@@ -91,6 +91,52 @@ app.get('/api/test-db', async (req, res) => {
   }
 });
 
+// Debug DB tables and extensions
+app.get('/api/debug-db', async (req, res) => {
+  const reports = {};
+  try {
+    // 1. Check extensions
+    try {
+      const extRes = await pool.query("SELECT extname FROM pg_extension;");
+      reports.extensions = extRes.rows.map(r => r.extname);
+    } catch (e) {
+      reports.extensions_error = e.message;
+    }
+
+    // 2. Check tables
+    try {
+      const tablesRes = await pool.query(`
+        SELECT table_name 
+        FROM information_schema.tables 
+        WHERE table_schema = 'public';
+      `);
+      reports.tables = tablesRes.rows.map(r => r.table_name);
+    } catch (e) {
+      reports.tables_error = e.message;
+    }
+
+    // 3. Try to run a query on usuarios to check rows
+    try {
+      const countRes = await pool.query('SELECT COUNT(*) as count FROM usuarios;');
+      reports.usuarios_count = countRes.rows[0].count;
+    } catch (e) {
+      reports.usuarios_error = e.message;
+    }
+
+    // 4. Try PostGIS version
+    try {
+      const postgisVer = await pool.query('SELECT PostGIS_Version();');
+      reports.postgis_version = postgisVer.rows[0].postgis_version;
+    } catch (e) {
+      reports.postgis_error = e.message;
+    }
+
+    res.json(reports);
+  } catch (err) {
+    res.status(500).json({ error: err.message, reports });
+  }
+});
+
 // 🔹 LISTA DE PRESTADORES (Geolocalización con PostGIS)
 app.get('/api/providers', async (req, res) => {
   try {
