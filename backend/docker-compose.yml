@@ -51,5 +51,28 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: beauty-backend
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=beauty_db
+      - DB_USER=admin
+      - DB_PASSWORD=admin123
+      - JWT_SECRET=beauty_app_super_secret_key_2026_change_in_production
+      - NODE_ENV=development
+      - SEED_DATABASE=true
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
 volumes:
   postgres_data:
