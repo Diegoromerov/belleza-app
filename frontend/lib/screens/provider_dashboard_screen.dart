@@ -1,6 +1,6 @@
 // frontend/lib/screens/provider_dashboard_screen.dart
 import 'dart:async';
-import 'dart:js' as js;
+import '../services/web_geolocation.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -1272,29 +1272,11 @@ class _SegmentedPinDialogState extends State<SegmentedPinDialog> {
 
       if (kIsWeb) {
         try {
-          final completer = Completer<Map<String, double>>();
-          final geolocation = js.context['navigator']['geolocation'];
-          if (geolocation != null) {
-            geolocation.callMethod('getCurrentPosition', [
-              (position) {
-                final coords = position['coords'];
-                final double lat = double.tryParse(coords['latitude']?.toString() ?? '') ?? 4.6735;
-                final double lon = double.tryParse(coords['longitude']?.toString() ?? '') ?? -74.1422;
-                completer.complete({'lat': lat, 'lon': lon});
-              },
-              (error) {
-                completer.complete({'lat': 4.6735, 'lon': -74.1422});
-              }
-            ]);
-            final pos = await completer.future.timeout(
-              const Duration(seconds: 4),
-              onTimeout: () => {'lat': 4.6735, 'lon': -74.1422},
-            );
-            providerLat = pos['lat']!;
-            providerLon = pos['lon']!;
-            clientLat = providerLat;
-            clientLon = providerLon;
-          }
+          final pos = await getWebGeolocation();
+          providerLat = pos['lat']!;
+          providerLon = pos['lon']!;
+          clientLat = providerLat;
+          clientLon = providerLon;
         } catch (e) {
           debugPrint('Error obteniendo geolocalización web: $e');
         }
