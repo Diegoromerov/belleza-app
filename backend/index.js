@@ -1807,11 +1807,15 @@ const initDatabase = async () => {
 
     const countRes = await pool.query('SELECT COUNT(*)::int FROM usuarios;');
     if (countRes.rows[0].count === 1) {
-      const seedPath = path.join(__dirname, 'seed.sql');
-      if (fs.existsSync(seedPath)) {
-        const seedSql = fs.readFileSync(seedPath, 'utf8');
-        await pool.query(seedSql);
-        console.log('🌱 Datos de prueba (seed.sql) sembrados exitosamente.');
+      if (process.env.SEED_DATABASE === 'true') {
+        const seedPath = path.join(__dirname, 'seed.sql');
+        if (fs.existsSync(seedPath)) {
+          const seedSql = fs.readFileSync(seedPath, 'utf8');
+          await pool.query(seedSql);
+          console.log('🌱 Datos de prueba (seed.sql) sembrados exitosamente.');
+        }
+      } else {
+        console.log('⚠️  Omitiendo la siembra de base de datos (SEED_DATABASE no está establecida como "true").');
       }
     }
   } catch (error) {
