@@ -1,0 +1,29 @@
+name: beauty_app
+description: Plataforma de servicios de belleza con geolocalización
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.1.0
+  shared_preferences: ^2.2.2
+  cupertino_icons: ^1.0.6
+  flutter_map: ^8.3.0
+  latlong2: ^0.9.1
+  image_picker: ^1.0.7
+  js: ^0.6.7
+  web_socket_channel: ^3.0.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/

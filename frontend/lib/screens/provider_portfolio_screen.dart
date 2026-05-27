@@ -1,0 +1,441 @@
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import '../services/api_service.dart';
+
+class ProviderPortfolioScreen extends StatefulWidget {
+  const ProviderPortfolioScreen({super.key});
+
+  @override
+  State<ProviderPortfolioScreen> createState() => _ProviderPortfolioScreenState();
+}
+
+class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
+  List<Map<String, dynamic>> _portfolioItems = [];
+  bool _isLoading = true;
+  String? _error;
+  final ImagePicker _picker = ImagePicker();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPortfolio();
+  }
+
+  Future<void> _loadPortfolio() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      final data = await ApiService.fetchProviderPortfolio();
+      if (mounted) {
+        setState(() {
+          _portfolioItems = data;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _pickAndUploadImage() async {
+    try {
+      final XFile? file = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1920,
+        maxHeight: 1080,
+        imageQuality: 85,
+      );
+
+      if (file == null) {
+        return;
+      }
+
+      final bytes = await file.readAsBytes();
+      final filename = file.name;
+
+      if (!mounted) {
+        return;
+      }
+
+      final result = await showDialog<Map<String, String>>(
+        context: context,
+        builder: (context) {
+          final titleCtrl = TextEditingController();
+          String category = 'Cabello';
+          final categories = ['Cabello', 'Uñas', 'Maquillaje', 'Cuidado de la piel', 'Barbería', 'Otros'];
+          final formKey = GlobalKey<FormState>();
+
+          return AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            title: const Text(
+              'Agregar al Portafolio',
+              style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, letterSpacing: -0.5),
+            ),
+            content: Form(
+              key: formKey,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text('Elige una foto de tus trabajos y descríbela.', style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+                    const SizedBox(height: 20),
+                    TextFormField(
+                      controller: titleCtrl,
+                      style: const TextStyle(fontSize: 14),
+                      decoration: InputDecoration(
+                        labelText: 'Título o Descripción *',
+                        labelStyle: const TextStyle(color: Colors.grey),
+                        floatingLabelBehavior: FloatingLabelBehavior.never,
+                        filled: true,
+                        fillColor: const Color(0xFFF5EBE6),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
+                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: const BorderSide(color: Color(0xFFC89D93), width: 1.5)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                      ),
+                      validator: (v) => v == null || v.trim().isEmpty ? 'Ingresa un título' : null,
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      initialValue: category,
+                      style: const TextStyle(color: Colors.black87, fontSize: 14, fontWeight: FontWeight.w500),
+                      decoration: InputDecoration(
+                        labelText: 'Categoría',
+                        labelStyle: const TextStyle(color: Colors.grey),
+                        floatingLabelBehavior: FloatingLabelBehavior.never,
+                        filled: true,
+                        fillColor: const Color(0xFFF5EBE6),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
+                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: const BorderSide(color: Color(0xFFC89D93), width: 1.5)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      ),
+                      items: categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+                      onChanged: (v) {
+                        if (v != null) {
+                          category = v;
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancelar', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  if (formKey.currentState!.validate()) {
+                    Navigator.pop(context, {
+                      'title': titleCtrl.text.trim(),
+                      'category': category,
+                    });
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFC89D93),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                ),
+                child: const Text('Subir Foto', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (result == null) {
+        return;
+      }
+
+      setState(() => _isLoading = true);
+
+      final imageUrl = await ApiService.uploadImage(bytes, filename);
+
+      await ApiService.addPortfolioItem(
+        imageUrl: imageUrl,
+        title: result['title'],
+        category: result['category'],
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('✅ Foto agregada al portafolio con éxito'), 
+            backgroundColor: const Color(0xFFC89D93),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          ),
+        );
+      }
+      _loadPortfolio();
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('❌ Error al subir: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  Future<void> _confirmDelete(String id) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 28),
+            SizedBox(width: 8),
+            Text('¿Eliminar del portafolio?', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+          ],
+        ),
+        content: const Text('¿Estás seguro de que deseas eliminar esta imagen de tu portafolio? Esta acción es definitiva.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Volver', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFEE2E2),
+              foregroundColor: const Color(0xFFDC2626),
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            ),
+            child: const Text('Eliminar', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      setState(() => _isLoading = true);
+      try {
+        await ApiService.deletePortfolioItem(id);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('✅ Imagen eliminada'), 
+              backgroundColor: const Color(0xFFC89D93),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            ),
+          );
+        }
+        _loadPortfolio();
+      } catch (e) {
+        if (mounted) {
+          setState(() => _isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('❌ Error al eliminar: $e'), backgroundColor: Colors.red),
+          );
+        }
+      }
+    }
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.photo_library_outlined, size: 80, color: Color(0xFFC89D93)),
+            const SizedBox(height: 16),
+            const Text(
+              'Tu portafolio está vacío',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87, letterSpacing: -0.3),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Agrega fotos de tus mejores trabajos para que los clientes puedan ver la calidad de tus servicios.',
+              style: TextStyle(color: Colors.grey[600], height: 1.4, fontSize: 13),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: _pickAndUploadImage,
+              icon: const Icon(Icons.add_photo_alternate_outlined),
+              label: const Text('Agregar Foto'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFC89D93),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                elevation: 0,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPortfolioGrid() {
+    return GridView.builder(
+      padding: const EdgeInsets.all(16),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 0.8,
+      ),
+      itemCount: _portfolioItems.length,
+      itemBuilder: (context, index) {
+        final item = _portfolioItems[index];
+        final id = item['id'] as String;
+        final imageUrl = item['image_url'] as String;
+        final title = item['title'] as String? ?? '';
+        final category = item['category'] as String? ?? 'General';
+
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x0A000000),
+                blurRadius: 16,
+                offset: Offset(0, 4),
+              )
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: Stack(
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      child: Image.network(
+                        imageUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          color: const Color(0xFFF5EBE6),
+                          child: const Icon(Icons.broken_image, color: Colors.grey),
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            category,
+                            style: const TextStyle(color: Color(0xFFC89D93), fontSize: 11, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: Material(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(20),
+                    child: IconButton(
+                      icon: const Icon(Icons.delete_outline, color: Colors.white, size: 18),
+                      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                      onPressed: () => _confirmDelete(id),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: const Text('Mi Portafolio', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5)),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _loadPortfolio,
+            tooltip: 'Actualizar',
+          ),
+        ],
+      ),
+      body: Stack(
+        children: [
+          if (_portfolioItems.isEmpty && !_isLoading && _error == null)
+            _buildEmptyState()
+          else if (_error != null && _portfolioItems.isEmpty)
+            Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, color: Colors.redAccent, size: 48),
+                  const SizedBox(height: 16),
+                  Text('Error: $_error', textAlign: TextAlign.center),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: _loadPortfolio,
+                    child: const Text('Reintentar'),
+                  ),
+                ],
+              ),
+            )
+          else
+            _buildPortfolioGrid(),
+          if (_isLoading)
+            Container(
+              color: const Color(0x1E000000),
+              child: const Center(
+                child: CircularProgressIndicator(color: Color(0xFFC89D93)),
+              ),
+            ),
+        ],
+      ),
+      floatingActionButton: _portfolioItems.isNotEmpty
+          ? FloatingActionButton(
+              onPressed: _pickAndUploadImage,
+              backgroundColor: const Color(0xFFC89D93),
+              foregroundColor: Colors.white,
+              tooltip: 'Agregar Imagen',
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              elevation: 4,
+              child: const Icon(Icons.add_a_photo_outlined),
+            )
+          : null,
+    );
+  }
+}
