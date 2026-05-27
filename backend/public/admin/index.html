@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Belleza App - Control Center</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Leaflet CSS for Map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <i class="fa-solid fa-face-retouching-natural logo-icon"></i>
+        <span>Belleza admin</span>
+      </div>
+      <nav class="sidebar-menu">
+        <a href="#dashboard" class="menu-item active" id="nav-dashboard">
+          <i class="fa-solid fa-chart-line"></i><span>Dashboard</span>
+        </a>
+        <a href="#sos" class="menu-item" id="nav-sos">
+          <i class="fa-solid fa-triangle-exclamation"></i><span>Alertas SOS</span>
+          <span class="badge badge-danger" id="sos-badge" style="display: none;">0</span>
+        </a>
+        <a href="#analytics" class="menu-item" id="nav-analytics">
+          <i class="fa-solid fa-user-gear"></i><span>Telemetría</span>
+        </a>
+        <a href="#transactions" class="menu-item" id="nav-transactions">
+          <i class="fa-solid fa-receipt"></i><span>Historial</span>
+        </a>
+      </nav>
+      <div class="sidebar-status">
+        <div class="status-indicator online"></div>
+        <span>Servidor en línea</span>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      
+      <!-- Top Header -->
+      <header class="main-header">
+        <div class="header-title">
+          <h1 id="page-title">Centro de Control Operativo</h1>
+          <p id="page-subtitle">Monitoreo de métricas y seguridad en tiempo real</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-secondary" id="refresh-metrics-btn">
+            <i class="fa-solid fa-arrows-rotate"></i> Actualizar
+          </button>
+          <div class="admin-profile">
+            <div class="avatar">AD</div>
+            <div class="profile-info">
+              <span class="name">Administrador</span>
+              <span class="role">Soporte Staging</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Dashboard Sections -->
+      <div class="dashboard-body">
+
+        <!-- 🚨 SOS Emergency Banner (Visible when active alerts exist) -->
+        <div class="sos-banner" id="active-sos-banner" style="display: none;">
+          <div class="sos-banner-content">
+            <i class="fa-solid fa-triangle-exclamation animate-pulse"></i>
+            <div>
+              <h3>🚨 ALERTA DE EMERGENCIA SOS ACTIVA</h3>
+              <p>Se ha reportado un botón de pánico activo. Revisa el mapa inmediatamente.</p>
+            </div>
+          </div>
+          <button class="btn btn-light" id="go-to-sos-btn">Ver Detalle</button>
+        </div>
+
+        <!-- 📊 KPI metrics grid -->
+        <section class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-icon money">
+              <i class="fa-solid fa-wallet"></i>
+            </div>
+            <div class="kpi-data">
+              <span class="kpi-label">Ingresos Totales</span>
+              <h2 class="kpi-val" id="kpi-revenue">$0.00</h2>
+              <span class="kpi-trend positive"><i class="fa-solid fa-arrow-up"></i> 100% (Completadas)</span>
+            </div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-icon bookings">
+              <i class="fa-solid fa-calendar-check"></i>
+            </div>
+            <div class="kpi-data">
+              <span class="kpi-label">Reservas Creadas</span>
+              <h2 class="kpi-val" id="kpi-bookings">0</h2>
+              <span class="kpi-subtext" id="kpi-bookings-sub">0 pendientes</span>
+            </div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-icon providers">
+              <i class="fa-solid fa-user-tie"></i>
+            </div>
+            <div class="kpi-data">
+              <span class="kpi-label">Estilistas Activos</span>
+              <h2 class="kpi-val" id="kpi-providers">0</h2>
+              <span class="kpi-subtext" id="kpi-providers-sub">En línea en Fontibón</span>
+            </div>
+          </div>
+
+          <div class="kpi-card danger-card" id="sos-kpi-card">
+            <div class="kpi-icon sos">
+              <i class="fa-solid fa-bell"></i>
+            </div>
+            <div class="kpi-data">
+              <span class="kpi-label">Alertas SOS Activas</span>
+              <h2 class="kpi-val" id="kpi-sos">0</h2>
+              <span class="kpi-subtext text-danger" id="kpi-sos-sub">No hay emergencias</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Dynamic View Sections -->
+        
+        <!-- Section: Dashboard & SOS Map -->
+        <div class="view-section" id="view-dashboard-sos">
+          <div class="grid-2-col">
+            
+            <!-- SOS Live Map -->
+            <div class="panel map-panel">
+              <div class="panel-header">
+                <h3><i class="fa-solid fa-map-location-dot"></i> Ubicación de Alertas (Fontibón, Bogotá)</h3>
+                <span class="panel-status live">En vivo</span>
+              </div>
+              <div class="panel-body">
+                <div id="sos-map"></div>
+              </div>
+            </div>
+
+            <!-- Active Alerts Table -->
+            <div class="panel alerts-panel">
+              <div class="panel-header">
+                <h3><i class="fa-solid fa-shield-halved"></i> Alertas de Pánico Recientes</h3>
+              </div>
+              <div class="panel-body table-container">
+                <table class="data-table" id="alerts-table">
+                  <thead>
+                    <tr>
+                      <th>Usuario</th>
+                      <th>Teléfono</th>
+                      <th>Coordenadas</th>
+                      <th>Estado</th>
+                      <th>Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody id="alerts-table-body">
+                    <tr>
+                      <td colspan="5" class="empty-message">No se han registrado alertas de pánico.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Section: Telemetry / Analytics -->
+        <div class="view-section" id="view-analytics" style="display: none;">
+          <div class="grid-2-col">
+            
+            <!-- Screen Views Chart -->
+            <div class="panel chart-panel">
+              <div class="panel-header">
+                <h3><i class="fa-solid fa-chart-simple"></i> Pantallas Más Visitadas (Screen Views)</h3>
+              </div>
+              <div class="panel-body">
+                <canvas id="screens-chart"></canvas>
+              </div>
+            </div>
+
+            <!-- Clicks/Interactions Chart -->
+            <div class="panel chart-panel">
+              <div class="panel-header">
+                <h3><i class="fa-solid fa-arrow-pointer"></i> Interacciones de Usuario (Clicks)</h3>
+              </div>
+              <div class="panel-body">
+                <canvas id="clicks-chart"></canvas>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Section: Historical Ledger -->
+        <div class="view-section" id="view-transactions" style="display: none;">
+          <div class="panel full-width-panel">
+            <div class="panel-header">
+              <h3><i class="fa-solid fa-clock-rotate-left"></i> Historial Completo de Alertas SOS</h3>
+            </div>
+            <div class="panel-body table-container">
+              <table class="data-table" id="sos-history-table">
+                <thead>
+                  <tr>
+                    <th>ID Alerta</th>
+                    <th>Usuario</th>
+                    <th>Email</th>
+                    <th>Reserva Relacionada</th>
+                    <th>Ubicación</th>
+                    <th>Estado</th>
+                    <th>Fecha y Hora</th>
+                  </tr>
+                </thead>
+                <tbody id="sos-history-body">
+                  <tr>
+                    <td colspan="7" class="empty-message">Cargando historial...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Leaflet Map JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Custom App Script -->
+  <script src="app.js"></script>
+</body>
+</html>

@@ -61,6 +61,7 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use('/uploads', express.static(uploadsDir));
+app.use('/admin', express.static(path.join(__dirname, 'public/admin')));
 
 // ==========================================
 // RUTAS PÚBLICAS
@@ -1205,6 +1206,21 @@ app.post('/api/upload', authMiddleware, (req, res) => {
   });
 });
 
+// Lista de clientes conectados a eventos SSE de administración
+const sseClients = [];
+
+// Función para transmitir eventos a todos los clientes del dashboard conectados
+const broadcastAdminEvent = (type, data) => {
+  const payload = JSON.stringify({ type, data });
+  sseClients.forEach(client => {
+    try {
+      client.write(`data: ${payload}\n\n`);
+    } catch (err) {
+      console.error('Error al escribir en cliente SSE:', err);
+    }
+  });
+};
+
 // 🔹 NUEVO: Registrar Alerta de Emergencia / SOS (Pánico)
 app.post('/api/sos', authMiddleware, async (req, res) => {
   try {
@@ -1232,6 +1248,18 @@ app.post('/api/sos', authMiddleware, async (req, res) => {
     ]);
 
     const alertId = result.rows[0].id;
+    
+    // Emitir el evento SOS en tiempo real a los dashboards conectados
+    broadcastAdminEvent('sos_alert', {
+      id: alertId,
+      user_id: user_id,
+      email: req.user.email,
+      booking_id: booking_id || null,
+      latitude: latitude ? parseFloat(latitude) : null,
+      longitude: longitude ? parseFloat(longitude) : null,
+      estado: 'ACTIVO',
+      creado_en: result.rows[0].creado_en
+    });
     
     // Log de consola con estilo de emergencia
     console.log('\x1b[41m\x1b[37m%s\x1b[0m', `🚨 [ALERTA DE EMERGENCIA - SOS] 🚨`);
@@ -1333,6 +1361,135 @@ app.post('/api/analytics/events', optionalAuthMiddleware, async (req, res) => {
   } catch (error) {
     console.error('❌ ERROR EN POST /api/analytics/events:', error);
     res.status(500).json({ error: 'Error interno al guardar telemetría' });
+  }
+});
+
+// 🔹 NUEVO: Canal SSE en tiempo real para eventos de administración
+app.get('/api/admin/events/stream', (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
+
+  sseClients.push(res);
+  console.log(`🔌 [SSE] Administrador conectado al flujo en vivo. Total conectados: ${sseClients.length}`);
+
+  // Enviar ping inicial para confirmar conexión
+  res.write(`data: ${JSON.stringify({ type: 'connected', timestamp: new Date().toISOString() })}\n\n`);
+
+  req.on('close', () => {
+    const index = sseClients.indexOf(res);
+    if (index !== -1) {
+      sseClients.splice(index, 1);
+      console.log(`🔌 [SSE] Administrador desconectado del flujo. Total conectados: ${sseClients.length}`);
+    }
+  });
+});
+
+// 🔹 NUEVO: Obtener estadísticas globales y telemetría de analíticas
+app.get('/api/admin/metrics', async (req, res) => {
+  try {
+    // 1. Estadísticas agregadas de reservas
+    const bookingsCountRes = await pool.query(`
+      SELECT estado, COUNT(*)::int as count 
+      FROM bookings 
+      GROUP BY estado;
+    `);
+    
+    // 2. Ingresos totales (suma de valor_bruto de reservas completadas)
+    const revenueRes = await pool.query(`
+      SELECT COALESCE(SUM(valor_bruto), 0.0)::double precision as total_revenue
+      FROM bookings 
+      WHERE estado = 'COMPLETADA';
+    `);
+    
+    // 3. Usuarios registrados agrupados por rol
+    const usersCountRes = await pool.query(`
+      SELECT rol, COUNT(*)::int as count 
+      FROM usuarios 
+      GROUP BY rol;
+    `);
+    
+    // 4. Prestadores activos (online)
+    const activeProvidersRes = await pool.query(`
+      SELECT COUNT(*)::int as count 
+      FROM perfiles_prestador 
+      WHERE is_online = true;
+    `);
+    
+    // 5. Historial de alertas SOS (últimas 20)
+    const sosAlertsRes = await pool.query(`
+      SELECT s.*, u.nombre as user_name, u.email as user_email, u.phone as user_phone
+      FROM sos_alerts s
+      JOIN usuarios u ON s.user_id = u.id
+      ORDER BY s.creado_en DESC
+      LIMIT 20;
+    `);
+    
+    // 6. Frecuencia de visitas a pantallas de la telemetría
+    const telemetryScreensRes = await pool.query(`
+      SELECT screen_name, COUNT(*)::int as count
+      FROM user_activity_logs
+      WHERE event_type = 'SCREEN_VIEW'
+      GROUP BY screen_name
+      ORDER BY count DESC
+      LIMIT 10;
+    `);
+
+    // 7. Frecuencia de clicks en botones / elementos interactuados
+    const telemetryClicksRes = await pool.query(`
+      SELECT element_id, COUNT(*)::int as count
+      FROM user_activity_logs
+      WHERE event_type = 'TAP' OR event_type = 'SOS_TRIGGERED' OR event_type = 'CATEGORY_FILTER_SELECTED'
+      GROUP BY element_id
+      ORDER BY count DESC
+      LIMIT 10;
+    `);
+
+    res.json({
+      success: true,
+      data: {
+        bookings_status: bookingsCountRes.rows,
+        total_revenue: revenueRes.rows[0].total_revenue,
+        users_by_role: usersCountRes.rows,
+        active_providers_online: activeProvidersRes.rows[0].count,
+        sos_alerts: sosAlertsRes.rows,
+        telemetry_screens: telemetryScreensRes.rows,
+        telemetry_clicks: telemetryClicksRes.rows
+      }
+    });
+  } catch (error) {
+    console.error('❌ ERROR EN GET /api/admin/metrics:', error);
+    res.status(500).json({ error: 'Error al obtener métricas del panel administrativo' });
+  }
+});
+
+// 🔹 NUEVO: Resolver Alerta SOS / Pánico
+app.patch('/api/admin/sos/resolve/:id', async (req, res) => {
+  try {
+    const alertId = parseInt(req.params.id);
+    const updateRes = await pool.query(`
+      UPDATE sos_alerts
+      SET estado = 'RESUELTO'
+      WHERE id = $1
+      RETURNING *;
+    `, [alertId]);
+
+    if (updateRes.rows.length === 0) {
+      return res.status(404).json({ error: 'Alerta SOS no encontrada' });
+    }
+
+    // Emitir evento de actualización a los dashboards conectados
+    broadcastAdminEvent('sos_resolved', updateRes.rows[0]);
+
+    res.json({
+      success: true,
+      message: 'Alerta SOS marcada como resuelta',
+      alert: updateRes.rows[0]
+    });
+  } catch (error) {
+    console.error('❌ ERROR EN PATCH /api/admin/sos/resolve:', error);
+    res.status(500).json({ error: 'Error al resolver alerta SOS' });
   }
 });
 
