@@ -2018,6 +2018,16 @@ const initDatabase = async () => {
       CREATE INDEX IF NOT EXISTS idx_activity_logs_event ON user_activity_logs(event_type);
     `);
 
+    // 🔸 Ejecutar migración de lealtad y fraude (loyalty_migration.sql)
+    const loyaltyMigrationPath = path.join(__dirname, 'src/config/loyalty_migration.sql');
+    if (fs.existsSync(loyaltyMigrationPath)) {
+      const loyaltySql = fs.readFileSync(loyaltyMigrationPath, 'utf8');
+      await pool.query(loyaltySql);
+      console.log('✅ Base de datos: Migración de lealtad y fraude ejecutada desde loyalty_migration.sql');
+    } else {
+      console.warn('⚠️ No se encontró loyalty_migration.sql. Se omitió la migración de lealtad.');
+    }
+
     const aiUserQuery = `
       INSERT INTO usuarios (id, email, nombre, auth_provider, provider_id, rol, onboarding_completo)
       VALUES (

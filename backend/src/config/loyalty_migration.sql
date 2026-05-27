@@ -56,11 +56,11 @@ CREATE TABLE IF NOT EXISTS fraud_flags (
 DROP INDEX IF EXISTS idx_perfiles_prestador_ubicacion;
 
 -- A. Spatial index for all active and verified providers
-CREATE INDEX idx_providers_spatial_active ON perfiles_prestador USING GIST (ubicacion)
+CREATE INDEX IF NOT EXISTS idx_providers_spatial_active ON perfiles_prestador USING GIST (ubicacion)
 WHERE is_active = true AND estatus_verificacion = 'APROBADO';
 
 -- B. Specialized partial index for Avant-Garde Elite priority lookup
-CREATE INDEX idx_providers_spatial_elite ON perfiles_prestador USING GIST (ubicacion)
+CREATE INDEX IF NOT EXISTS idx_providers_spatial_elite ON perfiles_prestador USING GIST (ubicacion)
 WHERE is_active = true AND estatus_verificacion = 'APROBADO' AND is_avant_garde_elite = true;
 
 -- 7. Triggers for Dynamic Platform Commission Calculation (Style Hierarchy)
