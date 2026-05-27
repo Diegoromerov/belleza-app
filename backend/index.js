@@ -114,6 +114,14 @@ app.get('/api/debug-db', async (req, res) => {
       reports.extensions_error = e.message;
     }
 
+    // 1.5 Check available extensions
+    try {
+      const availExtRes = await pool.query("SELECT name, default_version, installed_version FROM pg_available_extensions WHERE name LIKE 'postgis%';");
+      reports.available_extensions = availExtRes.rows;
+    } catch (e) {
+      reports.available_extensions_error = e.message;
+    }
+
     // 2. Check tables
     try {
       const tablesRes = await pool.query(`
