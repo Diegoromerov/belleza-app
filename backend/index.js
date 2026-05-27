@@ -16,6 +16,8 @@ const { findCachedJob, enqueueTryonJob } = require('./src/services/queueService'
 const crypto = require('crypto');
 const { WebSocketServer } = require('ws');
 
+let lastDbInitError = null;
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -94,7 +96,16 @@ app.get('/api/test-db', async (req, res) => {
 // Debug DB tables and extensions
 app.get('/api/debug-db', async (req, res) => {
   const reports = {};
+  reports.lastDbInitError = lastDbInitError;
   try {
+    // 0. Try to create postgis extension
+    try {
+      await pool.query("CREATE EXTENSION IF NOT EXISTS postgis;");
+      reports.postgis_creation = "success";
+    } catch (e) {
+      reports.postgis_creation_error = e.message;
+    }
+
     // 1. Check extensions
     try {
       const extRes = await pool.query("SELECT extname FROM pg_extension;");
@@ -2022,6 +2033,11 @@ const initDatabase = async () => {
     }
   } catch (error) {
     console.error('❌ Error al inicializar la base de datos:', error);
+    lastDbInitError = {
+      message: error.message,
+      stack: error.stack,
+      timestamp: new Date().toISOString()
+    };
   }
 };
 
