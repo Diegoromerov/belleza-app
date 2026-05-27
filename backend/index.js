@@ -106,6 +106,14 @@ app.get('/api/debug-db', async (req, res) => {
       reports.postgis_creation_error = e.message;
     }
 
+    // 0.5 Check Postgres version
+    try {
+      const verRes = await pool.query("SELECT version();");
+      reports.postgres_version = verRes.rows[0].version;
+    } catch (e) {
+      reports.postgres_version_error = e.message;
+    }
+
     // 1. Check extensions
     try {
       const extRes = await pool.query("SELECT extname FROM pg_extension;");
