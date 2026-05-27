@@ -1891,6 +1891,20 @@ const initDatabase = async () => {
     const tableCheck = await pool.query("SELECT to_regclass('public.usuarios') as exists;");
     const hasTable = tableCheck.rows[0].exists !== null;
 
+    if (hasTable) {
+      console.log('✅ Base de datos ya inicializada. Omitiendo recreación de tablas.');
+    } else {
+      const schemaPath = path.join(__dirname, 'schema.sql');
+      if (fs.existsSync(schemaPath)) {
+        const schemaSql = fs.readFileSync(schemaPath, 'utf8');
+        await pool.query(schemaSql);
+        console.log('✅ Base de datos: Esquema inicializado/verificado desde schema.sql');
+      } else {
+        console.warn('⚠️ No se encontró schema.sql. Se omitió la creación automática de tablas.');
+      }
+    }
+
+    // Ejecutar migraciones y tablas adicionales ahora que el esquema base está garantizado
     await pool.query(`
       ALTER TABLE bookings
       ADD COLUMN IF NOT EXISTS service_address TEXT;
@@ -1930,21 +1944,6 @@ const initDatabase = async () => {
       CREATE INDEX IF NOT EXISTS idx_activity_logs_session ON user_activity_logs(session_id);
       CREATE INDEX IF NOT EXISTS idx_activity_logs_event ON user_activity_logs(event_type);
     `);
-
-
-
-    if (hasTable) {
-      console.log('✅ Base de datos ya inicializada. Omitiendo recreación de tablas.');
-    } else {
-      const schemaPath = path.join(__dirname, 'schema.sql');
-      if (fs.existsSync(schemaPath)) {
-        const schemaSql = fs.readFileSync(schemaPath, 'utf8');
-        await pool.query(schemaSql);
-        console.log('✅ Base de datos: Esquema inicializado/verificado desde schema.sql');
-      } else {
-        console.warn('⚠️ No se encontró schema.sql. Se omitió la creación automática de tablas.');
-      }
-    }
 
     const aiUserQuery = `
       INSERT INTO usuarios (id, email, nombre, auth_provider, provider_id, rol, onboarding_completo)
