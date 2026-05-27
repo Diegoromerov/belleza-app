@@ -7,16 +7,28 @@ import '../models/provider_model.dart';
 import '../models/service_model.dart';
 
 class ApiService {
+  // --- CONFIGURACIÓN DE ENTORNO DE DESARROLLO / PRODUCCIÓN ---
+  // Cambia esta variable a 'true' para apuntar al servidor en la nube (Railway)
+  static const bool useStaging = true;
+  static const String stagingUrl = 'https://belleza-app-production.up.railway.app';
+
   static String? _cachedBaseUrl;
   static final List<String> _ports = ['3000', '3001'];
 
   static String get _host => kIsWeb ? 'localhost' : '10.0.2.2';
 
-  static String get baseUrl => _cachedBaseUrl ?? 'http://$_host:3000';
+  static String get baseUrl {
+    if (useStaging) return stagingUrl;
+    return _cachedBaseUrl ?? 'http://$_host:3000';
+  }
   static String get _baseUrl => baseUrl;
   static String get _apiPath => '/api';
 
   static Future<void> ensureBaseUrl() async {
+    if (useStaging) {
+      _cachedBaseUrl = stagingUrl;
+      return;
+    }
     if (_cachedBaseUrl != null) return;
     for (final port in _ports) {
       final url = 'http://$_host:$port';
