@@ -167,9 +167,9 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> with Single
       builder: (context) {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setModalState) {
-            final providerName = booking['provider_business_name'] != '' 
-                ? booking['provider_business_name'] as String 
-                : booking['provider_name'] as String? ?? 'Prestador';
+            final providerName = (booking['provider_business_name'] != null && booking['provider_business_name'].toString().isNotEmpty)
+                ? booking['provider_business_name'].toString()
+                : (booking['provider_name']?.toString() ?? 'Prestador');
             return Padding(
               padding: EdgeInsets.only(
                 bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -397,16 +397,16 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> with Single
   }
 
   Widget _buildBookingCard(Map<String, dynamic> booking, bool isUpcoming) {
-    final status = booking['status'] as String? ?? 'pending';
-    final providerName = booking['provider_business_name'] != '' 
-        ? booking['provider_business_name'] as String 
-        : booking['provider_name'] as String? ?? 'Establecimiento';
+    final status = booking['status']?.toString() ?? 'pending';
+    final providerName = (booking['provider_business_name'] != null && booking['provider_business_name'].toString().isNotEmpty)
+        ? booking['provider_business_name'].toString()
+        : (booking['provider_name']?.toString() ?? 'Establecimiento');
     
-    final avatarUrl = booking['provider_avatar_url'] as String? ?? '';
-    final serviceName = booking['service_name'] as String? ?? 'Servicio';
-    final scheduledAt = booking['scheduled_at'] as String? ?? '';
-    final totalAmount = booking['total_amount'] as double? ?? 0.0;
-    final isReviewed = booking['is_reviewed'] as bool? ?? false;
+    final avatarUrl = booking['provider_avatar_url']?.toString() ?? '';
+    final serviceName = booking['service_name']?.toString() ?? 'Servicio';
+    final scheduledAt = booking['scheduled_at']?.toString() ?? '';
+    final totalAmount = (booking['total_amount'] as num?)?.toDouble() ?? 0.0;
+    final isReviewed = booking['is_reviewed'] == true;
     final reviewData = booking['review'] as Map<String, dynamic>?;
 
     return Container(
@@ -514,7 +514,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> with Single
                 ),
               ],
             ),
-            if (booking['service_address'] != null && (booking['service_address'] as String).isNotEmpty) ...[
+            if (booking['service_address'] != null && booking['service_address'].toString().isNotEmpty) ...[
               const SizedBox(height: 12),
               Container(
                 width: double.infinity,
@@ -529,7 +529,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> with Single
                 ),
               ),
             ],
-            if (booking['notes'] != null && (booking['notes'] as String).isNotEmpty) ...[
+            if (booking['notes'] != null && booking['notes'].toString().isNotEmpty) ...[
               const SizedBox(height: 12),
               Container(
                 width: double.infinity,
@@ -627,7 +627,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> with Single
                         ),
                       ],
                     ),
-                    if (reviewData['comment'] != null && (reviewData['comment'] as String).isNotEmpty) ...[
+                    if (reviewData['comment'] != null && reviewData['comment'].toString().isNotEmpty) ...[
                       const SizedBox(height: 6),
                       Text(
                         '"${reviewData['comment']}"',
@@ -746,12 +746,12 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> with Single
     }
 
     final upcoming = _bookings.where((b) {
-      final status = (b['status'] as String? ?? 'pending').toUpperCase();
+      final status = (b['status']?.toString() ?? 'pending').toUpperCase();
       return status == 'PENDING' || status == 'PENDIENTE_PAGO' || status == 'CONFIRMED' || status == 'CONFIRMADA' || status == 'EN_PROGRESO' || status == 'FINALIZADA_PRESTADOR';
     }).toList();
 
     final history = _bookings.where((b) {
-      final status = (b['status'] as String? ?? 'pending').toUpperCase();
+      final status = (b['status']?.toString() ?? 'pending').toUpperCase();
       return status == 'COMPLETED' || status == 'COMPLETADA' || status == 'CANCELLED' || status == 'CANCELADA';
     }).toList();
 
