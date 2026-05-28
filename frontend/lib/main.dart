@@ -7,6 +7,7 @@ import 'package:latlong2/latlong.dart';
 import 'services/api_service.dart';
 import 'services/analytics_service.dart';
 import 'services/auth_service.dart';
+import 'services/web_geolocation.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/auth/onboarding_screen.dart';
@@ -107,6 +108,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
   String? _userRole;
   final TextEditingController _searchController = TextEditingController();
   final LatLng _fontibonCenter = const LatLng(4.6735, -74.1422);
+  LatLng? _userLocation;
 
   @override
   void initState() {
@@ -114,12 +116,28 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
     _mapController = MapController();
     _loadProviders();
     _loadUserRole();
+    _determineUserLocation();
   }
 
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _determineUserLocation() async {
+    try {
+      final pos = await getWebGeolocation();
+      final lat = pos['lat']!;
+      final lon = pos['lon']!;
+      if (mounted) {
+        setState(() {
+          _userLocation = LatLng(lat, lon);
+        });
+        _mapController.move(_userLocation!, 13.5);
+        _loadProviders();
+      }
+    } catch (_) {}
   }
 
   Future<void> _loadProviders() async {
@@ -129,7 +147,10 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
       _errorMessage = null;
     });
     try {
-      final providers = await ApiService.fetchProvidersSecured();
+      final providers = await ApiService.fetchProvidersSecured(
+        latitude: _userLocation?.latitude,
+        longitude: _userLocation?.longitude,
+      );
       if (!mounted) return;
       setState(() {
         _allProviders = providers;
@@ -288,19 +309,19 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
       }
 
       // Registrar evento de telemetría de botón SOS presionado
+      final double lat = _userLocation?.latitude ?? _fontibonCenter.latitude;
+      final double lon = _userLocation?.longitude ?? _fontibonCenter.longitude;
+
       AnalyticsService().logEvent(
         eventType: 'SOS_TRIGGERED',
         screenName: '/home',
         elementId: 'sos_client_fab',
         metadata: {
           'booking_id': activeBookingId,
-          'latitude': _fontibonCenter.latitude,
-          'longitude': _fontibonCenter.longitude,
+          'latitude': lat,
+          'longitude': lon,
         },
       );
-
-      final double lat = _fontibonCenter.latitude;
-      final double lon = _fontibonCenter.longitude;
 
       final res = await ApiService.triggerSOS(
         bookingId: activeBookingId,
@@ -721,10 +742,27 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                 urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName: 'com.beautyapp.map',
               ),
-              // Marcadores de prestadores en el mapa
+              // Marcadores de prestadores en el mapa + marcador de ubicación del usuario
               MarkerLayer(
-                markers: _filteredProviders.map((p) {
-                  return Marker(
+                markers: [
+                  if (_userLocation != null)
+                    Marker(
+                      width: 50,
+                      height: 50,
+                      point: _userLocation!,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: const Color(0xFF1E88E5).withOpacity(0.2),
+                          border: Border.all(color: const Color(0xFF1E88E5), width: 2),
+                        ),
+                        child: const Center(
+                          child: Icon(Icons.my_location, color: Color(0xFF1E88E5), size: 24),
+                        ),
+                      ),
+                    ),
+                  ..._filteredProviders.map((p) {
+                    return Marker(
                     width: 60,
                     height: 60,
                     point: LatLng(p.latitude, p.longitude),
@@ -770,7 +808,8 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                     ),
                   );
                 }).toList(),
-              ),
+              ],
+            ),
             ],
           ),
 
@@ -901,6 +940,21 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                   ),
                 ],
               ),
+            ),
+          ),
+
+          // Capa: Botón Mi Ubicación
+          Positioned(
+            right: 20,
+            bottom: 172,
+            child: FloatingActionButton(
+              heroTag: 'my_location_fab',
+              onPressed: _determineUserLocation,
+              backgroundColor: Colors.white,
+              foregroundColor: const Color(0xFFC89D93),
+              elevation: 4,
+              shape: const CircleBorder(),
+              child: const Icon(Icons.my_location, size: 24),
             ),
           ),
 
