@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'chat_screen.dart';
+import '../services/api_service.dart';
 
 class BookingTrackingScreen extends StatefulWidget {
   final Map<String, dynamic> booking;
@@ -99,7 +100,9 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
             ),
             children: [
               TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                urlTemplate: MapSettings.isDark
+                    ? 'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
+                    : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName: 'com.beautyapp.map',
               ),
               // Línea de Ruta (Polyline)
@@ -232,6 +235,28 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
                     ),
                   ],
                 ),
+              ),
+            ),
+          ),
+
+          // Botón Tema de Mapa (Claro/Oscuro Limpio)
+          Positioned(
+            right: 20,
+            bottom: 230,
+            child: FloatingActionButton(
+              heroTag: 'map_theme_tracking_fab',
+              onPressed: () {
+                setState(() {
+                  MapSettings.isDark = !MapSettings.isDark;
+                });
+              },
+              backgroundColor: Colors.white,
+              foregroundColor: const Color(0xFFC89D93),
+              elevation: 4,
+              shape: const CircleBorder(),
+              child: Icon(
+                MapSettings.isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+                size: 22,
               ),
             ),
           ),

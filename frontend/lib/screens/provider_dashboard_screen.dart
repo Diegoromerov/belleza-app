@@ -333,7 +333,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                 );
               },
               icon: const Icon(Icons.chat_bubble_outline_rounded, size: 16),
-              label: const Text('Chat Directo', style: TextStyle(fontSize: 12.5)),
+              label: const Text('Chat', style: TextStyle(fontSize: 12.5)),
               style: OutlinedButton.styleFrom(
                 foregroundColor: const Color(0xFFC89D93),
                 side: const BorderSide(color: Color(0xFFC89D93), width: 1.5),
@@ -342,12 +342,37 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
               ),
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 8),
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: () async {
+                final refresh = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ProviderRouteScreen(booking: b),
+                  ),
+                );
+                if (refresh == true) {
+                  _fetchBookings();
+                  _fetchProfile();
+                }
+              },
+              icon: const Icon(Icons.map_outlined, size: 16),
+              label: const Text('Ver Mapa', style: TextStyle(fontSize: 12.5)),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFFC89D93),
+                side: const BorderSide(color: Color(0xFFC89D93), width: 1.5),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                padding: const EdgeInsets.symmetric(vertical: 10),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
           Expanded(
             child: ElevatedButton.icon(
               onPressed: () => _showSegmentedPinDialog(b),
               icon: const Icon(Icons.check_circle_outline_rounded, size: 16),
-              label: const Text('Finalizar Servicio', style: TextStyle(fontSize: 12.5)),
+              label: const Text('Finalizar', style: TextStyle(fontSize: 12.5)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF16A34A),
                 foregroundColor: Colors.white,
@@ -1025,6 +1050,33 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                                       style: const TextStyle(fontSize: 13, color: Colors.grey),
                                     ),
                                   ),
+                                  if ((b['service_address']?.toString().isNotEmpty ?? false) &&
+                                      cardStatus != 'COMPLETADA' &&
+                                      cardStatus != 'COMPLETED' &&
+                                      cardStatus != 'CANCELADA' &&
+                                      cardStatus != 'CANCELLED' &&
+                                      cardStatus != 'PENDIENTE_PAGO') ...[
+                                    const SizedBox(width: 6),
+                                    GestureDetector(
+                                      onTap: () async {
+                                        final refresh = await Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => ProviderRouteScreen(booking: b),
+                                          ),
+                                        );
+                                        if (refresh == true) {
+                                          _fetchBookings();
+                                          _fetchProfile();
+                                        }
+                                      },
+                                      child: const Icon(
+                                        Icons.map_outlined,
+                                        color: Color(0xFFC89D93),
+                                        size: 20,
+                                      ),
+                                    ),
+                                  ],
                                 ],
                               ),
                               const SizedBox(height: 16),

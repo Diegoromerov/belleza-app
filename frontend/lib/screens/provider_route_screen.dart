@@ -112,6 +112,8 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen> {
     final String serviceName = widget.booking['service_name'] ?? 'Servicio';
     final String clientId = widget.booking['client_id']?.toString() ?? '';
     final String serviceAddress = widget.booking['service_address']?.toString() ?? '';
+    final String status = (widget.booking['status'] as String? ?? '').toUpperCase();
+    final bool isInProgress = status == 'EN_PROGRESO';
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -138,7 +140,9 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen> {
             ),
             children: [
               TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                urlTemplate: MapSettings.isDark
+                    ? 'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
+                    : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName: 'com.beautyapp.map',
               ),
               PolylineLayer(
@@ -257,6 +261,28 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen> {
             ),
           ),
 
+          // Botón Tema de Mapa (Claro/Oscuro Limpio)
+          Positioned(
+            right: 20,
+            bottom: 220,
+            child: FloatingActionButton(
+              heroTag: 'map_theme_route_fab',
+              onPressed: () {
+                setState(() {
+                  MapSettings.isDark = !MapSettings.isDark;
+                });
+              },
+              backgroundColor: Colors.white,
+              foregroundColor: const Color(0xFFC89D93),
+              elevation: 4,
+              shape: const CircleBorder(),
+              child: Icon(
+                MapSettings.isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+                size: 22,
+              ),
+            ),
+          ),
+
           // 3. Capa Inferior: Drawer de Estado y Botón de Inicio
           Positioned(
             left: 16,
@@ -296,8 +322,16 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen> {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                _isArrived ? '🟢 Has llegado al destino' : '🚙 En camino al domicilio',
-                                style: TextStyle(fontSize: 13, color: _isArrived ? Colors.green[700] : Colors.grey),
+                                isInProgress
+                                    ? '⚡ Servicio en Progreso'
+                                    : (_isArrived ? '🟢 Has llegado al destino' : '🚙 En camino al domicilio'),
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: isInProgress
+                                      ? Colors.purple[700]
+                                      : (_isArrived ? Colors.green[700] : Colors.grey),
+                                  fontWeight: isInProgress ? FontWeight.bold : FontWeight.normal,
+                                ),
                               ),
                             ],
                           ),
@@ -346,10 +380,9 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen> {
                         const SizedBox(width: 16),
                         // Botón Iniciar Servicio
                         Expanded(
-                          child: _isStartingService
-                              ? const Center(child: CircularProgressIndicator(color: Color(0xFFC89D93)))
-                              : ElevatedButton(
-                                  onPressed: _handleStartService,
+                          child: isInProgress
+                              ? ElevatedButton(
+                                  onPressed: () => Navigator.pop(context, false),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFFC89D93),
                                     foregroundColor: Colors.white,
@@ -358,10 +391,26 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen> {
                                     elevation: 0,
                                   ),
                                   child: const Text(
-                                    'Iniciar Servicio',
+                                    'Volver al Panel',
                                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                                   ),
-                                ),
+                                )
+                              : _isStartingService
+                                  ? const Center(child: CircularProgressIndicator(color: Color(0xFFC89D93)))
+                                  : ElevatedButton(
+                                      onPressed: _handleStartService,
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0xFFC89D93),
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(vertical: 14),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                                        elevation: 0,
+                                      ),
+                                      child: const Text(
+                                        'Iniciar Servicio',
+                                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                      ),
+                                    ),
                         ),
                       ],
                     ),

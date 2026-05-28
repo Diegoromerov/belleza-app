@@ -724,6 +724,42 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
     );
   }
 
+  Widget _buildNavItem({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    Color color = const Color(0xFFC89D93),
+  }) {
+    return Expanded(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: color, size: 20),
+              const SizedBox(height: 3),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -739,7 +775,9 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
             ),
             children: [
               TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                urlTemplate: MapSettings.isDark
+                    ? 'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
+                    : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName: 'com.beautyapp.map',
               ),
               // Marcadores de prestadores en el mapa + marcador de ubicación del usuario
@@ -878,11 +916,11 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
             left: 24,
             right: 24,
             child: Container(
-              height: 64,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              height: 72,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.92),
-                borderRadius: BorderRadius.circular(32),
+                borderRadius: BorderRadius.circular(36),
                 border: Border.all(color: const Color(0xFFE8D7D3).withOpacity(0.6), width: 1.5),
                 boxShadow: const [
                   BoxShadow(
@@ -893,52 +931,74 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                 ],
               ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.auto_awesome, color: Color(0xFFC89D93)),
-                    onPressed: () => _navigateToAIChat(''),
-                    tooltip: 'Asistente IA',
+                  _buildNavItem(
+                    icon: Icons.auto_awesome,
+                    label: 'Asistente IA',
+                    onTap: () => _navigateToAIChat(''),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.chat_bubble_outline_rounded, color: Color(0xFFC89D93)),
-                    onPressed: () => Navigator.pushNamed(context, '/chat'),
-                    tooltip: 'Mensajes',
+                  _buildNavItem(
+                    icon: Icons.chat_bubble_outline_rounded,
+                    label: 'Chats',
+                    onTap: () => Navigator.pushNamed(context, '/chat'),
                   ),
                   if (_userRole == 'client') ...[
-                    IconButton(
-                      icon: const Icon(Icons.calendar_today_outlined, color: Color(0xFFC89D93)),
-                      onPressed: () => Navigator.pushNamed(context, '/client-bookings'),
-                      tooltip: 'Mis Citas',
+                    _buildNavItem(
+                      icon: Icons.calendar_today_outlined,
+                      label: 'Citas',
+                      onTap: () => Navigator.pushNamed(context, '/client-bookings'),
                     ),
                   ]
                   else if (_userRole == 'provider') ...[
-                    IconButton(
-                      icon: const Icon(Icons.dashboard_outlined, color: Color(0xFFC89D93)),
-                      onPressed: () => Navigator.pushNamed(context, '/provider'),
-                      tooltip: 'Mi Panel',
+                    _buildNavItem(
+                      icon: Icons.dashboard_outlined,
+                      label: 'Panel',
+                      onTap: () => Navigator.pushNamed(context, '/provider'),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.inventory_2_outlined, color: Color(0xFFC89D93)),
-                      onPressed: () => Navigator.pushNamed(context, '/provider/services'),
-                      tooltip: 'Mis Servicios',
+                    _buildNavItem(
+                      icon: Icons.inventory_2_outlined,
+                      label: 'Servicios',
+                      onTap: () => Navigator.pushNamed(context, '/provider/services'),
                     ),
                   ],
-                  IconButton(
-                    icon: const Icon(Icons.person_outline_rounded, color: Color(0xFFC89D93)),
-                    onPressed: () => Navigator.pushNamed(context, '/profile'),
-                    tooltip: 'Mi Perfil',
+                  _buildNavItem(
+                    icon: Icons.person_outline_rounded,
+                    label: 'Perfil',
+                    onTap: () => Navigator.pushNamed(context, '/profile'),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.logout_rounded, color: Colors.grey),
-                    onPressed: () async {
+                  _buildNavItem(
+                    icon: Icons.logout_rounded,
+                    label: 'Salir',
+                    color: Colors.grey,
+                    onTap: () async {
                       final navigator = Navigator.of(context);
                       await AuthService.logout();
                       navigator.pushReplacementNamed('/login');
                     },
-                    tooltip: 'Cerrar Sesión',
                   ),
                 ],
+              ),
+            ),
+          ),
+
+          // Capa: Botón Tema de Mapa (Claro/Oscuro Limpio)
+          Positioned(
+            right: 20,
+            bottom: 240,
+            child: FloatingActionButton(
+              heroTag: 'map_theme_main_fab',
+              onPressed: () {
+                setState(() {
+                  MapSettings.isDark = !MapSettings.isDark;
+                });
+              },
+              backgroundColor: Colors.white,
+              foregroundColor: const Color(0xFFC89D93),
+              elevation: 4,
+              shape: const CircleBorder(),
+              child: Icon(
+                MapSettings.isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+                size: 24,
               ),
             ),
           ),

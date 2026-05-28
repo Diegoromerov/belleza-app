@@ -9,12 +9,18 @@ class AuthService {
     return ApiService.baseUrl;
   }
 
-  static Future<bool> register(String fullName, String email, String password, String? phone) async {
+  static Future<bool> register(String fullName, String email, String password, String? phone, String role) async {
     final baseUrl = await getBaseUrl();
     final response = await http.post(
       Uri.parse('$baseUrl/api/auth/register'),
       headers: {'Content-Type': 'application/json'},
-      body: json.encode({'full_name': fullName, 'email': email, 'password': password, 'phone': phone}),
+      body: json.encode({
+        'full_name': fullName,
+        'email': email,
+        'password': password,
+        'phone': phone,
+        'role': role,
+      }),
     );
     return response.statusCode == 201;
   }
