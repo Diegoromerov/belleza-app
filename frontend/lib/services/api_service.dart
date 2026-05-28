@@ -649,3 +649,8 @@ class ApiService {
   }
 }
 
+class MapSettings {
+  static bool isDark = false;
+}
+
+
