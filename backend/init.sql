@@ -26,7 +26,7 @@ DROP TYPE IF EXISTS tipo_metodo_retiro CASCADE;
 DROP TYPE IF EXISTS estado_cita CASCADE;
 
 -- 3. Crear Enums
-CREATE TYPE tipo_auth_provider AS ENUM ('GOOGLE', 'OUTLOOK', 'LOCAL');
+CREATE TYPE tipo_auth_provider AS ENUM ('GOOGLE', 'OUTLOOK', 'LOCAL', 'APPLE');
 CREATE TYPE tipo_rol AS ENUM ('CLIENTE', 'PRESTADOR');
 CREATE TYPE estado_verificacion AS ENUM ('PENDIENTE', 'APROBADO', 'RECHAZADO');
 CREATE TYPE tipo_metodo_retiro AS ENUM ('NEQUI', 'BANCARIA');

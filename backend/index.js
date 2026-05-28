@@ -2001,6 +2001,16 @@ const initDatabase = async () => {
       }
     }
 
+    // Agregar 'APPLE' al tipo_auth_provider ENUM si no existe
+    try {
+      await pool.query("ALTER TYPE tipo_auth_provider ADD VALUE 'APPLE';");
+      console.log('✅ Base de datos: Añadido valor "APPLE" al tipo_auth_provider');
+    } catch (e) {
+      if (e.code !== '42710') { // 42710 = duplicate_object, ignorar si ya existe
+        console.warn('⚠️ Error al agregar "APPLE" al tipo_auth_provider:', e.message);
+      }
+    }
+
     // Ejecutar migraciones y tablas adicionales ahora que el esquema base está garantizado
     await pool.query(`
       ALTER TABLE bookings
@@ -2068,14 +2078,20 @@ const initDatabase = async () => {
     await pool.query(aiUserQuery);
     console.log('🤖 Usuario Asistente de IA verificado/creado con ID 0.');
 
-    const countRes = await pool.query('SELECT COUNT(*)::int FROM usuarios;');
-    if (countRes.rows[0].count === 1) {
+    const checkUser = await pool.query("SELECT id FROM usuarios WHERE email = 'provider@beautyapp.com';");
+    const needsSeed = checkUser.rows.length === 0;
+
+    if (needsSeed) {
       if (process.env.SEED_DATABASE === 'true') {
         const seedPath = path.join(__dirname, 'seed.sql');
         if (fs.existsSync(seedPath)) {
-          const seedSql = fs.readFileSync(seedPath, 'utf8');
-          await pool.query(seedSql);
-          console.log('🌱 Datos de prueba (seed.sql) sembrados exitosamente.');
+          try {
+            const seedSql = fs.readFileSync(seedPath, 'utf8');
+            await pool.query(seedSql);
+            console.log('🌱 Datos de prueba (seed.sql) sembrados exitosamente.');
+          } catch (seedErr) {
+            console.warn('⚠️ Advertencia al sembrar datos de prueba:', seedErr.message);
+          }
         }
       } else {
         console.log('⚠️  Omitiendo la siembra de base de datos (SEED_DATABASE no está establecida como "true").');
