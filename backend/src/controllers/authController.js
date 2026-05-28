@@ -8,7 +8,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'beauty_app_super_secret_key_2026_c
 // ==========================================
 exports.register = async (req, res) => {
   try {
-    const { full_name, email, password, phone } = req.body;
+    const { full_name, email, password, phone, role } = req.body;
     
     if (!full_name || !email || !password) {
       return res.status(400).json({ error: 'Faltan campos obligatorios' });
@@ -18,11 +18,15 @@ exports.register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const providerId = 'local_' + cleanEmail;
 
+    // Determinar el rol y estado de onboarding
+    const userRole = (role && role.toUpperCase() === 'PRESTADOR') ? 'PRESTADOR' : 'CLIENTE';
+    const onboarding = (userRole === 'CLIENTE'); // true para cliente (completo), false para prestador (requiere docs)
+
     const result = await pool.query(
       `INSERT INTO usuarios (nombre, email, password_hash, phone, auth_provider, provider_id, rol, onboarding_completo) 
-       VALUES ($1, $2, $3, $4, 'LOCAL', $5, 'CLIENTE', true) 
+       VALUES ($1, $2, $3, $4, 'LOCAL', $5, $6, $7) 
        RETURNING id, nombre, email, rol, onboarding_completo`,
-      [full_name, cleanEmail, hashedPassword, phone || null, providerId]
+      [full_name, cleanEmail, hashedPassword, phone || null, providerId, userRole, onboarding]
     );
 
     const user = result.rows[0];
@@ -32,7 +36,7 @@ exports.register = async (req, res) => {
         id: user.id.toString(),
         full_name: user.nombre,
         email: user.email,
-        role: 'client',
+        role: user.rol === 'PRESTADOR' ? 'provider' : 'client',
         onboarding_completo: user.onboarding_completo
       }
     });
