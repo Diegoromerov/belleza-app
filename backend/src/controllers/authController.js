@@ -202,15 +202,15 @@ exports.onboarding = async (req, res) => {
         [userId]
       );
 
-      // Crear o actualizar perfil en perfiles_prestador
+      // Crear o actualizar perfil en perfiles_prestador (auto-aprobado para testing)
       await pool.query(
         `INSERT INTO perfiles_prestador (id, documento_id_url, rut_url, certificacion_url, estatus_verificacion, is_active)
-         VALUES ($1, $2, $3, $4, 'PENDIENTE', true)
+         VALUES ($1, $2, $3, $4, 'APROBADO', true)
          ON CONFLICT (id) DO UPDATE SET
            documento_id_url = EXCLUDED.documento_id_url,
            rut_url = EXCLUDED.rut_url,
            certificacion_url = EXCLUDED.certificacion_url,
-           estatus_verificacion = 'PENDIENTE';`,
+           estatus_verificacion = 'APROBADO';`,
         [userId, documento_id_url || null, rut_url || null, certificacion_url || null]
       );
       

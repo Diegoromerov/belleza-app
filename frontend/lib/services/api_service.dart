@@ -139,9 +139,13 @@ class ApiService {
   // ─────────────────────────────────────────────────────────────
   // PROVEEDORES (Públicos - sin token requerido)
   // ─────────────────────────────────────────────────────────────
-  static Future<List<ProviderModel>> fetchProvidersSecured() async {
+  static Future<List<ProviderModel>> fetchProvidersSecured({double? latitude, double? longitude}) async {
     await ensureBaseUrl();
-    final response = await http.get(Uri.parse('$_baseUrl$_apiPath/providers')).timeout(const Duration(seconds: 30));
+    String url = '$_baseUrl$_apiPath/providers';
+    if (latitude != null && longitude != null) {
+      url += '?lat=$latitude&lon=$longitude';
+    }
+    final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 30));
     if (response.statusCode == 200) {
       final data = _normalizeDynamicUrls(json.decode(response.body));
       return (data['data'] as List<dynamic>)
@@ -542,12 +546,16 @@ class ApiService {
     throw Exception(json.decode(response.body)['error'] ?? 'Error ${response.statusCode}');
   }
 
-  static Future<bool> updateProviderStatus(bool isActive) async {
+  static Future<bool> updateProviderStatus(bool isActive, {double? latitude, double? longitude}) async {
     final headers = await _getAuthHeaders();
     final response = await http.patch(
       Uri.parse('$_baseUrl$_apiPath/providers/status'),
       headers: headers,
-      body: json.encode({'is_active': isActive}),
+      body: json.encode({
+        'is_active': isActive,
+        if (latitude != null) 'latitude': latitude,
+        if (longitude != null) 'longitude': longitude,
+      }),
     ).timeout(const Duration(seconds: 30));
     if (response.statusCode == 200) {
       final data = json.decode(response.body);

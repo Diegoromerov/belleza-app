@@ -73,11 +73,26 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
           _ratingCount = int.tryParse(data['rating_count']?.toString() ?? '') ?? 0;
           _loadingProfile = false;
         });
+
+        // Si el proveedor está en línea, refrescamos su ubicación en background
+        if (_isActive) {
+          _refreshActiveLocation();
+        }
       }
     } catch (e) {
       if (mounted) {
         setState(() => _loadingProfile = false);
       }
+    }
+  }
+
+  Future<void> _refreshActiveLocation() async {
+    try {
+      final pos = await getWebGeolocation();
+      await ApiService.updateProviderStatus(true, latitude: pos['lat'], longitude: pos['lon']);
+      debugPrint('🟢 Ubicación actualizada automáticamente al cargar perfil: ${pos['lat']}, ${pos['lon']}');
+    } catch (e) {
+      debugPrint('❌ Error al actualizar ubicación automáticamente: $e');
     }
   }
 
@@ -429,7 +444,18 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
   Future<void> _toggleStatus(bool value) async {
     setState(() => _isActive = value);
     try {
-      await ApiService.updateProviderStatus(value);
+      double? lat;
+      double? lon;
+      if (value) {
+        try {
+          final pos = await getWebGeolocation();
+          lat = pos['lat'];
+          lon = pos['lon'];
+        } catch (e) {
+          debugPrint('Error getting geolocation: $e');
+        }
+      }
+      await ApiService.updateProviderStatus(value, latitude: lat, longitude: lon);
       HapticFeedback.lightImpact();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

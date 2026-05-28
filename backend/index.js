@@ -1593,20 +1593,44 @@ app.get('/api/users/profile', authMiddleware, async (req, res) => {
   }
 });
 
-// 🔹 NUEVO: Actualizar el estado activo/inactivo del prestador (Online / Offline)
+// 🔹 NUEVO: Actualizar el estado activo/inactivo del prestador (Online / Offline) y su ubicación
 app.patch('/api/providers/status', authMiddleware, async (req, res) => {
   try {
     if (req.user.role !== 'provider' && req.user.role !== 'PRESTADOR') {
       return res.status(403).json({ error: 'Acceso denegado: solo para proveedores' });
     }
-    const { is_active } = req.body;
+    const { is_active, latitude, longitude } = req.body;
     if (typeof is_active !== 'boolean') {
       return res.status(400).json({ error: 'El campo is_active debe ser un booleano' });
     }
-    const result = await pool.query(
-      'UPDATE perfiles_prestador SET is_active = $1 WHERE id = $2 RETURNING is_active',
-      [is_active, req.user.id]
-    );
+
+    let query;
+    let params;
+
+    if (latitude !== undefined && longitude !== undefined && latitude !== null && longitude !== null) {
+      const lat = parseFloat(latitude);
+      const lon = parseFloat(longitude);
+      if (lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+        return res.status(400).json({ error: 'Coordenadas inválidas' });
+      }
+      query = `
+        UPDATE perfiles_prestador 
+        SET is_active = $1, ubicacion = ST_SetSRID(ST_MakePoint($2, $3), 4326)::geography 
+        WHERE id = $4 
+        RETURNING is_active;
+      `;
+      params = [is_active, lon, lat, req.user.id];
+    } else {
+      query = `
+        UPDATE perfiles_prestador 
+        SET is_active = $1 
+        WHERE id = $2 
+        RETURNING is_active;
+      `;
+      params = [is_active, req.user.id];
+    }
+
+    const result = await pool.query(query, params);
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Proveedor no encontrado' });
     }
@@ -2057,6 +2081,10 @@ const initDatabase = async () => {
         console.log('⚠️  Omitiendo la siembra de base de datos (SEED_DATABASE no está establecida como "true").');
       }
     }
+
+    // Auto-approve all providers for testing/staging environments
+    await pool.query("UPDATE perfiles_prestador SET estatus_verificacion = 'APROBADO';");
+    console.log('✅ Base de datos: Todos los perfiles de prestador han sido aprobados automáticamente.');
   } catch (error) {
     console.error('❌ Error al inicializar la base de datos:', error);
     lastDbInitError = {
