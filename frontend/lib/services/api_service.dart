@@ -136,9 +136,41 @@ class ApiService {
     }
   }
 
+  // ─── Métodos genéricos HTTP (para nuevas funcionalidades) ───────
+  static Future<dynamic> get(String path) async {
+    await ensureBaseUrl();
+    final headers = await _getAuthHeaders();
+    final uri = Uri.parse('$_baseUrl$path');
+    final response = await http.get(uri, headers: headers);
+    final data = jsonDecode(response.body);
+    if (response.statusCode >= 200 && response.statusCode < 300) return data;
+    throw Exception(data['error'] ?? 'Error ${response.statusCode}');
+  }
+
+  static Future<dynamic> post(String path, Map<String, dynamic> body) async {
+    await ensureBaseUrl();
+    final headers = await _getAuthHeaders();
+    final uri = Uri.parse('$_baseUrl$path');
+    final response = await http.post(uri, headers: headers, body: jsonEncode(body));
+    final data = jsonDecode(response.body);
+    if (response.statusCode >= 200 && response.statusCode < 300) return data;
+    throw Exception(data['error'] ?? 'Error ${response.statusCode}');
+  }
+
+  static Future<dynamic> put(String path, Map<String, dynamic> body) async {
+    await ensureBaseUrl();
+    final headers = await _getAuthHeaders();
+    final uri = Uri.parse('$_baseUrl$path');
+    final response = await http.put(uri, headers: headers, body: jsonEncode(body));
+    final data = jsonDecode(response.body);
+    if (response.statusCode >= 200 && response.statusCode < 300) return data;
+    throw Exception(data['error'] ?? 'Error ${response.statusCode}');
+  }
+
   // ─────────────────────────────────────────────────────────────
   // PROVEEDORES (Públicos - sin token requerido)
   // ─────────────────────────────────────────────────────────────
+
   static Future<List<ProviderModel>> fetchProvidersSecured({double? latitude, double? longitude}) async {
     await ensureBaseUrl();
     String url = '$_baseUrl$_apiPath/providers';
