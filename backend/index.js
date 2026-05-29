@@ -9,8 +9,10 @@ require('dotenv').config();
 
 // ⚠️ IMPORTANTE: Imports al inicio para evitar ReferenceError
 const authRoutes = require('./src/routes/authRoutes');
+const paymentRoutes = require('./src/routes/paymentRoutes');
 const authMiddleware = require('./src/middleware/auth');
 const { processAssistantMessage, AI_USER_ID } = require('./src/services/geminiService');
+const { inicializarJobs } = require('./src/jobs/paymentJobs');
 
 const { findCachedJob, enqueueTryonJob } = require('./src/services/queueService');
 const crypto = require('crypto');
@@ -64,6 +66,11 @@ app.use(cors({
 app.use(express.json());
 app.use('/uploads', express.static(uploadsDir));
 app.use('/admin', express.static(path.join(__dirname, 'public/admin')));
+
+// ==========================================
+// SISTEMA DE PAGOS
+// ==========================================
+app.use('/api', paymentRoutes);
 
 // ==========================================
 // RUTAS PÚBLICAS
@@ -2345,6 +2352,8 @@ const server = app.listen(PORT, async () => {
   console.log(`📦 Entorno: ${process.env.NODE_ENV || 'development'}`);
   await testConnection();
   await initDatabase();
+  // Iniciar jobs de pagos (maduración, retiros automáticos, conciliación)
+  inicializarJobs();
 });
 
 // ==========================================
