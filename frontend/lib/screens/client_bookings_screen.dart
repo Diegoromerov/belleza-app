@@ -1,6 +1,7 @@
 // frontend/lib/screens/client_bookings_screen.dart
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import 'otp_confirm_screen.dart';
 
 class ClientBookingsScreen extends StatefulWidget {
   const ClientBookingsScreen({super.key});
@@ -302,14 +303,18 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> with Single
         return const Color(0xFFD97706);
       case 'CONFIRMED':
       case 'CONFIRMADA': 
+      case 'CHECKIN_REALIZADO':
         return const Color(0xFF2563EB);
       case 'EN_PROGRESO': 
         return const Color(0xFF8B5CF6);
-      case 'FINALIZADA_PRESTADOR': 
+      case 'FINALIZADA_PRESTADOR':
+      case 'ESPERANDO_OTP':
         return const Color(0xFF06B6D4);
       case 'COMPLETED':
       case 'COMPLETADA': 
         return const Color(0xFF16A34A);
+      case 'EN_DISPUTA':
+        return const Color(0xFFEA580C);
       case 'CANCELLED':
       case 'CANCELADA': 
         return const Color(0xFFDC2626);
@@ -324,15 +329,19 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> with Single
       case 'PENDIENTE_PAGO': 
         return const Color(0xFFFEF3C7);
       case 'CONFIRMED':
-      case 'CONFIRMADA': 
+      case 'CONFIRMADA':
+      case 'CHECKIN_REALIZADO':
         return const Color(0xFFDBEAFE);
       case 'EN_PROGRESO': 
         return const Color(0xFFEDE9FE);
-      case 'FINALIZADA_PRESTADOR': 
+      case 'FINALIZADA_PRESTADOR':
+      case 'ESPERANDO_OTP':
         return const Color(0xFFECFEFF);
       case 'COMPLETED':
       case 'COMPLETADA': 
         return const Color(0xFFDCFCE7);
+      case 'EN_DISPUTA':
+        return const Color(0xFFFFF7ED);
       case 'CANCELLED':
       case 'CANCELADA': 
         return const Color(0xFFFEE2E2);
@@ -349,13 +358,18 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> with Single
       case 'CONFIRMED':
       case 'CONFIRMADA': 
         return 'Confirmada';
+      case 'CHECKIN_REALIZADO':
+        return 'Prestador llegó';
       case 'EN_PROGRESO': 
         return 'En Progreso';
-      case 'FINALIZADA_PRESTADOR': 
-        return 'Finalizada';
+      case 'FINALIZADA_PRESTADOR':
+      case 'ESPERANDO_OTP':
+        return '¡Ingresa tu código!';
       case 'COMPLETED':
       case 'COMPLETADA': 
         return 'Completada';
+      case 'EN_DISPUTA':
+        return 'En Disputa';
       case 'CANCELLED':
       case 'CANCELADA': 
         return 'Cancelada';
@@ -544,53 +558,98 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> with Single
                 ),
               ),
             ],
-            if (status.toUpperCase() == 'EN_PROGRESO') ...[
+            // ─── OTP: Cuando el prestador marcó el servicio completado ───
+            if (status.toUpperCase() == 'ESPERANDO_OTP' ||
+                status.toUpperCase() == 'FINALIZADA_PRESTADOR') ...[
               const SizedBox(height: 12),
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFF1F2), // Light pink/blush
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF6B21A8), Color(0xFF9333EA)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFFECDD3), width: 1.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF6B21A8).withOpacity(0.3),
+                      blurRadius: 16, offset: const Offset(0, 6),
+                    ),
+                  ],
                 ),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.security_rounded, color: Color(0xFFE11D48), size: 22),
+                        Icon(Icons.verified_rounded, color: Colors.white, size: 24),
                         SizedBox(width: 8),
                         Text(
-                          'PIN de seguridad del servicio',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF9F1239)),
+                          '¡El servicio ha finalizado!',
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    Center(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFFDA4AF), width: 1),
-                        ),
-                        child: Text(
-                          booking['pin_verificacion'] ?? '----',
-                          style: const TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 6,
-                            color: Color(0xFFE11D48),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'El prestador completó el servicio. Ingresa tu código de 6 dígitos para confirmar y liberar el pago.',
+                      style: TextStyle(color: Colors.white70, fontSize: 13),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 14),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => OtpConfirmScreen(
+                              bookingId: booking['id'],
+                              prestadorNombre: providerName,
+                              servicioNombre: serviceName,
+                              valorBruto: totalAmount,
+                            ),
                           ),
+                        ).then((_) => _loadBookings()),
+                        icon: const Icon(Icons.lock_open_rounded, color: Color(0xFF6B21A8)),
+                        label: const Text(
+                          'Ingresar código de confirmación',
+                          style: TextStyle(color: Color(0xFF6B21A8), fontWeight: FontWeight.bold),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 13),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                          elevation: 0,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 10),
-                    const Text(
-                      'Comparte este código de 4 dígitos con el profesional de belleza únicamente cuando el servicio haya finalizado a tu entera satisfacción para autorizar la liberación del pago.',
-                      style: TextStyle(fontSize: 12, color: Color(0xFF881337), height: 1.3),
+                  ],
+                ),
+              ),
+            ],
+            // ─── Estado en disputa ───
+            if (status.toUpperCase() == 'EN_DISPUTA') ...[
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF7ED),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFFED7AA)),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.gavel, color: Color(0xFFEA580C), size: 20),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Esta reserva tiene una disputa activa. El equipo la resolverá en máx. 48 horas.',
+                        style: TextStyle(color: Color(0xFF9A3412), fontSize: 13),
+                      ),
                     ),
                   ],
                 ),
