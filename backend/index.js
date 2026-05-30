@@ -2069,6 +2069,21 @@ const initDatabase = async () => {
       console.warn('⚠️ No se encontró loyalty_migration.sql. Se omitió la migración de lealtad.');
     }
 
+    // 🔸 Ejecutar migración del sistema de pagos (001_payment_system.sql)
+    const paymentMigrationPath = path.join(__dirname, 'migrations/001_payment_system.sql');
+    if (fs.existsSync(paymentMigrationPath)) {
+      try {
+        const paymentSql = fs.readFileSync(paymentMigrationPath, 'utf8');
+        await pool.query(paymentSql);
+        console.log('✅ Base de datos: Migración del sistema de pagos aplicada.');
+      } catch (pmErr) {
+        // Ignorar errores de "ya existe" (idempotente con IF NOT EXISTS)
+        if (!pmErr.message.includes('already exists') && !pmErr.message.includes('ya existe')) {
+          console.warn('⚠️ Advertencia en migración de pagos:', pmErr.message);
+        }
+      }
+    }
+
     const aiUserQuery = `
       INSERT INTO usuarios (id, email, nombre, auth_provider, provider_id, rol, onboarding_completo)
       VALUES (
