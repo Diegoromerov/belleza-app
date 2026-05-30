@@ -269,7 +269,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
   Widget _buildCardActionButtons(Map<String, dynamic> b) {
     final status = (b['status'] as String? ?? 'pending').toUpperCase();
 
-    if (status == 'CONFIRMED' || status == 'CONFIRMADA') {
+    if (status == 'CONFIRMED' || status == 'CONFIRMADA' || status == 'CHECKIN_REALIZADO') {
       return Row(
         children: [
           Expanded(
@@ -314,76 +314,129 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
         ],
       );
     } else if (status == 'EN_PROGRESO') {
-      return Row(
+      return Column(
         children: [
-          Expanded(
-            child: OutlinedButton.icon(
-              onPressed: () {
-                final clientId = b['client_id']?.toString();
-                if (clientId == null) return;
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => ChatScreen(
-                      partnerId: clientId,
-                      partnerName: b['client_name'] ?? 'Cliente',
-                      partnerRole: 'client',
-                      partnerAvatar: '',
-                    ),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    final clientId = b['client_id']?.toString();
+                    if (clientId == null) return;
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ChatScreen(
+                          partnerId: clientId,
+                          partnerName: b['client_name'] ?? 'Cliente',
+                          partnerRole: 'client',
+                          partnerAvatar: '',
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.chat_bubble_outline_rounded, size: 16),
+                  label: const Text('Chat', style: TextStyle(fontSize: 12.5)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFC89D93),
+                    side: const BorderSide(color: Color(0xFFC89D93), width: 1.5),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
                   ),
-                );
-              },
-              icon: const Icon(Icons.chat_bubble_outline_rounded, size: 16),
-              label: const Text('Chat', style: TextStyle(fontSize: 12.5)),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFFC89D93),
-                side: const BorderSide(color: Color(0xFFC89D93), width: 1.5),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                padding: const EdgeInsets.symmetric(vertical: 10),
+                ),
               ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: OutlinedButton.icon(
-              onPressed: () async {
-                final refresh = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => ProviderRouteScreen(booking: b),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    final refresh = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ProviderRouteScreen(booking: b),
+                      ),
+                    );
+                    if (refresh == true) {
+                      _fetchBookings();
+                      _fetchProfile();
+                    }
+                  },
+                  icon: const Icon(Icons.map_outlined, size: 16),
+                  label: const Text('Ver Mapa', style: TextStyle(fontSize: 12.5)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFC89D93),
+                    side: const BorderSide(color: Color(0xFFC89D93), width: 1.5),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
                   ),
-                );
-                if (refresh == true) {
-                  _fetchBookings();
-                  _fetchProfile();
-                }
-              },
-              icon: const Icon(Icons.map_outlined, size: 16),
-              label: const Text('Ver Mapa', style: TextStyle(fontSize: 12.5)),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFFC89D93),
-                side: const BorderSide(color: Color(0xFFC89D93), width: 1.5),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                padding: const EdgeInsets.symmetric(vertical: 10),
+                ),
               ),
-            ),
+            ],
           ),
-          const SizedBox(width: 8),
-          Expanded(
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: () => _showSegmentedPinDialog(b),
-              icon: const Icon(Icons.check_circle_outline_rounded, size: 16),
-              label: const Text('Finalizar', style: TextStyle(fontSize: 12.5)),
+              onPressed: () => _handleCompleteService(b['id'].toString()),
+              icon: const Icon(Icons.check_circle_outline_rounded, size: 18),
+              label: const Text(
+                'Marcar como completado',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF16A34A),
                 foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                padding: const EdgeInsets.symmetric(vertical: 10),
+                padding: const EdgeInsets.symmetric(vertical: 12),
               ),
             ),
           ),
         ],
+      );
+    } else if (status == 'ESPERANDO_OTP' || status == 'FINALIZADA_PRESTADOR') {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFECFEFF),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFF06B6D4).withOpacity(0.4)),
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: 16, height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF06B6D4)),
+            ),
+            SizedBox(width: 10),
+            Text(
+              'Esperando código del cliente...',
+              style: TextStyle(color: Color(0xFF0E7490), fontWeight: FontWeight.w600, fontSize: 13),
+            ),
+          ],
+        ),
+      );
+    } else if (status == 'EN_DISPUTA') {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF7ED),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFFED7AA)),
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.gavel, color: Color(0xFFEA580C), size: 18),
+            SizedBox(width: 8),
+            Text(
+              'Disputa activa — en revisión',
+              style: TextStyle(color: Color(0xFF9A3412), fontWeight: FontWeight.w600, fontSize: 13),
+            ),
+          ],
+        ),
       );
     } else if (status == 'COMPLETED' || status == 'COMPLETADA') {
       return Row(
@@ -466,6 +519,33 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
       );
     }
   }
+
+  /// Llama al endpoint que genera OTP y cambia estado a ESPERANDO_OTP
+  Future<void> _handleCompleteService(String bookingId) async {
+    try {
+      await ApiService.post('/api/bookings/$bookingId/complete', {});
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✅ Servicio completado. El cliente recibirá su código de confirmación.'),
+            backgroundColor: Color(0xFF16A34A),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        _fetchBookings();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString().replaceAll('Exception: ', '')}'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
+  }
+
 
   Future<void> _toggleStatus(bool value) async {
     setState(() => _isActive = value);
