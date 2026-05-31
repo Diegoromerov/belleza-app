@@ -481,7 +481,7 @@ router.get('/wallet', authMiddleware, async (req, res) => {
     });
   } catch (err) {
     console.error('Error al obtener wallet:', err);
-    res.status(500).json({ error: 'Error al obtener información del wallet.' });
+    res.status(500).json({ error: 'Error al obtener información del wallet.', details: err.message });
   }
 });
 
@@ -522,7 +522,7 @@ router.get('/wallet/transactions', authMiddleware, async (req, res) => {
     });
   } catch (err) {
     console.error('Error al obtener transacciones:', err);
-    res.status(500).json({ error: 'Error al obtener historial.' });
+    res.status(500).json({ error: 'Error al obtener historial.', details: err.message });
   }
 });
 
