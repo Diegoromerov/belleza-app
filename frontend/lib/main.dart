@@ -8,6 +8,7 @@ import 'services/api_service.dart';
 import 'services/analytics_service.dart';
 import 'services/auth_service.dart';
 import 'services/web_geolocation.dart';
+import 'services/notification_service.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/auth/onboarding_screen.dart';
@@ -38,6 +39,7 @@ class BeautyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Beauty App',
+      navigatorKey: NotificationService.navigatorKey,
       debugShowCheckedModeBanner: false,
       navigatorObservers: [AnalyticsRouteObserver()],
       theme: ThemeData(
@@ -214,7 +216,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
       MaterialPageRoute(
         builder: (_) => ChatScreen(
           partnerId: '00000000-0000-0000-0000-000000000000',
-          partnerName: 'EstiloFonty IA',
+          partnerName: 'Asistente de Belleza & Tips IA',
           partnerRole: 'admin',
           partnerAvatar: '',
           initialMessage: message.trim().isNotEmpty ? message.trim() : null,
@@ -883,7 +885,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                           controller: _searchController,
                           textCapitalization: TextCapitalization.sentences,
                           decoration: const InputDecoration(
-                            hintText: '¿Qué look buscas hoy? EstiloFonty IA te asesora...',
+                            hintText: '¿Buscas un estilo o tips de belleza? Pregúntale a la IA aquí...',
                             hintStyle: TextStyle(fontSize: 13.5, color: Colors.grey, overflow: TextOverflow.ellipsis),
                             border: InputBorder.none,
                           ),

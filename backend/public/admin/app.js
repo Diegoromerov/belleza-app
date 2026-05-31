@@ -1,5 +1,46 @@
-// App logic for Belleza App - Control Center
 document.addEventListener('DOMContentLoaded', () => {
+  // Helper de Fetch Autenticado para el Panel de Administración
+  async function authFetch(url, options = {}) {
+    let token = localStorage.getItem('admin_token');
+    if (!token) {
+      token = localStorage.getItem('flutter.token') || localStorage.getItem('token');
+    }
+    
+    if (!token) {
+      const email = prompt('Belleza App Control Center\nPor favor, ingresa tu correo de administrador:', 'admin@beautyapp.com');
+      const password = prompt('Ingresa tu contraseña:');
+      if (email && password) {
+        try {
+          const res = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+          });
+          const data = await res.json();
+          if (data.token) {
+            token = data.token;
+            localStorage.setItem('admin_token', token);
+          } else {
+            alert('Error de login: ' + (data.error || 'Credenciales incorrectas.'));
+          }
+        } catch (err) {
+          console.error('Error de autenticación:', err);
+        }
+      }
+    }
+
+    options.headers = {
+      ...options.headers,
+      'Authorization': `Bearer ${token}`
+    };
+
+    const res = await fetch(url, options);
+    if (res.status === 401 || res.status === 403) {
+      localStorage.removeItem('admin_token');
+      alert('Sesión administrativa no autorizada o expirada. Por favor recarga la página para re-autenticarte.');
+    }
+    return res;
+  }
   // Navigation elements
   const navItems = document.querySelectorAll('.menu-item');
   const sections = document.querySelectorAll('.view-section');
@@ -91,7 +132,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 3. Connect to Real-Time SSE Stream
   function connectSSE() {
-    const sseUrl = '/api/admin/events/stream';
+    const token = localStorage.getItem('admin_token') || localStorage.getItem('flutter.token') || localStorage.getItem('token');
+    const sseUrl = '/api/admin/events/stream' + (token ? '?token=' + encodeURIComponent(token) : '');
     const eventSource = new EventSource(sseUrl);
 
     eventSource.onmessage = (event) => {
@@ -249,7 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 7. Fetch Metrics & Build Charts
   async function fetchMetrics() {
     try {
-      const response = await fetch('/api/admin/metrics');
+      const response = await authFetch('/api/admin/metrics');
       const resData = await response.json();
       
       if (!resData.success) throw new Error(resData.error);
@@ -385,7 +427,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!confirm('¿Seguro que deseas marcar esta alerta de pánico como RESUELTA?')) return;
     
     try {
-      const response = await fetch(`/api/admin/sos/resolve/${id}`, {
+      const response = await authFetch(`/api/admin/sos/resolve/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' }
       });

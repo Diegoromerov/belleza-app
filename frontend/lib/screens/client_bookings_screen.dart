@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import 'otp_confirm_screen.dart';
+import '../shared/theme.dart';
 
 class ClientBookingsScreen extends StatefulWidget {
   const ClientBookingsScreen({super.key});
@@ -15,6 +16,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> with Single
   List<Map<String, dynamic>> _bookings = [];
   bool _isLoading = true;
   String? _error;
+  bool _showSuccessOverlay = false;
 
   @override
   void initState() {
@@ -59,7 +61,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> with Single
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: const Row(
           children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 28),
+            Icon(Icons.warning_amber_rounded, color: AppTheme.error, size: 28),
             SizedBox(width: 8),
             Text('¿Cancelar cita?', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
           ],
@@ -73,8 +75,8 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> with Single
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFEE2E2),
-              foregroundColor: const Color(0xFFDC2626),
+              backgroundColor: AppTheme.errorBg,
+              foregroundColor: AppTheme.error,
               elevation: 0,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -99,7 +101,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> with Single
                   Text('Tu cita ha sido cancelada con éxito.'),
                 ],
               ),
-              backgroundColor: const Color(0xFFC89D93),
+              backgroundColor: AppTheme.primary,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             ),
@@ -112,7 +114,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> with Single
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('❌ Error al cancelar: $e'),
-              backgroundColor: Colors.redAccent,
+              backgroundColor: AppTheme.error,
             ),
           );
         }
@@ -125,20 +127,10 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> with Single
     try {
       await ApiService.submitReview(bookingId, ratingSelected, reviewComment);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Row(
-              children: [
-                Icon(Icons.check_circle, color: Colors.white),
-                SizedBox(width: 8),
-                Text('¡Gracias por tu opinión! Reseña guardada.'),
-              ],
-            ),
-            backgroundColor: const Color(0xFFC89D93),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          ),
-        );
+        setState(() {
+          _isLoading = false;
+          _showSuccessOverlay = true;
+        });
       }
       _loadBookings();
     } catch (e) {
@@ -147,10 +139,54 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> with Single
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('❌ Error al enviar reseña: $e'),
-            backgroundColor: Colors.redAccent,
+            backgroundColor: AppTheme.error,
           ),
         );
       }
+    }
+  }
+
+  // Simulación de pasarela de pago Wompi
+  Future<void> _runWompiCheckout(double amount, VoidCallback onSuccess) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.payment_rounded, size: 50, color: AppTheme.primary),
+              const SizedBox(height: 20),
+              const CircularProgressIndicator(color: AppTheme.primary),
+              const SizedBox(height: 20),
+              const Text(
+                'Procesando Pago Seguro Wompi',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Propina: \$${amount.toStringAsFixed(0)} COP',
+                style: const TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Simulando pasarela Wompi...',
+                style: TextStyle(fontStyle: FontStyle.italic, fontSize: 11, color: Colors.grey),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    // Simular retraso de pasarela de pago (2.5 segundos)
+    await Future.delayed(const Duration(milliseconds: 2500));
+    if (mounted) {
+      Navigator.pop(context); // Cerrar diálogo Wompi
+      onSuccess();
     }
   }
 
@@ -159,6 +195,12 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> with Single
     String reviewComment = '';
     final commentController = TextEditingController();
 
+    // Módulo de Propinas
+    String selectedTipOption = 'Sin propina';
+    double tipAmount = 0.0;
+    bool showCustomTipField = false;
+    final customTipController = TextEditingController();
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -166,11 +208,69 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> with Single
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (context) {
+        final totalAmount = (booking['total_amount'] as num?)?.toDouble() ?? 0.0;
+        final providerName = (booking['provider_business_name'] != null && booking['provider_business_name'].toString().isNotEmpty)
+            ? booking['provider_business_name'].toString()
+            : (booking['provider_name']?.toString() ?? 'Prestador');
+
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setModalState) {
-            final providerName = (booking['provider_business_name'] != null && booking['provider_business_name'].toString().isNotEmpty)
-                ? booking['provider_business_name'].toString()
-                : (booking['provider_name']?.toString() ?? 'Prestador');
+            Widget buildTipCard(String label, String value, String emoji) {
+              final isSelected = selectedTipOption == value;
+              return GestureDetector(
+                onTap: () {
+                  setModalState(() {
+                    selectedTipOption = value;
+                    if (value == 'Sin propina') {
+                      tipAmount = 0.0;
+                      showCustomTipField = false;
+                    } else if (value == '5%') {
+                      tipAmount = totalAmount * 0.05;
+                      showCustomTipField = false;
+                    } else if (value == '10%') {
+                      tipAmount = totalAmount * 0.10;
+                      showCustomTipField = false;
+                    } else if (value == '15%') {
+                      tipAmount = totalAmount * 0.15;
+                      showCustomTipField = false;
+                    } else if (value == 'Personalizada') {
+                      showCustomTipField = true;
+                      final customVal = double.tryParse(customTipController.text) ?? 0.0;
+                      tipAmount = customVal;
+                    }
+                  });
+                },
+                child: Container(
+                  width: 72,
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  decoration: BoxDecoration(
+                    color: isSelected ? AppTheme.primary : AppTheme.primaryLight.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isSelected ? AppTheme.primary : Colors.transparent,
+                      width: 1.5,
+                    ),
+                    boxShadow: isSelected ? AppTheme.softShadow : null,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(emoji, style: const TextStyle(fontSize: 18)),
+                      const SizedBox(height: 4),
+                      Text(
+                        label,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: isSelected ? Colors.white : Colors.black87,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+
             return Padding(
               padding: EdgeInsets.only(
                 bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -211,16 +311,15 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> with Single
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 20),
+                    
+                    // Selector de estrellas con micro-animaciones
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(5, (index) {
                         final starValue = index + 1;
-                        return IconButton(
+                        return AnimatedStarButton(
                           iconSize: 40,
-                          icon: Icon(
-                            starValue <= ratingSelected ? Icons.star_rounded : Icons.star_border_rounded,
-                            color: const Color(0xFFD97706),
-                          ),
+                          isSelected: starValue <= ratingSelected,
                           onPressed: () {
                             setModalState(() {
                               ratingSelected = starValue;
@@ -230,6 +329,8 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> with Single
                       }),
                     ),
                     const SizedBox(height: 16),
+                    
+                    // Comentario escrito
                     TextField(
                       controller: commentController,
                       maxLines: 3,
@@ -244,26 +345,113 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> with Single
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(24),
-                          borderSide: const BorderSide(color: Color(0xFFC89D93), width: 1.5),
+                          borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
                         ),
                         filled: true,
-                        fillColor: const Color(0xFFF5EBE6),
+                        fillColor: AppTheme.primaryLight.withOpacity(0.5),
                         contentPadding: const EdgeInsets.all(16),
                       ),
                       onChanged: (v) => reviewComment = v,
                     ),
+                    const SizedBox(height: 20),
+                    
+                    // Módulo de Propinas como tarjetas con emojis
+                    const Text(
+                      '¿Deseas agregar una propina?',
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black87),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        buildTipCard('0%', 'Sin propina', '😊'),
+                        buildTipCard('5%', '5%', '👍'),
+                        buildTipCard('10%', '10%', '⭐'),
+                        buildTipCard('15%', '15%', '🔥'),
+                        buildTipCard('Custom', 'Personalizada', '✏️'),
+                      ],
+                    ),
+                    if (showCustomTipField) ...[
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: customTipController,
+                        keyboardType: TextInputType.number,
+                        style: const TextStyle(fontSize: 14),
+                        decoration: InputDecoration(
+                          labelText: 'Valor de propina personalizado (\$)',
+                          labelStyle: const TextStyle(fontSize: 12),
+                          prefixText: '\$ ',
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
+                          ),
+                        ),
+                        onChanged: (val) {
+                          final parsed = double.tryParse(val) ?? 0.0;
+                          setModalState(() {
+                            tipAmount = parsed;
+                          });
+                        },
+                      ),
+                    ],
+                    
+                    const SizedBox(height: 16),
+                    // Desglose de Pago
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppTheme.background,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFF3EAE8)),
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('Servicio:', style: TextStyle(fontSize: 12, color: Colors.black54)),
+                              Text('\$${totalAmount.toStringAsFixed(0)}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('Propina:', style: TextStyle(fontSize: 12, color: Colors.black54)),
+                              Text('\$${tipAmount.toStringAsFixed(0)}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.success)),
+                            ],
+                          ),
+                          const Divider(height: 16),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('Total a pagar:', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                              Text('\$${(totalAmount + tipAmount).toStringAsFixed(0)}', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppTheme.primary)),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
                     const SizedBox(height: 24),
+                    
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFC89D93),
+                        backgroundColor: AppTheme.primary,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                         elevation: 0,
                       ),
-                      onPressed: () {
-                        Navigator.pop(context);
-                        _submitReviewHelper(booking['id'], ratingSelected, reviewComment);
+                      onPressed: () async {
+                        Navigator.pop(context); // Cerrar rating sheet
+                        if (tipAmount > 0.0) {
+                          await _runWompiCheckout(tipAmount, () {
+                            _submitReviewHelper(booking['id'], ratingSelected, reviewComment);
+                          });
+                        } else {
+                          _submitReviewHelper(booking['id'], ratingSelected, reviewComment);
+                        }
                       },
                       child: const Text('Enviar Calificación', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                     ),
@@ -300,7 +488,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> with Single
     switch (s) {
       case 'PENDING':
       case 'PENDIENTE_PAGO': 
-        return const Color(0xFFD97706);
+        return AppTheme.warning;
       case 'CONFIRMED':
       case 'CONFIRMADA': 
       case 'CHECKIN_REALIZADO':
@@ -312,12 +500,12 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> with Single
         return const Color(0xFF06B6D4);
       case 'COMPLETED':
       case 'COMPLETADA': 
-        return const Color(0xFF16A34A);
+        return AppTheme.success;
       case 'EN_DISPUTA':
         return const Color(0xFFEA580C);
       case 'CANCELLED':
       case 'CANCELADA': 
-        return const Color(0xFFDC2626);
+        return AppTheme.error;
       default: return Colors.grey;
     }
   }
@@ -327,7 +515,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> with Single
     switch (s) {
       case 'PENDING':
       case 'PENDIENTE_PAGO': 
-        return const Color(0xFFFEF3C7);
+        return AppTheme.warningBg;
       case 'CONFIRMED':
       case 'CONFIRMADA':
       case 'CHECKIN_REALIZADO':
@@ -339,12 +527,12 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> with Single
         return const Color(0xFFECFEFF);
       case 'COMPLETED':
       case 'COMPLETADA': 
-        return const Color(0xFFDCFCE7);
+        return AppTheme.successBg;
       case 'EN_DISPUTA':
         return const Color(0xFFFFF7ED);
       case 'CANCELLED':
       case 'CANCELADA': 
-        return const Color(0xFFFEE2E2);
+        return AppTheme.errorBg;
       default: return const Color(0xFFF3F4F6);
     }
   }
@@ -384,7 +572,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> with Single
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.calendar_today_outlined, size: 64, color: Color(0xFFC89D93)),
+            const Icon(Icons.calendar_today_outlined, size: 64, color: AppTheme.primary),
             const SizedBox(height: 16),
             Text(
               message,
@@ -397,7 +585,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> with Single
               icon: const Icon(Icons.search),
               label: const Text('Explorar Prestadores'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFC89D93),
+                backgroundColor: AppTheme.primary,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
@@ -428,13 +616,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> with Single
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A000000),
-            blurRadius: 16,
-            offset: Offset(0, 4),
-          )
-        ],
+        boxShadow: AppTheme.softShadow,
       ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -445,12 +627,12 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> with Single
               children: [
                 CircleAvatar(
                   radius: 24,
-                  backgroundColor: const Color(0xFFF5EBE6),
+                  backgroundColor: AppTheme.primaryLight,
                   backgroundImage: avatarUrl.isNotEmpty ? NetworkImage(avatarUrl) : null,
                   child: avatarUrl.isEmpty
                       ? Text(
                           providerName.isNotEmpty ? providerName[0].toUpperCase() : 'P',
-                          style: const TextStyle(color: Color(0xFFC89D93), fontWeight: FontWeight.bold, fontSize: 18),
+                          style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 18),
                         )
                       : null,
                 ),
@@ -523,7 +705,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> with Single
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFFC89D93),
+                    color: AppTheme.primary,
                   ),
                 ),
               ],
@@ -549,7 +731,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> with Single
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF5EBE6),
+                  color: AppTheme.primaryLight.withOpacity(0.5),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Text(
@@ -661,9 +843,9 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> with Single
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0x1FFEFE3C),
+                  color: AppTheme.warningBg,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0x33D97706)),
+                  border: Border.all(color: AppTheme.warning.withOpacity(0.2)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -674,7 +856,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> with Single
                           children: List.generate(5, (starIndex) {
                             return Icon(
                               starIndex < reviewData['rating'] ? Icons.star_rounded : Icons.star_border_rounded,
-                              color: const Color(0xFFD97706),
+                              color: AppTheme.warning,
                               size: 16,
                             );
                           }),
@@ -712,7 +894,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> with Single
                   icon: const Icon(Icons.location_on, size: 18),
                   label: const Text('📍 Ver Seguimiento en Vivo'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFC89D93),
+                    backgroundColor: AppTheme.primary,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                     padding: const EdgeInsets.symmetric(vertical: 12),
@@ -730,8 +912,8 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> with Single
                   icon: const Icon(Icons.cancel_outlined, size: 18),
                   label: const Text('Cancelar Cita'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFFDC2626),
-                    side: const BorderSide(color: Color(0xFFFEE2E2)),
+                    foregroundColor: AppTheme.error,
+                    side: const BorderSide(color: AppTheme.errorBg),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
@@ -747,7 +929,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> with Single
                   icon: const Icon(Icons.star_outline_rounded, size: 18),
                   label: const Text('Calificar Servicio'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFC89D93),
+                    backgroundColor: AppTheme.primary,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                     padding: const EdgeInsets.symmetric(vertical: 12),
@@ -772,7 +954,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> with Single
           foregroundColor: Colors.black,
           elevation: 0,
         ),
-        body: const Center(child: CircularProgressIndicator(color: Color(0xFFC89D93))),
+        body: const Center(child: CircularProgressIndicator(color: AppTheme.primary)),
       );
     }
 
@@ -788,7 +970,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> with Single
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.wifi_off_rounded, color: Colors.redAccent, size: 48),
+              const Icon(Icons.wifi_off_rounded, color: AppTheme.error, size: 48),
               const SizedBox(height: 16),
               Text('Error de conexión:\n$_error', textAlign: TextAlign.center, style: const TextStyle(color: Colors.grey)),
               const SizedBox(height: 16),
@@ -796,7 +978,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> with Single
                 onPressed: _loadBookings,
                 icon: const Icon(Icons.refresh),
                 label: const Text('Reintentar'),
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFC89D93), foregroundColor: Colors.white),
+                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, foregroundColor: Colors.white),
               ),
             ],
           ),
@@ -815,7 +997,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> with Single
     }).toList();
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: const Text('Mis Citas', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5)),
         backgroundColor: Colors.white,
@@ -830,9 +1012,9 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> with Single
         ],
         bottom: TabBar(
           controller: _tabController,
-          labelColor: const Color(0xFFC89D93),
+          labelColor: AppTheme.primary,
           unselectedLabelColor: Colors.grey,
-          indicatorColor: const Color(0xFFC89D93),
+          indicatorColor: AppTheme.primary,
           indicatorSize: TabBarIndicatorSize.tab,
           tabs: const [
             Tab(text: 'Próximas'),
@@ -847,7 +1029,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> with Single
             children: [
               // Pestaña: Próximas
               RefreshIndicator(
-                color: const Color(0xFFC89D93),
+                color: AppTheme.primary,
                 onRefresh: _loadBookings,
                 child: upcoming.isEmpty
                     ? _buildEmptyState('No tienes citas programadas próximamente.')
@@ -859,7 +1041,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> with Single
               ),
               // Pestaña: Historial
               RefreshIndicator(
-                color: const Color(0xFFC89D93),
+                color: AppTheme.primary,
                 onRefresh: _loadBookings,
                 child: history.isEmpty
                     ? _buildEmptyState('Tu historial de citas está vacío.')
@@ -875,10 +1057,135 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen> with Single
             Container(
               color: const Color(0x1E000000),
               child: const Center(
-                child: CircularProgressIndicator(color: Color(0xFFC89D93)),
+                child: CircularProgressIndicator(color: AppTheme.primary),
+              ),
+            ),
+          // Pantalla de Éxito Overlay interactiva con colores de AppTheme
+          if (_showSuccessOverlay)
+            Positioned.fill(
+              child: Container(
+                color: Colors.white,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    TweenAnimationBuilder<double>(
+                      duration: const Duration(milliseconds: 800),
+                      tween: Tween(begin: 0.0, end: 1.0),
+                      curve: Curves.elasticOut,
+                      builder: (context, val, child) {
+                        return Transform.scale(
+                          scale: val,
+                          child: child,
+                        );
+                      },
+                      child: const CircleAvatar(
+                        radius: 54,
+                        backgroundColor: AppTheme.successBg,
+                        child: Icon(Icons.check_circle, size: 84, color: AppTheme.success),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      '¡Calificación Exitosa!',
+                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87),
+                    ),
+                    const SizedBox(height: 12),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 40),
+                      child: Text(
+                        'Tu reseña y propina han sido procesadas correctamente. ¡Muchas gracias por tu opinión!',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 14, color: Colors.black54, height: 1.4),
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          _showSuccessOverlay = false;
+                        });
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primary,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                        padding: const EdgeInsets.symmetric(horizontal: 44, vertical: 16),
+                        elevation: 0,
+                      ),
+                      child: const Text('Entendido', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    ),
+                  ],
+                ),
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+// Botón de Estrella interactivo y animado con rebote utilizando colores de AppTheme
+class AnimatedStarButton extends StatefulWidget {
+  final bool isSelected;
+  final VoidCallback onPressed;
+  final double iconSize;
+
+  const AnimatedStarButton({
+    key,
+    required this.isSelected,
+    required this.onPressed,
+    required this.iconSize,
+  }) : super(key: key);
+
+  @override
+  State<AnimatedStarButton> createState() => _AnimatedStarButtonState();
+}
+
+class _AnimatedStarButtonState extends State<AnimatedStarButton> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 150),
+    );
+    _scaleAnimation = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween<double>(begin: 1.0, end: 1.3), weight: 50),
+      TweenSequenceItem(tween: Tween<double>(begin: 1.3, end: 1.0), weight: 50),
+    ]).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+  }
+
+  @override
+  void didUpdateWidget(covariant AnimatedStarButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isSelected && !oldWidget.isSelected) {
+      _controller.forward(from: 0.0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ScaleTransition(
+      scale: _scaleAnimation,
+      child: IconButton(
+        iconSize: widget.iconSize,
+        icon: Icon(
+          widget.isSelected ? Icons.star_rounded : Icons.star_border_rounded,
+          color: AppTheme.warning,
+        ),
+        onPressed: () {
+          _controller.forward(from: 0.0);
+          widget.onPressed();
+        },
       ),
     );
   }

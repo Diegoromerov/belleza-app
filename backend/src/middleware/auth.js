@@ -3,7 +3,7 @@ const { pool } = require('../config/db');
 const JWT_SECRET = process.env.JWT_SECRET || 'beauty_app_super_secret_key_2026_change_in_production';
 
 module.exports = async (req, res, next) => {
-  const token = req.header('Authorization')?.replace('Bearer ', '');
+  const token = req.header('Authorization')?.replace('Bearer ', '') || req.query.token;
   if (!token) return res.status(401).json({ error: 'Acceso denegado. Token requerido.' });
   try {
     const verified = jwt.verify(token, JWT_SECRET);

@@ -208,7 +208,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                               ),
                             ),
                             title: const Text(
-                              'EstiloFonty IA',
+                              'Asistente de Belleza & Tips IA',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
@@ -217,7 +217,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                               ),
                             ),
                             subtitle: const Text(
-                              'Asesor de belleza y agendamiento interactivo en Fontibón. ¡Pregúntame o mándame una foto!',
+                              'Encuentra los mejores estilos, profesionales o pídele consejos de cuidado. ¡Pregúntame o envíame una foto!',
                               style: TextStyle(
                                 color: Colors.white70,
                                 fontSize: 12.5,
@@ -235,7 +235,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                 MaterialPageRoute(
                                   builder: (_) => const ChatScreen(
                                     partnerId: '00000000-0000-0000-0000-000000000000',
-                                    partnerName: 'EstiloFonty IA',
+                                    partnerName: 'Asistente de Belleza & Tips IA',
                                     partnerRole: 'admin',
                                     partnerAvatar: '',
                                   ),

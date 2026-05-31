@@ -1,10 +1,12 @@
 // frontend/lib/screens/booking_tracking_screen.dart
 import 'dart:async';
+import 'dart:ui' show ImageFilter;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'chat_screen.dart';
 import '../services/api_service.dart';
+import '../shared/theme.dart';
 
 class BookingTrackingScreen extends StatefulWidget {
   final Map<String, dynamic> booking;
@@ -18,7 +20,7 @@ class BookingTrackingScreen extends StatefulWidget {
   State<BookingTrackingScreen> createState() => _BookingTrackingScreenState();
 }
 
-class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
+class _BookingTrackingScreenState extends State<BookingTrackingScreen> with SingleTickerProviderStateMixin {
   // Coordenadas fijas del cliente en Fontibón
   final LatLng _clientLoc = const LatLng(4.6735, -74.1422);
   
@@ -30,16 +32,26 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
   Timer? _moveTimer;
   int _minutesRemaining = 8;
 
+  late AnimationController _pulseController;
+
   @override
   void initState() {
     super.initState();
     // Inicia un poco al noreste del cliente
     _providerLoc = const LatLng(4.6795, -74.1310);
+    
+    // Controlador para la animación pulsante concéntrica del marcador del proveedor
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat();
+
     _startTrackingSimulation();
   }
 
   @override
   void dispose() {
+    _pulseController.dispose();
     _moveTimer?.cancel();
     super.dispose();
   }
@@ -75,8 +87,12 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
     final String pin = widget.booking['pin_verificacion'] ?? '----';
     final String providerId = widget.booking['provider_id']?.toString() ?? '2';
 
+    // Cálculo dinámico de distancia en kilómetros
+    final double distanceInKm = const Distance().distance(_providerLoc, _clientLoc) / 1000.0;
+    final String distanceText = '${distanceInKm.toStringAsFixed(1)} km';
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: const Text(
           'Seguimiento en Vivo',
@@ -110,7 +126,7 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
                 polylines: [
                   Polyline(
                     points: [_providerLoc, _clientLoc],
-                    color: const Color(0xFFC89D93),
+                    color: AppTheme.primary,
                     strokeWidth: 4.5,
                   ),
                 ],
@@ -124,51 +140,68 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
                     height: 50,
                     point: _clientLoc,
                     child: Container(
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         color: Colors.white,
                         shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(color: Color(0x1F000000), blurRadius: 8, offset: Offset(0, 4)),
-                        ],
+                        boxShadow: AppTheme.softShadow,
                       ),
-                      child: const Icon(Icons.home_work, color: Colors.blueAccent, size: 28),
+                      child: const Icon(Icons.home_work, color: AppTheme.primary, size: 28),
                     ),
                   ),
-                  // Marcador de Ubicación del Prestador (Origen Animado)
+                  // Marcador de Ubicación del Prestador (Origen Animado con pulso concéntrico real)
                   Marker(
-                    width: 55,
-                    height: 55,
+                    width: 100,
+                    height: 100,
                     point: _providerLoc,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        // Círculo de pulso animado simulado
-                        Container(
-                          width: 45,
-                          height: 45,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: const Color(0xFFC89D93).withOpacity(0.3),
-                          ),
+                    child: AnimatedBuilder(
+                      animation: _pulseController,
+                      builder: (context, child) {
+                        return Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            // Primer anillo concéntrico
+                            Opacity(
+                              opacity: (1.0 - _pulseController.value).clamp(0.0, 1.0),
+                              child: Container(
+                                width: 35 + (_pulseController.value * 55),
+                                height: 35 + (_pulseController.value * 55),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: AppTheme.primary.withOpacity(0.4),
+                                ),
+                              ),
+                            ),
+                            // Segundo anillo concéntrico desfasado
+                            Opacity(
+                              opacity: (1.0 - ((_pulseController.value + 0.5) % 1.0)).clamp(0.0, 1.0),
+                              child: Container(
+                                width: 35 + (((_pulseController.value + 0.5) % 1.0) * 55),
+                                height: 35 + (((_pulseController.value + 0.5) % 1.0) * 55),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: AppTheme.primary.withOpacity(0.25),
+                                ),
+                              ),
+                            ),
+                            child!,
+                          ],
+                        );
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppTheme.primary, width: 2.5),
+                          boxShadow: AppTheme.softShadow,
                         ),
-                        Container(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(color: const Color(0xFFC89D93), width: 2.5),
-                            boxShadow: const [
-                              BoxShadow(color: Color(0x1A000000), blurRadius: 6, offset: Offset(0, 3)),
-                            ],
-                          ),
-                          child: CircleAvatar(
-                            radius: 18,
-                            backgroundColor: const Color(0xFFF5EBE6),
-                            backgroundImage: providerAvatar.isNotEmpty ? NetworkImage(providerAvatar) : null,
-                            child: providerAvatar.isEmpty
-                                ? const Icon(Icons.face_retouching_natural, size: 18, color: Color(0xFFC89D93))
-                                : null,
-                          ),
+                        child: CircleAvatar(
+                          radius: 18,
+                          backgroundColor: AppTheme.primaryLight,
+                          backgroundImage: providerAvatar.isNotEmpty ? NetworkImage(providerAvatar) : null,
+                          child: providerAvatar.isEmpty
+                              ? const Icon(Icons.face_retouching_natural, size: 18, color: AppTheme.primary)
+                              : null,
                         ),
-                      ],
+                      ),
                     ),
                   ),
                 ],
@@ -176,73 +209,10 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
             ],
           ),
 
-          // 2. Capa Superior: Sticky Escrow Card
-          Positioned(
-            top: 16,
-            left: 16,
-            right: 16,
-            child: Card(
-              color: Colors.white,
-              elevation: 4,
-              shadowColor: const Color(0x12000000),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
-                side: const BorderSide(color: Color(0xFFF3EAE8), width: 1),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.vpn_key, color: Color(0xFFC89D93), size: 22),
-                        SizedBox(width: 8),
-                        Text(
-                          'PIN DE SEGURIDAD ESCROW',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey,
-                            letterSpacing: 1.0,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF5EBE6),
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      child: Text(
-                        '🔑  $pin',
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF881337),
-                          letterSpacing: 4.0,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    const Text(
-                      'Compártelo con tu profesional solo al finalizar el servicio para liberar el pago',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 11.5, color: Colors.grey, height: 1.35),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
           // Botón Tema de Mapa (Claro/Oscuro Limpio)
           Positioned(
             right: 20,
-            bottom: 230,
+            bottom: 380,
             child: FloatingActionButton(
               heroTag: 'map_theme_tracking_fab',
               onPressed: () {
@@ -251,7 +221,7 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
                 });
               },
               backgroundColor: Colors.white,
-              foregroundColor: const Color(0xFFC89D93),
+              foregroundColor: AppTheme.primary,
               elevation: 4,
               shape: const CircleBorder(),
               child: Icon(
@@ -261,122 +231,197 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> {
             ),
           ),
 
-          // 3. Capa Inferior: Bottom Status Sheet (Fijo)
+          // Botón flotante para chatear fácilmente
+          Positioned(
+            right: 20,
+            bottom: 315,
+            child: FloatingActionButton(
+              heroTag: 'chat_tracking_fab',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ChatScreen(
+                      partnerId: providerId,
+                      partnerName: providerBusiness,
+                      partnerRole: 'provider',
+                      partnerAvatar: providerAvatar,
+                    ),
+                  ),
+                );
+              },
+              backgroundColor: AppTheme.primary,
+              foregroundColor: Colors.white,
+              elevation: 6,
+              shape: const CircleBorder(),
+              child: const Icon(Icons.chat_bubble_rounded, size: 24),
+            ),
+          ),
+
+          // 3. Capa Inferior: Bottom Status Card (Glassmorphic Redesign with Integrated Escrow PIN)
           Positioned(
             left: 16,
             right: 16,
             bottom: 24,
-            child: Card(
-              color: Colors.white,
-              elevation: 6,
-              shadowColor: const Color(0x1F000000),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(28),
-                side: const BorderSide(color: Color(0xFFF3EAE8), width: 1),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(28),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.85),
+                    borderRadius: BorderRadius.circular(28),
+                    border: Border.all(color: AppTheme.primary.withOpacity(0.2), width: 1.5),
+                    boxShadow: AppTheme.cardShadow,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        CircleAvatar(
-                          radius: 26,
-                          backgroundColor: const Color(0xFFE8D7D3),
-                          backgroundImage: providerAvatar.isNotEmpty ? NetworkImage(providerAvatar) : null,
-                          child: providerAvatar.isEmpty
-                              ? Text(
-                                  providerName.isNotEmpty ? providerName[0].toUpperCase() : 'P',
-                                  style: const TextStyle(fontSize: 18, color: Color(0xFFC89D93), fontWeight: FontWeight.bold),
-                                )
-                              : null,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                providerBusiness.isNotEmpty ? providerBusiness : providerName,
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                providerName,
-                                style: const TextStyle(fontSize: 13, color: Colors.grey),
-                              ),
-                            ],
-                          ),
-                        ),
-                        // Contador de tiempo
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFEF2F2),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Column(
-                            children: [
-                              Text(
-                                'Llega en',
-                                style: TextStyle(fontSize: 10, color: Colors.red[800], fontWeight: FontWeight.bold),
-                              ),
-                              Text(
-                                '$_minutesRemaining min',
-                                style: TextStyle(fontSize: 15, color: Colors.red[900], fontWeight: FontWeight.bold),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Divider(height: 28, color: Color(0xFFF3EAE8)),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        // Wompi Badge
                         Row(
                           children: [
-                            const Icon(Icons.shield, color: Colors.green, size: 18),
-                            const SizedBox(width: 6),
-                            Text(
-                              'Pago Wompi Protegido',
-                              style: TextStyle(color: Colors.green[800], fontSize: 12, fontWeight: FontWeight.bold),
+                            CircleAvatar(
+                              radius: 26,
+                              backgroundColor: AppTheme.primaryLight,
+                              backgroundImage: providerAvatar.isNotEmpty ? NetworkImage(providerAvatar) : null,
+                              child: providerAvatar.isEmpty
+                                  ? Text(
+                                      providerName.isNotEmpty ? providerName[0].toUpperCase() : 'P',
+                                      style: const TextStyle(fontSize: 18, color: AppTheme.primary, fontWeight: FontWeight.bold),
+                                    )
+                                  : null,
                             ),
-                          ],
-                        ),
-                        // Call & Chat Floating Buttons
-                        Row(
-                          children: [
-                            GestureDetector(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => ChatScreen(
-                                      partnerId: providerId,
-                                      partnerName: providerBusiness,
-                                      partnerRole: 'provider',
-                                      partnerAvatar: providerAvatar,
-                                    ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    providerBusiness.isNotEmpty ? providerBusiness : providerName,
+                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                );
-                              },
-                              child: const CircleAvatar(
-                                radius: 20,
-                                backgroundColor: Color(0xFFC89D93),
-                                child: Icon(Icons.chat_bubble_outline_rounded, color: Colors.white, size: 18),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '$providerName • $distanceText',
+                                    style: const TextStyle(fontSize: 13, color: Colors.black54),
+                                  ),
+                                ],
                               ),
+                            ),
+                            // Contador de tiempo estimado
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: AppTheme.errorBg,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Column(
+                                children: [
+                                  const Text(
+                                    'Llega en',
+                                    style: TextStyle(fontSize: 10, color: AppTheme.error, fontWeight: FontWeight.bold),
+                                  ),
+                                  Text(
+                                    '$_minutesRemaining min',
+                                    style: const TextStyle(fontSize: 15, color: AppTheme.error, fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        
+                        // Barra de progreso de llegada
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Progreso de llegada',
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black54),
+                            ),
+                            Text(
+                              '${(_progress * 100).toStringAsFixed(0)}%',
+                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.primary),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: LinearProgressIndicator(
+                            value: _progress,
+                            backgroundColor: AppTheme.primaryLight,
+                            valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.primary),
+                            minHeight: 8,
+                          ),
+                        ),
+                        
+                        const Divider(height: 24, color: Color(0xFFF3EAE8)),
+                        
+                        // Escrow PIN integrado de manera limpia
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryLight.withOpacity(0.4),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: AppTheme.primary.withOpacity(0.15)),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Row(
+                                children: [
+                                  Icon(Icons.vpn_key_rounded, color: AppTheme.primary, size: 18),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'PIN Escrow Seguro:',
+                                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black87),
+                                  ),
+                                ],
+                              ),
+                              Text(
+                                pin,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.error,
+                                  letterSpacing: 2.0,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        
+                        const SizedBox(height: 12),
+                        
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            // Wompi Badge
+                            Row(
+                              children: [
+                                const Icon(Icons.shield, color: AppTheme.success, size: 18),
+                                const SizedBox(width: 6),
+                                const Text(
+                                  'Pago Wompi Protegido',
+                                  style: TextStyle(color: AppTheme.success, fontSize: 12, fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
+                            const Text(
+                              'En camino',
+                              style: TextStyle(color: AppTheme.primary, fontSize: 12, fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),
                       ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),

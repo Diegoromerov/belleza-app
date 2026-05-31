@@ -11,6 +11,25 @@ require('dotenv').config();
 const authRoutes = require('./src/routes/authRoutes');
 const paymentRoutes = require('./src/routes/paymentRoutes');
 const authMiddleware = require('./src/middleware/auth');
+const adminMiddleware = async (req, res, next) => {
+  try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ error: 'No autorizado. Token inválido.' });
+    }
+    const { rows } = await pool.query('SELECT rol, email FROM usuarios WHERE id = $1', [req.user.id]);
+    if (!rows.length) {
+      return res.status(401).json({ error: 'Usuario no encontrado.' });
+    }
+    const user = rows[0];
+    if (user.rol === 'ADMIN' || user.email === 'admin@beautyapp.com' || user.email === 'admin') {
+      return next();
+    }
+    return res.status(403).json({ error: 'Acceso denegado. Se requieren permisos de administrador.' });
+  } catch (error) {
+    console.error('Error en adminMiddleware:', error);
+    res.status(500).json({ error: 'Error interno de autorización.' });
+  }
+};
 const { processAssistantMessage, AI_USER_ID } = require('./src/services/geminiService');
 const { inicializarJobs } = require('./src/jobs/paymentJobs');
 
@@ -1041,13 +1060,14 @@ app.post('/api/services', authMiddleware, async (req, res) => {
       return res.status(403).json({ error: 'Acceso denegado: solo para proveedores' });
     }
 
-    const { name, description, price, duration_minutes, category } = req.body;
+    const { name, description, price, duration_minutes, category, is_active } = req.body;
     if (!name || price === undefined || !duration_minutes) {
       return res.status(400).json({ error: 'Faltan campos obligatorios (nombre, precio, duración)' });
     }
 
     const parsedPrice = parseFloat(price);
     const parsedDuration = parseInt(duration_minutes);
+    const isActiveVal = is_active !== false;
 
     if (isNaN(parsedPrice) || parsedPrice < 0) {
       return res.status(400).json({ error: 'Precio inválido' });
@@ -1058,11 +1078,11 @@ app.post('/api/services', authMiddleware, async (req, res) => {
 
     const query = `
       INSERT INTO services (provider_id, name, description, price, duration_minutes, category, is_active)
-      VALUES ($1, $2, $3, $4, $5, $6, true)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING id, name, description, price, duration_minutes, category, is_active;
     `;
     const result = await pool.query(query, [
-      req.user.id, name, description || null, parsedPrice, parsedDuration, category || null
+      req.user.id, name, description || null, parsedPrice, parsedDuration, category || null, isActiveVal
     ]);
 
     res.status(201).json({
@@ -1205,14 +1225,37 @@ app.get('/api/providers/:id/slots', async (req, res) => {
       return { start, end };
     });
 
-    // 3. Generar slots de 06:00 a 20:00 cada 30 minutos
-    const slots = [];
+    // 3. Obtener el horario configurado del prestador
+    const hoursRes = await pool.query('SELECT active_start_hour, active_end_hour, weekly_schedule FROM perfiles_prestador WHERE id = $1', [providerId]);
+    
     const [year, month, day] = date.split('-').map(Number);
+    const dateObj = new Date(year, month - 1, day);
+    const dayOfWeek = dateObj.getDay(); // 0: domingo, 1: lunes, ..., 6: sabado
+    const dayNames = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+    const currentDayName = dayNames[dayOfWeek];
 
-    // Inicio: 06:00 AM local del servidor
-    const startTime = new Date(year, month - 1, day, 6, 0, 0);
-    // Fin: 08:00 PM (20:00) local del servidor
-    const endTime = new Date(year, month - 1, day, 20, 0, 0);
+    const weeklySchedule = hoursRes.rows.length > 0 && hoursRes.rows[0].weekly_schedule ? hoursRes.rows[0].weekly_schedule : null;
+    let startHour = 6;
+    let endHour = 20;
+    let isDayActive = true;
+
+    if (weeklySchedule && weeklySchedule[currentDayName]) {
+      const dayConf = weeklySchedule[currentDayName];
+      isDayActive = dayConf.activo !== false;
+      startHour = dayConf.inicio !== undefined ? parseInt(dayConf.inicio) : 6;
+      endHour = dayConf.fin !== undefined ? parseInt(dayConf.fin) : 20;
+    } else {
+      startHour = hoursRes.rows.length > 0 && hoursRes.rows[0].active_start_hour !== null ? parseInt(hoursRes.rows[0].active_start_hour) : 6;
+      endHour = hoursRes.rows.length > 0 && hoursRes.rows[0].active_end_hour !== null ? parseInt(hoursRes.rows[0].active_end_hour) : 20;
+    }
+
+    if (!isDayActive) {
+      return res.json({ success: true, slots: [] });
+    }
+
+    const slots = [];
+    const startTime = new Date(year, month - 1, day, startHour, 0, 0);
+    const endTime = new Date(year, month - 1, day, endHour, 0, 0);
 
     const now = new Date();
 
@@ -1445,7 +1488,7 @@ app.post('/api/analytics/events', optionalAuthMiddleware, async (req, res) => {
 });
 
 // 🔹 NUEVO: Canal SSE en tiempo real para eventos de administración
-app.get('/api/admin/events/stream', (req, res) => {
+app.get('/api/admin/events/stream', authMiddleware, adminMiddleware, (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
@@ -1467,7 +1510,7 @@ app.get('/api/admin/events/stream', (req, res) => {
 });
 
 // 🔹 NUEVO: Obtener estadísticas globales y telemetría de analíticas
-app.get('/api/admin/metrics', async (req, res) => {
+app.get('/api/admin/metrics', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     // 1. Estadísticas agregadas de reservas
     const bookingsCountRes = await pool.query(`
@@ -1545,7 +1588,7 @@ app.get('/api/admin/metrics', async (req, res) => {
 });
 
 // 🔹 NUEVO: Resolver Alerta SOS / Pánico
-app.patch('/api/admin/sos/resolve/:id', async (req, res) => {
+app.patch('/api/admin/sos/resolve/:id', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const alertId = parseInt(req.params.id);
     const updateRes = await pool.query(`
@@ -1583,7 +1626,7 @@ app.get('/api/users/profile', authMiddleware, async (req, res) => {
     let user = result.rows[0];
     user.role = user.role === 'PRESTADOR' ? 'provider' : (user.role === 'CLIENTE' ? 'client' : null);
     if (user.role === 'provider') {
-      const providerRes = await pool.query('SELECT is_active, business_name, description, rating_avg, rating_count, (estatus_verificacion = \'APROBADO\') as is_verified, estatus_verificacion FROM perfiles_prestador WHERE id = $1', [req.user.id]);
+      const providerRes = await pool.query('SELECT is_active, business_name, description, rating_avg, rating_count, (estatus_verificacion = \'APROBADO\') as is_verified, estatus_verificacion, active_start_hour, active_end_hour, weekly_schedule FROM perfiles_prestador WHERE id = $1', [req.user.id]);
       if (providerRes.rows.length > 0) {
         user = { 
           ...user, 
@@ -1673,38 +1716,84 @@ app.patch('/api/users/avatar', authMiddleware, async (req, res) => {
   }
 });
 
-// 🔹 NUEVO: Actualizar perfil del usuario (nombre y teléfono)
+// 🔹 NUEVO: Actualizar perfil del usuario (nombre, teléfono, bio, rango de horas de disponibilidad y horario semanal)
 app.patch('/api/users/profile', authMiddleware, async (req, res) => {
   try {
-    const { full_name, phone } = req.body;
-    if (!full_name && !phone) {
-      return res.status(400).json({ error: 'Debe proporcionar al menos un campo para actualizar (full_name o phone)' });
+    const { full_name, phone, description, active_start_hour, active_end_hour, weekly_schedule } = req.body;
+    if (!full_name && !phone && description === undefined && active_start_hour === undefined && active_end_hour === undefined && weekly_schedule === undefined) {
+      return res.status(400).json({ error: 'Debe proporcionar al menos un campo para actualizar' });
     }
     
-    // Construir query dinámica
-    const updates = [];
-    const values = [];
-    let paramIndex = 1;
-    
-    if (full_name !== undefined) {
-      updates.push(`nombre = $${paramIndex++}`);
-      values.push(full_name);
+    // 1. Actualizar tabla usuarios (nombre, teléfono)
+    if (full_name || phone) {
+      const updates = [];
+      const values = [];
+      let paramIndex = 1;
+      
+      if (full_name !== undefined) {
+        updates.push(`nombre = $${paramIndex++}`);
+        values.push(full_name);
+      }
+      if (phone !== undefined) {
+        updates.push(`phone = $${paramIndex++}`);
+        values.push(phone);
+      }
+      
+      values.push(req.user.id);
+      const query = `UPDATE usuarios SET ${updates.join(', ')} WHERE id = $${paramIndex} RETURNING id;`;
+      await pool.query(query, values);
     }
-    if (phone !== undefined) {
-      updates.push(`phone = $${paramIndex++}`);
-      values.push(phone);
+
+    // 2. Actualizar tabla perfiles_prestador (description, active_start_hour, active_end_hour, weekly_schedule)
+    if (description !== undefined || active_start_hour !== undefined || active_end_hour !== undefined || weekly_schedule !== undefined) {
+      const userCheck = await pool.query('SELECT rol FROM usuarios WHERE id = $1', [req.user.id]);
+      if (userCheck.rows.length > 0 && userCheck.rows[0].rol === 'PRESTADOR') {
+        const provUpdates = [];
+        const provValues = [];
+        let provParamIdx = 1;
+
+        if (description !== undefined) {
+          provUpdates.push(`description = $${provParamIdx++}`);
+          provValues.push(description);
+        }
+        if (active_start_hour !== undefined) {
+          provUpdates.push(`active_start_hour = $${provParamIdx++}`);
+          provValues.push(active_start_hour !== null ? parseInt(active_start_hour) : null);
+        }
+        if (active_end_hour !== undefined) {
+          provUpdates.push(`active_end_hour = $${provParamIdx++}`);
+          provValues.push(active_end_hour !== null ? parseInt(active_end_hour) : null);
+        }
+        if (weekly_schedule !== undefined) {
+          provUpdates.push(`weekly_schedule = $${provParamIdx++}`);
+          provValues.push(weekly_schedule !== null ? (typeof weekly_schedule === 'string' ? weekly_schedule : JSON.stringify(weekly_schedule)) : null);
+        }
+
+        provValues.push(req.user.id);
+        const provQuery = `UPDATE perfiles_prestador SET ${provUpdates.join(', ')} WHERE id = $${provParamIdx};`;
+        await pool.query(provQuery, provValues);
+      }
     }
-    
-    values.push(req.user.id);
-    const query = `UPDATE usuarios SET ${updates.join(', ')} WHERE id = $${paramIndex} RETURNING id, email, nombre as full_name, phone, foto_url as avatar_url, rol as role;`;
-    
-    const result = await pool.query(query, values);
-    if (result.rows.length === 0) {
+
+    // 3. Obtener el perfil completo para retornar
+    const finalProfileRes = await pool.query('SELECT id, email, nombre as full_name, phone, foto_url as avatar_url, rol as role, onboarding_completo FROM usuarios WHERE id = $1', [req.user.id]);
+    if (finalProfileRes.rows.length === 0) {
       return res.status(404).json({ error: 'Usuario no encontrado' });
     }
-    
-    let user = result.rows[0];
+    let user = finalProfileRes.rows[0];
     user.role = user.role === 'PRESTADOR' ? 'provider' : (user.role === 'CLIENTE' ? 'client' : null);
+    if (user.role === 'provider') {
+      const providerRes = await pool.query('SELECT is_active, business_name, description, rating_avg, rating_count, (estatus_verificacion = \'APROBADO\') as is_verified, estatus_verificacion, active_start_hour, active_end_hour FROM perfiles_prestador WHERE id = $1', [req.user.id]);
+      if (providerRes.rows.length > 0) {
+        user = { 
+          ...user, 
+          ...providerRes.rows[0],
+          is_verified: !!providerRes.rows[0].is_verified,
+          is_active: !!providerRes.rows[0].is_active
+        };
+      }
+    }
+    
     res.json({
       success: true,
       message: 'Perfil actualizado con éxito',
@@ -1799,6 +1888,39 @@ app.delete('/api/portfolio/:id', authMiddleware, async (req, res) => {
   } catch (error) {
     console.error('❌ ERROR EN DELETE /api/portfolio/:id:', { message: error.message });
     res.status(500).json({ error: 'Error interno al eliminar del portafolio' });
+  }
+});
+
+// 🔹 NUEVO: Actualizar título y categoría de un elemento del portafolio (Proveedor)
+app.put('/api/portfolio/:id', authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'provider' && req.user.role !== 'PRESTADOR') {
+      return res.status(403).json({ error: 'Acceso denegado: solo para proveedores' });
+    }
+    const itemId = req.params.id;
+    const providerId = req.user.id;
+    const { title, category } = req.body;
+
+    const query = `
+      UPDATE portfolio_items
+      SET title = $1, category = $2
+      WHERE id = $3 AND provider_id = $4
+      RETURNING id, title, category;
+    `;
+    const result = await pool.query(query, [title || null, category || null, itemId, providerId]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Elemento del portafolio no encontrado o no te pertenece' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Elemento del portafolio actualizado con éxito',
+      portfolio_item: result.rows[0]
+    });
+  } catch (error) {
+    console.error('❌ ERROR EN PUT /api/portfolio/:id:', { message: error.message });
+    res.status(500).json({ error: 'Error interno al actualizar el portafolio' });
   }
 });
 
@@ -2059,6 +2181,15 @@ const initDatabase = async () => {
       CREATE INDEX IF NOT EXISTS idx_activity_logs_event ON user_activity_logs(event_type);
     `);
 
+    // Crear índices de rendimiento para bookings, reviews y services si no existen
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_bookings_client ON bookings(client_id);
+      CREATE INDEX IF NOT EXISTS idx_bookings_provider ON bookings(provider_id);
+      CREATE INDEX IF NOT EXISTS idx_bookings_scheduled ON bookings(scheduled_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_reviews_provider ON reviews(provider_id);
+      CREATE INDEX IF NOT EXISTS idx_services_provider ON services(provider_id);
+    `);
+
     // 🔸 Ejecutar migración de lealtad y fraude (loyalty_migration.sql)
     const loyaltyMigrationPath = path.join(__dirname, 'src/config/loyalty_migration.sql');
     if (fs.existsSync(loyaltyMigrationPath)) {
@@ -2082,6 +2213,84 @@ const initDatabase = async () => {
           console.warn('⚠️ Advertencia en migración de pagos:', pmErr.message);
         }
       }
+    }
+
+    // 🔸 Ejecutar migración de disputas y schedule (disputas table, triggers, indexes y weekly_schedule)
+    try {
+      // 1. Crear tabla disputas
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS disputas (
+          id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          booking_id      UUID NOT NULL REFERENCES bookings(id) ON DELETE RESTRICT,
+          iniciado_por    INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE RESTRICT,
+          tipo_actor      VARCHAR(20) NOT NULL CHECK (tipo_actor IN ('CLIENTE','PRESTADOR','SISTEMA')),
+          tipo            VARCHAR(50) NOT NULL,
+          descripcion     TEXT,
+          evidencia_urls  TEXT[] DEFAULT '{}',
+          monto_disputado NUMERIC(12,2) NOT NULL,
+          estado          VARCHAR(20) NOT NULL DEFAULT 'ABIERTA',
+          resuelto_por    INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+          resolucion      VARCHAR(50),
+          porcentaje_prestador NUMERIC(5,2),
+          nota_resolucion TEXT,
+          creado_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          actualizado_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          resuelto_at     TIMESTAMPTZ,
+          sla_limite_at   TIMESTAMPTZ
+        );
+      `);
+
+      // 2. Crear índices
+      await pool.query(`CREATE INDEX IF NOT EXISTS idx_disputas_booking ON disputas(booking_id);`);
+      await pool.query(`CREATE INDEX IF NOT EXISTS idx_disputas_estado ON disputas(estado, creado_at DESC);`);
+      await pool.query(`CREATE INDEX IF NOT EXISTS idx_disputas_sla ON disputas(sla_limite_at) WHERE estado IN ('ABIERTA','EN_REVISION');`);
+
+      // 3. Crear función de trigger SLA
+      await pool.query(`
+        CREATE OR REPLACE FUNCTION set_disputa_sla()
+        RETURNS TRIGGER AS $$
+        BEGIN
+          IF NEW.sla_limite_at IS NULL THEN
+            NEW.sla_limite_at = NEW.creado_at + INTERVAL '48 hours';
+          END IF;
+          RETURN NEW;
+        END;
+        $$ LANGUAGE plpgsql;
+      `);
+
+      // 4. Vincular triggers
+      await pool.query(`DROP TRIGGER IF EXISTS trg_disputa_sla ON disputas;`);
+      await pool.query(`
+        CREATE TRIGGER trg_disputa_sla
+        BEFORE INSERT ON disputas
+        FOR EACH ROW EXECUTE FUNCTION set_disputa_sla();
+      `);
+
+      await pool.query(`DROP TRIGGER IF EXISTS trg_disputa_updated_at ON disputas;`);
+      await pool.query(`
+        CREATE TRIGGER trg_disputa_updated_at
+        BEFORE UPDATE ON disputas
+        FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+      `);
+
+      // 5. Agregar weekly_schedule a perfiles_prestador
+      const defaultSchedule = JSON.stringify({
+        lunes: { activo: true, inicio: 6, fin: 20 },
+        martes: { activo: true, inicio: 6, fin: 20 },
+        miercoles: { activo: true, inicio: 6, fin: 20 },
+        jueves: { activo: true, inicio: 6, fin: 20 },
+        viernes: { activo: true, inicio: 6, fin: 20 },
+        sabado: { activo: true, inicio: 8, fin: 18 },
+        domingo: { activo: false, inicio: 8, fin: 18 }
+      });
+      await pool.query(`
+        ALTER TABLE perfiles_prestador 
+        ADD COLUMN IF NOT EXISTS weekly_schedule JSONB DEFAULT '${defaultSchedule}'::jsonb;
+      `);
+
+      console.log('✅ Base de datos: Migración de disputas y weekly_schedule verificadas/aplicadas.');
+    } catch (migErr) {
+      console.warn('⚠️ Error al aplicar migración de disputas/weekly_schedule:', migErr.message);
     }
 
     const aiUserQuery = `
@@ -2421,3 +2630,4 @@ process.on('uncaughtException', (error) => {
     process.exit(1);
   }
 });
+// Nodemon trigger reload to reconnect to beauty-postgres database - updated weekly schedule logic

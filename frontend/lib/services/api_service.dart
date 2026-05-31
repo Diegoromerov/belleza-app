@@ -295,6 +295,7 @@ class ApiService {
     required int durationMinutes,
     String? description,
     String? category,
+    bool isActive = true,
   }) async {
     final headers = await _getAuthHeaders();
     final response = await http.post(
@@ -306,6 +307,7 @@ class ApiService {
         'duration_minutes': durationMinutes,
         'description': description,
         'category': category,
+        'is_active': isActive,
       }),
     ).timeout(const Duration(seconds: 30));
     if (response.statusCode == 201) {
@@ -472,6 +474,24 @@ class ApiService {
     throw Exception(json.decode(response.body)['error'] ?? 'Error ${response.statusCode}');
   }
 
+  static Future<Map<String, dynamic>> updatePortfolioItem({
+    required String id,
+    String? title,
+    String? category,
+  }) async {
+    final headers = await _getAuthHeaders();
+    final response = await http.put(
+      Uri.parse('$_baseUrl$_apiPath/portfolio/$id'),
+      headers: headers,
+      body: json.encode({
+        'title': title,
+        'category': category,
+      }),
+    ).timeout(const Duration(seconds: 30));
+    if (response.statusCode == 200) return json.decode(response.body);
+    throw Exception(json.decode(response.body)['error'] ?? 'Error ${response.statusCode}');
+  }
+
   static Future<Map<String, dynamic>> fetchUserProfile() async {
     final headers = await _getAuthHeaders();
     final response = await http.get(
@@ -488,6 +508,10 @@ class ApiService {
   static Future<Map<String, dynamic>> updateUserProfile({
     required String fullName,
     required String phone,
+    String? description,
+    int? activeStartHour,
+    int? activeEndHour,
+    Map<String, dynamic>? weeklySchedule,
   }) async {
     final headers = await _getAuthHeaders();
     final response = await http.patch(
@@ -496,6 +520,10 @@ class ApiService {
       body: json.encode({
         'full_name': fullName,
         'phone': phone,
+        if (description != null) 'description': description,
+        if (activeStartHour != null) 'active_start_hour': activeStartHour,
+        if (activeEndHour != null) 'active_end_hour': activeEndHour,
+        if (weeklySchedule != null) 'weekly_schedule': weeklySchedule,
       }),
     ).timeout(const Duration(seconds: 30));
     if (response.statusCode == 200) return json.decode(response.body);
