@@ -1,11 +1,13 @@
 // frontend/lib/screens/provider_route_screen.dart
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'chat_screen.dart';
 import '../services/api_service.dart';
+import '../shared/theme.dart';
 
 class ProviderRouteScreen extends StatefulWidget {
   final Map<String, dynamic> booking;
@@ -19,7 +21,7 @@ class ProviderRouteScreen extends StatefulWidget {
   State<ProviderRouteScreen> createState() => _ProviderRouteScreenState();
 }
 
-class _ProviderRouteScreenState extends State<ProviderRouteScreen> {
+class _ProviderRouteScreenState extends State<ProviderRouteScreen> with SingleTickerProviderStateMixin {
   // Coordenadas fijas del cliente en Fontibón
   final LatLng _clientLoc = const LatLng(4.6735, -74.1422);
 
@@ -32,17 +34,25 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen> {
   bool _isArrived = false;
   bool _isStartingService = false;
 
+  late AnimationController _pulseController;
+
   @override
   void initState() {
     super.initState();
     // Inicia un poco al noreste del cliente
     _providerLoc = const LatLng(4.6795, -74.1310);
     _startRouteSimulation();
+
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat();
   }
 
   @override
   void dispose() {
     _moveTimer?.cancel();
+    _pulseController.dispose();
     super.dispose();
   }
 
@@ -86,7 +96,7 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen> {
                 Text('🚀 Servicio iniciado. ¡A dar el mejor look, vecino!'),
               ],
             ),
-            backgroundColor: const Color(0xFFC89D93),
+            backgroundColor: AppTheme.primary,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           ),
@@ -99,7 +109,7 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('❌ Error al iniciar servicio: $e'),
-            backgroundColor: Colors.redAccent,
+            backgroundColor: AppTheme.error,
           ),
         );
       }
@@ -116,13 +126,13 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen> {
     final bool isInProgress = status == 'EN_PROGRESO';
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: const Text(
           'Trayecto a Domicilio',
           style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5, fontSize: 18),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: AppTheme.surface,
         foregroundColor: Colors.black,
         elevation: 0,
         leading: IconButton(
@@ -149,7 +159,7 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen> {
                 polylines: [
                   Polyline(
                     points: [_providerLoc, _clientLoc],
-                    color: const Color(0xFFC89D93),
+                    color: AppTheme.primary,
                     strokeWidth: 4.5,
                   ),
                 ],
@@ -162,47 +172,71 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen> {
                     height: 50,
                     point: _clientLoc,
                     child: Container(
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
+                      decoration: BoxDecoration(
+                        color: AppTheme.surface,
                         shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(color: Color(0x1F000000), blurRadius: 8, offset: Offset(0, 4)),
-                        ],
+                        boxShadow: AppTheme.softShadow,
                       ),
-                      child: const Icon(Icons.home_work, color: Colors.blueAccent, size: 28),
+                      child: const Icon(Icons.home_work, color: AppTheme.info, size: 28),
                     ),
                   ),
-                  // Marcador Prestador (Origen móvil)
+                  // Marcador Prestador (Origen móvil) con doble anillo de pulso concéntrico
                   Marker(
-                    width: 55,
-                    height: 55,
+                    width: 80,
+                    height: 80,
                     point: _providerLoc,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        Container(
-                          width: 45,
-                          height: 45,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: const Color(0xFFC89D93).withOpacity(0.3),
-                          ),
-                        ),
-                        Container(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(color: const Color(0xFFC89D93), width: 2.5),
-                            boxShadow: const [
-                              BoxShadow(color: Color(0x1A000000), blurRadius: 6, offset: Offset(0, 3)),
-                            ],
-                          ),
-                          child: const CircleAvatar(
-                            radius: 18,
-                            backgroundColor: Color(0xFFF5EBE6),
-                            child: Icon(Icons.content_cut, size: 18, color: Color(0xFFC89D93)),
-                          ),
-                        ),
-                      ],
+                    child: AnimatedBuilder(
+                      animation: _pulseController,
+                      builder: (context, child) {
+                        return Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            // Primera anilla de pulso
+                            Opacity(
+                              opacity: (1.0 - _pulseController.value).clamp(0.0, 1.0),
+                              child: Container(
+                                width: 40 + (_pulseController.value * 40),
+                                height: 40 + (_pulseController.value * 40),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: AppTheme.primary.withValues(alpha: 0.6),
+                                    width: 2,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            // Segunda anilla de pulso (desfasada)
+                            Opacity(
+                              opacity: (1.0 - ((_pulseController.value + 0.5) % 1.0)).clamp(0.0, 1.0),
+                              child: Container(
+                                width: 40 + (((_pulseController.value + 0.5) % 1.0) * 40),
+                                height: 40 + (((_pulseController.value + 0.5) % 1.0) * 40),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: AppTheme.primary.withValues(alpha: 0.4),
+                                    width: 2,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            // El avatar del prestador
+                            Container(
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(color: AppTheme.primary, width: 2.5),
+                                boxShadow: AppTheme.softShadow,
+                              ),
+                              child: const CircleAvatar(
+                                radius: 18,
+                                backgroundColor: AppTheme.primaryLight,
+                                child: Icon(Icons.content_cut, size: 18, color: AppTheme.primary),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                   ),
                 ],
@@ -210,52 +244,57 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen> {
             ],
           ),
 
-          // 2. Capa Superior: Dirección y Cita Card
+          // 2. Capa Superior: Dirección y Cita Card (Glassmorphic)
           Positioned(
             top: 16,
             left: 16,
             right: 16,
-            child: Card(
-              color: Colors.white,
-              elevation: 4,
-              shadowColor: const Color(0x12000000),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
-                side: const BorderSide(color: Color(0xFFF3EAE8), width: 1),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppTheme.surface.withValues(alpha: 0.7),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: AppTheme.surface.withValues(alpha: 0.5), width: 1.5),
+                    boxShadow: AppTheme.cardShadow,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.location_on, color: Color(0xFFC89D93), size: 20),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            serviceAddress.isNotEmpty
-                                ? serviceAddress
-                                : 'Dirección pendiente por confirmar',
-                            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey[800], fontSize: 13.5),
-                          ),
+                        Row(
+                          children: [
+                            const Icon(Icons.location_on, color: AppTheme.primary, size: 20),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                serviceAddress.isNotEmpty
+                                    ? serviceAddress
+                                    : 'Dirección pendiente por confirmar',
+                                style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey[800], fontSize: 13.5),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Divider(height: 1, color: AppTheme.primary.withValues(alpha: 0.2)),
+                        const SizedBox(height: 10),
+                        Text(
+                          'Servicio: $serviceName',
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Cliente: $clientName',
+                          style: const TextStyle(fontSize: 13, color: Colors.grey),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 10),
-                    const Divider(height: 1, color: Color(0xFFF3EAE8)),
-                    const SizedBox(height: 10),
-                    Text(
-                      'Servicio: $serviceName',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Cliente: $clientName',
-                      style: const TextStyle(fontSize: 13, color: Colors.grey),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -272,8 +311,8 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen> {
                   MapSettings.isDark = !MapSettings.isDark;
                 });
               },
-              backgroundColor: Colors.white,
-              foregroundColor: const Color(0xFFC89D93),
+              backgroundColor: AppTheme.surface,
+              foregroundColor: AppTheme.primary,
               elevation: 4,
               shape: const CircleBorder(),
               child: Icon(
@@ -283,138 +322,141 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen> {
             ),
           ),
 
-          // 3. Capa Inferior: Drawer de Estado y Botón de Inicio
+          // 3. Capa Inferior: Drawer de Estado y Botón de Inicio (Glassmorphic)
           Positioned(
             left: 16,
             right: 16,
             bottom: 24,
-            child: Card(
-              color: Colors.white,
-              elevation: 6,
-              shadowColor: const Color(0x1F000000),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(28),
-                side: const BorderSide(color: Color(0xFFF3EAE8), width: 1),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(28),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppTheme.surface.withValues(alpha: 0.7),
+                    borderRadius: BorderRadius.circular(28),
+                    border: Border.all(color: AppTheme.surface.withValues(alpha: 0.5), width: 1.5),
+                    boxShadow: AppTheme.cardShadow,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        CircleAvatar(
-                          radius: 24,
-                          backgroundColor: const Color(0xFFE8D7D3),
-                          child: Text(
-                            clientName.isNotEmpty ? clientName[0].toUpperCase() : 'C',
-                            style: const TextStyle(fontSize: 16, color: Color(0xFFC89D93), fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                clientName,
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87),
+                        Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 24,
+                              backgroundColor: AppTheme.primaryLight,
+                              child: Text(
+                                clientName.isNotEmpty ? clientName[0].toUpperCase() : 'C',
+                                style: const TextStyle(fontSize: 16, color: AppTheme.primary, fontWeight: FontWeight.bold),
                               ),
-                              const SizedBox(height: 2),
-                              Text(
-                                isInProgress
-                                    ? '⚡ Servicio en Progreso'
-                                    : (_isArrived ? '🟢 Has llegado al destino' : '🚙 En camino al domicilio'),
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: isInProgress
-                                      ? Colors.purple[700]
-                                      : (_isArrived ? Colors.green[700] : Colors.grey),
-                                  fontWeight: isInProgress ? FontWeight.bold : FontWeight.normal,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    clientName,
+                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    isInProgress
+                                        ? '⚡ Servicio en Progreso'
+                                        : (_isArrived ? '🟢 Has llegado al destino' : '🚙 En camino al domicilio'),
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: isInProgress
+                                          ? AppTheme.primary
+                                          : (_isArrived ? AppTheme.success : Colors.grey),
+                                      fontWeight: isInProgress ? FontWeight.bold : FontWeight.normal,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (!_isArrived)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.errorBg,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  '$_minutesRemaining min',
+                                  style: const TextStyle(fontSize: 14, color: AppTheme.error, fontWeight: FontWeight.bold),
                                 ),
                               ),
-                            ],
-                          ),
+                          ],
                         ),
-                        if (!_isArrived)
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFEF2F2),
-                              borderRadius: BorderRadius.circular(20),
+                        Divider(height: 24, color: AppTheme.primary.withValues(alpha: 0.2)),
+                        Row(
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                if (clientId.isNotEmpty) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => ChatScreen(
+                                        partnerId: clientId,
+                                        partnerName: clientName,
+                                        partnerRole: 'client',
+                                        partnerAvatar: '',
+                                      ),
+                                    ),
+                                  );
+                                }
+                              },
+                              child: const CircleAvatar(
+                                radius: 22,
+                                backgroundColor: AppTheme.primary,
+                                child: Icon(Icons.chat_bubble_outline_rounded, color: Colors.white, size: 18),
+                              ),
                             ),
-                            child: Text(
-                              '$_minutesRemaining min',
-                              style: TextStyle(fontSize: 14, color: Colors.red[900], fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                      ],
-                    ),
-                    const Divider(height: 24, color: Color(0xFFF3EAE8)),
-                    Row(
-                      children: [
-                        // Botones rápidos de contacto
-
-                        GestureDetector(
-                          onTap: () {
-                            if (clientId.isNotEmpty) {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => ChatScreen(
-                                    partnerId: clientId,
-                                    partnerName: clientName,
-                                    partnerRole: 'client',
-                                    partnerAvatar: '',
-                                  ),
-                                ),
-                              );
-                            }
-                          },
-                          child: const CircleAvatar(
-                            radius: 22,
-                            backgroundColor: Color(0xFFC89D93),
-                            child: Icon(Icons.chat_bubble_outline_rounded, color: Colors.white, size: 18),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        // Botón Iniciar Servicio
-                        Expanded(
-                          child: isInProgress
-                              ? ElevatedButton(
-                                  onPressed: () => Navigator.pop(context, false),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFFC89D93),
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(vertical: 14),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                                    elevation: 0,
-                                  ),
-                                  child: const Text(
-                                    'Volver al Panel',
-                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                                  ),
-                                )
-                              : _isStartingService
-                                  ? const Center(child: CircularProgressIndicator(color: Color(0xFFC89D93)))
-                                  : ElevatedButton(
-                                      onPressed: _handleStartService,
+                            const SizedBox(width: 16),
+                            // Botón Iniciar Servicio
+                            Expanded(
+                              child: isInProgress
+                                  ? ElevatedButton(
+                                      onPressed: () => Navigator.pop(context, false),
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor: const Color(0xFFC89D93),
+                                        backgroundColor: AppTheme.primary,
                                         foregroundColor: Colors.white,
                                         padding: const EdgeInsets.symmetric(vertical: 14),
                                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                                         elevation: 0,
                                       ),
                                       child: const Text(
-                                        'Iniciar Servicio',
+                                        'Volver al Panel',
                                         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                                       ),
-                                    ),
+                                    )
+                                  : _isStartingService
+                                      ? const Center(child: CircularProgressIndicator(color: AppTheme.primary))
+                                      : ElevatedButton(
+                                          onPressed: _handleStartService,
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: AppTheme.primary,
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.symmetric(vertical: 14),
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                                            elevation: 0,
+                                          ),
+                                          child: const Text(
+                                            'Iniciar Servicio',
+                                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                          ),
+                                        ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -424,3 +466,4 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen> {
     );
   }
 }
+

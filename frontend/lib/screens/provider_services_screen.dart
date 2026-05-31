@@ -70,6 +70,7 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen> with Si
           durationMinutes: duration,
           description: description,
           category: category,
+          isActive: isActive,
         );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -210,23 +211,68 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen> with Si
                           ),
                         ],
                       ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Selección rápida de duración:',
+                        style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w500),
+                      ),
+                      const SizedBox(height: 6),
+                      StatefulBuilder(
+                        builder: (context, setChipState) {
+                          return Wrap(
+                            spacing: 8,
+                            runSpacing: 4,
+                            children: [30, 45, 60, 90, 120].map((mins) {
+                              final labelText = '$mins min';
+                              final isSelected = durationCtrl.text == mins.toString();
+                              return ChoiceChip(
+                                label: Text(labelText),
+                                selected: isSelected,
+                                onSelected: (selected) {
+                                  if (selected) {
+                                    setModalState(() {
+                                      durationCtrl.text = mins.toString();
+                                    });
+                                    setChipState(() {});
+                                  }
+                                },
+                                selectedColor: const Color(0xFFE5CECA),
+                                backgroundColor: const Color(0xFFF5EBE6),
+                                labelStyle: TextStyle(
+                                  color: isSelected ? const Color(0xFFC89D93) : Colors.black87,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              );
+                            }).toList(),
+                          );
+                        }
+                      ),
                       const SizedBox(height: 12),
-                      TextFormField(
-                        controller: categoryCtrl,
-                        decoration: _inputDecoration('Categoría (opcional)', Icons.category_outlined),
-                        style: const TextStyle(fontSize: 14),
+                      DropdownButtonFormField<String>(
+                        value: categoryCtrl.text.trim().isEmpty ? null : (['Cabello', 'Uñas', 'Maquillaje', 'Cuidado de la piel', 'Barbería', 'Otros'].contains(categoryCtrl.text.trim()) ? categoryCtrl.text.trim() : 'Otros'),
+                        style: const TextStyle(color: Colors.black87, fontSize: 14, fontWeight: FontWeight.w500),
+                        decoration: _inputDecoration('Categoría *', Icons.category_outlined),
+                        items: ['Cabello', 'Uñas', 'Maquillaje', 'Cuidado de la piel', 'Barbería', 'Otros']
+                            .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                            .toList(),
+                        onChanged: (v) {
+                          if (v != null) {
+                            categoryCtrl.text = v;
+                          }
+                        },
+                        validator: (v) => v == null || v.isEmpty ? 'Requerido' : null,
                       ),
                       const SizedBox(height: 16),
-                      if (service != null)
-                        SwitchListTile(
-                          title: const Text('Servicio activo'),
-                          subtitle: Text(isActive ? 'Visible para clientes' : 'Oculto para clientes'),
-                          value: isActive,
-                          activeThumbColor: Colors.green,
-                          activeTrackColor: const Color(0xFFDCFCE7),
-                          onChanged: (v) => setModalState(() => isActive = v),
-                          contentPadding: EdgeInsets.zero,
-                        ),
+                      SwitchListTile(
+                        title: const Text('Servicio activo'),
+                        subtitle: Text(isActive ? 'Visible para clientes' : 'Oculto para clientes'),
+                        value: isActive,
+                        activeThumbColor: Colors.green,
+                        activeTrackColor: const Color(0xFFDCFCE7),
+                        onChanged: (v) => setModalState(() => isActive = v),
+                        contentPadding: EdgeInsets.zero,
+                      ),
                       const SizedBox(height: 24),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
@@ -269,7 +315,7 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen> with Si
       labelText: label,
       labelStyle: const TextStyle(color: Colors.grey, fontSize: 13),
       prefixIcon: Icon(icon, color: const Color(0xFFC89D93)),
-      floatingLabelBehavior: FloatingLabelBehavior.never,
+      floatingLabelBehavior: FloatingLabelBehavior.auto,
       filled: true,
       fillColor: const Color(0xFFF5EBE6),
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
@@ -286,18 +332,30 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen> with Si
   }
 
   Future<void> _confirmDelete(ServiceModel service) async {
+    final isCurrentlyActive = service.isActive;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 28),
-            SizedBox(width: 8),
-            Text('¿Desactivar servicio?', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            Icon(
+              isCurrentlyActive ? Icons.warning_amber_rounded : Icons.check_circle_outline_rounded,
+              color: isCurrentlyActive ? Colors.redAccent : Colors.green,
+              size: 28,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              isCurrentlyActive ? '¿Desactivar servicio?' : '¿Activar servicio?',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
           ],
         ),
-        content: Text('¿Estás seguro de que deseas desactivar "${service.name}"? Los clientes no podrán reservarlo, pero el historial de citas se mantendrá.'),
+        content: Text(
+          isCurrentlyActive
+              ? '¿Estás seguro de que deseas desactivar "${service.name}"? Los clientes no podrán reservarlo, pero el historial de citas se mantendrá.'
+              : '¿Estás seguro de que deseas activar "${service.name}"? Los clientes podrán reservarlo nuevamente.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -306,13 +364,16 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen> with Si
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFEE2E2),
-              foregroundColor: const Color(0xFFDC2626),
+              backgroundColor: isCurrentlyActive ? const Color(0xFFFEE2E2) : const Color(0xFFDCFCE7),
+              foregroundColor: isCurrentlyActive ? const Color(0xFFDC2626) : const Color(0xFF16A34A),
               elevation: 0,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             ),
-            child: const Text('Desactivar', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: Text(
+              isCurrentlyActive ? 'Desactivar' : 'Activar',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
@@ -321,16 +382,38 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen> with Si
     if (confirm == true) {
       setState(() => _isLoading = true);
       try {
-        await ApiService.deleteService(service.id);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('✅ Servicio desactivado'), 
-              backgroundColor: const Color(0xFFC89D93),
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            ),
+        if (isCurrentlyActive) {
+          await ApiService.deleteService(service.id);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('✅ Servicio desactivado'), 
+                backgroundColor: const Color(0xFFC89D93),
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              ),
+            );
+          }
+        } else {
+          await ApiService.updateService(
+            id: service.id,
+            name: service.name,
+            price: service.price,
+            durationMinutes: service.durationMinutes,
+            description: service.description,
+            category: service.category,
+            isActive: true,
           );
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('✅ Servicio activado'), 
+                backgroundColor: const Color(0xFFC89D93),
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              ),
+            );
+          }
         }
         _loadServices();
       } catch (e) {
@@ -412,13 +495,41 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen> with Si
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          if (service.category.isNotEmpty) ...[
-                            const SizedBox(height: 2),
-                            Text(
-                              service.category,
-                              style: TextStyle(color: Colors.grey[600], fontSize: 13),
-                            ),
-                          ],
+                          Row(
+                            children: [
+                              if (service.category.isNotEmpty) ...[
+                                Text(
+                                  service.category,
+                                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                                ),
+                                const SizedBox(width: 8),
+                                const Text('•', style: TextStyle(color: Colors.grey)),
+                                const SizedBox(width: 8),
+                              ],
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF5EBE6),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.star, color: Colors.amber, size: 12),
+                                    const SizedBox(width: 2),
+                                    Text(
+                                      '${service.bookingsCount} reservas',
+                                      style: const TextStyle(
+                                        color: Color(0xFFC89D93),
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         ],
                       ),
                     ),

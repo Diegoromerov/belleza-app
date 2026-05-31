@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/api_service.dart';
@@ -14,6 +15,9 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
   bool _isLoading = true;
   String? _error;
   final ImagePicker _picker = ImagePicker();
+
+  String _selectedCategory = 'Todos';
+  final List<String> _filterCategories = ['Todos', 'Cabello', 'Uñas', 'Maquillaje', 'Cuidado de la piel', 'Barbería', 'Otros'];
 
   @override
   void initState() {
@@ -85,7 +89,17 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text('Elige una foto de tus trabajos y descríbela.', style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Image.memory(
+                        bytes,
+                        height: 120,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text('Ponle un título a tu trabajo y elige la categoría.', style: TextStyle(color: Colors.grey[600], fontSize: 13)),
                     const SizedBox(height: 20),
                     TextFormField(
                       controller: titleCtrl,
@@ -93,7 +107,7 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                       decoration: InputDecoration(
                         labelText: 'Título o Descripción *',
                         labelStyle: const TextStyle(color: Colors.grey),
-                        floatingLabelBehavior: FloatingLabelBehavior.never,
+                        floatingLabelBehavior: FloatingLabelBehavior.auto,
                         filled: true,
                         fillColor: const Color(0xFFF5EBE6),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
@@ -110,7 +124,7 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                       decoration: InputDecoration(
                         labelText: 'Categoría',
                         labelStyle: const TextStyle(color: Colors.grey),
-                        floatingLabelBehavior: FloatingLabelBehavior.never,
+                        floatingLabelBehavior: FloatingLabelBehavior.auto,
                         filled: true,
                         fillColor: const Color(0xFFF5EBE6),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
@@ -187,6 +201,150 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('❌ Error al subir: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  Future<void> _editPortfolioItem(Map<String, dynamic> item) async {
+    final id = item['id'] as String;
+    final imageUrl = item['image_url'] as String;
+    final initialTitle = item['title'] as String? ?? '';
+    final initialCategory = item['category'] as String? ?? 'Cabello';
+
+    final result = await showDialog<Map<String, String>>(
+      context: context,
+      builder: (context) {
+        final titleCtrl = TextEditingController(text: initialTitle);
+        String category = initialCategory;
+        final categories = ['Cabello', 'Uñas', 'Maquillaje', 'Cuidado de la piel', 'Barbería', 'Otros'];
+        final formKey = GlobalKey<FormState>();
+
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          title: const Text(
+            'Editar Información',
+            style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, letterSpacing: -0.5),
+          ),
+          content: Form(
+            key: formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Image.network(
+                      imageUrl,
+                      height: 120,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        height: 120,
+                        color: const Color(0xFFF5EBE6),
+                        child: const Icon(Icons.broken_image, color: Colors.grey),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text('Edita el título o categoría de este trabajo.', style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+                  const SizedBox(height: 20),
+                  TextFormField(
+                    controller: titleCtrl,
+                    style: const TextStyle(fontSize: 14),
+                    decoration: InputDecoration(
+                      labelText: 'Título o Descripción *',
+                      labelStyle: const TextStyle(color: Colors.grey),
+                      floatingLabelBehavior: FloatingLabelBehavior.auto,
+                      filled: true,
+                      fillColor: const Color(0xFFF5EBE6),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
+                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: const BorderSide(color: Color(0xFFC89D93), width: 1.5)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    ),
+                    validator: (v) => v == null || v.trim().isEmpty ? 'Ingresa un título' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    value: category,
+                    style: const TextStyle(color: Colors.black87, fontSize: 14, fontWeight: FontWeight.w500),
+                    decoration: InputDecoration(
+                      labelText: 'Categoría',
+                      labelStyle: const TextStyle(color: Colors.grey),
+                      floatingLabelBehavior: FloatingLabelBehavior.auto,
+                      filled: true,
+                      fillColor: const Color(0xFFF5EBE6),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
+                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: const BorderSide(color: Color(0xFFC89D93), width: 1.5)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    ),
+                    items: categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+                    onChanged: (v) {
+                      if (v != null) {
+                        category = v;
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (formKey.currentState!.validate()) {
+                  Navigator.pop(context, {
+                    'title': titleCtrl.text.trim(),
+                    'category': category,
+                  });
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFC89D93),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              ),
+              child: const Text('Guardar', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (result == null) return;
+
+    setState(() => _isLoading = true);
+    try {
+      await ApiService.updatePortfolioItem(
+        id: id,
+        title: result['title'],
+        category: result['category'],
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('✅ Elemento del portafolio actualizado con éxito'),
+            backgroundColor: const Color(0xFFC89D93),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          ),
+        );
+      }
+      _loadPortfolio();
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('❌ Error al actualizar: $e'), backgroundColor: Colors.red),
         );
       }
     }
@@ -290,90 +448,175 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
   }
 
   Widget _buildPortfolioGrid() {
-    return GridView.builder(
-      padding: const EdgeInsets.all(16),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 0.8,
-      ),
-      itemCount: _portfolioItems.length,
-      itemBuilder: (context, index) {
-        final item = _portfolioItems[index];
-        final id = item['id'] as String;
-        final imageUrl = item['image_url'] as String;
-        final title = item['title'] as String? ?? '';
-        final category = item['category'] as String? ?? 'General';
+    final filteredItems = _selectedCategory == 'Todos'
+        ? _portfolioItems
+        : _portfolioItems.where((item) => (item['category'] as String? ?? 'General') == _selectedCategory).toList();
 
-        return Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x0A000000),
-                blurRadius: 16,
-                offset: Offset(0, 4),
-              )
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(24),
-            child: Stack(
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Expanded(
-                      child: Image.network(
-                        imageUrl,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          color: const Color(0xFFF5EBE6),
-                          child: const Icon(Icons.broken_image, color: Colors.grey),
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            title,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            category,
-                            style: const TextStyle(color: Color(0xFFC89D93), fontSize: 11, fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: Material(
-                    color: Colors.black54,
+    return Column(
+      children: [
+        // Category Filter Chips List
+        Container(
+          height: 56,
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: _filterCategories.length,
+            itemBuilder: (context, index) {
+              final cat = _filterCategories[index];
+              final isSelected = _selectedCategory == cat;
+              return Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: FilterChip(
+                  label: Text(cat),
+                  selected: isSelected,
+                  onSelected: (selected) {
+                    setState(() {
+                      _selectedCategory = cat;
+                    });
+                  },
+                  selectedColor: const Color(0xFFE5CECA),
+                  backgroundColor: const Color(0xFFF5EBE6),
+                  checkmarkColor: const Color(0xFFC89D93),
+                  labelStyle: TextStyle(
+                    color: isSelected ? const Color(0xFFC89D93) : Colors.black87,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    fontSize: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
-                    child: IconButton(
-                      icon: const Icon(Icons.delete_outline, color: Colors.white, size: 18),
-                      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-                      onPressed: () => _confirmDelete(id),
-                    ),
+                    side: BorderSide.none,
                   ),
                 ),
-              ],
-            ),
+              );
+            },
           ),
-        );
-      },
+        ),
+        Expanded(
+          child: filteredItems.isEmpty
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Text(
+                      'No hay elementos en la categoría "$_selectedCategory".',
+                      style: const TextStyle(fontSize: 15, color: Colors.grey, fontWeight: FontWeight.w500),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                )
+              : GridView.builder(
+                  padding: const EdgeInsets.all(16),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 0.8,
+                  ),
+                  itemCount: filteredItems.length,
+                  itemBuilder: (context, index) {
+                    final item = filteredItems[index];
+                    final id = item['id'] as String;
+                    final imageUrl = item['image_url'] as String;
+                    final title = item['title'] as String? ?? '';
+                    final category = item['category'] as String? ?? 'General';
+
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x0A000000),
+                            blurRadius: 16,
+                            offset: Offset(0, 4),
+                          )
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(24),
+                        child: Stack(
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Expanded(
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => FullScreenImageViewer(
+                                            imageUrl: imageUrl,
+                                            title: title,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    child: Image.network(
+                                      imageUrl,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) => Container(
+                                        color: const Color(0xFFF5EBE6),
+                                        child: const Icon(Icons.broken_image, color: Colors.grey),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.all(12.0),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        title,
+                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        category,
+                                        style: const TextStyle(color: Color(0xFFC89D93), fontSize: 11, fontWeight: FontWeight.bold),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Positioned(
+                              top: 8,
+                              right: 8,
+                              child: Row(
+                                children: [
+                                  Material(
+                                    color: Colors.black54,
+                                    borderRadius: BorderRadius.circular(20),
+                                    child: IconButton(
+                                      icon: const Icon(Icons.edit_outlined, color: Colors.white, size: 18),
+                                      constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                                      onPressed: () => _editPortfolioItem(item),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Material(
+                                    color: Colors.black54,
+                                    borderRadius: BorderRadius.circular(20),
+                                    child: IconButton(
+                                      icon: const Icon(Icons.delete_outline, color: Colors.white, size: 18),
+                                      constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                                      onPressed: () => _confirmDelete(id),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+        ),
+      ],
     );
   }
 
@@ -436,6 +679,52 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
               child: const Icon(Icons.add_a_photo_outlined),
             )
           : null,
+    );
+  }
+}
+
+class FullScreenImageViewer extends StatelessWidget {
+  final String imageUrl;
+  final String title;
+
+  const FullScreenImageViewer({
+    super.key,
+    required this.imageUrl,
+    required this.title,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: Text(
+          title.isNotEmpty ? title : 'Ver Imagen',
+          style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+      ),
+      body: Center(
+        child: InteractiveViewer(
+          clipBehavior: Clip.none,
+          maxScale: 4.0,
+          child: Image.network(
+            imageUrl,
+            fit: BoxFit.contain,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return const Center(child: CircularProgressIndicator(color: Colors.white));
+            },
+            errorBuilder: (context, error, stackTrace) => const Icon(
+              Icons.broken_image,
+              color: Colors.white54,
+              size: 64,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

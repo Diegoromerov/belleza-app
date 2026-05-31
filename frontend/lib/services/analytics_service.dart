@@ -12,7 +12,9 @@ class AnalyticsService {
   factory AnalyticsService() => _instance;
   AnalyticsService._internal();
 
-  late final String sessionId;
+  String? _sessionId;
+  String get sessionId => _sessionId ??= _generateUUIDv4();
+  set sessionId(String value) => _sessionId = value;
   final List<Map<String, dynamic>> _queue = [];
   Timer? _flushTimer;
   bool _isSending = false;

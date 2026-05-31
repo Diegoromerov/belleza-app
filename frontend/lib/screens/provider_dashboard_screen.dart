@@ -1,12 +1,13 @@
 // frontend/lib/screens/provider_dashboard_screen.dart
 import 'dart:async';
 import '../services/web_geolocation.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'chat_screen.dart';
 import 'provider_route_screen.dart';
 import 'wallet_screen.dart';
+import 'chat_list_screen.dart';
+import 'provider_profile_screen.dart';
 import '../services/api_service.dart';
 import '../services/analytics_service.dart';
 
@@ -22,8 +23,16 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
   bool _loadingProfile = true;
   String? _error;
   bool _isActive = true;
-  double _ratingAvg = 4.8;
+  double? _ratingAvg;
   int _ratingCount = 0;
+
+  // Sprint 2 Navigation State
+  int _currentIndex = 0;
+
+  // Localized loading states
+  final Set<String> _loadingBookings = {};
+  bool _loadingSOS = false;
+  bool _isTogglingStatus = false;
 
   @override
   void initState() {
@@ -70,7 +79,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
       if (mounted) {
         setState(() {
           _isActive = data['is_active'] ?? true;
-          _ratingAvg = double.tryParse(data['rating_avg']?.toString() ?? '') ?? 4.8;
+          _ratingAvg = data['rating_avg'] != null ? double.tryParse(data['rating_avg'].toString()) : null;
           _ratingCount = int.tryParse(data['rating_count']?.toString() ?? '') ?? 0;
           _loadingProfile = false;
         });
@@ -98,7 +107,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
   }
 
   Future<void> _handleStartService(String bookingId) async {
-    setState(() => _loading = true);
+    setState(() => _loadingBookings.add(bookingId));
     try {
       await ApiService.startBooking(bookingId);
       HapticFeedback.mediumImpact();
@@ -122,13 +131,16 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
       _fetchProfile();
     } catch (e) {
       if (mounted) {
-        setState(() => _loading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('❌ Error al iniciar servicio: $e'),
             backgroundColor: Colors.redAccent,
           ),
         );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _loadingBookings.remove(bookingId));
       }
     }
   }
@@ -150,9 +162,8 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
 
   void _showPayoutBreakdownDialog(Map<String, dynamic> booking, {bool immediate = false}) {
     final double gross = double.tryParse(booking['valor_bruto']?.toString() ?? booking['total_amount']?.toString() ?? '0.0') ?? 0.0;
-    final double platformCut = double.tryParse(booking['comision_plataforma']?.toString() ?? booking['platform_commission']?.toString() ?? '0.0') ?? 0.0;
-    final double stateTax = double.tryParse(booking['impuestos_estado']?.toString() ?? booking['state_tax']?.toString() ?? '0.0') ?? 0.0;
-    final double netPayout = double.tryParse(booking['pago_neto_prestador']?.toString() ?? booking['provider_net_amount']?.toString() ?? '0.0') ?? 0.0;
+    final double platformCut = gross * 0.20;
+    final double netPayout = gross * 0.80;
 
     final String nequiAccount = booking['numero_cuenta_nequi'] ?? '+573001112222';
     final String wompiRef = booking['wompi_reference'] ?? 'wompi_ref_${booking['id'].toString().substring(0, 8).toUpperCase()}';
@@ -192,10 +203,8 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
               _breakdownRow('Liquidación Bruta', '\$${gross.toStringAsFixed(0)} COP', isBold: true),
               const SizedBox(height: 8),
               _breakdownRow('Comisión Plataforma (20%)', '-\$${platformCut.toStringAsFixed(0)} COP', color: Colors.red[800]),
-              const SizedBox(height: 4),
-              _breakdownRow('Retenciones del Estado (8%)', '-\$${stateTax.toStringAsFixed(0)} COP', color: Colors.red[800]),
               const Divider(height: 24, color: Color(0xFFE8D7D3)),
-              _breakdownRow('Dispersión Nequi (Neto 72%)', '\$${netPayout.toStringAsFixed(0)} COP', color: Colors.green[800], isBold: true),
+              _breakdownRow('Dispersión Nequi (Neto 80%)', '\$${netPayout.toStringAsFixed(0)} COP', color: Colors.green[800], isBold: true),
               const SizedBox(height: 16),
               Container(
                 padding: const EdgeInsets.all(12),
@@ -268,6 +277,16 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
 
   Widget _buildCardActionButtons(Map<String, dynamic> b) {
     final status = (b['status'] as String? ?? 'pending').toUpperCase();
+    final bookingId = b['id'].toString();
+
+    if (_loadingBookings.contains(bookingId)) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(8.0),
+          child: CircularProgressIndicator(color: Color(0xFFC89D93), strokeWidth: 2),
+        ),
+      );
+    }
 
     if (status == 'CONFIRMED' || status == 'CONFIRMADA' || status == 'CHECKIN_REALIZADO') {
       return Row(
@@ -299,7 +318,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
           const SizedBox(width: 10),
           Expanded(
             child: ElevatedButton.icon(
-              onPressed: () => _handleStartService(b['id'].toString()),
+              onPressed: () => _handleStartService(bookingId),
               icon: const Icon(Icons.play_arrow_outlined, size: 16),
               label: const Text('Iniciar Servicio', style: TextStyle(fontSize: 12.5)),
               style: ElevatedButton.styleFrom(
@@ -376,7 +395,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: () => _handleCompleteService(b['id'].toString()),
+              onPressed: () => _handleCompleteService(bookingId),
               icon: const Icon(Icons.check_circle_outline_rounded, size: 18),
               label: const Text(
                 'Marcar como completado',
@@ -399,20 +418,32 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: const Color(0xFFECFEFF),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(color: const Color(0xFF06B6D4).withOpacity(0.4)),
         ),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Column(
           children: [
-            SizedBox(
-              width: 16, height: 16,
-              child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF06B6D4)),
+            const OtpTimerWidget(),
+            const SizedBox(height: 10),
+            ElevatedButton.icon(
+              onPressed: () => _showSegmentedPinDialog(b),
+              icon: const Icon(Icons.vpn_key_outlined, size: 16),
+              label: const Text('Ingresar Código OTP', style: TextStyle(fontWeight: FontWeight.bold)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF0284C7),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                elevation: 0,
+                minimumSize: const Size(double.infinity, 44),
+              ),
             ),
-            SizedBox(width: 10),
-            Text(
-              'Esperando código del cliente...',
-              style: TextStyle(color: Color(0xFF0E7490), fontWeight: FontWeight.w600, fontSize: 13),
+            const SizedBox(height: 4),
+            TextButton(
+              onPressed: () => _showSupportEscapeDialog(b),
+              child: const Text(
+                'El cliente no puede confirmar / Reportar soporte',
+                style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold),
+              ),
             ),
           ],
         ),
@@ -520,8 +551,72 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
     }
   }
 
-  /// Llama al endpoint que genera OTP y cambia estado a ESPERANDO_OTP
+  void _showSupportEscapeDialog(Map<String, dynamic> b) {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          title: const Row(
+            children: [
+              Icon(Icons.support_agent_outlined, color: Colors.orange),
+              SizedBox(width: 8),
+              Text('Asistencia / Soporte', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            ],
+          ),
+          content: const Text(
+            'Si el cliente no tiene acceso a internet o no puede ver su código OTP en este momento, puedes solicitar la liberación manual del servicio reportando el caso a soporte o abriendo una disputa temporal.',
+            style: TextStyle(fontSize: 13.5, height: 1.4),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF0284C7),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              ),
+              onPressed: () async {
+                navigator.pop(); // Cerrar
+                setState(() => _loadingBookings.add(b['id'].toString()));
+                try {
+                  await ApiService.updateBookingStatus(b['id'].toString(), 'EN_DISPUTA');
+                  _fetchBookings();
+                  if (mounted) {
+                    scaffoldMessenger.showSnackBar(
+                      const SnackBar(
+                        content: Text('⚠️ Se ha reportado el caso. El servicio se encuentra en revisión de soporte.'),
+                        backgroundColor: Colors.orange,
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    scaffoldMessenger.showSnackBar(
+                      SnackBar(content: Text('Error: $e'), backgroundColor: Colors.redAccent),
+                    );
+                  }
+                } finally {
+                  if (mounted) {
+                    setState(() => _loadingBookings.remove(b['id'].toString()));
+                  }
+                }
+              },
+              child: const Text('Reportar Caso a Soporte', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _handleCompleteService(String bookingId) async {
+    setState(() => _loadingBookings.add(bookingId));
     try {
       await ApiService.post('/api/bookings/$bookingId/complete', {});
       if (mounted) {
@@ -543,12 +638,18 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
           ),
         );
       }
+    } finally {
+      if (mounted) {
+        setState(() => _loadingBookings.remove(bookingId));
+      }
     }
   }
 
-
   Future<void> _toggleStatus(bool value) async {
-    setState(() => _isActive = value);
+    setState(() {
+      _isTogglingStatus = true;
+      _isActive = value;
+    });
     try {
       double? lat;
       double? lon;
@@ -583,6 +684,10 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
           ),
         );
       }
+    } finally {
+      if (mounted) {
+        setState(() => _isTogglingStatus = false);
+      }
     }
   }
 
@@ -599,12 +704,76 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
   }
 
   double get _weeklyNetEarnings {
+    final now = DateTime.now();
+    final monday = now.subtract(Duration(days: now.weekday - 1));
+    final startOfWeek = DateTime(monday.year, monday.month, monday.day);
+    final endOfWeek = startOfWeek.add(const Duration(days: 7));
+
     return _bookings.where((b) {
       final st = (b['status'] as String? ?? '').toUpperCase();
-      return st == 'CONFIRMADA' || st == 'COMPLETADA' || st == 'CONFIRMED' || st == 'COMPLETED' || st == 'EN_PROGRESO';
+      final isStatusOk = st == 'CONFIRMADA' || st == 'COMPLETADA' || st == 'CONFIRMED' || st == 'COMPLETED' || st == 'EN_PROGRESO';
+      if (!isStatusOk) return false;
+      try {
+        final date = DateTime.parse(b['scheduled_at']);
+        return date.isAfter(startOfWeek.subtract(const Duration(seconds: 1))) && date.isBefore(endOfWeek);
+      } catch (_) {
+        return false;
+      }
     }).fold(0.0, (sum, b) {
-      return sum + (double.tryParse(b['provider_net_amount']?.toString() ?? '') ?? 0.0);
+      final amountStr = b['pago_neto_prestador']?.toString() ?? b['provider_net_amount']?.toString() ?? '';
+      return sum + (double.tryParse(amountStr) ?? 0.0);
     });
+  }
+
+  double get _lastWeeklyNetEarnings {
+    final now = DateTime.now();
+    final monday = now.subtract(Duration(days: now.weekday - 1));
+    final startOfThisWeek = DateTime(monday.year, monday.month, monday.day);
+    final startOfLastWeek = startOfThisWeek.subtract(const Duration(days: 7));
+    final endOfLastWeek = startOfThisWeek;
+
+    return _bookings.where((b) {
+      final st = (b['status'] as String? ?? '').toUpperCase();
+      final isStatusOk = st == 'CONFIRMADA' || st == 'COMPLETADA' || st == 'CONFIRMED' || st == 'COMPLETED' || st == 'EN_PROGRESO';
+      if (!isStatusOk) return false;
+      try {
+        final date = DateTime.parse(b['scheduled_at']);
+        return date.isAfter(startOfLastWeek.subtract(const Duration(microseconds: 1))) && date.isBefore(endOfLastWeek);
+      } catch (_) {
+        return false;
+      }
+    }).fold(0.0, (sum, b) {
+      final amountStr = b['pago_neto_prestador']?.toString() ?? b['provider_net_amount']?.toString() ?? '';
+      return sum + (double.tryParse(amountStr) ?? 0.0);
+    });
+  }
+
+  String get _weeklyNetEarningsWoWText {
+    final current = _weeklyNetEarnings;
+    final last = _lastWeeklyNetEarnings;
+    if (last == 0) {
+      return current > 0 ? '+100% vs sem. ant.' : 'Estable vs sem. ant.';
+    }
+    final diff = ((current - last) / last) * 100;
+    final sign = diff >= 0 ? '+' : '';
+    return '$sign${diff.toStringAsFixed(0)}% vs sem. ant.';
+  }
+
+  // Highlight next appointment finder
+  Map<String, dynamic>? get _nextBooking {
+    final upcoming = _bookings.where((b) {
+      final st = (b['status'] as String? ?? '').toUpperCase();
+      return st != 'COMPLETED' && st != 'COMPLETADA' && st != 'CANCELLED' && st != 'CANCELADA' && st != 'PENDIENTE_PAGO';
+    }).toList();
+    if (upcoming.isEmpty) return null;
+    upcoming.sort((a, b) {
+      try {
+        return DateTime.parse(a['scheduled_at']).compareTo(DateTime.parse(b['scheduled_at']));
+      } catch (_) {
+        return 0;
+      }
+    });
+    return upcoming.first;
   }
 
   void _showSOSConfirmationDialog() {
@@ -657,7 +826,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               ),
               onPressed: () async {
-                Navigator.pop(context); // Cerrar diálogo primero
+                Navigator.pop(context);
                 await _triggerSOSAlert();
               },
               child: const Row(
@@ -677,7 +846,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
 
   Future<void> _triggerSOSAlert() async {
     setState(() {
-      _loading = true;
+      _loadingSOS = true;
     });
 
     try {
@@ -691,6 +860,16 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
         // Ignorar si no hay citas en progreso
       }
 
+      double lat = 4.6735;
+      double lon = -74.1422;
+      try {
+        final pos = await getWebGeolocation();
+        lat = pos['lat'] ?? 4.6735;
+        lon = pos['lon'] ?? -74.1422;
+      } catch (e) {
+        debugPrint('Error getting real geolocation for SOS: $e');
+      }
+
       // Registrar evento de telemetría de botón SOS presionado por prestador
       AnalyticsService().logEvent(
         eventType: 'SOS_TRIGGERED',
@@ -698,13 +877,10 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
         elementId: 'sos_provider_fab',
         metadata: {
           'booking_id': activeBookingId,
-          'latitude': 4.6735,
-          'longitude': -74.1422,
+          'latitude': lat,
+          'longitude': lon,
         },
       );
-
-      const double lat = 4.6735;
-      const double lon = -74.1422;
 
       final res = await ApiService.triggerSOS(
         bookingId: activeBookingId,
@@ -713,22 +889,21 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
       );
 
       if (!mounted) return;
-      setState(() {
-        _loading = false;
-      });
-
       _showSOSTriggeredSheet(res['message'] ?? 'Alerta enviada correctamente.');
     } catch (e) {
       if (!mounted) return;
-      setState(() {
-        _loading = false;
-      });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('❌ Error al enviar alerta SOS: $e'),
           backgroundColor: Colors.redAccent,
         ),
       );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loadingSOS = false;
+        });
+      }
     }
   }
 
@@ -807,11 +982,699 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
     );
   }
 
+  // Next booking card step visual helpers
+  Widget _buildStepIndicator(int step, String label, bool isActive) {
+    final color = isActive ? const Color(0xFFF43F5E) : Colors.grey[300]!;
+    final textColor = isActive ? const Color(0xFFF43F5E) : Colors.grey[500]!;
+    return Column(
+      children: [
+        Container(
+          width: 28,
+          height: 28,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: isActive ? const Color(0xFFFFE4E6) : Colors.transparent,
+            border: Border.all(color: color, width: 2),
+          ),
+          child: Center(
+            child: Text(
+              step.toString(),
+              style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12),
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(color: textColor, fontSize: 10, fontWeight: FontWeight.bold),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStepLine(bool isActive) {
+    return Expanded(
+      child: Container(
+        height: 2,
+        color: isActive ? const Color(0xFFF43F5E) : Colors.grey[300],
+      ),
+    );
+  }
+
+  String _getStepDescription(int step) {
+    switch (step) {
+      case 1:
+      case 2:
+        return '👉 Paso 1 y 2: Dirígete a la ubicación del cliente e inicia el servicio cuando estés listo para comenzar.';
+      case 3:
+        return '👉 Paso 3: Estás realizando el servicio. Al finalizar, márcalo como completado.';
+      case 4:
+        return '👉 Paso 4: Pídele al cliente el código PIN de 4 dígitos generado en su pantalla para liberar los fondos.';
+      default:
+        return '';
+    }
+  }
+
+  Widget _buildNextBookingActions(Map<String, dynamic> b, int currentStep) {
+    if (currentStep == 1 || currentStep == 2) {
+      return Row(
+        children: [
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: () async {
+                final refresh = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ProviderRouteScreen(booking: b),
+                  ),
+                );
+                if (refresh == true) {
+                  _fetchBookings();
+                  _fetchProfile();
+                }
+              },
+              icon: const Icon(Icons.navigation_outlined, size: 16),
+              label: const Text('Salir hacia allá', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold)),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFFF43F5E),
+                side: const BorderSide(color: Color(0xFFF43F5E), width: 1.5),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: ElevatedButton.icon(
+              onPressed: () => _handleStartService(b['id'].toString()),
+              icon: const Icon(Icons.play_arrow_outlined, size: 16),
+              label: const Text('Empezar servicio', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFF43F5E),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
+          ),
+        ],
+      );
+    } else if (currentStep == 3) {
+      return SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          onPressed: () => _handleCompleteService(b['id'].toString()),
+          icon: const Icon(Icons.check_circle_outline_rounded, size: 18),
+          label: const Text(
+            'Terminé el servicio',
+            style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF16A34A),
+            foregroundColor: Colors.white,
+            elevation: 0,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+            padding: const EdgeInsets.symmetric(vertical: 14),
+          ),
+        ),
+      );
+    } else {
+      // Step 4: OTP
+      return Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () => _showSegmentedPinDialog(b),
+                  icon: const Icon(Icons.vpn_key_outlined, size: 16),
+                  label: const Text('Ingresar Código OTP', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0284C7),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: TextButton.icon(
+                  onPressed: () => _showSupportEscapeDialog(b),
+                  icon: const Icon(Icons.support_agent_outlined, size: 16, color: Colors.grey),
+                  label: const Text(
+                    'El cliente no puede confirmar / Reportar soporte',
+                    style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      );
+    }
+  }
+
+  Widget _buildNextBookingCard(Map<String, dynamic> b) {
+    final date = DateTime.parse(b['scheduled_at']).toLocal();
+    final dayStr = '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}';
+    final hourStr = '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+    final clientInitial = (b['client_name'] ?? '?')[0].toUpperCase();
+    final status = (b['status'] as String? ?? 'pending').toUpperCase();
+
+    int currentStep = 1;
+    if (status == 'EN_PROGRESO') {
+      currentStep = 3;
+    } else if (status == 'ESPERANDO_OTP' || status == 'FINALIZADA_PRESTADOR') {
+      currentStep = 4;
+    }
+
+    final bool isLoading = _loadingBookings.contains(b['id'].toString());
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 24),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFFFF1F2), Color(0xFFFFF5F5)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: const Color(0xFFFECDD3), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFE11D48).withOpacity(0.06),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: const BoxDecoration(
+              color: Color(0xFFF43F5E),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(26),
+                topRight: Radius.circular(26),
+              ),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.star_rounded, color: Colors.white, size: 18),
+                const SizedBox(width: 6),
+                const Text(
+                  'PRÓXIMA CITA',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 1),
+                ),
+                const Spacer(),
+                Text(
+                  '$dayStr - $hourStr',
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 22,
+                      backgroundColor: const Color(0xFFFFE4E6),
+                      child: Text(
+                        clientInitial,
+                        style: const TextStyle(color: Color(0xFFE11D48), fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            b['client_name'] ?? 'Cliente',
+                            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.black87),
+                          ),
+                          Text(
+                            'Servicio: ${b['service_name']}',
+                            style: const TextStyle(fontSize: 13, color: Colors.grey, fontWeight: FontWeight.w500),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      '\$${(double.tryParse(b['total_amount']?.toString() ?? '') ?? 0.0).toStringAsFixed(0)}',
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFFE11D48)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                const Divider(color: Color(0xFFFFE4E6), height: 1),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildStepIndicator(1, "Ruta", currentStep >= 1),
+                    _buildStepLine(currentStep >= 2),
+                    _buildStepIndicator(2, "Iniciar", currentStep >= 2),
+                    _buildStepLine(currentStep >= 3),
+                    _buildStepIndicator(3, "Terminar", currentStep >= 3),
+                    _buildStepLine(currentStep >= 4),
+                    _buildStepIndicator(4, "OTP", currentStep >= 4),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  _getStepDescription(currentStep),
+                  style: const TextStyle(fontSize: 13, fontStyle: FontStyle.italic, color: Colors.black87),
+                ),
+                const SizedBox(height: 16),
+                if (isLoading)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: CircularProgressIndicator(color: Color(0xFFF43F5E)),
+                    ),
+                  )
+                else
+                  _buildNextBookingActions(b, currentStep),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDashboardHome() {
+    final next = _nextBooking;
+
+    return RefreshIndicator(
+      onRefresh: () async {
+        await _fetchBookings();
+        await _fetchProfile();
+      },
+      color: const Color(0xFFC89D93),
+      child: ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        children: [
+          // Hero section with gradient background
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFFDF4F2), Color(0xFFF5EBE6)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(color: const Color(0xFFE8D7D3).withOpacity(0.5), width: 1.5),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Tu Resumen en Fontibón',
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, letterSpacing: -0.5),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Gestiona tus citas y chatea con tus clientes en tiempo real, vecino.',
+                  style: TextStyle(fontSize: 13.5, color: Colors.grey),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _analyticsCard(
+                        'Citas Hoy',
+                        _todayBookingsCount.toString(),
+                        Icons.today_rounded,
+                        const Color(0xFFC89D93),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _analyticsCardWithTween(
+                        'Ganancia Net',
+                        _weeklyNetEarnings,
+                        Icons.account_balance_wallet_outlined,
+                        const Color(0xFF16A34A),
+                        subtitle: _weeklyNetEarningsWoWText,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _analyticsCard(
+                        'Valoración',
+                        _ratingAvg != null ? _ratingAvg!.toStringAsFixed(1) : "--",
+                        Icons.star_rounded,
+                        const Color(0xFFD97706),
+                        subtitle: '$_ratingCount reseñas',
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 28),
+
+          // ─── Prominent Next Booking Card ────────────────────────
+          if (next != null) ...[
+            _buildNextBookingCard(next),
+          ],
+
+          // ─── Banner acceso rápido al Wallet ────────────────────────
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                _currentIndex = 2; // Switch to Wallet Tab
+              });
+            },
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF6B21A8), Color(0xFF9333EA)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF6B21A8).withOpacity(0.35),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.account_balance_wallet, color: Colors.white, size: 26),
+                  ),
+                  const SizedBox(width: 14),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Mi Wallet', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                        Text('Ver saldo, retiros e historial', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.arrow_forward_ios, color: Colors.white70, size: 16),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 28),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Servicios Activos Recientes',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: -0.5),
+              ),
+              Text(
+                '${_bookings.length} en total',
+                style: const TextStyle(fontSize: 13, color: Colors.grey, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          _buildAgendaList(limitToRecent: true, excludeBookingId: next?['id']?.toString()),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAgendaList({bool limitToRecent = false, String? excludeBookingId}) {
+    var filtered = _bookings;
+    if (excludeBookingId != null) {
+      filtered = filtered.where((b) => b['id']?.toString() != excludeBookingId).toList();
+    }
+
+    if (limitToRecent && filtered.length > 3) {
+      filtered = filtered.sublist(0, 3);
+    }
+
+    if (filtered.isEmpty) {
+      return Container(
+        height: 150,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: Colors.grey[50],
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.grey[200]!),
+        ),
+        child: const Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.calendar_today_outlined, color: Colors.grey, size: 36),
+            SizedBox(height: 12),
+            Text(
+              'No hay citas agendadas disponibles.',
+              style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w500),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      children: filtered.map((b) {
+        final date = DateTime.parse(b['scheduled_at']).toLocal();
+        final dayStr = '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}';
+        final hourStr = '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+        final clientInitial = (b['client_name'] ?? '?')[0].toUpperCase();
+        final cardStatus = (b['status'] as String? ?? '').toUpperCase();
+
+        return Stack(
+          children: [
+            GestureDetector(
+              onTap: (cardStatus == 'COMPLETADA' || cardStatus == 'COMPLETED')
+                  ? () => _showPayoutBreakdownDialog(b)
+                  : null,
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: const Color(0xFFF3EAE8), width: 1),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x05000000),
+                      blurRadius: 10,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 20,
+                            backgroundColor: const Color(0xFFF5EBE6),
+                            child: Text(
+                              clientInitial,
+                              style: const TextStyle(color: Color(0xFFC89D93), fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  b['client_name'] ?? 'Cliente',
+                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                ),
+                                const Text(
+                                  'Contacto seguro vía Chat',
+                                  style: TextStyle(fontSize: 12, color: Color(0xFFC89D93), fontWeight: FontWeight.w500),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: _statusBgColor(b['status']),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              _statusText(b['status']).toUpperCase(),
+                              style: TextStyle(
+                                color: _statusColor(b['status']),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 10,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Divider(height: 24, color: Color(0xFFF3F4F6)),
+                      Row(
+                        children: [
+                          const Icon(Icons.spa_outlined, size: 16, color: Colors.grey),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              'Servicio: ${b['service_name']}',
+                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                            ),
+                          ),
+                          Text(
+                            '\$${(double.tryParse(b['total_amount']?.toString() ?? '') ?? 0.0).toStringAsFixed(0)}',
+                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFFC89D93)),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Icon(Icons.access_time_outlined, size: 16, color: Colors.grey),
+                          const SizedBox(width: 6),
+                          Text(
+                            '$dayStr a las $hourStr',
+                            style: const TextStyle(fontSize: 14, color: Colors.black87),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Icon(Icons.location_on_outlined, size: 16, color: Colors.grey),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              (b['service_address']?.toString().isNotEmpty ?? false)
+                                  ? 'Dirección: ${b['service_address']}'
+                                  : 'Dirección pendiente por confirmar',
+                              style: const TextStyle(fontSize: 13, color: Colors.grey),
+                            ),
+                          ),
+                          if ((b['service_address']?.toString().isNotEmpty ?? false) &&
+                              cardStatus != 'COMPLETADA' &&
+                              cardStatus != 'COMPLETED' &&
+                              cardStatus != 'CANCELADA' &&
+                              cardStatus != 'CANCELLED' &&
+                              cardStatus != 'PENDIENTE_PAGO') ...[
+                            const SizedBox(width: 6),
+                            GestureDetector(
+                              onTap: () async {
+                                final refresh = await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => ProviderRouteScreen(booking: b),
+                                  ),
+                                );
+                                if (refresh == true) {
+                                  _fetchBookings();
+                                  _fetchProfile();
+                                }
+                              },
+                              child: const Icon(
+                                Icons.map_outlined,
+                                color: Color(0xFFC89D93),
+                                size: 20,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      _buildCardActionButtons(b),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            if (cardStatus == 'PENDIENTE_PAGO')
+              Positioned.fill(
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.85),
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Center(
+                    child: Card(
+                      color: Colors.white,
+                      elevation: 4,
+                      shadowColor: const Color(0x1F000000),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                        side: const BorderSide(color: Color(0xFFFEF3C7), width: 1.5),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.lock_clock_outlined, color: Color(0xFFD97706), size: 36),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Pago en Verificación',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.black87),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Esperando confirmación de la pasarela Wompi...',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        );
+      }).toList(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (_loading || _loadingProfile) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator(color: Color(0xFFC89D93))));
+    final isPageLoading = (_bookings.isEmpty && _loading) || _loadingProfile;
+    if (isPageLoading) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(color: Color(0xFFC89D93)),
+        ),
+      );
     }
+
     if (_error != null && _bookings.isEmpty) {
       return Scaffold(
         appBar: AppBar(title: const Text('Panel de Prestador')),
@@ -834,446 +1697,144 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
       );
     }
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text(
-          'Belleza Pro',
-          style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5, fontSize: 18),
-        ),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
-        centerTitle: false,
-        actions: [
-          Row(
+    // Switch body based on current BottomNavigationBar index
+    Widget bodyWidget;
+    switch (_currentIndex) {
+      case 0:
+        bodyWidget = _buildDashboardHome();
+        break;
+      case 1:
+        bodyWidget = RefreshIndicator(
+          onRefresh: () async {
+            await _fetchBookings();
+            await _fetchProfile();
+          },
+          color: const Color(0xFFC89D93),
+          child: ListView(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             children: [
-              Text(
-                _isActive ? 'En Línea' : 'Fuera de Línea',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: _isActive ? const Color(0xFF16A34A) : Colors.grey,
-                ),
-              ),
-              const SizedBox(width: 4),
-              Switch(
-                value: _isActive,
-                onChanged: _toggleStatus,
-                activeThumbColor: const Color(0xFF16A34A),
-                activeTrackColor: const Color(0xFFDCFCE7),
-                inactiveThumbColor: Colors.grey[400],
-                inactiveTrackColor: Colors.grey[200],
-              ),
-            ],
-          ),
-          const SizedBox(width: 8),
-          IconButton(
-            icon: const Icon(Icons.inventory_2_outlined),
-            tooltip: 'Gestionar Servicios',
-            onPressed: () => Navigator.pushNamed(context, '/provider/services'),
-          ),
-          IconButton(
-            icon: const Icon(Icons.photo_library_outlined),
-            tooltip: 'Mi Portafolio',
-            onPressed: () => Navigator.pushNamed(context, '/provider/portfolio'),
-          ),
-          IconButton(
-            icon: const Icon(Icons.chat_bubble_outline_rounded),
-            tooltip: 'Mensajes',
-            onPressed: () => Navigator.pushNamed(context, '/chat'),
-          ),
-          IconButton(
-            icon: const Icon(Icons.person_outline_rounded),
-            tooltip: 'Mi Perfil',
-            onPressed: () async {
-              final refresh = await Navigator.pushNamed(context, '/provider/profile');
-              if (refresh == true) {
-                _fetchBookings();
-                _fetchProfile();
-              }
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              _fetchBookings();
-              _fetchProfile();
-            },
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          await _fetchBookings();
-          await _fetchProfile();
-        },
-        color: const Color(0xFFC89D93),
-        child: ListView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          children: [
-            // Hero section with gradient background
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFFDF4F2), Color(0xFFF5EBE6)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(28),
-                border: Border.all(color: const Color(0xFFE8D7D3).withOpacity(0.5), width: 1.5),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
-                    'Tu Resumen en Fontibón',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, letterSpacing: -0.5),
+                    'Agenda Completa',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: -0.5),
                   ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Gestiona tus citas y chatea con tus clientes en tiempo real, vecino.',
-                    style: TextStyle(fontSize: 13.5, color: Colors.grey),
-                  ),
-                  const SizedBox(height: 20),
-                  // Analytics Cards Row
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _analyticsCard(
-                          'Citas Hoy',
-                          _todayBookingsCount.toString(),
-                          Icons.today_rounded,
-                          const Color(0xFFC89D93),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _analyticsCardWithTween(
-                          'Ganancia Net',
-                          _weeklyNetEarnings,
-                          Icons.account_balance_wallet_outlined,
-                          const Color(0xFF16A34A),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _analyticsCard(
-                          'Valoración',
-                          _ratingAvg.toStringAsFixed(1),
-                          Icons.star_rounded,
-                          const Color(0xFFD97706),
-                          subtitle: '$_ratingCount reseñas',
-                        ),
-                      ),
-                    ],
+                  Text(
+                    '${_bookings.length} servicios',
+                    style: const TextStyle(fontSize: 13, color: Colors.grey, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 28),
+              const SizedBox(height: 16),
+              _buildAgendaList(limitToRecent: false),
+            ],
+          ),
+        );
+        break;
+      case 2:
+        bodyWidget = const WalletScreen(isEmbedded: true);
+        break;
+      case 3:
+        bodyWidget = const ChatListScreen();
+        break;
+      case 4:
+        bodyWidget = const ProviderProfileScreen(isEmbedded: true);
+        break;
+      default:
+        bodyWidget = _buildDashboardHome();
+    }
 
-            // ─── Banner acceso rápido al Wallet ────────────────────────
-            GestureDetector(
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const WalletScreen()),
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: _currentIndex >= 2
+          ? null
+          : AppBar(
+              title: Text(
+                _currentIndex == 0 ? 'Belleza Pro' : 'Mi Agenda',
+                style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5, fontSize: 18),
               ),
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF6B21A8), Color(0xFF9333EA)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.black,
+              elevation: 0,
+              centerTitle: false,
+              actions: [
+                if (_currentIndex == 0) ...[
+                  PulsingStatusChip(
+                    isActive: _isActive,
+                    isToggling: _isTogglingStatus,
+                    onChanged: _toggleStatus,
                   ),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF6B21A8).withOpacity(0.35),
-                      blurRadius: 16, offset: const Offset(0, 6),
-                    ),
-                  ],
+                  const SizedBox(width: 8),
+                ],
+                IconButton(
+                  icon: const Icon(Icons.refresh),
+                  onPressed: () {
+                    _fetchBookings();
+                    _fetchProfile();
+                  },
                 ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 48, height: 48,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(Icons.account_balance_wallet, color: Colors.white, size: 26),
-                    ),
-                    const SizedBox(width: 14),
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Mi Wallet', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                          Text('Ver saldo, retiros e historial', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                        ],
-                      ),
-                    ),
-                    const Icon(Icons.arrow_forward_ios, color: Colors.white70, size: 16),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 28),
-
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Agenda de Clientes',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: -0.5),
-                ),
-                Text(
-                  '${_bookings.length} servicios',
-                  style: const TextStyle(fontSize: 13, color: Colors.grey, fontWeight: FontWeight.bold),
-                ),
+                const SizedBox(width: 8),
               ],
             ),
-            const SizedBox(height: 12),
-
-            if (_bookings.isEmpty)
-              Container(
-                height: 200,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: Colors.grey[50],
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: Colors.grey[200]!),
-                ),
-                child: const Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.calendar_today_outlined, color: Colors.grey, size: 40),
-                    SizedBox(height: 12),
-                    Text(
-                      'No tienes citas agendadas aún.',
-                      style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w500),
-                    ),
-                  ],
-                ),
-              )
-            else
-              ..._bookings.map((b) {
-                final date = DateTime.parse(b['scheduled_at']).toLocal();
-                final dayStr = '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}';
-                final hourStr = '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
-                final clientInitial = (b['client_name'] ?? '?')[0].toUpperCase();
-                final cardStatus = (b['status'] as String? ?? '').toUpperCase();
-
-                return Stack(
-                  children: [
-                    // Main Appointment Card
-                    GestureDetector(
-                      onTap: (cardStatus == 'COMPLETADA' || cardStatus == 'COMPLETED')
-                          ? () => _showPayoutBreakdownDialog(b)
-                          : null,
-                      child: Container(
-                        margin: const EdgeInsets.only(bottom: 16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(24),
-                          border: Border.all(color: const Color(0xFFF3EAE8), width: 1),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color(0x05000000),
-                              blurRadius: 10,
-                              offset: Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  CircleAvatar(
-                                    radius: 20,
-                                    backgroundColor: const Color(0xFFF5EBE6),
-                                    child: Text(
-                                      clientInitial,
-                                      style: const TextStyle(color: Color(0xFFC89D93), fontWeight: FontWeight.bold),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          b['client_name'] ?? 'Cliente',
-                                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                                        ),
-                                        const Text(
-                                          'Contacto seguro vía Chat',
-                                          style: TextStyle(fontSize: 12, color: Color(0xFFC89D93), fontWeight: FontWeight.w500),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  // Status Badge
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                    decoration: BoxDecoration(
-                                      color: _statusBgColor(b['status']),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Text(
-                                      _statusText(b['status']).toUpperCase(),
-                                      style: TextStyle(
-                                        color: _statusColor(b['status']),
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 10,
-                                        letterSpacing: 0.5,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const Divider(height: 24, color: Color(0xFFF3F4F6)),
-                              Row(
-                                children: [
-                                  const Icon(Icons.spa_outlined, size: 16, color: Colors.grey),
-                                  const SizedBox(width: 6),
-                                  Expanded(
-                                    child: Text(
-                                      'Servicio: ${b['service_name']}',
-                                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                                    ),
-                                  ),
-                                  Text(
-                                    '\$${(double.tryParse(b['total_amount']?.toString() ?? '') ?? 0.0).toStringAsFixed(0)}',
-                                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFFC89D93)),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  const Icon(Icons.access_time_outlined, size: 16, color: Colors.grey),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    '$dayStr a las $hourStr',
-                                    style: const TextStyle(fontSize: 14, color: Colors.black87),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  const Icon(Icons.location_on_outlined, size: 16, color: Colors.grey),
-                                  const SizedBox(width: 6),
-                                  Expanded(
-                                    child: Text(
-                                      (b['service_address']?.toString().isNotEmpty ?? false)
-                                          ? 'Dirección: ${b['service_address']}'
-                                          : 'Dirección pendiente por confirmar',
-                                      style: const TextStyle(fontSize: 13, color: Colors.grey),
-                                    ),
-                                  ),
-                                  if ((b['service_address']?.toString().isNotEmpty ?? false) &&
-                                      cardStatus != 'COMPLETADA' &&
-                                      cardStatus != 'COMPLETED' &&
-                                      cardStatus != 'CANCELADA' &&
-                                      cardStatus != 'CANCELLED' &&
-                                      cardStatus != 'PENDIENTE_PAGO') ...[
-                                    const SizedBox(width: 6),
-                                    GestureDetector(
-                                      onTap: () async {
-                                        final refresh = await Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) => ProviderRouteScreen(booking: b),
-                                          ),
-                                        );
-                                        if (refresh == true) {
-                                          _fetchBookings();
-                                          _fetchProfile();
-                                        }
-                                      },
-                                      child: const Icon(
-                                        Icons.map_outlined,
-                                        color: Color(0xFFC89D93),
-                                        size: 20,
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                              const SizedBox(height: 16),
-                              _buildCardActionButtons(b),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    
-                    // Glassmorphic Locked Overlay for PENDIENTE_PAGO
-                    if (cardStatus == 'PENDIENTE_PAGO')
-                      Positioned.fill(
-                        child: Container(
-                          margin: const EdgeInsets.only(bottom: 16),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.85),
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                          child: Center(
-                            child: Card(
-                              color: Colors.white,
-                              elevation: 4,
-                              shadowColor: const Color(0x1F000000),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
-                                side: const BorderSide(color: Color(0xFFFEF3C7), width: 1.5),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.lock_clock_outlined, color: Color(0xFFD97706), size: 36),
-                                    const SizedBox(height: 8),
-                                    const Text(
-                                      'Pago en Verificación',
-                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.black87),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'Esperando confirmación de la pasarela Wompi...',
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                );
-              }),
-            const SizedBox(height: 40),
-          ],
-        ),
-      ),
+      body: bodyWidget,
       floatingActionButton: FloatingActionButton(
         heroTag: 'sos_provider_fab',
-        onPressed: _showSOSConfirmationDialog,
+        onPressed: _loadingSOS ? null : _showSOSConfirmationDialog,
         backgroundColor: const Color(0xFFDC2626),
         foregroundColor: Colors.white,
         elevation: 4,
         shape: const CircleBorder(),
-        child: const Icon(Icons.emergency_outlined, size: 28),
+        child: _loadingSOS
+            ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
+              )
+            : const Icon(Icons.emergency_outlined, size: 28),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: const Color(0xFFC89D93),
+        unselectedItemColor: Colors.grey[500],
+        backgroundColor: Colors.white,
+        elevation: 8,
+        selectedFontSize: 11.5,
+        unselectedFontSize: 11,
+        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_outlined),
+            activeIcon: Icon(Icons.home),
+            label: 'Inicio',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.calendar_month_outlined),
+            activeIcon: Icon(Icons.calendar_month),
+            label: 'Agenda',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.account_balance_wallet_outlined),
+            activeIcon: Icon(Icons.account_balance_wallet),
+            label: 'Wallet',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.chat_bubble_outline),
+            activeIcon: Icon(Icons.chat_bubble),
+            label: 'Chat',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            activeIcon: Icon(Icons.person),
+            label: 'Perfil',
+          ),
+        ],
       ),
     );
   }
@@ -1310,7 +1871,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
             const SizedBox(height: 2),
             Text(
               subtitle,
-              style: TextStyle(fontSize: 9, color: Colors.grey[400], fontWeight: FontWeight.w500),
+              style: TextStyle(fontSize: 9, color: Colors.grey[450], fontWeight: FontWeight.bold),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -1320,7 +1881,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
     );
   }
 
-  Widget _analyticsCardWithTween(String label, double targetValue, IconData icon, Color color) {
+  Widget _analyticsCardWithTween(String label, double targetValue, IconData icon, Color color, {String? subtitle}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
       decoration: BoxDecoration(
@@ -1355,6 +1916,15 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
+          if (subtitle != null) ...[
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              style: TextStyle(fontSize: 9, color: Colors.grey[450], fontWeight: FontWeight.bold),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
         ],
       ),
     );
@@ -1364,22 +1934,23 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
     final s = (status?.toString() ?? '').toUpperCase();
     switch (s) {
       case 'PENDING':
-      case 'PENDIENTE_PAGO': 
+      case 'PENDIENTE_PAGO':
         return const Color(0xFFD97706);
       case 'CONFIRMED':
-      case 'CONFIRMADA': 
+      case 'CONFIRMADA':
         return const Color(0xFF2563EB);
-      case 'EN_PROGRESO': 
+      case 'EN_PROGRESO':
         return const Color(0xFF8B5CF6);
-      case 'FINALIZADA_PRESTADOR': 
+      case 'FINALIZADA_PRESTADOR':
         return const Color(0xFF06B6D4);
       case 'COMPLETED':
-      case 'COMPLETADA': 
+      case 'COMPLETADA':
         return const Color(0xFF16A34A);
       case 'CANCELLED':
-      case 'CANCELADA': 
+      case 'CANCELADA':
         return const Color(0xFFDC2626);
-      default: return Colors.grey;
+      default:
+        return Colors.grey;
     }
   }
 
@@ -1387,22 +1958,23 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
     final s = (status?.toString() ?? '').toUpperCase();
     switch (s) {
       case 'PENDING':
-      case 'PENDIENTE_PAGO': 
+      case 'PENDIENTE_PAGO':
         return const Color(0xFFFEF3C7);
       case 'CONFIRMED':
-      case 'CONFIRMADA': 
+      case 'CONFIRMADA':
         return const Color(0xFFDBEAFE);
-      case 'EN_PROGRESO': 
+      case 'EN_PROGRESO':
         return const Color(0xFFEDE9FE);
-      case 'FINALIZADA_PRESTADOR': 
+      case 'FINALIZADA_PRESTADOR':
         return const Color(0xFFECFEFF);
       case 'COMPLETED':
-      case 'COMPLETADA': 
+      case 'COMPLETADA':
         return const Color(0xFFDCFCE7);
       case 'CANCELLED':
-      case 'CANCELADA': 
+      case 'CANCELADA':
         return const Color(0xFFFEE2E2);
-      default: return const Color(0xFFF3F4F6);
+      default:
+        return const Color(0xFFF3F4F6);
     }
   }
 
@@ -1410,27 +1982,177 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
     final s = (status?.toString() ?? '').toUpperCase();
     switch (s) {
       case 'PENDING':
-      case 'PENDIENTE_PAGO': 
+      case 'PENDIENTE_PAGO':
         return 'Pendiente Pago';
       case 'CONFIRMED':
-      case 'CONFIRMADA': 
+      case 'CONFIRMADA':
         return 'Confirmada';
-      case 'EN_PROGRESO': 
+      case 'EN_PROGRESO':
         return 'En Progreso';
-      case 'FINALIZADA_PRESTADOR': 
+      case 'FINALIZADA_PRESTADOR':
         return 'Finalizada';
       case 'COMPLETED':
-      case 'COMPLETADA': 
+      case 'COMPLETADA':
         return 'Completada';
       case 'CANCELLED':
-      case 'CANCELADA': 
+      case 'CANCELADA':
         return 'Cancelada';
-      default: return status?.toString() ?? '';
+      default:
+        return status?.toString() ?? '';
     }
   }
 }
 
-// Custom Segemented Pin Input Dialog
+// Pulsing chip state widget
+class PulsingStatusChip extends StatefulWidget {
+  final bool isActive;
+  final bool isToggling;
+  final ValueChanged<bool> onChanged;
+
+  const PulsingStatusChip({
+    super.key,
+    required this.isActive,
+    required this.isToggling,
+    required this.onChanged,
+  });
+
+  @override
+  State<PulsingStatusChip> createState() => _PulsingStatusChipState();
+}
+
+class _PulsingStatusChipState extends State<PulsingStatusChip> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: widget.isToggling ? null : () => widget.onChanged(!widget.isActive),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: widget.isActive ? const Color(0xFFDCFCE7) : Colors.grey[200],
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: widget.isActive ? const Color(0xFF86EFAC) : Colors.grey[300]!,
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (widget.isToggling)
+              const SizedBox(
+                width: 8,
+                height: 8,
+                child: CircularProgressIndicator(strokeWidth: 1.5, color: Color(0xFF16A34A)),
+              )
+            else if (widget.isActive)
+              ScaleTransition(
+                scale: Tween<double>(begin: 0.8, end: 1.2).animate(
+                  CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+                ),
+                child: Container(
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Color(0xFF16A34A),
+                  ),
+                ),
+              )
+            else
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.grey[600],
+                ),
+              ),
+            const SizedBox(width: 6),
+            Text(
+              widget.isActive ? 'En Línea' : 'Fuera de Línea',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: widget.isActive ? const Color(0xFF15803D) : Colors.grey[700],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// OTP Timer Widget
+class OtpTimerWidget extends StatefulWidget {
+  const OtpTimerWidget({super.key});
+
+  @override
+  State<OtpTimerWidget> createState() => _OtpTimerWidgetState();
+}
+
+class _OtpTimerWidgetState extends State<OtpTimerWidget> {
+  int _secondsLeft = 300; // 5 minutes
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_secondsLeft > 0) {
+        if (mounted) {
+          setState(() {
+            _secondsLeft--;
+          });
+        }
+      } else {
+        _timer?.cancel();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final minutes = (_secondsLeft ~/ 60).toString().padLeft(2, '0');
+    final seconds = (_secondsLeft % 60).toString().padLeft(2, '0');
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Icon(Icons.timer_outlined, size: 14, color: Colors.orange),
+        const SizedBox(width: 6),
+        Text(
+          'Tiempo sugerido de confirmación: $minutes:$seconds',
+          style: const TextStyle(fontSize: 12, color: Colors.orange, fontWeight: FontWeight.bold),
+        ),
+      ],
+    );
+  }
+}
+
+// Segmented Pin Input Dialog
 class SegmentedPinDialog extends StatefulWidget {
   final Map<String, dynamic> booking;
   final Function(Map<String, dynamic>) onSuccess;
@@ -1472,26 +2194,23 @@ class _SegmentedPinDialogState extends State<SegmentedPinDialog> {
     });
 
     try {
-      // Capturar geolocalización en tiempo real
       double providerLat = 4.6735;
       double providerLon = -74.1422;
       double clientLat = 4.6735;
       double clientLon = -74.1422;
 
-      if (kIsWeb) {
-        try {
-          final pos = await getWebGeolocation();
-          providerLat = pos['lat']!;
-          providerLon = pos['lon']!;
-          clientLat = providerLat;
-          clientLon = providerLon;
-        } catch (e) {
-          debugPrint('Error obteniendo geolocalización web: $e');
-        }
+      try {
+        final pos = await getWebGeolocation();
+        providerLat = pos['lat']!;
+        providerLon = pos['lon']!;
+        clientLat = providerLat;
+        clientLon = providerLon;
+      } catch (e) {
+        debugPrint('Error obteniendo geolocalización: $e');
       }
 
       final res = await ApiService.completeBooking(
-        widget.booking['id'].toString(), 
+        widget.booking['id'].toString(),
         pin,
         providerLat: providerLat,
         providerLon: providerLon,
@@ -1500,7 +2219,7 @@ class _SegmentedPinDialogState extends State<SegmentedPinDialog> {
       );
       HapticFeedback.mediumImpact();
       if (mounted) {
-        Navigator.pop(context); // Close dialog
+        Navigator.pop(context);
         widget.onSuccess(res);
       }
     } catch (e) {
@@ -1509,7 +2228,6 @@ class _SegmentedPinDialogState extends State<SegmentedPinDialog> {
         setState(() {
           _isSubmitting = false;
           _error = e.toString().replaceAll('Exception:', '');
-          // Reset fields on error
           for (var c in _controllers) {
             c.clear();
           }
@@ -1569,7 +2287,6 @@ class _SegmentedPinDialogState extends State<SegmentedPinDialog> {
                       if (index < 3) {
                         _focusNodes[index + 1].requestFocus();
                       } else {
-                        // Segmented auto-submit
                         _submitPin();
                       }
                     } else if (val.isEmpty && index > 0) {

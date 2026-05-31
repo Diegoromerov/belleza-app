@@ -54,6 +54,15 @@ async function requirePrestador(req, res) {
   return true;
 }
 
+async function requireAdmin(req, res) {
+  const { rows } = await pool.query('SELECT rol, email FROM usuarios WHERE id = $1', [req.user.id]);
+  if (!rows.length || (rows[0].rol !== 'ADMIN' && rows[0].email !== 'admin@beautyapp.com' && rows[0].email !== 'admin')) {
+    res.status(403).json({ error: 'Solo administradores pueden realizar esta acción.' });
+    return false;
+  }
+  return true;
+}
+
 // ─── CHECK-IN GPS ────────────────────────────────────────────────────────────
 
 /**
@@ -860,7 +869,7 @@ router.post('/disputes', authMiddleware, async (req, res) => {
  * Métricas financieras del día y alertas.
  */
 router.get('/admin/dashboard', authMiddleware, async (req, res) => {
-  // TODO: Agregar middleware de rol ADMIN
+  if (!await requireAdmin(req, res)) return;
   try {
     const [financiero, disputas, alertas] = await Promise.all([
       pool.query(`
@@ -906,6 +915,7 @@ router.get('/admin/dashboard', authMiddleware, async (req, res) => {
  * GET /api/admin/disputes
  */
 router.get('/admin/disputes', authMiddleware, async (req, res) => {
+  if (!await requireAdmin(req, res)) return;
   const estado = req.query.estado || 'ABIERTA';
   const page = parseInt(req.query.page) || 1;
   const limit = Math.min(parseInt(req.query.limit) || 20, 50);
@@ -946,6 +956,7 @@ router.get('/admin/disputes', authMiddleware, async (req, res) => {
  * PUT /api/admin/disputes/:id/resolve
  */
 router.put('/admin/disputes/:id/resolve', authMiddleware, async (req, res) => {
+  if (!await requireAdmin(req, res)) return;
   const { id } = req.params;
   const { resolucion, porcentaje_prestador, nota_resolucion } = req.body;
 

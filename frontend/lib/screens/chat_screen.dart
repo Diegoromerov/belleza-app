@@ -2,8 +2,11 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
+import 'booking_screen.dart';
+import 'provider_detail_screen.dart';
 
 class ChatScreen extends StatefulWidget {
   final String partnerId;
@@ -31,11 +34,39 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   List<Map<String, dynamic>> _messages = [];
+
+  Map<String, String> _parseAiRecommendation(String text) {
+    final Map<String, String> meta = {};
+    final lines = text.split('\n');
+    for (var line in lines) {
+      final lower = line.toLowerCase();
+      if (lower.contains('id prestador:') || lower.contains('id_prestador:')) {
+        meta['providerId'] = line.split(':').last.trim().replaceAll(RegExp(r'[^\w\-]'), '');
+      }
+      if (lower.contains('profesional/establecimiento:') || lower.contains('profesional:')) {
+        meta['providerName'] = line.split(':').last.trim().replaceAll(RegExp(r'[\"*]'), '');
+      }
+      if (lower.contains('servicio id:') || lower.contains('servicio_id:')) {
+        meta['serviceId'] = line.split(':').skip(1).join(':').trim().replaceAll(RegExp(r'[\"*]'), '');
+      }
+      if (lower.contains('tratamiento sugerido:') || lower.contains('servicio:')) {
+        meta['serviceName'] = line.split(':').last.trim().replaceAll(RegExp(r'[\"*]'), '');
+      }
+      if (lower.contains('precio de referencia:') || lower.contains('precio:')) {
+        meta['price'] = line.split(':').last.trim().replaceAll(RegExp(r'[^\d]'), '');
+      }
+    }
+    return meta;
+  }
   bool _isLoading = true;
   String? _error;
   String? _currentUserId;
   Timer? _pollingTimer;
   bool _isSending = false;
+
+  WebSocketChannel? _webSocketChannel;
+  bool _isWebSocketConnected = false;
+  Timer? _reconnectTimer;
 
   @override
   void initState() {
@@ -43,17 +74,85 @@ class _ChatScreenState extends State<ChatScreen> {
     _loadCurrentUserId();
     _loadMessages(showLoading: true);
     _markAsRead();
-    // Start 3-second auto-polling for messages
-    _pollingTimer = Timer.periodic(const Duration(seconds: 3), (_) {
-      _loadMessages(showLoading: false);
-      _markAsRead();
-    });
+    
+    // Connect to WebSocket with reconnect/fallback
+    _connectWebSocket();
 
     if (widget.initialMessage != null || widget.initialImagePath != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _sendInitialMessage();
       });
     }
+  }
+
+  void _connectWebSocket() {
+    _webSocketChannel?.sink.close();
+    _reconnectTimer?.cancel();
+
+    try {
+      final wsBase = ApiService.baseUrl.replaceFirst('http', 'ws');
+      final wsUrl = '$wsBase/chat';
+
+      _webSocketChannel = WebSocketChannel.connect(Uri.parse(wsUrl));
+      
+      _webSocketChannel!.stream.listen(
+        (message) {
+          if (mounted) {
+            setState(() {
+              _isWebSocketConnected = true;
+            });
+            // Stop polling timer if connected
+            if (_pollingTimer != null) {
+              _pollingTimer!.cancel();
+              _pollingTimer = null;
+            }
+            // Parse message and trigger reload
+            try {
+              _loadMessages(showLoading: false);
+              _markAsRead();
+            } catch (_) {}
+          }
+        },
+        onError: (error) {
+          _handleWebSocketFailure();
+        },
+        onDone: () {
+          _handleWebSocketFailure();
+        },
+      );
+
+      // Join chat room or send handshake
+      _webSocketChannel!.sink.add(jsonEncode({
+        'type': 'join',
+        'partnerId': widget.partnerId,
+      }));
+
+    } catch (e) {
+      _handleWebSocketFailure();
+    }
+  }
+
+  void _handleWebSocketFailure() {
+    if (!mounted) return;
+    setState(() {
+      _isWebSocketConnected = false;
+    });
+
+    // Fallback: Start 3-second auto-polling for messages if not running
+    if (_pollingTimer == null) {
+      _pollingTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+        _loadMessages(showLoading: false);
+        _markAsRead();
+      });
+    }
+
+    // Schedule reconnect attempt in 5 seconds
+    _reconnectTimer?.cancel();
+    _reconnectTimer = Timer(const Duration(seconds: 5), () {
+      if (mounted && !_isWebSocketConnected) {
+        _connectWebSocket();
+      }
+    });
   }
 
   Future<void> _sendInitialMessage() async {
@@ -83,10 +182,11 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-
   @override
   void dispose() {
     _pollingTimer?.cancel();
+    _reconnectTimer?.cancel();
+    _webSocketChannel?.sink.close();
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -410,24 +510,57 @@ class _ChatScreenState extends State<ChatScreen> {
                                                         padding: const EdgeInsets.symmetric(vertical: 8),
                                                       ),
                                                       onPressed: () {
-                                                        showDialog(
-                                                          context: context,
-                                                          builder: (context) => AlertDialog(
-                                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                                                            title: const Text('¡De una parce!', style: TextStyle(fontWeight: FontWeight.bold)),
-                                                            content: const Text('Te redirigiremos con los prestadores de Fontibón para agendar este estilo de inmediato, vecino.'),
-                                                            actions: [
-                                                              TextButton(
-                                                                onPressed: () {
-                                                                  Navigator.pop(context);
-                                                                  Navigator.pop(context);
-                                                                },
-                                                                child: const Text('Listo', style: TextStyle(color: Color(0xFFC89D93), fontWeight: FontWeight.bold)),
-                                                              )
-                                                            ],
-                                                          ),
-                                                        );
-                                                      },
+                                                         final meta = _parseAiRecommendation(text);
+                                                         final providerId = meta['providerId'];
+                                                         final serviceId = meta['serviceId'];
+
+                                                         if (providerId != null && providerId.isNotEmpty) {
+                                                           if (serviceId != null && serviceId.isNotEmpty) {
+                                                             final serviceItem = {
+                                                               'id': serviceId,
+                                                               'name': meta['serviceName'] ?? 'Tratamiento Recomendado',
+                                                               'price': double.tryParse(meta['price'] ?? '') ?? 0.0,
+                                                               'duration_minutes': 60,
+                                                             };
+                                                             Navigator.push(
+                                                               context,
+                                                               MaterialPageRoute(
+                                                                 builder: (_) => BookingScreen(
+                                                                   providerId: providerId,
+                                                                   providerName: meta['providerName'] ?? 'Prestador',
+                                                                   services: [serviceItem],
+                                                                   initialNotes: 'Recomendado por el Asesor de Belleza IA.',
+                                                                 ),
+                                                               ),
+                                                             );
+                                                           } else {
+                                                             Navigator.push(
+                                                               context,
+                                                               MaterialPageRoute(
+                                                                 builder: (_) => ProviderDetailScreen(providerId: providerId),
+                                                               ),
+                                                             );
+                                                           }
+                                                         } else {
+                                                           showDialog(
+                                                             context: context,
+                                                             builder: (context) => AlertDialog(
+                                                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                                                               title: const Text('¡De una parce!', style: TextStyle(fontWeight: FontWeight.bold)),
+                                                               content: const Text('Te redirigiremos con los prestadores de Fontibón para agendar este estilo de inmediato, vecino.'),
+                                                               actions: [
+                                                                 TextButton(
+                                                                   onPressed: () {
+                                                                     Navigator.pop(context);
+                                                                     Navigator.pop(context);
+                                                                   },
+                                                                   child: const Text('Listo', style: TextStyle(color: Color(0xFFC89D93), fontWeight: FontWeight.bold)),
+                                                                 )
+                                                               ],
+                                                             ),
+                                                           );
+                                                         }
+                                                       },
                                                       icon: const Icon(Icons.calendar_month, size: 14),
                                                       label: const Text('Agendar este estilo', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold)),
                                                     ),

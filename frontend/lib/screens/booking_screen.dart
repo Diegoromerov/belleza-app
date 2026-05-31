@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/api_service.dart';
+import '../shared/theme.dart';
 
 class BookingScreen extends StatefulWidget {
   final String providerId;
@@ -229,7 +230,7 @@ class _BookingScreenState extends State<BookingScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5EBE6),
+        color: AppTheme.primaryLight,
         borderRadius: BorderRadius.circular(30),
       ),
       child: DropdownButtonHideUnderline(
@@ -250,56 +251,102 @@ class _BookingScreenState extends State<BookingScreen> {
     );
   }
 
-  Widget _buildDateSelector() => InkWell(
-        onTap: () async {
-          final date = await showDatePicker(
-            context: context,
-            initialDate: selectedDate ?? DateTime.now(),
-            firstDate: DateTime.now(),
-            lastDate: DateTime.now().add(const Duration(days: 90)),
-            builder: (context, child) => Theme(
-              data: Theme.of(context).copyWith(
-                colorScheme: const ColorScheme.light(
-                  primary: Color(0xFFC89D93),
-                  onPrimary: Colors.white,
-                  surface: Colors.white,
-                  onSurface: Colors.black,
+    String _getDayName(DateTime date) {
+    const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+    return days[date.weekday % 7];
+  }
+
+  String _getMonthName(DateTime date) {
+    const months = [
+      '', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'
+    ];
+    return months[date.month];
+  }
+
+  Widget _buildDateSelector() {
+    final List<DateTime> next7Days = List.generate(7, (index) {
+      final date = DateTime.now().add(Duration(days: index));
+      return DateTime(date.year, date.month, date.day);
+    });
+
+    return SizedBox(
+      height: 90,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        itemCount: next7Days.length,
+        itemBuilder: (context, index) {
+          final date = next7Days[index];
+          final isSelected = selectedDate != null &&
+              selectedDate!.year == date.year &&
+              selectedDate!.month == date.month &&
+              selectedDate!.day == date.day;
+
+          return GestureDetector(
+            onTap: () {
+              setState(() {
+                selectedDate = date;
+              });
+              _loadSlots();
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: 75,
+              margin: const EdgeInsets.only(right: 10, bottom: 4),
+              decoration: BoxDecoration(
+                color: isSelected ? AppTheme.primary : AppTheme.primaryLight,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: isSelected
+                    ? [
+                        BoxShadow(
+                          color: AppTheme.primary.withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        )
+                      ]
+                    : [],
+                border: Border.all(
+                  color: isSelected ? AppTheme.primary : Colors.transparent,
+                  width: 1.5,
                 ),
               ),
-              child: child!,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                     _getDayName(date),
+                     style: TextStyle(
+                       fontSize: 12,
+                       fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                       color: isSelected ? Colors.white70 : Colors.grey[600],
+                     ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    date.day.toString(),
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: isSelected ? Colors.white : Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                     _getMonthName(date),
+                     style: TextStyle(
+                       fontSize: 10,
+                       fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                       color: isSelected ? Colors.white70 : Colors.grey[500],
+                     ),
+                  ),
+                ],
+              ),
             ),
           );
-          if (date != null) {
-            setState(() {
-              selectedDate = date;
-            });
-            _loadSlots();
-          }
         },
-        borderRadius: BorderRadius.circular(30),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF5EBE6),
-            borderRadius: BorderRadius.circular(30),
-          ),
-          child: Row(
-            children: [
-              const Icon(Icons.calendar_today_outlined, color: Color(0xFFC89D93), size: 18),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  selectedDate != null
-                      ? '${selectedDate!.day.toString().padLeft(2, '0')}/${selectedDate!.month.toString().padLeft(2, '0')}/${selectedDate!.year}'
-                      : 'Seleccionar fecha',
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: Colors.black87),
-                ),
-              ),
-              const Icon(Icons.arrow_drop_down, color: Color(0xFFC89D93)),
-            ],
-          ),
-        ),
-      );
+      ),
+    );
+  }
 
   Widget _buildTimeSelector() {
     if (selectedDate == null || selectedServiceId == null) {
@@ -312,7 +359,7 @@ class _BookingScreenState extends State<BookingScreen> {
       return const Center(
         child: Padding(
           padding: EdgeInsets.all(16.0),
-          child: CircularProgressIndicator(color: Color(0xFFC89D93)),
+          child: CircularProgressIndicator(color: AppTheme.primary),
         ),
       );
     }
@@ -361,38 +408,53 @@ class _BookingScreenState extends State<BookingScreen> {
                   });
                 }
               : null,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 150),
             decoration: BoxDecoration(
               color: isSelected
-                  ? const Color(0xFFC89D93)
+                  ? AppTheme.primary
                   : isAvailable
-                      ? const Color(0x33F5EBE6)
+                      ? AppTheme.primaryLight.withOpacity(0.3)
                       : const Color(0xFFF3F4F6),
               border: Border.all(
                 color: isSelected
-                    ? const Color(0xFFC89D93)
+                    ? AppTheme.primary
                     : isAvailable
-                        ? const Color(0xFFE5CECA)
+                        ? AppTheme.primaryLight
                         : const Color(0xFFE5E7EB),
                 width: 1.5,
               ),
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(16),
             ),
             alignment: Alignment.center,
-            child: Text(
-              time,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: isSelected
-                    ? Colors.white
-                    : isAvailable
-                        ? const Color(0xFFC89D93)
-                        : Colors.grey[400],
-                decoration: isAvailable ? TextDecoration.none : TextDecoration.lineThrough,
-              ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.access_time_filled,
+                  size: 14,
+                  color: isSelected
+                      ? Colors.white
+                      : isAvailable
+                          ? AppTheme.primary
+                          : Colors.grey[400],
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  time,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: isSelected
+                        ? Colors.white
+                        : isAvailable
+                            ? Colors.black87
+                            : Colors.grey[400],
+                    decoration: isAvailable ? TextDecoration.none : TextDecoration.lineThrough,
+                  ),
+                ),
+              ],
             ),
           ),
         );
@@ -403,21 +465,10 @@ class _BookingScreenState extends State<BookingScreen> {
   Widget _buildNotesField() => TextField(
         maxLines: 3,
         style: const TextStyle(fontSize: 14),
-        decoration: InputDecoration(
+        decoration: AppTheme.inputDecoration(
           hintText: 'Ej: Quisiera un corte con flequillo...',
-          hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(24),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(24),
-            borderSide: const BorderSide(color: Color(0xFFC89D93), width: 1.5),
-          ),
-          filled: true,
-          fillColor: const Color(0xFFF5EBE6),
-          contentPadding: const EdgeInsets.all(16),
+          labelText: 'Notas adicionales (opcional)',
+          prefixIcon: Icons.note_alt_outlined,
         ),
         onChanged: (value) => notes = value,
       );
@@ -425,22 +476,10 @@ class _BookingScreenState extends State<BookingScreen> {
   Widget _buildAddressField() => TextField(
         maxLines: 2,
         style: const TextStyle(fontSize: 14),
-        decoration: InputDecoration(
-          hintText: 'Ej: Calle 24 # 95-32, Torre 2, Apto 402, FontibÃ³n',
-          hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(24),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(24),
-            borderSide: const BorderSide(color: Color(0xFFC89D93), width: 1.5),
-          ),
-          filled: true,
-          fillColor: const Color(0xFFF5EBE6),
-          contentPadding: const EdgeInsets.all(16),
-          prefixIcon: const Icon(Icons.location_on_outlined, color: Color(0xFFC89D93)),
+        decoration: AppTheme.inputDecoration(
+          hintText: 'Ej: Calle 24 # 95-32, Torre 2, Apto 402, Fontibón',
+          labelText: 'Dirección del servicio',
+          prefixIcon: Icons.location_on_outlined,
         ),
         onChanged: (value) => serviceAddress = value,
       );
@@ -448,9 +487,9 @@ class _BookingScreenState extends State<BookingScreen> {
   Widget _buildConfirmButton() => ElevatedButton(
         onPressed: isLoading || _selectedSlotTime == null ? null : _confirmBooking,
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFFC89D93),
+          backgroundColor: AppTheme.primary,
           foregroundColor: Colors.white,
-          disabledBackgroundColor: const Color(0xFFE5CECA),
+          disabledBackgroundColor: AppTheme.primaryLight,
           padding: const EdgeInsets.all(16),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
           elevation: 0,
