@@ -86,7 +86,7 @@ class _WalkthroughDialogState extends State<_WalkthroughDialog> {
           title: 'Paso 1: Gestionar Agenda',
           description: 'Mira tus próximas citas pendientes de pago, confirmadas y en progreso desde la vista principal.',
           icon: Icons.assignment_outlined,
-          simulationText: 'Simulación: Te ha llegado una reserva de "Corte y Peinado a Domicilio" por $50,000 COP en Fontibón.',
+          simulationText: 'Simulación: Te ha llegado una reserva de "Corte y Peinado a Domicilio" por \$50,000 COP en Fontibón.',
         ),
         WalkthroughStep(
           title: 'Paso 2: Ruta y Check-In',
