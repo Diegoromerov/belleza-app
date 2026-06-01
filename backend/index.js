@@ -440,7 +440,7 @@ app.get('/api/bookings/provider', authMiddleware, async (req, res) => {
     }
 
     const providerCheck = await pool.query(
-      'SELECT id FROM perfiles_prestador WHERE id = $1 AND is_active = true', 
+      'SELECT id FROM perfiles_prestador WHERE id = $1', 
       [req.user.id]
     );
     
