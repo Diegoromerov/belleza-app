@@ -116,6 +116,16 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('view-transactions').style.display = 'block';
         pageTitle.textContent = 'Historial Operativo';
         pageSubtitle.textContent = 'Registro histórico de alertas de pánico y eventos';
+      } else if (targetSectionId === 'users') {
+        document.getElementById('view-users').style.display = 'block';
+        pageTitle.textContent = 'Gestión de Clientes y Proveedores';
+        pageSubtitle.textContent = 'Habilitar y desactivar cuentas de usuarios del sistema';
+        fetchUsers();
+      } else if (targetSectionId === 'disputes') {
+        document.getElementById('view-disputes').style.display = 'block';
+        pageTitle.textContent = 'Resolución de Disputas';
+        pageSubtitle.textContent = 'Administración y conciliación financiera de reclamos';
+        fetchDisputes();
       }
     });
   });
@@ -574,6 +584,372 @@ document.addEventListener('DOMContentLoaded', () => {
       refreshBtn.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i> Actualizar';
     });
   });
+
+  // --- Gestión de Clientes y Proveedores ---
+  let usersList = [];
+
+  async function fetchUsers() {
+    const tableBody = document.getElementById('users-table-body');
+    tableBody.innerHTML = `<tr><td colspan="6" class="empty-message"><i class="fa-solid fa-spinner fa-spin"></i> Cargando usuarios...</td></tr>`;
+    try {
+      const response = await authFetch('/api/admin/users');
+      const data = await response.json();
+      if (!data.success) throw new Error(data.error || 'Error al obtener usuarios');
+      
+      usersList = data.users;
+      renderUsers();
+    } catch (err) {
+      console.error('Error fetchUsers:', err);
+      tableBody.innerHTML = `<tr><td colspan="7" class="empty-message text-danger">Error: ${err.message}</td></tr>`;
+    }
+  }
+
+  function renderUsers() {
+    const searchInputEl = document.getElementById('user-search-input');
+    const roleFilterEl = document.getElementById('user-role-filter');
+    if (!searchInputEl || !roleFilterEl) return;
+
+    const searchVal = searchInputEl.value.toLowerCase().trim();
+    const roleVal = roleFilterEl.value;
+    const tableBody = document.getElementById('users-table-body');
+    
+    const filtered = usersList.filter(user => {
+      const matchesSearch = (user.nombre || '').toLowerCase().includes(searchVal) || (user.email || '').toLowerCase().includes(searchVal);
+      const matchesRole = roleVal === 'ALL' || user.rol === roleVal;
+      return matchesSearch && matchesRole;
+    });
+
+    if (filtered.length === 0) {
+      tableBody.innerHTML = `<tr><td colspan="7" class="empty-message">No se encontraron usuarios coincidentes.</td></tr>`;
+      return;
+    }
+
+    tableBody.innerHTML = filtered.map(user => {
+      const statusClass = user.is_active ? 'badge-success' : 'badge-danger';
+      const statusText = user.is_active ? 'Activo' : 'Desactivado';
+      const buttonClass = user.is_active ? 'btn-danger' : 'btn-success';
+      const buttonText = user.is_active ? 'Desactivar' : 'Activar';
+      const buttonIcon = user.is_active ? 'fa-user-slash' : 'fa-user-check';
+      const phoneText = user.phone || 'Sin teléfono';
+      const rolText = user.rol === 'PRESTADOR' ? 'Proveedor' : 'Cliente';
+      
+      let verifyCol = 'N/A';
+      if (user.rol === 'PRESTADOR') {
+        const vStatus = user.estatus_verificacion || 'PENDIENTE';
+        let badgeClass = 'badge-warning';
+        if (vStatus === 'APROBADO') badgeClass = 'badge-success';
+        if (vStatus === 'RECHAZADO') badgeClass = 'badge-danger';
+        
+        verifyCol = `
+          <div style="display: flex; flex-direction: column; gap: 4px; align-items: center;">
+            <span class="badge ${badgeClass}">${vStatus}</span>
+            <button class="btn btn-secondary btn-sm verify-docs-btn" style="padding: 2px 6px; font-size: 10px;" data-id="${user.id}">
+              <i class="fa-solid fa-file-invoice"></i> Docs
+            </button>
+          </div>
+        `;
+      }
+
+      return `
+        <tr id="user-row-${user.id}">
+          <td><strong>${user.nombre}</strong></td>
+          <td>${user.email}</td>
+          <td>${phoneText}</td>
+          <td><span class="role-tag ${user.rol.toLowerCase()}">${rolText}</span></td>
+          <td><span class="badge ${statusClass}">${statusText}</span></td>
+          <td>${verifyCol}</td>
+          <td>
+            <button class="btn ${buttonClass} btn-sm toggle-user-btn" data-id="${user.id}" data-active="${user.is_active}">
+              <i class="fa-solid ${buttonIcon}"></i> ${buttonText}
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    // Bind event listeners for toggle buttons
+    document.querySelectorAll('.toggle-user-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const userId = btn.getAttribute('data-id');
+        const currentActive = btn.getAttribute('data-active') === 'true';
+        const actionStr = currentActive ? 'desactivar' : 'activar';
+        
+        if (confirm(`¿Estás seguro de que deseas ${actionStr} a este usuario?`)) {
+          btn.disabled = true;
+          btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Procesando...`;
+          try {
+            const response = await authFetch(`/api/admin/users/${userId}/toggle-status`, {
+              method: 'PATCH'
+            });
+            const resData = await response.json();
+            if (!resData.success) throw new Error(resData.error || 'Error al actualizar');
+            
+            // Actualizar en el estado local
+            const index = usersList.findIndex(u => u.id === userId);
+            if (index !== -1) {
+              usersList[index].is_active = resData.user.is_active;
+            }
+            renderUsers();
+          } catch (err) {
+            alert(`Error al cambiar estado del usuario: ${err.message}`);
+            renderUsers();
+          }
+        }
+      });
+    });
+
+    // Bind event listeners for document verification buttons
+    document.querySelectorAll('.verify-docs-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const userId = btn.getAttribute('data-id');
+        const user = usersList.find(u => u.id === userId);
+        if (!user) return;
+
+        document.getElementById('verify-provider-id').value = userId;
+        
+        const idLink = document.getElementById('doc-id-link');
+        const rutLink = document.getElementById('doc-rut-link');
+        const certLink = document.getElementById('doc-cert-link');
+
+        // Configurar URLs o deshabilitar si no existen
+        if (user.documento_id_url) {
+          idLink.href = user.documento_id_url;
+          idLink.style.display = 'inline-block';
+        } else {
+          idLink.style.display = 'none';
+        }
+
+        if (user.rut_url) {
+          rutLink.href = user.rut_url;
+          rutLink.style.display = 'inline-block';
+        } else {
+          rutLink.style.display = 'none';
+        }
+
+        if (user.certificacion_url) {
+          certLink.href = user.certificacion_url;
+          certLink.style.display = 'inline-block';
+        } else {
+          certLink.style.display = 'none';
+        }
+
+        document.getElementById('verify-docs-modal').style.display = 'flex';
+      });
+    });
+  }
+
+  // Bind verify modal actions
+  const btnApproveDocs = document.getElementById('btn-approve-docs');
+  const btnRejectDocs = document.getElementById('btn-reject-docs');
+
+  if (btnApproveDocs) {
+    btnApproveDocs.addEventListener('click', async () => {
+      const providerId = document.getElementById('verify-provider-id').value;
+      btnApproveDocs.disabled = true;
+      try {
+        const response = await authFetch(`/api/admin/users/${providerId}/verify`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'APROBADO' })
+        });
+        const resData = await response.json();
+        if (!resData.success) throw new Error(resData.error || 'Error al aprobar');
+        
+        alert('Proveedor aprobado y activado con éxito.');
+        document.getElementById('verify-docs-modal').style.display = 'none';
+        fetchUsers();
+      } catch (err) {
+        alert(`Error al aprobar proveedor: ${err.message}`);
+      } finally {
+        btnApproveDocs.disabled = false;
+      }
+    });
+  }
+
+  if (btnRejectDocs) {
+    btnRejectDocs.addEventListener('click', async () => {
+      const providerId = document.getElementById('verify-provider-id').value;
+      if (confirm('¿Estás seguro de que deseas rechazar los documentos de este proveedor? Su perfil se mantendrá inactivo.')) {
+        btnRejectDocs.disabled = true;
+        try {
+          const response = await authFetch(`/api/admin/users/${providerId}/verify`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'RECHAZADO' })
+          });
+          const resData = await response.json();
+          if (!resData.success) throw new Error(resData.error || 'Error al rechazar');
+          
+          alert('Documentación rechazada.');
+          document.getElementById('verify-docs-modal').style.display = 'none';
+          fetchUsers();
+        } catch (err) {
+          alert(`Error al rechazar proveedor: ${err.message}`);
+        } finally {
+          btnRejectDocs.disabled = false;
+        }
+      }
+    });
+  }
+
+  // --- Gestión y Resolución de Disputas ---
+  let disputesList = [];
+
+  async function fetchDisputes() {
+    const tableBody = document.getElementById('disputes-table-body');
+    tableBody.innerHTML = `<tr><td colspan="7" class="empty-message"><i class="fa-solid fa-spinner fa-spin"></i> Cargando disputas...</td></tr>`;
+    try {
+      const response = await authFetch('/api/admin/disputes');
+      const data = await response.json();
+      if (!data.success) throw new Error(data.error || 'Error al obtener disputas');
+      
+      disputesList = data.disputes;
+      renderDisputes();
+    } catch (err) {
+      console.error('Error fetchDisputes:', err);
+      tableBody.innerHTML = `<tr><td colspan="7" class="empty-message text-danger">Error: ${err.message}</td></tr>`;
+    }
+  }
+
+  function renderDisputes() {
+    const stateFilterEl = document.getElementById('dispute-state-filter');
+    if (!stateFilterEl) return;
+
+    const stateVal = stateFilterEl.value;
+    const tableBody = document.getElementById('disputes-table-body');
+    
+    const filtered = disputesList.filter(dispute => {
+      return stateVal === 'ALL' || dispute.estado === stateVal;
+    });
+
+    if (filtered.length === 0) {
+      tableBody.innerHTML = `<tr><td colspan="7" class="empty-message">No se encontraron disputas registradas.</td></tr>`;
+      return;
+    }
+
+    tableBody.innerHTML = filtered.map(d => {
+      const statusClass = d.estado === 'RESUELTA' ? 'badge-success' : 'badge-warning';
+      
+      let actionBtn = '';
+      if (d.estado === 'ABIERTA') {
+        actionBtn = `
+          <button class="btn btn-resolve btn-sm open-resolve-btn" data-id="${d.id}">
+            <i class="fa-solid fa-gavel"></i> Resolver
+          </button>
+        `;
+      } else {
+        actionBtn = `
+          <span style="font-size: 11px; color: var(--text-muted);">
+            Resuelto (${d.resolucion})<br>
+            <em style="display:block; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${d.nota_resolucion || ''}</em>
+          </span>
+        `;
+      }
+
+      return `
+        <tr id="dispute-row-${d.id}">
+          <td>
+            <strong>${d.iniciado_por_nombre}</strong><br>
+            <span style="font-size:10px; color:var(--text-muted);">${d.tipo_actor}</span>
+          </td>
+          <td>${d.cliente_nombre}</td>
+          <td>${d.prestador_nombre}</td>
+          <td>$${parseFloat(d.monto_disputado).toLocaleString('es-CO')}</td>
+          <td>
+            <strong>${d.tipo}</strong><br>
+            <span style="font-size: 11px; color: var(--text-muted);">${d.descripcion || 'Sin descripción'}</span>
+          </td>
+          <td><span class="badge ${statusClass}">${d.estado}</span></td>
+          <td>${actionBtn}</td>
+        </tr>
+      `;
+    }).join('');
+
+    // Bind click for resolve buttons
+    document.querySelectorAll('.open-resolve-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        const dispute = disputesList.find(d => d.id === id);
+        if (!dispute) return;
+
+        document.getElementById('resolve-dispute-id').value = id;
+        document.getElementById('resolve-note-input').value = '';
+        document.getElementById('resolve-action-select').value = 'REEMBOLSO_COMPLETO';
+        document.getElementById('resolve-pct-container').style.display = 'none';
+        document.getElementById('resolve-pct-input').value = '0';
+        
+        document.getElementById('resolve-dispute-modal').style.display = 'flex';
+      });
+    });
+  }
+
+  // Bind change of select in dispute resolution
+  const actionSelect = document.getElementById('resolve-action-select');
+  if (actionSelect) {
+    actionSelect.addEventListener('change', () => {
+      const val = actionSelect.value;
+      const pctContainer = document.getElementById('resolve-pct-container');
+      const pctInput = document.getElementById('resolve-pct-input');
+      
+      if (val === 'REEMBOLSO_COMPLETO') {
+        pctContainer.style.display = 'none';
+        pctInput.value = '0';
+      } else if (val === 'PAGO_PRESTADOR') {
+        pctContainer.style.display = 'none';
+        pctInput.value = '100';
+      } else {
+        pctContainer.style.display = 'block';
+        pctInput.value = '50';
+      }
+    });
+  }
+
+  // Bind dispute resolve submission
+  const btnSubmitResolution = document.getElementById('btn-submit-resolution');
+  if (btnSubmitResolution) {
+    btnSubmitResolution.addEventListener('click', async () => {
+      const disputeId = document.getElementById('resolve-dispute-id').value;
+      const resolucion = document.getElementById('resolve-action-select').value;
+      const porcentaje_prestador = document.getElementById('resolve-pct-input').value;
+      const nota_resolucion = document.getElementById('resolve-note-input').value.trim();
+
+      if (!nota_resolucion) {
+        alert('Por favor, ingrese una justificación para la resolución.');
+        return;
+      }
+
+      btnSubmitResolution.disabled = true;
+      btnSubmitResolution.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Resolviendo...';
+      
+      try {
+        const response = await authFetch(`/api/admin/disputes/${disputeId}/resolve`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ resolucion, porcentaje_prestador, nota_resolucion })
+        });
+        const resData = await response.json();
+        if (!resData.success) throw new Error(resData.error || 'Error al resolver disputa');
+
+        alert('Disputa resuelta y fondos distribuidos correctamente.');
+        document.getElementById('resolve-dispute-modal').style.display = 'none';
+        fetchDisputes();
+      } catch (err) {
+        alert(`Error al resolver disputa: ${err.message}`);
+      } finally {
+        btnSubmitResolution.disabled = false;
+        btnSubmitResolution.innerHTML = 'Resolver Disputa';
+      }
+    });
+  }
+
+  const disputeFilterEl = document.getElementById('dispute-state-filter');
+  if (disputeFilterEl) disputeFilterEl.addEventListener('change', renderDisputes);
+
+  // Bind Search and Filter Events
+  const searchEl = document.getElementById('user-search-input');
+  const roleEl = document.getElementById('user-role-filter');
+  if (searchEl) searchEl.addEventListener('input', renderUsers);
+  if (roleEl) roleEl.addEventListener('change', renderUsers);
 
   // Startup Init Execution
   initMap();

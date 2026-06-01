@@ -216,8 +216,24 @@ CREATE TABLE IF NOT EXISTS disputas (
   actualizado_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   resuelto_at     TIMESTAMPTZ,
   -- SLA
-  sla_limite_at   TIMESTAMPTZ GENERATED ALWAYS AS (creado_at + INTERVAL '48 hours') STORED
+  sla_limite_at   TIMESTAMPTZ
 );
+
+-- Trigger para SLA en disputas
+CREATE OR REPLACE FUNCTION set_disputa_sla()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.sla_limite_at IS NULL THEN
+    NEW.sla_limite_at = NEW.creado_at + INTERVAL '48 hours';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_disputa_sla ON disputas;
+CREATE TRIGGER trg_disputa_sla
+  BEFORE INSERT ON disputas
+  FOR EACH ROW EXECUTE FUNCTION set_disputa_sla();
 
 CREATE INDEX IF NOT EXISTS idx_disputas_booking  ON disputas(booking_id);
 CREATE INDEX IF NOT EXISTS idx_disputas_estado   ON disputas(estado, creado_at DESC);

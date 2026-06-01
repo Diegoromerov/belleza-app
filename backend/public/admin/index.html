@@ -41,6 +41,12 @@
         <a href="#transactions" class="menu-item" id="nav-transactions">
           <i class="fa-solid fa-receipt"></i><span>Historial</span>
         </a>
+        <a href="#users" class="menu-item" id="nav-users">
+          <i class="fa-solid fa-users"></i><span>Clientes y Proveedores</span>
+        </a>
+        <a href="#disputes" class="menu-item" id="nav-disputes">
+          <i class="fa-solid fa-scale-balanced"></i><span>Disputas</span>
+        </a>
       </nav>
       <div class="sidebar-status">
         <div class="status-indicator online"></div>
@@ -187,6 +193,7 @@
             </div>
 
           </div>
+        </div>
         <!-- Section: Metrics / Financials -->
         <div class="view-section" id="view-metrics" style="display: none;">
           <div class="grid-2-col">
@@ -268,6 +275,149 @@
           </div>
         </div>
 
+        <!-- Section: Clientes y Proveedores -->
+        <div class="view-section" id="view-users" style="display: none;">
+          <div class="panel full-width-panel">
+            <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; gap: 15px; flex-wrap: wrap;">
+              <h3><i class="fa-solid fa-users"></i> Gestión de Clientes y Proveedores</h3>
+              <div class="panel-actions" style="display: flex; gap: 10px; align-items: center;">
+                <input type="text" id="user-search-input" placeholder="Buscar por nombre o email..." class="search-input" style="padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: #fff; width: 250px;">
+                <select id="user-role-filter" class="role-filter" style="padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); background: rgba(15,23,42,0.8); color: #fff; cursor: pointer;">
+                  <option value="ALL">Todos los roles</option>
+                  <option value="CLIENTE">Clientes</option>
+                  <option value="PRESTADOR">Proveedores</option>
+                </select>
+              </div>
+            </div>
+            <div class="panel-body table-container">
+              <table class="data-table" id="users-table">
+                <thead>
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Email</th>
+                    <th>Teléfono</th>
+                    <th>Rol</th>
+                    <th>Estado</th>
+                    <th>Verificación</th>
+                    <th>Acción</th>
+                  </tr>
+                </thead>
+                <tbody id="users-table-body">
+                  <tr>
+                    <td colspan="7" class="empty-message">Cargando usuarios...</td>
+                  </tr>
+                </tbody>
+              </table>
+             </div>
+          </div>
+        </div>
+
+        <!-- Section: Disputas -->
+        <div class="view-section" id="view-disputes" style="display: none;">
+          <div class="panel full-width-panel">
+            <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; gap: 15px; flex-wrap: wrap;">
+              <h3><i class="fa-solid fa-scale-balanced"></i> Resolución de Disputas</h3>
+              <div class="panel-actions" style="display: flex; gap: 10px; align-items: center;">
+                <select id="dispute-state-filter" class="role-filter" style="padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); background: rgba(15,23,42,0.8); color: #fff; cursor: pointer;">
+                  <option value="ALL">Todos los estados</option>
+                  <option value="ABIERTA">Abiertas</option>
+                  <option value="RESUELTA">Resueltas</option>
+                </select>
+              </div>
+            </div>
+            <div class="panel-body table-container">
+              <table class="data-table" id="disputes-table">
+                <thead>
+                  <tr>
+                    <th>Iniciado Por</th>
+                    <th>Cliente</th>
+                    <th>Proveedor</th>
+                    <th>Monto</th>
+                    <th>Motivo</th>
+                    <th>Estado</th>
+                    <th>Acción</th>
+                  </tr>
+                </thead>
+                <tbody id="disputes-table-body">
+                  <tr>
+                    <td colspan="7" class="empty-message">Cargando disputas...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modales Flotantes -->
+
+      <!-- Modal de Verificación de Documentos -->
+      <div class="modal-backdrop" id="verify-docs-modal" style="display: none;">
+        <div class="admin-modal">
+          <div class="modal-header">
+            <h3><i class="fa-solid fa-file-shield"></i> Verificar Documentos de Proveedor</h3>
+            <button class="modal-close-btn" onclick="document.getElementById('verify-docs-modal').style.display='none'">&times;</button>
+          </div>
+          <div class="modal-body">
+            <p>Inspecciona los documentos cargados por el proveedor para aprobar o rechazar su registro en la plataforma.</p>
+            <div class="docs-list" style="margin: 20px 0; display: flex; flex-direction: column; gap: 12px;">
+              <div class="doc-item" style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px;">
+                <span><i class="fa-solid fa-address-card"></i> Documento de Identificación (ID)</span>
+                <a id="doc-id-link" href="#" target="_blank" class="btn btn-secondary btn-sm" style="display: inline-block; text-decoration: none;"><i class="fa-solid fa-eye"></i> Ver Documento</a>
+              </div>
+              <div class="doc-item" style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px;">
+                <span><i class="fa-solid fa-file-invoice"></i> Registro Único Tributario (RUT)</span>
+                <a id="doc-rut-link" href="#" target="_blank" class="btn btn-secondary btn-sm" style="display: inline-block; text-decoration: none;"><i class="fa-solid fa-eye"></i> Ver RUT</a>
+              </div>
+              <div class="doc-item" style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px;">
+                <span><i class="fa-solid fa-award"></i> Certificación Profesional</span>
+                <a id="doc-cert-link" href="#" target="_blank" class="btn btn-secondary btn-sm" style="display: inline-block; text-decoration: none;"><i class="fa-solid fa-eye"></i> Ver Certificado</a>
+              </div>
+            </div>
+            <input type="hidden" id="verify-provider-id">
+          </div>
+          <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px;">
+            <button class="btn btn-danger" id="btn-reject-docs">Rechazar Documentos</button>
+            <button class="btn btn-success" id="btn-approve-docs">Aprobar y Activar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal de Resolución de Disputas -->
+      <div class="modal-backdrop" id="resolve-dispute-modal" style="display: none;">
+        <div class="admin-modal">
+          <div class="modal-header">
+            <h3><i class="fa-solid fa-scale-balanced"></i> Resolver Disputa</h3>
+            <button class="modal-close-btn" onclick="document.getElementById('resolve-dispute-modal').style.display='none'">&times;</button>
+          </div>
+          <div class="modal-body">
+            <p>Decida el reparto del dinero retenido para la reserva y escriba la justificación.</p>
+            <div style="margin: 15px 0; display: flex; flex-direction: column; gap: 15px;">
+              <div>
+                <label style="display: block; margin-bottom: 5px; color: var(--text-muted);">Resolución Contable</label>
+                <select id="resolve-action-select" class="role-filter" style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); background: rgba(15,23,42,0.8); color: #fff;">
+                  <option value="REEMBOLSO_COMPLETO">Reembolso Completo al Cliente (0% al Proveedor)</option>
+                  <option value="PAGO_PRESTADOR">Pago Completo al Proveedor (100% al Proveedor)</option>
+                  <option value="REPARTO_PROPORCIONAL">Reparto Proporcional</option>
+                </select>
+              </div>
+              <div id="resolve-pct-container" style="display: none;">
+                <label style="display: block; margin-bottom: 5px; color: var(--text-muted);">Porcentaje asignado al Proveedor (%)</label>
+                <input type="number" id="resolve-pct-input" min="0" max="100" value="50" style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: #fff;">
+              </div>
+              <div>
+                <label style="display: block; margin-bottom: 5px; color: var(--text-muted);">Nota de Resolución (Justificación)</label>
+                <textarea id="resolve-note-input" rows="4" placeholder="Escriba la justificación legal/administrativa de la resolución..." style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: #fff; resize: none;"></textarea>
+              </div>
+            </div>
+            <input type="hidden" id="resolve-dispute-id">
+          </div>
+          <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px;">
+            <button class="btn btn-secondary" onclick="document.getElementById('resolve-dispute-modal').style.display='none'">Cancelar</button>
+            <button class="btn btn-success" id="btn-submit-resolution">Resolver Disputa</button>
+          </div>
+        </div>
       </div>
 
     </main>
