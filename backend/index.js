@@ -86,6 +86,9 @@ app.use(cors({
 app.use(express.json());
 app.use('/uploads', express.static(uploadsDir));
 app.use('/admin', express.static(path.join(__dirname, 'public/admin')));
+app.get('/onboarding', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/onboarding.html'));
+});
 
 // ==========================================
 // SISTEMA DE PAGOS

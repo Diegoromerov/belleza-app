@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GlowApp - Onboarding Tutorial</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg-primary: #0A0E17;
+      --bg-secondary: #111827;
+      --text-main: #F3F4F6;
+      --text-muted: #9CA3AF;
+      --color-primary: #C89D93;
+      --color-primary-light: #E8D7D3;
+      --color-danger: #EF4444;
+      --color-success: #10B981;
+      --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-primary);
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+      overflow-x: hidden;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 800px;
+      background: rgba(31, 41, 55, 0.45);
+      border: 1px solid rgba(232, 215, 211, 0.15);
+      border-radius: 24px;
+      padding: 24px;
+      backdrop-filter: blur(10px);
+    }
+
+    h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 24px;
+      text-align: center;
+      margin-bottom: 6px;
+      color: var(--color-primary-light);
+    }
+
+    p.subtitle {
+      font-size: 13px;
+      text-align: center;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+    }
+
+    .phone-wrap {
+      display: flex;
+      gap: 32px;
+      align-items: flex-start;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .phone-frame {
+      width: 280px;
+      min-width: 280px;
+      border: 8px solid #2d3748;
+      border-radius: 36px;
+      overflow: hidden;
+      background: var(--bg-primary);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+      border-bottom-width: 12px;
+    }
+
+    .phone-notch {
+      background: #111827;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .phone-notch span {
+      width: 60px;
+      height: 8px;
+      background: #1f2937;
+      border-radius: 8px;
+    }
+
+    .phone-screen {
+      background: #0d131f;
+      height: 480px;
+      position: relative;
+      overflow: hidden;
+      color: #fff;
+    }
+
+    /* Pantallas individuales */
+    .screen {
+      display: none;
+      height: 100%;
+      position: relative;
+      overflow-y: auto;
+      padding: 12px;
+      padding-bottom: 70px;
+    }
+    .screen.active {
+      display: block;
+      animation: fadeInPhoneScreen 0.3s ease-in-out;
+    }
+
+    @keyframes fadeInPhoneScreen {
+      from { opacity: 0; transform: scale(0.98); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    /* Componentes de la Simulación Móvil */
+    .phone-header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 6px 12px 6px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .phone-header-title {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      color: var(--color-primary);
+      font-size: 16px;
+    }
+    .header-brand-icon {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .phone-search-box {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+      color: var(--text-muted);
+      font-size: 11px;
+    }
+
+    .phone-categories {
+      display: flex;
+      gap: 8px;
+      margin: 12px 0;
+      overflow-x: auto;
+    }
+    .phone-category {
+      padding: 6px 12px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.05);
+      font-size: 10px;
+      white-space: nowrap;
+      color: var(--text-muted);
+    }
+    .phone-category.active {
+      background: var(--color-primary);
+      color: var(--bg-primary);
+      font-weight: 600;
+    }
+
+    .phone-section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+
+    .phone-professional-card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .phone-professional-card:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: var(--color-primary);
+    }
+
+    .phone-prof-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: var(--color-primary);
+      color: var(--bg-primary);
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+    }
+
+    .phone-prof-details {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+    .phone-prof-name {
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .phone-prof-subtitle {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+    .phone-prof-rating {
+      font-size: 10px;
+      color: var(--color-warning);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .phone-prof-action {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .tooltip-bubble {
+      position: absolute;
+      background: #8B5CF6;
+      color: #fff;
+      font-size: 10px;
+      padding: 8px 12px;
+      border-radius: 12px;
+      line-height: 1.4;
+      z-index: 20;
+      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+      pointer-events: none;
+      animation: floatTooltip 2s ease-in-out infinite;
+    }
+
+    @keyframes floatTooltip {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+
+    .tooltip-bubble.below::after {
+      content: '';
+      position: absolute;
+      top: -10px;
+      left: 20px;
+      border: 5px solid transparent;
+      border-bottom-color: #8B5CF6;
+    }
+    .tooltip-bubble.above::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 20px;
+      border: 5px solid transparent;
+      border-top-color: #8B5CF6;
+    }
+
+    .phone-back-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 4px 0 12px 0;
+      cursor: pointer;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .phone-prof-hero {
+      text-align: center;
+      padding: 14px 0;
+    }
+    .phone-hero-avatar {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      background: var(--color-primary);
+      color: var(--bg-primary);
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      margin: 0 auto 8px auto;
+    }
+    .phone-prof-hero h3 {
+      font-size: 15px;
+      margin-bottom: 2px;
+    }
+    .phone-hero-badge {
+      font-size: 9px;
+      background: rgba(200, 157, 147, 0.15);
+      color: var(--color-primary-light);
+      padding: 2px 8px;
+      border-radius: 10px;
+      display: inline-block;
+      margin-bottom: 4px;
+    }
+    .phone-hero-rating {
+      font-size: 10px;
+      color: var(--color-warning);
+    }
+
+    .phone-prof-bio {
+      margin-top: 8px;
+    }
+    .phone-prof-bio h4, .phone-portfolio-section h4 {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+    .phone-prof-bio p {
+      font-size: 10px;
+      line-height: 1.5;
+      color: #d1d5db;
+    }
+
+    .phone-portfolio-gallery {
+      display: flex;
+      gap: 6px;
+      margin-top: 6px;
+    }
+    .phone-port-item {
+      flex: 1;
+      height: 48px;
+      background: linear-gradient(135deg, rgba(200,157,147,0.1) 0%, rgba(200,157,147,0.3) 100%);
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .phone-cta-btn {
+      width: calc(100% - 24px);
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      background: var(--color-primary);
+      color: var(--bg-primary);
+      border: none;
+      padding: 10px 0;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      box-shadow: 0 4px 10px rgba(200, 157, 147, 0.3);
+      transition: all 0.2s;
+    }
+    .phone-cta-btn:hover {
+      transform: translateY(-2px);
+    }
+    .phone-cta-btn.success {
+      background: var(--color-success);
+      color: #fff;
+      box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+    }
+    .phone-cta-btn.secondary {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: #fff;
+      position: relative;
+      bottom: auto;
+      left: auto;
+      width: 100%;
+      margin-top: 14px;
+    }
+
+    .phone-calendar-title, .phone-time-title {
+      font-size: 11px;
+      font-weight: 600;
+      margin: 10px 0 6px 0;
+      color: var(--text-muted);
+    }
+    .phone-calendar-days {
+      display: flex;
+      justify-content: space-between;
+      background: rgba(255,255,255,0.03);
+      padding: 8px;
+      border-radius: 10px;
+    }
+    .phone-cal-day {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 6px;
+      border-radius: 8px;
+      width: 32px;
+    }
+    .phone-cal-day span {
+      font-size: 8px;
+      color: var(--text-muted);
+    }
+    .phone-cal-day strong {
+      font-size: 10px;
+    }
+    .phone-cal-day.active {
+      background: var(--color-primary);
+      color: var(--bg-primary);
+    }
+
+    .phone-time-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+    }
+    .phone-time-slot {
+      background: rgba(255,255,255,0.04);
+      border: 0.5px solid rgba(255,255,255,0.06);
+      border-radius: 8px;
+      padding: 8px;
+      text-align: center;
+      font-size: 10px;
+    }
+    .phone-time-slot.active {
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+      background: rgba(200, 157, 147, 0.08);
+    }
+
+    .phone-summary-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 10px;
+    }
+    .phone-summary-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      margin-bottom: 6px;
+    }
+
+    .phone-payment-methods {
+      margin-top: 12px;
+    }
+    .phone-pay-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      background: rgba(255,255,255,0.03);
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.05);
+      font-size: 10px;
+    }
+    .phone-pay-option.active {
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+    }
+
+    .phone-success-screen {
+      text-align: center;
+      padding: 24px 0 10px 0;
+    }
+    .phone-success-icon {
+      font-size: 40px;
+      color: var(--color-success);
+      margin-bottom: 12px;
+    }
+    .phone-success-screen h3 {
+      font-size: 16px;
+      margin-bottom: 6px;
+    }
+    .phone-success-screen p {
+      font-size: 10px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+    .phone-success-details {
+      background: rgba(255,255,255,0.03);
+      border-radius: 12px;
+      padding: 12px;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .phone-pin-badge span {
+      display: block;
+      font-size: 8px;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+    }
+    .phone-pin-badge strong {
+      font-size: 16px;
+      color: var(--color-primary);
+      letter-spacing: 0.1em;
+    }
+
+    /* Panel de pasos */
+    .side-panel {
+      flex: 1;
+      min-width: 300px;
+      padding: 8px;
+    }
+
+    .progress-bar {
+      height: 4px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 4px;
+      margin-bottom: 16px;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--color-primary);
+      border-radius: 4px;
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .step-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .step-item {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      background: rgba(255, 255, 255, 0.02);
+      cursor: pointer;
+      transition: var(--transition-smooth);
+    }
+    .step-item:hover {
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .step-item.active {
+      border-color: var(--color-primary);
+      background: rgba(200, 157, 147, 0.08);
+    }
+    .step-item.done {
+      border-color: rgba(16, 185, 129, 0.25);
+    }
+    .step-item.done .step-num {
+      background: var(--color-success);
+      color: #fff;
+    }
+
+    .step-num {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      background: rgba(255,255,255,0.08);
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+    .step-item.active .step-num {
+      background: var(--color-primary);
+      color: var(--bg-primary);
+    }
+
+    .step-content {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .step-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+    .step-desc {
+      font-size: 10px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .nav-btns {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    .nav-btn {
+      flex: 1;
+      padding: 10px 0;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      color: #fff;
+      transition: var(--transition-smooth);
+    }
+    .nav-btn.primary {
+      background: var(--color-primary);
+      color: var(--bg-primary);
+      border-color: var(--color-primary);
+    }
+    .nav-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .skip-btn-container {
+      margin-top: 24px;
+      display: flex;
+      justify-content: center;
+    }
+    .skip-btn {
+      background: none;
+      border: none;
+      color: var(--color-primary);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Guía Interactiva de GlowApp</h1>
+    <p class="subtitle">Descubre cómo agendar y pagar tus servicios de belleza a domicilio paso a paso</p>
+
+    <div class="phone-wrap">
+      <!-- IZQUIERDA: teléfono -->
+      <div class="phone-frame">
+        <div class="phone-notch"><span></span></div>
+        <div class="phone-screen">
+
+          <!-- PANTALLA 1: Listado de profesionales (s0) -->
+          <div class="screen active" id="s0">
+            <div class="phone-header-bar">
+              <i class="fa-solid fa-scissors header-brand-icon"></i>
+              <span class="phone-header-title">GlowApp</span>
+              <i class="fa-solid fa-bell header-brand-icon"></i>
+            </div>
+            <div class="phone-search-box">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <span>Buscar estilistas, manicuristas...</span>
+            </div>
+            <div class="phone-categories">
+              <div class="phone-category active">Corte</div>
+              <div class="phone-category">Barba</div>
+              <div class="phone-category">Uñas</div>
+              <div class="phone-category">Maquillaje</div>
+            </div>
+            <div class="phone-section-title">Estilistas Recomendados</div>
+            <div class="phone-professional-card" id="trigger-go-s1">
+              <div class="phone-prof-avatar">VG</div>
+              <div class="phone-prof-details">
+                <span class="phone-prof-name">Valeria Gómez</span>
+                <span class="phone-prof-subtitle">Estilista Premium • Balayage</span>
+                <span class="phone-prof-rating"><i class="fa-solid fa-star"></i> 4.9 (124)</span>
+              </div>
+              <div class="phone-prof-action">
+                <i class="fa-solid fa-chevron-right"></i>
+              </div>
+            </div>
+            <div class="phone-professional-card">
+              <div class="phone-prof-avatar">CR</div>
+              <div class="phone-prof-details">
+                <span class="phone-prof-name">Carlos Ruíz</span>
+                <span class="phone-prof-subtitle">Barbero Especialista • Estilo</span>
+                <span class="phone-prof-rating"><i class="fa-solid fa-star"></i> 4.8 (89)</span>
+              </div>
+              <div class="phone-prof-action">
+                <i class="fa-solid fa-chevron-right"></i>
+              </div>
+            </div>
+            <div class="tooltip-bubble below" style="left:15px; top:170px; width: 210px;">
+              <i class="fa-solid fa-hand-pointer animate-bounce"></i> Toca el perfil de Valeria Gómez para ver detalles
+            </div>
+          </div>
+
+          <!-- PANTALLA 2: Perfil del profesional (s1) -->
+          <div class="screen" id="s1">
+            <div class="phone-back-bar" id="back-to-s0">
+              <i class="fa-solid fa-arrow-left"></i>
+              <span>Perfil Profesional</span>
+            </div>
+            <div class="phone-prof-hero">
+              <div class="phone-hero-avatar">VG</div>
+              <h3>Valeria Gómez</h3>
+              <span class="phone-hero-badge"><i class="fa-solid fa-certificate"></i> Estilista Certificada</span>
+              <div class="phone-hero-rating"><i class="fa-solid fa-star"></i> 4.9 (124 reseñas)</div>
+            </div>
+            <div class="phone-prof-bio">
+              <h4>Biografía</h4>
+              <p>Especialista en colorimetría y cortes modernos con más de 8 años de trayectoria internacional.</p>
+            </div>
+            <div class="phone-portfolio-section">
+              <h4>Portafolio</h4>
+              <div class="phone-portfolio-gallery">
+                <div class="phone-port-item"></div>
+                <div class="phone-port-item"></div>
+                <div class="phone-port-item"></div>
+              </div>
+            </div>
+            <button class="phone-cta-btn" id="trigger-go-s2">Agendar Cita ($150k COP)</button>
+            <div class="tooltip-bubble above" style="left:15px; bottom:65px; width: 210px;">
+              <i class="fa-solid fa-hand-pointer"></i> Toca "Agendar Cita" para programar el turno
+            </div>
+          </div>
+
+          <!-- PANTALLA 3: Calendario y horario (s2) -->
+          <div class="screen" id="s2">
+            <div class="phone-back-bar" id="back-to-s1">
+              <i class="fa-solid fa-arrow-left"></i>
+              <span>Selecciona Fecha y Hora</span>
+            </div>
+            <div class="phone-calendar-title">Junio 2026</div>
+            <div class="phone-calendar-days">
+              <div class="phone-cal-day"><span>Lu</span><strong>01</strong></div>
+              <div class="phone-cal-day active"><span>Ma</span><strong>02</strong></div>
+              <div class="phone-cal-day"><span>Mi</span><strong>03</strong></div>
+              <div class="phone-cal-day"><span>Ju</span><strong>04</strong></div>
+              <div class="phone-cal-day"><span>Vi</span><strong>05</strong></div>
+            </div>
+            <div class="phone-time-title">Horarios Disponibles</div>
+            <div class="phone-time-grid">
+              <div class="phone-time-slot">09:00 AM</div>
+              <div class="phone-time-slot active">02:00 PM</div>
+              <div class="phone-time-slot">04:30 PM</div>
+              <div class="phone-time-slot">06:00 PM</div>
+            </div>
+            <button class="phone-cta-btn" id="trigger-go-s3">Confirmar y Continuar</button>
+            <div class="tooltip-bubble below" style="left:15px; top:75px; width: 210px;">
+              <i class="fa-solid fa-circle-check"></i> Elige un día y hora disponible, luego toca "Confirmar"
+            </div>
+          </div>
+
+          <!-- PANTALLA 4: Resumen y pago (s3) -->
+          <div class="screen" id="s3">
+            <div class="phone-back-bar" id="back-to-s2">
+              <i class="fa-solid fa-arrow-left"></i>
+              <span>Resumen del Pedido</span>
+            </div>
+            <div class="phone-summary-card">
+              <div class="phone-summary-row">
+                <strong>Servicio:</strong>
+                <span>Corte & Balayage</span>
+              </div>
+              <div class="phone-summary-row">
+                <strong>Profesional:</strong>
+                <span>Valeria Gómez</span>
+              </div>
+              <div class="phone-summary-row">
+                <strong>Fecha:</strong>
+                <span>Martes, 02 Jun</span>
+              </div>
+              <div class="phone-summary-row">
+                <strong>Hora:</strong>
+                <span>02:00 PM</span>
+              </div>
+              <hr style="border: 0.5px solid rgba(255,255,255,0.1); margin: 8px 0;">
+              <div class="phone-summary-row">
+                <strong style="color: var(--color-primary);">Total:</strong>
+                <strong style="color: var(--color-primary);">$150,000 COP</strong>
+              </div>
+            </div>
+            <div class="phone-payment-methods">
+              <div class="phone-pay-option active">
+                <i class="fa-solid fa-credit-card"></i>
+                <span>Pasarela Wompi (Nequi/Dav/TC)</span>
+              </div>
+            </div>
+            <button class="phone-cta-btn success" id="trigger-go-s4"><i class="fa-solid fa-shield-halved"></i> Pagar con Wompi</button>
+            <div class="tooltip-bubble above" style="left:15px; bottom:65px; width: 210px;">
+              <i class="fa-solid fa-lock"></i> Revisa los datos y toca "Pagar con Wompi" para procesar seguro
+            </div>
+          </div>
+
+          <!-- PANTALLA 5: Confirmación (s4) -->
+          <div class="screen" id="s4">
+            <div class="phone-success-screen">
+              <div class="phone-success-icon">
+                <i class="fa-solid fa-circle-check"></i>
+              </div>
+              <h3>¡Cita Agendada!</h3>
+              <p>Tu cita con <strong>Valeria Gómez</strong> ha sido confirmada para el <strong>02 de Junio a las 02:00 PM</strong>.</p>
+              <div class="phone-success-details">
+                <div class="phone-pin-badge">
+                  <span>Código de Confirmación OTP</span>
+                  <strong>749 203</strong>
+                </div>
+              </div>
+              <button class="phone-cta-btn secondary" id="btnResetTutorial"><i class="fa-solid fa-arrows-rotate"></i> Volver a Empezar</button>
+            </div>
+          </div>
+
+        </div>
+        <div style="padding:8px; display:flex; justify-content:center; background: var(--bg-secondary);">
+          <div style="width:80px; height:4px; background:rgba(255,255,255,0.1); border-radius:4px;"></div>
+        </div>
+      </div>
+
+      <!-- DERECHA: panel de pasos -->
+      <div class="side-panel">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill" style="width:0%"></div>
+        </div>
+        <div class="step-list" id="stepList">
+          <div class="step-item active" data-step="0">
+            <div class="step-num">1</div>
+            <div class="step-content">
+              <div class="step-title">Explorar Servicios y Profesionales</div>
+              <div class="step-desc">El cliente filtra categorías de servicios y visualiza estilistas calificados según ubicación e histórico de satisfacción.</div>
+            </div>
+          </div>
+          <div class="step-item" data-step="1">
+            <div class="step-num">2</div>
+            <div class="step-content">
+              <div class="step-title">Inspección de Perfil y Trabajos</div>
+              <div class="step-desc">Acceso a biografías, certificaciones oficiales, valoraciones promedio y galería fotográfica de trabajos anteriores (portafolio).</div>
+            </div>
+          </div>
+          <div class="step-item" data-step="2">
+            <div class="step-num">3</div>
+            <div class="step-content">
+              <div class="step-title">Programación de Turno</div>
+              <div class="step-desc">Selección interactiva de fechas y franjas horarias disponibles según el horario laboral dinámico configurado por el profesional.</div>
+            </div>
+          </div>
+          <div class="step-item" data-step="3">
+            <div class="step-num">4</div>
+            <div class="step-content">
+              <div class="step-title">Garantía Escrow y Pago Seguro</div>
+              <div class="step-desc">Resumen detallado de tarifas y procesamiento de pago seguro integrado con pasarelas para retención preventiva del saldo.</div>
+            </div>
+          </div>
+          <div class="step-item" data-step="4">
+            <div class="step-num">5</div>
+            <div class="step-content">
+              <div class="step-title">Generación de Token OTP y Cierre</div>
+              <div class="step-desc">Cita confirmada en tiempo real. Se genera un código OTP único para ser validado físicamente en el check-in del servicio.</div>
+            </div>
+          </div>
+        </div>
+        <div class="nav-btns">
+          <button class="nav-btn" id="btnPrev" disabled>← Anterior</button>
+          <button class="nav-btn primary" id="btnNext">Siguiente →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Botón de Omitir/Comenzar App -->
+    <div class="skip-btn-container">
+      <button class="skip-btn" id="btnSkipTutorial">Omitir Tutorial e Ir a la Aplicación</button>
+    </div>
+  </div>
+
+  <script>
+    let currentStep = 0;
+    const totalSteps = 5;
+    const screens = ['s0', 's1', 's2', 's3', 's4'];
+    const stepItems = document.querySelectorAll('.step-item');
+    const progressFill = document.getElementById('progressFill');
+    const btnNext = document.getElementById('btnNext');
+    const btnPrev = document.getElementById('btnPrev');
+
+    function goTo(step) {
+      if (step < 0 || step >= totalSteps) return;
+      document.getElementById(screens[currentStep]).classList.remove('active');
+      currentStep = step;
+      document.getElementById(screens[currentStep]).classList.add('active');
+
+      stepItems.forEach((el, i) => {
+        el.classList.remove('active', 'done');
+        if (i < currentStep) el.classList.add('done');
+        if (i === currentStep) el.classList.add('active');
+        
+        const numEl = el.querySelector('.step-num');
+        if (numEl) {
+          numEl.textContent = i < currentStep ? '✓' : (i + 1);
+        }
+      });
+
+      if (progressFill) {
+        progressFill.style.width = (currentStep / (totalSteps - 1) * 100) + '%';
+      }
+      if (btnPrev) btnPrev.disabled = currentStep === 0;
+      if (btnNext) {
+        btnNext.textContent = currentStep === totalSteps - 1 ? '¡Comenzar!' : 'Siguiente →';
+      }
+    }
+
+    if (btnNext) {
+      btnNext.onclick = () => {
+        if (currentStep === totalSteps - 1) {
+          // Informar al WebView que el tutorial ha concluido
+          if (window.FlutterInterface) {
+            window.FlutterInterface.postMessage('finish');
+          } else {
+            alert('Tutorial completado. redirigiendo...');
+          }
+        } else {
+          goTo(currentStep + 1);
+        }
+      };
+    }
+
+    if (btnPrev) {
+      btnPrev.onclick = () => goTo(currentStep - 1);
+    }
+
+    // Vincular clicks a los pasos del panel lateral
+    stepItems.forEach(el => {
+      el.onclick = () => goTo(parseInt(el.dataset.step));
+    });
+
+    // Triggers de los componentes del teléfono
+    document.getElementById('trigger-go-s1').onclick = () => goTo(1);
+    document.getElementById('back-to-s0').onclick = () => goTo(0);
+    document.getElementById('trigger-go-s2').onclick = () => goTo(2);
+    document.getElementById('back-to-s1').onclick = () => goTo(1);
+    document.getElementById('trigger-go-s3').onclick = () => goTo(3);
+    document.getElementById('back-to-s2').onclick = () => goTo(2);
+    document.getElementById('trigger-go-s4').onclick = () => goTo(4);
+    document.getElementById('btnResetTutorial').onclick = () => goTo(0);
+
+    // Botón Omitir
+    document.getElementById('btnSkipTutorial').onclick = () => {
+      if (window.FlutterInterface) {
+        window.FlutterInterface.postMessage('skip');
+      } else {
+        alert('Omitir tutorial.');
+      }
+    };
+  </script>
+</body>
+</html>

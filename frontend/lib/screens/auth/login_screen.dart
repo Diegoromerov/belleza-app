@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
 import '../../services/api_service.dart';
+import '../onboarding_webview_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -43,9 +44,23 @@ class _LoginScreenState extends State<LoginScreen> {
         final String? role = result['user']['role'];
         if (onboardingCompleto) {
           if (role == 'provider') {
-            Navigator.pushReplacementNamed(context, '/provider');
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (_) => OnboardingWebViewScreen(
+                  onCompleted: () => Navigator.pushReplacementNamed(context, '/provider'),
+                ),
+              ),
+            );
           } else {
-            Navigator.pushReplacementNamed(context, '/home');
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (_) => OnboardingWebViewScreen(
+                  onCompleted: () => Navigator.pushReplacementNamed(context, '/home'),
+                ),
+              ),
+            );
           }
         } else {
           Navigator.pushReplacementNamed(context, '/onboarding');
@@ -97,9 +112,23 @@ class _LoginScreenState extends State<LoginScreen> {
         final String? role = result['user']['role'];
         if (onboardingCompleto) {
           if (role == 'provider') {
-            Navigator.pushReplacementNamed(context, '/provider');
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (_) => OnboardingWebViewScreen(
+                  onCompleted: () => Navigator.pushReplacementNamed(context, '/provider'),
+                ),
+              ),
+            );
           } else {
-            Navigator.pushReplacementNamed(context, '/home');
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (_) => OnboardingWebViewScreen(
+                  onCompleted: () => Navigator.pushReplacementNamed(context, '/home'),
+                ),
+              ),
+            );
           }
         } else {
           Navigator.pushReplacementNamed(context, '/onboarding');
