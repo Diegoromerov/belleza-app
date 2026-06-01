@@ -8,7 +8,7 @@ import 'services/api_service.dart';
 import 'services/analytics_service.dart';
 import 'services/auth_service.dart';
 import 'services/web_geolocation.dart';
-import 'shared/onboarding_helper.dart';
+
 import 'services/notification_service.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
@@ -224,19 +224,10 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
           final data = json.decode(decoded);
           if (mounted) {
             setState(() => _userRole = data['role']);
-            // Mostrar walkthrough de cliente de forma asíncrona tras el primer frame
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              importWalkthroughAndShow();
-            });
           }
         }
       } catch (_) {}
     }
-  }
-
-  void importWalkthroughAndShow() {
-    // Llama al helper de onboarding para cliente
-    OnboardingWalkthroughHelper.showWalkthroughIfNeeded(context, 'client');
   }
 
   void _navigateToAIChat(String message) {
