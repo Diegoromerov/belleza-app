@@ -10,6 +10,7 @@ require('dotenv').config();
 // ⚠️ IMPORTANTE: Imports al inicio para evitar ReferenceError
 const authRoutes = require('./src/routes/authRoutes');
 const paymentRoutes = require('./src/routes/paymentRoutes');
+const glowAdminRoutes = require('./src/modules/admin-glow/admin.routes');
 const authMiddleware = require('./src/middleware/auth');
 const adminMiddleware = async (req, res, next) => {
   try {
@@ -90,6 +91,7 @@ app.use('/admin', express.static(path.join(__dirname, 'public/admin')));
 // SISTEMA DE PAGOS
 // ==========================================
 app.use('/api', paymentRoutes);
+app.use('/api/glow-admin', glowAdminRoutes);
 
 // ==========================================
 // RUTAS PÚBLICAS
