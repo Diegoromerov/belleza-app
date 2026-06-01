@@ -2,6 +2,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
+import '../../services/api_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -31,6 +32,8 @@ class _LoginScreenState extends State<LoginScreen> {
       _isLoading = true;
       _error = null;
     });
+    // Forzar limpieza de base url cache por si no se limpió en logout
+    ApiService.resetCachedBaseUrl();
     try {
       final result =
           await AuthService.login(_emailCtrl.text.trim(), _passCtrl.text);
@@ -51,7 +54,7 @@ class _LoginScreenState extends State<LoginScreen> {
         setState(() => _error = 'Credenciales incorrectas');
       }
     } catch (e) {
-      setState(() => _error = 'Error de conexión');
+      setState(() => _error = 'Error de conexión: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
