@@ -10,6 +10,7 @@ import 'chat_list_screen.dart';
 import 'provider_profile_screen.dart';
 import '../services/api_service.dart';
 import '../services/analytics_service.dart';
+import '../shared/onboarding_helper.dart';
 
 class ProviderDashboardScreen extends StatefulWidget {
   const ProviderDashboardScreen({super.key});
@@ -40,6 +41,9 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
     super.initState();
     _fetchBookings();
     _fetchProfile();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      OnboardingWalkthroughHelper.showWalkthroughIfNeeded(context, 'provider');
+    });
   }
 
   Future<void> _fetchBookings() async {
