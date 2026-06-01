@@ -1565,6 +1565,198 @@ app.patch('/api/admin/sos/resolve/:id', authMiddleware, adminMiddleware, async (
   }
 });
 
+// 🔹 NUEVOS: Endpoints Administrativos para Encender/Apagar Clientes y Proveedores y Verificación de Documentos
+app.get('/api/admin/users', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT u.id, u.nombre, u.email, u.phone, u.rol, u.is_active,
+             p.estatus_verificacion, p.documento_id_url, p.rut_url, p.certificacion_url
+      FROM usuarios u
+      LEFT JOIN perfiles_prestador p ON u.id = p.id
+      WHERE u.rol IN ('CLIENTE', 'PRESTADOR')
+      ORDER BY u.nombre ASC;
+    `);
+    res.json({
+      success: true,
+      users: result.rows.map(row => ({
+        id: row.id.toString(),
+        nombre: row.nombre,
+        email: row.email,
+        phone: row.phone,
+        rol: row.rol,
+        is_active: row.is_active,
+        estatus_verificacion: row.estatus_verificacion || null,
+        documento_id_url: row.documento_id_url || null,
+        rut_url: row.rut_url || null,
+        certificacion_url: row.certificacion_url || null
+      }))
+    });
+  } catch (error) {
+    console.error('❌ ERROR EN GET /api/admin/users:', error);
+    res.status(500).json({ error: 'Error al obtener lista de usuarios.' });
+  }
+});
+
+app.patch('/api/admin/users/:id/toggle-status', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id);
+    const result = await pool.query(`
+      UPDATE usuarios 
+      SET is_active = NOT COALESCE(is_active, TRUE) 
+      WHERE id = $1 
+      RETURNING id, nombre, email, rol, is_active;
+    `, [userId]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Usuario no encontrado.' });
+    }
+
+    const updatedUser = result.rows[0];
+
+    if (updatedUser.rol === 'PRESTADOR') {
+      await pool.query(`
+        UPDATE perfiles_prestador 
+        SET is_active = $1 
+        WHERE id = $2;
+      `, [updatedUser.is_active, updatedUser.id]);
+    }
+
+    res.json({
+      success: true,
+      message: `Usuario ${updatedUser.nombre} estado actualizado con éxito.`,
+      user: {
+        id: updatedUser.id.toString(),
+        nombre: updatedUser.nombre,
+        email: updatedUser.email,
+        rol: updatedUser.rol,
+        is_active: updatedUser.is_active
+      }
+    });
+  } catch (error) {
+    console.error('❌ ERROR EN PATCH /api/admin/users/:id/toggle-status:', error);
+    res.status(500).json({ error: 'Error al actualizar el estado del usuario.' });
+  }
+});
+
+app.patch('/api/admin/users/:id/verify', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id);
+    const { status } = req.body; // 'APROBADO' o 'RECHAZADO'
+
+    if (!status || !['APROBADO', 'RECHAZADO', 'PENDIENTE'].includes(status)) {
+      return res.status(400).json({ error: 'Estado de verificación inválido.' });
+    }
+
+    // 1. Actualizar estatus de verificación en perfiles_prestador
+    const checkProfile = await pool.query('SELECT id FROM perfiles_prestador WHERE id = $1', [userId]);
+    if (checkProfile.rows.length === 0) {
+      return res.status(404).json({ error: 'El perfil de proveedor no existe.' });
+    }
+
+    const result = await pool.query(`
+      UPDATE perfiles_prestador
+      SET estatus_verificacion = $1,
+          is_active = $2
+      WHERE id = $3
+      RETURNING id, estatus_verificacion, is_active;
+    `, [status, status === 'APROBADO', userId]);
+
+    // 2. Sincronizar el estado del usuario para que esté activo si es aprobado
+    await pool.query(`
+      UPDATE usuarios
+      SET is_active = $1
+      WHERE id = $2;
+    `, [status === 'APROBADO', userId]);
+
+    res.json({
+      success: true,
+      message: `Estatus de verificación actualizado a ${status} con éxito.`,
+      data: result.rows[0]
+    });
+  } catch (error) {
+    console.error('❌ ERROR EN PATCH /api/admin/users/:id/verify:', error);
+    res.status(500).json({ error: 'Error al verificar proveedor.' });
+  }
+});
+
+// 🔹 NUEVOS: Endpoints Administrativos para Gestión y Resolución de Disputas
+app.get('/api/admin/disputes', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT d.id, d.booking_id, d.tipo_actor, d.tipo, d.descripcion, d.evidencia_urls, d.monto_disputado, d.estado, d.nota_resolucion, d.creado_at, d.sla_limite_at,
+             u_init.nombre AS iniciado_por_nombre, u_init.email AS iniciado_por_email,
+             u_client.nombre AS cliente_nombre, u_client.email AS cliente_email,
+             u_prov.nombre AS prestador_nombre, u_prov.email AS prestador_email
+      FROM disputas d
+      JOIN usuarios u_init ON d.iniciado_por = u_init.id
+      JOIN bookings b ON d.booking_id = b.id
+      JOIN usuarios u_client ON b.client_id = u_client.id
+      JOIN usuarios u_prov ON b.provider_id = u_prov.id
+      ORDER BY d.creado_at DESC;
+    `);
+    res.json({
+      success: true,
+      disputes: result.rows
+    });
+  } catch (error) {
+    console.error('❌ ERROR EN GET /api/admin/disputes:', error);
+    res.status(500).json({ error: 'Error al obtener lista de disputas.' });
+  }
+});
+
+app.patch('/api/admin/disputes/:id/resolve', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const disputeId = req.params.id;
+    const adminId = req.user.id;
+    const { resolucion, porcentaje_prestador, nota_resolucion } = req.body;
+
+    if (!resolucion || porcentaje_prestador === undefined || !nota_resolucion) {
+      return res.status(400).json({ error: 'Todos los campos de resolución son requeridos.' });
+    }
+
+    const pct = parseFloat(porcentaje_prestador);
+
+    // 1. Obtener la disputa
+    const checkDispute = await pool.query('SELECT * FROM disputas WHERE id = $1', [disputeId]);
+    if (checkDispute.rows.length === 0) {
+      return res.status(404).json({ error: 'Disputa no encontrada.' });
+    }
+
+    const dispute = checkDispute.rows[0];
+
+    // 2. Actualizar la disputa
+    const result = await pool.query(`
+      UPDATE disputas
+      SET estado = 'RESUELTA',
+          resuelto_por = $1,
+          resolucion = $2,
+          porcentaje_prestador = $3,
+          nota_resolucion = $4,
+          resuelto_at = NOW(),
+          actualizado_at = NOW()
+      WHERE id = $5
+      RETURNING *;
+    `, [adminId, resolucion, pct, nota_resolucion, disputeId]);
+
+    // 3. Sincronizar el estado del booking. Si el prestador recibe > 0%, marcar como completada. De lo contrario cancelada.
+    const finalBookingStatus = pct > 0 ? 'COMPLETADA' : 'CANCELADA';
+    await pool.query(`
+      UPDATE bookings
+      SET estado = $1
+      WHERE id = $2;
+    `, [finalBookingStatus, dispute.booking_id]);
+
+    res.json({
+      success: true,
+      message: 'Disputa resuelta con éxito.',
+      dispute: result.rows[0]
+    });
+  } catch (error) {
+    console.error('❌ ERROR EN PATCH /api/admin/disputes/:id/resolve:', error);
+    res.status(500).json({ error: 'Error al resolver la disputa.' });
+  }
+});
+
 // 🔹 NUEVO: Obtener perfil del usuario autenticado (incluye avatar_url)
 app.get('/api/users/profile', authMiddleware, async (req, res) => {
   try {
@@ -2090,6 +2282,11 @@ const initDatabase = async () => {
     }
 
     // Ejecutar migraciones y tablas adicionales ahora que el esquema base está garantizado
+    await pool.query(`
+      ALTER TABLE usuarios
+      ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;
+    `);
+
     await pool.query(`
       ALTER TABLE bookings
       ADD COLUMN IF NOT EXISTS service_address TEXT;

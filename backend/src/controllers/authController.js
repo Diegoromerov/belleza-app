@@ -65,7 +65,7 @@ exports.login = async (req, res) => {
     const cleanEmail = email.trim().toLowerCase();
 
     const result = await pool.query(
-      `SELECT id, nombre, email, password_hash, rol, onboarding_completo 
+      `SELECT id, nombre, email, password_hash, rol, onboarding_completo, is_active 
        FROM usuarios 
        WHERE LOWER(email) = $1 AND auth_provider = 'LOCAL'`, 
       [cleanEmail]
@@ -77,6 +77,11 @@ exports.login = async (req, res) => {
     }
     
     const user = result.rows[0];
+
+    if (user.is_active === false) {
+      console.log('❌ RECHAZADO: El usuario está desactivado.');
+      return res.status(403).json({ error: 'Tu cuenta ha sido desactivada por el administrador.' });
+    }
 
     const isValid = await bcrypt.compare(password, user.password_hash);
     if (!isValid) {
@@ -127,7 +132,7 @@ exports.oauth = async (req, res) => {
 
     // Buscamos si existe por la cuenta federada o por email
     let userQuery = await pool.query(
-      `SELECT id, nombre, email, rol, onboarding_completo 
+      `SELECT id, nombre, email, rol, onboarding_completo, is_active 
        FROM usuarios 
        WHERE (auth_provider = $1 AND provider_id = $2) OR LOWER(email) = $3`,
       [provider, provider_id, cleanEmail]
@@ -137,6 +142,12 @@ exports.oauth = async (req, res) => {
 
     if (userQuery.rows.length > 0) {
       user = userQuery.rows[0];
+      
+      if (user.is_active === false) {
+        console.log('❌ RECHAZADO OAUTH: El usuario está desactivado.');
+        return res.status(403).json({ error: 'Tu cuenta ha sido desactivada por el administrador.' });
+      }
+
       // Si existía (ej. local) pero ahora ingresa con oauth, actualizamos proveedor federado
       await pool.query(
         `UPDATE usuarios 
@@ -145,7 +156,7 @@ exports.oauth = async (req, res) => {
         [provider, provider_id, foto_url || null, user.id]
       );
       // Recargar datos actualizados
-      const updated = await pool.query('SELECT id, nombre, email, rol, onboarding_completo FROM usuarios WHERE id = $1', [user.id]);
+      const updated = await pool.query('SELECT id, nombre, email, rol, onboarding_completo, is_active FROM usuarios WHERE id = $1', [user.id]);
       user = updated.rows[0];
     } else {
       // Registrar nuevo usuario federado con rol = NULL y onboarding_completo = false
