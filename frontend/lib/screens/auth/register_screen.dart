@@ -16,24 +16,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
-  
+
   String _selectedRole = 'CLIENTE'; // 'CLIENTE' or 'PRESTADOR'
   bool _isLoading = false;
   bool _obscurePassword = true;
   String? _error;
 
   @override
-  void dispose() { 
-    _nameCtrl.dispose(); 
-    _emailCtrl.dispose(); 
-    _passCtrl.dispose(); 
-    _phoneCtrl.dispose(); 
-    super.dispose(); 
+  void dispose() {
+    _nameCtrl.dispose();
+    _emailCtrl.dispose();
+    _passCtrl.dispose();
+    _phoneCtrl.dispose();
+    super.dispose();
   }
 
   Future<void> _handleRegister() async {
     if (!_formKey.currentState!.validate()) return;
-    setState(() { _isLoading = true; _error = null; });
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
     try {
       final name = _nameCtrl.text.trim();
       final email = _emailCtrl.text.trim();
@@ -41,9 +44,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       final phone = _phoneCtrl.text.trim();
 
       final success = await AuthService.register(
-        name, 
-        email, 
-        password, 
+        name,
+        email,
+        password,
         phone.isNotEmpty ? phone : null,
         _selectedRole,
       );
@@ -57,17 +60,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
         if (!mounted) return;
 
         if (loginResult != null) {
-          final bool onboardingCompleto = loginResult['user']['onboarding_completo'] ?? false;
+          final bool onboardingCompleto =
+              loginResult['user']['onboarding_completo'] ?? false;
           final String? role = loginResult['user']['role'];
 
-          scaffoldMessenger.showSnackBar(
-            SnackBar(
-              content: Text('✅ Registro exitoso como ${_selectedRole == 'PRESTADOR' ? 'Prestador' : 'Cliente'}.'), 
-              backgroundColor: const Color(0xFF10B981),
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            )
-          );
+          scaffoldMessenger.showSnackBar(SnackBar(
+            content: Text(
+                '✅ Registro exitoso como ${_selectedRole == 'PRESTADOR' ? 'Prestador' : 'Cliente'}.'),
+            backgroundColor: const Color(0xFF10B981),
+            behavior: SnackBarBehavior.floating,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ));
 
           if (onboardingCompleto) {
             if (role == 'provider') {
@@ -79,22 +83,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
             navigator.pushNamedAndRemoveUntil('/onboarding', (route) => false);
           }
         } else {
-          scaffoldMessenger.showSnackBar(
-            const SnackBar(
-              content: Text('✅ Cuenta creada. Inicie sesión para continuar.'), 
-              backgroundColor: Colors.green,
-            )
-          );
+          scaffoldMessenger.showSnackBar(const SnackBar(
+            content: Text('✅ Cuenta creada. Inicie sesión para continuar.'),
+            backgroundColor: Colors.green,
+          ));
           navigator.pop();
         }
       } else {
-        setState(() => _error = 'Error al registrar. El correo electrónico podría estar en uso.');
+        setState(() => _error =
+            'Error al registrar. El correo electrónico podría estar en uso.');
       }
-    } catch (e) { 
-      setState(() => _error = 'Error de conexión: $e'); 
-    } finally { 
+    } catch (e) {
+      setState(() => _error = 'Error de conexión: $e');
+    } finally {
       if (mounted) {
-        setState(() => _isLoading = false); 
+        setState(() => _isLoading = false);
       }
     }
   }
@@ -116,7 +119,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -124,28 +128,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   Align(
                     alignment: Alignment.centerLeft,
                     child: IconButton(
-                      icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF8A7A77), size: 20),
+                      icon: const Icon(Icons.arrow_back_ios_new,
+                          color: Color(0xFF8A7A77), size: 20),
                       onPressed: () => Navigator.pop(context),
                     ),
                   ),
-                  
+
                   // Encabezado
                   Hero(
                     tag: 'logo',
                     child: Container(
                       padding: EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Color(0x1F8A6B63),
-                            blurRadius: 20,
-                            offset: Offset(0, 8),
-                          )
-                        ]
-                      ),
-                      child: Icon(Icons.face_retouching_natural, size: 48, color: Color(0xFFC89D93)),
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Color(0x1F8A6B63),
+                              blurRadius: 20,
+                              offset: Offset(0, 8),
+                            )
+                          ]),
+                      child: Icon(Icons.face_retouching_natural,
+                          size: 48, color: Color(0xFFC89D93)),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -210,22 +215,36 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               Container(
                                 padding: const EdgeInsets.all(4),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFEADCD6).withOpacity(0.5),
+                                  color:
+                                      const Color(0xFFEADCD6).withOpacity(0.5),
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                                 child: Row(
                                   children: [
                                     Expanded(
                                       child: GestureDetector(
-                                        onTap: () => setState(() => _selectedRole = 'CLIENTE'),
+                                        onTap: () => setState(
+                                            () => _selectedRole = 'CLIENTE'),
                                         child: AnimatedContainer(
-                                          duration: const Duration(milliseconds: 200),
-                                          padding: const EdgeInsets.symmetric(vertical: 12),
+                                          duration:
+                                              const Duration(milliseconds: 200),
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 12),
                                           decoration: BoxDecoration(
-                                            color: _selectedRole == 'CLIENTE' ? Colors.white : Colors.transparent,
-                                            borderRadius: BorderRadius.circular(12),
-                                            boxShadow: _selectedRole == 'CLIENTE' 
-                                                ? [const BoxShadow(color: Color(0x1F000000), blurRadius: 4, offset: Offset(0, 2))]
+                                            color: _selectedRole == 'CLIENTE'
+                                                ? Colors.white
+                                                : Colors.transparent,
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                            boxShadow: _selectedRole ==
+                                                    'CLIENTE'
+                                                ? [
+                                                    const BoxShadow(
+                                                        color:
+                                                            Color(0x1F000000),
+                                                        blurRadius: 4,
+                                                        offset: Offset(0, 2))
+                                                  ]
                                                 : [],
                                           ),
                                           child: Center(
@@ -233,7 +252,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                               'Cliente',
                                               style: TextStyle(
                                                 fontWeight: FontWeight.bold,
-                                                color: _selectedRole == 'CLIENTE' ? const Color(0xFF8A5D54) : const Color(0xFF8A7A77),
+                                                color: _selectedRole ==
+                                                        'CLIENTE'
+                                                    ? const Color(0xFF8A5D54)
+                                                    : const Color(0xFF8A7A77),
                                                 fontSize: 14,
                                               ),
                                             ),
@@ -243,15 +265,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     ),
                                     Expanded(
                                       child: GestureDetector(
-                                        onTap: () => setState(() => _selectedRole = 'PRESTADOR'),
+                                        onTap: () => setState(
+                                            () => _selectedRole = 'PRESTADOR'),
                                         child: AnimatedContainer(
-                                          duration: const Duration(milliseconds: 200),
-                                          padding: const EdgeInsets.symmetric(vertical: 12),
+                                          duration:
+                                              const Duration(milliseconds: 200),
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 12),
                                           decoration: BoxDecoration(
-                                            color: _selectedRole == 'PRESTADOR' ? Colors.white : Colors.transparent,
-                                            borderRadius: BorderRadius.circular(12),
-                                            boxShadow: _selectedRole == 'PRESTADOR' 
-                                                ? [const BoxShadow(color: Color(0x1F000000), blurRadius: 4, offset: Offset(0, 2))]
+                                            color: _selectedRole == 'PRESTADOR'
+                                                ? Colors.white
+                                                : Colors.transparent,
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                            boxShadow: _selectedRole ==
+                                                    'PRESTADOR'
+                                                ? [
+                                                    const BoxShadow(
+                                                        color:
+                                                            Color(0x1F000000),
+                                                        blurRadius: 4,
+                                                        offset: Offset(0, 2))
+                                                  ]
                                                 : [],
                                           ),
                                           child: Center(
@@ -259,7 +294,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                               'Prestador',
                                               style: TextStyle(
                                                 fontWeight: FontWeight.bold,
-                                                color: _selectedRole == 'PRESTADOR' ? const Color(0xFF8A5D54) : const Color(0xFF8A7A77),
+                                                color: _selectedRole ==
+                                                        'PRESTADOR'
+                                                    ? const Color(0xFF8A5D54)
+                                                    : const Color(0xFF8A7A77),
                                                 fontSize: 14,
                                               ),
                                             ),
@@ -279,10 +317,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 decoration: BoxDecoration(
                                   color: const Color(0xFFFCF8F5),
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: const Color(0xFFEADCD6), width: 1),
+                                  border: Border.all(
+                                      color: const Color(0xFFEADCD6), width: 1),
                                 ),
                                 child: Text(
-                                  _selectedRole == 'CLIENTE' 
+                                  _selectedRole == 'CLIENTE'
                                       ? '✨ Agenda citas, encuentra estilistas locales en Fontibón y califica los servicios recibidos.'
                                       : '💼 Ofrece tus servicios, fija tus precios y horarios. Requiere cargar tus documentos (Cédula, RUT, Certificaciones) en el siguiente paso.',
                                   style: const TextStyle(
@@ -297,8 +336,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               // Form Fields
                               TextFormField(
                                 controller: _nameCtrl,
-                                decoration: _inputDecoration('Nombre completo', Icons.person_outline),
-                                validator: (v) => v!.isEmpty ? 'Ingresa tu nombre completo' : null,
+                                decoration: _inputDecoration(
+                                    'Nombre completo', Icons.person_outline),
+                                validator: (v) => v!.isEmpty
+                                    ? 'Ingresa tu nombre completo'
+                                    : null,
                                 style: const TextStyle(fontSize: 14),
                               ),
                               const SizedBox(height: 14),
@@ -306,8 +348,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               TextFormField(
                                 controller: _emailCtrl,
                                 keyboardType: TextInputType.emailAddress,
-                                decoration: _inputDecoration('Correo electrónico', Icons.email_outlined),
-                                validator: (v) => v!.isEmpty ? 'Ingresa tu correo' : null,
+                                decoration: _inputDecoration(
+                                    'Correo electrónico', Icons.email_outlined),
+                                validator: (v) =>
+                                    v!.isEmpty ? 'Ingresa tu correo' : null,
                                 style: const TextStyle(fontSize: 14),
                               ),
                               const SizedBox(height: 14),
@@ -316,18 +360,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 controller: _passCtrl,
                                 obscureText: _obscurePassword,
                                 decoration: _inputDecoration(
-                                  'Contraseña', 
+                                  'Contraseña',
                                   Icons.lock_outline,
                                   suffixIcon: IconButton(
                                     icon: Icon(
-                                      _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                                      _obscurePassword
+                                          ? Icons.visibility_outlined
+                                          : Icons.visibility_off_outlined,
                                       color: const Color(0xFFC89D93),
                                       size: 20,
                                     ),
-                                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                                    onPressed: () => setState(() =>
+                                        _obscurePassword = !_obscurePassword),
                                   ),
                                 ),
-                                validator: (v) => v!.length < 6 ? 'Mínimo 6 caracteres' : null,
+                                validator: (v) => v!.length < 6
+                                    ? 'Mínimo 6 caracteres'
+                                    : null,
                                 style: const TextStyle(fontSize: 14),
                               ),
                               const SizedBox(height: 14),
@@ -335,7 +384,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               TextFormField(
                                 controller: _phoneCtrl,
                                 keyboardType: TextInputType.phone,
-                                decoration: _inputDecoration('Teléfono (opcional)', Icons.phone_outlined),
+                                decoration: _inputDecoration(
+                                    'Teléfono (opcional)',
+                                    Icons.phone_outlined),
                                 style: const TextStyle(fontSize: 14),
                               ),
                               const SizedBox(height: 24),
@@ -346,7 +397,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   child: Text(
                                     _error!,
                                     textAlign: TextAlign.center,
-                                    style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w600, fontSize: 13),
+                                    style: const TextStyle(
+                                        color: Colors.redAccent,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 13),
                                   ),
                                 ),
 
@@ -356,9 +410,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFFC89D93),
                                   foregroundColor: Colors.white,
-                                  disabledBackgroundColor: const Color(0xFFE6D6D3),
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                  disabledBackgroundColor:
+                                      const Color(0xFFE6D6D3),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 16),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16)),
                                   elevation: 2,
                                   shadowColor: const Color(0x3FC89D93),
                                 ),
@@ -366,11 +423,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     ? const SizedBox(
                                         width: 24,
                                         height: 24,
-                                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                                        child: CircularProgressIndicator(
+                                            color: Colors.white,
+                                            strokeWidth: 2.5),
                                       )
                                     : const Text(
-                                        'Crear Cuenta', 
-                                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: -0.2),
+                                        'Crear Cuenta',
+                                        style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            letterSpacing: -0.2),
                                       ),
                               ),
                             ],
@@ -389,7 +451,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  InputDecoration _inputDecoration(String label, IconData icon, {Widget? suffixIcon}) {
+  InputDecoration _inputDecoration(String label, IconData icon,
+      {Widget? suffixIcon}) {
     return InputDecoration(
       labelText: label,
       labelStyle: const TextStyle(color: Color(0xFF8A7A77), fontSize: 14),

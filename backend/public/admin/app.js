@@ -61,6 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Data State
   let activeAlerts = [];
+  let lastMetricsData = null;
   let charts = {}; // Instance container for Chart.js
   
   // Iconos personalizados para Leaflet
@@ -97,6 +98,11 @@ document.addEventListener('DOMContentLoaded', () => {
         pageSubtitle.textContent = 'Monitoreo de métricas y seguridad en tiempo real';
         // Recalcular tamaño del mapa por si estuvo oculto
         setTimeout(() => map.invalidateSize(), 100);
+      } else if (targetSectionId === 'metrics') {
+        document.getElementById('view-metrics').style.display = 'block';
+        pageTitle.textContent = 'Métricas y Proyecciones Financieras';
+        pageSubtitle.textContent = 'Simulación, estimaciones de ingresos y control de comisiones';
+        if (lastMetricsData) renderMetricsCharts(lastMetricsData);
       } else if (targetSectionId === 'sos') {
         document.getElementById('view-dashboard-sos').style.display = 'block';
         pageTitle.textContent = 'Ubicación de Alertas SOS';
@@ -297,17 +303,24 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!resData.success) throw new Error(resData.error);
       
       const metrics = resData.data;
+      lastMetricsData = metrics; // Guardar en caché global
       
       // A. Update KPI Cards
-      document.getElementById('kpi-revenue').textContent = `$${metrics.total_revenue.toFixed(2)}`;
+      document.getElementById('kpi-revenue').textContent = `$${metrics.total_revenue.toLocaleString('es-CO')}`;
+      document.getElementById('kpi-commission').textContent = `$${(metrics.platform_commission || 0).toLocaleString('es-CO')}`;
+      document.getElementById('kpi-tax').textContent = `$${(metrics.state_tax || 0).toLocaleString('es-CO')}`;
       
       const bookingsCount = metrics.bookings_status.reduce((sum, item) => sum + item.count, 0);
       document.getElementById('kpi-bookings').textContent = bookingsCount;
       
-      const pendingBookings = metrics.bookings_status.find(b => b.estado === 'PENDIENTE' || b.estado === 'PENDING')?.count || 0;
-      document.getElementById('kpi-bookings-sub').textContent = `${pendingBookings} pendientes`;
+      const pendingBookings = metrics.bookings_status.find(b => b.estado === 'PENDIENTE_PAGO' || b.estado === 'PENDIENTE' || b.estado === 'PENDING')?.count || 0;
+      document.getElementById('kpi-bookings-sub').textContent = `${pendingBookings} pendientes de pago`;
       
-      document.getElementById('kpi-providers').textContent = metrics.active_providers_online;
+      // Actualizar gráficos financieros si la pestaña actual es metrics
+      const activeTab = document.querySelector('.menu-item.active')?.getAttribute('href');
+      if (activeTab === '#metrics') {
+        renderMetricsCharts(metrics);
+      }
       
       // Cargar alertas activas en el estado global
       activeAlerts = metrics.sos_alerts.filter(a => a.estado === 'ACTIVO');
@@ -443,6 +456,114 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Error al resolver la alerta SOS:', err);
     }
   };
+
+  // 8.5. Render Financial Metrics and Line Projections
+  function renderMetricsCharts(metrics) {
+    if (!metrics.projections || !metrics.categories) return;
+
+    // A. Chart: Projections & Revenue Trend
+    if (charts.projections) charts.projections.destroy();
+
+    const projData = metrics.projections;
+    const historyLabels = projData.history.map(h => h.month);
+    const historyValues = projData.history.map(h => h.revenue);
+
+    // Agregar mes de proyección
+    const allLabels = [...historyLabels, `${projData.projectedMonth} (Proyección)`];
+    const allValues = [...historyValues, projData.projectedRevenue];
+
+    // Actualizar badge de tendencia
+    const trendBadge = document.getElementById('projection-trend-badge');
+    if (trendBadge) {
+      trendBadge.textContent = projData.trend === 'CRECIENTE' ? '📈 Tendencia Creciente' : '📉 Tendencia Decreciente';
+      trendBadge.style.backgroundColor = projData.trend === 'CRECIENTE' ? '#10B981' : '#EF4444';
+    }
+
+    const ctxProj = document.getElementById('projections-chart').getContext('2d');
+    charts.projections = new Chart(ctxProj, {
+      type: 'line',
+      data: {
+        labels: allLabels,
+        datasets: [
+          {
+            label: 'Historial de Facturación',
+            data: [...historyValues, null], // Omitir el último punto para la línea continua
+            borderColor: '#C89D93',
+            backgroundColor: 'rgba(200, 157, 147, 0.1)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.3
+          },
+          {
+            label: 'Proyección Futura',
+            data: [...historyValues.map(() => null).slice(0, -1), historyValues[historyValues.length - 1], projData.projectedRevenue], // Conectar el último punto histórico con el proyectado
+            borderColor: '#EF4444',
+            borderDash: [6, 6],
+            borderWidth: 3,
+            pointBackgroundColor: '#EF4444',
+            pointRadius: 6,
+            fill: false
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: true, labels: { color: '#9CA3AF' } }
+        },
+        scales: {
+          y: {
+            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+            ticks: {
+              color: '#9CA3AF',
+              callback: (value) => `$${value.toLocaleString('es-CO')}`
+            }
+          },
+          x: {
+            grid: { display: false },
+            ticks: { color: '#9CA3AF' }
+          }
+        }
+      }
+    });
+
+    // B. Chart: Category Revenue Share (Doughnut)
+    if (charts.categories) charts.categories.destroy();
+
+    const catLabels = metrics.categories.map(c => c.category);
+    const catRevenues = metrics.categories.map(c => c.revenue);
+
+    // Fallback si no hay categorías en reservas completadas
+    const finalLabels = catLabels.length ? catLabels : ['Sin datos'];
+    const finalRevenues = catRevenues.length ? catRevenues : [1];
+    const catColors = ['#E5CECA', '#C89D93', '#F5EBE6', '#A78BFA', '#3B82F6', '#10B981', '#F59E0B'];
+
+    const ctxCat = document.getElementById('categories-chart').getContext('2d');
+    charts.categories = new Chart(ctxCat, {
+      type: 'doughnut',
+      data: {
+        labels: finalLabels,
+        datasets: [{
+          data: finalRevenues,
+          backgroundColor: catColors.slice(0, finalLabels.length),
+          borderWidth: 2,
+          borderColor: '#1E293B' // Color oscuro del tema del panel
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+            position: 'right',
+            labels: { color: '#9CA3AF', boxWidth: 12 }
+          }
+        }
+      }
+    });
+  }
 
   // Bind Refresh Event
   refreshBtn.addEventListener('click', () => {

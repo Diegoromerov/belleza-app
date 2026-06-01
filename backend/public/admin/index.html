@@ -28,6 +28,9 @@
         <a href="#dashboard" class="menu-item active" id="nav-dashboard">
           <i class="fa-solid fa-chart-line"></i><span>Dashboard</span>
         </a>
+        <a href="#metrics" class="menu-item" id="nav-metrics">
+          <i class="fa-solid fa-money-bill-trend-up"></i><span>Métricas Financieras</span>
+        </a>
         <a href="#sos" class="menu-item" id="nav-sos">
           <i class="fa-solid fa-triangle-exclamation"></i><span>Alertas SOS</span>
           <span class="badge badge-danger" id="sos-badge" style="display: none;">0</span>
@@ -90,9 +93,31 @@
               <i class="fa-solid fa-wallet"></i>
             </div>
             <div class="kpi-data">
-              <span class="kpi-label">Ingresos Totales</span>
+              <span class="kpi-label">Ingresos Brutos</span>
               <h2 class="kpi-val" id="kpi-revenue">$0.00</h2>
               <span class="kpi-trend positive"><i class="fa-solid fa-arrow-up"></i> 100% (Completadas)</span>
+            </div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-icon revenue-commission">
+              <i class="fa-solid fa-percent"></i>
+            </div>
+            <div class="kpi-data">
+              <span class="kpi-label">Comisión Plataforma (20%)</span>
+              <h2 class="kpi-val" id="kpi-commission">$0.00</h2>
+              <span class="kpi-subtext">Ganancias netas app</span>
+            </div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-icon state-tax-card">
+              <i class="fa-solid fa-landmark"></i>
+            </div>
+            <div class="kpi-data">
+              <span class="kpi-label">Impuestos Estado (8%)</span>
+              <h2 class="kpi-val" id="kpi-tax">$0.00</h2>
+              <span class="kpi-subtext">Retención tributaria</span>
             </div>
           </div>
 
@@ -104,17 +129,6 @@
               <span class="kpi-label">Reservas Creadas</span>
               <h2 class="kpi-val" id="kpi-bookings">0</h2>
               <span class="kpi-subtext" id="kpi-bookings-sub">0 pendientes</span>
-            </div>
-          </div>
-
-          <div class="kpi-card">
-            <div class="kpi-icon providers">
-              <i class="fa-solid fa-user-tie"></i>
-            </div>
-            <div class="kpi-data">
-              <span class="kpi-label">Estilistas Activos</span>
-              <h2 class="kpi-val" id="kpi-providers">0</h2>
-              <span class="kpi-subtext" id="kpi-providers-sub">En línea en Fontibón</span>
             </div>
           </div>
 
@@ -172,6 +186,29 @@
               </div>
             </div>
 
+          </div>
+        <!-- Section: Metrics / Financials -->
+        <div class="view-section" id="view-metrics" style="display: none;">
+          <div class="grid-2-col">
+            <!-- Projections Chart -->
+            <div class="panel chart-panel">
+              <div class="panel-header">
+                <h3><i class="fa-solid fa-chart-line"></i> Tendencia y Proyección de Facturación</h3>
+                <span class="badge badge-success" id="projection-trend-badge">Creciente</span>
+              </div>
+              <div class="panel-body">
+                <canvas id="projections-chart"></canvas>
+              </div>
+            </div>
+            <!-- Category Chart -->
+            <div class="panel chart-panel">
+              <div class="panel-header">
+                <h3><i class="fa-solid fa-chart-pie"></i> Participación por Categorías</h3>
+              </div>
+              <div class="panel-body">
+                <canvas id="categories-chart"></canvas>
+              </div>
+            </div>
           </div>
         </div>
 

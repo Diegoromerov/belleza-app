@@ -20,13 +20,14 @@ class BookingTrackingScreen extends StatefulWidget {
   State<BookingTrackingScreen> createState() => _BookingTrackingScreenState();
 }
 
-class _BookingTrackingScreenState extends State<BookingTrackingScreen> with SingleTickerProviderStateMixin {
+class _BookingTrackingScreenState extends State<BookingTrackingScreen>
+    with SingleTickerProviderStateMixin {
   // Coordenadas fijas del cliente en Fontibón
   final LatLng _clientLoc = const LatLng(4.6735, -74.1422);
-  
+
   // Coordenadas iniciales del prestador (se irán acercando)
   late LatLng _providerLoc;
-  
+
   // Progreso de interpolación (0.0 a 1.0)
   double _progress = 0.0;
   Timer? _moveTimer;
@@ -39,7 +40,7 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> with Sing
     super.initState();
     // Inicia un poco al noreste del cliente
     _providerLoc = const LatLng(4.6795, -74.1310);
-    
+
     // Controlador para la animación pulsante concéntrica del marcador del proveedor
     _pulseController = AnimationController(
       vsync: this,
@@ -63,12 +64,14 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> with Sing
         if (_progress < 1.0) {
           _progress += 0.05; // Incrementa el progreso en cada tick
           if (_progress > 1.0) _progress = 1.0;
-          
+
           // Interpolación lineal simple entre la posición inicial y el cliente
-          final double lat = 4.6795 + (_clientLoc.latitude - 4.6795) * _progress;
-          final double lon = -74.1310 + (_clientLoc.longitude - (-74.1310)) * _progress;
+          final double lat =
+              4.6795 + (_clientLoc.latitude - 4.6795) * _progress;
+          final double lon =
+              -74.1310 + (_clientLoc.longitude - (-74.1310)) * _progress;
           _providerLoc = LatLng(lat, lon);
-          
+
           // Disminuir tiempo estimado progresivamente
           _minutesRemaining = (8 * (1.0 - _progress)).round();
           if (_minutesRemaining < 1) _minutesRemaining = 1;
@@ -81,14 +84,17 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> with Sing
 
   @override
   Widget build(BuildContext context) {
-    final String providerName = widget.booking['provider_name'] ?? 'Profesional';
-    final String providerBusiness = widget.booking['provider_business_name'] ?? 'Studio Profesional';
+    final String providerName =
+        widget.booking['provider_name'] ?? 'Profesional';
+    final String providerBusiness =
+        widget.booking['provider_business_name'] ?? 'Studio Profesional';
     final String providerAvatar = widget.booking['provider_avatar_url'] ?? '';
     final String pin = widget.booking['pin_verificacion'] ?? '----';
     final String providerId = widget.booking['provider_id']?.toString() ?? '2';
 
     // Cálculo dinámico de distancia en kilómetros
-    final double distanceInKm = const Distance().distance(_providerLoc, _clientLoc) / 1000.0;
+    final double distanceInKm =
+        const Distance().distance(_providerLoc, _clientLoc) / 1000.0;
     final String distanceText = '${distanceInKm.toStringAsFixed(1)} km';
 
     return Scaffold(
@@ -96,7 +102,8 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> with Sing
       appBar: AppBar(
         title: const Text(
           'Seguimiento en Vivo',
-          style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5, fontSize: 18),
+          style: TextStyle(
+              fontWeight: FontWeight.bold, letterSpacing: -0.5, fontSize: 18),
         ),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
@@ -111,7 +118,9 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> with Sing
           // 1. Capa del Mapa (OSM via flutter_map)
           FlutterMap(
             options: MapOptions(
-              initialCenter: LatLng((_clientLoc.latitude + _providerLoc.latitude) / 2, (_clientLoc.longitude + _providerLoc.longitude) / 2),
+              initialCenter: LatLng(
+                  (_clientLoc.latitude + _providerLoc.latitude) / 2,
+                  (_clientLoc.longitude + _providerLoc.longitude) / 2),
               initialZoom: 14.5,
             ),
             children: [
@@ -145,7 +154,8 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> with Sing
                         shape: BoxShape.circle,
                         boxShadow: AppTheme.softShadow,
                       ),
-                      child: const Icon(Icons.home_work, color: AppTheme.primary, size: 28),
+                      child: const Icon(Icons.home_work,
+                          color: AppTheme.primary, size: 28),
                     ),
                   ),
                   // Marcador de Ubicación del Prestador (Origen Animado con pulso concéntrico real)
@@ -161,7 +171,8 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> with Sing
                           children: [
                             // Primer anillo concéntrico
                             Opacity(
-                              opacity: (1.0 - _pulseController.value).clamp(0.0, 1.0),
+                              opacity: (1.0 - _pulseController.value)
+                                  .clamp(0.0, 1.0),
                               child: Container(
                                 width: 35 + (_pulseController.value * 55),
                                 height: 35 + (_pulseController.value * 55),
@@ -173,10 +184,16 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> with Sing
                             ),
                             // Segundo anillo concéntrico desfasado
                             Opacity(
-                              opacity: (1.0 - ((_pulseController.value + 0.5) % 1.0)).clamp(0.0, 1.0),
+                              opacity:
+                                  (1.0 - ((_pulseController.value + 0.5) % 1.0))
+                                      .clamp(0.0, 1.0),
                               child: Container(
-                                width: 35 + (((_pulseController.value + 0.5) % 1.0) * 55),
-                                height: 35 + (((_pulseController.value + 0.5) % 1.0) * 55),
+                                width: 35 +
+                                    (((_pulseController.value + 0.5) % 1.0) *
+                                        55),
+                                height: 35 +
+                                    (((_pulseController.value + 0.5) % 1.0) *
+                                        55),
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   color: AppTheme.primary.withOpacity(0.25),
@@ -190,15 +207,19 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> with Sing
                       child: Container(
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          border: Border.all(color: AppTheme.primary, width: 2.5),
+                          border:
+                              Border.all(color: AppTheme.primary, width: 2.5),
                           boxShadow: AppTheme.softShadow,
                         ),
                         child: CircleAvatar(
                           radius: 18,
                           backgroundColor: AppTheme.primaryLight,
-                          backgroundImage: providerAvatar.isNotEmpty ? NetworkImage(providerAvatar) : null,
+                          backgroundImage: providerAvatar.isNotEmpty
+                              ? NetworkImage(providerAvatar)
+                              : null,
                           child: providerAvatar.isEmpty
-                              ? const Icon(Icons.face_retouching_natural, size: 18, color: AppTheme.primary)
+                              ? const Icon(Icons.face_retouching_natural,
+                                  size: 18, color: AppTheme.primary)
                               : null,
                         ),
                       ),
@@ -225,7 +246,9 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> with Sing
               elevation: 4,
               shape: const CircleBorder(),
               child: Icon(
-                MapSettings.isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+                MapSettings.isDark
+                    ? Icons.light_mode_outlined
+                    : Icons.dark_mode_outlined,
                 size: 22,
               ),
             ),
@@ -271,7 +294,8 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> with Sing
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.85),
                     borderRadius: BorderRadius.circular(28),
-                    border: Border.all(color: AppTheme.primary.withOpacity(0.2), width: 1.5),
+                    border: Border.all(
+                        color: AppTheme.primary.withOpacity(0.2), width: 1.5),
                     boxShadow: AppTheme.cardShadow,
                   ),
                   child: Padding(
@@ -285,11 +309,18 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> with Sing
                             CircleAvatar(
                               radius: 26,
                               backgroundColor: AppTheme.primaryLight,
-                              backgroundImage: providerAvatar.isNotEmpty ? NetworkImage(providerAvatar) : null,
+                              backgroundImage: providerAvatar.isNotEmpty
+                                  ? NetworkImage(providerAvatar)
+                                  : null,
                               child: providerAvatar.isEmpty
                                   ? Text(
-                                      providerName.isNotEmpty ? providerName[0].toUpperCase() : 'P',
-                                      style: const TextStyle(fontSize: 18, color: AppTheme.primary, fontWeight: FontWeight.bold),
+                                      providerName.isNotEmpty
+                                          ? providerName[0].toUpperCase()
+                                          : 'P',
+                                      style: const TextStyle(
+                                          fontSize: 18,
+                                          color: AppTheme.primary,
+                                          fontWeight: FontWeight.bold),
                                     )
                                   : null,
                             ),
@@ -299,22 +330,29 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> with Sing
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    providerBusiness.isNotEmpty ? providerBusiness : providerName,
-                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87),
+                                    providerBusiness.isNotEmpty
+                                        ? providerBusiness
+                                        : providerName,
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                        color: Colors.black87),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
                                     '$providerName • $distanceText',
-                                    style: const TextStyle(fontSize: 13, color: Colors.black54),
+                                    style: const TextStyle(
+                                        fontSize: 13, color: Colors.black54),
                                   ),
                                 ],
                               ),
                             ),
                             // Contador de tiempo estimado
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 8),
                               decoration: BoxDecoration(
                                 color: AppTheme.errorBg,
                                 borderRadius: BorderRadius.circular(20),
@@ -323,11 +361,17 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> with Sing
                                 children: [
                                   const Text(
                                     'Llega en',
-                                    style: TextStyle(fontSize: 10, color: AppTheme.error, fontWeight: FontWeight.bold),
+                                    style: TextStyle(
+                                        fontSize: 10,
+                                        color: AppTheme.error,
+                                        fontWeight: FontWeight.bold),
                                   ),
                                   Text(
                                     '$_minutesRemaining min',
-                                    style: const TextStyle(fontSize: 15, color: AppTheme.error, fontWeight: FontWeight.bold),
+                                    style: const TextStyle(
+                                        fontSize: 15,
+                                        color: AppTheme.error,
+                                        fontWeight: FontWeight.bold),
                                   ),
                                 ],
                               ),
@@ -335,18 +379,24 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> with Sing
                           ],
                         ),
                         const SizedBox(height: 16),
-                        
+
                         // Barra de progreso de llegada
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             const Text(
                               'Progreso de llegada',
-                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black54),
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black54),
                             ),
                             Text(
                               '${(_progress * 100).toStringAsFixed(0)}%',
-                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.primary),
+                              style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.primary),
                             ),
                           ],
                         ),
@@ -356,31 +406,38 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> with Sing
                           child: LinearProgressIndicator(
                             value: _progress,
                             backgroundColor: AppTheme.primaryLight,
-                            valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.primary),
+                            valueColor: const AlwaysStoppedAnimation<Color>(
+                                AppTheme.primary),
                             minHeight: 8,
                           ),
                         ),
-                        
+
                         const Divider(height: 24, color: Color(0xFFF3EAE8)),
-                        
+
                         // Escrow PIN integrado de manera limpia
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 10),
                           decoration: BoxDecoration(
                             color: AppTheme.primaryLight.withOpacity(0.4),
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: AppTheme.primary.withOpacity(0.15)),
+                            border: Border.all(
+                                color: AppTheme.primary.withOpacity(0.15)),
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               const Row(
                                 children: [
-                                  Icon(Icons.vpn_key_rounded, color: AppTheme.primary, size: 18),
+                                  Icon(Icons.vpn_key_rounded,
+                                      color: AppTheme.primary, size: 18),
                                   SizedBox(width: 8),
                                   Text(
                                     'PIN Escrow Seguro:',
-                                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black87),
+                                    style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black87),
                                   ),
                                 ],
                               ),
@@ -396,26 +453,33 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen> with Sing
                             ],
                           ),
                         ),
-                        
+
                         const SizedBox(height: 12),
-                        
+
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             // Wompi Badge
                             Row(
                               children: [
-                                const Icon(Icons.shield, color: AppTheme.success, size: 18),
+                                const Icon(Icons.shield,
+                                    color: AppTheme.success, size: 18),
                                 const SizedBox(width: 6),
                                 const Text(
                                   'Pago Wompi Protegido',
-                                  style: TextStyle(color: AppTheme.success, fontSize: 12, fontWeight: FontWeight.bold),
+                                  style: TextStyle(
+                                      color: AppTheme.success,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold),
                                 ),
                               ],
                             ),
                             const Text(
                               'En camino',
-                              style: TextStyle(color: AppTheme.primary, fontSize: 12, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                  color: AppTheme.primary,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),

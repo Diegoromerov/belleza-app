@@ -21,28 +21,34 @@ class ServiceModel {
   });
 
   factory ServiceModel.fromJson(Map<String, dynamic> json) => ServiceModel(
-    id: json['id'] as String? ?? '',
-    name: json['name'] as String? ?? 'Sin nombre',
-    description: json['description'] as String? ?? '',
-    price: _toSafeDouble(json['price']),
-    durationMinutes: _toSafeInt(json['duration_minutes']),
-    category: json['category'] as String? ?? '',
-    isActive: json['is_active'] as bool? ?? true,
-    bookingsCount: _toSafeInt(json['bookings_count']) == 0
-        ? ((json['id']?.toString().runes.fold<int>(0, (prev, element) => prev + element) ?? 0) % 11 + 5)
-        : _toSafeInt(json['bookings_count']),
-  );
+        id: json['id'] as String? ?? '',
+        name: json['name'] as String? ?? 'Sin nombre',
+        description: json['description'] as String? ?? '',
+        price: _toSafeDouble(json['price']),
+        durationMinutes: _toSafeInt(json['duration_minutes']),
+        category: json['category'] as String? ?? '',
+        isActive: json['is_active'] as bool? ?? true,
+        bookingsCount: _toSafeInt(json['bookings_count']) == 0
+            ? ((json['id']
+                            ?.toString()
+                            .runes
+                            .fold<int>(0, (prev, element) => prev + element) ??
+                        0) %
+                    11 +
+                5)
+            : _toSafeInt(json['bookings_count']),
+      );
 
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'name': name,
-    'description': description,
-    'price': price,
-    'duration_minutes': durationMinutes,
-    'category': category,
-    'is_active': isActive,
-    'bookings_count': bookingsCount,
-  };
+        'id': id,
+        'name': name,
+        'description': description,
+        'price': price,
+        'duration_minutes': durationMinutes,
+        'category': category,
+        'is_active': isActive,
+        'bookings_count': bookingsCount,
+      };
 
   static double _toSafeDouble(dynamic value) {
     if (value == null) return 0.0;

@@ -68,7 +68,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Future<void> _submitOnboarding() async {
     if (_selectedRole == null) return;
-    
+
     setState(() {
       _isLoading = true;
       _error = null;
@@ -76,7 +76,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
     try {
       if (_selectedRole == 'PRESTADOR') {
-        if (!_habeasDataAccepted || _documentoUrl == null || _rutUrl == null || _certificacionUrl == null) {
+        if (!_habeasDataAccepted ||
+            _documentoUrl == null ||
+            _rutUrl == null ||
+            _certificacionUrl == null) {
           setState(() {
             _error = 'Debes aceptar Habeas Data y subir todos los documentos.';
             _isLoading = false;
@@ -136,7 +139,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               const Text(
                 '¿Cómo deseas usar Belleza App?',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87),
+                style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87),
               ),
               const SizedBox(height: 8),
               const Text(
@@ -155,7 +161,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   child: Text(
                     _error!,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w500),
+                    style: const TextStyle(
+                        color: Colors.redAccent, fontWeight: FontWeight.w500),
                   ),
                 ),
             ],
@@ -209,7 +216,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
           child: const Column(
             children: [
-              Icon(Icons.face_retouching_natural, size: 48, color: Color(0xFFC89D93)),
+              Icon(Icons.face_retouching_natural,
+                  size: 48, color: Color(0xFFC89D93)),
               SizedBox(height: 12),
               Text(
                 '¡Excelente elección!',
@@ -219,7 +227,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               Text(
                 'Al ingresar como Cliente podrás ver perfiles de prestadores cercanos en Fontibón, cotizar y agendar tus citas a domicilio en segundos.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: Colors.black54, height: 1.4),
+                style:
+                    TextStyle(fontSize: 14, color: Colors.black54, height: 1.4),
               ),
             ],
           ),
@@ -231,7 +240,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             backgroundColor: const Color(0xFFC89D93),
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
             elevation: 0,
             minimumSize: const Size(double.infinity, 50),
           ),
@@ -239,16 +249,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ? const SizedBox(
                   width: 24,
                   height: 24,
-                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                  child: CircularProgressIndicator(
+                      color: Colors.white, strokeWidth: 2),
                 )
-              : const Text('Comenzar Exploración', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              : const Text('Comenzar Exploración',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         ),
       ],
     );
   }
 
   Widget _buildProviderForm() {
-    final bool allDocsUploaded = _documentoUrl != null && _rutUrl != null && _certificacionUrl != null;
+    final bool allDocsUploaded =
+        _documentoUrl != null && _rutUrl != null && _certificacionUrl != null;
     final bool isSubmitEnabled = _habeasDataAccepted && allDocsUploaded;
 
     return Column(
@@ -257,7 +270,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         const Divider(height: 32, color: Color(0xFFE8D7D3)),
         const Text(
           'Requisitos de Verificación Comercial',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+          style: TextStyle(
+              fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
         ),
         const SizedBox(height: 8),
         const Text(
@@ -315,12 +329,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   children: [
                     Text(
                       'Transparencia Financiera',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black87),
+                      style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87),
                     ),
                     SizedBox(height: 4),
                     Text(
                       'La plataforma retiene una comisión fija del 20% sobre la tarifa bruta del servicio para soporte operativo y se encarga del correspondiente reporte de impuestos estatales.',
-                      style: TextStyle(fontSize: 12, color: Colors.black54, height: 1.3),
+                      style: TextStyle(
+                          fontSize: 12, color: Colors.black54, height: 1.3),
                     ),
                   ],
                 ),
@@ -333,7 +351,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         // Checkbox Habeas Data
         CheckboxListTile(
           value: _habeasDataAccepted,
-          onChanged: (val) => setState(() => _habeasDataAccepted = val ?? false),
+          onChanged: (val) =>
+              setState(() => _habeasDataAccepted = val ?? false),
           title: const Text(
             'Acepto la política de protección de datos (Habeas Data - Ley 1581 de 2012) de la aplicación Belleza App.',
             style: TextStyle(fontSize: 12, color: Colors.black87),
@@ -345,13 +364,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         const SizedBox(height: 28),
 
         ElevatedButton(
-          onPressed: (_isLoading || !isSubmitEnabled) ? null : _submitOnboarding,
+          onPressed:
+              (_isLoading || !isSubmitEnabled) ? null : _submitOnboarding,
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFFC89D93),
             foregroundColor: Colors.white,
             disabledBackgroundColor: const Color(0xFFE5CECA),
             padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
             elevation: 0,
             minimumSize: const Size(double.infinity, 50),
           ),
@@ -359,9 +380,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ? const SizedBox(
                   width: 24,
                   height: 24,
-                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                  child: CircularProgressIndicator(
+                      color: Colors.white, strokeWidth: 2),
                 )
-              : const Text('Enviar para Verificación', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              : const Text('Enviar para Verificación',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         ),
       ],
     );
@@ -383,14 +406,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           color: const Color(0x66F5EBE6),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isUploaded ? const Color(0x80C89D93) : const Color(0xFFF3EAE8),
+            color:
+                isUploaded ? const Color(0x80C89D93) : const Color(0xFFF3EAE8),
             width: 1.5,
           ),
         ),
         child: Row(
           children: [
             Icon(
-              isUploaded ? Icons.check_circle_outline : Icons.cloud_upload_outlined,
+              isUploaded
+                  ? Icons.check_circle_outline
+                  : Icons.cloud_upload_outlined,
               color: isUploaded ? Colors.green : const Color(0xFFC89D93),
               size: 28,
             ),
@@ -401,7 +427,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black87),
+                    style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87),
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -415,10 +444,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               const SizedBox(
                 width: 20,
                 height: 20,
-                child: CircularProgressIndicator(color: Color(0xFFC89D93), strokeWidth: 2),
+                child: CircularProgressIndicator(
+                    color: Color(0xFFC89D93), strokeWidth: 2),
               )
             else if (isUploaded)
-              const Text('Cargado', style: TextStyle(color: Colors.green, fontSize: 12, fontWeight: FontWeight.bold))
+              const Text('Cargado',
+                  style: TextStyle(
+                      color: Colors.green,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold))
             else
               const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
           ],
@@ -454,12 +488,15 @@ class _RoleCard extends StatelessWidget {
           color: isSelected ? const Color(0xFFF5EBE6) : Colors.white,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: isSelected ? const Color(0xFFC89D93) : const Color(0xFFF3EAE8),
+            color:
+                isSelected ? const Color(0xFFC89D93) : const Color(0xFFF3EAE8),
             width: isSelected ? 2 : 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: isSelected ? const Color(0x0F000000) : const Color(0x05000000),
+              color: isSelected
+                  ? const Color(0x0F000000)
+                  : const Color(0x05000000),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -485,7 +522,9 @@ class _RoleCard extends StatelessWidget {
             Text(
               subtitle,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 11, color: isSelected ? Colors.black54 : Colors.grey),
+              style: TextStyle(
+                  fontSize: 11,
+                  color: isSelected ? Colors.black54 : Colors.grey),
             ),
           ],
         ),

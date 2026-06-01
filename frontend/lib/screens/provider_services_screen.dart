@@ -10,7 +10,8 @@ class ProviderServicesScreen extends StatefulWidget {
   State<ProviderServicesScreen> createState() => _ProviderServicesScreenState();
 }
 
-class _ProviderServicesScreenState extends State<ProviderServicesScreen> with SingleTickerProviderStateMixin {
+class _ProviderServicesScreenState extends State<ProviderServicesScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   List<ServiceModel> _services = [];
   bool _isLoading = true;
@@ -75,10 +76,11 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen> with Si
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('✅ Servicio creado con éxito'), 
+              content: const Text('✅ Servicio creado con éxito'),
               backgroundColor: const Color(0xFFC89D93),
               behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
             ),
           );
         }
@@ -95,10 +97,11 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen> with Si
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('✅ Servicio actualizado con éxito'), 
+              content: const Text('✅ Servicio actualizado con éxito'),
               backgroundColor: const Color(0xFFC89D93),
               behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
             ),
           );
         }
@@ -117,8 +120,10 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen> with Si
   Future<void> _showServiceForm({ServiceModel? service}) async {
     final nameCtrl = TextEditingController(text: service?.name ?? '');
     final descCtrl = TextEditingController(text: service?.description ?? '');
-    final priceCtrl = TextEditingController(text: service?.price.toString() ?? '');
-    final durationCtrl = TextEditingController(text: service?.durationMinutes.toString() ?? '');
+    final priceCtrl =
+        TextEditingController(text: service?.price.toString() ?? '');
+    final durationCtrl =
+        TextEditingController(text: service?.durationMinutes.toString() ?? '');
     final categoryCtrl = TextEditingController(text: service?.category ?? '');
     final formKey = GlobalKey<FormState>();
     bool isActive = service?.isActive ?? true;
@@ -126,14 +131,17 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen> with Si
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (context) {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setModalState) {
             return Padding(
               padding: EdgeInsets.only(
                 bottom: MediaQuery.of(context).viewInsets.bottom,
-                left: 20, right: 20, top: 24,
+                left: 20,
+                right: 20,
+                top: 24,
               ),
               child: SingleChildScrollView(
                 child: Form(
@@ -144,27 +152,37 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen> with Si
                     children: [
                       Center(
                         child: Container(
-                          width: 40, height: 5,
-                          decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10)),
+                          width: 40,
+                          height: 5,
+                          decoration: BoxDecoration(
+                              color: Colors.grey[300],
+                              borderRadius: BorderRadius.circular(10)),
                         ),
                       ),
                       const SizedBox(height: 16),
                       Text(
                         service == null ? 'Nuevo Servicio' : 'Editar Servicio',
-                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87, letterSpacing: -0.5),
+                        style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                            letterSpacing: -0.5),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 20),
                       TextFormField(
                         controller: nameCtrl,
-                        decoration: _inputDecoration('Nombre del servicio *', Icons.cut),
+                        decoration: _inputDecoration(
+                            'Nombre del servicio *', Icons.cut),
                         style: const TextStyle(fontSize: 14),
-                        validator: (v) => v == null || v.trim().isEmpty ? 'Requerido' : null,
+                        validator: (v) =>
+                            v == null || v.trim().isEmpty ? 'Requerido' : null,
                       ),
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: descCtrl,
-                        decoration: _inputDecoration('Descripción (opcional)', Icons.description_outlined),
+                        decoration: _inputDecoration('Descripción (opcional)',
+                            Icons.description_outlined),
                         style: const TextStyle(fontSize: 14),
                         maxLines: 2,
                       ),
@@ -174,9 +192,12 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen> with Si
                           Expanded(
                             child: TextFormField(
                               controller: priceCtrl,
-                              decoration: _inputDecoration('Precio (\$) *', Icons.attach_money_outlined),
+                              decoration: _inputDecoration(
+                                  'Precio (\$) *', Icons.attach_money_outlined),
                               style: const TextStyle(fontSize: 14),
-                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                      decimal: true),
                               validator: (v) {
                                 if (v == null || v.isEmpty) {
                                   return 'Requerido';
@@ -194,7 +215,8 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen> with Si
                           Expanded(
                             child: TextFormField(
                               controller: durationCtrl,
-                              decoration: _inputDecoration('Duración (min) *', Icons.access_time_outlined),
+                              decoration: _inputDecoration('Duración (min) *',
+                                  Icons.access_time_outlined),
                               style: const TextStyle(fontSize: 14),
                               keyboardType: TextInputType.number,
                               validator: (v) {
@@ -214,59 +236,89 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen> with Si
                       const SizedBox(height: 8),
                       const Text(
                         'Selección rápida de duración:',
-                        style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w500),
+                        style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                            fontWeight: FontWeight.w500),
                       ),
                       const SizedBox(height: 6),
-                      StatefulBuilder(
-                        builder: (context, setChipState) {
-                          return Wrap(
-                            spacing: 8,
-                            runSpacing: 4,
-                            children: [30, 45, 60, 90, 120].map((mins) {
-                              final labelText = '$mins min';
-                              final isSelected = durationCtrl.text == mins.toString();
-                              return ChoiceChip(
-                                label: Text(labelText),
-                                selected: isSelected,
-                                onSelected: (selected) {
-                                  if (selected) {
-                                    setModalState(() {
-                                      durationCtrl.text = mins.toString();
-                                    });
-                                    setChipState(() {});
-                                  }
-                                },
-                                selectedColor: const Color(0xFFE5CECA),
-                                backgroundColor: const Color(0xFFF5EBE6),
-                                labelStyle: TextStyle(
-                                  color: isSelected ? const Color(0xFFC89D93) : Colors.black87,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              );
-                            }).toList(),
-                          );
-                        }
-                      ),
+                      StatefulBuilder(builder: (context, setChipState) {
+                        return Wrap(
+                          spacing: 8,
+                          runSpacing: 4,
+                          children: [30, 45, 60, 90, 120].map((mins) {
+                            final labelText = '$mins min';
+                            final isSelected =
+                                durationCtrl.text == mins.toString();
+                            return ChoiceChip(
+                              label: Text(labelText),
+                              selected: isSelected,
+                              onSelected: (selected) {
+                                if (selected) {
+                                  setModalState(() {
+                                    durationCtrl.text = mins.toString();
+                                  });
+                                  setChipState(() {});
+                                }
+                              },
+                              selectedColor: const Color(0xFFE5CECA),
+                              backgroundColor: const Color(0xFFF5EBE6),
+                              labelStyle: TextStyle(
+                                color: isSelected
+                                    ? const Color(0xFFC89D93)
+                                    : Colors.black87,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            );
+                          }).toList(),
+                        );
+                      }),
                       const SizedBox(height: 12),
                       DropdownButtonFormField<String>(
-                        value: categoryCtrl.text.trim().isEmpty ? null : (['Cabello', 'Uñas', 'Maquillaje', 'Cuidado de la piel', 'Barbería', 'Otros'].contains(categoryCtrl.text.trim()) ? categoryCtrl.text.trim() : 'Otros'),
-                        style: const TextStyle(color: Colors.black87, fontSize: 14, fontWeight: FontWeight.w500),
-                        decoration: _inputDecoration('Categoría *', Icons.category_outlined),
-                        items: ['Cabello', 'Uñas', 'Maquillaje', 'Cuidado de la piel', 'Barbería', 'Otros']
-                            .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                        value: categoryCtrl.text.trim().isEmpty
+                            ? null
+                            : ([
+                                'Cabello',
+                                'Uñas',
+                                'Maquillaje',
+                                'Cuidado de la piel',
+                                'Barbería',
+                                'Otros'
+                              ].contains(categoryCtrl.text.trim())
+                                ? categoryCtrl.text.trim()
+                                : 'Otros'),
+                        style: const TextStyle(
+                            color: Colors.black87,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500),
+                        decoration: _inputDecoration(
+                            'Categoría *', Icons.category_outlined),
+                        items: [
+                          'Cabello',
+                          'Uñas',
+                          'Maquillaje',
+                          'Cuidado de la piel',
+                          'Barbería',
+                          'Otros'
+                        ]
+                            .map((c) =>
+                                DropdownMenuItem(value: c, child: Text(c)))
                             .toList(),
                         onChanged: (v) {
                           if (v != null) {
                             categoryCtrl.text = v;
                           }
                         },
-                        validator: (v) => v == null || v.isEmpty ? 'Requerido' : null,
+                        validator: (v) =>
+                            v == null || v.isEmpty ? 'Requerido' : null,
                       ),
                       const SizedBox(height: 16),
                       SwitchListTile(
                         title: const Text('Servicio activo'),
-                        subtitle: Text(isActive ? 'Visible para clientes' : 'Oculto para clientes'),
+                        subtitle: Text(isActive
+                            ? 'Visible para clientes'
+                            : 'Oculto para clientes'),
                         value: isActive,
                         activeThumbColor: Colors.green,
                         activeTrackColor: const Color(0xFFDCFCE7),
@@ -279,7 +331,8 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen> with Si
                           backgroundColor: const Color(0xFFC89D93),
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30)),
                           elevation: 0,
                         ),
                         onPressed: () {
@@ -288,15 +341,25 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen> with Si
                             _submitServiceHelper(
                               service: service,
                               name: nameCtrl.text.trim(),
-                              price: double.parse(priceCtrl.text.replaceAll(',', '.')),
+                              price: double.parse(
+                                  priceCtrl.text.replaceAll(',', '.')),
                               duration: int.parse(durationCtrl.text),
-                              description: descCtrl.text.trim().isNotEmpty ? descCtrl.text.trim() : null,
-                              category: categoryCtrl.text.trim().isNotEmpty ? categoryCtrl.text.trim() : null,
+                              description: descCtrl.text.trim().isNotEmpty
+                                  ? descCtrl.text.trim()
+                                  : null,
+                              category: categoryCtrl.text.trim().isNotEmpty
+                                  ? categoryCtrl.text.trim()
+                                  : null,
                               isActive: isActive,
                             );
                           }
                         },
-                        child: Text(service == null ? 'Crear Servicio' : 'Guardar Cambios', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        child: Text(
+                            service == null
+                                ? 'Crear Servicio'
+                                : 'Guardar Cambios',
+                            style: const TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold)),
                       ),
                       const SizedBox(height: 24),
                     ],
@@ -318,7 +381,8 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen> with Si
       floatingLabelBehavior: FloatingLabelBehavior.auto,
       filled: true,
       fillColor: const Color(0xFFF5EBE6),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
+      border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(30),
         borderSide: BorderSide.none,
@@ -340,13 +404,17 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen> with Si
         title: Row(
           children: [
             Icon(
-              isCurrentlyActive ? Icons.warning_amber_rounded : Icons.check_circle_outline_rounded,
+              isCurrentlyActive
+                  ? Icons.warning_amber_rounded
+                  : Icons.check_circle_outline_rounded,
               color: isCurrentlyActive ? Colors.redAccent : Colors.green,
               size: 28,
             ),
             const SizedBox(width: 8),
             Text(
-              isCurrentlyActive ? '¿Desactivar servicio?' : '¿Activar servicio?',
+              isCurrentlyActive
+                  ? '¿Desactivar servicio?'
+                  : '¿Activar servicio?',
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
           ],
@@ -359,15 +427,22 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen> with Si
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Volver', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+            child: const Text('Volver',
+                style:
+                    TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: isCurrentlyActive ? const Color(0xFFFEE2E2) : const Color(0xFFDCFCE7),
-              foregroundColor: isCurrentlyActive ? const Color(0xFFDC2626) : const Color(0xFF16A34A),
+              backgroundColor: isCurrentlyActive
+                  ? const Color(0xFFFEE2E2)
+                  : const Color(0xFFDCFCE7),
+              foregroundColor: isCurrentlyActive
+                  ? const Color(0xFFDC2626)
+                  : const Color(0xFF16A34A),
               elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30)),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             ),
             child: Text(
@@ -387,10 +462,11 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen> with Si
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: const Text('✅ Servicio desactivado'), 
+                content: const Text('✅ Servicio desactivado'),
                 backgroundColor: const Color(0xFFC89D93),
                 behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20)),
               ),
             );
           }
@@ -407,10 +483,11 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen> with Si
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: const Text('✅ Servicio activado'), 
+                content: const Text('✅ Servicio activado'),
                 backgroundColor: const Color(0xFFC89D93),
                 behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20)),
               ),
             );
           }
@@ -434,9 +511,15 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen> with Si
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.inventory_2_outlined, size: 64, color: Color(0xFFC89D93)),
+            const Icon(Icons.inventory_2_outlined,
+                size: 64, color: Color(0xFFC89D93)),
             const SizedBox(height: 16),
-            Text(message, style: const TextStyle(fontSize: 15, color: Colors.grey, fontWeight: FontWeight.w500), textAlign: TextAlign.center),
+            Text(message,
+                style: const TextStyle(
+                    fontSize: 15,
+                    color: Colors.grey,
+                    fontWeight: FontWeight.w500),
+                textAlign: TextAlign.center),
             const SizedBox(height: 24),
             ElevatedButton.icon(
               onPressed: () => _showServiceForm(),
@@ -445,8 +528,10 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen> with Si
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFC89D93),
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30)),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
                 elevation: 0,
               ),
             ),
@@ -457,8 +542,10 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen> with Si
   }
 
   Widget _buildServiceCard(ServiceModel service) {
-    final statusColor = service.isActive ? const Color(0xFF16A34A) : Colors.grey;
-    final statusBgColor = service.isActive ? const Color(0xFFDCFCE7) : const Color(0xFFF3F4F6);
+    final statusColor =
+        service.isActive ? const Color(0xFF16A34A) : Colors.grey;
+    final statusBgColor =
+        service.isActive ? const Color(0xFFDCFCE7) : const Color(0xFFF3F4F6);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -491,7 +578,10 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen> with Si
                         children: [
                           Text(
                             service.name,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, letterSpacing: -0.3),
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                letterSpacing: -0.3),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -500,14 +590,17 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen> with Si
                               if (service.category.isNotEmpty) ...[
                                 Text(
                                   service.category,
-                                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                                  style: TextStyle(
+                                      color: Colors.grey[600], fontSize: 13),
                                 ),
                                 const SizedBox(width: 8),
-                                const Text('•', style: TextStyle(color: Colors.grey)),
+                                const Text('•',
+                                    style: TextStyle(color: Colors.grey)),
                                 const SizedBox(width: 8),
                               ],
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 2),
                                 decoration: BoxDecoration(
                                   color: const Color(0xFFF5EBE6),
                                   borderRadius: BorderRadius.circular(12),
@@ -515,7 +608,8 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen> with Si
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    const Icon(Icons.star, color: Colors.amber, size: 12),
+                                    const Icon(Icons.star,
+                                        color: Colors.amber, size: 12),
                                     const SizedBox(width: 2),
                                     Text(
                                       '${service.bookingsCount} reservas',
@@ -534,7 +628,8 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen> with Si
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
                         color: statusBgColor,
                         borderRadius: BorderRadius.circular(20),
@@ -554,7 +649,8 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen> with Si
                   const SizedBox(height: 8),
                   Text(
                     service.description,
-                    style: TextStyle(color: Colors.grey[600], fontSize: 13, height: 1.4),
+                    style: TextStyle(
+                        color: Colors.grey[600], fontSize: 13, height: 1.4),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -565,14 +661,20 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen> with Si
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.access_time_filled_rounded, size: 14, color: Colors.grey[500]),
+                        Icon(Icons.access_time_filled_rounded,
+                            size: 14, color: Colors.grey[500]),
                         const SizedBox(width: 4),
-                        Text('${service.durationMinutes} min', style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+                        Text('${service.durationMinutes} min',
+                            style: TextStyle(
+                                color: Colors.grey[600], fontSize: 13)),
                       ],
                     ),
                     Text(
                       service.formattedPrice,
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFFC89D93)),
+                      style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFC89D93)),
                     ),
                   ],
                 ),
@@ -587,7 +689,8 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen> with Si
                         style: OutlinedButton.styleFrom(
                           foregroundColor: const Color(0xFFC89D93),
                           side: const BorderSide(color: Color(0xFFE5CECA)),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30)),
                           padding: const EdgeInsets.symmetric(vertical: 10),
                         ),
                       ),
@@ -597,11 +700,17 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen> with Si
                       child: OutlinedButton.icon(
                         onPressed: () => _confirmDelete(service),
                         icon: const Icon(Icons.block_outlined, size: 16),
-                        label: Text(service.isActive ? 'Desactivar' : 'Activar'),
+                        label:
+                            Text(service.isActive ? 'Desactivar' : 'Activar'),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: service.isActive ? Colors.red : Colors.green,
-                          side: BorderSide(color: (service.isActive ? Colors.red : Colors.green)[200]!),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                          foregroundColor:
+                              service.isActive ? Colors.red : Colors.green,
+                          side: BorderSide(
+                              color: (service.isActive
+                                  ? Colors.red
+                                  : Colors.green)[200]!),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30)),
                           padding: const EdgeInsets.symmetric(vertical: 10),
                         ),
                       ),
@@ -621,19 +730,24 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen> with Si
     if (_isLoading && _services.isEmpty) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text('Mis Servicios', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5)),
+          title: const Text('Mis Servicios',
+              style:
+                  TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5)),
           backgroundColor: Colors.white,
           foregroundColor: Colors.black,
           elevation: 0,
         ),
-        body: const Center(child: CircularProgressIndicator(color: Color(0xFFC89D93))),
+        body: const Center(
+            child: CircularProgressIndicator(color: Color(0xFFC89D93))),
       );
     }
 
     if (_error != null && _services.isEmpty) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text('Mis Servicios', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5)),
+          title: const Text('Mis Servicios',
+              style:
+                  TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5)),
           backgroundColor: Colors.white,
           foregroundColor: Colors.black,
           elevation: 0,
@@ -642,15 +756,20 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen> with Si
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.wifi_off_rounded, color: Colors.redAccent, size: 48),
+              const Icon(Icons.wifi_off_rounded,
+                  color: Colors.redAccent, size: 48),
               const SizedBox(height: 16),
-              Text('Error de conexión:\n$_error', textAlign: TextAlign.center, style: const TextStyle(color: Colors.grey)),
+              Text('Error de conexión:\n$_error',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.grey)),
               const SizedBox(height: 16),
               ElevatedButton.icon(
                 onPressed: _loadServices,
                 icon: const Icon(Icons.refresh),
                 label: const Text('Reintentar'),
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFC89D93), foregroundColor: Colors.white),
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFC89D93),
+                    foregroundColor: Colors.white),
               ),
             ],
           ),
@@ -664,7 +783,8 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen> with Si
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Mis Servicios', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5)),
+        title: const Text('Mis Servicios',
+            style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5)),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
@@ -695,11 +815,13 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen> with Si
                 color: const Color(0xFFC89D93),
                 onRefresh: _loadServices,
                 child: active.isEmpty
-                    ? _buildEmptyState('No tienes servicios activos.\nToca el botón + para agregar uno.')
+                    ? _buildEmptyState(
+                        'No tienes servicios activos.\nToca el botón + para agregar uno.')
                     : ListView.builder(
                         padding: const EdgeInsets.all(16),
                         itemCount: active.length,
-                        itemBuilder: (context, index) => _buildServiceCard(active[index]),
+                        itemBuilder: (context, index) =>
+                            _buildServiceCard(active[index]),
                       ),
               ),
               RefreshIndicator(
@@ -711,7 +833,10 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen> with Si
                           padding: EdgeInsets.all(24.0),
                           child: Text(
                             'No tienes servicios inactivos.',
-                            style: TextStyle(fontSize: 16, color: Colors.grey, fontWeight: FontWeight.w500),
+                            style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey,
+                                fontWeight: FontWeight.w500),
                             textAlign: TextAlign.center,
                           ),
                         ),
@@ -719,7 +844,8 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen> with Si
                     : ListView.builder(
                         padding: const EdgeInsets.all(16),
                         itemCount: inactive.length,
-                        itemBuilder: (context, index) => _buildServiceCard(inactive[index]),
+                        itemBuilder: (context, index) =>
+                            _buildServiceCard(inactive[index]),
                       ),
               ),
             ],
@@ -727,7 +853,8 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen> with Si
           if (_isLoading)
             Container(
               color: const Color(0x1E000000),
-              child: const Center(child: CircularProgressIndicator(color: Color(0xFFC89D93))),
+              child: const Center(
+                  child: CircularProgressIndicator(color: Color(0xFFC89D93))),
             ),
         ],
       ),

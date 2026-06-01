@@ -27,11 +27,16 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
-    setState(() { _isLoading = true; _error = null; });
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
     try {
-      final result = await AuthService.login(_emailCtrl.text.trim(), _passCtrl.text);
+      final result =
+          await AuthService.login(_emailCtrl.text.trim(), _passCtrl.text);
       if (result != null && mounted) {
-        final bool onboardingCompleto = result['user']['onboarding_completo'] ?? false;
+        final bool onboardingCompleto =
+            result['user']['onboarding_completo'] ?? false;
         final String? role = result['user']['role'];
         if (onboardingCompleto) {
           if (role == 'provider') {
@@ -53,21 +58,26 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleOAuth(String provider) async {
-    setState(() { _isLoading = true; _error = null; });
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
     try {
-      final email = provider == 'GOOGLE' 
-          ? 'googleuser@correo.com' 
-          : (provider == 'OUTLOOK' ? 'outlookuser@outlook.com' : 'appleuser@icloud.com');
-      final name = provider == 'GOOGLE' 
-          ? 'Usuario de Google' 
+      final email = provider == 'GOOGLE'
+          ? 'googleuser@correo.com'
+          : (provider == 'OUTLOOK'
+              ? 'outlookuser@outlook.com'
+              : 'appleuser@icloud.com');
+      final name = provider == 'GOOGLE'
+          ? 'Usuario de Google'
           : (provider == 'OUTLOOK' ? 'Usuario de Outlook' : 'Usuario de Apple');
-      final fotoUrl = provider == 'GOOGLE' 
-          ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop' 
-          : (provider == 'OUTLOOK' 
+      final fotoUrl = provider == 'GOOGLE'
+          ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop'
+          : (provider == 'OUTLOOK'
               ? 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=200&auto=format&fit=crop'
               : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200&auto=format&fit=crop');
-      final providerId = provider == 'GOOGLE' 
-          ? 'google_123456789' 
+      final providerId = provider == 'GOOGLE'
+          ? 'google_123456789'
           : (provider == 'OUTLOOK' ? 'outlook_987654321' : 'apple_555666777');
 
       final result = await AuthService.loginOAuth(
@@ -79,7 +89,8 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (result != null && mounted) {
-        final bool onboardingCompleto = result['user']['onboarding_completo'] ?? false;
+        final bool onboardingCompleto =
+            result['user']['onboarding_completo'] ?? false;
         final String? role = result['user']['role'];
         if (onboardingCompleto) {
           if (role == 'provider') {
@@ -117,7 +128,8 @@ class _LoginScreenState extends State<LoginScreen> {
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -127,17 +139,17 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Container(
                       padding: EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Color(0x1F8A6B63),
-                            blurRadius: 20,
-                            offset: Offset(0, 8),
-                          )
-                        ]
-                      ),
-                      child: Icon(Icons.face_retouching_natural, size: 56, color: Color(0xFFC89D93)),
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Color(0x1F8A6B63),
+                              blurRadius: 20,
+                              offset: Offset(0, 8),
+                            )
+                          ]),
+                      child: Icon(Icons.face_retouching_natural,
+                          size: 56, color: Color(0xFFC89D93)),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -198,45 +210,55 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               ),
                               const SizedBox(height: 20),
-                              
+
                               // Email Input
                               TextFormField(
                                 controller: _emailCtrl,
                                 keyboardType: TextInputType.emailAddress,
-                                decoration: _inputDecoration('Correo electrónico', Icons.email_outlined),
-                                validator: (v) => v!.isEmpty ? 'Ingresa tu correo' : null,
+                                decoration: _inputDecoration(
+                                    'Correo electrónico', Icons.email_outlined),
+                                validator: (v) =>
+                                    v!.isEmpty ? 'Ingresa tu correo' : null,
                                 style: const TextStyle(fontSize: 15),
                               ),
                               const SizedBox(height: 16),
-                              
+
                               // Password Input
                               TextFormField(
                                 controller: _passCtrl,
                                 obscureText: _obscurePassword,
                                 decoration: _inputDecoration(
-                                  'Contraseña', 
+                                  'Contraseña',
                                   Icons.lock_outline,
                                   suffixIcon: IconButton(
                                     icon: Icon(
-                                      _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                                      _obscurePassword
+                                          ? Icons.visibility_outlined
+                                          : Icons.visibility_off_outlined,
                                       color: const Color(0xFFC89D93),
                                       size: 20,
                                     ),
-                                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                                    onPressed: () => setState(() =>
+                                        _obscurePassword = !_obscurePassword),
                                   ),
                                 ),
-                                validator: (v) => v!.length < 6 ? 'Mínimo 6 caracteres' : null,
+                                validator: (v) => v!.length < 6
+                                    ? 'Mínimo 6 caracteres'
+                                    : null,
                                 style: const TextStyle(fontSize: 15),
                               ),
                               const SizedBox(height: 24),
-                              
+
                               if (_error != null)
                                 Padding(
                                   padding: const EdgeInsets.only(bottom: 16),
                                   child: Text(
                                     _error!,
                                     textAlign: TextAlign.center,
-                                    style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w600, fontSize: 13),
+                                    style: const TextStyle(
+                                        color: Colors.redAccent,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 13),
                                   ),
                                 ),
 
@@ -246,9 +268,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFFC89D93),
                                   foregroundColor: Colors.white,
-                                  disabledBackgroundColor: const Color(0xFFE6D6D3),
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                  disabledBackgroundColor:
+                                      const Color(0xFFE6D6D3),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 16),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16)),
                                   elevation: 2,
                                   shadowColor: const Color(0x3FC89D93),
                                 ),
@@ -256,49 +281,74 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ? const SizedBox(
                                         width: 24,
                                         height: 24,
-                                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                                        child: CircularProgressIndicator(
+                                            color: Colors.white,
+                                            strokeWidth: 2.5),
                                       )
                                     : const Text(
-                                        'Entrar con Correo', 
-                                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: -0.2),
+                                        'Entrar con Correo',
+                                        style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            letterSpacing: -0.2),
                                       ),
                               ),
-                              
+
                               const SizedBox(height: 24),
-                              
+
                               // Separador para Social Logins
                               Row(
                                 children: [
-                                  Expanded(child: Divider(color: const Color(0xFFE8D7D3).withOpacity(0.6))),
+                                  Expanded(
+                                      child: Divider(
+                                          color: const Color(0xFFE8D7D3)
+                                              .withOpacity(0.6))),
                                   const Padding(
-                                    padding: EdgeInsets.symmetric(horizontal: 16),
+                                    padding:
+                                        EdgeInsets.symmetric(horizontal: 16),
                                     child: Text(
                                       'o accede rápido con',
-                                      style: TextStyle(color: Color(0xFF8A7A77), fontSize: 12, fontWeight: FontWeight.w500),
+                                      style: TextStyle(
+                                          color: Color(0xFF8A7A77),
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500),
                                     ),
                                   ),
-                                  Expanded(child: Divider(color: const Color(0xFFE8D7D3).withOpacity(0.6))),
+                                  Expanded(
+                                      child: Divider(
+                                          color: const Color(0xFFE8D7D3)
+                                              .withOpacity(0.6))),
                                 ],
                               ),
                               const SizedBox(height: 20),
 
                               // Social Buttons en Igualdad de Condiciones (Google, Outlook, Apple)
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
                                 children: [
                                   _buildSocialButton(
-                                    icon: const Icon(Icons.g_mobiledata, color: Color(0xFFD32F2F), size: 36),
-                                    onTap: _isLoading ? null : () => _handleOAuth('GOOGLE'),
+                                    icon: const Icon(Icons.g_mobiledata,
+                                        color: Color(0xFFD32F2F), size: 36),
+                                    onTap: _isLoading
+                                        ? null
+                                        : () => _handleOAuth('GOOGLE'),
                                     label: 'Google',
                                   ),
                                   _buildSocialButton(
-                                    icon: const Icon(Icons.mail_outline, color: Color(0xFF1976D2), size: 24),
-                                    onTap: _isLoading ? null : () => _handleOAuth('OUTLOOK'),
+                                    icon: const Icon(Icons.mail_outline,
+                                        color: Color(0xFF1976D2), size: 24),
+                                    onTap: _isLoading
+                                        ? null
+                                        : () => _handleOAuth('OUTLOOK'),
                                     label: 'Outlook',
                                   ),
                                   _buildSocialButton(
-                                    icon: const Icon(Icons.apple, color: Colors.black87, size: 28),
-                                    onTap: _isLoading ? null : () => _handleOAuth('APPLE'),
+                                    icon: const Icon(Icons.apple,
+                                        color: Colors.black87, size: 28),
+                                    onTap: _isLoading
+                                        ? null
+                                        : () => _handleOAuth('APPLE'),
                                     label: 'Apple',
                                   ),
                                 ],
@@ -310,7 +360,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 28),
-                  
+
                   // Link de Registro
                   TextButton(
                     onPressed: () => Navigator.pushNamed(context, '/register'),
@@ -320,11 +370,14 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: RichText(
                       text: const TextSpan(
                         text: '¿No tienes cuenta? ',
-                        style: TextStyle(color: Color(0xFF7A6A67), fontSize: 14),
+                        style:
+                            TextStyle(color: Color(0xFF7A6A67), fontSize: 14),
                         children: [
                           TextSpan(
                             text: 'Regístrate aquí',
-                            style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFC89D93)),
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFFC89D93)),
                           ),
                         ],
                       ),
@@ -372,7 +425,8 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  InputDecoration _inputDecoration(String label, IconData icon, {Widget? suffixIcon}) {
+  InputDecoration _inputDecoration(String label, IconData icon,
+      {Widget? suffixIcon}) {
     return InputDecoration(
       labelText: label,
       labelStyle: const TextStyle(color: Color(0xFF8A7A77), fontSize: 14),

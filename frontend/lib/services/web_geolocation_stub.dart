@@ -15,10 +15,10 @@ Future<Map<String, double>> getWebGeolocation() async {
         return {'lat': 4.6735, 'lon': -74.1422};
       }
     }
-    
+
     if (permission == LocationPermission.deniedForever) {
       return {'lat': 4.6735, 'lon': -74.1422};
-    } 
+    }
 
     final Position position = await Geolocator.getCurrentPosition(
       desiredAccuracy: LocationAccuracy.high,

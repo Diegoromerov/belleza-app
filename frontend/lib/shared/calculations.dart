@@ -13,7 +13,8 @@ class Calculations {
     return totalAmount * (feePercentage / 100);
   }
 
-  static double calculateProviderEarnings(double totalAmount, double tipAmount, double feePercentage) {
+  static double calculateProviderEarnings(
+      double totalAmount, double tipAmount, double feePercentage) {
     final fee = calculatePlatformFee(totalAmount, feePercentage);
     return totalAmount - fee + tipAmount;
   }

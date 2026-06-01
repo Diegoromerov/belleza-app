@@ -20,21 +20,21 @@ class AppTheme {
 
   // Sombras premium suaves
   static List<BoxShadow> get cardShadow => const [
-    BoxShadow(
-      color: Color(0x0F8E7D7A),
-      blurRadius: 20,
-      offset: Offset(0, 8),
-      spreadRadius: -2,
-    ),
-  ];
+        BoxShadow(
+          color: Color(0x0F8E7D7A),
+          blurRadius: 20,
+          offset: Offset(0, 8),
+          spreadRadius: -2,
+        ),
+      ];
 
   static List<BoxShadow> get softShadow => const [
-    BoxShadow(
-      color: Color(0x088E7D7A),
-      blurRadius: 12,
-      offset: Offset(0, 4),
-    ),
-  ];
+        BoxShadow(
+          color: Color(0x088E7D7A),
+          blurRadius: 12,
+          offset: Offset(0, 4),
+        ),
+      ];
 
   // Decoración genérica de inputs
   static InputDecoration inputDecoration({

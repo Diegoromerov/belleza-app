@@ -41,23 +41,36 @@ class _ChatScreenState extends State<ChatScreen> {
     for (var line in lines) {
       final lower = line.toLowerCase();
       if (lower.contains('id prestador:') || lower.contains('id_prestador:')) {
-        meta['providerId'] = line.split(':').last.trim().replaceAll(RegExp(r'[^\w\-]'), '');
+        meta['providerId'] =
+            line.split(':').last.trim().replaceAll(RegExp(r'[^\w\-]'), '');
       }
-      if (lower.contains('profesional/establecimiento:') || lower.contains('profesional:')) {
-        meta['providerName'] = line.split(':').last.trim().replaceAll(RegExp(r'[\"*]'), '');
+      if (lower.contains('profesional/establecimiento:') ||
+          lower.contains('profesional:')) {
+        meta['providerName'] =
+            line.split(':').last.trim().replaceAll(RegExp(r'[\"*]'), '');
       }
       if (lower.contains('servicio id:') || lower.contains('servicio_id:')) {
-        meta['serviceId'] = line.split(':').skip(1).join(':').trim().replaceAll(RegExp(r'[\"*]'), '');
+        meta['serviceId'] = line
+            .split(':')
+            .skip(1)
+            .join(':')
+            .trim()
+            .replaceAll(RegExp(r'[\"*]'), '');
       }
-      if (lower.contains('tratamiento sugerido:') || lower.contains('servicio:')) {
-        meta['serviceName'] = line.split(':').last.trim().replaceAll(RegExp(r'[\"*]'), '');
+      if (lower.contains('tratamiento sugerido:') ||
+          lower.contains('servicio:')) {
+        meta['serviceName'] =
+            line.split(':').last.trim().replaceAll(RegExp(r'[\"*]'), '');
       }
-      if (lower.contains('precio de referencia:') || lower.contains('precio:')) {
-        meta['price'] = line.split(':').last.trim().replaceAll(RegExp(r'[^\d]'), '');
+      if (lower.contains('precio de referencia:') ||
+          lower.contains('precio:')) {
+        meta['price'] =
+            line.split(':').last.trim().replaceAll(RegExp(r'[^\d]'), '');
       }
     }
     return meta;
   }
+
   bool _isLoading = true;
   String? _error;
   String? _currentUserId;
@@ -74,7 +87,7 @@ class _ChatScreenState extends State<ChatScreen> {
     _loadCurrentUserId();
     _loadMessages(showLoading: true);
     _markAsRead();
-    
+
     // Connect to WebSocket with reconnect/fallback
     _connectWebSocket();
 
@@ -94,7 +107,7 @@ class _ChatScreenState extends State<ChatScreen> {
       final wsUrl = '$wsBase/chat';
 
       _webSocketChannel = WebSocketChannel.connect(Uri.parse(wsUrl));
-      
+
       _webSocketChannel!.stream.listen(
         (message) {
           if (mounted) {
@@ -126,7 +139,6 @@ class _ChatScreenState extends State<ChatScreen> {
         'type': 'join',
         'partnerId': widget.partnerId,
       }));
-
     } catch (e) {
       _handleWebSocketFailure();
     }
@@ -198,9 +210,13 @@ class _ChatScreenState extends State<ChatScreen> {
       try {
         final parts = token.split('.');
         if (parts.length >= 2) {
-          final String payload = parts[1].replaceAll('-', '+').replaceAll('_', '/');
+          final String payload =
+              parts[1].replaceAll('-', '+').replaceAll('_', '/');
           final String decoded = String.fromCharCodes(base64Decode(
-            payload.length % 4 == 0 ? payload : payload.padRight(payload.length + (4 - payload.length % 4), '='),
+            payload.length % 4 == 0
+                ? payload
+                : payload.padRight(
+                    payload.length + (4 - payload.length % 4), '='),
           ));
           final data = jsonDecode(decoded);
           if (mounted) {
@@ -214,7 +230,8 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   List<int> base64Decode(String source) {
-    const base64Chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+    const base64Chars =
+        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
     final output = <int>[];
     var buffer = 0;
     var bits = 0;
@@ -339,16 +356,22 @@ class _ChatScreenState extends State<ChatScreen> {
           children: [
             CircleAvatar(
               radius: 18,
-              backgroundColor: isProvider ? Colors.pink[100] : Colors.purple[100],
-              backgroundImage: widget.partnerAvatar != null && widget.partnerAvatar!.isNotEmpty
+              backgroundColor:
+                  isProvider ? Colors.pink[100] : Colors.purple[100],
+              backgroundImage: widget.partnerAvatar != null &&
+                      widget.partnerAvatar!.isNotEmpty
                   ? NetworkImage(widget.partnerAvatar!)
                   : null,
-              child: widget.partnerAvatar == null || widget.partnerAvatar!.isEmpty
+              child: widget.partnerAvatar == null ||
+                      widget.partnerAvatar!.isEmpty
                   ? Text(
-                      widget.partnerName.isNotEmpty ? widget.partnerName[0].toUpperCase() : 'U',
+                      widget.partnerName.isNotEmpty
+                          ? widget.partnerName[0].toUpperCase()
+                          : 'U',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: isProvider ? Colors.pink[800] : Colors.purple[800],
+                        color:
+                            isProvider ? Colors.pink[800] : Colors.purple[800],
                         fontSize: 14,
                       ),
                     )
@@ -361,7 +384,8 @@ class _ChatScreenState extends State<ChatScreen> {
                 children: [
                   Text(
                     widget.partnerName,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   Text(
                     isProvider ? 'PRESTADOR DE SERVICIOS' : 'CLIENTE',
@@ -382,19 +406,22 @@ class _ChatScreenState extends State<ChatScreen> {
         children: [
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator(color: Colors.pink))
+                ? const Center(
+                    child: CircularProgressIndicator(color: Colors.pink))
                 : _error != null
                     ? Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                            const Icon(Icons.error_outline,
+                                color: Colors.red, size: 48),
                             const SizedBox(height: 16),
                             Text('Error: $_error', textAlign: TextAlign.center),
                             const SizedBox(height: 16),
                             ElevatedButton(
                               onPressed: () => _loadMessages(showLoading: true),
-                              style: ElevatedButton.styleFrom(backgroundColor: Colors.pink),
+                              style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.pink),
                               child: const Text('Reintentar'),
                             ),
                           ],
@@ -405,61 +432,78 @@ class _ChatScreenState extends State<ChatScreen> {
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.chat_bubble_outline, size: 64, color: Colors.pink[200]),
+                                Icon(Icons.chat_bubble_outline,
+                                    size: 64, color: Colors.pink[200]),
                                 const SizedBox(height: 16),
                                 Text(
                                   '¡Envía un mensaje a ${widget.partnerName}!',
-                                  style: const TextStyle(color: Colors.grey, fontSize: 16),
+                                  style: const TextStyle(
+                                      color: Colors.grey, fontSize: 16),
                                 ),
                               ],
                             ),
                           )
                         : ListView.builder(
                             controller: _scrollController,
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 20),
                             itemCount: _messages.length,
                             itemBuilder: (context, index) {
                               final msg = _messages[index];
                               final isMe = msg['sender_id'] == _currentUserId;
-                              final isAi = msg['sender_id'] == '00000000-0000-0000-0000-000000000000';
+                              final isAi = msg['sender_id'] ==
+                                  '00000000-0000-0000-0000-000000000000';
                               final time = _formatTime(msg['created_at']);
 
                               if (isAi) {
                                 final text = msg['message'] ?? '';
-                                final isRec = text.contains('Estilo Recomendado:') || text.contains('[SIMULACIÓN IA]');
+                                final isRec =
+                                    text.contains('Estilo Recomendado:') ||
+                                        text.contains('[SIMULACIÓN IA]');
 
                                 return Container(
                                   margin: const EdgeInsets.only(bottom: 16),
                                   child: Row(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Container(
-                                        margin: const EdgeInsets.only(right: 8, top: 4),
+                                        margin: const EdgeInsets.only(
+                                            right: 8, top: 4),
                                         padding: const EdgeInsets.all(6),
                                         decoration: const BoxDecoration(
                                           color: Color(0xFFE8D7D3),
                                           shape: BoxShape.circle,
                                         ),
-                                        child: const Icon(Icons.auto_awesome, color: Color(0xFFC89D93), size: 16),
+                                        child: const Icon(Icons.auto_awesome,
+                                            color: Color(0xFFC89D93), size: 16),
                                       ),
                                       Expanded(
                                         child: Align(
                                           alignment: Alignment.centerLeft,
                                           child: Container(
                                             constraints: BoxConstraints(
-                                              maxWidth: MediaQuery.of(context).size.width * 0.7,
+                                              maxWidth: MediaQuery.of(context)
+                                                      .size
+                                                      .width *
+                                                  0.7,
                                             ),
-                                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 16, vertical: 12),
                                             decoration: const BoxDecoration(
                                               gradient: LinearGradient(
-                                                colors: [Color(0xFFFFFDFB), Color(0xFFF5EBE6)],
+                                                colors: [
+                                                  Color(0xFFFFFDFB),
+                                                  Color(0xFFF5EBE6)
+                                                ],
                                                 begin: Alignment.topLeft,
                                                 end: Alignment.bottomRight,
                                               ),
                                               borderRadius: BorderRadius.only(
                                                 topLeft: Radius.circular(16),
                                                 topRight: Radius.circular(16),
-                                                bottomRight: Radius.circular(16),
+                                                bottomRight:
+                                                    Radius.circular(16),
                                               ),
                                               boxShadow: [
                                                 BoxShadow(
@@ -470,11 +514,14 @@ class _ChatScreenState extends State<ChatScreen> {
                                               ],
                                             ),
                                             child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
                                               children: [
                                                 if (isRec) ...[
                                                   ClipRRect(
-                                                    borderRadius: BorderRadius.circular(12),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            12),
                                                     child: Image.network(
                                                       'https://images.unsplash.com/photo-1562322140-8baeececf3df?w=500',
                                                       height: 110,
@@ -485,7 +532,12 @@ class _ChatScreenState extends State<ChatScreen> {
                                                   const SizedBox(height: 8),
                                                   const Text(
                                                     'Asesoría de Belleza IA',
-                                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFFC89D93)),
+                                                    style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        fontSize: 14,
+                                                        color:
+                                                            Color(0xFFC89D93)),
                                                   ),
                                                   const SizedBox(height: 4),
                                                 ],
@@ -502,73 +554,141 @@ class _ChatScreenState extends State<ChatScreen> {
                                                   SizedBox(
                                                     width: double.infinity,
                                                     child: ElevatedButton.icon(
-                                                      style: ElevatedButton.styleFrom(
-                                                        backgroundColor: const Color(0xFFC89D93),
-                                                        foregroundColor: Colors.white,
+                                                      style: ElevatedButton
+                                                          .styleFrom(
+                                                        backgroundColor:
+                                                            const Color(
+                                                                0xFFC89D93),
+                                                        foregroundColor:
+                                                            Colors.white,
                                                         elevation: 0,
-                                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                                        padding: const EdgeInsets.symmetric(vertical: 8),
+                                                        shape: RoundedRectangleBorder(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        20)),
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .symmetric(
+                                                                vertical: 8),
                                                       ),
                                                       onPressed: () {
-                                                         final meta = _parseAiRecommendation(text);
-                                                         final providerId = meta['providerId'];
-                                                         final serviceId = meta['serviceId'];
+                                                        final meta =
+                                                            _parseAiRecommendation(
+                                                                text);
+                                                        final providerId =
+                                                            meta['providerId'];
+                                                        final serviceId =
+                                                            meta['serviceId'];
 
-                                                         if (providerId != null && providerId.isNotEmpty) {
-                                                           if (serviceId != null && serviceId.isNotEmpty) {
-                                                             final serviceItem = {
-                                                               'id': serviceId,
-                                                               'name': meta['serviceName'] ?? 'Tratamiento Recomendado',
-                                                               'price': double.tryParse(meta['price'] ?? '') ?? 0.0,
-                                                               'duration_minutes': 60,
-                                                             };
-                                                             Navigator.push(
-                                                               context,
-                                                               MaterialPageRoute(
-                                                                 builder: (_) => BookingScreen(
-                                                                   providerId: providerId,
-                                                                   providerName: meta['providerName'] ?? 'Prestador',
-                                                                   services: [serviceItem],
-                                                                   initialNotes: 'Recomendado por el Asesor de Belleza IA.',
-                                                                 ),
-                                                               ),
-                                                             );
-                                                           } else {
-                                                             Navigator.push(
-                                                               context,
-                                                               MaterialPageRoute(
-                                                                 builder: (_) => ProviderDetailScreen(providerId: providerId),
-                                                               ),
-                                                             );
-                                                           }
-                                                         } else {
-                                                           showDialog(
-                                                             context: context,
-                                                             builder: (context) => AlertDialog(
-                                                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                                                               title: const Text('¡De una parce!', style: TextStyle(fontWeight: FontWeight.bold)),
-                                                               content: const Text('Te redirigiremos con los prestadores de Fontibón para agendar este estilo de inmediato, vecino.'),
-                                                               actions: [
-                                                                 TextButton(
-                                                                   onPressed: () {
-                                                                     Navigator.pop(context);
-                                                                     Navigator.pop(context);
-                                                                   },
-                                                                   child: const Text('Listo', style: TextStyle(color: Color(0xFFC89D93), fontWeight: FontWeight.bold)),
-                                                                 )
-                                                               ],
-                                                             ),
-                                                           );
-                                                         }
-                                                       },
-                                                      icon: const Icon(Icons.calendar_month, size: 14),
-                                                      label: const Text('Agendar este estilo', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold)),
+                                                        if (providerId !=
+                                                                null &&
+                                                            providerId
+                                                                .isNotEmpty) {
+                                                          if (serviceId !=
+                                                                  null &&
+                                                              serviceId
+                                                                  .isNotEmpty) {
+                                                            final serviceItem =
+                                                                {
+                                                              'id': serviceId,
+                                                              'name': meta[
+                                                                      'serviceName'] ??
+                                                                  'Tratamiento Recomendado',
+                                                              'price': double.tryParse(
+                                                                      meta['price'] ??
+                                                                          '') ??
+                                                                  0.0,
+                                                              'duration_minutes':
+                                                                  60,
+                                                            };
+                                                            Navigator.push(
+                                                              context,
+                                                              MaterialPageRoute(
+                                                                builder: (_) =>
+                                                                    BookingScreen(
+                                                                  providerId:
+                                                                      providerId,
+                                                                  providerName:
+                                                                      meta['providerName'] ??
+                                                                          'Prestador',
+                                                                  services: [
+                                                                    serviceItem
+                                                                  ],
+                                                                  initialNotes:
+                                                                      'Recomendado por el Asesor de Belleza IA.',
+                                                                ),
+                                                              ),
+                                                            );
+                                                          } else {
+                                                            Navigator.push(
+                                                              context,
+                                                              MaterialPageRoute(
+                                                                builder: (_) =>
+                                                                    ProviderDetailScreen(
+                                                                        providerId:
+                                                                            providerId),
+                                                              ),
+                                                            );
+                                                          }
+                                                        } else {
+                                                          showDialog(
+                                                            context: context,
+                                                            builder:
+                                                                (context) =>
+                                                                    AlertDialog(
+                                                              shape: RoundedRectangleBorder(
+                                                                  borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                              24)),
+                                                              title: const Text(
+                                                                  '¡De una parce!',
+                                                                  style: TextStyle(
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .bold)),
+                                                              content: const Text(
+                                                                  'Te redirigiremos con los prestadores de Fontibón para agendar este estilo de inmediato, vecino.'),
+                                                              actions: [
+                                                                TextButton(
+                                                                  onPressed:
+                                                                      () {
+                                                                    Navigator.pop(
+                                                                        context);
+                                                                    Navigator.pop(
+                                                                        context);
+                                                                  },
+                                                                  child: const Text(
+                                                                      'Listo',
+                                                                      style: TextStyle(
+                                                                          color: Color(
+                                                                              0xFFC89D93),
+                                                                          fontWeight:
+                                                                              FontWeight.bold)),
+                                                                )
+                                                              ],
+                                                            ),
+                                                          );
+                                                        }
+                                                      },
+                                                      icon: const Icon(
+                                                          Icons.calendar_month,
+                                                          size: 14),
+                                                      label: const Text(
+                                                          'Agendar este estilo',
+                                                          style: TextStyle(
+                                                              fontSize: 11.5,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold)),
                                                     ),
                                                   ),
                                                 ],
                                                 const SizedBox(height: 4),
                                                 Align(
-                                                  alignment: Alignment.bottomRight,
+                                                  alignment:
+                                                      Alignment.bottomRight,
                                                   child: Text(
                                                     time,
                                                     style: TextStyle(
@@ -588,20 +708,31 @@ class _ChatScreenState extends State<ChatScreen> {
                               }
 
                               return Align(
-                                alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+                                alignment: isMe
+                                    ? Alignment.centerRight
+                                    : Alignment.centerLeft,
                                 child: Container(
                                   margin: const EdgeInsets.only(bottom: 12),
                                   constraints: BoxConstraints(
-                                    maxWidth: MediaQuery.of(context).size.width * 0.75,
+                                    maxWidth:
+                                        MediaQuery.of(context).size.width *
+                                            0.75,
                                   ),
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 10),
                                   decoration: BoxDecoration(
-                                    color: isMe ? const Color(0xFFC89D93) : Colors.white,
+                                    color: isMe
+                                        ? const Color(0xFFC89D93)
+                                        : Colors.white,
                                     borderRadius: BorderRadius.only(
                                       topLeft: const Radius.circular(16),
                                       topRight: const Radius.circular(16),
-                                      bottomLeft: isMe ? const Radius.circular(16) : Radius.zero,
-                                      bottomRight: isMe ? Radius.zero : const Radius.circular(16),
+                                      bottomLeft: isMe
+                                          ? const Radius.circular(16)
+                                          : Radius.zero,
+                                      bottomRight: isMe
+                                          ? Radius.zero
+                                          : const Radius.circular(16),
                                     ),
                                     boxShadow: const [
                                       BoxShadow(
@@ -617,7 +748,9 @@ class _ChatScreenState extends State<ChatScreen> {
                                       Text(
                                         msg['message'] ?? '',
                                         style: TextStyle(
-                                          color: isMe ? Colors.white : Colors.black87,
+                                          color: isMe
+                                              ? Colors.white
+                                              : Colors.black87,
                                           fontSize: 15,
                                         ),
                                       ),
@@ -625,7 +758,9 @@ class _ChatScreenState extends State<ChatScreen> {
                                       Text(
                                         time,
                                         style: TextStyle(
-                                          color: isMe ? Colors.white70 : Colors.grey[500],
+                                          color: isMe
+                                              ? Colors.white70
+                                              : Colors.grey[500],
                                           fontSize: 10,
                                         ),
                                       ),
@@ -659,7 +794,8 @@ class _ChatScreenState extends State<ChatScreen> {
                         ),
                         fillColor: Colors.grey[100],
                         filled: true,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 10),
                       ),
                       onSubmitted: (_) => _sendMessage(),
                     ),

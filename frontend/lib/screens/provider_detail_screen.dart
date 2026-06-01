@@ -21,13 +21,21 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
   String selectedCategory = 'Todos';
 
   @override
-  void initState() { super.initState(); _loadDetails(); }
+  void initState() {
+    super.initState();
+    _loadDetails();
+  }
 
   Future<void> _loadDetails() async {
     try {
       final data = await ApiService.fetchProviderDetails(widget.providerId);
-      setState(() { details = data; isLoading = false; });
-    } catch (e) { setState(() => isLoading = false); }
+      setState(() {
+        details = data;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() => isLoading = false);
+    }
   }
 
   double _num(dynamic v) {
@@ -40,24 +48,45 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading) return const Scaffold(body: Center(child: CircularProgressIndicator(color: Color(0xFFC89D93))));
-    if (details == null) return Scaffold(appBar: AppBar(title: const Text('Error')), body: const Center(child: Text('❌ No se pudieron cargar los datos')));
+    if (isLoading)
+      return const Scaffold(
+          body: Center(
+              child: CircularProgressIndicator(color: Color(0xFFC89D93))));
+    if (details == null)
+      return Scaffold(
+          appBar: AppBar(title: const Text('Error')),
+          body: const Center(child: Text('❌ No se pudieron cargar los datos')));
 
     final p = details!['provider'];
-    final services = (details!['services'] as List<dynamic>).cast<Map<String, dynamic>>();
-    final portfolio = (details!['portfolio'] as List<dynamic>? ?? []).cast<Map<String, dynamic>>();
-    final reviews = (details!['reviews'] as List<dynamic>? ?? []).cast<Map<String, dynamic>>();
+    final services =
+        (details!['services'] as List<dynamic>).cast<Map<String, dynamic>>();
+    final portfolio = (details!['portfolio'] as List<dynamic>? ?? [])
+        .cast<Map<String, dynamic>>();
+    final reviews = (details!['reviews'] as List<dynamic>? ?? [])
+        .cast<Map<String, dynamic>>();
 
-    final hasAvatar = p['avatar_url'] != null && p['avatar_url'].toString().isNotEmpty;
+    final hasAvatar =
+        p['avatar_url'] != null && p['avatar_url'].toString().isNotEmpty;
     final initialLetter = (p['full_name'] ?? '?')[0].toUpperCase();
 
     final filteredServices = services.where((s) {
       if (selectedCategory == 'Todos') return true;
       final cat = (s['category'] ?? '').toString().toLowerCase();
-      bool matchCabello = cat.contains('cabello') || cat.contains('pelo') || cat.contains('corte');
-      bool matchUnas = cat.contains('uña') || cat.contains('unas') || cat.contains('manicur') || cat.contains('pedicur');
-      bool matchMaquillaje = cat.contains('maquillaje') || cat.contains('makeup') || cat.contains('cejas') || cat.contains('pestaña');
-      bool matchPiel = cat.contains('piel') || cat.contains('facial') || cat.contains('skincare') || cat.contains('corporal');
+      bool matchCabello = cat.contains('cabello') ||
+          cat.contains('pelo') ||
+          cat.contains('corte');
+      bool matchUnas = cat.contains('uña') ||
+          cat.contains('unas') ||
+          cat.contains('manicur') ||
+          cat.contains('pedicur');
+      bool matchMaquillaje = cat.contains('maquillaje') ||
+          cat.contains('makeup') ||
+          cat.contains('cejas') ||
+          cat.contains('pestaña');
+      bool matchPiel = cat.contains('piel') ||
+          cat.contains('facial') ||
+          cat.contains('skincare') ||
+          cat.contains('corporal');
       bool matchBarberia = cat.contains('barber') || cat.contains('barba');
       switch (selectedCategory) {
         case 'Cabello':
@@ -71,7 +100,11 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
         case 'Barbería':
           return matchBarberia;
         case 'Otros':
-          return !matchCabello && !matchUnas && !matchMaquillaje && !matchPiel && !matchBarberia;
+          return !matchCabello &&
+              !matchUnas &&
+              !matchMaquillaje &&
+              !matchPiel &&
+              !matchBarberia;
         default:
           return false;
       }
@@ -110,7 +143,11 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                   Container(
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [Colors.black54, Colors.transparent, Colors.black45],
+                        colors: [
+                          Colors.black54,
+                          Colors.transparent,
+                          Colors.black45
+                        ],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                       ),
@@ -140,11 +177,15 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                         child: CircleAvatar(
                           radius: 40,
                           backgroundColor: AppTheme.primaryLight,
-                          backgroundImage: hasAvatar ? NetworkImage(p['avatar_url']) : null,
+                          backgroundImage:
+                              hasAvatar ? NetworkImage(p['avatar_url']) : null,
                           child: !hasAvatar
                               ? Text(
                                   initialLetter,
-                                  style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: AppTheme.primary),
+                                  style: const TextStyle(
+                                      fontSize: 32,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppTheme.primary),
                                 )
                               : null,
                         ),
@@ -173,8 +214,10 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                               ),
                             ),
                           ),
-                          if (p['is_verified'] == true || p['is_verified'] == 'true')
-                            const Icon(Icons.verified, color: AppTheme.primary, size: 24),
+                          if (p['is_verified'] == true ||
+                              p['is_verified'] == 'true')
+                            const Icon(Icons.verified,
+                                color: AppTheme.primary, size: 24),
                         ],
                       ),
                       const SizedBox(height: 6),
@@ -182,23 +225,30 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                       // Rating y localidad
                       Row(
                         children: [
-                          const Icon(Icons.star_rounded, color: Color(0xFFD97706), size: 20),
+                          const Icon(Icons.star_rounded,
+                              color: Color(0xFFD97706), size: 20),
                           const SizedBox(width: 4),
                           Text(
                             _num(p['rating_avg']).toStringAsFixed(1),
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 15),
                           ),
                           const SizedBox(width: 4),
                           Text(
                             '(${p['rating_count'] ?? 0} valoraciones)',
-                            style: const TextStyle(color: Colors.grey, fontSize: 13),
+                            style: const TextStyle(
+                                color: Colors.grey, fontSize: 13),
                           ),
                           const SizedBox(width: 12),
-                          const Icon(Icons.location_on, color: Colors.grey, size: 16),
+                          const Icon(Icons.location_on,
+                              color: Colors.grey, size: 16),
                           const SizedBox(width: 4),
                           const Text(
                             'Fontibón',
-                            style: TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w500),
+                            style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500),
                           ),
                         ],
                       ),
@@ -215,14 +265,18 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                   MaterialPageRoute(
                                     builder: (_) => ChatScreen(
                                       partnerId: widget.providerId,
-                                      partnerName: p['business_name'] ?? p['full_name'] ?? 'Prestador',
+                                      partnerName: p['business_name'] ??
+                                          p['full_name'] ??
+                                          'Prestador',
                                       partnerRole: 'provider',
                                       partnerAvatar: p['avatar_url'],
                                     ),
                                   ),
                                 );
                               },
-                              icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18),
+                              icon: const Icon(
+                                  Icons.chat_bubble_outline_rounded,
+                                  size: 18),
                               label: const Text('Chatear'),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppTheme.primary,
@@ -231,7 +285,8 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(30),
                                 ),
-                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 12),
                               ),
                             ),
                           ),
@@ -240,15 +295,20 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                       const SizedBox(height: 28),
 
                       // Sobre nosotros
-                      if (p['description'] != null && p['description'].toString().trim().isNotEmpty) ...[
+                      if (p['description'] != null &&
+                          p['description'].toString().trim().isNotEmpty) ...[
                         const Text(
                           'Sobre nosotros',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: -0.5),
+                          style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: -0.5),
                         ),
                         const SizedBox(height: 8),
                         Text(
                           p['description'],
-                          style: const TextStyle(fontSize: 14, height: 1.6, color: Colors.black87),
+                          style: const TextStyle(
+                              fontSize: 14, height: 1.6, color: Colors.black87),
                         ),
                         const SizedBox(height: 28),
                       ],
@@ -256,7 +316,10 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                       // Servicios
                       const Text(
                         'Servicios Ofrecidos',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: -0.5),
+                        style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: -0.5),
                       ),
                       const SizedBox(height: 12),
 
@@ -265,18 +328,32 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                         scrollDirection: Axis.horizontal,
                         physics: const BouncingScrollPhysics(),
                         child: Row(
-                          children: ['Todos', 'Cabello', 'Uñas', 'Maquillaje', 'Cuidado de la piel', 'Barbería', 'Otros'].map((cat) {
+                          children: [
+                            'Todos',
+                            'Cabello',
+                            'Uñas',
+                            'Maquillaje',
+                            'Cuidado de la piel',
+                            'Barbería',
+                            'Otros'
+                          ].map((cat) {
                             final isSelected = selectedCategory == cat;
                             return Padding(
-                              padding: const EdgeInsets.only(right: 8.0, bottom: 8.0),
+                              padding: const EdgeInsets.only(
+                                  right: 8.0, bottom: 8.0),
                               child: ChoiceChip(
                                 label: Text(cat),
                                 selected: isSelected,
                                 selectedColor: AppTheme.primary,
-                                backgroundColor: AppTheme.primaryLight.withOpacity(0.4),
+                                backgroundColor:
+                                    AppTheme.primaryLight.withOpacity(0.4),
                                 labelStyle: TextStyle(
-                                  color: isSelected ? Colors.white : Colors.black87,
-                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                  color: isSelected
+                                      ? Colors.white
+                                      : Colors.black87,
+                                  fontWeight: isSelected
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
                                 ),
                                 onSelected: (selected) {
                                   setState(() {
@@ -286,7 +363,9 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(20),
                                   side: BorderSide(
-                                    color: isSelected ? AppTheme.primary : Colors.transparent,
+                                    color: isSelected
+                                        ? AppTheme.primary
+                                        : Colors.transparent,
                                   ),
                                 ),
                               ),
@@ -309,91 +388,122 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                           child: const Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.style_outlined, color: Colors.grey, size: 30),
+                              Icon(Icons.style_outlined,
+                                  color: Colors.grey, size: 30),
                               SizedBox(height: 8),
                               Text(
                                 'No hay servicios en esta categoría.',
-                                style: TextStyle(color: Colors.grey, fontSize: 13),
+                                style:
+                                    TextStyle(color: Colors.grey, fontSize: 13),
                               ),
                             ],
                           ),
                         )
                       else
                         ...filteredServices.map((s) => Container(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Color(0x0A000000),
-                                blurRadius: 12,
-                                offset: Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        s['name'] ?? '',
-                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                                      ),
-                                    ),
-                                    Text(
-                                      '\$${_num(s['price']).toStringAsFixed(0)}',
-                                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.primary),
-                                    ),
-                                  ],
-                                ),
-                                if (s['description'] != null && s['description'].toString().trim().isNotEmpty) ...[
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    s['description'],
-                                    style: TextStyle(color: Colors.grey[600], fontSize: 13, height: 1.4),
+                              margin: const EdgeInsets.only(bottom: 12),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Color(0x0A000000),
+                                    blurRadius: 12,
+                                    offset: Offset(0, 2),
                                   ),
                                 ],
-                                const SizedBox(height: 12),
-                                Row(
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Icon(Icons.access_time, size: 16, color: Colors.grey),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      '${s['duration_minutes']} min',
-                                      style: TextStyle(color: Colors.grey[600], fontSize: 13, fontWeight: FontWeight.w500),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            s['name'] ?? '',
+                                            style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 16),
+                                          ),
+                                        ),
+                                        Text(
+                                          '\$${_num(s['price']).toStringAsFixed(0)}',
+                                          style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppTheme.primary),
+                                        ),
+                                      ],
                                     ),
-                                    if (s['category'] != null && s['category'].toString().trim().isNotEmpty) ...[
-                                      const SizedBox(width: 12),
-                                      const Icon(Icons.style_outlined, size: 16, color: Colors.grey),
-                                      const SizedBox(width: 4),
+                                    if (s['description'] != null &&
+                                        s['description']
+                                            .toString()
+                                            .trim()
+                                            .isNotEmpty) ...[
+                                      const SizedBox(height: 6),
                                       Text(
-                                        s['category'],
-                                        style: TextStyle(color: Colors.grey[600], fontSize: 13, fontWeight: FontWeight.w500),
+                                        s['description'],
+                                        style: TextStyle(
+                                            color: Colors.grey[600],
+                                            fontSize: 13,
+                                            height: 1.4),
                                       ),
                                     ],
+                                    const SizedBox(height: 12),
+                                    Row(
+                                      children: [
+                                        const Icon(Icons.access_time,
+                                            size: 16, color: Colors.grey),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          '${s['duration_minutes']} min',
+                                          style: TextStyle(
+                                              color: Colors.grey[600],
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w500),
+                                        ),
+                                        if (s['category'] != null &&
+                                            s['category']
+                                                .toString()
+                                                .trim()
+                                                .isNotEmpty) ...[
+                                          const SizedBox(width: 12),
+                                          const Icon(Icons.style_outlined,
+                                              size: 16, color: Colors.grey),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            s['category'],
+                                            style: TextStyle(
+                                                color: Colors.grey[600],
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w500),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
                                   ],
                                 ),
-                              ],
-                            ),
-                          ),
-                        )),
+                              ),
+                            )),
                       const SizedBox(height: 28),
 
                       // Banner Contextual de IA Ubicuo
-                      _buildAIBanner(context, p['business_name'] ?? p['full_name'] ?? 'María'),
+                      _buildAIBanner(context,
+                          p['business_name'] ?? p['full_name'] ?? 'María'),
 
                       const SizedBox(height: 28),
 
                       // Portafolio
                       const Text(
                         'Portafolio de Trabajo',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: -0.5),
+                        style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: -0.5),
                       ),
                       const SizedBox(height: 12),
                       portfolio.isEmpty
@@ -408,11 +518,13 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                               child: const Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.photo_outlined, color: Colors.grey, size: 30),
+                                  Icon(Icons.photo_outlined,
+                                      color: Colors.grey, size: 30),
                                   SizedBox(height: 8),
                                   Text(
                                     'Sin imágenes en el portafolio por ahora.',
-                                    style: TextStyle(color: Colors.grey, fontSize: 13),
+                                    style: TextStyle(
+                                        color: Colors.grey, fontSize: 13),
                                   ),
                                 ],
                               ),
@@ -420,7 +532,8 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                           : GridView.builder(
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),
-                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
                                 crossAxisCount: 3,
                                 crossAxisSpacing: 8,
                                 mainAxisSpacing: 8,
@@ -436,20 +549,24 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                         backgroundColor: Colors.transparent,
                                         insetPadding: EdgeInsets.zero,
                                         child: BackdropFilter(
-                                          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                                          filter: ImageFilter.blur(
+                                              sigmaX: 8, sigmaY: 8),
                                           child: Stack(
                                             alignment: Alignment.center,
                                             children: [
                                               GestureDetector(
-                                                onTap: () => Navigator.pop(context),
+                                                onTap: () =>
+                                                    Navigator.pop(context),
                                                 child: Container(
-                                                  color: Colors.black.withOpacity(0.5),
+                                                  color: Colors.black
+                                                      .withOpacity(0.5),
                                                   width: double.infinity,
                                                   height: double.infinity,
                                                 ),
                                               ),
                                               ClipRRect(
-                                                borderRadius: BorderRadius.circular(16),
+                                                borderRadius:
+                                                    BorderRadius.circular(16),
                                                 child: InteractiveViewer(
                                                   panEnabled: true,
                                                   minScale: 0.5,
@@ -465,12 +582,19 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                                 right: 20,
                                                 child: ClipOval(
                                                   child: BackdropFilter(
-                                                    filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                                                    filter: ImageFilter.blur(
+                                                        sigmaX: 5, sigmaY: 5),
                                                     child: CircleAvatar(
-                                                      backgroundColor: Colors.white24,
+                                                      backgroundColor:
+                                                          Colors.white24,
                                                       child: IconButton(
-                                                        icon: const Icon(Icons.close, color: Colors.white),
-                                                        onPressed: () => Navigator.pop(context),
+                                                        icon: const Icon(
+                                                            Icons.close,
+                                                            color:
+                                                                Colors.white),
+                                                        onPressed: () =>
+                                                            Navigator.pop(
+                                                                context),
                                                       ),
                                                     ),
                                                   ),
@@ -497,7 +621,10 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                       // Reseñas
                       const Text(
                         'Opiniones Recientes',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: -0.5),
+                        style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: -0.5),
                       ),
                       const SizedBox(height: 12),
                       reviews.isEmpty
@@ -512,11 +639,13 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                               child: const Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.rate_review_outlined, color: Colors.grey, size: 30),
+                                  Icon(Icons.rate_review_outlined,
+                                      color: Colors.grey, size: 30),
                                   SizedBox(height: 8),
                                   Text(
                                     'Aún sin reseñas.',
-                                    style: TextStyle(color: Colors.grey, fontSize: 13),
+                                    style: TextStyle(
+                                        color: Colors.grey, fontSize: 13),
                                   ),
                                 ],
                               ),
@@ -527,13 +656,20 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                               itemCount: reviews.length,
                               itemBuilder: (context, index) {
                                 final r = reviews[index];
-                                final clientName = r['client_name'] ?? 'Cliente';
+                                final clientName =
+                                    r['client_name'] ?? 'Cliente';
                                 final rating = r['rating'] ?? 5;
                                 final comment = r['comment'] ?? '';
-                                final clientAvatar = r['client_avatar_url'] ?? r['client_avatar'];
-                                final hasClientAvatar = clientAvatar != null && clientAvatar.toString().isNotEmpty;
-                                final clientInitial = clientName.isNotEmpty ? clientName[0].toUpperCase() : '?';
-                                final reviewPhotos = (r['photos'] as List<dynamic>? ?? []).cast<String>();
+                                final clientAvatar = r['client_avatar_url'] ??
+                                    r['client_avatar'];
+                                final hasClientAvatar = clientAvatar != null &&
+                                    clientAvatar.toString().isNotEmpty;
+                                final clientInitial = clientName.isNotEmpty
+                                    ? clientName[0].toUpperCase()
+                                    : '?';
+                                final reviewPhotos =
+                                    (r['photos'] as List<dynamic>? ?? [])
+                                        .cast<String>();
 
                                 return Container(
                                   margin: const EdgeInsets.only(bottom: 12),
@@ -542,22 +678,28 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                     color: Colors.white,
                                     borderRadius: BorderRadius.circular(20),
                                     boxShadow: AppTheme.softShadow,
-                                    border: Border.all(color: AppTheme.primaryLight, width: 1),
+                                    border: Border.all(
+                                        color: AppTheme.primaryLight, width: 1),
                                   ),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Row(
                                         children: [
                                           CircleAvatar(
                                             radius: 20,
-                                            backgroundColor: AppTheme.primaryLight,
-                                            backgroundImage: hasClientAvatar ? NetworkImage(clientAvatar) : null,
+                                            backgroundColor:
+                                                AppTheme.primaryLight,
+                                            backgroundImage: hasClientAvatar
+                                                ? NetworkImage(clientAvatar)
+                                                : null,
                                             child: !hasClientAvatar
                                                 ? Text(
                                                     clientInitial,
                                                     style: const TextStyle(
-                                                      fontWeight: FontWeight.bold,
+                                                      fontWeight:
+                                                          FontWeight.bold,
                                                       fontSize: 14,
                                                       color: AppTheme.primary,
                                                     ),
@@ -567,11 +709,15 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                           const SizedBox(width: 12),
                                           Expanded(
                                             child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
                                               children: [
                                                 Text(
                                                   clientName,
-                                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                                  style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 14),
                                                 ),
                                                 const SizedBox(height: 2),
                                                 Row(
@@ -580,7 +726,9 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                                     (starIdx) => Icon(
                                                       Icons.star_rounded,
                                                       size: 16,
-                                                      color: starIdx < rating ? AppTheme.primary : Colors.grey[200],
+                                                      color: starIdx < rating
+                                                          ? AppTheme.primary
+                                                          : Colors.grey[200],
                                                     ),
                                                   ),
                                                 ),
@@ -593,7 +741,10 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                         const SizedBox(height: 12),
                                         Text(
                                           comment,
-                                          style: const TextStyle(fontSize: 13, height: 1.4, color: Colors.black87),
+                                          style: const TextStyle(
+                                              fontSize: 13,
+                                              height: 1.4,
+                                              color: Colors.black87),
                                         ),
                                       ],
                                       if (reviewPhotos.isNotEmpty) ...[
@@ -604,36 +755,57 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                             scrollDirection: Axis.horizontal,
                                             itemCount: reviewPhotos.length,
                                             itemBuilder: (context, photoIdx) {
-                                              final photoUrl = reviewPhotos[photoIdx];
+                                              final photoUrl =
+                                                  reviewPhotos[photoIdx];
                                               return GestureDetector(
                                                 onTap: () {
                                                   showDialog(
                                                     context: context,
                                                     builder: (_) => Dialog(
-                                                      backgroundColor: Colors.transparent,
-                                                      insetPadding: EdgeInsets.zero,
+                                                      backgroundColor:
+                                                          Colors.transparent,
+                                                      insetPadding:
+                                                          EdgeInsets.zero,
                                                       child: BackdropFilter(
-                                                        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                                                        filter:
+                                                            ImageFilter.blur(
+                                                                sigmaX: 8,
+                                                                sigmaY: 8),
                                                         child: Stack(
-                                                          alignment: Alignment.center,
+                                                          alignment:
+                                                              Alignment.center,
                                                           children: [
                                                             GestureDetector(
-                                                              onTap: () => Navigator.pop(context),
+                                                              onTap: () =>
+                                                                  Navigator.pop(
+                                                                      context),
                                                               child: Container(
-                                                                color: Colors.black.withOpacity(0.85),
-                                                                width: double.infinity,
-                                                                height: double.infinity,
+                                                                color: Colors
+                                                                    .black
+                                                                    .withOpacity(
+                                                                        0.85),
+                                                                width: double
+                                                                    .infinity,
+                                                                height: double
+                                                                    .infinity,
                                                               ),
                                                             ),
                                                             ClipRRect(
-                                                              borderRadius: BorderRadius.circular(16),
-                                                              child: InteractiveViewer(
-                                                                panEnabled: true,
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          16),
+                                                              child:
+                                                                  InteractiveViewer(
+                                                                panEnabled:
+                                                                    true,
                                                                 minScale: 0.5,
                                                                 maxScale: 4.0,
-                                                                child: Image.network(
+                                                                child: Image
+                                                                    .network(
                                                                   photoUrl,
-                                                                  fit: BoxFit.contain,
+                                                                  fit: BoxFit
+                                                                      .contain,
                                                                 ),
                                                               ),
                                                             ),
@@ -641,13 +813,29 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                                               top: 40,
                                                               right: 20,
                                                               child: ClipOval(
-                                                                child: BackdropFilter(
-                                                                  filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                                                                  child: CircleAvatar(
-                                                                    backgroundColor: Colors.black38,
-                                                                    child: IconButton(
-                                                                      icon: const Icon(Icons.close, color: Colors.white),
-                                                                      onPressed: () => Navigator.pop(context),
+                                                                child:
+                                                                    BackdropFilter(
+                                                                  filter: ImageFilter
+                                                                      .blur(
+                                                                          sigmaX:
+                                                                              5,
+                                                                          sigmaY:
+                                                                              5),
+                                                                  child:
+                                                                      CircleAvatar(
+                                                                    backgroundColor:
+                                                                        Colors
+                                                                            .black38,
+                                                                    child:
+                                                                        IconButton(
+                                                                      icon: const Icon(
+                                                                          Icons
+                                                                              .close,
+                                                                          color:
+                                                                              Colors.white),
+                                                                      onPressed:
+                                                                          () =>
+                                                                              Navigator.pop(context),
                                                                     ),
                                                                   ),
                                                                 ),
@@ -660,12 +848,16 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                                   );
                                                 },
                                                 child: Container(
-                                                  margin: const EdgeInsets.only(right: 8),
+                                                  margin: const EdgeInsets.only(
+                                                      right: 8),
                                                   width: 60,
                                                   decoration: BoxDecoration(
-                                                    borderRadius: BorderRadius.circular(8),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            8),
                                                     image: DecorationImage(
-                                                      image: NetworkImage(photoUrl),
+                                                      image: NetworkImage(
+                                                          photoUrl),
                                                       fit: BoxFit.cover,
                                                     ),
                                                   ),
@@ -712,7 +904,8 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
             MaterialPageRoute(
               builder: (context) => BookingScreen(
                 providerId: widget.providerId,
-                providerName: p['business_name'] ?? p['full_name'] ?? 'Prestador',
+                providerName:
+                    p['business_name'] ?? p['full_name'] ?? 'Prestador',
                 services: services,
               ),
             ),
@@ -758,7 +951,8 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: AppTheme.primary.withOpacity(0.3), width: 1.5),
+            border: Border.all(
+                color: AppTheme.primary.withOpacity(0.3), width: 1.5),
             boxShadow: const [
               BoxShadow(
                 color: Color(0x05000000),
@@ -772,12 +966,16 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.auto_awesome, color: AppTheme.primary, size: 20),
+                  const Icon(Icons.auto_awesome,
+                      color: AppTheme.primary, size: 20),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       '¿Te interesa el trabajo de $providerName?',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5, color: Colors.black87),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14.5,
+                          color: Colors.black87),
                     ),
                   ),
                 ],
@@ -785,7 +983,8 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
               const SizedBox(height: 6),
               const Text(
                 'Pregúntale a nuestra IA si sus estilos van con tu rostro y facciones.',
-                style: TextStyle(fontSize: 12.5, color: Colors.black87, height: 1.35),
+                style: TextStyle(
+                    fontSize: 12.5, color: Colors.black87, height: 1.35),
               ),
               const SizedBox(height: 14),
               SizedBox(
@@ -794,15 +993,17 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                     ? const Center(
                         child: Padding(
                           padding: EdgeInsets.symmetric(vertical: 8.0),
-                          child: CircularProgressIndicator(color: AppTheme.primary),
+                          child: CircularProgressIndicator(
+                              color: AppTheme.primary),
                         ),
                       )
                     : ElevatedButton.icon(
                         onPressed: () async {
                           final ImagePicker picker = ImagePicker();
                           final navigator = Navigator.of(context);
-                          final scaffoldMessenger = ScaffoldMessenger.of(context);
-                          
+                          final scaffoldMessenger =
+                              ScaffoldMessenger.of(context);
+
                           final XFile? file = await picker.pickImage(
                             source: ImageSource.gallery,
                             maxWidth: 800,
@@ -814,8 +1015,9 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                           setBannerState(() => isUploading = true);
                           try {
                             final bytes = await file.readAsBytes();
-                            final absoluteUrl = await ApiService.uploadImage(bytes, file.name);
-                            
+                            final absoluteUrl =
+                                await ApiService.uploadImage(bytes, file.name);
+
                             String relativePath = '';
                             final uri = Uri.tryParse(absoluteUrl);
                             if (uri != null) {
@@ -823,17 +1025,19 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                             } else {
                               relativePath = absoluteUrl;
                             }
-                            
+
                             setBannerState(() => isUploading = false);
-                            
+
                             navigator.push(
                               MaterialPageRoute(
                                 builder: (_) => ChatScreen(
-                                  partnerId: '00000000-0000-0000-0000-000000000000',
+                                  partnerId:
+                                      '00000000-0000-0000-0000-000000000000',
                                   partnerName: 'Asistente de Belleza & Tips IA',
                                   partnerRole: 'admin',
                                   partnerAvatar: '',
-                                  initialMessage: 'Hola, me interesa saber si el estilo de $providerName va con mi rostro y cabello.',
+                                  initialMessage:
+                                      'Hola, me interesa saber si el estilo de $providerName va con mi rostro y cabello.',
                                   initialImagePath: relativePath,
                                 ),
                               ),
@@ -851,13 +1055,15 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                         icon: const Icon(Icons.camera_alt_outlined, size: 16),
                         label: const Text(
                           'Subir mi foto para Análisis Multimodal',
-                          style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                              fontSize: 12.5, fontWeight: FontWeight.bold),
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.primary,
                           foregroundColor: Colors.white,
                           elevation: 0,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20)),
                           padding: const EdgeInsets.symmetric(vertical: 10),
                         ),
                       ),

@@ -10,12 +10,14 @@ class NotificationService {
     _startMockNotificationGenerator();
   }
 
-  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+  static final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey<NavigatorState>();
 
   final StreamController<Map<String, dynamic>> _notificationController =
       StreamController<Map<String, dynamic>>.broadcast();
 
-  Stream<Map<String, dynamic>> get notificationsStream => _notificationController.stream;
+  Stream<Map<String, dynamic>> get notificationsStream =>
+      _notificationController.stream;
 
   Timer? _mockTimer;
 
@@ -81,7 +83,8 @@ class NotificationService {
                   ),
                   boxShadow: AppTheme.cardShadow,
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Row(
                   children: [
                     Container(
@@ -122,7 +125,8 @@ class NotificationService {
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close, size: 18, color: Colors.grey),
+                      icon:
+                          const Icon(Icons.close, size: 18, color: Colors.grey),
                       onPressed: () {
                         overlayEntry.remove();
                       },

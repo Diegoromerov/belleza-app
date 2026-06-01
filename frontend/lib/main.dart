@@ -80,11 +80,13 @@ class BeautyApp extends StatelessWidget {
         '/verification-pending': (_) => const VerificationPendingScreen(),
         '/profile': (_) => const ClientProfileScreen(),
         '/booking-tracking': (context) {
-          final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+          final args = ModalRoute.of(context)!.settings.arguments
+              as Map<String, dynamic>;
           return BookingTrackingScreen(booking: args);
         },
         '/provider-route': (context) {
-          final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+          final args = ModalRoute.of(context)!.settings.arguments
+              as Map<String, dynamic>;
           return ProviderRouteScreen(booking: args);
         },
       },
@@ -170,7 +172,9 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
 
   void _filterProviders() {
     setState(() {
-      _filteredProviders = _allProviders.where((p) => _providerMatchesCategory(p, _selectedCategory)).toList();
+      _filteredProviders = _allProviders
+          .where((p) => _providerMatchesCategory(p, _selectedCategory))
+          .toList();
     });
   }
 
@@ -179,15 +183,28 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
     final desc = provider.description.toLowerCase();
     final biz = provider.businessName.toLowerCase();
     final name = provider.fullName.toLowerCase();
-    
+
     if (category == 'hair') {
-      return desc.contains('hair') || desc.contains('corte') || desc.contains('balayage') || biz.contains('hair') || biz.contains('corte') || name.contains('mari');
+      return desc.contains('hair') ||
+          desc.contains('corte') ||
+          desc.contains('balayage') ||
+          biz.contains('hair') ||
+          biz.contains('corte') ||
+          name.contains('mari');
     }
     if (category == 'nails') {
-      return desc.contains('nails') || desc.contains('manicur') || desc.contains('uña') || biz.contains('nails') || biz.contains('manicur') || name.contains('carlos');
+      return desc.contains('nails') ||
+          desc.contains('manicur') ||
+          desc.contains('uña') ||
+          biz.contains('nails') ||
+          biz.contains('manicur') ||
+          name.contains('carlos');
     }
     if (category == 'makeup') {
-      return desc.contains('makeup') || desc.contains('maquillaj') || biz.contains('makeup') || biz.contains('maquillaj');
+      return desc.contains('makeup') ||
+          desc.contains('maquillaj') ||
+          biz.contains('makeup') ||
+          biz.contains('maquillaj');
     }
     return true;
   }
@@ -230,14 +247,17 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
           title: const Row(
             children: [
-              Icon(Icons.warning_amber_rounded, color: Color(0xFFDC2626), size: 28),
+              Icon(Icons.warning_amber_rounded,
+                  color: Color(0xFFDC2626), size: 28),
               SizedBox(width: 8),
               Text(
                 '🚨 ALERTA SOS',
-                style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFDC2626)),
+                style: TextStyle(
+                    fontWeight: FontWeight.bold, color: Color(0xFFDC2626)),
               ),
             ],
           ),
@@ -247,32 +267,40 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
             children: [
               Text(
                 '¿Estás en peligro o necesitas asistencia inmediata?',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.black87),
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    color: Colors.black87),
               ),
               SizedBox(height: 12),
               Text(
                 'Al confirmar, se enviará una alerta silenciosa con tu ubicación actual a la central de seguridad de la plataforma y te daremos la opción de llamar directamente al número de emergencias (123).',
-                style: TextStyle(fontSize: 13.5, height: 1.4, color: Colors.black54),
+                style: TextStyle(
+                    fontSize: 13.5, height: 1.4, color: Colors.black54),
               ),
             ],
           ),
           actionsAlignment: MainAxisAlignment.spaceBetween,
-          actionsPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          actionsPadding:
+              const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: const Text(
                 'Cancelar',
-                style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
+                style:
+                    TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
               ),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFDC2626),
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20)),
                 elevation: 0,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               ),
               onPressed: () async {
                 Navigator.pop(context); // Cerrar diálogo primero
@@ -283,7 +311,8 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                 children: [
                   Icon(Icons.security, size: 18),
                   SizedBox(width: 6),
-                  Text('SÍ, ENVIAR SOS', style: TextStyle(fontWeight: FontWeight.bold)),
+                  Text('SÍ, ENVIAR SOS',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
@@ -370,17 +399,22 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.check_circle_outline, color: Colors.green, size: 64),
+              const Icon(Icons.check_circle_outline,
+                  color: Colors.green, size: 64),
               const SizedBox(height: 16),
               const Text(
                 'Alerta SOS Registrada',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.black87),
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                    color: Colors.black87),
               ),
               const SizedBox(height: 12),
               Text(
                 message,
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey[600], fontSize: 14, height: 1.4),
+                style: TextStyle(
+                    color: Colors.grey[600], fontSize: 14, height: 1.4),
               ),
               const SizedBox(height: 24),
               ElevatedButton.icon(
@@ -388,7 +422,8 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                   backgroundColor: const Color(0xFFDC2626),
                   foregroundColor: Colors.white,
                   minimumSize: const Size(double.infinity, 54),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(27)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(27)),
                   elevation: 2,
                 ),
                 onPressed: () {
@@ -411,12 +446,14 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                 style: OutlinedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 50),
                   side: const BorderSide(color: Color(0xFFE8D7D3), width: 1.5),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(25)),
                 ),
                 onPressed: () => Navigator.pop(context),
                 child: const Text(
                   'Entendido / Cerrar',
-                  style: TextStyle(color: Color(0xFFC89D93), fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                      color: Color(0xFFC89D93), fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -425,7 +462,6 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
       },
     );
   }
-
 
   void _showQuickViewSheet(ProviderModel provider) {
     showModalBottomSheet(
@@ -462,11 +498,18 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                   CircleAvatar(
                     radius: 28,
                     backgroundColor: const Color(0xFFE8D7D3),
-                    backgroundImage: provider.avatarUrl.isNotEmpty ? NetworkImage(provider.avatarUrl) : null,
+                    backgroundImage: provider.avatarUrl.isNotEmpty
+                        ? NetworkImage(provider.avatarUrl)
+                        : null,
                     child: provider.avatarUrl.isEmpty
                         ? Text(
-                            provider.fullName.isNotEmpty ? provider.fullName[0].toUpperCase() : '?',
-                            style: const TextStyle(fontSize: 20, color: Color(0xFFC89D93), fontWeight: FontWeight.bold),
+                            provider.fullName.isNotEmpty
+                                ? provider.fullName[0].toUpperCase()
+                                : '?',
+                            style: const TextStyle(
+                                fontSize: 20,
+                                color: Color(0xFFC89D93),
+                                fontWeight: FontWeight.bold),
                           )
                         : null,
                   ),
@@ -479,39 +522,54 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                           children: [
                             Expanded(
                               child: Text(
-                                provider.businessName.isNotEmpty ? provider.businessName : provider.fullName,
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.black87, letterSpacing: -0.5),
+                                provider.businessName.isNotEmpty
+                                    ? provider.businessName
+                                    : provider.fullName,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                    color: Colors.black87,
+                                    letterSpacing: -0.5),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
                             if (provider.isVerified) ...[
                               const SizedBox(width: 4),
-                              const Icon(Icons.verified, color: Color(0xFFC89D93), size: 18),
+                              const Icon(Icons.verified,
+                                  color: Color(0xFFC89D93), size: 18),
                             ],
                           ],
                         ),
                         const SizedBox(height: 4),
                         Text(
                           provider.fullName,
-                          style: TextStyle(fontSize: 13, color: Colors.grey[500], fontWeight: FontWeight.w500),
+                          style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey[500],
+                              fontWeight: FontWeight.w500),
                         ),
                       ],
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF5EBE6),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.star, color: Color(0xFFC89D93), size: 15),
+                        const Icon(Icons.star,
+                            color: Color(0xFFC89D93), size: 15),
                         const SizedBox(width: 4),
                         Text(
                           provider.ratingAvg.toStringAsFixed(1),
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFFC89D93)),
+                          style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFFC89D93)),
                         ),
                       ],
                     ),
@@ -521,23 +579,31 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
               const SizedBox(height: 16),
               Text(
                 provider.description,
-                style: TextStyle(color: Colors.grey[600], fontSize: 14, height: 1.4),
+                style: TextStyle(
+                    color: Colors.grey[600], fontSize: 14, height: 1.4),
               ),
               const SizedBox(height: 16),
               Row(
                 children: [
-                  const Icon(Icons.location_on, color: Color(0xFFC89D93), size: 16),
+                  const Icon(Icons.location_on,
+                      color: Color(0xFFC89D93), size: 16),
                   const SizedBox(width: 4),
                   Text(
                     'A ${(provider.distanceMeters / 1000).toStringAsFixed(1)} km en Fontibón',
-                    style: TextStyle(fontSize: 13, color: Colors.grey[600], fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w600),
                   ),
                 ],
               ),
               const SizedBox(height: 20),
               const Text(
                 'Galería del Profesional',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87),
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: Colors.black87),
               ),
               const SizedBox(height: 10),
               FutureBuilder<Map<String, dynamic>>(
@@ -547,26 +613,31 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                     return SizedBox(
                       height: 100,
                       child: Row(
-                        children: List.generate(2, (index) => Expanded(
-                          child: Container(
-                            margin: const EdgeInsets.only(right: 8),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF5EBE6),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: const Center(
-                              child: SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFC89D93)),
-                              ),
-                            ),
-                          ),
-                        )),
+                        children: List.generate(
+                            2,
+                            (index) => Expanded(
+                                  child: Container(
+                                    margin: const EdgeInsets.only(right: 8),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF5EBE6),
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    child: const Center(
+                                      child: SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Color(0xFFC89D93)),
+                                      ),
+                                    ),
+                                  ),
+                                )),
                       ),
                     );
                   }
-                  final portfolio = (snapshot.data?['portfolio'] as List<dynamic>?) ?? [];
+                  final portfolio =
+                      (snapshot.data?['portfolio'] as List<dynamic>?) ?? [];
                   if (portfolio.isEmpty) {
                     return Container(
                       height: 100,
@@ -586,7 +657,8 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                   return SizedBox(
                     height: 110,
                     child: Row(
-                      children: List.generate(portfolio.length > 2 ? 2 : portfolio.length, (idx) {
+                      children: List.generate(
+                          portfolio.length > 2 ? 2 : portfolio.length, (idx) {
                         final item = portfolio[idx];
                         final imgUrl = item['image_url'] as String? ?? '';
                         return Expanded(
@@ -599,7 +671,8 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                                 fit: BoxFit.cover,
                                 errorBuilder: (_, __, ___) => Container(
                                   color: const Color(0xFFF5EBE6),
-                                  child: const Icon(Icons.broken_image, color: Color(0xFFC89D93)),
+                                  child: const Icon(Icons.broken_image,
+                                      color: Color(0xFFC89D93)),
                                 ),
                               ),
                             ),
@@ -617,8 +690,10 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                     child: OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        side: const BorderSide(color: Color(0xFFC89D93), width: 1.5),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        side: const BorderSide(
+                            color: Color(0xFFC89D93), width: 1.5),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20)),
                       ),
                       onPressed: () {
                         Navigator.pop(context);
@@ -627,17 +702,23 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                           MaterialPageRoute(
                             builder: (_) => ChatScreen(
                               partnerId: provider.id,
-                              partnerName: provider.businessName.isNotEmpty ? provider.businessName : provider.fullName,
+                              partnerName: provider.businessName.isNotEmpty
+                                  ? provider.businessName
+                                  : provider.fullName,
                               partnerRole: 'provider',
                               partnerAvatar: provider.avatarUrl,
                             ),
                           ),
                         );
                       },
-                      icon: const Icon(Icons.chat_bubble_outline_rounded, color: Color(0xFFC89D93), size: 18),
+                      icon: const Icon(Icons.chat_bubble_outline_rounded,
+                          color: Color(0xFFC89D93), size: 18),
                       label: const Text(
                         'Chat Directo',
-                        style: TextStyle(color: Color(0xFFC89D93), fontWeight: FontWeight.bold, fontSize: 14),
+                        style: TextStyle(
+                            color: Color(0xFFC89D93),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14),
                       ),
                     ),
                   ),
@@ -648,7 +729,8 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                         backgroundColor: const Color(0xFFC89D93),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20)),
                         elevation: 0,
                       ),
                       onPressed: () {
@@ -656,13 +738,15 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => ProviderDetailScreen(providerId: provider.id),
+                            builder: (_) =>
+                                ProviderDetailScreen(providerId: provider.id),
                           ),
                         );
                       },
                       child: const Text(
                         'Ver Perfil Completo',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 14),
                       ),
                     ),
                   ),
@@ -717,8 +801,12 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                 fontSize: 13,
               ),
               backgroundColor: Colors.white,
-              side: BorderSide(color: isSelected ? Colors.transparent : const Color(0xFFE8D7D3)),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              side: BorderSide(
+                  color: isSelected
+                      ? Colors.transparent
+                      : const Color(0xFFE8D7D3)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
             ),
           );
         },
@@ -794,62 +882,72 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: const Color(0xFF1E88E5).withOpacity(0.2),
-                          border: Border.all(color: const Color(0xFF1E88E5), width: 2),
+                          border: Border.all(
+                              color: const Color(0xFF1E88E5), width: 2),
                         ),
                         child: const Center(
-                          child: Icon(Icons.my_location, color: Color(0xFF1E88E5), size: 24),
+                          child: Icon(Icons.my_location,
+                              color: Color(0xFF1E88E5), size: 24),
                         ),
                       ),
                     ),
                   ..._filteredProviders.map((p) {
                     return Marker(
-                    width: 60,
-                    height: 60,
-                    point: LatLng(p.latitude, p.longitude),
-                    child: GestureDetector(
-                      onTap: () => _showQuickViewSheet(p),
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Container(
-                            width: 45,
-                            height: 45,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: const Color(0xFFC89D93).withOpacity(0.3),
+                      width: 60,
+                      height: 60,
+                      point: LatLng(p.latitude, p.longitude),
+                      child: GestureDetector(
+                        onTap: () => _showQuickViewSheet(p),
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Container(
+                              width: 45,
+                              height: 45,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: const Color(0xFFC89D93).withOpacity(0.3),
+                              ),
                             ),
-                          ),
-                          Container(
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(color: const Color(0xFFC89D93), width: 3),
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: Color(0x1F000000),
-                                  blurRadius: 6,
-                                  offset: Offset(0, 3),
-                                ),
-                              ],
+                            Container(
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                    color: const Color(0xFFC89D93), width: 3),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Color(0x1F000000),
+                                    blurRadius: 6,
+                                    offset: Offset(0, 3),
+                                  ),
+                                ],
+                              ),
+                              child: CircleAvatar(
+                                radius: 18,
+                                backgroundColor: const Color(0xFFF5EBE6),
+                                backgroundImage: p.avatarUrl.isNotEmpty
+                                    ? NetworkImage(p.avatarUrl)
+                                    : null,
+                                child: p.avatarUrl.isEmpty
+                                    ? Text(
+                                        p.fullName.isNotEmpty
+                                            ? p.fullName[0].toUpperCase()
+                                            : '?',
+                                        style: const TextStyle(
+                                            fontSize: 14,
+                                            color: Color(0xFFC89D93),
+                                            fontWeight: FontWeight.bold),
+                                      )
+                                    : null,
+                              ),
                             ),
-                            child: CircleAvatar(
-                              radius: 18,
-                              backgroundColor: const Color(0xFFF5EBE6),
-                              backgroundImage: p.avatarUrl.isNotEmpty ? NetworkImage(p.avatarUrl) : null,
-                              child: p.avatarUrl.isEmpty
-                                  ? Text(
-                                      p.fullName.isNotEmpty ? p.fullName[0].toUpperCase() : '?',
-                                      style: const TextStyle(fontSize: 14, color: Color(0xFFC89D93), fontWeight: FontWeight.bold),
-                                    )
-                                  : null,
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  );
-                }).toList(),
-              ],
-            ),
+                    );
+                  }).toList(),
+                ],
+              ),
             ],
           ),
 
@@ -867,7 +965,8 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.95),
                     borderRadius: BorderRadius.circular(30),
-                    border: Border.all(color: const Color(0xFFE8D7D3), width: 1.5),
+                    border:
+                        Border.all(color: const Color(0xFFE8D7D3), width: 1.5),
                     boxShadow: const [
                       BoxShadow(
                         color: Color(0x0F000000),
@@ -885,8 +984,12 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                           controller: _searchController,
                           textCapitalization: TextCapitalization.sentences,
                           decoration: const InputDecoration(
-                            hintText: '¿Buscas un estilo o tips de belleza? Pregúntale a la IA aquí...',
-                            hintStyle: TextStyle(fontSize: 13.5, color: Colors.grey, overflow: TextOverflow.ellipsis),
+                            hintText:
+                                '¿Buscas un estilo o tips de belleza? Pregúntale a la IA aquí...',
+                            hintStyle: TextStyle(
+                                fontSize: 13.5,
+                                color: Colors.grey,
+                                overflow: TextOverflow.ellipsis),
                             border: InputBorder.none,
                           ),
                           onSubmitted: (val) {
@@ -897,7 +1000,8 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.auto_awesome, color: Color(0xFFC89D93)),
+                        icon: const Icon(Icons.auto_awesome,
+                            color: Color(0xFFC89D93)),
                         onPressed: () {
                           _navigateToAIChat(_searchController.text);
                         },
@@ -923,7 +1027,9 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.92),
                 borderRadius: BorderRadius.circular(36),
-                border: Border.all(color: const Color(0xFFE8D7D3).withOpacity(0.6), width: 1.5),
+                border: Border.all(
+                    color: const Color(0xFFE8D7D3).withOpacity(0.6),
+                    width: 1.5),
                 boxShadow: const [
                   BoxShadow(
                     color: Color(0x1A000000),
@@ -948,10 +1054,10 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                     _buildNavItem(
                       icon: Icons.calendar_today_outlined,
                       label: 'Citas',
-                      onTap: () => Navigator.pushNamed(context, '/client-bookings'),
+                      onTap: () =>
+                          Navigator.pushNamed(context, '/client-bookings'),
                     ),
-                  ]
-                  else if (_userRole == 'provider') ...[
+                  ] else if (_userRole == 'provider') ...[
                     _buildNavItem(
                       icon: Icons.dashboard_outlined,
                       label: 'Panel',
@@ -960,7 +1066,8 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                     _buildNavItem(
                       icon: Icons.inventory_2_outlined,
                       label: 'Servicios',
-                      onTap: () => Navigator.pushNamed(context, '/provider/services'),
+                      onTap: () =>
+                          Navigator.pushNamed(context, '/provider/services'),
                     ),
                   ],
                   _buildNavItem(
@@ -999,7 +1106,9 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
               elevation: 4,
               shape: const CircleBorder(),
               child: Icon(
-                MapSettings.isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+                MapSettings.isDark
+                    ? Icons.light_mode_outlined
+                    : Icons.dark_mode_outlined,
                 size: 24,
               ),
             ),
@@ -1035,7 +1144,6 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
             ),
           ),
 
-
           // Pantalla de carga superpuesta
           if (_isLoading)
             Container(
@@ -1053,7 +1161,8 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
               right: 20,
               child: Card(
                 color: Colors.red[50],
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
                 child: Padding(
                   padding: const EdgeInsets.all(12),
                   child: Row(
@@ -1063,7 +1172,8 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                       Expanded(
                         child: Text(
                           'No se pudo conectar: $_errorMessage',
-                          style: TextStyle(color: Colors.red[800], fontSize: 13),
+                          style:
+                              TextStyle(color: Colors.red[800], fontSize: 13),
                         ),
                       ),
                       IconButton(

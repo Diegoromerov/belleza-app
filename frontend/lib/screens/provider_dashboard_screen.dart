@@ -14,7 +14,8 @@ import '../services/analytics_service.dart';
 class ProviderDashboardScreen extends StatefulWidget {
   const ProviderDashboardScreen({super.key});
   @override
-  State<ProviderDashboardScreen> createState() => _ProviderDashboardScreenState();
+  State<ProviderDashboardScreen> createState() =>
+      _ProviderDashboardScreenState();
 }
 
 class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
@@ -70,7 +71,8 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
     setState(() => _loadingProfile = true);
     try {
       final data = await ApiService.fetchUserProfile();
-      if (data['role'] == 'provider' && data['estatus_verificacion'] != 'APROBADO') {
+      if (data['role'] == 'provider' &&
+          data['estatus_verificacion'] != 'APROBADO') {
         if (mounted) {
           Navigator.pushReplacementNamed(context, '/verification-pending');
           return;
@@ -79,8 +81,11 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
       if (mounted) {
         setState(() {
           _isActive = data['is_active'] ?? true;
-          _ratingAvg = data['rating_avg'] != null ? double.tryParse(data['rating_avg'].toString()) : null;
-          _ratingCount = int.tryParse(data['rating_count']?.toString() ?? '') ?? 0;
+          _ratingAvg = data['rating_avg'] != null
+              ? double.tryParse(data['rating_avg'].toString())
+              : null;
+          _ratingCount =
+              int.tryParse(data['rating_count']?.toString() ?? '') ?? 0;
           _loadingProfile = false;
         });
 
@@ -99,8 +104,10 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
   Future<void> _refreshActiveLocation() async {
     try {
       final pos = await getWebGeolocation();
-      await ApiService.updateProviderStatus(true, latitude: pos['lat'], longitude: pos['lon']);
-      debugPrint('🟢 Ubicación actualizada automáticamente al cargar perfil: ${pos['lat']}, ${pos['lon']}');
+      await ApiService.updateProviderStatus(true,
+          latitude: pos['lat'], longitude: pos['lon']);
+      debugPrint(
+          '🟢 Ubicación actualizada automáticamente al cargar perfil: ${pos['lat']}, ${pos['lon']}');
     } catch (e) {
       debugPrint('❌ Error al actualizar ubicación automáticamente: $e');
     }
@@ -123,7 +130,8 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
             ),
             backgroundColor: const Color(0xFFC89D93),
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           ),
         );
       }
@@ -154,26 +162,49 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
         onSuccess: (res) {
           _fetchBookings();
           _fetchProfile();
-          _showPayoutBreakdownDialog(res['booking'] ?? booking, immediate: true);
+          _showPayoutBreakdownDialog(res['booking'] ?? booking,
+              immediate: true);
         },
       ),
     );
   }
 
-  void _showPayoutBreakdownDialog(Map<String, dynamic> booking, {bool immediate = false}) {
-    final double gross = double.tryParse(booking['valor_bruto']?.toString() ?? booking['total_amount']?.toString() ?? '0.0') ?? 0.0;
-    final double platformCut = gross * 0.20;
-    final double netPayout = gross * 0.80;
+  void _showPayoutBreakdownDialog(Map<String, dynamic> booking,
+      {bool immediate = false}) {
+    final double gross = double.tryParse(booking['valor_bruto']?.toString() ??
+            booking['total_amount']?.toString() ??
+            '0.0') ??
+        0.0;
+    final double platformCut = double.tryParse(
+            booking['comision_plataforma']?.toString() ??
+                booking['platform_commission']?.toString() ??
+                '0.0') ??
+        (gross * 0.20);
+    final double stateTax = double.tryParse(
+            booking['impuestos_estado']?.toString() ??
+                booking['state_tax']?.toString() ??
+                '0.0') ??
+        (gross * 0.08);
+    final double netPayout = double.tryParse(
+            booking['pago_neto_prestador']?.toString() ??
+                booking['provider_net_amount']?.toString() ??
+                '0.0') ??
+        (gross - platformCut - stateTax);
 
-    final String nequiAccount = booking['numero_cuenta_nequi'] ?? '+573001112222';
-    final String wompiRef = booking['wompi_reference'] ?? 'wompi_ref_${booking['id'].toString().substring(0, 8).toUpperCase()}';
-    final String payoutStatus = booking['payout_status'] == 'paid' ? 'DISPERSADO (Nequi)' : 'EN COLA (Wompi)';
+    final String nequiAccount =
+        booking['numero_cuenta_nequi'] ?? '+573001112222';
+    final String wompiRef = booking['wompi_reference'] ??
+        'wompi_ref_${booking['id'].toString().substring(0, 8).toUpperCase()}';
+    final String payoutStatus = booking['payout_status'] == 'paid'
+        ? 'DISPERSADO (Nequi)'
+        : 'EN COLA (Wompi)';
 
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
           title: Row(
             children: [
               Icon(
@@ -183,8 +214,11 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  immediate ? '¡Servicio Completado!' : 'Detalle de Liquidación',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                  immediate
+                      ? '¡Servicio Completado!'
+                      : 'Detalle de Liquidación',
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 18),
                 ),
               ),
             ],
@@ -200,11 +234,21 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                 ),
                 const SizedBox(height: 16),
               ],
-              _breakdownRow('Liquidación Bruta', '\$${gross.toStringAsFixed(0)} COP', isBold: true),
+              _breakdownRow(
+                  'Liquidación Bruta', '\$${gross.toStringAsFixed(0)} COP',
+                  isBold: true),
               const SizedBox(height: 8),
-              _breakdownRow('Comisión Plataforma (20%)', '-\$${platformCut.toStringAsFixed(0)} COP', color: Colors.red[800]),
+              _breakdownRow('Comisión Plataforma (20%)',
+                  '-\$${platformCut.toStringAsFixed(0)} COP',
+                  color: Colors.red[800]),
+              const SizedBox(height: 8),
+              _breakdownRow('Impuesto de Estado (8%)',
+                  '-\$${stateTax.toStringAsFixed(0)} COP',
+                  color: Colors.red[800]),
               const Divider(height: 24, color: Color(0xFFE8D7D3)),
-              _breakdownRow('Dispersión Nequi (Neto 80%)', '\$${netPayout.toStringAsFixed(0)} COP', color: Colors.green[800], isBold: true),
+              _breakdownRow('Dispersión Nequi (Neto)',
+                  '\$${netPayout.toStringAsFixed(0)} COP',
+                  color: Colors.green[800], isBold: true),
               const SizedBox(height: 16),
               Container(
                 padding: const EdgeInsets.all(12),
@@ -217,17 +261,24 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                   children: [
                     Text(
                       'Estado: $payoutStatus',
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black87),
+                      style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'Cuenta Nequi: $nequiAccount',
-                      style: const TextStyle(fontSize: 12, color: Colors.black87),
+                      style:
+                          const TextStyle(fontSize: 12, color: Colors.black87),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'Referencia Wompi:\n$wompiRef',
-                      style: TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: Colors.grey[700]),
+                      style: TextStyle(
+                          fontSize: 11,
+                          fontStyle: FontStyle.italic,
+                          color: Colors.grey[700]),
                     ),
                   ],
                 ),
@@ -235,12 +286,28 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
             ],
           ),
           actions: [
+            TextButton.icon(
+              onPressed: () {
+                Navigator.pop(context);
+                setState(() {
+                  _currentIndex = 2; // Wallet Tab
+                });
+              },
+              icon: const Icon(Icons.account_balance_wallet_outlined,
+                  size: 18, color: Color(0xFFC89D93)),
+              label: const Text(
+                'Ver Wallet',
+                style: TextStyle(
+                    fontWeight: FontWeight.bold, color: Color(0xFFC89D93)),
+              ),
+            ),
             ElevatedButton(
               onPressed: () => Navigator.pop(context),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFC89D93),
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20)),
                 elevation: 0,
               ),
               child: const Text('Entendido'),
@@ -251,7 +318,8 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
     );
   }
 
-  Widget _breakdownRow(String label, String value, {Color? color, bool isBold = false}) {
+  Widget _breakdownRow(String label, String value,
+      {Color? color, bool isBold = false}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -283,12 +351,15 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
       return const Center(
         child: Padding(
           padding: EdgeInsets.all(8.0),
-          child: CircularProgressIndicator(color: Color(0xFFC89D93), strokeWidth: 2),
+          child: CircularProgressIndicator(
+              color: Color(0xFFC89D93), strokeWidth: 2),
         ),
       );
     }
 
-    if (status == 'CONFIRMED' || status == 'CONFIRMADA' || status == 'CHECKIN_REALIZADO') {
+    if (status == 'CONFIRMED' ||
+        status == 'CONFIRMADA' ||
+        status == 'CHECKIN_REALIZADO') {
       return Row(
         children: [
           Expanded(
@@ -306,11 +377,13 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                 }
               },
               icon: const Icon(Icons.navigation_outlined, size: 16),
-              label: const Text('Iniciar Ruta', style: TextStyle(fontSize: 12.5)),
+              label:
+                  const Text('Iniciar Ruta', style: TextStyle(fontSize: 12.5)),
               style: OutlinedButton.styleFrom(
                 foregroundColor: const Color(0xFFC89D93),
                 side: const BorderSide(color: Color(0xFFC89D93), width: 1.5),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30)),
                 padding: const EdgeInsets.symmetric(vertical: 10),
               ),
             ),
@@ -320,12 +393,14 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
             child: ElevatedButton.icon(
               onPressed: () => _handleStartService(bookingId),
               icon: const Icon(Icons.play_arrow_outlined, size: 16),
-              label: const Text('Iniciar Servicio', style: TextStyle(fontSize: 12.5)),
+              label: const Text('Iniciar Servicio',
+                  style: TextStyle(fontSize: 12.5)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFC89D93),
                 foregroundColor: Colors.white,
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30)),
                 padding: const EdgeInsets.symmetric(vertical: 10),
               ),
             ),
@@ -358,8 +433,10 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                   label: const Text('Chat', style: TextStyle(fontSize: 12.5)),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFFC89D93),
-                    side: const BorderSide(color: Color(0xFFC89D93), width: 1.5),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                    side:
+                        const BorderSide(color: Color(0xFFC89D93), width: 1.5),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30)),
                     padding: const EdgeInsets.symmetric(vertical: 10),
                   ),
                 ),
@@ -380,11 +457,14 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                     }
                   },
                   icon: const Icon(Icons.map_outlined, size: 16),
-                  label: const Text('Ver Mapa', style: TextStyle(fontSize: 12.5)),
+                  label:
+                      const Text('Ver Mapa', style: TextStyle(fontSize: 12.5)),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFFC89D93),
-                    side: const BorderSide(color: Color(0xFFC89D93), width: 1.5),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                    side:
+                        const BorderSide(color: Color(0xFFC89D93), width: 1.5),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30)),
                     padding: const EdgeInsets.symmetric(vertical: 10),
                   ),
                 ),
@@ -395,7 +475,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: () => _handleCompleteService(bookingId),
+              onPressed: () => _showCompleteServiceConfirmation(bookingId),
               icon: const Icon(Icons.check_circle_outline_rounded, size: 18),
               label: const Text(
                 'Marcar como completado',
@@ -405,7 +485,8 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                 backgroundColor: const Color(0xFF16A34A),
                 foregroundColor: Colors.white,
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30)),
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
             ),
@@ -425,16 +506,33 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
           children: [
             const OtpTimerWidget(),
             const SizedBox(height: 10),
-            ElevatedButton.icon(
-              onPressed: () => _showSegmentedPinDialog(b),
-              icon: const Icon(Icons.vpn_key_outlined, size: 16),
-              label: const Text('Ingresar Código OTP', style: TextStyle(fontWeight: FontWeight.bold)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0284C7),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                elevation: 0,
-                minimumSize: const Size(double.infinity, 44),
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border:
+                    Border.all(color: const Color(0xFF06B6D4).withOpacity(0.2)),
+              ),
+              child: Row(
+                children: [
+                  const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Color(0xFF06B6D4)),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Esperando confirmación OTP del cliente...',
+                      style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.cyan[950]),
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 4),
@@ -442,7 +540,10 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
               onPressed: () => _showSupportEscapeDialog(b),
               child: const Text(
                 'El cliente no puede confirmar / Reportar soporte',
-                style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey,
+                    fontWeight: FontWeight.bold),
               ),
             ),
           ],
@@ -464,7 +565,10 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
             SizedBox(width: 8),
             Text(
               'Disputa activa — en revisión',
-              style: TextStyle(color: Color(0xFF9A3412), fontWeight: FontWeight.w600, fontSize: 13),
+              style: TextStyle(
+                  color: Color(0xFF9A3412),
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13),
             ),
           ],
         ),
@@ -476,11 +580,13 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
             child: OutlinedButton.icon(
               onPressed: () => _showPayoutBreakdownDialog(b),
               icon: const Icon(Icons.receipt_long_outlined, size: 16),
-              label: const Text('Ver Liquidación', style: TextStyle(fontSize: 12.5)),
+              label: const Text('Ver Liquidación',
+                  style: TextStyle(fontSize: 12.5)),
               style: OutlinedButton.styleFrom(
                 foregroundColor: const Color(0xFFC89D93),
                 side: const BorderSide(color: Color(0xFFC89D93), width: 1.5),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30)),
                 padding: const EdgeInsets.symmetric(vertical: 10),
               ),
             ),
@@ -509,7 +615,8 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                 backgroundColor: const Color(0xFFC89D93),
                 foregroundColor: Colors.white,
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30)),
                 padding: const EdgeInsets.symmetric(vertical: 10),
               ),
             ),
@@ -541,7 +648,8 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
               style: OutlinedButton.styleFrom(
                 foregroundColor: const Color(0xFFC89D93),
                 side: const BorderSide(color: Color(0xFFC89D93), width: 1.5),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30)),
                 padding: const EdgeInsets.symmetric(vertical: 10),
               ),
             ),
@@ -558,12 +666,14 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
           title: const Row(
             children: [
               Icon(Icons.support_agent_outlined, color: Colors.orange),
               SizedBox(width: 8),
-              Text('Asistencia / Soporte', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              Text('Asistencia / Soporte',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
             ],
           ),
           content: const Text(
@@ -573,24 +683,28 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+              child:
+                  const Text('Cancelar', style: TextStyle(color: Colors.grey)),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF0284C7),
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20)),
               ),
               onPressed: () async {
                 navigator.pop(); // Cerrar
                 setState(() => _loadingBookings.add(b['id'].toString()));
                 try {
-                  await ApiService.updateBookingStatus(b['id'].toString(), 'EN_DISPUTA');
+                  await ApiService.updateBookingStatus(
+                      b['id'].toString(), 'EN_DISPUTA');
                   _fetchBookings();
                   if (mounted) {
                     scaffoldMessenger.showSnackBar(
                       const SnackBar(
-                        content: Text('⚠️ Se ha reportado el caso. El servicio se encuentra en revisión de soporte.'),
+                        content: Text(
+                            '⚠️ Se ha reportado el caso. El servicio se encuentra en revisión de soporte.'),
                         backgroundColor: Colors.orange,
                       ),
                     );
@@ -598,7 +712,9 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                 } catch (e) {
                   if (mounted) {
                     scaffoldMessenger.showSnackBar(
-                      SnackBar(content: Text('Error: $e'), backgroundColor: Colors.redAccent),
+                      SnackBar(
+                          content: Text('Error: $e'),
+                          backgroundColor: Colors.redAccent),
                     );
                   }
                 } finally {
@@ -607,11 +723,53 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                   }
                 }
               },
-              child: const Text('Reportar Caso a Soporte', style: TextStyle(fontWeight: FontWeight.bold)),
+              child: const Text('Reportar Caso a Soporte',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
             ),
           ],
         );
       },
+    );
+  }
+
+  void _showCompleteServiceConfirmation(String bookingId) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Row(
+          children: [
+            Icon(Icons.check_circle_outline, color: Color(0xFF16A34A)),
+            SizedBox(width: 8),
+            Text('¿Finalizar Servicio?',
+                style: TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: const Text(
+          '¿Estás seguro de que has terminado el servicio? Al confirmar, el cliente recibirá su código PIN de verificación en su app.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Volver al servicio',
+                style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF16A34A),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
+              elevation: 0,
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+              _handleCompleteService(bookingId);
+            },
+            child: const Text('Sí, Finalizar'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -622,7 +780,8 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('✅ Servicio completado. El cliente recibirá su código de confirmación.'),
+            content: Text(
+                '✅ Servicio completado. El cliente recibirá su código de confirmación.'),
             backgroundColor: Color(0xFF16A34A),
             behavior: SnackBarBehavior.floating,
           ),
@@ -633,7 +792,8 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${e.toString().replaceAll('Exception: ', '')}'),
+            content:
+                Text('Error: ${e.toString().replaceAll('Exception: ', '')}'),
             backgroundColor: Colors.redAccent,
           ),
         );
@@ -662,15 +822,19 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
           debugPrint('Error getting geolocation: $e');
         }
       }
-      await ApiService.updateProviderStatus(value, latitude: lat, longitude: lon);
+      await ApiService.updateProviderStatus(value,
+          latitude: lat, longitude: lon);
       HapticFeedback.lightImpact();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(value ? '🟢 Ahora estás En Línea' : '⚫ Ahora estás Fuera de Línea'),
+            content: Text(value
+                ? '🟢 Ahora estás En Línea'
+                : '⚫ Ahora estás Fuera de Línea'),
             backgroundColor: const Color(0xFFC89D93),
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           ),
         );
       }
@@ -696,7 +860,9 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
     return _bookings.where((b) {
       try {
         final date = DateTime.parse(b['scheduled_at']);
-        return date.year == now.year && date.month == now.month && date.day == now.day;
+        return date.year == now.year &&
+            date.month == now.month &&
+            date.day == now.day;
       } catch (_) {
         return false;
       }
@@ -711,16 +877,23 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
 
     return _bookings.where((b) {
       final st = (b['status'] as String? ?? '').toUpperCase();
-      final isStatusOk = st == 'CONFIRMADA' || st == 'COMPLETADA' || st == 'CONFIRMED' || st == 'COMPLETED' || st == 'EN_PROGRESO';
+      final isStatusOk = st == 'CONFIRMADA' ||
+          st == 'COMPLETADA' ||
+          st == 'CONFIRMED' ||
+          st == 'COMPLETED' ||
+          st == 'EN_PROGRESO';
       if (!isStatusOk) return false;
       try {
         final date = DateTime.parse(b['scheduled_at']);
-        return date.isAfter(startOfWeek.subtract(const Duration(seconds: 1))) && date.isBefore(endOfWeek);
+        return date.isAfter(startOfWeek.subtract(const Duration(seconds: 1))) &&
+            date.isBefore(endOfWeek);
       } catch (_) {
         return false;
       }
     }).fold(0.0, (sum, b) {
-      final amountStr = b['pago_neto_prestador']?.toString() ?? b['provider_net_amount']?.toString() ?? '';
+      final amountStr = b['pago_neto_prestador']?.toString() ??
+          b['provider_net_amount']?.toString() ??
+          '';
       return sum + (double.tryParse(amountStr) ?? 0.0);
     });
   }
@@ -734,16 +907,24 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
 
     return _bookings.where((b) {
       final st = (b['status'] as String? ?? '').toUpperCase();
-      final isStatusOk = st == 'CONFIRMADA' || st == 'COMPLETADA' || st == 'CONFIRMED' || st == 'COMPLETED' || st == 'EN_PROGRESO';
+      final isStatusOk = st == 'CONFIRMADA' ||
+          st == 'COMPLETADA' ||
+          st == 'CONFIRMED' ||
+          st == 'COMPLETED' ||
+          st == 'EN_PROGRESO';
       if (!isStatusOk) return false;
       try {
         final date = DateTime.parse(b['scheduled_at']);
-        return date.isAfter(startOfLastWeek.subtract(const Duration(microseconds: 1))) && date.isBefore(endOfLastWeek);
+        return date.isAfter(
+                startOfLastWeek.subtract(const Duration(microseconds: 1))) &&
+            date.isBefore(endOfLastWeek);
       } catch (_) {
         return false;
       }
     }).fold(0.0, (sum, b) {
-      final amountStr = b['pago_neto_prestador']?.toString() ?? b['provider_net_amount']?.toString() ?? '';
+      final amountStr = b['pago_neto_prestador']?.toString() ??
+          b['provider_net_amount']?.toString() ??
+          '';
       return sum + (double.tryParse(amountStr) ?? 0.0);
     });
   }
@@ -763,12 +944,17 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
   Map<String, dynamic>? get _nextBooking {
     final upcoming = _bookings.where((b) {
       final st = (b['status'] as String? ?? '').toUpperCase();
-      return st != 'COMPLETED' && st != 'COMPLETADA' && st != 'CANCELLED' && st != 'CANCELADA' && st != 'PENDIENTE_PAGO';
+      return st != 'COMPLETED' &&
+          st != 'COMPLETADA' &&
+          st != 'CANCELLED' &&
+          st != 'CANCELADA' &&
+          st != 'PENDIENTE_PAGO';
     }).toList();
     if (upcoming.isEmpty) return null;
     upcoming.sort((a, b) {
       try {
-        return DateTime.parse(a['scheduled_at']).compareTo(DateTime.parse(b['scheduled_at']));
+        return DateTime.parse(a['scheduled_at'])
+            .compareTo(DateTime.parse(b['scheduled_at']));
       } catch (_) {
         return 0;
       }
@@ -781,14 +967,17 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
           title: const Row(
             children: [
-              Icon(Icons.warning_amber_rounded, color: Color(0xFFDC2626), size: 28),
+              Icon(Icons.warning_amber_rounded,
+                  color: Color(0xFFDC2626), size: 28),
               SizedBox(width: 8),
               Text(
                 '🚨 ALERTA SOS',
-                style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFDC2626)),
+                style: TextStyle(
+                    fontWeight: FontWeight.bold, color: Color(0xFFDC2626)),
               ),
             ],
           ),
@@ -798,32 +987,40 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
             children: [
               Text(
                 '¿Estás en peligro o necesitas asistencia inmediata?',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.black87),
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    color: Colors.black87),
               ),
               SizedBox(height: 12),
               Text(
                 'Al confirmar, se enviará una alerta silenciosa con tu ubicación actual a la central de seguridad de la plataforma y te daremos la opción de llamar directamente al número de emergencias (123).',
-                style: TextStyle(fontSize: 13.5, height: 1.4, color: Colors.black54),
+                style: TextStyle(
+                    fontSize: 13.5, height: 1.4, color: Colors.black54),
               ),
             ],
           ),
           actionsAlignment: MainAxisAlignment.spaceBetween,
-          actionsPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          actionsPadding:
+              const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: const Text(
                 'Cancelar',
-                style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
+                style:
+                    TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
               ),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFDC2626),
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20)),
                 elevation: 0,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               ),
               onPressed: () async {
                 Navigator.pop(context);
@@ -834,7 +1031,8 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                 children: [
                   Icon(Icons.security, size: 18),
                   SizedBox(width: 6),
-                  Text('SÍ, ENVIAR SOS', style: TextStyle(fontWeight: FontWeight.bold)),
+                  Text('SÍ, ENVIAR SOS',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
@@ -926,17 +1124,22 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.check_circle_outline, color: Colors.green, size: 64),
+              const Icon(Icons.check_circle_outline,
+                  color: Colors.green, size: 64),
               const SizedBox(height: 16),
               const Text(
                 'Alerta SOS Registrada',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.black87),
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                    color: Colors.black87),
               ),
               const SizedBox(height: 12),
               Text(
                 message,
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey[600], fontSize: 14, height: 1.4),
+                style: TextStyle(
+                    color: Colors.grey[600], fontSize: 14, height: 1.4),
               ),
               const SizedBox(height: 24),
               ElevatedButton.icon(
@@ -944,7 +1147,8 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                   backgroundColor: const Color(0xFFDC2626),
                   foregroundColor: Colors.white,
                   minimumSize: const Size(double.infinity, 54),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(27)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(27)),
                   elevation: 2,
                 ),
                 onPressed: () {
@@ -967,12 +1171,14 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                 style: OutlinedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 50),
                   side: const BorderSide(color: Color(0xFFE8D7D3), width: 1.5),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(25)),
                 ),
                 onPressed: () => Navigator.pop(context),
                 child: const Text(
                   'Entendido / Cerrar',
-                  style: TextStyle(color: Color(0xFFC89D93), fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                      color: Color(0xFFC89D93), fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -999,14 +1205,16 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
           child: Center(
             child: Text(
               step.toString(),
-              style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12),
+              style: TextStyle(
+                  color: color, fontWeight: FontWeight.bold, fontSize: 12),
             ),
           ),
         ),
         const SizedBox(height: 4),
         Text(
           label,
-          style: TextStyle(color: textColor, fontSize: 10, fontWeight: FontWeight.bold),
+          style: TextStyle(
+              color: textColor, fontSize: 10, fontWeight: FontWeight.bold),
         ),
       ],
     );
@@ -1054,11 +1262,14 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                 }
               },
               icon: const Icon(Icons.navigation_outlined, size: 16),
-              label: const Text('Salir hacia allá', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold)),
+              label: const Text('Salir hacia allá',
+                  style:
+                      TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold)),
               style: OutlinedButton.styleFrom(
                 foregroundColor: const Color(0xFFF43F5E),
                 side: const BorderSide(color: Color(0xFFF43F5E), width: 1.5),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30)),
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
             ),
@@ -1068,12 +1279,15 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
             child: ElevatedButton.icon(
               onPressed: () => _handleStartService(b['id'].toString()),
               icon: const Icon(Icons.play_arrow_outlined, size: 16),
-              label: const Text('Empezar servicio', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold)),
+              label: const Text('Empezar servicio',
+                  style:
+                      TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFF43F5E),
                 foregroundColor: Colors.white,
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30)),
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
             ),
@@ -1084,7 +1298,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
       return SizedBox(
         width: double.infinity,
         child: ElevatedButton.icon(
-          onPressed: () => _handleCompleteService(b['id'].toString()),
+          onPressed: () => _showCompleteServiceConfirmation(b['id'].toString()),
           icon: const Icon(Icons.check_circle_outline_rounded, size: 18),
           label: const Text(
             'Terminé el servicio',
@@ -1094,7 +1308,8 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
             backgroundColor: const Color(0xFF16A34A),
             foregroundColor: Colors.white,
             elevation: 0,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
             padding: const EdgeInsets.symmetric(vertical: 14),
           ),
         ),
@@ -1103,23 +1318,34 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
       // Step 4: OTP
       return Column(
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () => _showSegmentedPinDialog(b),
-                  icon: const Icon(Icons.vpn_key_outlined, size: 16),
-                  label: const Text('Ingresar Código OTP', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0284C7),
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFECFEFF),
+              borderRadius: BorderRadius.circular(20),
+              border:
+                  Border.all(color: const Color(0xFF06B6D4).withOpacity(0.3)),
+            ),
+            child: Row(
+              children: [
+                const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2, color: Color(0xFF06B6D4)),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Esperando que el cliente ingrese el código OTP...',
+                    style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.cyan[950]),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           const SizedBox(height: 8),
           Row(
@@ -1127,10 +1353,14 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
               Expanded(
                 child: TextButton.icon(
                   onPressed: () => _showSupportEscapeDialog(b),
-                  icon: const Icon(Icons.support_agent_outlined, size: 16, color: Colors.grey),
+                  icon: const Icon(Icons.support_agent_outlined,
+                      size: 16, color: Colors.grey),
                   label: const Text(
                     'El cliente no puede confirmar / Reportar soporte',
-                    style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey,
+                        fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
@@ -1143,8 +1373,10 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
 
   Widget _buildNextBookingCard(Map<String, dynamic> b) {
     final date = DateTime.parse(b['scheduled_at']).toLocal();
-    final dayStr = '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}';
-    final hourStr = '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+    final dayStr =
+        '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}';
+    final hourStr =
+        '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
     final clientInitial = (b['client_name'] ?? '?')[0].toUpperCase();
     final status = (b['status'] as String? ?? 'pending').toUpperCase();
 
@@ -1193,12 +1425,19 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                 const SizedBox(width: 6),
                 const Text(
                   'PRÓXIMA CITA',
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 1),
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                      letterSpacing: 1),
                 ),
                 const Spacer(),
                 Text(
                   '$dayStr - $hourStr',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12),
                 ),
               ],
             ),
@@ -1215,7 +1454,10 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                       backgroundColor: const Color(0xFFFFE4E6),
                       child: Text(
                         clientInitial,
-                        style: const TextStyle(color: Color(0xFFE11D48), fontWeight: FontWeight.bold, fontSize: 16),
+                        style: const TextStyle(
+                            color: Color(0xFFE11D48),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -1225,18 +1467,27 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                         children: [
                           Text(
                             b['client_name'] ?? 'Cliente',
-                            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.black87),
+                            style: const TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87),
                           ),
                           Text(
                             'Servicio: ${b['service_name']}',
-                            style: const TextStyle(fontSize: 13, color: Colors.grey, fontWeight: FontWeight.w500),
+                            style: const TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey,
+                                fontWeight: FontWeight.w500),
                           ),
                         ],
                       ),
                     ),
                     Text(
                       '\$${(double.tryParse(b['total_amount']?.toString() ?? '') ?? 0.0).toStringAsFixed(0)}',
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFFE11D48)),
+                      style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFE11D48)),
                     ),
                   ],
                 ),
@@ -1258,19 +1509,74 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                 const SizedBox(height: 20),
                 Text(
                   _getStepDescription(currentStep),
-                  style: const TextStyle(fontSize: 13, fontStyle: FontStyle.italic, color: Colors.black87),
+                  style: const TextStyle(
+                      fontSize: 13,
+                      fontStyle: FontStyle.italic,
+                      color: Colors.black87),
                 ),
                 const SizedBox(height: 16),
                 if (isLoading)
                   const Center(
                     child: Padding(
                       padding: EdgeInsets.all(8.0),
-                      child: CircularProgressIndicator(color: Color(0xFFF43F5E)),
+                      child:
+                          CircularProgressIndicator(color: Color(0xFFF43F5E)),
                     ),
                   )
                 else
                   _buildNextBookingActions(b, currentStep),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOfflineBanner() {
+    if (_isActive) return const SizedBox.shrink();
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFEF3C7),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFFDE68A)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.offline_bolt_rounded, color: Color(0xFFD97706)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Estás Fuera de Línea',
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF78350F),
+                      fontSize: 13),
+                ),
+                Text(
+                  'No aparecerás en el mapa de clientes ni recibirás nuevas citas.',
+                  style: TextStyle(color: Color(0xFF374151), fontSize: 11),
+                ),
+              ],
+            ),
+          ),
+          TextButton(
+            onPressed: () => _toggleStatus(true),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: const Text(
+              'CONECTAR',
+              style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF78350F),
+                  fontSize: 12),
             ),
           ),
         ],
@@ -1290,6 +1596,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
       child: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         children: [
+          _buildOfflineBanner(),
           // Hero section with gradient background
           Container(
             padding: const EdgeInsets.all(24),
@@ -1300,14 +1607,18 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(28),
-              border: Border.all(color: const Color(0xFFE8D7D3).withOpacity(0.5), width: 1.5),
+              border: Border.all(
+                  color: const Color(0xFFE8D7D3).withOpacity(0.5), width: 1.5),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
                   'Tu Resumen en Fontibón',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, letterSpacing: -0.5),
+                  style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: -0.5),
                 ),
                 const SizedBox(height: 4),
                 const Text(
@@ -1339,7 +1650,9 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                     Expanded(
                       child: _analyticsCard(
                         'Valoración',
-                        _ratingAvg != null ? _ratingAvg!.toStringAsFixed(1) : "--",
+                        _ratingAvg != null
+                            ? _ratingAvg!.toStringAsFixed(1)
+                            : "--",
                         Icons.star_rounded,
                         const Color(0xFFD97706),
                         subtitle: '$_ratingCount reseñas',
@@ -1390,19 +1703,27 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                       color: Colors.white.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(Icons.account_balance_wallet, color: Colors.white, size: 26),
+                    child: const Icon(Icons.account_balance_wallet,
+                        color: Colors.white, size: 26),
                   ),
                   const SizedBox(width: 14),
                   const Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Mi Wallet', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                        Text('Ver saldo, retiros e historial', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                        Text('Mi Wallet',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16)),
+                        Text('Ver saldo, retiros e historial',
+                            style:
+                                TextStyle(color: Colors.white70, fontSize: 12)),
                       ],
                     ),
                   ),
-                  const Icon(Icons.arrow_forward_ios, color: Colors.white70, size: 16),
+                  const Icon(Icons.arrow_forward_ios,
+                      color: Colors.white70, size: 16),
                 ],
               ),
             ),
@@ -1414,26 +1735,36 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
             children: [
               const Text(
                 'Servicios Activos Recientes',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: -0.5),
+                style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: -0.5),
               ),
               Text(
                 '${_bookings.length} en total',
-                style: const TextStyle(fontSize: 13, color: Colors.grey, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey,
+                    fontWeight: FontWeight.bold),
               ),
             ],
           ),
           const SizedBox(height: 12),
 
-          _buildAgendaList(limitToRecent: true, excludeBookingId: next?['id']?.toString()),
+          _buildAgendaList(
+              limitToRecent: true, excludeBookingId: next?['id']?.toString()),
         ],
       ),
     );
   }
 
-  Widget _buildAgendaList({bool limitToRecent = false, String? excludeBookingId}) {
+  Widget _buildAgendaList(
+      {bool limitToRecent = false, String? excludeBookingId}) {
     var filtered = _bookings;
     if (excludeBookingId != null) {
-      filtered = filtered.where((b) => b['id']?.toString() != excludeBookingId).toList();
+      filtered = filtered
+          .where((b) => b['id']?.toString() != excludeBookingId)
+          .toList();
     }
 
     if (limitToRecent && filtered.length > 3) {
@@ -1466,8 +1797,10 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
     return Column(
       children: filtered.map((b) {
         final date = DateTime.parse(b['scheduled_at']).toLocal();
-        final dayStr = '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}';
-        final hourStr = '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+        final dayStr =
+            '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}';
+        final hourStr =
+            '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
         final clientInitial = (b['client_name'] ?? '?')[0].toUpperCase();
         final cardStatus = (b['status'] as String? ?? '').toUpperCase();
 
@@ -1503,7 +1836,9 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                             backgroundColor: const Color(0xFFF5EBE6),
                             child: Text(
                               clientInitial,
-                              style: const TextStyle(color: Color(0xFFC89D93), fontWeight: FontWeight.bold),
+                              style: const TextStyle(
+                                  color: Color(0xFFC89D93),
+                                  fontWeight: FontWeight.bold),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -1513,17 +1848,23 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                               children: [
                                 Text(
                                   b['client_name'] ?? 'Cliente',
-                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                  style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold),
                                 ),
                                 const Text(
                                   'Contacto seguro vía Chat',
-                                  style: TextStyle(fontSize: 12, color: Color(0xFFC89D93), fontWeight: FontWeight.w500),
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFFC89D93),
+                                      fontWeight: FontWeight.w500),
                                 ),
                               ],
                             ),
                           ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 6),
                             decoration: BoxDecoration(
                               color: _statusBgColor(b['status']),
                               borderRadius: BorderRadius.circular(20),
@@ -1543,45 +1884,56 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                       const Divider(height: 24, color: Color(0xFFF3F4F6)),
                       Row(
                         children: [
-                          const Icon(Icons.spa_outlined, size: 16, color: Colors.grey),
+                          const Icon(Icons.spa_outlined,
+                              size: 16, color: Colors.grey),
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
                               'Servicio: ${b['service_name']}',
-                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                              style: const TextStyle(
+                                  fontSize: 14, fontWeight: FontWeight.w500),
                             ),
                           ),
                           Text(
                             '\$${(double.tryParse(b['total_amount']?.toString() ?? '') ?? 0.0).toStringAsFixed(0)}',
-                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFFC89D93)),
+                            style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFFC89D93)),
                           ),
                         ],
                       ),
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          const Icon(Icons.access_time_outlined, size: 16, color: Colors.grey),
+                          const Icon(Icons.access_time_outlined,
+                              size: 16, color: Colors.grey),
                           const SizedBox(width: 6),
                           Text(
                             '$dayStr a las $hourStr',
-                            style: const TextStyle(fontSize: 14, color: Colors.black87),
+                            style: const TextStyle(
+                                fontSize: 14, color: Colors.black87),
                           ),
                         ],
                       ),
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          const Icon(Icons.location_on_outlined, size: 16, color: Colors.grey),
+                          const Icon(Icons.location_on_outlined,
+                              size: 16, color: Colors.grey),
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
-                              (b['service_address']?.toString().isNotEmpty ?? false)
+                              (b['service_address']?.toString().isNotEmpty ??
+                                      false)
                                   ? 'Dirección: ${b['service_address']}'
                                   : 'Dirección pendiente por confirmar',
-                              style: const TextStyle(fontSize: 13, color: Colors.grey),
+                              style: const TextStyle(
+                                  fontSize: 13, color: Colors.grey),
                             ),
                           ),
-                          if ((b['service_address']?.toString().isNotEmpty ?? false) &&
+                          if ((b['service_address']?.toString().isNotEmpty ??
+                                  false) &&
                               cardStatus != 'COMPLETADA' &&
                               cardStatus != 'COMPLETED' &&
                               cardStatus != 'CANCELADA' &&
@@ -1593,7 +1945,8 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                                 final refresh = await Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) => ProviderRouteScreen(booking: b),
+                                    builder: (_) =>
+                                        ProviderRouteScreen(booking: b),
                                   ),
                                 );
                                 if (refresh == true) {
@@ -1632,24 +1985,30 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                       shadowColor: const Color(0x1F000000),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
-                        side: const BorderSide(color: Color(0xFFFEF3C7), width: 1.5),
+                        side: const BorderSide(
+                            color: Color(0xFFFEF3C7), width: 1.5),
                       ),
                       child: Padding(
                         padding: const EdgeInsets.all(16.0),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.lock_clock_outlined, color: Color(0xFFD97706), size: 36),
+                            const Icon(Icons.lock_clock_outlined,
+                                color: Color(0xFFD97706), size: 36),
                             const SizedBox(height: 8),
                             const Text(
                               'Pago en Verificación',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.black87),
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                  color: Colors.black87),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               'Esperando confirmación de la pasarela Wompi...',
                               textAlign: TextAlign.center,
-                              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                              style: TextStyle(
+                                  fontSize: 12, color: Colors.grey[600]),
                             ),
                           ],
                         ),
@@ -1687,9 +2046,11 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
             child: const Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('❌ Error de conexión', style: TextStyle(color: Colors.red, fontSize: 18)),
+                Text('❌ Error de conexión',
+                    style: TextStyle(color: Colors.red, fontSize: 18)),
                 SizedBox(height: 8),
-                Text('Toca para reintentar', style: TextStyle(color: Colors.blue)),
+                Text('Toca para reintentar',
+                    style: TextStyle(color: Colors.blue)),
               ],
             ),
           ),
@@ -1718,11 +2079,17 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                 children: [
                   const Text(
                     'Agenda Completa',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: -0.5),
+                    style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: -0.5),
                   ),
                   Text(
                     '${_bookings.length} servicios',
-                    style: const TextStyle(fontSize: 13, color: Colors.grey, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey,
+                        fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
@@ -1752,7 +2119,10 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
           : AppBar(
               title: Text(
                 _currentIndex == 0 ? 'Belleza Pro' : 'Mi Agenda',
-                style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5, fontSize: 18),
+                style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: -0.5,
+                    fontSize: 18),
               ),
               backgroundColor: Colors.white,
               foregroundColor: Colors.black,
@@ -1789,7 +2159,8 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
             ? const SizedBox(
                 width: 24,
                 height: 24,
-                child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
+                child: CircularProgressIndicator(
+                    strokeWidth: 2.5, color: Colors.white),
               )
             : const Icon(Icons.emergency_outlined, size: 28),
       ),
@@ -1839,14 +2210,16 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
     );
   }
 
-  Widget _analyticsCard(String label, String value, IconData icon, Color color, {String? subtitle}) {
+  Widget _analyticsCard(String label, String value, IconData icon, Color color,
+      {String? subtitle}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: const [
-          BoxShadow(color: Color(0x05000000), blurRadius: 8, offset: Offset(0, 4)),
+          BoxShadow(
+              color: Color(0x05000000), blurRadius: 8, offset: Offset(0, 4)),
         ],
       ),
       child: Column(
@@ -1856,14 +2229,16 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
           const SizedBox(height: 10),
           Text(
             value,
-            style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: color),
+            style: TextStyle(
+                fontSize: 17, fontWeight: FontWeight.bold, color: color),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 2),
           Text(
             label,
-            style: const TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+                fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -1871,7 +2246,10 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
             const SizedBox(height: 2),
             Text(
               subtitle,
-              style: TextStyle(fontSize: 9, color: Colors.grey[450], fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  fontSize: 9,
+                  color: Colors.grey[450],
+                  fontWeight: FontWeight.bold),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -1881,14 +2259,17 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
     );
   }
 
-  Widget _analyticsCardWithTween(String label, double targetValue, IconData icon, Color color, {String? subtitle}) {
+  Widget _analyticsCardWithTween(
+      String label, double targetValue, IconData icon, Color color,
+      {String? subtitle}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: const [
-          BoxShadow(color: Color(0x05000000), blurRadius: 8, offset: Offset(0, 4)),
+          BoxShadow(
+              color: Color(0x05000000), blurRadius: 8, offset: Offset(0, 4)),
         ],
       ),
       child: Column(
@@ -1903,7 +2284,8 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
             builder: (context, value, child) {
               return Text(
                 '\$${value.toStringAsFixed(0)}',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: color),
+                style: TextStyle(
+                    fontSize: 15, fontWeight: FontWeight.bold, color: color),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               );
@@ -1912,7 +2294,8 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
           const SizedBox(height: 2),
           Text(
             label,
-            style: const TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+                fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -1920,7 +2303,10 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
             const SizedBox(height: 2),
             Text(
               subtitle,
-              style: TextStyle(fontSize: 9, color: Colors.grey[450], fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  fontSize: 9,
+                  color: Colors.grey[450],
+                  fontWeight: FontWeight.bold),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -2020,7 +2406,8 @@ class PulsingStatusChip extends StatefulWidget {
   State<PulsingStatusChip> createState() => _PulsingStatusChipState();
 }
 
-class _PulsingStatusChipState extends State<PulsingStatusChip> with SingleTickerProviderStateMixin {
+class _PulsingStatusChipState extends State<PulsingStatusChip>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
   @override
@@ -2041,14 +2428,16 @@ class _PulsingStatusChipState extends State<PulsingStatusChip> with SingleTicker
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: widget.isToggling ? null : () => widget.onChanged(!widget.isActive),
+      onTap:
+          widget.isToggling ? null : () => widget.onChanged(!widget.isActive),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: widget.isActive ? const Color(0xFFDCFCE7) : Colors.grey[200],
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: widget.isActive ? const Color(0xFF86EFAC) : Colors.grey[300]!,
+            color:
+                widget.isActive ? const Color(0xFF86EFAC) : Colors.grey[300]!,
             width: 1,
           ),
         ),
@@ -2059,7 +2448,8 @@ class _PulsingStatusChipState extends State<PulsingStatusChip> with SingleTicker
               const SizedBox(
                 width: 8,
                 height: 8,
-                child: CircularProgressIndicator(strokeWidth: 1.5, color: Color(0xFF16A34A)),
+                child: CircularProgressIndicator(
+                    strokeWidth: 1.5, color: Color(0xFF16A34A)),
               )
             else if (widget.isActive)
               ScaleTransition(
@@ -2090,7 +2480,9 @@ class _PulsingStatusChipState extends State<PulsingStatusChip> with SingleTicker
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
-                color: widget.isActive ? const Color(0xFF15803D) : Colors.grey[700],
+                color: widget.isActive
+                    ? const Color(0xFF15803D)
+                    : Colors.grey[700],
               ),
             ),
           ],
@@ -2145,7 +2537,8 @@ class _OtpTimerWidgetState extends State<OtpTimerWidget> {
         const SizedBox(width: 6),
         Text(
           'Tiempo sugerido de confirmación: $minutes:$seconds',
-          style: const TextStyle(fontSize: 12, color: Colors.orange, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+              fontSize: 12, color: Colors.orange, fontWeight: FontWeight.bold),
         ),
       ],
     );
@@ -2168,7 +2561,8 @@ class SegmentedPinDialog extends StatefulWidget {
 }
 
 class _SegmentedPinDialogState extends State<SegmentedPinDialog> {
-  final List<TextEditingController> _controllers = List.generate(4, (_) => TextEditingController());
+  final List<TextEditingController> _controllers =
+      List.generate(4, (_) => TextEditingController());
   final List<FocusNode> _focusNodes = List.generate(4, (_) => FocusNode());
   bool _isSubmitting = false;
   String? _error;
@@ -2245,7 +2639,8 @@ class _SegmentedPinDialogState extends State<SegmentedPinDialog> {
         children: [
           Icon(Icons.verified_user_outlined, color: Color(0xFFC89D93)),
           SizedBox(width: 8),
-          Text('Verificación Escrow', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+          Text('Verificación Escrow',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         ],
       ),
       content: Column(
@@ -2267,7 +2662,9 @@ class _SegmentedPinDialogState extends State<SegmentedPinDialog> {
                   color: const Color(0xFFF5EBE6),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: _focusNodes[index].hasFocus ? const Color(0xFFC89D93) : Colors.transparent,
+                    color: _focusNodes[index].hasFocus
+                        ? const Color(0xFFC89D93)
+                        : Colors.transparent,
                     width: 2,
                   ),
                 ),
@@ -2277,7 +2674,10 @@ class _SegmentedPinDialogState extends State<SegmentedPinDialog> {
                   keyboardType: TextInputType.number,
                   maxLength: 1,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF881337)),
+                  style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF881337)),
                   decoration: const InputDecoration(
                     counterText: '',
                     border: InputBorder.none,
@@ -2305,12 +2705,16 @@ class _SegmentedPinDialogState extends State<SegmentedPinDialog> {
                 SizedBox(
                   width: 14,
                   height: 14,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFC89D93)),
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2, color: Color(0xFFC89D93)),
                 ),
                 SizedBox(width: 8),
                 Text(
                   '📡 Validando proximidad GPS (PostGIS)...',
-                  style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w500),
+                  style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey,
+                      fontWeight: FontWeight.w500),
                 ),
               ],
             ),
@@ -2319,7 +2723,10 @@ class _SegmentedPinDialogState extends State<SegmentedPinDialog> {
             const SizedBox(height: 12),
             Text(
               _error!,
-              style: const TextStyle(color: Colors.redAccent, fontSize: 12, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                  color: Colors.redAccent,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
           ],
