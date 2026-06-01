@@ -68,23 +68,23 @@ CREATE OR REPLACE FUNCTION calc_booking_split()
 RETURNS TRIGGER AS $$
 DECLARE
   p_tier VARCHAR(30);
-  comm_rate NUMERIC(4,2) := 0.20; -- Default 20%
+  comm_rate NUMERIC(4,2) := 0.12; -- Default 12% net commission (making 20% total with tax)
   booking_dow INTEGER;
 BEGIN
   -- Fetch current loyalty tier of the provider
   SELECT tier INTO p_tier FROM provider_loyalty WHERE provider_id = NEW.provider_id;
   
-  -- Avant-Garde Elite receives 18% commission on Tuesdays (2) and Wednesdays (3)
+  -- Avant-Garde Elite receives 10% commission on Tuesdays (2) and Wednesdays (3) (18% total with tax)
   IF p_tier = 'Avant-Garde Elite' THEN
     booking_dow := EXTRACT(DOW FROM NEW.scheduled_at);
     IF booking_dow IN (2, 3) THEN
-      comm_rate := 0.18;
+      comm_rate := 0.10;
     END IF;
   END IF;
 
   NEW.comision_plataforma := ROUND(NEW.valor_bruto * comm_rate, 2);
   NEW.impuestos_estado := ROUND(NEW.valor_bruto * 0.08, 2);
-  NEW.pago_neto_prestador := NEW.valor_bruto - NEW.comision_plataforma - NEW.impuestos_estado;
+  NEW.pago_neto_prestador := NEW.valor_bruto - (NEW.comision_plataforma + NEW.impuestos_estado);
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;

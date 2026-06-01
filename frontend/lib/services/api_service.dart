@@ -16,6 +16,10 @@ class ApiService {
   static String? _cachedBaseUrl;
   static final List<String> _ports = ['3000', '3001'];
 
+  static void resetCachedBaseUrl() {
+    _cachedBaseUrl = null;
+  }
+
   static String get _host => kIsWeb ? 'localhost' : '10.0.2.2';
 
   static String get baseUrl {
