@@ -2288,6 +2288,11 @@ const initDatabase = async () => {
     `);
 
     await pool.query(`
+      ALTER TABLE perfiles_prestador
+      ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;
+    `);
+
+    await pool.query(`
       ALTER TABLE bookings
       ADD COLUMN IF NOT EXISTS service_address TEXT;
     `);
