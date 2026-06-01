@@ -126,6 +126,11 @@ document.addEventListener('DOMContentLoaded', () => {
         pageTitle.textContent = 'Resolución de Disputas';
         pageSubtitle.textContent = 'Administración y conciliación financiera de reclamos';
         fetchDisputes();
+      } else if (targetSectionId === 'tutorial') {
+        document.getElementById('view-tutorial').style.display = 'block';
+        pageTitle.textContent = 'Tutorial Interactivo de Onboarding';
+        pageSubtitle.textContent = 'Simulación paso a paso del flujo de clientes en la app de belleza';
+        initTutorial();
       }
     });
   });
@@ -950,6 +955,88 @@ document.addEventListener('DOMContentLoaded', () => {
   const roleEl = document.getElementById('user-role-filter');
   if (searchEl) searchEl.addEventListener('input', renderUsers);
   if (roleEl) roleEl.addEventListener('change', renderUsers);
+
+  // ==========================================
+  // TUTORIAL INTERACTIVO: Flujo y Simulación
+  // ==========================================
+  let currentStep = 0;
+  const totalSteps = 5;
+  const screens = ['s0', 's1', 's2', 's3', 's4'];
+
+  function initTutorial() {
+    const stepItems = document.querySelectorAll('.step-item');
+    const progressFill = document.getElementById('progressFill');
+    const btnNext = document.getElementById('btnNext');
+    const btnPrev = document.getElementById('btnPrev');
+
+    function goTo(step) {
+      if (step < 0 || step >= totalSteps) return;
+      
+      document.getElementById(screens[currentStep]).classList.remove('active');
+      currentStep = step;
+      document.getElementById(screens[currentStep]).classList.add('active');
+
+      stepItems.forEach((el, i) => {
+        el.classList.remove('active', 'done');
+        if (i < currentStep) el.classList.add('done');
+        if (i === currentStep) el.classList.add('active');
+        
+        const numEl = el.querySelector('.step-num');
+        if (numEl) {
+          numEl.textContent = i < currentStep ? '✓' : (i + 1);
+        }
+      });
+
+      if (progressFill) {
+        progressFill.style.width = (currentStep / (totalSteps - 1) * 100) + '%';
+      }
+      if (btnPrev) btnPrev.disabled = currentStep === 0;
+      if (btnNext) {
+        btnNext.textContent = currentStep === totalSteps - 1 ? 'Reiniciar' : 'Siguiente →';
+      }
+    }
+
+    stepItems.forEach(el => {
+      el.onclick = () => goTo(parseInt(el.dataset.step));
+    });
+
+    if (btnNext) {
+      btnNext.onclick = () => {
+        if (currentStep === totalSteps - 1) goTo(0);
+        else goTo(currentStep + 1);
+      };
+    }
+
+    if (btnPrev) {
+      btnPrev.onclick = () => goTo(currentStep - 1);
+    }
+
+    const triggerGoS1 = document.getElementById('trigger-go-s1');
+    if (triggerGoS1) triggerGoS1.onclick = () => goTo(1);
+
+    const backToS0 = document.getElementById('back-to-s0');
+    if (backToS0) backToS0.onclick = () => goTo(0);
+
+    const triggerGoS2 = document.getElementById('trigger-go-s2');
+    if (triggerGoS2) triggerGoS2.onclick = () => goTo(2);
+
+    const backToS1 = document.getElementById('back-to-s1');
+    if (backToS1) backToS1.onclick = () => goTo(1);
+
+    const triggerGoS3 = document.getElementById('trigger-go-s3');
+    if (triggerGoS3) triggerGoS3.onclick = () => goTo(3);
+
+    const backToS2 = document.getElementById('back-to-s2');
+    if (backToS2) backToS2.onclick = () => goTo(2);
+
+    const triggerGoS4 = document.getElementById('trigger-go-s4');
+    if (triggerGoS4) triggerGoS4.onclick = () => goTo(4);
+
+    const btnResetTutorial = document.getElementById('btnResetTutorial');
+    if (btnResetTutorial) btnResetTutorial.onclick = () => goTo(0);
+
+    goTo(0);
+  }
 
   // Startup Init Execution
   initMap();

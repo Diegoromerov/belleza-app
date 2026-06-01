@@ -47,6 +47,9 @@
         <a href="#disputes" class="menu-item" id="nav-disputes">
           <i class="fa-solid fa-scale-balanced"></i><span>Disputas</span>
         </a>
+        <a href="#tutorial" class="menu-item" id="nav-tutorial">
+          <i class="fa-solid fa-graduation-cap"></i><span>Tutorial Onboarding</span>
+        </a>
       </nav>
       <div class="sidebar-status">
         <div class="status-indicator online"></div>
@@ -347,6 +350,237 @@
             </div>
           </div>
         </div>
+
+        <!-- Section: Onboarding Tutorial -->
+        <div class="view-section" id="view-tutorial" style="display: none;">
+          <div class="panel full-width-panel">
+            <div class="panel-header">
+              <h3><i class="fa-solid fa-graduation-cap"></i> Simulación y Flujo de Onboarding del Cliente</h3>
+            </div>
+            <div class="panel-body">
+              <div class="phone-wrap">
+                <!-- IZQUIERDA: teléfono -->
+                <div class="phone-frame">
+                  <div class="phone-notch"><span></span></div>
+                  <div class="phone-screen">
+
+                    <!-- PANTALLA 1: Listado de profesionales (s0) -->
+                    <div class="screen active" id="s0">
+                      <div class="phone-header-bar">
+                        <i class="fa-solid fa-scissors header-brand-icon"></i>
+                        <span class="phone-header-title">GlowApp</span>
+                        <i class="fa-solid fa-bell header-brand-icon"></i>
+                      </div>
+                      <div class="phone-search-box">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <span>Buscar estilistas, manicuristas...</span>
+                      </div>
+                      <div class="phone-categories">
+                        <div class="phone-category active">Corte</div>
+                        <div class="phone-category">Barba</div>
+                        <div class="phone-category">Uñas</div>
+                        <div class="phone-category">Maquillaje</div>
+                      </div>
+                      <div class="phone-section-title">Estilistas Recomendados</div>
+                      <div class="phone-professional-card" id="trigger-go-s1">
+                        <div class="phone-prof-avatar">VG</div>
+                        <div class="phone-prof-details">
+                          <span class="phone-prof-name">Valeria Gómez</span>
+                          <span class="phone-prof-subtitle">Estilista Premium • Balayage</span>
+                          <span class="phone-prof-rating"><i class="fa-solid fa-star"></i> 4.9 (124)</span>
+                        </div>
+                        <div class="phone-prof-action">
+                          <i class="fa-solid fa-chevron-right"></i>
+                        </div>
+                      </div>
+                      <div class="phone-professional-card">
+                        <div class="phone-prof-avatar">CR</div>
+                        <div class="phone-prof-details">
+                          <span class="phone-prof-name">Carlos Ruíz</span>
+                          <span class="phone-prof-subtitle">Barbero Especialista • Estilo</span>
+                          <span class="phone-prof-rating"><i class="fa-solid fa-star"></i> 4.8 (89)</span>
+                        </div>
+                        <div class="phone-prof-action">
+                          <i class="fa-solid fa-chevron-right"></i>
+                        </div>
+                      </div>
+                      <div class="tooltip-bubble below" style="left:15px; top:170px; width: 210px;">
+                        <i class="fa-solid fa-hand-pointer animate-bounce"></i> Toca el perfil de Valeria Gómez para ver detalles
+                      </div>
+                    </div>
+
+                    <!-- PANTALLA 2: Perfil del profesional (s1) -->
+                    <div class="screen" id="s1">
+                      <div class="phone-back-bar" id="back-to-s0">
+                        <i class="fa-solid fa-arrow-left"></i>
+                        <span>Perfil Profesional</span>
+                      </div>
+                      <div class="phone-prof-hero">
+                        <div class="phone-hero-avatar">VG</div>
+                        <h3>Valeria Gómez</h3>
+                        <span class="phone-hero-badge"><i class="fa-solid fa-certificate"></i> Estilista Certificada</span>
+                        <div class="phone-hero-rating"><i class="fa-solid fa-star"></i> 4.9 (124 reseñas)</div>
+                      </div>
+                      <div class="phone-prof-bio">
+                        <h4>Biografía</h4>
+                        <p>Especialista en colorimetría y cortes modernos con más de 8 años de trayectoria internacional.</p>
+                      </div>
+                      <div class="phone-portfolio-section">
+                        <h4>Portafolio</h4>
+                        <div class="phone-portfolio-gallery">
+                          <div class="phone-port-item"></div>
+                          <div class="phone-port-item"></div>
+                          <div class="phone-port-item"></div>
+                        </div>
+                      </div>
+                      <button class="phone-cta-btn" id="trigger-go-s2">Agendar Cita ($150k COP)</button>
+                      <div class="tooltip-bubble above" style="left:15px; bottom:65px; width: 210px;">
+                        <i class="fa-solid fa-hand-pointer"></i> Toca "Agendar Cita" para programar el turno
+                      </div>
+                    </div>
+
+                    <!-- PANTALLA 3: Calendario y horario (s2) -->
+                    <div class="screen" id="s2">
+                      <div class="phone-back-bar" id="back-to-s1">
+                        <i class="fa-solid fa-arrow-left"></i>
+                        <span>Selecciona Fecha y Hora</span>
+                      </div>
+                      <div class="phone-calendar-title">Junio 2026</div>
+                      <div class="phone-calendar-days">
+                        <div class="phone-cal-day"><span>Lu</span><strong>01</strong></div>
+                        <div class="phone-cal-day active"><span>Ma</span><strong>02</strong></div>
+                        <div class="phone-cal-day"><span>Mi</span><strong>03</strong></div>
+                        <div class="phone-cal-day"><span>Ju</span><strong>04</strong></div>
+                        <div class="phone-cal-day"><span>Vi</span><strong>05</strong></div>
+                      </div>
+                      <div class="phone-time-title">Horarios Disponibles</div>
+                      <div class="phone-time-grid">
+                        <div class="phone-time-slot">09:00 AM</div>
+                        <div class="phone-time-slot active">02:00 PM</div>
+                        <div class="phone-time-slot">04:30 PM</div>
+                        <div class="phone-time-slot">06:00 PM</div>
+                      </div>
+                      <button class="phone-cta-btn" id="trigger-go-s3">Confirmar y Continuar</button>
+                      <div class="tooltip-bubble below" style="left:15px; top:75px; width: 210px;">
+                        <i class="fa-solid fa-circle-check"></i> Elige un día y hora disponible, luego toca "Confirmar"
+                      </div>
+                    </div>
+
+                    <!-- PANTALLA 4: Resumen y pago (s3) -->
+                    <div class="screen" id="s3">
+                      <div class="phone-back-bar" id="back-to-s2">
+                        <i class="fa-solid fa-arrow-left"></i>
+                        <span>Resumen del Pedido</span>
+                      </div>
+                      <div class="phone-summary-card">
+                        <div class="phone-summary-row">
+                          <strong>Servicio:</strong>
+                          <span>Corte & Balayage</span>
+                        </div>
+                        <div class="phone-summary-row">
+                          <strong>Profesional:</strong>
+                          <span>Valeria Gómez</span>
+                        </div>
+                        <div class="phone-summary-row">
+                          <strong>Fecha:</strong>
+                          <span>Martes, 02 Jun</span>
+                        </div>
+                        <div class="phone-summary-row">
+                          <strong>Hora:</strong>
+                          <span>02:00 PM</span>
+                        </div>
+                        <hr style="border: 0.5px solid rgba(255,255,255,0.1); margin: 8px 0;">
+                        <div class="phone-summary-row">
+                          <strong style="color: var(--color-primary);">Total:</strong>
+                          <strong style="color: var(--color-primary);">$150,000 COP</strong>
+                        </div>
+                      </div>
+                      <div class="phone-payment-methods">
+                        <div class="phone-pay-option active">
+                          <i class="fa-solid fa-credit-card"></i>
+                          <span>Pasarela Wompi (Nequi/Dav/TC)</span>
+                        </div>
+                      </div>
+                      <button class="phone-cta-btn success" id="trigger-go-s4"><i class="fa-solid fa-shield-halved"></i> Pagar con Wompi</button>
+                      <div class="tooltip-bubble above" style="left:15px; bottom:65px; width: 210px;">
+                        <i class="fa-solid fa-lock"></i> Revisa los datos y toca "Pagar con Wompi" para procesar seguro
+                      </div>
+                    </div>
+
+                    <!-- PANTALLA 5: Confirmación (s4) -->
+                    <div class="screen" id="s4">
+                      <div class="phone-success-screen">
+                        <div class="phone-success-icon">
+                          <i class="fa-solid fa-circle-check"></i>
+                        </div>
+                        <h3>¡Cita Agendada!</h3>
+                        <p>Tu cita con <strong>Valeria Gómez</strong> ha sido confirmada para el <strong>02 de Junio a las 02:00 PM</strong>.</p>
+                        <div class="phone-success-details">
+                          <div class="phone-pin-badge">
+                            <span>Código de Confirmación OTP</span>
+                            <strong>749 203</strong>
+                          </div>
+                        </div>
+                        <button class="phone-cta-btn secondary" id="btnResetTutorial"><i class="fa-solid fa-arrows-rotate"></i> Volver a Empezar</button>
+                      </div>
+                    </div>
+
+                  </div>
+                  <div style="padding:8px; display:flex; justify-content:center; background: var(--bg-secondary);">
+                    <div style="width:80px; height:4px; background:rgba(255,255,255,0.1); border-radius:4px;"></div>
+                  </div>
+                </div>
+
+                <!-- DERECHA: panel de pasos -->
+                <div class="side-panel">
+                  <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width:0%"></div>
+                  </div>
+                  <div class="step-list" id="stepList">
+                    <div class="step-item active" data-step="0">
+                      <div class="step-num">1</div>
+                      <div class="step-content">
+                        <div class="step-title">Explorar Servicios y Profesionales</div>
+                        <div class="step-desc">El cliente filtra categorías de servicios y visualiza estilistas calificados según ubicación e histórico de satisfacción.</div>
+                      </div>
+                    </div>
+                    <div class="step-item" data-step="1">
+                      <div class="step-num">2</div>
+                      <div class="step-content">
+                        <div class="step-title">Inspección de Perfil y Trabajos</div>
+                        <div class="step-desc">Acceso a biografías, certificaciones oficiales, valoraciones promedio y galería fotográfica de trabajos anteriores (portafolio).</div>
+                      </div>
+                    </div>
+                    <div class="step-item" data-step="2">
+                      <div class="step-num">3</div>
+                      <div class="step-content">
+                        <div class="step-title">Programación de Turno</div>
+                        <div class="step-desc">Selección interactiva de fechas y franjas horarias disponibles según el horario laboral dinámico configurado por el profesional.</div>
+                      </div>
+                    </div>
+                    <div class="step-item" data-step="3">
+                      <div class="step-num">4</div>
+                      <div class="step-content">
+                        <div class="step-title">Garantía Escrow y Pago Seguro</div>
+                        <div class="step-desc">Resumen detallado de tarifas y procesamiento de pago seguro integrado con pasarelas para retención preventiva del saldo.</div>
+                      </div>
+                    </div>
+                    <div class="step-item" data-step="4">
+                      <div class="step-num">5</div>
+                      <div class="step-content">
+                        <div class="step-title">Generación de Token OTP y Cierre</div>
+                        <div class="step-desc">Cita confirmada en tiempo real. Se genera un código OTP único para ser validado físicamente en el check-in del servicio.</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="nav-btns">
+                    <button class="nav-btn btn" id="btnPrev" style="background: rgba(255,255,255,0.05); color: #fff; border-color: rgba(255,255,255,0.1);" disabled>← Anterior</button>
+                    <button class="nav-btn btn primary" id="btnNext" style="background: var(--color-primary); color: var(--bg-primary); border-color: var(--color-primary);">Siguiente →</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
 
       </div>
 
