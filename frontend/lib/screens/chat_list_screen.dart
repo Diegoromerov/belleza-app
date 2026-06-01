@@ -43,9 +43,13 @@ class _ChatListScreenState extends State<ChatListScreen> {
       try {
         final parts = token.split('.');
         if (parts.length >= 2) {
-          final String payload = parts[1].replaceAll('-', '+').replaceAll('_', '/');
+          final String payload =
+              parts[1].replaceAll('-', '+').replaceAll('_', '/');
           final String decoded = String.fromCharCodes(base64Decode(
-            payload.length % 4 == 0 ? payload : payload.padRight(payload.length + (4 - payload.length % 4), '='),
+            payload.length % 4 == 0
+                ? payload
+                : payload.padRight(
+                    payload.length + (4 - payload.length % 4), '='),
           ));
           final data = jsonDecode(decoded);
           if (mounted) {
@@ -60,7 +64,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
   // Fallback base64 decoding helper
   List<int> base64Decode(String source) {
-    const base64Chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+    const base64Chars =
+        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
     final output = <int>[];
     var buffer = 0;
     var bits = 0;
@@ -84,7 +89,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
   String jsonDecodePayload(String payload) {
     try {
       final decodedBytes = base64Decode(
-        payload.length % 4 == 0 ? payload : payload.padRight(payload.length + (4 - payload.length % 4), '='),
+        payload.length % 4 == 0
+            ? payload
+            : payload.padRight(payload.length + (4 - payload.length % 4), '='),
       );
       return String.fromCharCodes(decodedBytes);
     } catch (_) {
@@ -125,7 +132,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
     try {
       final dateTime = DateTime.parse(dateStr).toLocal();
       final now = DateTime.now();
-      if (dateTime.day == now.day && dateTime.month == now.month && dateTime.year == now.year) {
+      if (dateTime.day == now.day &&
+          dateTime.month == now.month &&
+          dateTime.year == now.year) {
         final hour = dateTime.hour.toString().padLeft(2, '0');
         final minute = dateTime.minute.toString().padLeft(2, '0');
         return '$hour:$minute';
@@ -152,19 +161,24 @@ class _ChatListScreenState extends State<ChatListScreen> {
         centerTitle: false,
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFFC89D93)))
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFFC89D93)))
           : _error != null
               ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline, color: Colors.redAccent, size: 48),
+                      const Icon(Icons.error_outline,
+                          color: Colors.redAccent, size: 48),
                       const SizedBox(height: 16),
-                      Text('Error al cargar chats: $_error', textAlign: TextAlign.center),
+                      Text('Error al cargar chats: $_error',
+                          textAlign: TextAlign.center),
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: () => _fetchConversations(showLoading: true),
-                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFC89D93), foregroundColor: Colors.white),
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFC89D93),
+                            foregroundColor: Colors.white),
                         child: const Text('Reintentar'),
                       ),
                     ],
@@ -176,7 +190,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
                   child: Column(
                     children: [
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
                         child: Container(
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(24),
@@ -194,7 +209,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
                             ],
                           ),
                           child: ListTile(
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 12),
                             leading: Container(
                               padding: const EdgeInsets.all(8),
                               decoration: const BoxDecoration(
@@ -234,8 +250,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                 context,
                                 MaterialPageRoute(
                                   builder: (_) => const ChatScreen(
-                                    partnerId: '00000000-0000-0000-0000-000000000000',
-                                    partnerName: 'Asistente de Belleza & Tips IA',
+                                    partnerId:
+                                        '00000000-0000-0000-0000-000000000000',
+                                    partnerName:
+                                        'Asistente de Belleza & Tips IA',
                                     partnerRole: 'admin',
                                     partnerAvatar: '',
                                   ),
@@ -247,7 +265,11 @@ class _ChatListScreenState extends State<ChatListScreen> {
                       ),
                       const SizedBox(height: 8),
                       Expanded(
-                        child: _conversations.where((c) => c['conversation_partner_id'] != '00000000-0000-0000-0000-000000000000').isEmpty
+                        child: _conversations
+                                .where((c) =>
+                                    c['conversation_partner_id'] !=
+                                    '00000000-0000-0000-0000-000000000000')
+                                .isEmpty
                             ? ListView(
                                 children: [
                                   const SizedBox(height: 60),
@@ -267,31 +289,52 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                   ),
                                   const SizedBox(height: 8),
                                   Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 40),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 40),
                                     child: Text(
                                       _currentUserRole == 'provider'
                                           ? 'Cuando los clientes te envíen mensajes, aparecerán aquí.'
                                           : 'Explora prestadores y escribe para comenzar un chat.',
                                       textAlign: TextAlign.center,
-                                      style: const TextStyle(color: Colors.grey, fontSize: 13),
+                                      style: const TextStyle(
+                                          color: Colors.grey, fontSize: 13),
                                     ),
                                   ),
                                 ],
                               )
                             : ListView.separated(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                itemCount: _conversations.where((c) => c['conversation_partner_id'] != '00000000-0000-0000-0000-000000000000').length,
-                                separatorBuilder: (context, index) => const SizedBox(height: 12),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 8),
+                                itemCount: _conversations
+                                    .where((c) =>
+                                        c['conversation_partner_id'] !=
+                                        '00000000-0000-0000-0000-000000000000')
+                                    .length,
+                                separatorBuilder: (context, index) =>
+                                    const SizedBox(height: 12),
                                 itemBuilder: (context, index) {
-                                  final filteredConversations = _conversations.where((c) => c['conversation_partner_id'] != '00000000-0000-0000-0000-000000000000').toList();
+                                  final filteredConversations = _conversations
+                                      .where((c) =>
+                                          c['conversation_partner_id'] !=
+                                          '00000000-0000-0000-0000-000000000000')
+                                      .toList();
                                   final chat = filteredConversations[index];
-                                  final partnerId = chat['conversation_partner_id'] as String;
-                                  final partnerName = chat['partner_name'] as String? ?? 'Usuario';
-                                  final partnerAvatar = chat['partner_avatar'] as String?;
-                                  final partnerRole = chat['partner_role'] as String? ?? 'client';
-                                  final lastMessage = chat['last_message'] as String? ?? '';
-                                  final lastMessageTime = chat['last_message_time'] as String?;
-                                  final unreadCount = chat['unread_count'] as int? ?? 0;
+                                  final partnerId =
+                                      chat['conversation_partner_id'] as String;
+                                  final partnerName =
+                                      chat['partner_name'] as String? ??
+                                          'Usuario';
+                                  final partnerAvatar =
+                                      chat['partner_avatar'] as String?;
+                                  final partnerRole =
+                                      chat['partner_role'] as String? ??
+                                          'client';
+                                  final lastMessage =
+                                      chat['last_message'] as String? ?? '';
+                                  final lastMessageTime =
+                                      chat['last_message_time'] as String?;
+                                  final unreadCount =
+                                      chat['unread_count'] as int? ?? 0;
 
                                   final isProvider = partnerRole == 'provider';
 
@@ -308,16 +351,25 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                       ],
                                     ),
                                     child: ListTile(
-                                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                              horizontal: 16, vertical: 8),
                                       leading: CircleAvatar(
                                         radius: 26,
-                                        backgroundColor: const Color(0xFFF5EBE6),
-                                        backgroundImage: partnerAvatar != null && partnerAvatar.isNotEmpty
-                                            ? NetworkImage(partnerAvatar)
-                                            : null,
-                                        child: partnerAvatar == null || partnerAvatar.isEmpty
+                                        backgroundColor:
+                                            const Color(0xFFF5EBE6),
+                                        backgroundImage:
+                                            partnerAvatar != null &&
+                                                    partnerAvatar.isNotEmpty
+                                                ? NetworkImage(partnerAvatar)
+                                                : null,
+                                        child: partnerAvatar == null ||
+                                                partnerAvatar.isEmpty
                                             ? Text(
-                                                partnerName.isNotEmpty ? partnerName[0].toUpperCase() : 'U',
+                                                partnerName.isNotEmpty
+                                                    ? partnerName[0]
+                                                        .toUpperCase()
+                                                    : 'U',
                                                 style: const TextStyle(
                                                   fontWeight: FontWeight.bold,
                                                   color: Color(0xFFC89D93),
@@ -334,7 +386,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
                                               style: TextStyle(
-                                                fontWeight: unreadCount > 0 ? FontWeight.bold : FontWeight.w600,
+                                                fontWeight: unreadCount > 0
+                                                    ? FontWeight.bold
+                                                    : FontWeight.w600,
                                                 fontSize: 15,
                                               ),
                                             ),
@@ -344,8 +398,12 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                               _formatTime(lastMessageTime),
                                               style: TextStyle(
                                                 fontSize: 11,
-                                                color: unreadCount > 0 ? const Color(0xFFC89D93) : Colors.grey[600],
-                                                fontWeight: unreadCount > 0 ? FontWeight.bold : FontWeight.normal,
+                                                color: unreadCount > 0
+                                                    ? const Color(0xFFC89D93)
+                                                    : Colors.grey[600],
+                                                fontWeight: unreadCount > 0
+                                                    ? FontWeight.bold
+                                                    : FontWeight.normal,
                                               ),
                                             ),
                                         ],
@@ -360,19 +418,29 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                                 maxLines: 1,
                                                 overflow: TextOverflow.ellipsis,
                                                 style: TextStyle(
-                                                  color: unreadCount > 0 ? Colors.black87 : Colors.grey[600],
-                                                  fontWeight: unreadCount > 0 ? FontWeight.w500 : FontWeight.normal,
+                                                  color: unreadCount > 0
+                                                      ? Colors.black87
+                                                      : Colors.grey[600],
+                                                  fontWeight: unreadCount > 0
+                                                      ? FontWeight.w500
+                                                      : FontWeight.normal,
                                                   fontSize: 13,
                                                 ),
                                               ),
                                             ),
                                             if (unreadCount > 0)
                                               Container(
-                                                margin: const EdgeInsets.only(left: 8),
-                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                margin: const EdgeInsets.only(
+                                                    left: 8),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 8,
+                                                        vertical: 4),
                                                 decoration: BoxDecoration(
-                                                  color: const Color(0xFFC89D93),
-                                                  borderRadius: BorderRadius.circular(12),
+                                                  color:
+                                                      const Color(0xFFC89D93),
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
                                                 ),
                                                 child: Text(
                                                   '$unreadCount',
@@ -386,17 +454,29 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                             else ...[
                                               const SizedBox(width: 4),
                                               Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 8,
+                                                        vertical: 4),
                                                 decoration: BoxDecoration(
-                                                  color: isProvider ? const Color(0xFFFEF3C7) : const Color(0xFFDCFCE7),
-                                                  borderRadius: BorderRadius.circular(20),
+                                                  color: isProvider
+                                                      ? const Color(0xFFFEF3C7)
+                                                      : const Color(0xFFDCFCE7),
+                                                  borderRadius:
+                                                      BorderRadius.circular(20),
                                                 ),
                                                 child: Text(
-                                                  isProvider ? 'PRESTADOR' : 'CLIENTE',
+                                                  isProvider
+                                                      ? 'PRESTADOR'
+                                                      : 'CLIENTE',
                                                   style: TextStyle(
                                                     fontSize: 9,
                                                     fontWeight: FontWeight.bold,
-                                                    color: isProvider ? const Color(0xFFD97706) : const Color(0xFF16A34A),
+                                                    color: isProvider
+                                                        ? const Color(
+                                                            0xFFD97706)
+                                                        : const Color(
+                                                            0xFF16A34A),
                                                   ),
                                                 ),
                                               ),

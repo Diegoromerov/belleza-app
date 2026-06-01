@@ -64,11 +64,13 @@ class VerificationPendingScreen extends StatelessWidget {
                 icon: const Icon(Icons.logout, color: Color(0xFFC89D93)),
                 label: const Text(
                   'Cerrar Sesión',
-                  style: TextStyle(color: Color(0xFFC89D93), fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                      color: Color(0xFFC89D93), fontWeight: FontWeight.bold),
                 ),
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30)),
                   side: const BorderSide(color: Color(0xFFC89D93), width: 1.5),
                 ),
               ),

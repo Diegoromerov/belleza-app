@@ -10,8 +10,11 @@ Future<Map<String, double>> getWebGeolocation() async {
       geolocation.callMethod('getCurrentPosition', [
         (position) {
           final coords = position['coords'];
-          final double lat = double.tryParse(coords['latitude']?.toString() ?? '') ?? 4.6735;
-          final double lon = double.tryParse(coords['longitude']?.toString() ?? '') ?? -74.1422;
+          final double lat =
+              double.tryParse(coords['latitude']?.toString() ?? '') ?? 4.6735;
+          final double lon =
+              double.tryParse(coords['longitude']?.toString() ?? '') ??
+                  -74.1422;
           completer.complete({'lat': lat, 'lon': lon});
         },
         (error) {

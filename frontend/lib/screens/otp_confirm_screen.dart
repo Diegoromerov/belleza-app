@@ -55,8 +55,7 @@ class _OtpConfirmScreenState extends State<OtpConfirmScreen>
     super.dispose();
   }
 
-  String get _codigoCompleto =>
-      _controllers.map((c) => c.text).join();
+  String get _codigoCompleto => _controllers.map((c) => c.text).join();
 
   bool get _codigoLleno => _codigoCompleto.length == 6;
 
@@ -67,13 +66,18 @@ class _OtpConfirmScreenState extends State<OtpConfirmScreen>
     if (value.isEmpty && index > 0) {
       _focusNodes[index - 1].requestFocus();
     }
-    setState(() { _error = null; });
+    setState(() {
+      _error = null;
+    });
     if (_codigoLleno) _confirmar();
   }
 
   Future<void> _confirmar() async {
     if (!_codigoLleno || _loading) return;
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
 
     try {
       final res = await ApiService.post(
@@ -139,7 +143,8 @@ class _OtpConfirmScreenState extends State<OtpConfirmScreen>
 
               // ─── Ícono animado ────────────────────────────────────────
               Container(
-                width: 90, height: 90,
+                width: 90,
+                height: 90,
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
                     colors: [Color(0xFF6B21A8), Color(0xFFE040FB)],
@@ -148,17 +153,22 @@ class _OtpConfirmScreenState extends State<OtpConfirmScreen>
                   boxShadow: [
                     BoxShadow(
                       color: const Color(0xFFE040FB).withOpacity(0.4),
-                      blurRadius: 24, spreadRadius: 4,
+                      blurRadius: 24,
+                      spreadRadius: 4,
                     ),
                   ],
                 ),
-                child: const Icon(Icons.verified_rounded, color: Colors.white, size: 48),
+                child: const Icon(Icons.verified_rounded,
+                    color: Colors.white, size: 48),
               ),
               const SizedBox(height: 32),
 
               const Text(
                 'Confirmar servicio',
-                style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
@@ -170,7 +180,8 @@ class _OtpConfirmScreenState extends State<OtpConfirmScreen>
               const SizedBox(height: 8),
               Text(
                 '${widget.servicioNombre} · ${widget.prestadorNombre}',
-                style: const TextStyle(color: Color(0xFFE040FB), fontWeight: FontWeight.w600),
+                style: const TextStyle(
+                    color: Color(0xFFE040FB), fontWeight: FontWeight.w600),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 40),
@@ -180,19 +191,22 @@ class _OtpConfirmScreenState extends State<OtpConfirmScreen>
                 animation: _shakeAnimation,
                 builder: (context, child) => Transform.translate(
                   offset: Offset(
-                    _shakeAnimation.value * (_shakeController.value < 0.5 ? 1 : -1),
+                    _shakeAnimation.value *
+                        (_shakeController.value < 0.5 ? 1 : -1),
                     0,
                   ),
                   child: child,
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(6, (i) => _OtpField(
-                    controller: _controllers[i],
-                    focusNode: _focusNodes[i],
-                    hasError: _error != null,
-                    onChanged: (v) => _onDigitChanged(i, v),
-                  )),
+                  children: List.generate(
+                      6,
+                      (i) => _OtpField(
+                            controller: _controllers[i],
+                            focusNode: _focusNodes[i],
+                            hasError: _error != null,
+                            onChanged: (v) => _onDigitChanged(i, v),
+                          )),
                 ),
               ),
 
@@ -200,7 +214,8 @@ class _OtpConfirmScreenState extends State<OtpConfirmScreen>
               if (_error != null) ...[
                 const SizedBox(height: 16),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   decoration: BoxDecoration(
                     color: Colors.red.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(10),
@@ -208,14 +223,16 @@ class _OtpConfirmScreenState extends State<OtpConfirmScreen>
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.error_outline, color: Colors.red, size: 18),
+                      const Icon(Icons.error_outline,
+                          color: Colors.red, size: 18),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           _intentosRestantes != null
                               ? 'Código incorrecto. $_intentosRestantes intento(s) restante(s).'
                               : _error!,
-                          style: const TextStyle(color: Colors.red, fontSize: 13),
+                          style:
+                              const TextStyle(color: Colors.red, fontSize: 13),
                         ),
                       ),
                     ],
@@ -233,16 +250,22 @@ class _OtpConfirmScreenState extends State<OtpConfirmScreen>
                     backgroundColor: const Color(0xFFE040FB),
                     disabledBackgroundColor: Colors.white12,
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
                   ),
                   child: _loading
                       ? const SizedBox(
-                          height: 22, width: 22,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          height: 22,
+                          width: 22,
+                          child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2),
                         )
                       : const Text(
                           'Confirmar y liberar pago',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16),
                         ),
                 ),
               ),
@@ -275,7 +298,8 @@ class _OtpConfirmScreenState extends State<OtpConfirmScreen>
                 onPressed: () {
                   // Navegar a abrir disputa
                   Navigator.pushNamed(
-                    context, '/dispute',
+                    context,
+                    '/dispute',
                     arguments: {'booking_id': widget.bookingId},
                   );
                 },
@@ -310,7 +334,8 @@ class _OtpField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 48, height: 60,
+      width: 48,
+      height: 60,
       margin: const EdgeInsets.symmetric(horizontal: 5),
       decoration: BoxDecoration(
         color: hasError ? Colors.red.withOpacity(0.1) : const Color(0xFF1A1A2E),
@@ -377,20 +402,26 @@ class _ConfirmacionExitosaScreen extends StatelessWidget {
                 builder: (ctx, v, _) => Transform.scale(
                   scale: v,
                   child: Container(
-                    width: 100, height: 100,
+                    width: 100,
+                    height: 100,
                     decoration: BoxDecoration(
                       color: const Color(0xFF10B981).withOpacity(0.15),
                       shape: BoxShape.circle,
-                      border: Border.all(color: const Color(0xFF10B981), width: 3),
+                      border:
+                          Border.all(color: const Color(0xFF10B981), width: 3),
                     ),
-                    child: const Icon(Icons.check, color: Color(0xFF10B981), size: 56),
+                    child: const Icon(Icons.check,
+                        color: Color(0xFF10B981), size: 56),
                   ),
                 ),
               ),
               const SizedBox(height: 32),
               const Text(
                 '¡Servicio confirmado!',
-                style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
@@ -405,22 +436,26 @@ class _ConfirmacionExitosaScreen extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: const Color(0xFF10B981).withOpacity(0.08),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFF10B981).withOpacity(0.2)),
+                  border: Border.all(
+                      color: const Color(0xFF10B981).withOpacity(0.2)),
                 ),
                 child: Column(
                   children: [
-                    const Icon(Icons.account_balance_wallet, color: Color(0xFF10B981), size: 32),
+                    const Icon(Icons.account_balance_wallet,
+                        color: Color(0xFF10B981), size: 32),
                     const SizedBox(height: 12),
                     const Text(
                       'El pago fue liberado al prestador',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                          color: Colors.white, fontWeight: FontWeight.bold),
                       textAlign: TextAlign.center,
                     ),
                     if (disponibleEn != null) ...[
                       const SizedBox(height: 6),
                       Text(
                         'Disponible en su wallet en ~2 horas',
-                        style: const TextStyle(color: Colors.white54, fontSize: 13),
+                        style: const TextStyle(
+                            color: Colors.white54, fontSize: 13),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -443,10 +478,14 @@ class _ConfirmacionExitosaScreen extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFE040FB),
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
                   child: const Text('Calificar servicio',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16)),
                 ),
               ),
             ],

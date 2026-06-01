@@ -21,7 +21,8 @@ class ProviderRouteScreen extends StatefulWidget {
   State<ProviderRouteScreen> createState() => _ProviderRouteScreenState();
 }
 
-class _ProviderRouteScreenState extends State<ProviderRouteScreen> with SingleTickerProviderStateMixin {
+class _ProviderRouteScreenState extends State<ProviderRouteScreen>
+    with SingleTickerProviderStateMixin {
   // Coordenadas fijas del cliente en Fontibón
   final LatLng _clientLoc = const LatLng(4.6735, -74.1422);
 
@@ -61,11 +62,14 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen> with SingleTi
       if (!mounted) return;
       setState(() {
         if (_progress < 1.0) {
-          _progress += 0.1; // Incrementa 10% cada 2 segundos (20 segundos total)
+          _progress +=
+              0.1; // Incrementa 10% cada 2 segundos (20 segundos total)
           if (_progress > 1.0) _progress = 1.0;
 
-          final double lat = 4.6795 + (_clientLoc.latitude - 4.6795) * _progress;
-          final double lon = -74.1310 + (_clientLoc.longitude - (-74.1310)) * _progress;
+          final double lat =
+              4.6795 + (_clientLoc.latitude - 4.6795) * _progress;
+          final double lon =
+              -74.1310 + (_clientLoc.longitude - (-74.1310)) * _progress;
           _providerLoc = LatLng(lat, lon);
 
           _minutesRemaining = (8 * (1.0 - _progress)).round();
@@ -98,10 +102,12 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen> with SingleTi
             ),
             backgroundColor: AppTheme.primary,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           ),
         );
-        Navigator.pop(context, true); // Retorna true para refrescar el dashboard
+        Navigator.pop(
+            context, true); // Retorna true para refrescar el dashboard
       }
     } catch (e) {
       setState(() => _isStartingService = false);
@@ -121,8 +127,10 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen> with SingleTi
     final String clientName = widget.booking['client_name'] ?? 'Cliente';
     final String serviceName = widget.booking['service_name'] ?? 'Servicio';
     final String clientId = widget.booking['client_id']?.toString() ?? '';
-    final String serviceAddress = widget.booking['service_address']?.toString() ?? '';
-    final String status = (widget.booking['status'] as String? ?? '').toUpperCase();
+    final String serviceAddress =
+        widget.booking['service_address']?.toString() ?? '';
+    final String status =
+        (widget.booking['status'] as String? ?? '').toUpperCase();
     final bool isInProgress = status == 'EN_PROGRESO';
 
     return Scaffold(
@@ -130,7 +138,8 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen> with SingleTi
       appBar: AppBar(
         title: const Text(
           'Trayecto a Domicilio',
-          style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5, fontSize: 18),
+          style: TextStyle(
+              fontWeight: FontWeight.bold, letterSpacing: -0.5, fontSize: 18),
         ),
         backgroundColor: AppTheme.surface,
         foregroundColor: Colors.black,
@@ -145,7 +154,9 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen> with SingleTi
           // 1. Capa de Mapa (OSM via flutter_map)
           FlutterMap(
             options: MapOptions(
-              initialCenter: LatLng((_clientLoc.latitude + _providerLoc.latitude) / 2, (_clientLoc.longitude + _providerLoc.longitude) / 2),
+              initialCenter: LatLng(
+                  (_clientLoc.latitude + _providerLoc.latitude) / 2,
+                  (_clientLoc.longitude + _providerLoc.longitude) / 2),
               initialZoom: 14.2,
             ),
             children: [
@@ -177,7 +188,8 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen> with SingleTi
                         shape: BoxShape.circle,
                         boxShadow: AppTheme.softShadow,
                       ),
-                      child: const Icon(Icons.home_work, color: AppTheme.info, size: 28),
+                      child: const Icon(Icons.home_work,
+                          color: AppTheme.info, size: 28),
                     ),
                   ),
                   // Marcador Prestador (Origen móvil) con doble anillo de pulso concéntrico
@@ -193,14 +205,16 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen> with SingleTi
                           children: [
                             // Primera anilla de pulso
                             Opacity(
-                              opacity: (1.0 - _pulseController.value).clamp(0.0, 1.0),
+                              opacity: (1.0 - _pulseController.value)
+                                  .clamp(0.0, 1.0),
                               child: Container(
                                 width: 40 + (_pulseController.value * 40),
                                 height: 40 + (_pulseController.value * 40),
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: AppTheme.primary.withValues(alpha: 0.6),
+                                    color:
+                                        AppTheme.primary.withValues(alpha: 0.6),
                                     width: 2,
                                   ),
                                 ),
@@ -208,14 +222,21 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen> with SingleTi
                             ),
                             // Segunda anilla de pulso (desfasada)
                             Opacity(
-                              opacity: (1.0 - ((_pulseController.value + 0.5) % 1.0)).clamp(0.0, 1.0),
+                              opacity:
+                                  (1.0 - ((_pulseController.value + 0.5) % 1.0))
+                                      .clamp(0.0, 1.0),
                               child: Container(
-                                width: 40 + (((_pulseController.value + 0.5) % 1.0) * 40),
-                                height: 40 + (((_pulseController.value + 0.5) % 1.0) * 40),
+                                width: 40 +
+                                    (((_pulseController.value + 0.5) % 1.0) *
+                                        40),
+                                height: 40 +
+                                    (((_pulseController.value + 0.5) % 1.0) *
+                                        40),
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: AppTheme.primary.withValues(alpha: 0.4),
+                                    color:
+                                        AppTheme.primary.withValues(alpha: 0.4),
                                     width: 2,
                                   ),
                                 ),
@@ -225,13 +246,15 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen> with SingleTi
                             Container(
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                border: Border.all(color: AppTheme.primary, width: 2.5),
+                                border: Border.all(
+                                    color: AppTheme.primary, width: 2.5),
                                 boxShadow: AppTheme.softShadow,
                               ),
                               child: const CircleAvatar(
                                 radius: 18,
                                 backgroundColor: AppTheme.primaryLight,
-                                child: Icon(Icons.content_cut, size: 18, color: AppTheme.primary),
+                                child: Icon(Icons.content_cut,
+                                    size: 18, color: AppTheme.primary),
                               ),
                             ),
                           ],
@@ -257,40 +280,53 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen> with SingleTi
                   decoration: BoxDecoration(
                     color: AppTheme.surface.withValues(alpha: 0.7),
                     borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: AppTheme.surface.withValues(alpha: 0.5), width: 1.5),
+                    border: Border.all(
+                        color: AppTheme.surface.withValues(alpha: 0.5),
+                        width: 1.5),
                     boxShadow: AppTheme.cardShadow,
                   ),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 16),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           children: [
-                            const Icon(Icons.location_on, color: AppTheme.primary, size: 20),
+                            const Icon(Icons.location_on,
+                                color: AppTheme.primary, size: 20),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 serviceAddress.isNotEmpty
                                     ? serviceAddress
                                     : 'Dirección pendiente por confirmar',
-                                style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey[800], fontSize: 13.5),
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.grey[800],
+                                    fontSize: 13.5),
                               ),
                             ),
                           ],
                         ),
                         const SizedBox(height: 10),
-                        Divider(height: 1, color: AppTheme.primary.withValues(alpha: 0.2)),
+                        Divider(
+                            height: 1,
+                            color: AppTheme.primary.withValues(alpha: 0.2)),
                         const SizedBox(height: 10),
                         Text(
                           'Servicio: $serviceName',
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87),
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              color: Colors.black87),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           'Cliente: $clientName',
-                          style: const TextStyle(fontSize: 13, color: Colors.grey),
+                          style:
+                              const TextStyle(fontSize: 13, color: Colors.grey),
                         ),
                       ],
                     ),
@@ -316,7 +352,9 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen> with SingleTi
               elevation: 4,
               shape: const CircleBorder(),
               child: Icon(
-                MapSettings.isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+                MapSettings.isDark
+                    ? Icons.light_mode_outlined
+                    : Icons.dark_mode_outlined,
                 size: 22,
               ),
             ),
@@ -335,7 +373,9 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen> with SingleTi
                   decoration: BoxDecoration(
                     color: AppTheme.surface.withValues(alpha: 0.7),
                     borderRadius: BorderRadius.circular(28),
-                    border: Border.all(color: AppTheme.surface.withValues(alpha: 0.5), width: 1.5),
+                    border: Border.all(
+                        color: AppTheme.surface.withValues(alpha: 0.5),
+                        width: 1.5),
                     boxShadow: AppTheme.cardShadow,
                   ),
                   child: Padding(
@@ -349,8 +389,13 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen> with SingleTi
                               radius: 24,
                               backgroundColor: AppTheme.primaryLight,
                               child: Text(
-                                clientName.isNotEmpty ? clientName[0].toUpperCase() : 'C',
-                                style: const TextStyle(fontSize: 16, color: AppTheme.primary, fontWeight: FontWeight.bold),
+                                clientName.isNotEmpty
+                                    ? clientName[0].toUpperCase()
+                                    : 'C',
+                                style: const TextStyle(
+                                    fontSize: 16,
+                                    color: AppTheme.primary,
+                                    fontWeight: FontWeight.bold),
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -360,19 +405,28 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen> with SingleTi
                                 children: [
                                   Text(
                                     clientName,
-                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87),
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                        color: Colors.black87),
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
                                     isInProgress
                                         ? '⚡ Servicio en Progreso'
-                                        : (_isArrived ? '🟢 Has llegado al destino' : '🚙 En camino al domicilio'),
+                                        : (_isArrived
+                                            ? '🟢 Has llegado al destino'
+                                            : '🚙 En camino al domicilio'),
                                     style: TextStyle(
                                       fontSize: 13,
                                       color: isInProgress
                                           ? AppTheme.primary
-                                          : (_isArrived ? AppTheme.success : Colors.grey),
-                                      fontWeight: isInProgress ? FontWeight.bold : FontWeight.normal,
+                                          : (_isArrived
+                                              ? AppTheme.success
+                                              : Colors.grey),
+                                      fontWeight: isInProgress
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
                                     ),
                                   ),
                                 ],
@@ -380,19 +434,25 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen> with SingleTi
                             ),
                             if (!_isArrived)
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 8),
                                 decoration: BoxDecoration(
                                   color: AppTheme.errorBg,
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Text(
                                   '$_minutesRemaining min',
-                                  style: const TextStyle(fontSize: 14, color: AppTheme.error, fontWeight: FontWeight.bold),
+                                  style: const TextStyle(
+                                      fontSize: 14,
+                                      color: AppTheme.error,
+                                      fontWeight: FontWeight.bold),
                                 ),
                               ),
                           ],
                         ),
-                        Divider(height: 24, color: AppTheme.primary.withValues(alpha: 0.2)),
+                        Divider(
+                            height: 24,
+                            color: AppTheme.primary.withValues(alpha: 0.2)),
                         Row(
                           children: [
                             GestureDetector(
@@ -414,7 +474,8 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen> with SingleTi
                               child: const CircleAvatar(
                                 radius: 22,
                                 backgroundColor: AppTheme.primary,
-                                child: Icon(Icons.chat_bubble_outline_rounded, color: Colors.white, size: 18),
+                                child: Icon(Icons.chat_bubble_outline_rounded,
+                                    color: Colors.white, size: 18),
                               ),
                             ),
                             const SizedBox(width: 16),
@@ -422,33 +483,46 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen> with SingleTi
                             Expanded(
                               child: isInProgress
                                   ? ElevatedButton(
-                                      onPressed: () => Navigator.pop(context, false),
+                                      onPressed: () =>
+                                          Navigator.pop(context, false),
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: AppTheme.primary,
                                         foregroundColor: Colors.white,
-                                        padding: const EdgeInsets.symmetric(vertical: 14),
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 14),
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(30)),
                                         elevation: 0,
                                       ),
                                       child: const Text(
                                         'Volver al Panel',
-                                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14),
                                       ),
                                     )
                                   : _isStartingService
-                                      ? const Center(child: CircularProgressIndicator(color: AppTheme.primary))
+                                      ? const Center(
+                                          child: CircularProgressIndicator(
+                                              color: AppTheme.primary))
                                       : ElevatedButton(
                                           onPressed: _handleStartService,
                                           style: ElevatedButton.styleFrom(
                                             backgroundColor: AppTheme.primary,
                                             foregroundColor: Colors.white,
-                                            padding: const EdgeInsets.symmetric(vertical: 14),
-                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 14),
+                                            shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(30)),
                                             elevation: 0,
                                           ),
                                           child: const Text(
                                             'Iniciar Servicio',
-                                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 14),
                                           ),
                                         ),
                             ),
@@ -466,4 +540,3 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen> with SingleTi
     );
   }
 }
-

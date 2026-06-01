@@ -9,7 +9,8 @@ class AuthService {
     return ApiService.baseUrl;
   }
 
-  static Future<bool> register(String fullName, String email, String password, String? phone, String role) async {
+  static Future<bool> register(String fullName, String email, String password,
+      String? phone, String role) async {
     final baseUrl = await getBaseUrl();
     final response = await http.post(
       Uri.parse('$baseUrl/api/auth/register'),
@@ -25,7 +26,8 @@ class AuthService {
     return response.statusCode == 201;
   }
 
-  static Future<Map<String, dynamic>?> login(String email, String password) async {
+  static Future<Map<String, dynamic>?> login(
+      String email, String password) async {
     final baseUrl = await getBaseUrl();
     final response = await http.post(
       Uri.parse('$baseUrl/api/auth/login'),

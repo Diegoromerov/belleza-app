@@ -17,18 +17,23 @@ class MapScreen extends StatefulWidget {
 class _MapScreenState extends State<MapScreen> {
   @override
   Widget build(BuildContext context) {
-    final valid = widget.providers.where((p) => p.latitude != 0 && p.longitude != 0).toList();
-    final center = valid.isNotEmpty ? LatLng(valid[0].latitude, valid[0].longitude) : const LatLng(4.6097, -74.0817);
+    final valid = widget.providers
+        .where((p) => p.latitude != 0 && p.longitude != 0)
+        .toList();
+    final center = valid.isNotEmpty
+        ? LatLng(valid[0].latitude, valid[0].longitude)
+        : const LatLng(4.6097, -74.0817);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Explorar Fontibón', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5)),
+        title: const Text('Explorar Fontibón',
+            style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5)),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.list_alt_rounded), 
+            icon: const Icon(Icons.list_alt_rounded),
             onPressed: () => Navigator.pop(context),
             tooltip: 'Ver Lista',
           )
@@ -46,50 +51,81 @@ class _MapScreenState extends State<MapScreen> {
                 userAgentPackageName: 'com.beautyapp.map',
               ),
               MarkerLayer(
-                markers: valid.map((p) => Marker(
-                  width: 90, height: 95, point: LatLng(p.latitude, p.longitude),
-                  child: GestureDetector(
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ProviderDetailScreen(providerId: p.id))),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(color: const Color(0xFFC89D93), width: 2),
-                            boxShadow: const [
-                              BoxShadow(color: Color(0x1A000000), blurRadius: 6, offset: Offset(0, 3)),
-                            ],
+                markers: valid
+                    .map((p) => Marker(
+                          width: 90,
+                          height: 95,
+                          point: LatLng(p.latitude, p.longitude),
+                          child: GestureDetector(
+                            onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => ProviderDetailScreen(
+                                        providerId: p.id))),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                        color: const Color(0xFFC89D93),
+                                        width: 2),
+                                    boxShadow: const [
+                                      BoxShadow(
+                                          color: Color(0x1A000000),
+                                          blurRadius: 6,
+                                          offset: Offset(0, 3)),
+                                    ],
+                                  ),
+                                  child: CircleAvatar(
+                                    radius: 20,
+                                    backgroundColor: const Color(0xFFF5EBE6),
+                                    backgroundImage: p.avatarUrl.isNotEmpty
+                                        ? NetworkImage(p.avatarUrl)
+                                        : null,
+                                    child: p.avatarUrl.isEmpty
+                                        ? const Icon(
+                                            Icons.face_retouching_natural,
+                                            size: 20,
+                                            color: Color(0xFFC89D93))
+                                        : null,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(20),
+                                    boxShadow: const [
+                                      BoxShadow(
+                                          color: Color(0x1A000000),
+                                          blurRadius: 4,
+                                          offset: Offset(0, 2)),
+                                    ],
+                                  ),
+                                  child: Text(
+                                    p.businessName.isNotEmpty
+                                        ? p.businessName
+                                        : p.fullName,
+                                    style: const TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black87),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                CustomPaint(
+                                    size: const Size(12, 6),
+                                    painter: _ArrowPainter()),
+                              ],
+                            ),
                           ),
-                          child: CircleAvatar(
-                            radius: 20, 
-                            backgroundColor: const Color(0xFFF5EBE6),
-                            backgroundImage: p.avatarUrl.isNotEmpty ? NetworkImage(p.avatarUrl) : null,
-                            child: p.avatarUrl.isEmpty ? const Icon(Icons.face_retouching_natural, size: 20, color: Color(0xFFC89D93)) : null,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.white, 
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: const [
-                              BoxShadow(color: Color(0x1A000000), blurRadius: 4, offset: Offset(0, 2)),
-                            ],
-                          ),
-                          child: Text(
-                            p.businessName.isNotEmpty ? p.businessName : p.fullName, 
-                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.black87),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        CustomPaint(size: const Size(12, 6), painter: _ArrowPainter()),
-                      ],
-                    ),
-                  ),
-                )).toList(),
+                        ))
+                    .toList(),
               ),
             ],
           ),
@@ -108,7 +144,9 @@ class _MapScreenState extends State<MapScreen> {
               elevation: 4,
               shape: const CircleBorder(),
               child: Icon(
-                MapSettings.isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+                MapSettings.isDark
+                    ? Icons.light_mode_outlined
+                    : Icons.dark_mode_outlined,
                 size: 24,
               ),
             ),
@@ -122,9 +160,17 @@ class _MapScreenState extends State<MapScreen> {
 class _ArrowPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = Colors.white..style = PaintingStyle.fill;
-    final path = ui.Path()..moveTo(0,0)..lineTo(size.width/2, size.height)..lineTo(size.width,0)..close();
+    final paint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
+    final path = ui.Path()
+      ..moveTo(0, 0)
+      ..lineTo(size.width / 2, size.height)
+      ..lineTo(size.width, 0)
+      ..close();
     canvas.drawPath(path, paint);
   }
-  @override bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

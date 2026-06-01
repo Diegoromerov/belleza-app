@@ -74,7 +74,9 @@ class _BookingScreenState extends State<BookingScreen> {
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('❌ Error al cargar horarios: $e'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('❌ Error al cargar horarios: $e'),
+              backgroundColor: Colors.red),
         );
       }
     }
@@ -83,20 +85,27 @@ class _BookingScreenState extends State<BookingScreen> {
   Future<void> _confirmBooking() async {
     if (selectedServiceId == null || selectedServiceId!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('⚠️ Selecciona un servicio'), backgroundColor: Colors.orange),
+        const SnackBar(
+            content: Text('⚠️ Selecciona un servicio'),
+            backgroundColor: Colors.orange),
       );
       return;
     }
     if (selectedDate == null || _selectedSlotTime == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('⚠️ Selecciona fecha y hora de la cuadrícula'), backgroundColor: Colors.orange),
+        const SnackBar(
+            content: Text('⚠️ Selecciona fecha y hora de la cuadrícula'),
+            backgroundColor: Colors.orange),
       );
       return;
     }
 
     if (serviceAddress.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('âš ï¸ Ingresa la direcciÃ³n donde llegarÃ¡ el prestador'), backgroundColor: Colors.orange),
+        const SnackBar(
+            content: Text(
+                'âš ï¸ Ingresa la direcciÃ³n donde llegarÃ¡ el prestador'),
+            backgroundColor: Colors.orange),
       );
       return;
     }
@@ -132,7 +141,8 @@ class _BookingScreenState extends State<BookingScreen> {
         (s) => s['id']?.toString() == selectedServiceId,
         orElse: () => <String, dynamic>{},
       );
-      final serviceName = selectedService['name']?.toString() ?? 'Servicio de Belleza';
+      final serviceName =
+          selectedService['name']?.toString() ?? 'Servicio de Belleza';
       final price = _parseDouble(selectedService['price']);
 
       if (mounted) {
@@ -166,7 +176,8 @@ class _BookingScreenState extends State<BookingScreen> {
       appBar: AppBar(
         title: Text(
           'Reservar con ${widget.providerName}',
-          style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5, fontSize: 18),
+          style: const TextStyle(
+              fontWeight: FontWeight.bold, letterSpacing: -0.5, fontSize: 18),
         ),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
@@ -174,15 +185,17 @@ class _BookingScreenState extends State<BookingScreen> {
         centerTitle: false,
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFFC89D93)))
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFFC89D93)))
           : SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _buildSectionTitle('1. Selecciona un Servicio'),
                   const SizedBox(height: 12),
-                  _buildServiceDropdown(),
+                  _buildServiceSelectionList(),
                   const SizedBox(height: 24),
                   _buildSectionTitle('2. Elige una Fecha'),
                   const SizedBox(height: 12),
@@ -210,55 +223,123 @@ class _BookingScreenState extends State<BookingScreen> {
 
   Widget _buildSectionTitle(String title) => Text(
         title,
-        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black87, letterSpacing: -0.3),
+        style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+            letterSpacing: -0.3),
       );
 
-  Widget _buildServiceDropdown() {
+  Widget _buildServiceSelectionList() {
     if (widget.services.isEmpty) {
-      return const Text('⚠️ No hay servicios disponibles', style: TextStyle(color: Colors.orange));
+      return const Text('⚠️ No hay servicios disponibles',
+          style: TextStyle(color: Colors.orange));
     }
-    final List<DropdownMenuItem<String>> dropdownItems = [];
-    for (final service in widget.services) {
-      final price = _parseDouble(service['price']);
-      final name = service['name']?.toString() ?? 'Sin nombre';
-      final id = service['id']?.toString() ?? '';
-      dropdownItems.add(DropdownMenuItem<String>(
-        value: id,
-        child: Text('$name - \$${price.toStringAsFixed(0)}'),
-      ));
-    }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      decoration: BoxDecoration(
-        color: AppTheme.primaryLight,
-        borderRadius: BorderRadius.circular(30),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          isExpanded: true,
-          value: selectedServiceId,
-          style: const TextStyle(color: Colors.black87, fontSize: 15, fontWeight: FontWeight.w500),
-          hint: const Text('Selecciona un servicio', style: TextStyle(color: Colors.grey)),
-          items: dropdownItems,
-          onChanged: (String? value) {
+    return Column(
+      children: widget.services.map((service) {
+        final price = _parseDouble(service['price']);
+        final name = service['name']?.toString() ?? 'Sin nombre';
+        final id = service['id']?.toString() ?? '';
+        final description = service['description']?.toString() ?? '';
+        final isSelected = selectedServiceId == id;
+
+        return GestureDetector(
+          onTap: () {
             setState(() {
-              selectedServiceId = value;
+              selectedServiceId = id;
             });
             _loadSlots();
           },
-        ),
-      ),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: isSelected ? const Color(0xFFF5EBE6) : Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isSelected
+                    ? const Color(0xFFC89D93)
+                    : const Color(0xFFF3EAE8),
+                width: isSelected ? 2 : 1,
+              ),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: const Color(0xFFC89D93).withOpacity(0.15),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      )
+                    ]
+                  : [],
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  isSelected
+                      ? Icons.radio_button_checked
+                      : Icons.radio_button_off,
+                  color: const Color(0xFFC89D93),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            color: Colors.black87),
+                      ),
+                      if (description.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          description,
+                          style:
+                              TextStyle(color: Colors.grey[600], fontSize: 12),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  '\$${price.toStringAsFixed(0)} COP',
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFFC89D93),
+                      fontSize: 14),
+                ),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 
-    String _getDayName(DateTime date) {
+  String _getDayName(DateTime date) {
     const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
     return days[date.weekday % 7];
   }
 
   String _getMonthName(DateTime date) {
     const months = [
-      '', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'
+      '',
+      'Ene',
+      'Feb',
+      'Mar',
+      'Abr',
+      'May',
+      'Jun',
+      'Jul',
+      'Ago',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dic'
     ];
     return months[date.month];
   }
@@ -314,12 +395,13 @@ class _BookingScreenState extends State<BookingScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                     _getDayName(date),
-                     style: TextStyle(
-                       fontSize: 12,
-                       fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                       color: isSelected ? Colors.white70 : Colors.grey[600],
-                     ),
+                    _getDayName(date),
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.w500,
+                      color: isSelected ? Colors.white70 : Colors.grey[600],
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -332,12 +414,13 @@ class _BookingScreenState extends State<BookingScreen> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                     _getMonthName(date),
-                     style: TextStyle(
-                       fontSize: 10,
-                       fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                       color: isSelected ? Colors.white70 : Colors.grey[500],
-                     ),
+                    _getMonthName(date),
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.w500,
+                      color: isSelected ? Colors.white70 : Colors.grey[500],
+                    ),
                   ),
                 ],
               ),
@@ -352,7 +435,8 @@ class _BookingScreenState extends State<BookingScreen> {
     if (selectedDate == null || selectedServiceId == null) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 8.0),
-        child: Text('Selecciona un servicio y fecha primero.', style: TextStyle(color: Colors.grey)),
+        child: Text('Selecciona un servicio y fecha primero.',
+            style: TextStyle(color: Colors.grey)),
       );
     }
     if (_isLoadingSlots) {
@@ -376,7 +460,10 @@ class _BookingScreenState extends State<BookingScreen> {
             SizedBox(height: 8),
             Text(
               'No hay horarios disponibles para esta fecha o el prestador no está activo.',
-              style: TextStyle(color: Color(0xFFDC2626), fontSize: 13, fontWeight: FontWeight.w500),
+              style: TextStyle(
+                  color: Color(0xFFDC2626),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500),
               textAlign: TextAlign.center,
             ),
           ],
@@ -451,7 +538,9 @@ class _BookingScreenState extends State<BookingScreen> {
                         : isAvailable
                             ? Colors.black87
                             : Colors.grey[400],
-                    decoration: isAvailable ? TextDecoration.none : TextDecoration.lineThrough,
+                    decoration: isAvailable
+                        ? TextDecoration.none
+                        : TextDecoration.lineThrough,
                   ),
                 ),
               ],
@@ -485,20 +574,23 @@ class _BookingScreenState extends State<BookingScreen> {
       );
 
   Widget _buildConfirmButton() => ElevatedButton(
-        onPressed: isLoading || _selectedSlotTime == null ? null : _confirmBooking,
+        onPressed:
+            isLoading || _selectedSlotTime == null ? null : _confirmBooking,
         style: ElevatedButton.styleFrom(
           backgroundColor: AppTheme.primary,
           foregroundColor: Colors.white,
           disabledBackgroundColor: AppTheme.primaryLight,
           padding: const EdgeInsets.all(16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
           elevation: 0,
         ),
         child: isLoading
             ? const SizedBox(
                 height: 24,
                 width: 24,
-                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                child: CircularProgressIndicator(
+                    color: Colors.white, strokeWidth: 2),
               )
             : const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -617,7 +709,8 @@ class _WompiCheckoutWidgetState extends State<_WompiCheckoutWidget> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding:
+          EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
         decoration: const BoxDecoration(
           color: Colors.white,
@@ -696,7 +789,8 @@ class _WompiCheckoutWidgetState extends State<_WompiCheckoutWidget> {
   Widget _buildSuccessView() {
     final ref = _successData!['reference'] ?? 'N/A';
     final amount = _successData!['amount'] ?? widget.price;
-    final method = _successData!['payment_method'] ?? (_selectedTab == 0 ? 'NEQUI' : 'CARD');
+    final method = _successData!['payment_method'] ??
+        (_selectedTab == 0 ? 'NEQUI' : 'CARD');
 
     return Column(
       children: [
@@ -705,7 +799,8 @@ class _WompiCheckoutWidgetState extends State<_WompiCheckoutWidget> {
         const SizedBox(height: 16),
         const Text(
           '¡Pago Exitoso!',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87),
+          style: TextStyle(
+              fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87),
         ),
         const SizedBox(height: 8),
         Text(
@@ -725,7 +820,8 @@ class _WompiCheckoutWidgetState extends State<_WompiCheckoutWidget> {
             children: [
               _buildReceiptRow('Servicio', widget.serviceName),
               const SizedBox(height: 8),
-              _buildReceiptRow('Valor Pagado', '\$${amount.toStringAsFixed(0)} COP'),
+              _buildReceiptRow(
+                  'Valor Pagado', '\$${amount.toStringAsFixed(0)} COP'),
               const SizedBox(height: 8),
               _buildReceiptRow('Medio de Pago', method),
               const SizedBox(height: 8),
@@ -741,14 +837,20 @@ class _WompiCheckoutWidgetState extends State<_WompiCheckoutWidget> {
               backgroundColor: const Color(0xFF5C288D),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30)),
               elevation: 0,
             ),
             onPressed: () {
               Navigator.pop(context); // Cerrar bottom sheet
-              Navigator.pushReplacementNamed(context, '/client-bookings');
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                '/client-bookings',
+                (route) => route.settings.name == '/home',
+              );
             },
-            child: const Text('Listo', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            child: const Text('Listo',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           ),
         ),
         const SizedBox(height: 16),
@@ -777,21 +879,28 @@ class _WompiCheckoutWidgetState extends State<_WompiCheckoutWidget> {
                     children: [
                       Text(
                         widget.serviceName,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87),
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            color: Colors.black87),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
                       Text(
                         'Prestador: ${widget.providerName}',
-                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                        style:
+                            const TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                     ],
                   ),
                 ),
                 Text(
                   '\$${widget.price.toStringAsFixed(0)} COP',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF5C288D)),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Color(0xFF5C288D)),
                 ),
               ],
             ),
@@ -808,13 +917,22 @@ class _WompiCheckoutWidgetState extends State<_WompiCheckoutWidget> {
               children: [
                 Expanded(
                   child: GestureDetector(
-                    onTap: _isProcessing ? null : () => setState(() => _selectedTab = 0),
+                    onTap: _isProcessing
+                        ? null
+                        : () => setState(() => _selectedTab = 0),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: _selectedTab == 0 ? Colors.white : Colors.transparent,
+                        color: _selectedTab == 0
+                            ? Colors.white
+                            : Colors.transparent,
                         borderRadius: BorderRadius.circular(21),
                         boxShadow: _selectedTab == 0
-                            ? const [BoxShadow(color: Color(0x1F000000), blurRadius: 4, offset: Offset(0, 2))]
+                            ? const [
+                                BoxShadow(
+                                    color: Color(0x1F000000),
+                                    blurRadius: 4,
+                                    offset: Offset(0, 2))
+                              ]
                             : null,
                       ),
                       alignment: Alignment.center,
@@ -823,7 +941,9 @@ class _WompiCheckoutWidgetState extends State<_WompiCheckoutWidget> {
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
-                          color: _selectedTab == 0 ? const Color(0xFF5C288D) : Colors.grey[600],
+                          color: _selectedTab == 0
+                              ? const Color(0xFF5C288D)
+                              : Colors.grey[600],
                         ),
                       ),
                     ),
@@ -831,13 +951,22 @@ class _WompiCheckoutWidgetState extends State<_WompiCheckoutWidget> {
                 ),
                 Expanded(
                   child: GestureDetector(
-                    onTap: _isProcessing ? null : () => setState(() => _selectedTab = 1),
+                    onTap: _isProcessing
+                        ? null
+                        : () => setState(() => _selectedTab = 1),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: _selectedTab == 1 ? Colors.white : Colors.transparent,
+                        color: _selectedTab == 1
+                            ? Colors.white
+                            : Colors.transparent,
                         borderRadius: BorderRadius.circular(21),
                         boxShadow: _selectedTab == 1
-                            ? const [BoxShadow(color: Color(0x1F000000), blurRadius: 4, offset: Offset(0, 2))]
+                            ? const [
+                                BoxShadow(
+                                    color: Color(0x1F000000),
+                                    blurRadius: 4,
+                                    offset: Offset(0, 2))
+                              ]
                             : null,
                       ),
                       alignment: Alignment.center,
@@ -846,7 +975,9 @@ class _WompiCheckoutWidgetState extends State<_WompiCheckoutWidget> {
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
-                          color: _selectedTab == 1 ? const Color(0xFF5C288D) : Colors.grey[600],
+                          color: _selectedTab == 1
+                              ? const Color(0xFF5C288D)
+                              : Colors.grey[600],
                         ),
                       ),
                     ),
@@ -862,7 +993,10 @@ class _WompiCheckoutWidgetState extends State<_WompiCheckoutWidget> {
             Text(
               '❌ $_errorMsg',
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.redAccent, fontSize: 13, fontWeight: FontWeight.w500),
+              style: const TextStyle(
+                  color: Colors.redAccent,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500),
             ),
           ],
           const SizedBox(height: 24),
@@ -872,7 +1006,8 @@ class _WompiCheckoutWidgetState extends State<_WompiCheckoutWidget> {
               foregroundColor: Colors.white,
               disabledBackgroundColor: const Color(0xFFBCABC7),
               padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30)),
               elevation: 0,
             ),
             onPressed: _isProcessing ? null : _handlePayment,
@@ -880,14 +1015,17 @@ class _WompiCheckoutWidgetState extends State<_WompiCheckoutWidget> {
                 ? const SizedBox(
                     width: 20,
                     height: 20,
-                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                    child: CircularProgressIndicator(
+                        color: Colors.white, strokeWidth: 2),
                   )
                 : const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.lock_outline, size: 18),
                       SizedBox(width: 8),
-                      Text('Pagar de forma segura', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                      Text('Pagar de forma segura',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 15)),
                     ],
                   ),
           ),
@@ -914,7 +1052,8 @@ class _WompiCheckoutWidgetState extends State<_WompiCheckoutWidget> {
       keyboardType: TextInputType.phone,
       enabled: !_isProcessing,
       style: const TextStyle(fontSize: 14),
-      decoration: _inputDecoration('Número de celular (Nequi)', Icons.phone_android),
+      decoration:
+          _inputDecoration('Número de celular (Nequi)', Icons.phone_android),
       validator: (val) {
         if (val == null || val.isEmpty) return 'El número es requerido';
         if (val.length != 10 || !RegExp(r'^[0-9]+$').hasMatch(val)) {
@@ -935,7 +1074,8 @@ class _WompiCheckoutWidgetState extends State<_WompiCheckoutWidget> {
           style: const TextStyle(fontSize: 14),
           decoration: _inputDecoration('Número de Tarjeta', Icons.credit_card),
           validator: (val) {
-            if (val == null || val.isEmpty) return 'El número de tarjeta es requerido';
+            if (val == null || val.isEmpty)
+              return 'El número de tarjeta es requerido';
             if (val.length != 16 || !RegExp(r'^[0-9]+$').hasMatch(val)) {
               return 'Debe tener 16 dígitos';
             }
@@ -951,7 +1091,8 @@ class _WompiCheckoutWidgetState extends State<_WompiCheckoutWidget> {
                 keyboardType: TextInputType.datetime,
                 enabled: !_isProcessing,
                 style: const TextStyle(fontSize: 14),
-                decoration: _inputDecoration('Exp (MM/AA)', Icons.calendar_month),
+                decoration:
+                    _inputDecoration('Exp (MM/AA)', Icons.calendar_month),
                 validator: (val) {
                   if (val == null || val.isEmpty) return 'Requerido';
                   if (!RegExp(r'^(0[1-9]|1[0-2])\/[0-9]{2}$').hasMatch(val)) {
@@ -986,9 +1127,11 @@ class _WompiCheckoutWidgetState extends State<_WompiCheckoutWidget> {
           keyboardType: TextInputType.name,
           enabled: !_isProcessing,
           style: const TextStyle(fontSize: 14),
-          decoration: _inputDecoration('Titular de la tarjeta', Icons.person_outline),
+          decoration:
+              _inputDecoration('Titular de la tarjeta', Icons.person_outline),
           validator: (val) {
-            if (val == null || val.isEmpty) return 'El nombre del titular es requerido';
+            if (val == null || val.isEmpty)
+              return 'El nombre del titular es requerido';
             return null;
           },
         ),
@@ -1002,11 +1145,13 @@ class _WompiCheckoutWidgetState extends State<_WompiCheckoutWidget> {
       children: [
         Text(
           label,
-          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black54),
+          style: const TextStyle(
+              fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black54),
         ),
         Text(
           value,
-          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black87),
+          style: const TextStyle(
+              fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black87),
         ),
       ],
     );
@@ -1020,7 +1165,8 @@ class _WompiCheckoutWidgetState extends State<_WompiCheckoutWidget> {
       floatingLabelBehavior: FloatingLabelBehavior.never,
       filled: true,
       fillColor: const Color(0xFFF9F7FA),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
+      border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(30),
         borderSide: BorderSide.none,

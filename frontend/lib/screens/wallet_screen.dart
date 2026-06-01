@@ -29,7 +29,9 @@ class _WalletScreenState extends State<WalletScreen>
   bool _loadingMore = false;
 
   static final _formatCOP = NumberFormat.currency(
-    locale: 'es_CO', symbol: '\$', decimalDigits: 0,
+    locale: 'es_CO',
+    symbol: '\$',
+    decimalDigits: 0,
   );
 
   @override
@@ -46,25 +48,41 @@ class _WalletScreenState extends State<WalletScreen>
   }
 
   Future<void> _cargarWallet() async {
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       final res = await ApiService.get('/api/wallet');
-      setState(() { _wallet = res; _loading = false; });
+      setState(() {
+        _wallet = res;
+        _loading = false;
+      });
       _cargarTransacciones(loadMore: false);
     } catch (e) {
-      setState(() { _error = e.toString(); _loading = false; });
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
     }
   }
 
   Future<void> _cargarTransacciones({bool loadMore = false}) async {
     if (loadMore) {
       if (_loadingMore || !_hasMore) return;
-      setState(() { _loadingMore = true; });
+      setState(() {
+        _loadingMore = true;
+      });
     } else {
-      setState(() { _loadingTx = true; _currentPage = 1; _hasMore = true; });
+      setState(() {
+        _loadingTx = true;
+        _currentPage = 1;
+        _hasMore = true;
+      });
     }
     try {
-      final res = await ApiService.get('/api/wallet/transactions?page=$_currentPage&limit=15');
+      final res = await ApiService.get(
+          '/api/wallet/transactions?page=$_currentPage&limit=15');
       final newTxs = res['transacciones'] ?? [];
       final pagination = res['pagination'];
       final total = pagination != null ? (pagination['total'] ?? 0) : 0;
@@ -83,20 +101,26 @@ class _WalletScreenState extends State<WalletScreen>
         _loadingMore = false;
       });
     } catch (_) {
-      setState(() { _loadingTx = false; _loadingMore = false; });
+      setState(() {
+        _loadingTx = false;
+        _loadingMore = false;
+      });
     }
   }
 
   Future<void> _solicitarRetiro() async {
     final wallet = _wallet!;
-    final disponible = double.tryParse(wallet['saldo_disponible'].toString()) ?? 0;
-    final minimo = double.tryParse(wallet['minimo_retiro_cop'].toString()) ?? 50000;
+    final disponible =
+        double.tryParse(wallet['saldo_disponible'].toString()) ?? 0;
+    final minimo =
+        double.tryParse(wallet['minimo_retiro_cop'].toString()) ?? 50000;
 
     final TextEditingController montoCtrl = TextEditingController(
       text: disponible.toStringAsFixed(0),
     );
 
-    final String targetCuenta = '${wallet['banco'] ?? ''} ****${(wallet['numero_cuenta'] ?? '').toString().length > 4 ? wallet['numero_cuenta'].toString().substring(wallet['numero_cuenta'].toString().length - 4) : '????'}';
+    final String targetCuenta =
+        '${wallet['banco'] ?? ''} ****${(wallet['numero_cuenta'] ?? '').toString().length > 4 ? wallet['numero_cuenta'].toString().substring(wallet['numero_cuenta'].toString().length - 4) : '????'}';
 
     final resultado = await showModalBottomSheet<bool>(
       context: context,
@@ -113,15 +137,18 @@ class _WalletScreenState extends State<WalletScreen>
     if (resultado == true) {
       if (!mounted) return;
       // 2-step confirmation dialog
-      final double montoFinal = double.parse(montoCtrl.text.replaceAll('.', '').replaceAll(',', ''));
+      final double montoFinal =
+          double.parse(montoCtrl.text.replaceAll('.', '').replaceAll(',', ''));
       final bool? verificado = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
           backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: const Text(
             '¿Confirmar retiro?',
-            style: TextStyle(color: Color(0xFF4A3E3D), fontWeight: FontWeight.bold),
+            style: TextStyle(
+                color: Color(0xFF4A3E3D), fontWeight: FontWeight.bold),
           ),
           content: Text(
             'Estás a punto de retirar ${_formatCOP.format(montoFinal)} a tu cuenta $targetCuenta. Esta acción no se puede deshacer.',
@@ -130,14 +157,16 @@ class _WalletScreenState extends State<WalletScreen>
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancelar', style: TextStyle(color: Color(0xFF8E7D7A))),
+              child: const Text('Cancelar',
+                  style: TextStyle(color: Color(0xFF8E7D7A))),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(ctx, true),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFC89D93),
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
               child: const Text('Confirmar Retiro'),
             ),
@@ -152,7 +181,8 @@ class _WalletScreenState extends State<WalletScreen>
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('✅ Retiro solicitado. Llegará en 1-2 días hábiles.'),
+                content:
+                    Text('✅ Retiro solicitado. Llegará en 1-2 días hábiles.'),
                 backgroundColor: Color(0xFF10B981),
               ),
             );
@@ -162,7 +192,8 @@ class _WalletScreenState extends State<WalletScreen>
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Error: ${e.toString().replaceAll('Exception: ', '')}'),
+                content: Text(
+                    'Error: ${e.toString().replaceAll('Exception: ', '')}'),
                 backgroundColor: Colors.red,
               ),
             );
@@ -177,7 +208,8 @@ class _WalletScreenState extends State<WalletScreen>
     return Scaffold(
       backgroundColor: Colors.white,
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFFC89D93)))
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFFC89D93)))
           : _error != null
               ? _buildError()
               : _buildContent(),
@@ -193,7 +225,8 @@ class _WalletScreenState extends State<WalletScreen>
         leading: widget.isEmbedded
             ? null
             : IconButton(
-                icon: const Icon(Icons.arrow_back_ios, color: Color(0xFFC89D93)),
+                icon:
+                    const Icon(Icons.arrow_back_ios, color: Color(0xFFC89D93)),
                 onPressed: () => Navigator.pop(context),
               ),
         title: const Text(
@@ -223,7 +256,8 @@ class _WalletScreenState extends State<WalletScreen>
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFC89D93),
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
               child: const Text('Reintentar'),
             ),
@@ -235,9 +269,12 @@ class _WalletScreenState extends State<WalletScreen>
 
   Widget _buildContent() {
     final wallet = _wallet!;
-    final disponible = double.tryParse(wallet['saldo_disponible'].toString()) ?? 0;
-    final pendiente = double.tryParse(wallet['saldo_pendiente'].toString()) ?? 0;
-    final enDisputa = double.tryParse(wallet['saldo_en_disputa'].toString()) ?? 0;
+    final disponible =
+        double.tryParse(wallet['saldo_disponible'].toString()) ?? 0;
+    final pendiente =
+        double.tryParse(wallet['saldo_pendiente'].toString()) ?? 0;
+    final enDisputa =
+        double.tryParse(wallet['saldo_en_disputa'].toString()) ?? 0;
     final puedeRetirar = wallet['puede_retirar'] == true;
     final razonBloqueo = wallet['razon_bloqueo'] as String?;
 
@@ -257,7 +294,10 @@ class _WalletScreenState extends State<WalletScreen>
                 ),
               ),
               padding: EdgeInsets.fromLTRB(
-                24, MediaQuery.of(context).padding.top + 16, 24, 32,
+                24,
+                MediaQuery.of(context).padding.top + 16,
+                24,
+                32,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -266,7 +306,8 @@ class _WalletScreenState extends State<WalletScreen>
                     children: [
                       if (!widget.isEmbedded)
                         IconButton(
-                          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+                          icon: const Icon(Icons.arrow_back_ios,
+                              color: Colors.white),
                           onPressed: () => Navigator.pop(context),
                         ),
                       const Spacer(),
@@ -280,7 +321,8 @@ class _WalletScreenState extends State<WalletScreen>
                       ),
                       const Spacer(),
                       IconButton(
-                        icon: const Icon(Icons.settings_outlined, color: Colors.white),
+                        icon: const Icon(Icons.settings_outlined,
+                            color: Colors.white),
                         onPressed: () => _mostrarConfigRetiro(),
                       ),
                     ],
@@ -336,9 +378,8 @@ class _WalletScreenState extends State<WalletScreen>
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: puedeRetirar
-                              ? Colors.white
-                              : Colors.white38,
+                          backgroundColor:
+                              puedeRetirar ? Colors.white : Colors.white38,
                           foregroundColor: puedeRetirar
                               ? const Color(0xFFC89D93)
                               : Colors.black26,
@@ -357,7 +398,8 @@ class _WalletScreenState extends State<WalletScreen>
                       child: Center(
                         child: Text(
                           'Próximo retiro: ${DateFormat('dd MMM, hh:mm a', 'es').format(DateTime.parse(wallet['proxima_fecha_retiro']))}',
-                          style: const TextStyle(color: Colors.white, fontSize: 12),
+                          style: const TextStyle(
+                              color: Colors.white, fontSize: 12),
                         ),
                       ),
                     ),
@@ -402,11 +444,13 @@ class _WalletScreenState extends State<WalletScreen>
 
   Widget _buildMovimientos() {
     if (_loadingTx) {
-      return const Center(child: CircularProgressIndicator(color: Color(0xFFC89D93)));
+      return const Center(
+          child: CircularProgressIndicator(color: Color(0xFFC89D93)));
     }
     if (_transacciones.isEmpty) {
       return const Center(
-        child: Text('Sin movimientos aún', style: TextStyle(color: Color(0xFF8E7D7A), fontSize: 14)),
+        child: Text('Sin movimientos aún',
+            style: TextStyle(color: Color(0xFF8E7D7A), fontSize: 14)),
       );
     }
 
@@ -423,7 +467,8 @@ class _WalletScreenState extends State<WalletScreen>
           if (_loadingMore) {
             return const Padding(
               padding: EdgeInsets.all(16.0),
-              child: Center(child: CircularProgressIndicator(color: Color(0xFFC89D93))),
+              child: Center(
+                  child: CircularProgressIndicator(color: Color(0xFFC89D93))),
             );
           }
           return Padding(
@@ -433,9 +478,11 @@ class _WalletScreenState extends State<WalletScreen>
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: Color(0xFFC89D93)),
                 foregroundColor: const Color(0xFFC89D93),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
-              child: const Text('Cargar más movimientos', style: TextStyle(fontSize: 14)),
+              child: const Text('Cargar más movimientos',
+                  style: TextStyle(fontSize: 14)),
             ),
           );
         }
@@ -445,9 +492,11 @@ class _WalletScreenState extends State<WalletScreen>
   }
 
   Widget _buildRetirosTab() {
-    final retiros = _transacciones.where((tx) => tx['tipo'] == 'DEBITO_RETIRO').toList();
+    final retiros =
+        _transacciones.where((tx) => tx['tipo'] == 'DEBITO_RETIRO').toList();
     if (_loadingTx) {
-      return const Center(child: CircularProgressIndicator(color: Color(0xFFC89D93)));
+      return const Center(
+          child: CircularProgressIndicator(color: Color(0xFFC89D93)));
     }
     if (retiros.isEmpty) {
       return const Center(
@@ -464,7 +513,8 @@ class _WalletScreenState extends State<WalletScreen>
         final tx = retiros[i];
         final monto = double.tryParse(tx['monto'].toString()) ?? 0;
         final fecha = tx['created_at'] != null
-            ? DateFormat('dd MMM, hh:mm a', 'es').format(DateTime.parse(tx['created_at']))
+            ? DateFormat('dd MMM, hh:mm a', 'es')
+                .format(DateTime.parse(tx['created_at']))
             : '';
         final estadoRaw = (tx['estado'] ?? '').toString().toUpperCase();
 
@@ -502,7 +552,8 @@ class _WalletScreenState extends State<WalletScreen>
                   color: const Color(0xFFC89D93).withOpacity(0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.account_balance_wallet, color: Color(0xFFC89D93), size: 20),
+                child: const Icon(Icons.account_balance_wallet,
+                    color: Color(0xFFC89D93), size: 20),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -511,10 +562,15 @@ class _WalletScreenState extends State<WalletScreen>
                   children: [
                     const Text(
                       'Retiro solicitado',
-                      style: TextStyle(color: Color(0xFF4A3E3D), fontWeight: FontWeight.w600, fontSize: 14),
+                      style: TextStyle(
+                          color: Color(0xFF4A3E3D),
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14),
                     ),
                     const SizedBox(height: 2),
-                    Text(fecha, style: const TextStyle(color: Color(0xFF8E7D7A), fontSize: 12)),
+                    Text(fecha,
+                        style: const TextStyle(
+                            color: Color(0xFF8E7D7A), fontSize: 12)),
                   ],
                 ),
               ),
@@ -531,7 +587,8 @@ class _WalletScreenState extends State<WalletScreen>
                   ),
                   const SizedBox(height: 4),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
                       color: estadoColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(6),
@@ -557,7 +614,8 @@ class _WalletScreenState extends State<WalletScreen>
   Widget _buildResumen() {
     final wallet = _wallet!;
     final totalGanado = double.tryParse(wallet['total_ganado'].toString()) ?? 0;
-    final totalRetirado = double.tryParse(wallet['total_retirado'].toString()) ?? 0;
+    final totalRetirado =
+        double.tryParse(wallet['total_retirado'].toString()) ?? 0;
     final modelo = wallet['modelo_retiro'] ?? 'DEMANDA';
 
     return ListView(
@@ -622,7 +680,8 @@ class _WalletScreenState extends State<WalletScreen>
             decoration: BoxDecoration(
               color: const Color(0xFF10B981).withOpacity(0.08),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFF10B981).withOpacity(0.25)),
+              border:
+                  Border.all(color: const Color(0xFF10B981).withOpacity(0.25)),
             ),
             child: Row(
               children: [
@@ -632,10 +691,14 @@ class _WalletScreenState extends State<WalletScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text('Cuenta verificada',
-                      style: TextStyle(color: Color(0xFF4A3E3D), fontWeight: FontWeight.bold, fontSize: 13)),
+                        style: TextStyle(
+                            color: Color(0xFF4A3E3D),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13)),
                     Text(
                       '${wallet['banco'] ?? ''} ****${wallet['numero_cuenta'].toString().length > 4 ? wallet['numero_cuenta'].toString().substring(wallet['numero_cuenta'].toString().length - 4) : ''}',
-                      style: const TextStyle(color: Color(0xFF8E7D7A), fontSize: 12),
+                      style: const TextStyle(
+                          color: Color(0xFF8E7D7A), fontSize: 12),
                     ),
                   ],
                 ),
@@ -648,17 +711,23 @@ class _WalletScreenState extends State<WalletScreen>
 
   String _nombreModelo(String modelo) {
     switch (modelo) {
-      case 'QUINCENA': return 'Automático cada 15 días';
-      case 'MENSUAL':  return 'Automático mensual';
-      default:         return 'Por demanda';
+      case 'QUINCENA':
+        return 'Automático cada 15 días';
+      case 'MENSUAL':
+        return 'Automático mensual';
+      default:
+        return 'Por demanda';
     }
   }
 
   String _descripcionModelo(String modelo) {
     switch (modelo) {
-      case 'QUINCENA': return 'Retiro automático los días 15 y último del mes';
-      case 'MENSUAL':  return 'Retiro automático el último día de cada mes';
-      default:         return 'Retira cuando quieras, mín. \$50.000 cada 3 días';
+      case 'QUINCENA':
+        return 'Retiro automático los días 15 y último del mes';
+      case 'MENSUAL':
+        return 'Retiro automático el último día de cada mes';
+      default:
+        return 'Retira cuando quieras, mín. \$50.000 cada 3 días';
     }
   }
 
@@ -682,20 +751,31 @@ class _WalletScreenState extends State<WalletScreen>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text('Modelo de retiro',
-                style: TextStyle(color: Color(0xFF4A3E3D), fontSize: 18, fontWeight: FontWeight.bold)),
+                  style: TextStyle(
+                      color: Color(0xFF4A3E3D),
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold)),
               const SizedBox(height: 20),
               ...[
                 ('DEMANDA', 'Por demanda', 'Cada 3 días, mín. \$50.000'),
-                ('QUINCENA', 'Cada 15 días', 'Automático los días 15 y último del mes'),
+                (
+                  'QUINCENA',
+                  'Cada 15 días',
+                  'Automático los días 15 y último del mes'
+                ),
                 ('MENSUAL', 'Mensual', 'Automático el último día del mes'),
               ].map((m) => RadioListTile<String>(
-                value: m.$1,
-                groupValue: modeloSeleccionado,
-                activeColor: const Color(0xFFC89D93),
-                title: Text(m.$2, style: const TextStyle(color: Color(0xFF4A3E3D))),
-                subtitle: Text(m.$3, style: const TextStyle(color: Color(0xFF8E7D7A), fontSize: 12)),
-                onChanged: (v) => setModalState(() => modeloSeleccionado = v!),
-              )),
+                    value: m.$1,
+                    groupValue: modeloSeleccionado,
+                    activeColor: const Color(0xFFC89D93),
+                    title: Text(m.$2,
+                        style: const TextStyle(color: Color(0xFF4A3E3D))),
+                    subtitle: Text(m.$3,
+                        style: const TextStyle(
+                            color: Color(0xFF8E7D7A), fontSize: 12)),
+                    onChanged: (v) =>
+                        setModalState(() => modeloSeleccionado = v!),
+                  )),
               const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
@@ -703,17 +783,22 @@ class _WalletScreenState extends State<WalletScreen>
                   onPressed: () async {
                     Navigator.pop(ctx);
                     try {
-                      await ApiService.put('/api/wallet/model', {'modelo': modeloSeleccionado});
+                      await ApiService.put(
+                          '/api/wallet/model', {'modelo': modeloSeleccionado});
                       _cargarWallet();
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Modelo actualizado'), backgroundColor: Color(0xFF10B981)),
+                          const SnackBar(
+                              content: Text('Modelo actualizado'),
+                              backgroundColor: Color(0xFF10B981)),
                         );
                       }
                     } catch (e) {
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+                          SnackBar(
+                              content: Text('Error: $e'),
+                              backgroundColor: Colors.red),
                         );
                       }
                     }
@@ -721,9 +806,14 @@ class _WalletScreenState extends State<WalletScreen>
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFC89D93),
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: const Text('Guardar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                  child: const Text('Guardar',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14)),
                 ),
               ),
             ],
@@ -742,7 +832,11 @@ class _SaldoChip extends StatelessWidget {
   final Color color;
   final IconData icon;
 
-  const _SaldoChip({required this.label, required this.monto, required this.color, required this.icon});
+  const _SaldoChip(
+      {required this.label,
+      required this.monto,
+      required this.color,
+      required this.icon});
 
   @override
   Widget build(BuildContext context) {
@@ -764,8 +858,13 @@ class _SaldoChip extends StatelessWidget {
                 children: [
                   Text(label, style: TextStyle(color: color, fontSize: 12)),
                   Text(
-                    NumberFormat.currency(locale: 'es_CO', symbol: '\$', decimalDigits: 0).format(monto),
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                    NumberFormat.currency(
+                            locale: 'es_CO', symbol: '\$', decimalDigits: 0)
+                        .format(monto),
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
@@ -785,20 +884,35 @@ class _TransaccionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tipo = tx['tipo'] as String;
-    final esCredito = tipo.startsWith('CREDITO') || tipo == 'LIBERACION_DISPUTA' || tipo == 'BONO_CANCELACION';
+    final esCredito = tipo.startsWith('CREDITO') ||
+        tipo == 'LIBERACION_DISPUTA' ||
+        tipo == 'BONO_CANCELACION';
     final monto = double.tryParse(tx['monto'].toString()) ?? 0;
     final fecha = tx['created_at'] != null
-        ? DateFormat('dd MMM, hh:mm a', 'es').format(DateTime.parse(tx['created_at']))
+        ? DateFormat('dd MMM, hh:mm a', 'es')
+            .format(DateTime.parse(tx['created_at']))
         : '';
 
     final (icono, color, titulo) = switch (tipo) {
-      'CREDITO_SERVICIO'    => (Icons.arrow_downward, const Color(0xFF10B981), 'Servicio completado'),
-      'DEBITO_RETIRO'       => (Icons.arrow_upward, const Color(0xFFC89D93), 'Retiro'),
-      'RETENCION_DISPUTA'   => (Icons.gavel, Colors.orange, 'Fondos retenidos'),
-      'LIBERACION_DISPUTA'  => (Icons.check_circle, const Color(0xFF10B981), 'Disputa resuelta'),
-      'BONO_CANCELACION'    => (Icons.card_giftcard, Colors.blue, 'Bono recibido'),
-      'AJUSTE_ADMIN'        => (Icons.tune, Colors.grey, 'Ajuste administrativo'),
-      _                     => (Icons.swap_horiz, Colors.grey, tipo),
+      'CREDITO_SERVICIO' => (
+          Icons.arrow_downward,
+          const Color(0xFF10B981),
+          'Servicio completado'
+        ),
+      'DEBITO_RETIRO' => (
+          Icons.arrow_upward,
+          const Color(0xFFC89D93),
+          'Retiro'
+        ),
+      'RETENCION_DISPUTA' => (Icons.gavel, Colors.orange, 'Fondos retenidos'),
+      'LIBERACION_DISPUTA' => (
+          Icons.check_circle,
+          const Color(0xFF10B981),
+          'Disputa resuelta'
+        ),
+      'BONO_CANCELACION' => (Icons.card_giftcard, Colors.blue, 'Bono recibido'),
+      'AJUSTE_ADMIN' => (Icons.tune, Colors.grey, 'Ajuste administrativo'),
+      _ => (Icons.swap_horiz, Colors.grey, tipo),
     };
 
     return Container(
@@ -819,7 +933,8 @@ class _TransaccionTile extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: 40, height: 40,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
               color: color.withOpacity(0.12),
               borderRadius: BorderRadius.circular(10),
@@ -831,17 +946,26 @@ class _TransaccionTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(titulo, style: const TextStyle(color: Color(0xFF4A3E3D), fontWeight: FontWeight.w600, fontSize: 14)),
+                Text(titulo,
+                    style: const TextStyle(
+                        color: Color(0xFF4A3E3D),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14)),
                 if (tx['servicio_nombre'] != null)
-                  Text(tx['servicio_nombre'], style: const TextStyle(color: Color(0xFF8E7D7A), fontSize: 12)),
-                Text(fecha, style: const TextStyle(color: Color(0xFF8E7D7A), fontSize: 12)),
+                  Text(tx['servicio_nombre'],
+                      style: const TextStyle(
+                          color: Color(0xFF8E7D7A), fontSize: 12)),
+                Text(fecha,
+                    style: const TextStyle(
+                        color: Color(0xFF8E7D7A), fontSize: 12)),
               ],
             ),
           ),
           Text(
             '${esCredito ? '+' : '-'}${NumberFormat.currency(locale: 'es_CO', symbol: '\$', decimalDigits: 0).format(monto)}',
             style: TextStyle(
-              color: esCredito ? const Color(0xFF10B981) : const Color(0xFFC89D93),
+              color:
+                  esCredito ? const Color(0xFF10B981) : const Color(0xFFC89D93),
               fontWeight: FontWeight.bold,
               fontSize: 15,
             ),
@@ -858,7 +982,11 @@ class _ResumenCard extends StatelessWidget {
   final IconData icon;
   final Color color;
 
-  const _ResumenCard({required this.titulo, required this.monto, required this.icon, required this.color});
+  const _ResumenCard(
+      {required this.titulo,
+      required this.monto,
+      required this.icon,
+      required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -876,10 +1004,15 @@ class _ResumenCard extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(titulo, style: const TextStyle(color: Color(0xFF8E7D7A), fontSize: 13)),
+              Text(titulo,
+                  style:
+                      const TextStyle(color: Color(0xFF8E7D7A), fontSize: 13)),
               Text(
-                NumberFormat.currency(locale: 'es_CO', symbol: '\$', decimalDigits: 0).format(monto),
-                style: TextStyle(color: color, fontSize: 22, fontWeight: FontWeight.bold),
+                NumberFormat.currency(
+                        locale: 'es_CO', symbol: '\$', decimalDigits: 0)
+                    .format(monto),
+                style: TextStyle(
+                    color: color, fontSize: 22, fontWeight: FontWeight.bold),
               ),
             ],
           ),
@@ -929,7 +1062,8 @@ class _RetiroBottomSheetState extends State<_RetiroBottomSheet> {
         ),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       ),
-      child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+      child: Text(label,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
     );
   }
 
@@ -946,16 +1080,24 @@ class _RetiroBottomSheetState extends State<_RetiroBottomSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Center(child: Container(
-            width: 40, height: 4,
-            decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
+          Center(
+              child: Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2)),
           )),
           const SizedBox(height: 20),
           const Text('Solicitar retiro',
-            style: TextStyle(color: Color(0xFF4A3E3D), fontSize: 20, fontWeight: FontWeight.bold)),
+              style: TextStyle(
+                  color: Color(0xFF4A3E3D),
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold)),
           const SizedBox(height: 4),
-          Text('Disponible: ${NumberFormat.currency(locale: 'es_CO', symbol: '\$', decimalDigits: 0).format(widget.disponible)}',
-            style: const TextStyle(color: Color(0xFF8E7D7A), fontSize: 14)),
+          Text(
+              'Disponible: ${NumberFormat.currency(locale: 'es_CO', symbol: '\$', decimalDigits: 0).format(widget.disponible)}',
+              style: const TextStyle(color: Color(0xFF8E7D7A), fontSize: 14)),
           const SizedBox(height: 16),
           // Quick selector buttons
           Row(
@@ -971,12 +1113,20 @@ class _RetiroBottomSheetState extends State<_RetiroBottomSheet> {
             controller: widget.montoCtrl,
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            style: const TextStyle(color: Color(0xFF4A3E3D), fontSize: 24, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+                color: Color(0xFF4A3E3D),
+                fontSize: 24,
+                fontWeight: FontWeight.bold),
             decoration: InputDecoration(
               prefixText: '\$ ',
-              prefixStyle: const TextStyle(color: Color(0xFFC89D93), fontSize: 24, fontWeight: FontWeight.bold),
-              helperText: 'Mínimo: ${NumberFormat.currency(locale: 'es_CO', symbol: '\$', decimalDigits: 0).format(widget.minimo)}',
-              helperStyle: const TextStyle(color: Color(0xFF8E7D7A), fontSize: 12),
+              prefixStyle: const TextStyle(
+                  color: Color(0xFFC89D93),
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold),
+              helperText:
+                  'Mínimo: ${NumberFormat.currency(locale: 'es_CO', symbol: '\$', decimalDigits: 0).format(widget.minimo)}',
+              helperStyle:
+                  const TextStyle(color: Color(0xFF8E7D7A), fontSize: 12),
               filled: true,
               fillColor: const Color(0xFFFAF5F4),
               border: OutlineInputBorder(
@@ -995,9 +1145,12 @@ class _RetiroBottomSheetState extends State<_RetiroBottomSheet> {
             ),
             child: Row(
               children: [
-                const Icon(Icons.account_balance, color: Color(0xFFC89D93), size: 18),
+                const Icon(Icons.account_balance,
+                    color: Color(0xFFC89D93), size: 18),
                 const SizedBox(width: 10),
-                Text(widget.cuenta, style: const TextStyle(color: Color(0xFF4A3E3D), fontSize: 14)),
+                Text(widget.cuenta,
+                    style: const TextStyle(
+                        color: Color(0xFF4A3E3D), fontSize: 14)),
               ],
             ),
           ),
@@ -1014,17 +1167,22 @@ class _RetiroBottomSheetState extends State<_RetiroBottomSheet> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFC89D93),
                 padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
               child: const Text('Confirmar retiro',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16)),
             ),
           ),
           const SizedBox(height: 8),
           Center(
             child: TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancelar', style: TextStyle(color: Color(0xFF8E7D7A), fontSize: 14)),
+              child: const Text('Cancelar',
+                  style: TextStyle(color: Color(0xFF8E7D7A), fontSize: 14)),
             ),
           ),
         ],
@@ -1039,12 +1197,16 @@ class _TabDelegate extends SliverPersistentHeaderDelegate {
   final TabBar tabBar;
   const _TabDelegate(this.tabBar);
 
-  @override double get minExtent => tabBar.preferredSize.height;
-  @override double get maxExtent => tabBar.preferredSize.height;
-  @override bool shouldRebuild(covariant _TabDelegate oldDelegate) => false;
+  @override
+  double get minExtent => tabBar.preferredSize.height;
+  @override
+  double get maxExtent => tabBar.preferredSize.height;
+  @override
+  bool shouldRebuild(covariant _TabDelegate oldDelegate) => false;
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
     return Container(
       color: Colors.white,
       child: tabBar,

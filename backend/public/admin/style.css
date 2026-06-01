@@ -327,6 +327,16 @@ h1, h2, h3, h4, .sidebar-logo {
   color: var(--color-warning);
 }
 
+.kpi-icon.revenue-commission {
+  background-color: rgba(16, 185, 129, 0.15);
+  color: #34D399;
+}
+
+.kpi-icon.state-tax-card {
+  background-color: rgba(167, 139, 250, 0.15);
+  color: #A78BFA;
+}
+
 .kpi-icon.bookings {
   background-color: rgba(200, 157, 147, 0.15);
   color: var(--color-primary);
@@ -340,6 +350,17 @@ h1, h2, h3, h4, .sidebar-logo {
 .kpi-icon.sos {
   background-color: rgba(239, 68, 68, 0.15);
   color: var(--color-danger);
+}
+
+/* Badge de Proyección */
+#projection-trend-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  color: white;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
 .kpi-data {

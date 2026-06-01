@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/api_service.dart';
@@ -7,7 +6,8 @@ class ProviderPortfolioScreen extends StatefulWidget {
   const ProviderPortfolioScreen({super.key});
 
   @override
-  State<ProviderPortfolioScreen> createState() => _ProviderPortfolioScreenState();
+  State<ProviderPortfolioScreen> createState() =>
+      _ProviderPortfolioScreenState();
 }
 
 class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
@@ -17,7 +17,15 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
   final ImagePicker _picker = ImagePicker();
 
   String _selectedCategory = 'Todos';
-  final List<String> _filterCategories = ['Todos', 'Cabello', 'Uñas', 'Maquillaje', 'Cuidado de la piel', 'Barbería', 'Otros'];
+  final List<String> _filterCategories = [
+    'Todos',
+    'Cabello',
+    'Uñas',
+    'Maquillaje',
+    'Cuidado de la piel',
+    'Barbería',
+    'Otros'
+  ];
 
   @override
   void initState() {
@@ -73,14 +81,25 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
         builder: (context) {
           final titleCtrl = TextEditingController();
           String category = 'Cabello';
-          final categories = ['Cabello', 'Uñas', 'Maquillaje', 'Cuidado de la piel', 'Barbería', 'Otros'];
+          final categories = [
+            'Cabello',
+            'Uñas',
+            'Maquillaje',
+            'Cuidado de la piel',
+            'Barbería',
+            'Otros'
+          ];
           final formKey = GlobalKey<FormState>();
 
           return AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
             title: const Text(
               'Agregar al Portafolio',
-              style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, letterSpacing: -0.5),
+              style: TextStyle(
+                  color: Colors.black87,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: -0.5),
             ),
             content: Form(
               key: formKey,
@@ -99,7 +118,9 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    Text('Ponle un título a tu trabajo y elige la categoría.', style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+                    Text('Ponle un título a tu trabajo y elige la categoría.',
+                        style:
+                            TextStyle(color: Colors.grey[600], fontSize: 13)),
                     const SizedBox(height: 20),
                     TextFormField(
                       controller: titleCtrl,
@@ -110,29 +131,53 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                         floatingLabelBehavior: FloatingLabelBehavior.auto,
                         filled: true,
                         fillColor: const Color(0xFFF5EBE6),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
-                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
-                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: const BorderSide(color: Color(0xFFC89D93), width: 1.5)),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(30),
+                            borderSide: BorderSide.none),
+                        enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(30),
+                            borderSide: BorderSide.none),
+                        focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(30),
+                            borderSide: const BorderSide(
+                                color: Color(0xFFC89D93), width: 1.5)),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 16),
                       ),
-                      validator: (v) => v == null || v.trim().isEmpty ? 'Ingresa un título' : null,
+                      validator: (v) => v == null || v.trim().isEmpty
+                          ? 'Ingresa un título'
+                          : null,
                     ),
                     const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
                       initialValue: category,
-                      style: const TextStyle(color: Colors.black87, fontSize: 14, fontWeight: FontWeight.w500),
+                      style: const TextStyle(
+                          color: Colors.black87,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500),
                       decoration: InputDecoration(
                         labelText: 'Categoría',
                         labelStyle: const TextStyle(color: Colors.grey),
                         floatingLabelBehavior: FloatingLabelBehavior.auto,
                         filled: true,
                         fillColor: const Color(0xFFF5EBE6),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
-                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
-                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: const BorderSide(color: Color(0xFFC89D93), width: 1.5)),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(30),
+                            borderSide: BorderSide.none),
+                        enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(30),
+                            borderSide: BorderSide.none),
+                        focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(30),
+                            borderSide: const BorderSide(
+                                color: Color(0xFFC89D93), width: 1.5)),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 12),
                       ),
-                      items: categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+                      items: categories
+                          .map(
+                              (c) => DropdownMenuItem(value: c, child: Text(c)))
+                          .toList(),
                       onChanged: (v) {
                         if (v != null) {
                           category = v;
@@ -146,7 +191,9 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Cancelar', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                child: const Text('Cancelar',
+                    style: TextStyle(
+                        color: Colors.grey, fontWeight: FontWeight.bold)),
               ),
               ElevatedButton(
                 onPressed: () {
@@ -160,11 +207,14 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFC89D93),
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30)),
                   elevation: 0,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 ),
-                child: const Text('Subir Foto', style: TextStyle(fontWeight: FontWeight.bold)),
+                child: const Text('Subir Foto',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
               ),
             ],
           );
@@ -188,10 +238,11 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('✅ Foto agregada al portafolio con éxito'), 
+            content: const Text('✅ Foto agregada al portafolio con éxito'),
             backgroundColor: const Color(0xFFC89D93),
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           ),
         );
       }
@@ -200,7 +251,9 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
       if (mounted) {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('❌ Error al subir: $e'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('❌ Error al subir: $e'),
+              backgroundColor: Colors.red),
         );
       }
     }
@@ -217,14 +270,25 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
       builder: (context) {
         final titleCtrl = TextEditingController(text: initialTitle);
         String category = initialCategory;
-        final categories = ['Cabello', 'Uñas', 'Maquillaje', 'Cuidado de la piel', 'Barbería', 'Otros'];
+        final categories = [
+          'Cabello',
+          'Uñas',
+          'Maquillaje',
+          'Cuidado de la piel',
+          'Barbería',
+          'Otros'
+        ];
         final formKey = GlobalKey<FormState>();
 
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
           title: const Text(
             'Editar Información',
-            style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, letterSpacing: -0.5),
+            style: TextStyle(
+                color: Colors.black87,
+                fontWeight: FontWeight.bold,
+                letterSpacing: -0.5),
           ),
           content: Form(
             key: formKey,
@@ -243,12 +307,14 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                       errorBuilder: (context, error, stackTrace) => Container(
                         height: 120,
                         color: const Color(0xFFF5EBE6),
-                        child: const Icon(Icons.broken_image, color: Colors.grey),
+                        child:
+                            const Icon(Icons.broken_image, color: Colors.grey),
                       ),
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Text('Edita el título o categoría de este trabajo.', style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+                  Text('Edita el título o categoría de este trabajo.',
+                      style: TextStyle(color: Colors.grey[600], fontSize: 13)),
                   const SizedBox(height: 20),
                   TextFormField(
                     controller: titleCtrl,
@@ -259,29 +325,52 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                       floatingLabelBehavior: FloatingLabelBehavior.auto,
                       filled: true,
                       fillColor: const Color(0xFFF5EBE6),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
-                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
-                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: const BorderSide(color: Color(0xFFC89D93), width: 1.5)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                          borderSide: BorderSide.none),
+                      enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                          borderSide: BorderSide.none),
+                      focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                          borderSide: const BorderSide(
+                              color: Color(0xFFC89D93), width: 1.5)),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 16),
                     ),
-                    validator: (v) => v == null || v.trim().isEmpty ? 'Ingresa un título' : null,
+                    validator: (v) => v == null || v.trim().isEmpty
+                        ? 'Ingresa un título'
+                        : null,
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
                     value: category,
-                    style: const TextStyle(color: Colors.black87, fontSize: 14, fontWeight: FontWeight.w500),
+                    style: const TextStyle(
+                        color: Colors.black87,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500),
                     decoration: InputDecoration(
                       labelText: 'Categoría',
                       labelStyle: const TextStyle(color: Colors.grey),
                       floatingLabelBehavior: FloatingLabelBehavior.auto,
                       filled: true,
                       fillColor: const Color(0xFFF5EBE6),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
-                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
-                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: const BorderSide(color: Color(0xFFC89D93), width: 1.5)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                          borderSide: BorderSide.none),
+                      enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                          borderSide: BorderSide.none),
+                      focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                          borderSide: const BorderSide(
+                              color: Color(0xFFC89D93), width: 1.5)),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 12),
                     ),
-                    items: categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+                    items: categories
+                        .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                        .toList(),
                     onChanged: (v) {
                       if (v != null) {
                         category = v;
@@ -295,7 +384,9 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancelar', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+              child: const Text('Cancelar',
+                  style: TextStyle(
+                      color: Colors.grey, fontWeight: FontWeight.bold)),
             ),
             ElevatedButton(
               onPressed: () {
@@ -309,11 +400,14 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFC89D93),
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30)),
                 elevation: 0,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               ),
-              child: const Text('Guardar', style: TextStyle(fontWeight: FontWeight.bold)),
+              child: const Text('Guardar',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
             ),
           ],
         );
@@ -332,10 +426,12 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('✅ Elemento del portafolio actualizado con éxito'),
+            content:
+                const Text('✅ Elemento del portafolio actualizado con éxito'),
             backgroundColor: const Color(0xFFC89D93),
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           ),
         );
       }
@@ -344,7 +440,9 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
       if (mounted) {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('❌ Error al actualizar: $e'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('❌ Error al actualizar: $e'),
+              backgroundColor: Colors.red),
         );
       }
     }
@@ -357,16 +455,21 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: const Row(
           children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 28),
+            Icon(Icons.warning_amber_rounded,
+                color: Colors.redAccent, size: 28),
             SizedBox(width: 8),
-            Text('¿Eliminar del portafolio?', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            Text('¿Eliminar del portafolio?',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
           ],
         ),
-        content: const Text('¿Estás seguro de que deseas eliminar esta imagen de tu portafolio? Esta acción es definitiva.'),
+        content: const Text(
+            '¿Estás seguro de que deseas eliminar esta imagen de tu portafolio? Esta acción es definitiva.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Volver', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+            child: const Text('Volver',
+                style:
+                    TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
@@ -374,10 +477,12 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
               backgroundColor: const Color(0xFFFEE2E2),
               foregroundColor: const Color(0xFFDC2626),
               elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30)),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             ),
-            child: const Text('Eliminar', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: const Text('Eliminar',
+                style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -390,10 +495,11 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('✅ Imagen eliminada'), 
+              content: const Text('✅ Imagen eliminada'),
               backgroundColor: const Color(0xFFC89D93),
               behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
             ),
           );
         }
@@ -402,7 +508,9 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
         if (mounted) {
           setState(() => _isLoading = false);
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('❌ Error al eliminar: $e'), backgroundColor: Colors.red),
+            SnackBar(
+                content: Text('❌ Error al eliminar: $e'),
+                backgroundColor: Colors.red),
           );
         }
       }
@@ -416,16 +524,22 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.photo_library_outlined, size: 80, color: Color(0xFFC89D93)),
+            const Icon(Icons.photo_library_outlined,
+                size: 80, color: Color(0xFFC89D93)),
             const SizedBox(height: 16),
             const Text(
               'Tu portafolio está vacío',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87, letterSpacing: -0.3),
+              style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                  letterSpacing: -0.3),
             ),
             const SizedBox(height: 8),
             Text(
               'Agrega fotos de tus mejores trabajos para que los clientes puedan ver la calidad de tus servicios.',
-              style: TextStyle(color: Colors.grey[600], height: 1.4, fontSize: 13),
+              style:
+                  TextStyle(color: Colors.grey[600], height: 1.4, fontSize: 13),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
@@ -436,8 +550,10 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFC89D93),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30)),
                 elevation: 0,
               ),
             ),
@@ -450,7 +566,10 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
   Widget _buildPortfolioGrid() {
     final filteredItems = _selectedCategory == 'Todos'
         ? _portfolioItems
-        : _portfolioItems.where((item) => (item['category'] as String? ?? 'General') == _selectedCategory).toList();
+        : _portfolioItems
+            .where((item) =>
+                (item['category'] as String? ?? 'General') == _selectedCategory)
+            .toList();
 
     return Column(
       children: [
@@ -478,8 +597,10 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                   backgroundColor: const Color(0xFFF5EBE6),
                   checkmarkColor: const Color(0xFFC89D93),
                   labelStyle: TextStyle(
-                    color: isSelected ? const Color(0xFFC89D93) : Colors.black87,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    color:
+                        isSelected ? const Color(0xFFC89D93) : Colors.black87,
+                    fontWeight:
+                        isSelected ? FontWeight.bold : FontWeight.normal,
                     fontSize: 12,
                   ),
                   shape: RoundedRectangleBorder(
@@ -498,7 +619,10 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                     padding: const EdgeInsets.all(24.0),
                     child: Text(
                       'No hay elementos en la categoría "$_selectedCategory".',
-                      style: const TextStyle(fontSize: 15, color: Colors.grey, fontWeight: FontWeight.w500),
+                      style: const TextStyle(
+                          fontSize: 15,
+                          color: Colors.grey,
+                          fontWeight: FontWeight.w500),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -544,7 +668,8 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) => FullScreenImageViewer(
+                                          builder: (context) =>
+                                              FullScreenImageViewer(
                                             imageUrl: imageUrl,
                                             title: title,
                                           ),
@@ -554,9 +679,12 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                                     child: Image.network(
                                       imageUrl,
                                       fit: BoxFit.cover,
-                                      errorBuilder: (context, error, stackTrace) => Container(
+                                      errorBuilder:
+                                          (context, error, stackTrace) =>
+                                              Container(
                                         color: const Color(0xFFF5EBE6),
-                                        child: const Icon(Icons.broken_image, color: Colors.grey),
+                                        child: const Icon(Icons.broken_image,
+                                            color: Colors.grey),
                                       ),
                                     ),
                                   ),
@@ -564,18 +692,24 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                                 Padding(
                                   padding: const EdgeInsets.all(12.0),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         title,
-                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                       ),
                                       const SizedBox(height: 2),
                                       Text(
                                         category,
-                                        style: const TextStyle(color: Color(0xFFC89D93), fontSize: 11, fontWeight: FontWeight.bold),
+                                        style: const TextStyle(
+                                            color: Color(0xFFC89D93),
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold),
                                       ),
                                     ],
                                   ),
@@ -591,8 +725,10 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                                     color: Colors.black54,
                                     borderRadius: BorderRadius.circular(20),
                                     child: IconButton(
-                                      icon: const Icon(Icons.edit_outlined, color: Colors.white, size: 18),
-                                      constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                                      icon: const Icon(Icons.edit_outlined,
+                                          color: Colors.white, size: 18),
+                                      constraints: const BoxConstraints(
+                                          minWidth: 34, minHeight: 34),
                                       onPressed: () => _editPortfolioItem(item),
                                     ),
                                   ),
@@ -601,8 +737,10 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                                     color: Colors.black54,
                                     borderRadius: BorderRadius.circular(20),
                                     child: IconButton(
-                                      icon: const Icon(Icons.delete_outline, color: Colors.white, size: 18),
-                                      constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                                      icon: const Icon(Icons.delete_outline,
+                                          color: Colors.white, size: 18),
+                                      constraints: const BoxConstraints(
+                                          minWidth: 34, minHeight: 34),
                                       onPressed: () => _confirmDelete(id),
                                     ),
                                   ),
@@ -625,7 +763,8 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Mi Portafolio', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5)),
+        title: const Text('Mi Portafolio',
+            style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5)),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
@@ -646,7 +785,8 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.error_outline, color: Colors.redAccent, size: 48),
+                  const Icon(Icons.error_outline,
+                      color: Colors.redAccent, size: 48),
                   const SizedBox(height: 16),
                   Text('Error: $_error', textAlign: TextAlign.center),
                   const SizedBox(height: 16),
@@ -674,7 +814,8 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
               backgroundColor: const Color(0xFFC89D93),
               foregroundColor: Colors.white,
               tooltip: 'Agregar Imagen',
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
               elevation: 4,
               child: const Icon(Icons.add_a_photo_outlined),
             )
@@ -703,7 +844,8 @@ class FullScreenImageViewer extends StatelessWidget {
         iconTheme: const IconThemeData(color: Colors.white),
         title: Text(
           title.isNotEmpty ? title : 'Ver Imagen',
-          style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+              color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
         ),
       ),
       body: Center(
@@ -715,7 +857,8 @@ class FullScreenImageViewer extends StatelessWidget {
             fit: BoxFit.contain,
             loadingBuilder: (context, child, loadingProgress) {
               if (loadingProgress == null) return child;
-              return const Center(child: CircularProgressIndicator(color: Colors.white));
+              return const Center(
+                  child: CircularProgressIndicator(color: Colors.white));
             },
             errorBuilder: (context, error, stackTrace) => const Icon(
               Icons.broken_image,

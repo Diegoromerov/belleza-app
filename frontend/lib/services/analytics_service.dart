@@ -45,7 +45,8 @@ class AnalyticsService {
     synchronized(() {
       _queue.add(event);
       if (kDebugMode) {
-        print('📊 AnalyticsService: Evento encolado [$eventType] en screen [$screenName]. Cola: ${_queue.length}');
+        print(
+            '📊 AnalyticsService: Evento encolado [$eventType] en screen [$screenName]. Cola: ${_queue.length}');
       }
     });
 
@@ -79,28 +80,34 @@ class AnalyticsService {
       final uri = Uri.parse('${ApiService.baseUrl}/api/analytics/events');
 
       if (kDebugMode) {
-        print('📊 AnalyticsService: Enviando ${eventsToSend.length} eventos al servidor...');
+        print(
+            '📊 AnalyticsService: Enviando ${eventsToSend.length} eventos al servidor...');
       }
 
-      final response = await http.post(
-        uri,
-        headers: headers,
-        body: json.encode({'events': eventsToSend}),
-      ).timeout(const Duration(seconds: 15));
+      final response = await http
+          .post(
+            uri,
+            headers: headers,
+            body: json.encode({'events': eventsToSend}),
+          )
+          .timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         if (kDebugMode) {
-          print('📊 AnalyticsService: Lote de ${eventsToSend.length} eventos enviado con éxito');
+          print(
+              '📊 AnalyticsService: Lote de ${eventsToSend.length} eventos enviado con éxito');
         }
       } else {
         if (kDebugMode) {
-          print('❌ AnalyticsService: Fallo al enviar lote. Status: ${response.statusCode}. Reencolando...');
+          print(
+              '❌ AnalyticsService: Fallo al enviar lote. Status: ${response.statusCode}. Reencolando...');
         }
         _requeueEvents(eventsToSend);
       }
     } catch (e) {
       if (kDebugMode) {
-        print('❌ AnalyticsService: Error de conexión enviando analíticas: $e. Reencolando...');
+        print(
+            '❌ AnalyticsService: Error de conexión enviando analíticas: $e. Reencolando...');
       }
       _requeueEvents(eventsToSend);
     } finally {
@@ -135,12 +142,12 @@ class AnalyticsService {
   String _generateUUIDv4() {
     final random = Random.secure();
     final values = List<int>.generate(16, (i) => random.nextInt(256));
-    
+
     // Set version to 4 (0100)
     values[6] = (values[6] & 0x0f) | 0x40;
     // Set variant to RFC 4122 (10xx)
     values[8] = (values[8] & 0x3f) | 0x80;
-    
+
     final buffer = StringBuffer();
     for (var i = 0; i < 16; i++) {
       if (i == 4 || i == 6 || i == 8 || i == 10) {
@@ -156,6 +163,7 @@ class AnalyticsService {
     lockAction() {
       action();
     }
+
     lockAction();
   }
 }
