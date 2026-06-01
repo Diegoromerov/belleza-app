@@ -101,7 +101,7 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
     const servicesContext = await getServicesContext();
     const systemInstruction = `${BASE_SYSTEM_INSTRUCTION}\n${servicesContext}`;
 
-    // 2. Obtener el historial de la conversación (últimos 15 mensajes)
+    // 2. Obtener el historial de la conversación (últimos 15 mensajes del usuario específico con el bot de IA)
     const historyQuery = `
       SELECT sender_id, receiver_id, message, created_at
       FROM messages

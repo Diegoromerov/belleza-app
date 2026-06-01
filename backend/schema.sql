@@ -111,13 +111,13 @@ CREATE TABLE bookings (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 9. Trigger para cálculo automático de comisiones y reporte estatal
 CREATE OR REPLACE FUNCTION calc_booking_split()
 RETURNS TRIGGER AS $$
 BEGIN
-  NEW.comision_plataforma := ROUND(NEW.valor_bruto * 0.20, 2);
+  -- La comisión total cobrada al prestador es del 20%, la cual contiene un 8% de impuestos y 12% de comisión neta.
+  NEW.comision_plataforma := ROUND(NEW.valor_bruto * 0.12, 2);
   NEW.impuestos_estado := ROUND(NEW.valor_bruto * 0.08, 2);
-  NEW.pago_neto_prestador := NEW.valor_bruto - NEW.comision_plataforma - NEW.impuestos_estado;
+  NEW.pago_neto_prestador := NEW.valor_bruto - (NEW.comision_plataforma + NEW.impuestos_estado);
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;

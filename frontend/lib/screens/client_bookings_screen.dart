@@ -69,8 +69,43 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
           ],
         ),
-        content: Text(
-            '¿Estás seguro de que deseas cancelar tu cita con $providerName? Esta acción no se puede deshacer.'),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('¿Estás seguro de que deseas cancelar tu cita? Esta acción no se puede deshacer.'),
+            SizedBox(height: 12),
+            Card(
+              color: Color(0xFFFEF2F2),
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                side: BorderSide(color: Color(0xFFFEE2E2)),
+                borderRadius: BorderRadius.all(Radius.circular(12)),
+              ),
+              child: Padding(
+                padding: EdgeInsets.all(12),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.info_outline, color: AppTheme.error, size: 20),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Aviso de Reembolso: Se descontarán los valores administrativos y tributarios incurridos del monto total pagado. No se realiza devolución del dinero en su totalidad.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF991B1B),
+                          fontWeight: FontWeight.w500,
+                          height: 1.3,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),

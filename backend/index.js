@@ -2222,7 +2222,7 @@ const initDatabase = async () => {
         FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
       `);
 
-      // 5. Agregar weekly_schedule a perfiles_prestador
+      // 5. Agregar weekly_schedule y active_start_hour / active_end_hour a perfiles_prestador
       const defaultSchedule = JSON.stringify({
         lunes: { activo: true, inicio: 6, fin: 20 },
         martes: { activo: true, inicio: 6, fin: 20 },
@@ -2234,12 +2234,14 @@ const initDatabase = async () => {
       });
       await pool.query(`
         ALTER TABLE perfiles_prestador 
-        ADD COLUMN IF NOT EXISTS weekly_schedule JSONB DEFAULT '${defaultSchedule}'::jsonb;
+        ADD COLUMN IF NOT EXISTS weekly_schedule JSONB DEFAULT '${defaultSchedule}'::jsonb,
+        ADD COLUMN IF NOT EXISTS active_start_hour INTEGER DEFAULT 6,
+        ADD COLUMN IF NOT EXISTS active_end_hour INTEGER DEFAULT 20;
       `);
 
-      console.log('✅ Base de datos: Migración de disputas y weekly_schedule verificadas/aplicadas.');
+      console.log('✅ Base de datos: Migración de disputas, weekly_schedule y horarios de disponibilidad verificados/aplicados.');
     } catch (migErr) {
-      console.warn('⚠️ Error al aplicar migración de disputas/weekly_schedule:', migErr.message);
+      console.warn('⚠️ Error al aplicar migración de disputas/weekly_schedule/horarios:', migErr.message);
     }
 
     const aiUserQuery = `

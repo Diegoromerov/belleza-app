@@ -122,5 +122,6 @@ class AuthService {
   static Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
+    ApiService.resetCachedBaseUrl();
   }
 }
