@@ -2,6 +2,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
+import 'package:flutter/foundation.dart';
 import '../../services/api_service.dart';
 import '../onboarding_webview_screen.dart';
 
@@ -43,24 +44,32 @@ class _LoginScreenState extends State<LoginScreen> {
             result['user']['onboarding_completo'] ?? false;
         final String? role = result['user']['role'];
         if (onboardingCompleto) {
-          if (role == 'provider') {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (_) => OnboardingWebViewScreen(
-                  onCompleted: () => Navigator.pushReplacementNamed(context, '/provider'),
-                ),
-              ),
-            );
+          if (kIsWeb) {
+            if (role == 'provider') {
+              Navigator.pushReplacementNamed(context, '/provider');
+            } else {
+              Navigator.pushReplacementNamed(context, '/home');
+            }
           } else {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (_) => OnboardingWebViewScreen(
-                  onCompleted: () => Navigator.pushReplacementNamed(context, '/home'),
+            if (role == 'provider') {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => OnboardingWebViewScreen(
+                    onCompleted: () => Navigator.pushReplacementNamed(context, '/provider'),
+                  ),
                 ),
-              ),
-            );
+              );
+            } else {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => OnboardingWebViewScreen(
+                    onCompleted: () => Navigator.pushReplacementNamed(context, '/home'),
+                  ),
+                ),
+              );
+            }
           }
         } else {
           Navigator.pushReplacementNamed(context, '/onboarding');
@@ -111,24 +120,32 @@ class _LoginScreenState extends State<LoginScreen> {
             result['user']['onboarding_completo'] ?? false;
         final String? role = result['user']['role'];
         if (onboardingCompleto) {
-          if (role == 'provider') {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (_) => OnboardingWebViewScreen(
-                  onCompleted: () => Navigator.pushReplacementNamed(context, '/provider'),
-                ),
-              ),
-            );
+          if (kIsWeb) {
+            if (role == 'provider') {
+              Navigator.pushReplacementNamed(context, '/provider');
+            } else {
+              Navigator.pushReplacementNamed(context, '/home');
+            }
           } else {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (_) => OnboardingWebViewScreen(
-                  onCompleted: () => Navigator.pushReplacementNamed(context, '/home'),
+            if (role == 'provider') {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => OnboardingWebViewScreen(
+                    onCompleted: () => Navigator.pushReplacementNamed(context, '/provider'),
+                  ),
                 ),
-              ),
-            );
+              );
+            } else {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => OnboardingWebViewScreen(
+                    onCompleted: () => Navigator.pushReplacementNamed(context, '/home'),
+                  ),
+                ),
+              );
+            }
           }
         } else {
           Navigator.pushReplacementNamed(context, '/onboarding');
