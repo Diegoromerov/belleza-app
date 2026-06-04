@@ -14,12 +14,17 @@ class OnboardingWebViewScreen extends StatefulWidget {
 }
 
 class _OnboardingWebViewScreenState extends State<OnboardingWebViewScreen> {
-  late final WebViewController _controller;
+  WebViewController? _controller;
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
+
+    if (kIsWeb) {
+      _isLoading = false;
+      return;
+    }
 
     final onboardingUrl = '${ApiService.baseUrl}/onboarding';
     debugPrint('🌐 Cargando Tutorial Interactivo en WebView: $onboardingUrl');
@@ -111,7 +116,7 @@ class _OnboardingWebViewScreenState extends State<OnboardingWebViewScreen> {
       ),
       body: Stack(
         children: [
-          WebViewWidget(controller: _controller),
+          WebViewWidget(controller: _controller!),
           if (_isLoading)
             const Center(
               child: CircularProgressIndicator(
