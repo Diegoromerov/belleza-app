@@ -208,13 +208,16 @@ exports.onboarding = async (req, res) => {
 
     const mappedRol = rol.toUpperCase();
 
+    const clientIp = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+
     if (mappedRol === 'PRESTADOR') {
       // Prestador requiere documentación y entra en PENDIENTE
       await pool.query(
         `UPDATE usuarios 
-         SET rol = 'PRESTADOR', onboarding_completo = true 
+         SET rol = 'PRESTADOR', onboarding_completo = true,
+             habeas_data_accepted_at = NOW(), habeas_data_ip = $2
          WHERE id = $1`,
-        [userId]
+        [userId, clientIp]
       );
 
       // Crear o actualizar perfil en perfiles_prestador (auto-aprobado para testing)
@@ -234,9 +237,10 @@ exports.onboarding = async (req, res) => {
       // Cliente se marca completo inmediatamente
       await pool.query(
         `UPDATE usuarios 
-         SET rol = 'CLIENTE', onboarding_completo = true 
+         SET rol = 'CLIENTE', onboarding_completo = true,
+             habeas_data_accepted_at = NOW(), habeas_data_ip = $2
          WHERE id = $1`,
-        [userId]
+        [userId, clientIp]
       );
       console.log(`📋 Onboarding completado para Cliente ID ${userId}.`);
     }

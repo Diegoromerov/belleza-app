@@ -52,6 +52,8 @@ CREATE TABLE usuarios (
   rol tipo_rol DEFAULT NULL,
   onboarding_completo BOOLEAN DEFAULT FALSE,
   is_active BOOLEAN DEFAULT TRUE,
+  habeas_data_accepted_at TIMESTAMPTZ DEFAULT NULL,
+  habeas_data_ip VARCHAR(45) DEFAULT NULL,
   creado_en TIMESTAMPTZ DEFAULT NOW(),
   CONSTRAINT unique_auth_provider_id UNIQUE (auth_provider, provider_id)
 );
@@ -217,5 +219,41 @@ CREATE TABLE user_activity_logs (
 );
 CREATE INDEX idx_activity_logs_session ON user_activity_logs(session_id);
 CREATE INDEX idx_activity_logs_event ON user_activity_logs(event_type);
+
+-- 17. Tabla platform_config (Configuración dinámica de negocio)
+CREATE TABLE IF NOT EXISTS platform_config (
+  key   VARCHAR(100) PRIMARY KEY,
+  value TEXT NOT NULL,
+  descripcion TEXT,
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_by INTEGER REFERENCES usuarios(id) ON DELETE SET NULL
+);
+
+INSERT INTO platform_config (key, value, descripcion) VALUES
+  ('comision_plataforma_pct', '20',  'Porcentaje de comisión sobre cada servicio'),
+  ('otp_vigencia_minutos',    '45',  'Minutos de validez del OTP de confirmación'),
+  ('otp_max_intentos',        '3',   'Intentos máximos antes de bloquear OTP'),
+  ('wallet_ventana_pendiente_horas', '2', 'Horas de espera post-OTP para pasar a disponible'),
+  ('retiro_demanda_min_cop',  '50000', 'Monto mínimo para retiro por demanda en COP'),
+  ('retiro_demanda_dias',     '3',   'Días mínimos entre retiros por demanda'),
+  ('retiro_auto_min_cop',     '20000','Monto mínimo para retiros automáticos'),
+  ('gps_tolerancia_metros',   '500', 'Radio GPS permitido para check-in'),
+  ('disputa_ventana_horas',   '2',   'Horas para abrir disputa tras OTP validado'),
+  ('disputa_max_reembolso_pct','50', 'Máximo % reembolsable cuando OTP ya fue usado'),
+  ('cancelacion_libre_horas', '24',  'Horas de anticipación para cancelación sin penalidad'),
+  ('riesgo_suspender_score',  '50',  'Risk score que pausa retiros del prestador'),
+  ('gps_centro_latitud', '4.6735', 'Latitud por defecto del centro de la zona de servicio'),
+  ('gps_centro_longitud', '-74.1422', 'Longitud por defecto del centro de la zona de servicio'),
+  ('gps_default_radio_metros', '5000', 'Radio de búsqueda geográfico por defecto en metros')
+ON CONFLICT (key) DO NOTHING;
+
+-- 18. Tabla admin_mfa (Autenticación multifactor para administradores)
+CREATE TABLE IF NOT EXISTS admin_mfa (
+  user_id INTEGER PRIMARY KEY REFERENCES usuarios(id) ON DELETE CASCADE,
+  secret_key VARCHAR(255) NOT NULL,
+  is_enabled BOOLEAN DEFAULT FALSE,
+  backup_codes TEXT[],
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
 
 
