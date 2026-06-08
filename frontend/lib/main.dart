@@ -9,6 +9,7 @@ import 'services/api_service.dart';
 import 'services/analytics_service.dart';
 import 'services/auth_service.dart';
 import 'services/web_geolocation.dart';
+import 'services/secure_storage_service.dart';
 
 import 'services/notification_service.dart';
 import 'screens/auth/login_screen.dart';
@@ -146,7 +147,101 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
         _mapController.move(_userLocation!, 13.5);
         _loadProviders();
       }
-    } catch (_) {}
+    } catch (_) {
+      if (mounted) {
+        _showManualLocationPicker();
+      }
+    }
+  }
+
+  void _showManualLocationPicker() {
+    final latController = TextEditingController(text: "4.6735");
+    final lonController = TextEditingController(text: "-74.1422");
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+          title: const Row(
+            children: [
+              Icon(Icons.location_off, color: Color(0xFFC89D93), size: 28),
+              SizedBox(width: 8),
+              Text(
+                'Ubicación Manual',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'No pudimos acceder a tu GPS. Por favor ingresa tus coordenadas de servicio de forma manual:',
+                style: TextStyle(fontSize: 14, color: Colors.black54),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: latController,
+                decoration: const InputDecoration(
+                  labelText: 'Latitud',
+                  border: OutlineInputBorder(),
+                ),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: lonController,
+                decoration: const InputDecoration(
+                  labelText: 'Longitud',
+                  border: OutlineInputBorder(),
+                ),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                // Fallback por defecto si cancelan
+                setState(() {
+                  _userLocation = _fontibonCenter;
+                });
+                _loadProviders();
+              },
+              child: const Text('Usar Bogotá (Fontibón)', style: TextStyle(color: Colors.grey)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFC89D93),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              ),
+              onPressed: () {
+                final double? lat = double.tryParse(latController.text);
+                final double? lon = double.tryParse(lonController.text);
+                if (lat != null && lon != null && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {
+                  Navigator.pop(context);
+                  setState(() {
+                    _userLocation = LatLng(lat, lon);
+                  });
+                  _mapController.move(_userLocation!, 13.5);
+                  _loadProviders();
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Coordenadas inválidas. Rango Lat (-90 a 90), Lon (-180 a 180)')),
+                  );
+                }
+              },
+              child: const Text('Confirmar', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _loadProviders() async {
@@ -156,10 +251,9 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
       _errorMessage = null;
     });
 
-    // 1. Cargar datos cacheados localmente de SharedPreferences para visualización inmediata
+    // 1. Cargar datos cacheados localmente de SecureStorage para visualización inmediata
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final String? cachedJson = prefs.getString('cached_providers');
+      final String? cachedJson = await SecureStorageService().read('cached_providers');
       if (cachedJson != null) {
         final List<dynamic> decoded = json.decode(cachedJson);
         final cachedProviders = decoded.map((jsonObj) => ProviderModel.fromJson(jsonObj)).toList();
@@ -172,7 +266,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
         }
       }
     } catch (e) {
-      debugPrint('Error leyendo caché local: $e');
+      debugPrint('Error leyendo caché seguro local: $e');
     }
 
     // 2. Realizar la petición asíncrona de red para actualizar la información (con reintentos y retroceso exponencial)
@@ -225,13 +319,12 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
         _isLoading = false;
       });
 
-      // 3. Guardar en caché el nuevo listado
+      // 3. Guardar en caché el nuevo listado usando SecureStorage
       try {
-        final prefs = await SharedPreferences.getInstance();
         final rawList = providers.map((p) => p.toJson()).toList();
-        await prefs.setString('cached_providers', json.encode(rawList));
+        await SecureStorageService().write('cached_providers', json.encode(rawList));
       } catch (cacheErr) {
-        debugPrint('Error guardando en caché: $cacheErr');
+        debugPrint('Error guardando en caché segura: $cacheErr');
       }
     }
   }

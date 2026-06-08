@@ -2,6 +2,7 @@
 const User = require('./User');
 const Service = require('./Service');
 const Booking = require('./Booking');
+const Transaction = require('./Transaction');
 
 // A Service belongs to a Provider (User)
 Service.belongsTo(User, { foreignKey: 'provider_id', as: 'provider' });
@@ -19,8 +20,13 @@ User.hasMany(Booking, { foreignKey: 'provider_id', as: 'providerBookings' });
 Booking.belongsTo(Service, { foreignKey: 'service_id', as: 'service' });
 Service.hasMany(Booking, { foreignKey: 'service_id', as: 'bookings' });
 
+// A Transaction belongs to a Booking
+Transaction.belongsTo(Booking, { foreignKey: 'booking_id', as: 'booking' });
+Booking.hasOne(Transaction, { foreignKey: 'booking_id', as: 'transaction' });
+
 module.exports = {
   User,
   Service,
-  Booking
+  Booking,
+  Transaction
 };
