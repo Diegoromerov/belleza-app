@@ -20,6 +20,24 @@ router.get('/sos/active', adminController.getAllActiveAlerts);
 router.patch('/sos/resolve/:id', adminController.resolveSOSAlert);
 
 /**
+ * @route GET /api/glow-admin/provider/pending
+ * @desc Obtiene todos los prestadores pendientes de verificación
+ */
+router.get('/provider/pending', adminController.getPendingProvidersList);
+
+/**
+ * @route POST /api/glow-admin/provider/approve
+ * @desc Aprueba la verificación del perfil de un prestador
+ */
+router.post('/provider/approve', adminController.approveProvider);
+
+/**
+ * @route POST /api/glow-admin/provider/reject
+ * @desc Rechaza la verificación del perfil de un prestador
+ */
+router.post('/provider/reject', adminController.rejectProvider);
+
+/**
  * @route POST /api/glow-admin/provider/verify
  * @desc Verifica el perfil de un prestador para habilitar su etiqueta verde
  */
@@ -30,5 +48,11 @@ router.post('/provider/verify', adminController.verifyProvider);
  * @desc Aprueba la dispersión y retiro de fondos de un prestador
  */
 router.post('/payout/approve', adminController.approvePayout);
+
+/**
+ * @route POST /api/glow-admin/provider/verify-auto
+ * @desc Verifica automáticamente un prestador (mock KYC)
+ */
+router.post('/provider/verify-auto', adminController.verifyProviderAuto);
 
 module.exports = router;

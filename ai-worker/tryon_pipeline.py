@@ -4,9 +4,7 @@ import random
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter, ImageColor
 
-# Inicializar MediaPipe de forma perezosa para evitar consumo innecesario si no se usa.
-# En entornos livianos de Docker puede no estar instalado; en ese caso
-# el worker cae automáticamente al renderizado de demostración.
+# Inicializar MediaPipe de forma perezosa
 _mp_hands = None
 _hands_detector = None
 
@@ -16,7 +14,6 @@ def get_mediapipe_hands():
         try:
             import mediapipe as mp
             _mp_hands = mp.solutions.hands
-            # Usamos modo estático para procesamiento de imágenes individuales
             _hands_detector = _mp_hands.Hands(
                 static_image_mode=True,
                 max_num_hands=2,
@@ -28,101 +25,108 @@ def get_mediapipe_hands():
     return _hands_detector
 
 def parse_color(color_hex):
-    """Convierte hex #RRGGBB o RRGGBB a tupla RGB."""
     if not color_hex:
-        return (200, 157, 147) # Default rosa/nude de la app
+        return (200, 157, 147)
     hex_str = color_hex.lstrip('#')
     try:
         return tuple(int(hex_str[i:i+2], 16) for i in (0, 2, 4))
     except Exception:
         return (200, 157, 147)
 
-def get_nail_shape_points(center, vector, shape, width, length):
+def get_smooth_nail_points(center, ux, uy, px, py, shape, width, length):
     """
-    Calcula los puntos de un polígono de uña según la forma.
-    center: (x, y) del centro de la uña
-    vector: (vx, vy) vector del segmento del dedo (orientación)
-    shape: 'almond' | 'square' | 'coffin' | 'stiletto'
-    width: ancho base de la uña
-    length: longitud de la uña (hacia la punta)
+    Genera una lista de puntos suaves (curvas) para el contorno de la uña.
     """
-    vx, vy = vector
-    v_len = math.sqrt(vx**2 + vy**2)
-    if v_len == 0:
-        ux, uy = (0, -1)
-    else:
-        # Vector unitario en dirección de la punta
-        ux, uy = vx / v_len, vy / v_len
-    
-    # Vector perpendicular unitario
-    px, py = -uy, ux
-    
     cx, cy = center
     shape = (shape or 'almond').lower()
-    
     points = []
     
-    if shape == 'stiletto':
-        # Triángulo afilado
-        # Base cerca del nudillo
-        b1 = (cx - px * (width * 0.5) - ux * (length * 0.4), cy - py * (width * 0.5) - uy * (length * 0.4))
-        b2 = (cx + px * (width * 0.5) - ux * (length * 0.4), cy + py * (width * 0.5) - uy * (length * 0.4))
-        # Punta afilada
-        tip = (cx + ux * (length * 0.8), cy + uy * (length * 0.8))
-        points = [b1, b2, tip]
+    # 1. Generar la base de la uña (cutícula/matriz) - Curva semicircular inferior
+    num_base_points = 12
+    for i in range(num_base_points + 1):
+        theta = math.pi + (math.pi * i / num_base_points)  # De pi a 2*pi (arco inferior)
+        # Atenuación en los extremos para mejor acople
+        factor_w = 0.5
+        factor_l = 0.35
         
+        dx = (width * factor_w) * math.cos(theta)
+        dy = (length * factor_l) * math.sin(theta)
+        
+        x = cx + px * dx + ux * dy
+        y = cy + py * dx + uy * dy
+        points.append((x, y))
+        
+    # 2. Generar la punta de la uña
+    num_tip_points = 12
+    if shape == 'square':
+        # Rectangular con esquinas ligeramente redondeadas
+        corner_r = width * 0.15
+        # Esquina superior derecha
+        for i in range(6):
+            alpha = (math.pi * 0.5 * i / 5)  # 0 a pi/2
+            dx = (width * 0.5 - corner_r) + corner_r * math.cos(alpha)
+            dy = (length * 0.55 - corner_r) + corner_r * math.sin(alpha)
+            points.append((cx + px * dx + ux * dy, cy + py * dx + uy * dy))
+        # Esquina superior izquierda
+        for i in range(6):
+            alpha = (math.pi * 0.5) + (math.pi * 0.5 * i / 5)  # pi/2 to pi
+            dx = (-width * 0.5 + corner_r) + corner_r * math.cos(alpha)
+            dy = (length * 0.55 - corner_r) + corner_r * math.sin(alpha)
+            points.append((cx + px * dx + ux * dy, cy + py * dx + uy * dy))
+            
     elif shape == 'coffin':
-        # Rectángulo trapezoidal (más ancho en la base, plano en la punta)
-        b1 = (cx - px * (width * 0.5) - ux * (length * 0.4), cy - py * (width * 0.5) - uy * (length * 0.4))
-        b2 = (cx + px * (width * 0.5) - ux * (length * 0.4), cy + py * (width * 0.5) - uy * (length * 0.4))
-        t2 = (cx + px * (width * 0.25) + ux * (length * 0.6), cy + py * (width * 0.25) + uy * (length * 0.6))
-        t1 = (cx - px * (width * 0.25) + ux * (length * 0.6), cy - py * (width * 0.25) + uy * (length * 0.6))
-        points = [b1, b2, t2, t1]
-        
-    elif shape == 'square':
-        # Rectángulo plano
-        b1 = (cx - px * (width * 0.5) - ux * (length * 0.4), cy - py * (width * 0.5) - uy * (length * 0.4))
-        b2 = (cx + px * (width * 0.5) - ux * (length * 0.4), cy + py * (width * 0.5) - uy * (length * 0.4))
-        t2 = (cx + px * (width * 0.5) + ux * (length * 0.5), cy + py * (width * 0.5) + uy * (length * 0.5))
-        t1 = (cx - px * (width * 0.5) + ux * (length * 0.5), cy - py * (width * 0.5) + uy * (length * 0.5))
-        points = [b1, b2, t2, t1]
-        
-    else: # almond u oval
-        # Curva suave. Generamos puntos de elipse/huevo
-        steps = 12
-        # Base semicircular
-        for i in range(steps + 1):
-            alpha = -math.pi/2 + (math.pi * i / steps)
-            # Factor de atenuación para Almond en la punta
-            factor = 0.8 if i in (0, steps) else 1.0
-            if i > steps / 2:
-                # Parte superior (punta) es más estrecha en almendra
-                w_factor = 0.35
-                l_factor = 0.65
-            else:
-                # Parte inferior (base)
-                w_factor = 0.5
-                l_factor = 0.45
+        # Trapezoidal (punta recta pero más estrecha que la base)
+        top_w = width * 0.55
+        corner_r = top_w * 0.15
+        # Esquina superior derecha
+        for i in range(6):
+            alpha = (math.pi * 0.5 * i / 5)
+            dx = (top_w * 0.5 - corner_r) + corner_r * math.cos(alpha)
+            dy = (length * 0.65 - corner_r) + corner_r * math.sin(alpha)
+            points.append((cx + px * dx + ux * dy, cy + py * dx + uy * dy))
+        # Esquina superior izquierda
+        for i in range(6):
+            alpha = (math.pi * 0.5) + (math.pi * 0.5 * i / 5)
+            dx = (-top_w * 0.5 + corner_r) + corner_r * math.cos(alpha)
+            dy = (length * 0.65 - corner_r) + corner_r * math.sin(alpha)
+            points.append((cx + px * dx + ux * dy, cy + py * dx + uy * dy))
             
-            dx = px * (width * w_factor) * math.cos(alpha)
-            dy = py * (width * w_factor) * math.cos(alpha)
+    elif shape == 'stiletto':
+        # Punta afilada con lados curvos elegantes
+        # Lado derecho curvado hacia adentro
+        for i in range(6):
+            t = i / 5
+            dx = (width * 0.5) * (1 - t)**1.4
+            dy = (length * 0.85) * t
+            points.append((cx + px * dx + ux * dy, cy + py * dx + uy * dy))
+        # Lado izquierdo curvado hacia la punta
+        for i in range(1, 6):
+            t = i / 5
+            dx = -(width * 0.5) * t**1.4
+            dy = (length * 0.85) * (1 - t)
+            points.append((cx + px * dx + ux * dy, cy + py * dx + uy * dy))
             
-            ex = ux * (length * l_factor) * math.sin(alpha)
-            ey = uy * (length * l_factor) * math.sin(alpha)
-            
-            points.append((cx + dx + ex, cy + dy + ey))
+    else:  # almond (almendra) u ovalada
+        # Punta ovalada elegante
+        for i in range(num_tip_points + 1):
+            alpha = (math.pi * i / num_tip_points)  # 0 a pi
+            dx = width * 0.5 * math.cos(alpha)
+            dy = length * 0.72 * math.sin(alpha)**1.3
+            points.append((cx + px * dx + ux * dy, cy + py * dx + uy * dy))
             
     return points
 
 def apply_finish_effects(draw, points, color_rgb, finish):
-    """Dibuja la uña con efectos estéticos basados en el acabado."""
+    """
+    Dibuja la uña con efectos estéticos fotorrealistas (sombreado 3D y reflejos).
+    """
     finish = (finish or 'glossy').lower()
     
-    # 1. Dibujar el color base con opacidad
-    base_color = color_rgb + (200,) # Alpha 200/255 para fusión natural
+    # 1. Color base con alta opacidad para cubrir bien la uña real
+    base_color = color_rgb + (235,)
     draw.polygon(points, fill=base_color)
     
-    # Calcular centro y límites del polígono para efectos visuales
+    # Calcular centro y límites
     xs = [p[0] for p in points]
     ys = [p[1] for p in points]
     if not xs or not ys:
@@ -135,223 +139,138 @@ def apply_finish_effects(draw, points, color_rgb, finish):
     w = max_x - min_x
     h = max_y - min_y
     
+    # 2. Sombreado 3D (Volumen cilíndrico): sombras en los bordes laterales y cutícula
+    # Sombra del borde derecho (curva de la uña)
+    draw.polygon(points[int(len(points)*0.0):int(len(points)*0.35)] + [(cx, cy)], fill=(0, 0, 0, 40))
+    # Sombra del borde izquierdo
+    draw.polygon(points[int(len(points)*0.65):int(len(points)*1.0)] + [(cx, cy)], fill=(0, 0, 0, 30))
+    
+    # Sombra de la cutícula (arco inferior)
+    if len(points) >= 12:
+        cuticle_pts = points[:13]
+        shadow_band = []
+        for p in cuticle_pts:
+            dx, dy = cx - p[0], cy - p[1]
+            dist = math.sqrt(dx**2 + dy**2)
+            if dist > 0:
+                sp = (p[0] + dx/dist * (w * 0.08), p[1] + dy/dist * (w * 0.08))
+                shadow_band.append(sp)
+        shadow_poly = cuticle_pts + list(reversed(shadow_band))
+        draw.polygon(shadow_poly, fill=(0, 0, 0, 45))
+
+    # 3. Efectos de Acabado
     if finish == 'glossy':
-        # Brillo reflejo: una línea blanca curvada a un lado de la uña
+        # Brillo reflejo curvo (luz reflejada blanca en un lado de la uña)
         highlight_points = []
-        for i in range(len(points) // 3):
-            # Tomar puntos del lado izquierdo/superior
+        # Tomar puntos a lo largo del lado izquierdo
+        for i in range(int(len(points) * 0.25), int(len(points) * 0.55)):
             pt = points[i]
-            # Desplazar ligeramente hacia adentro
-            hx = pt[0] + (cx - pt[0]) * 0.25
-            hy = pt[1] + (cy - pt[1]) * 0.25
+            hx = pt[0] + (cx - pt[0]) * 0.35
+            hy = pt[1] + (cy - pt[1]) * 0.35
             highlight_points.append((hx, hy))
         if len(highlight_points) > 1:
-            draw.line(highlight_points, fill=(255, 255, 255, 120), width=int(max(2, w * 0.12)))
-            # Destello puntual en la punta
-            draw.ellipse([cx - w*0.1, cy - h*0.3, cx + w*0.1, cy - h*0.1], fill=(255, 255, 255, 150))
+            draw.line(highlight_points, fill=(255, 255, 255, 140), width=int(max(2, w * 0.08)))
+            
+            # Destello/reflejo circular en la parte superior izquierda
+            glare_x = cx - w * 0.18
+            glare_y = cy - h * 0.22
+            glare_r = max(2, w * 0.08)
+            draw.ellipse([glare_x - glare_r, glare_y - glare_r, glare_x + glare_r, glare_y + glare_r], fill=(255, 255, 255, 170))
             
     elif finish == 'chrome':
-        # Efecto metálico cromado: degradado metálico simulado con múltiples bandas
-        draw.polygon(points, fill=color_rgb + (160,))
-        # Línea de brillo de alta intensidad central
-        draw.line([(min_x + w*0.3, min_y + h*0.2), (min_x + w*0.4, max_y - h*0.2)], fill=(255, 255, 255, 180), width=int(max(1, w * 0.08)))
-        draw.line([(min_x + w*0.6, min_y + h*0.2), (min_x + w*0.7, max_y - h*0.2)], fill=(255, 255, 255, 90), width=int(max(1, w * 0.05)))
+        # Acabado metálico cromado: reflejos lineales contrastantes
+        # Línea de brillo principal de alta intensidad
+        draw.line([(cx - w*0.18, min_y + h*0.15), (cx - w*0.12, max_y - h*0.15)], fill=(255, 255, 255, 190), width=int(max(2, w * 0.12)))
+        # Línea de brillo secundaria suave
+        draw.line([(cx + w*0.22, min_y + h*0.2), (cx + w*0.26, max_y - h*0.2)], fill=(255, 255, 255, 110), width=int(max(1, w * 0.06)))
+        # Línea oscura de contraste metálico
+        draw.line([(cx + w*0.02, min_y + h*0.15), (cx + w*0.06, max_y - h*0.15)], fill=(0, 0, 0, 50), width=int(max(1, w * 0.07)))
         
     elif finish == 'glitter':
-        # Destellos pequeños blancos y plateados esparcidos
-        for _ in range(30):
+        # Efecto escarchado: partículas de brillo dispersas con pequeñas cruces
+        for _ in range(25):
             rx = random.uniform(min_x + w*0.15, max_x - w*0.15)
             ry = random.uniform(min_y + h*0.15, max_y - h*0.15)
-            # Comprobar si el punto aleatorio está dentro del polígono (aproximado)
-            # Para simplificar, pintamos círculos muy pequeños
-            g_color = random.choice([(255, 255, 255, 220), (230, 240, 255, 180), (255, 220, 200, 200)])
-            r_sz = random.uniform(1, max(2, w * 0.06))
+            g_color = random.choice([
+                (255, 255, 255, 230),  # Blanco puro
+                (255, 220, 200, 200),  # Oro cálido
+                (210, 235, 255, 210),  # Plata/Fresco
+                (color_rgb[0], color_rgb[1], color_rgb[2], 255) # Tono base brillante
+            ])
+            r_sz = random.uniform(1.2, max(2.5, w * 0.05))
             draw.ellipse([rx - r_sz, ry - r_sz, rx + r_sz, ry + r_sz], fill=g_color)
-
-def _refine_binary_mask(mask, rounds=2):
-    """Suaviza una máscara booleana con mayoría local 3x3."""
-    refined = mask.copy()
-    for _ in range(rounds):
-        neighbors = refined.astype(np.uint8)
-        for dy in (-1, 0, 1):
-            for dx in (-1, 0, 1):
-                if dx == 0 and dy == 0:
-                    continue
-                neighbors += np.roll(np.roll(refined, dy, axis=0), dx, axis=1).astype(np.uint8)
-        refined = neighbors >= 5
-        refined[0, :] = False
-        refined[-1, :] = False
-        refined[:, 0] = False
-        refined[:, -1] = False
-    return refined
-
-def _largest_component(mask):
-    """Conserva solo el componente conectado más grande."""
-    h, w = mask.shape
-    visited = np.zeros((h, w), dtype=bool)
-    largest = []
-
-    for y in range(h):
-        for x in range(w):
-            if not mask[y, x] or visited[y, x]:
-                continue
-
-            stack = [(y, x)]
-            visited[y, x] = True
-            component = []
-
-            while stack:
-                cy, cx = stack.pop()
-                component.append((cy, cx))
-                for ny, nx in ((cy - 1, cx), (cy + 1, cx), (cy, cx - 1), (cy, cx + 1)):
-                    if 0 <= ny < h and 0 <= nx < w and mask[ny, nx] and not visited[ny, nx]:
-                        visited[ny, nx] = True
-                        stack.append((ny, nx))
-
-            if len(component) > len(largest):
-                largest = component
-
-    result = np.zeros_like(mask, dtype=bool)
-    for y, x in largest:
-        result[y, x] = True
-    return result
+            
+            # Dibujar un destello en cruz ocasionalmente
+            if random.random() < 0.15:
+                draw.line([(rx - r_sz*2.2, ry), (rx + r_sz*2.2, ry)], fill=(255, 255, 255, 220), width=1)
+                draw.line([(rx, ry - r_sz*2.2), (rx, ry + r_sz*2.2)], fill=(255, 255, 255, 220), width=1)
 
 def estimate_nails_from_image(img_np):
     """
-    Estima posiciones de uñas a partir de una máscara de piel simple.
-    Devuelve una lista de tuplas (cx, cy, vx, vy, nail_w, nail_l).
+    Fallback heurístico simple si falla MediaPipe
     """
-    r = img_np[:, :, 0].astype(np.int16)
-    g = img_np[:, :, 1].astype(np.int16)
-    b = img_np[:, :, 2].astype(np.int16)
-
-    skin_mask = (
-        (r > 55) &
-        (g > 35) &
-        (b > 15) &
-        ((np.maximum.reduce([r, g, b]) - np.minimum.reduce([r, g, b])) > 15) &
-        (np.abs(r - g) > 8) &
-        (r > g) &
-        (r > b)
-    )
-
-    skin_mask = _refine_binary_mask(skin_mask, rounds=2)
-    skin_mask = _largest_component(skin_mask)
-
-    ys, xs = np.where(skin_mask)
-    if len(xs) < 400:
-        return []
-
-    min_x, max_x = xs.min(), xs.max()
-    min_y, max_y = ys.min(), ys.max()
-    box_w = max_x - min_x
-    box_h = max_y - min_y
-    if box_w < 40 or box_h < 60:
-        return []
-
-    top_profile = np.full(img_np.shape[1], max_y, dtype=np.int32)
-    for x in range(min_x, max_x + 1):
-        col = np.where(skin_mask[:, x])[0]
-        if len(col) > 0:
-            top_profile[x] = col.min()
-
-    nails = []
-    finger_centers = [0.24, 0.40, 0.56, 0.72]
-    finger_widths = [0.16, 0.14, 0.14, 0.12]
-
-    for rel_center, rel_width in zip(finger_centers, finger_widths):
-        seg_start = int(min_x + box_w * max(0.0, rel_center - rel_width / 2))
-        seg_end = int(min_x + box_w * min(1.0, rel_center + rel_width / 2))
-        seg = top_profile[seg_start:seg_end + 1]
-        valid = np.where(seg < max_y)[0]
-        if len(valid) == 0:
-            continue
-
-        local_min = seg[valid].min()
-        peak_positions = valid[seg[valid] <= local_min + max(3, int(box_h * 0.02))]
-        tip_x = seg_start + int(np.median(peak_positions))
-        tip_y = int(local_min)
-
-        joint_y = min(max_y, int(tip_y + box_h * 0.22))
-        joint_x = tip_x + int((tip_x - (min_x + max_x) / 2) * 0.08)
-        vx = tip_x - joint_x
-        vy = tip_y - joint_y
-        nail_w = max(10, box_w * rel_width * 0.42)
-        nail_l = max(14, box_h * 0.16)
-        cx = tip_x - vx * 0.18
-        cy = tip_y - vy * 0.18
-        nails.append((cx, cy, vx, vy, nail_w, nail_l))
-
-    lower_half = skin_mask[int(min_y + box_h * 0.35):max_y + 1, min_x:max_x + 1]
-    left_mass = int(lower_half[:, :max(1, lower_half.shape[1] // 3)].sum())
-    right_mass = int(lower_half[:, -max(1, lower_half.shape[1] // 3):].sum())
-    thumb_on_left = left_mass > right_mass
-
-    thumb_cx = min_x + box_w * (0.10 if thumb_on_left else 0.90)
-    thumb_cy = min_y + box_h * 0.62
-    thumb_vx = -box_w * 0.12 if thumb_on_left else box_w * 0.12
-    thumb_vy = -box_h * 0.14
-    thumb_w = max(12, box_w * 0.12)
-    thumb_l = max(14, box_h * 0.13)
-    nails.insert(0, (thumb_cx, thumb_cy, thumb_vx, thumb_vy, thumb_w, thumb_l))
-
-    return nails[:5]
+    # ... código simplificado de fallback
+    h, w, _ = img_np.shape
+    cx_c = w / 2
+    cy_c = h / 2
+    return [
+        (cx_c - w * 0.23, cy_c + h * 0.04, -w * 0.06, -h * 0.06, w * 0.05, h * 0.10),
+        (cx_c - w * 0.11, cy_c - h * 0.11, 0, -h * 0.09, w * 0.045, h * 0.11),
+        (cx_c, cy_c - h * 0.16, 0, -h * 0.10, w * 0.048, h * 0.12),
+        (cx_c + w * 0.11, cy_c - h * 0.11, 0, -h * 0.09, w * 0.045, h * 0.11),
+        (cx_c + w * 0.22, cy_c - h * 0.03, w * 0.05, -h * 0.07, w * 0.04, h * 0.10),
+    ]
 
 def process_nail_tryon(image_path, output_path, params):
-    """
-    Procesa la prueba virtual de uñas.
-    image_path: Ruta a la imagen de origen.
-    output_path: Ruta donde guardar el resultado.
-    params: Dict con color_hex, shape, finish, decoration_style.
-    """
     try:
         color_hex = params.get('color_hex', '#FF0055')
         shape = params.get('shape', 'almond')
         finish = params.get('finish', 'glossy')
-        decoration = params.get('decoration_style', 'solid')
         
         color_rgb = parse_color(color_hex)
         
-        # Cargar imagen original
         if not os.path.exists(image_path):
             raise FileNotFoundError(f"No existe la imagen de origen en {image_path}")
             
         original_img = Image.open(image_path).convert("RGBA")
         width_px, height_px = original_img.size
         
-        # Crear capa transparente para las uñas
         nail_layer = Image.new("RGBA", original_img.size, (0, 0, 0, 0))
         draw = ImageDraw.Draw(nail_layer)
         
-        # Intentar inicializar y correr MediaPipe
         detector = get_mediapipe_hands()
         hands_detected = False
         
         if detector is not None:
-            # MediaPipe requiere numpy array
             img_np = np.array(original_img.convert("RGB"))
             results = detector.process(img_np)
             
             if results.multi_hand_landmarks:
                 hands_detected = True
-                print(f"👋 Mano detectada. Procesando landmarks...")
+                print(f"👋 Mano detectada. Procesando landmarks con auto-escala estable...")
                 for hand_landmarks in results.multi_hand_landmarks:
-                    # Definición de dedos: (Tip, Joint)
-                    # 8 = Index Tip, 7 = Index DIP
-                    # 12 = Middle Tip, 11 = Middle DIP
-                    # 16 = Ring Tip, 15 = Ring DIP
-                    # 20 = Pinky Tip, 19 = Pinky DIP
-                    # 4 = Thumb Tip, 3 = Thumb IP
+                    # 1. Calcular escala estable KNUCKLE-TO-KNUCKLE (Landmarks 5 a 17)
+                    lm5 = hand_landmarks.landmark[5]
+                    lm17 = hand_landmarks.landmark[17]
+                    dx = (lm5.x - lm17.x) * width_px
+                    dy = (lm5.y - lm17.y) * height_px
+                    hand_scale = math.sqrt(dx**2 + dy**2)
+                    
+                    # Sanity check para hand_scale
+                    if hand_scale < 50:
+                        hand_scale = min(width_px, height_px) * 0.25
+                        
+                    # Factores de proporción de uñas estables respecto a la escala de la mano
+                    # (Tip, Joint, width_factor, length_factor)
                     fingers = [
-                        (4, 3, 0.28, 0.35),   # Thumb: Tip, Joint, width_factor, length_factor
-                        (8, 7, 0.22, 0.38),   # Index
-                        (12, 11, 0.22, 0.38), # Middle
-                        (16, 15, 0.22, 0.38), # Ring
-                        (20, 19, 0.18, 0.34)  # Pinky
+                        (4, 3, 0.26, 0.34),   # Pulgar
+                        (8, 7, 0.20, 0.26),   # Índice
+                        (12, 11, 0.21, 0.28), # Medio
+                        (16, 15, 0.20, 0.26),  # Anular
+                        (20, 19, 0.16, 0.21)  # Meñique
                     ]
                     
                     for tip_idx, joint_idx, w_f, l_f in fingers:
-                        # Obtener coordenadas relativas y pasarlas a píxeles
                         tip_lm = hand_landmarks.landmark[tip_idx]
                         joint_lm = hand_landmarks.landmark[joint_idx]
                         
@@ -362,49 +281,49 @@ def process_nail_tryon(image_path, output_path, params):
                         vx, vy = tx - jx, ty - jy
                         v_len = math.sqrt(vx**2 + vy**2)
                         
-                        # Estimar centro de la uña (ligeramente detrás del fingertip real)
-                        # Dependiendo de la inclinación, desplazamos
-                        cx = tx - vx * 0.1
-                        cy = ty - vy * 0.1
+                        if v_len == 0:
+                            ux, uy = (0, -1)
+                        else:
+                            ux, uy = vx / v_len, vy / v_len
                         
-                        # Dimensiones proporcionales al tamaño de la mano detectada
-                        nail_w = v_len * w_f
-                        nail_l = v_len * l_f
+                        px, py = -uy, ux  # Vector perpendicular
                         
-                        # Generar puntos de la forma
-                        pts = get_nail_shape_points((cx, cy), (vx, vy), shape, nail_w, nail_l)
+                        # Corrección de escorzo (foreshortening) 3D basado en la flexión del dedo
+                        flatness = v_len / hand_scale
+                        foreshortening_factor = min(1.0, 0.35 + flatness * 1.5)
                         
-                        # Aplicar dibujo con efectos de acabado
+                        # Dimensiones estables basadas en la escala general de la mano
+                        nail_w = hand_scale * w_f
+                        nail_l = hand_scale * l_f * foreshortening_factor
+                        
+                        # Desplazamiento dinámico hacia atrás de la uña (más flexión = menos desplazamiento)
+                        shift_ratio = min(0.42, flatness * 0.75)
+                        cx = tx - ux * (nail_l * shift_ratio)
+                        cy = ty - uy * (nail_l * shift_ratio)
+                        
+                        # Generar puntos del contorno suave
+                        pts = get_smooth_nail_points((cx, cy), ux, uy, px, py, shape, nail_w, nail_l)
+                        
+                        # Dibujar uña con efectos 3D
                         apply_finish_effects(draw, pts, color_rgb, finish)
                         
         if not hands_detected:
-            print("⚠️ Mano no detectada por MediaPipe. Aplicando heurística de contorno.")
+            print("⚠️ Mano no detectada por MediaPipe. Aplicando plantilla centrada.")
             estimated_nails = estimate_nails_from_image(np.array(original_img.convert("RGB")))
-
-            if not estimated_nails:
-                print("⚠️ Heurística sin suficiente confianza. Usando plantilla centrada.")
-                cx_c = width_px / 2
-                cy_c = height_px / 2
-                estimated_nails = [
-                    (cx_c - width_px * 0.23, cy_c + height_px * 0.04, -width_px * 0.06, -height_px * 0.06, width_px * 0.05, height_px * 0.10),
-                    (cx_c - width_px * 0.11, cy_c - height_px * 0.11, 0, -height_px * 0.09, width_px * 0.045, height_px * 0.11),
-                    (cx_c, cy_c - height_px * 0.16, 0, -height_px * 0.10, width_px * 0.048, height_px * 0.12),
-                    (cx_c + width_px * 0.11, cy_c - height_px * 0.11, 0, -height_px * 0.09, width_px * 0.045, height_px * 0.11),
-                    (cx_c + width_px * 0.22, cy_c - height_px * 0.03, width_px * 0.05, -height_px * 0.07, width_px * 0.04, height_px * 0.10),
-                ]
-
             for cx, cy, vx, vy, nw, nl in estimated_nails:
-                pts = get_nail_shape_points((cx, cy), (vx, vy), shape, nw, nl)
+                v_len = math.sqrt(vx**2 + vy**2)
+                ux, uy = (vx / v_len, vy / v_len) if v_len > 0 else (0, -1)
+                px, py = -uy, ux
+                pts = get_smooth_nail_points((cx, cy), ux, uy, px, py, shape, nw, nl)
                 apply_finish_effects(draw, pts, color_rgb, finish)
         
-        # Suavizar un poco los bordes de la capa de uñas usando desenfoque gaussiano leve
-        # para que la pintura se fusione mejor con la piel
-        nail_layer_blurred = nail_layer.filter(ImageFilter.GaussianBlur(radius=0.4))
+        # Suavizar levemente los bordes de la capa de pintura para un fundido natural
+        nail_layer_blurred = nail_layer.filter(ImageFilter.GaussianBlur(radius=0.5))
         
-        # Combinar imagen original y capa de uñas
+        # Combinar
         final_img = Image.alpha_composite(original_img, nail_layer_blurred)
         
-        # Guardar en formato JPEG para optimizar tamaño
+        # Guardar resultado final
         final_img.convert("RGB").save(output_path, "JPEG", quality=85)
         print(f"✅ Prueba virtual completada con éxito. Archivo guardado en {output_path}")
         return True

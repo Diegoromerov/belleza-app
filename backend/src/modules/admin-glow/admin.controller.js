@@ -163,9 +163,152 @@ async function approvePayout(req, res) {
   }
 }
 
+/**
+ * Obtener todos los prestadores pendientes de verificación.
+ */
+async function getPendingProvidersList(req, res) {
+  try {
+    const list = await adminModel.getPendingProviders();
+    return res.status(200).json({
+      success: true,
+      count: list.length,
+      data: list
+    });
+  } catch (error) {
+    console.error('Error al obtener prestadores pendientes:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Error interno al obtener los prestadores pendientes.'
+    });
+  }
+}
+
+/**
+ * Aprobar la verificación del perfil de un prestador.
+ */
+async function approveProvider(req, res) {
+  try {
+    const { providerId } = req.body;
+    const adminId = req.admin.id;
+
+    if (!providerId) {
+      return res.status(400).json({
+        success: false,
+        error: 'El ID del prestador es obligatorio para realizar la aprobación.'
+      });
+    }
+
+    await adminModel.setProviderVerifiedStatus(providerId, true);
+    await adminModel.logAdminAction(
+      adminId,
+      'APROBAR_PRESTADOR',
+      `Prestador ID ${providerId} verificado y APROBADO`
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: `El prestador #${providerId} ha sido aprobado exitosamente.`
+    });
+  } catch (error) {
+    console.error('Error al aprobar prestador:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Error interno al aprobar prestador.'
+    });
+  }
+}
+
+/**
+ * Rechazar la verificación del perfil de un prestador.
+ */
+async function rejectProvider(req, res) {
+  try {
+    const { providerId } = req.body;
+    const adminId = req.admin.id;
+
+    if (!providerId) {
+      return res.status(400).json({
+        success: false,
+        error: 'El ID del prestador es obligatorio para realizar el rechazo.'
+      });
+    }
+
+    await adminModel.setProviderVerifiedStatus(providerId, false);
+    await adminModel.logAdminAction(
+      adminId,
+      'RECHAZAR_PRESTADOR',
+      `Prestador ID ${providerId} RECHAZADO`
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: `El prestador #${providerId} ha sido rechazado.`
+    });
+  } catch (error) {
+    console.error('Error al rechazar prestador:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Error interno al rechazar prestador.'
+    });
+  }
+}
+
+/**
+ * Automatización de KYC (Mock): Aprueba y verifica inmediatamente un prestador.
+ */
+async function verifyProviderAuto(req, res) {
+  try {
+    const { providerId, documentType, documentNumber } = req.body;
+    const adminId = req.admin ? req.admin.id : null; // Podría llamarse por un sistema automatizado/webhook
+
+    if (!providerId) {
+      return res.status(400).json({
+        success: false,
+        error: 'El ID del prestador es obligatorio para la verificación KYC.'
+      });
+    }
+
+    // Simulamos que el mock KYC/OCR valida el documento
+    if (documentNumber && documentNumber.trim() === 'INVALIDO') {
+      await adminModel.setProviderVerifiedStatus(providerId, false);
+      return res.status(422).json({
+        success: false,
+        error: 'El documento falló la validación KYC.'
+      });
+    }
+
+    // 1. Aprobar y Verificar el prestador
+    await adminModel.setProviderVerifiedStatus(providerId, true);
+
+    // 2. Registrar auditoría si hay admin
+    if (adminId) {
+      await adminModel.logAdminAction(
+        adminId,
+        'KYC_AUTO_VERIFICACION',
+        `Prestador ID ${providerId} aprobado automáticamente por KYC Mock`
+      );
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `El prestador #${providerId} ha sido verificado automáticamente mediante KYC Mock.`
+    });
+  } catch (error) {
+    console.error('Error al realizar auto-verificación KYC:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Error interno al procesar auto-verificación KYC.'
+    });
+  }
+}
+
 module.exports = {
   getAllActiveAlerts,
   resolveSOSAlert,
   verifyProvider,
-  approvePayout
+  approvePayout,
+  getPendingProvidersList,
+  approveProvider,
+  rejectProvider,
+  verifyProviderAuto
 };

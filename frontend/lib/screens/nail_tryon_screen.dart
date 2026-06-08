@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
+import '../services/auth_service.dart';
 import 'booking_screen.dart';
 
 class NailTryonScreen extends StatefulWidget {
@@ -307,6 +308,13 @@ class _NailTryonScreenState extends State<NailTryonScreen> {
   // Flujo de Reserva Integrado
   Future<void> _bookAppointment() async {
     if (_previewImageUrl == null) return;
+    final token = await AuthService.getToken();
+    if (token == null) {
+      if (mounted) {
+        Navigator.pushNamed(context, '/login');
+      }
+      return;
+    }
 
     setState(() {
       _isUploading = true;

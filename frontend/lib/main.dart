@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'services/api_service.dart';
 import 'services/analytics_service.dart';
@@ -25,6 +26,7 @@ import 'screens/client_profile_screen.dart';
 import 'screens/provider_profile_screen.dart';
 import 'screens/booking_tracking_screen.dart';
 import 'screens/provider_route_screen.dart';
+import 'screens/nail_tryon_screen.dart';
 import 'models/provider_model.dart';
 
 void main() async {
@@ -66,7 +68,7 @@ class BeautyApp extends StatelessWidget {
           elevation: 0,
         ),
       ),
-      initialRoute: '/login',
+      initialRoute: '/home',
       routes: {
         '/login': (_) => const LoginScreen(),
         '/register': (_) => const RegisterScreen(),
@@ -77,6 +79,7 @@ class BeautyApp extends StatelessWidget {
         '/provider/portfolio': (_) => const ProviderPortfolioScreen(),
         '/provider/profile': (_) => const ProviderProfileScreen(),
         '/chat': (_) => const ChatListScreen(),
+        // '/tryon': (_) => const NailTryonScreen(),
         '/onboarding': (_) => const OnboardingScreen(),
         '/verification-pending': (_) => const VerificationPendingScreen(),
         '/profile': (_) => const ClientProfileScreen(),
@@ -110,10 +113,12 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
   bool _isLoading = true;
   String? _errorMessage;
 
+  bool _hasToken = false;
   String? _userRole;
   final TextEditingController _searchController = TextEditingController();
   final LatLng _fontibonCenter = const LatLng(4.6735, -74.1422);
   LatLng? _userLocation;
+  final GlobalKey _tryonKey = GlobalKey();
 
   @override
   void initState() {
@@ -151,6 +156,27 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
       _isLoading = true;
       _errorMessage = null;
     });
+
+    // 1. Cargar datos cacheados localmente de SharedPreferences para visualización inmediata
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String? cachedJson = prefs.getString('cached_providers');
+      if (cachedJson != null) {
+        final List<dynamic> decoded = json.decode(cachedJson);
+        final cachedProviders = decoded.map((jsonObj) => ProviderModel.fromJson(jsonObj)).toList();
+        if (mounted) {
+          setState(() {
+            _allProviders = cachedProviders;
+            _filterProviders();
+            _isLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error leyendo caché local: $e');
+    }
+
+    // 2. Realizar la petición asíncrona de red para actualizar la información
     try {
       final providers = await ApiService.fetchProvidersSecured(
         latitude: _userLocation?.latitude,
@@ -162,12 +188,34 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
         _filterProviders();
         _isLoading = false;
       });
+
+      // 3. Guardar en caché el nuevo listado
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final rawList = providers.map((p) => p.toJson()).toList();
+        await prefs.setString('cached_providers', json.encode(rawList));
+      } catch (cacheErr) {
+        debugPrint('Error guardando en caché: $cacheErr');
+      }
     } catch (e) {
       if (!mounted) return;
-      setState(() {
-        _errorMessage = e.toString();
-        _isLoading = false;
-      });
+      // Si ya cargó del caché no pisamos los datos con un error
+      if (_allProviders.isEmpty) {
+        setState(() {
+          _errorMessage = e.toString();
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Sin conexión. Mostrando datos sin conexión.'),
+            backgroundColor: Color(0xFFC89D93),
+          ),
+        );
+      }
     }
   }
 
@@ -212,6 +260,11 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
 
   Future<void> _loadUserRole() async {
     final token = await AuthService.getToken();
+    if (mounted) {
+      setState(() {
+        _hasToken = token != null;
+      });
+    }
     if (token != null) {
       try {
         final parts = token.split('.');
@@ -227,6 +280,30 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
           }
         }
       } catch (_) {}
+    }
+  }
+
+  Future<void> _checkAuthAndNavigate(String routeName) async {
+    final token = await AuthService.getToken();
+    if (token == null) {
+      if (mounted) {
+        Navigator.pushNamed(context, '/login');
+      }
+    } else {
+      if (mounted) {
+        Navigator.pushNamed(context, routeName);
+      }
+    }
+  }
+
+  Future<void> _checkAuthAndNavigateToAIChat(String message) async {
+    final token = await AuthService.getToken();
+    if (token == null) {
+      if (mounted) {
+        Navigator.pushNamed(context, '/login');
+      }
+    } else {
+      _navigateToAIChat(message);
     }
   }
 
@@ -698,21 +775,30 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20)),
                       ),
-                      onPressed: () {
-                        Navigator.pop(context);
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ChatScreen(
-                              partnerId: provider.id,
-                              partnerName: provider.businessName.isNotEmpty
-                                  ? provider.businessName
-                                  : provider.fullName,
-                              partnerRole: 'provider',
-                              partnerAvatar: provider.avatarUrl,
+                      onPressed: () async {
+                        final token = await AuthService.getToken();
+                        if (token == null) {
+                          if (context.mounted) {
+                            Navigator.pushNamed(context, '/login');
+                          }
+                          return;
+                        }
+                        if (context.mounted) {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ChatScreen(
+                                partnerId: provider.id,
+                                partnerName: provider.businessName.isNotEmpty
+                                    ? provider.businessName
+                                    : provider.fullName,
+                                partnerRole: 'provider',
+                                partnerAvatar: provider.avatarUrl,
+                              ),
                             ),
-                          ),
-                        );
+                          );
+                        }
                       },
                       icon: const Icon(Icons.chat_bubble_outline_rounded,
                           color: Color(0xFFC89D93), size: 18),
@@ -818,12 +904,14 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
   }
 
   Widget _buildNavItem({
+    Key? key,
     required IconData icon,
     required String label,
     required VoidCallback onTap,
     Color color = const Color(0xFFC89D93),
   }) {
     return Expanded(
+      key: key,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -1046,46 +1134,57 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                   _buildNavItem(
                     icon: Icons.auto_awesome,
                     label: 'Asistente IA',
-                    onTap: () => _navigateToAIChat(''),
+                    onTap: () => _checkAuthAndNavigateToAIChat(''),
                   ),
                   _buildNavItem(
                     icon: Icons.chat_bubble_outline_rounded,
                     label: 'Chats',
-                    onTap: () => Navigator.pushNamed(context, '/chat'),
+                    onTap: () => _checkAuthAndNavigate('/chat'),
                   ),
+                  // Ocultado por solicitud:
+                  // _buildNavItem(
+                  //   key: _tryonKey,
+                  //   icon: Icons.auto_awesome_motion,
+                  //   label: 'Try-On Uñas',
+                  //   onTap: () => Navigator.pushNamed(context, '/tryon'),
+                  // ),
                   if (_userRole == 'client') ...[
                     _buildNavItem(
                       icon: Icons.calendar_today_outlined,
                       label: 'Citas',
                       onTap: () =>
-                          Navigator.pushNamed(context, '/client-bookings'),
+                          _checkAuthAndNavigate('/client-bookings'),
                     ),
                   ] else if (_userRole == 'provider') ...[
                     _buildNavItem(
                       icon: Icons.dashboard_outlined,
                       label: 'Panel',
-                      onTap: () => Navigator.pushNamed(context, '/provider'),
+                      onTap: () => _checkAuthAndNavigate('/provider'),
                     ),
                     _buildNavItem(
                       icon: Icons.inventory_2_outlined,
                       label: 'Servicios',
                       onTap: () =>
-                          Navigator.pushNamed(context, '/provider/services'),
+                          _checkAuthAndNavigate('/provider/services'),
                     ),
                   ],
                   _buildNavItem(
                     icon: Icons.person_outline_rounded,
                     label: 'Perfil',
-                    onTap: () => Navigator.pushNamed(context, '/profile'),
+                    onTap: () => _checkAuthAndNavigate('/profile'),
                   ),
                   _buildNavItem(
-                    icon: Icons.logout_rounded,
-                    label: 'Salir',
+                    icon: _hasToken ? Icons.logout_rounded : Icons.login_rounded,
+                    label: _hasToken ? 'Salir' : 'Ingresar',
                     color: Colors.grey,
                     onTap: () async {
-                      final navigator = Navigator.of(context);
-                      await AuthService.logout();
-                      navigator.pushReplacementNamed('/login');
+                      if (_hasToken) {
+                        final navigator = Navigator.of(context);
+                        await AuthService.logout();
+                        navigator.pushReplacementNamed('/login');
+                      } else {
+                        Navigator.pushNamed(context, '/login');
+                      }
                     },
                   ),
                 ],
