@@ -1,5 +1,7 @@
 // backend/src/controllers/bookingController.js
 const { pool } = require('../config/db');
+const { Booking, Service, User } = require('../models');
+const { Op } = require('sequelize');
 
 // 🔹 CREAR RESERVA
 exports.createBooking = async (req, res) => {
@@ -11,15 +13,13 @@ exports.createBooking = async (req, res) => {
       return res.status(400).json({ error: 'Faltan campos requeridos' });
     }
 
-    const serviceQuery = 'SELECT price, duration_minutes FROM services WHERE id = $1;';
-    const serviceResult = await pool.query(serviceQuery, [service_id]);
-
-    if (serviceResult.rows.length === 0) {
+    const service = await Service.findByPk(service_id);
+    if (!service) {
       return res.status(404).json({ error: 'Servicio no encontrado' });
     }
 
-    const price = parseFloat(serviceResult.rows[0].price);
-    const durationMinutes = parseInt(serviceResult.rows[0].duration_minutes);
+    const price = parseFloat(service.price);
+    const durationMinutes = parseInt(service.duration_minutes);
     const total_amount = price;
 
     // 🔸 Validación de solapamiento de horarios (Collision Check)
@@ -27,50 +27,52 @@ exports.createBooking = async (req, res) => {
     const newEnd = new Date(newStart.getTime() + durationMinutes * 60 * 1000);
     const dateStr = newStart.toISOString().split('T')[0];
 
-    const overlapQuery = `
-      SELECT b.scheduled_at, s.duration_minutes 
-      FROM bookings b
-      JOIN services s ON b.service_id = s.id
-      WHERE b.provider_id = $1 
-        AND b.estado NOT IN ('CANCELADA')
-        AND b.scheduled_at::date = $2::date;
-    `;
-    const overlapResult = await pool.query(overlapQuery, [provider_id, dateStr]);
+    // Consulta de solapamiento usando Sequelize
+    const overlaps = await Booking.findAll({
+      where: {
+        provider_id,
+        estado: { [Op.ne]: 'CANCELADA' }
+      },
+      include: [{
+        model: Service,
+        as: 'service',
+        attributes: ['duration_minutes']
+      }]
+    });
 
-    for (const row of overlapResult.rows) {
-      const bStart = new Date(row.scheduled_at);
-      const bEnd = new Date(bStart.getTime() + parseInt(row.duration_minutes) * 60 * 1000);
+    // Filtrar por el mismo día y verificar solapamiento
+    for (const b of overlaps) {
+      const bStart = new Date(b.scheduled_at);
+      if (bStart.toISOString().split('T')[0] === dateStr) {
+        const bDuration = parseInt(b.service.duration_minutes);
+        const bEnd = new Date(bStart.getTime() + bDuration * 60 * 1000);
 
-      // Colisión: newStart < bEnd AND newEnd > bStart
-      if (newStart.getTime() < bEnd.getTime() && newEnd.getTime() > bStart.getTime()) {
-        return res.status(409).json({ error: 'El horario seleccionado ya está reservado o entra en conflicto con otra cita' });
+        if (newStart.getTime() < bEnd.getTime() && newEnd.getTime() > bStart.getTime()) {
+          return res.status(409).json({ error: 'El horario seleccionado ya está reservado o entra en conflicto con otra cita' });
+        }
       }
     }
 
     const pin = Math.floor(1000 + Math.random() * 9000).toString();
-    const bookingQuery = `
-      INSERT INTO bookings (client_id, provider_id, service_id, scheduled_at, valor_bruto, service_address, notes, estado, pin_verificacion)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, 'PENDIENTE_PAGO', $8)
-      RETURNING id;
-    `;
 
-    const result = await pool.query(bookingQuery, [
-      clientId,
+    const newBooking = await Booking.create({
+      client_id: clientId,
       provider_id,
       service_id,
-      scheduled_at,
-      total_amount,
-      service_address || null,
-      notes || null,
-      pin
-    ]);
+      scheduled_at: newStart,
+      valor_bruto: total_amount,
+      service_address: service_address || null,
+      notes: notes || null,
+      estado: 'PENDIENTE_PAGO',
+      pin_verificacion: pin
+    });
 
-    console.log(`📅 Nueva cita creada: ${result.rows[0].id} para usuario ${clientId} con PIN ${pin}`);
+    console.log(`📅 Nueva cita creada: ${newBooking.id} para usuario ${clientId} con PIN ${pin}`);
 
     res.json({
       success: true,
       message: 'Cita reservada exitosamente',
-      booking_id: result.rows[0].id,
+      booking_id: newBooking.id,
       pin_verificacion: pin
     });
 
@@ -87,15 +89,9 @@ exports.getProviderBookings = async (req, res) => {
       return res.status(403).json({ error: 'Acceso denegado: solo para proveedores' });
     }
 
-    const providerCheck = await pool.query(
-      'SELECT id FROM perfiles_prestador WHERE id = $1', 
-      [req.user.id]
-    );
-    
-    if (providerCheck.rows.length === 0) {
-      return res.status(404).json({ error: 'Perfil de proveedor no encontrado o inactivo' });
-    }
-
+    // Usamos pool para queries directas si son a tablas no mapeadas (o complejas), 
+    // pero Sequelize es genial para obtener la estructura limpia.
+    // Usamos pool para transacciones y relaciones para mantener compatibilidad con transactions
     const query = `
       SELECT 
         b.id, b.scheduled_at, b.estado AS status, b.valor_bruto AS total_amount, 
@@ -164,26 +160,24 @@ exports.updateBookingStatus = async (req, res) => {
       return res.status(400).json({ error: `Estado inválido. Permitidos: ${validStatuses.join(', ')}` });
     }
 
-    const query = `
-      UPDATE bookings 
-      SET estado = $1
-      WHERE id = $2 AND provider_id = $3
-      RETURNING id, estado AS status;
-    `;
-    
-    const result = await pool.query(query, [dbStatus, bookingId, providerId]);
-    
-    if (result.rows.length === 0) {
+    const booking = await Booking.findOne({
+      where: { id: bookingId, provider_id: providerId }
+    });
+
+    if (!booking) {
       return res.status(404).json({ error: 'Cita no encontrada o no te pertenece' });
     }
+
+    booking.estado = dbStatus;
+    await booking.save();
 
     console.log('✅ Cita actualizada a estado:', dbStatus);
     
     res.json({ 
       success: true, 
       booking: {
-        id: result.rows[0].id,
-        status: result.rows[0].status
+        id: booking.id,
+        status: booking.estado
       } 
     });
     
@@ -254,28 +248,23 @@ exports.cancelBooking = async (req, res) => {
     const bookingId = req.params.id;
     const clientId = req.user.id;
 
-    const checkQuery = 'SELECT estado AS status FROM bookings WHERE id = $1 AND client_id = $2;';
-    const checkRes = await pool.query(checkQuery, [bookingId, clientId]);
-    
-    if (checkRes.rows.length === 0) {
+    const booking = await Booking.findOne({
+      where: { id: bookingId, client_id: clientId }
+    });
+
+    if (!booking) {
       return res.status(404).json({ error: 'Cita no encontrada o no tienes permisos para cancelarla' });
     }
 
-    const currentStatus = checkRes.rows[0].status;
-    if (currentStatus === 'CANCELADA') {
+    if (booking.estado === 'CANCELADA') {
       return res.status(400).json({ error: 'La cita ya está cancelada' });
     }
-    if (currentStatus === 'COMPLETADA') {
+    if (booking.estado === 'COMPLETADA') {
       return res.status(400).json({ error: 'No se puede cancelar una cita que ya ha sido completada' });
     }
 
-    const updateQuery = `
-      UPDATE bookings 
-      SET estado = 'CANCELADA'
-      WHERE id = $1 AND client_id = $2
-      RETURNING id, estado AS status;
-    `;
-    const updateRes = await pool.query(updateQuery, [bookingId, clientId]);
+    booking.estado = 'CANCELADA';
+    await booking.save();
 
     console.log(`❌ Cita ${bookingId} cancelada por el cliente ${clientId}`);
 
@@ -283,8 +272,8 @@ exports.cancelBooking = async (req, res) => {
       success: true,
       message: 'Cita cancelada exitosamente',
       booking: {
-        id: updateRes.rows[0].id,
-        status: updateRes.rows[0].status
+        id: booking.id,
+        status: booking.estado
       }
     });
 
@@ -306,37 +295,33 @@ exports.payBooking = async (req, res) => {
       return res.status(400).json({ error: 'Método de pago inválido. Permitidos: NEQUI, CARD' });
     }
 
-    // Verificar si la cita existe y pertenece al cliente
-    const checkQuery = 'SELECT estado, valor_bruto FROM bookings WHERE id = $1 AND client_id = $2;';
-    const checkRes = await pool.query(checkQuery, [bookingId, clientId]);
+    const booking = await Booking.findOne({
+      where: { id: bookingId, client_id: clientId }
+    });
 
-    if (checkRes.rows.length === 0) {
+    if (!booking) {
       return res.status(404).json({ error: 'Cita no encontrada o no tienes permisos para pagarla' });
     }
 
-    const { estado, valor_bruto } = checkRes.rows[0];
-    if (estado !== 'PENDIENTE_PAGO') {
-      return res.status(400).json({ error: `La cita no se encuentra en estado PENDIENTE_PAGO. Estado actual: ${estado}` });
+    if (booking.estado !== 'PENDIENTE_PAGO') {
+      return res.status(400).json({ error: `La cita no se encuentra en estado PENDIENTE_PAGO. Estado actual: ${booking.estado}` });
     }
 
-    // Simular un retardo del servidor de pago de 1.5 segundos
     await new Promise(resolve => setTimeout(resolve, 1500));
 
     const referenceToken = 'wompi_tx_' + Math.random().toString(36).substring(2, 11).toUpperCase();
 
-    // Iniciar transacción en base de datos
     const clientDb = await pool.connect();
     try {
       await clientDb.query('BEGIN');
 
       // 1. Actualizar el estado de la cita
-      const updateQuery = `
-        UPDATE bookings
-        SET estado = 'CONFIRMADA', payment_status = 'paid'
-        WHERE id = $1 AND client_id = $2
-        RETURNING id, estado AS status;
-      `;
-      await clientDb.query(updateQuery, [bookingId, clientId]);
+      await clientDb.query(
+        `UPDATE bookings
+         SET estado = 'CONFIRMADA', payment_status = 'paid'
+         WHERE id = $1 AND client_id = $2`,
+        [bookingId, clientId]
+      );
 
       // 2. Registrar la transacción
       const txQuery = `
@@ -349,9 +334,9 @@ exports.payBooking = async (req, res) => {
           payment_method = EXCLUDED.payment_method,
           external_id = EXCLUDED.external_id;
       `;
-      await clientDb.query(txQuery, [bookingId, valor_bruto, method, referenceToken]);
+      await clientDb.query(txQuery, [bookingId, booking.valor_bruto, method, referenceToken]);
 
-      await clientDb.query('BEGIN' !== 'BEGIN' ? 'ROLLBACK' : 'COMMIT');
+      await clientDb.query('COMMIT');
 
       console.log(`\n💳 [WOMPI WEBHOOK SIMULATOR] Pago completado con éxito. Cita: ${bookingId}. Referencia: ${referenceToken}`);
 
@@ -360,7 +345,7 @@ exports.payBooking = async (req, res) => {
         message: 'Pago procesado y verificado con éxito por Wompi',
         booking_id: bookingId,
         reference: referenceToken,
-        amount: parseFloat(valor_bruto),
+        amount: parseFloat(booking.valor_bruto),
         payment_method: method
       });
 
@@ -396,13 +381,11 @@ exports.wompiWebhook = async (req, res) => {
         try {
           await clientDb.query('BEGIN');
 
-          // Actualizar cita a CONFIRMADA
           await clientDb.query(
             "UPDATE bookings SET estado = 'CONFIRMADA', payment_status = 'paid' WHERE id = $1",
             [bookingId]
           );
 
-          // Registrar la transacción
           await clientDb.query(`
             INSERT INTO transactions (booking_id, amount, status, payment_method, external_id)
             VALUES ($1, $2, 'paid', $3, $4)
@@ -441,16 +424,15 @@ exports.createReview = async (req, res) => {
       return res.status(400).json({ error: 'La calificación debe ser un número entero entre 1 y 5' });
     }
 
-    const bookingQuery = 'SELECT provider_id, estado AS status FROM bookings WHERE id = $1 AND client_id = $2;';
-    const bookingRes = await pool.query(bookingQuery, [bookingId, clientId]);
+    const booking = await Booking.findOne({
+      where: { id: bookingId, client_id: clientId }
+    });
 
-    if (bookingRes.rows.length === 0) {
+    if (!booking) {
       return res.status(404).json({ error: 'Cita no encontrada o no tienes permisos para calificarla' });
     }
 
-    const { provider_id, status } = bookingRes.rows[0];
-
-    if (status !== 'COMPLETADA') {
+    if (booking.estado !== 'COMPLETADA') {
       return res.status(400).json({ error: 'Solo puedes calificar citas que hayan sido completadas' });
     }
 
@@ -468,15 +450,15 @@ exports.createReview = async (req, res) => {
         VALUES ($1, $2, $3, $4, $5)
         RETURNING id;
       `;
-      await clientDb.query(insertReviewQuery, [bookingId, clientId, provider_id, parsedRating, comment || null]);
+      await clientDb.query(insertReviewQuery, [bookingId, clientId, booking.provider_id, parsedRating, comment || null]);
 
       const statsQuery = 'SELECT AVG(rating) as avg_rating, COUNT(id) as count_rating FROM reviews WHERE provider_id = $1;';
-      const statsRes = await clientDb.query(statsQuery, [provider_id]);
+      const statsRes = await clientDb.query(statsQuery, [booking.provider_id]);
       const avg = parseFloat(statsRes.rows[0].avg_rating) || 0.0;
       const count = parseInt(statsRes.rows[0].count_rating) || 0;
 
       const updateProviderQuery = 'UPDATE perfiles_prestador SET rating_avg = $1, rating_count = $2 WHERE id = $3;';
-      await clientDb.query(updateProviderQuery, [avg, count, provider_id]);
+      await clientDb.query(updateProviderQuery, [avg, count, booking.provider_id]);
 
       await clientDb.query('COMMIT');
 
@@ -504,34 +486,30 @@ exports.startService = async (req, res) => {
     const bookingId = req.params.id;
     const providerId = req.user.id;
 
-    // Verificar si la cita existe y pertenece al proveedor
-    const checkQuery = 'SELECT estado FROM bookings WHERE id = $1 AND provider_id = $2;';
-    const checkRes = await pool.query(checkQuery, [bookingId, providerId]);
+    const booking = await Booking.findOne({
+      where: { id: bookingId, provider_id: providerId }
+    });
 
-    if (checkRes.rows.length === 0) {
+    if (!booking) {
       return res.status(404).json({ error: 'Cita no encontrada o no tienes permisos para iniciarla' });
     }
 
-    const currentStatus = checkRes.rows[0].estado;
-    if (currentStatus !== 'CONFIRMADA') {
-      return res.status(400).json({ error: `No se puede iniciar el servicio. El estado actual es ${currentStatus} (debe ser CONFIRMADA).` });
+    if (booking.estado !== 'CONFIRMADA') {
+      return res.status(400).json({ error: `No se puede iniciar el servicio. El estado actual es ${booking.estado} (debe ser CONFIRMADA).` });
     }
 
-    // Actualizar a EN_PROGRESO
-    const updateQuery = `
-      UPDATE bookings
-      SET estado = 'EN_PROGRESO'
-      WHERE id = $1 AND provider_id = $2
-      RETURNING id, estado AS status;
-    `;
-    const result = await pool.query(updateQuery, [bookingId, providerId]);
+    booking.estado = 'EN_PROGRESO';
+    await booking.save();
 
     console.log(`🚀 Servicio iniciado para cita ${bookingId} por prestador ${providerId}`);
 
     res.json({
       success: true,
       message: 'Servicio iniciado con éxito',
-      booking: result.rows[0]
+      booking: {
+        id: booking.id,
+        status: booking.estado
+      }
     });
 
   } catch (error) {
