@@ -1,6 +1,7 @@
 // backend/src/controllers/bookingController.js
 const { pool } = require('../config/db');
-const { Booking, Service, User } = require('../models');
+const { Booking, Service, User, Transaction } = require('../models');
+const { sequelize } = require('../config/database');
 const { Op } = require('sequelize');
 
 // 🔹 CREAR RESERVA
@@ -91,7 +92,6 @@ exports.getProviderBookings = async (req, res) => {
 
     // Usamos pool para queries directas si son a tablas no mapeadas (o complejas), 
     // pero Sequelize es genial para obtener la estructura limpia.
-    // Usamos pool para transacciones y relaciones para mantener compatibilidad con transactions
     const query = `
       SELECT 
         b.id, b.scheduled_at, b.estado AS status, b.valor_bruto AS total_amount, 
@@ -283,7 +283,7 @@ exports.cancelBooking = async (req, res) => {
   }
 };
 
-// 🔹 Simular Pago con Wompi para una cita (Cliente)
+// 🔹 Simular Pago con Wompi para una cita (Cliente) - REFACTORIZADO A SEQUELIZE TRANSACTIONS
 exports.payBooking = async (req, res) => {
   try {
     const bookingId = req.params.id;
@@ -311,50 +311,48 @@ exports.payBooking = async (req, res) => {
 
     const referenceToken = 'wompi_tx_' + Math.random().toString(36).substring(2, 11).toUpperCase();
 
-    const clientDb = await pool.connect();
-    try {
-      await clientDb.query('BEGIN');
-
+    // Transacción nativa usando Sequelize
+    const result = await sequelize.transaction(async (t) => {
       // 1. Actualizar el estado de la cita
-      await clientDb.query(
-        `UPDATE bookings
-         SET estado = 'CONFIRMADA', payment_status = 'paid'
-         WHERE id = $1 AND client_id = $2`,
-        [bookingId, clientId]
-      );
+      booking.estado = 'CONFIRMADA';
+      booking.payment_status = 'paid';
+      await booking.save({ transaction: t });
 
-      // 2. Registrar la transacción
-      const txQuery = `
-        INSERT INTO transactions (booking_id, amount, status, payment_method, external_id)
-        VALUES ($1, $2, 'paid', $3, $4)
-        ON CONFLICT (booking_id)
-        DO UPDATE SET
-          amount = EXCLUDED.amount,
-          status = 'paid',
-          payment_method = EXCLUDED.payment_method,
-          external_id = EXCLUDED.external_id;
-      `;
-      await clientDb.query(txQuery, [bookingId, booking.valor_bruto, method, referenceToken]);
+      // 2. Registrar la transacción (usando ON CONFLICT / upsert equivalente en Sequelize)
+      const [tx, created] = await Transaction.findOrCreate({
+        where: { booking_id: bookingId },
+        defaults: {
+          amount: booking.valor_bruto,
+          status: 'paid',
+          payment_method: method,
+          external_id: referenceToken
+        },
+        transaction: t
+      });
 
-      await clientDb.query('COMMIT');
+      if (!created) {
+        tx.amount = booking.valor_bruto;
+        tx.status = 'paid';
+        tx.payment_method = method;
+        tx.external_id = referenceToken;
+        await tx.save({ transaction: t });
+      }
 
-      console.log(`\n💳 [WOMPI WEBHOOK SIMULATOR] Pago completado con éxito. Cita: ${bookingId}. Referencia: ${referenceToken}`);
-
-      res.json({
-        success: true,
-        message: 'Pago procesado y verificado con éxito por Wompi',
+      return {
         booking_id: bookingId,
         reference: referenceToken,
         amount: parseFloat(booking.valor_bruto),
         payment_method: method
-      });
+      };
+    });
 
-    } catch (dbErr) {
-      await clientDb.query('ROLLBACK');
-      throw dbErr;
-    } finally {
-      clientDb.release();
-    }
+    console.log(`\n💳 [WOMPI SEQUELIZE TX] Pago completado con éxito. Cita: ${bookingId}. Referencia: ${referenceToken}`);
+
+    res.json({
+      success: true,
+      message: 'Pago procesado y verificado con éxito por Wompi',
+      ...result
+    });
 
   } catch (error) {
     console.error('❌ ERROR EN POST /api/bookings/:id/pay:', error);
@@ -362,7 +360,7 @@ exports.payBooking = async (req, res) => {
   }
 };
 
-// 🔹 Webhook Simulado de Wompi
+// 🔹 Webhook Simulado de Wompi - REFACTORIZADO A SEQUELIZE TRANSACTIONS
 exports.wompiWebhook = async (req, res) => {
   try {
     const { event, data } = req.body;
@@ -377,31 +375,33 @@ exports.wompiWebhook = async (req, res) => {
       const externalId = tx.id;
 
       if (status === 'APPROVED') {
-        const clientDb = await pool.connect();
-        try {
-          await clientDb.query('BEGIN');
-
-          await clientDb.query(
-            "UPDATE bookings SET estado = 'CONFIRMADA', payment_status = 'paid' WHERE id = $1",
-            [bookingId]
+        await sequelize.transaction(async (t) => {
+          // Actualizar cita a CONFIRMADA
+          await Booking.update(
+            { estado: 'CONFIRMADA', payment_status: 'paid' },
+            { where: { id: bookingId }, transaction: t }
           );
 
-          await clientDb.query(`
-            INSERT INTO transactions (booking_id, amount, status, payment_method, external_id)
-            VALUES ($1, $2, 'paid', $3, $4)
-            ON CONFLICT (booking_id) DO UPDATE SET
-              status = 'paid',
-              external_id = EXCLUDED.external_id;
-          `, [bookingId, amount, paymentMethod, externalId]);
+          // Registrar la transacción
+          const [trans, created] = await Transaction.findOrCreate({
+            where: { booking_id: bookingId },
+            defaults: {
+              amount: amount,
+              status: 'paid',
+              payment_method: paymentMethod,
+              external_id: externalId
+            },
+            transaction: t
+          });
 
-          await clientDb.query('COMMIT');
-          console.log(`✅ [WOMPI WEBHOOK SUCCESS] Cita ${bookingId} confirmada por webhook.`);
-        } catch (dbErr) {
-          await clientDb.query('ROLLBACK');
-          throw dbErr;
-        } finally {
-          clientDb.release();
-        }
+          if (!created) {
+            trans.status = 'paid';
+            trans.external_id = externalId;
+            await trans.save({ transaction: t });
+          }
+        });
+
+        console.log(`✅ [WOMPI WEBHOOK SUCCESS] Cita ${bookingId} confirmada por webhook Sequelize.`);
       }
     }
 
