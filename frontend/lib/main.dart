@@ -9,6 +9,7 @@ import 'services/api_service.dart';
 import 'services/analytics_service.dart';
 import 'services/auth_service.dart';
 import 'services/web_geolocation.dart';
+import 'package:geocoding/geocoding.dart' as geo;
 import 'services/secure_storage_service.dart';
 
 import 'services/notification_service.dart';
@@ -155,90 +156,106 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
   }
 
   void _showManualLocationPicker() {
-    final latController = TextEditingController(text: "4.6735");
-    final lonController = TextEditingController(text: "-74.1422");
+    final addressController = TextEditingController(text: "Fontibon, Bogota");
+    bool resolving = false;
 
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-          title: const Row(
-            children: [
-              Icon(Icons.location_off, color: Color(0xFFC89D93), size: 28),
-              SizedBox(width: 8),
-              Text(
-                'Ubicación Manual',
-                style: TextStyle(fontWeight: FontWeight.bold),
+        return StatefulBuilder(
+          builder: (context, setStateModal) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+              title: const Row(
+                children: [
+                  Icon(Icons.location_off, color: Color(0xFFC89D93), size: 28),
+                  SizedBox(width: 8),
+                  Text(
+                    'Ingresa tu Ubicación',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ],
               ),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'No pudimos acceder a tu GPS. Por favor ingresa tus coordenadas de servicio de forma manual:',
-                style: TextStyle(fontSize: 14, color: Colors.black54),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'No pudimos acceder a tu GPS. Por favor escribe tu dirección, barrio o ciudad:',
+                    style: TextStyle(fontSize: 14, color: Colors.black54),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: addressController,
+                    decoration: const InputDecoration(
+                      labelText: 'Dirección o Barrio',
+                      hintText: 'Ej. Fontibon, Bogota',
+                      border: OutlineInputBorder(),
+                    ),
+                    enabled: !resolving,
+                  ),
+                  if (resolving) ...[
+                    const SizedBox(height: 16),
+                    const Center(
+                      child: CircularProgressIndicator(color: Color(0xFFC89D93)),
+                    )
+                  ]
+                ],
               ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: latController,
-                decoration: const InputDecoration(
-                  labelText: 'Latitud',
-                  border: OutlineInputBorder(),
+              actions: [
+                TextButton(
+                  onPressed: resolving ? null : () {
+                    Navigator.pop(context);
+                    setState(() {
+                      _userLocation = _fontibonCenter;
+                    });
+                    _loadProviders();
+                  },
+                  child: const Text('Usar Fontibón (Defecto)', style: TextStyle(color: Colors.grey)),
                 ),
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: lonController,
-                decoration: const InputDecoration(
-                  labelText: 'Longitud',
-                  border: OutlineInputBorder(),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFC89D93),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  ),
+                  onPressed: resolving ? null : () async {
+                    final address = addressController.text.trim();
+                    if (address.isEmpty) return;
+
+                    setStateModal(() {
+                      resolving = true;
+                    });
+
+                    try {
+                      // Obtener coordenadas a partir de texto
+                      final locations = await geo.locationFromAddress(address);
+                      if (locations.isNotEmpty) {
+                        final firstLoc = locations.first;
+                        Navigator.pop(context);
+                        setState(() {
+                          _userLocation = LatLng(firstLoc.latitude, firstLoc.longitude);
+                        });
+                        _mapController.move(_userLocation!, 13.5);
+                        _loadProviders();
+                      } else {
+                        throw Exception('No locations found');
+                      }
+                    } catch (e) {
+                      setStateModal(() {
+                        resolving = false;
+                      });
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('No pudimos localizar esa dirección. Intenta otra.')),
+                      );
+                    }
+                  },
+                  child: const Text('Buscar', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                // Fallback por defecto si cancelan
-                setState(() {
-                  _userLocation = _fontibonCenter;
-                });
-                _loadProviders();
-              },
-              child: const Text('Usar Bogotá (Fontibón)', style: TextStyle(color: Colors.grey)),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFC89D93),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              ),
-              onPressed: () {
-                final double? lat = double.tryParse(latController.text);
-                final double? lon = double.tryParse(lonController.text);
-                if (lat != null && lon != null && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {
-                  Navigator.pop(context);
-                  setState(() {
-                    _userLocation = LatLng(lat, lon);
-                  });
-                  _mapController.move(_userLocation!, 13.5);
-                  _loadProviders();
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Coordenadas inválidas. Rango Lat (-90 a 90), Lon (-180 a 180)')),
-                  );
-                }
-              },
-              child: const Text('Confirmar', style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
-          ],
+              ],
+            );
+          }
         );
       },
     );
