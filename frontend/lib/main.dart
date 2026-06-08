@@ -26,7 +26,6 @@ import 'screens/client_profile_screen.dart';
 import 'screens/provider_profile_screen.dart';
 import 'screens/booking_tracking_screen.dart';
 import 'screens/provider_route_screen.dart';
-import 'screens/nail_tryon_screen.dart';
 import 'models/provider_model.dart';
 
 void main() async {
@@ -176,15 +175,52 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
       debugPrint('Error leyendo caché local: $e');
     }
 
-    // 2. Realizar la petición asíncrona de red para actualizar la información
-    try {
-      final providers = await ApiService.fetchProvidersSecured(
-        latitude: _userLocation?.latitude,
-        longitude: _userLocation?.longitude,
-      );
+    // 2. Realizar la petición asíncrona de red para actualizar la información (con reintentos y retroceso exponencial)
+    int retries = 0;
+    const int maxRetries = 3;
+    int delayMs = 1000;
+    List<ProviderModel>? providers;
+    
+    while (retries < maxRetries) {
+      try {
+        providers = await ApiService.fetchProvidersSecured(
+          latitude: _userLocation?.latitude,
+          longitude: _userLocation?.longitude,
+        );
+        break;
+      } catch (e) {
+        retries++;
+        if (retries >= maxRetries) {
+          if (!mounted) return;
+          // Si ya cargó del caché no pisamos los datos con un error
+          if (_allProviders.isEmpty) {
+            setState(() {
+              _errorMessage = 'Fallo de conexión tras varios intentos: ${e.toString()}';
+              _isLoading = false;
+            });
+          } else {
+            setState(() {
+              _isLoading = false;
+            });
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Sin conexión. Mostrando datos sin conexión.'),
+                backgroundColor: Color(0xFFC89D93),
+              ),
+            );
+          }
+          return;
+        }
+        debugPrint('Fallo al cargar prestadores. Reintentando en ${delayMs}ms (Intento $retries de $maxRetries)...');
+        await Future.delayed(Duration(milliseconds: delayMs));
+        delayMs *= 2; // Retroceso exponencial
+      }
+    }
+
+    if (providers != null) {
       if (!mounted) return;
       setState(() {
-        _allProviders = providers;
+        _allProviders = providers!;
         _filterProviders();
         _isLoading = false;
       });
@@ -196,25 +232,6 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
         await prefs.setString('cached_providers', json.encode(rawList));
       } catch (cacheErr) {
         debugPrint('Error guardando en caché: $cacheErr');
-      }
-    } catch (e) {
-      if (!mounted) return;
-      // Si ya cargó del caché no pisamos los datos con un error
-      if (_allProviders.isEmpty) {
-        setState(() {
-          _errorMessage = e.toString();
-          _isLoading = false;
-        });
-      } else {
-        setState(() {
-          _isLoading = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Sin conexión. Mostrando datos sin conexión.'),
-            backgroundColor: Color(0xFFC89D93),
-          ),
-        );
       }
     }
   }
