@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/api_service.dart';
+import '../services/auth_service.dart';
 import '../shared/theme.dart';
 import 'booking_screen.dart';
 import 'chat_screen.dart';
@@ -899,17 +900,28 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
           ],
         ),
         child: ElevatedButton(
-          onPressed: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => BookingScreen(
-                providerId: widget.providerId,
-                providerName:
-                    p['business_name'] ?? p['full_name'] ?? 'Prestador',
-                services: services,
-              ),
-            ),
-          ),
+          onPressed: () async {
+            final token = await AuthService.getToken();
+            if (token == null) {
+              if (context.mounted) {
+                Navigator.pushNamed(context, '/login');
+              }
+              return;
+            }
+            if (context.mounted) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => BookingScreen(
+                    providerId: widget.providerId,
+                    providerName:
+                        p['business_name'] ?? p['full_name'] ?? 'Prestador',
+                    services: services,
+                  ),
+                ),
+              );
+            }
+          },
           style: ElevatedButton.styleFrom(
             backgroundColor: AppTheme.primary,
             foregroundColor: Colors.white,

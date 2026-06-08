@@ -11,6 +11,9 @@ require('dotenv').config();
 const authRoutes = require('./src/routes/authRoutes');
 const paymentRoutes = require('./src/routes/paymentRoutes');
 const bookingRoutes = require('./src/routes/bookingRoutes');
+const serviceRoutes = require('./src/routes/serviceRoutes');
+const chatRoutes = require('./src/routes/chatRoutes');
+const tryonRoutes = require('./src/routes/tryonRoutes');
 const glowAdminRoutes = require('./src/modules/admin-glow/admin.routes');
 const authMiddleware = require('./src/middleware/auth');
 const adminMiddleware = async (req, res, next) => {
@@ -87,15 +90,16 @@ app.use(cors({
 app.use(express.json());
 app.use('/uploads', express.static(uploadsDir));
 app.use('/admin', express.static(path.join(__dirname, 'public/admin')));
-app.get('/onboarding', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public/onboarding.html'));
-});
+
 
 // ==========================================
 // SISTEMA DE PAGOS
 // ==========================================
 app.use('/api', paymentRoutes);
 app.use('/api', bookingRoutes);
+app.use('/api', serviceRoutes);
+app.use('/api', chatRoutes);
+app.use('/api', tryonRoutes);
 app.use('/api/glow-admin', glowAdminRoutes);
 
 // ==========================================
@@ -376,179 +380,7 @@ app.use('/api/auth', authRoutes);
 // 🔹 RUTAS DE RESERVAS REFACTORIZADAS (Movidas a bookingRoutes.js y bookingController.js)
 
 
-// ==========================================
-// 🔹 NUEVOS ENDPOINTS: Gestión de Servicios del Proveedor
-// ==========================================
-
-// GET /api/services/provider → Lista servicios del provider (activos + inactivos)
-app.get('/api/services/provider', authMiddleware, async (req, res) => {
-  try {
-    if (req.user.role !== 'provider' && req.user.role !== 'PRESTADOR') {
-      return res.status(403).json({ error: 'Acceso denegado: solo para proveedores' });
-    }
-
-    const query = `
-      SELECT id, name, description, price, duration_minutes, category, is_active
-      FROM services
-      WHERE provider_id = $1
-      ORDER BY name ASC;
-    `;
-    const result = await pool.query(query, [req.user.id]);
-
-    const formattedServices = result.rows.map(row => ({
-      id: row.id,
-      name: row.name,
-      description: row.description || '',
-      price: parseFloat(row.price) || 0.0,
-      duration_minutes: parseInt(row.duration_minutes) || 30,
-      category: row.category || '',
-      is_active: !!row.is_active
-    }));
-
-    res.json({ success: true, count: formattedServices.length, data: formattedServices });
-  } catch (error) {
-    console.error('❌ ERROR EN GET /api/services/provider:', { message: error.message, code: error.code });
-    res.status(500).json({ error: 'Error interno al obtener servicios' });
-  }
-});
-
-// POST /api/services → Crea servicio
-app.post('/api/services', authMiddleware, async (req, res) => {
-  try {
-    if (req.user.role !== 'provider' && req.user.role !== 'PRESTADOR') {
-      return res.status(403).json({ error: 'Acceso denegado: solo para proveedores' });
-    }
-
-    const { name, description, price, duration_minutes, category, is_active } = req.body;
-    if (!name || price === undefined || !duration_minutes) {
-      return res.status(400).json({ error: 'Faltan campos obligatorios (nombre, precio, duración)' });
-    }
-
-    const parsedPrice = parseFloat(price);
-    const parsedDuration = parseInt(duration_minutes);
-    const isActiveVal = is_active !== false;
-
-    if (isNaN(parsedPrice) || parsedPrice < 0) {
-      return res.status(400).json({ error: 'Precio inválido' });
-    }
-    if (isNaN(parsedDuration) || parsedDuration <= 0) {
-      return res.status(400).json({ error: 'Duración inválida' });
-    }
-
-    const query = `
-      INSERT INTO services (provider_id, name, description, price, duration_minutes, category, is_active)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
-      RETURNING id, name, description, price, duration_minutes, category, is_active;
-    `;
-    const result = await pool.query(query, [
-      req.user.id, name, description || null, parsedPrice, parsedDuration, category || null, isActiveVal
-    ]);
-
-    res.status(201).json({
-      success: true,
-      message: 'Servicio creado exitosamente',
-      service: {
-        ...result.rows[0],
-        price: parseFloat(result.rows[0].price),
-        duration_minutes: parseInt(result.rows[0].duration_minutes)
-      }
-    });
-  } catch (error) {
-    console.error('❌ ERROR EN POST /api/services:', { message: error.message, code: error.code });
-    res.status(500).json({ error: 'Error interno al crear el servicio' });
-  }
-});
-
-// PUT /api/services/:id → Actualiza servicio
-app.put('/api/services/:id', authMiddleware, async (req, res) => {
-  try {
-    if (req.user.role !== 'provider' && req.user.role !== 'PRESTADOR') {
-      return res.status(403).json({ error: 'Acceso denegado: solo para proveedores' });
-    }
-
-    const serviceId = req.params.id;
-    const providerId = req.user.id;
-    const { name, description, price, duration_minutes, category, is_active } = req.body;
-
-    const checkQuery = 'SELECT id FROM services WHERE id = $1 AND provider_id = $2;';
-    const checkRes = await pool.query(checkQuery, [serviceId, providerId]);
-    if (checkRes.rows.length === 0) {
-      return res.status(404).json({ error: 'Servicio no encontrado o no te pertenece' });
-    }
-
-    if (!name || price === undefined || !duration_minutes) {
-      return res.status(400).json({ error: 'Faltan campos obligatorios (nombre, precio, duración)' });
-    }
-
-    const parsedPrice = parseFloat(price);
-    const parsedDuration = parseInt(duration_minutes);
-
-    if (isNaN(parsedPrice) || parsedPrice < 0) {
-      return res.status(400).json({ error: 'Precio inválido' });
-    }
-    if (isNaN(parsedDuration) || parsedDuration <= 0) {
-      return res.status(400).json({ error: 'Duración inválida' });
-    }
-
-    const query = `
-      UPDATE services
-      SET name = $1, description = $2, price = $3, duration_minutes = $4, category = $5, is_active = $6
-      WHERE id = $7 AND provider_id = $8
-      RETURNING id, name, description, price, duration_minutes, category, is_active;
-    `;
-    const result = await pool.query(query, [
-      name, description || null, parsedPrice, parsedDuration, category || null, is_active !== false, serviceId, providerId
-    ]);
-
-    res.json({
-      success: true,
-      message: 'Servicio actualizado exitosamente',
-      service: {
-        ...result.rows[0],
-        price: parseFloat(result.rows[0].price),
-        duration_minutes: parseInt(result.rows[0].duration_minutes)
-      }
-    });
-  } catch (error) {
-    console.error('❌ ERROR EN PUT /api/services/:id:', { message: error.message, code: error.code });
-    res.status(500).json({ error: 'Error interno al actualizar el servicio' });
-  }
-});
-
-// DELETE /api/services/:id → Soft delete (desactivar servicio)
-app.delete('/api/services/:id', authMiddleware, async (req, res) => {
-  try {
-    if (req.user.role !== 'provider' && req.user.role !== 'PRESTADOR') {
-      return res.status(403).json({ error: 'Acceso denegado: solo para proveedores' });
-    }
-
-    const serviceId = req.params.id;
-    const providerId = req.user.id;
-
-    const checkQuery = 'SELECT id FROM services WHERE id = $1 AND provider_id = $2;';
-    const checkRes = await pool.query(checkQuery, [serviceId, providerId]);
-    if (checkRes.rows.length === 0) {
-      return res.status(404).json({ error: 'Servicio no encontrado o no te pertenece' });
-    }
-
-    const query = `
-      UPDATE services
-      SET is_active = false
-      WHERE id = $1 AND provider_id = $2
-      RETURNING id, name, is_active;
-    `;
-    const result = await pool.query(query, [serviceId, providerId]);
-
-    res.json({
-      success: true,
-      message: 'Servicio desactivado exitosamente',
-      service: result.rows[0]
-    });
-  } catch (error) {
-    console.error('❌ ERROR EN DELETE /api/services/:id:', { message: error.message, code: error.code });
-    res.status(500).json({ error: 'Error interno al desactivar el servicio' });
-  }
-});
+// 🔹 RUTAS DE SERVICIOS REFACTORIZADAS (Movidas a serviceRoutes.js y serviceController.js)
 
 // 🔹 NUEVO: Obtener slots de tiempo disponibles para un proveedor y fecha específica
 app.get('/api/providers/:id/slots', async (req, res) => {
@@ -1550,189 +1382,7 @@ app.put('/api/portfolio/:id', authMiddleware, async (req, res) => {
 // 🔹 NUEVOS ENDPOINTS: Sistema de Chat y Mensajería
 // ==========================================
 
-// GET /api/chat/conversations → Listar conversaciones activas
-app.get('/api/chat/conversations', authMiddleware, async (req, res) => {
-  try {
-    const userId = req.user.id;
-
-    const query = `
-      SELECT DISTINCT ON (conversation_partner_id)
-        m.conversation_partner_id,
-        u.nombre as partner_name,
-        u.foto_url as partner_avatar,
-        CASE WHEN u.rol = 'PRESTADOR' THEN 'provider' ELSE 'client' END as partner_role,
-        m.message as last_message,
-        m.created_at as last_message_time,
-        m.sender_id,
-        (
-          SELECT COUNT(*)::int 
-          FROM messages 
-          WHERE sender_id = m.conversation_partner_id 
-            AND receiver_id = $1 
-            AND is_read = false
-        ) as unread_count
-      FROM (
-        SELECT 
-          CASE WHEN sender_id = $1 THEN receiver_id ELSE sender_id END as conversation_partner_id,
-          message,
-          created_at,
-          sender_id
-        FROM messages
-        WHERE sender_id = $1 OR receiver_id = $1
-        ORDER BY created_at DESC
-      ) m
-      JOIN usuarios u ON u.id = m.conversation_partner_id
-      ORDER BY m.conversation_partner_id, m.created_at DESC;
-    `;
-
-    const result = await pool.query(query, [userId]);
-    
-    // Mapear el ID de la conversación a string para compatibilidad con Flutter
-    const conversations = result.rows.map(row => ({
-      ...row,
-      conversation_partner_id: row.conversation_partner_id.toString()
-    }));
-
-    // Ordenar por fecha del último mensaje descendente
-    conversations.sort((a, b) => new Date(b.last_message_time) - new Date(a.last_message_time));
-
-    res.json({
-      success: true,
-      count: conversations.length,
-      data: conversations
-    });
-  } catch (error) {
-    console.error('❌ ERROR EN GET /api/chat/conversations:', error);
-    res.status(500).json({ error: 'Error al obtener conversaciones' });
-  }
-});
-
-// GET /api/chat/messages/:partnerId → Historial de mensajes con un socio
-app.get('/api/chat/messages/:partnerId', authMiddleware, async (req, res) => {
-  try {
-    const userId = req.user.id;
-    const partnerId = req.params.partnerId;
-    const resolvedPartnerId = (partnerId === '0' || partnerId === '00000000-0000-0000-0000-000000000000' || partnerId === AI_USER_ID.toString()) ? 0 : parseInt(partnerId);
-
-    const query = `
-      SELECT id, sender_id, receiver_id, message, is_read, created_at
-      FROM messages
-      WHERE (sender_id = $1 AND receiver_id = $2)
-         OR (sender_id = $2 AND receiver_id = $1)
-      ORDER BY created_at ASC;
-    `;
-    const result = await pool.query(query, [userId, resolvedPartnerId]);
-    
-    // Mapear los IDs de remitente y receptor a strings para compatibilidad
-    const formattedMessages = result.rows.map(row => ({
-      ...row,
-      sender_id: row.sender_id.toString(),
-      receiver_id: row.receiver_id.toString()
-    }));
-
-    res.json({
-      success: true,
-      count: formattedMessages.length,
-      data: formattedMessages
-    });
-  } catch (error) {
-    console.error('❌ ERROR EN GET /api/chat/messages/:partnerId:', error);
-    res.status(500).json({ error: 'Error al obtener mensajes' });
-  }
-});
-
-// POST /api/chat/messages → Enviar un mensaje
-app.post('/api/chat/messages', authMiddleware, async (req, res) => {
-  try {
-    const senderId = req.user.id;
-    const { receiver_id, message, image_path } = req.body;
-
-    if (!receiver_id || !message || message.trim() === '') {
-      return res.status(400).json({ error: 'receiver_id y message son obligatorios' });
-    }
-
-    const targetReceiver = (receiver_id === '0' || receiver_id === '00000000-0000-0000-0000-000000000000' || receiver_id === AI_USER_ID.toString()) ? 0 : parseInt(receiver_id);
-
-    // Sistema de Detección y Prevención de Evasión (Anti-Circumvention Filter)
-    const normalizedMsg = message.replace(/[\s\-\.\(\)]/g, '');
-    const containsPhone = /3[0-9]{9}|60[0-9]{8}/.test(normalizedMsg);
-    const containsEmail = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/.test(message);
-    const containsSocial = /@[a-zA-Z0-9_._]+/.test(message);
-    
-    const forbiddenPatterns = [
-      'por fuera', 'pago directo', 'pago en efectivo', 'efectivo directo', 
-      'whatsapp', 'wpp', 'escríbame', 'escribame', 'nequi directo', 
-      'transferencia directa', 'llámeme', 'llamame', 'escríbeme', 'escribeme',
-      'mi cel', 'mi número', 'mi numero', 'número de contacto', 'numero de contacto'
-    ];
-    
-    const lowerMessage = message.toLowerCase();
-    const containsForbiddenPattern = forbiddenPatterns.some(pat => lowerMessage.includes(pat));
-
-    // Bloquear de forma estricta entre clientes y proveedores (omitir para el Asistente de IA)
-    if (targetReceiver !== 0) {
-      if (containsPhone || containsEmail || containsSocial || containsForbiddenPattern) {
-        return res.status(400).json({ 
-          error: 'Por motivos de seguridad y políticas de la plataforma, no está permitido compartir información de contacto directo (teléfonos, correos, redes sociales) ni negociar pagos externos fuera de la aplicación. Por favor, mantenga su comunicación y transacciones dentro de Belleza App.' 
-        });
-      }
-    }
-
-    const query = `
-      INSERT INTO messages (sender_id, receiver_id, message)
-      VALUES ($1, $2, $3)
-      RETURNING id, sender_id, receiver_id, message, is_read, created_at;
-    `;
-    const result = await pool.query(query, [senderId, targetReceiver, message.trim()]);
-    
-    const formatted = {
-      ...result.rows[0],
-      sender_id: result.rows[0].sender_id.toString(),
-      receiver_id: result.rows[0].receiver_id.toString()
-    };
-
-    // Responder inmediatamente (no bloqueante)
-    res.status(201).json({
-      success: true,
-      data: formatted
-    });
-
-    // Si el receptor es el Asistente de IA, disparar generación asíncrona en segundo plano
-    if (targetReceiver === 0) {
-      processAssistantMessage(senderId, message.trim(), image_path).catch(err => {
-        console.error('❌ Error en procesamiento asíncrono del Asistente de IA:', err);
-      });
-    }
-
-  } catch (error) {
-    console.error('❌ ERROR EN POST /api/chat/messages:', error);
-    res.status(500).json({ error: 'Error al enviar el mensaje' });
-  }
-});
-
-// PATCH /api/chat/messages/:partnerId/read → Marcar mensajes recibidos como leídos
-app.patch('/api/chat/messages/:partnerId/read', authMiddleware, async (req, res) => {
-  try {
-    const userId = req.user.id;
-    const partnerId = req.params.partnerId;
-    const resolvedPartnerId = (partnerId === '0' || partnerId === '00000000-0000-0000-0000-000000000000' || partnerId === AI_USER_ID.toString()) ? 0 : parseInt(partnerId);
-
-    const query = `
-      UPDATE messages
-      SET is_read = true
-      WHERE sender_id = $1 AND receiver_id = $2 AND is_read = false
-      RETURNING id;
-    `;
-    const result = await pool.query(query, [resolvedPartnerId, userId]);
-    res.json({
-      success: true,
-      count: result.rows.length
-    });
-  } catch (error) {
-    console.error('❌ ERROR EN PATCH /api/chat/messages/:partnerId/read:', error);
-    res.status(500).json({ error: 'Error al marcar mensajes como leídos' });
-  }
-});
+// 🔹 RUTAS DE CHAT REFACTORIZADAS (Movidas a chatRoutes.js y chatController.js)
 
 const initDatabase = async () => {
   try {
@@ -2013,6 +1663,8 @@ const notifyUserJobUpdate = (userId, jobData) => {
   }
 };
 
+app.set('notifyUserJobUpdate', notifyUserJobUpdate);
+
 // ==========================================
 // 🔹 LIMPIEZA PERIÓDICA DE TRABAJOS EXPIRADOS (24H)
 // ==========================================
@@ -2061,158 +1713,7 @@ setInterval(cleanExpiredTryonJobs, 60 * 60 * 1000);
 // 🔹 NUEVOS ENDPOINTS: Prueba Virtual de Uñas (Nail Try-On)
 // ==========================================
 
-// POST /api/nail-tryon → Iniciar trabajo de prueba virtual
-app.post('/api/nail-tryon', authMiddleware, upload.single('image'), async (req, res) => {
-  try {
-    const userId = req.user.id;
-    const { color_hex, shape, finish, decoration_style } = req.body;
-
-    if (!req.file) {
-      return res.status(400).json({ error: 'Se requiere una imagen de la mano o uñas.' });
-    }
-
-    // Calcular el hash MD5 de la imagen para control de caché
-    const fileBuffer = fs.readFileSync(req.file.path);
-    const imageHash = crypto.createHash('md5').update(fileBuffer).digest('hex');
-
-    // Buscar si ya existe el resultado en caché
-    const cachedJob = await findCachedJob(imageHash, color_hex, shape, finish, decoration_style);
-    
-    if (cachedJob) {
-      console.log(`🎯 Caché hit para prueba virtual. Retornando preview de trabajo previo.`);
-      
-      const jobId = crypto.randomUUID();
-      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-      
-      const insertCachedQuery = `
-        INSERT INTO nail_tryon_jobs (id, user_id, status, color_hex, shape, finish, decoration_style, original_image_url, preview_url, image_hash, expires_at)
-        VALUES ($1, $2, 'completed', $3, $4, $5, $6, $7, $8, $9, $10)
-        RETURNING id, status, preview_url;
-      `;
-      
-      const host = req.get('host');
-      const originalImageUrl = `${req.protocol}://${host}/uploads/${req.file.filename}`;
-      
-      const result = await pool.query(insertCachedQuery, [
-        jobId,
-        userId,
-        color_hex || null,
-        shape || null,
-        finish || null,
-        decoration_style || null,
-        originalImageUrl,
-        cachedJob.preview_url,
-        imageHash,
-        expiresAt
-      ]);
-      
-      return res.status(201).json({
-        success: true,
-        message: 'Resultado recuperado de la caché.',
-        job: result.rows[0]
-      });
-    }
-
-    // Si no hay caché, crear un nuevo trabajo pendiente
-    const jobId = crypto.randomUUID();
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    const host = req.get('host');
-    const originalImageUrl = `${req.protocol}://${host}/uploads/${req.file.filename}`;
-
-    const insertQuery = `
-      INSERT INTO nail_tryon_jobs (id, user_id, status, color_hex, shape, finish, decoration_style, original_image_url, image_hash, expires_at)
-      VALUES ($1, $2, 'pending', $3, $4, $5, $6, $7, $8, $9)
-      RETURNING id, status;
-    `;
-
-    const result = await pool.query(insertQuery, [
-      jobId,
-      userId,
-      color_hex || null,
-      shape || null,
-      finish || null,
-      decoration_style || null,
-      originalImageUrl,
-      imageHash,
-      expiresAt
-    ]);
-
-    // Encolar trabajo en Redis de forma asíncrona
-    await enqueueTryonJob(jobId, userId, {
-      color_hex,
-      shape,
-      finish,
-      decoration_style
-    }, originalImageUrl, imageHash);
-
-    res.status(201).json({
-      success: true,
-      message: 'Trabajo de prueba virtual creado y encolado.',
-      job: result.rows[0]
-    });
-
-  } catch (error) {
-    console.error('❌ ERROR EN POST /api/nail-tryon:', error);
-    res.status(500).json({ error: 'Error al crear la prueba virtual de uñas.' });
-  }
-});
-
-// GET /api/nail-tryon/:id → Obtener estado del trabajo
-app.get('/api/nail-tryon/:id', authMiddleware, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const query = `
-      SELECT id, status, color_hex, shape, finish, decoration_style, original_image_url, preview_url, error_message, created_at
-      FROM nail_tryon_jobs
-      WHERE id = $1 AND user_id = $2;
-    `;
-    const result = await pool.query(query, [id, req.user.id]);
-    
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Trabajo no encontrado.' });
-    }
-    
-    res.json({ success: true, job: result.rows[0] });
-  } catch (error) {
-    console.error('❌ ERROR EN GET /api/nail-tryon/:id:', error);
-    res.status(500).json({ error: 'Error al obtener estado de la prueba virtual.' });
-  }
-});
-
-// POST /api/nail-tryon/:id/complete → Reportar terminación de trabajo (uso interno por Python Worker)
-app.post('/api/nail-tryon/:id/complete', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { status, preview_url, error_message } = req.body;
-
-    if (!['completed', 'failed'].includes(status)) {
-      return res.status(400).json({ error: 'Estado de finalización inválido.' });
-    }
-
-    const query = `
-      UPDATE nail_tryon_jobs
-      SET status = $1, preview_url = $2, error_message = $3
-      WHERE id = $4
-      RETURNING id, user_id, status, preview_url, error_message;
-    `;
-    const result = await pool.query(query, [status, preview_url || null, error_message || null, id]);
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Trabajo no encontrado para actualización.' });
-    }
-
-    const updatedJob = result.rows[0];
-    console.log(`📢 Trabajo de prueba virtual actualizado por IA Worker: ${id} (${status})`);
-
-    // Notificar al cliente vía WebSocket
-    notifyUserJobUpdate(updatedJob.user_id, updatedJob);
-
-    res.json({ success: true, message: 'Trabajo actualizado y notificado.' });
-  } catch (error) {
-    console.error('❌ ERROR EN POST /api/nail-tryon/:id/complete:', error);
-    res.status(500).json({ error: 'Error al reportar finalización del trabajo.' });
-  }
-});
+// 🔹 RUTAS DE TRY-ON REFACTORIZADAS (Movidas a tryonRoutes.js y tryonController.js)
 
 // ==========================================
 // INICIO DEL SERVIDOR

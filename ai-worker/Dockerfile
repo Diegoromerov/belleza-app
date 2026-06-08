@@ -11,6 +11,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY requirements.txt .
 RUN pip install --default-timeout=1000 --no-cache-dir -r requirements.txt
+# Instalar MediaPipe SIN dependencias transitivas (torch, jax, matplotlib = ~700MB innecesarios)
+# Las dependencias reales que MediaPipe necesita ya están en requirements.txt
+RUN pip install --default-timeout=1000 --no-cache-dir --no-deps mediapipe==0.10.11
 
 # Crear directorio para almacenar las imágenes (mapeado por volumen)
 RUN mkdir -p /app/uploads

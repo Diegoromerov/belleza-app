@@ -58,6 +58,8 @@ services:
     container_name: beauty-backend
     ports:
       - "3000:3000"
+    volumes:
+      - ./uploads:/app/uploads
     environment:
       - PORT=3000
       - DB_HOST=postgres
@@ -65,6 +67,8 @@ services:
       - DB_NAME=beauty_db
       - DB_USER=admin
       - DB_PASSWORD=admin123
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
       - JWT_SECRET=beauty_app_super_secret_key_2026_change_in_production
       - NODE_ENV=development
       - SEED_DATABASE=true

@@ -33,7 +33,7 @@ def get_redis_client():
     global r_client
     if r_client is None:
         try:
-            r_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0, socket_timeout=5)
+            r_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0, socket_timeout=15)
             # Validar conexión
             r_client.ping()
             print(f"🔌 Conectado a Redis en {REDIS_HOST}:{REDIS_PORT} exitosamente.")

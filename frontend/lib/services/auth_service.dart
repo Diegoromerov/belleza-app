@@ -124,4 +124,25 @@ class AuthService {
     await prefs.clear();
     ApiService.resetCachedBaseUrl();
   }
+
+  static Future<Map<String, dynamic>?> loginWithGoogle(String idToken) async {
+    final baseUrl = await getBaseUrl();
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/auth/google'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({'idToken': idToken}),
+    );
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('token', data['token']);
+      await prefs.setString('userId', data['user']['id'].toString());
+      await prefs.setString('userName', data['user']['full_name']);
+      if (data['user']['role'] != null) {
+        await prefs.setString('userRole', data['user']['role']);
+      }
+      return data;
+    }
+    return null;
+  }
 }

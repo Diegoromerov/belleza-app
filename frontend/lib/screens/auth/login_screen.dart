@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
 import 'package:flutter/foundation.dart';
 import '../../services/api_service.dart';
-import '../onboarding_webview_screen.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -20,6 +20,11 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   bool _obscurePassword = true;
   String? _error;
+
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: ['email'],
+    serverClientId: '466897054371-qaec2ipcc0pea91obs0ejcb9tene7kma.apps.googleusercontent.com',
+  );
 
   @override
   void dispose() {
@@ -44,32 +49,10 @@ class _LoginScreenState extends State<LoginScreen> {
             result['user']['onboarding_completo'] ?? false;
         final String? role = result['user']['role'];
         if (onboardingCompleto) {
-          if (kIsWeb) {
-            if (role == 'provider') {
-              Navigator.pushReplacementNamed(context, '/provider');
-            } else {
-              Navigator.pushReplacementNamed(context, '/home');
-            }
+          if (role == 'provider') {
+            Navigator.pushReplacementNamed(context, '/provider');
           } else {
-            if (role == 'provider') {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => OnboardingWebViewScreen(
-                    onCompleted: () => Navigator.pushReplacementNamed(context, '/provider'),
-                  ),
-                ),
-              );
-            } else {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => OnboardingWebViewScreen(
-                    onCompleted: () => Navigator.pushReplacementNamed(context, '/home'),
-                  ),
-                ),
-              );
-            }
+            Navigator.pushReplacementNamed(context, '/home');
           }
         } else {
           Navigator.pushReplacementNamed(context, '/onboarding');
@@ -84,28 +67,72 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  Future<void> _handleOAuth(String provider) async {
+  Future<void> _handleGoogleSignIn() async {
     setState(() {
       _isLoading = true;
       _error = null;
     });
     try {
-      final email = provider == 'GOOGLE'
-          ? 'googleuser@correo.com'
-          : (provider == 'OUTLOOK'
+      String idToken = 'test_google_token_usuario_pruebas';
+      
+      // En producción / móviles reales, ejecutamos el flujo interactivo de Google
+      if (!kIsWeb) {
+        final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+        if (googleUser != null) {
+          final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+          if (googleAuth.idToken != null) {
+            idToken = googleAuth.idToken!;
+          }
+        } else {
+          // El usuario canceló la autenticación
+          setState(() => _isLoading = false);
+          return;
+        }
+      }
+
+      final result = await AuthService.loginWithGoogle(idToken);
+
+      if (result != null && mounted) {
+        final bool onboardingCompleto =
+            result['user']['onboarding_completo'] ?? false;
+        final String? role = result['user']['role'];
+        if (onboardingCompleto) {
+          if (role == 'provider') {
+            Navigator.pushReplacementNamed(context, '/provider');
+          } else {
+            Navigator.pushReplacementNamed(context, '/home');
+          }
+        } else {
+          Navigator.pushReplacementNamed(context, '/onboarding');
+        }
+      } else {
+        setState(() => _error = 'Error al autenticar con Google');
+      }
+    } catch (e) {
+      setState(() => _error = 'Error de conexión: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _handleOAuth(String provider) async {
+    if (provider == 'GOOGLE') {
+      await _handleGoogleSignIn();
+      return;
+    }
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      final email = provider == 'OUTLOOK'
               ? 'outlookuser@outlook.com'
-              : 'appleuser@icloud.com');
-      final name = provider == 'GOOGLE'
-          ? 'Usuario de Google'
-          : (provider == 'OUTLOOK' ? 'Usuario de Outlook' : 'Usuario de Apple');
-      final fotoUrl = provider == 'GOOGLE'
-          ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop'
-          : (provider == 'OUTLOOK'
+              : 'appleuser@icloud.com';
+      final name = provider == 'OUTLOOK' ? 'Usuario de Outlook' : 'Usuario de Apple';
+      final fotoUrl = provider == 'OUTLOOK'
               ? 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=200&auto=format&fit=crop'
-              : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200&auto=format&fit=crop');
-      final providerId = provider == 'GOOGLE'
-          ? 'google_123456789'
-          : (provider == 'OUTLOOK' ? 'outlook_987654321' : 'apple_555666777');
+              : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200&auto=format&fit=crop';
+      final providerId = provider == 'OUTLOOK' ? 'outlook_987654321' : 'apple_555666777';
 
       final result = await AuthService.loginOAuth(
         email: email,
@@ -120,32 +147,10 @@ class _LoginScreenState extends State<LoginScreen> {
             result['user']['onboarding_completo'] ?? false;
         final String? role = result['user']['role'];
         if (onboardingCompleto) {
-          if (kIsWeb) {
-            if (role == 'provider') {
-              Navigator.pushReplacementNamed(context, '/provider');
-            } else {
-              Navigator.pushReplacementNamed(context, '/home');
-            }
+          if (role == 'provider') {
+            Navigator.pushReplacementNamed(context, '/provider');
           } else {
-            if (role == 'provider') {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => OnboardingWebViewScreen(
-                    onCompleted: () => Navigator.pushReplacementNamed(context, '/provider'),
-                  ),
-                ),
-              );
-            } else {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => OnboardingWebViewScreen(
-                    onCompleted: () => Navigator.pushReplacementNamed(context, '/home'),
-                  ),
-                ),
-              );
-            }
+            Navigator.pushReplacementNamed(context, '/home');
           }
         } else {
           Navigator.pushReplacementNamed(context, '/onboarding');
