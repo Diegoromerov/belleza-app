@@ -107,7 +107,14 @@ app.use('/api/glow-admin', glowAdminRoutes);
 // ==========================================
 
 // Health check
-app.get('/api/health', (req, res) => {
+app.get('/api/health', async (req, res) => {
+  try {
+    // Alinear la secuencia auto-incremental de usuarios para evitar colisión de IDs (duplicate key value)
+    await pool.query("SELECT setval('usuarios_id_seq', (SELECT COALESCE(MAX(id), 0) FROM usuarios) + 1, false);");
+    console.log("✅ Secuencia de usuarios alineada con éxito.");
+  } catch (err) {
+    console.error("⚠️ Error alineando la secuencia de usuarios:", err.message);
+  }
   res.json({ 
     status: 'OK', 
     message: 'Backend funcionando', 
