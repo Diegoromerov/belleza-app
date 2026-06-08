@@ -5,7 +5,11 @@ const connectionString = process.env.DATABASE_URL;
 
 let sequelize;
 
-if (connectionString) {
+if (process.env.NODE_ENV === 'test') {
+  sequelize = new Sequelize('sqlite::memory:', {
+    logging: false
+  });
+} else if (connectionString) {
   sequelize = new Sequelize(connectionString, {
     dialect: 'postgres',
     dialectOptions: {

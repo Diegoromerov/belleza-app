@@ -1,5 +1,6 @@
 // backend/src/controllers/chatController.js
-const { pool } = require('../config/db');
+const { sequelize } = require('../config/database');
+const { QueryTypes } = require('sequelize');
 const { processAssistantMessage, AI_USER_ID } = require('../services/geminiService');
 
 // GET /api/chat/conversations → Listar conversaciones activas
@@ -20,26 +21,29 @@ exports.getConversations = async (req, res) => {
           SELECT COUNT(*)::int 
           FROM messages 
           WHERE sender_id = m.conversation_partner_id 
-            AND receiver_id = $1 
+            AND receiver_id = :userId 
             AND is_read = false
         ) as unread_count
       FROM (
         SELECT 
-          CASE WHEN sender_id = $1 THEN receiver_id ELSE sender_id END as conversation_partner_id,
+          CASE WHEN sender_id = :userId THEN receiver_id ELSE sender_id END as conversation_partner_id,
           message,
           created_at,
           sender_id
         FROM messages
-        WHERE sender_id = $1 OR receiver_id = $1
+        WHERE sender_id = :userId OR receiver_id = :userId
         ORDER BY created_at DESC
       ) m
       JOIN usuarios u ON u.id = m.conversation_partner_id
       ORDER BY m.conversation_partner_id, m.created_at DESC;
     `;
 
-    const result = await pool.query(query, [userId]);
+    const results = await sequelize.query(query, {
+      replacements: { userId },
+      type: QueryTypes.SELECT
+    });
     
-    const conversations = result.rows.map(row => ({
+    const conversations = results.map(row => ({
       ...row,
       conversation_partner_id: row.conversation_partner_id.toString()
     }));
@@ -67,13 +71,16 @@ exports.getMessages = async (req, res) => {
     const query = `
       SELECT id, sender_id, receiver_id, message, is_read, created_at
       FROM messages
-      WHERE (sender_id = $1 AND receiver_id = $2)
-         OR (sender_id = $2 AND receiver_id = $1)
+      WHERE (sender_id = :userId AND receiver_id = :resolvedPartnerId)
+         OR (sender_id = :resolvedPartnerId AND receiver_id = :userId)
       ORDER BY created_at ASC;
     `;
-    const result = await pool.query(query, [userId, resolvedPartnerId]);
+    const results = await sequelize.query(query, {
+      replacements: { userId, resolvedPartnerId },
+      type: QueryTypes.SELECT
+    });
     
-    const formattedMessages = result.rows.map(row => ({
+    const formattedMessages = results.map(row => ({
       ...row,
       sender_id: row.sender_id.toString(),
       receiver_id: row.receiver_id.toString()
@@ -128,15 +135,20 @@ exports.sendMessage = async (req, res) => {
 
     const query = `
       INSERT INTO messages (sender_id, receiver_id, message)
-      VALUES ($1, $2, $3)
+      VALUES (:senderId, :targetReceiver, :message)
       RETURNING id, sender_id, receiver_id, message, is_read, created_at;
     `;
-    const result = await pool.query(query, [senderId, targetReceiver, message.trim()]);
+    const results = await sequelize.query(query, {
+      replacements: { senderId, targetReceiver, message: message.trim() },
+      type: QueryTypes.INSERT
+    });
     
+    // results en INSERT en pg retorna [rows, metadata]
+    const row = results[0][0];
     const formatted = {
-      ...result.rows[0],
-      sender_id: result.rows[0].sender_id.toString(),
-      receiver_id: result.rows[0].receiver_id.toString()
+      ...row,
+      sender_id: row.sender_id.toString(),
+      receiver_id: row.receiver_id.toString()
     };
 
     res.status(201).json({
@@ -166,13 +178,19 @@ exports.readMessages = async (req, res) => {
     const query = `
       UPDATE messages
       SET is_read = true
-      WHERE sender_id = $1 AND receiver_id = $2 AND is_read = false
+      WHERE sender_id = :resolvedPartnerId AND receiver_id = :userId AND is_read = false
       RETURNING id;
     `;
-    const result = await pool.query(query, [resolvedPartnerId, userId]);
+    const results = await sequelize.query(query, {
+      replacements: { resolvedPartnerId, userId },
+      type: QueryTypes.UPDATE
+    });
+    
+    // En UPDATE, pg retorna [rows, metadata] o similar
+    const rows = results[0];
     res.json({
       success: true,
-      count: result.rows.length
+      count: rows.length
     });
   } catch (error) {
     console.error('❌ ERROR EN PATCH /api/chat/messages/:partnerId/read:', error);
