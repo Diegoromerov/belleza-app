@@ -71,7 +71,7 @@ const upload = multer({
   fileFilter: (req, file, cb) => {
     const allowedTypes = /jpeg|jpg|png|gif|webp/;
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedTypes.test(file.mimetype) || file.mimetype === 'application/octet-stream' || !file.mimetype;
+    const mimetype = allowedTypes.test(file.mimetype);
     if (extname && mimetype) {
       return cb(null, true);
     } else {
@@ -90,6 +90,14 @@ app.use(cors({
 app.use(express.json());
 app.use('/uploads', express.static(uploadsDir));
 app.use('/admin', express.static(path.join(__dirname, 'public/admin')));
+
+const allowDebugRoutes = process.env.ALLOW_DEBUG_ROUTES === 'true' || process.env.NODE_ENV !== 'production';
+const debugRouteMiddleware = (req, res, next) => {
+  if (!allowDebugRoutes) {
+    return authMiddleware(req, res, () => adminMiddleware(req, res, next));
+  }
+  return next();
+};
 
 
 // ==========================================
@@ -124,7 +132,7 @@ app.get('/api/health', async (req, res) => {
 });
 
 // Test DB connection
-app.get('/api/test-db', async (req, res) => {
+app.get('/api/test-db', debugRouteMiddleware, async (req, res) => {
   try {
     const connected = await testConnection();
     res.json({ 
@@ -138,7 +146,7 @@ app.get('/api/test-db', async (req, res) => {
 });
 
 // Debug DB tables and extensions
-app.get('/api/debug-db', async (req, res) => {
+app.get('/api/debug-db', debugRouteMiddleware, async (req, res) => {
   const reports = {};
   reports.lastDbInitError = lastDbInitError;
   try {
@@ -1632,9 +1640,10 @@ const initDatabase = async () => {
       }
     }
 
-    // Auto-approve all providers for testing/staging environments
-    await pool.query("UPDATE perfiles_prestador SET estatus_verificacion = 'APROBADO';");
-    console.log('✅ Base de datos: Todos los perfiles de prestador han sido aprobados automáticamente.');
+    if (process.env.AUTO_APPROVE_PROVIDERS === 'true') {
+      await pool.query("UPDATE perfiles_prestador SET estatus_verificacion = 'APROBADO';");
+      console.log('✅ Base de datos: Todos los perfiles de prestador han sido aprobados automáticamente.');
+    }
   } catch (error) {
     console.error('❌ Error al inicializar la base de datos:', error);
     lastDbInitError = {

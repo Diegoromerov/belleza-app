@@ -1,7 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { pool } = require('../config/db');
-const JWT_SECRET = process.env.JWT_SECRET || 'beauty_app_super_secret_key_2026_change_in_production';
+const { getJwtSecret, toApiRole } = require('../config/jwt');
 
 // ==========================================
 // 📝 REGISTRO LOCAL
@@ -36,7 +36,7 @@ exports.register = async (req, res) => {
         id: user.id.toString(),
         full_name: user.nombre,
         email: user.email,
-        role: user.rol === 'PRESTADOR' ? 'provider' : 'client',
+        role: toApiRole(user.rol),
         onboarding_completo: user.onboarding_completo
       }
     });
@@ -55,9 +55,6 @@ exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
     
-    console.log('\n==== [DEBUG LOGIN LOCAL] ====');
-    console.log('Email recibido:', JSON.stringify(email));
-
     if (!email || !password) {
       return res.status(400).json({ error: 'Email y contraseña son obligatorios' });
     }
@@ -91,8 +88,8 @@ exports.login = async (req, res) => {
     
     // Generación del Token JWT
     const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.rol === 'PRESTADOR' ? 'provider' : (user.rol === 'CLIENTE' ? 'client' : null) }, 
-      JWT_SECRET, 
+      { id: user.id, email: user.email, role: toApiRole(user.rol), rol: user.rol }, 
+      getJwtSecret(), 
       { expiresIn: '7d' }
     );
     
@@ -105,7 +102,7 @@ exports.login = async (req, res) => {
         id: user.id.toString(), 
         full_name: user.nombre, 
         email: user.email, 
-        role: user.rol === 'PRESTADOR' ? 'provider' : (user.rol === 'CLIENTE' ? 'client' : null),
+        role: toApiRole(user.rol),
         onboarding_completo: user.onboarding_completo
       } 
     });
@@ -121,6 +118,10 @@ exports.login = async (req, res) => {
 // ==========================================
 exports.oauth = async (req, res) => {
   try {
+    return res.status(410).json({
+      error: 'OAuth directo deshabilitado. Usa /api/auth/google u otro proveedor verificado.'
+    });
+
     const { email, nombre, foto_url, auth_provider, provider_id } = req.body;
 
     if (!email || !nombre || !auth_provider || !provider_id) {
@@ -249,7 +250,7 @@ exports.onboarding = async (req, res) => {
       success: true,
       message: 'Onboarding completado exitosamente',
       user: {
-        role: mappedRol === 'PRESTADOR' ? 'provider' : 'client',
+        role: toApiRole(mappedRol),
         onboarding_completo: true
       }
     });

@@ -2,10 +2,10 @@
 const { OAuth2Client } = require('google-auth-library');
 const jwt = require('jsonwebtoken');
 const { pool } = require('../config/db');
+const { getJwtSecret, toApiRole } = require('../config/jwt');
 
 const CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 const client = new OAuth2Client(CLIENT_ID);
-const JWT_SECRET = process.env.JWT_SECRET || 'beauty_app_super_secret_key_2026_change_in_production';
 
 exports.googleSignIn = async (req, res) => {
   try {
@@ -16,7 +16,7 @@ exports.googleSignIn = async (req, res) => {
 
     let payload;
     // Permitir token de prueba en desarrollo/testing
-    if (process.env.NODE_ENV === 'test' || idToken.startsWith('test_google_token_')) {
+    if (process.env.NODE_ENV === 'test' && idToken.startsWith('test_google_token_')) {
       const tokenSuffix = idToken.replace('test_google_token_', '');
       payload = {
         email: `${tokenSuffix}@gmail.com`,
@@ -65,8 +65,8 @@ exports.googleSignIn = async (req, res) => {
 
     // Generar JWT
     const appToken = jwt.sign(
-      { id: user.id, email: user.email, role: user.rol === 'PRESTADOR' ? 'provider' : 'client' },
-      JWT_SECRET,
+      { id: user.id, email: user.email, role: toApiRole(user.rol), rol: user.rol },
+      getJwtSecret(),
       { expiresIn: '24h' }
     );
 
@@ -77,7 +77,7 @@ exports.googleSignIn = async (req, res) => {
         id: user.id.toString(),
         full_name: user.nombre,
         email: user.email,
-        role: user.rol === 'PRESTADOR' ? 'provider' : 'client',
+        role: toApiRole(user.rol),
         onboarding_completo: user.onboarding_completo
       }
     });
