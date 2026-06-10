@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../services/auth_service.dart';
 import '../../services/api_service.dart';
+import '../../shared/theme.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -76,12 +77,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
     try {
       if (_selectedRole == 'PRESTADOR') {
-        if (!_habeasDataAccepted ||
-            _documentoUrl == null ||
-            _rutUrl == null ||
-            _certificacionUrl == null) {
+        if (!_habeasDataAccepted) {
           setState(() {
-            _error = 'Debes aceptar Habeas Data y subir todos los documentos.';
+            _error = 'Debes aceptar Habeas Data.';
             _isLoading = false;
           });
           return;
@@ -107,6 +105,36 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         } else {
           setState(() => _error = 'Error al guardar el perfil');
         }
+      }
+    } catch (e) {
+      setState(() => _error = 'Error de conexión: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _saveDraft() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      final result = await AuthService.completeOnboarding(
+        role: 'PRESTADOR',
+        documentoIdUrl: _documentoUrl,
+        rutUrl: _rutUrl,
+        certificacionUrl: _certificacionUrl,
+      );
+      if (result != null && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✓ Borrador guardado. Puedes completar tu perfil más tarde.'),
+            backgroundColor: Color(0xFFC89D93),
+          ),
+        );
+        Navigator.pushReplacementNamed(context, '/verification-pending');
+      } else {
+        setState(() => _error = 'Error al guardar el borrador');
       }
     } catch (e) {
       setState(() => _error = 'Error de conexión: $e');
@@ -145,14 +173,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     color: Colors.black87),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'Selecciona tu perfil de acceso para comenzar',
+              Text(
+                _selectedRole == 'PRESTADOR'
+                    ? '¡Completa tu registro y empieza a ganar dinero esta misma semana!'
+                    : 'Selecciona tu perfil de acceso para comenzar',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: Colors.grey),
+                style: const TextStyle(fontSize: 14, color: Colors.grey),
               ),
               const SizedBox(height: 28),
               _buildRoleSelectionCards(),
+              if (_selectedRole == 'PRESTADOR') ...[
+                const SizedBox(height: 20),
+                _buildProgressStepper(),
+              ],
               const SizedBox(height: 24),
+              if (_selectedRole == 'PRESTADOR') _buildTestimonialCard(),
               if (_selectedRole == 'CLIENTE') _buildClientView(),
               if (_selectedRole == 'PRESTADOR') _buildProviderForm(),
               if (_error != null)
@@ -214,18 +249,28 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             color: const Color(0xFFF5EBE6),
             borderRadius: BorderRadius.circular(24),
           ),
-          child: const Column(
+          child: Column(
             children: [
-              Icon(Icons.face_retouching_natural,
-                  size: 48, color: Color(0xFFC89D93)),
-              SizedBox(height: 12),
-              Text(
-                '¡Excelente elección!',
+              Container(
+                width: 94,
+                height: 94,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFFD4AF37), width: 3.0),
+                  image: const DecorationImage(
+                    image: AssetImage('assets/images/avatar_aura.png'),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                '¡Hola! Soy Aura, tu guía personal',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              SizedBox(height: 8),
-              Text(
-                'Al ingresar como Cliente podrás ver perfiles de prestadores cercanos en Fontibón, cotizar y agendar tus citas a domicilio en segundos.',
+              const SizedBox(height: 10),
+              const Text(
+                'Te guiaré para encontrar a tu estilista ideal a domicilio, agendar de manera segura y proteger tus pagos con depósito en garantía en segundos.',
                 textAlign: TextAlign.center,
                 style:
                     TextStyle(fontSize: 14, color: Colors.black54, height: 1.4),
@@ -260,23 +305,62 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Widget _buildProviderForm() {
-    final bool allDocsUploaded =
-        _documentoUrl != null && _rutUrl != null && _certificacionUrl != null;
-    final bool isSubmitEnabled = _habeasDataAccepted && allDocsUploaded;
+    final bool atLeastOneDocUploaded =
+        _documentoUrl != null || _rutUrl != null || _certificacionUrl != null;
+    final bool isSubmitEnabled = _habeasDataAccepted && atLeastOneDocUploaded;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const Divider(height: 32, color: Color(0xFFE8D7D3)),
         const Text(
-          'Requisitos de Verificación Comercial',
+          'Completa tu perfil profesional',
           style: TextStyle(
               fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
         ),
         const SizedBox(height: 8),
+        const Row(
+          children: [
+            Icon(Icons.access_time, color: Color(0xFFC89D93)),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Tú decides tu horario: trabaja cuando quieras y donde quieras.',
+                style: TextStyle(fontSize: 13, color: Colors.black87),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        const Row(
+          children: [
+            Icon(Icons.account_balance_wallet, color: Color(0xFFC89D93)),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Pago 100% seguro: depósito en garantía antes de iniciar cada servicio.',
+                style: TextStyle(fontSize: 13, color: Colors.black87),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        const Row(
+          children: [
+            Icon(Icons.trending_up, color: Color(0xFFC89D93)),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Clientes sin esfuerzo: nosotros nos encargamos de la publicidad y tracción.',
+                style: TextStyle(fontSize: 13, color: Colors.black87),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
         const Text(
-          'De acuerdo con las regulaciones de la Ley 711 de 2001 de Colombia, es obligatorio adjuntar documentación válida para prestar servicios estéticos.',
-          style: TextStyle(fontSize: 13, color: Colors.grey, height: 1.3),
+          'La ley colombiana nos pide verificar tu formación profesional — ¡es por tu seguridad y la de tus clientes!',
+          style: TextStyle(fontSize: 11, color: Colors.grey, height: 1.3),
         ),
         const SizedBox(height: 20),
 
@@ -293,7 +377,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         // Carga de RUT
         _buildDocumentUploadTile(
           title: 'Registro Único Tributario (RUT)',
-          subtitle: 'Requerido para liquidaciones financieras',
+          subtitle: 'Opcional · Requerido para liquidaciones financieras',
           isUploaded: _rutUrl != null,
           isUploading: _uploadingRut,
           onTap: () => _pickAndUploadDocument('rut'),
@@ -303,7 +387,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         // Carga de Certificado de Bioseguridad
         _buildDocumentUploadTile(
           title: 'Certificado Profesional / Bioseguridad',
-          subtitle: 'Cumplimiento Ley 711 de 2001',
+          subtitle: 'Opcional · Cumplimiento Ley 711 de 2001',
           isUploaded: _certificacionUrl != null,
           isUploading: _uploadingCert,
           onTap: () => _pickAndUploadDocument('cert'),
@@ -336,7 +420,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ),
                     SizedBox(height: 4),
                     Text(
-                      'La plataforma retiene una comisión fija del 20% sobre la tarifa bruta del servicio para soporte operativo y se encarga del correspondiente reporte de impuestos estatales.',
+                      'GlowApp invierte en publicidad para traerte clientes, cubre el procesamiento seguro de pagos con Wompi, provee soporte 24/7 y gestiona el reporte de impuestos estatales. A cambio, retenemos una comisión fija del 20% sobre servicios exitosos. ¡Si tú no ganas, nosotros tampoco!',
                       style: TextStyle(
                           fontSize: 12, color: Colors.black54, height: 1.3),
                     ),
@@ -360,6 +444,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           activeColor: const Color(0xFFC89D93),
           contentPadding: EdgeInsets.zero,
           controlAffinity: ListTileControlAffinity.leading,
+        ),
+        const Padding(
+          padding: EdgeInsets.only(left: 16, top: 4),
+          child: Text(
+            'Sin contratos de permanencia. Puedes pausar o eliminar tu cuenta en cualquier momento.',
+            style: TextStyle(fontSize: 11, color: Colors.grey, height: 1.3),
+          ),
         ),
         const SizedBox(height: 28),
 
@@ -386,6 +477,235 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               : const Text('Enviar para Verificación',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         ),
+        const Padding(
+          padding: EdgeInsets.only(top: 6),
+          child: Text(
+            'Serás redirigido a tu panel de seguimiento',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 10, color: Colors.grey),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.schedule, size: 14, color: Colors.grey),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  'Nuestro equipo validará tus documentos en menos de 24 horas hábiles. Te notificaremos por la app apenas tu cuenta esté activa.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 11, color: Colors.grey, height: 1.3),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const Padding(
+          padding: EdgeInsets.only(top: 4, left: 16, right: 16),
+          child: Text(
+            'Si necesitamos ajustes en tus documentos, te informaremos con instrucciones claras para resubir.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 10, color: Colors.grey),
+          ),
+        ),
+        const SizedBox(height: 12),
+        OutlinedButton(
+          onPressed: _isLoading ? null : _saveDraft,
+          style: OutlinedButton.styleFrom(
+            foregroundColor: const Color(0xFFC89D93),
+            side: const BorderSide(color: Color(0xFFC89D93)),
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+            elevation: 0,
+            minimumSize: const Size(double.infinity, 50),
+          ),
+          child: const Text('Guardar borrador y completar más tarde',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProgressStepper() {
+    final int currentStep = _isLoading
+        ? 3
+        : (_documentoUrl != null || _rutUrl != null || _certificacionUrl != null) ? 2 : 1;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: Row(
+        children: [
+          _buildStepCircle('✓', 'Elige rol', true),
+          Expanded(
+            child: Container(
+              height: 2,
+              color: const Color(0xFFC89D93),
+            ),
+          ),
+          _buildStepCircle('2', 'Documentos', currentStep >= 2),
+          Expanded(
+            child: Container(
+              height: 2,
+              color: currentStep >= 3
+                  ? const Color(0xFFC89D93)
+                  : const Color(0xFFE8D7D3),
+            ),
+          ),
+          _buildStepCircle('3', '¡Listo!', currentStep >= 3),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStepCircle(String label, String text, bool isCompleted) {
+    return Column(
+      children: [
+        Container(
+          width: 28,
+          height: 28,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: isCompleted ? const Color(0xFFC89D93) : Colors.white,
+            border: Border.all(
+              color: isCompleted
+                  ? const Color(0xFFC89D93)
+                  : const Color(0xFFE8D7D3),
+              width: 2,
+            ),
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: isCompleted ? Colors.white : Colors.grey,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          text,
+          style: TextStyle(
+            fontSize: 10,
+            color: isCompleted ? Colors.black87 : Colors.grey,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTestimonialCard() {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFFDFB),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFF3EAE8)),
+            boxShadow: AppTheme.softShadow,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const CircleAvatar(
+                    backgroundColor: Color(0xFFC89D93),
+                    radius: 20,
+                    child: Text(
+                      'VP',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Valentina P.',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        Text(
+                          'Estilista en Bogotá',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Row(
+                    children: List.generate(
+                      5,
+                      (index) => const Icon(
+                        Icons.star,
+                        color: Color(0xFFD4AF37),
+                        size: 16,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                '"Desde que me registré en GlowApp, organicé mis horarios y mis ingresos crecieron un 40% en el primer mes. Los pagos son puntuales cada semana y el soporte siempre responde rápido. ¡Es como tener mi propio salón sin pagar arriendo!"',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontStyle: FontStyle.italic,
+                  color: Colors.black87,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'Resultado basado en prestadoras activas durante la fase de prueba.',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 10, color: Colors.grey),
+        ),
+        const SizedBox(height: 16),
+        const Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.lock_outline, size: 14, color: Colors.green),
+                SizedBox(width: 4),
+                Text(
+                  'Datos protegidos (Ley 1581)',
+                  style: TextStyle(fontSize: 11, color: Colors.black54),
+                ),
+              ],
+            ),
+            Row(
+              children: [
+                Icon(Icons.credit_card_outlined, size: 14, color: Colors.blue),
+                SizedBox(width: 4),
+                Text(
+                  'Pagos seguros vía Wompi',
+                  style: TextStyle(fontSize: 11, color: Colors.black54),
+                ),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
       ],
     );
   }
@@ -403,13 +723,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: const Color(0x66F5EBE6),
+          color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color:
-                isUploaded ? const Color(0x80C89D93) : const Color(0xFFF3EAE8),
+                isUploaded ? const Color(0xFFC89D93) : const Color(0xFFEADCD6),
             width: 1.5,
           ),
+          boxShadow: AppTheme.softShadow,
         ),
         child: Row(
           children: [
@@ -492,15 +813,7 @@ class _RoleCard extends StatelessWidget {
                 isSelected ? const Color(0xFFC89D93) : const Color(0xFFF3EAE8),
             width: isSelected ? 2 : 1,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: isSelected
-                  ? const Color(0x0F000000)
-                  : const Color(0x05000000),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          boxShadow: isSelected ? AppTheme.cardShadow : AppTheme.softShadow,
         ),
         child: Column(
           children: [

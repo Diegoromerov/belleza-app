@@ -1,0 +1,61 @@
+====================================================================
+GLOWAPP - REPORTE DE OPERACIONES #005
+AUDITORÍA OPERATIVA Y ESTADO DEL ARTE DEL CÓDIGO
+====================================================================
+
+Fecha: 2026-06-09
+Estado: Finalizado
+Responsable: Director de Operaciones (COO)
+
+1. SÍNTESIS DE LA CONSULTA
+--------------------------------------------------------------------
+Se ha realizado una auditoría exhaustiva de la base de código actual de GlowApp (Backend, Frontend Flutter y Base de Datos) desde el rol de Director de Operaciones (COO) para determinar la viabilidad de lanzamiento comercial, detectar cuellos de botella operativos y evaluar riesgos antes de pasar a producción.
+
+2. INFORME DEL ESTADO DEL ARTE (AUDITORÍA OPERATIVA POR MÓDULO)
+--------------------------------------------------------------------
+
+A. PROCESO DE ONBOARDING Y VERIFICACIÓN KYC
+- Estado Actual: Los documentos (Cédula, RUT, Bioseguridad) se suben mediante Multer y se almacenan de manera local en el servidor (`backend/uploads/`). El estado se inicializa como 'PENDIENTE' y requiere aprobación manual del administrador o el uso de un servicio 'Mock' automatizado para testing.
+- Evaluación COO: 
+  * Riesgo Crítico: El almacenamiento local de documentos de identidad es inviable para producción (falta de escalabilidad, problemas de seguridad de datos y cumplimiento de Habeas Data).
+  * Cuello de Botella: La aprobación manual retrasará la activación de prestadores a medida que escalemos el número de usuarios.
+- Acción Recomendada: Migrar el almacenamiento a un bucket seguro (AWS S3) con control de acceso e integrar un motor de KYC real (ej. Truora o Sumsub) para lectura OCR y validación de antecedentes penales/legales.
+
+B. GEOLOCALIZACIÓN Y SEGUIMIENTO EN TIEMPO REAL (TRACKING)
+- Estado Actual: 
+  * Backend: Correcta implementación de PostGIS. Utiliza consultas espaciales optimizadas con un índice GiST (`idx_perfiles_prestador_ubicacion`) para buscar proveedores dentro de un radio, aplicando un beneficio del 15% de radio adicional a los proveedores del nivel "Visage Pro".
+  * Frontend: El mapa de rastreo del cliente (`booking_tracking_screen.dart`) es 100% una simulación visual basada en un temporizador de Flutter que interpola coordenadas fijas en Fontibón (Bogotá).
+- Evaluación COO: 
+  * Falso Positivo: Aunque la UI luce "premium" y se mueve, no refleja la ubicación real del prestador en camino. Esto creará una mala experiencia de usuario y reclamos por demoras no notificadas.
+- Acción Recomendada: Sustituir la interpolación ficticia del frontend por suscripciones en tiempo real a las coordenadas GPS reales actualizadas por el prestador a través de WebSockets (Socket.io) o polling controlado.
+
+C. BOTÓN SOS Y ALERTAS DE SEGURIDAD
+- Estado Actual: Botón SOS operativo en los dashboards de clientes y prestadores. El backend (`POST /api/sos`) almacena las alertas y utiliza Server-Sent Events (SSE) para emitirlas instantáneamente al panel de control administrativo.
+- Evaluación COO: 
+  * Calificación: Excelente preparación técnica inicial. El flujo de software responde de forma reactiva.
+  * Vacío Operativo: El sistema solo depende de que un operador humano esté viendo el dashboard. Si no hay nadie logueado, la alerta SOS queda inatendida.
+- Acción Recomendada: Implementar una integración secundaria (ej. Twilio) para enviar automáticamente un SMS/Notificación de emergencia al equipo de soporte de guardia y al prestador, junto con coordenadas directas.
+
+D. SISTEMA FINANCIERO, COMISIONES Y RETIROS
+- Estado Actual:
+  * Reparto de Ingresos: Se ejecuta a través del trigger SQL `before_booking_insert_update` (12% comisión de plataforma y 8% impuestos estatales). Cuenta con lógica para disminuir la comisión al 10% en días específicos de la semana para el nivel "Avant-Garde Elite".
+  * Flujo de Retiro: Posee reglas operativas robustas en el backend (bloqueo por disputas activas, montos mínimos de retiro, ventanas de tiempo).
+  * Pasarela Wompi: La dispersión de fondos a través de la API de Wompi está comentada como un 'TODO' (en `paymentRoutes.js:668-669`), operando en simulación sobre base de datos.
+- Evaluación COO: 
+  * Bloqueante: Sin la integración real de Wompi Payouts / Dispersión a Nequi y cuentas bancarias, es imposible pagarle a los prestadores en la vida real.
+- Acción Recomendada: Desarrollar la integración con la API de dispersión (Payouts) de Wompi antes de iniciar la fase de pruebas piloto con dinero real.
+
+3. PLAN DE ACCIÓN Y TAREAS CLAVE A DESARROLLAR
+--------------------------------------------------------------------
+
+[OP-AUD-001] Integración de Storage en la Nube (AWS S3) para KYC:
+- Tarea para Devs: Reemplazar el almacenamiento local de `multer` por un adaptador de AWS S3 en el backend para la carga de documentos de identidad.
+
+[OP-AUD-002] Implementación de Tracking GPS Real:
+- Tarea para Devs: Conectar el widget de mapa de tracking en Flutter al servicio de localización real del prestador, eliminando el timer de simulación de Fontibón.
+
+[OP-AUD-003] Activación de Wompi Payouts para Dispersión:
+- Tarea para Devs/CFO: Desarrollar y certificar los endpoints de pago y dispersión utilizando la API de producción/sandbox de Wompi.
+
+[OP-AUD-004] Protocolo Offline de Atención SOS:
+- Tarea para Operaciones/Soporte: Diseñar el manual de atención física en campo y conectar alertas automáticas vía SMS/WhatsApp para emergencias en tiempo real.

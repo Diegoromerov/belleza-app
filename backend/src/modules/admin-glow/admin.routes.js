@@ -55,4 +55,10 @@ router.post('/payout/approve', adminController.approvePayout);
  */
 router.post('/provider/verify-auto', adminController.verifyProviderAuto);
 
+/**
+ * @route GET /api/glow-admin/dashboard/financial-summary
+ * @desc Obtiene el resumen financiero consolidado para el panel de administración
+ */
+router.get('/dashboard/financial-summary', adminController.getFinancialSummary);
+
 module.exports = router;

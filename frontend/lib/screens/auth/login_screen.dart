@@ -5,6 +5,7 @@ import '../../services/auth_service.dart';
 import 'package:flutter/foundation.dart';
 import '../../services/api_service.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import '../../shared/theme.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -169,16 +170,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFFAF5F2),
-              Color(0xFFE8D4CB),
-            ],
-          ),
-        ),
+        color: const Color(0xFFEDE3DA), // Fondo sólido crema exacto de la imagen del logotipo (#EDE3DA)
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
@@ -187,45 +179,15 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Encabezado principal elegante
                   Hero(
                     tag: 'logo',
-                    child: Container(
-                      padding: EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Color(0x1F8A6B63),
-                              blurRadius: 20,
-                              offset: Offset(0, 8),
-                            )
-                          ]),
-                      child: Icon(Icons.face_retouching_natural,
-                          size: 56, color: Color(0xFFC89D93)),
+                    child: Image.asset(
+                      'assets/images/logo_maestro_v5.png',
+                      width: 260,
+                      fit: BoxFit.contain,
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Belleza App',
-                    style: TextStyle(
-                      fontSize: 34,
-                      fontWeight: FontWeight.w900,
-                      color: Color(0xFF4A3E3D),
-                      letterSpacing: -1.2,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  const Text(
-                    'Tu estilista a domicilio en Fontibón',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF8A7A77),
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 24),
 
                   // Tarjeta Glassmorphic
                   ClipRRect(
@@ -241,36 +203,24 @@ class _LoginScreenState extends State<LoginScreen> {
                             color: Colors.white.withOpacity(0.6),
                             width: 1.5,
                           ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0x0A000000),
-                              blurRadius: 24,
-                              offset: const Offset(0, 12),
-                            ),
-                          ],
+                          boxShadow: AppTheme.glassShadow,
                         ),
                         child: Form(
                           key: _formKey,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              const Text(
-                                'Ingreso Local',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF4A3E3D),
-                                  letterSpacing: -0.5,
-                                ),
-                              ),
-                              const SizedBox(height: 20),
+                              const SizedBox(height: 8),
 
                               // Email Input
                               TextFormField(
                                 controller: _emailCtrl,
                                 keyboardType: TextInputType.emailAddress,
-                                decoration: _inputDecoration(
-                                    'Correo electrónico', Icons.email_outlined),
+                                decoration: AppTheme.inputDecoration(
+                                  hintText: 'Correo electrónico',
+                                  prefixIcon: Icons.email_outlined,
+                                  labelText: 'Correo electrónico',
+                                ),
                                 validator: (v) =>
                                     v!.isEmpty ? 'Ingresa tu correo' : null,
                                 style: const TextStyle(fontSize: 15),
@@ -281,9 +231,10 @@ class _LoginScreenState extends State<LoginScreen> {
                               TextFormField(
                                 controller: _passCtrl,
                                 obscureText: _obscurePassword,
-                                decoration: _inputDecoration(
-                                  'Contraseña',
-                                  Icons.lock_outline,
+                                decoration: AppTheme.inputDecoration(
+                                  hintText: 'Contraseña',
+                                  prefixIcon: Icons.lock_outline,
+                                  labelText: 'Contraseña',
                                   suffixIcon: IconButton(
                                     icon: Icon(
                                       _obscurePassword
@@ -463,45 +414,13 @@ class _LoginScreenState extends State<LoginScreen> {
             shape: BoxShape.circle,
             color: Colors.white,
             border: Border.all(color: const Color(0xFFEADCD6), width: 1.5),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x08000000),
-                blurRadius: 8,
-                offset: Offset(0, 3),
-              ),
-            ],
+            boxShadow: AppTheme.softShadow,
           ),
           child: Center(
             child: icon,
           ),
         ),
       ),
-    );
-  }
-
-  InputDecoration _inputDecoration(String label, IconData icon,
-      {Widget? suffixIcon}) {
-    return InputDecoration(
-      labelText: label,
-      labelStyle: const TextStyle(color: Color(0xFF8A7A77), fontSize: 14),
-      prefixIcon: Icon(icon, color: const Color(0xFFC89D93), size: 20),
-      suffixIcon: suffixIcon,
-      floatingLabelBehavior: FloatingLabelBehavior.auto,
-      filled: true,
-      fillColor: Colors.white.withOpacity(0.7),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: Color(0xFFEADCD6)),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: Color(0xFFEADCD6)),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: Color(0xFFC89D93), width: 1.5),
-      ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
     );
   }
 }

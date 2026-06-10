@@ -302,7 +302,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                   decoration: BoxDecoration(
                     color: isSelected
                         ? AppTheme.primary
-                        : AppTheme.primaryLight.withOpacity(0.5),
+                        : AppTheme.accent.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: isSelected ? AppTheme.primary : Colors.transparent,
@@ -410,7 +410,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                               color: AppTheme.primary, width: 1.5),
                         ),
                         filled: true,
-                        fillColor: AppTheme.primaryLight.withOpacity(0.5),
+                        fillColor: AppTheme.accent.withOpacity(0.15),
                         contentPadding: const EdgeInsets.all(16),
                       ),
                       onChanged: (v) => reviewComment = v,
@@ -728,7 +728,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
               children: [
                 CircleAvatar(
                   radius: 24,
-                  backgroundColor: AppTheme.primaryLight,
+                  backgroundColor: AppTheme.accent.withOpacity(0.2),
                   backgroundImage:
                       avatarUrl.isNotEmpty ? NetworkImage(avatarUrl) : null,
                   child: avatarUrl.isEmpty
@@ -847,7 +847,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryLight.withOpacity(0.5),
+                  color: AppTheme.accent.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Text(

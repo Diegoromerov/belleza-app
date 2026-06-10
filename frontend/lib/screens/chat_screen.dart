@@ -354,28 +354,37 @@ class _ChatScreenState extends State<ChatScreen> {
         titleSpacing: 0,
         title: Row(
           children: [
-            CircleAvatar(
-              radius: 18,
-              backgroundColor:
-                  isProvider ? Colors.pink[100] : Colors.purple[100],
-              backgroundImage: widget.partnerAvatar != null &&
-                      widget.partnerAvatar!.isNotEmpty
-                  ? NetworkImage(widget.partnerAvatar!)
-                  : null,
-              child: widget.partnerAvatar == null ||
-                      widget.partnerAvatar!.isEmpty
-                  ? Text(
-                      widget.partnerName.isNotEmpty
-                          ? widget.partnerName[0].toUpperCase()
-                          : 'U',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color:
-                            isProvider ? Colors.pink[800] : Colors.purple[800],
-                        fontSize: 14,
-                      ),
-                    )
-                  : null,
+            Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: widget.partnerAvatar != null && widget.partnerAvatar!.contains('avatar_aura.png')
+                    ? Border.all(color: const Color(0xFFD4AF37), width: 2.0)
+                    : null,
+              ),
+              child: CircleAvatar(
+                radius: widget.partnerAvatar != null && widget.partnerAvatar!.contains('avatar_aura.png') ? 21 : 18,
+                backgroundColor: isProvider ? Colors.pink[100] : Colors.purple[100],
+                backgroundImage: widget.partnerAvatar != null &&
+                        widget.partnerAvatar!.isNotEmpty
+                    ? (widget.partnerAvatar!.startsWith('assets/')
+                        ? AssetImage(widget.partnerAvatar!) as ImageProvider
+                        : NetworkImage(widget.partnerAvatar!) as ImageProvider)
+                    : null,
+                child: widget.partnerAvatar == null ||
+                        widget.partnerAvatar!.isEmpty
+                    ? Text(
+                        widget.partnerName.isNotEmpty
+                            ? widget.partnerName[0].toUpperCase()
+                            : 'U',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color:
+                              isProvider ? Colors.pink[800] : Colors.purple[800],
+                          fontSize: 14,
+                        ),
+                      )
+                    : null,
+              ),
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -470,13 +479,16 @@ class _ChatScreenState extends State<ChatScreen> {
                                       Container(
                                         margin: const EdgeInsets.only(
                                             right: 8, top: 4),
-                                        padding: const EdgeInsets.all(6),
-                                        decoration: const BoxDecoration(
-                                          color: Color(0xFFE8D7D3),
+                                        width: 36,
+                                        height: 36,
+                                        decoration: BoxDecoration(
                                           shape: BoxShape.circle,
+                                          border: Border.all(color: const Color(0xFFD4AF37), width: 1.5),
+                                          image: const DecorationImage(
+                                            image: AssetImage('assets/images/avatar_aura.png'),
+                                            fit: BoxFit.cover,
+                                          ),
                                         ),
-                                        child: const Icon(Icons.auto_awesome,
-                                            color: Color(0xFFC89D93), size: 16),
                                       ),
                                       Expanded(
                                         child: Align(

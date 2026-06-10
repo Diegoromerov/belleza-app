@@ -1128,6 +1128,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
       context: context,
       isDismissible: false,
       enableDrag: false,
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
         return Container(
@@ -1138,68 +1139,75 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
               topRight: Radius.circular(28),
             ),
           ),
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.check_circle_outline,
-                  color: Colors.green, size: 64),
-              const SizedBox(height: 16),
-              const Text(
-                'Alerta SOS Registrada',
-                style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
-                    color: Colors.black87),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                message,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    color: Colors.grey[600], fontSize: 14, height: 1.4),
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFDC2626),
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size(double.infinity, 54),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(27)),
-                  elevation: 2,
-                ),
-                onPressed: () {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('📞 Marcando al 123 (Emergencias)...'),
-                      backgroundColor: Color(0xFFDC2626),
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.phone_in_talk_rounded),
-                label: const Text(
-                  'LLAMAR A EMERGENCIAS (123)',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-              ),
-              const SizedBox(height: 12),
-              OutlinedButton(
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 50),
-                  side: const BorderSide(color: Color(0xFFE8D7D3), width: 1.5),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25)),
-                ),
-                onPressed: () => Navigator.pop(context),
-                child: const Text(
-                  'Entendido / Cerrar',
+          padding: EdgeInsets.only(
+            left: 24,
+            right: 24,
+            top: 24,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.check_circle_outline,
+                    color: Colors.green, size: 52),
+                const SizedBox(height: 12),
+                const Text(
+                  'Alerta SOS Registrada',
                   style: TextStyle(
-                      color: Color(0xFFC89D93), fontWeight: FontWeight.bold),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                      color: Colors.black87),
                 ),
-              ),
-            ],
+                const SizedBox(height: 8),
+                Text(
+                  message,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      color: Colors.grey[600], fontSize: 14, height: 1.4),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFDC2626),
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(double.infinity, 48),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24)),
+                    elevation: 2,
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('📞 Marcando al 123 (Emergencias)...'),
+                        backgroundColor: Color(0xFFDC2626),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.phone_in_talk_rounded),
+                  label: const Text(
+                    'LLAMAR A EMERGENCIAS (123)',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 44),
+                    side: const BorderSide(color: Color(0xFFE8D7D3), width: 1.5),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(22)),
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text(
+                    'Entendido / Cerrar',
+                    style: TextStyle(
+                        color: Color(0xFFC89D93), fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },

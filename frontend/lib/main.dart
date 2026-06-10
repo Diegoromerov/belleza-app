@@ -5,6 +5,8 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:flutter/services.dart';
+
 import 'services/api_service.dart';
 import 'services/analytics_service.dart';
 import 'services/auth_service.dart';
@@ -29,9 +31,14 @@ import 'screens/provider_profile_screen.dart';
 import 'screens/booking_tracking_screen.dart';
 import 'screens/provider_route_screen.dart';
 import 'models/provider_model.dart';
+import 'shared/theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
   AnalyticsService().init();
   runApp(const BeautyApp());
 }
@@ -42,30 +49,33 @@ class BeautyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Beauty App',
+      title: 'GlowApp',
       navigatorKey: NotificationService.navigatorKey,
       debugShowCheckedModeBanner: false,
       navigatorObservers: [AnalyticsRouteObserver()],
       theme: ThemeData(
-        primaryColor: const Color(0xFFC89D93),
+        primaryColor: AppTheme.primary,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFFC89D93),
-          primary: const Color(0xFFC89D93),
-          secondary: const Color(0xFFE8D7D3),
-          surface: Colors.white,
+          seedColor: AppTheme.primary,
+          primary: AppTheme.primary,
+          secondary: AppTheme.accent,
+          surface: AppTheme.surface,
+          background: AppTheme.background,
         ),
+        scaffoldBackgroundColor: AppTheme.background,
         useMaterial3: true,
         cardTheme: CardThemeData(
+          color: AppTheme.surface,
           elevation: 0,
-          shadowColor: const Color(0x0A000000),
+          shadowColor: const Color(0x0A8C6F65),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
             side: const BorderSide(color: Color(0xFFF3EAE8), width: 1),
           ),
         ),
         appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black87,
+          backgroundColor: AppTheme.surface,
+          foregroundColor: AppTheme.text,
           elevation: 0,
         ),
       ),
@@ -106,7 +116,7 @@ class ProvidersScreen extends StatefulWidget {
   State<ProvidersScreen> createState() => _ProvidersScreenState();
 }
 
-class _ProvidersScreenState extends State<ProvidersScreen> {
+class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderStateMixin {
   late final MapController _mapController;
   List<ProviderModel> _allProviders = [];
   List<ProviderModel> _filteredProviders = [];
@@ -121,6 +131,9 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
   LatLng? _userLocation;
   final GlobalKey _tryonKey = GlobalKey();
 
+  bool _showTutorial = false;
+  int _tutorialStep = 0;
+
   @override
   void initState() {
     super.initState();
@@ -128,6 +141,97 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
     _loadProviders();
     _loadUserRole();
     _determineUserLocation();
+    _checkTutorial();
+  }
+
+  Future<void> _checkTutorial() async {
+    final prefs = await SharedPreferences.getInstance();
+    final seen = prefs.getBool('seen_aura_tutorial') ?? false;
+    if (!seen && mounted) {
+      setState(() {
+        _showTutorial = true;
+        _tutorialStep = 0;
+      });
+    }
+  }
+
+  Future<void> _completeTutorial() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('seen_aura_tutorial', true);
+    if (mounted) {
+      setState(() {
+        _showTutorial = false;
+      });
+      _searchController.clear();
+      _animatedMapMove(_userLocation ?? _fontibonCenter, 13.5);
+    }
+  }
+
+  void _animatedMapMove(LatLng destLocation, double destZoom) {
+    // Animate map movement smoothly over 1000 milliseconds
+    final latTween = Tween<double>(begin: _mapController.camera.center.latitude, end: destLocation.latitude);
+    final lngTween = Tween<double>(begin: _mapController.camera.center.longitude, end: destLocation.longitude);
+    final zoomTween = Tween<double>(begin: _mapController.camera.zoom, end: destZoom);
+
+    final controller = AnimationController(duration: const Duration(milliseconds: 1000), vsync: this);
+    final animation = CurvedAnimation(parent: controller, curve: Curves.fastOutSlowIn);
+
+    controller.addListener(() {
+      if (mounted) {
+        _mapController.move(
+          LatLng(latTween.evaluate(animation), lngTween.evaluate(animation)),
+          zoomTween.evaluate(animation),
+        );
+      }
+    });
+
+    animation.addStatusListener((status) {
+      if (status == AnimationStatus.completed || status == AnimationStatus.dismissed) {
+        controller.dispose();
+      }
+    });
+
+    controller.forward();
+  }
+
+  void _startSearchTypingSimulation() {
+    _searchController.clear();
+    final text = 'Tips de cuidado capilar caseros';
+    int charIndex = 0;
+    Future.doWhile(() async {
+      if (_tutorialStep != 1 || !_showTutorial) return false;
+      await Future.delayed(const Duration(milliseconds: 100));
+      if (_tutorialStep != 1 || !_showTutorial) return false;
+      charIndex++;
+      if (charIndex <= text.length) {
+        if (mounted) {
+          setState(() {
+            _searchController.text = text.substring(0, charIndex);
+          });
+        }
+        return true;
+      }
+      return false;
+    });
+  }
+
+  void _handleTutorialStepChange(int newStep) {
+    setState(() {
+      _tutorialStep = newStep;
+    });
+
+    if (_tutorialStep == 1) {
+      _startSearchTypingSimulation();
+    } else {
+      _searchController.clear();
+    }
+
+    if (_tutorialStep == 2 && _filteredProviders.isNotEmpty) {
+      final firstProv = _filteredProviders.first;
+      _animatedMapMove(LatLng(firstProv.latitude, firstProv.longitude), 15.0);
+    } else {
+      _animatedMapMove(_userLocation ?? _fontibonCenter, 13.5);
+    }
   }
 
   @override
@@ -592,6 +696,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
       context: context,
       isDismissible: false,
       enableDrag: false,
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
         return Container(
@@ -602,68 +707,75 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
               topRight: Radius.circular(28),
             ),
           ),
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.check_circle_outline,
-                  color: Colors.green, size: 64),
-              const SizedBox(height: 16),
-              const Text(
-                'Alerta SOS Registrada',
-                style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
-                    color: Colors.black87),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                message,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    color: Colors.grey[600], fontSize: 14, height: 1.4),
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFDC2626),
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size(double.infinity, 54),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(27)),
-                  elevation: 2,
-                ),
-                onPressed: () {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('📞 Marcando al 123 (Emergencias)...'),
-                      backgroundColor: Color(0xFFDC2626),
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.phone_in_talk_rounded),
-                label: const Text(
-                  'LLAMAR A EMERGENCIAS (123)',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-              ),
-              const SizedBox(height: 12),
-              OutlinedButton(
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 50),
-                  side: const BorderSide(color: Color(0xFFE8D7D3), width: 1.5),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25)),
-                ),
-                onPressed: () => Navigator.pop(context),
-                child: const Text(
-                  'Entendido / Cerrar',
+          padding: EdgeInsets.only(
+            left: 24,
+            right: 24,
+            top: 24,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.check_circle_outline,
+                    color: Colors.green, size: 52),
+                const SizedBox(height: 12),
+                const Text(
+                  'Alerta SOS Registrada',
                   style: TextStyle(
-                      color: Color(0xFFC89D93), fontWeight: FontWeight.bold),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                      color: Colors.black87),
                 ),
-              ),
-            ],
+                const SizedBox(height: 8),
+                Text(
+                  message,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      color: Colors.grey[600], fontSize: 14, height: 1.4),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFDC2626),
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(double.infinity, 48),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24)),
+                    elevation: 2,
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('📞 Marcando al 123 (Emergencias)...'),
+                        backgroundColor: Color(0xFFDC2626),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.phone_in_talk_rounded),
+                  label: const Text(
+                     'LLAMAR A EMERGENCIAS (123)',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 44),
+                    side: const BorderSide(color: Color(0xFFE8D7D3), width: 1.5),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(22)),
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text(
+                    'Entendido / Cerrar',
+                    style: TextStyle(
+                        color: Color(0xFFC89D93), fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -1016,11 +1128,11 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                 fontWeight: FontWeight.bold,
                 fontSize: 13,
               ),
-              backgroundColor: Colors.white,
+              backgroundColor: isSelected ? AppTheme.primary : AppTheme.surface,
               side: BorderSide(
                   color: isSelected
                       ? Colors.transparent
-                      : const Color(0xFFE8D7D3)),
+                      : AppTheme.accent.withOpacity(0.4)),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20)),
             ),
@@ -1035,7 +1147,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
     required IconData icon,
     required String label,
     required VoidCallback onTap,
-    Color color = const Color(0xFFC89D93),
+    Color color = AppTheme.text,
   }) {
     return Expanded(
       key: key,
@@ -1099,13 +1211,13 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                       child: Container(
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: const Color(0xFF1E88E5).withOpacity(0.2),
+                          color: AppTheme.primary.withOpacity(0.2),
                           border: Border.all(
-                              color: const Color(0xFF1E88E5), width: 2),
+                              color: AppTheme.primary, width: 2),
                         ),
                         child: const Center(
                           child: Icon(Icons.my_location,
-                              color: Color(0xFF1E88E5), size: 24),
+                              color: AppTheme.primary, size: 24),
                         ),
                       ),
                     ),
@@ -1124,19 +1236,19 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                               height: 45,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: const Color(0xFFC89D93).withOpacity(0.3),
+                                color: AppTheme.primary.withOpacity(0.25),
                               ),
                             ),
                             Container(
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 border: Border.all(
-                                    color: const Color(0xFFC89D93), width: 3),
+                                    color: AppTheme.primary, width: 2),
                                 boxShadow: const [
                                   BoxShadow(
-                                    color: Color(0x1F000000),
-                                    blurRadius: 6,
-                                    offset: Offset(0, 3),
+                                    color: Color(0x128C6F65),
+                                    blurRadius: 8,
+                                    offset: Offset(0, 4),
                                   ),
                                 ],
                               ),
@@ -1153,7 +1265,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                                             : '?',
                                         style: const TextStyle(
                                             fontSize: 14,
-                                            color: Color(0xFFC89D93),
+                                            color: AppTheme.primary,
                                             fontWeight: FontWeight.bold),
                                       )
                                     : null,
@@ -1181,21 +1293,15 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                   height: 54,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.95),
+                    color: AppTheme.surface.withOpacity(0.95),
                     borderRadius: BorderRadius.circular(30),
                     border:
-                        Border.all(color: const Color(0xFFE8D7D3), width: 1.5),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x0F000000),
-                        blurRadius: 10,
-                        offset: Offset(0, 4),
-                      ),
-                    ],
+                        Border.all(color: AppTheme.accent.withOpacity(0.4), width: 1.5),
+                    boxShadow: AppTheme.softShadow,
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.search, color: Color(0xFFC89D93)),
+                      const Icon(Icons.search, color: AppTheme.primary),
                       const SizedBox(width: 10),
                       Expanded(
                         child: TextField(
@@ -1206,7 +1312,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                                 '¿Buscas un estilo o tips de belleza? Pregúntale a la IA aquí...',
                             hintStyle: TextStyle(
                                 fontSize: 13.5,
-                                color: Colors.grey,
+                                color: AppTheme.text,
                                 overflow: TextOverflow.ellipsis),
                             border: InputBorder.none,
                           ),
@@ -1219,7 +1325,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                       ),
                       IconButton(
                         icon: const Icon(Icons.auto_awesome,
-                            color: Color(0xFFC89D93)),
+                            color: AppTheme.primary),
                         onPressed: () {
                           _navigateToAIChat(_searchController.text);
                         },
@@ -1243,18 +1349,12 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
               height: 72,
               padding: const EdgeInsets.symmetric(horizontal: 8),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.92),
+                color: AppTheme.surface.withOpacity(0.92),
                 borderRadius: BorderRadius.circular(36),
                 border: Border.all(
-                    color: const Color(0xFFE8D7D3).withOpacity(0.6),
+                    color: AppTheme.accent.withOpacity(0.4),
                     width: 1.5),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x1A000000),
-                    blurRadius: 12,
-                    offset: Offset(0, 5),
-                  ),
-                ],
+                boxShadow: AppTheme.glassShadow,
               ),
               child: Row(
                 children: [
@@ -1319,6 +1419,26 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
             ),
           ),
 
+          // Capa: Botón Temporal/Transitorio para reiniciar el Tutorial de Aura (Revisión)
+          Positioned(
+            right: 20,
+            bottom: 308,
+            child: FloatingActionButton(
+              heroTag: 'aura_tutorial_restart_fab',
+              onPressed: () {
+                _handleTutorialStepChange(0);
+                setState(() {
+                  _showTutorial = true;
+                });
+              },
+              backgroundColor: const Color(0xFFD4AF37),
+              foregroundColor: Colors.white,
+              elevation: 4,
+              shape: const CircleBorder(),
+              child: const Icon(Icons.school_outlined, size: 24),
+            ),
+          ),
+
           // Capa: Botón Tema de Mapa (Claro/Oscuro Limpio)
           Positioned(
             right: 20,
@@ -1330,8 +1450,8 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                   MapSettings.isDark = !MapSettings.isDark;
                 });
               },
-              backgroundColor: Colors.white,
-              foregroundColor: const Color(0xFFC89D93),
+              backgroundColor: AppTheme.surface,
+              foregroundColor: AppTheme.primary,
               elevation: 4,
               shape: const CircleBorder(),
               child: Icon(
@@ -1350,8 +1470,8 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
             child: FloatingActionButton(
               heroTag: 'my_location_fab',
               onPressed: _determineUserLocation,
-              backgroundColor: Colors.white,
-              foregroundColor: const Color(0xFFC89D93),
+              backgroundColor: AppTheme.surface,
+              foregroundColor: AppTheme.primary,
               elevation: 4,
               shape: const CircleBorder(),
               child: const Icon(Icons.my_location, size: 24),
@@ -1414,7 +1534,532 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                 ),
               ),
             ),
+          
+          // Capa: Tutorial interactivo guiado por Aura
+          if (_showTutorial)
+            _buildTutorialOverlay(),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTutorialOverlay() {
+    final double topPadding = MediaQuery.of(context).padding.top;
+    
+    // Contenido dinámico según el paso (0 al 6)
+    String stepTitle = '';
+    String stepDescription = '';
+    Widget? highlightWidget;
+    Widget centerGraphic = const SizedBox.shrink();
+
+    if (_tutorialStep == 0) {
+      stepTitle = '¡Te doy la bienvenida! 🌸';
+      stepDescription = 'Hola, soy Aura, tu asistente personal de belleza. Permíteme guiarte en este recorrido interactivo por GlowApp.';
+      centerGraphic = Container(
+        width: 140,
+        height: 140,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          border: Border.all(color: const Color(0xFFD4AF37), width: 3.5),
+          image: const DecorationImage(
+            image: AssetImage('assets/images/avatar_aura.png'),
+            fit: BoxFit.cover,
+          ),
+        ),
+      );
+    } else if (_tutorialStep == 1) {
+      stepTitle = '1. Consulta con Inteligencia Artificial';
+      stepDescription = 'Escribe lo que buscas en la barra superior o solicítame consejos directamente. Mi motor de IA procesará tu solicitud de inmediato.';
+      // Destacamos la barra superior
+      highlightWidget = Positioned(
+        top: topPadding + 16,
+        left: 16,
+        right: 16,
+        child: IgnorePointer(
+          child: Container(
+            height: 54,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(30),
+              border: Border.all(color: const Color(0xFFD4AF37), width: 3),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFD4AF37).withOpacity(0.6),
+                  blurRadius: 16,
+                  spreadRadius: 4,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    } else if (_tutorialStep == 2) {
+      stepTitle = '2. Búsqueda en el Mapa';
+      stepDescription = 'Los estilistas disponibles en Fontibón se muestran como círculos. ¡Demos clic sobre el marcador de Ana Silva para ver su perfil!';
+      // Destacamos un marcador del mapa (simulando un toque)
+      highlightWidget = Center(
+        child: IgnorePointer(
+          child: Container(
+            width: 70,
+            height: 70,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: const Color(0xFFD4AF37), width: 3),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFD4AF37).withOpacity(0.6),
+                  blurRadius: 20,
+                  spreadRadius: 6,
+                ),
+              ],
+            ),
+            child: const Icon(Icons.touch_app, color: Color(0xFFD4AF37), size: 36),
+          ),
+        ),
+      );
+    } else if (_tutorialStep == 3) {
+      stepTitle = '3. Vista Rápida del Prestador';
+      stepDescription = 'Al tocar su marcador, se abrirá esta tarjeta resumen. Aquí ves su calificación y el botón para ver su perfil profesional completo.';
+      // Renderizamos la tarjeta de Vista Rápida simulada
+      highlightWidget = Positioned(
+        bottom: MediaQuery.of(context).size.height * 0.40,
+        left: 20,
+        right: 20,
+        child: Card(
+          elevation: 8,
+          shadowColor: const Color(0x228C6F65),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppTheme.primary, width: 2),
+                    image: const DecorationImage(
+                      image: AssetImage('assets/images/logo_maestro_v3.jpg'),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Ana Silva',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.text),
+                      ),
+                      SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(Icons.star, color: Colors.amber, size: 16),
+                          SizedBox(width: 4),
+                          Text('4.9 (48 reseñas) • Cabello', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  onPressed: () {},
+                  child: const Text('Ver Perfil', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    } else if (_tutorialStep == 4) {
+      stepTitle = '4. Perfil Profesional';
+      stepDescription = 'Explora su galería de fotos certificadas de trabajos anteriores, opiniones reales y su catálogo de servicios de belleza disponibles.';
+      // Renderizamos el perfil detallado del proveedor simulado
+      highlightWidget = Positioned(
+        top: topPadding + 20,
+        left: 20,
+        right: 20,
+        bottom: MediaQuery.of(context).size.height * 0.45,
+        child: Card(
+          elevation: 8,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                height: 90,
+                decoration: const BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage('assets/images/logo_maestro_v5.png'),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        image: DecorationImage(
+                          image: AssetImage('assets/images/logo_maestro_v3.jpg'),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    const Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Ana Silva', style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.text)),
+                        Text('Estilista Capilar Profesional', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                child: Text(
+                  'Servicios Disponibles:',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.text),
+                ),
+              ),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  children: [
+                    _buildMockServiceTile('Corte de Cabello Dama', '\$45.000 COP'),
+                    _buildMockServiceTile('Peinado Especial Fiesta', '\$60.000 COP'),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    } else if (_tutorialStep == 5) {
+      stepTitle = '5. Simulación de Reserva';
+      stepDescription = 'Selecciona el día y la hora de tu conveniencia. Toda la coordinación y el agendamiento son 100% online y a domicilio.';
+      // Renderizamos el flujo de reserva simulado
+      highlightWidget = Positioned(
+        top: topPadding + 40,
+        left: 20,
+        right: 20,
+        bottom: MediaQuery.of(context).size.height * 0.43,
+        child: Card(
+          elevation: 8,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Agendar con Ana Silva',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.text),
+                ),
+                const SizedBox(height: 12),
+                const Text('Seleccionar Fecha (Junio 2026):', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildMockDayTile('16', 'Mar', false),
+                    _buildMockDayTile('17', 'Mié', true),
+                    _buildMockDayTile('18', 'Jue', false),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                const Text('Seleccionar Hora:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildMockHourTile('10:00 AM', false),
+                    _buildMockHourTile('2:00 PM', true),
+                    _buildMockHourTile('4:00 PM', false),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    } else if (_tutorialStep == 6) {
+      stepTitle = '6. Pago Seguro en Garantía';
+      stepDescription = 'Tu pago se procesa por Wompi Bancolombia. GlowApp retiene los fondos y solo se liberan al prestador cuando compartas tu PIN OTP al finalizar el servicio.';
+      centerGraphic = Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFFEAEFEA),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: const Color(0xFF4A5D4E), width: 2),
+        ),
+        child: const Column(
+          children: [
+            Icon(Icons.security, color: Color(0xFF4A5D4E), size: 48),
+            SizedBox(height: 8),
+            Text(
+              'Transacción Segura de Pago',
+              style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF4A5D4E)),
+            ),
+            SizedBox(height: 4),
+            Text(
+              'Depósito de Garantía Wompi Activo\nMonto total: \$45.000 COP',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 11, color: Color(0xFF4A5D4E)),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Stack(
+      children: [
+        // Fondo translúcido que bloquea clics traseros
+        GestureDetector(
+          onTap: () {}, 
+          child: Container(
+            color: Colors.black.withOpacity(0.7),
+          ),
+        ),
+        
+        // Elemento destacado si aplica en el paso
+        if (highlightWidget != null) highlightWidget,
+
+        // Tarjeta interactiva de Aura (centrada en el paso 0, inferior en los demás)
+        AnimatedPositioned(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+          left: 20,
+          right: 20,
+          bottom: _tutorialStep == 0 
+              ? MediaQuery.of(context).size.height * 0.25 
+              : 20,
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(color: AppTheme.accent.withOpacity(0.4), width: 1.5),
+              boxShadow: AppTheme.glassShadow,
+            ),
+            child: AnimatedSize(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeInOut,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 250),
+                    child: centerGraphic is! SizedBox 
+                        ? Container(
+                            key: ValueKey<int>(_tutorialStep),
+                            margin: const EdgeInsets.only(bottom: 20),
+                            child: centerGraphic,
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 250),
+                    child: Row(
+                      key: ValueKey<int>(_tutorialStep),
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (_tutorialStep > 0) ...[
+                          Container(
+                            width: 58,
+                            height: 58,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: const Color(0xFFD4AF37), width: 2.0),
+                              image: const DecorationImage(
+                                image: AssetImage('assets/images/avatar_aura.png'),
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                        ],
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                stepTitle,
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.text,
+                                  letterSpacing: -0.5,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                stepDescription,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey[700],
+                                  height: 1.4,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  
+                  // Indicador de progreso con 7 puntos interactivos
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(7, (index) {
+                      final bool isActive = _tutorialStep == index;
+                      return AnimatedContainer(
+                        duration: const Duration(milliseconds: 250),
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        width: isActive ? 12 : 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: isActive ? AppTheme.primary : const Color(0xFFE5CECA),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 20),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      TextButton(
+                        onPressed: _completeTutorial,
+                        child: Text(
+                          'Saltar',
+                          style: TextStyle(
+                            color: Colors.grey[500],
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          if (_tutorialStep > 0)
+                            Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: OutlinedButton(
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(color: AppTheme.accent),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                ),
+                                onPressed: () => _handleTutorialStepChange(_tutorialStep - 1),
+                                child: const Text(
+                                  'Atrás',
+                                  style: TextStyle(color: AppTheme.text),
+                                ),
+                              ),
+                            ),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primary,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              elevation: 0,
+                            ),
+                            onPressed: () {
+                              if (_tutorialStep < 6) {
+                                _handleTutorialStepChange(_tutorialStep + 1);
+                              } else {
+                                _completeTutorial();
+                              }
+                            },
+                            child: Text(
+                              _tutorialStep == 6 ? 'Finalizar' : 'Siguiente',
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Helpers para los Mocks Visuales del Tutorial
+  Widget _buildMockServiceTile(String title, String price) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.grey[50],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[200]!),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+            Text(price, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.primary)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMockDayTile(String day, String dayName, bool isSelected) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: isSelected ? AppTheme.primary : Colors.grey[100],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: isSelected ? AppTheme.primary : Colors.grey[300]!),
+      ),
+      child: Column(
+        children: [
+          Text(day, style: TextStyle(fontWeight: FontWeight.bold, color: isSelected ? Colors.white : Colors.black87)),
+          Text(dayName, style: TextStyle(fontSize: 10, color: isSelected ? Colors.white70 : Colors.grey)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMockHourTile(String hour, bool isSelected) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: isSelected ? AppTheme.primary : Colors.grey[100],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        hour,
+        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: isSelected ? Colors.white : Colors.black54),
       ),
     );
   }

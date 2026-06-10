@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/api_service.dart';
+import '../shared/theme.dart';
 
 class OtpConfirmScreen extends StatefulWidget {
   final String bookingId;
@@ -123,7 +124,7 @@ class _OtpConfirmScreenState extends State<OtpConfirmScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F0F1A),
+      backgroundColor: AppTheme.background,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -134,29 +135,21 @@ class _OtpConfirmScreenState extends State<OtpConfirmScreen>
               Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+                    icon: const Icon(Icons.arrow_back_ios, color: AppTheme.text),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ],
               ),
               const SizedBox(height: 32),
 
-              // ─── Ícono animado ────────────────────────────────────────
+              // ─── Ícono animado (Oro Rosa Glow) ────────────────────────
               Container(
                 width: 90,
                 height: 90,
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF6B21A8), Color(0xFFE040FB)],
-                  ),
+                  gradient: AppTheme.roseGoldSatinGradient,
                   borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFE040FB).withOpacity(0.4),
-                      blurRadius: 24,
-                      spreadRadius: 4,
-                    ),
-                  ],
+                  boxShadow: AppTheme.glassShadow,
                 ),
                 child: const Icon(Icons.verified_rounded,
                     color: Colors.white, size: 48),
@@ -165,23 +158,20 @@ class _OtpConfirmScreenState extends State<OtpConfirmScreen>
 
               const Text(
                 'Confirmar servicio',
-                style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold),
+                style: AppTheme.h1,
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
-              Text(
+              const Text(
                 'Ingresa el código de 6 dígitos que\nrecibirás en esta app',
-                style: const TextStyle(color: Colors.white54, fontSize: 15),
+                style: AppTheme.body,
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
               Text(
                 '${widget.servicioNombre} · ${widget.prestadorNombre}',
                 style: const TextStyle(
-                    color: Color(0xFFE040FB), fontWeight: FontWeight.w600),
+                    color: AppTheme.primary, fontWeight: FontWeight.w600),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 40),
@@ -210,21 +200,21 @@ class _OtpConfirmScreenState extends State<OtpConfirmScreen>
                 ),
               ),
 
-              // ─── Error ────────────────────────────────────────────────
+              // ─── Error (Terracota desaturado, no rojo punitivo) ─────────
               if (_error != null) ...[
                 const SizedBox(height: 16),
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.1),
+                    color: AppTheme.accent.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.red.withOpacity(0.3)),
+                    border: Border.all(color: AppTheme.accent.withOpacity(0.3)),
                   ),
                   child: Row(
                     children: [
                       const Icon(Icons.error_outline,
-                          color: Colors.red, size: 18),
+                          color: AppTheme.text, size: 18),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -232,7 +222,7 @@ class _OtpConfirmScreenState extends State<OtpConfirmScreen>
                               ? 'Código incorrecto. $_intentosRestantes intento(s) restante(s).'
                               : _error!,
                           style:
-                              const TextStyle(color: Colors.red, fontSize: 13),
+                              const TextStyle(color: AppTheme.text, fontSize: 13),
                         ),
                       ),
                     ],
@@ -247,8 +237,8 @@ class _OtpConfirmScreenState extends State<OtpConfirmScreen>
                 child: ElevatedButton(
                   onPressed: _codigoLleno && !_loading ? _confirmar : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE040FB),
-                    disabledBackgroundColor: Colors.white12,
+                    backgroundColor: AppTheme.primary,
+                    disabledBackgroundColor: Colors.black12,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14)),
@@ -275,19 +265,20 @@ class _OtpConfirmScreenState extends State<OtpConfirmScreen>
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.04),
+                  color: Colors.white.withOpacity(0.6),
                   borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFFEADCD6)),
                 ),
                 child: const Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.info_outline, color: Colors.white38, size: 16),
+                    Icon(Icons.info_outline, color: AppTheme.text, size: 16),
                     SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Al ingresar este código confirmas que recibiste el servicio. '
                         'Tienes 2 horas para reportar inconformidades.',
-                        style: TextStyle(color: Colors.white38, fontSize: 12),
+                        style: TextStyle(color: AppTheme.text, fontSize: 12),
                       ),
                     ),
                   ],
@@ -305,7 +296,7 @@ class _OtpConfirmScreenState extends State<OtpConfirmScreen>
                 },
                 child: const Text(
                   '¿Problemas con el servicio? Abrir disputa',
-                  style: TextStyle(color: Colors.white38, fontSize: 13),
+                  style: TextStyle(color: AppTheme.text, fontSize: 13, decoration: TextDecoration.underline),
                 ),
               ),
             ],
@@ -338,16 +329,17 @@ class _OtpField extends StatelessWidget {
       height: 60,
       margin: const EdgeInsets.symmetric(horizontal: 5),
       decoration: BoxDecoration(
-        color: hasError ? Colors.red.withOpacity(0.1) : const Color(0xFF1A1A2E),
-        borderRadius: BorderRadius.circular(12),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: hasError
-              ? Colors.red.withOpacity(0.5)
+              ? AppTheme.accent
               : focusNode.hasFocus
-                  ? const Color(0xFFE040FB)
-                  : Colors.white12,
+                  ? AppTheme.primary
+                  : const Color(0xFFEADCD6),
           width: 2,
         ),
+        boxShadow: AppTheme.softShadow,
       ),
       child: TextField(
         controller: controller,
@@ -357,7 +349,7 @@ class _OtpField extends StatelessWidget {
         keyboardType: TextInputType.number,
         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
         style: const TextStyle(
-          color: Colors.white,
+          color: AppTheme.text,
           fontSize: 24,
           fontWeight: FontWeight.bold,
         ),
@@ -387,7 +379,7 @@ class _ConfirmacionExitosaScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F0F1A),
+      backgroundColor: AppTheme.background,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(32),
@@ -418,26 +410,23 @@ class _ConfirmacionExitosaScreen extends StatelessWidget {
               const SizedBox(height: 32),
               const Text(
                 '¡Servicio confirmado!',
-                style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold),
+                style: AppTheme.h1,
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
               Text(
                 '$servicioNombre con $prestadorNombre',
-                style: const TextStyle(color: Colors.white60, fontSize: 16),
+                style: AppTheme.body,
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 32),
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF10B981).withOpacity(0.08),
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                      color: const Color(0xFF10B981).withOpacity(0.2)),
+                  border: Border.all(color: const Color(0xFFEADCD6)),
+                  boxShadow: AppTheme.softShadow,
                 ),
                 child: Column(
                   children: [
@@ -447,7 +436,7 @@ class _ConfirmacionExitosaScreen extends StatelessWidget {
                     const Text(
                       'El pago fue liberado al prestador',
                       style: TextStyle(
-                          color: Colors.white, fontWeight: FontWeight.bold),
+                          color: AppTheme.text, fontWeight: FontWeight.bold),
                       textAlign: TextAlign.center,
                     ),
                     if (disponibleEn != null) ...[
@@ -455,7 +444,7 @@ class _ConfirmacionExitosaScreen extends StatelessWidget {
                       Text(
                         'Disponible en su wallet en ~2 horas',
                         style: const TextStyle(
-                            color: Colors.white54, fontSize: 13),
+                            color: AppTheme.text, fontSize: 13),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -465,7 +454,7 @@ class _ConfirmacionExitosaScreen extends StatelessWidget {
               const SizedBox(height: 40),
               const Text(
                 'Tienes 2 horas para reportar si el servicio\nno cumplió con lo acordado.',
-                style: TextStyle(color: Colors.white38, fontSize: 13),
+                style: TextStyle(color: AppTheme.text, fontSize: 13),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 40),
@@ -476,7 +465,7 @@ class _ConfirmacionExitosaScreen extends StatelessWidget {
                     Navigator.popUntil(context, (route) => route.isFirst);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE040FB),
+                    backgroundColor: AppTheme.primary,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),

@@ -208,23 +208,23 @@ class _ChatListScreenState extends State<ChatListScreen> {
                               )
                             ],
                           ),
-                          child: ListTile(
+                           child: ListTile(
                             contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 20, vertical: 12),
                             leading: Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: const BoxDecoration(
-                                color: Color(0x33FFFFFF),
+                              width: 58,
+                              height: 58,
+                              decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.auto_awesome,
-                                color: Colors.white,
-                                size: 24,
+                                border: Border.all(color: const Color(0xFFD4AF37), width: 2.5),
+                                image: const DecorationImage(
+                                  image: AssetImage('assets/images/avatar_aura.png'),
+                                  fit: BoxFit.cover,
+                                ),
                               ),
                             ),
                             title: const Text(
-                              'Asistente de Belleza & Tips IA',
+                              'Aura - Asistente de IA',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
@@ -233,7 +233,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                               ),
                             ),
                             subtitle: const Text(
-                              'Encuentra los mejores estilos, profesionales o pídele consejos de cuidado. ¡Pregúntame o envíame una foto!',
+                              'Pregúntame sobre estilos de cabello, agendamiento seguro, garantías o activa el botón SOS.',
                               style: TextStyle(
                                 color: Colors.white70,
                                 fontSize: 12.5,
@@ -253,9 +253,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                     partnerId:
                                         '00000000-0000-0000-0000-000000000000',
                                     partnerName:
-                                        'Asistente de Belleza & Tips IA',
+                                        'Aura - Asistente de IA',
                                     partnerRole: 'admin',
-                                    partnerAvatar: '',
+                                    partnerAvatar: 'assets/images/avatar_aura.png',
                                   ),
                                 ),
                               );

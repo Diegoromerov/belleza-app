@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../services/api_service.dart';
+import '../shared/theme.dart';
 
 class WalletScreen extends StatefulWidget {
   final bool isEmbedded;
@@ -206,10 +207,10 @@ class _WalletScreenState extends State<WalletScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.background,
       body: _loading
           ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFFC89D93)))
+              child: CircularProgressIndicator(color: AppTheme.primary))
           : _error != null
               ? _buildError()
               : _buildContent(),
@@ -286,18 +287,12 @@ class _WalletScreenState extends State<WalletScreen>
           // ─── Header con saldo principal ──────────────────────────────
           SliverToBoxAdapter(
             child: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFFC89D93), Color(0xFFE8D7D3)],
-                ),
-              ),
+              color: AppTheme.background,
               padding: EdgeInsets.fromLTRB(
                 24,
                 MediaQuery.of(context).padding.top + 16,
                 24,
-                32,
+                24,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -307,99 +302,185 @@ class _WalletScreenState extends State<WalletScreen>
                       if (!widget.isEmbedded)
                         IconButton(
                           icon: const Icon(Icons.arrow_back_ios,
-                              color: Colors.white),
+                              color: AppTheme.text),
                           onPressed: () => Navigator.pop(context),
                         ),
                       const Spacer(),
                       const Text(
                         'Mi Wallet',
                         style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
+                          color: AppTheme.text,
+                          fontSize: 20,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       const Spacer(),
                       IconButton(
                         icon: const Icon(Icons.settings_outlined,
-                            color: Colors.white),
+                            color: AppTheme.text),
                         onPressed: () => _mostrarConfigRetiro(),
                       ),
                     ],
                   ),
                   const SizedBox(height: 24),
-                  const Text(
-                    'Saldo disponible',
-                    style: TextStyle(color: Colors.white70, fontSize: 14),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _formatCOP.format(disponible),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 40,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: -1,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  // ─── Saldos secundarios ─────────────────────────
-                  Row(
+
+                  // Tarjeta de Balance Disponible (Oro Rosa Satinado con Marca de Agua)
+                  Stack(
                     children: [
-                      _SaldoChip(
-                        label: 'En camino',
-                        monto: pendiente,
-                        color: const Color(0xFFF59E0B),
-                        icon: Icons.schedule,
-                      ),
-                      const SizedBox(width: 12),
-                      _SaldoChip(
-                        label: 'En disputa',
-                        monto: enDisputa,
-                        color: Colors.red,
-                        icon: Icons.gavel,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  // ─── Botón de retiro ─────────────────────────────
-                  SizedBox(
-                    width: double.infinity,
-                    child: AnimatedOpacity(
-                      opacity: puedeRetirar ? 1.0 : 0.7,
-                      duration: const Duration(milliseconds: 300),
-                      child: ElevatedButton.icon(
-                        onPressed: puedeRetirar ? _solicitarRetiro : null,
-                        icon: const Icon(Icons.account_balance_wallet),
-                        label: Text(
-                          puedeRetirar
-                              ? 'Retirar ahora'
-                              : razonBloqueo ?? 'No disponible',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          gradient: AppTheme.roseGoldSatinGradient,
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: AppTheme.cardShadow,
                         ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              puedeRetirar ? Colors.white : Colors.white38,
-                          foregroundColor: puedeRetirar
-                              ? const Color(0xFFC89D93)
-                              : Colors.black26,
-                          elevation: puedeRetirar ? 2 : 0,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Saldo disponible',
+                              style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500, letterSpacing: 0.5),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              _formatCOP.format(disponible),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 36,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                            const SizedBox(height: 28),
+                            // Botón de retiro premium
+                            SizedBox(
+                              width: double.infinity,
+                              child: AnimatedOpacity(
+                                opacity: puedeRetirar ? 1.0 : 0.7,
+                                duration: const Duration(milliseconds: 300),
+                                child: ElevatedButton.icon(
+                                  onPressed: puedeRetirar ? _solicitarRetiro : null,
+                                  icon: const Icon(Icons.account_balance_wallet_outlined, size: 18),
+                                  label: Text(
+                                    puedeRetirar
+                                        ? 'RETIRAR AHORA'
+                                        : razonBloqueo ?? 'NO DISPONIBLE',
+                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, letterSpacing: 0.8),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.white,
+                                    foregroundColor: AppTheme.text,
+                                    elevation: 2,
+                                    padding: const EdgeInsets.symmetric(vertical: 14),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Marca de agua de GlowApp
+                      Positioned(
+                        right: -10,
+                        bottom: -15,
+                        child: Opacity(
+                          opacity: 0.08,
+                          child: Text(
+                            'Glow',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 64,
+                              fontWeight: FontWeight.w900,
+                              fontStyle: FontStyle.italic,
+                              letterSpacing: -2,
+                            ),
                           ),
                         ),
                       ),
-                    ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Tarjetas de saldos secundarios (Matte Terracotta para retenciones)
+                  Row(
+                    children: [
+                      // Tarjeta en camino (Terracota Mate)
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          decoration: BoxDecoration(
+                            gradient: AppTheme.terracottaMatteGradient,
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: AppTheme.softShadow,
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.schedule, color: Colors.white, size: 20),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text('En camino', style: TextStyle(color: Colors.white70, fontSize: 11)),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      _formatCOP.format(pendiente),
+                                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      // Tarjeta en disputa (Matte Terracota desaturado / Crimson)
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          decoration: BoxDecoration(
+                            color: AppTheme.error,
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: AppTheme.softShadow,
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.gavel, color: Colors.white, size: 20),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text('En disputa', style: TextStyle(color: Colors.white70, fontSize: 11)),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      _formatCOP.format(enDisputa),
+                                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   if (!puedeRetirar && wallet['proxima_fecha_retiro'] != null)
                     Padding(
-                      padding: const EdgeInsets.only(top: 8),
+                      padding: const EdgeInsets.only(top: 12),
                       child: Center(
                         child: Text(
-                          'Próximo retiro: ${DateFormat('dd MMM, hh:mm a', 'es').format(DateTime.parse(wallet['proxima_fecha_retiro']))}',
+                          'Próximo retiro automático: ${DateFormat('dd MMM, hh:mm a', 'es').format(DateTime.parse(wallet['proxima_fecha_retiro']))}',
                           style: const TextStyle(
-                              color: Colors.white, fontSize: 12),
+                              color: AppTheme.text, fontSize: 12, fontWeight: FontWeight.w500),
                         ),
                       ),
                     ),

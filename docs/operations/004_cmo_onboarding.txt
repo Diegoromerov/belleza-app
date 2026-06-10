@@ -1,0 +1,43 @@
+====================================================================
+GLOWAPP - REPORTE DE CRECIMIENTO Y MARKETING #001
+ROL: DIRECTOR DE CRECIMIENTO Y MARKETING (CMO) - ONBOARDING Y ALINEACIÓN INICIAL
+====================================================================
+
+Fecha: 2026-06-09
+Estado: Aprobado / Inicializado
+Responsable: Director de Crecimiento y Marketing (CMO - Chief Marketing Officer)
+
+1. SÍNTESIS DE LA CONSULTA / ESTABLECIMIENTO DEL ROL
+--------------------------------------------------------------------
+Se ha formalizado la incorporación del Director de Crecimiento y Marketing (CMO) con la misión fundamental de diseñar, estructurar e implementar las estrategias de marketing digital y crecimiento (Growth Marketing) enfocadas en la adquisición, retención y fidelización de ambos lados del marketplace: los usuarios finales (clientes) y los socios estilistas (providers).
+
+El CMO definirá el funnel de conversión integral, la estrategia de marketing de rendimiento (Performance Marketing), y el despliegue de herramientas de analítica digital para optimizar el retorno de inversión publicitaria y acelerar la escala operativa de GlowApp.
+
+2. ANÁLISIS DE CRECIMIENTO, ADQUISICIÓN Y MARKETING DIGITAL
+--------------------------------------------------------------------
+El crecimiento de GlowApp como marketplace bidireccional plantea dinámicas específicas que requieren una supervisión estratégica directa por parte de este rol:
+- Adquisición Bidireccional (B2C / B2B): Coordinar campañas de performance diferenciadas. Para los clientes finales, enfocado en conveniencia, calidad y confianza. Para los estilistas (providers), enfocado en la oportunidad de ingresos adicionales, flexibilidad horaria y la facilidad técnica de la app.
+- Optimización del Funnel de Conversión: Monitoreo constante del recorrido del usuario, desde la visualización de anuncios, instalación de la app, registro en la plataforma, hasta la primera reserva completada.
+- Herramientas de Analítica y Atribución: Selección e integración de soluciones tecnológicas avanzadas para medir la efectividad de los canales de adquisición de pago (Meta Ads, Google Ads, TikTok Ads) y orgánicos (SEO, ASO - App Store Optimization).
+- Campañas de Fidelización y Retención: Diseño de dinámicas de recomendación ("Member-get-Member"), cupones por primera compra, campañas de reactivación basadas en push notifications y CRM (e.g., Braze, HubSpot, Klaviyo).
+
+3. PLAN DE ALINEACIÓN CORPORATIVA e INTERDEPARTAMENTAL
+--------------------------------------------------------------------
+Para garantizar un crecimiento sostenible y alineado con los recursos y capacidades del negocio, el CMO colaborará activamente con:
+- COO / Operaciones: Coordinar el balance de oferta y demanda. Lanzar campañas de adquisición de estilistas en zonas específicas con baja densidad de proveedores, y coordinar promociones de clientes para cubrir las horas de baja ocupación del personal de belleza.
+- CTO / Desarrollo de Software: Asegurar la correcta implementación de SDKs de analítica (Firebase, Mixpanel) y plataformas de atribución móvil (AppsFlyer / Adjust), así como la automatización del envío de notificaciones push personalizadas y deep-linking en la app móvil.
+- CFO / Legal: Establecer presupuestos de marketing estrictos alineados con los objetivos de CAC (Customer Acquisition Cost) y LTV (Lifetime Value). Definir los límites financieros de los códigos de descuento y programas de cashback, cumpliendo con la normatividad tributaria local.
+
+4. PLAN DE ACCIÓN Y TAREAS DE CRECIMIENTO A DESARROLLAR
+--------------------------------------------------------------------
+[CMO-001] Estrategia de Adquisición Multicanal y Growth Loop:
+- Diseñar campañas de pauta digital diferenciando audiencias de clientes finales y proveedores estilistas en Bogotá y Medellín, estableciendo los mensajes clave y las propuestas de valor iniciales.
+
+[CMO-002] Plan de Implementación de SDKs de Analítica y Atribución Móvil:
+- Definir la taxonomía y eventos de analítica a traquear en la app (e.g., app_opened, signup_completed, services_searched, booking_created, booking_completed) y colaborar con el CTO para su implementación en Flutter/Firebase.
+
+[CMO-003] Diseño del Programa de Referidos e Incentivos:
+- Estructurar el flujo operativo y financiero del sistema de recomendados ("Recomienda y Gana") para incentivar la viralidad de la aplicación entre usuarios actuales y nuevos estilistas.
+
+[CMO-004] Definición y Reporte de KPIs de Growth:
+- Establecer un dashboard de marketing con las métricas clave de salud del negocio: CAC por canal, LTV, Tasa de Conversión del Registro a Booking, ROI/ROAS publicitario y Tasa de Retención semanal/mensual.

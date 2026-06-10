@@ -252,7 +252,7 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen>
                               ),
                               child: const CircleAvatar(
                                 radius: 18,
-                                backgroundColor: AppTheme.primaryLight,
+                                backgroundColor: AppTheme.background,
                                 child: Icon(Icons.content_cut,
                                     size: 18, color: AppTheme.primary),
                               ),
@@ -387,7 +387,7 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen>
                           children: [
                             CircleAvatar(
                               radius: 24,
-                              backgroundColor: AppTheme.primaryLight,
+                              backgroundColor: AppTheme.background,
                               child: Text(
                                 clientName.isNotEmpty
                                     ? clientName[0].toUpperCase()

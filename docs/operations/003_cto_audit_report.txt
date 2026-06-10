@@ -1,0 +1,58 @@
+====================================================================
+GLOWAPP - INFORME DE AUDITORÍA TÉCNICA #003
+ROL: DIRECTOR DE TECNOLOGÍA (CTO) - AUDITORÍA Y ESTADO DEL ARTE
+====================================================================
+
+Fecha: 2026-06-09
+Estado: Bajo Revisión
+Responsable: Director de Tecnología (CTO)
+
+1. RESUMEN EJECUTIVO
+--------------------------------------------------------------------
+La plataforma de GlowApp cuenta con flujos funcionales robustos, geolocalización integrada, y servicios interactivos con Inteligencia Artificial. Sin embargo, existen problemas críticos de diseño de software, seguridad e indexación de datos que amenazan la estabilidad, escalabilidad y la confidencialidad de la aplicación si se despliega en producción en su estado actual.
+
+2. DIAGNÓSTICO DE ARQUITECTURA Y ESTRUCTURA
+--------------------------------------------------------------------
+Backend (Node.js/Express):
+- Monolito en index.js (~1,800 líneas): El archivo de inicio contiene configuraciones de Express, lógica directa de múltiples endpoints administrativos, el servidor de WebSockets, flujos SSE y scripts de inicialización y migración.
+  * Riesgo: Alta probabilidad de conflictos de fusión (merge conflicts), violación del principio de responsabilidad única y alta complejidad para mantenibilidad.
+- Capa de Datos Duplicada (Doble Cliente): El backend utiliza de forma simultánea pg.Pool y Sequelize. Esto provoca la creación de dos pools de conexiones separados hacia la misma base de datos.
+  * Riesgo: Agotamiento prematuro de conexiones en PostgreSQL bajo tráfico de producción y fugas de recursos debido al manejo heterogéneo de transacciones.
+
+Frontend (Flutter):
+- Monolito en main.dart (~2,000 líneas): Alberga tanto el punto de entrada principal como toda la pantalla ProvidersScreen (mapa interactivo, simulaciones de Aura, geolocalización y SOS).
+  * Riesgo: Reconstrucción ineficiente del árbol de widgets, dificultad para realizar pruebas unitarias y pérdida de modularidad.
+
+3. OPTIMIZACIÓN ESPACIAL Y BASE DE DATOS (PostgreSQL/PostGIS)
+--------------------------------------------------------------------
+Casting Redundante en Consultas PostGIS:
+- La consulta espacial utiliza castings explícitos (ubicacion::geography). Dado que la columna ubicacion ya está definida como GEOGRAPHY(Point, 4326), esto es redundante.
+  * Riesgo: Dependiendo de la versión de PostGIS, los castings explícitos sobre columnas indexadas pueden deshabilitar el uso del índice espacial GIST (idx_perfiles_prestador_ubicacion), forzando un escaneo secuencial (Seq Scan) de toda la tabla de prestadores y ralentizando drásticamente la geolocalización bajo carga.
+
+4. INTEGRACIÓN DE SOCKETS, APIS Y SERVICIOS DE IA
+--------------------------------------------------------------------
+Inseguridad Crítica en WebSockets (Suplantación de Identidad):
+- El servidor WebSocket registra las conexiones a través de un mensaje plano sin autenticación:
+  `if (data.type === 'register' && data.userId)`
+  * Riesgo Crítico: Cualquier cliente malicioso puede conectarse al WebSocket de producción y registrarse bajo el userId de cualquier víctima, interceptando sus actualizaciones en tiempo real y flujos SOS.
+
+Acoplamiento de IA y Base de Datos:
+- El servicio de Gemini realiza consultas directas SQL para inyectar el catálogo de servicios como contexto.
+  * Riesgo: El crecimiento del catálogo desbordará la ventana de contexto de la IA o incrementará drásticamente los costos de consumo de tokens por mensaje de chat.
+
+5. VULNERABILIDADES DE SEGURIDAD Y VARIABLES DE ENTORNO
+--------------------------------------------------------------------
+Secretos Expuestos en el Repositorio (.env):
+- El archivo .env del backend expone claves de desarrollo críticas como JWT_SECRET e incluso una GEMINI_API_KEY activa de Google.
+  * Riesgo Crítico: Compromiso inmediato de la cuenta de Google Cloud y capacidad de descifrar/firmar tokens de usuario de manera no autorizada.
+
+Bypass de Permisos de Administrador (Hardcoded Admin):
+- El adminMiddleware permite el acceso de administrador mediante correos hardcodeados (admin, admin@beautyapp.com).
+  * Riesgo: Permite a un atacante burlar los controles de rol registrando una cuenta local con esos correos.
+
+6. PLAN DE REMEDIACIÓN PROPUESTO PARA EL CTO
+--------------------------------------------------------------------
+1. Refactorización de Monolitos: Separar los controladores de administración de index.js en rutas dedicadas y modularizar main.dart de Flutter extrayendo pantallas.
+2. Corrección de Queries Espaciales: Eliminar castings redundantes de PostGIS para garantizar el uso del índice GIST.
+3. Seguridad en WebSockets e Identidad: Validar tokens JWT durante el apretón de manos (handshake) del WebSocket y remover credenciales quemadas en el código.
+4. Protección de Credenciales: Mover .env al .gitignore y rotar inmediatamente la GEMINI_API_KEY comprometida.
