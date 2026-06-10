@@ -1,0 +1,12 @@
+# CODEOWNERS
+# Configuración de revisiones obligatorias para módulos críticos
+
+# Regla por defecto para el repositorio
+*       @Diegoromerov
+
+# Módulos del Backend y Configuración
+/backend/       @Diegoromerov
+/backend/src/config/    @Diegoromerov
+
+# Módulos de Integración Continua
+/.github/workflows/    @Diegoromerov
