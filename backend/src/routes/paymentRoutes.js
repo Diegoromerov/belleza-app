@@ -238,6 +238,11 @@ router.post('/bookings/:id/confirm-otp', authMiddleware, async (req, res) => {
 
     const otp = otpResult.rows[0];
 
+    if (String(otp.client_id) !== String(req.user.id)) {
+      await client.query('ROLLBACK');
+      return res.status(403).json({ error: 'Solo el cliente de la reserva puede confirmar el OTP.' });
+    }
+
     // Verificar expiración
     if (new Date() > new Date(otp.expira_at)) {
       await client.query(

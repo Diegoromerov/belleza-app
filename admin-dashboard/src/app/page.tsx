@@ -148,9 +148,19 @@ export default function Dashboard() {
   useEffect(() => {
     async function fetchDashboardData() {
       try {
-        const response = await fetch('http://localhost:3000/api/glow-admin/dashboard/financial-summary', {
+        const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
+        const adminToken =
+          window.localStorage.getItem('adminToken') ||
+          process.env.NEXT_PUBLIC_ADMIN_TOKEN;
+
+        if (!adminToken) {
+          setBackendStatus('Modo SimulaciÃ³n (sin token admin)');
+          return;
+        }
+
+        const response = await fetch(`${apiBaseUrl}/api/glow-admin/dashboard/financial-summary`, {
           headers: {
-            'Authorization': 'Bearer test_admin_token'
+            'Authorization': `Bearer ${adminToken}`
           }
         });
         if (response.ok) {

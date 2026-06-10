@@ -1,7 +1,5 @@
 const jwt = require('jsonwebtoken');
-
-// Clave secreta obtenida de las variables de entorno o fallback seguro
-const JWT_SECRET = process.env.JWT_SECRET || 'glowapp_super_secret_admin_key_2026';
+const { getJwtSecret } = require('../../config/jwt');
 
 /**
  * Middleware para proteger rutas administrativas.
@@ -19,7 +17,7 @@ async function authAdmin(req, res, next) {
     // Verificar firma y expiración del JWT
     let decoded;
     try {
-      decoded = jwt.verify(token, JWT_SECRET);
+      decoded = jwt.verify(token, getJwtSecret());
     } catch (err) {
       if (err.name === 'TokenExpiredError') {
         return res.status(401).json({ error: 'Sesión expirada. Por favor inicie sesión nuevamente.' });
@@ -28,12 +26,13 @@ async function authAdmin(req, res, next) {
     }
 
     // Verificar que el payload del token contenga la información requerida
-    if (!decoded || !decoded.id || !decoded.rol) {
+    const tokenRole = decoded.rol || decoded.role;
+    if (!decoded || !decoded.id || !tokenRole) {
       return res.status(401).json({ error: 'Token de acceso malformado o incompleto.' });
     }
 
     // Validar rol estrictamente 'ADMIN'
-    if (decoded.rol.toUpperCase() !== 'ADMIN') {
+    if (tokenRole.toUpperCase() !== 'ADMIN') {
       return res.status(403).json({ error: 'Acceso denegado. Se requieren permisos de administrador.' });
     }
 
@@ -41,7 +40,7 @@ async function authAdmin(req, res, next) {
     req.admin = {
       id: decoded.id,
       email: decoded.email,
-      rol: decoded.rol
+      rol: 'ADMIN'
     };
 
     next();

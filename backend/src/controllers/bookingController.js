@@ -3,6 +3,27 @@ const { pool } = require('../config/db');
 const { Booking, Service, User, Transaction } = require('../models');
 const { sequelize } = require('../config/database');
 const { Op } = require('sequelize');
+const crypto = require('crypto');
+
+const verifyWompiSignature = (req) => {
+  const secret = process.env.WOMPI_WEBHOOK_SECRET;
+  if (!secret && process.env.NODE_ENV === 'production') return false;
+  if (!secret) return true;
+
+  const signature = req.header('x-wompi-signature') || req.header('x-signature');
+  if (!signature) return false;
+
+  const expected = crypto
+    .createHmac('sha256', secret)
+    .update(JSON.stringify(req.body))
+    .digest('hex');
+
+  const signatureBuffer = Buffer.from(signature, 'hex');
+  const expectedBuffer = Buffer.from(expected, 'hex');
+
+  return signatureBuffer.length === expectedBuffer.length &&
+    crypto.timingSafeEqual(signatureBuffer, expectedBuffer);
+};
 
 // 🔹 CREAR RESERVA
 exports.createBooking = async (req, res) => {
@@ -363,6 +384,10 @@ exports.payBooking = async (req, res) => {
 // 🔹 Webhook Simulado de Wompi - REFACTORIZADO A SEQUELIZE TRANSACTIONS
 exports.wompiWebhook = async (req, res) => {
   try {
+    if (!verifyWompiSignature(req)) {
+      return res.status(401).json({ error: 'Firma de webhook invÃ¡lida.' });
+    }
+
     const { event, data } = req.body;
     console.log('📡 [WOMPI WEBHOOK RECEIVED] Evento:', event);
 
