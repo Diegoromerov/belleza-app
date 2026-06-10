@@ -1,4 +1,4 @@
-﻿# 🌸 Beauty App - Plataforma de Belleza
+# 🌸 Beauty App - Plataforma de Belleza
 
 ## 📦 Stack Tecnológico
 - **Backend:** Node.js + Express + PostgreSQL (PostGIS) + Redis
@@ -16,3 +16,9 @@
 - `backend/`: API REST y lógica de negocio
 - `frontend/`: App móvil multiplataforma
 - `docs/`: Documentación técnica y de negocio
+
+## ⚖️ Privacidad y Protección de Datos (Ley 1581 / GDPR)
+La geolocalización basada en PostGIS y los flujos de registro cumplen con la **Ley de Protección de Datos Personales (Ley 1581 de 2012 de Colombia)** y directrices de protección generales (GDPR). 
+- El consentimiento explícito se registra mediante metadatos de aceptación de Habeas Data (`habeas_data_accepted_at`, `habeas_data_ip`) en el onboarding de cada usuario.
+- Los logs de telemetría y geolocalización se manejan bajo estrictas políticas de anonimización en producción.
+
