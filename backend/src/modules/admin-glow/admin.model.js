@@ -149,6 +149,68 @@ async function processWalletWithdrawal(providerId, amount, newBalance) {
   return await executeQuery(recordTransactionQuery, [providerId, amount]);
 }
 
+/**
+ * Obtiene métricas financieras consolidadas agregando valores brutos, comisiones e impuestos.
+ */
+async function getConsolidatedFinancialMetrics() {
+  const query = `
+    SELECT 
+      COALESCE(SUM(valor_bruto), 0.00) AS gmv,
+      COALESCE(SUM(comision_plataforma), 0.00) AS total_commission,
+      COALESCE(SUM(impuestos_estado), 0.00) AS total_taxes,
+      COALESCE(SUM(comision_plataforma + impuestos_estado), 0.00) AS platform_gross_income,
+      COALESCE(SUM(pago_neto_prestador), 0.00) AS total_provider_payouts,
+      COUNT(id) AS total_bookings
+    FROM bookings
+    WHERE estado IN ('COMPLETADA', 'FINALIZADA_PRESTADOR');
+  `;
+  const rows = await executeQuery(query);
+  return rows.length > 0 ? rows[0] : {
+    gmv: 0,
+    total_commission: 0,
+    total_taxes: 0,
+    platform_gross_income: 0,
+    total_provider_payouts: 0,
+    total_bookings: 0
+  };
+}
+
+/**
+ * Obtiene el historial financiero diario (últimos 30 días con actividad).
+ */
+async function getDailyFinancialHistory() {
+  const query = `
+    SELECT 
+      DATE(scheduled_at) AS date,
+      COALESCE(SUM(valor_bruto), 0.00) AS gmv,
+      COALESCE(SUM(comision_plataforma + impuestos_estado), 0.00) AS income
+    FROM bookings
+    WHERE estado IN ('COMPLETADA', 'FINALIZADA_PRESTADOR')
+    GROUP BY DATE(scheduled_at)
+    ORDER BY DATE(scheduled_at) ASC
+    LIMIT 30;
+  `;
+  return await executeQuery(query);
+}
+
+/**
+ * Obtiene la distribución de popularidad e ingresos por categoría de servicio.
+ */
+async function getCategoryPopularity() {
+  const query = `
+    SELECT 
+      COALESCE(s.category, 'Otros') AS category,
+      COUNT(b.id) AS booking_count,
+      COALESCE(SUM(b.valor_bruto), 0.00) AS total_revenue
+    FROM bookings b
+    JOIN services s ON b.service_id = s.id
+    WHERE b.estado IN ('COMPLETADA', 'FINALIZADA_PRESTADOR')
+    GROUP BY s.category
+    ORDER BY booking_count DESC;
+  `;
+  return await executeQuery(query);
+}
+
 module.exports = {
   getActiveSOSAlerts,
   updateSOSAlertStatus,
@@ -157,5 +219,8 @@ module.exports = {
   setProviderVerifiedStatus,
   getProviderWalletBalance,
   hasActiveDisputes,
-  processWalletWithdrawal
+  processWalletWithdrawal,
+  getConsolidatedFinancialMetrics,
+  getDailyFinancialHistory,
+  getCategoryPopularity
 };

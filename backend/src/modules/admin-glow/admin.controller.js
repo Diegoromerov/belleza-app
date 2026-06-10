@@ -302,6 +302,34 @@ async function verifyProviderAuto(req, res) {
   }
 }
 
+/**
+ * Obtiene el resumen financiero consolidado para el panel de administración.
+ */
+async function getFinancialSummary(req, res) {
+  try {
+    const [consolidated, dailyHistory, categoryPopularity] = await Promise.all([
+      adminModel.getConsolidatedFinancialMetrics(),
+      adminModel.getDailyFinancialHistory(),
+      adminModel.getCategoryPopularity()
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        consolidated,
+        dailyHistory,
+        categoryPopularity
+      }
+    });
+  } catch (error) {
+    console.error('Error al obtener el resumen financiero:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Error interno al obtener el resumen financiero del dashboard.'
+    });
+  }
+}
+
 module.exports = {
   getAllActiveAlerts,
   resolveSOSAlert,
@@ -310,5 +338,7 @@ module.exports = {
   getPendingProvidersList,
   approveProvider,
   rejectProvider,
-  verifyProviderAuto
+  verifyProviderAuto,
+  getFinancialSummary
 };
+

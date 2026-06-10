@@ -154,6 +154,33 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                       ),
                     ),
                   ),
+                  // Avatar del prestador posicionado dentro de la cabecera para evitar que quede por debajo
+                  Positioned(
+                    left: 20,
+                    bottom: 12,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppTheme.surface, width: 4),
+                        boxShadow: AppTheme.cardShadow,
+                      ),
+                      child: CircleAvatar(
+                        radius: 40,
+                        backgroundColor: AppTheme.surface, // Fondo blanco para alto contraste
+                        backgroundImage:
+                            hasAvatar ? NetworkImage(p['avatar_url']) : null,
+                        child: !hasAvatar
+                            ? Text(
+                                initialLetter,
+                                style: const TextStyle(
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.primary),
+                              )
+                            : null,
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -162,46 +189,12 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
           // Contenido
           SliverList(
             delegate: SliverChildListDelegate([
-              Transform.translate(
-                offset: const Offset(0, -40),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: AppTheme.surface, width: 4),
-                          boxShadow: AppTheme.cardShadow,
-                        ),
-                        child: CircleAvatar(
-                          radius: 40,
-                          backgroundColor: AppTheme.primaryLight,
-                          backgroundImage:
-                              hasAvatar ? NetworkImage(p['avatar_url']) : null,
-                          child: !hasAvatar
-                              ? Text(
-                                  initialLetter,
-                                  style: const TextStyle(
-                                      fontSize: 32,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppTheme.primary),
-                                )
-                              : null,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Transform.translate(
-                offset: const Offset(0, -25),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+              const SizedBox(height: 16), // Espaciador superior limpio
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                       // Nombre y verificado
                       Row(
                         children: [
@@ -347,7 +340,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                 selected: isSelected,
                                 selectedColor: AppTheme.primary,
                                 backgroundColor:
-                                    AppTheme.primaryLight.withOpacity(0.4),
+                                    AppTheme.accent.withOpacity(0.2),
                                 labelStyle: TextStyle(
                                   color: isSelected
                                       ? Colors.white
@@ -680,7 +673,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                     borderRadius: BorderRadius.circular(20),
                                     boxShadow: AppTheme.softShadow,
                                     border: Border.all(
-                                        color: AppTheme.primaryLight, width: 1),
+                                        color: AppTheme.accent.withOpacity(0.3), width: 1),
                                   ),
                                   child: Column(
                                     crossAxisAlignment:
@@ -691,7 +684,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                           CircleAvatar(
                                             radius: 20,
                                             backgroundColor:
-                                                AppTheme.primaryLight,
+                                                AppTheme.accent.withOpacity(0.2),
                                             backgroundImage: hasClientAvatar
                                                 ? NetworkImage(clientAvatar)
                                                 : null,
@@ -873,12 +866,10 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                 );
                               },
                             ),
-                      const SizedBox(height: 40),
                     ],
                   ),
                 ),
-              ),
-            ]),
+              ]),
           ),
         ],
       ),
@@ -958,7 +949,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [Color(0xFFFFF5F2), AppTheme.primaryLight],
+              colors: [Color(0xFFFFF8F0), Color(0xFFF5E4E0)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),

@@ -375,7 +375,7 @@ class _BookingScreenState extends State<BookingScreen> {
               width: 75,
               margin: const EdgeInsets.only(right: 10, bottom: 4),
               decoration: BoxDecoration(
-                color: isSelected ? AppTheme.primary : AppTheme.primaryLight,
+                color: isSelected ? AppTheme.primary : AppTheme.background,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: isSelected
                     ? [
@@ -502,13 +502,13 @@ class _BookingScreenState extends State<BookingScreen> {
               color: isSelected
                   ? AppTheme.primary
                   : isAvailable
-                      ? AppTheme.primaryLight.withOpacity(0.3)
+                      ? AppTheme.accent.withOpacity(0.2)
                       : const Color(0xFFF3F4F6),
               border: Border.all(
                 color: isSelected
                     ? AppTheme.primary
                     : isAvailable
-                        ? AppTheme.primaryLight
+                        ? AppTheme.accent.withOpacity(0.4)
                         : const Color(0xFFE5E7EB),
                 width: 1.5,
               ),
@@ -579,7 +579,7 @@ class _BookingScreenState extends State<BookingScreen> {
         style: ElevatedButton.styleFrom(
           backgroundColor: AppTheme.primary,
           foregroundColor: Colors.white,
-          disabledBackgroundColor: AppTheme.primaryLight,
+          disabledBackgroundColor: AppTheme.accent.withOpacity(0.5),
           padding: const EdgeInsets.all(16),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),

@@ -90,7 +90,7 @@ class NotificationService {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: const BoxDecoration(
-                        color: AppTheme.primaryLight,
+                        color: Color(0xFFFFF8F0),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(

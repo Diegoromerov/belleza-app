@@ -1,0 +1,40 @@
+====================================================================
+GLOWAPP - REPORTE DE OPERACIONES #001
+ROL: DIRECTOR DE OPERACIONES (COO) - ONBOARDING Y ALINEACIÓN INICIAL
+====================================================================
+
+Fecha: 2026-06-09
+Estado: Aprobado / Inicializado
+Responsable: Director de Operaciones (COO)
+
+1. SÍNTESIS DE LA CONSULTA / ESTABLECIMIENTO DEL ROL
+--------------------------------------------------------------------
+Se ha formalizado la incorporación del Director de Operaciones (COO) para liderar el crecimiento de la red de profesionales de belleza y garantizar la excelencia en los estándares de calidad del servicio. 
+
+Se define la metodología de trabajo: toma de decisiones operativas basada en datos geográficos, KPIs y una integración estrecha con las áreas de Tecnología (Backend/Frontend), Soporte y Reclutamiento. Cada ciclo de consulta concluirá con un reporte de decisiones y planes de acción concretos.
+
+2. ANÁLISIS DEL CORE DE NEGOCIO Y CONTEXTO OPERATIVO
+--------------------------------------------------------------------
+GlowApp opera como una plataforma de servicios de belleza a domicilio bajo demanda (On-demand). Los pilares operativos inmediatos identificados en la plataforma son:
+- Registro y Verificación (KYC): Validación estricta de documentos legales (cédula, RUT, certificación de bioseguridad) de los prestadores de servicios para asegurar confianza y habilitar insignias de verificación verdes.
+- Seguridad en Campo (SOS): Monitoreo de alertas de pánico en tiempo real para clientes y prestadores, coordinando con soporte y autoridades locales (Bogotá, Medellín).
+- Geocercas y Asignación: Toma de decisiones logísticas basadas en la ubicación geográfica de los prestadores para optimizar tiempos de traslado y ocupación.
+
+3. PLAN DE ALINEACIÓN CORPORATIVA e INTERDEPARTAMENTAL
+--------------------------------------------------------------------
+Para crear un entorno corporativo cohesionado, la dirección de operaciones colaborará activamente con los siguientes perfiles:
+- CTO / Desarrollo de Software: Para automatizar los flujos de validación KYC en la base de datos (PostgreSQL) y garantizar la estabilidad del servicio de geolocalización en tiempo real en la App móvil (Flutter).
+- Dirección de Calidad / Soporte: Para definir los protocolos de resolución de alertas SOS y el seguimiento post-servicio (CSAT/NPS) de los profesionales.
+- Departamento de Legal y Cumplimiento: Asegurar que los requisitos de bioseguridad y retenciones impositivas (ej. 8% recaudado) cumplan con la normativa fiscal vigente.
+
+4. PLAN DE ACCIÓN Y TAREAS OPERATIVAS A DESARROLLAR
+--------------------------------------------------------------------
+[OP-001] Definición del Flujo KYC Automatizado:
+- Diseñar el funnel de reclutamiento de profesionales en la app móvil.
+- Tarea para Devs: Conectar la interfaz del dashboard de administración con el backend para que la aprobación KYC actualice inmediatamente el estatus en la base de datos.
+
+[OP-002] Protocolo de Seguridad SOS:
+- Diseñar el árbol de decisiones para el equipo de soporte al recibir una alerta de pánico (contacto con cuadrantes policiales locales, geolocalización activa).
+
+[OP-003] KPI Dashboard Operativo:
+- Definir métricas clave de monitoreo: Tasa de Aceptación de Servicios, Tiempo de Desplazamiento Promedio, Densidad de Profesionales por Zona Geográfica, y Tasa de Retención de Providers.

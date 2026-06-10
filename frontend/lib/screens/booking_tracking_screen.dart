@@ -213,7 +213,7 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen>
                         ),
                         child: CircleAvatar(
                           radius: 18,
-                          backgroundColor: AppTheme.primaryLight,
+                          backgroundColor: AppTheme.accent.withOpacity(0.2),
                           backgroundImage: providerAvatar.isNotEmpty
                               ? NetworkImage(providerAvatar)
                               : null,
@@ -308,7 +308,7 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen>
                           children: [
                             CircleAvatar(
                               radius: 26,
-                              backgroundColor: AppTheme.primaryLight,
+                              backgroundColor: AppTheme.accent.withOpacity(0.2),
                               backgroundImage: providerAvatar.isNotEmpty
                                   ? NetworkImage(providerAvatar)
                                   : null,
@@ -405,7 +405,7 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen>
                           borderRadius: BorderRadius.circular(8),
                           child: LinearProgressIndicator(
                             value: _progress,
-                            backgroundColor: AppTheme.primaryLight,
+                            backgroundColor: AppTheme.background,
                             valueColor: const AlwaysStoppedAnimation<Color>(
                                 AppTheme.primary),
                             minHeight: 8,
@@ -419,7 +419,7 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen>
                           padding: const EdgeInsets.symmetric(
                               horizontal: 14, vertical: 10),
                           decoration: BoxDecoration(
-                            color: AppTheme.primaryLight.withOpacity(0.4),
+                            color: AppTheme.accent.withOpacity(0.15),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
                                 color: AppTheme.primary.withOpacity(0.15)),

@@ -1,0 +1,43 @@
+====================================================================
+GLOWAPP - REPORTE DE FINANZAS Y LEGAL #001
+ROL: DIRECTOR FINANCIERO Y LEGAL (CFO & LEGAL LEAD) - ONBOARDING Y ALINEACIÓN INICIAL
+====================================================================
+
+Fecha: 2026-06-09
+Estado: Aprobado / Inicializado
+Responsable: Director Financiero y Legal (CFO & Legal Lead)
+
+1. SÍNTESIS DE LA CONSULTA / ESTABLECIMIENTO DEL ROL
+--------------------------------------------------------------------
+Se ha formalizado la incorporación del Director Financiero y Legal (CFO & Legal Lead) con la misión fundamental de garantizar la viabilidad financiera de la empresa, estructurar y controlar el flujo de caja transaccional a través de la pasarela de pagos (Wompi) y asegurar el cumplimiento normativo y fiscal.
+
+El CFO & Legal Lead definirá el marco financiero de cobro, conciliación y dispersión de fondos para prestadores de servicios de belleza (providers), así como las políticas de privacidad de datos personales y la estrategia tributaria aplicable a la economía colaborativa.
+
+2. ANÁLISIS DE LA VIABILIDAD FINANCIERA, PASARELA DE PAGOS Y CUMPLIMIENTO
+--------------------------------------------------------------------
+La operación de GlowApp involucra dinámicas monetarias y regulatorias complejas que requieren supervisión directa de este rol:
+- Gestión del Flujo de Caja y Dispersión (Wompi): Administración del sistema de wallets de los prestadores (provider_wallet), controlando saldos disponibles, saldos pendientes y fondos retenidos en disputa. Integración de transferencias directas a Nequi, Daviplata o cuentas bancarias utilizando los beneficiarios de Wompi.
+- Estructuración Tributaria de Economía Colaborativa: Aplicación automática de la regla de split de transacciones en la base de datos (bookings): de cada servicio facturado, el 20% es retenido por la plataforma (distribuido en 12% comisión neta de plataforma y 8% impuestos de estado para el cumplimiento tributario nacional), dejando el 80% como pago neto al prestador.
+- Protección de Datos Personales y Habeas Data: Custodia y seguridad legal en la recolección de documentos de identidad (Cédulas y RUT para KYC), datos bancarios y la geolocalización en tiempo real (GPS) para el check-in de servicios, garantizando el cumplimiento estricto de las regulaciones de privacidad.
+- Resolución Financiera de Disputas: Definición del árbol de reembolsos y gestión de compensaciones cuando se activen disputas por fallas técnicas, no-shows o cancelaciones (dentro de la ventana de 2 horas post-OTP y con SLA de resolución de 48 horas).
+
+3. PLAN DE ALINEACIÓN CORPORATIVA e INTERDEPARTAMENTAL
+--------------------------------------------------------------------
+Para afianzar el control fiscal y la viabilidad del negocio, el CFO & Legal Lead colaborará de la siguiente manera:
+- CTO / Desarrollo de Software: Asegurar la correcta ejecución de las migraciones de base de datos financieras, el correcto registro en el log de auditoría inmutable (audit_log), el control de estados de transacciones Wompi y la encriptación de datos de carácter sensible.
+- COO / Operaciones: Coordinación en el funnel KYC para garantizar que ningún prestador pueda retirar fondos (retiros_pausados) si no ha completado la verificación de documentos o si su score de riesgo (risk_score) supera los límites configurados.
+- Soporte al Cliente: Establecer las directrices operativas sobre disputas, cancelaciones y montos reembolsables máximos para clientes.
+
+4. PLAN DE ACCIÓN Y TAREAS FINANCIERAS/LEGALES A DESARROLLAR
+--------------------------------------------------------------------
+[CFO-001] Estructuración Fiscal y Conciliación del Impuesto de Economía Colaborativa:
+- Validar el modelo de retención impositiva (8% impuestos de estado y 12% comisión de plataforma) para asegurar que cumpla con los estándares tributarios vigentes para plataformas digitales y prestadores independientes.
+
+[CFO-002] Automatización de Dispersiones e Integración de Cuentas Wompi:
+- Diseñar y auditar la lógica de dispersión de fondos automática (Wompi Payouts / Nequi) garantizando la verificación previa de cuentas (cuenta_verificada) y registrando cada movimiento en la tabla de transacciones de la wallet.
+
+[CFO-003] Manual de Políticas de Privacidad y Habeas Data (GPS/KYC):
+- Redactar los Términos y Condiciones y la Política de Privacidad de la aplicación, definiendo el propósito legal detrás de la recolección de geolocalización activa de usuarios y prestadores, y la recolección de documentos sensibles.
+
+[CFO-004] Auditoría de Transacciones e inmutabilidad Financiera:
+- Configurar y auditar la persistencia del histórico transaccional (wallet_transactions y audit_log) asegurando que no existan discrepancias en el balance de saldos de las carteras de los proveedores.
