@@ -174,8 +174,8 @@ exports.oauth = async (req, res) => {
 
     // Firmar Token JWT
     const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.rol === 'PRESTADOR' ? 'provider' : (user.rol === 'CLIENTE' ? 'client' : null) }, 
-      JWT_SECRET, 
+      { id: user.id, email: user.email, role: toApiRole(user.rol), rol: user.rol }, 
+      getJwtSecret(), 
       { expiresIn: '7d' }
     );
 
@@ -186,7 +186,7 @@ exports.oauth = async (req, res) => {
         id: user.id.toString(),
         full_name: user.nombre,
         email: user.email,
-        role: user.rol === 'PRESTADOR' ? 'provider' : (user.rol === 'CLIENTE' ? 'client' : null),
+        role: toApiRole(user.rol),
         onboarding_completo: user.onboarding_completo
       }
     });
