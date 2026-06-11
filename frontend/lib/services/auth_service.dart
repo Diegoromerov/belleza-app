@@ -86,6 +86,8 @@ class AuthService {
     String? documentoIdUrl,
     String? rutUrl,
     String? certificacionUrl,
+    required bool aceptarHabeasData,
+    required bool aceptarTerminos,
   }) async {
     final baseUrl = await getBaseUrl();
     final token = await getToken();
@@ -101,6 +103,8 @@ class AuthService {
         'documento_id_url': documentoIdUrl,
         'rut_url': rutUrl,
         'certificacion_url': certificacionUrl,
+        'aceptar_habeas_data': aceptarHabeasData,
+        'aceptar_terminos': aceptarTerminos,
       }),
     );
     if (response.statusCode == 200) {
