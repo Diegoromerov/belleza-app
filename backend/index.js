@@ -14,6 +14,7 @@ const bookingRoutes = require('./src/routes/bookingRoutes');
 const serviceRoutes = require('./src/routes/serviceRoutes');
 const chatRoutes = require('./src/routes/chatRoutes');
 const tryonRoutes = require('./src/routes/tryonRoutes');
+const designsRoutes = require('./src/routes/designsRoutes');
 const glowAdminRoutes = require('./src/modules/admin-glow/admin.routes');
 const authMiddleware = require('./src/middleware/auth');
 const adminMiddleware = async (req, res, next) => {
@@ -387,6 +388,7 @@ app.get('/api/providers/:id', async (req, res) => {
 // RUTAS DE AUTENTICACIÓN
 // ==========================================
 app.use('/api/auth', authRoutes);
+app.use('/api/designs', designsRoutes);
 
 // ==========================================
 // RUTAS PROTEGIDAS (Requieren JWT)
