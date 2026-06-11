@@ -191,24 +191,23 @@ exports.oauth = async (req, res) => {
 
   } catch (err) {
     console.error('❌ ERROR OAUTH:', err.message);
-    res.status(500).json({ error: 'Error al procesar autenticación OAuth' });
-  }
-};
-
-// ==========================================
-// 📋 COMPLETAR ONBOARDING (Ley 1581 Habeas Data)
+    res.status(500).json({ error: 'Error al proce// ==========================================
+// 📋 COMPLETAR ONBOARDING (Ley 1581 Habeas Data y Términos y Condiciones)
 // ==========================================
 exports.onboarding = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { rol, documento_id_url, rut_url, certificacion_url } = req.body;
+    const { rol, documento_id_url, rut_url, certificacion_url, aceptar_habeas_data, aceptar_terminos } = req.body;
 
     if (!rol || !['CLIENTE', 'PRESTADOR'].includes(rol.toUpperCase())) {
       return res.status(400).json({ error: 'Rol inválido o ausente' });
     }
 
-    const mappedRol = rol.toUpperCase();
+    if (aceptar_habeas_data !== true || aceptar_terminos !== true) {
+      return res.status(400).json({ error: 'Debe aceptar la Política de Tratamiento de Datos Personales (Habeas Data) y los Términos y Condiciones para continuar.' });
+    }
 
+    const mappedRol = rol.toUpperCase();
     const clientIp = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
     if (mappedRol === 'PRESTADOR') {
@@ -216,7 +215,8 @@ exports.onboarding = async (req, res) => {
       await pool.query(
         `UPDATE usuarios 
          SET rol = 'PRESTADOR', onboarding_completo = true,
-             habeas_data_accepted_at = NOW(), habeas_data_ip = $2
+             habeas_data_accepted_at = NOW(), habeas_data_ip = $2,
+             terminos_accepted_at = NOW(), terminos_ip = $2
          WHERE id = $1`,
         [userId, clientIp]
       );
@@ -230,20 +230,21 @@ exports.onboarding = async (req, res) => {
            rut_url = EXCLUDED.rut_url,
            certificacion_url = EXCLUDED.certificacion_url,
            estatus_verificacion = 'PENDIENTE';`,
-        [userId, documento_id_url || null, rut_url || null, certificacion_url || null]
+         [userId, documento_id_url || null, rut_url || null, certificacion_url || null]
       );
       
-      console.log(`📋 Onboarding completado para Proveedor ID ${userId}. Esperando revisión.`);
+      console.log(`📋 Onboarding y aceptación legal completados para Proveedor ID ${userId}. Esperando revisión.`);
     } else {
       // Cliente se marca completo inmediatamente
       await pool.query(
         `UPDATE usuarios 
          SET rol = 'CLIENTE', onboarding_completo = true,
-             habeas_data_accepted_at = NOW(), habeas_data_ip = $2
+             habeas_data_accepted_at = NOW(), habeas_data_ip = $2,
+             terminos_accepted_at = NOW(), terminos_ip = $2
          WHERE id = $1`,
         [userId, clientIp]
       );
-      console.log(`📋 Onboarding completado para Cliente ID ${userId}.`);
+      console.log(`📋 Onboarding y aceptación legal completados para Cliente ID ${userId}.`);
     }
 
     res.json({

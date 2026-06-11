@@ -16,6 +16,7 @@ class OnboardingScreen extends StatefulWidget {
 class _OnboardingScreenState extends State<OnboardingScreen> {
   String? _selectedRole; // 'CLIENTE' or 'PRESTADOR'
   bool _habeasDataAccepted = false;
+  bool _terminosAccepted = false;
   bool _isLoading = false;
   String? _error;
 
@@ -70,6 +71,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Future<void> _submitOnboarding() async {
     if (_selectedRole == null) return;
 
+    if (!_habeasDataAccepted || !_terminosAccepted) {
+      setState(() {
+        _error = 'Debes aceptar la Política de Privacidad (Habeas Data) y los Términos y Condiciones para continuar.';
+      });
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _error = null;
@@ -77,19 +85,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
     try {
       if (_selectedRole == 'PRESTADOR') {
-        if (!_habeasDataAccepted) {
-          setState(() {
-            _error = 'Debes aceptar Habeas Data.';
-            _isLoading = false;
-          });
-          return;
-        }
-
         final result = await AuthService.completeOnboarding(
           role: 'PRESTADOR',
           documentoIdUrl: _documentoUrl,
           rutUrl: _rutUrl,
           certificacionUrl: _certificacionUrl,
+          aceptarHabeasData: _habeasDataAccepted,
+          aceptarTerminos: _terminosAccepted,
         );
 
         if (result != null && mounted) {
@@ -99,7 +101,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         }
       } else {
         // CLIENTE
-        final result = await AuthService.completeOnboarding(role: 'CLIENTE');
+        final result = await AuthService.completeOnboarding(
+          role: 'CLIENTE',
+          aceptarHabeasData: _habeasDataAccepted,
+          aceptarTerminos: _terminosAccepted,
+        );
         if (result != null && mounted) {
           Navigator.pushReplacementNamed(context, '/home');
         } else {
@@ -124,6 +130,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         documentoIdUrl: _documentoUrl,
         rutUrl: _rutUrl,
         certificacionUrl: _certificacionUrl,
+        aceptarHabeasData: _habeasDataAccepted,
+        aceptarTerminos: _terminosAccepted,
       );
       if (result != null && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -278,12 +286,36 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ],
           ),
         ),
-        const SizedBox(height: 40),
+        const SizedBox(height: 24),
+        CheckboxListTile(
+          value: _habeasDataAccepted,
+          onChanged: (val) => setState(() => _habeasDataAccepted = val ?? false),
+          title: const Text(
+            'Acepto la Política de Tratamiento de Datos Personales (Habeas Data - Ley 1581 de 2012).',
+            style: TextStyle(fontSize: 12, color: Colors.black87),
+          ),
+          activeColor: const Color(0xFFC89D93),
+          contentPadding: EdgeInsets.zero,
+          controlAffinity: ListTileControlAffinity.leading,
+        ),
+        CheckboxListTile(
+          value: _terminosAccepted,
+          onChanged: (val) => setState(() => _terminosAccepted = val ?? false),
+          title: const Text(
+            'Acepto los Términos y Condiciones de Uso de la plataforma GlowApp.',
+            style: TextStyle(fontSize: 12, color: Colors.black87),
+          ),
+          activeColor: const Color(0xFFC89D93),
+          contentPadding: EdgeInsets.zero,
+          controlAffinity: ListTileControlAffinity.leading,
+        ),
+        const SizedBox(height: 16),
         ElevatedButton(
-          onPressed: _isLoading ? null : _submitOnboarding,
+          onPressed: (_isLoading || !_habeasDataAccepted || !_terminosAccepted) ? null : _submitOnboarding,
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFFC89D93),
             foregroundColor: Colors.white,
+            disabledBackgroundColor: const Color(0xFFE5CECA),
             padding: const EdgeInsets.symmetric(vertical: 16),
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
@@ -307,7 +339,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget _buildProviderForm() {
     final bool atLeastOneDocUploaded =
         _documentoUrl != null || _rutUrl != null || _certificacionUrl != null;
-    final bool isSubmitEnabled = _habeasDataAccepted && atLeastOneDocUploaded;
+    final bool isSubmitEnabled = _habeasDataAccepted && _terminosAccepted && atLeastOneDocUploaded;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -439,6 +471,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               setState(() => _habeasDataAccepted = val ?? false),
           title: const Text(
             'Acepto la política de protección de datos (Habeas Data - Ley 1581 de 2012) de la aplicación Belleza App.',
+            style: TextStyle(fontSize: 12, color: Colors.black87),
+          ),
+          activeColor: const Color(0xFFC89D93),
+          contentPadding: EdgeInsets.zero,
+          controlAffinity: ListTileControlAffinity.leading,
+        ),
+        CheckboxListTile(
+          value: _terminosAccepted,
+          onChanged: (val) =>
+              setState(() => _terminosAccepted = val ?? false),
+          title: const Text(
+            'Acepto los Términos y Condiciones y el Contrato de Prestación de Servicios de GlowApp.',
             style: TextStyle(fontSize: 12, color: Colors.black87),
           ),
           activeColor: const Color(0xFFC89D93),
