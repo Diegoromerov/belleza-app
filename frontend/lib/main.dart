@@ -30,6 +30,7 @@ import 'screens/client_profile_screen.dart';
 import 'screens/provider_profile_screen.dart';
 import 'screens/booking_tracking_screen.dart';
 import 'screens/provider_route_screen.dart';
+import 'screens/designs/manicure_ideas_screen.dart';
 import 'models/provider_model.dart';
 import 'shared/theme.dart';
 
@@ -94,6 +95,7 @@ class BeautyApp extends StatelessWidget {
         '/onboarding': (_) => const OnboardingScreen(),
         '/verification-pending': (_) => const VerificationPendingScreen(),
         '/profile': (_) => const ClientProfileScreen(),
+        '/ideas': (_) => const ManicureIdeasScreen(),
         '/booking-tracking': (context) {
           final args = ModalRoute.of(context)!.settings.arguments
               as Map<String, dynamic>;
@@ -1367,6 +1369,11 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                     icon: Icons.chat_bubble_outline_rounded,
                     label: 'Chats',
                     onTap: () => _checkAuthAndNavigate('/chat'),
+                  ),
+                  _buildNavItem(
+                    icon: Icons.lightbulb_outline_rounded,
+                    label: 'Ideas',
+                    onTap: () => _checkAuthAndNavigate('/ideas'),
                   ),
                   // Ocultado por solicitud:
                   // _buildNavItem(

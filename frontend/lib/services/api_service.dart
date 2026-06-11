@@ -829,6 +829,23 @@ class ApiService {
     throw Exception(
         json.decode(response.body)['error'] ?? 'Error ${response.statusCode}');
   }
+
+  // 🔹 NUEVO: Buscar ideas de diseños de manicura (Pinterest / Google CSE)
+  static Future<List<Map<String, dynamic>>> fetchDesignIdeas(String query) async {
+    final headers = await _getAuthHeaders();
+    final response = await http
+        .get(
+          Uri.parse('$_baseUrl$_apiPath/designs/search?q=${Uri.encodeComponent(query)}'),
+          headers: headers,
+        )
+        .timeout(const Duration(seconds: 30));
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return List<Map<String, dynamic>>.from(data['data']);
+    }
+    throw Exception(
+        json.decode(response.body)['error'] ?? 'Error ${response.statusCode}');
+  }
 }
 
 class MapSettings {
