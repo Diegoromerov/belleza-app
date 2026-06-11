@@ -192,7 +192,11 @@ exports.oauth = async (req, res) => {
     });
 
   } catch (err) {
-    res.status(500).json({ error: 'Error al procesar OAuth' });
+    console.error('❌ ERROR OAUTH:', err.message);
+    res.status(500).json({ 
+      error: 'Error al procesar OAuth',
+      details: process.env.ALLOW_MOCK_AUTH === 'true' ? err.message : undefined
+    });
   }
 };
 

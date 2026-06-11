@@ -84,6 +84,9 @@ exports.googleSignIn = async (req, res) => {
 
   } catch (error) {
     console.error('❌ ERROR GOOGLE SIGN-IN:', error.message);
-    res.status(401).json({ error: 'Autenticación de Google inválida o fallida' });
+    res.status(401).json({ 
+      error: 'Autenticación de Google inválida o fallida',
+      details: process.env.ALLOW_MOCK_AUTH === 'true' ? error.message : undefined
+    });
   }
 };
