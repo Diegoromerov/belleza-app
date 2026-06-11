@@ -118,9 +118,11 @@ exports.login = async (req, res) => {
 // ==========================================
 exports.oauth = async (req, res) => {
   try {
-    return res.status(410).json({
-      error: 'OAuth directo deshabilitado. Usa /api/auth/google u otro proveedor verificado.'
-    });
+    if (process.env.ALLOW_MOCK_AUTH !== 'true' && process.env.NODE_ENV !== 'test') {
+      return res.status(410).json({
+        error: 'OAuth directo deshabilitado. Usa /api/auth/google u otro proveedor verificado o configure ALLOW_MOCK_AUTH=true.'
+      });
+    }
 
     const { email, nombre, foto_url, auth_provider, provider_id } = req.body;
 

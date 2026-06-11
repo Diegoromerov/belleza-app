@@ -15,8 +15,8 @@ exports.googleSignIn = async (req, res) => {
     }
 
     let payload;
-    // Permitir token de prueba en desarrollo/testing
-    if (process.env.NODE_ENV === 'test' && idToken.startsWith('test_google_token_')) {
+    // Permitir token de prueba en desarrollo/testing o si ALLOW_MOCK_AUTH es true
+    if ((process.env.NODE_ENV === 'test' || process.env.ALLOW_MOCK_AUTH === 'true') && idToken.startsWith('test_google_token_')) {
       const tokenSuffix = idToken.replace('test_google_token_', '');
       payload = {
         email: `${tokenSuffix}@gmail.com`,
