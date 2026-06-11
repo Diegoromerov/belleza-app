@@ -190,8 +190,11 @@ exports.oauth = async (req, res) => {
     });
 
   } catch (err) {
-    console.error('❌ ERROR OAUTH:', err.message);
-    res.status(500).json({ error: 'Error al proce// ==========================================
+    res.status(500).json({ error: 'Error al procesar OAuth' });
+  }
+};
+
+// ==========================================
 // 📋 COMPLETAR ONBOARDING (Ley 1581 Habeas Data y Términos y Condiciones)
 // ==========================================
 exports.onboarding = async (req, res) => {
