@@ -586,6 +586,16 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                 onPressed: () => Navigator.pop(context, true),
               ),
         automaticallyImplyLeading: !widget.isEmbedded,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout_rounded, color: Colors.grey),
+            onPressed: () async {
+              final navigator = Navigator.of(context);
+              await AuthService.logout();
+              navigator.pushNamedAndRemoveUntil('/login', (route) => false);
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),

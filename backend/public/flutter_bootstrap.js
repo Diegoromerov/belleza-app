@@ -40,6 +40,6 @@ _flutter.loader.load({
     renderer: "html"
   },
   serviceWorkerSettings: {
-    serviceWorkerVersion: "4094585020" /* Flutter's service worker is deprecated and will be removed in a future Flutter release. */
+    serviceWorkerVersion: "3712854938" /* Flutter's service worker is deprecated and will be removed in a future Flutter release. */
   }
 });
