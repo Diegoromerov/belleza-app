@@ -1182,6 +1182,67 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
     );
   }
 
+  Widget _buildProminentCenterNavItem({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Transform.translate(
+          offset: const Offset(0, -14),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: const LinearGradient(
+                    colors: [
+                      Color(0xFFE8D7D3), // Golden soft rose
+                      Color(0xFFC89D93), // Warm primary pink
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFC89D93).withOpacity(0.4),
+                      blurRadius: 10,
+                      spreadRadius: 2,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                  border: Border.all(
+                    color: Colors.white,
+                    width: 2.5,
+                  ),
+                ),
+                child: Icon(
+                  icon,
+                  color: Colors.white,
+                  size: 26,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFFB07D62),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -1360,67 +1421,70 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
               ),
               child: Row(
                 children: [
+                  // Botón 1: Asistente IA (Común)
                   _buildNavItem(
                     icon: Icons.auto_awesome,
                     label: 'Asistente IA',
                     onTap: () => _checkAuthAndNavigateToAIChat(''),
                   ),
-                  _buildNavItem(
-                    icon: Icons.chat_bubble_outline_rounded,
-                    label: 'Chats',
-                    onTap: () => _checkAuthAndNavigate('/chat'),
-                  ),
-                  _buildNavItem(
-                    icon: Icons.lightbulb_outline_rounded,
-                    label: 'Ideas',
-                    onTap: () => _checkAuthAndNavigate('/ideas'),
-                  ),
-                  // Ocultado por solicitud:
-                  // _buildNavItem(
-                  //   key: _tryonKey,
-                  //   icon: Icons.auto_awesome_motion,
-                  //   label: 'Try-On Uñas',
-                  //   onTap: () => Navigator.pushNamed(context, '/tryon'),
-                  // ),
-                  if (_userRole == 'client') ...[
-                    _buildNavItem(
-                      icon: Icons.calendar_today_outlined,
-                      label: 'Citas',
-                      onTap: () =>
-                          _checkAuthAndNavigate('/client-bookings'),
-                    ),
-                  ] else if (_userRole == 'provider') ...[
+                  
+                  // Botón 2: Dinámico (Citas o Panel)
+                  if (_userRole == 'provider')
                     _buildNavItem(
                       icon: Icons.dashboard_outlined,
                       label: 'Panel',
                       onTap: () => _checkAuthAndNavigate('/provider'),
+                    )
+                  else
+                    _buildNavItem(
+                      icon: Icons.calendar_today_outlined,
+                      label: 'Citas',
+                      onTap: () => _checkAuthAndNavigate('/client-bookings'),
                     ),
+
+                  // Botón 3: Ideas (Botón central prominente)
+                  _buildProminentCenterNavItem(
+                    icon: Icons.lightbulb_outline_rounded,
+                    label: 'Ideas',
+                    onTap: () => _checkAuthAndNavigate('/ideas'),
+                  ),
+
+                  // Botón 4: Dinámico (Servicios o Perfil)
+                  if (_userRole == 'provider')
                     _buildNavItem(
                       icon: Icons.inventory_2_outlined,
                       label: 'Servicios',
-                      onTap: () =>
-                          _checkAuthAndNavigate('/provider/services'),
+                      onTap: () => _checkAuthAndNavigate('/provider/services'),
+                    )
+                  else
+                    _buildNavItem(
+                      icon: Icons.person_outline_rounded,
+                      label: 'Perfil',
+                      onTap: () => _checkAuthAndNavigate('/profile'),
                     ),
-                  ],
-                  _buildNavItem(
-                    icon: Icons.person_outline_rounded,
-                    label: 'Perfil',
-                    onTap: () => _checkAuthAndNavigate('/profile'),
-                  ),
-                  _buildNavItem(
-                    icon: _hasToken ? Icons.logout_rounded : Icons.login_rounded,
-                    label: _hasToken ? 'Salir' : 'Ingresar',
-                    color: Colors.grey,
-                    onTap: () async {
-                      if (_hasToken) {
-                        final navigator = Navigator.of(context);
-                        await AuthService.logout();
-                        navigator.pushReplacementNamed('/login');
-                      } else {
-                        Navigator.pushNamed(context, '/login');
-                      }
-                    },
-                  ),
+
+                  // Botón 5: Dinámico (Perfil o Salir/Ingresar)
+                  if (_userRole == 'provider')
+                    _buildNavItem(
+                      icon: Icons.person_outline_rounded,
+                      label: 'Perfil',
+                      onTap: () => _checkAuthAndNavigate('/profile'),
+                    )
+                  else
+                    _buildNavItem(
+                      icon: _hasToken ? Icons.logout_rounded : Icons.login_rounded,
+                      label: _hasToken ? 'Salir' : 'Ingresar',
+                      color: Colors.grey,
+                      onTap: () async {
+                        if (_hasToken) {
+                          final navigator = Navigator.of(context);
+                          await AuthService.logout();
+                          navigator.pushReplacementNamed('/login');
+                        } else {
+                          Navigator.pushNamed(context, '/login');
+                        }
+                      },
+                    ),
                 ],
               ),
             ),

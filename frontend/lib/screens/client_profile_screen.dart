@@ -146,6 +146,16 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
           onPressed: () => Navigator.pop(context,
               true), // Retorna true para refrescar la pantalla principal
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout_rounded, color: Colors.grey),
+            onPressed: () async {
+              final navigator = Navigator.of(context);
+              await AuthService.logout();
+              navigator.pushNamedAndRemoveUntil('/login', (route) => false);
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
