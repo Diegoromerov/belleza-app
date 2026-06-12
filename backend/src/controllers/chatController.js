@@ -2,6 +2,7 @@
 const { sequelize } = require('../config/database');
 const { QueryTypes } = require('sequelize');
 const { processAssistantMessage, AI_USER_ID } = require('../services/geminiService');
+const { notifyUserChatMessage } = require('../services/websocketService');
 
 // GET /api/chat/conversations → Listar conversaciones activas
 exports.getConversations = async (req, res) => {
@@ -155,6 +156,9 @@ exports.sendMessage = async (req, res) => {
       success: true,
       data: formatted
     });
+
+    // Notificar al receptor en tiempo real vía WebSocket
+    notifyUserChatMessage(targetReceiver, formatted);
 
     if (targetReceiver === 0) {
       processAssistantMessage(senderId, message.trim(), image_path).catch(err => {
