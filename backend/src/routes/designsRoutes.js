@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router();
 const path = require('path');
 const multer = require('multer');
-const { searchPinterestDesigns, analyzeFaceShape } = require('../controllers/designsController');
+const { searchPinterestDesigns, analyzeFaceShape, analyzeDesign } = require('../controllers/designsController');
 const authMiddleware = require('../middleware/auth');
 
 const upload = multer({
@@ -23,5 +23,6 @@ const upload = multer({
 
 router.get('/search', authMiddleware, searchPinterestDesigns);
 router.post('/face-analysis', authMiddleware, upload.single('image'), analyzeFaceShape);
+router.post('/analyze', authMiddleware, upload.single('image'), analyzeDesign);
 
 module.exports = router;
