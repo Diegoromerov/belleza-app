@@ -1,4 +1,5 @@
 // backend/src/controllers/designsController.js
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 require('dotenv').config();
 
 const MOCK_NAIL_IMAGES = [
@@ -34,9 +35,23 @@ const MOCK_NAIL_IMAGES = [
   }
 ];
 
+const MOCK_FACE_ANALYSIS = {
+  face_shape: 'Ovalado',
+  explanation: 'El rostro ovalado es considerado la forma más simétrica y versátil. Le beneficia casi cualquier tipo de corte, especialmente los que despejan las facciones y añaden movimiento lateral.',
+  recommended_cuts: [
+    { name: 'Corte Shag Capas Suaves', reason: 'Añade textura y volumen natural sin alterar la simetría.' },
+    { name: 'Bob Clásico Desfilado', reason: 'Enmarca perfectamente la mandíbula y define los pómulos.' },
+    { name: 'Flequillo Abierto (Curtain Bangs)', reason: 'Aporta frescura y resalta la mirada de forma sofisticada.' }
+  ],
+  pinterest_query: 'cortes de cabello rostro ovalado mujer'
+};
+
+// Inicializar el cliente de la API de Gemini
+const apiKey = process.env.GEMINI_API_KEY;
+const ai = apiKey ? new GoogleGenerativeAI(apiKey) : null;
+
 // Función helper para buscar imágenes reales de Pinterest usando DuckDuckGo sin llaves
 const searchRealPinterestImages = async (query) => {
-  // Desactivar TLS de forma aislada para este fetch si es necesario
   const oldTlsConfig = process.env.NODE_TLS_REJECT_UNAUTHORIZED;
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
   
@@ -104,7 +119,6 @@ exports.searchPinterestDesigns = async (req, res) => {
     const apiKey = process.env.GOOGLE_SEARCH_API_KEY;
     const cx = process.env.GOOGLE_SEARCH_CX;
 
-    // Si las variables de Google no están configuradas, intentamos la búsqueda real gratuita vía DuckDuckGo
     if (!apiKey || !cx) {
       console.log('🔍 Buscando imágenes reales de Pinterest mediante motor alternativo...');
       const realImages = await searchRealPinterestImages(q);
@@ -117,7 +131,6 @@ exports.searchPinterestDesigns = async (req, res) => {
         });
       }
 
-      // Fallback a mock solo si DuckDuckGo también falla
       console.log('⚠️ Búsqueda alternativa falló o fue bloqueada. Usando datos de prueba.');
       const queryLower = q.toLowerCase();
       let filteredMocks = MOCK_NAIL_IMAGES;
@@ -142,7 +155,6 @@ exports.searchPinterestDesigns = async (req, res) => {
       });
     }
 
-    // Si están configuradas las variables de Google Custom Search, usamos el canal oficial
     const searchQuery = `${q} uñas manicure site:pinterest.com`;
     const searchUrl = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cx}&q=${encodeURIComponent(searchQuery)}&searchType=image&num=6`;
 
@@ -176,5 +188,80 @@ exports.searchPinterestDesigns = async (req, res) => {
   } catch (error) {
     console.error('❌ ERROR AL BUSCAR DISEÑOS:', error.message);
     res.status(500).json({ error: 'Error al buscar ideas de diseños' });
+  }
+};
+
+exports.analyzeFaceShape = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'Es obligatorio subir una foto de rostro en el campo "image".' });
+    }
+
+    // Si no hay API Key de Gemini, devolvemos el Mock inmediato
+    if (!ai) {
+      console.warn('⚠️ GEMINI_API_KEY no configurada. Retornando análisis de rostro simulado.');
+      return res.status(200).json({
+        success: true,
+        source: 'mock',
+        analysis: MOCK_FACE_ANALYSIS
+      });
+    }
+
+    const fileBuffer = req.file.buffer;
+    const mimeType = req.file.mimetype;
+
+    const imagePart = {
+      inlineData: {
+        data: fileBuffer.toString('base64'),
+        mimeType
+      }
+    };
+
+    const prompt = `Analiza detenidamente la forma del rostro de la persona en esta imagen.
+Dime qué tipo de rostro tiene (Ovalado, Redondo, Cuadrado, Corazón, Diamante, Alargado).
+Recomienda 3 cortes de cabello específicos para este tipo de rostro.
+Genera una consulta de búsqueda en español óptima de no más de 6 palabras para buscar ideas visuales de estos cortes de cabello en Pinterest (por ejemplo, "cortes de cabello para rostro redondo").
+Responde de manera obligatoria únicamente con un objeto JSON válido, sin formato markdown (sin bloques de código \`\`\`json) y sin caracteres adicionales, usando este formato exacto:
+{
+  "face_shape": "Tipo de rostro",
+  "explanation": "Breve explicación de por qué y qué le beneficia",
+  "recommended_cuts": [
+    { "name": "Nombre del corte", "reason": "Razón corta de la recomendación" },
+    { "name": "Nombre del corte 2", "reason": "Razón corta de la recomendación" },
+    { "name": "Nombre del corte 3", "reason": "Razón corta de la recomendación" }
+  ],
+  "pinterest_query": "consulta de búsqueda para pinterest"
+}`;
+
+    const model = ai.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    const result = await model.generateContent([prompt, imagePart]);
+    const response = await result.response;
+    
+    let text = response.text().trim();
+    
+    // Limpieza de formato markdown de bloques de código en caso de que Gemini los retorne
+    if (text.startsWith('```json')) {
+      text = text.substring(7, text.length - 3).trim();
+    } else if (text.startsWith('```')) {
+      text = text.substring(3, text.length - 3).trim();
+    }
+
+    let analysisJson;
+    try {
+      analysisJson = JSON.parse(text);
+    } catch (parseErr) {
+      console.error('Error al parsear respuesta JSON de Gemini:', text);
+      throw new Error('La IA no retornó un formato JSON válido.');
+    }
+
+    return res.status(200).json({
+      success: true,
+      source: 'gemini',
+      analysis: analysisJson
+    });
+
+  } catch (error) {
+    console.error('❌ ERROR ANALIZANDO ROSTRO:', error.message);
+    res.status(500).json({ error: 'Error al analizar la forma del rostro con IA' });
   }
 };

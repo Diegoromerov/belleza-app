@@ -846,6 +846,35 @@ class ApiService {
     throw Exception(
         json.decode(response.body)['error'] ?? 'Error ${response.statusCode}');
   }
+
+  // 🔹 NUEVO: Analizar forma del rostro por IA
+  static Future<Map<String, dynamic>> analyzeFaceShape(Uint8List imageBytes, String filename) async {
+    await ensureBaseUrl();
+    final token = await _getToken();
+    final uri = Uri.parse('$_baseUrl$_apiPath/designs/face-analysis');
+    final request = http.MultipartRequest('POST', uri);
+    
+    if (token != null && token.isNotEmpty) {
+      request.headers['Authorization'] = 'Bearer $token';
+    }
+    
+    request.files.add(
+      http.MultipartFile.fromBytes(
+        'image',
+        imageBytes,
+        filename: filename,
+      ),
+    );
+    
+    final streamedResponse = await request.send().timeout(const Duration(seconds: 45));
+    final response = await http.Response.fromStream(streamedResponse);
+    
+    final data = json.decode(response.body);
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return Map<String, dynamic>.from(data);
+    }
+    throw Exception(data['error'] ?? 'Error ${response.statusCode}');
+  }
 }
 
 class MapSettings {
