@@ -129,7 +129,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
   bool _hasToken = false;
   String? _userRole;
   final TextEditingController _searchController = TextEditingController();
-  final LatLng _fontibonCenter = const LatLng(4.6735, -74.1422);
+  final LatLng _bogotaCenter = const LatLng(4.6735, -74.1422);
   LatLng? _userLocation;
   final GlobalKey _tryonKey = GlobalKey();
 
@@ -165,7 +165,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
         _showTutorial = false;
       });
       _searchController.clear();
-      _animatedMapMove(_userLocation ?? _fontibonCenter, 13.5);
+      _animatedMapMove(_userLocation ?? _bogotaCenter, 13.5);
     }
   }
 
@@ -232,7 +232,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
       final firstProv = _filteredProviders.first;
       _animatedMapMove(LatLng(firstProv.latitude, firstProv.longitude), 15.0);
     } else {
-      _animatedMapMove(_userLocation ?? _fontibonCenter, 13.5);
+      _animatedMapMove(_userLocation ?? _bogotaCenter, 13.5);
     }
   }
 
@@ -262,7 +262,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
   }
 
   void _showManualLocationPicker() {
-    final addressController = TextEditingController(text: "Fontibon, Bogota");
+    final addressController = TextEditingController(text: "Bogota, Colombia");
     bool resolving = false;
 
     showDialog(
@@ -296,7 +296,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                     controller: addressController,
                     decoration: const InputDecoration(
                       labelText: 'Dirección o Barrio',
-                      hintText: 'Ej. Fontibon, Bogota',
+                      hintText: 'Ej. Bogota, Colombia',
                       border: OutlineInputBorder(),
                     ),
                     enabled: !resolving,
@@ -314,11 +314,11 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                   onPressed: resolving ? null : () {
                     Navigator.pop(context);
                     setState(() {
-                      _userLocation = _fontibonCenter;
+                      _userLocation = _bogotaCenter;
                     });
                     _loadProviders();
                   },
-                  child: const Text('Usar Fontibón (Defecto)', style: TextStyle(color: Colors.grey)),
+                  child: const Text('Usar Bogotá (Defecto)', style: TextStyle(color: Colors.grey)),
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
@@ -653,8 +653,8 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
       }
 
       // Registrar evento de telemetría de botón SOS presionado
-      final double lat = _userLocation?.latitude ?? _fontibonCenter.latitude;
-      final double lon = _userLocation?.longitude ?? _fontibonCenter.longitude;
+      final double lat = _userLocation?.latitude ?? _bogotaCenter.latitude;
+      final double lon = _userLocation?.longitude ?? _bogotaCenter.longitude;
 
       AnalyticsService().logEvent(
         eventType: 'SOS_TRIGGERED',
@@ -1188,11 +1188,11 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          // Capa 0: Mapa a pantalla completa centrado en Fontibón
+          // Capa 0: Mapa a pantalla completa centrado en Bogotá
           FlutterMap(
             mapController: _mapController,
             options: MapOptions(
-              initialCenter: _fontibonCenter,
+              initialCenter: _bogotaCenter,
               initialZoom: 13.5,
             ),
             children: [

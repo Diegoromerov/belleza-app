@@ -1,6 +1,7 @@
 // backend/src/services/geminiService.js
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { pool } = require('../config/db');
+const { notifyUserChatMessage } = require('./websocketService');
 const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
@@ -76,7 +77,7 @@ async function getServicesContext() {
     ).join('\n');
   } catch (error) {
     console.error('Error al obtener servicios para contexto de IA:', error);
-    return 'Servicios de cortes, uñas y peinados a domicilio en Fontibón.';
+    return 'Servicios de cortes, uñas y peinados a domicilio en Bogotá.';
   }
 }
 
@@ -193,10 +194,20 @@ Servicio ID: 11111111-1111-1111-1111-111111111111`;
     const insertQuery = `
       INSERT INTO messages (sender_id, receiver_id, message)
       VALUES ($1, $2, $3)
-      RETURNING id, created_at;
+      RETURNING id, sender_id, receiver_id, message, is_read, created_at;
     `;
-    await pool.query(insertQuery, [AI_USER_ID, userId, aiResponseText]);
+    const insertRes = await pool.query(insertQuery, [AI_USER_ID, userId, aiResponseText]);
+    const row = insertRes.rows[0];
+    const formatted = {
+      ...row,
+      sender_id: row.sender_id.toString(),
+      receiver_id: row.receiver_id.toString()
+    };
+
     console.log(`🤖 Respuesta de IA enviada con éxito al usuario ${userId}.`);
+
+    // Notificar en tiempo real al usuario vía WebSocket de la respuesta de la IA
+    notifyUserChatMessage(userId, formatted);
 
   } catch (error) {
     console.error('❌ Error crítico en processAssistantMessage:', error);

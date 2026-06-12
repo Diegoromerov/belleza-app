@@ -1665,29 +1665,14 @@ const initDatabase = async () => {
 // ==========================================
 // 🔹 GESTIÓN DE WEBSOCKETS Y NOTIFICACIONES
 // ==========================================
-const wsClients = new Map(); // userId -> Set of WS connections
-
-const notifyUserJobUpdate = (userId, jobData) => {
-  const userIdStr = userId.toString();
-  if (wsClients.has(userIdStr)) {
-    const payload = JSON.stringify({
-      type: 'nail_tryon_update',
-      data: {
-        id: jobData.id,
-        status: jobData.status,
-        preview_url: jobData.preview_url,
-        error_message: jobData.error_message
-      }
-    });
-    for (const conn of wsClients.get(userIdStr)) {
-      if (conn.readyState === 1) { // OPEN
-        conn.send(payload);
-      }
-    }
-  }
-};
-
+const { registerClient, unregisterClient, notifyUserJobUpdate, notifyUserChatMessage } = require('./src/services/websocketService');
 app.set('notifyUserJobUpdate', notifyUserJobUpdate);
+app.set('notifyUserChatMessage', notifyUserChatMessage);
+
+// Limpiar historial de chats de la base de datos para verlos más limpios en cada reinicio/despliegue
+pool.query('TRUNCATE TABLE messages RESTART IDENTITY CASCADE;')
+  .then(() => console.log('🗑️ Historial de mensajes de chat truncado exitosamente en la base de datos.'))
+  .catch(err => console.error('Error al limpiar mensajes de chat:', err));
 
 // ==========================================
 // 🔹 LIMPIEZA PERIÓDICA DE TRABAJOS EXPIRADOS (24H)
@@ -1763,13 +1748,8 @@ wss.on('connection', (ws) => {
     try {
       const data = JSON.parse(message);
       if (data.type === 'register' && data.userId) {
-        const userIdStr = data.userId.toString();
-        if (!wsClients.has(userIdStr)) {
-          wsClients.set(userIdStr, new Set());
-        }
-        wsClients.get(userIdStr).add(ws);
-        console.log(`👤 Conexión WS registrada para usuario: ${userIdStr}`);
-        ws.send(JSON.stringify({ status: 'registered', userId: userIdStr }));
+        registerClient(data.userId, ws);
+        ws.send(JSON.stringify({ status: 'registered', userId: data.userId.toString() }));
       }
     } catch (err) {
       console.error('Error procesando mensaje WebSocket:', err);
@@ -1777,14 +1757,7 @@ wss.on('connection', (ws) => {
   });
   
   ws.on('close', () => {
-    for (const [userId, connSet] of wsClients.entries()) {
-      if (connSet.has(ws)) {
-        connSet.delete(ws);
-        if (connSet.size === 0) wsClients.delete(userId);
-        console.log(`🔌 Conexión WS removida para usuario: ${userId}`);
-        break;
-      }
-    }
+    unregisterClient(ws);
   });
 });
 
