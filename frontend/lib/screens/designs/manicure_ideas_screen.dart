@@ -175,7 +175,7 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> with SingleTi
           final searchResults = await ApiService.fetchDesignIdeas(pinterestQuery);
           pinterestImages = searchResults.take(6).toList();
         } catch (searchErr) {
-          print('Error buscando imágenes en Pinterest para corte: $searchErr');
+          debugPrint('Error buscando imágenes en Pinterest para corte: $searchErr');
         }
 
         setState(() {
