@@ -32,7 +32,19 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> with SingleTi
   bool _isLoading = false;
   String? _error;
 
-  final List<String> _colors = ['Nude', 'Rojo', 'Negro', 'Blanco', 'Rosa Pastel', 'Gliter/Brillos'];
+  final List<Map<String, dynamic>> _nailColors = const [
+    {'name': 'Rojo', 'color': Color(0xFFC41E3A)},
+    {'name': 'Azul', 'color': Color(0xFF1E90FF)},
+    {'name': 'Amarillo', 'color': Color(0xFFFFD700)},
+    {'name': 'Verde', 'color': Color(0xFF4A5D4E)},
+    {'name': 'Morado', 'color': Color(0xFFD8B4F8)},
+    {'name': 'Naranja', 'color': Color(0xFFFF7F50)},
+    {'name': 'Nude', 'color': Color(0xFFEADBC8)},
+    {'name': 'Negro', 'color': Color(0xFF1A1A1A)},
+    {'name': 'Blanco', 'color': Color(0xFFF9F9F9), 'border': true},
+    {'name': 'Rosa', 'color': Color(0xFFFFC5C5)},
+    {'name': 'Gliter', 'color': Color(0xFFD3D3D3)},
+  ];
   final List<String> _styles = ['Francesa', 'Minimalista', 'Con Apliques', 'Mano Alzada', 'Efecto Espejo'];
   final List<String> _shapes = ['Almendra', 'Cuadrada', 'Ovalada', 'Stiletto', 'Coffin'];
 
@@ -436,30 +448,59 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> with SingleTi
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text('Color de esmalte:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.text)),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            children: _colors.map((color) {
-              final isSelected = _selectedColor == color;
-              return ChoiceChip(
-                label: Text(color),
-                selected: isSelected,
-                selectedColor: AppTheme.primary,
-                labelStyle: TextStyle(
-                  color: isSelected ? Colors.white : AppTheme.text,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                ),
-                onSelected: _isLimitReached
-                    ? null
-                    : (selected) {
-                        setState(() {
-                          _selectedColor = selected ? color : null;
-                        });
-                      },
-              );
-            }).toList(),
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 44,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: _nailColors.length,
+              itemBuilder: (context, index) {
+                final nailColor = _nailColors[index];
+                final colorName = nailColor['name'] as String;
+                final colorVal = nailColor['color'] as Color;
+                final hasBorder = nailColor['border'] == true;
+                final isSelected = _selectedColor == colorName;
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 5.0),
+                  child: Tooltip(
+                    message: colorName,
+                    child: GestureDetector(
+                      onTap: _isLimitReached
+                          ? null
+                          : () {
+                              setState(() {
+                                _selectedColor = isSelected ? null : colorName;
+                              });
+                            },
+                      child: Container(
+                        width: 38,
+                        height: 38,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: colorVal,
+                          border: Border.all(
+                            color: isSelected
+                                ? AppTheme.primary
+                                : (hasBorder ? Colors.grey.shade400 : Colors.transparent),
+                            width: isSelected ? 3.0 : 1.5,
+                          ),
+                          boxShadow: isSelected ? AppTheme.softShadow : null,
+                        ),
+                        child: isSelected
+                            ? Icon(
+                                Icons.check,
+                                color: colorVal.computeLuminance() > 0.5 ? Colors.black87 : Colors.white,
+                                size: 20,
+                              )
+                            : null,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
 
           const Text('Estilo / Decoración:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.text)),
           const SizedBox(height: 8),
