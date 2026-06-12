@@ -1,5 +1,6 @@
 // backend/src/controllers/designsController.js
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const path = require('path');
 require('dotenv').config();
 
 const MOCK_NAIL_IMAGES = [
@@ -208,7 +209,21 @@ exports.analyzeFaceShape = async (req, res) => {
     }
 
     const fileBuffer = req.file.buffer;
-    const mimeType = req.file.mimetype;
+    let mimeType = req.file.mimetype;
+
+    // Detectar mimetype si es genérico
+    if (!mimeType || mimeType === 'application/octet-stream') {
+      const ext = path.extname(req.file.originalname || '').toLowerCase();
+      if (ext === '.png') {
+        mimeType = 'image/png';
+      } else if (ext === '.webp') {
+        mimeType = 'image/webp';
+      } else if (ext === '.gif') {
+        mimeType = 'image/gif';
+      } else {
+        mimeType = 'image/jpeg';
+      }
+    }
 
     const imagePart = {
       inlineData: {
@@ -234,7 +249,17 @@ Responde de manera obligatoria únicamente con un objeto JSON válido, sin forma
 }`;
 
     const model = ai.getGenerativeModel({ model: 'gemini-2.5-flash' });
-    const result = await model.generateContent([prompt, imagePart]);
+    const result = await model.generateContent({
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            { text: prompt },
+            imagePart
+          ]
+        }
+      ]
+    });
     const response = await result.response;
     
     let text = response.text().trim();
@@ -262,6 +287,9 @@ Responde de manera obligatoria únicamente con un objeto JSON válido, sin forma
 
   } catch (error) {
     console.error('❌ ERROR ANALIZANDO ROSTRO:', error.message);
-    res.status(500).json({ error: 'Error al analizar la forma del rostro con IA' });
+    res.status(500).json({ 
+      error: 'Error al analizar la forma del rostro con IA',
+      details: error.message 
+    });
   }
 };

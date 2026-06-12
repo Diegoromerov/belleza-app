@@ -873,7 +873,8 @@ class ApiService {
     if (response.statusCode == 200 || response.statusCode == 201) {
       return Map<String, dynamic>.from(data);
     }
-    throw Exception(data['error'] ?? 'Error ${response.statusCode}');
+    final errorMsg = data['details'] != null ? "${data['error']}: ${data['details']}" : (data['error'] ?? 'Error ${response.statusCode}');
+    throw Exception(errorMsg);
   }
 }
 
