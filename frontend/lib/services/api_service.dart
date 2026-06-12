@@ -876,6 +876,37 @@ class ApiService {
     final errorMsg = data['details'] != null ? "${data['error']}: ${data['details']}" : (data['error'] ?? 'Error ${response.statusCode}');
     throw Exception(errorMsg);
   }
+
+  // 🔹 NUEVO: Analizar diseño por IA (Colorimetría, Capilar, Textura, Cejas, Uñas)
+  static Future<Map<String, dynamic>> analyzeDesignWithAI(Uint8List imageBytes, String filename, String type) async {
+    await ensureBaseUrl();
+    final token = await _getToken();
+    final uri = Uri.parse('$_baseUrl$_apiPath/designs/analyze');
+    final request = http.MultipartRequest('POST', uri);
+    
+    if (token != null && token.isNotEmpty) {
+      request.headers['Authorization'] = 'Bearer $token';
+    }
+    
+    request.fields['type'] = type;
+    request.files.add(
+      http.MultipartFile.fromBytes(
+        'image',
+        imageBytes,
+        filename: filename,
+      ),
+    );
+    
+    final streamedResponse = await request.send().timeout(const Duration(seconds: 45));
+    final response = await http.Response.fromStream(streamedResponse);
+    
+    final data = json.decode(response.body);
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return Map<String, dynamic>.from(data);
+    }
+    final errorMsg = data['details'] != null ? "${data['error']}: ${data['details']}" : (data['error'] ?? 'Error ${response.statusCode}');
+    throw Exception(errorMsg);
+  }
 }
 
 class MapSettings {

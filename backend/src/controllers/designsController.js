@@ -293,3 +293,205 @@ Responde de manera obligatoria únicamente con un objeto JSON válido, sin forma
     });
   }
 };
+
+exports.analyzeDesign = async (req, res) => {
+  try {
+    const { type } = req.body;
+    if (!req.file) {
+      return res.status(400).json({ error: 'Es obligatorio subir una imagen para el análisis.' });
+    }
+    if (!type) {
+      return res.status(400).json({ error: 'El campo "type" es obligatorio para identificar el análisis.' });
+    }
+
+    // Mock responses in case Gemini API is not configured
+    if (!ai) {
+      console.warn(`⚠️ GEMINI_API_KEY no configurada. Retornando análisis simulado para "${type}".`);
+      let mockResult = {};
+      if (type === 'skin-tone') {
+        mockResult = {
+          undertone: "Frío",
+          skin_tone: "Medio Claro",
+          explanation: "Tu subtono de piel es frío, lo que significa que los colores con base azul o rosa resaltan tu luminosidad natural de forma espectacular.",
+          recommended_colors: ["Rosa Pastel", "Azul Marino", "Gris Perla", "Rojo Cereza"],
+          pinterest_query: "paleta de colores invierno frio ropa maquillaje"
+        };
+      } else if (type === 'hair-diagnostic') {
+        mockResult = {
+          damage_level: "Medio",
+          scalp_status: "Seco",
+          explanation: "Se observa cierta deshidratación en la hebra capilar con puntas abiertas leves, lo que sugiere una pérdida moderada de humedad y lípidos naturales.",
+          recommended_treatments: ["Mascarilla ultra-hidratante de argán", "Cauterización capilar con queratina", "Uso de sérum reparador de puntas"],
+          pinterest_query: "tratamiento hidratacion cabello antes y despues"
+        };
+      } else if (type === 'skin-texture') {
+        mockResult = {
+          skin_type: "Mixta",
+          pore_status: "Dilatado en zona T",
+          explanation: "Tu piel muestra una ligera acumulación de sebo en la frente y nariz (Zona T) con poros algo más visibles, mientras que las mejillas tienden a estar normales o secas.",
+          recommended_routine: ["Limpiador facial espumoso con ácido salicílico", "Tónico equilibrante sin alcohol", "Sérum con Niacinamida para control de poros"],
+          pinterest_query: "rutina skincare poros dilatados zona t"
+        };
+      } else if (type === 'eyebrow-visagism') {
+        mockResult = {
+          face_proportions: "Rostro Ovalado / Equilibrado",
+          eyebrow_shape: "Arqueada Suave",
+          explanation: "Dadas las proporciones equilibradas de tu rostro, una ceja con arco suave y grosor natural ayuda a enmarcar tus ojos sin endurecer tu mirada.",
+          recommended_designs: ["Depilación con hilo para definición limpia", "Sombreado temporal con Henna", "Laminado de cejas orgánicas"],
+          pinterest_query: "diseno cejas naturales rostro ovalado"
+        };
+      } else if (type === 'nails-style') {
+        mockResult = {
+          finger_proportion: "Dedos alargados y estilizados",
+          skin_undertone: "Cálido",
+          recommended_shapes: ["Almendra", "Ovalada", "Semi-cuadrada"],
+          recommended_colors: ["Nude beige", "Rojo terracota", "Glitter dorado"],
+          pinterest_query: "unas almendradas color nude beige"
+        };
+      } else {
+        return res.status(400).json({ error: `Tipo de análisis "${type}" no reconocido.` });
+      }
+
+      return res.status(200).json({
+        success: true,
+        source: 'mock',
+        analysis: mockResult
+      });
+    }
+
+    const fileBuffer = req.file.buffer;
+    let mimeType = req.file.mimetype;
+
+    if (!mimeType || mimeType === 'application/octet-stream') {
+      const ext = path.extname(req.file.originalname || '').toLowerCase();
+      if (ext === '.png') mimeType = 'image/png';
+      else if (ext === '.webp') mimeType = 'image/webp';
+      else if (ext === '.gif') mimeType = 'image/gif';
+      else mimeType = 'image/jpeg';
+    }
+
+    const imagePart = {
+      inlineData: {
+        data: fileBuffer.toString('base64'),
+        mimeType
+      }
+    };
+
+    let prompt = '';
+    let jsonTemplate = '';
+
+    if (type === 'skin-tone') {
+      prompt = `Analiza detalladamente la colorimetría de la piel en esta foto de rostro.
+Identifica el subtono de piel (Cálido, Frío o Neutro) y el tono general (Claro, Medio, Oscuro).
+Proporciona una explicación detallada sobre qué colores de cabello, prendas y maquillaje le favorecen según su estación de color.
+Sugiere una lista de 4 colores específicos recomendados.
+Genera una consulta corta (máximo 6 palabras) en español para buscar paletas de color inspiracionales en Pinterest.`;
+      jsonTemplate = `{
+  "undertone": "Subtono de piel",
+  "skin_tone": "Tono general",
+  "explanation": "Explicación detallada de colorimetría facial...",
+  "recommended_colors": ["Color 1", "Color 2", "Color 3", "Color 4"],
+  "pinterest_query": "consulta corta de pinterest"
+}`;
+    } else if (type === 'hair-diagnostic') {
+      prompt = `Analiza la condición de la hebra capilar o cuero cabelludo que se observa de cerca en esta foto.
+Evalúa el nivel de daño (Bajo, Medio, Alto) y la condición general (Seco, Graso, Mixto o Saludable).
+Proporciona una explicación diagnóstica sobre el frizz, porosidad aparente, puntas y brillo.
+Recomienda una lista de 3 tratamientos específicos o mascarillas reparadoras.
+Genera una consulta corta (máximo 6 palabras) en español para buscar tratamientos o resultados en Pinterest.`;
+      jsonTemplate = `{
+  "damage_level": "Nivel de daño",
+  "scalp_status": "Condición general",
+  "explanation": "Explicación detallada del diagnóstico...",
+  "recommended_treatments": ["Tratamiento 1", "Tratamiento 2", "Tratamiento 3"],
+  "pinterest_query": "consulta corta de pinterest"
+}`;
+    } else if (type === 'skin-texture') {
+      prompt = `Analiza el estado de la textura de la piel del rostro en esta foto de primer plano.
+Determina el tipo de piel observado (Grasa, Seca, Mixta, Normal o Sensible) y el estado de los poros/imperfecciones (Dilatados, Congestionados, Obstruidos o Normales).
+Explica la presencia de brillo, puntos negros, resequedad o texturas irregulares en zonas como la T o las mejillas.
+Sugiere una rutina de cuidado facial corta (3 pasos específicos).
+Genera una consulta corta (máximo 6 palabras) en español para buscar rutinas de skincare de inspiración en Pinterest.`;
+      jsonTemplate = `{
+  "skin_type": "Tipo de piel",
+  "pore_status": "Estado de poros",
+  "explanation": "Explicación de textura de la piel...",
+  "recommended_routine": ["Paso 1: Limpiador...", "Paso 2: Tónico...", "Paso 3: Hidratación/Sérum..."],
+  "pinterest_query": "consulta corta de pinterest"
+}`;
+    } else if (type === 'eyebrow-visagism') {
+      prompt = `Realiza un estudio de visagismo de cejas a partir de la estructura del rostro en esta foto.
+Identifica las proporciones del rostro (ej. Rostro Redondo, Ovalado, Cuadrado) y la forma recomendada de cejas (ej. Arqueada, Angular, Recta, Sutil).
+Explica detalladamente cómo el arco, la longitud y el grosor ideal de la ceja pueden armonizar sus rasgos faciales.
+Recomienda 3 diseños de cejas o técnicas profesionales aplicables (ej. Depilación con hilo, Laminado, Henna).
+Genera una consulta corta (máximo 6 palabras) en español para buscar diseños de cejas óptimos en Pinterest.`;
+      jsonTemplate = `{
+  "face_proportions": "Proporción facial detectada",
+  "eyebrow_shape": "Forma recomendada",
+  "explanation": "Explicación de visagismo geométrico...",
+  "recommended_designs": ["Técnica/Diseño 1", "Técnica/Diseño 2", "Técnica/Diseño 3"],
+  "pinterest_query": "consulta corta de pinterest"
+}`;
+    } else if (type === 'nails-style') {
+      prompt = `Analiza la estructura de la mano, la longitud de los dedos y el tono de piel en esta foto.
+Determina la proporción de los dedos (ej. Dedos cortos, Dedos alargados) y el subtono cromático de la mano (Cálido o Frío).
+Sugiere las 3 formas de uñas que más estilizan la mano (ej. Almendra, Ovalada, Coffin) y una lista de 4 colores de esmalte favorecedores.
+Genera una consulta corta (máximo 6 palabras) en español para buscar estilos de manicure ideales en Pinterest.`;
+      jsonTemplate = `{
+  "finger_proportion": "Proporción de los dedos",
+  "skin_undertone": "Subtono cromático de mano",
+  "recommended_shapes": ["Forma 1", "Forma 2", "Forma 3"],
+  "recommended_colors": ["Color 1", "Color 2", "Color 3", "Color 4"],
+  "pinterest_query": "consulta corta de pinterest"
+}`;
+    } else {
+      return res.status(400).json({ error: `Tipo de análisis "${type}" no es válido.` });
+    }
+
+    const fullPrompt = `${prompt}
+Responde de manera obligatoria únicamente con un objeto JSON válido, sin formato markdown (sin bloques de código \`\`\`json) y sin caracteres adicionales, usando este formato exacto:
+${jsonTemplate}`;
+
+    const model = ai.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    const result = await model.generateContent({
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            { text: fullPrompt },
+            imagePart
+          ]
+        }
+      ]
+    });
+    const response = await result.response;
+    
+    let text = response.text().trim();
+    if (text.startsWith('```json')) {
+      text = text.substring(7, text.length - 3).trim();
+    } else if (text.startsWith('```')) {
+      text = text.substring(3, text.length - 3).trim();
+    }
+
+    let analysisJson;
+    try {
+      analysisJson = JSON.parse(text);
+    } catch (parseErr) {
+      console.error('Error al parsear respuesta JSON de Gemini para análisis:', text);
+      throw new Error('La IA no retornó un formato JSON válido.');
+    }
+
+    return res.status(200).json({
+      success: true,
+      source: 'gemini',
+      analysis: analysisJson
+    });
+
+  } catch (error) {
+    console.error('❌ ERROR REALIZANDO ANÁLISIS DE DISEÑO:', error.message);
+    res.status(500).json({ 
+      error: 'Error al analizar la imagen con IA',
+      details: error.message 
+    });
+  }
+};
