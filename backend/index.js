@@ -91,6 +91,12 @@ app.use(cors({
 app.use(express.json());
 app.use('/uploads', express.static(uploadsDir));
 app.use('/admin', express.static(path.join(__dirname, 'public/admin')));
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Servir la aplicación Flutter Web en cualquier ruta no controlada por API u otros estáticos
+app.get(/^(?!\/api|\/uploads|\/admin).*/, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/index.html'));
+});
 
 const allowDebugRoutes = process.env.ALLOW_DEBUG_ROUTES === 'true' || process.env.NODE_ENV !== 'production';
 const debugRouteMiddleware = (req, res, next) => {
