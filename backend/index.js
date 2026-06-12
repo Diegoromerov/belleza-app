@@ -46,7 +46,7 @@ const { WebSocketServer } = require('ws');
 let lastDbInitError = null;
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 
 // Configuración de Multer para almacenamiento estático local
 const uploadsDir = path.join(__dirname, 'uploads');

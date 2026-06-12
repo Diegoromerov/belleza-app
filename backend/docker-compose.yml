@@ -57,11 +57,11 @@ services:
       dockerfile: Dockerfile
     container_name: beauty-backend
     ports:
-      - "3000:3000"
+      - "8080:8080"
     volumes:
       - ./uploads:/app/uploads
     environment:
-      - PORT=3000
+      - PORT=8080
       - DB_HOST=postgres
       - DB_PORT=5432
       - DB_NAME=beauty_db
