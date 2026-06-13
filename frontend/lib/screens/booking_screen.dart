@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/api_service.dart';
 import '../shared/theme.dart';
+import '../services/booking_recovery_service.dart';
+import 'designs/manicure_ideas_screen.dart';
 
 class BookingScreen extends StatefulWidget {
   final String providerId;
@@ -37,6 +39,17 @@ class _BookingScreenState extends State<BookingScreen> {
   void initState() {
     super.initState();
     notes = widget.initialNotes ?? '';
+    try {
+      final ref = ManicureIdeasScreen.selectedReference;
+      if (ref != null && ref['image_url'] != null) {
+        if (notes.isNotEmpty) {
+          notes += '\n';
+        }
+        notes += 'Referencia visual: ${ref['image_url']} (${ref['title']})';
+        // Clear it once consumed so it doesn't leak to future unrelated bookings
+        ManicureIdeasScreen.selectedReference = null;
+      }
+    } catch (_) {}
     final now = DateTime.now();
     // Default to tomorrow
     selectedDate = DateTime(now.year, now.month, now.day + 1);
@@ -147,6 +160,12 @@ class _BookingScreenState extends State<BookingScreen> {
 
       if (mounted) {
         setState(() => isLoading = false);
+        BookingRecoveryService.savePendingBooking(
+          bookingId: bookingId,
+          serviceName: serviceName,
+          price: price,
+          providerName: widget.providerName,
+        );
         _showWompiCheckoutSheet(
           context: context,
           bookingId: bookingId,
@@ -629,7 +648,7 @@ void _showWompiCheckoutSheet({
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (context) => _WompiCheckoutWidget(
+    builder: (context) => WompiCheckoutWidget(
       bookingId: bookingId,
       serviceName: serviceName,
       price: price,
@@ -638,13 +657,13 @@ void _showWompiCheckoutSheet({
   );
 }
 
-class _WompiCheckoutWidget extends StatefulWidget {
+class WompiCheckoutWidget extends StatefulWidget {
   final String bookingId;
   final String serviceName;
   final double price;
   final String providerName;
 
-  const _WompiCheckoutWidget({
+  const WompiCheckoutWidget({
     required this.bookingId,
     required this.serviceName,
     required this.price,
@@ -652,10 +671,10 @@ class _WompiCheckoutWidget extends StatefulWidget {
   });
 
   @override
-  State<_WompiCheckoutWidget> createState() => _WompiCheckoutWidgetState();
+  State<WompiCheckoutWidget> createState() => _WompiCheckoutWidgetState();
 }
 
-class _WompiCheckoutWidgetState extends State<_WompiCheckoutWidget> {
+class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
   int _selectedTab = 0; // 0: Nequi, 1: Card
   final _nequiCtrl = TextEditingController();
   final _cardCtrl = TextEditingController();
@@ -688,6 +707,9 @@ class _WompiCheckoutWidgetState extends State<_WompiCheckoutWidget> {
     try {
       final method = _selectedTab == 0 ? 'NEQUI' : 'CARD';
       final res = await ApiService.payBooking(widget.bookingId, method);
+
+      // Clear pending booking recovery since payment succeeded
+      await BookingRecoveryService.clearPendingBooking();
 
       // Respuesta táctil háptica en caso de éxito
       await HapticFeedback.lightImpact();

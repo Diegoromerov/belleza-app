@@ -56,10 +56,19 @@ function fileToGenerativePart(filePath, mimeType) {
   };
 }
 
+let servicesContextCache = null;
+let lastCacheTime = 0;
+const CACHE_TTL = 300000; // 5 minutos en ms
+
 /**
- * Obtiene el catálogo actual de servicios de la base de datos
+ * Obtiene el catálogo actual de servicios de la base de datos con caché de 5 minutos
  */
 async function getServicesContext() {
+  const now = Date.now();
+  if (servicesContextCache && (now - lastCacheTime < CACHE_TTL)) {
+    return servicesContextCache;
+  }
+
   try {
     const query = `
       SELECT s.id as service_id, s.name, s.price, s.duration_minutes, s.category, p.business_name, p.rating_avg, p.id as provider_id
@@ -72,9 +81,13 @@ async function getServicesContext() {
     if (res.rows.length === 0) {
       return 'Actualmente no hay servicios registrados en la plataforma.';
     }
-    return res.rows.map(row => 
+    const resultString = res.rows.map(row => 
       `- [Servicio ID: ${row.service_id}] "${row.name}" por $${parseFloat(row.price).toLocaleString('es-CO')} COP (Categoría: ${row.category}, duración: ${row.duration_minutes} min) ofrecido por "${row.business_name}" (Valoración: ${row.rating_avg || 'Sin calificar'}★, ID Prestador: ${row.provider_id})`
     ).join('\n');
+
+    servicesContextCache = resultString;
+    lastCacheTime = now;
+    return resultString;
   } catch (error) {
     console.error('Error al obtener servicios para contexto de IA:', error);
     return 'Servicios de cortes, uñas y peinados a domicilio en Bogotá.';

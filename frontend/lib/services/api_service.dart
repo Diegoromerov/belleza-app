@@ -435,53 +435,6 @@ class ApiService {
         json.decode(response.body)['error'] ?? 'Error ${response.statusCode}');
   }
 
-  static Future<Map<String, dynamic>> submitNailTryon({
-    required Uint8List imageBytes,
-    required String filename,
-    required String colorHex,
-    required String shape,
-    required String finish,
-    required String decorationStyle,
-  }) async {
-    await ensureBaseUrl();
-    final token = await _getToken();
-    final uri = Uri.parse('$_baseUrl$_apiPath/nail-tryon');
-    final request = http.MultipartRequest('POST', uri);
-    if (token != null && token.isNotEmpty) {
-      request.headers['Authorization'] = 'Bearer $token';
-    }
-    request.files.add(
-      http.MultipartFile.fromBytes('image', imageBytes, filename: filename),
-    );
-    request.fields['color_hex'] = colorHex;
-    request.fields['shape'] = shape;
-    request.fields['finish'] = finish;
-    request.fields['decoration_style'] = decorationStyle;
-
-    final streamedResponse =
-        await request.send().timeout(const Duration(seconds: 45));
-    final response = await http.Response.fromStream(streamedResponse);
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      return json.decode(response.body);
-    }
-    throw Exception(
-        json.decode(response.body)['error'] ?? 'Error ${response.statusCode}');
-  }
-
-  static Future<Map<String, dynamic>> getNailTryonJobStatus(
-      String jobId) async {
-    final headers = await _getAuthHeaders();
-    final response = await http
-        .get(
-          Uri.parse('$_baseUrl$_apiPath/nail-tryon/$jobId'),
-          headers: headers,
-        )
-        .timeout(const Duration(seconds: 30));
-    if (response.statusCode == 200) return json.decode(response.body);
-    throw Exception(
-        json.decode(response.body)['error'] ?? 'Error ${response.statusCode}');
-  }
-
   static Future<Map<String, dynamic>> updateAvatar(String imageUrl) async {
     final headers = await _getAuthHeaders();
     final response = await http
