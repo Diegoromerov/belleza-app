@@ -9,12 +9,12 @@ import '../models/service_model.dart';
 class ApiService {
   // --- CONFIGURACIÓN DE ENTORNO DE DESARROLLO / PRODUCCIÓN ---
   // Cambia esta variable a 'true' para apuntar al servidor en la nube (Railway)
-  static const bool useStaging = true;
+  static const bool useStaging = false;
   static const String stagingUrl =
       'https://belleza-app-production.up.railway.app';
 
   static String? _cachedBaseUrl;
-  static final List<String> _ports = ['3000', '3001'];
+  static final List<String> _ports = ['8082', '3000', '3001'];
 
   static void resetCachedBaseUrl() {
     _cachedBaseUrl = null;
@@ -24,7 +24,7 @@ class ApiService {
 
   static String get baseUrl {
     if (useStaging) return stagingUrl;
-    return _cachedBaseUrl ?? 'http://$_host:3000';
+    return _cachedBaseUrl ?? 'http://$_host:8082';
   }
 
   static String get _baseUrl => baseUrl;
