@@ -6,6 +6,8 @@ import '../../services/api_service.dart';
 import '../../shared/theme.dart';
 
 class ManicureIdeasScreen extends StatefulWidget {
+  static Map<String, dynamic>? selectedReference;
+
   const ManicureIdeasScreen({super.key});
 
   @override
@@ -133,6 +135,51 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
     });
   }
 
+  Future<bool> _showBiometricConsentDialog() async {
+    bool? accepted = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          title: const Row(
+            children: [
+              Icon(Icons.shield_outlined, color: AppTheme.primary),
+              SizedBox(width: 8),
+              Text('Consentimiento de Datos', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          content: const Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Para ofrecerte un diagnóstico preciso asistido por Inteligencia Artificial (Gemini API), necesitamos analizar temporalmente la imagen que proporciones.\n\n'
+                'GlowApp no almacena permanentemente datos biométricos sensibles de tu rostro. Las imágenes procesadas se gestionan con cifrado y se eliminan tras el análisis.',
+                style: TextStyle(fontSize: 14, color: Colors.black87, height: 1.3),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancelar', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              ),
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Autorizar y Continuar', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ],
+        );
+      },
+    );
+    return accepted ?? false;
+  }
+
   Future<void> _pickAnalysisImage(ImageSource source) async {
     if (_isLimitReached) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -143,6 +190,9 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
       );
       return;
     }
+
+    final bool consent = await _showBiometricConsentDialog();
+    if (!consent) return;
 
     final ImagePicker picker = ImagePicker();
     try {
@@ -270,8 +320,14 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                 ),
                 onPressed: () {
+                  final ref = {
+                    'image_url': image['image_url'],
+                    'title': image['title'] ?? 'Referencia',
+                    'category': _activeToolId ?? 'nails-classic'
+                  };
+                  ManicureIdeasScreen.selectedReference = ref;
                   Navigator.pop(context);
-                  Navigator.pop(context, image['image_url']);
+                  Navigator.pop(context, ref);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('Referencia seleccionada: ${image['title']}'),

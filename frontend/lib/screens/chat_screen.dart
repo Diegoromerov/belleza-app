@@ -68,6 +68,17 @@ class _ChatScreenState extends State<ChatScreen> {
             line.split(':').last.trim().replaceAll(RegExp(r'[^\d]'), '');
       }
     }
+    // Heuristic fallbacks if not structured
+    if (meta['serviceName'] == null || meta['serviceName']!.isEmpty) {
+      final lowerText = text.toLowerCase();
+      if (lowerText.contains('uñas') || lowerText.contains('manicura') || lowerText.contains('pedicura') || lowerText.contains('nails')) {
+        meta['serviceName'] = 'Uñas';
+      } else if (lowerText.contains('cabello') || lowerText.contains('pelo') || lowerText.contains('capilar') || lowerText.contains('corte') || lowerText.contains('keratina')) {
+        meta['serviceName'] = 'Cabello';
+      } else if (lowerText.contains('maquillaje') || lowerText.contains('cejas') || lowerText.contains('piel') || lowerText.contains('facial') || lowerText.contains('poros') || lowerText.contains('colorimetría')) {
+        meta['serviceName'] = 'Maquillaje';
+      }
+    }
     return meta;
   }
 
@@ -502,28 +513,15 @@ class _ChatScreenState extends State<ChatScreen> {
                                             ),
                                             padding: const EdgeInsets.symmetric(
                                                 horizontal: 16, vertical: 12),
-                                            decoration: const BoxDecoration(
-                                              gradient: LinearGradient(
-                                                colors: [
-                                                  Color(0xFFFFFDFB),
-                                                  Color(0xFFF5EBE6)
-                                                ],
-                                                begin: Alignment.topLeft,
-                                                end: Alignment.bottomRight,
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFF3ECE6),
+                                              borderRadius: const BorderRadius.only(
+                                                topLeft: Radius.circular(18),
+                                                topRight: Radius.circular(18),
+                                                bottomLeft: Radius.circular(4),
+                                                bottomRight: Radius.circular(18),
                                               ),
-                                              borderRadius: BorderRadius.only(
-                                                topLeft: Radius.circular(16),
-                                                topRight: Radius.circular(16),
-                                                bottomRight:
-                                                    Radius.circular(16),
-                                              ),
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  color: Color(0x08000000),
-                                                  blurRadius: 6,
-                                                  offset: Offset(0, 3),
-                                                ),
-                                              ],
+                                              border: Border.all(color: const Color(0xFFE5DDD5)),
                                             ),
                                             child: Column(
                                               crossAxisAlignment:
@@ -664,12 +662,14 @@ class _ChatScreenState extends State<ChatScreen> {
                                                                   'Te redirigiremos con los prestadores de Fontibón para agendar este estilo de inmediato, vecino.'),
                                                               actions: [
                                                                 TextButton(
-                                                                  onPressed:
-                                                                      () {
+                                                                  onPressed: () {
                                                                     Navigator.pop(
                                                                         context);
                                                                     Navigator.pop(
-                                                                        context);
+                                                                        context, {
+                                                                      'category': meta['serviceName'] ?? 'all',
+                                                                      'serviceName': meta['serviceName'] ?? 'Servicio'
+                                                                    });
                                                                   },
                                                                   child: const Text(
                                                                       'Listo',
@@ -735,24 +735,20 @@ class _ChatScreenState extends State<ChatScreen> {
                                   decoration: BoxDecoration(
                                     color: isMe
                                         ? const Color(0xFFC89D93)
-                                        : Colors.white,
+                                        : const Color(0xFFF3ECE6),
                                     borderRadius: BorderRadius.only(
-                                      topLeft: const Radius.circular(16),
-                                      topRight: const Radius.circular(16),
+                                      topLeft: const Radius.circular(18),
+                                      topRight: const Radius.circular(18),
                                       bottomLeft: isMe
-                                          ? const Radius.circular(16)
-                                          : Radius.zero,
+                                          ? const Radius.circular(18)
+                                          : const Radius.circular(4),
                                       bottomRight: isMe
-                                          ? Radius.zero
-                                          : const Radius.circular(16),
+                                          ? const Radius.circular(4)
+                                          : const Radius.circular(18),
                                     ),
-                                    boxShadow: const [
-                                      BoxShadow(
-                                        color: Color(0x0A000000),
-                                        blurRadius: 4,
-                                        offset: Offset(0, 2),
-                                      ),
-                                    ],
+                                    border: isMe
+                                        ? null
+                                        : Border.all(color: const Color(0xFFE5DDD5)),
                                   ),
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.end,

@@ -21,25 +21,6 @@ const unregisterClient = (ws) => {
   }
 };
 
-const notifyUserJobUpdate = (userId, jobData) => {
-  const userIdStr = userId.toString();
-  if (wsClients.has(userIdStr)) {
-    const payload = JSON.stringify({
-      type: 'nail_tryon_update',
-      data: {
-        id: jobData.id,
-        status: jobData.status,
-        preview_url: jobData.preview_url,
-        error_message: jobData.error_message
-      }
-    });
-    for (const conn of wsClients.get(userIdStr)) {
-      if (conn.readyState === 1) { // OPEN
-        conn.send(payload);
-      }
-    }
-  }
-};
 
 const notifyUserChatMessage = (userId, messageData) => {
   const userIdStr = userId.toString();
@@ -59,6 +40,5 @@ const notifyUserChatMessage = (userId, messageData) => {
 module.exports = {
   registerClient,
   unregisterClient,
-  notifyUserJobUpdate,
   notifyUserChatMessage
 };

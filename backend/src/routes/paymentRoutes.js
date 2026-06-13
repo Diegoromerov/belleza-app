@@ -298,7 +298,22 @@ router.post('/bookings/:id/confirm-otp', authMiddleware, async (req, res) => {
     // ✅ CÓDIGO CORRECTO — Activar dispersión
     const ventanaHoras = parseInt(await getConfig('wallet_ventana_pendiente_horas', '2'));
     const maduraAt = new Date(Date.now() + ventanaHoras * 60 * 60 * 1000);
-    const montoNeto = parseFloat(otp.pago_neto_prestador);
+    
+    // Obtener configuración de retenciones impositivas
+    const retefuentePct = parseFloat(await getConfig('retefuente_pct', '4.0'));
+    const reteicaPct = parseFloat(await getConfig('reteica_pct', '0.414'));
+    const reteivaPct = parseFloat(await getConfig('reteiva_pct', '15.0'));
+
+    const basePagoNeto = parseFloat(otp.pago_neto_prestador);
+    const comisionPlataforma = parseFloat(otp.comision_plataforma);
+
+    // Calcular deducciones de retenciones colombianas
+    const retencionFuente = Math.round(basePagoNeto * (retefuentePct / 100) * 100) / 100;
+    const retencionIca = Math.round(basePagoNeto * (reteicaPct / 100) * 100) / 100;
+    const retencionIva = Math.round(comisionPlataforma * (reteivaPct / 100) * 100) / 100;
+
+    const totalRetenciones = retencionFuente + retencionIca + retencionIva;
+    const montoNeto = basePagoNeto - totalRetenciones;
 
     // 1. Marcar OTP como usado
     await client.query(
@@ -325,7 +340,7 @@ router.post('/bookings/:id/confirm-otp', authMiddleware, async (req, res) => {
     );
     const wallet = walletResult.rows[0];
 
-    // 4. Registrar transacción en ledger
+    // 4. Registrar transacción en ledger con desglose de retenciones
     await client.query(
       `INSERT INTO wallet_transactions
          (provider_id, booking_id, tipo, monto, saldo_resultante, estado, descripcion, metadata)
@@ -334,7 +349,14 @@ router.post('/bookings/:id/confirm-otp', authMiddleware, async (req, res) => {
         otp.provider_id, id, montoNeto,
         parseFloat(wallet.saldo_disponible) + parseFloat(wallet.saldo_pendiente),
         `Servicio completado. Disponible en ${ventanaHoras}h.`,
-        JSON.stringify({ madura_at: maduraAt, comision_plataforma: otp.comision_plataforma })
+        JSON.stringify({ 
+          madura_at: maduraAt, 
+          comision_plataforma: otp.comision_plataforma,
+          retencion_fuente: retencionFuente,
+          retencion_ica: retencionIca,
+          retencion_iva: retencionIva,
+          base_pago_neto: basePagoNeto
+        })
       ]
     );
 

@@ -1,7 +1,21 @@
-// backend/src/controllers/designsController.js
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const path = require('path');
 require('dotenv').config();
+const { pool } = require('../config/db');
+
+const saveAnalysisToDb = async (userId, toolType, resultData) => {
+  if (!userId) return;
+  try {
+    const query = `
+      INSERT INTO ai_diagnostics (user_id, tool_type, result_data)
+      VALUES ($1, $2, $3);
+    `;
+    await pool.query(query, [userId, toolType, JSON.stringify(resultData)]);
+    console.log(`💾 [DB] Guardado historial de IA (${toolType}) para usuario ${userId}`);
+  } catch (err) {
+    console.error('⚠️ [DB ERROR] Error guardando historial de IA:', err.message);
+  }
+};
 
 const MOCK_NAIL_IMAGES = [
   {
@@ -53,9 +67,6 @@ const ai = apiKey ? new GoogleGenerativeAI(apiKey) : null;
 
 // Función helper para buscar imágenes reales de Pinterest usando DuckDuckGo sin llaves
 const searchRealPinterestImages = async (query) => {
-  const oldTlsConfig = process.env.NODE_TLS_REJECT_UNAUTHORIZED;
-  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-  
   try {
     const searchQuery = `${query} uñas manicure site:pinterest.com`;
     const url = `https://duckduckgo.com/?q=${encodeURIComponent(searchQuery)}`;
@@ -105,8 +116,6 @@ const searchRealPinterestImages = async (query) => {
   } catch (err) {
     console.error('⚠️ Error buscando en DuckDuckGo:', err.message);
     return null;
-  } finally {
-    process.env.NODE_TLS_REJECT_UNAUTHORIZED = oldTlsConfig;
   }
 };
 
@@ -201,6 +210,9 @@ exports.analyzeFaceShape = async (req, res) => {
     // Si no hay API Key de Gemini, devolvemos el Mock inmediato
     if (!ai) {
       console.warn('⚠️ GEMINI_API_KEY no configurada. Retornando análisis de rostro simulado.');
+      if (req.user && req.user.id) {
+        await saveAnalysisToDb(req.user.id, 'eyebrow-visagism', MOCK_FACE_ANALYSIS);
+      }
       return res.status(200).json({
         success: true,
         source: 'mock',
@@ -279,6 +291,10 @@ Responde de manera obligatoria únicamente con un objeto JSON válido, sin forma
       throw new Error('La IA no retornó un formato JSON válido.');
     }
 
+    if (req.user && req.user.id) {
+      await saveAnalysisToDb(req.user.id, 'eyebrow-visagism', analysisJson);
+    }
+
     return res.status(200).json({
       success: true,
       source: 'gemini',
@@ -350,6 +366,10 @@ exports.analyzeDesign = async (req, res) => {
         };
       } else {
         return res.status(400).json({ error: `Tipo de análisis "${type}" no reconocido.` });
+      }
+
+      if (req.user && req.user.id) {
+        await saveAnalysisToDb(req.user.id, type, mockResult);
       }
 
       return res.status(200).json({
@@ -479,6 +499,10 @@ ${jsonTemplate}`;
     } catch (parseErr) {
       console.error('Error al parsear respuesta JSON de Gemini para análisis:', text);
       throw new Error('La IA no retornó un formato JSON válido.');
+    }
+
+    if (req.user && req.user.id) {
+      await saveAnalysisToDb(req.user.id, type, analysisJson);
     }
 
     return res.status(200).json({

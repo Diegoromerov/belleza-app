@@ -13,7 +13,6 @@ const paymentRoutes = require('./src/routes/paymentRoutes');
 const bookingRoutes = require('./src/routes/bookingRoutes');
 const serviceRoutes = require('./src/routes/serviceRoutes');
 const chatRoutes = require('./src/routes/chatRoutes');
-const tryonRoutes = require('./src/routes/tryonRoutes');
 const designsRoutes = require('./src/routes/designsRoutes');
 const glowAdminRoutes = require('./src/modules/admin-glow/admin.routes');
 const authMiddleware = require('./src/middleware/auth');
@@ -39,7 +38,6 @@ const adminMiddleware = async (req, res, next) => {
 const { processAssistantMessage, AI_USER_ID } = require('./src/services/geminiService');
 const { inicializarJobs } = require('./src/jobs/paymentJobs');
 
-const { findCachedJob, enqueueTryonJob } = require('./src/services/queueService');
 const crypto = require('crypto');
 const { WebSocketServer } = require('ws');
 
@@ -114,7 +112,6 @@ app.use('/api', paymentRoutes);
 app.use('/api', bookingRoutes);
 app.use('/api', serviceRoutes);
 app.use('/api', chatRoutes);
-app.use('/api', tryonRoutes);
 app.use('/api/glow-admin', glowAdminRoutes);
 
 // ==========================================
@@ -1674,55 +1671,7 @@ pool.query('TRUNCATE TABLE messages RESTART IDENTITY CASCADE;')
   .then(() => console.log('🗑️ Historial de mensajes de chat truncado exitosamente en la base de datos.'))
   .catch(err => console.error('Error al limpiar mensajes de chat:', err));
 
-// ==========================================
-// 🔹 LIMPIEZA PERIÓDICA DE TRABAJOS EXPIRADOS (24H)
-// ==========================================
-const cleanExpiredTryonJobs = async () => {
-  try {
-    const query = `
-      SELECT id, original_image_url, preview_url 
-      FROM nail_tryon_jobs 
-      WHERE expires_at < NOW();
-    `;
-    const res = await pool.query(query);
-    
-    for (const row of res.rows) {
-      const deleteLocalFile = (url) => {
-        if (url && url.includes('/uploads/')) {
-          const filename = url.split('/uploads/')[1];
-          const filepath = path.join(__dirname, 'uploads', filename);
-          if (fs.existsSync(filepath)) {
-            try {
-              fs.unlinkSync(filepath);
-              console.log(`🗑️ Archivo expirado de prueba virtual eliminado: ${filepath}`);
-            } catch (fileErr) {
-              console.error(`Error eliminando archivo ${filepath}:`, fileErr.message);
-            }
-          }
-        }
-      };
-      deleteLocalFile(row.original_image_url);
-      deleteLocalFile(row.preview_url);
-    }
-    
-    const deleteQuery = `DELETE FROM nail_tryon_jobs WHERE expires_at < NOW();`;
-    const deleteRes = await pool.query(deleteQuery);
-    if (deleteRes.rowCount > 0) {
-      console.log(`🧹 Base de datos: ${deleteRes.rowCount} registros de prueba virtual expirados eliminados.`);
-    }
-  } catch (err) {
-    console.error('Error al limpiar trabajos de prueba virtual expirados:', err);
-  }
-};
-
-// Limpieza automática cada hora
-setInterval(cleanExpiredTryonJobs, 60 * 60 * 1000);
-
-// ==========================================
-// 🔹 NUEVOS ENDPOINTS: Prueba Virtual de Uñas (Nail Try-On)
-// ==========================================
-
-// 🔹 RUTAS DE TRY-ON REFACTORIZADAS (Movidas a tryonRoutes.js y tryonController.js)
+// Módulo Nail Try-on removido por completo.
 
 // ==========================================
 // INICIO DEL SERVIDOR

@@ -91,7 +91,6 @@ class BeautyApp extends StatelessWidget {
         '/provider/portfolio': (_) => const ProviderPortfolioScreen(),
         '/provider/profile': (_) => const ProviderProfileScreen(),
         '/chat': (_) => const ChatListScreen(),
-        // '/tryon': (_) => const NailTryonScreen(),
         '/onboarding': (_) => const OnboardingScreen(),
         '/verification-pending': (_) => const VerificationPendingScreen(),
         '/profile': (_) => const ClientProfileScreen(),
@@ -131,7 +130,6 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
   final TextEditingController _searchController = TextEditingController();
   final LatLng _bogotaCenter = const LatLng(4.6735, -74.1422);
   LatLng? _userLocation;
-  final GlobalKey _tryonKey = GlobalKey();
 
   bool _showTutorial = false;
   int _tutorialStep = 0;
