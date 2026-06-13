@@ -1001,63 +1001,12 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                         ),
                       )
                     : ElevatedButton.icon(
-                        onPressed: () async {
-                          final ImagePicker picker = ImagePicker();
-                          final navigator = Navigator.of(context);
-                          final scaffoldMessenger =
-                              ScaffoldMessenger.of(context);
-
-                          final XFile? file = await picker.pickImage(
-                            source: ImageSource.gallery,
-                            maxWidth: 800,
-                            maxHeight: 800,
-                            imageQuality: 85,
-                          );
-                          if (file == null) return;
-
-                          setBannerState(() => isUploading = true);
-                          try {
-                            final bytes = await file.readAsBytes();
-                            final absoluteUrl =
-                                await ApiService.uploadImage(bytes, file.name);
-
-                            String relativePath = '';
-                            final uri = Uri.tryParse(absoluteUrl);
-                            if (uri != null) {
-                              relativePath = uri.path;
-                            } else {
-                              relativePath = absoluteUrl;
-                            }
-
-                            setBannerState(() => isUploading = false);
-
-                            navigator.push(
-                              MaterialPageRoute(
-                                builder: (_) => ChatScreen(
-                                  partnerId:
-                                      '00000000-0000-0000-0000-000000000000',
-                                  partnerName: 'Asistente de Belleza & Tips IA',
-                                  partnerRole: 'admin',
-                                  partnerAvatar: '',
-                                  initialMessage:
-                                      'Hola, me interesa saber si el estilo de $providerName va con mi rostro y cabello.',
-                                  initialImagePath: relativePath,
-                                ),
-                              ),
-                            );
-                          } catch (e) {
-                            setBannerState(() => isUploading = false);
-                            scaffoldMessenger.showSnackBar(
-                              SnackBar(
-                                content: Text('❌ Error al subir imagen: $e'),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                          }
+                        onPressed: () {
+                          Navigator.of(context).pushNamed('/ideas');
                         },
-                        icon: const Icon(Icons.camera_alt_outlined, size: 16),
+                        icon: const Icon(Icons.lightbulb_outline, size: 16),
                         label: const Text(
-                          'Subir mi foto para Análisis Multimodal',
+                          'Ver Ideas y Visajismo IA',
                           style: TextStyle(
                               fontSize: 12.5, fontWeight: FontWeight.bold),
                         ),

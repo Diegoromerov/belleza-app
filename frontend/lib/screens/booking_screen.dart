@@ -117,7 +117,7 @@ class _BookingScreenState extends State<BookingScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text(
-                'âš ï¸ Ingresa la direcciÃ³n donde llegarÃ¡ el prestador'),
+                '⚠️ Ingresa la dirección donde llegará el prestador'),
             backgroundColor: Colors.orange),
       );
       return;
@@ -224,7 +224,7 @@ class _BookingScreenState extends State<BookingScreen> {
                   const SizedBox(height: 12),
                   _buildTimeSelector(),
                   const SizedBox(height: 24),
-                  _buildSectionTitle('4. DirecciÃ³n del servicio'),
+                  _buildSectionTitle('4. Dirección del servicio'),
                   const SizedBox(height: 12),
                   _buildAddressField(),
                   const SizedBox(height: 24),

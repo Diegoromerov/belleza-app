@@ -3,9 +3,9 @@ const { sequelize } = require('../config/database');
 
 const Booking = sequelize.define('Booking', {
   id: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.UUID,
     primaryKey: true,
-    autoIncrement: true
+    defaultValue: DataTypes.UUIDV4
   },
   client_id: {
     type: DataTypes.INTEGER,
@@ -18,7 +18,7 @@ const Booking = sequelize.define('Booking', {
     field: 'provider_id'
   },
   service_id: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.UUID,
     allowNull: false,
     field: 'service_id'
   },

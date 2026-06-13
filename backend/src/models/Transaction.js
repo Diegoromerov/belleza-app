@@ -3,12 +3,12 @@ const { sequelize } = require('../config/database');
 
 const Transaction = sequelize.define('Transaction', {
   id: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.UUID,
     primaryKey: true,
-    autoIncrement: true
+    defaultValue: DataTypes.UUIDV4
   },
   booking_id: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.UUID,
     allowNull: false,
     unique: true,
     field: 'booking_id'
@@ -31,10 +31,10 @@ const Transaction = sequelize.define('Transaction', {
     allowNull: true,
     field: 'external_id'
   },
-  creado_en: {
+  created_en: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW,
-    field: 'creado_en'
+    field: 'created_en'
   }
 }, {
   tableName: 'transactions',
