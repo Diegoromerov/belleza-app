@@ -472,61 +472,66 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
     );
   }
 
-  // --- VISTA: DASHBOARD DE HERRAMIENTAS ---
   Widget _buildDashboard() {
     final tools = [
       {
         'id': 'nails-classic',
         'title': 'Buscador de Diseños de Uñas',
-        'description': 'Filtra ideas de Pinterest por color, estilo y forma de uña.',
+        'description': 'Filtra ideas de Pinterest por color, estilo y forma.',
         'icon': Icons.brush_rounded,
         'tag': 'TRADICIONAL',
+        'image': 'assets/images/design_ideas_nails_classic_1781572880027.png',
       },
       {
         'id': 'skin-tone',
         'title': 'Analizador de Colorimetría',
-        'description': 'Determina tu tono y subtono de piel para encontrar tu paleta de color ideal.',
+        'description': 'Determina tu paleta de color ideal según tu tono de piel.',
         'icon': Icons.palette_rounded,
         'tag': 'IA',
+        'image': 'assets/images/design_ideas_skin_tone_1781572896303.png',
       },
       {
         'id': 'hair-diagnostic',
         'title': 'Diagnóstico Capilar Inteligente',
-        'description': 'Evalúa el nivel de daño y tipo de tu hebra capilar para sugerir tratamientos.',
+        'description': 'Evalúa tu hebra capilar para sugerir tratamientos.',
         'icon': Icons.spa_rounded,
         'tag': 'IA',
+        'image': 'assets/images/design_ideas_hair_diagnostic_1781572914936.png',
       },
       {
         'id': 'skin-texture',
         'title': 'Escáner de Textura y Poros',
-        'description': 'Detecta el tipo de piel, poros e imperfecciones para una rutina de skincare.',
+        'description': 'Analiza poros e hidratación para tu rutina facial.',
         'icon': Icons.face_retouching_natural_rounded,
         'tag': 'IA',
+        'image': 'assets/images/design_ideas_skin_texture_1781572933469.png',
       },
       {
         'id': 'eyebrow-visagism',
         'title': 'Simulador de Visagismo de Cejas',
-        'description': 'Estudia las proporciones de tu rostro para sugerir la ceja ideal.',
+        'description': 'Sugerencias de cejas según tus proporciones faciales.',
         'icon': Icons.remove_red_eye_rounded,
         'tag': 'IA',
+        'image': 'assets/images/design_ideas_eyebrow_visagism_1781572947958.png',
       },
       {
         'id': 'nails-style',
         'title': 'Guía de Estilo de Uñas IA',
-        'description': 'Analiza tu mano y dedos para recomendarte formas y esmaltes.',
+        'description': 'Recomendación de formas y esmaltes según tu mano.',
         'icon': Icons.back_hand_rounded,
         'tag': 'IA',
+        'image': 'assets/images/design_ideas_nails_style_1781572969602.png',
       },
     ];
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
             'Elige una herramienta para comenzar:',
-            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppTheme.text),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.text),
           ),
           const SizedBox(height: 16),
           GridView.builder(
@@ -535,13 +540,15 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
             itemCount: tools.length,
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              childAspectRatio: 0.85,
+              crossAxisSpacing: 14,
+              mainAxisSpacing: 14,
+              childAspectRatio: 0.65,
             ),
             itemBuilder: (context, index) {
               final tool = tools[index];
               final isIA = tool['tag'] == 'IA';
+              final imageAsset = tool['image'] as String;
+
               return GestureDetector(
                 onTap: () {
                   setState(() {
@@ -549,79 +556,104 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
                   });
                   _resetAnalysisState();
                 },
-                child: Card(
-                  elevation: 2,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    side: BorderSide(
-                      color: isIA ? AppTheme.primary.withOpacity(0.25) : Colors.grey.shade200,
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(24),
+                    color: Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.04),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                    border: Border.all(
+                      color: isIA ? const Color(0xFFC89D93).withOpacity(0.25) : Colors.grey.shade200,
                       width: 1.5,
                     ),
                   ),
-                  color: Colors.white,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: (isIA ? AppTheme.primary : AppTheme.accent).withOpacity(0.12),
-                                shape: BoxShape.circle,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Encabezado Visual del Card (Imagen de la Opción C)
+                      ClipRRect(
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(22),
+                          topRight: Radius.circular(22),
+                        ),
+                        child: Image.asset(
+                          imageAsset,
+                          height: 100,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => Container(
+                            height: 100,
+                            color: Colors.grey[200],
+                            child: const Icon(Icons.image_not_supported_outlined, color: Colors.grey),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    tool['icon'] as IconData,
+                                    color: isIA ? const Color(0xFFC89D93) : const Color(0xFFB07D62),
+                                    size: 16,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: isIA ? const Color(0xFFF3ECE6) : Colors.grey.shade100,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      tool['tag'] as String,
+                                      style: TextStyle(
+                                        fontSize: 8,
+                                        fontWeight: FontWeight.bold,
+                                        color: isIA ? const Color(0xFFC89D93) : Colors.grey.shade700,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                              child: Icon(
-                                tool['icon'] as IconData,
-                                color: isIA ? AppTheme.primary : AppTheme.accent,
-                                size: 24,
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: isIA ? const Color(0xFFE8D7D3) : Colors.grey.shade100,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Text(
-                                tool['tag'] as String,
-                                style: TextStyle(
-                                  fontSize: 8.5,
+                              const SizedBox(height: 8),
+                              Text(
+                                tool['title'] as String,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 12.5,
                                   fontWeight: FontWeight.bold,
-                                  color: isIA ? AppTheme.primary : Colors.grey.shade700,
+                                  color: AppTheme.text,
+                                  height: 1.2,
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          tool['title'] as String,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.text,
+                              const SizedBox(height: 4),
+                              Expanded(
+                                child: Text(
+                                  tool['description'] as String,
+                                  maxLines: 4,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.grey.shade600,
+                                    height: 1.25,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        Expanded(
-                          child: Text(
-                            tool['description'] as String,
-                            maxLines: 4,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 10.5,
-                              color: Colors.grey.shade600,
-                              height: 1.3,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               );
