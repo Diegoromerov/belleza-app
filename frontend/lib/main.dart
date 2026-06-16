@@ -41,6 +41,7 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
   AnalyticsService().init();
+  await AppTheme.loadThemePreference();
   runApp(const BeautyApp());
 }
 
@@ -49,62 +50,67 @@ class BeautyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'GlowApp',
-      navigatorKey: NotificationService.navigatorKey,
-      debugShowCheckedModeBanner: false,
-      navigatorObservers: [AnalyticsRouteObserver()],
-      theme: ThemeData(
-        primaryColor: AppTheme.primary,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: AppTheme.primary,
-          primary: AppTheme.primary,
-          secondary: AppTheme.accent,
-          surface: AppTheme.surface,
-          background: AppTheme.background,
-        ),
-        scaffoldBackgroundColor: AppTheme.background,
-        useMaterial3: true,
-        cardTheme: CardThemeData(
-          color: AppTheme.surface,
-          elevation: 0,
-          shadowColor: const Color(0x0A8C6F65),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-            side: const BorderSide(color: Color(0xFFF3EAE8), width: 1),
+    return ValueListenableBuilder<bool>(
+      valueListenable: AppTheme.isModernTheme,
+      builder: (context, isModern, child) {
+        return MaterialApp(
+          title: 'GlowApp',
+          navigatorKey: NotificationService.navigatorKey,
+          debugShowCheckedModeBanner: false,
+          navigatorObservers: [AnalyticsRouteObserver()],
+          theme: ThemeData(
+            primaryColor: AppTheme.primary,
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: AppTheme.primary,
+              primary: AppTheme.primary,
+              secondary: AppTheme.accent,
+              surface: AppTheme.surface,
+              background: AppTheme.background,
+            ),
+            scaffoldBackgroundColor: AppTheme.background,
+            useMaterial3: true,
+            cardTheme: CardThemeData(
+              color: AppTheme.surface,
+              elevation: 0,
+              shadowColor: const Color(0x0A8C6F65),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+                side: BorderSide(color: Color(0xFFF3EAE8), width: 1),
+              ),
+            ),
+            appBarTheme: AppBarTheme(
+              backgroundColor: AppTheme.surface,
+              foregroundColor: AppTheme.text,
+              elevation: 0,
+            ),
           ),
-        ),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: AppTheme.surface,
-          foregroundColor: AppTheme.text,
-          elevation: 0,
-        ),
-      ),
-      initialRoute: '/home',
-      routes: {
-        '/login': (_) => const LoginScreen(),
-        '/register': (_) => const RegisterScreen(),
-        '/home': (_) => const ProvidersScreen(),
-        '/provider': (_) => const ProviderDashboardScreen(),
-        '/client-bookings': (_) => const ClientBookingsScreen(),
-        '/provider/services': (_) => const ProviderServicesScreen(),
-        '/provider/portfolio': (_) => const ProviderPortfolioScreen(),
-        '/provider/profile': (_) => const ProviderProfileScreen(),
-        '/chat': (_) => const ChatListScreen(),
-        '/onboarding': (_) => const OnboardingScreen(),
-        '/verification-pending': (_) => const VerificationPendingScreen(),
-        '/profile': (_) => const ClientProfileScreen(),
-        '/ideas': (_) => const ManicureIdeasScreen(),
-        '/booking-tracking': (context) {
-          final args = ModalRoute.of(context)!.settings.arguments
-              as Map<String, dynamic>;
-          return BookingTrackingScreen(booking: args);
-        },
-        '/provider-route': (context) {
-          final args = ModalRoute.of(context)!.settings.arguments
-              as Map<String, dynamic>;
-          return ProviderRouteScreen(booking: args);
-        },
+          initialRoute: '/home',
+          routes: {
+            '/login': (_) => const LoginScreen(),
+            '/register': (_) => const RegisterScreen(),
+            '/home': (_) => const ProvidersScreen(),
+            '/provider': (_) => const ProviderDashboardScreen(),
+            '/client-bookings': (_) => const ClientBookingsScreen(),
+            '/provider/services': (_) => const ProviderServicesScreen(),
+            '/provider/portfolio': (_) => const ProviderPortfolioScreen(),
+            '/provider/profile': (_) => const ProviderProfileScreen(),
+            '/chat': (_) => const ChatListScreen(),
+            '/onboarding': (_) => const OnboardingScreen(),
+            '/verification-pending': (_) => const VerificationPendingScreen(),
+            '/profile': (_) => const ClientProfileScreen(),
+            '/ideas': (_) => const ManicureIdeasScreen(),
+            '/booking-tracking': (context) {
+              final args = ModalRoute.of(context)!.settings.arguments
+                  as Map<String, dynamic>;
+              return BookingTrackingScreen(booking: args);
+            },
+            '/provider-route': (context) {
+              final args = ModalRoute.of(context)!.settings.arguments
+                  as Map<String, dynamic>;
+              return ProviderRouteScreen(booking: args);
+            },
+          },
+        );
       },
     );
   }
@@ -271,7 +277,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
           builder: (context, setStateModal) {
             return AlertDialog(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-              title: const Row(
+              title: Row(
                 children: [
                   Icon(Icons.location_off, color: Color(0xFFC89D93), size: 28),
                   SizedBox(width: 8),
@@ -285,11 +291,11 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'No pudimos acceder a tu GPS. Por favor escribe tu dirección, barrio o ciudad:',
                     style: TextStyle(fontSize: 14, color: Colors.black54),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   TextField(
                     controller: addressController,
                     decoration: const InputDecoration(
@@ -300,8 +306,8 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                     enabled: !resolving,
                   ),
                   if (resolving) ...[
-                    const SizedBox(height: 16),
-                    const Center(
+                    SizedBox(height: 16),
+                    Center(
                       child: CircularProgressIndicator(color: Color(0xFFC89D93)),
                     )
                   ]
@@ -316,7 +322,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                     });
                     _loadProviders();
                   },
-                  child: const Text('Usar Bogotá (Defecto)', style: TextStyle(color: Colors.grey)),
+                  child: Text('Usar Bogotá (Defecto)', style: TextStyle(color: Colors.grey)),
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
@@ -355,7 +361,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                       );
                     }
                   },
-                  child: const Text('Buscar', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: Text('Buscar', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ],
             );
@@ -576,7 +582,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
         return AlertDialog(
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-          title: const Row(
+          title: Row(
             children: [
               Icon(Icons.warning_amber_rounded,
                   color: Color(0xFFDC2626), size: 28),
@@ -588,7 +594,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
               ),
             ],
           ),
-          content: const Column(
+          content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -613,7 +619,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text(
+              child: Text(
                 'Cancelar',
                 style:
                     TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
@@ -633,7 +639,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                 Navigator.pop(context); // Cerrar diálogo primero
                 await _triggerSOSAlert();
               },
-              child: const Row(
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.security, size: 18),
@@ -716,7 +722,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
       backgroundColor: Colors.transparent,
       builder: (context) {
         return Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(28),
@@ -733,24 +739,24 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.check_circle_outline,
+                Icon(Icons.check_circle_outline,
                     color: Colors.green, size: 52),
-                const SizedBox(height: 12),
-                const Text(
+                SizedBox(height: 12),
+                Text(
                   'Alerta SOS Registrada',
                   style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 20,
                       color: Colors.black87),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Text(
                   message,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                       color: Colors.grey[600], fontSize: 14, height: 1.4),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFDC2626),
@@ -769,22 +775,22 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                       ),
                     );
                   },
-                  icon: const Icon(Icons.phone_in_talk_rounded),
-                  label: const Text(
+                  icon: Icon(Icons.phone_in_talk_rounded),
+                  label: Text(
                      'LLAMAR A EMERGENCIAS (123)',
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 OutlinedButton(
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size(double.infinity, 44),
-                    side: const BorderSide(color: Color(0xFFE8D7D3), width: 1.5),
+                    side: BorderSide(color: Color(0xFFE8D7D3), width: 1.5),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(22)),
                   ),
                   onPressed: () => Navigator.pop(context),
-                  child: const Text(
+                  child: Text(
                     'Entendido / Cerrar',
                     style: TextStyle(
                         color: Color(0xFFC89D93), fontWeight: FontWeight.bold),
@@ -805,7 +811,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
       backgroundColor: Colors.transparent,
       builder: (context) {
         return Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(28),
@@ -827,7 +833,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               Row(
                 children: [
                   CircleAvatar(
@@ -841,14 +847,14 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                             provider.fullName.isNotEmpty
                                 ? provider.fullName[0].toUpperCase()
                                 : '?',
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 20,
                                 color: Color(0xFFC89D93),
                                 fontWeight: FontWeight.bold),
                           )
                         : null,
                   ),
-                  const SizedBox(width: 14),
+                  SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -860,7 +866,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                                 provider.businessName.isNotEmpty
                                     ? provider.businessName
                                     : provider.fullName,
-                                style: const TextStyle(
+                                style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 18,
                                     color: Colors.black87,
@@ -870,13 +876,13 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                               ),
                             ),
                             if (provider.isVerified) ...[
-                              const SizedBox(width: 4),
-                              const Icon(Icons.verified,
+                              SizedBox(width: 4),
+                              Icon(Icons.verified,
                                   color: Color(0xFFC89D93), size: 18),
                             ],
                           ],
                         ),
-                        const SizedBox(height: 4),
+                        SizedBox(height: 4),
                         Text(
                           provider.fullName,
                           style: TextStyle(
@@ -896,12 +902,12 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.star,
+                        Icon(Icons.star,
                             color: Color(0xFFC89D93), size: 15),
-                        const SizedBox(width: 4),
+                        SizedBox(width: 4),
                         Text(
                           provider.ratingAvg.toStringAsFixed(1),
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
                               color: Color(0xFFC89D93)),
@@ -911,18 +917,18 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               Text(
                 provider.description,
                 style: TextStyle(
                     color: Colors.grey[600], fontSize: 14, height: 1.4),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               Row(
                 children: [
-                  const Icon(Icons.location_on,
+                  Icon(Icons.location_on,
                       color: Color(0xFFC89D93), size: 16),
-                  const SizedBox(width: 4),
+                  SizedBox(width: 4),
                   Text(
                     'A ${(provider.distanceMeters / 1000).toStringAsFixed(1)} km en Fontibón',
                     style: TextStyle(
@@ -932,15 +938,15 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
-              const Text(
+              SizedBox(height: 20),
+              Text(
                 'Galería del Profesional',
                 style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                     color: Colors.black87),
               ),
-              const SizedBox(height: 10),
+              SizedBox(height: 10),
               FutureBuilder<Map<String, dynamic>>(
                 future: ApiService.fetchProviderDetails(provider.id),
                 builder: (context, snapshot) {
@@ -957,7 +963,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                                       color: const Color(0xFFF5EBE6),
                                       borderRadius: BorderRadius.circular(16),
                                     ),
-                                    child: const Center(
+                                    child: Center(
                                       child: SizedBox(
                                         width: 20,
                                         height: 20,
@@ -981,7 +987,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                         color: const Color(0xFFF5EBE6),
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      child: const Center(
+                      child: Center(
                         child: Text(
                           'No hay fotos cargadas en el portafolio',
                           style: TextStyle(color: Colors.grey, fontSize: 13),
@@ -1006,7 +1012,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                                 fit: BoxFit.cover,
                                 errorBuilder: (_, __, ___) => Container(
                                   color: const Color(0xFFF5EBE6),
-                                  child: const Icon(Icons.broken_image,
+                                  child: Icon(Icons.broken_image,
                                       color: Color(0xFFC89D93)),
                                 ),
                               ),
@@ -1018,14 +1024,14 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                   );
                 },
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               Row(
                 children: [
                   Expanded(
                     child: OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        side: const BorderSide(
+                        side: BorderSide(
                             color: Color(0xFFC89D93), width: 1.5),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20)),
@@ -1055,9 +1061,9 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                           );
                         }
                       },
-                      icon: const Icon(Icons.chat_bubble_outline_rounded,
+                      icon: Icon(Icons.chat_bubble_outline_rounded,
                           color: Color(0xFFC89D93), size: 18),
-                      label: const Text(
+                      label: Text(
                         'Chat Directo',
                         style: TextStyle(
                             color: Color(0xFFC89D93),
@@ -1066,7 +1072,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
@@ -1087,7 +1093,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                           ),
                         );
                       },
-                      child: const Text(
+                      child: Text(
                         'Ver Perfil Completo',
                         style: TextStyle(
                             fontWeight: FontWeight.bold, fontSize: 14),
@@ -1166,7 +1172,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                           : Colors.grey.shade600,
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  SizedBox(height: 6),
                   Text(
                     cat['name'] as String,
                     style: TextStyle(
@@ -1191,8 +1197,9 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
     required IconData icon,
     required String label,
     required VoidCallback onTap,
-    Color color = AppTheme.text,
+    Color? color,
   }) {
+    final resolvedColor = color ?? AppTheme.text;
     return Expanded(
       key: key,
       child: Material(
@@ -1204,8 +1211,8 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: color, size: 20),
-              const SizedBox(height: 3),
+              Icon(icon, color: resolvedColor, size: 20),
+              SizedBox(height: 3),
               Text(
                 label,
                 textAlign: TextAlign.center,
@@ -1214,7 +1221,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                 style: TextStyle(
                   fontSize: 9.5,
                   fontWeight: FontWeight.bold,
-                  color: color,
+                  color: resolvedColor,
                 ),
               ),
             ],
@@ -1269,10 +1276,10 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                   size: 26,
                 ),
               ),
-              const SizedBox(height: 2),
+              SizedBox(height: 2),
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w800,
                   color: Color(0xFFB07D62),
@@ -1320,7 +1327,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                           border: Border.all(
                               color: AppTheme.primary, width: 2),
                         ),
-                        child: const Center(
+                        child: Center(
                           child: Icon(Icons.my_location,
                               color: AppTheme.primary, size: 24),
                         ),
@@ -1368,7 +1375,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                                         p.fullName.isNotEmpty
                                             ? p.fullName[0].toUpperCase()
                                             : '?',
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                             fontSize: 14,
                                             color: AppTheme.primary,
                                             fontWeight: FontWeight.bold),
@@ -1384,6 +1391,51 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                 ],
               ),
             ],
+          ),
+
+          // Theme Toggle Floating Button
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 80,
+            right: 16,
+            child: ValueListenableBuilder<bool>(
+              valueListenable: AppTheme.isModernTheme,
+              builder: (context, isModern, _) {
+                return InkWell(
+                  onTap: () => AppTheme.toggleTheme(),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: AppTheme.surface.withOpacity(0.9),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: AppTheme.accent.withOpacity(0.3),
+                        width: 1.5,
+                      ),
+                      boxShadow: AppTheme.softShadow,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          isModern ? Icons.palette_outlined : Icons.brush_outlined,
+                          size: 14,
+                          color: AppTheme.primary,
+                        ),
+                        SizedBox(width: 4),
+                        Text(
+                          isModern ? 'Lujo Cálido' : 'Clásico',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.text,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
           ),
 
           // Capa 1: Floating AI Search Bar
@@ -1406,13 +1458,13 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.search, color: AppTheme.primary),
-                      const SizedBox(width: 10),
+                      Icon(Icons.search, color: AppTheme.primary),
+                      SizedBox(width: 10),
                       Expanded(
                         child: TextField(
                           controller: _searchController,
                           textCapitalization: TextCapitalization.sentences,
-                          decoration: const InputDecoration(
+                           decoration: InputDecoration(
                             hintText:
                                 '¿Buscas un estilo o tips de belleza? Pregúntale a la IA aquí...',
                             hintStyle: TextStyle(
@@ -1429,7 +1481,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.auto_awesome,
+                        icon: Icon(Icons.auto_awesome,
                             color: AppTheme.primary),
                         onPressed: () {
                           _navigateToAIChat(_searchController.text);
@@ -1438,7 +1490,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                     ],
                   ),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 // Capa 2: Filtros de Categorías M3
                 _buildCategorySelector(),
               ],
@@ -1548,7 +1600,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
               foregroundColor: Colors.white,
               elevation: 4,
               shape: const CircleBorder(),
-              child: const Icon(Icons.school_outlined, size: 24),
+              child: Icon(Icons.school_outlined, size: 24),
             ),
           ),
 
@@ -1587,7 +1639,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
               foregroundColor: AppTheme.primary,
               elevation: 4,
               shape: const CircleBorder(),
-              child: const Icon(Icons.my_location, size: 24),
+              child: Icon(Icons.my_location, size: 24),
             ),
           ),
 
@@ -1602,7 +1654,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
               foregroundColor: Colors.white,
               elevation: 4,
               shape: const CircleBorder(),
-              child: const Icon(Icons.emergency_outlined, size: 28),
+              child: Icon(Icons.emergency_outlined, size: 28),
             ),
           ),
 
@@ -1610,7 +1662,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
           if (_isLoading)
             Container(
               color: Colors.black12,
-              child: const Center(
+              child: Center(
                 child: CircularProgressIndicator(color: Color(0xFFC89D93)),
               ),
             ),
@@ -1629,8 +1681,8 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                   padding: const EdgeInsets.all(12),
                   child: Row(
                     children: [
-                      const Icon(Icons.error_outline, color: Colors.red),
-                      const SizedBox(width: 10),
+                      Icon(Icons.error_outline, color: Colors.red),
+                      SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           'No se pudo conectar: $_errorMessage',
@@ -1639,7 +1691,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.refresh, color: Colors.red),
+                        icon: Icon(Icons.refresh, color: Colors.red),
                         onPressed: _loadProviders,
                       ),
                     ],
@@ -1663,7 +1715,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
     String stepTitle = '';
     String stepDescription = '';
     Widget? highlightWidget;
-    Widget centerGraphic = const SizedBox.shrink();
+    Widget centerGraphic = SizedBox.shrink();
 
     if (_tutorialStep == 0) {
       stepTitle = '¡Te doy la bienvenida! 🌸';
@@ -1726,7 +1778,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                 ),
               ],
             ),
-            child: const Icon(Icons.touch_app, color: Color(0xFFD4AF37), size: 36),
+            child: Icon(Icons.touch_app, color: Color(0xFFD4AF37), size: 36),
           ),
         ),
       );
@@ -1758,8 +1810,8 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                const Expanded(
+                SizedBox(width: 12),
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
@@ -1786,7 +1838,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
                   onPressed: () {},
-                  child: const Text('Ver Perfil', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  child: Text('Ver Perfil', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                 ),
               ],
             ),
@@ -1811,7 +1863,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
             children: [
               Container(
                 height: 90,
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   image: DecorationImage(
                     image: AssetImage('assets/images/logo_maestro_v5.png'),
                     fit: BoxFit.cover,
@@ -1825,7 +1877,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                     Container(
                       width: 44,
                       height: 44,
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         image: DecorationImage(
                           image: AssetImage('assets/images/logo_maestro_v3.jpg'),
@@ -1833,8 +1885,8 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                         ),
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    const Column(
+                    SizedBox(width: 10),
+                    Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('Ana Silva', style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.text)),
@@ -1845,7 +1897,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                 ),
               ),
               const Divider(height: 1),
-              const Padding(
+              Padding(
                 padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 child: Text(
                   'Servicios Disponibles:',
@@ -1882,13 +1934,13 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Agendar con Ana Silva',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.text),
                 ),
-                const SizedBox(height: 12),
-                const Text('Seleccionar Fecha (Junio 2026):', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 6),
+                SizedBox(height: 12),
+                Text('Seleccionar Fecha (Junio 2026):', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                SizedBox(height: 6),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
@@ -1897,9 +1949,9 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                     _buildMockDayTile('18', 'Jue', false),
                   ],
                 ),
-                const SizedBox(height: 12),
-                const Text('Seleccionar Hora:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 6),
+                SizedBox(height: 12),
+                Text('Seleccionar Hora:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                SizedBox(height: 6),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
@@ -1923,7 +1975,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
           borderRadius: BorderRadius.circular(24),
           border: Border.all(color: const Color(0xFF4A5D4E), width: 2),
         ),
-        child: const Column(
+        child: Column(
           children: [
             Icon(Icons.security, color: Color(0xFF4A5D4E), size: 48),
             SizedBox(height: 8),
@@ -1986,7 +2038,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                             margin: const EdgeInsets.only(bottom: 20),
                             child: centerGraphic,
                           )
-                        : const SizedBox.shrink(),
+                        : SizedBox.shrink(),
                   ),
                   AnimatedSwitcher(
                     duration: const Duration(milliseconds: 250),
@@ -2007,7 +2059,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                               ),
                             ),
                           ),
-                          const SizedBox(width: 16),
+                          SizedBox(width: 16),
                         ],
                         Expanded(
                           child: Column(
@@ -2015,14 +2067,14 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                             children: [
                               Text(
                                 stepTitle,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                   color: AppTheme.text,
                                   letterSpacing: -0.5,
                                 ),
                               ),
-                              const SizedBox(height: 8),
+                              SizedBox(height: 8),
                               Text(
                                 stepDescription,
                                 style: TextStyle(
@@ -2037,7 +2089,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                       ],
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  SizedBox(height: 20),
                   
                   // Indicador de progreso con 7 puntos interactivos
                   Row(
@@ -2050,13 +2102,13 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                         width: isActive ? 12 : 8,
                         height: 8,
                         decoration: BoxDecoration(
-                          color: isActive ? AppTheme.primary : const Color(0xFFE5CECA),
+                          color: isActive ? AppTheme.primary :  Color(0xFFE5CECA),
                           borderRadius: BorderRadius.circular(4),
                         ),
                       );
                     }),
                   ),
-                  const SizedBox(height: 20),
+                  SizedBox(height: 20),
 
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -2078,13 +2130,13 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                               padding: const EdgeInsets.only(right: 8),
                               child: OutlinedButton(
                                 style: OutlinedButton.styleFrom(
-                                  side: const BorderSide(color: AppTheme.accent),
+                                  side: BorderSide(color: AppTheme.accent),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(20),
                                   ),
                                 ),
                                 onPressed: () => _handleTutorialStepChange(_tutorialStep - 1),
-                                child: const Text(
+                                child: Text(
                                   'Atrás',
                                   style: TextStyle(color: AppTheme.text),
                                 ),
@@ -2108,7 +2160,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                             },
                             child: Text(
                               _tutorialStep == 6 ? 'Finalizar' : 'Siguiente',
-                              style: const TextStyle(fontWeight: FontWeight.bold),
+                              style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                           ),
                         ],
@@ -2138,8 +2190,8 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
-            Text(price, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.primary)),
+            Text(title, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+            Text(price, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.primary)),
           ],
         ),
       ),

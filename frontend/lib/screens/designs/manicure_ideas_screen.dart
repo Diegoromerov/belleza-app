@@ -142,14 +142,14 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
       builder: (context) {
         return AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: const Row(
+          title: Row(
             children: [
               Icon(Icons.shield_outlined, color: AppTheme.primary),
               SizedBox(width: 8),
               Text('Consentimiento de Datos', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             ],
           ),
-          content: const Column(
+          content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
@@ -162,7 +162,7 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancelar', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+              child: Text('Cancelar', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -171,7 +171,7 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
               ),
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Autorizar y Continuar', style: TextStyle(fontWeight: FontWeight.bold)),
+              child: Text('Autorizar y Continuar', style: TextStyle(fontWeight: FontWeight.bold)),
             ),
           ],
         );
@@ -283,12 +283,12 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
               backgroundColor: Colors.transparent,
               elevation: 0,
               leading: IconButton(
-                icon: const Icon(Icons.close, color: Colors.white),
+                icon: Icon(Icons.close, color: Colors.white),
                 onPressed: () => Navigator.pop(context),
               ),
               title: Text(
                 image['title'] ?? 'Detalle de Idea',
-                style: const TextStyle(color: Colors.white, fontSize: 16),
+                style: TextStyle(color: Colors.white, fontSize: 16),
               ),
             ),
             Expanded(
@@ -301,7 +301,7 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
                       image['image_url'],
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) {
-                        return const Center(
+                        return Center(
                           child: Icon(Icons.broken_image, color: Colors.white30, size: 60),
                         );
                       },
@@ -338,14 +338,14 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
                         ),
                       );
                     },
-                    icon: const Icon(Icons.check),
-                    label: const Text('Usar como referencia para mi cita', style: TextStyle(fontWeight: FontWeight.bold)),
+                    icon: Icon(Icons.check),
+                    label: Text('Usar como referencia para mi cita', style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
                       foregroundColor: const Color(0xFFC89D93),
-                      side: const BorderSide(color: Color(0xFFC89D93), width: 1.5),
+                      side: BorderSide(color: Color(0xFFC89D93), width: 1.5),
                       minimumSize: const Size(double.infinity, 44),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                     ),
@@ -357,8 +357,8 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
                         'category': _activeToolId == 'nails-classic' ? 'nails' : 'all'
                       });
                     },
-                    icon: const Icon(Icons.map_outlined),
-                    label: const Text('Ver en el mapa quién hace este estilo', style: TextStyle(fontWeight: FontWeight.bold)),
+                    icon: Icon(Icons.map_outlined),
+                    label: Text('Ver en el mapa quién hace este estilo', style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),
@@ -407,10 +407,10 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
         backgroundColor: AppTheme.primary,
         foregroundColor: Colors.white,
         elevation: 2,
-        title: Text(screenTitle, style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(screenTitle, style: TextStyle(fontWeight: FontWeight.bold)),
         leading: _activeToolId != null
             ? IconButton(
-                icon: const Icon(Icons.arrow_back),
+                icon: Icon(Icons.arrow_back),
                 onPressed: () {
                   setState(() {
                     _activeToolId = null;
@@ -421,7 +421,7 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
         actions: [
           if (_activeToolId != null)
             IconButton(
-              icon: const Icon(Icons.refresh),
+              icon: Icon(Icons.refresh),
               onPressed: () {
                 if (_activeToolId == 'nails-classic') {
                   _clearFilters();
@@ -471,8 +471,8 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
                 padding: const EdgeInsets.all(12),
                 child: Row(
                   children: [
-                    const Icon(Icons.lock, color: AppTheme.error, size: 20),
-                    const SizedBox(width: 8),
+                    Icon(Icons.lock, color: AppTheme.error, size: 20),
+                    SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Has alcanzado el límite de búsquedas de diseño en esta sesión.',
@@ -553,11 +553,11 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Elige una herramienta para comenzar:',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.text),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -613,7 +613,7 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
                           errorBuilder: (context, error, stackTrace) => Container(
                             height: 100,
                             color: Colors.grey[200],
-                            child: const Icon(Icons.image_not_supported_outlined, color: Colors.grey),
+                            child: Icon(Icons.image_not_supported_outlined, color: Colors.grey),
                           ),
                         ),
                       ),
@@ -630,7 +630,7 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
                                     color: isIA ? const Color(0xFFC89D93) : const Color(0xFFB07D62),
                                     size: 16,
                                   ),
-                                  const SizedBox(width: 6),
+                                  SizedBox(width: 6),
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                     decoration: BoxDecoration(
@@ -648,19 +648,19 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 8),
+                              SizedBox(height: 8),
                               Text(
                                 tool['title'] as String,
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 12.5,
                                   fontWeight: FontWeight.bold,
                                   color: AppTheme.text,
                                   height: 1.2,
                                 ),
                               ),
-                              const SizedBox(height: 4),
+                              SizedBox(height: 4),
                               Expanded(
                                 child: Text(
                                   tool['description'] as String,
@@ -695,8 +695,8 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Color de esmalte:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.text)),
-          const SizedBox(height: 10),
+          Text('Color de esmalte:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.text)),
+          SizedBox(height: 10),
           SizedBox(
             height: 44,
             child: ListView.builder(
@@ -748,10 +748,10 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
               },
             ),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
 
-          const Text('Estilo / Decoración:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.text)),
-          const SizedBox(height: 8),
+          Text('Estilo / Decoración:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.text)),
+          SizedBox(height: 8),
           Wrap(
             spacing: 8,
             children: _styles.map((style) {
@@ -774,10 +774,10 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
               );
             }).toList(),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
 
-          const Text('Forma de uña:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.text)),
-          const SizedBox(height: 8),
+          Text('Forma de uña:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.text)),
+          SizedBox(height: 8),
           Wrap(
             spacing: 8,
             children: _shapes.map((shape) {
@@ -800,7 +800,7 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
               );
             }).toList(),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
 
           TextField(
             controller: _customQueryController,
@@ -811,7 +811,7 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
             ),
             enabled: !_isLimitReached,
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
 
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -823,17 +823,17 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
             ),
             onPressed: _isLoading || _isLimitReached ? null : _searchDesigns,
             child: _isLoading
-                ? const SizedBox(
+                ? SizedBox(
                     height: 20,
                     width: 20,
                     child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                   )
-                : const Text(
+                : Text(
                     'Buscar 6 Diseños Inspirados en Pinterest',
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                   ),
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
 
           _buildImagesGrid(_images, _error),
         ],
@@ -897,13 +897,13 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
                     ),
                     child: Icon(cameraIcon, size: 60, color: AppTheme.primary.withOpacity(0.7)),
                   ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 Text(
                   instructionText,
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 12.5, color: Colors.grey.shade600, fontStyle: FontStyle.italic),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 if (_analysisImageBytes == null)
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
@@ -913,8 +913,8 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                     ),
                     onPressed: _isLimitReached ? null : _showGenericImageSourceSelector,
-                    icon: const Icon(Icons.add_a_photo),
-                    label: const Text('Subir Foto para Análisis', style: TextStyle(fontWeight: FontWeight.bold)),
+                    icon: Icon(Icons.add_a_photo),
+                    label: Text('Subir Foto para Análisis', style: TextStyle(fontWeight: FontWeight.bold)),
                   )
                 else if (!_isAnalyzing)
                   Row(
@@ -922,30 +922,30 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
                     children: [
                       TextButton.icon(
                         onPressed: _showGenericImageSourceSelector,
-                        icon: const Icon(Icons.refresh, color: AppTheme.accent),
-                        label: const Text('Cambiar foto', style: TextStyle(color: AppTheme.accent)),
+                        icon: Icon(Icons.refresh, color: AppTheme.accent),
+                        label: Text('Cambiar foto', style: TextStyle(color: AppTheme.accent)),
                       ),
-                      const SizedBox(width: 12),
+                      SizedBox(width: 12),
                       TextButton.icon(
                         onPressed: _resetAnalysisState,
-                        icon: const Icon(Icons.delete, color: Colors.redAccent),
-                        label: const Text('Eliminar', style: TextStyle(color: Colors.redAccent)),
+                        icon: Icon(Icons.delete, color: Colors.redAccent),
+                        label: Text('Eliminar', style: TextStyle(color: Colors.redAccent)),
                       ),
                     ],
                   ),
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
 
           // Loader
           if (_isAnalyzing) ...[
             Center(
               child: Column(
                 children: [
-                  const SizedBox(height: 10),
-                  const CircularProgressIndicator(color: AppTheme.primary),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 10),
+                   CircularProgressIndicator(color: AppTheme.primary),
+                  SizedBox(height: 16),
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -960,8 +960,8 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
                           style: AppTheme.subtitle.copyWith(color: AppTheme.text, fontWeight: FontWeight.w600),
                           textAlign: TextAlign.center,
                         ),
-                        const SizedBox(height: 8),
-                        const Text(
+                        SizedBox(height: 8),
+                        Text(
                           'Gemini 2.5 Flash está evaluando tu imagen para darte las mejores sugerencias.',
                           style: TextStyle(color: Colors.black54, fontSize: 13),
                           textAlign: TextAlign.center,
@@ -977,16 +977,16 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
           // Resultados
           if (_analysisResult != null) ...[
             _buildAnalysisResultsCard(),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
           ],
 
           // Galería Pinterest
           if (_pinterestImages.isNotEmpty) ...[
-            const Text(
+            Text(
               'Ideas de inspiración en Pinterest:',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppTheme.text),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -1011,7 +1011,7 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
                           item['image_url'],
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) {
-                            return const Center(child: Icon(Icons.broken_image, size: 40));
+                            return Center(child: Icon(Icons.broken_image, size: 40));
                           },
                         ),
                         Positioned(
@@ -1025,7 +1025,7 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
                               item['title'] ?? 'Recomendación',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(color: Colors.white, fontSize: 11),
+                              style: TextStyle(color: Colors.white, fontSize: 11),
                             ),
                           ),
                         )
@@ -1042,7 +1042,7 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: Text(
                 _analysisError!,
-                style: const TextStyle(color: AppTheme.error, fontWeight: FontWeight.bold),
+                style: TextStyle(color: AppTheme.error, fontWeight: FontWeight.bold),
               ),
             ),
         ],
@@ -1051,22 +1051,22 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
   }
 
   Widget _buildAnalysisResultsCard() {
-    if (_analysisResult == null) return const SizedBox.shrink();
+    if (_analysisResult == null) return SizedBox.shrink();
 
     final List<Widget> details = [];
 
     if (_activeToolId == 'skin-tone') {
       details.add(_buildResultRow('Tono general:', _analysisResult!['skin_tone']));
       details.add(_buildResultRow('Subtono:', _analysisResult!['undertone']));
-      details.add(const SizedBox(height: 12));
-      details.add(const Text('Colores sugeridos:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.text)));
-      details.add(const SizedBox(height: 6));
+      details.add(SizedBox(height: 12));
+      details.add(Text('Colores sugeridos:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.text)));
+      details.add(SizedBox(height: 6));
       details.add(Wrap(
         spacing: 8,
         runSpacing: 8,
         children: ((_analysisResult!['recommended_colors'] ?? []) as List<dynamic>).map((c) {
           return Chip(
-            label: Text(c.toString(), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            label: Text(c.toString(), style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
             backgroundColor: AppTheme.primary.withOpacity(0.1),
             side: BorderSide.none,
           );
@@ -1075,18 +1075,18 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
     } else if (_activeToolId == 'hair-diagnostic') {
       details.add(_buildResultRow('Nivel de daño:', _analysisResult!['damage_level']));
       details.add(_buildResultRow('Condición general:', _analysisResult!['scalp_status']));
-      details.add(const SizedBox(height: 12));
-      details.add(const Text('Tratamientos sugeridos:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.text)));
-      details.add(const SizedBox(height: 6));
+      details.add(SizedBox(height: 12));
+      details.add(Text('Tratamientos sugeridos:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.text)));
+      details.add(SizedBox(height: 6));
       details.add(Column(
         children: ((_analysisResult!['recommended_treatments'] ?? []) as List<dynamic>).map((t) {
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 4.0),
             child: Row(
               children: [
-                const Icon(Icons.check_circle_outline, color: AppTheme.accent, size: 18),
-                const SizedBox(width: 8),
-                Expanded(child: Text(t.toString(), style: const TextStyle(fontSize: 13))),
+                Icon(Icons.check_circle_outline, color: AppTheme.accent, size: 18),
+                SizedBox(width: 8),
+                Expanded(child: Text(t.toString(), style: TextStyle(fontSize: 13))),
               ],
             ),
           );
@@ -1095,9 +1095,9 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
     } else if (_activeToolId == 'skin-texture') {
       details.add(_buildResultRow('Tipo de piel:', _analysisResult!['skin_type']));
       details.add(_buildResultRow('Estado de poros:', _analysisResult!['pore_status']));
-      details.add(const SizedBox(height: 12));
-      details.add(const Text('Rutina facial recomendada:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.text)));
-      details.add(const SizedBox(height: 6));
+      details.add(SizedBox(height: 12));
+      details.add(Text('Rutina facial recomendada:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.text)));
+      details.add(SizedBox(height: 6));
       details.add(Column(
         children: ((_analysisResult!['recommended_routine'] ?? []) as List<dynamic>).map((r) {
           return Padding(
@@ -1105,9 +1105,9 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.spa_outlined, color: AppTheme.primary, size: 18),
-                const SizedBox(width: 8),
-                Expanded(child: Text(r.toString(), style: const TextStyle(fontSize: 13))),
+                Icon(Icons.spa_outlined, color: AppTheme.primary, size: 18),
+                SizedBox(width: 8),
+                Expanded(child: Text(r.toString(), style: TextStyle(fontSize: 13))),
               ],
             ),
           );
@@ -1116,18 +1116,18 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
     } else if (_activeToolId == 'eyebrow-visagism') {
       details.add(_buildResultRow('Proporciones del rostro:', _analysisResult!['face_proportions']));
       details.add(_buildResultRow('Cejas recomendadas:', _analysisResult!['eyebrow_shape']));
-      details.add(const SizedBox(height: 12));
-      details.add(const Text('Diseños y Técnicas sugeridas:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.text)));
-      details.add(const SizedBox(height: 6));
+      details.add(SizedBox(height: 12));
+      details.add(Text('Diseños y Técnicas sugeridas:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.text)));
+      details.add(SizedBox(height: 6));
       details.add(Column(
         children: ((_analysisResult!['recommended_designs'] ?? []) as List<dynamic>).map((d) {
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 4.0),
             child: Row(
               children: [
-                const Icon(Icons.remove_red_eye_outlined, color: AppTheme.accent, size: 18),
-                const SizedBox(width: 8),
-                Expanded(child: Text(d.toString(), style: const TextStyle(fontSize: 13))),
+                Icon(Icons.remove_red_eye_outlined, color: AppTheme.accent, size: 18),
+                SizedBox(width: 8),
+                Expanded(child: Text(d.toString(), style: TextStyle(fontSize: 13))),
               ],
             ),
           );
@@ -1136,27 +1136,27 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
     } else if (_activeToolId == 'nails-style') {
       details.add(_buildResultRow('Proporción dedos:', _analysisResult!['finger_proportion']));
       details.add(_buildResultRow('Subtono mano:', _analysisResult!['skin_undertone']));
-      details.add(const SizedBox(height: 12));
-      details.add(const Text('Formas de uñas ideales:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.text)));
-      details.add(const SizedBox(height: 6));
+      details.add(SizedBox(height: 12));
+      details.add(Text('Formas de uñas ideales:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.text)));
+      details.add(SizedBox(height: 6));
       details.add(Wrap(
         spacing: 8,
         children: ((_analysisResult!['recommended_shapes'] ?? []) as List<dynamic>).map((s) {
           return Chip(
-            label: Text(s.toString(), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            label: Text(s.toString(), style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
             backgroundColor: AppTheme.accent.withOpacity(0.1),
             side: BorderSide.none,
           );
         }).toList(),
       ));
-      details.add(const SizedBox(height: 12));
-      details.add(const Text('Esmaltes recomendados:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.text)));
-      details.add(const SizedBox(height: 6));
+      details.add(SizedBox(height: 12));
+      details.add(Text('Esmaltes recomendados:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.text)));
+      details.add(SizedBox(height: 6));
       details.add(Wrap(
         spacing: 8,
         children: ((_analysisResult!['recommended_colors'] ?? []) as List<dynamic>).map((c) {
           return Chip(
-            label: Text(c.toString(), style: const TextStyle(fontSize: 12)),
+            label: Text(c.toString(), style: TextStyle(fontSize: 12)),
             backgroundColor: AppTheme.primary.withOpacity(0.1),
             side: BorderSide.none,
           );
@@ -1178,9 +1178,9 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
           children: [
             Row(
               children: [
-                const Icon(Icons.stars_rounded, color: AppTheme.primary, size: 28),
-                const SizedBox(width: 10),
-                const Text(
+                Icon(Icons.stars_rounded, color: AppTheme.primary, size: 28),
+                SizedBox(width: 10),
+                Text(
                   'Resultado del Análisis IA',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: AppTheme.text),
                 ),
@@ -1189,17 +1189,17 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
             const Divider(height: 24, thickness: 1),
             Text(
               _analysisResult!['explanation'] ?? '',
-              style: const TextStyle(fontSize: 13.5, color: Colors.black87, height: 1.45),
+              style: TextStyle(fontSize: 13.5, color: Colors.black87, height: 1.45),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             ...details,
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
                 style: OutlinedButton.styleFrom(
                   foregroundColor: const Color(0xFFC89D93),
-                  side: const BorderSide(color: Color(0xFFC89D93), width: 1.5),
+                  side: BorderSide(color: Color(0xFFC89D93), width: 1.5),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
@@ -1216,8 +1216,8 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
                     'category': category
                   });
                 },
-                icon: const Icon(Icons.map_outlined),
-                label: const Text('Ver en el mapa quién hace este estilo', style: TextStyle(fontWeight: FontWeight.bold)),
+                icon: Icon(Icons.map_outlined),
+                label: Text('Ver en el mapa quién hace este estilo', style: TextStyle(fontWeight: FontWeight.bold)),
               ),
             ),
           ],
@@ -1231,9 +1231,9 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
       padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: RichText(
         text: TextSpan(
-          style: const TextStyle(fontSize: 13.5, color: AppTheme.text),
+          style: TextStyle(fontSize: 13.5, color: AppTheme.text),
           children: [
-            TextSpan(text: '$label ', style: const TextStyle(fontWeight: FontWeight.bold)),
+            TextSpan(text: '$label ', style: TextStyle(fontWeight: FontWeight.bold)),
             TextSpan(text: value?.toString() ?? ''),
           ],
         ),
@@ -1258,7 +1258,7 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
                 'Seleccionar Foto para Análisis',
                 style: AppTheme.subtitle.copyWith(fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
@@ -1267,8 +1267,8 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
                       Navigator.pop(context);
                       _pickAnalysisImage(ImageSource.camera);
                     },
-                    icon: const Icon(Icons.camera_alt),
-                    label: const Text('Cámara'),
+                    icon: Icon(Icons.camera_alt),
+                    label: Text('Cámara'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primary,
                       foregroundColor: Colors.white,
@@ -1280,8 +1280,8 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
                       Navigator.pop(context);
                       _pickAnalysisImage(ImageSource.gallery);
                     },
-                    icon: const Icon(Icons.photo_library),
-                    label: const Text('Galería'),
+                    icon: Icon(Icons.photo_library),
+                    label: Text('Galería'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.accent,
                       foregroundColor: Colors.white,
@@ -1303,11 +1303,11 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Diseños Encontrados (Toca para ampliar):',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppTheme.text),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -1332,7 +1332,7 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
                         item['image_url'],
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
-                          return const Center(child: Icon(Icons.broken_image, size: 40));
+                          return Center(child: Icon(Icons.broken_image, size: 40));
                         },
                       ),
                       Positioned(
@@ -1346,7 +1346,7 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
                             item['title'] ?? 'Diseño',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(color: Colors.white, fontSize: 11),
+                            style: TextStyle(color: Colors.white, fontSize: 11),
                           ),
                         ),
                       )
@@ -1365,11 +1365,11 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
         padding: const EdgeInsets.symmetric(vertical: 16),
         child: Text(
           errorMsg,
-          style: const TextStyle(color: AppTheme.error, fontWeight: FontWeight.bold),
+          style: TextStyle(color: AppTheme.error, fontWeight: FontWeight.bold),
         ),
       );
     }
 
-    return const SizedBox.shrink();
+    return SizedBox.shrink();
   }
 }

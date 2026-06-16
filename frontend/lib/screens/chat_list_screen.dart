@@ -151,7 +151,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Mensajes',
           style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5),
         ),
@@ -161,25 +161,25 @@ class _ChatListScreenState extends State<ChatListScreen> {
         centerTitle: false,
       ),
       body: _isLoading
-          ? const Center(
+          ? Center(
               child: CircularProgressIndicator(color: Color(0xFFC89D93)))
           : _error != null
               ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline,
+                      Icon(Icons.error_outline,
                           color: Colors.redAccent, size: 48),
-                      const SizedBox(height: 16),
+                      SizedBox(height: 16),
                       Text('Error al cargar chats: $_error',
                           textAlign: TextAlign.center),
-                      const SizedBox(height: 16),
+                      SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: () => _fetchConversations(showLoading: true),
                         style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFC89D93),
                             foregroundColor: Colors.white),
-                        child: const Text('Reintentar'),
+                        child: Text('Reintentar'),
                       ),
                     ],
                   ),
@@ -223,7 +223,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                 ),
                               ),
                             ),
-                            title: const Text(
+                            title: Text(
                               'Aura - Asistente de IA',
                               style: TextStyle(
                                 color: Colors.white,
@@ -232,7 +232,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                 letterSpacing: -0.3,
                               ),
                             ),
-                            subtitle: const Text(
+                            subtitle: Text(
                               'Pregúntame sobre estilos de cabello, agendamiento seguro, garantías o activa el botón SOS.',
                               style: TextStyle(
                                 color: Colors.white70,
@@ -240,7 +240,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                 height: 1.3,
                               ),
                             ),
-                            trailing: const Icon(
+                            trailing: Icon(
                               Icons.arrow_forward_ios,
                               color: Colors.white,
                               size: 14,
@@ -263,7 +263,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: 8),
                       Expanded(
                         child: _conversations
                                 .where((c) =>
@@ -272,14 +272,14 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                 .isEmpty
                             ? ListView(
                                 children: [
-                                  const SizedBox(height: 60),
-                                  const Icon(
+                                  SizedBox(height: 60),
+                                  Icon(
                                     Icons.chat_bubble_outline_rounded,
                                     size: 56,
                                     color: Colors.grey,
                                   ),
-                                  const SizedBox(height: 16),
-                                  const Text(
+                                  SizedBox(height: 16),
+                                  Text(
                                     'No hay otros chats activos',
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
@@ -287,7 +287,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                       color: Colors.black54,
                                     ),
                                   ),
-                                  const SizedBox(height: 8),
+                                  SizedBox(height: 8),
                                   Padding(
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 40),
@@ -296,7 +296,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                           ? 'Cuando los clientes te envíen mensajes, aparecerán aquí.'
                                           : 'Explora prestadores y escribe para comenzar un chat.',
                                       textAlign: TextAlign.center,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                           color: Colors.grey, fontSize: 13),
                                     ),
                                   ),
@@ -311,7 +311,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                         '00000000-0000-0000-0000-000000000000')
                                     .length,
                                 separatorBuilder: (context, index) =>
-                                    const SizedBox(height: 12),
+                                    SizedBox(height: 12),
                                 itemBuilder: (context, index) {
                                   final filteredConversations = _conversations
                                       .where((c) =>
@@ -370,7 +370,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                                     ? partnerName[0]
                                                         .toUpperCase()
                                                     : 'U',
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                   fontWeight: FontWeight.bold,
                                                   color: Color(0xFFC89D93),
                                                   fontSize: 18,
@@ -444,7 +444,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                                 ),
                                                 child: Text(
                                                   '$unreadCount',
-                                                  style: const TextStyle(
+                                                  style: TextStyle(
                                                     color: Colors.white,
                                                     fontSize: 10,
                                                     fontWeight: FontWeight.bold,
@@ -452,7 +452,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                                 ),
                                               )
                                             else ...[
-                                              const SizedBox(width: 4),
+                                              SizedBox(width: 4),
                                               Container(
                                                 padding:
                                                     const EdgeInsets.symmetric(

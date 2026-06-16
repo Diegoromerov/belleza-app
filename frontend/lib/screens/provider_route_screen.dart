@@ -93,7 +93,7 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Row(
+            content: Row(
               children: [
                 Icon(Icons.play_circle_fill, color: Colors.white),
                 SizedBox(width: 8),
@@ -136,7 +136,7 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen>
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Trayecto a Domicilio',
           style: TextStyle(
               fontWeight: FontWeight.bold, letterSpacing: -0.5, fontSize: 18),
@@ -145,7 +145,7 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen>
         foregroundColor: Colors.black,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context, false),
         ),
       ),
@@ -188,7 +188,7 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen>
                         shape: BoxShape.circle,
                         boxShadow: AppTheme.softShadow,
                       ),
-                      child: const Icon(Icons.home_work,
+                      child: Icon(Icons.home_work,
                           color: AppTheme.info, size: 28),
                     ),
                   ),
@@ -250,7 +250,7 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen>
                                     color: AppTheme.primary, width: 2.5),
                                 boxShadow: AppTheme.softShadow,
                               ),
-                              child: const CircleAvatar(
+                              child: CircleAvatar(
                                 radius: 18,
                                 backgroundColor: AppTheme.background,
                                 child: Icon(Icons.content_cut,
@@ -294,9 +294,9 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen>
                       children: [
                         Row(
                           children: [
-                            const Icon(Icons.location_on,
+                            Icon(Icons.location_on,
                                 color: AppTheme.primary, size: 20),
-                            const SizedBox(width: 8),
+                            SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 serviceAddress.isNotEmpty
@@ -310,23 +310,23 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen>
                             ),
                           ],
                         ),
-                        const SizedBox(height: 10),
+                        SizedBox(height: 10),
                         Divider(
                             height: 1,
                             color: AppTheme.primary.withValues(alpha: 0.2)),
-                        const SizedBox(height: 10),
+                        SizedBox(height: 10),
                         Text(
                           'Servicio: $serviceName',
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 14,
                               color: Colors.black87),
                         ),
-                        const SizedBox(height: 4),
+                        SizedBox(height: 4),
                         Text(
                           'Cliente: $clientName',
                           style:
-                              const TextStyle(fontSize: 13, color: Colors.grey),
+                              TextStyle(fontSize: 13, color: Colors.grey),
                         ),
                       ],
                     ),
@@ -392,25 +392,25 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen>
                                 clientName.isNotEmpty
                                     ? clientName[0].toUpperCase()
                                     : 'C',
-                                style: const TextStyle(
+                                style: TextStyle(
                                     fontSize: 16,
                                     color: AppTheme.primary,
                                     fontWeight: FontWeight.bold),
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            SizedBox(width: 12),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
                                     clientName,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 16,
                                         color: Colors.black87),
                                   ),
-                                  const SizedBox(height: 2),
+                                  SizedBox(height: 2),
                                   Text(
                                     isInProgress
                                         ? '⚡ Servicio en Progreso'
@@ -442,7 +442,7 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen>
                                 ),
                                 child: Text(
                                   '$_minutesRemaining min',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                       fontSize: 14,
                                       color: AppTheme.error,
                                       fontWeight: FontWeight.bold),
@@ -471,14 +471,14 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen>
                                   );
                                 }
                               },
-                              child: const CircleAvatar(
+                              child: CircleAvatar(
                                 radius: 22,
                                 backgroundColor: AppTheme.primary,
                                 child: Icon(Icons.chat_bubble_outline_rounded,
                                     color: Colors.white, size: 18),
                               ),
                             ),
-                            const SizedBox(width: 16),
+                            SizedBox(width: 16),
                             // Botón Iniciar Servicio
                             Expanded(
                               child: isInProgress
@@ -495,7 +495,7 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen>
                                                 BorderRadius.circular(30)),
                                         elevation: 0,
                                       ),
-                                      child: const Text(
+                                      child: Text(
                                         'Volver al Panel',
                                         style: TextStyle(
                                             fontWeight: FontWeight.bold,
@@ -503,7 +503,7 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen>
                                       ),
                                     )
                                   : _isStartingService
-                                      ? const Center(
+                                      ? Center(
                                           child: CircularProgressIndicator(
                                               color: AppTheme.primary))
                                       : ElevatedButton(
@@ -518,7 +518,7 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen>
                                                     BorderRadius.circular(30)),
                                             elevation: 0,
                                           ),
-                                          child: const Text(
+                                          child: Text(
                                             'Iniciar Servicio',
                                             style: TextStyle(
                                                 fontWeight: FontWeight.bold,

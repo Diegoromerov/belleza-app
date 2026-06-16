@@ -33,8 +33,8 @@ class AISearchBar extends StatelessWidget {
             ),
             child: Row(
               children: [
-                const Icon(Icons.search, color: AppTheme.primary),
-                const SizedBox(width: 10),
+                Icon(Icons.search, color: AppTheme.primary),
+                SizedBox(width: 10),
                 Expanded(
                   child: TextField(
                     controller: controller,
@@ -52,13 +52,13 @@ class AISearchBar extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.auto_awesome, color: AppTheme.primary),
+                  icon: Icon(Icons.auto_awesome, color: AppTheme.primary),
                   onPressed: onAwesomePressed,
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           categorySelector,
         ],
       ),
