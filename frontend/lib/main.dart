@@ -1395,8 +1395,8 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
 
           // Theme Toggle Floating Button
           Positioned(
-            top: MediaQuery.of(context).padding.top + 80,
-            right: 16,
+            right: 20,
+            bottom: 376,
             child: ValueListenableBuilder<bool>(
               valueListenable: AppTheme.isModernTheme,
               builder: (context, isModern, _) {
