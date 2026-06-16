@@ -61,7 +61,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: const Row(
+        title: Row(
           children: [
             Icon(Icons.warning_amber_rounded, color: AppTheme.error, size: 28),
             SizedBox(width: 8),
@@ -69,7 +69,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
           ],
         ),
-        content: const Column(
+        content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -109,7 +109,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Volver',
+            child: Text('Volver',
                 style:
                     TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
           ),
@@ -123,7 +123,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                   borderRadius: BorderRadius.circular(30)),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             ),
-            child: const Text('Cancelar Cita',
+            child: Text('Cancelar Cita',
                 style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
@@ -137,7 +137,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Row(
+              content: Row(
                 children: [
                   Icon(Icons.check_circle, color: Colors.white),
                   SizedBox(width: 8),
@@ -203,26 +203,26 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.payment_rounded,
+              Icon(Icons.payment_rounded,
                   size: 50, color: AppTheme.primary),
-              const SizedBox(height: 20),
-              const CircularProgressIndicator(color: AppTheme.primary),
-              const SizedBox(height: 20),
-              const Text(
+              SizedBox(height: 20),
+               CircularProgressIndicator(color: AppTheme.primary),
+              SizedBox(height: 20),
+              Text(
                 'Procesando Pago Seguro Wompi',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               Text(
                 'Propina: \$${amount.toStringAsFixed(0)} COP',
-                style: const TextStyle(
+                style: TextStyle(
                     color: Colors.grey,
                     fontSize: 13,
                     fontWeight: FontWeight.w600),
               ),
-              const SizedBox(height: 12),
-              const Text(
+              SizedBox(height: 12),
+              Text(
                 'Simulando pasarela Wompi...',
                 style: TextStyle(
                     fontStyle: FontStyle.italic,
@@ -313,8 +313,8 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(emoji, style: const TextStyle(fontSize: 18)),
-                      const SizedBox(height: 4),
+                      Text(emoji, style: TextStyle(fontSize: 18)),
+                      SizedBox(height: 4),
                       Text(
                         label,
                         style: TextStyle(
@@ -351,8 +351,8 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                         ),
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    const Text(
+                    SizedBox(height: 16),
+                    Text(
                       'Calificar tu servicio',
                       style: TextStyle(
                         fontSize: 20,
@@ -362,13 +362,13 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 6),
+                    SizedBox(height: 6),
                     Text(
                       'Cuéntanos tu experiencia con $providerName',
                       style: TextStyle(color: Colors.grey[600], fontSize: 14),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 20),
+                    SizedBox(height: 20),
 
                     // Selector de estrellas con micro-animaciones
                     Row(
@@ -386,17 +386,17 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                         );
                       }),
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
 
                     // Comentario escrito
                     TextField(
                       controller: commentController,
                       maxLines: 3,
-                      style: const TextStyle(fontSize: 14),
+                      style: TextStyle(fontSize: 14),
                       decoration: InputDecoration(
                         hintText: 'Escribe tu comentario aquí (opcional)...',
                         hintStyle:
-                            const TextStyle(color: Colors.grey, fontSize: 14),
+                            TextStyle(color: Colors.grey, fontSize: 14),
                         border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(24),
                             borderSide: BorderSide.none),
@@ -406,7 +406,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(24),
-                          borderSide: const BorderSide(
+                          borderSide: BorderSide(
                               color: AppTheme.primary, width: 1.5),
                         ),
                         filled: true,
@@ -415,17 +415,17 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                       ),
                       onChanged: (v) => reviewComment = v,
                     ),
-                    const SizedBox(height: 20),
+                    SizedBox(height: 20),
 
                     // Módulo de Propinas como tarjetas con emojis
-                    const Text(
+                    Text(
                       '¿Deseas agregar una propina?',
                       style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                           color: Colors.black87),
                     ),
-                    const SizedBox(height: 10),
+                    SizedBox(height: 10),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -437,20 +437,20 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                       ],
                     ),
                     if (showCustomTipField) ...[
-                      const SizedBox(height: 12),
+                      SizedBox(height: 12),
                       TextField(
                         controller: customTipController,
                         keyboardType: TextInputType.number,
-                        style: const TextStyle(fontSize: 14),
+                        style: TextStyle(fontSize: 14),
                         decoration: InputDecoration(
                           labelText: 'Valor de propina personalizado (\$)',
-                          labelStyle: const TextStyle(fontSize: 12),
+                          labelStyle: TextStyle(fontSize: 12),
                           prefixText: '\$ ',
                           border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(16)),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
-                            borderSide: const BorderSide(
+                            borderSide: BorderSide(
                                 color: AppTheme.primary, width: 1.5),
                           ),
                         ),
@@ -463,7 +463,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                       ),
                     ],
 
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     // Desglose de Pago
                     Container(
                       padding: const EdgeInsets.all(16),
@@ -477,24 +477,24 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text('Servicio:',
+                              Text('Servicio:',
                                   style: TextStyle(
                                       fontSize: 12, color: Colors.black54)),
                               Text('\$${totalAmount.toStringAsFixed(0)}',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.bold)),
                             ],
                           ),
-                          const SizedBox(height: 6),
+                          SizedBox(height: 6),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text('Propina:',
+                              Text('Propina:',
                                   style: TextStyle(
                                       fontSize: 12, color: Colors.black54)),
                               Text('\$${tipAmount.toStringAsFixed(0)}',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.bold,
                                       color: AppTheme.success)),
@@ -504,13 +504,13 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text('Total a pagar:',
+                              Text('Total a pagar:',
                                   style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.bold)),
                               Text(
                                   '\$${(totalAmount + tipAmount).toStringAsFixed(0)}',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.bold,
                                       color: AppTheme.primary)),
@@ -519,7 +519,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                         ],
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: 24),
 
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
@@ -542,11 +542,11 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                               booking['id'], ratingSelected, reviewComment);
                         }
                       },
-                      child: const Text('Enviar Calificación',
+                      child: Text('Enviar Calificación',
                           style: TextStyle(
                               fontSize: 16, fontWeight: FontWeight.bold)),
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: 24),
                   ],
                 ),
               ),
@@ -666,22 +666,22 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.calendar_today_outlined,
+            Icon(Icons.calendar_today_outlined,
                 size: 64, color: AppTheme.primary),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             Text(
               message,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 15,
                   color: Colors.grey,
                   fontWeight: FontWeight.w500),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             ElevatedButton.icon(
               onPressed: () => Navigator.pop(context),
-              icon: const Icon(Icons.search),
-              label: const Text('Explorar Prestadores'),
+              icon: Icon(Icons.search),
+              label: Text('Explorar Prestadores'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primary,
                 foregroundColor: Colors.white,
@@ -736,33 +736,33 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                           providerName.isNotEmpty
                               ? providerName[0].toUpperCase()
                               : 'P',
-                          style: const TextStyle(
+                          style: TextStyle(
                               color: AppTheme.primary,
                               fontWeight: FontWeight.bold,
                               fontSize: 18),
                         )
                       : null,
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         providerName,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
                             letterSpacing: -0.3),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 2),
+                      SizedBox(height: 2),
                       Row(
                         children: [
                           Icon(Icons.access_time_filled_rounded,
                               size: 14, color: Colors.grey[500]),
-                          const SizedBox(width: 4),
+                          SizedBox(width: 4),
                           Text(
                             _formatDateTime(scheduledAt),
                             style: TextStyle(
@@ -801,12 +801,12 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                     children: [
                       Text(
                         serviceName,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontWeight: FontWeight.w600, fontSize: 15),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4),
                       Text(
                         'Duración: ${booking['service_duration']} min',
                         style: TextStyle(color: Colors.grey[500], fontSize: 13),
@@ -816,7 +816,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                 ),
                 Text(
                   '\$${totalAmount.toStringAsFixed(0)}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: AppTheme.primary,
@@ -826,7 +826,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
             ),
             if (booking['service_address'] != null &&
                 booking['service_address'].toString().isNotEmpty) ...[
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
@@ -842,7 +842,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
             ],
             if (booking['notes'] != null &&
                 booking['notes'].toString().isNotEmpty) ...[
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
@@ -862,7 +862,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
             // ─── OTP: Cuando el prestador marcó el servicio completado ───
             if (status.toUpperCase() == 'ESPERANDO_OTP' ||
                 status.toUpperCase() == 'FINALIZADA_PRESTADOR') ...[
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
@@ -883,7 +883,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                 ),
                 child: Column(
                   children: [
-                    const Row(
+                    Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(Icons.verified_rounded,
@@ -898,13 +898,13 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    const Text(
+                    SizedBox(height: 8),
+                    Text(
                       'El prestador completó el servicio. Ingresa tu código de 6 dígitos para confirmar y liberar el pago.',
                       style: TextStyle(color: Colors.white70, fontSize: 13),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 14),
+                    SizedBox(height: 14),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
@@ -919,9 +919,9 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                             ),
                           ),
                         ).then((_) => _loadBookings()),
-                        icon: const Icon(Icons.lock_open_rounded,
+                        icon: Icon(Icons.lock_open_rounded,
                             color: Color(0xFF6B21A8)),
-                        label: const Text(
+                        label: Text(
                           'Ingresar código de confirmación',
                           style: TextStyle(
                               color: Color(0xFF6B21A8),
@@ -942,7 +942,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
             ],
             // ─── Estado en disputa ───
             if (status.toUpperCase() == 'EN_DISPUTA') ...[
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(14),
@@ -951,7 +951,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: const Color(0xFFFED7AA)),
                 ),
-                child: const Row(
+                child: Row(
                   children: [
                     Icon(Icons.gavel, color: Color(0xFFEA580C), size: 20),
                     SizedBox(width: 10),
@@ -967,7 +967,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
               ),
             ],
             if (reviewData != null) ...[
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
@@ -992,8 +992,8 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                             );
                           }),
                         ),
-                        const SizedBox(width: 8),
-                        const Text(
+                        SizedBox(width: 8),
+                        Text(
                           'Tu calificación',
                           style: TextStyle(
                               fontSize: 12,
@@ -1004,7 +1004,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                     ),
                     if (reviewData['comment'] != null &&
                         reviewData['comment'].toString().isNotEmpty) ...[
-                      const SizedBox(height: 6),
+                      SizedBox(height: 6),
                       Text(
                         '"${reviewData['comment']}"',
                         style: TextStyle(
@@ -1018,7 +1018,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
             if (status.toUpperCase() == 'CONFIRMADA' ||
                 status.toUpperCase() == 'CONFIRMED' ||
                 status.toUpperCase() == 'EN_PROGRESO') ...[
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
@@ -1029,8 +1029,8 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                       arguments: booking,
                     );
                   },
-                  icon: const Icon(Icons.location_on, size: 18),
-                  label: const Text('📍 Ver Seguimiento en Vivo'),
+                  icon: Icon(Icons.location_on, size: 18),
+                  label: Text('📍 Ver Seguimiento en Vivo'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primary,
                     foregroundColor: Colors.white,
@@ -1047,17 +1047,17 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                     status.toLowerCase() == 'pendiente_pago' ||
                     status.toLowerCase() == 'confirmed' ||
                     status.toLowerCase() == 'confirmada')) ...[
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
                   onPressed: () =>
                       _confirmCancelBooking(booking['id'], providerName),
-                  icon: const Icon(Icons.cancel_outlined, size: 18),
-                  label: const Text('Cancelar Cita'),
+                  icon: Icon(Icons.cancel_outlined, size: 18),
+                  label: Text('Cancelar Cita'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppTheme.error,
-                    side: const BorderSide(color: AppTheme.errorBg),
+                    side: BorderSide(color: AppTheme.errorBg),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30)),
                     padding: const EdgeInsets.symmetric(vertical: 12),
@@ -1066,13 +1066,13 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
               ),
             ],
             if (!isUpcoming && status == 'completed' && !isReviewed) ...[
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: () => _showRatingSheet(booking),
-                  icon: const Icon(Icons.star_outline_rounded, size: 18),
-                  label: const Text('Calificar Servicio'),
+                  icon: Icon(Icons.star_outline_rounded, size: 18),
+                  label: Text('Calificar Servicio'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primary,
                     foregroundColor: Colors.white,
@@ -1095,14 +1095,14 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
     if (_isLoading && _bookings.isEmpty) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text('Mis Citas',
+          title: Text('Mis Citas',
               style:
                   TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5)),
           backgroundColor: Colors.white,
           foregroundColor: Colors.black,
           elevation: 0,
         ),
-        body: const Center(
+        body: Center(
             child: CircularProgressIndicator(color: AppTheme.primary)),
       );
     }
@@ -1110,7 +1110,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
     if (_error != null && _bookings.isEmpty) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text('Mis Citas',
+          title: Text('Mis Citas',
               style:
                   TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5)),
           backgroundColor: Colors.white,
@@ -1121,17 +1121,17 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.wifi_off_rounded,
+              Icon(Icons.wifi_off_rounded,
                   color: AppTheme.error, size: 48),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               Text('Error de conexión:\n$_error',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.grey)),
-              const SizedBox(height: 16),
+                  style: TextStyle(color: Colors.grey)),
+              SizedBox(height: 16),
               ElevatedButton.icon(
                 onPressed: _loadBookings,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Reintentar'),
+                icon: Icon(Icons.refresh),
+                label: Text('Reintentar'),
                 style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primary,
                     foregroundColor: Colors.white),
@@ -1163,14 +1163,14 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text('Mis Citas',
+        title: Text('Mis Citas',
             style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5)),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: Icon(Icons.refresh),
             tooltip: 'Actualizar',
             onPressed: _loadBookings,
           ),
@@ -1226,7 +1226,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
           if (_isLoading)
             Container(
               color: const Color(0x1E000000),
-              child: const Center(
+              child: Center(
                 child: CircularProgressIndicator(color: AppTheme.primary),
               ),
             ),
@@ -1248,23 +1248,23 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                           child: child,
                         );
                       },
-                      child: const CircleAvatar(
+                      child: CircleAvatar(
                         radius: 54,
                         backgroundColor: AppTheme.successBg,
                         child: Icon(Icons.check_circle,
                             size: 84, color: AppTheme.success),
                       ),
                     ),
-                    const SizedBox(height: 24),
-                    const Text(
+                    SizedBox(height: 24),
+                    Text(
                       '¡Calificación Exitosa!',
                       style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
                           color: Colors.black87),
                     ),
-                    const SizedBox(height: 12),
-                    const Padding(
+                    SizedBox(height: 12),
+                    Padding(
                       padding: EdgeInsets.symmetric(horizontal: 40),
                       child: Text(
                         'Tu reseña y propina han sido procesadas correctamente. ¡Muchas gracias por tu opinión!',
@@ -1273,7 +1273,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                             fontSize: 14, color: Colors.black54, height: 1.4),
                       ),
                     ),
-                    const SizedBox(height: 32),
+                    SizedBox(height: 32),
                     ElevatedButton(
                       onPressed: () {
                         setState(() {
@@ -1289,7 +1289,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                             horizontal: 44, vertical: 16),
                         elevation: 0,
                       ),
-                      child: const Text('Entendido',
+                      child: Text('Entendido',
                           style: TextStyle(
                               fontWeight: FontWeight.bold, fontSize: 16)),
                     ),

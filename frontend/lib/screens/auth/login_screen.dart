@@ -187,7 +187,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       fit: BoxFit.contain,
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
 
                   // Tarjeta Glassmorphic
                   ClipRRect(
@@ -210,7 +210,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              const SizedBox(height: 8),
+                              SizedBox(height: 8),
 
                               // Email Input
                               TextFormField(
@@ -223,9 +223,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                                 validator: (v) =>
                                     v!.isEmpty ? 'Ingresa tu correo' : null,
-                                style: const TextStyle(fontSize: 15),
+                                style: TextStyle(fontSize: 15),
                               ),
-                              const SizedBox(height: 16),
+                              SizedBox(height: 16),
 
                               // Password Input
                               TextFormField(
@@ -250,9 +250,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                 validator: (v) => v!.length < 6
                                     ? 'Mínimo 6 caracteres'
                                     : null,
-                                style: const TextStyle(fontSize: 15),
+                                style: TextStyle(fontSize: 15),
                               ),
-                              const SizedBox(height: 24),
+                              SizedBox(height: 24),
 
                               if (_error != null)
                                 Padding(
@@ -260,7 +260,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   child: Text(
                                     _error!,
                                     textAlign: TextAlign.center,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                         color: Colors.redAccent,
                                         fontWeight: FontWeight.w600,
                                         fontSize: 13),
@@ -283,14 +283,14 @@ class _LoginScreenState extends State<LoginScreen> {
                                   shadowColor: const Color(0x3FC89D93),
                                 ),
                                 child: _isLoading
-                                    ? const SizedBox(
+                                    ? SizedBox(
                                         width: 24,
                                         height: 24,
                                         child: CircularProgressIndicator(
                                             color: Colors.white,
                                             strokeWidth: 2.5),
                                       )
-                                    : const Text(
+                                    : Text(
                                         'Entrar con Correo',
                                         style: TextStyle(
                                             fontSize: 16,
@@ -299,7 +299,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ),
                               ),
 
-                              const SizedBox(height: 24),
+                              SizedBox(height: 24),
 
                               // Separador para Social Logins
                               Row(
@@ -308,7 +308,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       child: Divider(
                                           color: const Color(0xFFE8D7D3)
                                               .withOpacity(0.6))),
-                                  const Padding(
+                                  Padding(
                                     padding:
                                         EdgeInsets.symmetric(horizontal: 16),
                                     child: Text(
@@ -325,7 +325,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                               .withOpacity(0.6))),
                                 ],
                               ),
-                              const SizedBox(height: 20),
+                              SizedBox(height: 20),
 
                               // Social Buttons en Igualdad de Condiciones (Google, Outlook, Apple)
                               Row(
@@ -333,7 +333,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     MainAxisAlignment.spaceEvenly,
                                 children: [
                                   _buildSocialButton(
-                                    icon: const Icon(Icons.g_mobiledata,
+                                    icon: Icon(Icons.g_mobiledata,
                                         color: Color(0xFFD32F2F), size: 36),
                                     onTap: _isLoading
                                         ? null
@@ -341,7 +341,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     label: 'Google',
                                   ),
                                   _buildSocialButton(
-                                    icon: const Icon(Icons.mail_outline,
+                                    icon: Icon(Icons.mail_outline,
                                         color: Color(0xFF1976D2), size: 24),
                                     onTap: _isLoading
                                         ? null
@@ -349,7 +349,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     label: 'Outlook',
                                   ),
                                   _buildSocialButton(
-                                    icon: const Icon(Icons.apple,
+                                    icon: Icon(Icons.apple,
                                         color: Colors.black87, size: 28),
                                     onTap: _isLoading
                                         ? null
@@ -364,7 +364,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 28),
+                  SizedBox(height: 28),
 
                   // Link de Registro
                   TextButton(

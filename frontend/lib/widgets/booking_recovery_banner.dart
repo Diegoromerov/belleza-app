@@ -32,12 +32,12 @@ class BookingRecoveryBanner extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 20),
-              const SizedBox(width: 8),
+              Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 20),
+              SizedBox(width: 8),
               Expanded(
                 child: Text(
                   'Pago pendiente: $serviceName',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
                     color: Colors.black87,
@@ -47,17 +47,17 @@ class BookingRecoveryBanner extends StatelessWidget {
               IconButton(
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
-                icon: const Icon(Icons.close, color: Colors.grey, size: 18),
+                icon: Icon(Icons.close, color: Colors.grey, size: 18),
                 onPressed: onClosePressed,
               ),
             ],
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Text(
             'Tu cita con $providerName no está confirmada aún.',
-            style: const TextStyle(fontSize: 12, color: Colors.black54),
+            style: TextStyle(fontSize: 12, color: Colors.black54),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF5C288D),
@@ -67,10 +67,10 @@ class BookingRecoveryBanner extends StatelessWidget {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             onPressed: onPayPressed,
-            icon: const Icon(Icons.payment, size: 16),
+            icon: Icon(Icons.payment, size: 16),
             label: Text(
               'Pagar \$${price.toStringAsFixed(0)} COP con Wompi',
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
             ),
           ),
         ],
