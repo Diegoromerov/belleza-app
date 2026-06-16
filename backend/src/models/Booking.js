@@ -71,6 +71,11 @@ const Booking = sequelize.define('Booking', {
     type: DataTypes.STRING(10),
     allowNull: true,
     field: 'pin_verificacion'
+  },
+  productos_adicionales: {
+    type: DataTypes.JSONB,
+    allowNull: true,
+    field: 'productos_adicionales'
   }
 }, {
   tableName: 'bookings',
