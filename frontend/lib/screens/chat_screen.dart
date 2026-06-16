@@ -480,6 +480,18 @@ class _ChatScreenState extends State<ChatScreen> {
                                 final isRec =
                                     text.contains('Estilo Recomendado:') ||
                                         text.contains('[SIMULACIÓN IA]');
+                                
+                                // Parse and clean redirect metadata
+                                String cleanText = text;
+                                String? redirectToolId;
+                                if (text.contains('Redirección Módulo Ideas:')) {
+                                  final reg = RegExp(r'Redirección Módulo Ideas:\s*([\w\-]+)');
+                                  final match = reg.firstMatch(text);
+                                  if (match != null) {
+                                    redirectToolId = match.group(1);
+                                    cleanText = text.replaceAll(reg, '').trim();
+                                  }
+                                }
 
                                 return Container(
                                   margin: const EdgeInsets.only(bottom: 16),
@@ -552,13 +564,42 @@ class _ChatScreenState extends State<ChatScreen> {
                                                   const SizedBox(height: 4),
                                                 ],
                                                 Text(
-                                                  text,
+                                                  cleanText,
                                                   style: const TextStyle(
                                                     color: Colors.black87,
                                                     fontSize: 14.5,
                                                     height: 1.35,
                                                   ),
                                                 ),
+                                                if (redirectToolId != null) ...[
+                                                  const SizedBox(height: 10),
+                                                  SizedBox(
+                                                    width: double.infinity,
+                                                    child: OutlinedButton.icon(
+                                                      style: OutlinedButton.styleFrom(
+                                                        side: const BorderSide(color: Color(0xFFC89D93), width: 1.5),
+                                                        foregroundColor: const Color(0xFFC89D93),
+                                                        shape: RoundedRectangleBorder(
+                                                          borderRadius: BorderRadius.circular(20),
+                                                        ),
+                                                        padding: const EdgeInsets.symmetric(vertical: 8),
+                                                      ),
+                                                      icon: const Icon(Icons.auto_awesome, size: 14),
+                                                      label: const Text(
+                                                        'Abrir herramienta en Ideas IA',
+                                                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                                                      ),
+                                                      onPressed: () {
+                                                        // Navigate to /ideas using arguments to pre-load a tool
+                                                        Navigator.pushNamed(
+                                                          context,
+                                                          '/ideas',
+                                                          arguments: {'toolId': redirectToolId},
+                                                        );
+                                                      },
+                                                    ),
+                                                  ),
+                                                ],
                                                 if (isRec) ...[
                                                   const SizedBox(height: 12),
                                                   SizedBox(

@@ -347,8 +347,26 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
 
 
 
+  bool _argsChecked = false;
+
   @override
   Widget build(BuildContext context) {
+    // Check if arguments contain a pre-loaded toolId from the chat assistant
+    if (!_argsChecked) {
+      _argsChecked = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        try {
+          final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+          if (args != null && args['toolId'] != null) {
+            setState(() {
+              _activeToolId = args['toolId'] as String;
+            });
+            _resetAnalysisState();
+          }
+        } catch (_) {}
+      });
+    }
+
     String screenTitle = 'Ideas y Visajismo IA';
     if (_activeToolId != null) {
       if (_activeToolId == 'nails-classic') screenTitle = 'Buscador de Uñas';
