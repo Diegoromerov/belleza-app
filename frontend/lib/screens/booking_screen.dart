@@ -35,6 +35,11 @@ class _BookingScreenState extends State<BookingScreen> {
   bool _isLoadingSlots = false;
   String? _selectedSlotTime;
 
+  // products variables
+  List<Map<String, dynamic>> _recommendedProducts = [];
+  bool _isLoadingProducts = false;
+  Map<String, int> _selectedProductsQty = {};
+
   @override
   void initState() {
     super.initState();
@@ -57,6 +62,59 @@ class _BookingScreenState extends State<BookingScreen> {
       selectedServiceId = widget.services.first['id']?.toString();
     }
     _loadSlots();
+    _loadRecommendedProducts();
+  }
+
+  String _mapServiceToTag(String category, String name) {
+    final cat = category.toLowerCase();
+    final nm = name.toLowerCase();
+
+    if (nm.contains('ceja') || nm.contains('eyebrow') || cat.contains('eyebrow')) {
+      return 'eyebrow-visagism';
+    }
+    if (nm.contains('facial') || nm.contains('limpieza') || nm.contains('skin') || cat.contains('skin') || cat.contains('facial')) {
+      return 'skin-texture';
+    }
+    if (cat.contains('nails') || cat.contains('uñas') || nm.contains('manicura') || nm.contains('pedicura') || nm.contains('nails')) {
+      return 'nails-classic';
+    }
+    if (cat.contains('hair') || cat.contains('cabello') || nm.contains('corte') || nm.contains('balayage') || nm.contains('peinado') || nm.contains('tinte')) {
+      return 'hair-diagnostic';
+    }
+
+    return 'nails-classic';
+  }
+
+  Future<void> _loadRecommendedProducts() async {
+    if (selectedServiceId == null) return;
+    final selectedService = widget.services.firstWhere(
+      (s) => s['id']?.toString() == selectedServiceId,
+      orElse: () => <String, dynamic>{},
+    );
+    if (selectedService.isEmpty) return;
+
+    final name = selectedService['name']?.toString() ?? '';
+    final category = selectedService['category']?.toString() ?? '';
+    final tag = _mapServiceToTag(category, name);
+
+    setState(() {
+      _isLoadingProducts = true;
+      _recommendedProducts = [];
+      _selectedProductsQty = {};
+    });
+
+    try {
+      final products = await ApiService.fetchProductsByTag(tag);
+      setState(() {
+        _recommendedProducts = products;
+        _isLoadingProducts = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoadingProducts = false;
+      });
+      debugPrint('Error loading products: $e');
+    }
   }
 
   Future<void> _loadSlots() async {
@@ -135,6 +193,14 @@ class _BookingScreenState extends State<BookingScreen> {
       minute,
     );
 
+    final List<Map<String, dynamic>> productosAdicionales = [];
+    _selectedProductsQty.forEach((id, qty) {
+      productosAdicionales.add({
+        'id': int.parse(id),
+        'cantidad': qty,
+      });
+    });
+
     setState(() => isLoading = true);
     try {
       final res = await ApiService.createBooking(
@@ -143,6 +209,7 @@ class _BookingScreenState extends State<BookingScreen> {
         scheduledAt: scheduledDateTime.toIso8601String(),
         serviceAddress: serviceAddress.trim(),
         notes: notes.isNotEmpty ? notes : null,
+        productosAdicionales: productosAdicionales.isNotEmpty ? productosAdicionales : null,
       );
 
       final bookingId = res['booking_id']?.toString();
@@ -156,21 +223,31 @@ class _BookingScreenState extends State<BookingScreen> {
       );
       final serviceName =
           selectedService['name']?.toString() ?? 'Servicio de Belleza';
-      final price = _parseDouble(selectedService['price']);
+      final servicePrice = _parseDouble(selectedService['price']);
+
+      double totalBookingPrice = servicePrice;
+      for (final pId in _selectedProductsQty.keys) {
+        final prod = _recommendedProducts.firstWhere((p) => p['id'].toString() == pId, orElse: () => <String, dynamic>{});
+        if (prod.isNotEmpty) {
+          final prodPrice = _parseDouble(prod['precio']);
+          final qty = _selectedProductsQty[pId] ?? 0;
+          totalBookingPrice += prodPrice * qty;
+        }
+      }
 
       if (mounted) {
         setState(() => isLoading = false);
         BookingRecoveryService.savePendingBooking(
           bookingId: bookingId,
           serviceName: serviceName,
-          price: price,
+          price: totalBookingPrice,
           providerName: widget.providerName,
         );
         _showWompiCheckoutSheet(
           context: context,
           bookingId: bookingId,
           serviceName: serviceName,
-          price: price,
+          price: totalBookingPrice,
           providerName: widget.providerName,
         );
       }
@@ -231,12 +308,235 @@ class _BookingScreenState extends State<BookingScreen> {
                   _buildSectionTitle('5. Notas adicionales (opcional)'),
                   const SizedBox(height: 12),
                   _buildNotesField(),
+                  const SizedBox(height: 24),
+                  _buildSectionTitle('6. Añadir productos a domicilio (Consignación Local)'),
+                  const SizedBox(height: 12),
+                  _buildProductsSelector(),
                   const SizedBox(height: 36),
                   _buildConfirmButton(),
                   const SizedBox(height: 40),
                 ],
               ),
             ),
+    );
+  }
+
+  Widget _buildProductsSelector() {
+    if (_isLoadingProducts) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(16.0),
+          child: CircularProgressIndicator(color: AppTheme.primary),
+        ),
+      );
+    }
+    if (_recommendedProducts.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8.0),
+        child: Text('No hay productos sugeridos para este servicio.',
+            style: TextStyle(color: Colors.grey, fontSize: 13)),
+      );
+    }
+
+    return SizedBox(
+      height: 190,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        itemCount: _recommendedProducts.length,
+        itemBuilder: (context, index) {
+          final prod = _recommendedProducts[index];
+          final id = prod['id'].toString();
+          final nombre = prod['nombre']?.toString() ?? 'Producto';
+          final precio = _parseDouble(prod['precio']);
+          final image = prod['imagen_url']?.toString() ?? '';
+          final stock = int.tryParse(prod['stock']?.toString() ?? '0') ?? 0;
+          final qty = _selectedProductsQty[id] ?? 0;
+
+          return Container(
+            width: 140,
+            margin: const EdgeInsets.only(right: 12, bottom: 4),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: qty > 0 ? AppTheme.primary : const Color(0xFFF3EAE8),
+                width: qty > 0 ? 2 : 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                )
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        if (image.isNotEmpty)
+                          Image.network(
+                            image,
+                            fit: BoxFit.cover,
+                            errorBuilder: (c, o, s) => Container(
+                              color: const Color(0xFFF5EBE6),
+                              child: const Icon(Icons.shopping_bag_outlined,
+                                  color: AppTheme.primary),
+                            ),
+                          )
+                        else
+                          Container(
+                            color: const Color(0xFFF5EBE6),
+                            child: const Icon(Icons.shopping_bag_outlined,
+                                color: AppTheme.primary),
+                          ),
+                        if (qty > 0)
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primary,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                '$qty',
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          nombre,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '\$${precio.toStringAsFixed(0)} COP',
+                          style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.primary),
+                        ),
+                        const SizedBox(height: 6),
+                        if (stock <= 0)
+                          const Text(
+                            'Agotado',
+                            style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.red,
+                                fontWeight: FontWeight.bold),
+                          )
+                        else if (qty == 0)
+                          SizedBox(
+                            width: double.infinity,
+                            height: 24,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFF5EBE6),
+                                foregroundColor: AppTheme.primary,
+                                elevation: 0,
+                                padding: EdgeInsets.zero,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12)),
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _selectedProductsQty[id] = 1;
+                                });
+                              },
+                              child: const Text('Agregar',
+                                  style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold)),
+                            ),
+                          )
+                        else
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    if (qty > 1) {
+                                      _selectedProductsQty[id] = qty - 1;
+                                    } else {
+                                      _selectedProductsQty.remove(id);
+                                    }
+                                  });
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.all(2),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[200],
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(Icons.remove,
+                                      size: 14, color: Colors.black87),
+                                ),
+                              ),
+                              Text('$qty',
+                                  style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold)),
+                              GestureDetector(
+                                onTap: () {
+                                  if (qty < stock) {
+                                    setState(() {
+                                      _selectedProductsQty[id] = qty + 1;
+                                    });
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                          content: Text(
+                                              'Solo hay $stock unidades disponibles')),
+                                    );
+                                  }
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.all(2),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.primary.withOpacity(0.1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(Icons.add,
+                                      size: 14, color: AppTheme.primary),
+                                ),
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -268,6 +568,7 @@ class _BookingScreenState extends State<BookingScreen> {
               selectedServiceId = id;
             });
             _loadSlots();
+            _loadRecommendedProducts();
           },
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),

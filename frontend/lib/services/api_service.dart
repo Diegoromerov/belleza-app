@@ -202,6 +202,22 @@ class ApiService {
     throw Exception('Error ${response.statusCode}');
   }
 
+  static Future<List<Map<String, dynamic>>> fetchProductsByTag(String tag) async {
+    await ensureBaseUrl();
+    final headers = await _getAuthHeaders();
+    final response = await http
+        .get(
+          Uri.parse('$_baseUrl$_apiPath/products?tag=$tag'),
+          headers: headers,
+        )
+        .timeout(const Duration(seconds: 30));
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return List<Map<String, dynamic>>.from(data['data']);
+    }
+    throw Exception('Error al obtener productos');
+  }
+
   static Future<Map<String, dynamic>> fetchProviderDetails(
       String providerId) async {
     await ensureBaseUrl();
@@ -224,6 +240,7 @@ class ApiService {
     required String scheduledAt,
     required String serviceAddress,
     String? notes,
+    List<Map<String, dynamic>>? productosAdicionales,
   }) async {
     final headers = await _getAuthHeaders();
     final response = await http
@@ -236,6 +253,7 @@ class ApiService {
             'scheduled_at': scheduledAt,
             'service_address': serviceAddress,
             'notes': notes,
+            'productos_adicionales': productosAdicionales,
           }),
         )
         .timeout(const Duration(seconds: 30));

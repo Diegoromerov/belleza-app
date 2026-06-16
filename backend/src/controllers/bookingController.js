@@ -29,7 +29,7 @@ const verifyWompiSignature = (req) => {
 exports.createBooking = async (req, res) => {
   try {
     const clientId = req.user.id;
-    const { provider_id, service_id, scheduled_at, service_address, notes } = req.body;
+    const { provider_id, service_id, scheduled_at, service_address, notes, productos_adicionales } = req.body;
 
     if (!provider_id || !service_id || !scheduled_at) {
       return res.status(400).json({ error: 'Faltan campos requeridos' });
@@ -42,7 +42,41 @@ exports.createBooking = async (req, res) => {
 
     const price = parseFloat(service.price);
     const durationMinutes = parseInt(service.duration_minutes);
-    const total_amount = price;
+    let total_amount = price;
+    let cleanProductsList = [];
+
+    // Validar y acumular productos adicionales
+    if (productos_adicionales && Array.isArray(productos_adicionales) && productos_adicionales.length > 0) {
+      for (const prodItem of productos_adicionales) {
+        const { id, cantidad } = prodItem;
+        const qty = parseInt(cantidad) || 1;
+
+        const prodQuery = 'SELECT id, nombre, precio, stock FROM productos WHERE id = :productId;';
+        const prodResults = await sequelize.query(prodQuery, {
+          replacements: { productId: id },
+          type: sequelize.QueryTypes.SELECT
+        });
+
+        if (prodResults.length === 0) {
+          return res.status(404).json({ error: `Producto con ID ${id} no encontrado` });
+        }
+
+        const dbProd = prodResults[0];
+        if (parseInt(dbProd.stock) < qty) {
+          return res.status(400).json({ error: `Stock insuficiente para el producto: ${dbProd.nombre}` });
+        }
+
+        const prodPrice = parseFloat(dbProd.precio);
+        total_amount += prodPrice * qty;
+
+        cleanProductsList.push({
+          id: dbProd.id,
+          nombre: dbProd.nombre,
+          precio: prodPrice,
+          cantidad: qty
+        });
+      }
+    }
 
     // 🔸 Validación de solapamiento de horarios (Collision Check)
     const newStart = new Date(scheduled_at);
@@ -86,10 +120,11 @@ exports.createBooking = async (req, res) => {
       service_address: service_address || null,
       notes: notes || null,
       estado: 'PENDIENTE_PAGO',
-      pin_verificacion: pin
+      pin_verificacion: pin,
+      productos_adicionales: cleanProductsList.length > 0 ? cleanProductsList : []
     });
 
-    console.log(`📅 Nueva cita creada: ${newBooking.id} para usuario ${clientId} con PIN ${pin}`);
+    console.log(`📅 Nueva cita creada: ${newBooking.id} para usuario ${clientId} con PIN ${pin} y ${cleanProductsList.length} productos.`);
 
     res.json({
       success: true,
@@ -339,6 +374,20 @@ exports.payBooking = async (req, res) => {
       booking.payment_status = 'paid';
       await booking.save({ transaction: t });
 
+      // Decrementar stock de productos
+      if (booking.productos_adicionales && Array.isArray(booking.productos_adicionales)) {
+        for (const item of booking.productos_adicionales) {
+          await sequelize.query(
+            'UPDATE productos SET stock = stock - :qty WHERE id = :productId AND stock >= :qty;',
+            {
+              replacements: { qty: item.cantidad, productId: item.id },
+              type: sequelize.QueryTypes.UPDATE,
+              transaction: t
+            }
+          );
+        }
+      }
+
       // 2. Registrar la transacción (usando ON CONFLICT / upsert equivalente en Sequelize)
       const [tx, created] = await Transaction.findOrCreate({
         where: { booking_id: bookingId },
@@ -406,6 +455,21 @@ exports.wompiWebhook = async (req, res) => {
             { estado: 'CONFIRMADA', payment_status: 'paid' },
             { where: { id: bookingId }, transaction: t }
           );
+
+          // Decrementar stock de productos
+          const booking = await Booking.findByPk(bookingId, { transaction: t });
+          if (booking && booking.productos_adicionales && Array.isArray(booking.productos_adicionales)) {
+            for (const item of booking.productos_adicionales) {
+              await sequelize.query(
+                'UPDATE productos SET stock = stock - :qty WHERE id = :productId AND stock >= :qty;',
+                {
+                  replacements: { qty: item.cantidad, productId: item.id },
+                  type: sequelize.QueryTypes.UPDATE,
+                  transaction: t
+                }
+              );
+            }
+          }
 
           // Registrar la transacción
           const [trans, created] = await Transaction.findOrCreate({
