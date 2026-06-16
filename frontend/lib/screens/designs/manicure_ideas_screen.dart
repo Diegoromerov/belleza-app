@@ -310,33 +310,57 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
                 ),
               ),
             ),
-            Padding(
+             Padding(
               padding: const EdgeInsets.all(16.0),
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primary,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size(double.infinity, 44),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                ),
-                onPressed: () {
-                  final ref = {
-                    'image_url': image['image_url'],
-                    'title': image['title'] ?? 'Referencia',
-                    'category': _activeToolId ?? 'nails-classic'
-                  };
-                  ManicureIdeasScreen.selectedReference = ref;
-                  Navigator.pop(context);
-                  Navigator.pop(context, ref);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Referencia seleccionada: ${image['title']}'),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primary,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 44),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                     ),
-                  );
-                },
-                icon: const Icon(Icons.check),
-                label: const Text('Usar como referencia para mi cita', style: TextStyle(fontWeight: FontWeight.bold)),
+                    onPressed: () {
+                      final ref = {
+                        'image_url': image['image_url'],
+                        'title': image['title'] ?? 'Referencia',
+                        'category': _activeToolId ?? 'nails-classic'
+                      };
+                      ManicureIdeasScreen.selectedReference = ref;
+                      Navigator.pop(context);
+                      Navigator.pop(context, ref);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Referencia seleccionada: ${image['title']}'),
+                          backgroundColor: AppTheme.primary,
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.check),
+                    label: const Text('Usar como referencia para mi cita', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFFC89D93),
+                      side: const BorderSide(color: Color(0xFFC89D93), width: 1.5),
+                      minimumSize: const Size(double.infinity, 44),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    ),
+                    onPressed: () {
+                      Navigator.pop(context); // Close preview
+                      Navigator.pop(context, {
+                        'action': 'filter_map',
+                        'toolId': _activeToolId ?? 'nails-classic',
+                        'category': _activeToolId == 'nails-classic' ? 'nails' : 'all'
+                      });
+                    },
+                    icon: const Icon(Icons.map_outlined),
+                    label: const Text('Ver en el mapa quién hace este estilo', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ],
               ),
             ),
           ],
@@ -1169,6 +1193,33 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
             ),
             const SizedBox(height: 16),
             ...details,
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFFC89D93),
+                  side: const BorderSide(color: Color(0xFFC89D93), width: 1.5),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                onPressed: () {
+                  // Mapear el ID de la herramienta activa a la categoría de la base de datos
+                  String category = 'all';
+                  if (_activeToolId == 'nails-style') category = 'nails';
+                  else if (_activeToolId == 'hair-diagnostic') category = 'hair';
+                  else if (_activeToolId == 'skin-texture' || _activeToolId == 'skin-tone') category = 'facials';
+
+                  Navigator.pop(context, {
+                    'action': 'filter_map',
+                    'toolId': _activeToolId,
+                    'category': category
+                  });
+                },
+                icon: const Icon(Icons.map_outlined),
+                label: const Text('Ver en el mapa quién hace este estilo', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ),
           ],
         ),
       ),

@@ -522,7 +522,23 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
       }
     } else {
       if (mounted) {
-        Navigator.pushNamed(context, routeName);
+        final result = await Navigator.pushNamed(context, routeName);
+        if (result != null && result is Map<String, dynamic>) {
+          if (result['action'] == 'filter_map') {
+            final category = result['category'] ?? 'all';
+            setState(() {
+              _selectedCategory = category;
+              _filterProviders();
+            });
+            // Auto scroll or zoom to filtered providers if needed
+            if (_filteredProviders.isNotEmpty) {
+              _mapController.move(
+                LatLng(_filteredProviders.first.latitude, _filteredProviders.first.longitude),
+                14.5
+              );
+            }
+          }
+        }
       }
     }
   }
