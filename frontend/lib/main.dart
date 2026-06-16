@@ -1089,13 +1089,13 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
 
   Widget _buildCategorySelector() {
     final categories = [
-      {'name': '💇‍♂️ Cabello', 'value': 'hair'},
-      {'name': '💅 Uñas', 'value': 'nails'},
-      {'name': '💄 Maquillaje', 'value': 'makeup'},
-      {'name': '✨ Más', 'value': 'all'},
+      {'name': 'Cabello', 'value': 'hair', 'icon': Icons.content_cut_outlined},
+      {'name': 'Uñas', 'value': 'nails', 'icon': Icons.brush_outlined},
+      {'name': 'Maquillaje', 'value': 'makeup', 'icon': Icons.face_retouching_natural_outlined},
+      {'name': 'Todos', 'value': 'all', 'icon': Icons.auto_awesome_outlined},
     ];
     return SizedBox(
-      height: 44,
+      height: 75,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -1104,37 +1104,65 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
           final cat = categories[index];
           final val = cat['value'] as String;
           final isSelected = _selectedCategory == val;
-          return Container(
-            margin: const EdgeInsets.only(right: 10),
-            child: FilterChip(
-              selected: isSelected,
-              onSelected: (_) {
-                setState(() {
-                  _selectedCategory = val;
-                  _filterProviders();
-                });
-                AnalyticsService().logEvent(
-                  eventType: 'CATEGORY_FILTER_SELECTED',
-                  screenName: '/home',
-                  elementId: 'category_chip_$val',
-                  metadata: {'category': val},
-                );
-              },
-              label: Text(cat['name'] as String),
-              selectedColor: const Color(0xFFC89D93),
-              checkmarkColor: Colors.white,
-              labelStyle: TextStyle(
-                color: isSelected ? Colors.white : Colors.black87,
-                fontWeight: FontWeight.bold,
-                fontSize: 13,
+          final iconData = cat['icon'] as IconData;
+
+          return GestureDetector(
+            onTap: () {
+              setState(() {
+                _selectedCategory = val;
+                _filterProviders();
+              });
+              AnalyticsService().logEvent(
+                eventType: 'CATEGORY_FILTER_SELECTED',
+                screenName: '/home',
+                elementId: 'category_chip_$val',
+                metadata: {'category': val},
+              );
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              margin: const EdgeInsets.only(right: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 46,
+                    height: 46,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isSelected
+                          ? const Color(0xFFC89D93).withOpacity(0.15)
+                          : Colors.grey.shade50,
+                      border: Border.all(
+                        color: isSelected
+                            ? const Color(0xFFC89D93)
+                            : Colors.grey.shade200,
+                        width: 1.2,
+                      ),
+                    ),
+                    child: Icon(
+                      iconData,
+                      size: 20,
+                      color: isSelected
+                          ? const Color(0xFFC89D93)
+                          : Colors.grey.shade600,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    cat['name'] as String,
+                    style: TextStyle(
+                      color: isSelected
+                          ? const Color(0xFFC89D93)
+                          : Colors.grey.shade600,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
               ),
-              backgroundColor: isSelected ? AppTheme.primary : AppTheme.surface,
-              side: BorderSide(
-                  color: isSelected
-                      ? Colors.transparent
-                      : AppTheme.accent.withOpacity(0.4)),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20)),
             ),
           );
         },

@@ -8,8 +8,7 @@ import '../models/service_model.dart';
 
 class ApiService {
   // --- CONFIGURACIÓN DE ENTORNO DE DESARROLLO / PRODUCCIÓN ---
-  // Cambia esta variable a 'true' para apuntar al servidor en la nube (Railway)
-  static const bool useStaging = false;
+  static const bool useStaging = true;
   static const String stagingUrl =
       'https://belleza-app-production.up.railway.app';
 
