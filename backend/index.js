@@ -14,6 +14,7 @@ const bookingRoutes = require('./src/routes/bookingRoutes');
 const serviceRoutes = require('./src/routes/serviceRoutes');
 const chatRoutes = require('./src/routes/chatRoutes');
 const designsRoutes = require('./src/routes/designsRoutes');
+const productRoutes = require('./src/routes/productRoutes');
 const glowAdminRoutes = require('./src/modules/admin-glow/admin.routes');
 const authMiddleware = require('./src/middleware/auth');
 const adminMiddleware = async (req, res, next) => {
@@ -112,6 +113,7 @@ app.use('/api', paymentRoutes);
 app.use('/api', bookingRoutes);
 app.use('/api', serviceRoutes);
 app.use('/api', chatRoutes);
+app.use('/api', productRoutes);
 app.use('/api/glow-admin', glowAdminRoutes);
 
 // ==========================================
