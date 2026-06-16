@@ -1,13 +1,30 @@
-// frontend/lib/shared/theme.dart
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AppTheme {
+  static final ValueNotifier<bool> isModernTheme = ValueNotifier<bool>(true);
+
+  static Future<void> loadThemePreference() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      isModernTheme.value = prefs.getBool('is_modern_theme') ?? true;
+    } catch (_) {}
+  }
+
+  static Future<void> toggleTheme() async {
+    isModernTheme.value = !isModernTheme.value;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('is_modern_theme', isModernTheme.value);
+    } catch (_) {}
+  }
+
   // Colores principales de la marca (GlowApp)
-  static const Color primary = Color(0xFFD9A093); // Oro Rosa Glow
-  static const Color accent = Color(0xFFC89D93);  // Terracota Suave
-  static const Color text = Color(0xFF8C6F65);    // Terracota Profundo
-  static const Color background = Color(0xFFFFF8F0); // Crema de Seda
-  static const Color surface = Color(0xFFFFFFFF); // Blanco Perla
+  static Color get primary => isModernTheme.value ? const Color(0xFFC89D93) : const Color(0xFFD9A093);
+  static Color get accent => isModernTheme.value ? const Color(0xFFC89D93) : const Color(0xFFC89D93);
+  static Color get text => isModernTheme.value ? const Color(0xFF2D2C2A) : const Color(0xFF8C6F65);
+  static Color get background => isModernTheme.value ? const Color(0xFFFDFBF7) : const Color(0xFFFFF8F0);
+  static Color get surface => isModernTheme.value ? const Color(0xFFF7F4EF) : const Color(0xFFFFFFFF);
 
   static const LinearGradient premiumGradient = LinearGradient(
     begin: Alignment.topCenter,
@@ -88,8 +105,8 @@ class AppTheme {
     return InputDecoration(
       hintText: hintText,
       labelText: labelText,
-      hintStyle: const TextStyle(color: Color(0xFFB19F9C), fontSize: 14),
-      labelStyle: const TextStyle(color: Color(0xFF8E7D7A), fontSize: 14),
+      hintStyle: TextStyle(color: Color(0xFFB19F9C), fontSize: 14),
+      labelStyle: TextStyle(color: Color(0xFF8E7D7A), fontSize: 14),
       prefixIcon: Icon(prefixIcon, color: primary, size: 22),
       suffixIcon: suffixIcon,
       floatingLabelBehavior: FloatingLabelBehavior.auto,
@@ -97,45 +114,49 @@ class AppTheme {
       fillColor: Colors.white.withOpacity(0.8),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: Color(0xFFEADCD6), width: 1),
+        borderSide: BorderSide(color: Color(0xFFEADCD6), width: 1),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: Color(0xFFEADCD6), width: 1),
+        borderSide: BorderSide(color: Color(0xFFEADCD6), width: 1),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: primary, width: 1.8),
+        borderSide: BorderSide(color: primary, width: 1.8),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
     );
   }
 
   // Especificación de Tipografía de la Guía Maestra
-  static const TextStyle h1 = TextStyle(
+  static TextStyle get h1 => TextStyle(
     fontSize: 24,
-    fontWeight: FontWeight.w600,
+    fontWeight: isModernTheme.value ? FontWeight.w300 : FontWeight.w600,
     color: text,
     height: 1.25,
+    fontFamily: isModernTheme.value ? 'serif' : null,
+    letterSpacing: isModernTheme.value ? 0.5 : null,
   );
 
-  static const TextStyle subtitle = TextStyle(
+  static TextStyle get subtitle => TextStyle(
     fontSize: 16,
-    fontWeight: FontWeight.w500,
+    fontWeight: isModernTheme.value ? FontWeight.w400 : FontWeight.w500,
     color: text,
     height: 1.25,
+    fontFamily: isModernTheme.value ? 'serif' : null,
   );
 
-  static const TextStyle body = TextStyle(
+  static TextStyle get body => TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.w400,
     color: text,
     height: 1.25,
   );
 
-  static const TextStyle buttonLabel = TextStyle(
+  static TextStyle get buttonLabel => TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.w600,
+    color: text,
     letterSpacing: 0.5,
   );
 }

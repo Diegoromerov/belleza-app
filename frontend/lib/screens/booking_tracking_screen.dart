@@ -100,7 +100,7 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen>
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Seguimiento en Vivo',
           style: TextStyle(
               fontWeight: FontWeight.bold, letterSpacing: -0.5, fontSize: 18),
@@ -109,7 +109,7 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen>
         foregroundColor: Colors.black,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -154,7 +154,7 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen>
                         shape: BoxShape.circle,
                         boxShadow: AppTheme.softShadow,
                       ),
-                      child: const Icon(Icons.home_work,
+                      child: Icon(Icons.home_work,
                           color: AppTheme.primary, size: 28),
                     ),
                   ),
@@ -218,7 +218,7 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen>
                               ? NetworkImage(providerAvatar)
                               : null,
                           child: providerAvatar.isEmpty
-                              ? const Icon(Icons.face_retouching_natural,
+                              ? Icon(Icons.face_retouching_natural,
                                   size: 18, color: AppTheme.primary)
                               : null,
                         ),
@@ -277,7 +277,7 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen>
               foregroundColor: Colors.white,
               elevation: 6,
               shape: const CircleBorder(),
-              child: const Icon(Icons.chat_bubble_rounded, size: 24),
+              child: Icon(Icons.chat_bubble_rounded, size: 24),
             ),
           ),
 
@@ -317,14 +317,14 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen>
                                       providerName.isNotEmpty
                                           ? providerName[0].toUpperCase()
                                           : 'P',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                           fontSize: 18,
                                           color: AppTheme.primary,
                                           fontWeight: FontWeight.bold),
                                     )
                                   : null,
                             ),
-                            const SizedBox(width: 12),
+                            SizedBox(width: 12),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -333,17 +333,17 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen>
                                     providerBusiness.isNotEmpty
                                         ? providerBusiness
                                         : providerName,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 16,
                                         color: Colors.black87),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
-                                  const SizedBox(height: 2),
+                                  SizedBox(height: 2),
                                   Text(
                                     '$providerName • $distanceText',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                         fontSize: 13, color: Colors.black54),
                                   ),
                                 ],
@@ -359,7 +359,7 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen>
                               ),
                               child: Column(
                                 children: [
-                                  const Text(
+                                  Text(
                                     'Llega en',
                                     style: TextStyle(
                                         fontSize: 10,
@@ -368,7 +368,7 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen>
                                   ),
                                   Text(
                                     '$_minutesRemaining min',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                         fontSize: 15,
                                         color: AppTheme.error,
                                         fontWeight: FontWeight.bold),
@@ -378,13 +378,13 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen>
                             ),
                           ],
                         ),
-                        const SizedBox(height: 16),
+                        SizedBox(height: 16),
 
                         // Barra de progreso de llegada
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text(
+                            Text(
                               'Progreso de llegada',
                               style: TextStyle(
                                   fontSize: 12,
@@ -393,20 +393,20 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen>
                             ),
                             Text(
                               '${(_progress * 100).toStringAsFixed(0)}%',
-                              style: const TextStyle(
+                              style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
                                   color: AppTheme.primary),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 6),
+                        SizedBox(height: 6),
                         ClipRRect(
                           borderRadius: BorderRadius.circular(8),
                           child: LinearProgressIndicator(
                             value: _progress,
                             backgroundColor: AppTheme.background,
-                            valueColor: const AlwaysStoppedAnimation<Color>(
+                            valueColor: AlwaysStoppedAnimation<Color>(
                                 AppTheme.primary),
                             minHeight: 8,
                           ),
@@ -427,7 +427,7 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen>
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Row(
+                              Row(
                                 children: [
                                   Icon(Icons.vpn_key_rounded,
                                       color: AppTheme.primary, size: 18),
@@ -443,7 +443,7 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen>
                               ),
                               Text(
                                 pin,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                   color: AppTheme.error,
@@ -454,7 +454,7 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen>
                           ),
                         ),
 
-                        const SizedBox(height: 12),
+                        SizedBox(height: 12),
 
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -462,10 +462,10 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen>
                             // Wompi Badge
                             Row(
                               children: [
-                                const Icon(Icons.shield,
+                                Icon(Icons.shield,
                                     color: AppTheme.success, size: 18),
-                                const SizedBox(width: 6),
-                                const Text(
+                                SizedBox(width: 6),
+                                Text(
                                   'Pago Wompi Protegido',
                                   style: TextStyle(
                                       color: AppTheme.success,
@@ -474,7 +474,7 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen>
                                 ),
                               ],
                             ),
-                            const Text(
+                            Text(
                               'En camino',
                               style: TextStyle(
                                   color: AppTheme.primary,

@@ -89,17 +89,17 @@ class NotificationService {
                   children: [
                     Container(
                       padding: const EdgeInsets.all(8),
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         color: Color(0xFFFFF8F0),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.notifications_active,
                         color: AppTheme.primary,
                         size: 24,
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -107,16 +107,16 @@ class NotificationService {
                         children: [
                           Text(
                             notification['title'] ?? 'Notificación',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 14,
                               color: AppTheme.info,
                             ),
                           ),
-                          const SizedBox(height: 2),
+                          SizedBox(height: 2),
                           Text(
                             notification['body'] ?? '',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
                               color: Colors.black87,
                             ),
@@ -126,7 +126,7 @@ class NotificationService {
                     ),
                     IconButton(
                       icon:
-                          const Icon(Icons.close, size: 18, color: Colors.grey),
+                          Icon(Icons.close, size: 18, color: Colors.grey),
                       onPressed: () {
                         overlayEntry.remove();
                       },

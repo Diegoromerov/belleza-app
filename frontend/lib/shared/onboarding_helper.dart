@@ -138,7 +138,7 @@ class _WalkthroughDialogState extends State<_WalkthroughDialog> {
               children: [
                 Text(
                   'Instrucciones (${_currentStep + 1}/${_steps.length})',
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: Color(0xFFC89D93),
                       fontSize: 12,
@@ -161,13 +161,13 @@ class _WalkthroughDialogState extends State<_WalkthroughDialog> {
                 ),
               ],
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
 
             // Step Icon Circle
             Center(
               child: Container(
                 padding: const EdgeInsets.all(18),
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   color: Color(0xFFFFF5F3),
                   shape: BoxShape.circle,
                 ),
@@ -178,28 +178,28 @@ class _WalkthroughDialogState extends State<_WalkthroughDialog> {
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
 
             // Step Title
             Text(
               step.title,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
                   color: Color(0xFF4A3E3D),
                   letterSpacing: -0.5),
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
 
             // Step Description
             Text(
               step.description,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 13.5, color: Colors.grey, height: 1.4),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
 
             // Simulation Widget
             Container(
@@ -212,7 +212,7 @@ class _WalkthroughDialogState extends State<_WalkthroughDialog> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(
+                  Row(
                     children: [
                       Icon(Icons.play_circle_outline,
                           color: Color(0xFFC89D93), size: 18),
@@ -226,22 +226,22 @@ class _WalkthroughDialogState extends State<_WalkthroughDialog> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   Text(
                     step.simulationText,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 12, color: Colors.black87, height: 1.35),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
 
             // Don't show again Checkbox
             CheckboxListTile(
               value: _dontShowAgain,
               onChanged: (val) => setState(() => _dontShowAgain = val ?? false),
-              title: const Text(
+              title: Text(
                 'No volver a mostrar instructivo',
                 style: TextStyle(fontSize: 12, color: Colors.black87),
               ),
@@ -249,7 +249,7 @@ class _WalkthroughDialogState extends State<_WalkthroughDialog> {
               contentPadding: EdgeInsets.zero,
               controlAffinity: ListTileControlAffinity.leading,
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
 
             // Navigation Buttons
             Row(
@@ -260,16 +260,16 @@ class _WalkthroughDialogState extends State<_WalkthroughDialog> {
                       onPressed: () => setState(() => _currentStep--),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: const Color(0xFFC89D93),
-                        side: const BorderSide(color: Color(0xFFE8D7D3)),
+                        side: BorderSide(color: Color(0xFFE8D7D3)),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30)),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
-                      child: const Text('Atrás',
+                      child: Text('Atrás',
                           style: TextStyle(fontWeight: FontWeight.bold)),
                     ),
                   ),
-                if (_currentStep > 0) const SizedBox(width: 12),
+                if (_currentStep > 0) SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton(
                     onPressed: isLast
@@ -285,7 +285,7 @@ class _WalkthroughDialogState extends State<_WalkthroughDialog> {
                     ),
                     child: Text(
                       isLast ? '¡Comenzar!' : 'Siguiente',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),

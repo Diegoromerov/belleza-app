@@ -26,14 +26,14 @@ class _MapScreenState extends State<MapScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Explorar Fontibón',
+        title: Text('Explorar Fontibón',
             style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5)),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.list_alt_rounded),
+            icon: Icon(Icons.list_alt_rounded),
             onPressed: () => Navigator.pop(context),
             tooltip: 'Ver Lista',
           )
@@ -85,14 +85,14 @@ class _MapScreenState extends State<MapScreen> {
                                         ? NetworkImage(p.avatarUrl)
                                         : null,
                                     child: p.avatarUrl.isEmpty
-                                        ? const Icon(
+                                        ? Icon(
                                             Icons.face_retouching_natural,
                                             size: 20,
                                             color: Color(0xFFC89D93))
                                         : null,
                                   ),
                                 ),
-                                const SizedBox(height: 4),
+                                SizedBox(height: 4),
                                 Container(
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 8, vertical: 4),
@@ -110,7 +110,7 @@ class _MapScreenState extends State<MapScreen> {
                                     p.businessName.isNotEmpty
                                         ? p.businessName
                                         : p.fullName,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                         fontSize: 10,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.black87),

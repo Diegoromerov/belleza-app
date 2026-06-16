@@ -55,8 +55,8 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
               child: CircularProgressIndicator(color: Color(0xFFC89D93))));
     if (details == null)
       return Scaffold(
-          appBar: AppBar(title: const Text('Error')),
-          body: const Center(child: Text('❌ No se pudieron cargar los datos')));
+          appBar: AppBar(title: Text('Error')),
+          body: Center(child: Text('❌ No se pudieron cargar los datos')));
 
     final p = details!['provider'];
     final services =
@@ -127,7 +127,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
               child: CircleAvatar(
                 backgroundColor: AppTheme.surface.withOpacity(0.9),
                 child: IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.black),
+                  icon: Icon(Icons.arrow_back, color: Colors.black),
                   onPressed: () => Navigator.pop(context),
                 ),
               ),
@@ -142,7 +142,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                     fit: BoxFit.cover,
                   ),
                   Container(
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
                           Colors.black54,
@@ -172,7 +172,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                         child: !hasAvatar
                             ? Text(
                                 initialLetter,
-                                style: const TextStyle(
+                                style: TextStyle(
                                     fontSize: 32,
                                     fontWeight: FontWeight.bold,
                                     color: AppTheme.primary),
@@ -189,7 +189,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
           // Contenido
           SliverList(
             delegate: SliverChildListDelegate([
-              const SizedBox(height: 16), // Espaciador superior limpio
+              SizedBox(height: 16), // Espaciador superior limpio
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                 child: Column(
@@ -201,7 +201,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                           Expanded(
                             child: Text(
                               p['business_name'] ?? p['full_name'] ?? '',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: -0.5,
@@ -210,34 +210,34 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                           ),
                           if (p['is_verified'] == true ||
                               p['is_verified'] == 'true')
-                            const Icon(Icons.verified,
+                            Icon(Icons.verified,
                                 color: AppTheme.primary, size: 24),
                         ],
                       ),
-                      const SizedBox(height: 6),
+                      SizedBox(height: 6),
 
                       // Rating y localidad
                       Row(
                         children: [
-                          const Icon(Icons.star_rounded,
+                          Icon(Icons.star_rounded,
                               color: Color(0xFFD97706), size: 20),
-                          const SizedBox(width: 4),
+                          SizedBox(width: 4),
                           Text(
                             _num(p['rating_avg']).toStringAsFixed(1),
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontWeight: FontWeight.bold, fontSize: 15),
                           ),
-                          const SizedBox(width: 4),
+                          SizedBox(width: 4),
                           Text(
                             '(${p['rating_count'] ?? 0} valoraciones)',
-                            style: const TextStyle(
+                            style: TextStyle(
                                 color: Colors.grey, fontSize: 13),
                           ),
-                          const SizedBox(width: 12),
-                          const Icon(Icons.location_on,
+                          SizedBox(width: 12),
+                          Icon(Icons.location_on,
                               color: Colors.grey, size: 16),
-                          const SizedBox(width: 4),
-                          const Text(
+                          SizedBox(width: 4),
+                          Text(
                             'Fontibón',
                             style: TextStyle(
                                 color: Colors.grey,
@@ -246,7 +246,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 20),
+                      SizedBox(height: 20),
 
                       // Botones rápidos
                       Row(
@@ -268,10 +268,10 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                   ),
                                 );
                               },
-                              icon: const Icon(
+                              icon: Icon(
                                   Icons.chat_bubble_outline_rounded,
                                   size: 18),
-                              label: const Text('Chatear'),
+                              label: Text('Chatear'),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppTheme.primary,
                                 foregroundColor: Colors.white,
@@ -286,36 +286,36 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 28),
+                      SizedBox(height: 28),
 
                       // Sobre nosotros
                       if (p['description'] != null &&
                           p['description'].toString().trim().isNotEmpty) ...[
-                        const Text(
+                        Text(
                           'Sobre nosotros',
                           style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                               letterSpacing: -0.5),
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: 8),
                         Text(
                           p['description'],
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 14, height: 1.6, color: Colors.black87),
                         ),
-                        const SizedBox(height: 28),
+                        SizedBox(height: 28),
                       ],
 
                       // Servicios
-                      const Text(
+                      Text(
                         'Servicios Ofrecidos',
                         style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                             letterSpacing: -0.5),
                       ),
-                      const SizedBox(height: 12),
+                      SizedBox(height: 12),
 
                       // Category Horizontal List Chips Filters
                       SingleChildScrollView(
@@ -367,7 +367,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                           }).toList(),
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      SizedBox(height: 12),
 
                       if (filteredServices.isEmpty)
                         Container(
@@ -379,7 +379,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(color: Colors.grey[200]!),
                           ),
-                          child: const Column(
+                          child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(Icons.style_outlined,
@@ -419,14 +419,14 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                         Expanded(
                                           child: Text(
                                             s['name'] ?? '',
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                                 fontWeight: FontWeight.bold,
                                                 fontSize: 16),
                                           ),
                                         ),
                                         Text(
                                           '\$${_num(s['price']).toStringAsFixed(0)}',
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.bold,
                                               color: AppTheme.primary),
@@ -438,7 +438,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                             .toString()
                                             .trim()
                                             .isNotEmpty) ...[
-                                      const SizedBox(height: 6),
+                                      SizedBox(height: 6),
                                       Text(
                                         s['description'],
                                         style: TextStyle(
@@ -447,12 +447,12 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                             height: 1.4),
                                       ),
                                     ],
-                                    const SizedBox(height: 12),
+                                    SizedBox(height: 12),
                                     Row(
                                       children: [
-                                        const Icon(Icons.access_time,
+                                        Icon(Icons.access_time,
                                             size: 16, color: Colors.grey),
-                                        const SizedBox(width: 4),
+                                        SizedBox(width: 4),
                                         Text(
                                           '${s['duration_minutes']} min',
                                           style: TextStyle(
@@ -465,10 +465,10 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                                 .toString()
                                                 .trim()
                                                 .isNotEmpty) ...[
-                                          const SizedBox(width: 12),
-                                          const Icon(Icons.style_outlined,
+                                          SizedBox(width: 12),
+                                          Icon(Icons.style_outlined,
                                               size: 16, color: Colors.grey),
-                                          const SizedBox(width: 4),
+                                          SizedBox(width: 4),
                                           Text(
                                             s['category'],
                                             style: TextStyle(
@@ -483,23 +483,23 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                 ),
                               ),
                             )),
-                      const SizedBox(height: 28),
+                      SizedBox(height: 28),
 
                       // Banner Contextual de IA Ubicuo
                       _buildAIBanner(context,
                           p['business_name'] ?? p['full_name'] ?? 'María'),
 
-                      const SizedBox(height: 28),
+                      SizedBox(height: 28),
 
                       // Portafolio
-                      const Text(
+                      Text(
                         'Portafolio de Trabajo',
                         style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                             letterSpacing: -0.5),
                       ),
-                      const SizedBox(height: 12),
+                      SizedBox(height: 12),
                       portfolio.isEmpty
                           ? Container(
                               height: 120,
@@ -509,7 +509,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(color: Colors.grey[200]!),
                               ),
-                              child: const Column(
+                              child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(Icons.photo_outlined,
@@ -582,7 +582,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                                       backgroundColor:
                                                           Colors.white24,
                                                       child: IconButton(
-                                                        icon: const Icon(
+                                                        icon: Icon(
                                                             Icons.close,
                                                             color:
                                                                 Colors.white),
@@ -610,17 +610,17 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                 );
                               },
                             ),
-                      const SizedBox(height: 28),
+                      SizedBox(height: 28),
 
                       // Reseñas
-                      const Text(
+                      Text(
                         'Opiniones Recientes',
                         style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                             letterSpacing: -0.5),
                       ),
-                      const SizedBox(height: 12),
+                      SizedBox(height: 12),
                       reviews.isEmpty
                           ? Container(
                               height: 120,
@@ -630,7 +630,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(color: Colors.grey[200]!),
                               ),
-                              child: const Column(
+                              child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(Icons.rate_review_outlined,
@@ -691,7 +691,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                             child: !hasClientAvatar
                                                 ? Text(
                                                     clientInitial,
-                                                    style: const TextStyle(
+                                                    style: TextStyle(
                                                       fontWeight:
                                                           FontWeight.bold,
                                                       fontSize: 14,
@@ -700,7 +700,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                                   )
                                                 : null,
                                           ),
-                                          const SizedBox(width: 12),
+                                          SizedBox(width: 12),
                                           Expanded(
                                             child: Column(
                                               crossAxisAlignment:
@@ -708,12 +708,12 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                               children: [
                                                 Text(
                                                   clientName,
-                                                  style: const TextStyle(
+                                                  style: TextStyle(
                                                       fontWeight:
                                                           FontWeight.bold,
                                                       fontSize: 14),
                                                 ),
-                                                const SizedBox(height: 2),
+                                                SizedBox(height: 2),
                                                 Row(
                                                   children: List.generate(
                                                     5,
@@ -732,17 +732,17 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                         ],
                                       ),
                                       if (comment.trim().isNotEmpty) ...[
-                                        const SizedBox(height: 12),
+                                        SizedBox(height: 12),
                                         Text(
                                           comment,
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                               fontSize: 13,
                                               height: 1.4,
                                               color: Colors.black87),
                                         ),
                                       ],
                                       if (reviewPhotos.isNotEmpty) ...[
-                                        const SizedBox(height: 10),
+                                        SizedBox(height: 10),
                                         SizedBox(
                                           height: 60,
                                           child: ListView.builder(
@@ -822,7 +822,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                                                             .black38,
                                                                     child:
                                                                         IconButton(
-                                                                      icon: const Icon(
+                                                                      icon: Icon(
                                                                           Icons
                                                                               .close,
                                                                           color:
@@ -880,7 +880,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
           bottom: MediaQuery.of(context).padding.bottom + 12,
           top: 12,
         ),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: Colors.white,
           boxShadow: [
             BoxShadow(
@@ -922,7 +922,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
             ),
             padding: const EdgeInsets.symmetric(vertical: 16),
           ),
-          child: const Row(
+          child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(Icons.calendar_today_outlined, size: 18),
@@ -969,13 +969,13 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.auto_awesome,
+                  Icon(Icons.auto_awesome,
                       color: AppTheme.primary, size: 20),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       '¿Te interesa el trabajo de $providerName?',
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 14.5,
                           color: Colors.black87),
@@ -983,17 +983,17 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 6),
-              const Text(
+              SizedBox(height: 6),
+              Text(
                 'Pregúntale a nuestra IA si sus estilos van con tu rostro y facciones.',
                 style: TextStyle(
                     fontSize: 12.5, color: Colors.black87, height: 1.35),
               ),
-              const SizedBox(height: 14),
+              SizedBox(height: 14),
               SizedBox(
                 width: double.infinity,
                 child: isUploading
-                    ? const Center(
+                    ? Center(
                         child: Padding(
                           padding: EdgeInsets.symmetric(vertical: 8.0),
                           child: CircularProgressIndicator(
@@ -1004,8 +1004,8 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                         onPressed: () {
                           Navigator.of(context).pushNamed('/ideas');
                         },
-                        icon: const Icon(Icons.lightbulb_outline, size: 16),
-                        label: const Text(
+                        icon: Icon(Icons.lightbulb_outline, size: 16),
+                        label: Text(
                           'Ver Ideas y Visajismo IA',
                           style: TextStyle(
                               fontSize: 12.5, fontWeight: FontWeight.bold),

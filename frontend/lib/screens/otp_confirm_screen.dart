@@ -131,16 +131,16 @@ class _OtpConfirmScreenState extends State<OtpConfirmScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back_ios, color: AppTheme.text),
+                    icon: Icon(Icons.arrow_back_ios, color: AppTheme.text),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ],
               ),
-              const SizedBox(height: 32),
+              SizedBox(height: 32),
 
               // ─── Ícono animado (Oro Rosa Glow) ────────────────────────
               Container(
@@ -151,30 +151,30 @@ class _OtpConfirmScreenState extends State<OtpConfirmScreen>
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: AppTheme.glassShadow,
                 ),
-                child: const Icon(Icons.verified_rounded,
+                child: Icon(Icons.verified_rounded,
                     color: Colors.white, size: 48),
               ),
-              const SizedBox(height: 32),
+              SizedBox(height: 32),
 
-              const Text(
+              Text(
                 'Confirmar servicio',
                 style: AppTheme.h1,
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 12),
-              const Text(
+              SizedBox(height: 12),
+              Text(
                 'Ingresa el código de 6 dígitos que\nrecibirás en esta app',
                 style: AppTheme.body,
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               Text(
                 '${widget.servicioNombre} · ${widget.prestadorNombre}',
-                style: const TextStyle(
+                style: TextStyle(
                     color: AppTheme.primary, fontWeight: FontWeight.w600),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 40),
+              SizedBox(height: 40),
 
               // ─── Campos OTP ───────────────────────────────────────────
               AnimatedBuilder(
@@ -202,7 +202,7 @@ class _OtpConfirmScreenState extends State<OtpConfirmScreen>
 
               // ─── Error (Terracota desaturado, no rojo punitivo) ─────────
               if (_error != null) ...[
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -213,23 +213,23 @@ class _OtpConfirmScreenState extends State<OtpConfirmScreen>
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.error_outline,
+                      Icon(Icons.error_outline,
                           color: AppTheme.text, size: 18),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           _intentosRestantes != null
                               ? 'Código incorrecto. $_intentosRestantes intento(s) restante(s).'
                               : _error!,
                           style:
-                              const TextStyle(color: AppTheme.text, fontSize: 13),
+                              TextStyle(color: AppTheme.text, fontSize: 13),
                         ),
                       ),
                     ],
                   ),
                 ),
               ],
-              const SizedBox(height: 32),
+              SizedBox(height: 32),
 
               // ─── Botón confirmar ──────────────────────────────────────
               SizedBox(
@@ -244,13 +244,13 @@ class _OtpConfirmScreenState extends State<OtpConfirmScreen>
                         borderRadius: BorderRadius.circular(14)),
                   ),
                   child: _loading
-                      ? const SizedBox(
+                      ? SizedBox(
                           height: 22,
                           width: 22,
                           child: CircularProgressIndicator(
                               color: Colors.white, strokeWidth: 2),
                         )
-                      : const Text(
+                      : Text(
                           'Confirmar y liberar pago',
                           style: TextStyle(
                               color: Colors.white,
@@ -259,7 +259,7 @@ class _OtpConfirmScreenState extends State<OtpConfirmScreen>
                         ),
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
 
               // ─── Nota sobre disputas ──────────────────────────────────
               Container(
@@ -269,7 +269,7 @@ class _OtpConfirmScreenState extends State<OtpConfirmScreen>
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: const Color(0xFFEADCD6)),
                 ),
-                child: const Row(
+                child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Icon(Icons.info_outline, color: AppTheme.text, size: 16),
@@ -284,7 +284,7 @@ class _OtpConfirmScreenState extends State<OtpConfirmScreen>
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               TextButton(
                 onPressed: () {
                   // Navegar a abrir disputa
@@ -294,7 +294,7 @@ class _OtpConfirmScreenState extends State<OtpConfirmScreen>
                     arguments: {'booking_id': widget.bookingId},
                   );
                 },
-                child: const Text(
+                child: Text(
                   '¿Problemas con el servicio? Abrir disputa',
                   style: TextStyle(color: AppTheme.text, fontSize: 13, decoration: TextDecoration.underline),
                 ),
@@ -348,7 +348,7 @@ class _OtpField extends StatelessWidget {
         maxLength: 1,
         keyboardType: TextInputType.number,
         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        style: const TextStyle(
+        style: TextStyle(
           color: AppTheme.text,
           fontSize: 24,
           fontWeight: FontWeight.bold,
@@ -402,24 +402,24 @@ class _ConfirmacionExitosaScreen extends StatelessWidget {
                       border:
                           Border.all(color: const Color(0xFF10B981), width: 3),
                     ),
-                    child: const Icon(Icons.check,
+                    child: Icon(Icons.check,
                         color: Color(0xFF10B981), size: 56),
                   ),
                 ),
               ),
-              const SizedBox(height: 32),
-              const Text(
+              SizedBox(height: 32),
+              Text(
                 '¡Servicio confirmado!',
                 style: AppTheme.h1,
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               Text(
                 '$servicioNombre con $prestadorNombre',
                 style: AppTheme.body,
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 32),
+              SizedBox(height: 32),
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -430,20 +430,20 @@ class _ConfirmacionExitosaScreen extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
-                    const Icon(Icons.account_balance_wallet,
+                    Icon(Icons.account_balance_wallet,
                         color: Color(0xFF10B981), size: 32),
-                    const SizedBox(height: 12),
-                    const Text(
+                    SizedBox(height: 12),
+                    Text(
                       'El pago fue liberado al prestador',
                       style: TextStyle(
                           color: AppTheme.text, fontWeight: FontWeight.bold),
                       textAlign: TextAlign.center,
                     ),
                     if (disponibleEn != null) ...[
-                      const SizedBox(height: 6),
+                      SizedBox(height: 6),
                       Text(
                         'Disponible en su wallet en ~2 horas',
-                        style: const TextStyle(
+                        style: TextStyle(
                             color: AppTheme.text, fontSize: 13),
                         textAlign: TextAlign.center,
                       ),
@@ -451,13 +451,13 @@ class _ConfirmacionExitosaScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 40),
-              const Text(
+              SizedBox(height: 40),
+              Text(
                 'Tienes 2 horas para reportar si el servicio\nno cumplió con lo acordado.',
                 style: TextStyle(color: AppTheme.text, fontSize: 13),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 40),
+              SizedBox(height: 40),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -470,7 +470,7 @@ class _ConfirmacionExitosaScreen extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: const Text('Calificar servicio',
+                  child: Text('Calificar servicio',
                       style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,

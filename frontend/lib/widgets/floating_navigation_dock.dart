@@ -36,7 +36,7 @@ class FloatingNavigationDock extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(icon, color: color, size: 20),
-              const SizedBox(height: 3),
+              SizedBox(height: 3),
               Text(
                 label,
                 textAlign: TextAlign.center,
@@ -100,10 +100,10 @@ class FloatingNavigationDock extends StatelessWidget {
                   size: 26,
                 ),
               ),
-              const SizedBox(height: 2),
+              SizedBox(height: 2),
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w800,
                   color: Color(0xFFB07D62),

@@ -272,7 +272,7 @@ class _BookingScreenState extends State<BookingScreen> {
       appBar: AppBar(
         title: Text(
           'Reservar con ${widget.providerName}',
-          style: const TextStyle(
+          style: TextStyle(
               fontWeight: FontWeight.bold, letterSpacing: -0.5, fontSize: 18),
         ),
         backgroundColor: Colors.white,
@@ -281,7 +281,7 @@ class _BookingScreenState extends State<BookingScreen> {
         centerTitle: false,
       ),
       body: isLoading
-          ? const Center(
+          ? Center(
               child: CircularProgressIndicator(color: Color(0xFFC89D93)))
           : SingleChildScrollView(
               padding:
@@ -290,31 +290,31 @@ class _BookingScreenState extends State<BookingScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _buildSectionTitle('1. Selecciona un Servicio'),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   _buildServiceSelectionList(),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
                   _buildSectionTitle('2. Elige una Fecha'),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   _buildDateSelector(),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
                   _buildSectionTitle('3. Horarios Disponibles'),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   _buildTimeSelector(),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
                   _buildSectionTitle('4. Dirección del servicio'),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   _buildAddressField(),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
                   _buildSectionTitle('5. Notas adicionales (opcional)'),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   _buildNotesField(),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
                   _buildSectionTitle('6. Añadir productos a domicilio (Consignación Local)'),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   _buildProductsSelector(),
-                  const SizedBox(height: 36),
+                  SizedBox(height: 36),
                   _buildConfirmButton(),
-                  const SizedBox(height: 40),
+                  SizedBox(height: 40),
                 ],
               ),
             ),
@@ -323,7 +323,7 @@ class _BookingScreenState extends State<BookingScreen> {
 
   Widget _buildProductsSelector() {
     if (_isLoadingProducts) {
-      return const Center(
+      return Center(
         child: Padding(
           padding: EdgeInsets.all(16.0),
           child: CircularProgressIndicator(color: AppTheme.primary),
@@ -331,7 +331,7 @@ class _BookingScreenState extends State<BookingScreen> {
       );
     }
     if (_recommendedProducts.isEmpty) {
-      return const Padding(
+      return Padding(
         padding: EdgeInsets.symmetric(vertical: 8.0),
         child: Text('No hay productos sugeridos para este servicio.',
             style: TextStyle(color: Colors.grey, fontSize: 13)),
@@ -360,7 +360,7 @@ class _BookingScreenState extends State<BookingScreen> {
               color: Colors.white,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: qty > 0 ? AppTheme.primary : const Color(0xFFF3EAE8),
+                color: qty > 0 ? AppTheme.primary :  Color(0xFFF3EAE8),
                 width: qty > 0 ? 2 : 1,
               ),
               boxShadow: [
@@ -386,14 +386,14 @@ class _BookingScreenState extends State<BookingScreen> {
                             fit: BoxFit.cover,
                             errorBuilder: (c, o, s) => Container(
                               color: const Color(0xFFF5EBE6),
-                              child: const Icon(Icons.shopping_bag_outlined,
+                              child: Icon(Icons.shopping_bag_outlined,
                                   color: AppTheme.primary),
                             ),
                           )
                         else
                           Container(
                             color: const Color(0xFFF5EBE6),
-                            child: const Icon(Icons.shopping_bag_outlined,
+                            child: Icon(Icons.shopping_bag_outlined,
                                 color: AppTheme.primary),
                           ),
                         if (qty > 0)
@@ -409,7 +409,7 @@ class _BookingScreenState extends State<BookingScreen> {
                               ),
                               child: Text(
                                 '$qty',
-                                style: const TextStyle(
+                                style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold),
@@ -428,22 +428,22 @@ class _BookingScreenState extends State<BookingScreen> {
                           nombre,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                               color: Colors.black87),
                         ),
-                        const SizedBox(height: 2),
+                        SizedBox(height: 2),
                         Text(
                           '\$${precio.toStringAsFixed(0)} COP',
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
                               color: AppTheme.primary),
                         ),
-                        const SizedBox(height: 6),
+                        SizedBox(height: 6),
                         if (stock <= 0)
-                          const Text(
+                          Text(
                             'Agotado',
                             style: TextStyle(
                                 fontSize: 10,
@@ -468,7 +468,7 @@ class _BookingScreenState extends State<BookingScreen> {
                                   _selectedProductsQty[id] = 1;
                                 });
                               },
-                              child: const Text('Agregar',
+                              child: Text('Agregar',
                                   style: TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.bold)),
@@ -494,12 +494,12 @@ class _BookingScreenState extends State<BookingScreen> {
                                     color: Colors.grey[200],
                                     shape: BoxShape.circle,
                                   ),
-                                  child: const Icon(Icons.remove,
+                                  child: Icon(Icons.remove,
                                       size: 14, color: Colors.black87),
                                 ),
                               ),
                               Text('$qty',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.bold)),
                               GestureDetector(
@@ -522,7 +522,7 @@ class _BookingScreenState extends State<BookingScreen> {
                                     color: AppTheme.primary.withOpacity(0.1),
                                     shape: BoxShape.circle,
                                   ),
-                                  child: const Icon(Icons.add,
+                                  child: Icon(Icons.add,
                                       size: 14, color: AppTheme.primary),
                                 ),
                               ),
@@ -542,7 +542,7 @@ class _BookingScreenState extends State<BookingScreen> {
 
   Widget _buildSectionTitle(String title) => Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.bold,
             color: Colors.black87,
@@ -551,7 +551,7 @@ class _BookingScreenState extends State<BookingScreen> {
 
   Widget _buildServiceSelectionList() {
     if (widget.services.isEmpty) {
-      return const Text('⚠️ No hay servicios disponibles',
+      return Text('⚠️ No hay servicios disponibles',
           style: TextStyle(color: Colors.orange));
     }
     return Column(
@@ -601,20 +601,20 @@ class _BookingScreenState extends State<BookingScreen> {
                       : Icons.radio_button_off,
                   color: const Color(0xFFC89D93),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         name,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
                             color: Colors.black87),
                       ),
                       if (description.isNotEmpty) ...[
-                        const SizedBox(height: 4),
+                        SizedBox(height: 4),
                         Text(
                           description,
                           style:
@@ -624,10 +624,10 @@ class _BookingScreenState extends State<BookingScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Text(
                   '\$${price.toStringAsFixed(0)} COP',
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: Color(0xFFC89D93),
                       fontSize: 14),
@@ -723,7 +723,7 @@ class _BookingScreenState extends State<BookingScreen> {
                       color: isSelected ? Colors.white70 : Colors.grey[600],
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Text(
                     date.day.toString(),
                     style: TextStyle(
@@ -732,7 +732,7 @@ class _BookingScreenState extends State<BookingScreen> {
                       color: isSelected ? Colors.white : Colors.black87,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  SizedBox(height: 2),
                   Text(
                     _getMonthName(date),
                     style: TextStyle(
@@ -753,14 +753,14 @@ class _BookingScreenState extends State<BookingScreen> {
 
   Widget _buildTimeSelector() {
     if (selectedDate == null || selectedServiceId == null) {
-      return const Padding(
+      return Padding(
         padding: EdgeInsets.symmetric(vertical: 8.0),
         child: Text('Selecciona un servicio y fecha primero.',
             style: TextStyle(color: Colors.grey)),
       );
     }
     if (_isLoadingSlots) {
-      return const Center(
+      return Center(
         child: Padding(
           padding: EdgeInsets.all(16.0),
           child: CircularProgressIndicator(color: AppTheme.primary),
@@ -774,7 +774,7 @@ class _BookingScreenState extends State<BookingScreen> {
           color: const Color(0xFFFEE2E2),
           borderRadius: BorderRadius.circular(24),
         ),
-        child: const Column(
+        child: Column(
           children: [
             Icon(Icons.calendar_today, color: Color(0xFFDC2626), size: 30),
             SizedBox(height: 8),
@@ -847,7 +847,7 @@ class _BookingScreenState extends State<BookingScreen> {
                           ? AppTheme.primary
                           : Colors.grey[400],
                 ),
-                const SizedBox(width: 6),
+                SizedBox(width: 6),
                 Text(
                   time,
                   style: TextStyle(
@@ -873,7 +873,7 @@ class _BookingScreenState extends State<BookingScreen> {
 
   Widget _buildNotesField() => TextField(
         maxLines: 3,
-        style: const TextStyle(fontSize: 14),
+        style: TextStyle(fontSize: 14),
         decoration: AppTheme.inputDecoration(
           hintText: 'Ej: Quisiera un corte con flequillo...',
           labelText: 'Notas adicionales (opcional)',
@@ -884,7 +884,7 @@ class _BookingScreenState extends State<BookingScreen> {
 
   Widget _buildAddressField() => TextField(
         maxLines: 2,
-        style: const TextStyle(fontSize: 14),
+        style: TextStyle(fontSize: 14),
         decoration: AppTheme.inputDecoration(
           hintText: 'Ej: Calle 24 # 95-32, Torre 2, Apto 402, Fontibón',
           labelText: 'Dirección del servicio',
@@ -906,13 +906,13 @@ class _BookingScreenState extends State<BookingScreen> {
           elevation: 0,
         ),
         child: isLoading
-            ? const SizedBox(
+            ? SizedBox(
                 height: 24,
                 width: 24,
                 child: CircularProgressIndicator(
                     color: Colors.white, strokeWidth: 2),
               )
-            : const Row(
+            : Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(Icons.check_circle_outline, size: 20),
@@ -1035,7 +1035,7 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
       padding:
           EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(28),
@@ -1057,7 +1057,7 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -1071,8 +1071,8 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
                         borderRadius: BorderRadius.circular(4),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    const Text(
+                    SizedBox(width: 8),
+                    Text(
                       'wompi',
                       style: TextStyle(
                         fontSize: 22,
@@ -1081,11 +1081,11 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
                         letterSpacing: -1.0,
                       ),
                     ),
-                    const SizedBox(width: 4),
+                    SizedBox(width: 4),
                     Container(
                       width: 6,
                       height: 6,
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         color: Color(0xFFF12A7B),
                         shape: BoxShape.circle,
                       ),
@@ -1093,12 +1093,12 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
                   ],
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close, color: Colors.grey),
+                  icon: Icon(Icons.close, color: Colors.grey),
                   onPressed: () => Navigator.pop(context),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             if (_successData != null)
               _buildSuccessView()
             else
@@ -1117,21 +1117,21 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
 
     return Column(
       children: [
-        const SizedBox(height: 16),
-        const Icon(Icons.check_circle, color: Color(0xFF10B981), size: 72),
-        const SizedBox(height: 16),
-        const Text(
+        SizedBox(height: 16),
+        Icon(Icons.check_circle, color: Color(0xFF10B981), size: 72),
+        SizedBox(height: 16),
+        Text(
           '¡Pago Exitoso!',
           style: TextStyle(
               fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         Text(
           'Tu cita con ${widget.providerName} ha sido confirmada.',
           textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 14, color: Colors.black54),
+          style: TextStyle(fontSize: 14, color: Colors.black54),
         ),
-        const SizedBox(height: 24),
+        SizedBox(height: 24),
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -1142,17 +1142,17 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
           child: Column(
             children: [
               _buildReceiptRow('Servicio', widget.serviceName),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               _buildReceiptRow(
                   'Valor Pagado', '\$${amount.toStringAsFixed(0)} COP'),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               _buildReceiptRow('Medio de Pago', method),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               _buildReceiptRow('Ref. Wompi', ref),
             ],
           ),
         ),
-        const SizedBox(height: 32),
+        SizedBox(height: 32),
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
@@ -1172,11 +1172,11 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
                 (route) => route.settings.name == '/home',
               );
             },
-            child: const Text('Listo',
+            child: Text('Listo',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
       ],
     );
   }
@@ -1202,25 +1202,25 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
                     children: [
                       Text(
                         widget.serviceName,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
                             color: Colors.black87),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4),
                       Text(
                         'Prestador: ${widget.providerName}',
                         style:
-                            const TextStyle(fontSize: 12, color: Colors.grey),
+                            TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                     ],
                   ),
                 ),
                 Text(
                   '\$${widget.price.toStringAsFixed(0)} COP',
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                       color: Color(0xFF5C288D)),
@@ -1228,7 +1228,7 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
           Container(
             height: 50,
             decoration: BoxDecoration(
@@ -1309,20 +1309,20 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
           if (_selectedTab == 0) _buildNequiForm() else _buildCardForm(),
           if (_errorMsg != null) ...[
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             Text(
               '❌ $_errorMsg',
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                   color: Colors.redAccent,
                   fontSize: 13,
                   fontWeight: FontWeight.w500),
             ),
           ],
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF5C288D),
@@ -1335,13 +1335,13 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
             ),
             onPressed: _isProcessing ? null : _handlePayment,
             child: _isProcessing
-                ? const SizedBox(
+                ? SizedBox(
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(
                         color: Colors.white, strokeWidth: 2),
                   )
-                : const Row(
+                : Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.lock_outline, size: 18),
@@ -1352,8 +1352,8 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
                     ],
                   ),
           ),
-          const SizedBox(height: 8),
-          const Row(
+          SizedBox(height: 8),
+          Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(Icons.security, size: 12, color: Colors.grey),
@@ -1374,7 +1374,7 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
       controller: _nequiCtrl,
       keyboardType: TextInputType.phone,
       enabled: !_isProcessing,
-      style: const TextStyle(fontSize: 14),
+      style: TextStyle(fontSize: 14),
       decoration:
           _inputDecoration('Número de celular (Nequi)', Icons.phone_android),
       validator: (val) {
@@ -1394,7 +1394,7 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
           controller: _cardCtrl,
           keyboardType: TextInputType.number,
           enabled: !_isProcessing,
-          style: const TextStyle(fontSize: 14),
+          style: TextStyle(fontSize: 14),
           decoration: _inputDecoration('Número de Tarjeta', Icons.credit_card),
           validator: (val) {
             if (val == null || val.isEmpty)
@@ -1405,7 +1405,7 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
             return null;
           },
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         Row(
           children: [
             Expanded(
@@ -1413,7 +1413,7 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
                 controller: _expCtrl,
                 keyboardType: TextInputType.datetime,
                 enabled: !_isProcessing,
-                style: const TextStyle(fontSize: 14),
+                style: TextStyle(fontSize: 14),
                 decoration:
                     _inputDecoration('Exp (MM/AA)', Icons.calendar_month),
                 validator: (val) {
@@ -1425,13 +1425,13 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
                 },
               ),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             Expanded(
               child: TextFormField(
                 controller: _cvvCtrl,
                 keyboardType: TextInputType.number,
                 enabled: !_isProcessing,
-                style: const TextStyle(fontSize: 14),
+                style: TextStyle(fontSize: 14),
                 decoration: _inputDecoration('CVV', Icons.lock_outline),
                 validator: (val) {
                   if (val == null || val.isEmpty) return 'Requerido';
@@ -1444,12 +1444,12 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         TextFormField(
           controller: _holderCtrl,
           keyboardType: TextInputType.name,
           enabled: !_isProcessing,
-          style: const TextStyle(fontSize: 14),
+          style: TextStyle(fontSize: 14),
           decoration:
               _inputDecoration('Titular de la tarjeta', Icons.person_outline),
           validator: (val) {
@@ -1468,12 +1468,12 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
               fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black54),
         ),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
               fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black87),
         ),
       ],
@@ -1483,7 +1483,7 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
   InputDecoration _inputDecoration(String label, IconData icon) {
     return InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(color: Colors.grey, fontSize: 13),
+      labelStyle: TextStyle(color: Colors.grey, fontSize: 13),
       prefixIcon: Icon(icon, color: const Color(0xFF5C288D)),
       floatingLabelBehavior: FloatingLabelBehavior.never,
       filled: true,
@@ -1496,7 +1496,7 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(30),
-        borderSide: const BorderSide(color: Color(0xFF5C288D), width: 1.5),
+        borderSide: BorderSide(color: Color(0xFF5C288D), width: 1.5),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
     );

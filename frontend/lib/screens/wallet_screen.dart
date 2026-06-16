@@ -146,19 +146,19 @@ class _WalletScreenState extends State<WalletScreen>
           backgroundColor: Colors.white,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text(
+          title: Text(
             '¿Confirmar retiro?',
             style: TextStyle(
                 color: Color(0xFF4A3E3D), fontWeight: FontWeight.bold),
           ),
           content: Text(
             'Estás a punto de retirar ${_formatCOP.format(montoFinal)} a tu cuenta $targetCuenta. Esta acción no se puede deshacer.',
-            style: const TextStyle(color: Color(0xFF8E7D7A), fontSize: 14),
+            style: TextStyle(color: Color(0xFF8E7D7A), fontSize: 14),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancelar',
+              child: Text('Cancelar',
                   style: TextStyle(color: Color(0xFF8E7D7A))),
             ),
             ElevatedButton(
@@ -169,7 +169,7 @@ class _WalletScreenState extends State<WalletScreen>
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
               ),
-              child: const Text('Confirmar Retiro'),
+              child: Text('Confirmar Retiro'),
             ),
           ],
         ),
@@ -209,7 +209,7 @@ class _WalletScreenState extends State<WalletScreen>
     return Scaffold(
       backgroundColor: AppTheme.background,
       body: _loading
-          ? const Center(
+          ? Center(
               child: CircularProgressIndicator(color: AppTheme.primary))
           : _error != null
               ? _buildError()
@@ -227,10 +227,10 @@ class _WalletScreenState extends State<WalletScreen>
             ? null
             : IconButton(
                 icon:
-                    const Icon(Icons.arrow_back_ios, color: Color(0xFFC89D93)),
+                    Icon(Icons.arrow_back_ios, color: Color(0xFFC89D93)),
                 onPressed: () => Navigator.pop(context),
               ),
-        title: const Text(
+        title: Text(
           'Error de Wallet',
           style: TextStyle(
             color: Color(0xFFC89D93),
@@ -244,14 +244,14 @@ class _WalletScreenState extends State<WalletScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline, color: Colors.red, size: 48),
-            const SizedBox(height: 16),
+            Icon(Icons.error_outline, color: Colors.red, size: 48),
+            SizedBox(height: 16),
             Text(
               _error!,
-              style: const TextStyle(color: Color(0xFF4A3E3D), fontSize: 14),
+              style: TextStyle(color: Color(0xFF4A3E3D), fontSize: 14),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             ElevatedButton(
               onPressed: _cargarWallet,
               style: ElevatedButton.styleFrom(
@@ -260,7 +260,7 @@ class _WalletScreenState extends State<WalletScreen>
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
               ),
-              child: const Text('Reintentar'),
+              child: Text('Reintentar'),
             ),
           ],
         ),
@@ -301,12 +301,12 @@ class _WalletScreenState extends State<WalletScreen>
                     children: [
                       if (!widget.isEmbedded)
                         IconButton(
-                          icon: const Icon(Icons.arrow_back_ios,
+                          icon: Icon(Icons.arrow_back_ios,
                               color: AppTheme.text),
                           onPressed: () => Navigator.pop(context),
                         ),
                       const Spacer(),
-                      const Text(
+                      Text(
                         'Mi Wallet',
                         style: TextStyle(
                           color: AppTheme.text,
@@ -316,13 +316,13 @@ class _WalletScreenState extends State<WalletScreen>
                       ),
                       const Spacer(),
                       IconButton(
-                        icon: const Icon(Icons.settings_outlined,
+                        icon: Icon(Icons.settings_outlined,
                             color: AppTheme.text),
                         onPressed: () => _mostrarConfigRetiro(),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
 
                   // Tarjeta de Balance Disponible (Oro Rosa Satinado con Marca de Agua)
                   Stack(
@@ -338,21 +338,21 @@ class _WalletScreenState extends State<WalletScreen>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'Saldo disponible',
                               style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500, letterSpacing: 0.5),
                             ),
-                            const SizedBox(height: 8),
+                            SizedBox(height: 8),
                             Text(
                               _formatCOP.format(disponible),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 36,
                                 fontWeight: FontWeight.w900,
                                 letterSpacing: -0.5,
                               ),
                             ),
-                            const SizedBox(height: 28),
+                            SizedBox(height: 28),
                             // Botón de retiro premium
                             SizedBox(
                               width: double.infinity,
@@ -361,12 +361,12 @@ class _WalletScreenState extends State<WalletScreen>
                                 duration: const Duration(milliseconds: 300),
                                 child: ElevatedButton.icon(
                                   onPressed: puedeRetirar ? _solicitarRetiro : null,
-                                  icon: const Icon(Icons.account_balance_wallet_outlined, size: 18),
+                                  icon: Icon(Icons.account_balance_wallet_outlined, size: 18),
                                   label: Text(
                                     puedeRetirar
                                         ? 'RETIRAR AHORA'
                                         : razonBloqueo ?? 'NO DISPONIBLE',
-                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, letterSpacing: 0.8),
+                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, letterSpacing: 0.8),
                                   ),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.white,
@@ -403,7 +403,7 @@ class _WalletScreenState extends State<WalletScreen>
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
 
                   // Tarjetas de saldos secundarios (Matte Terracotta para retenciones)
                   Row(
@@ -419,17 +419,17 @@ class _WalletScreenState extends State<WalletScreen>
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.schedule, color: Colors.white, size: 20),
-                              const SizedBox(width: 8),
+                              Icon(Icons.schedule, color: Colors.white, size: 20),
+                              SizedBox(width: 8),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text('En camino', style: TextStyle(color: Colors.white70, fontSize: 11)),
-                                    const SizedBox(height: 2),
+                                    Text('En camino', style: TextStyle(color: Colors.white70, fontSize: 11)),
+                                    SizedBox(height: 2),
                                     Text(
                                       _formatCOP.format(pendiente),
-                                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ],
@@ -439,7 +439,7 @@ class _WalletScreenState extends State<WalletScreen>
                           ),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      SizedBox(width: 12),
                       // Tarjeta en disputa (Matte Terracota desaturado / Crimson)
                       Expanded(
                         child: Container(
@@ -451,17 +451,17 @@ class _WalletScreenState extends State<WalletScreen>
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.gavel, color: Colors.white, size: 20),
-                              const SizedBox(width: 8),
+                              Icon(Icons.gavel, color: Colors.white, size: 20),
+                              SizedBox(width: 8),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text('En disputa', style: TextStyle(color: Colors.white70, fontSize: 11)),
-                                    const SizedBox(height: 2),
+                                    Text('En disputa', style: TextStyle(color: Colors.white70, fontSize: 11)),
+                                    SizedBox(height: 2),
                                     Text(
                                       _formatCOP.format(enDisputa),
-                                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ],
@@ -479,7 +479,7 @@ class _WalletScreenState extends State<WalletScreen>
                       child: Center(
                         child: Text(
                           'Próximo retiro automático: ${DateFormat('dd MMM, hh:mm a', 'es').format(DateTime.parse(wallet['proxima_fecha_retiro']))}',
-                          style: const TextStyle(
+                          style: TextStyle(
                               color: AppTheme.text, fontSize: 12, fontWeight: FontWeight.w500),
                         ),
                       ),
@@ -525,11 +525,11 @@ class _WalletScreenState extends State<WalletScreen>
 
   Widget _buildMovimientos() {
     if (_loadingTx) {
-      return const Center(
+      return Center(
           child: CircularProgressIndicator(color: Color(0xFFC89D93)));
     }
     if (_transacciones.isEmpty) {
-      return const Center(
+      return Center(
         child: Text('Sin movimientos aún',
             style: TextStyle(color: Color(0xFF8E7D7A), fontSize: 14)),
       );
@@ -546,7 +546,7 @@ class _WalletScreenState extends State<WalletScreen>
       itemBuilder: (ctx, i) {
         if (i == _transacciones.length) {
           if (_loadingMore) {
-            return const Padding(
+            return Padding(
               padding: EdgeInsets.all(16.0),
               child: Center(
                   child: CircularProgressIndicator(color: Color(0xFFC89D93))),
@@ -557,12 +557,12 @@ class _WalletScreenState extends State<WalletScreen>
             child: OutlinedButton(
               onPressed: () => _cargarTransacciones(loadMore: true),
               style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Color(0xFFC89D93)),
+                side: BorderSide(color: Color(0xFFC89D93)),
                 foregroundColor: const Color(0xFFC89D93),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
               ),
-              child: const Text('Cargar más movimientos',
+              child: Text('Cargar más movimientos',
                   style: TextStyle(fontSize: 14)),
             ),
           );
@@ -576,11 +576,11 @@ class _WalletScreenState extends State<WalletScreen>
     final retiros =
         _transacciones.where((tx) => tx['tipo'] == 'DEBITO_RETIRO').toList();
     if (_loadingTx) {
-      return const Center(
+      return Center(
           child: CircularProgressIndicator(color: Color(0xFFC89D93)));
     }
     if (retiros.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
           'Sin retiros aún',
           style: TextStyle(color: Color(0xFF8E7D7A), fontSize: 14),
@@ -633,24 +633,24 @@ class _WalletScreenState extends State<WalletScreen>
                   color: const Color(0xFFC89D93).withOpacity(0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.account_balance_wallet,
+                child: Icon(Icons.account_balance_wallet,
                     color: Color(0xFFC89D93), size: 20),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Retiro solicitado',
                       style: TextStyle(
                           color: Color(0xFF4A3E3D),
                           fontWeight: FontWeight.w600,
                           fontSize: 14),
                     ),
-                    const SizedBox(height: 2),
+                    SizedBox(height: 2),
                     Text(fecha,
-                        style: const TextStyle(
+                        style: TextStyle(
                             color: Color(0xFF8E7D7A), fontSize: 12)),
                   ],
                 ),
@@ -660,13 +660,13 @@ class _WalletScreenState extends State<WalletScreen>
                 children: [
                   Text(
                     '-${_formatCOP.format(monto)}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: Color(0xFF4A3E3D),
                       fontWeight: FontWeight.bold,
                       fontSize: 15,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Container(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -708,14 +708,14 @@ class _WalletScreenState extends State<WalletScreen>
           icon: Icons.trending_up,
           color: const Color(0xFF10B981),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         _ResumenCard(
           titulo: 'Total retirado',
           monto: totalRetirado,
           icon: Icons.arrow_upward,
           color: const Color(0xFFC89D93),
         ),
-        const SizedBox(height: 24),
+        SizedBox(height: 24),
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -733,28 +733,28 @@ class _WalletScreenState extends State<WalletScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Modelo de retiro',
                 style: TextStyle(color: Color(0xFF8E7D7A), fontSize: 13),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               Text(
                 _nombreModelo(modelo),
-                style: const TextStyle(
+                style: TextStyle(
                   color: Color(0xFF4A3E3D),
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: 4),
               Text(
                 _descripcionModelo(modelo),
-                style: const TextStyle(color: Color(0xFF8E7D7A), fontSize: 12),
+                style: TextStyle(color: Color(0xFF8E7D7A), fontSize: 12),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         if (wallet['cuenta_verificada'] == true)
           Container(
             padding: const EdgeInsets.all(16),
@@ -766,19 +766,19 @@ class _WalletScreenState extends State<WalletScreen>
             ),
             child: Row(
               children: [
-                const Icon(Icons.verified, color: Color(0xFF10B981)),
-                const SizedBox(width: 12),
+                Icon(Icons.verified, color: Color(0xFF10B981)),
+                SizedBox(width: 12),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Cuenta verificada',
+                    Text('Cuenta verificada',
                         style: TextStyle(
                             color: Color(0xFF4A3E3D),
                             fontWeight: FontWeight.bold,
                             fontSize: 13)),
                     Text(
                       '${wallet['banco'] ?? ''} ****${wallet['numero_cuenta'].toString().length > 4 ? wallet['numero_cuenta'].toString().substring(wallet['numero_cuenta'].toString().length - 4) : ''}',
-                      style: const TextStyle(
+                      style: TextStyle(
                           color: Color(0xFF8E7D7A), fontSize: 12),
                     ),
                   ],
@@ -831,12 +831,12 @@ class _WalletScreenState extends State<WalletScreen>
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Modelo de retiro',
+              Text('Modelo de retiro',
                   style: TextStyle(
                       color: Color(0xFF4A3E3D),
                       fontSize: 18,
                       fontWeight: FontWeight.bold)),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               ...[
                 ('DEMANDA', 'Por demanda', 'Cada 3 días, mín. \$50.000'),
                 (
@@ -850,14 +850,14 @@ class _WalletScreenState extends State<WalletScreen>
                     groupValue: modeloSeleccionado,
                     activeColor: const Color(0xFFC89D93),
                     title: Text(m.$2,
-                        style: const TextStyle(color: Color(0xFF4A3E3D))),
+                        style: TextStyle(color: Color(0xFF4A3E3D))),
                     subtitle: Text(m.$3,
-                        style: const TextStyle(
+                        style: TextStyle(
                             color: Color(0xFF8E7D7A), fontSize: 12)),
                     onChanged: (v) =>
                         setModalState(() => modeloSeleccionado = v!),
                   )),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -890,7 +890,7 @@ class _WalletScreenState extends State<WalletScreen>
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: const Text('Guardar',
+                  child: Text('Guardar',
                       style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -932,7 +932,7 @@ class _SaldoChip extends StatelessWidget {
         child: Row(
           children: [
             Icon(icon, color: color, size: 16),
-            const SizedBox(width: 6),
+            SizedBox(width: 6),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -942,7 +942,7 @@ class _SaldoChip extends StatelessWidget {
                     NumberFormat.currency(
                             locale: 'es_CO', symbol: '\$', decimalDigits: 0)
                         .format(monto),
-                    style: const TextStyle(
+                    style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                         fontSize: 13),
@@ -1022,22 +1022,22 @@ class _TransaccionTile extends StatelessWidget {
             ),
             child: Icon(icono, color: color, size: 20),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(titulo,
-                    style: const TextStyle(
+                    style: TextStyle(
                         color: Color(0xFF4A3E3D),
                         fontWeight: FontWeight.w600,
                         fontSize: 14)),
                 if (tx['servicio_nombre'] != null)
                   Text(tx['servicio_nombre'],
-                      style: const TextStyle(
+                      style: TextStyle(
                           color: Color(0xFF8E7D7A), fontSize: 12)),
                 Text(fecha,
-                    style: const TextStyle(
+                    style: TextStyle(
                         color: Color(0xFF8E7D7A), fontSize: 12)),
               ],
             ),
@@ -1081,13 +1081,13 @@ class _ResumenCard extends StatelessWidget {
       child: Row(
         children: [
           Icon(icon, color: color, size: 28),
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(titulo,
                   style:
-                      const TextStyle(color: Color(0xFF8E7D7A), fontSize: 13)),
+                      TextStyle(color: Color(0xFF8E7D7A), fontSize: 13)),
               Text(
                 NumberFormat.currency(
                         locale: 'es_CO', symbol: '\$', decimalDigits: 0)
@@ -1139,12 +1139,12 @@ class _RetiroBottomSheetState extends State<_RetiroBottomSheet> {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: Color(0xFFE8D7D3)),
+          side: BorderSide(color: Color(0xFFE8D7D3)),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       ),
       child: Text(label,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
     );
   }
 
@@ -1153,7 +1153,7 @@ class _RetiroBottomSheetState extends State<_RetiroBottomSheet> {
     return Container(
       margin: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -1169,17 +1169,17 @@ class _RetiroBottomSheetState extends State<_RetiroBottomSheet> {
                 color: Colors.grey.shade300,
                 borderRadius: BorderRadius.circular(2)),
           )),
-          const SizedBox(height: 20),
-          const Text('Solicitar retiro',
+          SizedBox(height: 20),
+          Text('Solicitar retiro',
               style: TextStyle(
                   color: Color(0xFF4A3E3D),
                   fontSize: 20,
                   fontWeight: FontWeight.bold)),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Text(
               'Disponible: ${NumberFormat.currency(locale: 'es_CO', symbol: '\$', decimalDigits: 0).format(widget.disponible)}',
-              style: const TextStyle(color: Color(0xFF8E7D7A), fontSize: 14)),
-          const SizedBox(height: 16),
+              style: TextStyle(color: Color(0xFF8E7D7A), fontSize: 14)),
+          SizedBox(height: 16),
           // Quick selector buttons
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -1189,25 +1189,25 @@ class _RetiroBottomSheetState extends State<_RetiroBottomSheet> {
               _buildPercentButton(1.0, '100%'),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           TextField(
             controller: widget.montoCtrl,
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            style: const TextStyle(
+            style: TextStyle(
                 color: Color(0xFF4A3E3D),
                 fontSize: 24,
                 fontWeight: FontWeight.bold),
             decoration: InputDecoration(
               prefixText: '\$ ',
-              prefixStyle: const TextStyle(
+              prefixStyle: TextStyle(
                   color: Color(0xFFC89D93),
                   fontSize: 24,
                   fontWeight: FontWeight.bold),
               helperText:
                   'Mínimo: ${NumberFormat.currency(locale: 'es_CO', symbol: '\$', decimalDigits: 0).format(widget.minimo)}',
               helperStyle:
-                  const TextStyle(color: Color(0xFF8E7D7A), fontSize: 12),
+                  TextStyle(color: Color(0xFF8E7D7A), fontSize: 12),
               filled: true,
               fillColor: const Color(0xFFFAF5F4),
               border: OutlineInputBorder(
@@ -1216,7 +1216,7 @@ class _RetiroBottomSheetState extends State<_RetiroBottomSheet> {
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -1226,21 +1226,21 @@ class _RetiroBottomSheetState extends State<_RetiroBottomSheet> {
             ),
             child: Row(
               children: [
-                const Icon(Icons.account_balance,
+                Icon(Icons.account_balance,
                     color: Color(0xFFC89D93), size: 18),
-                const SizedBox(width: 10),
+                SizedBox(width: 10),
                 Text(widget.cuenta,
-                    style: const TextStyle(
+                    style: TextStyle(
                         color: Color(0xFF4A3E3D), fontSize: 14)),
               ],
             ),
           ),
-          const SizedBox(height: 12),
-          const Text(
+          SizedBox(height: 12),
+          Text(
             '⏱ El dinero llegará en 1-2 días hábiles. La plataforma asume el costo de transferencia.',
             style: TextStyle(color: Color(0xFF8E7D7A), fontSize: 12),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -1251,18 +1251,18 @@ class _RetiroBottomSheetState extends State<_RetiroBottomSheet> {
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
               ),
-              child: const Text('Confirmar retiro',
+              child: Text('Confirmar retiro',
                   style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                       fontSize: 16)),
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Center(
             child: TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancelar',
+              child: Text('Cancelar',
                   style: TextStyle(color: Color(0xFF8E7D7A), fontSize: 14)),
             ),
           ),
