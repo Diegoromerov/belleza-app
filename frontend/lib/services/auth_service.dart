@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
+import 'secure_storage_service.dart';
 
 class AuthService {
   static Future<String> getBaseUrl() async {
@@ -37,7 +38,10 @@ class AuthService {
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('token', data['token']);
+      
+      // 🛡️ PARCHE DE SEGURIDAD (GLOW-SEC-02): Guardar el token en almacenamiento cifrado
+      await SecureStorageService().write('token', data['token']);
+      
       await prefs.setString('userId', data['user']['id'].toString());
       await prefs.setString('userName', data['user']['full_name']);
       if (data['user']['role'] != null) {
@@ -70,7 +74,10 @@ class AuthService {
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('token', data['token']);
+      
+      // 🛡️ PARCHE DE SEGURIDAD (GLOW-SEC-02): Guardar el token en almacenamiento cifrado
+      await SecureStorageService().write('token', data['token']);
+      
       await prefs.setString('userId', data['user']['id'].toString());
       await prefs.setString('userName', data['user']['full_name']);
       if (data['user']['role'] != null) {
@@ -119,13 +126,15 @@ class AuthService {
   }
 
   static Future<String?> getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('token');
+    // 🛡️ PARCHE DE SEGURIDAD (GLOW-SEC-02): Leer token de almacenamiento cifrado
+    return await SecureStorageService().read('token');
   }
 
   static Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
+    // 🛡️ PARCHE DE SEGURIDAD (GLOW-SEC-02): Limpiar almacenamiento cifrado
+    await SecureStorageService().clearAll();
     ApiService.resetCachedBaseUrl();
   }
 
@@ -139,7 +148,10 @@ class AuthService {
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('token', data['token']);
+      
+      // 🛡️ PARCHE DE SEGURIDAD (GLOW-SEC-02): Guardar el token en almacenamiento cifrado
+      await SecureStorageService().write('token', data['token']);
+      
       await prefs.setString('userId', data['user']['id'].toString());
       await prefs.setString('userName', data['user']['full_name']);
       if (data['user']['role'] != null) {

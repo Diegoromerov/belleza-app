@@ -1393,50 +1393,6 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
             ],
           ),
 
-          // Theme Toggle Floating Button
-          Positioned(
-            right: 20,
-            bottom: 376,
-            child: ValueListenableBuilder<bool>(
-              valueListenable: AppTheme.isModernTheme,
-              builder: (context, isModern, _) {
-                return InkWell(
-                  onTap: () => AppTheme.toggleTheme(),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: AppTheme.surface.withOpacity(0.9),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: AppTheme.accent.withOpacity(0.3),
-                        width: 1.5,
-                      ),
-                      boxShadow: AppTheme.softShadow,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          isModern ? Icons.palette_outlined : Icons.brush_outlined,
-                          size: 14,
-                          color: AppTheme.primary,
-                        ),
-                        SizedBox(width: 4),
-                        Text(
-                          isModern ? 'Lujo Cálido' : 'Clásico',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.text,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
 
           // Capa 1: Floating AI Search Bar
           Positioned(

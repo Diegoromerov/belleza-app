@@ -10,6 +10,7 @@ class BookingScreen extends StatefulWidget {
   final String providerName;
   final List<Map<String, dynamic>> services;
   final String? initialNotes;
+  final String? preselectedProductId;
 
   const BookingScreen({
     super.key,
@@ -17,6 +18,7 @@ class BookingScreen extends StatefulWidget {
     required this.providerName,
     required this.services,
     this.initialNotes,
+    this.preselectedProductId,
   });
 
   @override
@@ -108,6 +110,57 @@ class _BookingScreenState extends State<BookingScreen> {
       setState(() {
         _recommendedProducts = products;
         _isLoadingProducts = false;
+        if (widget.preselectedProductId != null) {
+          final targetId = widget.preselectedProductId!;
+          final hasProduct = products.any((p) => p['id']?.toString() == targetId);
+          if (hasProduct) {
+            _selectedProductsQty[targetId] = 1;
+          } else {
+            // Inject extra product info if not matching tag but explicitly requested
+            Map<String, dynamic>? extraProduct;
+            if (targetId == '1') {
+              extraProduct = {
+                'id': 1,
+                'nombre': 'Kit Balayage Pro',
+                'precio': 45000.00,
+                'stock': 20,
+                'imagen_url': 'https://images.unsplash.com/photo-1535585209827-a15fcdbc4c2d?q=80&w=200',
+                'tag_especialidad': 'hair-diagnostic'
+              };
+            } else if (targetId == '2') {
+              extraProduct = {
+                'id': 2,
+                'nombre': 'Aceite de Cutículas Frutales',
+                'precio': 15000.00,
+                'stock': 50,
+                'imagen_url': 'https://images.unsplash.com/photo-1607602132700-068258431c6c?q=80&w=200',
+                'tag_especialidad': 'nails-classic'
+              };
+            } else if (targetId == '4') {
+              extraProduct = {
+                'id': 4,
+                'nombre': 'Sérum Facial Ácido Hialurónico',
+                'precio': 55000.00,
+                'stock': 30,
+                'imagen_url': 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?q=80&w=200',
+                'tag_especialidad': 'skin-texture'
+              };
+            } else if (targetId == '6') {
+              extraProduct = {
+                'id': 6,
+                'nombre': 'Gel Moldeador de Cejas Orgánico',
+                'precio': 18000.00,
+                'stock': 40,
+                'imagen_url': 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?q=80&w=200',
+                'tag_especialidad': 'eyebrow-visagism'
+              };
+            }
+            if (extraProduct != null) {
+              _recommendedProducts.insert(0, extraProduct);
+              _selectedProductsQty[targetId] = 1;
+            }
+          }
+        }
       });
     } catch (e) {
       setState(() {

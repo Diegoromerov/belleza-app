@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../services/api_service.dart';
 import '../../shared/theme.dart';
+import '../booking_screen.dart';
 
 class ManicureIdeasScreen extends StatefulWidget {
   static Map<String, dynamic>? selectedReference;
@@ -99,8 +100,10 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
 
     try {
       final results = await ApiService.fetchDesignIdeas(query);
+      final List<Map<String, dynamic>> updatedResults = results.take(5).toList();
+      updatedResults.insert(0, _getSimulatedProduct());
       setState(() {
-        _images = results.take(6).toList(); // Limitar a 6
+        _images = updatedResults;
         _searchCount++;
         _totalImagesLoaded += _images.length;
         _isLoading = false;
@@ -245,7 +248,9 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
         List<Map<String, dynamic>> images = [];
         try {
           final searchResults = await ApiService.fetchDesignIdeas(pinterestQuery);
-          images = searchResults.take(6).toList();
+          final List<Map<String, dynamic>> updatedResults = searchResults.take(5).toList();
+          updatedResults.insert(0, _getSimulatedProduct());
+          images = updatedResults;
         } catch (searchErr) {
           debugPrint('Error buscando imágenes en Pinterest: $searchErr');
         }
@@ -999,40 +1004,7 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
               ),
               itemBuilder: (context, index) {
                 final item = _pinterestImages[index];
-                return GestureDetector(
-                  onTap: () => _showImageFullscreen(item),
-                  child: Card(
-                    clipBehavior: Clip.antiAlias,
-                    elevation: 2,
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        Image.network(
-                          item['image_url'],
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Center(child: Icon(Icons.broken_image, size: 40));
-                          },
-                        ),
-                        Positioned(
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                          child: Container(
-                            color: Colors.black54,
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            child: Text(
-                              item['title'] ?? 'Recomendación',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(color: Colors.white, fontSize: 11),
-                            ),
-                          ),
-                        )
-                      ],
-                    ),
-                  ),
-                );
+                return _buildGalleryCard(item);
               },
             ),
           ],
@@ -1316,10 +1288,13 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
               crossAxisCount: 2,
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
-              childAspectRatio: 0.8,
+              childAspectRatio: 0.72,
             ),
             itemBuilder: (context, index) {
               final item = imagesList[index];
+              if (item['is_product'] == true) {
+                return _buildProductCard(item);
+              }
               return GestureDetector(
                 onTap: () => _showImageFullscreen(item),
                 child: Card(
@@ -1371,5 +1346,272 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
     }
 
     return SizedBox.shrink();
+  }
+
+  Map<String, dynamic> _getSimulatedProduct() {
+    final tool = _activeToolId ?? 'nails-classic';
+    if (tool.contains('hair')) {
+      return {
+        'is_product': true,
+        'id': '1',
+        'title': 'Kit Balayage Pro',
+        'price': '45.000 COP',
+        'description': 'Champú y acondicionador para el mantenimiento de tonos rubios y balayage en casa.',
+        'image_url': 'https://images.unsplash.com/photo-1535585209827-a15fcdbc4c2d?q=80&w=200',
+      };
+    } else if (tool.contains('skin') || tool.contains('facial')) {
+      return {
+        'is_product': true,
+        'id': '4',
+        'title': 'Sérum Facial Ácido Hialurónico',
+        'price': '55.000 COP',
+        'description': 'Sérum hidratante concentrado para uso post-limpieza facial.',
+        'image_url': 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?q=80&w=200',
+      };
+    } else if (tool.contains('eyebrow') || tool.contains('ceja')) {
+      return {
+        'is_product': true,
+        'id': '6',
+        'title': 'Gel Moldeador de Cejas Orgánico',
+        'price': '18.000 COP',
+        'description': 'Fijador de cejas efecto laminado de larga duración.',
+        'image_url': 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?q=80&w=200',
+      };
+    } else {
+      return {
+        'is_product': true,
+        'id': '2',
+        'title': 'Aceite de Cutículas Frutales',
+        'price': '15.000 COP',
+        'description': 'Aceite hidratante enriquecido con vitamina E para uñas de gel y acrílicas.',
+        'image_url': 'https://images.unsplash.com/photo-1607602132700-068258431c6c?q=80&w=200',
+      };
+    }
+  }
+
+  Widget _buildProductCard(Map<String, dynamic> item) {
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      elevation: 3,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: const BorderSide(color: AppTheme.primary, width: 1.5),
+      ),
+      color: Colors.white,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            flex: 5,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Image.network(
+                  item['image_url'],
+                  fit: BoxFit.cover,
+                  errorBuilder: (c, o, s) => Container(
+                    color: const Color(0xFFF5EBE6),
+                    child: const Icon(Icons.shopping_bag_outlined, color: AppTheme.primary, size: 40),
+                  ),
+                ),
+                Positioned(
+                  top: 8,
+                  left: 8,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primary,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Text(
+                      'TIENDA GLOW',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            flex: 6,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item['title'] ?? '',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                          color: AppTheme.text,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        item['price'] ?? '',
+                        style: const TextStyle(
+                          color: AppTheme.primary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 28,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primary,
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.zero,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      onPressed: () => _handleProductBooking(item),
+                      child: const Text(
+                        'Comprar / Reservar',
+                        style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _handleProductBooking(Map<String, dynamic> product) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: Card(
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(color: AppTheme.primary),
+                SizedBox(height: 16),
+                Text(
+                  'Buscando profesional disponible...',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    try {
+      final providers = await ApiService.fetchProvidersSecured();
+      if (!mounted) return;
+      Navigator.pop(context); // Close loading dialog
+
+      if (providers.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No hay profesionales disponibles en este momento.'),
+            backgroundColor: AppTheme.error,
+          ),
+        );
+        return;
+      }
+
+      final provider = providers.first;
+      final details = await ApiService.fetchProviderDetails(provider.id);
+      if (!mounted) return;
+
+      final services = List<Map<String, dynamic>>.from(details['services'] ?? []);
+      if (services.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${provider.businessName} no tiene servicios activos.'),
+            backgroundColor: AppTheme.error,
+          ),
+        );
+        return;
+      }
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BookingScreen(
+            providerId: provider.id,
+            providerName: provider.businessName,
+            services: services,
+            preselectedProductId: product['id']?.toString(),
+          ),
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Close loading dialog if open
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al conectar con la agenda: $e'),
+            backgroundColor: AppTheme.error,
+          ),
+        );
+      }
+    }
+  }
+
+  Widget _buildGalleryCard(Map<String, dynamic> item) {
+    if (item['is_product'] == true) {
+      return _buildProductCard(item);
+    }
+    return GestureDetector(
+      onTap: () => _showImageFullscreen(item),
+      child: Card(
+        clipBehavior: Clip.antiAlias,
+        elevation: 2,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.network(
+              item['image_url'],
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return Center(child: Icon(Icons.broken_image, size: 40));
+              },
+            ),
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                color: Colors.black54,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: Text(
+                  item['title'] ?? 'Diseño',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: Colors.white, fontSize: 11),
+                ),
+              ),
+            )
+          ],
+        ),
+      ),
+    );
   }
 }

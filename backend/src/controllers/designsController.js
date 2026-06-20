@@ -288,7 +288,14 @@ Responde de manera obligatoria únicamente con un objeto JSON válido, sin forma
       analysisJson = JSON.parse(text);
     } catch (parseErr) {
       console.error('Error al parsear respuesta JSON de Gemini:', text);
+      // Garantizar purga incluso si falla el parseo
+      if (req.file && req.file.buffer) req.file.buffer.fill(0);
       throw new Error('La IA no retornó un formato JSON válido.');
+    }
+
+    // Purga criptográfica inmediata de la imagen del buffer en memoria RAM
+    if (req.file && req.file.buffer) {
+      req.file.buffer.fill(0);
     }
 
     if (req.user && req.user.id) {
@@ -302,6 +309,10 @@ Responde de manera obligatoria únicamente con un objeto JSON válido, sin forma
     });
 
   } catch (error) {
+    // Garantizar purga en caso de excepciones
+    if (req.file && req.file.buffer) {
+      try { req.file.buffer.fill(0); } catch (e) {}
+    }
     console.error('❌ ERROR ANALIZANDO ROSTRO:', error.message);
     res.status(500).json({ 
       error: 'Error al analizar la forma del rostro con IA',
@@ -498,7 +509,13 @@ ${jsonTemplate}`;
       analysisJson = JSON.parse(text);
     } catch (parseErr) {
       console.error('Error al parsear respuesta JSON de Gemini para análisis:', text);
+      if (req.file && req.file.buffer) req.file.buffer.fill(0);
       throw new Error('La IA no retornó un formato JSON válido.');
+    }
+
+    // Purga de RAM
+    if (req.file && req.file.buffer) {
+      req.file.buffer.fill(0);
     }
 
     if (req.user && req.user.id) {
@@ -512,6 +529,9 @@ ${jsonTemplate}`;
     });
 
   } catch (error) {
+    if (req.file && req.file.buffer) {
+      try { req.file.buffer.fill(0); } catch (e) {}
+    }
     console.error('❌ ERROR REALIZANDO ANÁLISIS DE DISEÑO:', error.message);
     res.status(500).json({ 
       error: 'Error al analizar la imagen con IA',
