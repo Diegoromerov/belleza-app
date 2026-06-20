@@ -220,10 +220,13 @@ exports.onboarding = async (req, res) => {
     const clientIp = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
     if (mappedRol === 'PRESTADOR') {
-      // Prestador requiere documentación y entra en PENDIENTE
+      // 🛡️ PARCHE DE SEGURIDAD (GLOW-SEC-01): El usuario que realiza el onboarding de prestador
+      // NO obtiene el rol en la tabla usuarios de forma inmediata. Se almacena su solicitud
+      // y archivos en perfiles_prestador como PENDIENTE, pero su cuenta de autenticación
+      // sigue siendo CLIENTE hasta aprobación administrativa.
       await pool.query(
         `UPDATE usuarios 
-         SET rol = 'PRESTADOR', onboarding_completo = true,
+         SET onboarding_completo = true,
              habeas_data_accepted_at = NOW(), habeas_data_ip = $2,
              terminos_accepted_at = NOW(), terminos_ip = $2
          WHERE id = $1`,
@@ -242,7 +245,7 @@ exports.onboarding = async (req, res) => {
          [userId, documento_id_url || null, rut_url || null, certificacion_url || null]
       );
       
-      console.log(`📋 Onboarding y aceptación legal completados para Proveedor ID ${userId}. Esperando revisión.`);
+      console.log(`📋 Onboarding y aceptación legal completados para Proveedor ID ${userId}. Estatus: PENDIENTE.`);
     } else {
       // Cliente se marca completo inmediatamente
       await pool.query(
@@ -260,7 +263,7 @@ exports.onboarding = async (req, res) => {
       success: true,
       message: 'Onboarding completado exitosamente',
       user: {
-        role: toApiRole(mappedRol),
+        role: mappedRol === 'PRESTADOR' ? 'client' : 'client', // Permanece como client hasta aprobación
         onboarding_completo: true
       }
     });
@@ -270,3 +273,38 @@ exports.onboarding = async (req, res) => {
     res.status(500).json({ error: 'Error al guardar onboarding' });
   }
 };
+
+// ==========================================
+// 👁️ REGISTRAR CONSENTIMIENTO BIOMÉTRICO E IA (Ley 1581)
+// ==========================================
+exports.acceptBiometricsConsent = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { consentimiento_otorgado, version_politica, dispositivo } = req.body;
+
+    if (consentimiento_otorgado === undefined || !version_politica) {
+      return res.status(400).json({ error: 'consentimiento_otorgado y version_politica son obligatorios.' });
+    }
+
+    const clientIp = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+
+    // Registrar en auditoría de consentimiento biométrico
+    await pool.query(
+      `INSERT INTO auditoria_consentimiento_biometrico (user_id, consentimiento_otorgado, version_politica, ip_registro, dispositivo)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [userId, consentimiento_otorgado, version_politica, clientIp, dispositivo || 'Unknown']
+    );
+
+    console.log(`🛡️ Auditoría de consentimiento biométrico registrada para usuario ID ${userId}. Consentimiento: ${consentimiento_otorgado}`);
+
+    res.json({
+      success: true,
+      message: 'Aceptación y auditoría de datos biométricos registrada exitosamente.',
+      consentimiento_otorgado
+    });
+  } catch (error) {
+    console.error('❌ ERROR ACCEPT BIOMETRICS CONSENT:', error.message);
+    res.status(500).json({ error: 'Error al guardar el consentimiento de datos biométricos.' });
+  }
+};
+
