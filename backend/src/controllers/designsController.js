@@ -375,6 +375,23 @@ exports.analyzeDesign = async (req, res) => {
           recommended_colors: ["Nude beige", "Rojo terracota", "Glitter dorado"],
           pinterest_query: "unas almendradas color nude beige"
         };
+      } else if (type === 'care-routine') {
+        mockResult = {
+          skin_type: "Mixta con tendencia a deshidratación",
+          scalp_status: "Normal",
+          explanation: "Tu piel muestra brillo leve en la zona T con mejillas deshidratadas. Requiere una rutina que equilibre la producción de grasa e hidrate a profundidad.",
+          recommended_routine: ["Paso 1: Limpiador suave hidratante", "Paso 2: Sérum de Ácido Hialurónico", "Paso 3: Crema gel ligera selladora"],
+          pinterest_query: "rutina skincare semanal piel mixta"
+        };
+      } else if (type === 'hair-color') {
+        mockResult = {
+          skin_undertone: "Cálido (Otoño Suave)",
+          face_shape: "Ovalado",
+          recommended_shades: ["Castaño Miel / Avellana", "Balayage Cobrizo sutil", "Chocolate dorado"],
+          explanation: "Los tonos cálidos con reflejos cobrizos o dorados aportan luz a tu piel y suavizan los rasgos de tu rostro ovalado de forma excepcional.",
+          recommended_colors: ["Miel", "Avellana", "Cobrizo", "Chocolate Dorado"],
+          pinterest_query: "tinte de cabello balayage miel castano"
+        };
       } else {
         return res.status(400).json({ error: `Tipo de análisis "${type}" no reconocido.` });
       }
@@ -472,6 +489,32 @@ Genera una consulta corta (máximo 6 palabras) en español para buscar estilos d
   "finger_proportion": "Proporción de los dedos",
   "skin_undertone": "Subtono cromático de mano",
   "recommended_shapes": ["Forma 1", "Forma 2", "Forma 3"],
+  "recommended_colors": ["Color 1", "Color 2", "Color 3", "Color 4"],
+  "pinterest_query": "consulta corta de pinterest"
+}`;
+    } else if (type === 'care-routine') {
+      prompt = `Analiza detalladamente la piel del rostro o la textura de cabello que se observa en esta foto.
+Determina el tipo de piel o cabello (ej. Piel Mixta, Cabello Seco/Fino) y el estado general observando el brillo, resequedad o texturas.
+Proporciona una explicación detallada del diagnóstico y genera una rutina semanal paso a paso en casa (3 pasos específicos).
+Genera una consulta corta (máximo 6 palabras) en español para buscar rutinas de skincare o haircare recomendadas en Pinterest.`;
+      jsonTemplate = `{
+  "skin_type": "Tipo de piel o cabello detectado",
+  "scalp_status": "Estado/Condición general",
+  "explanation": "Explicación detallada del cuidado recomendado...",
+  "recommended_routine": ["Paso 1...", "Paso 2...", "Paso 3..."],
+  "pinterest_query": "consulta corta de pinterest"
+}`;
+    } else if (type === 'hair-color') {
+      prompt = `Analiza el rostro de la persona en esta foto, enfocándose en el subtono cromático de su piel (Cálido, Frío o Neutro) y la forma del rostro.
+Determina el subtono cromático detectado y el tipo de rostro (Ovalado, Redondo, Cuadrado, etc.).
+Recomienda los 3 tonos o reflejos de tinte de cabello que más le favorecen para enmarcar su cara y aportar luminosidad a su piel.
+Explica detalladamente por qué estos colores armonizan con sus rasgos.
+Genera una consulta corta (máximo 6 palabras) en español para buscar ideas visuales de coloración capilar recomendada en Pinterest.`;
+      jsonTemplate = `{
+  "skin_undertone": "Subtono de piel detectado",
+  "face_shape": "Forma del rostro detectada",
+  "recommended_shades": ["Tono 1", "Tono 2", "Tono 3"],
+  "explanation": "Explicación detallada de colorimetría capilar...",
   "recommended_colors": ["Color 1", "Color 2", "Color 3", "Color 4"],
   "pinterest_query": "consulta corta de pinterest"
 }`;
