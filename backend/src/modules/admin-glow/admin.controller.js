@@ -259,7 +259,20 @@ async function rejectProvider(req, res) {
 async function verifyProviderAuto(req, res) {
   try {
     const { providerId, documentType, documentNumber } = req.body;
-    const adminId = req.admin ? req.admin.id : null; // Podría llamarse por un sistema automatizado/webhook
+    const adminId = req.admin ? req.admin.id : null;
+
+    // Si no hay sesión de administrador, validar token del webhook (SEC-05)
+    if (!adminId) {
+      const webhookToken = req.headers['x-webhook-token'];
+      const expectedToken = process.env.KYC_WEBHOOK_SECRET || 'glowapp_secure_kyc_webhook_secret_2026';
+      
+      if (!webhookToken || webhookToken !== expectedToken) {
+        return res.status(401).json({
+          success: false,
+          error: 'No autorizado. Se requiere un token de webhook válido para la verificación automatizada.'
+        });
+      }
+    }
 
     if (!providerId) {
       return res.status(400).json({
