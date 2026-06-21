@@ -1517,6 +1517,16 @@ const initDatabase = async () => {
       CREATE INDEX IF NOT EXISTS idx_activity_logs_event ON user_activity_logs(event_type);
     `);
 
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS admin_actions (
+        id SERIAL PRIMARY KEY,
+        admin_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+        accion VARCHAR(100) NOT NULL,
+        descripcion TEXT,
+        fecha_creacion TIMESTAMPTZ DEFAULT NOW()
+      );
+    `);
+
     // Crear índices de rendimiento para bookings, reviews y services si no existen
     await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_bookings_client ON bookings(client_id);

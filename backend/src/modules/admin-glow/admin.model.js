@@ -57,17 +57,6 @@ async function updateSOSAlertStatus(alertId, newStatus) {
  * Registra una acción administrativa.
  */
 async function logAdminAction(adminId, actionType, description) {
-  // Crear tabla admin_actions si no existe para evitar fallos
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS admin_actions (
-      id SERIAL PRIMARY KEY,
-      admin_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
-      accion VARCHAR(100) NOT NULL,
-      descripcion TEXT,
-      fecha_creacion TIMESTAMPTZ DEFAULT NOW()
-    );
-  `);
-  
   const query = `
     INSERT INTO admin_actions (admin_id, accion, descripcion, fecha_creacion)
     VALUES (?, ?, ?, NOW());
