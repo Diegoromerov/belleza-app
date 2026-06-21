@@ -83,8 +83,18 @@ const upload = multer({
 // ==========================================
 // MIDDLEWARE
 // ==========================================
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+  : ['http://localhost:8080', 'http://localhost:8081', 'http://localhost:7357', 'http://127.0.0.1:8080', 'http://localhost:8082'];
+
 app.use(cors({
-  origin: ['http://localhost:8080', 'http://localhost:8081', 'http://localhost:7357', 'http://127.0.0.1:8080'],
+  origin: (origin, callback) => {
+    // Permitir peticiones sin origen (ej: curl, Postman, apps móviles nativas)
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('CORS bloqueado por política de seguridad'));
+  },
   credentials: true
 }));
 app.use(express.json());
