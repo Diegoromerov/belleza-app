@@ -237,7 +237,7 @@ class _ChatScreenState extends State<ChatScreen> {
           final data = jsonDecode(decoded);
           if (mounted) {
             setState(() {
-              _currentUserId = data['id'];
+              _currentUserId = data['id']?.toString();
             });
             _registerWebSocket();
           }
