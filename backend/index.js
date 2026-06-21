@@ -649,8 +649,8 @@ const optionalAuthMiddleware = async (req, res, next) => {
   }
   try {
     const jwt = require('jsonwebtoken');
-    const JWT_SECRET = process.env.JWT_SECRET || 'beauty_app_super_secret_key_2026_change_in_production';
-    const verified = jwt.verify(token, JWT_SECRET);
+    const { getJwtSecret } = require('./src/config/jwt');
+    const verified = jwt.verify(token, getJwtSecret());
     
     const userRes = await pool.query('SELECT rol FROM usuarios WHERE id = $1', [verified.id]);
     if (userRes.rows.length > 0) {
