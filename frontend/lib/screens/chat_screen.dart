@@ -145,13 +145,18 @@ class _ChatScreenState extends State<ChatScreen> {
         },
       );
 
-      // Join chat room or send handshake
-      _webSocketChannel!.sink.add(jsonEncode({
-        'type': 'join',
-        'partnerId': widget.partnerId,
-      }));
+      _registerWebSocket();
     } catch (e) {
       _handleWebSocketFailure();
+    }
+  }
+
+  void _registerWebSocket() {
+    if (_webSocketChannel != null && _currentUserId != null) {
+      _webSocketChannel!.sink.add(jsonEncode({
+        'type': 'register',
+        'userId': _currentUserId,
+      }));
     }
   }
 
@@ -234,6 +239,7 @@ class _ChatScreenState extends State<ChatScreen> {
             setState(() {
               _currentUserId = data['id'];
             });
+            _registerWebSocket();
           }
         }
       } catch (_) {}
@@ -481,16 +487,37 @@ class _ChatScreenState extends State<ChatScreen> {
                                     text.contains('Estilo Recomendado:') ||
                                         text.contains('[SIMULACIÓN IA]');
                                 
-                                // Parse and clean redirect metadata
                                 String cleanText = text;
                                 String? redirectToolId;
-                                if (text.contains('Redirección Módulo Ideas:')) {
-                                  final reg = RegExp(r'Redirección Módulo Ideas:\s*([\w\-]+)');
-                                  final match = reg.firstMatch(text);
-                                  if (match != null) {
-                                    redirectToolId = match.group(1);
-                                    cleanText = text.replaceAll(reg, '').trim();
+                                
+                                // Case-insensitive regex supporting typos (e.g., 'rediceccioin'), spaces, dots/colons
+                                final redirectReg = RegExp(
+                                  r'(?:redirecci[oó]n|redicecci[oó]n|rediceccioin)\s+m[oó]dulo\s+ideas[:.\s\-]+([a-zA-Z0-9\-\s]+)',
+                                  caseSensitive: false,
+                                );
+                                final redirectMatch = redirectReg.firstMatch(text);
+                                if (redirectMatch != null) {
+                                  final extracted = redirectMatch.group(1)?.toLowerCase().trim() ?? '';
+                                  
+                                  // Normalize tool ID mapping
+                                  if (extracted.contains('nails') && (extracted.contains('clas') || extracted.contains('clás'))) {
+                                    redirectToolId = 'nails-classic';
+                                  } else if (extracted.contains('skin') && extracted.contains('tone')) {
+                                    redirectToolId = 'skin-tone';
+                                  } else if (extracted.contains('hair') || extracted.contains('capilar')) {
+                                    redirectToolId = 'hair-diagnostic';
+                                  } else if (extracted.contains('poros') || extracted.contains('texture') || extracted.contains('textura')) {
+                                    redirectToolId = 'skin-texture';
+                                  } else if (extracted.contains('cejas') || extracted.contains('eyebrow') || extracted.contains('visagism')) {
+                                    redirectToolId = 'eyebrow-visagism';
+                                  } else if (extracted.contains('nails') && extracted.contains('style')) {
+                                    redirectToolId = 'nails-style';
+                                  } else {
+                                    redirectToolId = extracted.replaceAll(' ', '-');
                                   }
+                                  
+                                  // Hide the metadata string from the visible message
+                                  cleanText = text.replaceRange(redirectMatch.start, redirectMatch.end, '').trim();
                                 }
 
                                 return Container(
