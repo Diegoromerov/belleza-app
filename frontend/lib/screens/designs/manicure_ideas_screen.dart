@@ -404,6 +404,8 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
       else if (_activeToolId == 'skin-texture') screenTitle = 'Escáner de Poros';
       else if (_activeToolId == 'eyebrow-visagism') screenTitle = 'Visagismo de Cejas';
       else if (_activeToolId == 'nails-style') screenTitle = 'Estilo de Uñas IA';
+      else if (_activeToolId == 'care-routine') screenTitle = 'Planificador Skincare';
+      else if (_activeToolId == 'hair-color') screenTitle = 'Colorimetría Capilar';
     }
 
     return Scaffold(
@@ -550,6 +552,22 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
         'icon': Icons.back_hand_rounded,
         'tag': 'IA',
         'image': 'assets/images/design_ideas_nails_style_1781572969602.png',
+      },
+      {
+        'id': 'care-routine',
+        'title': 'Planificador Skincare & Haircare',
+        'description': 'Genera tu rutina semanal de cuidado personal con IA.',
+        'icon': Icons.calendar_month_rounded,
+        'tag': 'IA',
+        'image': 'assets/images/design_ideas_skin_texture_1781572933469.png',
+      },
+      {
+        'id': 'hair-color',
+        'title': 'Colorimetría Capilar IA',
+        'description': 'Determina tus tonos de tinte y corte según tu rostro y piel.',
+        'icon': Icons.face_retouching_natural_rounded,
+        'tag': 'IA',
+        'image': 'assets/images/design_ideas_hair_diagnostic_1781572914936.png',
       },
     ];
 
@@ -866,6 +884,12 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
     } else if (_activeToolId == 'nails-style') {
       instructionText = 'Sube una foto plana de tu mano abierta para analizar la forma.';
       cameraIcon = Icons.back_hand;
+    } else if (_activeToolId == 'care-routine') {
+      instructionText = 'Sube una foto de tu rostro o cabello para planificar tu rutina semanal de cuidado.';
+      cameraIcon = Icons.calendar_month_rounded;
+    } else if (_activeToolId == 'hair-color') {
+      instructionText = 'Sube una foto de tu rostro para recibir recomendaciones de tinte y corte ideal.';
+      cameraIcon = Icons.color_lens_rounded;
     }
 
     return SingleChildScrollView(
@@ -1134,6 +1158,58 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
           );
         }).toList(),
       ));
+    } else if (_activeToolId == 'care-routine') {
+      details.add(_buildResultRow('Tipo de piel/cabello:', _analysisResult!['skin_type']));
+      details.add(_buildResultRow('Estado/Condición:', _analysisResult!['scalp_status']));
+      details.add(SizedBox(height: 12));
+      details.add(Text('Rutina semanal recomendada:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.text)));
+      details.add(SizedBox(height: 6));
+      details.add(Column(
+        children: ((_analysisResult!['recommended_routine'] ?? []) as List<dynamic>).map((r) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4.0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.calendar_today_outlined, color: AppTheme.primary, size: 18),
+                SizedBox(width: 8),
+                Expanded(child: Text(r.toString(), style: TextStyle(fontSize: 13))),
+              ],
+            ),
+          );
+        }).toList(),
+      ));
+    } else if (_activeToolId == 'hair-color') {
+      details.add(_buildResultRow('Subtono de piel:', _analysisResult!['skin_undertone']));
+      details.add(_buildResultRow('Forma de rostro:', _analysisResult!['face_shape']));
+      details.add(SizedBox(height: 12));
+      details.add(Text('Tonos de tinte recomendados:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.text)));
+      details.add(SizedBox(height: 6));
+      details.add(Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: ((_analysisResult!['recommended_shades'] ?? []) as List<dynamic>).map((s) {
+          return Chip(
+            label: Text(s.toString(), style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            backgroundColor: AppTheme.primary.withOpacity(0.1),
+            side: BorderSide.none,
+          );
+        }).toList(),
+      ));
+      details.add(SizedBox(height: 12));
+      details.add(Text('Colores ideales:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.text)));
+      details.add(SizedBox(height: 6));
+      details.add(Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: ((_analysisResult!['recommended_colors'] ?? []) as List<dynamic>).map((c) {
+          return Chip(
+            label: Text(c.toString(), style: TextStyle(fontSize: 12)),
+            backgroundColor: AppTheme.accent.withOpacity(0.1),
+            side: BorderSide.none,
+          );
+        }).toList(),
+      ));
     }
 
     return Card(
@@ -1179,8 +1255,8 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
                   // Mapear el ID de la herramienta activa a la categoría de la base de datos
                   String category = 'all';
                   if (_activeToolId == 'nails-style') category = 'nails';
-                  else if (_activeToolId == 'hair-diagnostic') category = 'hair';
-                  else if (_activeToolId == 'skin-texture' || _activeToolId == 'skin-tone') category = 'facials';
+                  else if (_activeToolId == 'hair-diagnostic' || _activeToolId == 'hair-color') category = 'hair';
+                  else if (_activeToolId == 'skin-texture' || _activeToolId == 'skin-tone' || _activeToolId == 'care-routine') category = 'facials';
 
                   Navigator.pop(context, {
                     'action': 'filter_map',
