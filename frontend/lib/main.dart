@@ -139,6 +139,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
 
   bool _showTutorial = false;
   int _tutorialStep = 0;
+  bool _isMapMenuOpen = false;
 
   @override
   void initState() {
@@ -200,39 +201,14 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
     controller.forward();
   }
 
-  void _startSearchTypingSimulation() {
-    _searchController.clear();
-    final text = 'Tips de cuidado capilar caseros';
-    int charIndex = 0;
-    Future.doWhile(() async {
-      if (_tutorialStep != 1 || !_showTutorial) return false;
-      await Future.delayed(const Duration(milliseconds: 100));
-      if (_tutorialStep != 1 || !_showTutorial) return false;
-      charIndex++;
-      if (charIndex <= text.length) {
-        if (mounted) {
-          setState(() {
-            _searchController.text = text.substring(0, charIndex);
-          });
-        }
-        return true;
-      }
-      return false;
-    });
-  }
+
 
   void _handleTutorialStepChange(int newStep) {
     setState(() {
       _tutorialStep = newStep;
     });
 
-    if (_tutorialStep == 1) {
-      _startSearchTypingSimulation();
-    } else {
-      _searchController.clear();
-    }
-
-    if (_tutorialStep == 2 && _filteredProviders.isNotEmpty) {
+    if (_tutorialStep == 1 && _filteredProviders.isNotEmpty) {
       final firstProv = _filteredProviders.first;
       _animatedMapMove(LatLng(firstProv.latitude, firstProv.longitude), 15.0);
     } else {
@@ -458,9 +434,15 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
 
   void _filterProviders() {
     setState(() {
-      _filteredProviders = _allProviders
-          .where((p) => _providerMatchesCategory(p, _selectedCategory))
-          .toList();
+      final query = _searchController.text.toLowerCase().trim();
+      _filteredProviders = _allProviders.where((p) {
+        final matchesCat = _providerMatchesCategory(p, _selectedCategory);
+        if (query.isEmpty) return matchesCat;
+        final matchesQuery = p.fullName.toLowerCase().contains(query) ||
+            p.businessName.toLowerCase().contains(query) ||
+            p.description.toLowerCase().contains(query);
+        return matchesCat && matchesQuery;
+      }).toList();
     });
   }
 
@@ -549,16 +531,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
     }
   }
 
-  Future<void> _checkAuthAndNavigateToAIChat(String message) async {
-    final token = await AuthService.getToken();
-    if (token == null) {
-      if (mounted) {
-        Navigator.pushNamed(context, '/login');
-      }
-    } else {
-      _navigateToAIChat(message);
-    }
-  }
+
 
   void _navigateToAIChat(String message) {
     Navigator.push(
@@ -575,6 +548,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
     );
   }
 
+  /*
   void _showSOSConfirmationDialog() {
     showDialog(
       context: context,
@@ -803,6 +777,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
       },
     );
   }
+  */
 
   void _showQuickViewSheet(ProviderModel provider) {
     showModalBottomSheet(
@@ -1394,7 +1369,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
           ),
 
 
-          // Capa 1: Floating AI Search Bar
+          // Capa 1: Floating Transaccional Search Bar with Aura Trigger
           Positioned(
             top: MediaQuery.of(context).padding.top + 16,
             left: 16,
@@ -1420,9 +1395,12 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                         child: TextField(
                           controller: _searchController,
                           textCapitalization: TextCapitalization.sentences,
-                           decoration: InputDecoration(
+                          onChanged: (val) {
+                            _filterProviders();
+                          },
+                          decoration: InputDecoration(
                             hintText:
-                                '¿Buscas un estilo o tips de belleza? Pregúntale a la IA aquí...',
+                                '¿Qué servicio o estilista buscas? O pregunta a Aura...',
                             hintStyle: TextStyle(
                                 fontSize: 13.5,
                                 color: AppTheme.text,
@@ -1430,9 +1408,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                             border: InputBorder.none,
                           ),
                           onSubmitted: (val) {
-                            if (val.trim().isNotEmpty) {
-                              _navigateToAIChat(val);
-                            }
+                            _filterProviders();
                           },
                         ),
                       ),
@@ -1453,11 +1429,11 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
             ),
           ),
 
-          // Capa 3: Glassmorphic Floating Navigation Dock
+          // Capa 3: Glassmorphic Floating Navigation Dock (Consolidated 4-item layout)
           Positioned(
-            bottom: 24,
-            left: 24,
-            right: 24,
+            bottom: MediaQuery.of(context).padding.bottom + 16,
+            left: 16,
+            right: 16,
             child: Container(
               height: 72,
               padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -1471,11 +1447,12 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
               ),
               child: Row(
                 children: [
-                  // Botón 1: Asistente IA (Común)
+                  // Botón 1: Explorar (Activo en esta pantalla)
                   _buildNavItem(
-                    icon: Icons.auto_awesome,
-                    label: 'Asistente IA',
-                    onTap: () => _checkAuthAndNavigateToAIChat(''),
+                    icon: Icons.map_outlined,
+                    label: 'Explorar',
+                    color: AppTheme.primary,
+                    onTap: () {},
                   ),
                   
                   // Botón 2: Dinámico (Citas o Panel)
@@ -1512,105 +1489,70 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                       label: 'Perfil',
                       onTap: () => _checkAuthAndNavigate('/profile'),
                     ),
-
-                  // Botón 5: Dinámico (Perfil o Salir/Ingresar)
-                  if (_userRole == 'provider')
-                    _buildNavItem(
-                      icon: Icons.person_outline_rounded,
-                      label: 'Perfil',
-                      onTap: () => _checkAuthAndNavigate('/profile'),
-                    )
-                  else
-                    _buildNavItem(
-                      icon: _hasToken ? Icons.logout_rounded : Icons.login_rounded,
-                      label: _hasToken ? 'Salir' : 'Ingresar',
-                      color: Colors.grey,
-                      onTap: () async {
-                        if (_hasToken) {
-                          final navigator = Navigator.of(context);
-                          await AuthService.logout();
-                          navigator.pushReplacementNamed('/login');
-                        } else {
-                          Navigator.pushNamed(context, '/login');
-                        }
-                      },
-                    ),
                 ],
               ),
             ),
           ),
 
-          // Capa: Botón Temporal/Transitorio para reiniciar el Tutorial de Aura (Revisión)
+          // Capa: Ajustes de Mapa (Speed Dial Expandible)
           Positioned(
             right: 20,
-            bottom: 308,
-            child: FloatingActionButton(
-              heroTag: 'aura_tutorial_restart_fab',
-              onPressed: () {
-                _handleTutorialStepChange(0);
-                setState(() {
-                  _showTutorial = true;
-                });
-              },
-              backgroundColor: const Color(0xFFD4AF37),
-              foregroundColor: Colors.white,
-              elevation: 4,
-              shape: const CircleBorder(),
-              child: Icon(Icons.school_outlined, size: 24),
-            ),
-          ),
-
-          // Capa: Botón Tema de Mapa (Claro/Oscuro Limpio)
-          Positioned(
-            right: 20,
-            bottom: 240,
-            child: FloatingActionButton(
-              heroTag: 'map_theme_main_fab',
-              onPressed: () {
-                setState(() {
-                  MapSettings.isDark = !MapSettings.isDark;
-                });
-              },
-              backgroundColor: AppTheme.surface,
-              foregroundColor: AppTheme.primary,
-              elevation: 4,
-              shape: const CircleBorder(),
-              child: Icon(
-                MapSettings.isDark
-                    ? Icons.light_mode_outlined
-                    : Icons.dark_mode_outlined,
-                size: 24,
-              ),
-            ),
-          ),
-
-          // Capa: Botón Mi Ubicación
-          Positioned(
-            right: 20,
-            bottom: 172,
-            child: FloatingActionButton(
-              heroTag: 'my_location_fab',
-              onPressed: _determineUserLocation,
-              backgroundColor: AppTheme.surface,
-              foregroundColor: AppTheme.primary,
-              elevation: 4,
-              shape: const CircleBorder(),
-              child: Icon(Icons.my_location, size: 24),
-            ),
-          ),
-
-          // Capa: Botón SOS para Cliente
-          Positioned(
-            right: 20,
-            bottom: 104,
-            child: FloatingActionButton(
-              heroTag: 'sos_client_fab',
-              onPressed: _showSOSConfirmationDialog,
-              backgroundColor: const Color(0xFFDC2626),
-              foregroundColor: Colors.white,
-              elevation: 4,
-              shape: const CircleBorder(),
-              child: Icon(Icons.emergency_outlined, size: 28),
+            bottom: MediaQuery.of(context).padding.bottom + 104,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                if (_isMapMenuOpen) ...[
+                  // Botón Tema de Mapa
+                  FloatingActionButton.small(
+                    heroTag: 'map_theme_main_fab',
+                    onPressed: () {
+                      setState(() {
+                        MapSettings.isDark = !MapSettings.isDark;
+                      });
+                    },
+                    backgroundColor: AppTheme.surface,
+                    foregroundColor: AppTheme.primary,
+                    elevation: 3,
+                    shape: const CircleBorder(),
+                    child: Icon(
+                      MapSettings.isDark
+                          ? Icons.light_mode_outlined
+                          : Icons.dark_mode_outlined,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  // Botón Mi Ubicación
+                  FloatingActionButton.small(
+                    heroTag: 'my_location_fab',
+                    onPressed: _determineUserLocation,
+                    backgroundColor: AppTheme.surface,
+                    foregroundColor: AppTheme.primary,
+                    elevation: 3,
+                    shape: const CircleBorder(),
+                    child: const Icon(Icons.my_location, size: 20),
+                  ),
+                  const SizedBox(height: 10),
+                ],
+                // Botón principal de menú expandible
+                FloatingActionButton(
+                  heroTag: 'map_settings_toggle_fab',
+                  onPressed: () {
+                    setState(() {
+                      _isMapMenuOpen = !_isMapMenuOpen;
+                    });
+                  },
+                  backgroundColor: AppTheme.primary,
+                  foregroundColor: Colors.white,
+                  elevation: 4,
+                  shape: const CircleBorder(),
+                  child: Icon(
+                    _isMapMenuOpen ? Icons.close : Icons.layers_outlined,
+                    size: 24,
+                  ),
+                ),
+              ],
             ),
           ),
 
@@ -1655,7 +1597,6 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                 ),
               ),
             ),
-          
           // Capa: Tutorial interactivo guiado por Aura
           if (_showTutorial)
             _buildTutorialOverlay(),
@@ -1667,7 +1608,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
   Widget _buildTutorialOverlay() {
     final double topPadding = MediaQuery.of(context).padding.top;
     
-    // Contenido dinámico según el paso (0 al 6)
+    // Contenido dinámico según el paso (0 al 3)
     String stepTitle = '';
     String stepDescription = '';
     Widget? highlightWidget;
@@ -1690,33 +1631,8 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
         ),
       );
     } else if (_tutorialStep == 1) {
-      stepTitle = '1. Consulta con Inteligencia Artificial';
-      stepDescription = 'Escribe lo que buscas en la barra superior o solicítame consejos directamente. Mi motor de IA procesará tu solicitud de inmediato.';
-      // Destacamos la barra superior
-      highlightWidget = Positioned(
-        top: topPadding + 16,
-        left: 16,
-        right: 16,
-        child: IgnorePointer(
-          child: Container(
-            height: 54,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(30),
-              border: Border.all(color: const Color(0xFFD4AF37), width: 3),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFFD4AF37).withOpacity(0.6),
-                  blurRadius: 16,
-                  spreadRadius: 4,
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    } else if (_tutorialStep == 2) {
-      stepTitle = '2. Búsqueda en el Mapa';
-      stepDescription = 'Los estilistas disponibles en Fontibón se muestran como círculos. ¡Demos clic sobre el marcador de Ana Silva para ver su perfil!';
+      stepTitle = '1. Estilistas en el Mapa';
+      stepDescription = 'Los estilistas disponibles cerca de tu zona se muestran como círculos con sus fotos. ¡Toca el marcador de Ana Silva para ver su perfil!';
       // Destacamos un marcador del mapa (simulando un toque)
       highlightWidget = Center(
         child: IgnorePointer(
@@ -1738,72 +1654,9 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
           ),
         ),
       );
-    } else if (_tutorialStep == 3) {
-      stepTitle = '3. Vista Rápida del Prestador';
-      stepDescription = 'Al tocar su marcador, se abrirá esta tarjeta resumen. Aquí ves su calificación y el botón para ver su perfil profesional completo.';
-      // Renderizamos la tarjeta de Vista Rápida simulada
-      highlightWidget = Positioned(
-        bottom: MediaQuery.of(context).size.height * 0.40,
-        left: 20,
-        right: 20,
-        child: Card(
-          elevation: 8,
-          shadowColor: const Color(0x228C6F65),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppTheme.primary, width: 2),
-                    image: const DecorationImage(
-                      image: AssetImage('assets/images/logo_maestro_v3.jpg'),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Ana Silva',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.text),
-                      ),
-                      SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Icon(Icons.star, color: Colors.amber, size: 16),
-                          SizedBox(width: 4),
-                          Text('4.9 (48 reseñas) • Cabello', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  ),
-                  onPressed: () {},
-                  child: Text('Ver Perfil', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    } else if (_tutorialStep == 4) {
-      stepTitle = '4. Perfil Profesional';
-      stepDescription = 'Explora su galería de fotos certificadas de trabajos anteriores, opiniones reales y su catálogo de servicios de belleza disponibles.';
+    } else if (_tutorialStep == 2) {
+      stepTitle = '2. Perfil Profesional y Portafolio';
+      stepDescription = 'Explora la galería de fotos certificadas de trabajos anteriores, opiniones reales y su catálogo de servicios de belleza disponibles.';
       // Renderizamos el perfil detallado del proveedor simulado
       highlightWidget = Positioned(
         top: topPadding + 20,
@@ -1873,57 +1726,9 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
           ),
         ),
       );
-    } else if (_tutorialStep == 5) {
-      stepTitle = '5. Simulación de Reserva';
-      stepDescription = 'Selecciona el día y la hora de tu conveniencia. Toda la coordinación y el agendamiento son 100% online y a domicilio.';
-      // Renderizamos el flujo de reserva simulado
-      highlightWidget = Positioned(
-        top: topPadding + 40,
-        left: 20,
-        right: 20,
-        bottom: MediaQuery.of(context).size.height * 0.43,
-        child: Card(
-          elevation: 8,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Agendar con Ana Silva',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.text),
-                ),
-                SizedBox(height: 12),
-                Text('Seleccionar Fecha (Junio 2026):', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                SizedBox(height: 6),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildMockDayTile('16', 'Mar', false),
-                    _buildMockDayTile('17', 'Mié', true),
-                    _buildMockDayTile('18', 'Jue', false),
-                  ],
-                ),
-                SizedBox(height: 12),
-                Text('Seleccionar Hora:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                SizedBox(height: 6),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildMockHourTile('10:00 AM', false),
-                    _buildMockHourTile('2:00 PM', true),
-                    _buildMockHourTile('4:00 PM', false),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    } else if (_tutorialStep == 6) {
-      stepTitle = '6. Pago Seguro en Garantía';
-      stepDescription = 'Tu pago se procesa por Wompi Bancolombia. GlowApp retiene los fondos y solo se liberan al prestador cuando compartas tu PIN OTP al finalizar el servicio.';
+    } else if (_tutorialStep == 3) {
+      stepTitle = '3. Reserva y Pago Seguro';
+      stepDescription = 'Selecciona el día y la hora de tu conveniencia. El pago se procesa por Wompi Bancolombia en modo garantía: el dinero solo se libera cuando ingreses el PIN OTP al finalizar el servicio.';
       centerGraphic = Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -2047,10 +1852,10 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                   ),
                   SizedBox(height: 20),
                   
-                  // Indicador de progreso con 7 puntos interactivos
+                  // Indicador de progreso con 4 puntos interactivos
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(7, (index) {
+                    children: List.generate(4, (index) {
                       final bool isActive = _tutorialStep == index;
                       return AnimatedContainer(
                         duration: const Duration(milliseconds: 250),
@@ -2108,14 +1913,14 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                               elevation: 0,
                             ),
                             onPressed: () {
-                              if (_tutorialStep < 6) {
+                              if (_tutorialStep < 3) {
                                 _handleTutorialStepChange(_tutorialStep + 1);
                               } else {
                                 _completeTutorial();
                               }
                             },
                             child: Text(
-                              _tutorialStep == 6 ? 'Finalizar' : 'Siguiente',
+                              _tutorialStep == 3 ? 'Finalizar' : 'Siguiente',
                               style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                           ),
