@@ -1,10 +1,422 @@
 // frontend/lib/screens/designs/manicure_ideas_screen.dart
+import 'dart:async';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/api_service.dart';
 import '../../shared/theme.dart';
 import '../booking_screen.dart';
+
+// ============================================================================
+// NUEVO WIDGET: Escáner Láser Animado (Seguro con Timer)
+// ============================================================================
+class LaserScannerWidget extends StatefulWidget {
+  final Uint8List imageBytes;
+  final List<String> scanningTexts;
+  
+  const LaserScannerWidget({
+    super.key,
+    required this.imageBytes,
+    required this.scanningTexts,
+  });
+
+  @override
+  State<LaserScannerWidget> createState() => _LaserScannerWidgetState();
+}
+
+class _LaserScannerWidgetState extends State<LaserScannerWidget>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+  int _currentTextIndex = 0;
+  Timer? _textTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    );
+    
+    _animation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+    
+    _controller.repeat(reverse: true);
+    
+    // Cambiar texto de diagnóstico cada 1.2 segundos usando un Timer controlado
+    _textTimer = Timer.periodic(const Duration(milliseconds: 1200), (timer) {
+      if (mounted) {
+        setState(() {
+          _currentTextIndex = (_currentTextIndex + 1) % widget.scanningTexts.length;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _textTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        // Imagen con bordes redondeados profundos
+        ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: Image.memory(
+            widget.imageBytes,
+            width: double.infinity,
+            height: 300,
+            fit: BoxFit.cover,
+          ),
+        ),
+        
+        // Overlay oscuro semitransparente
+        Container(
+          width: double.infinity,
+          height: 300,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.black.withOpacity(0.1),
+                Colors.transparent,
+                Colors.black.withOpacity(0.1),
+              ],
+            ),
+          ),
+        ),
+        
+        // Línea láser animada horizontal
+        AnimatedBuilder(
+          animation: _animation,
+          builder: (context, child) {
+            return Positioned(
+              top: _animation.value * 260,
+              left: 0,
+              right: 0,
+              child: Container(
+                height: 3,
+                decoration: BoxDecoration(
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFC89D93).withOpacity(0.8),
+                      blurRadius: 12,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.transparent,
+                        const Color(0xFFC89D93),
+                        Colors.white,
+                        const Color(0xFFC89D93),
+                        Colors.transparent,
+                      ],
+                      stops: const [0.0, 0.3, 0.5, 0.7, 1.0],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+        
+        // Texto dinámico de diagnóstico
+        Positioned(
+          bottom: 16,
+          left: 16,
+          right: 16,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.95),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: Text(
+                widget.scanningTexts[_currentTextIndex],
+                key: ValueKey<int>(_currentTextIndex),
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFFB07D62),
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ============================================================================
+// NUEVO WIDGET: Barra de Progreso Glow Credits con Gradiente
+// ============================================================================
+class GlowCreditsBar extends StatelessWidget {
+  final int currentSearches;
+  final int maxSearches;
+  final int currentImages;
+  final int maxImages;
+  final VoidCallback? onUpgradeTap;
+
+  const GlowCreditsBar({
+    super.key,
+    required this.currentSearches,
+    required this.maxSearches,
+    required this.currentImages,
+    required this.maxImages,
+    this.onUpgradeTap,
+  });
+
+  double get _searchProgress => currentSearches / maxSearches;
+  double get _imagesProgress => currentImages / maxImages;
+  double get _overallProgress => [_searchProgress, _imagesProgress].reduce((a, b) => a > b ? a : b);
+  bool get _isLimitReached => currentSearches >= maxSearches || currentImages >= maxImages;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFFC89D93).withOpacity(0.15),
+            const Color(0xFFB07D62).withOpacity(0.15),
+          ],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.auto_awesome,
+                    color: _isLimitReached ? AppTheme.error : const Color(0xFFC89D93),
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Glow Credits',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: _isLimitReached ? AppTheme.error : AppTheme.text,
+                    ),
+                  ),
+                ],
+              ),
+              Text(
+                '${currentSearches}/${maxSearches} búsquedas',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: _isLimitReached ? AppTheme.error : Colors.grey.shade700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          
+          // Barra de progreso con gradiente
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Stack(
+              children: [
+                Container(
+                  height: 10,
+                  color: Colors.grey.shade200,
+                ),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final double fullWidth = constraints.maxWidth;
+                    return AnimatedContainer(
+                      duration: const Duration(milliseconds: 500),
+                      height: 10,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: _isLimitReached
+                              ? [AppTheme.error, AppTheme.error.withOpacity(0.7)]
+                              : [const Color(0xFFC89D93), const Color(0xFFB07D62)],
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      width: fullWidth * (_overallProgress > 1.0 ? 1.0 : _overallProgress),
+                    );
+                  }
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '${currentImages}/${maxImages} imágenes cargadas',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+              if (_isLimitReached && onUpgradeTap != null)
+                GestureDetector(
+                  onTap: onUpgradeTap,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFC89D93), Color(0xFFB07D62)],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Text(
+                      'Desbloquear Ilimitado',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ============================================================================
+// NUEVO WIDGET: Tarjeta Premium para Límite Alcanzado
+// ============================================================================
+class PremiumUpgradeCard extends StatelessWidget {
+  final VoidCallback onScheduleTap;
+
+  const PremiumUpgradeCard({
+    super.key,
+    required this.onScheduleTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFFC89D93).withOpacity(0.2),
+            const Color(0xFFB07D62).withOpacity(0.2),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: const Color(0xFFC89D93).withOpacity(0.4),
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFC89D93).withOpacity(0.2),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: AppTheme.softShadow,
+            ),
+            child: const Icon(
+              Icons.diamond_rounded,
+              color: Color(0xFFC89D93),
+              size: 32,
+            ),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            '¡Límite de sesión alcanzado!',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.text,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Agenda tu cita ahora y obtén créditos de consulta ilimitados + beneficios exclusivos.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.grey.shade700,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFC89D93),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                elevation: 4,
+              ),
+              onPressed: onScheduleTap,
+              icon: const Icon(Icons.calendar_month_rounded),
+              label: const Text(
+                'Agendar Cita Ahora',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class ManicureIdeasScreen extends StatefulWidget {
   static Map<String, dynamic>? selectedReference;
@@ -59,10 +471,94 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
   String? _analysisError;
   Map<String, dynamic>? _analysisResult;
   List<Map<String, dynamic>> _pinterestImages = [];
+  bool _privacyConsentAccepted = false;
+
+  // Textos dinámicos para el escáner láser según el tipo de análisis
+  final Map<String, List<String>> _scanningTexts = {
+    'skin-tone': [
+      'Identificando tono de piel...',
+      'Analizando subtonos...',
+      'Detectando características faciales...',
+      'Generando paleta de colores...',
+    ],
+    'hair-diagnostic': [
+      'Evaluando hebra capilar...',
+      'Analizando nivel de hidratación...',
+      'Detectando daño y porosidad...',
+      'Generando recomendaciones...',
+    ],
+    'skin-texture': [
+      'Identificando pigmentación de la piel...',
+      'Evaluando poros e hidratación...',
+      'Analizando textura superficial...',
+      'Generando rutina personalizada...',
+    ],
+    'eyebrow-visagism': [
+      'Midiendo proporciones faciales...',
+      'Analizando simetría...',
+      'Detectando forma natural...',
+      'Diseñando cejas ideales...',
+    ],
+    'nails-style': [
+      'Analizando forma de mano...',
+      'Evaluando longitud de dedos...',
+      'Detectando subtono de piel...',
+      'Recomendando formas ideales...',
+    ],
+    'care-routine': [
+      'Analizando tipo de piel/cabello...',
+      'Evaluando necesidades específicas...',
+      'Detectando condiciones especiales...',
+      'Planificando rutina semanal...',
+    ],
+    'hair-color': [
+      'Analizando subtono de piel...',
+      'Evaluando forma de rostro...',
+      'Detectando características únicas...',
+      'Recomendando tonos ideales...',
+    ],
+  };
 
   @override
   void initState() {
     super.initState();
+    _loadLocalCredits();
+  }
+
+  Future<void> _loadLocalCredits() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      setState(() {
+        _searchCount = prefs.getInt('glow_search_count') ?? 0;
+        _totalImagesLoaded = prefs.getInt('glow_total_images_loaded') ?? 0;
+      });
+    } catch (e) {
+      debugPrint('Error loading local credits: $e');
+    }
+  }
+
+  Future<void> _incrementSearchCount() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      setState(() {
+        _searchCount++;
+      });
+      await prefs.setInt('glow_search_count', _searchCount);
+    } catch (e) {
+      debugPrint('Error saving search count: $e');
+    }
+  }
+
+  Future<void> _incrementImagesCount(int count) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      setState(() {
+        _totalImagesLoaded += count;
+      });
+      await prefs.setInt('glow_total_images_loaded', _totalImagesLoaded);
+    } catch (e) {
+      debugPrint('Error saving image count: $e');
+    }
   }
 
   @override
@@ -74,12 +570,7 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
   // --- MÉTODOS UÑAS TRADICIONALES ---
   Future<void> _searchDesigns() async {
     if (_isLimitReached) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Límite de sesión alcanzado (máximo 2 búsquedas o 12 imágenes).'),
-          backgroundColor: AppTheme.error,
-        ),
-      );
+      _showPremiumUpgradeBottomSheet();
       return;
     }
 
@@ -104,10 +595,10 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
       updatedResults.insert(0, _getSimulatedProduct());
       setState(() {
         _images = updatedResults;
-        _searchCount++;
-        _totalImagesLoaded += _images.length;
         _isLoading = false;
       });
+      _incrementSearchCount();
+      _incrementImagesCount(_images.length);
     } catch (e) {
       setState(() {
         _error = 'Ocurrió un error al buscar: $e';
@@ -135,67 +626,263 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
       _analysisError = null;
       _analysisResult = null;
       _pinterestImages = [];
+      _privacyConsentAccepted = false;
     });
   }
 
-  Future<bool> _showBiometricConsentDialog() async {
-    bool? accepted = await showDialog<bool>(
+  void _showPremiumUpgradeBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  margin: const EdgeInsets.only(top: 12),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                PremiumUpgradeCard(
+                  onScheduleTap: () {
+                    Navigator.pop(context);
+                    // Redirigir al agendamiento directamente
+                    _handleUpgradeBookingRedirect();
+                  },
+                ),
+                const SizedBox(height: 20),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _handleUpgradeBookingRedirect() async {
+    showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: Row(
-            children: [
-              Icon(Icons.shield_outlined, color: AppTheme.primary),
-              SizedBox(width: 8),
-              Text('Consentimiento de Datos', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Para ofrecerte un diagnóstico preciso asistido por Inteligencia Artificial (Gemini API), necesitamos analizar temporalmente la imagen que proporciones.\n\n'
-                'GlowApp no almacena permanentemente datos biométricos sensibles de tu rostro. Las imágenes procesadas se gestionan con cifrado y se eliminan tras el análisis.',
-                style: TextStyle(fontSize: 14, color: Colors.black87, height: 1.3),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text('Cancelar', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+      builder: (context) => const Center(
+        child: Card(
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(color: AppTheme.primary),
+                SizedBox(height: 16),
+                Text(
+                  'Conectando con la agenda...',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ],
             ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          ),
+        ),
+      ),
+    );
+
+    try {
+      final providers = await ApiService.fetchProvidersSecured();
+      if (!mounted) return;
+      Navigator.pop(context); // Cerrar cargando
+
+      if (providers.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No hay profesionales disponibles en este momento.'),
+            backgroundColor: AppTheme.error,
+          ),
+        );
+        return;
+      }
+
+      final provider = providers.first;
+      final details = await ApiService.fetchProviderDetails(provider.id);
+      if (!mounted) return;
+
+      final services = List<Map<String, dynamic>>.from(details['services'] ?? []);
+      
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BookingScreen(
+            providerId: provider.id,
+            providerName: provider.businessName,
+            services: services,
+          ),
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Cerrar cargando
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al conectar con la agenda: $e'),
+            backgroundColor: AppTheme.error,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showPrivacyInfoBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFC89D93).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.shield_outlined, color: Color(0xFFC89D93)),
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  'Privacidad y Protección de Datos',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.text,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Cómo protegemos tu información:',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.text,
               ),
-              onPressed: () => Navigator.pop(context, true),
-              child: Text('Autorizar y Continuar', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+            const SizedBox(height: 12),
+            _buildPrivacyItem(
+              Icons.hourglass_empty_rounded,
+              'Análisis Temporal',
+              'Las imágenes se procesan temporalmente con Inteligencia Artificial (Gemini API) y se eliminan automáticamente después del análisis.',
+            ),
+            const SizedBox(height: 12),
+            _buildPrivacyItem(
+              Icons.lock_outline,
+              'Sin Almacenamiento Permanente',
+              'GlowApp no almacena datos biométricos sensibles de forma permanente en nuestros servidores.',
+            ),
+            const SizedBox(height: 12),
+            _buildPrivacyItem(
+              Icons.security,
+              'Cifrado de Datos',
+              'Todas las imágenes se transmiten y procesan con cifrado de extremo a extremo.',
+            ),
+            const SizedBox(height: 12),
+            _buildPrivacyItem(
+              Icons.visibility_off,
+              'Uso Exclusivo para Diagnóstico',
+              'Tus imágenes solo se utilizan para generar recomendaciones personalizadas de belleza.',
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Color(0xFFC89D93), width: 1.5),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                onPressed: () => Navigator.pop(context),
+                child: const Text(
+                  'Entendido',
+                  style: TextStyle(
+                    color: Color(0xFFC89D93),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                  ),
+                ),
+              ),
             ),
           ],
-        );
-      },
+        ),
+      ),
     );
-    return accepted ?? false;
+  }
+
+  Widget _buildPrivacyItem(IconData icon, String title, String description) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 20, color: const Color(0xFFC89D93)),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  color: AppTheme.text,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                description,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey.shade600,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
   Future<void> _pickAnalysisImage(ImageSource source) async {
     if (_isLimitReached) {
+      _showPremiumUpgradeBottomSheet();
+      return;
+    }
+
+    if (!_privacyConsentAccepted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Límite de sesión alcanzado (máximo 2 búsquedas o 12 imágenes).'),
+          content: Text('Debes aceptar los términos de privacidad primero'),
           backgroundColor: AppTheme.error,
         ),
       );
       return;
     }
-
-    final bool consent = await _showBiometricConsentDialog();
-    if (!consent) return;
 
     final ImagePicker picker = ImagePicker();
     try {
@@ -258,10 +945,10 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
         setState(() {
           _analysisResult = analysis;
           _pinterestImages = images;
-          _searchCount++;
-          _totalImagesLoaded += images.length;
           _isAnalyzing = false;
         });
+        _incrementSearchCount();
+        _incrementImagesCount(images.length);
       } else {
         throw Exception('No se recibió la estructura de análisis esperada');
       }
@@ -443,51 +1130,21 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Panel de Control de Límites Compartido
-            Container(
-              width: double.infinity,
-              color: AppTheme.primary.withOpacity(0.08),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Búsquedas: $_searchCount / $maxSearches',
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.bold,
-                      color: _searchCount >= maxSearches ? AppTheme.error : AppTheme.text,
-                    ),
-                  ),
-                  Text(
-                    'Imágenes cargadas: $_totalImagesLoaded / $maxImages',
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.bold,
-                      color: _totalImagesLoaded >= maxImages ? AppTheme.error : AppTheme.text,
-                    ),
-                  ),
-                ],
+            // Panel de Control de Límites Compartido (Glow Credits)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: GlowCreditsBar(
+                currentSearches: _searchCount,
+                maxSearches: maxSearches,
+                currentImages: _totalImagesLoaded,
+                maxImages: maxImages,
+                onUpgradeTap: _isLimitReached ? _showPremiumUpgradeBottomSheet : null,
               ),
             ),
 
             if (_isLimitReached)
-              Container(
-                width: double.infinity,
-                color: AppTheme.errorBg,
-                padding: const EdgeInsets.all(12),
-                child: Row(
-                  children: [
-                    Icon(Icons.lock, color: AppTheme.error, size: 20),
-                    SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Has alcanzado el límite de búsquedas de diseño en esta sesión.',
-                        style: TextStyle(color: AppTheme.error, fontWeight: FontWeight.bold, fontSize: 13),
-                      ),
-                    ),
-                  ],
-                ),
+              PremiumUpgradeCard(
+                onScheduleTap: _handleUpgradeBookingRedirect,
               ),
 
             Expanded(
@@ -635,8 +1292,20 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) => Container(
                             height: 100,
-                            color: Colors.grey[200],
-                            child: Icon(Icons.image_not_supported_outlined, color: Colors.grey),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: isIA
+                                    ? [const Color(0xFFC89D93), const Color(0xFFEADBC8)]
+                                    : [const Color(0xFFB07D62), const Color(0xFFEADBC8)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                            ),
+                            child: Icon(
+                              tool['icon'] as IconData,
+                              color: Colors.white,
+                              size: 40,
+                            ),
                           ),
                         ),
                       ),
@@ -721,7 +1390,7 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
           Text('Color de esmalte:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.text)),
           SizedBox(height: 10),
           SizedBox(
-            height: 44,
+            height: 52,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               itemCount: _nailColors.length,
@@ -744,26 +1413,32 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
                               });
                             },
                       child: Container(
-                        width: 38,
-                        height: 38,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: colorVal,
-                          border: Border.all(
-                            color: isSelected
-                                ? AppTheme.primary
-                                : (hasBorder ? Colors.grey.shade400 : Colors.transparent),
-                            width: isSelected ? 3.0 : 1.5,
+                        width: 48,
+                        height: 48,
+                        alignment: Alignment.center,
+                        color: Colors.transparent,
+                        child: Container(
+                          width: 38,
+                          height: 38,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: colorVal,
+                            border: Border.all(
+                              color: isSelected
+                                  ? AppTheme.primary
+                                  : (hasBorder ? Colors.grey.shade400 : Colors.transparent),
+                              width: isSelected ? 3.0 : 1.5,
+                            ),
+                            boxShadow: isSelected ? AppTheme.softShadow : null,
                           ),
-                          boxShadow: isSelected ? AppTheme.softShadow : null,
+                          child: isSelected
+                              ? Icon(
+                                  Icons.check,
+                                  color: colorVal.computeLuminance() > 0.5 ? Colors.black87 : Colors.white,
+                                  size: 20,
+                                )
+                              : null,
                         ),
-                        child: isSelected
-                            ? Icon(
-                                Icons.check,
-                                color: colorVal.computeLuminance() > 0.5 ? Colors.black87 : Colors.white,
-                                size: 20,
-                              )
-                            : null,
                       ),
                     ),
                   ),
@@ -771,7 +1446,58 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
               },
             ),
           ),
-          SizedBox(height: 20),
+          
+          if (_selectedColor != null)
+            Container(
+              margin: const EdgeInsets.only(top: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    const Color(0xFFC89D93).withOpacity(0.2),
+                    const Color(0xFFB07D62).withOpacity(0.2),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: const Color(0xFFC89D93).withOpacity(0.3),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.color_lens,
+                    color: Color(0xFFC89D93),
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Color seleccionado: ',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey.shade700,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    child: Text(
+                      _selectedColor!,
+                      key: ValueKey<String>(_selectedColor!),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFFB07D62),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+          const SizedBox(height: 20),
 
           Text('Estilo / Decoración:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.text)),
           SizedBox(height: 8),
@@ -892,6 +1618,12 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
       cameraIcon = Icons.color_lens_rounded;
     }
 
+    final List<String> currentScanningTexts = _scanningTexts[_activeToolId] ?? [
+      'Analizando imagen...',
+      'Procesando con IA...',
+      'Generando diagnóstico...',
+    ];
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -901,38 +1633,100 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
             child: Column(
               children: [
                 if (_analysisImageBytes != null)
-                  Container(
-                    width: 150,
-                    height: 150,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: AppTheme.primary, width: 4),
-                      image: DecorationImage(
-                        image: MemoryImage(_analysisImageBytes!),
-                        fit: BoxFit.cover,
-                      ),
-                      boxShadow: AppTheme.cardShadow,
-                    ),
-                  )
+                  _isAnalyzing
+                      ? LaserScannerWidget(
+                          imageBytes: _analysisImageBytes!,
+                          scanningTexts: currentScanningTexts,
+                        )
+                      : Container(
+                          width: 150,
+                          height: 150,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: AppTheme.primary, width: 4),
+                            image: DecorationImage(
+                              image: MemoryImage(_analysisImageBytes!),
+                              fit: BoxFit.cover,
+                            ),
+                            boxShadow: AppTheme.cardShadow,
+                          ),
+                        )
                 else
-                  Container(
-                    width: 150,
-                    height: 150,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white,
-                      border: Border.all(color: AppTheme.primary.withOpacity(0.4), width: 2),
-                      boxShadow: AppTheme.softShadow,
-                    ),
-                    child: Icon(cameraIcon, size: 60, color: AppTheme.primary.withOpacity(0.7)),
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 120,
+                        height: 120,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppTheme.primary.withOpacity(0.1),
+                          border: Border.all(color: AppTheme.primary.withOpacity(0.3), width: 2),
+                        ),
+                        child: Icon(
+                          cameraIcon,
+                          size: 50,
+                          color: AppTheme.primary,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Sube tu foto para análisis',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.text,
+                        ),
+                      ),
+                    ],
                   ),
-                SizedBox(height: 12),
-                Text(
-                  instructionText,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 12.5, color: Colors.grey.shade600, fontStyle: FontStyle.italic),
-                ),
-                SizedBox(height: 16),
+                const SizedBox(height: 12),
+                if (!_isAnalyzing)
+                  Text(
+                    instructionText,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 12.5, color: Colors.grey.shade600, fontStyle: FontStyle.italic),
+                  ),
+                const SizedBox(height: 16),
+                
+                // Switch de Consentimiento Biométrico Contextual Inline
+                if (_analysisImageBytes == null) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    child: CheckboxListTile(
+                      activeColor: AppTheme.primary,
+                      title: Row(
+                        children: [
+                          const Expanded(
+                            child: Text(
+                              'Acepto el análisis temporal biométrico',
+                              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.info_outline, size: 18, color: Color(0xFFC89D93)),
+                            onPressed: _showPrivacyInfoBottomSheet,
+                            tooltip: 'Más información de privacidad',
+                          ),
+                        ],
+                      ),
+                      value: _privacyConsentAccepted,
+                      onChanged: (val) {
+                        setState(() {
+                          _privacyConsentAccepted = val ?? false;
+                        });
+                      },
+                      controlAffinity: ListTileControlAffinity.leading,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+
                 if (_analysisImageBytes == null)
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
@@ -940,10 +1734,13 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      elevation: _privacyConsentAccepted ? 2 : 0,
                     ),
-                    onPressed: _isLimitReached ? null : _showGenericImageSourceSelector,
-                    icon: Icon(Icons.add_a_photo),
-                    label: Text('Subir Foto para Análisis', style: TextStyle(fontWeight: FontWeight.bold)),
+                    onPressed: _isLimitReached || !_privacyConsentAccepted 
+                        ? null 
+                        : _showGenericImageSourceSelector,
+                    icon: const Icon(Icons.add_a_photo),
+                    label: const Text('Subir Foto para Análisis', style: TextStyle(fontWeight: FontWeight.bold)),
                   )
                 else if (!_isAnalyzing)
                   Row(
@@ -951,30 +1748,30 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
                     children: [
                       TextButton.icon(
                         onPressed: _showGenericImageSourceSelector,
-                        icon: Icon(Icons.refresh, color: AppTheme.accent),
-                        label: Text('Cambiar foto', style: TextStyle(color: AppTheme.accent)),
+                        icon: const Icon(Icons.refresh, color: AppTheme.accent),
+                        label: const Text('Cambiar foto', style: TextStyle(color: AppTheme.accent)),
                       ),
-                      SizedBox(width: 12),
+                      const SizedBox(width: 12),
                       TextButton.icon(
                         onPressed: _resetAnalysisState,
-                        icon: Icon(Icons.delete, color: Colors.redAccent),
-                        label: Text('Eliminar', style: TextStyle(color: Colors.redAccent)),
+                        icon: const Icon(Icons.delete, color: Colors.redAccent),
+                        label: const Text('Eliminar', style: TextStyle(color: Colors.redAccent)),
                       ),
                     ],
                   ),
               ],
             ),
           ),
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
 
           // Loader
           if (_isAnalyzing) ...[
             Center(
               child: Column(
                 children: [
-                  SizedBox(height: 10),
-                   CircularProgressIndicator(color: AppTheme.primary),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 10),
+                  const CircularProgressIndicator(color: AppTheme.primary),
+                  const SizedBox(height: 16),
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -985,12 +1782,12 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
                     child: Column(
                       children: [
                         Text(
-                          'Analizando imagen con Inteligencia Artificial...',
+                          'Generando sugerencias con Inteligencia Artificial...',
                           style: AppTheme.subtitle.copyWith(color: AppTheme.text, fontWeight: FontWeight.w600),
                           textAlign: TextAlign.center,
                         ),
-                        SizedBox(height: 8),
-                        Text(
+                        const SizedBox(height: 8),
+                        const Text(
                           'Gemini 2.5 Flash está evaluando tu imagen para darte las mejores sugerencias.',
                           style: TextStyle(color: Colors.black54, fontSize: 13),
                           textAlign: TextAlign.center,
@@ -1382,8 +2179,29 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
                       Image.network(
                         item['image_url'],
                         fit: BoxFit.cover,
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Container(
+                            color: Colors.grey.shade100,
+                            child: const Center(
+                              child: SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primary),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
                         errorBuilder: (context, error, stackTrace) {
-                          return Center(child: Icon(Icons.broken_image, size: 40));
+                          return Container(
+                            color: Colors.grey.shade200,
+                            child: const Center(
+                              child: Icon(Icons.broken_image_outlined, size: 32, color: Colors.grey),
+                            ),
+                          );
                         },
                       ),
                       Positioned(
@@ -1485,6 +2303,22 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
                 Image.network(
                   item['image_url'],
                   fit: BoxFit.cover,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Container(
+                      color: Colors.grey.shade100,
+                      child: const Center(
+                        child: SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primary),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                   errorBuilder: (c, o, s) => Container(
                     color: const Color(0xFFF5EBE6),
                     child: const Icon(Icons.shopping_bag_outlined, color: AppTheme.primary, size: 40),
@@ -1666,8 +2500,29 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
             Image.network(
               item['image_url'],
               fit: BoxFit.cover,
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) return child;
+                return Container(
+                  color: Colors.grey.shade100,
+                  child: const Center(
+                    child: SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primary),
+                      ),
+                    ),
+                  ),
+                );
+              },
               errorBuilder: (context, error, stackTrace) {
-                return Center(child: Icon(Icons.broken_image, size: 40));
+                return Container(
+                  color: Colors.grey.shade200,
+                  child: const Center(
+                    child: Icon(Icons.broken_image_outlined, size: 32, color: Colors.grey),
+                  ),
+                );
               },
             ),
             Positioned(
