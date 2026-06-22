@@ -47,6 +47,73 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
     return 0.0;
   }
 
+  String _getSpecialty(Map<String, dynamic> p, List<Map<String, dynamic>> services) {
+    if (p['specialty'] != null && p['specialty'].toString().isNotEmpty) {
+      return p['specialty'].toString().toLowerCase();
+    }
+    if (services.isNotEmpty) {
+      final firstCat = (services.first['category'] ?? '').toString().toLowerCase();
+      if (firstCat.contains('cabello') || firstCat.contains('pelo') || firstCat.contains('corte')) return 'cabello';
+      if (firstCat.contains('uña') || firstCat.contains('unas') || firstCat.contains('manicur') || firstCat.contains('pedicur')) return 'uñas';
+      if (firstCat.contains('maquillaje') || firstCat.contains('makeup') || firstCat.contains('ceja') || firstCat.contains('pestaña')) return 'maquillaje';
+      if (firstCat.contains('piel') || firstCat.contains('facial') || firstCat.contains('skincare') || firstCat.contains('corporal') || firstCat.contains('masaje')) return 'spa';
+      if (firstCat.contains('barber') || firstCat.contains('barba')) return 'barbería';
+    }
+    final desc = (p['description'] ?? '').toString().toLowerCase();
+    if (desc.contains('cabello') || desc.contains('tijera') || desc.contains('corte') || desc.contains('balayage')) return 'cabello';
+    if (desc.contains('uña') || desc.contains('unas') || desc.contains('manicur') || desc.contains('pedicur')) return 'uñas';
+    if (desc.contains('maquillaje') || desc.contains('makeup') || desc.contains('ceja') || desc.contains('pestaña')) return 'maquillaje';
+    if (desc.contains('piel') || desc.contains('facial') || desc.contains('skincare') || desc.contains('masaje')) return 'spa';
+    if (desc.contains('barber') || desc.contains('barba')) return 'barbería';
+    return 'belleza';
+  }
+
+  Color _getSpecialtyColor(String specialty) {
+    final Map<String, Color> specialtyColors = {
+      'cabello': const Color(0xFF6C3A5A),
+      'uñas': const Color(0xFFD4AF37),
+      'maquillaje': const Color(0xFFE8A2B6),
+      'spa': const Color(0xFF4A9B8E),
+      'barbería': const Color(0xFF2F4F4F),
+      'belleza': const Color(0xFFC89D93),
+    };
+    return specialtyColors[specialty] ?? const Color(0xFFC89D93);
+  }
+
+  IconData _getSpecialtyIcon(String specialty) {
+    final Map<String, IconData> specialtyIcons = {
+      'cabello': Icons.content_cut_outlined,
+      'uñas': Icons.brush_outlined,
+      'maquillaje': Icons.face_outlined,
+      'spa': Icons.spa_outlined,
+      'barbería': Icons.face_retouching_natural_outlined,
+      'belleza': Icons.face_outlined,
+    };
+    return specialtyIcons[specialty] ?? Icons.face_outlined;
+  }
+
+  Widget _buildFallbackCover(Color baseColor, IconData icon) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            baseColor.withOpacity(0.8),
+            baseColor,
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Center(
+        child: Icon(
+          icon,
+          size: 80,
+          color: Colors.white.withOpacity(0.7),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (isLoading)
@@ -69,6 +136,11 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
     final hasAvatar =
         p['avatar_url'] != null && p['avatar_url'].toString().isNotEmpty;
     final initialLetter = (p['full_name'] ?? '?')[0].toUpperCase();
+
+    final specialty = _getSpecialty(p, services);
+    final specColor = _getSpecialtyColor(specialty);
+    final specIcon = _getSpecialtyIcon(specialty);
+    final hasCover = p['cover_url'] != null && p['cover_url'].toString().isNotEmpty;
 
     final filteredServices = services.where((s) {
       if (selectedCategory == 'Todos') return true;
@@ -117,11 +189,11 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
         slivers: [
           // Cabecera de Alto Impacto con Parallax y Desvanecimiento al Desplazar
           SliverAppBar(
-            expandedHeight: 240,
+            expandedHeight: 280,
             pinned: true,
             elevation: 0,
             backgroundColor: AppTheme.surface,
-            foregroundColor: Colors.black,
+            foregroundColor: Colors.white,
             leading: Padding(
               padding: const EdgeInsets.all(8.0),
               child: CircleAvatar(
@@ -137,48 +209,149 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
               background: Stack(
                 fit: StackFit.expand,
                 children: [
-                  Image.network(
-                    'https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=1000&auto=format&fit=crop',
-                    fit: BoxFit.cover,
-                  ),
+                  hasCover
+                      ? Image.network(
+                          p['cover_url'],
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return _buildFallbackCover(specColor, specIcon);
+                          },
+                        )
+                      : _buildFallbackCover(specColor, specIcon),
                   Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          Colors.black54,
                           Colors.transparent,
-                          Colors.black45
+                          Colors.black.withOpacity(0.2),
+                          Colors.black.withOpacity(0.6),
+                          Colors.black.withOpacity(0.8),
                         ],
+                        stops: const [0.0, 0.3, 0.6, 1.0],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                       ),
                     ),
                   ),
-                  // Avatar del prestador posicionado dentro de la cabecera para evitar que quede por debajo
+                  // Información clave superpuesta en la cabecera
                   Positioned(
                     left: 20,
-                    bottom: 12,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppTheme.surface, width: 4),
-                        boxShadow: AppTheme.cardShadow,
-                      ),
-                      child: CircleAvatar(
-                        radius: 40,
-                        backgroundColor: AppTheme.surface, // Fondo blanco para alto contraste
-                        backgroundImage:
-                            hasAvatar ? NetworkImage(p['avatar_url']) : null,
-                        child: !hasAvatar
-                            ? Text(
-                                initialLetter,
-                                style: TextStyle(
-                                    fontSize: 32,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppTheme.primary),
-                              )
-                            : null,
-                      ),
+                    right: 20,
+                    bottom: 16,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        // Avatar con radio 45
+                        Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 3),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.2),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: CircleAvatar(
+                            radius: 45,
+                            backgroundColor: Colors.white,
+                            backgroundImage:
+                                hasAvatar ? NetworkImage(p['avatar_url']) : null,
+                            child: !hasAvatar
+                                ? Text(
+                                    initialLetter,
+                                    style: TextStyle(
+                                        fontSize: 36,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppTheme.primary),
+                                  )
+                                : null,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        // Detalles de texto
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Especialidad con su respectivo tag estético con icono
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: specColor.withOpacity(0.9),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      specIcon,
+                                      size: 14,
+                                      color: Colors.white,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      specialty.toUpperCase(),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              // Nombre de negocio / prestador
+                              Text(
+                                p['business_name'] ?? p['full_name'] ?? '',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  shadows: [
+                                    Shadow(
+                                      offset: Offset(0, 1),
+                                      blurRadius: 4,
+                                      color: Colors.black45,
+                                    ),
+                                  ],
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              // Rating y valoraciones
+                              Row(
+                                children: [
+                                  const Icon(Icons.star_rounded,
+                                      color: Color(0xFFFBBF24), size: 18),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    _num(p['rating_avg']).toStringAsFixed(1),
+                                    style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    '(${p['rating_count'] ?? 0} valoraciones)',
+                                    style: TextStyle(
+                                        color: Colors.white.withOpacity(0.8),
+                                        fontSize: 12),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -195,45 +368,36 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                      // Nombre y verificado
+                      // Ubicación y Verificación
                       Row(
                         children: [
-                          Expanded(
-                            child: Text(
-                              p['business_name'] ?? p['full_name'] ?? '',
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: -0.5,
+                          if (p['is_verified'] == true ||
+                              p['is_verified'] == 'true') ...[
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primary.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.verified,
+                                      color: AppTheme.primary, size: 16),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Verificado',
+                                    style: TextStyle(
+                                      color: AppTheme.primary,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                          ),
-                          if (p['is_verified'] == true ||
-                              p['is_verified'] == 'true')
-                            Icon(Icons.verified,
-                                color: AppTheme.primary, size: 24),
-                        ],
-                      ),
-                      SizedBox(height: 6),
-
-                      // Rating y localidad
-                      Row(
-                        children: [
-                          Icon(Icons.star_rounded,
-                              color: Color(0xFFD97706), size: 20),
-                          SizedBox(width: 4),
-                          Text(
-                            _num(p['rating_avg']).toStringAsFixed(1),
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 15),
-                          ),
-                          SizedBox(width: 4),
-                          Text(
-                            '(${p['rating_count'] ?? 0} valoraciones)',
-                            style: TextStyle(
-                                color: Colors.grey, fontSize: 13),
-                          ),
-                          SizedBox(width: 12),
+                            SizedBox(width: 12),
+                          ],
                           Icon(Icons.location_on,
                               color: Colors.grey, size: 16),
                           SizedBox(width: 4),
@@ -246,7 +410,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                           ),
                         ],
                       ),
-                      SizedBox(height: 20),
+                      SizedBox(height: 16),
 
                       // Botones rápidos
                       Row(
