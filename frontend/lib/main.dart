@@ -1768,6 +1768,19 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
         // Elemento destacado si aplica en el paso
         if (highlightWidget != null) highlightWidget,
 
+        // Botón "Omitir" rápido en la esquina superior derecha
+        Positioned(
+          top: topPadding + 16,
+          right: 16,
+          child: FloatingActionButton.small(
+            heroTag: 'tutorial_skip_fab',
+            onPressed: _completeTutorial,
+            backgroundColor: Colors.white.withOpacity(0.9),
+            foregroundColor: AppTheme.text,
+            child: const Icon(Icons.close, size: 20),
+          ),
+        ),
+
         // Tarjeta interactiva de Aura (centrada en el paso 0, inferior en los demás)
         AnimatedPositioned(
           duration: const Duration(milliseconds: 300),
