@@ -544,6 +544,7 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
         _searchCount++;
       });
       await prefs.setInt('glow_search_count', _searchCount);
+      debugPrint('📊 [Analytics EVENT] tool_search_performed: toolId=$_activeToolId, searchCount=$_searchCount');
     } catch (e) {
       debugPrint('Error saving search count: $e');
     }
@@ -556,6 +557,7 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
         _totalImagesLoaded += count;
       });
       await prefs.setInt('glow_total_images_loaded', _totalImagesLoaded);
+      debugPrint('📊 [Analytics EVENT] images_loaded: count=$count, totalImages=$_totalImagesLoaded');
     } catch (e) {
       debugPrint('Error saving image count: $e');
     }
@@ -1228,155 +1230,157 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
       },
     ];
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Elige una herramienta para comenzar:',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.text),
+    return CustomScrollView(
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+          sliver: SliverToBoxAdapter(
+            child: Text(
+              'Elige una herramienta para comenzar:',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.text),
+            ),
           ),
-          SizedBox(height: 16),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: tools.length,
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.all(16),
+          sliver: SliverGrid(
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
               crossAxisSpacing: 14,
               mainAxisSpacing: 14,
               childAspectRatio: 0.65,
             ),
-            itemBuilder: (context, index) {
-              final tool = tools[index];
-              final isIA = tool['tag'] == 'IA';
-              final imageAsset = tool['image'] as String;
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                final tool = tools[index];
+                final isIA = tool['tag'] == 'IA';
+                final imageAsset = tool['image'] as String;
 
-              return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _activeToolId = tool['id'] as String;
-                  });
-                  _resetAnalysisState();
-                },
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(24),
-                    color: Colors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.04),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                    border: Border.all(
-                      color: isIA ? const Color(0xFFC89D93).withOpacity(0.25) : Colors.grey.shade200,
-                      width: 1.5,
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Encabezado Visual del Card (Imagen de la Opción C)
-                      ClipRRect(
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(22),
-                          topRight: Radius.circular(22),
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _activeToolId = tool['id'] as String;
+                    });
+                    _resetAnalysisState();
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(24),
+                      color: Colors.white,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.04),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
                         ),
-                        child: Image.asset(
-                          imageAsset,
-                          height: 100,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => Container(
+                      ],
+                      border: Border.all(
+                        color: isIA ? const Color(0xFFC89D93).withOpacity(0.25) : Colors.grey.shade200,
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ClipRRect(
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(22),
+                            topRight: Radius.circular(22),
+                          ),
+                          child: Image.asset(
+                            imageAsset,
                             height: 100,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: isIA
-                                    ? [const Color(0xFFC89D93), const Color(0xFFEADBC8)]
-                                    : [const Color(0xFFB07D62), const Color(0xFFEADBC8)],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => Container(
+                              height: 100,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: isIA
+                                      ? [const Color(0xFFC89D93), const Color(0xFFEADBC8)]
+                                      : [const Color(0xFFB07D62), const Color(0xFFEADBC8)],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
                               ),
-                            ),
-                            child: Icon(
-                              tool['icon'] as IconData,
-                              color: Colors.white,
-                              size: 40,
+                              child: Icon(
+                                tool['icon'] as IconData,
+                                color: Colors.white,
+                                size: 40,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.all(12.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Icon(
-                                    tool['icon'] as IconData,
-                                    color: isIA ? const Color(0xFFC89D93) : const Color(0xFFB07D62),
-                                    size: 16,
-                                  ),
-                                  SizedBox(width: 6),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: isIA ? const Color(0xFFF3ECE6) : Colors.grey.shade100,
-                                      borderRadius: BorderRadius.circular(8),
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(
+                                      tool['icon'] as IconData,
+                                      color: isIA ? const Color(0xFFC89D93) : const Color(0xFFB07D62),
+                                      size: 16,
                                     ),
-                                    child: Text(
-                                      tool['tag'] as String,
-                                      style: TextStyle(
-                                        fontSize: 8,
-                                        fontWeight: FontWeight.bold,
-                                        color: isIA ? const Color(0xFFC89D93) : Colors.grey.shade700,
+                                    const SizedBox(width: 6),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: isIA ? const Color(0xFFF3ECE6) : Colors.grey.shade100,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        tool['tag'] as String,
+                                        style: TextStyle(
+                                          fontSize: 8,
+                                          fontWeight: FontWeight.bold,
+                                          color: isIA ? const Color(0xFFC89D93) : Colors.grey.shade700,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                              SizedBox(height: 8),
-                              Text(
-                                tool['title'] as String,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 12.5,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppTheme.text,
-                                  height: 1.2,
+                                  ],
                                 ),
-                              ),
-                              SizedBox(height: 4),
-                              Expanded(
-                                child: Text(
-                                  tool['description'] as String,
-                                  maxLines: 4,
+                                const SizedBox(height: 8),
+                                Text(
+                                  tool['title'] as String,
+                                  maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                    fontSize: 10,
-                                    color: Colors.grey.shade600,
-                                    height: 1.25,
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.text,
+                                    height: 1.2,
                                   ),
                                 ),
-                              ),
-                            ],
+                                const SizedBox(height: 4),
+                                Expanded(
+                                  child: Text(
+                                    tool['description'] as String,
+                                    maxLines: 4,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: Colors.grey.shade600,
+                                      height: 1.25,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+              childCount: tools.length,
+            ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
