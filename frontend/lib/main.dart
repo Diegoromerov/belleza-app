@@ -1432,7 +1432,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                       ),
                       InkWell(
                         onTap: () {
-                          _filterProviders();
+                          _navigateToAIChat(_searchController.text);
                         },
                         borderRadius: BorderRadius.circular(20),
                         child: Padding(
