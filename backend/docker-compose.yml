@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: admin123
       POSTGRES_DB: beauty_db
     ports:
-      - "5432:5432"
+      - "5435:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./schema.sql:/docker-entrypoint-initdb.d/init.sql
@@ -72,6 +72,7 @@ services:
       - JWT_SECRET=beauty_app_super_secret_key_2026_change_in_production
       - NODE_ENV=development
       - SEED_DATABASE=true
+      - ALLOW_MOCK_AUTH=true
     depends_on:
       postgres:
         condition: service_healthy

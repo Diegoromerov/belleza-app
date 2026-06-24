@@ -203,8 +203,8 @@ class GlowCreditsBar extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            const Color(0xFFC89D93).withOpacity(0.15),
-            const Color(0xFFB07D62).withOpacity(0.15),
+            const Color(0xFFC89D93).withOpacity(0.25),
+            const Color(0xFFB07D62).withOpacity(0.25),
           ],
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
@@ -1248,7 +1248,7 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
               crossAxisCount: 2,
               crossAxisSpacing: 14,
               mainAxisSpacing: 14,
-              childAspectRatio: 0.65,
+              childAspectRatio: 0.70,
             ),
             delegate: SliverChildBuilderDelegate(
               (context, index) {
@@ -1334,7 +1334,7 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
                                       child: Text(
                                         tool['tag'] as String,
                                         style: TextStyle(
-                                          fontSize: 8,
+                                          fontSize: 12,
                                           fontWeight: FontWeight.bold,
                                           color: isIA ? const Color(0xFFC89D93) : Colors.grey.shade700,
                                         ),
@@ -1407,41 +1407,60 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
                 return Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 5.0),
                   child: Tooltip(
-                    message: colorName,
+                    message: _isLimitReached 
+                        ? '$colorName (Límite alcanzado, agenda tu cita para créditos ilimitados)' 
+                        : colorName,
                     child: GestureDetector(
-                      onTap: _isLimitReached
-                          ? null
-                          : () {
-                              setState(() {
-                                _selectedColor = isSelected ? null : colorName;
-                              });
-                            },
-                      child: Container(
-                        width: 48,
-                        height: 48,
-                        alignment: Alignment.center,
-                        color: Colors.transparent,
-                        child: Container(
-                          width: 38,
-                          height: 38,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: colorVal,
-                            border: Border.all(
-                              color: isSelected
-                                  ? AppTheme.primary
-                                  : (hasBorder ? Colors.grey.shade400 : Colors.transparent),
-                              width: isSelected ? 3.0 : 1.5,
+                      onTap: () {
+                        if (_isLimitReached) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Text('⚠️ Límite alcanzado. Agenda tu cita para tener créditos ilimitados.'),
+                              backgroundColor: AppTheme.error,
+                              action: SnackBarAction(
+                                label: 'Agendar',
+                                textColor: Colors.white,
+                                onPressed: _showPremiumUpgradeBottomSheet,
+                              ),
                             ),
-                            boxShadow: isSelected ? AppTheme.softShadow : null,
+                          );
+                          return;
+                        }
+                        setState(() {
+                          _selectedColor = isSelected ? null : colorName;
+                        });
+                      },
+                      child: Semantics(
+                        label: 'Esmalte color $colorName',
+                        selected: isSelected,
+                        button: true,
+                        child: Container(
+                          width: 48,
+                          height: 48,
+                          alignment: Alignment.center,
+                          color: Colors.transparent,
+                          child: Container(
+                            width: 38,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: colorVal,
+                              border: Border.all(
+                                color: isSelected
+                                    ? AppTheme.primary
+                                    : (hasBorder ? Colors.grey.shade400 : Colors.transparent),
+                                width: isSelected ? 3.0 : 1.5,
+                              ),
+                              boxShadow: isSelected ? AppTheme.softShadow : null,
+                            ),
+                            child: isSelected
+                                ? Icon(
+                                    Icons.check,
+                                    color: colorVal.computeLuminance() > 0.5 ? Colors.black87 : Colors.white,
+                                    size: 20,
+                                  )
+                                : null,
                           ),
-                          child: isSelected
-                              ? Icon(
-                                  Icons.check,
-                                  color: colorVal.computeLuminance() > 0.5 ? Colors.black87 : Colors.white,
-                                  size: 20,
-                                )
-                              : null,
                         ),
                       ),
                     ),

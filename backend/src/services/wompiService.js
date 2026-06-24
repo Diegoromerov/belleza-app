@@ -56,3 +56,65 @@ exports.disbursePayout = async (bookingId, amount, nequiNumber, documentId) => {
     }
   }, 1500);
 };
+
+/**
+ * Realiza un retiro / payout automático o por demanda a través de Wompi.
+ * @param {object} params Datos del retiro
+ */
+exports.crearPayout = async ({ retiroId, providerId, amount, numeroCuenta, banco, automatico = false }) => {
+  // Simular la llamada de Wompi con latencia
+  setTimeout(async () => {
+    try {
+      console.log(`\n💸 [WOMPI PAYOUT RETIRO] Procesando dispersión de retiro (${automatico ? 'AUTOMÁTICO' : 'DEMANDA'}):`);
+      console.log(`   - Retiro ID: ${retiroId}`);
+      console.log(`   - Prestador ID: ${providerId}`);
+      console.log(`   - Monto: $${amount} COP`);
+      console.log(`   - Banco/Método: ${banco}`);
+      console.log(`   - Cuenta: ${numeroCuenta}`);
+
+      const referenceToken = 'wompi_ret_' + Math.random().toString(36).substring(2, 11).toUpperCase();
+
+      // Actualizar el estado del retiro a COMPLETADO y guardar el ID externo
+      await pool.query(
+        `UPDATE retiros 
+         SET estado = 'COMPLETADO', 
+             referencia_wompi = $2,
+             procesado_at = NOW() 
+         WHERE id = $1`,
+        [retiroId, referenceToken]
+      );
+
+      // Actualizar el estado de la transacción en ledger a COMPLETADO
+      await pool.query(
+        `UPDATE wallet_transactions 
+         SET estado = 'COMPLETADO', 
+             metadata = metadata || $2::jsonb 
+         WHERE provider_id = $1 
+           AND tipo = 'DEBITO_RETIRO' 
+           AND (metadata->>'retiro_id')::uuid = $3`,
+        [providerId, JSON.stringify({ referencia_wompi: referenceToken }), retiroId]
+      );
+
+      console.log(`✅ [WOMPI PAYOUT RETIRO] Retiro ${retiroId} dispersado con éxito. Ref: ${referenceToken}`);
+    } catch (err) {
+      console.error(`❌ [WOMPI PAYOUT RETIRO ERROR] Fallo al dispersar retiro ${retiroId}:`, err.message);
+      await pool.query(
+        `UPDATE retiros 
+         SET estado = 'FALLIDO', 
+             error_wompi = $2,
+             procesado_at = NOW() 
+         WHERE id = $1`,
+        [retiroId, err.message]
+      );
+      await pool.query(
+        `UPDATE wallet_transactions 
+         SET estado = 'FALLIDO' 
+         WHERE provider_id = $1 
+           AND tipo = 'DEBITO_RETIRO' 
+           AND (metadata->>'retiro_id')::uuid = $2`,
+        [providerId, retiroId]
+      );
+    }
+  }, 1000);
+};
+
