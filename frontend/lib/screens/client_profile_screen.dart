@@ -1,4 +1,5 @@
 // frontend/lib/screens/client_profile_screen.dart
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -61,9 +62,9 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
     try {
       final XFile? file = await picker.pickImage(
         source: ImageSource.gallery,
-        maxWidth: 600,
-        maxHeight: 600,
-        imageQuality: 85,
+        maxWidth: 400,
+        maxHeight: 400,
+        imageQuality: 70,
       );
       if (file == null) return;
 
@@ -74,11 +75,25 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
       });
 
       final Uint8List bytes = await file.readAsBytes();
-      final String uploadedUrl = await ApiService.uploadImage(bytes, file.name);
-      await ApiService.updateAvatar(uploadedUrl);
+      
+      // Convertir a Base64 Data URI para almacenar directamente en la BD
+      // Esto evita depender del filesystem del servidor (efímero en Railway)
+      final ext = file.name.toLowerCase().split('.').last;
+      final mimeTypes = {
+        'jpg': 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'png': 'image/png',
+        'gif': 'image/gif',
+        'webp': 'image/webp',
+      };
+      final mimeType = mimeTypes[ext] ?? 'image/jpeg';
+      final base64String = base64Encode(bytes);
+      final dataUri = 'data:$mimeType;base64,$base64String';
+      
+      await ApiService.updateAvatar(dataUri);
 
       setState(() {
-        _avatarUrl = uploadedUrl;
+        _avatarUrl = dataUri;
         _isUploading = false;
         _message = 'Foto de perfil actualizada con éxito';
       });
@@ -183,10 +198,11 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                       child: CircleAvatar(
                         radius: 56,
                         backgroundColor: const Color(0xFFF5EBE6),
-                        backgroundImage:
-                            _avatarUrl != null && _avatarUrl!.isNotEmpty
-                                ? NetworkImage(_avatarUrl!)
-                                : null,
+                        backgroundImage: _avatarUrl != null && _avatarUrl!.isNotEmpty
+                            ? (_avatarUrl!.startsWith('data:')
+                                ? MemoryImage(base64Decode(_avatarUrl!.split(',').last)) as ImageProvider
+                                : NetworkImage(_avatarUrl!))
+                            : null,
                         child: _avatarUrl == null || _avatarUrl!.isEmpty
                             ? Text(
                                 _nameCtrl.text.isNotEmpty
@@ -314,6 +330,16 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                 icon: Icons.gavel_outlined,
                 title: 'Habeas Data & Términos Legales',
                 onTap: _showHabeasDataDialog,
+              ),
+              _buildSettingsTile(
+                icon: Icons.headset_mic_outlined,
+                title: 'Centro de Soporte y PQRSF',
+                onTap: () => Navigator.pushNamed(context, '/support'),
+              ),
+              _buildSettingsTile(
+                icon: Icons.gavel_outlined,
+                title: 'Mis Disputas de Servicio',
+                onTap: () => Navigator.pushNamed(context, '/disputes'),
               ),
               SizedBox(height: 28),
 

@@ -2,6 +2,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart' as http_parser;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/provider_model.dart';
@@ -9,12 +10,12 @@ import '../models/service_model.dart';
 
 class ApiService {
   // --- CONFIGURACIÓN DE ENTORNO DE DESARROLLO / PRODUCCIÓN ---
-  static const bool useStaging = true;
+  static const bool useStaging = false;
   static const String stagingUrl =
       'https://belleza-app-production.up.railway.app';
 
   static String? _cachedBaseUrl;
-  static final List<String> _ports = ['8082', '3000', '3001'];
+  static final List<String> _ports = ['8080', '8082', '3000', '3001'];
 
   static void resetCachedBaseUrl() {
     _cachedBaseUrl = null;
@@ -24,7 +25,7 @@ class ApiService {
 
   static String get baseUrl {
     if (useStaging) return stagingUrl;
-    return _cachedBaseUrl ?? 'http://$_host:8082';
+    return 'http://$_host:8080';
   }
 
   static String get _baseUrl => baseUrl;
@@ -41,25 +42,28 @@ class ApiService {
       try {
         final response = await http
             .get(Uri.parse('$url/api/health'))
-            .timeout(const Duration(milliseconds: 1500));
+            .timeout(const Duration(milliseconds: 2000));
         if (response.statusCode == 200) {
-          final data = json.decode(response.body);
-          if (data['status'] == 'OK' ||
-              data['message']?.toString().contains('funcionando') == true) {
-            _cachedBaseUrl = url;
-            if (kDebugMode) {
-              print(
-                  '🔌 ApiService: BaseUrl detectado y fijado en $_cachedBaseUrl');
+          final contentType = response.headers['content-type'] ?? '';
+          if (contentType.toLowerCase().contains('application/json')) {
+            final data = json.decode(response.body);
+            if (data['status'] == 'OK' ||
+                data['message']?.toString().contains('funcionando') == true) {
+              _cachedBaseUrl = url;
+              if (kDebugMode) {
+                print(
+                    '🔌 ApiService: BaseUrl detectado y fijado en $_cachedBaseUrl');
+              }
+              return;
             }
-            return;
           }
         }
       } catch (_) {
         // Continuar al siguiente puerto
       }
     }
-    // Fallback default
-    _cachedBaseUrl = 'http://$_host:3000';
+    // Fallback default (el backend local por defecto corre en 8080)
+    _cachedBaseUrl = 'http://$_host:8080';
   }
 
   static String normalizeUrl(String? rawUrl) {
@@ -154,7 +158,14 @@ class ApiService {
     await ensureBaseUrl();
     final headers = await _getAuthHeaders();
     final uri = Uri.parse('$_baseUrl$path');
+    if (kDebugMode) {
+      print('🌐 ApiService.get: Requesting URI: $uri');
+    }
     final response = await http.get(uri, headers: headers);
+    if (kDebugMode) {
+      print('🌐 ApiService.get: Response Code: ${response.statusCode}');
+      print('🌐 ApiService.get: Response Body Preview: ${response.body.length > 200 ? response.body.substring(0, 200) : response.body}');
+    }
     final data = jsonDecode(response.body);
     if (response.statusCode >= 200 && response.statusCode < 300) return data;
     throw Exception(data['error'] ?? 'Error ${response.statusCode}');
@@ -441,8 +452,27 @@ class ApiService {
     if (token != null && token.isNotEmpty) {
       request.headers['Authorization'] = 'Bearer $token';
     }
+
+    // Detectar el MIME type basado en la extensión del archivo
+    // Sin esto, Flutter Web envía 'application/octet-stream' y el backend lo rechaza
+    final ext = filename.toLowerCase().split('.').last;
+    final mimeTypes = {
+      'jpg': 'image/jpeg',
+      'jpeg': 'image/jpeg',
+      'png': 'image/png',
+      'gif': 'image/gif',
+      'webp': 'image/webp',
+    };
+    final contentType = mimeTypes[ext] ?? 'image/jpeg';
+    final mimeParts = contentType.split('/');
+
     request.files.add(
-      http.MultipartFile.fromBytes('image', imageBytes, filename: filename),
+      http.MultipartFile.fromBytes(
+        'image',
+        imageBytes,
+        filename: filename,
+        contentType: http_parser.MediaType(mimeParts[0], mimeParts[1]),
+      ),
     );
     final streamedResponse =
         await request.send().timeout(const Duration(seconds: 45));

@@ -2,6 +2,7 @@
 // Jobs programados: retiros automáticos (quincena/mensual) + conciliación diaria
 
 const { pool } = require('../config/db');
+const wompiService = require('../services/wompiService');
 
 /**
  * Lee un parámetro de configuración de la plataforma.
@@ -161,8 +162,15 @@ async function ejecutarRetirosAutomaticos() {
           ]
         );
 
-        // TODO: Llamar API de Payouts de Wompi
-        // await wompiService.crearPayout({ ... });
+        // Llamar a la API de Payouts de Wompi para realizar la dispersión
+        wompiService.crearPayout({
+          retiroId: retiroRows[0].id,
+          providerId: wallet.provider_id,
+          amount: monto,
+          numeroCuenta: wallet.numero_cuenta,
+          banco: wallet.banco,
+          automatico: true
+        }).catch(err => console.error('Error asíncrono al iniciar dispersión de retiro automático:', err));
 
         await client.query('COMMIT');
         console.log(`✅ Retiro automático de $${monto} para ${wallet.nombre_prestador}`);

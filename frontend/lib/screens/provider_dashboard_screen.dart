@@ -9,6 +9,7 @@ import 'wallet_screen.dart';
 import 'chat_list_screen.dart';
 import 'provider_profile_screen.dart';
 import '../services/api_service.dart';
+import '../services/auth_service.dart';
 import '../services/analytics_service.dart';
 
 class ProviderDashboardScreen extends StatefulWidget {
@@ -409,7 +410,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
           SizedBox(width: 10),
           Expanded(
             child: ElevatedButton.icon(
-              onPressed: () => _handleStartService(bookingId),
+              onPressed: _loadingBookings.contains(bookingId) ? null : () => _handleStartService(bookingId),
               icon: Icon(Icons.play_arrow_outlined, size: 16),
               label: Text('Iniciar Servicio',
                   style: TextStyle(fontSize: 12.5)),
@@ -493,7 +494,9 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: () => _showCompleteServiceConfirmation(bookingId),
+              onPressed: _loadingBookings.contains(bookingId)
+                  ? null
+                  : () => _showCompleteServiceConfirmation(bookingId),
               icon: Icon(Icons.check_circle_outline_rounded, size: 18),
               label: Text(
                 'Marcar como completado',
@@ -1475,15 +1478,18 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
               children: [
                 Row(
                   children: [
-                    CircleAvatar(
-                      radius: 22,
-                      backgroundColor: const Color(0xFFFFE4E6),
-                      child: Text(
-                        clientInitial,
-                        style: TextStyle(
-                            color: Color(0xFFE11D48),
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16),
+                    Semantics(
+                      label: 'Avatar de la cliente: ${b['client_name'] ?? 'Cliente'}',
+                      child: CircleAvatar(
+                        radius: 22,
+                        backgroundColor: const Color(0xFFFFE4E6),
+                        child: Text(
+                          clientInitial,
+                          style: TextStyle(
+                              color: Color(0xFFE11D48),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16),
+                        ),
                       ),
                     ),
                     SizedBox(width: 12),
@@ -2064,21 +2070,52 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
       return Scaffold(
         appBar: AppBar(title: Text('Panel de Prestador')),
         body: Center(
-          child: TextButton(
-            onPressed: () {
-              _fetchBookings();
-              _fetchProfile();
-            },
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text('❌ Error de conexión',
-                    style: TextStyle(color: Colors.red, fontSize: 18)),
-                SizedBox(height: 8),
-                Text('Toca para reintentar',
-                    style: TextStyle(color: Colors.blue)),
-              ],
-            ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextButton(
+                onPressed: () {
+                  _fetchBookings();
+                  _fetchProfile();
+                },
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('❌ Error de conexión',
+                        style: TextStyle(color: Colors.red, fontSize: 18)),
+                    if (_error != null) ...[
+                      SizedBox(height: 8),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                        child: Text(
+                          _error!,
+                          style: TextStyle(color: Colors.grey[700], fontSize: 14),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ],
+                    SizedBox(height: 8),
+                    Text('Toca para reintentar',
+                        style: TextStyle(color: Colors.blue)),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: () async {
+                  await AuthService.logout();
+                  if (mounted) {
+                    Navigator.pushReplacementNamed(context, '/login');
+                  }
+                },
+                icon: const Icon(Icons.logout),
+                label: const Text('Cerrar sesión'),
+                style: ElevatedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  backgroundColor: const Color(0xFFC89D93),
+                ),
+              ),
+            ],
           ),
         ),
       );
@@ -2264,7 +2301,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
           Text(
             label,
             style: TextStyle(
-                fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold),
+                fontSize: 11, color: Colors.grey[750], fontWeight: FontWeight.bold),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -2274,7 +2311,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
               subtitle,
               style: TextStyle(
                   fontSize: 9,
-                  color: Colors.grey[450],
+                  color: Colors.grey[600],
                   fontWeight: FontWeight.bold),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -2321,7 +2358,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
           Text(
             label,
             style: TextStyle(
-                fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold),
+                fontSize: 11, color: Colors.grey[750], fontWeight: FontWeight.bold),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -2331,7 +2368,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
               subtitle,
               style: TextStyle(
                   fontSize: 9,
-                  color: Colors.grey[450],
+                  color: Colors.grey[600],
                   fontWeight: FontWeight.bold),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -2614,10 +2651,10 @@ class _SegmentedPinDialogState extends State<SegmentedPinDialog> {
     });
 
     try {
-      double providerLat = 4.6735;
-      double providerLon = -74.1422;
-      double clientLat = 4.6735;
-      double clientLon = -74.1422;
+      double providerLat;
+      double providerLon;
+      double clientLat;
+      double clientLon;
 
       try {
         final pos = await getWebGeolocation();
@@ -2626,7 +2663,8 @@ class _SegmentedPinDialogState extends State<SegmentedPinDialog> {
         clientLat = providerLat;
         clientLon = providerLon;
       } catch (e) {
-        debugPrint('Error obteniendo geolocalización: $e');
+        debugPrint('Error obteniendo geolocalización real: $e');
+        throw Exception('No se pudo verificar tu geolocalización. Asegúrate de activar el GPS y dar permisos de ubicación.');
       }
 
       final res = await ApiService.completeBooking(
@@ -2647,7 +2685,7 @@ class _SegmentedPinDialogState extends State<SegmentedPinDialog> {
       if (mounted) {
         setState(() {
           _isSubmitting = false;
-          _error = e.toString().replaceAll('Exception:', '');
+          _error = e.toString().replaceAll('Exception:', '').replaceAll('Exception: ', '');
           for (var c in _controllers) {
             c.clear();
           }
@@ -2694,31 +2732,37 @@ class _SegmentedPinDialogState extends State<SegmentedPinDialog> {
                     width: 2,
                   ),
                 ),
-                child: TextFormField(
-                  controller: _controllers[index],
-                  focusNode: _focusNodes[index],
-                  keyboardType: TextInputType.number,
-                  maxLength: 1,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF881337)),
-                  decoration: const InputDecoration(
-                    counterText: '',
-                    border: InputBorder.none,
-                  ),
-                  onChanged: (val) {
-                    if (val.length == 1) {
-                      if (index < 3) {
-                        _focusNodes[index + 1].requestFocus();
-                      } else {
-                        _submitPin();
+                child: Semantics(
+                  label: 'Dígito del PIN ${index + 1}',
+                  textField: true,
+                  child: TextFormField(
+                    controller: _controllers[index],
+                    focusNode: _focusNodes[index],
+                    keyboardType: TextInputType.number,
+                    maxLength: 1,
+                    obscureText: true,
+                    obscuringCharacter: '●',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF881337)),
+                    decoration: const InputDecoration(
+                      counterText: '',
+                      border: InputBorder.none,
+                    ),
+                    onChanged: (val) {
+                      if (val.length == 1) {
+                        if (index < 3) {
+                          _focusNodes[index + 1].requestFocus();
+                        } else {
+                          _submitPin();
+                        }
+                      } else if (val.isEmpty && index > 0) {
+                        _focusNodes[index - 1].requestFocus();
                       }
-                    } else if (val.isEmpty && index > 0) {
-                      _focusNodes[index - 1].requestFocus();
-                    }
-                  },
+                    },
+                  ),
                 ),
               );
             }),

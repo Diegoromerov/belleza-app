@@ -31,11 +31,17 @@ import 'screens/provider_profile_screen.dart';
 import 'screens/booking_tracking_screen.dart';
 import 'screens/provider_route_screen.dart';
 import 'screens/designs/manicure_ideas_screen.dart';
+import 'screens/support/support_center_screen.dart';
+import 'screens/disputes/disputes_list_screen.dart';
+import 'screens/academy/academy_screen.dart';
 import 'models/provider_model.dart';
 import 'shared/theme.dart';
 
+import 'package:intl/date_symbol_data_local.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('es', null);
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
@@ -109,6 +115,9 @@ class BeautyApp extends StatelessWidget {
                   as Map<String, dynamic>;
               return ProviderRouteScreen(booking: args);
             },
+            '/support': (_) => const SupportCenterScreen(),
+            '/disputes': (_) => const DisputesListScreen(),
+            '/provider/academy': (_) => const AcademyScreen(),
           },
         );
       },
@@ -1389,8 +1398,17 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.search, color: AppTheme.primary),
-                      SizedBox(width: 10),
+                      InkWell(
+                        onTap: () {
+                          _filterProviders();
+                        },
+                        borderRadius: BorderRadius.circular(20),
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Icon(Icons.search, color: AppTheme.primary),
+                        ),
+                      ),
+                      const SizedBox(width: 2),
                       Expanded(
                         child: TextField(
                           controller: _searchController,
@@ -1412,19 +1430,22 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                           },
                         ),
                       ),
-                      IconButton(
-                        icon: Icon(Icons.auto_awesome,
-                            color: AppTheme.primary),
-                        onPressed: () {
-                          _navigateToAIChat(_searchController.text);
+                      InkWell(
+                        onTap: () {
+                          _filterProviders();
                         },
+                        borderRadius: BorderRadius.circular(20),
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Icon(Icons.auto_awesome, color: AppTheme.primary),
+                        ),
                       ),
                     ],
                   ),
                 ),
-                SizedBox(height: 12),
-                // Capa 2: Filtros de Categorías M3
-                _buildCategorySelector(),
+                // El selector de categorías se ha ocultado conforme a los requerimientos UX
+                // SizedBox(height: 12),
+                // _buildCategorySelector(),
               ],
             ),
           ),
@@ -1447,48 +1468,26 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
               ),
               child: Row(
                 children: [
-                  // Botón 1: Explorar (Activo en esta pantalla)
+                  // Botón 1: Citas
                   _buildNavItem(
-                    icon: Icons.map_outlined,
-                    label: 'Explorar',
-                    color: AppTheme.primary,
-                    onTap: () {},
+                    icon: Icons.calendar_today_outlined,
+                    label: 'Citas',
+                    onTap: () => _checkAuthAndNavigate('/client-bookings'),
                   ),
-                  
-                  // Botón 2: Dinámico (Citas o Panel)
-                  if (_userRole == 'provider')
-                    _buildNavItem(
-                      icon: Icons.dashboard_outlined,
-                      label: 'Panel',
-                      onTap: () => _checkAuthAndNavigate('/provider'),
-                    )
-                  else
-                    _buildNavItem(
-                      icon: Icons.calendar_today_outlined,
-                      label: 'Citas',
-                      onTap: () => _checkAuthAndNavigate('/client-bookings'),
-                    ),
 
-                  // Botón 3: Ideas (Botón central prominente)
+                  // Botón 2: Ideas (Botón central prominente)
                   _buildProminentCenterNavItem(
                     icon: Icons.lightbulb_outline_rounded,
                     label: 'Ideas',
                     onTap: () => _checkAuthAndNavigate('/ideas'),
                   ),
 
-                  // Botón 4: Dinámico (Servicios o Perfil)
-                  if (_userRole == 'provider')
-                    _buildNavItem(
-                      icon: Icons.inventory_2_outlined,
-                      label: 'Servicios',
-                      onTap: () => _checkAuthAndNavigate('/provider/services'),
-                    )
-                  else
-                    _buildNavItem(
-                      icon: Icons.person_outline_rounded,
-                      label: 'Perfil',
-                      onTap: () => _checkAuthAndNavigate('/profile'),
-                    ),
+                  // Botón 3: Perfil
+                  _buildNavItem(
+                    icon: Icons.person_outline_rounded,
+                    label: 'Perfil',
+                    onTap: () => _checkAuthAndNavigate('/profile'),
+                  ),
                 ],
               ),
             ),

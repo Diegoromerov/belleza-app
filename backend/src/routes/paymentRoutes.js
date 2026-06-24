@@ -7,6 +7,7 @@ const { pool } = require('../config/db');
 const authMiddleware = require('../middleware/auth');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
+const wompiService = require('../services/wompiService');
 
 // ─── UTILIDADES ──────────────────────────────────────────────────────────────
 
@@ -174,7 +175,7 @@ router.post('/bookings/:id/complete', authMiddleware, async (req, res) => {
 
     // Actualizar estado de la reserva
     await client.query(
-      `UPDATE bookings SET estado = 'ESPERANDO_OTP', estado_cita = 'FINALIZADA_PRESTADOR'
+      `UPDATE bookings SET estado = 'ESPERANDO_OTP'
        WHERE id = $1`,
       [id]
     );
@@ -692,8 +693,15 @@ router.post('/wallet/withdraw', authMiddleware, async (req, res) => {
 
     await client.query('COMMIT');
 
-    // TODO: Llamar API de Payouts de Wompi aquí con wallet.wompi_beneficiary_id
-    // await wompiService.crearPayout({ beneficiarioId: wallet.wompi_beneficiary_id, monto: montoSolicitado });
+    // Llamar a la API de Payouts de Wompi para realizar la dispersión
+    wompiService.crearPayout({
+      retiroId: retiro.id,
+      providerId: req.user.id,
+      amount: montoSolicitado,
+      numeroCuenta: wallet.numero_cuenta,
+      banco: wallet.banco,
+      automatico: false
+    }).catch(err => console.error('Error asíncrono al iniciar dispersión de retiro:', err));
 
     res.json({
       ok: true,

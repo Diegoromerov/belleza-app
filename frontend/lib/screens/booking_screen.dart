@@ -461,7 +461,11 @@ class _BookingScreenState extends State<BookingScreen> {
             labelText: 'Dirección del servicio',
             prefixIcon: Icons.location_on_outlined,
           ),
-          onChanged: (value) => serviceAddress = value,
+          onChanged: (value) {
+            setState(() {
+              serviceAddress = value;
+            });
+          },
         ),
         const SizedBox(height: 24),
         _buildNotesExpandable(),

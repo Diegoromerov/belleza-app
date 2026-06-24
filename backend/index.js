@@ -16,6 +16,9 @@ const chatRoutes = require('./src/routes/chatRoutes');
 const designsRoutes = require('./src/routes/designsRoutes');
 const productRoutes = require('./src/routes/productRoutes');
 const providerRoutes = require('./src/routes/providerRoutes');
+const ticketRoutes = require('./src/routes/ticketRoutes');
+const disputeRoutes = require('./src/routes/disputeRoutes');
+const academyRoutes = require('./src/routes/academyRoutes');
 const glowAdminRoutes = require('./src/modules/admin-glow/admin.routes');
 const authMiddleware = require('./src/middleware/auth');
 const adminMiddleware = async (req, res, next) => {
@@ -70,13 +73,20 @@ const upload = multer({
   storage: storage,
   limits: { fileSize: 5 * 1024 * 1024 }, // Límite de 5MB
   fileFilter: (req, file, cb) => {
-    const allowedTypes = /jpeg|jpg|png|gif|webp/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedTypes.test(file.mimetype);
-    if (extname && mimetype) {
+    // Validar por extensión del archivo original
+    const allowedExtensions = /\.(jpeg|jpg|png|gif|webp)$/i;
+    const hasValidExtension = allowedExtensions.test(file.originalname);
+    
+    // Validar por MIME type (image/jpeg, image/png, etc.)
+    // También aceptar application/octet-stream si la extensión es válida
+    // (Flutter Web a veces envía application/octet-stream)
+    const hasValidMime = file.mimetype.startsWith('image/') || 
+                         (file.mimetype === 'application/octet-stream' && hasValidExtension);
+    
+    if (hasValidExtension || hasValidMime) {
       return cb(null, true);
     } else {
-      cb(new Error('Solo se permiten imágenes (.jpeg, .jpg, .png, .gif, .webp)'));
+      cb(new Error('Solo se permiten imágenes (.jpeg, .jpg, .png, .gif, .webp). Formato recibido: ' + file.mimetype + ' - ' + file.originalname));
     }
   }
 });
@@ -98,13 +108,13 @@ app.use(cors({
   },
   credentials: true
 }));
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 app.use('/uploads', express.static(uploadsDir));
 app.use('/admin', express.static(path.join(__dirname, 'public/admin')));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Servir la aplicación Flutter Web en cualquier ruta no controlada por API u otros estáticos
-app.get(/^(?!\/api|\/uploads|\/admin).*/, (req, res) => {
+app.get(/^(?!\/api(?:\/|$))(?!\/uploads(?:\/|$))(?!\/admin(?:\/|$)).*/, (req, res) => {
   res.sendFile(path.join(__dirname, 'public/index.html'));
 });
 
@@ -148,6 +158,9 @@ app.use('/api', serviceRoutes);
 app.use('/api', chatRoutes);
 app.use('/api', productRoutes);
 app.use('/api', providerRoutes);
+app.use('/api', ticketRoutes);
+app.use('/api', disputeRoutes);
+app.use('/api/academy', academyRoutes);
 app.use('/api/glow-admin', glowAdminRoutes);
 
 // ==========================================
@@ -284,13 +297,17 @@ app.post('/api/upload', authMiddleware, (req, res) => {
     if (!req.file) {
       return res.status(400).json({ error: 'No se ha proporcionado ninguna imagen' });
     }
+    // Construir URL robusta: usar X-Forwarded-Proto para detectar HTTPS detrás de proxy (Railway)
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol;
     const host = req.get('host');
-    const imageUrl = `${req.protocol}://${host}/uploads/${req.file.filename}`;
+    const relativePath = `/uploads/${req.file.filename}`;
+    const imageUrl = `${protocol}://${host}${relativePath}`;
+    console.log(`📸 Imagen subida: ${imageUrl} (relativa: ${relativePath})`);
     res.json({
       success: true,
       message: 'Imagen subida con éxito',
       url: imageUrl,
-      path: `/uploads/${req.file.filename}`
+      path: relativePath
     });
   });
 });
@@ -1390,6 +1407,30 @@ const initDatabase = async () => {
       }
     }
 
+    // 🔸 Ejecutar migración de soporte y PQRSF (007_soporte_y_pqrsf.sql)
+    const soporteMigrationPath = path.join(__dirname, 'migrations/007_soporte_y_pqrsf.sql');
+    if (fs.existsSync(soporteMigrationPath)) {
+      try {
+        const soporteSql = fs.readFileSync(soporteMigrationPath, 'utf8');
+        await pool.query(soporteSql);
+        console.log('✅ Base de datos: Migración de Soporte y PQRSF aplicada.');
+      } catch (sErr) {
+        console.warn('⚠️ Advertencia en migración de Soporte y PQRSF:', sErr.message);
+      }
+    }
+
+    // 🔸 Ejecutar migración de la Academia Glow (008_academia_glow.sql)
+    const academyMigrationPath = path.join(__dirname, 'migrations/008_academia_glow.sql');
+    if (fs.existsSync(academyMigrationPath)) {
+      try {
+        const academySql = fs.readFileSync(academyMigrationPath, 'utf8');
+        await pool.query(academySql);
+        console.log('✅ Base de datos: Migración de Academia Glow aplicada.');
+      } catch (aErr) {
+        console.warn('⚠️ Advertencia en migración de Academia Glow:', aErr.message);
+      }
+    }
+
     const checkUser = await pool.query("SELECT id FROM usuarios WHERE email = 'provider@beautyapp.com';");
     const needsSeed = checkUser.rows.length === 0;
 
@@ -1464,6 +1505,41 @@ wss.on('connection', (ws) => {
       if (data.type === 'register' && data.userId) {
         registerClient(data.userId, ws);
         ws.send(JSON.stringify({ status: 'registered', userId: data.userId.toString() }));
+      }
+      // Integración de Geolocalización en Tiempo Real vía WebSockets para Tracking
+      if (data.type === 'join_booking_room' && data.bookingId) {
+        ws.bookingId = data.bookingId;
+        ws.role = data.role || 'client';
+        console.log(`📡 Cliente WS unido a la sala del booking_${data.bookingId} como ${ws.role}`);
+        ws.send(JSON.stringify({ type: 'joined_room', bookingId: data.bookingId }));
+      }
+      if (data.type === 'location_update' && data.bookingId && data.latitude && data.longitude) {
+        console.log(`📍 Recibida coordenada GPS de prestador para booking_${data.bookingId}: ${data.latitude}, ${data.longitude}`);
+        
+        // Actualizar base de datos de manera hiper-local
+        if (data.providerId) {
+          pool.query(
+            `UPDATE perfiles_prestador 
+             SET ubicacion = ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography 
+             WHERE id = $3`,
+            [data.latitude, data.longitude, data.providerId]
+          ).catch(e => console.error('Error actualizando ubicación prestador:', e.message));
+        }
+
+        // Retransmitir a todos los clientes que estén en el mismo bookingId
+        const payload = JSON.stringify({
+          type: 'location_received',
+          bookingId: data.bookingId,
+          latitude: data.latitude,
+          longitude: data.longitude,
+          timestamp: new Date().toISOString()
+        });
+
+        wss.clients.forEach((client) => {
+          if (client !== ws && client.readyState === 1 && client.bookingId === data.bookingId) {
+            client.send(payload);
+          }
+        });
       }
     } catch (err) {
       console.error('Error procesando mensaje WebSocket:', err);

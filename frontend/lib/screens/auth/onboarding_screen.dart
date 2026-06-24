@@ -1,4 +1,5 @@
 // frontend/lib/screens/auth/onboarding_screen.dart
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -50,12 +51,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       });
 
       final Uint8List bytes = await file.readAsBytes();
-      final String uploadedUrl = await ApiService.uploadImage(bytes, file.name);
+      
+      // Convertir a Base64 Data URI para almacenar directamente en la BD
+      final ext = file.name.toLowerCase().split('.').last;
+      final mimeTypes = {
+        'jpg': 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'png': 'image/png',
+        'gif': 'image/gif',
+        'webp': 'image/webp',
+      };
+      final mimeType = mimeTypes[ext] ?? 'image/jpeg';
+      final base64String = base64Encode(bytes);
+      final dataUri = 'data:$mimeType;base64,$base64String';
 
       setState(() {
-        if (type == 'doc') _documentoUrl = uploadedUrl;
-        if (type == 'rut') _rutUrl = uploadedUrl;
-        if (type == 'cert') _certificacionUrl = uploadedUrl;
+        if (type == 'doc') _documentoUrl = dataUri;
+        if (type == 'rut') _rutUrl = dataUri;
+        if (type == 'cert') _certificacionUrl = dataUri;
       });
     } catch (e) {
       setState(() => _error = 'Error al subir el archivo: $e');
@@ -120,6 +133,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Future<void> _saveDraft() async {
+    if (!_habeasDataAccepted || !_terminosAccepted) {
+      setState(() {
+        _error = 'Debes aceptar la Política de Privacidad (Habeas Data) y los Términos y Condiciones para guardar tu borrador.';
+      });
+      return;
+    }
     setState(() {
       _isLoading = true;
       _error = null;
@@ -813,11 +832,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     color: Color(0xFFC89D93), strokeWidth: 2),
               )
             else if (isUploaded)
-              Text('Cargado',
-                  style: TextStyle(
-                      color: Colors.green,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold))
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  Icon(Icons.check_circle, color: Colors.green, size: 16),
+                  SizedBox(width: 4),
+                  Text('Cargado',
+                      style: TextStyle(
+                          color: Colors.green,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold)),
+                ],
+              )
             else
               Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
           ],

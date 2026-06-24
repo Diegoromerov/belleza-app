@@ -1,9 +1,11 @@
 // frontend/lib/screens/booking_tracking_screen.dart
 import 'dart:async';
+import 'dart:convert';
 import 'dart:ui' show ImageFilter;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:web_socket_channel/web_socket_channel.dart' as web_socket_channel;
 import 'chat_screen.dart';
 import '../services/api_service.dart';
 import '../shared/theme.dart';
@@ -28,10 +30,13 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen>
   // Coordenadas iniciales del prestador (se irán acercando)
   late LatLng _providerLoc;
 
-  // Progreso de interpolación (0.0 a 1.0)
   double _progress = 0.0;
   Timer? _moveTimer;
   int _minutesRemaining = 8;
+
+  // Canal de WebSocket para tracking GPS real
+  web_socket_channel.WebSocketChannel? _wsChannel;
+  bool _usingRealGPS = false;
 
   late AnimationController _pulseController;
 
@@ -47,6 +52,7 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen>
       duration: const Duration(seconds: 2),
     )..repeat();
 
+    _connectWebSocketTracking();
     _startTrackingSimulation();
   }
 
@@ -54,12 +60,61 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen>
   void dispose() {
     _pulseController.dispose();
     _moveTimer?.cancel();
+    _wsChannel?.sink.close();
     super.dispose();
+  }
+
+  void _connectWebSocketTracking() {
+    try {
+      final wsBase = ApiService.baseUrl.replaceFirst('http', 'ws');
+      final wsUrl = '$wsBase/chat'; // Reutilizamos el endpoint configurado en index.js
+      _wsChannel = web_socket_channel.WebSocketChannel.connect(Uri.parse(wsUrl));
+
+      // Unirse a la sala de la reserva
+      final bookingId = widget.booking['id']?.toString();
+      if (bookingId != null) {
+        _wsChannel!.sink.add(jsonEncode({
+          'type': 'join_booking_room',
+          'bookingId': bookingId,
+          'role': 'client'
+        }));
+      }
+
+      _wsChannel!.stream.listen((message) {
+        try {
+          final data = jsonDecode(message);
+          if (data['type'] == 'location_received' && data['latitude'] != null && data['longitude'] != null) {
+            if (mounted) {
+              setState(() {
+                _usingRealGPS = true;
+                _moveTimer?.cancel(); // Cancelar simulación si recibimos GPS real
+                _providerLoc = LatLng(
+                  double.parse(data['latitude'].toString()),
+                  double.parse(data['longitude'].toString()),
+                );
+                // Calcular progreso en función de la distancia
+                final double distanceInMeters = const Distance().distance(_providerLoc, _clientLoc);
+                final double initialDistance = 1500.0; // Distancia estimada inicial
+                _progress = (1.0 - (distanceInMeters / initialDistance)).clamp(0.0, 1.0);
+                _minutesRemaining = (8 * (1.0 - _progress)).round();
+                if (_minutesRemaining < 1) _minutesRemaining = 1;
+              });
+            }
+          }
+        } catch (_) {}
+      }, onError: (_) {
+        _usingRealGPS = false;
+      }, onDone: () {
+        _usingRealGPS = false;
+      });
+    } catch (_) {
+      _usingRealGPS = false;
+    }
   }
 
   void _startTrackingSimulation() {
     _moveTimer = Timer.periodic(const Duration(seconds: 2), (timer) {
-      if (!mounted) return;
+      if (!mounted || _usingRealGPS) return;
       setState(() {
         if (_progress < 1.0) {
           _progress += 0.05; // Incrementa el progreso en cada tick
@@ -211,17 +266,20 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen>
                               Border.all(color: AppTheme.primary, width: 2.5),
                           boxShadow: AppTheme.softShadow,
                         ),
-                        child: CircleAvatar(
-                          radius: 18,
-                          backgroundColor: AppTheme.accent.withOpacity(0.2),
-                          backgroundImage: providerAvatar.isNotEmpty
-                              ? NetworkImage(providerAvatar)
-                              : null,
-                          child: providerAvatar.isEmpty
-                              ? Icon(Icons.face_retouching_natural,
-                                  size: 18, color: AppTheme.primary)
-                              : null,
-                        ),
+                          child: Semantics(
+                            label: providerAvatar.isNotEmpty ? 'Avatar del profesional' : 'Icono de profesional',
+                            child: CircleAvatar(
+                              radius: 18,
+                              backgroundColor: AppTheme.accent.withOpacity(0.2),
+                              backgroundImage: providerAvatar.isNotEmpty
+                                  ? NetworkImage(providerAvatar)
+                                  : null,
+                              child: providerAvatar.isEmpty
+                                  ? Icon(Icons.face_retouching_natural,
+                                      size: 18, color: AppTheme.primary)
+                                  : null,
+                            ),
+                          ),
                       ),
                     ),
                   ),
@@ -243,14 +301,8 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen>
               },
               backgroundColor: Colors.white,
               foregroundColor: AppTheme.primary,
-              elevation: 4,
-              shape: const CircleBorder(),
-              child: Icon(
-                MapSettings.isDark
-                    ? Icons.light_mode_outlined
-                    : Icons.dark_mode_outlined,
-                size: 22,
-              ),
+              tooltip: 'Cambiar tema del mapa',
+              child: Icon(Icons.brightness_6),
             ),
           ),
 

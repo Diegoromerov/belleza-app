@@ -228,9 +228,10 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
       setState(() => _isLoading = true);
 
       final imageUrl = await ApiService.uploadImage(bytes, filename);
+      final normalizedUrl = ApiService.normalizeUrl(imageUrl);
 
       await ApiService.addPortfolioItem(
-        imageUrl: imageUrl,
+        imageUrl: normalizedUrl,
         title: result['title'],
         category: result['category'],
       );
@@ -458,16 +459,16 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
             Icon(Icons.warning_amber_rounded,
                 color: Colors.redAccent, size: 28),
             SizedBox(width: 8),
-            Text('¿Eliminar del portafolio?',
+            Text('Confirmar Eliminación',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
           ],
         ),
         content: Text(
-            '¿Estás seguro de que deseas eliminar esta imagen de tu portafolio? Esta acción es definitiva.'),
+            '⚠️ Atención: Esta imagen se borrará de forma permanente de tu portafolio y los clientes potenciales ya no podrán verla como referencia de tu trabajo. ¿Deseas proceder?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Volver',
+            child: Text('Conservar Imagen',
                 style:
                     TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
           ),
@@ -481,7 +482,7 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                   borderRadius: BorderRadius.circular(30)),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             ),
-            child: Text('Eliminar',
+            child: Text('Sí, Eliminar',
                 style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
