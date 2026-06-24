@@ -96,12 +96,19 @@ const upload = multer({
 // ==========================================
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
-  : ['http://localhost:8080', 'http://localhost:8081', 'http://localhost:7357', 'http://127.0.0.1:8080', 'http://localhost:8082'];
+  : [
+      'http://localhost:8080',
+      'http://localhost:8081',
+      'http://localhost:7357',
+      'http://127.0.0.1:8080',
+      'http://localhost:8082',
+      'https://belleza-app-production.up.railway.app'
+    ];
 
 app.use(cors({
   origin: (origin, callback) => {
     // Permitir peticiones sin origen (ej: curl, Postman, apps móviles nativas)
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.railway.app')) {
       return callback(null, true);
     }
     return callback(new Error('CORS bloqueado por política de seguridad'));
