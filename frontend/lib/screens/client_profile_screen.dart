@@ -356,11 +356,6 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                 title: 'Mis Disputas de Servicio',
                 onTap: () => Navigator.pushNamed(context, '/disputes'),
               ),
-              _buildSettingsTile(
-                icon: Icons.school_outlined,
-                title: 'Academia Glow',
-                onTap: () => Navigator.pushNamed(context, '/provider/academy'),
-              ),
               SizedBox(height: 28),
 
               // Botón cerrar sesión
