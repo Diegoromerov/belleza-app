@@ -1468,21 +1468,28 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
               ),
               child: Row(
                 children: [
-                  // Botón 1: Citas
+                   // Botón 1: Citas
                   _buildNavItem(
                     icon: Icons.calendar_today_outlined,
                     label: 'Citas',
                     onTap: () => _checkAuthAndNavigate('/client-bookings'),
                   ),
 
-                  // Botón 2: Ideas (Botón central prominente)
+                  // Botón 2: Chats
+                  _buildNavItem(
+                    icon: Icons.chat_bubble_outline_rounded,
+                    label: 'Chats',
+                    onTap: () => _checkAuthAndNavigate('/chat'),
+                  ),
+
+                  // Botón 3: Ideas (Botón central prominente)
                   _buildProminentCenterNavItem(
                     icon: Icons.lightbulb_outline_rounded,
                     label: 'Ideas',
                     onTap: () => _checkAuthAndNavigate('/ideas'),
                   ),
 
-                  // Botón 3: Perfil
+                  // Botón 4: Perfil
                   _buildNavItem(
                     icon: Icons.person_outline_rounded,
                     label: 'Perfil',
