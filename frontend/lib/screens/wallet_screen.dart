@@ -137,9 +137,45 @@ class _WalletScreenState extends State<WalletScreen>
 
     if (resultado == true) {
       if (!mounted) return;
-      // 2-step confirmation dialog
-      final double montoFinal =
-          double.parse(montoCtrl.text.replaceAll('.', '').replaceAll(',', ''));
+      final textParsed = montoCtrl.text.replaceAll('.', '').replaceAll(',', '').trim();
+      if (textParsed.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('⚠️ Debes ingresar un monto válido para el retiro.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+      final double montoFinal = double.tryParse(textParsed) ?? 0.0;
+      if (montoFinal <= 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('⚠️ El monto a retirar debe ser mayor que \$0 COP.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+      if (montoFinal < minimo) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('⚠️ El monto mínimo de retiro es de \$${_formatCOP.format(minimo)}.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+      if (montoFinal > disponible) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('⚠️ El monto excede el saldo disponible en tu wallet.'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+        return;
+      }
+
       final bool? verificado = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
