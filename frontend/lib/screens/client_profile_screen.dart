@@ -135,6 +135,23 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
     }
   }
 
+  ImageProvider? _getAvatarProvider() {
+    if (_avatarUrl == null || _avatarUrl!.isEmpty) return null;
+    try {
+      if (_avatarUrl!.startsWith('data:')) {
+        final parts = _avatarUrl!.split(',');
+        if (parts.length > 1) {
+          return MemoryImage(base64Decode(parts.last));
+        }
+      } else {
+        return NetworkImage(ApiService.normalizeUrl(_avatarUrl));
+      }
+    } catch (e) {
+      debugPrint('Error parsing avatar image: $e');
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -144,6 +161,8 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
             Center(child: CircularProgressIndicator(color: Color(0xFFC89D93))),
       );
     }
+
+    final avatarProvider = _getAvatarProvider();
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -198,12 +217,8 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                       child: CircleAvatar(
                         radius: 56,
                         backgroundColor: const Color(0xFFF5EBE6),
-                        backgroundImage: _avatarUrl != null && _avatarUrl!.isNotEmpty
-                            ? (_avatarUrl!.startsWith('data:')
-                                ? MemoryImage(base64Decode(_avatarUrl!.split(',').last)) as ImageProvider
-                                : NetworkImage(_avatarUrl!))
-                            : null,
-                        child: _avatarUrl == null || _avatarUrl!.isEmpty
+                        backgroundImage: avatarProvider,
+                        child: avatarProvider == null
                             ? Text(
                                 _nameCtrl.text.isNotEmpty
                                     ? _nameCtrl.text[0].toUpperCase()
