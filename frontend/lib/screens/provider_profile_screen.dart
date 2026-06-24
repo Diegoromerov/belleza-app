@@ -573,6 +573,23 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
     }
   }
 
+  ImageProvider? _getAvatarProvider() {
+    if (_avatarUrl == null || _avatarUrl!.isEmpty) return null;
+    try {
+      if (_avatarUrl!.startsWith('data:')) {
+        final parts = _avatarUrl!.split(',');
+        if (parts.length > 1) {
+          return MemoryImage(base64Decode(parts.last));
+        }
+      } else {
+        return NetworkImage(ApiService.normalizeUrl(_avatarUrl!));
+      }
+    } catch (e) {
+      debugPrint('Error parsing avatar image: $e');
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -583,31 +600,22 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
       );
     }
 
+    final avatarProvider = _getAvatarProvider();
+
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: Text(
-          'Perfil de Socio',
-          style: TextStyle(
-              fontWeight: FontWeight.bold, letterSpacing: -0.5, fontSize: 18),
-        ),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
-        leading: widget.isEmbedded
-            ? null
-            : IconButton(
-                icon: Icon(Icons.arrow_back),
-                onPressed: () => Navigator.pop(context, true),
+      appBar: widget.isEmbedded
+          ? null
+          : AppBar(
+              title: const Text(
+                'Mi Perfil Profesional',
+                style: TextStyle(
+                    fontWeight: FontWeight.bold, letterSpacing: -0.5, fontSize: 18),
               ),
-        automaticallyImplyLeading: !widget.isEmbedded,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.logout_rounded, color: Colors.grey),
-            onPressed: _confirmLogout,
-          ),
-        ],
-      ),
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.black,
+              elevation: 0,
+            ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
         child: Form(
@@ -640,12 +648,8 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                       child: CircleAvatar(
                         radius: 56,
                         backgroundColor: const Color(0xFFF5EBE6),
-                        backgroundImage: _avatarUrl != null && _avatarUrl!.isNotEmpty
-                            ? (_avatarUrl!.startsWith('data:')
-                                ? MemoryImage(base64Decode(_avatarUrl!.split(',').last)) as ImageProvider
-                                : NetworkImage(_avatarUrl!))
-                            : null,
-                        child: _avatarUrl == null || _avatarUrl!.isEmpty
+                        backgroundImage: avatarProvider,
+                        child: avatarProvider == null
                             ? Text(
                                 _nameCtrl.text.isNotEmpty
                                     ? _nameCtrl.text[0].toUpperCase()
