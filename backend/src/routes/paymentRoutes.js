@@ -1071,7 +1071,7 @@ router.put('/admin/disputes/:id/resolve', authMiddleware, async (req, res) => {
       `UPDATE disputas
        SET estado = 'RESUELTA', resolucion = $2, porcentaje_prestador = $3,
            nota_resolucion = $4, resuelto_por = $5, resuelto_at = NOW(),
-           actualizado_at = NOW()
+           updated_at = NOW()
        WHERE id = $1`,
       [id, resolucion, porcentaje_prestador || null, nota_resolucion || null, req.user.id]
     );
