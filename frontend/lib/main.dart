@@ -1473,7 +1473,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                   ),
 
                   // Botón 2: GlowShop
-                  _buildNavItem(
+                  _buildProminentCenterNavItem(
                     icon: Icons.shopping_bag_outlined,
                     label: 'GlowShop',
                     onTap: () => _checkAuthAndNavigate('/store'),
