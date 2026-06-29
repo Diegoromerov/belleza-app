@@ -1475,21 +1475,14 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                     onTap: () => _checkAuthAndNavigate('/client-bookings'),
                   ),
 
-                  // Botón 2: Chats
-                  _buildNavItem(
-                    icon: Icons.chat_bubble_outline_rounded,
-                    label: 'Chats',
-                    onTap: () => _checkAuthAndNavigate('/chat'),
-                  ),
-
-                  // Botón 3: Ideas (Botón central prominente)
+                  // Botón 2: Ideas (Botón central prominente)
                   _buildProminentCenterNavItem(
                     icon: Icons.lightbulb_outline_rounded,
                     label: 'Ideas',
                     onTap: () => _checkAuthAndNavigate('/ideas'),
                   ),
 
-                  // Botón 4: Perfil
+                  // Botón 3: Perfil
                   _buildNavItem(
                     icon: Icons.person_outline_rounded,
                     label: 'Perfil',
