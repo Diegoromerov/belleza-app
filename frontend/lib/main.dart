@@ -443,14 +443,8 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
 
   void _filterProviders() {
     setState(() {
-      final query = _searchController.text.toLowerCase().trim();
       _filteredProviders = _allProviders.where((p) {
-        final matchesCat = _providerMatchesCategory(p, _selectedCategory);
-        if (query.isEmpty) return matchesCat;
-        final matchesQuery = p.fullName.toLowerCase().contains(query) ||
-            p.businessName.toLowerCase().contains(query) ||
-            p.description.toLowerCase().contains(query);
-        return matchesCat && matchesQuery;
+        return _providerMatchesCategory(p, _selectedCategory);
       }).toList();
     });
   }
