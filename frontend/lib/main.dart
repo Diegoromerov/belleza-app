@@ -1400,7 +1400,9 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                     children: [
                       InkWell(
                         onTap: () {
-                          _filterProviders();
+                          if (_searchController.text.trim().isNotEmpty) {
+                            _navigateToAIChat(_searchController.text);
+                          }
                         },
                         borderRadius: BorderRadius.circular(20),
                         child: Padding(
@@ -1413,9 +1415,6 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                         child: TextField(
                           controller: _searchController,
                           textCapitalization: TextCapitalization.sentences,
-                          onChanged: (val) {
-                            _filterProviders();
-                          },
                           decoration: InputDecoration(
                             hintText:
                                 '¿Qué servicio o estilista buscas? O pregunta a Aura...',
@@ -1426,7 +1425,9 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                             border: InputBorder.none,
                           ),
                           onSubmitted: (val) {
-                            _filterProviders();
+                            if (val.trim().isNotEmpty) {
+                              _navigateToAIChat(val);
+                            }
                           },
                         ),
                       ),
