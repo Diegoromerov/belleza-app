@@ -6,7 +6,7 @@ const { QueryTypes } = require('sequelize');
 exports.createDispute = async (req, res) => {
   try {
     const userId = req.user.id;
-    const userRole = req.user.rol; // 'CLIENTE' o 'PRESTADOR'
+    const userRole = req.user.role; // 'client' o 'provider'
     const { booking_id, tipo, descripcion, evidencia_urls } = req.body;
 
     if (!booking_id || !tipo || !descripcion) {
@@ -45,7 +45,7 @@ exports.createDispute = async (req, res) => {
       return res.status(400).json({ error: 'Ya existe una disputa activa para esta reserva.' });
     }
 
-    const actorType = userRole === 'CLIENTE' ? 'CLIENTE' : 'PRESTADOR';
+    const actorType = userRole === 'client' ? 'CLIENTE' : 'PRESTADOR';
     const amount = booking.valor_bruto;
 
     // 2. Insertar la disputa
@@ -84,7 +84,7 @@ exports.createDispute = async (req, res) => {
 exports.getMyDisputes = async (req, res) => {
   try {
     const userId = req.user.id;
-    const is_admin = req.user.rol === 'ADMIN';
+    const is_admin = req.user.role === 'admin';
 
     let query = `
       SELECT d.*, b.scheduled_at as booking_fecha, s.name as servicio_nombre
@@ -121,7 +121,7 @@ exports.getDisputeById = async (req, res) => {
   try {
     const disputeId = req.params.id;
     const userId = req.user.id;
-    const is_admin = req.user.rol === 'ADMIN';
+    const is_admin = req.user.role === 'admin';
 
     const query = `
       SELECT d.*, b.client_id, b.provider_id, s.name as servicio_nombre
@@ -164,7 +164,7 @@ exports.resolveDispute = async (req, res) => {
     const adminId = req.user.id;
     const { resolucion, porcentaje_prestador, nota_resolucion } = req.body;
 
-    if (req.user.rol !== 'ADMIN') {
+    if (req.user.role !== 'admin') {
       return res.status(403).json({ error: 'Solo los administradores pueden resolver disputas.' });
     }
 

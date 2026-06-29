@@ -477,8 +477,9 @@ class _ChatScreenState extends State<ChatScreen> {
                             itemBuilder: (context, index) {
                               final msg = _messages[index];
                               final isMe = msg['sender_id'] == _currentUserId;
-                              final isAi = msg['sender_id'] ==
-                                  '00000000-0000-0000-0000-000000000000';
+                              final isAi = msg['sender_id'] == '0' ||
+                                  msg['sender_id'] ==
+                                      '00000000-0000-0000-0000-000000000000';
                               final time = _formatTime(msg['created_at']);
 
                               if (isAi) {
