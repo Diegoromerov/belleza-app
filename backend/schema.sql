@@ -256,4 +256,16 @@ CREATE TABLE IF NOT EXISTS admin_mfa (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 19. Tabla productos (Tienda en línea de GlowApp)
+CREATE TABLE IF NOT EXISTS productos (
+  id SERIAL PRIMARY KEY,
+  nombre VARCHAR(255) NOT NULL,
+  descripcion TEXT,
+  precio NUMERIC(10,2) NOT NULL CHECK (precio >= 0),
+  stock INT DEFAULT 0 CHECK (stock >= 0),
+  imagen_url TEXT,
+  tag_especialidad VARCHAR(50) NOT NULL,
+  creado_en TIMESTAMPTZ DEFAULT NOW()
+);
+
 

@@ -189,3 +189,15 @@ CREATE TABLE nail_tryon_jobs (
 );
 CREATE INDEX idx_nail_tryon_jobs_user ON nail_tryon_jobs(user_id);
 CREATE INDEX idx_nail_tryon_jobs_expires ON nail_tryon_jobs(expires_at);
+
+-- 15. Tabla productos (Tienda en línea de GlowApp)
+CREATE TABLE IF NOT EXISTS productos (
+  id SERIAL PRIMARY KEY,
+  nombre VARCHAR(255) NOT NULL,
+  descripcion TEXT,
+  precio NUMERIC(10,2) NOT NULL CHECK (precio >= 0),
+  stock INT DEFAULT 0 CHECK (stock >= 0),
+  imagen_url TEXT,
+  tag_especialidad VARCHAR(50) NOT NULL,
+  creado_en TIMESTAMPTZ DEFAULT NOW()
+);

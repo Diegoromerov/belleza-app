@@ -34,6 +34,7 @@ import 'screens/designs/manicure_ideas_screen.dart';
 import 'screens/support/support_center_screen.dart';
 import 'screens/disputes/disputes_list_screen.dart';
 import 'screens/academy/academy_screen.dart';
+import 'screens/store_screen.dart';
 import 'models/provider_model.dart';
 import 'shared/theme.dart';
 
@@ -118,6 +119,7 @@ class BeautyApp extends StatelessWidget {
             '/support': (_) => const SupportCenterScreen(),
             '/disputes': (_) => const DisputesListScreen(),
             '/provider/academy': (_) => const AcademyScreen(),
+            '/store': (_) => const StoreScreen(),
           },
         );
       },
@@ -1497,6 +1499,17 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 if (_isMapMenuOpen) ...[
+                  // Botón Tienda
+                  FloatingActionButton.small(
+                    heroTag: 'store_fab',
+                    onPressed: () => _checkAuthAndNavigate('/store'),
+                    backgroundColor: AppTheme.surface,
+                    foregroundColor: AppTheme.primary,
+                    elevation: 3,
+                    shape: const CircleBorder(),
+                    child: const Icon(Icons.shopping_bag_outlined, size: 20),
+                  ),
+                  const SizedBox(height: 10),
                   // Botón Tema de Mapa
                   FloatingActionButton.small(
                     heroTag: 'map_theme_main_fab',
