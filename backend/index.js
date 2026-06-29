@@ -1440,6 +1440,18 @@ const initDatabase = async () => {
       }
     }
 
+    // 🔸 Ejecutar migración de la Tienda de Productos (009_create_productos_table.sql)
+    const productosMigrationPath = path.join(__dirname, 'migrations/009_create_productos_table.sql');
+    if (fs.existsSync(productosMigrationPath)) {
+      try {
+        const productosSql = fs.readFileSync(productosMigrationPath, 'utf8');
+        await pool.query(productosSql);
+        console.log('✅ Base de datos: Migración de Tienda de Productos aplicada.');
+      } catch (pErr) {
+        console.warn('⚠️ Advertencia en migración de Tienda de Productos:', pErr.message);
+      }
+    }
+
     const checkUser = await pool.query("SELECT id FROM usuarios WHERE email = 'provider@beautyapp.com';");
     const needsSeed = checkUser.rows.length === 0;
 
