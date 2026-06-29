@@ -61,7 +61,7 @@ exports.getProductById = async (req, res) => {
 exports.createProduct = async (req, res) => {
   try {
     // Validar rol del usuario logueado
-    if (req.user.rol !== 'ADMIN' && req.user.rol !== 'PRESTADOR') {
+    if (req.user.role !== 'admin' && req.user.role !== 'provider') {
       return res.status(403).json({ error: 'No autorizado para realizar esta acción' });
     }
 
