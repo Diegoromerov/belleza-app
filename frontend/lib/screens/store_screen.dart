@@ -410,274 +410,279 @@ class _StoreScreenState extends State<StoreScreen> {
               );
             }
 
+            final double screenWidth = MediaQuery.of(context).size.width;
+            final bool isMobile = screenWidth < 680;
+
+            final Widget formColumn = Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.security, color: AppTheme.primary, size: 20),
+                        const SizedBox(width: 8),
+                        Text(
+                          'GlowPay - Pago Seguro',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.primary.withOpacity(0.8),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Información de Envío',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.text,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: nameCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'Nombre Completo',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.person_outline),
+                      ),
+                      validator: (v) => (v == null || v.isEmpty) ? 'Campo obligatorio' : null,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: addressCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'Dirección de Entrega',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.location_on_outlined),
+                      ),
+                      validator: (v) => (v == null || v.isEmpty) ? 'Campo obligatorio' : null,
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Detalles del Pago',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.text,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: cardCtrl,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Número de Tarjeta (16 dígitos)',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.credit_card),
+                        hintText: '4111 2222 3333 4444',
+                      ),
+                      validator: (v) => (v == null || v.length < 16) ? 'Ingresa una tarjeta válida' : null,
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: const Text('Cancelar'),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              if (_formKey.currentState!.validate()) {
+                                setCheckoutState(() {
+                                  processing = true;
+                                });
+                                await Future.delayed(const Duration(milliseconds: 2500));
+                                Navigator.pop(ctx);
+                                setState(() {
+                                  _cart.clear();
+                                  _isCartOpen = false;
+                                });
+                                _showOrderSuccessDialog();
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primary,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: const Text(
+                              'Finalizar',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+
+            final Widget summaryColumn = Container(
+              color: Colors.grey.shade50,
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Resumen del Pedido',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.text,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: _cart.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 10),
+                    itemBuilder: (c, index) {
+                      final item = _cart.values.elementAt(index);
+                      final prod = item['product'] as Map<String, dynamic>;
+                      final qty = item['quantity'] as int;
+                      final pPrice = double.tryParse(prod['precio']?.toString() ?? '0') ?? 0.0;
+                      
+                      return Row(
+                        children: [
+                          Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              Container(
+                                width: 45,
+                                height: 45,
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey.shade300),
+                                  borderRadius: BorderRadius.circular(8),
+                                  image: DecorationImage(
+                                    image: NetworkImage(prod['imagen_url']?.toString() ?? ''),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                top: -6,
+                                right: -6,
+                                child: CircleAvatar(
+                                  radius: 9,
+                                  backgroundColor: AppTheme.primary,
+                                  child: Text(
+                                    '$qty',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              prod['nombre']?.toString() ?? 'Producto',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            _formatCOP(pPrice * qty),
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  const Divider(),
+                  const SizedBox(height: 10),
+                  _buildSummaryRow('Subtotal', _formatCOP(subtotal)),
+                  const SizedBox(height: 6),
+                  _buildSummaryRow('Envío', _formatCOP(envio)),
+                  const SizedBox(height: 6),
+                  _buildSummaryRow('IVA (19%)', _formatCOP(iva)),
+                  const SizedBox(height: 10),
+                  const Divider(),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Total',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.text,
+                        ),
+                      ),
+                      Text(
+                        _formatCOP(total),
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+
             return Dialog(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
               clipBehavior: Clip.antiAlias,
               backgroundColor: Colors.white,
               child: Container(
-                constraints: const BoxConstraints(maxWidth: 800),
+                constraints: BoxConstraints(
+                  maxWidth: isMobile ? 400 : 800,
+                ),
                 child: SingleChildScrollView(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Columna Izquierda: Formulario (Shopify Checkout info)
-                      Expanded(
-                        flex: 5,
-                        child: Padding(
-                          padding: const EdgeInsets.all(28.0),
-                          child: Form(
-                            key: _formKey,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    const Icon(Icons.security, color: AppTheme.primary, size: 20),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      'GlowPay - Pago Seguro',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppTheme.primary.withOpacity(0.8),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 12),
-                                const Text(
-                                  'Información de Envío',
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppTheme.text,
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                                TextFormField(
-                                  controller: nameCtrl,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Nombre Completo',
-                                    border: OutlineInputBorder(),
-                                    prefixIcon: Icon(Icons.person_outline),
-                                  ),
-                                  validator: (v) => (v == null || v.isEmpty) ? 'Campo obligatorio' : null,
-                                ),
-                                const SizedBox(height: 12),
-                                TextFormField(
-                                  controller: addressCtrl,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Dirección de Entrega',
-                                    border: OutlineInputBorder(),
-                                    prefixIcon: Icon(Icons.location_on_outlined),
-                                  ),
-                                  validator: (v) => (v == null || v.isEmpty) ? 'Campo obligatorio' : null,
-                                ),
-                                const SizedBox(height: 24),
-                                const Text(
-                                  'Detalles del Pago',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppTheme.text,
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                TextFormField(
-                                  controller: cardCtrl,
-                                  keyboardType: TextInputType.number,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Número de Tarjeta (16 dígitos)',
-                                    border: OutlineInputBorder(),
-                                    prefixIcon: Icon(Icons.credit_card),
-                                    hintText: '4111 2222 3333 4444',
-                                  ),
-                                  validator: (v) => (v == null || v.length < 16) ? 'Ingresa una tarjeta válida' : null,
-                                ),
-                                const SizedBox(height: 32),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: OutlinedButton(
-                                        onPressed: () => Navigator.pop(ctx),
-                                        style: OutlinedButton.styleFrom(
-                                          padding: const EdgeInsets.symmetric(vertical: 16),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(12),
-                                          ),
-                                        ),
-                                        child: const Text('Cancelar'),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: ElevatedButton(
-                                        onPressed: () async {
-                                          if (_formKey.currentState!.validate()) {
-                                            setCheckoutState(() {
-                                              processing = true;
-                                            });
-                                            // Simular retraso de pasarela de pago seguro
-                                            await Future.delayed(const Duration(milliseconds: 2500));
-                                            
-                                            // Simular éxito de compra
-                                            Navigator.pop(ctx);
-                                            setState(() {
-                                              _cart.clear();
-                                              _isCartOpen = false;
-                                            });
-                                            _showOrderSuccessDialog();
-                                          }
-                                        },
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: AppTheme.primary,
-                                          foregroundColor: Colors.white,
-                                          padding: const EdgeInsets.symmetric(vertical: 16),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(12),
-                                          ),
-                                        ),
-                                        child: const Text(
-                                          'Finalizar Pedido',
-                                          style: TextStyle(fontWeight: FontWeight.bold),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
+                  child: isMobile
+                      ? Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            summaryColumn,
+                            const Divider(height: 1),
+                            formColumn,
+                          ],
+                        )
+                      : Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(flex: 5, child: formColumn),
+                            Expanded(flex: 4, child: summaryColumn),
+                          ],
                         ),
-                      ),
-                      // Columna Derecha: Resumen de Compra (Shopify Checkout summary)
-                      Expanded(
-                        flex: 4,
-                        child: Container(
-                          color: Colors.grey.shade50,
-                          padding: const EdgeInsets.all(28.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Resumen del Pedido',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppTheme.text,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              // Listado de mini-productos
-                              ListView.separated(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                itemCount: _cart.length,
-                                separatorBuilder: (_, __) => const SizedBox(height: 12),
-                                itemBuilder: (c, index) {
-                                  final item = _cart.values.elementAt(index);
-                                  final prod = item['product'] as Map<String, dynamic>;
-                                  final qty = item['quantity'] as int;
-                                  final pPrice = double.tryParse(prod['precio']?.toString() ?? '0') ?? 0.0;
-                                  
-                                  return Row(
-                                    children: [
-                                      // Imagen pequeña con badge de cantidad
-                                      Stack(
-                                        clipBehavior: Clip.none,
-                                        children: [
-                                          Container(
-                                            width: 50,
-                                            height: 50,
-                                            decoration: BoxDecoration(
-                                              border: Border.all(color: Colors.grey.shade300),
-                                              borderRadius: BorderRadius.circular(8),
-                                              image: DecorationImage(
-                                                image: NetworkImage(prod['imagen_url']?.toString() ?? ''),
-                                                fit: BoxFit.cover,
-                                              ),
-                                            ),
-                                          ),
-                                          Positioned(
-                                            top: -6,
-                                            right: -6,
-                                            child: CircleAvatar(
-                                              radius: 9,
-                                              backgroundColor: AppTheme.primary,
-                                              child: Text(
-                                                '$qty',
-                                                style: const TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 10,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(width: 14),
-                                      Expanded(
-                                        child: Text(
-                                          prod['nombre']?.toString() ?? 'Producto',
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        _formatCOP(pPrice * qty),
-                                        style: const TextStyle(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              ),
-                              const SizedBox(height: 24),
-                              const Divider(),
-                              const SizedBox(height: 12),
-                              _buildSummaryRow('Subtotal', _formatCOP(subtotal)),
-                              const SizedBox(height: 8),
-                              _buildSummaryRow('Envío', _formatCOP(envio)),
-                              const SizedBox(height: 8),
-                              _buildSummaryRow('IVA (19%)', _formatCOP(iva)),
-                              const SizedBox(height: 12),
-                              const Divider(),
-                              const SizedBox(height: 12),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  const Text(
-                                    'Total',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppTheme.text,
-                                    ),
-                                  ),
-                                  Text(
-                                    _formatCOP(total),
-                                    style: const TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w800,
-                                      color: AppTheme.primary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
               ),
             );
@@ -949,7 +954,7 @@ class _StoreScreenState extends State<StoreScreen> {
                             ),
                 ),
                 // Espacio invisible para cuando el Cart Drawer está abierto en pantallas grandes
-                if (_isCartOpen) const SizedBox(width: 380),
+                if (_isCartOpen && MediaQuery.of(context).size.width > 750) const SizedBox(width: 380),
               ],
             ),
           ),
@@ -1092,9 +1097,11 @@ class _StoreScreenState extends State<StoreScreen> {
 
   Widget _buildCartDrawer() {
     final subtotal = _getCartSubtotal();
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final double drawerWidth = screenWidth > 380 ? 380.0 : screenWidth;
     
     return Container(
-      width: 380,
+      width: drawerWidth,
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border(left: BorderSide(color: Colors.grey.shade200, width: 1.5)),
