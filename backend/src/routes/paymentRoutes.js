@@ -11,9 +11,6 @@ const wompiService = require('../services/wompiService');
 
 // ─── UTILIDADES ──────────────────────────────────────────────────────────────
 
-/**
- * Lee un parámetro de configuración de la plataforma.
- */
 async function getConfig(key, defaultValue = null) {
   const { rows } = await pool.query(
     'SELECT value FROM platform_config WHERE key = $1',
@@ -22,18 +19,12 @@ async function getConfig(key, defaultValue = null) {
   return rows.length > 0 ? rows[0].value : defaultValue;
 }
 
-/**
- * Genera un OTP numérico de 6 dígitos y devuelve el código y su hash.
- */
 async function generarOTP() {
   const codigo = String(Math.floor(100000 + Math.random() * 900000));
   const hash = await bcrypt.hash(codigo, 10);
   return { codigo, hash };
 }
 
-/**
- * Registra una entrada en audit_log.
- */
 async function auditLog(client, { actorId, accion, tabla, registroId, datosAntes, datosDespues, ip }) {
   await client.query(
     `INSERT INTO audit_log (actor_id, accion, tabla, registro_id, datos_antes, datos_despues, ip)
@@ -43,9 +34,6 @@ async function auditLog(client, { actorId, accion, tabla, registroId, datosAntes
   );
 }
 
-/**
- * Verifica que el usuario autenticado sea PRESTADOR y dueño del recurso, o ADMIN.
- */
 async function requirePrestador(req, res) {
   const { rows } = await pool.query('SELECT rol FROM usuarios WHERE id = $1', [req.user.id]);
   if (!rows.length || rows[0].rol !== 'PRESTADOR') {
@@ -66,11 +54,6 @@ async function requireAdmin(req, res) {
 
 // ─── CHECK-IN GPS ────────────────────────────────────────────────────────────
 
-/**
- * POST /api/bookings/:id/checkin
- * El prestador registra su llegada al domicilio del cliente.
- * Valida proximidad GPS (≤ 500m del domicilio).
- */
 router.post('/bookings/:id/checkin', authMiddleware, async (req, res) => {
   if (!await requirePrestador(req, res)) return;
 
@@ -96,8 +79,6 @@ router.post('/bookings/:id/checkin', authMiddleware, async (req, res) => {
 
     const tolerancia = parseInt(await getConfig('gps_tolerancia_metros', '500'));
 
-    // TODO: Validar distancia real usando coordenadas del cliente cuando estén disponibles.
-    // Por ahora, registramos el check-in con las coordenadas del prestador.
     await pool.query(
       `UPDATE bookings SET estado = 'CHECKIN_REALIZADO',
        notes = COALESCE(notes, '') || $3
@@ -118,11 +99,6 @@ router.post('/bookings/:id/checkin', authMiddleware, async (req, res) => {
 
 // ─── COMPLETAR SERVICIO → GENERAR OTP ────────────────────────────────────────
 
-/**
- * POST /api/bookings/:id/complete
- * El prestador marca el servicio como completado.
- * El sistema genera un OTP y lo envía al cliente.
- */
 router.post('/bookings/:id/complete', authMiddleware, async (req, res) => {
   if (!await requirePrestador(req, res)) return;
 
@@ -148,7 +124,6 @@ router.post('/bookings/:id/complete', authMiddleware, async (req, res) => {
 
     const booking = rows[0];
 
-    // Verificar si ya hay un OTP activo
     const otpExistente = await client.query(
       `SELECT id FROM otp_validaciones
        WHERE booking_id = $1 AND estado = 'ACTIVO' AND expira_at > NOW()`,
@@ -163,7 +138,6 @@ router.post('/bookings/:id/complete', authMiddleware, async (req, res) => {
     const { codigo, hash } = await generarOTP();
     const expiraAt = new Date(Date.now() + vigenciaMin * 60 * 1000);
 
-    // Guardar OTP hasheado (NUNCA el código plano)
     await client.query(
       `INSERT INTO otp_validaciones (booking_id, codigo_hash, expira_at, ip_generacion)
        VALUES ($1, $2, $3, $4)
@@ -173,17 +147,13 @@ router.post('/bookings/:id/complete', authMiddleware, async (req, res) => {
       [id, hash, expiraAt, req.ip]
     );
 
-    // Actualizar estado de la reserva
     await client.query(
-      `UPDATE bookings SET estado = 'ESPERANDO_OTP'
-       WHERE id = $1`,
+      `UPDATE bookings SET estado = 'ESPERANDO_OTP' WHERE id = $1`,
       [id]
     );
 
     await client.query('COMMIT');
 
-    // En producción: enviar código por Push Notification al cliente
-    // await notificacionService.enviarPush(booking.client_id, { tipo: 'OTP', codigo });
     console.log(`📱 OTP para reserva ${id}: ${codigo} (vigente ${vigenciaMin} min)`);
 
     res.json({
@@ -191,7 +161,6 @@ router.post('/bookings/:id/complete', authMiddleware, async (req, res) => {
       mensaje: 'Servicio marcado como completado. Se envió el código al cliente.',
       otp_expira_at: expiraAt,
       otp_vigencia_minutos: vigenciaMin,
-      // Solo en entorno dev se devuelve el código para pruebas
       ...(process.env.NODE_ENV !== 'production' && { otp_dev: codigo })
     });
   } catch (err) {
@@ -205,11 +174,6 @@ router.post('/bookings/:id/complete', authMiddleware, async (req, res) => {
 
 // ─── CONFIRMAR OTP → DISPERSIÓN ──────────────────────────────────────────────
 
-/**
- * POST /api/bookings/:id/confirm-otp
- * El cliente ingresa el código recibido.
- * Si es correcto, activa la dispersión del dinero al wallet del prestador.
- */
 router.post('/bookings/:id/confirm-otp', authMiddleware, async (req, res) => {
   const { id } = req.params;
   const { codigo } = req.body;
@@ -222,7 +186,6 @@ router.post('/bookings/:id/confirm-otp', authMiddleware, async (req, res) => {
   try {
     await client.query('BEGIN');
 
-    // Buscar OTP activo
     const otpResult = await client.query(
       `SELECT ov.*, b.valor_bruto, b.comision_plataforma, b.pago_neto_prestador,
               b.provider_id, b.client_id
@@ -244,7 +207,6 @@ router.post('/bookings/:id/confirm-otp', authMiddleware, async (req, res) => {
       return res.status(403).json({ error: 'Solo el cliente de la reserva puede confirmar el OTP.' });
     }
 
-    // Verificar expiración
     if (new Date() > new Date(otp.expira_at)) {
       await client.query(
         `UPDATE otp_validaciones SET estado = 'EXPIRADO' WHERE booking_id = $1`,
@@ -258,7 +220,6 @@ router.post('/bookings/:id/confirm-otp', authMiddleware, async (req, res) => {
       });
     }
 
-    // Verificar intentos
     const maxIntentos = parseInt(await getConfig('otp_max_intentos', '3'));
     if (otp.intentos_fallidos >= maxIntentos) {
       await client.query('ROLLBACK');
@@ -268,7 +229,6 @@ router.post('/bookings/:id/confirm-otp', authMiddleware, async (req, res) => {
       });
     }
 
-    // Verificar código
     const esValido = await bcrypt.compare(codigo, otp.codigo_hash);
     if (!esValido) {
       const nuevosIntentos = otp.intentos_fallidos + 1;
@@ -296,11 +256,9 @@ router.post('/bookings/:id/confirm-otp', authMiddleware, async (req, res) => {
       });
     }
 
-    // ✅ CÓDIGO CORRECTO — Activar dispersión
     const ventanaHoras = parseInt(await getConfig('wallet_ventana_pendiente_horas', '2'));
     const maduraAt = new Date(Date.now() + ventanaHoras * 60 * 60 * 1000);
-    
-    // Obtener configuración de retenciones impositivas
+
     const retefuentePct = parseFloat(await getConfig('retefuente_pct', '4.0'));
     const reteicaPct = parseFloat(await getConfig('reteica_pct', '0.414'));
     const reteivaPct = parseFloat(await getConfig('reteiva_pct', '15.0'));
@@ -308,7 +266,6 @@ router.post('/bookings/:id/confirm-otp', authMiddleware, async (req, res) => {
     const basePagoNeto = parseFloat(otp.pago_neto_prestador);
     const comisionPlataforma = parseFloat(otp.comision_plataforma);
 
-    // Calcular deducciones de retenciones colombianas
     const retencionFuente = Math.round(basePagoNeto * (retefuentePct / 100) * 100) / 100;
     const retencionIca = Math.round(basePagoNeto * (reteicaPct / 100) * 100) / 100;
     const retencionIva = Math.round(comisionPlataforma * (reteivaPct / 100) * 100) / 100;
@@ -316,19 +273,16 @@ router.post('/bookings/:id/confirm-otp', authMiddleware, async (req, res) => {
     const totalRetenciones = retencionFuente + retencionIca + retencionIva;
     const montoNeto = basePagoNeto - totalRetenciones;
 
-    // 1. Marcar OTP como usado
     await client.query(
       `UPDATE otp_validaciones SET estado = 'USADO', usado_at = NOW() WHERE booking_id = $1`,
       [id]
     );
 
-    // 2. Marcar reserva como COMPLETADA
     await client.query(
       `UPDATE bookings SET estado = 'COMPLETADA', payment_status = 'paid' WHERE id = $1`,
       [id]
     );
 
-    // 3. Acreditar saldo_pendiente en wallet del prestador
     const walletResult = await client.query(
       `INSERT INTO provider_wallet (provider_id, saldo_pendiente, total_ganado)
        VALUES ($1, $2, $2)
@@ -341,7 +295,6 @@ router.post('/bookings/:id/confirm-otp', authMiddleware, async (req, res) => {
     );
     const wallet = walletResult.rows[0];
 
-    // 4. Registrar transacción en ledger con desglose de retenciones
     await client.query(
       `INSERT INTO wallet_transactions
          (provider_id, booking_id, tipo, monto, saldo_resultante, estado, descripcion, metadata)
@@ -350,8 +303,8 @@ router.post('/bookings/:id/confirm-otp', authMiddleware, async (req, res) => {
         otp.provider_id, id, montoNeto,
         parseFloat(wallet.saldo_disponible) + parseFloat(wallet.saldo_pendiente),
         `Servicio completado. Disponible en ${ventanaHoras}h.`,
-        JSON.stringify({ 
-          madura_at: maduraAt, 
+        JSON.stringify({
+          madura_at: maduraAt,
           comision_plataforma: otp.comision_plataforma,
           retencion_fuente: retencionFuente,
           retencion_ica: retencionIca,
@@ -361,8 +314,6 @@ router.post('/bookings/:id/confirm-otp', authMiddleware, async (req, res) => {
       ]
     );
 
-    // 5. Programar maduración del saldo (se procesa por el job nocturno)
-    // Guardamos el timestamp en metadata de la transaction para que el job lo procese
     await client.query(
       `UPDATE wallet_transactions
        SET metadata = metadata || $2::jsonb
@@ -370,7 +321,6 @@ router.post('/bookings/:id/confirm-otp', authMiddleware, async (req, res) => {
       [id, JSON.stringify({ madura_at: maduraAt.toISOString() })]
     );
 
-    // 6. Audit log
     await auditLog(client, {
       actorId: req.user.id,
       accion: 'OTP_CONFIRMADO',
@@ -400,15 +350,10 @@ router.post('/bookings/:id/confirm-otp', authMiddleware, async (req, res) => {
 
 // ─── WALLET — SALDO Y RESUMEN ─────────────────────────────────────────────────
 
-/**
- * GET /api/wallet
- * Retorna el saldo y resumen del wallet del prestador autenticado.
- */
 router.get('/wallet', authMiddleware, async (req, res) => {
   if (!await requirePrestador(req, res)) return;
 
   try {
-    // Madurar saldos pendientes que ya cumplieron su ventana
     await pool.query(
       `UPDATE wallet_transactions
        SET estado = 'COMPLETADO'
@@ -419,7 +364,6 @@ router.get('/wallet', authMiddleware, async (req, res) => {
       [req.user.id]
     );
 
-    // Calcular cuánto maduró y acreditarlo al saldo disponible
     const madurados = await pool.query(
       `SELECT COALESCE(SUM(monto), 0) as total
        FROM wallet_transactions
@@ -439,7 +383,6 @@ router.get('/wallet', authMiddleware, async (req, res) => {
          WHERE provider_id = $1`,
         [req.user.id, parseFloat(madurados.rows[0].total)]
       );
-      // Marcar como acreditadas
       await pool.query(
         `UPDATE wallet_transactions
          SET metadata = metadata || '{"acreditado": true}'::jsonb
@@ -462,7 +405,6 @@ router.get('/wallet', authMiddleware, async (req, res) => {
     );
 
     if (!rows.length) {
-      // Crear wallet si no existe (retrocompatibilidad)
       await pool.query(
         'INSERT INTO provider_wallet (provider_id) VALUES ($1) ON CONFLICT DO NOTHING',
         [req.user.id]
@@ -476,7 +418,6 @@ router.get('/wallet', authMiddleware, async (req, res) => {
 
     const wallet = rows[0];
 
-    // Calcular disponibilidad de retiro por demanda
     const minCop = parseInt(await getConfig('retiro_demanda_min_cop', '50000'));
     const diasMin = parseInt(await getConfig('retiro_demanda_dias', '3'));
     let puede_retirar = false;
@@ -515,9 +456,6 @@ router.get('/wallet', authMiddleware, async (req, res) => {
 
 // ─── WALLET — HISTORIAL DE TRANSACCIONES ─────────────────────────────────────
 
-/**
- * GET /api/wallet/transactions
- */
 router.get('/wallet/transactions', authMiddleware, async (req, res) => {
   if (!await requirePrestador(req, res)) return;
 
@@ -556,10 +494,6 @@ router.get('/wallet/transactions', authMiddleware, async (req, res) => {
 
 // ─── RETIRO — SOLICITAR ───────────────────────────────────────────────────────
 
-/**
- * POST /api/wallet/withdraw
- * Solicita un retiro por demanda. Valida todas las reglas.
- */
 router.post('/wallet/withdraw', authMiddleware, async (req, res) => {
   if (!await requirePrestador(req, res)) return;
 
@@ -588,7 +522,6 @@ router.post('/wallet/withdraw', authMiddleware, async (req, res) => {
     const minCop = parseInt(await getConfig('retiro_demanda_min_cop', '50000'));
     const diasMin = parseInt(await getConfig('retiro_demanda_dias', '3'));
 
-    // ─── Validaciones en orden de prioridad ───
     if (wallet.retiros_pausados) {
       await client.query('ROLLBACK');
       return res.status(403).json({ error: 'Tus retiros están temporalmente pausados. Contacta soporte.' });
@@ -630,7 +563,6 @@ router.post('/wallet/withdraw', authMiddleware, async (req, res) => {
       }
     }
 
-    // ─── Verificar que no haya disputas activas ───
     const { rows: disputasActivas } = await client.query(
       `SELECT COUNT(*) FROM disputas d
        JOIN bookings b ON d.booking_id = b.id
@@ -644,7 +576,6 @@ router.post('/wallet/withdraw', authMiddleware, async (req, res) => {
       });
     }
 
-    // ─── Crear registro de retiro ───
     const retiroResult = await client.query(
       `INSERT INTO retiros (provider_id, wallet_id, monto, tipo_origen, numero_cuenta, banco)
        VALUES ($1, $2, $3, 'DEMANDA', $4, $5)
@@ -653,7 +584,6 @@ router.post('/wallet/withdraw', authMiddleware, async (req, res) => {
     );
     const retiro = retiroResult.rows[0];
 
-    // ─── Debitar del wallet ───
     await client.query(
       `UPDATE provider_wallet
        SET saldo_disponible = saldo_disponible - $2,
@@ -664,7 +594,6 @@ router.post('/wallet/withdraw', authMiddleware, async (req, res) => {
       [req.user.id, montoSolicitado]
     );
 
-    // ─── Registrar en ledger ───
     const walletActualizado = await client.query(
       'SELECT saldo_disponible + saldo_pendiente as saldo_total FROM provider_wallet WHERE provider_id = $1',
       [req.user.id]
@@ -681,7 +610,6 @@ router.post('/wallet/withdraw', authMiddleware, async (req, res) => {
       ]
     );
 
-    // ─── Audit log ───
     await auditLog(client, {
       actorId: req.user.id,
       accion: 'RETIRO_SOLICITADO',
@@ -693,7 +621,6 @@ router.post('/wallet/withdraw', authMiddleware, async (req, res) => {
 
     await client.query('COMMIT');
 
-    // Llamar a la API de Payouts de Wompi para realizar la dispersión
     wompiService.crearPayout({
       retiroId: retiro.id,
       providerId: req.user.id,
@@ -722,9 +649,6 @@ router.post('/wallet/withdraw', authMiddleware, async (req, res) => {
 
 // ─── WALLET — CAMBIAR MODELO DE RETIRO ───────────────────────────────────────
 
-/**
- * PUT /api/wallet/model
- */
 router.put('/wallet/model', authMiddleware, async (req, res) => {
   if (!await requirePrestador(req, res)) return;
 
@@ -736,7 +660,6 @@ router.put('/wallet/model', authMiddleware, async (req, res) => {
   }
 
   try {
-    // Calcular próximo retiro automático según el modelo
     let proximoRetiro = null;
     const ahora = new Date();
     if (modelo === 'QUINCENA') {
@@ -747,7 +670,7 @@ router.put('/wallet/model', authMiddleware, async (req, res) => {
         proximoRetiro = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 1);
       }
     } else if (modelo === 'MENSUAL') {
-      proximoRetiro = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 0); // último día del mes
+      proximoRetiro = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 0);
     }
 
     await pool.query(
@@ -771,9 +694,6 @@ router.put('/wallet/model', authMiddleware, async (req, res) => {
 
 // ─── DISPUTAS — ABRIR ─────────────────────────────────────────────────────────
 
-/**
- * POST /api/disputes
- */
 router.post('/disputes', authMiddleware, async (req, res) => {
   const { booking_id, tipo, descripcion, evidencia_urls } = req.body;
 
@@ -785,7 +705,6 @@ router.post('/disputes', authMiddleware, async (req, res) => {
   try {
     await client.query('BEGIN');
 
-    // Verificar que la reserva pertenece al usuario
     const { rows } = await client.query(
       `SELECT b.*, u_c.rol as rol_cliente, u_p.rol as rol_prestador
        FROM bookings b
@@ -804,7 +723,6 @@ router.post('/disputes', authMiddleware, async (req, res) => {
     const userRow = await client.query('SELECT rol FROM usuarios WHERE id = $1', [req.user.id]);
     const rolActor = userRow.rows[0].rol;
 
-    // Verificar ventana de disputa post-OTP (solo para clientes con OTP ya validado)
     if (rolActor === 'CLIENTE' && booking.estado === 'COMPLETADA') {
       const ventanaHoras = parseInt(await getConfig('disputa_ventana_horas', '2'));
       const otpResult = await client.query(
@@ -823,7 +741,6 @@ router.post('/disputes', authMiddleware, async (req, res) => {
       }
     }
 
-    // Verificar que no existe disputa abierta para esta reserva
     const dispExistente = await client.query(
       `SELECT id FROM disputas WHERE booking_id = $1 AND estado NOT IN ('RESUELTA','CERRADA')`,
       [booking_id]
@@ -833,25 +750,19 @@ router.post('/disputes', authMiddleware, async (req, res) => {
       return res.status(409).json({ error: 'Ya existe una disputa abierta para esta reserva.' });
     }
 
-    // Crear disputa
     const disputaResult = await client.query(
       `INSERT INTO disputas
          (booking_id, iniciado_por, tipo_actor, tipo, descripcion, evidencia_urls, monto_disputado)
        VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING *`,
-      [
-        booking_id, req.user.id, rolActor, tipo,
-        descripcion, evidencia_urls || [], booking.valor_bruto
-      ]
+      [booking_id, req.user.id, rolActor, tipo, descripcion, evidencia_urls || [], booking.valor_bruto]
     );
 
-    // Marcar reserva en disputa
     await client.query(
       `UPDATE bookings SET estado = 'EN_DISPUTA' WHERE id = $1`,
       [booking_id]
     );
 
-    // Congelar fondos del prestador si el servicio ya fue confirmado
     if (booking.estado === 'COMPLETADA') {
       const montoCongelar = parseFloat(booking.pago_neto_prestador);
       await client.query(
@@ -899,10 +810,6 @@ router.post('/disputes', authMiddleware, async (req, res) => {
 
 // ─── ADMIN — DASHBOARD FINANCIERO ────────────────────────────────────────────
 
-/**
- * GET /api/admin/dashboard
- * Métricas financieras del día y alertas.
- */
 router.get('/admin/dashboard', authMiddleware, async (req, res) => {
   if (!await requireAdmin(req, res)) return;
   try {
@@ -946,9 +853,6 @@ router.get('/admin/dashboard', authMiddleware, async (req, res) => {
 
 // ─── ADMIN — LISTAR DISPUTAS ──────────────────────────────────────────────────
 
-/**
- * GET /api/admin/disputes
- */
 router.get('/admin/disputes', authMiddleware, async (req, res) => {
   if (!await requireAdmin(req, res)) return;
   const estado = req.query.estado || 'ABIERTA';
@@ -987,9 +891,6 @@ router.get('/admin/disputes', authMiddleware, async (req, res) => {
 
 // ─── ADMIN — RESOLVER DISPUTA ─────────────────────────────────────────────────
 
-/**
- * PUT /api/admin/disputes/:id/resolve
- */
 router.put('/admin/disputes/:id/resolve', authMiddleware, async (req, res) => {
   if (!await requireAdmin(req, res)) return;
   const { id } = req.params;
@@ -1022,7 +923,6 @@ router.put('/admin/disputes/:id/resolve', authMiddleware, async (req, res) => {
     const disputa = rows[0];
     const montoEnDisputa = parseFloat(disputa.pago_neto_prestador);
 
-    // Aplicar resolución financiera
     let montoPrestador = 0;
     let montoReembolso = 0;
 
@@ -1038,13 +938,11 @@ router.put('/admin/disputes/:id/resolve', authMiddleware, async (req, res) => {
         montoReembolso = montoEnDisputa - montoPrestador;
         break;
       case 'COMPENSACION_PLATAFORMA':
-        // La plataforma absorbe el costo, el cliente recibe reembolso
         montoReembolso = parseFloat(disputa.valor_bruto);
         montoPrestador = 0;
         break;
     }
 
-    // Liberar fondos del prestador según resolución
     await client.query(
       `UPDATE provider_wallet
        SET saldo_en_disputa  = GREATEST(0, saldo_en_disputa - $2),
@@ -1066,17 +964,15 @@ router.put('/admin/disputes/:id/resolve', authMiddleware, async (req, res) => {
       );
     }
 
-    // Actualizar estado de la disputa
+    // ✅ BUG FIX: eliminado 'actualizado_at'/'updated_at' — columna no existe en tabla disputas
     await client.query(
       `UPDATE disputas
        SET estado = 'RESUELTA', resolucion = $2, porcentaje_prestador = $3,
-           nota_resolucion = $4, resuelto_por = $5, resuelto_at = NOW(),
-           actualizado_at = NOW()
+           nota_resolucion = $4, resuelto_por = $5, resuelto_at = NOW()
        WHERE id = $1`,
       [id, resolucion, porcentaje_prestador || null, nota_resolucion || null, req.user.id]
     );
 
-    // Actualizar estado de la reserva
     await client.query(
       `UPDATE bookings SET estado = $2 WHERE id = $1`,
       [disputa.booking_id, resolucion === 'REEMBOLSO_TOTAL' ? 'CANCELADA' : 'COMPLETADA']
