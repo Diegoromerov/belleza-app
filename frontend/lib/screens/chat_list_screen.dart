@@ -251,7 +251,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                 MaterialPageRoute(
                                   builder: (_) => const ChatScreen(
                                     partnerId:
-                                        '00000000-0000-0000-0000-000000000000',
+                                        '0',
                                     partnerName:
                                         'Aura - Asistente de IA',
                                     partnerRole: 'admin',
@@ -267,6 +267,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                       Expanded(
                         child: _conversations
                                 .where((c) =>
+                                    c['conversation_partner_id'] != '0' &&
                                     c['conversation_partner_id'] !=
                                     '00000000-0000-0000-0000-000000000000')
                                 .isEmpty
@@ -307,6 +308,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                     horizontal: 16, vertical: 8),
                                 itemCount: _conversations
                                     .where((c) =>
+                                        c['conversation_partner_id'] != '0' &&
                                         c['conversation_partner_id'] !=
                                         '00000000-0000-0000-0000-000000000000')
                                     .length,
@@ -315,6 +317,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                 itemBuilder: (context, index) {
                                   final filteredConversations = _conversations
                                       .where((c) =>
+                                          c['conversation_partner_id'] != '0' &&
                                           c['conversation_partner_id'] !=
                                           '00000000-0000-0000-0000-000000000000')
                                       .toList();

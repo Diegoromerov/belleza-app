@@ -47,7 +47,7 @@ exports.createTicket = async (req, res) => {
 exports.getMyTickets = async (req, res) => {
   try {
     const usuario_id = req.user.id;
-    const is_admin = req.user.rol === 'ADMIN';
+    const is_admin = req.user.role === 'admin';
 
     let query = `
       SELECT t.*, u.nombre as usuario_nombre, u.email as usuario_email 
@@ -83,7 +83,7 @@ exports.getTicketMessages = async (req, res) => {
   try {
     const ticketId = req.params.id;
     const usuario_id = req.user.id;
-    const is_admin = req.user.rol === 'ADMIN';
+    const is_admin = req.user.role === 'admin';
 
     // Verificar primero que el ticket pertenezca al usuario (o que sea admin)
     const checkTicketQuery = `SELECT usuario_id FROM tickets WHERE id = :ticketId;`;
@@ -129,7 +129,7 @@ exports.createTicketMessage = async (req, res) => {
     const ticketId = req.params.id;
     const sender_id = req.user.id;
     const { mensaje } = req.body;
-    const is_admin = req.user.rol === 'ADMIN';
+    const is_admin = req.user.role === 'admin';
 
     if (!mensaje || mensaje.trim().isEmpty) {
       return res.status(400).json({ error: 'El mensaje no puede estar vacío.' });

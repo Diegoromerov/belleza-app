@@ -68,6 +68,9 @@ exports.getMessages = async (req, res) => {
     const userId = req.user.id;
     const partnerId = req.params.partnerId;
     const resolvedPartnerId = (partnerId === '0' || partnerId === '00000000-0000-0000-0000-000000000000' || partnerId === AI_USER_ID.toString()) ? 0 : parseInt(partnerId);
+    if (isNaN(resolvedPartnerId)) {
+      return res.status(400).json({ error: 'El ID de socio no es un identificador válido' });
+    }
 
     const query = `
       SELECT id, sender_id, receiver_id, message, is_read, created_at
@@ -109,10 +112,13 @@ exports.sendMessage = async (req, res) => {
     }
 
     const targetReceiver = (receiver_id === '0' || receiver_id === '00000000-0000-0000-0000-000000000000' || receiver_id === AI_USER_ID.toString()) ? 0 : parseInt(receiver_id);
+    if (isNaN(targetReceiver)) {
+      return res.status(400).json({ error: 'El ID de receptor no es un identificador válido' });
+    }
 
     // Sistema de Detección y Prevención de Evasión (Anti-Circumvention Filter)
-    const normalizedMsg = message.replace(/[\s\-\.\(\)]/g, '');
-    const containsPhone = /3[0-9]{9}|60[0-9]{8}/.test(normalizedMsg);
+    const onlyDigits = message.replace(/\D/g, '');
+    const containsPhone = /3[0-9]{9}|60[0-9]{8}/.test(onlyDigits);
     const containsEmail = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/.test(message);
     const containsSocial = /@[a-zA-Z0-9_._]+/.test(message);
     
@@ -145,7 +151,10 @@ exports.sendMessage = async (req, res) => {
     });
     
     // results en INSERT en pg retorna [rows, metadata]
-    const row = results[0][0];
+    const row = results?.[0]?.[0];
+    if (!row) {
+      return res.status(500).json({ error: 'No se pudo registrar el mensaje' });
+    }
     const formatted = {
       ...row,
       sender_id: row.sender_id.toString(),
@@ -178,6 +187,9 @@ exports.readMessages = async (req, res) => {
     const userId = req.user.id;
     const partnerId = req.params.partnerId;
     const resolvedPartnerId = (partnerId === '0' || partnerId === '00000000-0000-0000-0000-000000000000' || partnerId === AI_USER_ID.toString()) ? 0 : parseInt(partnerId);
+    if (isNaN(resolvedPartnerId)) {
+      return res.status(400).json({ error: 'El ID de socio no es un identificador válido' });
+    }
 
     const query = `
       UPDATE messages
@@ -191,7 +203,7 @@ exports.readMessages = async (req, res) => {
     });
     
     // En UPDATE, pg retorna [rows, metadata] o similar
-    const rows = results[0];
+    const rows = results?.[0] || [];
     res.json({
       success: true,
       count: rows.length

@@ -116,24 +116,49 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
     const servicesContext = await getServicesContext();
     const systemInstruction = `${BASE_SYSTEM_INSTRUCTION}\n${servicesContext}`;
 
-    // 2. Obtener el historial de la conversación (últimos 8 mensajes para mayor velocidad y menor latencia)
+    // 2. Obtener los últimos 9 mensajes en orden descendente para filtrar correctamente
     const historyQuery = `
       SELECT sender_id, receiver_id, message, created_at
       FROM messages
       WHERE (sender_id = $1 AND receiver_id = $2)
          OR (sender_id = $2 AND receiver_id = $1)
-      ORDER BY created_at ASC
-      LIMIT 8;
+      ORDER BY created_at DESC
+      LIMIT 9;
     `;
     const historyRes = await pool.query(historyQuery, [userId, AI_USER_ID]);
     
-    // Formatear el historial para la API de Gemini
-    const contents = historyRes.rows.map(msg => ({
-      role: msg.sender_id === userId ? 'user' : 'model',
-      parts: [{ text: msg.message }]
-    }));
+    // Invertir el orden para que sea cronológico (de más antiguo a más reciente)
+    let rawMessages = historyRes.rows.reverse();
 
-    // 3. Preparar el mensaje actual (con soporte multimodal si hay imagen)
+    // Eliminar el mensaje que el usuario acaba de enviar si coincide con el último de la BD.
+    // Lo hacemos porque lo agregaremos explícitamente con soporte multimodal al final de 'contents'.
+    if (rawMessages.length > 0 && 
+        rawMessages[rawMessages.length - 1].sender_id === userId && 
+        rawMessages[rawMessages.length - 1].message === userMessageText) {
+      rawMessages.pop();
+    }
+
+    // Asegurarse de que queden máximo 8 mensajes de historial de contexto previo
+    if (rawMessages.length > 8) {
+      rawMessages = rawMessages.slice(rawMessages.length - 8);
+    }
+
+    // 3. Formatear el historial y agrupar mensajes consecutivos del mismo emisor (user/model)
+    const contents = [];
+    rawMessages.forEach(msg => {
+      const role = msg.sender_id === userId ? 'user' : 'model';
+      if (contents.length > 0 && contents[contents.length - 1].role === role) {
+        // Si el rol es el mismo que el anterior, concatenamos el texto con un salto de línea
+        contents[contents.length - 1].parts[0].text += `\n${msg.message}`;
+      } else {
+        contents.push({
+          role: role,
+          parts: [{ text: msg.message }]
+        });
+      }
+    });
+
+    // 4. Preparar el turno actual (con soporte multimodal si hay imagen)
     const userParts = [{ text: userMessageText }];
     
     if (imageRelativePath) {
@@ -155,15 +180,22 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
       }
     }
 
-    // Agregar el turno actual del usuario al historial a enviar
-    contents.push({
-      role: 'user',
-      parts: userParts
-    });
+    // Agregar el turno actual del usuario al historial a enviar de forma segura (evitando turnos consecutivos del mismo rol)
+    if (contents.length > 0 && contents[contents.length - 1].role === 'user') {
+      contents[contents.length - 1].parts[0].text += `\n${userMessageText}`;
+      if (userParts.length > 1) {
+        contents[contents.length - 1].parts.push(...userParts.slice(1));
+      }
+    } else {
+      contents.push({
+        role: 'user',
+        parts: userParts
+      });
+    }
 
     let aiResponseText = '';
 
-    // 4. Invocar la API de Gemini (o simular en ausencia de API Key)
+    // 5. Invocar la API de Gemini (o simular en ausencia de API Key)
     if (ai) {
       try {
         const model = ai.getGenerativeModel({
@@ -207,7 +239,7 @@ Servicio ID: 11111111-1111-1111-1111-111111111111`;
       }
     }
 
-    // 5. Guardar la respuesta de la IA en la tabla de mensajes
+    // 6. Guardar la respuesta de la IA en la tabla de mensajes
     const insertQuery = `
       INSERT INTO messages (sender_id, receiver_id, message)
       VALUES ($1, $2, $3)

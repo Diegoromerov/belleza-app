@@ -11,7 +11,7 @@ module.exports = async (req, res, next) => {
     const role = req.user.role;
 
     // Solo verificamos la suspensión si el usuario logueado o involucrado actúa como PRESTADOR
-    if (role === 'PRESTADOR') {
+    if (role === 'provider') {
       const result = await pool.query(
         'SELECT suspension_pila, pila_estado_verificacion FROM perfiles_prestador WHERE id = $1',
         [userId]

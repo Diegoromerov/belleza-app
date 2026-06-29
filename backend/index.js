@@ -102,6 +102,8 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
       'http://localhost:7357',
       'http://127.0.0.1:8080',
       'http://localhost:8082',
+      'http://localhost:3001',
+      'http://127.0.0.1:3001',
       'https://belleza-app-production.up.railway.app'
     ];
 
