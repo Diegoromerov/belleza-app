@@ -110,7 +110,7 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
 app.use(cors({
   origin: (origin, callback) => {
     // Permitir peticiones sin origen (ej: curl, Postman, apps móviles nativas)
-    if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.railway.app')) {
+    if (!origin || allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
     return callback(new Error('CORS bloqueado por política de seguridad'));
@@ -1452,6 +1452,18 @@ const initDatabase = async () => {
       }
     }
 
+    // 🔸 Ejecutar migración del esquema técnico de GlowStore (010_implement_glowstore_schema.sql)
+    const glowstoreMigrationPath = path.join(__dirname, 'migrations/010_implement_glowstore_schema.sql');
+    if (fs.existsSync(glowstoreMigrationPath)) {
+      try {
+        const glowstoreSql = fs.readFileSync(glowstoreMigrationPath, 'utf8');
+        await pool.query(glowstoreSql);
+        console.log('✅ Base de datos: Migración del esquema técnico de GlowStore aplicada.');
+      } catch (gErr) {
+        console.warn('⚠️ Advertencia en migración del esquema técnico de GlowStore:', gErr.message);
+      }
+    }
+
     const checkUser = await pool.query("SELECT id FROM usuarios WHERE email = 'provider@beautyapp.com';");
     const needsSeed = checkUser.rows.length === 0;
 
@@ -1493,10 +1505,8 @@ const { registerClient, unregisterClient, notifyUserJobUpdate, notifyUserChatMes
 app.set('notifyUserJobUpdate', notifyUserJobUpdate);
 app.set('notifyUserChatMessage', notifyUserChatMessage);
 
-// Limpiar historial de chats de la base de datos para verlos más limpios en cada reinicio/despliegue
-pool.query('TRUNCATE TABLE messages RESTART IDENTITY CASCADE;')
-  .then(() => console.log('🗑️ Historial de mensajes de chat truncado exitosamente en la base de datos.'))
-  .catch(err => console.error('Error al limpiar mensajes de chat:', err));
+// Limpiar historial de chats deshabilitado en producción para evitar pérdida de datos.
+// En desarrollo, utilizar una semilla de limpieza controlada si es necesario.
 
 // Módulo Nail Try-on removido por completo.
 

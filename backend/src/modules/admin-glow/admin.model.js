@@ -1,21 +1,15 @@
 /**
  * Modelo de datos del Panel de Administración de GlowApp para PostgreSQL.
- * Proporciona consultas parametrizadas seguras.
+ * Proporciona consultas parametrizadas seguras nativas.
  */
 const { pool } = require('../../config/db');
 
 /**
  * Helper para ejecutar consultas parametrizadas de forma segura en PostgreSQL.
- * Convierte automáticamente placeholders ? de MySQL a $1 de PostgreSQL para retrocompatibilidad.
  */
 async function executeQuery(query, params = []) {
   if (pool) {
-    let pgQuery = query;
-    let index = 1;
-    while (pgQuery.includes('?')) {
-      pgQuery = pgQuery.replace('?', `$${index++}`);
-    }
-    const res = await pool.query(pgQuery, params);
+    const res = await pool.query(query, params);
     return res.rows;
   }
   console.log(`[PostgreSQL mock] Ejecutando: ${query} con parámetros:`, params);
@@ -47,8 +41,8 @@ async function getActiveSOSAlerts() {
 async function updateSOSAlertStatus(alertId, newStatus) {
   const query = `
     UPDATE sos_alerts 
-    SET estado = ?, creado_en = NOW() 
-    WHERE id = ?;
+    SET estado = $1, creado_en = NOW() 
+    WHERE id = $2;
   `;
   return await executeQuery(query, [newStatus, alertId]);
 }
@@ -59,7 +53,7 @@ async function updateSOSAlertStatus(alertId, newStatus) {
 async function logAdminAction(adminId, actionType, description) {
   const query = `
     INSERT INTO admin_actions (admin_id, accion, descripcion, fecha_creacion)
-    VALUES (?, ?, ?, NOW());
+    VALUES ($1, $2, $3, NOW());
   `;
   return await executeQuery(query, [adminId, actionType, description]);
 }
@@ -85,8 +79,8 @@ async function setProviderVerifiedStatus(providerId, isVerified) {
   const status = isVerified ? 'APROBADO' : 'RECHAZADO';
   const query = `
     UPDATE perfiles_prestador 
-    SET estatus_verificacion = ? 
-    WHERE id = ?;
+    SET estatus_verificacion = $1 
+    WHERE id = $2;
   `;
   return await executeQuery(query, [status, providerId]);
 }
@@ -98,7 +92,7 @@ async function getProviderWalletBalance(providerId) {
   const query = `
     SELECT saldo_disponible 
     FROM provider_wallet 
-    WHERE provider_id = ?;
+    WHERE provider_id = $1;
   `;
   const rows = await executeQuery(query, [providerId]);
   return rows.length > 0 ? parseFloat(rows[0].saldo_disponible) : 0;
@@ -112,7 +106,7 @@ async function hasActiveDisputes(providerId) {
     SELECT COUNT(*) AS count 
     FROM disputas d
     JOIN bookings b ON d.booking_id = b.id
-    WHERE b.provider_id = ? AND d.estado IN ('ABIERTA','EN_REVISION');
+    WHERE b.provider_id = $1 AND d.estado IN ('ABIERTA','EN_REVISION');
   `;
   const rows = await executeQuery(query, [providerId]);
   return rows.length > 0 && parseInt(rows[0].count) > 0;
@@ -125,15 +119,15 @@ async function processWalletWithdrawal(providerId, amount, newBalance) {
   // 1. Actualizar saldo disponible
   const updateWalletQuery = `
     UPDATE provider_wallet 
-    SET saldo_disponible = ? 
-    WHERE provider_id = ?;
+    SET saldo_disponible = $1 
+    WHERE provider_id = $2;
   `;
   await executeQuery(updateWalletQuery, [newBalance, providerId]);
 
   // 2. Registrar el retiro en el historial de transacciones de liquidación
   const recordTransactionQuery = `
     INSERT INTO wallet_transactions (provider_id, tipo, monto, estado, created_at)
-    VALUES (?, 'DEBITO_RETIRO', ?, 'COMPLETADO', NOW());
+    VALUES ($1, 'DEBITO_RETIRO', $2, 'COMPLETADO', NOW());
   `;
   return await executeQuery(recordTransactionQuery, [providerId, amount]);
 }

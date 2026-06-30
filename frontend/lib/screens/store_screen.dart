@@ -4,7 +4,8 @@ import '../shared/theme.dart';
 import '../services/api_service.dart';
 
 class StoreScreen extends StatefulWidget {
-  const StoreScreen({super.key});
+  final String? bookingId;
+  const StoreScreen({super.key, this.bookingId});
 
   @override
   State<StoreScreen> createState() => _StoreScreenState();
@@ -24,7 +25,14 @@ class _StoreScreenState extends State<StoreScreen> {
   final Map<int, Map<String, dynamic>> _cart = {};
   bool _isCartOpen = false;
 
-  final List<String> _categories = ['Todos', 'Cabello', 'Uñas', 'Maquillaje'];
+  final List<String> _categories = ['Todos', 'Cabello', 'Uñas', 'Maquillaje', 'Estética'];
+
+  double _getProductPrice(Map<String, dynamic> product) {
+    if (widget.bookingId != null && product.containsKey('precio_con_reserva')) {
+      return double.tryParse(product['precio_con_reserva']?.toString() ?? '0') ?? 0.0;
+    }
+    return double.tryParse(product['precio']?.toString() ?? '0') ?? 0.0;
+  }
 
   @override
   void initState() {
@@ -133,7 +141,7 @@ class _StoreScreenState extends State<StoreScreen> {
     _cart.forEach((_, item) {
       final product = item['product'] as Map<String, dynamic>;
       final qty = item['quantity'] as int;
-      final price = double.tryParse(product['precio']?.toString() ?? '0') ?? 0.0;
+      final price = _getProductPrice(product);
       subtotal += price * qty;
     });
     return subtotal;
@@ -227,13 +235,42 @@ class _StoreScreenState extends State<StoreScreen> {
                               ),
                             ),
                             const SizedBox(height: 8),
-                            Text(
-                              _formatCOP(price),
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                                color: AppTheme.primary,
-                              ),
+                            Builder(
+                              builder: (context) {
+                                if (widget.bookingId != null && product.containsKey('precio_con_reserva')) {
+                                  final originalPrice = double.tryParse(product['precio']?.toString() ?? '0') ?? 0.0;
+                                  final discountPrice = double.tryParse(product['precio_con_reserva']?.toString() ?? '0') ?? 0.0;
+                                  return Row(
+                                    children: [
+                                      Text(
+                                        _formatCOP(originalPrice),
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.grey,
+                                          decoration: TextDecoration.lineThrough,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        _formatCOP(discountPrice),
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppTheme.primary,
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                }
+                                return Text(
+                                  _formatCOP(price),
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppTheme.primary,
+                                  ),
+                                );
+                              }
                             ),
                             const SizedBox(height: 16),
                             const Divider(),
@@ -362,7 +399,7 @@ class _StoreScreenState extends State<StoreScreen> {
     if (_cart.isEmpty) return;
 
     final double subtotal = _getCartSubtotal();
-    final double envio = 12000.0;
+    final double envio = widget.bookingId != null ? 0.0 : 12000.0;
     final double iva = subtotal * 0.19;
     final double total = subtotal + envio + iva;
 
@@ -507,13 +544,44 @@ class _StoreScreenState extends State<StoreScreen> {
                                 setCheckoutState(() {
                                   processing = true;
                                 });
-                                await Future.delayed(const Duration(milliseconds: 2500));
-                                Navigator.pop(ctx);
-                                setState(() {
-                                  _cart.clear();
-                                  _isCartOpen = false;
-                                });
-                                _showOrderSuccessDialog();
+                                
+                                try {
+                                  final itemsList = _cart.values.map((item) {
+                                    final prod = item['product'] as Map<String, dynamic>;
+                                    final qty = item['quantity'] as int;
+                                    return {
+                                      'producto_id': prod['id'],
+                                      'cantidad': qty
+                                    };
+                                  }).toList();
+
+                                  final checkoutData = {
+                                    'nombre_entrega': nameCtrl.text,
+                                    'direccion_entrega': addressCtrl.text,
+                                    'items': itemsList,
+                                    if (widget.bookingId != null) 'booking_id': widget.bookingId,
+                                  };
+
+                                  final response = await ApiService.post('/api/store/checkout', checkoutData);
+
+                                  if (response != null && response['success'] == true) {
+                                    Navigator.pop(ctx);
+                                    setState(() {
+                                      _cart.clear();
+                                      _isCartOpen = false;
+                                    });
+                                    _showOrderSuccessDialog();
+                                  } else {
+                                    throw Exception(response?['error'] ?? 'Error en el pago');
+                                  }
+                                } catch (e) {
+                                  setCheckoutState(() {
+                                    processing = false;
+                                  });
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Error al realizar pedido: $e')),
+                                  );
+                                }
                               }
                             },
                             style: ElevatedButton.styleFrom(
@@ -561,7 +629,7 @@ class _StoreScreenState extends State<StoreScreen> {
                       final item = _cart.values.elementAt(index);
                       final prod = item['product'] as Map<String, dynamic>;
                       final qty = item['quantity'] as int;
-                      final pPrice = double.tryParse(prod['precio']?.toString() ?? '0') ?? 0.0;
+                      final pPrice = _getProductPrice(prod);
                       
                       return Row(
                         children: [
@@ -1067,13 +1135,42 @@ class _StoreScreenState extends State<StoreScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      _formatCOP(price),
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.primary,
-                      ),
+                    Builder(
+                      builder: (context) {
+                        if (widget.bookingId != null && product.containsKey('precio_con_reserva')) {
+                          final originalPrice = double.tryParse(product['precio']?.toString() ?? '0') ?? 0.0;
+                          final discountPrice = double.tryParse(product['precio_con_reserva']?.toString() ?? '0') ?? 0.0;
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _formatCOP(originalPrice),
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.grey,
+                                  decoration: TextDecoration.lineThrough,
+                                ),
+                              ),
+                              Text(
+                                _formatCOP(discountPrice),
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.primary,
+                                ),
+                              ),
+                            ],
+                          );
+                        }
+                        return Text(
+                          _formatCOP(price),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.primary,
+                          ),
+                        );
+                      }
                     ),
                     if (stock > 0)
                       IconButton(
@@ -1167,7 +1264,7 @@ class _StoreScreenState extends State<StoreScreen> {
                       final qty = item['quantity'] as int;
                       final id = prod['id'] as int;
                       final stock = prod['stock'] as int? ?? 0;
-                      final pPrice = double.tryParse(prod['precio']?.toString() ?? '0') ?? 0.0;
+                      final pPrice = _getProductPrice(prod);
 
                       return Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
