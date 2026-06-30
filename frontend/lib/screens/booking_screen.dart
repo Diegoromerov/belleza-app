@@ -91,19 +91,19 @@ class _BookingScreenState extends State<BookingScreen> {
     final nm = name.toLowerCase();
 
     if (nm.contains('ceja') || nm.contains('eyebrow') || cat.contains('eyebrow')) {
-      return 'eyebrow-visagism';
+      return 'Maquillaje';
     }
     if (nm.contains('facial') || nm.contains('limpieza') || nm.contains('skin') || cat.contains('skin') || cat.contains('facial')) {
-      return 'skin-texture';
+      return 'Estética';
     }
     if (cat.contains('nails') || cat.contains('uñas') || nm.contains('manicura') || nm.contains('pedicura') || nm.contains('nails')) {
-      return 'nails-classic';
+      return 'Uñas';
     }
     if (cat.contains('hair') || cat.contains('cabello') || nm.contains('corte') || nm.contains('balayage') || nm.contains('peinado') || nm.contains('tinte')) {
-      return 'hair-diagnostic';
+      return 'Cabello';
     }
 
-    return 'nails-classic';
+    return 'Uñas';
   }
 
   Future<void> _loadRecommendedProducts() async {
@@ -144,7 +144,7 @@ class _BookingScreenState extends State<BookingScreen> {
                 'precio': 45000.00,
                 'stock': 20,
                 'imagen_url': 'https://images.unsplash.com/photo-1535585209827-a15fcdbc4c2d?q=80&w=200',
-                'tag_especialidad': 'hair-diagnostic'
+                'tag_especialidad': 'Cabello'
               };
             } else if (targetId == '2') {
               extraProduct = {
@@ -153,7 +153,7 @@ class _BookingScreenState extends State<BookingScreen> {
                 'precio': 15000.00,
                 'stock': 50,
                 'imagen_url': 'https://images.unsplash.com/photo-1607602132700-068258431c6c?q=80&w=200',
-                'tag_especialidad': 'nails-classic'
+                'tag_especialidad': 'Uñas'
               };
             } else if (targetId == '4') {
               extraProduct = {
@@ -162,7 +162,7 @@ class _BookingScreenState extends State<BookingScreen> {
                 'precio': 55000.00,
                 'stock': 30,
                 'imagen_url': 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?q=80&w=200',
-                'tag_especialidad': 'skin-texture'
+                'tag_especialidad': 'Estética'
               };
             } else if (targetId == '6') {
               extraProduct = {
@@ -171,7 +171,7 @@ class _BookingScreenState extends State<BookingScreen> {
                 'precio': 18000.00,
                 'stock': 40,
                 'imagen_url': 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?q=80&w=200',
-                'tag_especialidad': 'eyebrow-visagism'
+                'tag_especialidad': 'Maquillaje'
               };
             }
             if (extraProduct != null) {

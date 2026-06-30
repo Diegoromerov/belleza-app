@@ -2056,6 +2056,113 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
     );
   }
 
+  Widget _buildNavItem({
+    required int index,
+    required IconData icon,
+    required String label,
+  }) {
+    final isSelected = _currentIndex == index;
+    final color = isSelected ? const Color(0xFFC89D93) : Colors.grey[500]!;
+    return Expanded(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            setState(() {
+              _currentIndex = index;
+            });
+          },
+          borderRadius: BorderRadius.circular(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: color, size: 20),
+              const SizedBox(height: 3),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 9.5,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                  color: color,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProminentCenterNavItem({
+    required int index,
+    required IconData icon,
+    required String label,
+  }) {
+    final isSelected = _currentIndex == index;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        child: Transform.translate(
+          offset: const Offset(0, -14),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: const LinearGradient(
+                    colors: [
+                      Color(0xFFE8D7D3), // Golden soft rose
+                      Color(0xFFC89D93), // Warm primary pink
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFC89D93).withOpacity(0.4),
+                      blurRadius: 10,
+                      spreadRadius: 2,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                  border: Border.all(
+                    color: Colors.white,
+                    width: 2.5,
+                  ),
+                ),
+                child: Icon(
+                  icon,
+                  color: Colors.white,
+                  size: 26,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  color: isSelected ? const Color(0xFFC89D93) : const Color(0xFFB07D62),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isPageLoading = (_bookings.isEmpty && _loading) || _loadingProfile;
@@ -2214,70 +2321,96 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                 const SizedBox(width: 8),
               ],
             ),
-      body: bodyWidget,
-      floatingActionButton: FloatingActionButton(
-        heroTag: 'sos_provider_fab',
-        onPressed: _loadingSOS ? null : _showSOSConfirmationDialog,
-        backgroundColor: const Color(0xFFDC2626),
-        foregroundColor: Colors.white,
-        elevation: 4,
-        shape: const CircleBorder(),
-        child: _loadingSOS
-            ? const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(
-                    strokeWidth: 2.5, color: Colors.white),
-              )
-            : const Icon(Icons.emergency_outlined, size: 28),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: const Color(0xFFC89D93),
-        unselectedItemColor: Colors.grey[500],
-        backgroundColor: Colors.white,
-        elevation: 8,
-        selectedFontSize: 11.5,
-        unselectedFontSize: 11,
-        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'Inicio',
+      body: Stack(
+        children: [
+          Padding(
+            padding: EdgeInsets.only(
+              bottom: _currentIndex == 3 ? 0 : 88.0, // Tienda manages its own margins
+            ),
+            child: bodyWidget,
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_month_outlined),
-            activeIcon: Icon(Icons.calendar_month),
-            label: 'Agenda',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.account_balance_wallet_outlined),
-            activeIcon: Icon(Icons.account_balance_wallet),
-            label: 'Wallet',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_bag_outlined),
-            activeIcon: Icon(Icons.shopping_bag),
-            label: 'Tienda',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.chat_bubble_outline),
-            activeIcon: Icon(Icons.chat_bubble),
-            label: 'Chat',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
-            label: 'Perfil',
+          
+          // Custom Glassmorphic Navigation Dock matching client-side cover styles
+          Positioned(
+            bottom: MediaQuery.of(context).padding.bottom + 16,
+            left: 16,
+            right: 16,
+            child: Container(
+              height: 72,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.92),
+                borderRadius: BorderRadius.circular(36),
+                border: Border.all(
+                    color: const Color(0xFFE8D7D3).withOpacity(0.4),
+                    width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.06),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  _buildNavItem(
+                    index: 0,
+                    icon: _currentIndex == 0 ? Icons.home : Icons.home_outlined,
+                    label: 'Inicio',
+                  ),
+                  _buildNavItem(
+                    index: 1,
+                    icon: _currentIndex == 1 ? Icons.calendar_month : Icons.calendar_month_outlined,
+                    label: 'Agenda',
+                  ),
+                  _buildNavItem(
+                    index: 2,
+                    icon: _currentIndex == 2 ? Icons.account_balance_wallet : Icons.account_balance_wallet_outlined,
+                    label: 'Wallet',
+                  ),
+                  
+                  // Central Prominent floating button for the store
+                  _buildProminentCenterNavItem(
+                    index: 3,
+                    icon: Icons.shopping_bag_outlined,
+                    label: 'Tienda',
+                  ),
+                  
+                  _buildNavItem(
+                    index: 4,
+                    icon: _currentIndex == 4 ? Icons.chat_bubble : Icons.chat_bubble_outline,
+                    label: 'Chat',
+                  ),
+                  _buildNavItem(
+                    index: 5,
+                    icon: _currentIndex == 5 ? Icons.person : Icons.person_outline,
+                    label: 'Perfil',
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
+      ),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 80.0), // push above floating navigation bar
+        child: FloatingActionButton(
+          heroTag: 'sos_provider_fab',
+          onPressed: _loadingSOS ? null : _showSOSConfirmationDialog,
+          backgroundColor: const Color(0xFFDC2626),
+          foregroundColor: Colors.white,
+          elevation: 4,
+          shape: const CircleBorder(),
+          child: _loadingSOS
+              ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2.5, color: Colors.white),
+                )
+              : const Icon(Icons.emergency_outlined, size: 28),
+        ),
       ),
     );
   }
