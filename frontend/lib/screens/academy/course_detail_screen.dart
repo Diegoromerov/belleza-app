@@ -117,7 +117,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final themeColor = const Color(0xFFC89D93);
+    const themeColor = Color(0xFFC89D93);
 
     if (_isLoading) {
       return Scaffold(
@@ -277,7 +277,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.amber.withOpacity(0.1),
+                        color: Colors.amber.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: Colors.amber, width: 1),
                       ),
@@ -322,7 +322,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
 
                     return ListTile(
                       selected: isCurrent,
-                      selectedTileColor: themeColor.withOpacity(0.08),
+                      selectedTileColor: themeColor.withValues(alpha: 0.08),
                       leading: Icon(
                         isCompleted ? Icons.check_circle : Icons.play_arrow_outlined,
                         color: isCompleted ? Colors.green : (isCurrent ? themeColor : Colors.grey),

@@ -167,7 +167,7 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text(
+        title: const Text(
           'Mi Perfil',
           style: TextStyle(
               fontWeight: FontWeight.bold, letterSpacing: -0.5, fontSize: 18),
@@ -176,13 +176,13 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
         foregroundColor: Colors.black,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context,
               true), // Retorna true para refrescar la pantalla principal
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.logout_rounded, color: Colors.grey),
+            icon: const Icon(Icons.logout_rounded, color: Colors.grey),
             onPressed: () async {
               final navigator = Navigator.of(context);
               await AuthService.logout();
@@ -223,7 +223,7 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                                 _nameCtrl.text.isNotEmpty
                                     ? _nameCtrl.text[0].toUpperCase()
                                     : 'U',
-                                style: TextStyle(
+                                style: const TextStyle(
                                     fontSize: 40,
                                     color: Color(0xFFC89D93),
                                     fontWeight: FontWeight.bold),
@@ -236,7 +236,7 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                       right: 0,
                       child: GestureDetector(
                         onTap: _isUploading ? null : _pickAndUploadAvatar,
-                        child: CircleAvatar(
+                        child: const CircleAvatar(
                           radius: 18,
                           backgroundColor: Color(0xFFC89D93),
                           child: Icon(Icons.camera_alt,
@@ -245,7 +245,7 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                       ),
                     ),
                     if (_isUploading)
-                      Positioned.fill(
+                      const Positioned.fill(
                         child: CircleAvatar(
                           backgroundColor: Colors.black26,
                           child: CircularProgressIndicator(color: Colors.white),
@@ -254,7 +254,7 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                   ],
                 ),
               ),
-              SizedBox(height: 32),
+              const SizedBox(height: 32),
 
               // 2. Formularios de edición
               TextFormField(
@@ -264,7 +264,7 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                 validator: (v) =>
                     v!.isEmpty ? 'Ingresa tu nombre completo' : null,
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _phoneCtrl,
                 keyboardType: TextInputType.phone,
@@ -273,7 +273,7 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                 validator: (v) =>
                     v!.isEmpty ? 'Ingresa tu número telefónico' : null,
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               // Email de lectura no editable
               TextFormField(
                 initialValue: _email,
@@ -285,23 +285,23 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                   fillColor: Colors.grey[50],
                 ),
               ),
-              SizedBox(height: 24),
+              const SizedBox(height: 24),
 
               if (_error != null)
                 Text(
                   _error!,
-                  style: TextStyle(
+                  style: const TextStyle(
                       color: Colors.redAccent, fontWeight: FontWeight.w500),
                   textAlign: TextAlign.center,
                 ),
               if (_message != null)
                 Text(
                   _message!,
-                  style: TextStyle(
+                  style: const TextStyle(
                       color: Colors.green, fontWeight: FontWeight.w500),
                   textAlign: TextAlign.center,
                 ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
 
               // Botón guardar cambios
               ElevatedButton(
@@ -316,21 +316,21 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                   elevation: 0,
                 ),
                 child: _isSaving
-                    ? SizedBox(
+                    ? const SizedBox(
                         width: 24,
                         height: 24,
                         child: CircularProgressIndicator(
                             color: Colors.white, strokeWidth: 2),
                       )
-                    : Text('Guardar Cambios',
+                    : const Text('Guardar Cambios',
                         style: TextStyle(
                             fontSize: 16, fontWeight: FontWeight.bold)),
               ),
-              SizedBox(height: 24),
+              const SizedBox(height: 24),
 
               // 3. Accesos rápidos M3
               const Divider(color: Color(0xFFF3EAE8)),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               _buildSettingsTile(
                 icon: Icons.calendar_month_outlined,
                 title: 'Mis Citas',
@@ -356,7 +356,7 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                 title: 'Mis Disputas de Servicio',
                 onTap: () => Navigator.pushNamed(context, '/disputes'),
               ),
-              SizedBox(height: 28),
+              const SizedBox(height: 28),
 
               // Botón cerrar sesión
               OutlinedButton.icon(
@@ -365,18 +365,18 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                   await AuthService.logout();
                   navigator.pushNamedAndRemoveUntil('/login', (route) => false);
                 },
-                icon: Icon(Icons.logout, color: Colors.redAccent),
-                label: Text('Cerrar Sesión',
+                icon: const Icon(Icons.logout, color: Colors.redAccent),
+                label: const Text('Cerrar Sesión',
                     style: TextStyle(
                         color: Colors.redAccent, fontWeight: FontWeight.bold)),
                 style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: Colors.redAccent),
+                  side: const BorderSide(color: Colors.redAccent),
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30)),
                 ),
               ),
-              SizedBox(height: 40),
+              const SizedBox(height: 40),
             ],
           ),
         ),
@@ -392,10 +392,10 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
     return ListTile(
       leading: Icon(icon, color: const Color(0xFFC89D93)),
       title: Text(title,
-          style: TextStyle(
+          style: const TextStyle(
               fontWeight: FontWeight.w500, color: Colors.black87)),
       trailing:
-          Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
+          const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
       contentPadding: const EdgeInsets.symmetric(horizontal: 4.0),
       onTap: onTap,
     );
@@ -406,7 +406,7 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Text('Tratamiento de Datos Personales',
+        title: const Text('Tratamiento de Datos Personales',
             style: TextStyle(fontWeight: FontWeight.bold)),
         content: const SingleChildScrollView(
           child: Text(
@@ -420,7 +420,7 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Entendido',
+            child: const Text('Entendido',
                 style: TextStyle(
                     color: Color(0xFFC89D93), fontWeight: FontWeight.bold)),
           ),
@@ -432,7 +432,7 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
   InputDecoration _inputDecoration(String label, IconData icon) {
     return InputDecoration(
       labelText: label,
-      labelStyle: TextStyle(color: Colors.grey, fontSize: 14),
+      labelStyle: const TextStyle(color: Colors.grey, fontSize: 14),
       prefixIcon: Icon(icon, color: const Color(0xFFC89D93)),
       floatingLabelBehavior: FloatingLabelBehavior.never,
       filled: true,
@@ -447,7 +447,7 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(30),
-        borderSide: BorderSide(color: Color(0xFFC89D93), width: 1.5),
+        borderSide: const BorderSide(color: Color(0xFFC89D93), width: 1.5),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
     );

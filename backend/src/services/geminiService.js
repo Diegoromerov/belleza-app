@@ -112,6 +112,12 @@ async function getServicesContext() {
  */
 async function processAssistantMessage(userId, userMessageText, imageRelativePath) {
   try {
+    const parsedUserId = parseInt(userId, 10);
+    if (isNaN(parsedUserId)) {
+      console.error('❌ ERROR: userId no es un número válido:', userId);
+      return;
+    }
+
     // 1. Obtener contexto de servicios en tiempo real
     const servicesContext = await getServicesContext();
     const systemInstruction = `${BASE_SYSTEM_INSTRUCTION}\n${servicesContext}`;
@@ -125,7 +131,7 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
       ORDER BY created_at DESC
       LIMIT 9;
     `;
-    const historyRes = await pool.query(historyQuery, [userId, AI_USER_ID]);
+    const historyRes = await pool.query(historyQuery, [parsedUserId, AI_USER_ID]);
     
     // Invertir el orden para que sea cronológico (de más antiguo a más reciente)
     let rawMessages = historyRes.rows.reverse();
@@ -133,7 +139,7 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
     // Eliminar el mensaje que el usuario acaba de enviar si coincide con el último de la BD.
     // Lo hacemos porque lo agregaremos explícitamente con soporte multimodal al final de 'contents'.
     if (rawMessages.length > 0 && 
-        rawMessages[rawMessages.length - 1].sender_id === userId && 
+        rawMessages[rawMessages.length - 1].sender_id === parsedUserId && 
         rawMessages[rawMessages.length - 1].message === userMessageText) {
       rawMessages.pop();
     }
@@ -245,7 +251,7 @@ Servicio ID: 11111111-1111-1111-1111-111111111111`;
       VALUES ($1, $2, $3)
       RETURNING id, sender_id, receiver_id, message, is_read, created_at;
     `;
-    const insertRes = await pool.query(insertQuery, [AI_USER_ID, userId, aiResponseText]);
+    const insertRes = await pool.query(insertQuery, [AI_USER_ID, parsedUserId, aiResponseText]);
     const row = insertRes.rows[0];
     const formatted = {
       ...row,
@@ -253,10 +259,10 @@ Servicio ID: 11111111-1111-1111-1111-111111111111`;
       receiver_id: row.receiver_id.toString()
     };
 
-    console.log(`🤖 Respuesta de IA enviada con éxito al usuario ${userId}.`);
+    console.log(`🤖 Respuesta de IA enviada con éxito al usuario ${parsedUserId}.`);
 
     // Notificar en tiempo real al usuario vía WebSocket de la respuesta de la IA
-    notifyUserChatMessage(userId, formatted);
+    notifyUserChatMessage(parsedUserId, formatted);
 
   } catch (error) {
     console.error('❌ Error crítico en processAssistantMessage:', error);

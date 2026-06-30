@@ -113,7 +113,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
         return SafeArea(
           child: Wrap(
             children: [
-              Padding(
+              const Padding(
                 padding: EdgeInsets.all(16.0),
                 child: Text(
                   'Seleccionar Foto de Perfil',
@@ -122,22 +122,22 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
               ),
               ListTile(
                 leading:
-                    Icon(Icons.photo_library, color: Color(0xFFC89D93)),
-                title: Text('Galería de fotos'),
+                    const Icon(Icons.photo_library, color: Color(0xFFC89D93)),
+                title: const Text('Galería de fotos'),
                 onTap: () {
                   Navigator.pop(context);
                   _pickAndUploadAvatar(ImageSource.gallery);
                 },
               ),
               ListTile(
-                leading: Icon(Icons.camera_alt, color: Color(0xFFC89D93)),
-                title: Text('Cámara de fotos'),
+                leading: const Icon(Icons.camera_alt, color: Color(0xFFC89D93)),
+                title: const Text('Cámara de fotos'),
                 onTap: () {
                   Navigator.pop(context);
                   _pickAndUploadAvatar(ImageSource.camera);
                 },
               ),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
             ],
           ),
         );
@@ -262,7 +262,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
+              const Text(
                 'Progreso del Perfil',
                 style: TextStyle(
                     fontWeight: FontWeight.bold,
@@ -271,21 +271,21 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
               ),
               Text(
                 '$displayPercent%',
-                style: TextStyle(
+                style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     color: Color(0xFFC89D93),
                     fontSize: 13),
               ),
             ],
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
             child: LinearProgressIndicator(
               value: percent,
               backgroundColor: Colors.white,
               valueColor:
-                  AlwaysStoppedAnimation<Color>(Color(0xFFC89D93)),
+                  const AlwaysStoppedAnimation<Color>(Color(0xFFC89D93)),
               minHeight: 8,
             ),
           ),
@@ -330,7 +330,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(icon, color: textColor, size: 20),
-          SizedBox(width: 8),
+          const SizedBox(width: 8),
           Text(
             text,
             style: TextStyle(
@@ -376,7 +376,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          const Row(
             children: [
               Icon(Icons.calendar_month, color: Color(0xFFC89D93), size: 20),
               SizedBox(width: 8),
@@ -389,8 +389,8 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
               ),
             ],
           ),
-          SizedBox(height: 12),
-          Text(
+          const SizedBox(height: 12),
+          const Text(
             'Configura las horas de inicio y fin para cada día, o apaga los días que no laboras.',
             style: TextStyle(fontSize: 12, color: Colors.grey),
           ),
@@ -436,14 +436,14 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                       ],
                     ),
                   ),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: isActive
                         ? Row(
                             children: [
                               Expanded(
                                 child: DropdownButtonFormField<int>(
-                                  value: start,
+                                  initialValue: start,
                                   decoration: const InputDecoration(
                                     contentPadding: EdgeInsets.symmetric(
                                         horizontal: 8, vertical: 4),
@@ -459,7 +459,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                                             value: h,
                                             child: Text(
                                                 '${h.toString().padLeft(2, '0')}:00',
-                                                style: TextStyle(
+                                                style: const TextStyle(
                                                     fontSize: 12)),
                                           )),
                                   onChanged: (val) {
@@ -471,10 +471,10 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                                   },
                                 ),
                               ),
-                              SizedBox(width: 8),
+                              const SizedBox(width: 8),
                               Expanded(
                                 child: DropdownButtonFormField<int>(
-                                  value: end,
+                                  initialValue: end,
                                   decoration: const InputDecoration(
                                     contentPadding: EdgeInsets.symmetric(
                                         horizontal: 8, vertical: 4),
@@ -490,7 +490,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                                             value: h,
                                             child: Text(
                                                 '${h.toString().padLeft(2, '0')}:00',
-                                                style: TextStyle(
+                                                style: const TextStyle(
                                                     fontSize: 12)),
                                           )),
                                   onChanged: (val) {
@@ -510,7 +510,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                               ),
                             ],
                           )
-                        : Text(
+                        : const Text(
                             'Cerrado / No disponible',
                             style: TextStyle(
                                 fontStyle: FontStyle.italic,
@@ -532,7 +532,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Row(
+        title: const Row(
           children: [
             Icon(Icons.exit_to_app_rounded, color: Colors.redAccent, size: 28),
             SizedBox(width: 8),
@@ -541,11 +541,11 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
           ],
         ),
         content:
-            Text('¿Estás seguro de que deseas cerrar tu sesión actual?'),
+            const Text('¿Estás seguro de que deseas cerrar tu sesión actual?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancelar',
+            child: const Text('Cancelar',
                 style:
                     TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
           ),
@@ -559,7 +559,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                   borderRadius: BorderRadius.circular(30)),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             ),
-            child: Text('Cerrar Sesión',
+            child: const Text('Cerrar Sesión',
                 style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
@@ -654,7 +654,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                                 _nameCtrl.text.isNotEmpty
                                     ? _nameCtrl.text[0].toUpperCase()
                                     : 'P',
-                                style: TextStyle(
+                                style: const TextStyle(
                                     fontSize: 40,
                                     color: Color(0xFFC89D93),
                                     fontWeight: FontWeight.bold),
@@ -667,7 +667,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                       right: 0,
                       child: GestureDetector(
                         onTap: _isUploading ? null : _showPhotoSourceSheet,
-                        child: CircleAvatar(
+                        child: const CircleAvatar(
                           radius: 18,
                           backgroundColor: Color(0xFFC89D93),
                           child: Icon(Icons.camera_alt,
@@ -676,7 +676,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                       ),
                     ),
                     if (_isUploading)
-                      Positioned.fill(
+                      const Positioned.fill(
                         child: CircleAvatar(
                           backgroundColor: Colors.black26,
                           child: CircularProgressIndicator(color: Colors.white),
@@ -685,7 +685,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                   ],
                 ),
               ),
-              SizedBox(height: 32),
+              const SizedBox(height: 32),
 
               // 2. Formularios de edición
               TextFormField(
@@ -696,7 +696,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                     v!.isEmpty ? 'Ingresa tu nombre completo' : null,
                 onChanged: (v) => setState(() {}),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _phoneCtrl,
                 keyboardType: TextInputType.phone,
@@ -706,7 +706,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                     v!.isEmpty ? 'Ingresa tu número telefónico' : null,
                 onChanged: (v) => setState(() {}),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _bioCtrl,
                 maxLines: 3,
@@ -716,7 +716,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                     v!.isEmpty ? 'Ingresa una breve biografía' : null,
                 onChanged: (v) => setState(() {}),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               Row(
                 children: [
                   Expanded(
@@ -734,7 +734,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                       onChanged: (v) => setState(() {}),
                     ),
                   ),
-                  SizedBox(width: 16),
+                  const SizedBox(width: 16),
                   Expanded(
                     child: TextFormField(
                       controller: _experienceCtrl,
@@ -762,23 +762,23 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                   fillColor: Colors.grey[50],
                 ),
               ),
-              SizedBox(height: 24),
+              const SizedBox(height: 24),
 
               if (_error != null)
                 Text(
                   _error!,
-                  style: TextStyle(
+                  style: const TextStyle(
                       color: Colors.redAccent, fontWeight: FontWeight.w500),
                   textAlign: TextAlign.center,
                 ),
               if (_message != null)
                 Text(
                   _message!,
-                  style: TextStyle(
+                  style: const TextStyle(
                       color: Colors.green, fontWeight: FontWeight.w500),
                   textAlign: TextAlign.center,
                 ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
 
               // Botón guardar cambios
               ElevatedButton(
@@ -793,21 +793,21 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                   elevation: 0,
                 ),
                 child: _isSaving
-                    ? SizedBox(
+                    ? const SizedBox(
                         width: 24,
                         height: 24,
                         child: CircularProgressIndicator(
                             color: Colors.white, strokeWidth: 2),
                       )
-                    : Text('Guardar Cambios',
+                    : const Text('Guardar Cambios',
                         style: TextStyle(
                             fontSize: 16, fontWeight: FontWeight.bold)),
               ),
-              SizedBox(height: 24),
+              const SizedBox(height: 24),
 
               // 3. Accesos rápidos de Prestador
               const Divider(color: Color(0xFFF3EAE8)),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               _buildSettingsTile(
                 icon: Icons.inventory_2_outlined,
                 title: 'Gestionar Mis Servicios',
@@ -839,23 +839,23 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                 title: 'Academia Glow (Capacitación)',
                 onTap: () => Navigator.pushNamed(context, '/provider/academy'),
               ),
-              SizedBox(height: 28),
+              const SizedBox(height: 28),
 
               // Botón cerrar sesión
               OutlinedButton.icon(
                 onPressed: _confirmLogout,
-                icon: Icon(Icons.logout, color: Colors.redAccent),
-                label: Text('Cerrar Sesión',
+                icon: const Icon(Icons.logout, color: Colors.redAccent),
+                label: const Text('Cerrar Sesión',
                     style: TextStyle(
                         color: Colors.redAccent, fontWeight: FontWeight.bold)),
                 style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: Colors.redAccent),
+                  side: const BorderSide(color: Colors.redAccent),
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30)),
                 ),
               ),
-              SizedBox(height: 40),
+              const SizedBox(height: 40),
             ],
           ),
         ),
@@ -871,10 +871,10 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
     return ListTile(
       leading: Icon(icon, color: const Color(0xFFC89D93)),
       title: Text(title,
-          style: TextStyle(
+          style: const TextStyle(
               fontWeight: FontWeight.w500, color: Colors.black87)),
       trailing:
-          Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
+          const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
       contentPadding: const EdgeInsets.symmetric(horizontal: 4.0),
       onTap: onTap,
     );
@@ -885,7 +885,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Text('Tratamiento de Datos Personales',
+        title: const Text('Tratamiento de Datos Personales',
             style: TextStyle(fontWeight: FontWeight.bold)),
         content: const SingleChildScrollView(
           child: Text(
@@ -899,7 +899,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Entendido',
+            child: const Text('Entendido',
                 style: TextStyle(
                     color: Color(0xFFC89D93), fontWeight: FontWeight.bold)),
           ),
@@ -911,7 +911,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
   InputDecoration _inputDecoration(String label, IconData icon) {
     return InputDecoration(
       labelText: label,
-      labelStyle: TextStyle(color: Colors.grey, fontSize: 14),
+      labelStyle: const TextStyle(color: Colors.grey, fontSize: 14),
       prefixIcon: Icon(icon, color: const Color(0xFFC89D93)),
       floatingLabelBehavior: FloatingLabelBehavior.auto,
       filled: true,
@@ -926,7 +926,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(30),
-        borderSide: BorderSide(color: Color(0xFFC89D93), width: 1.5),
+        borderSide: const BorderSide(color: Color(0xFFC89D93), width: 1.5),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
     );

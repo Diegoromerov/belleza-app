@@ -237,7 +237,7 @@ class _DisputesListScreenState extends State<DisputesListScreen> {
                                         const SizedBox(height: 4),
                                         Text(
                                           _formatResolucionText(resolucion),
-                                          style: TextStyle(fontSize: 12, color: AppTheme.success, fontWeight: FontWeight.w600),
+                                          style: const TextStyle(fontSize: 12, color: AppTheme.success, fontWeight: FontWeight.w600),
                                         ),
                                         if (notaRes.isNotEmpty) ...[
                                           const SizedBox(height: 6),
@@ -277,7 +277,7 @@ class _DisputesListScreenState extends State<DisputesListScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.gavel_outlined, size: 64, color: AppTheme.primary.withOpacity(0.5)),
+            Icon(Icons.gavel_outlined, size: 64, color: AppTheme.primary.withValues(alpha: 0.5)),
             const SizedBox(height: 16),
             const Text(
               'Sin disputas de servicio activas',

@@ -81,13 +81,20 @@ exports.createBooking = async (req, res) => {
     // 🔸 Validación de solapamiento de horarios (Collision Check)
     const newStart = new Date(scheduled_at);
     const newEnd = new Date(newStart.getTime() + durationMinutes * 60 * 1000);
-    const dateStr = newStart.toISOString().split('T')[0];
+    
+    // Filtrar citas del mismo día únicamente para optimizar el rendimiento
+    const startOfDay = new Date(newStart.getTime());
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(newStart.getTime());
+    endOfDay.setHours(23, 59, 59, 999);
 
-    // Consulta de solapamiento usando Sequelize
     const overlaps = await Booking.findAll({
       where: {
         provider_id,
-        estado: { [Op.ne]: 'CANCELADA' }
+        estado: { [Op.ne]: 'CANCELADA' },
+        scheduled_at: {
+          [Op.between]: [startOfDay, endOfDay]
+        }
       },
       include: [{
         model: Service,
@@ -96,16 +103,15 @@ exports.createBooking = async (req, res) => {
       }]
     });
 
-    // Filtrar por el mismo día y verificar solapamiento
+    const dateStr = newStart.toISOString().split('T')[0];
+    // Verificar solapamiento en el subconjunto filtrado
     for (const b of overlaps) {
       const bStart = new Date(b.scheduled_at);
-      if (bStart.toISOString().split('T')[0] === dateStr) {
-        const bDuration = parseInt(b.service.duration_minutes);
-        const bEnd = new Date(bStart.getTime() + bDuration * 60 * 1000);
+      const bDuration = parseInt(b.service.duration_minutes);
+      const bEnd = new Date(bStart.getTime() + bDuration * 60 * 1000);
 
-        if (newStart.getTime() < bEnd.getTime() && newEnd.getTime() > bStart.getTime()) {
-          return res.status(409).json({ error: 'El horario seleccionado ya está reservado o entra en conflicto con otra cita' });
-        }
+      if (newStart.getTime() < bEnd.getTime() && newEnd.getTime() > bStart.getTime()) {
+        return res.status(409).json({ error: 'El horario seleccionado ya está reservado o entra en conflicto con otra cita' });
       }
     }
 
@@ -374,11 +380,26 @@ exports.payBooking = async (req, res) => {
       booking.payment_status = 'paid';
       await booking.save({ transaction: t });
 
-      // Decrementar stock de productos
+      // Decrementar stock de productos con validación preventiva (FOR UPDATE)
       if (booking.productos_adicionales && Array.isArray(booking.productos_adicionales)) {
         for (const item of booking.productos_adicionales) {
+          const prodRes = await sequelize.query(
+            'SELECT stock, nombre FROM productos WHERE id = :productId FOR UPDATE;',
+            {
+              replacements: { productId: item.id },
+              type: sequelize.QueryTypes.SELECT,
+              transaction: t
+            }
+          );
+          if (prodRes.length === 0) {
+            throw new Error(`Producto con ID ${item.id} no encontrado.`);
+          }
+          const currentStock = parseInt(prodRes[0].stock) || 0;
+          if (currentStock < item.cantidad) {
+            throw new Error(`Stock insuficiente para el producto: ${prodRes[0].nombre}. Disponible: ${currentStock}, Solicitado: ${item.cantidad}`);
+          }
           await sequelize.query(
-            'UPDATE productos SET stock = stock - :qty WHERE id = :productId AND stock >= :qty;',
+            'UPDATE productos SET stock = stock - :qty WHERE id = :productId;',
             {
               replacements: { qty: item.cantidad, productId: item.id },
               type: sequelize.QueryTypes.UPDATE,
@@ -456,12 +477,27 @@ exports.wompiWebhook = async (req, res) => {
             { where: { id: bookingId }, transaction: t }
           );
 
-          // Decrementar stock de productos
+          // Decrementar stock de productos con validación preventiva (FOR UPDATE)
           const booking = await Booking.findByPk(bookingId, { transaction: t });
           if (booking && booking.productos_adicionales && Array.isArray(booking.productos_adicionales)) {
             for (const item of booking.productos_adicionales) {
+              const prodRes = await sequelize.query(
+                'SELECT stock, nombre FROM productos WHERE id = :productId FOR UPDATE;',
+                {
+                  replacements: { productId: item.id },
+                  type: sequelize.QueryTypes.SELECT,
+                  transaction: t
+                }
+              );
+              if (prodRes.length === 0) {
+                throw new Error(`Producto con ID ${item.id} no encontrado.`);
+              }
+              const currentStock = parseInt(prodRes[0].stock) || 0;
+              if (currentStock < item.cantidad) {
+                throw new Error(`Stock insuficiente para el producto: ${prodRes[0].nombre}. Disponible: ${currentStock}, Solicitado: ${item.cantidad}`);
+              }
               await sequelize.query(
-                'UPDATE productos SET stock = stock - :qty WHERE id = :productId AND stock >= :qty;',
+                'UPDATE productos SET stock = stock - :qty WHERE id = :productId;',
                 {
                   replacements: { qty: item.cantidad, productId: item.id },
                   type: sequelize.QueryTypes.UPDATE,
