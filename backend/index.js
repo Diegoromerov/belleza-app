@@ -44,7 +44,6 @@ const { processAssistantMessage, AI_USER_ID } = require('./src/services/geminiSe
 const { inicializarJobs } = require('./src/jobs/paymentJobs');
 
 const crypto = require('crypto');
-const { WebSocketServer } = require('ws');
 
 let lastDbInitError = null;
 
@@ -1514,7 +1513,7 @@ const initDatabase = async () => {
 // ==========================================
 // 🔹 GESTIÓN DE WEBSOCKETS Y NOTIFICACIONES
 // ==========================================
-const { registerClient, unregisterClient, notifyUserJobUpdate, notifyUserChatMessage } = require('./src/services/websocketService');
+const { registerClient, unregisterClient, notifyUserJobUpdate, notifyUserChatMessage, initWebSocketServer } = require('./src/services/websocketService');
 app.set('notifyUserJobUpdate', notifyUserJobUpdate);
 app.set('notifyUserChatMessage', notifyUserChatMessage);
 
@@ -1533,66 +1532,8 @@ const server = app.listen(PORT, async () => {
   await initDatabase();
   // Iniciar jobs de pagos (maduración, retiros automáticos, conciliación)
   inicializarJobs();
-});
-
-// ==========================================
-// CONFIGURACIÓN DE WEBSOCKET SERVER (Compartiendo puerto con HTTP)
-// ==========================================
-const wss = new WebSocketServer({ server });
-
-wss.on('connection', (ws) => {
-  console.log('🔌 Nuevo cliente WebSocket conectado.');
-  
-  ws.on('message', (message) => {
-    try {
-      const data = JSON.parse(message);
-      if (data.type === 'register' && data.userId) {
-        registerClient(data.userId, ws);
-        ws.send(JSON.stringify({ status: 'registered', userId: data.userId.toString() }));
-      }
-      // Integración de Geolocalización en Tiempo Real vía WebSockets para Tracking
-      if (data.type === 'join_booking_room' && data.bookingId) {
-        ws.bookingId = data.bookingId;
-        ws.role = data.role || 'client';
-        console.log(`📡 Cliente WS unido a la sala del booking_${data.bookingId} como ${ws.role}`);
-        ws.send(JSON.stringify({ type: 'joined_room', bookingId: data.bookingId }));
-      }
-      if (data.type === 'location_update' && data.bookingId && data.latitude && data.longitude) {
-        console.log(`📍 Recibida coordenada GPS de prestador para booking_${data.bookingId}: ${data.latitude}, ${data.longitude}`);
-        
-        // Actualizar base de datos de manera hiper-local
-        if (data.providerId) {
-          pool.query(
-            `UPDATE perfiles_prestador 
-             SET ubicacion = ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography 
-             WHERE id = $3`,
-            [data.latitude, data.longitude, data.providerId]
-          ).catch(e => console.error('Error actualizando ubicación prestador:', e.message));
-        }
-
-        // Retransmitir a todos los clientes que estén en el mismo bookingId
-        const payload = JSON.stringify({
-          type: 'location_received',
-          bookingId: data.bookingId,
-          latitude: data.latitude,
-          longitude: data.longitude,
-          timestamp: new Date().toISOString()
-        });
-
-        wss.clients.forEach((client) => {
-          if (client !== ws && client.readyState === 1 && client.bookingId === data.bookingId) {
-            client.send(payload);
-          }
-        });
-      }
-    } catch (err) {
-      console.error('Error procesando mensaje WebSocket:', err);
-    }
-  });
-  
-  ws.on('close', () => {
-    unregisterClient(ws);
-  });
+  // Inicializar servidor WebSocket compartiendo puerto HTTP
+  initWebSocketServer(server);
 });
 
 // ==========================================
