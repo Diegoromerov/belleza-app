@@ -1480,7 +1480,9 @@ const initDatabase = async () => {
     const needsSeed = checkUser.rows.length === 0;
 
     if (needsSeed) {
-      if (process.env.SEED_DATABASE === 'true') {
+      if (process.env.NODE_ENV === 'production') {
+        console.warn('⚠️  Omitiendo siembra de base de datos: la siembra automática está prohibida en producción.');
+      } else if (process.env.SEED_DATABASE === 'true') {
         const seedPath = path.join(__dirname, 'seed.sql');
         if (fs.existsSync(seedPath)) {
           try {
@@ -1497,8 +1499,12 @@ const initDatabase = async () => {
     }
 
     if (process.env.AUTO_APPROVE_PROVIDERS === 'true') {
-      await pool.query("UPDATE perfiles_prestador SET estatus_verificacion = 'APROBADO';");
-      console.log('✅ Base de datos: Todos los perfiles de prestador han sido aprobados automáticamente.');
+      if (process.env.NODE_ENV === 'production') {
+        console.warn('⚠️  Omitiendo aprobación automática de prestadores: prohibida en entornos de producción.');
+      } else {
+        await pool.query("UPDATE perfiles_prestador SET estatus_verificacion = 'APROBADO';");
+        console.log('✅ Base de datos: Todos los perfiles de prestador han sido aprobados automáticamente.');
+      }
     }
   } catch (error) {
     console.error('❌ Error al inicializar la base de datos:', error);
