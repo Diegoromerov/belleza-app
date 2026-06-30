@@ -273,7 +273,7 @@ class _SupportCenterScreenState extends State<SupportCenterScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.headset_mic_outlined, size: 64, color: AppTheme.primary.withOpacity(0.5)),
+            Icon(Icons.headset_mic_outlined, size: 64, color: AppTheme.primary.withValues(alpha: 0.5)),
             const SizedBox(height: 16),
             const Text(
               '¿Tienes dudas, quejas o reclamos?',

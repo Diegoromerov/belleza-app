@@ -175,7 +175,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text(
+        title: const Text(
           'Configura tu Cuenta',
           style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5),
         ),
@@ -191,7 +191,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
+              const Text(
                 '¿Cómo deseas usar Belleza App?',
                 textAlign: TextAlign.center,
                 style: TextStyle(
@@ -199,21 +199,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     fontWeight: FontWeight.bold,
                     color: Colors.black87),
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               Text(
                 _selectedRole == 'PRESTADOR'
                     ? '¡Completa tu registro y empieza a ganar dinero esta misma semana!'
                     : 'Selecciona tu perfil de acceso para comenzar',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: Colors.grey),
+                style: const TextStyle(fontSize: 14, color: Colors.grey),
               ),
-              SizedBox(height: 28),
+              const SizedBox(height: 28),
               _buildRoleSelectionCards(),
               if (_selectedRole == 'PRESTADOR') ...[
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 _buildProgressStepper(),
               ],
-              SizedBox(height: 24),
+              const SizedBox(height: 24),
               if (_selectedRole == 'PRESTADOR') _buildTestimonialCard(),
               if (_selectedRole == 'CLIENTE') _buildClientView(),
               if (_selectedRole == 'PRESTADOR') _buildProviderForm(),
@@ -223,7 +223,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   child: Text(
                     _error!,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                         color: Colors.redAccent, fontWeight: FontWeight.w500),
                   ),
                 ),
@@ -249,7 +249,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             }),
           ),
         ),
-        SizedBox(width: 16),
+        const SizedBox(width: 16),
         Expanded(
           child: _RoleCard(
             title: 'Prestador',
@@ -269,7 +269,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget _buildClientView() {
     return Column(
       children: [
-        SizedBox(height: 24),
+        const SizedBox(height: 24),
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
@@ -290,13 +290,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ),
                 ),
               ),
-              SizedBox(height: 16),
-              Text(
+              const SizedBox(height: 16),
+              const Text(
                 '¡Hola! Soy Aura, tu guía personal',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              SizedBox(height: 10),
-              Text(
+              const SizedBox(height: 10),
+              const Text(
                 'Te guiaré para encontrar a tu estilista ideal a domicilio, agendar de manera segura y proteger tus pagos con depósito en garantía en segundos.',
                 textAlign: TextAlign.center,
                 style:
@@ -305,11 +305,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ],
           ),
         ),
-        SizedBox(height: 24),
+        const SizedBox(height: 24),
         CheckboxListTile(
           value: _habeasDataAccepted,
           onChanged: (val) => setState(() => _habeasDataAccepted = val ?? false),
-          title: Text(
+          title: const Text(
             'Acepto la Política de Tratamiento de Datos Personales (Habeas Data - Ley 1581 de 2012).',
             style: TextStyle(fontSize: 12, color: Colors.black87),
           ),
@@ -320,7 +320,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         CheckboxListTile(
           value: _terminosAccepted,
           onChanged: (val) => setState(() => _terminosAccepted = val ?? false),
-          title: Text(
+          title: const Text(
             'Acepto los Términos y Condiciones de Uso de la plataforma GlowApp.',
             style: TextStyle(fontSize: 12, color: Colors.black87),
           ),
@@ -328,7 +328,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           contentPadding: EdgeInsets.zero,
           controlAffinity: ListTileControlAffinity.leading,
         ),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         ElevatedButton(
           onPressed: (_isLoading || !_habeasDataAccepted || !_terminosAccepted) ? null : _submitOnboarding,
           style: ElevatedButton.styleFrom(
@@ -342,13 +342,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             minimumSize: const Size(double.infinity, 50),
           ),
           child: _isLoading
-              ? SizedBox(
+              ? const SizedBox(
                   width: 24,
                   height: 24,
                   child: CircularProgressIndicator(
                       color: Colors.white, strokeWidth: 2),
                 )
-              : Text('Comenzar Exploración',
+              : const Text('Comenzar Exploración',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         ),
       ],
@@ -364,13 +364,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const Divider(height: 32, color: Color(0xFFE8D7D3)),
-        Text(
+        const Text(
           'Completa tu perfil profesional',
           style: TextStyle(
               fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
         ),
-        SizedBox(height: 8),
-        Row(
+        const SizedBox(height: 8),
+        const Row(
           children: [
             Icon(Icons.access_time, color: Color(0xFFC89D93)),
             SizedBox(width: 8),
@@ -382,8 +382,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
           ],
         ),
-        SizedBox(height: 8),
-        Row(
+        const SizedBox(height: 8),
+        const Row(
           children: [
             Icon(Icons.account_balance_wallet, color: Color(0xFFC89D93)),
             SizedBox(width: 8),
@@ -395,8 +395,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
           ],
         ),
-        SizedBox(height: 8),
-        Row(
+        const SizedBox(height: 8),
+        const Row(
           children: [
             Icon(Icons.trending_up, color: Color(0xFFC89D93)),
             SizedBox(width: 8),
@@ -408,12 +408,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
           ],
         ),
-        SizedBox(height: 16),
-        Text(
+        const SizedBox(height: 16),
+        const Text(
           'La ley colombiana nos pide verificar tu formación profesional — ¡es por tu seguridad y la de tus clientes!',
           style: TextStyle(fontSize: 11, color: Colors.grey, height: 1.3),
         ),
-        SizedBox(height: 20),
+        const SizedBox(height: 20),
 
         // Carga de Cédula
         _buildDocumentUploadTile(
@@ -423,7 +423,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           isUploading: _uploadingDoc,
           onTap: () => _pickAndUploadDocument('doc'),
         ),
-        SizedBox(height: 12),
+        const SizedBox(height: 12),
 
         // Carga de RUT
         _buildDocumentUploadTile(
@@ -433,7 +433,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           isUploading: _uploadingRut,
           onTap: () => _pickAndUploadDocument('rut'),
         ),
-        SizedBox(height: 12),
+        const SizedBox(height: 12),
 
         // Carga de Certificado de Bioseguridad
         _buildDocumentUploadTile(
@@ -443,7 +443,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           isUploading: _uploadingCert,
           onTap: () => _pickAndUploadDocument('cert'),
         ),
-        SizedBox(height: 24),
+        const SizedBox(height: 24),
 
         // Carta informativa de comisiones (Transparencia Financiera)
         Container(
@@ -453,7 +453,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: const Color(0xFFF3EAE8)),
           ),
-          child: Row(
+          child: const Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Icon(Icons.info_outline, color: Color(0xFFC89D93), size: 24),
@@ -481,14 +481,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ],
           ),
         ),
-        SizedBox(height: 20),
+        const SizedBox(height: 20),
 
         // Checkbox Habeas Data
         CheckboxListTile(
           value: _habeasDataAccepted,
           onChanged: (val) =>
               setState(() => _habeasDataAccepted = val ?? false),
-          title: Text(
+          title: const Text(
             'Acepto la política de protección de datos (Habeas Data - Ley 1581 de 2012) de la aplicación Belleza App.',
             style: TextStyle(fontSize: 12, color: Colors.black87),
           ),
@@ -500,7 +500,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           value: _terminosAccepted,
           onChanged: (val) =>
               setState(() => _terminosAccepted = val ?? false),
-          title: Text(
+          title: const Text(
             'Acepto los Términos y Condiciones y el Contrato de Prestación de Servicios de GlowApp.',
             style: TextStyle(fontSize: 12, color: Colors.black87),
           ),
@@ -508,14 +508,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           contentPadding: EdgeInsets.zero,
           controlAffinity: ListTileControlAffinity.leading,
         ),
-        Padding(
+        const Padding(
           padding: EdgeInsets.only(left: 16, top: 4),
           child: Text(
             'Sin contratos de permanencia. Puedes pausar o eliminar tu cuenta en cualquier momento.',
             style: TextStyle(fontSize: 11, color: Colors.grey, height: 1.3),
           ),
         ),
-        SizedBox(height: 28),
+        const SizedBox(height: 28),
 
         ElevatedButton(
           onPressed:
@@ -531,16 +531,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             minimumSize: const Size(double.infinity, 50),
           ),
           child: _isLoading
-              ? SizedBox(
+              ? const SizedBox(
                   width: 24,
                   height: 24,
                   child: CircularProgressIndicator(
                       color: Colors.white, strokeWidth: 2),
                 )
-              : Text('Enviar para Verificación',
+              : const Text('Enviar para Verificación',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         ),
-        Padding(
+        const Padding(
           padding: EdgeInsets.only(top: 6),
           child: Text(
             'Serás redirigido a tu panel de seguimiento',
@@ -548,8 +548,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             style: TextStyle(fontSize: 10, color: Colors.grey),
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -565,7 +565,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ],
           ),
         ),
-        Padding(
+        const Padding(
           padding: EdgeInsets.only(top: 4, left: 16, right: 16),
           child: Text(
             'Si necesitamos ajustes en tus documentos, te informaremos con instrucciones claras para resubir.',
@@ -573,19 +573,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             style: TextStyle(fontSize: 10, color: Colors.grey),
           ),
         ),
-        SizedBox(height: 12),
+        const SizedBox(height: 12),
         OutlinedButton(
           onPressed: _isLoading ? null : _saveDraft,
           style: OutlinedButton.styleFrom(
             foregroundColor: const Color(0xFFC89D93),
-            side: BorderSide(color: Color(0xFFC89D93)),
+            side: const BorderSide(color: Color(0xFFC89D93)),
             padding: const EdgeInsets.symmetric(vertical: 16),
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
             elevation: 0,
             minimumSize: const Size(double.infinity, 50),
           ),
-          child: Text('Guardar borrador y completar más tarde',
+          child: const Text('Guardar borrador y completar más tarde',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         ),
       ],
@@ -649,7 +649,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
           ),
         ),
-        SizedBox(height: 4),
+        const SizedBox(height: 4),
         Text(
           text,
           style: TextStyle(
@@ -677,7 +677,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             children: [
               Row(
                 children: [
-                  CircleAvatar(
+                  const CircleAvatar(
                     backgroundColor: Color(0xFFC89D93),
                     radius: 20,
                     child: Text(
@@ -688,7 +688,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       ),
                     ),
                   ),
-                  SizedBox(width: 12),
+                  const SizedBox(width: 12),
                   const Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -714,7 +714,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   Row(
                     children: List.generate(
                       5,
-                      (index) => Icon(
+                      (index) => const Icon(
                         Icons.star,
                         color: Color(0xFFD4AF37),
                         size: 16,
@@ -723,8 +723,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ),
                 ],
               ),
-              SizedBox(height: 12),
-              Text(
+              const SizedBox(height: 12),
+              const Text(
                 '"Desde que me registré en GlowApp, organicé mis horarios y mis ingresos crecieron un 40% en el primer mes. Los pagos son puntuales cada semana y el soporte siempre responde rápido. ¡Es como tener mi propio salón sin pagar arriendo!"',
                 style: TextStyle(
                   fontSize: 13,
@@ -736,14 +736,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ],
           ),
         ),
-        SizedBox(height: 8),
-        Text(
+        const SizedBox(height: 8),
+        const Text(
           'Resultado basado en prestadoras activas durante la fase de prueba.',
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 10, color: Colors.grey),
         ),
-        SizedBox(height: 16),
-        Row(
+        const SizedBox(height: 16),
+        const Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             Row(
@@ -768,7 +768,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
           ],
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
       ],
     );
   }
@@ -804,37 +804,37 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               color: isUploaded ? Colors.green : const Color(0xFFC89D93),
               size: 28,
             ),
-            SizedBox(width: 16),
+            const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     title,
-                    style: TextStyle(
+                    style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: Colors.black87),
                   ),
-                  SizedBox(height: 2),
+                  const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: TextStyle(fontSize: 11, color: Colors.grey),
+                    style: const TextStyle(fontSize: 11, color: Colors.grey),
                   ),
                 ],
               ),
             ),
             if (isUploading)
-              SizedBox(
+              const SizedBox(
                 width: 20,
                 height: 20,
                 child: CircularProgressIndicator(
                     color: Color(0xFFC89D93), strokeWidth: 2),
               )
             else if (isUploaded)
-              Row(
+              const Row(
                 mainAxisSize: MainAxisSize.min,
-                children: const [
+                children: [
                   Icon(Icons.check_circle, color: Colors.green, size: 16),
                   SizedBox(width: 4),
                   Text('Cargado',
@@ -845,7 +845,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ],
               )
             else
-              Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
+              const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
           ],
         ),
       ),
@@ -892,7 +892,7 @@ class _RoleCard extends StatelessWidget {
               size: 40,
               color: isSelected ? const Color(0xFFC89D93) : Colors.grey,
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Text(
               title,
               style: TextStyle(
@@ -901,7 +901,7 @@ class _RoleCard extends StatelessWidget {
                 color: isSelected ? Colors.black87 : Colors.grey[700],
               ),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
               subtitle,
               textAlign: TextAlign.center,

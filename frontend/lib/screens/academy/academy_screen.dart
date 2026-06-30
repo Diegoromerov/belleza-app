@@ -43,7 +43,7 @@ class _AcademyScreenState extends State<AcademyScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final themeColor = const Color(0xFFC89D93);
+    const themeColor = Color(0xFFC89D93);
 
     return Scaffold(
       appBar: AppBar(
@@ -125,7 +125,7 @@ class _AcademyScreenState extends State<AcademyScreen> {
                                         Container(
                                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                           decoration: BoxDecoration(
-                                            color: themeColor.withOpacity(0.15),
+                                            color: themeColor.withValues(alpha: 0.15),
                                             borderRadius: BorderRadius.circular(20),
                                           ),
                                           child: Text(
@@ -137,7 +137,7 @@ class _AcademyScreenState extends State<AcademyScreen> {
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                             decoration: BoxDecoration(
-                                              color: Colors.green.withOpacity(0.15),
+                                              color: Colors.green.withValues(alpha: 0.15),
                                               borderRadius: BorderRadius.circular(20),
                                             ),
                                             child: const Row(

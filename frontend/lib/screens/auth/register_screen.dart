@@ -106,7 +106,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
@@ -128,7 +128,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   Align(
                     alignment: Alignment.centerLeft,
                     child: IconButton(
-                      icon: Icon(Icons.arrow_back_ios_new,
+                      icon: const Icon(Icons.arrow_back_ios_new,
                           color: Color(0xFF8A7A77), size: 20),
                       onPressed: () => Navigator.pop(context),
                     ),
@@ -138,8 +138,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   Hero(
                     tag: 'logo',
                     child: Container(
-                      padding: EdgeInsets.all(12),
-                      decoration: BoxDecoration(
+                      padding: const EdgeInsets.all(12),
+                      decoration: const BoxDecoration(
                           color: Colors.white,
                           shape: BoxShape.circle,
                           boxShadow: [
@@ -149,12 +149,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               offset: Offset(0, 8),
                             )
                           ]),
-                      child: Icon(Icons.face_retouching_natural,
+                      child: const Icon(Icons.face_retouching_natural,
                           size: 48, color: Color(0xFFC89D93)),
                     ),
                   ),
-                  SizedBox(height: 12),
-                  Text(
+                  const SizedBox(height: 12),
+                  const Text(
                     'Crear Cuenta',
                     style: TextStyle(
                       fontSize: 28,
@@ -163,8 +163,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       letterSpacing: -0.8,
                     ),
                   ),
-                  SizedBox(height: 4),
-                  Text(
+                  const SizedBox(height: 4),
+                  const Text(
                     'Únete a nuestra comunidad de belleza',
                     style: TextStyle(
                       fontSize: 13,
@@ -172,7 +172,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  SizedBox(height: 24),
+                  const SizedBox(height: 24),
 
                   // Tarjeta Glassmorphic
                   ClipRRect(
@@ -182,17 +182,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(28.0),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.85),
+                          color: Colors.white.withValues(alpha: 0.85),
                           borderRadius: BorderRadius.circular(28),
                           border: Border.all(
-                            color: Colors.white.withOpacity(0.6),
+                            color: Colors.white.withValues(alpha: 0.6),
                             width: 1.5,
                           ),
-                          boxShadow: [
+                          boxShadow: const [
                             BoxShadow(
-                              color: const Color(0x0A000000),
+                              color: Color(0x0A000000),
                               blurRadius: 24,
-                              offset: const Offset(0, 12),
+                              offset: Offset(0, 12),
                             ),
                           ],
                         ),
@@ -201,7 +201,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              Text(
+                              const Text(
                                 'Tipo de Usuario',
                                 style: TextStyle(
                                   fontSize: 15,
@@ -209,14 +209,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   color: Color(0xFF4A3E3D),
                                 ),
                               ),
-                              SizedBox(height: 12),
+                              const SizedBox(height: 12),
 
                               // Selector de Rol Premium
                               Container(
                                 padding: const EdgeInsets.all(4),
                                 decoration: BoxDecoration(
                                   color:
-                                      const Color(0xFFEADCD6).withOpacity(0.5),
+                                      const Color(0xFFEADCD6).withValues(alpha: 0.5),
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                                 child: Row(
@@ -308,7 +308,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   ],
                                 ),
                               ),
-                              SizedBox(height: 12),
+                              const SizedBox(height: 12),
 
                               // Caja informativa de rol
                               AnimatedContainer(
@@ -324,14 +324,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   _selectedRole == 'CLIENTE'
                                       ? '✨ Agenda citas, encuentra estilistas locales en Fontibón y califica los servicios recibidos.'
                                       : '💼 Ofrece tus servicios, fija tus precios y horarios. Requiere cargar tus documentos (Cédula, RUT, Certificaciones) en el siguiente paso.',
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     fontSize: 12,
                                     color: Color(0xFF8A7A77),
                                     height: 1.3,
                                   ),
                                 ),
                               ),
-                              SizedBox(height: 20),
+                              const SizedBox(height: 20),
 
                               // Form Fields
                               TextFormField(
@@ -341,9 +341,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 validator: (v) => v!.isEmpty
                                     ? 'Ingresa tu nombre completo'
                                     : null,
-                                style: TextStyle(fontSize: 14),
+                                style: const TextStyle(fontSize: 14),
                               ),
-                              SizedBox(height: 14),
+                              const SizedBox(height: 14),
 
                               TextFormField(
                                 controller: _emailCtrl,
@@ -352,9 +352,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     'Correo electrónico', Icons.email_outlined),
                                 validator: (v) =>
                                     v!.isEmpty ? 'Ingresa tu correo' : null,
-                                style: TextStyle(fontSize: 14),
+                                style: const TextStyle(fontSize: 14),
                               ),
-                              SizedBox(height: 14),
+                              const SizedBox(height: 14),
 
                               TextFormField(
                                 controller: _passCtrl,
@@ -377,9 +377,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 validator: (v) => v!.length < 6
                                     ? 'Mínimo 6 caracteres'
                                     : null,
-                                style: TextStyle(fontSize: 14),
+                                style: const TextStyle(fontSize: 14),
                               ),
-                              SizedBox(height: 14),
+                              const SizedBox(height: 14),
 
                               TextFormField(
                                 controller: _phoneCtrl,
@@ -387,9 +387,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 decoration: _inputDecoration(
                                     'Teléfono (opcional)',
                                     Icons.phone_outlined),
-                                style: TextStyle(fontSize: 14),
+                                style: const TextStyle(fontSize: 14),
                               ),
-                              SizedBox(height: 24),
+                              const SizedBox(height: 24),
 
                               if (_error != null)
                                 Padding(
@@ -397,7 +397,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   child: Text(
                                     _error!,
                                     textAlign: TextAlign.center,
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                         color: Colors.redAccent,
                                         fontWeight: FontWeight.w600,
                                         fontSize: 13),
@@ -420,14 +420,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   shadowColor: const Color(0x3FC89D93),
                                 ),
                                 child: _isLoading
-                                    ? SizedBox(
+                                    ? const SizedBox(
                                         width: 24,
                                         height: 24,
                                         child: CircularProgressIndicator(
                                             color: Colors.white,
                                             strokeWidth: 2.5),
                                       )
-                                    : Text(
+                                    : const Text(
                                         'Crear Cuenta',
                                         style: TextStyle(
                                             fontSize: 16,
@@ -441,7 +441,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                     ),
                   ),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                 ],
               ),
             ),
@@ -455,23 +455,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
       {Widget? suffixIcon}) {
     return InputDecoration(
       labelText: label,
-      labelStyle: TextStyle(color: Color(0xFF8A7A77), fontSize: 14),
+      labelStyle: const TextStyle(color: Color(0xFF8A7A77), fontSize: 14),
       prefixIcon: Icon(icon, color: const Color(0xFFC89D93), size: 20),
       suffixIcon: suffixIcon,
       floatingLabelBehavior: FloatingLabelBehavior.auto,
       filled: true,
-      fillColor: Colors.white.withOpacity(0.7),
+      fillColor: Colors.white.withValues(alpha: 0.7),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: Color(0xFFEADCD6)),
+        borderSide: const BorderSide(color: Color(0xFFEADCD6)),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: Color(0xFFEADCD6)),
+        borderSide: const BorderSide(color: Color(0xFFEADCD6)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: Color(0xFFC89D93), width: 1.5),
+        borderSide: const BorderSide(color: Color(0xFFC89D93), width: 1.5),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
     );
