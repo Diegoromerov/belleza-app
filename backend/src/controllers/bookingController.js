@@ -377,156 +377,81 @@ exports.payBooking = async (req, res) => {
       return res.status(400).json({ error: `La cita no se encuentra en estado PENDIENTE_PAGO. Estado actual: ${booking.estado}` });
     }
 
-    // 1. Obtener llaves de Wompi de variables de entorno o usar llaves públicas de test
-    const publicKey = process.env.WOMPI_PUBLIC_KEY || 'pub_test_QzY4c5k8M9P1wX312Y5pYxO825yQxTOW';
-    const privateKey = process.env.WOMPI_PRIVATE_KEY || 'prv_test_QzY4c5k8M9P1wX312Y5pYxO825yQxTOW';
+    await new Promise(resolve => setTimeout(resolve, 1500));
 
-    // 2. Obtener acceptance_token de Wompi Merchant
-    let acceptanceToken = '';
-    try {
-      const merchantRes = await fetch(`https://sandbox.wompi.co/v1/merchants/${publicKey}`);
-      const merchantData = await merchantRes.json();
-      acceptanceToken = merchantData?.data?.presigned_acceptance?.acceptance_token || '';
-    } catch (mErr) {
-      console.warn('⚠️ No se pudo obtener el acceptance_token de Wompi Sandbox, intentando continuar:', mErr.message);
-    }
+    const referenceToken = 'wompi_sim_' + Math.random().toString(36).substring(2, 11).toUpperCase();
 
-    // 3. Configurar método de pago para Wompi
-    let paymentMethodPayload = {};
-    if (method === 'CARD') {
-      paymentMethodPayload = {
-        type: 'CARD',
-        token: req.body.token || 'tok_test_a_transaction_approved', // Token aprobado por defecto
-        installments: 1
-      };
-    } else { // NEQUI
-      paymentMethodPayload = {
-        type: 'NEQUI',
-        phone_number: req.body.phone_number || '3001111111' // Celular aprobado por defecto
-      };
-    }
+    // Transacción nativa usando Sequelize (Simulando Wompi de forma local e inmediata)
+    const result = await sequelize.transaction(async (t) => {
+      // 1. Actualizar el estado de la cita
+      booking.estado = 'CONFIRMADA';
+      booking.payment_status = 'paid';
+      await booking.save({ transaction: t });
 
-    // 4. Crear la transacción en el Sandbox de Wompi
-    const referenceToken = 'wompi_ref_' + Math.random().toString(36).substring(2, 11).toUpperCase();
-    const amountInCents = Math.round(parseFloat(booking.valor_bruto) * 100);
-    const customerEmail = req.user.email || 'cliente@beautyapp.com';
-
-    let wompiTxId = '';
-    let wompiTxStatus = 'PENDING';
-
-    try {
-      const txRes = await fetch('https://sandbox.wompi.co/v1/transactions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${privateKey}`
-        },
-        body: JSON.stringify({
-          amount_in_cents: amountInCents,
-          currency: 'COP',
-          customer_email: customerEmail,
-          payment_method: paymentMethodPayload,
-          reference: bookingId,
-          acceptance_token: acceptanceToken
-        })
-      });
-
-      const txData = await txRes.json();
-      if (txData && txData.data) {
-        wompiTxId = txData.data.id || '';
-        wompiTxStatus = txData.data.status || 'PENDING';
-        console.log(`📡 [WOMPI SANDBOX API] Transacción creada. ID: ${wompiTxId}, Estado: ${wompiTxStatus}`);
-      } else {
-        throw new Error(txData.error?.reason || 'Error al conectar con la API de Wompi.');
-      }
-    } catch (apiErr) {
-      console.error('❌ Error llamando a Wompi API:', apiErr.message);
-      return res.status(402).json({ error: `La pasarela de pago Wompi rechazó la transacción: ${apiErr.message}` });
-    }
-
-    // 5. Procesar localmente si fue aprobada inmediatamente (como tarjeta aprobada)
-    if (wompiTxStatus === 'APPROVED') {
-      const result = await sequelize.transaction(async (t) => {
-        // Actualizar el estado de la cita
-        booking.estado = 'CONFIRMADA';
-        booking.payment_status = 'paid';
-        await booking.save({ transaction: t });
-
-        // Decrementar stock de productos con validación preventiva (FOR UPDATE)
-        if (booking.productos_adicionales && Array.isArray(booking.productos_adicionales)) {
-          for (const item of booking.productos_adicionales) {
-            const prodRes = await sequelize.query(
-              'SELECT stock, nombre FROM productos WHERE id = :productId FOR UPDATE;',
-              {
-                replacements: { productId: item.id },
-                type: sequelize.QueryTypes.SELECT,
-                transaction: t
-              }
-            );
-            if (prodRes.length === 0) {
-              throw new Error(`Producto con ID ${item.id} no encontrado.`);
+      // Decrementar stock de productos con validación preventiva (FOR UPDATE)
+      if (booking.productos_adicionales && Array.isArray(booking.productos_adicionales)) {
+        for (const item of booking.productos_adicionales) {
+          const prodRes = await sequelize.query(
+            'SELECT stock, nombre FROM productos WHERE id = :productId FOR UPDATE;',
+            {
+              replacements: { productId: item.id },
+              type: sequelize.QueryTypes.SELECT,
+              transaction: t
             }
-            const currentStock = parseInt(prodRes[0].stock) || 0;
-            if (currentStock < item.cantidad) {
-              throw new Error(`Stock insuficiente para el producto: ${prodRes[0].nombre}. Disponible: ${currentStock}, Solicitado: ${item.cantidad}`);
-            }
-            await sequelize.query(
-              'UPDATE productos SET stock = stock - :qty WHERE id = :productId;',
-              {
-                replacements: { qty: item.cantidad, productId: item.id },
-                type: sequelize.QueryTypes.UPDATE,
-                transaction: t
-              }
-            );
+          );
+          if (prodRes.length === 0) {
+            throw new Error(`Producto con ID ${item.id} no encontrado.`);
           }
+          const currentStock = parseInt(prodRes[0].stock) || 0;
+          if (currentStock < item.cantidad) {
+            throw new Error(`Stock insuficiente para el producto: ${prodRes[0].nombre}. Disponible: ${currentStock}, Solicitado: ${item.cantidad}`);
+          }
+          await sequelize.query(
+            'UPDATE productos SET stock = stock - :qty WHERE id = :productId;',
+            {
+              replacements: { qty: item.cantidad, productId: item.id },
+              type: sequelize.QueryTypes.UPDATE,
+              transaction: t
+            }
+          );
         }
+      }
 
-        // Registrar la transacción
-        const [tx, created] = await Transaction.findOrCreate({
-          where: { booking_id: bookingId },
-          defaults: {
-            amount: booking.valor_bruto,
-            status: 'paid',
-            payment_method: method,
-            external_id: wompiTxId || referenceToken
-          },
-          transaction: t
-        });
-
-        if (!created) {
-          tx.amount = booking.valor_bruto;
-          tx.status = 'paid';
-          tx.payment_method = method;
-          tx.external_id = wompiTxId || referenceToken;
-          await tx.save({ transaction: t });
-        }
-
-        return {
-          booking_id: bookingId,
-          reference: referenceToken,
-          amount: parseFloat(booking.valor_bruto),
+      // 2. Registrar la transacción
+      const [tx, created] = await Transaction.findOrCreate({
+        where: { booking_id: bookingId },
+        defaults: {
+          amount: booking.valor_bruto,
+          status: 'paid',
           payment_method: method,
-          wompi_id: wompiTxId
-        };
+          external_id: referenceToken
+        },
+        transaction: t
       });
 
-      console.log(`\n💳 [WOMPI SANDBOX SUCCESS] Pago completado con éxito. Cita: ${bookingId}. ID Wompi: ${wompiTxId}`);
+      if (!created) {
+        tx.amount = booking.valor_bruto;
+        tx.status = 'paid';
+        tx.payment_method = method;
+        tx.external_id = referenceToken;
+        await tx.save({ transaction: t });
+      }
 
-      return res.json({
-        success: true,
-        message: 'Pago procesado y verificado con éxito por Wompi Sandbox',
-        status: 'APPROVED',
-        ...result
-      });
-    }
+      return {
+        booking_id: bookingId,
+        reference: referenceToken,
+        amount: parseFloat(booking.valor_bruto),
+        payment_method: method
+      };
+    });
 
-    // 6. Si quedó PENDIENTE (flujo normal de Nequi push)
+    console.log(`\n💳 [WOMPI SIMULATOR SUCCESS] Pago completado con éxito de forma local. Cita: ${bookingId}. Referencia: ${referenceToken}`);
+
     res.json({
       success: true,
-      message: 'Pago enviado a Wompi. Pendiente por confirmación del usuario.',
-      status: wompiTxStatus,
-      wompi_id: wompiTxId,
-      booking_id: bookingId
+      message: 'Pago procesado y verificado con éxito por el simulador de Wompi',
+      status: 'APPROVED',
+      ...result
     });
 
   } catch (error) {
