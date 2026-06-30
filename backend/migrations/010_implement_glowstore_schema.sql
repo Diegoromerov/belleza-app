@@ -1,5 +1,8 @@
 -- Migración 010: Esquema técnico de GlowStore
 
+-- 0. Registrar nuevo tipo de transacción de billetera para productos
+ALTER TYPE tipo_wallet_tx ADD VALUE IF NOT EXISTS 'CREDITO_PRODUCTO';
+
 -- 1. Modificar la tabla productos para agregar columnas de visibilidad y precios diferenciados
 ALTER TABLE productos 
   ADD COLUMN IF NOT EXISTS tipo_visibilidad VARCHAR(20) DEFAULT 'PUBLICO' CHECK (tipo_visibilidad IN ('PUBLICO', 'INSUMO_PRESTADOR')),
@@ -17,11 +20,12 @@ UPDATE productos SET
 WHERE tipo_visibilidad = 'PUBLICO' AND precio_al_publico = 0.00;
 
 -- 3. Insertar insumos exclusivos para prestadores (no visibles para clientes)
-INSERT INTO productos (nombre, descripcion, precio_al_publico, precio_con_reserva, precio_prestador, comision_prestador, stock, imagen_url, tag_especialidad, tipo_visibilidad)
+INSERT INTO productos (nombre, descripcion, precio, precio_al_publico, precio_con_reserva, precio_prestador, comision_prestador, stock, imagen_url, tag_especialidad, tipo_visibilidad)
 VALUES 
   (
     'Cera Elástica de Miel (1kg)', 
     'Cera elástica profesional con extracto de miel orgánica. Ideal para depilación de zonas sensibles, alta elasticidad y bajo punto de fusión.', 
+    45000.00,
     0.00, 
     0.00, 
     45000.00, 
@@ -34,6 +38,7 @@ VALUES
   (
     'Kit Pestañas Premium (Melted)', 
     'Kit completo de pestañas pelo a pelo con adhesivo quirúrgico de secado rápido, removedor en gel y pinzas de precisión.', 
+    90000.00,
     0.00, 
     0.00, 
     90000.00, 
