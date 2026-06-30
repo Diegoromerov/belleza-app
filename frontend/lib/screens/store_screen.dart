@@ -203,6 +203,38 @@ class _StoreScreenState extends State<StoreScreen> {
                               ),
                             ),
                           ),
+                          // Badge de Visibilidad del Producto
+                          Positioned(
+                            top: 12,
+                            left: 12,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: (product['tipo_visibilidad'] == 'INSUMO_PRESTADOR')
+                                    ? const Color(0xFFDC2626) // Rojo elegante para Insumos
+                                    : const Color(0xFF059669), // Verde esmeralda para Público
+                                borderRadius: BorderRadius.circular(8),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.1),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Text(
+                                (product['tipo_visibilidad'] == 'INSUMO_PRESTADOR')
+                                    ? 'PROFESIONAL / INSUMO'
+                                    : 'VENTA AL PÚBLICO',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                       Padding(
@@ -1093,6 +1125,31 @@ class _StoreScreenState extends State<StoreScreen> {
                         ),
                       ),
                       child: const Text('Vista Rápida', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ),
+                // Badge de Visibilidad del Producto
+                Positioned(
+                  top: 8,
+                  left: 8,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: (product['tipo_visibilidad'] == 'INSUMO_PRESTADOR')
+                          ? const Color(0xFFDC2626) // Rojo elegante para Insumos
+                          : const Color(0xFF059669), // Verde esmeralda para Público
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      (product['tipo_visibilidad'] == 'INSUMO_PRESTADOR')
+                          ? 'PROFESIONAL'
+                          : 'PÚBLICO',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 8,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
+                      ),
                     ),
                   ),
                 ),
