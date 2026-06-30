@@ -1,5 +1,5 @@
 // backend/scratch/test_glowstore.js
-const { pool } = require('../config/db');
+const { pool } = require('../src/config/db');
 const fs = require('fs');
 const path = require('path');
 
@@ -14,35 +14,84 @@ async function runTests() {
     await pool.query(sqlContent);
     console.log('✅ Migración aplicada exitosamente.');
 
-    // 2. Limpiar registros de prueba anteriores
-    console.log('2. Limpiando datos viejos de prueba...');
+    // 2. Resolver/Crear Client, Provider y Service dinámicamente
+    console.log('2. Resolviendo entidades de prueba...');
+    
+    // Cliente
+    let clientRes = await pool.query("SELECT id FROM usuarios WHERE rol = 'CLIENTE' LIMIT 1;");
+    if (clientRes.rows.length === 0) {
+      clientRes = await pool.query("SELECT id FROM usuarios LIMIT 1;");
+    }
+    let clientId;
+    if (clientRes.rows.length === 0) {
+      const newClient = await pool.query(
+        "INSERT INTO usuarios (nombre, email, password, telefono, rol) VALUES ('Cliente Demo', 'cliente_demo@glowapp.com', 'hash', '123456', 'CLIENTE') RETURNING id;"
+      );
+      clientId = newClient.rows[0].id;
+    } else {
+      clientId = clientRes.rows[0].id;
+    }
+
+    // Proveedor
+    let providerRes = await pool.query("SELECT id FROM perfiles_prestador LIMIT 1;");
+    let providerId;
+    if (providerRes.rows.length === 0) {
+      const newProvUser = await pool.query(
+        "INSERT INTO usuarios (nombre, email, password, telefono, rol) VALUES ('Ana Prestadora', 'ana_prestadora@glowapp.com', 'hash', '654321', 'PRESTADOR') RETURNING id;"
+      );
+      providerId = newProvUser.rows[0].id;
+      await pool.query(
+        "INSERT INTO perfiles_prestador (id, business_name, description, rating_avg, rating_count) VALUES ($1, 'Ana Peluquería', 'Estilista profesional', 5.0, 1);",
+        [providerId]
+      );
+    } else {
+      providerId = providerRes.rows[0].id;
+    }
+
+    // Servicio
+    let serviceRes = await pool.query("SELECT id FROM services LIMIT 1;");
+    let serviceId;
+    if (serviceRes.rows.length === 0) {
+      const newService = await pool.query(
+        "INSERT INTO services (id, provider_id, name, description, duration_minutes, price, category) VALUES (gen_random_uuid(), $1, 'Manicura Semipermanente', 'Servicio de uñas profesional', 60, 55000.00, 'Uñas') RETURNING id;",
+        [providerId]
+      );
+      serviceId = newService.rows[0].id;
+    } else {
+      serviceId = serviceRes.rows[0].id;
+    }
+
+    console.log(`✅ Entidades de prueba resueltas: Cliente ID ${clientId}, Proveedor ID ${providerId}, Servicio ID ${serviceId}`);
+
+    // Limpiar registros de prueba anteriores
+    console.log('3. Limpiando datos viejos de prueba...');
     await pool.query("DELETE FROM detalles_pedido_tienda;");
     await pool.query("DELETE FROM pedidos_tienda;");
     await pool.query("DELETE FROM bookings WHERE id = 'b0000000-0000-0000-0000-000000000999';");
-    await pool.query("DELETE FROM provider_wallet WHERE provider_id = 104;");
-    await pool.query("DELETE FROM wallet_transactions WHERE provider_id = 104;");
+    await pool.query("DELETE FROM provider_wallet WHERE provider_id = $1;", [providerId]);
+    await pool.query("DELETE FROM wallet_transactions WHERE provider_id = $1;", [providerId]);
     console.log('✅ Base de datos limpia para pruebas.');
 
-    // 3. Crear una cita de prueba (Booking) asociada a la proveedora Ana (ID 104) y cliente Demo (ID 1)
-    console.log('3. Creando cita de prueba...');
+    // 4. Crear una cita de prueba (Booking) asociada al proveedor y cliente
+    console.log('4. Creando cita de prueba...');
     await pool.query(`
       INSERT INTO bookings (id, client_id, provider_id, service_id, scheduled_at, valor_bruto, estado, payment_status)
       VALUES (
         'b0000000-0000-0000-0000-000000000999', 
-        1, 
-        104, 
-        '00000000-0000-0000-0000-000000000402', 
+        $1, 
+        $2, 
+        $3, 
         NOW(), 
         55000.00, 
         'CONFIRMADA', 
         'unpaid'
       )
       ON CONFLICT DO NOTHING;
-    `);
+    `, [clientId, providerId, serviceId]);
     console.log('✅ Cita de prueba creada.');
 
-    // 4. Test de Catálogo para Cliente
-    console.log('4. Probando filtro de catálogo para Clientes...');
+    // 5. Test de Catálogo para Cliente
+    console.log('5. Probando filtro de catálogo para Clientes...');
     const clientCatalog = await pool.query(
       "SELECT id, nombre, tipo_visibilidad FROM productos WHERE tipo_visibilidad = 'PUBLICO';"
     );
@@ -52,8 +101,8 @@ async function runTests() {
     }
     console.log(`✅ TEST EXITOSO: Clientes ven ${clientCatalog.rows.length} productos y 0 insumos.`);
 
-    // 5. Test de Catálogo para Prestador
-    console.log('5. Probando catálogo para Prestador (debe incluir insumos)...');
+    // 6. Test de Catálogo para Prestador
+    console.log('6. Probando catálogo para Prestador (debe incluir insumos)...');
     const providerCatalog = await pool.query(
       "SELECT id, nombre, tipo_visibilidad FROM productos;"
     );
@@ -63,16 +112,24 @@ async function runTests() {
     }
     console.log(`✅ TEST EXITOSO: Prestadores ven todos los ${providerCatalog.rows.length} productos (incluye ${providerInsumos.length} insumos).`);
 
-    // 6. Obtener producto público para simular compra
-    const prodRes = await pool.query("SELECT id, stock, precio_con_reserva, comision_prestador FROM productos WHERE nombre = 'Shampoo de Argán Orgánico';");
-    const shampoo = prodRes.rows[0];
-    const stockAntes = shampoo.stock;
-    console.log(`ℹ️ Shampoo de Argán - Stock inicial: ${stockAntes}, Precio con Reserva: $${shampoo.precio_con_reserva}, Comisión: $${shampoo.comision_prestador}`);
+    // 7. Obtener producto público para simular compra (asegurar que exista o crearlo)
+    let prodRes = await pool.query("SELECT id, stock, precio_con_reserva, comision_prestador FROM productos WHERE nombre = 'Shampoo de Argán Orgánico';");
+    if (prodRes.rows.length === 0) {
+      // Intentar tomar cualquier producto público
+      prodRes = await pool.query("SELECT id, stock, precio_con_reserva, comision_prestador FROM productos WHERE tipo_visibilidad = 'PUBLICO' LIMIT 1;");
+    }
+    if (prodRes.rows.length === 0) {
+      throw new Error('❌ No hay productos públicos en la tabla para ejecutar el test de checkout.');
+    }
+    
+    const product = prodRes.rows[0];
+    const stockAntes = product.stock;
+    console.log(`ℹ️ Producto Seleccionado - Stock inicial: ${stockAntes}, Precio con Reserva: $${product.precio_con_reserva}, Comisión: $${product.comision_prestador}`);
 
-    // 7. Simular Checkout del Cliente asociado al Booking
-    console.log('7. Simulando checkout de compra asociado a la cita...');
-    const subtotal = parseFloat(shampoo.precio_con_reserva) * 2; // 2 unidades
-    const comisionTotal = parseFloat(shampoo.comision_prestador) * 2;
+    // 8. Simular Checkout del Cliente asociado al Booking
+    console.log('8. Simulando checkout de compra asociado a la cita...');
+    const subtotal = parseFloat(product.precio_con_reserva) * 2; // 2 unidades
+    const comisionTotal = parseFloat(product.comision_prestador) * 2;
     const iva = subtotal * 0.19;
     const total = subtotal + iva + 0.00; // Envío es 0 por ser asociado a cita
 
@@ -82,9 +139,9 @@ async function runTests() {
       VALUES ($1, 'CLIENTE', $2, $3, $4, $5, $6, $7, $8, 'PAGADO', $9, $10)
       RETURNING *;
     `, [
-      1, // Cliente Demo
-      'b0000000-0000-0000-0000-000000000999', // Booking ID
-      104, // Prestador Ana
+      clientId, 
+      'b0000000-0000-0000-0000-000000000999', 
+      providerId, 
       comisionTotal,
       subtotal,
       0.00,
@@ -99,31 +156,31 @@ async function runTests() {
     await pool.query(`
       INSERT INTO detalles_pedido_tienda (pedido_id, producto_id, cantidad, precio_unitario_pagado, comision_unitaria_prestador)
       VALUES ($1, $2, 2, $3, $4);
-    `, [order.id, shampoo.id, shampoo.precio_con_reserva, shampoo.comision_prestador]);
+    `, [order.id, product.id, product.precio_con_reserva, product.comision_prestador]);
 
     // Simular reducción de stock
-    await pool.query("UPDATE productos SET stock = stock - 2 WHERE id = $1;", [shampoo.id]);
+    await pool.query("UPDATE productos SET stock = stock - 2 WHERE id = $1;", [product.id]);
     console.log('✅ Pedido insertado y stock reservado.');
 
     // Verificar stock decrementado
-    const prodResDespues = await pool.query("SELECT stock FROM productos WHERE id = $1;", [shampoo.id]);
+    const prodResDespues = await pool.query("SELECT stock FROM productos WHERE id = $1;", [product.id]);
     const stockDespues = prodResDespues.rows[0].stock;
     if (stockDespues !== stockAntes - 2) {
       throw new Error(`❌ TEST FALLIDO: El stock no se restó correctamente. Antes: ${stockAntes}, Después: ${stockDespues}`);
     }
     console.log('✅ TEST EXITOSO: Reducción de stock verificada.');
 
-    // 8. Verificar que el wallet del prestador esté en 0 antes de completar la cita
-    console.log('8. Inicializando billetera de Ana...');
-    await pool.query("INSERT INTO provider_wallet (provider_id, saldo_pendiente) VALUES (104, 0.00) ON CONFLICT (provider_id) DO NOTHING;");
+    // 9. Verificar que el wallet del prestador esté en 0 antes de completar la cita
+    console.log('9. Inicializando billetera del prestador...');
+    await pool.query("INSERT INTO provider_wallet (provider_id, saldo_pendiente) VALUES ($1, 0.00) ON CONFLICT (provider_id) DO NOTHING;", [providerId]);
 
-    // 9. Simular la confirmación de la cita mediante el hook de OTP (Liberación de comisiones)
-    console.log('9. Simulando confirmación de cita (OTP) en backend...');
+    // 10. Simular la confirmación de la cita mediante el hook de OTP (Liberación de comisiones)
+    console.log('10. Simulando confirmación de cita (OTP) en backend...');
     
-    // Aquí replicamos exactamente el hook que añadimos en paymentRoutes.js:
+    // Replicar el hook en paymentRoutes.js:
     const storeOrderRes = await pool.query(
       'SELECT id, comision_total_prestador FROM pedidos_tienda WHERE booking_id = $1 AND prestador_comisionado_id = $2;',
-      ['b0000000-0000-0000-0000-000000000999', 104]
+      ['b0000000-0000-0000-0000-000000000999', providerId]
     );
 
     if (storeOrderRes.rows.length > 0) {
@@ -138,7 +195,7 @@ async function runTests() {
                total_ganado    = total_ganado + $2,
                updated_at      = NOW()
            WHERE provider_id = $1`,
-          [104, comisionTienda]
+          [providerId, comisionTienda]
         );
 
         // Registrar transacción de tipo CREDITO_PRODUCTO
@@ -147,7 +204,7 @@ async function runTests() {
              (provider_id, booking_id, tipo, monto, saldo_resultante, estado, descripcion, metadata)
            VALUES ($1, $2, 'CREDITO_PRODUCTO', $3, $3, 'PENDIENTE', $4, $5)`,
           [
-            104, 
+            providerId, 
             'b0000000-0000-0000-0000-000000000999', 
             comisionTienda,
             `Comisión de productos en GlowStore - Pedido #${storeOrder.id}`,
@@ -161,24 +218,24 @@ async function runTests() {
       }
     }
 
-    // 10. Validar billetera e historial de transacciones del prestador
-    console.log('10. Validando saldo acreditado en la billetera del prestador...');
-    const walletRes = await pool.query("SELECT saldo_pendiente FROM provider_wallet WHERE provider_id = 104;");
+    // 11. Validar billetera e historial de transacciones del prestador
+    console.log('11. Validando saldo acreditado en la billetera del prestador...');
+    const walletRes = await pool.query("SELECT saldo_pendiente FROM provider_wallet WHERE provider_id = $1;", [providerId]);
     const saldoPendiente = parseFloat(walletRes.rows[0].saldo_pendiente);
 
     if (saldoPendiente !== comisionTotal) {
       throw new Error(`❌ TEST FALLIDO: La comisión de la tienda no se acreditó en la billetera. Esperado: ${comisionTotal}, Obtenido: ${saldoPendiente}`);
     }
-    console.log(`✅ TEST EXITOSO: La billetera de Ana recibió correctamente la comisión de la tienda de $${saldoPendiente} COP.`);
+    console.log(`✅ TEST EXITOSO: La billetera del prestador recibió correctamente la comisión de la tienda de $${saldoPendiente} COP.`);
 
-    // 11. Limpieza final de datos de prueba
-    console.log('11. Limpiando datos de prueba...');
+    // 12. Limpieza final de datos de prueba
+    console.log('12. Limpiando datos de prueba...');
     await pool.query("DELETE FROM detalles_pedido_tienda;");
     await pool.query("DELETE FROM pedidos_tienda;");
     await pool.query("DELETE FROM bookings WHERE id = 'b0000000-0000-0000-0000-000000000999';");
-    await pool.query("DELETE FROM provider_wallet WHERE provider_id = 104;");
-    await pool.query("DELETE FROM wallet_transactions WHERE provider_id = 104;");
-    await pool.query("UPDATE productos SET stock = $1 WHERE id = $2;", [stockAntes, shampoo.id]);
+    await pool.query("DELETE FROM provider_wallet WHERE provider_id = $1;", [providerId]);
+    await pool.query("DELETE FROM wallet_transactions WHERE provider_id = $1;", [providerId]);
+    await pool.query("UPDATE productos SET stock = $1 WHERE id = $2;", [stockAntes, product.id]);
     console.log('✅ Base de datos limpia de pruebas.');
 
     console.log('\n🎉 ¡TODAS LAS PRUEBAS DE INTEGRACIÓN PASARON EXITOSAMENTE! 🎉');
