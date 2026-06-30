@@ -167,12 +167,10 @@ class _ChatScreenState extends State<ChatScreen> {
     });
 
     // Fallback: Start 3-second auto-polling for messages if not running
-    if (_pollingTimer == null) {
-      _pollingTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+    _pollingTimer ??= Timer.periodic(const Duration(seconds: 3), (_) {
         _loadMessages(showLoading: false);
         _markAsRead();
       });
-    }
 
     // Schedule reconnect attempt in 5 seconds
     _reconnectTimer?.cancel();
@@ -403,14 +401,14 @@ class _ChatScreenState extends State<ChatScreen> {
                     : null,
               ),
             ),
-            SizedBox(width: 10),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     widget.partnerName,
-                    style: TextStyle(
+                    style: const TextStyle(
                         fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   Text(
@@ -432,23 +430,23 @@ class _ChatScreenState extends State<ChatScreen> {
         children: [
           Expanded(
             child: _isLoading
-                ? Center(
+                ? const Center(
                     child: CircularProgressIndicator(color: Colors.pink))
                 : _error != null
                     ? Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.error_outline,
+                            const Icon(Icons.error_outline,
                                 color: Colors.red, size: 48),
-                            SizedBox(height: 16),
+                            const SizedBox(height: 16),
                             Text('Error: $_error', textAlign: TextAlign.center),
-                            SizedBox(height: 16),
+                            const SizedBox(height: 16),
                             ElevatedButton(
                               onPressed: () => _loadMessages(showLoading: true),
                               style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.pink),
-                              child: Text('Reintentar'),
+                              child: const Text('Reintentar'),
                             ),
                           ],
                         ),
@@ -460,10 +458,10 @@ class _ChatScreenState extends State<ChatScreen> {
                               children: [
                                 Icon(Icons.chat_bubble_outline,
                                     size: 64, color: Colors.pink[200]),
-                                SizedBox(height: 16),
+                                const SizedBox(height: 16),
                                 Text(
                                   '¡Envía un mensaje a ${widget.partnerName}!',
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                       color: Colors.grey, fontSize: 16),
                                 ),
                               ],
@@ -579,8 +577,8 @@ class _ChatScreenState extends State<ChatScreen> {
                                                       fit: BoxFit.cover,
                                                     ),
                                                   ),
-                                                  SizedBox(height: 8),
-                                                  Text(
+                                                  const SizedBox(height: 8),
+                                                  const Text(
                                                     'Asesoría de Belleza IA',
                                                     style: TextStyle(
                                                         fontWeight:
@@ -589,31 +587,31 @@ class _ChatScreenState extends State<ChatScreen> {
                                                         color:
                                                             Color(0xFFC89D93)),
                                                   ),
-                                                  SizedBox(height: 4),
+                                                  const SizedBox(height: 4),
                                                 ],
                                                 Text(
                                                   cleanText,
-                                                  style: TextStyle(
+                                                  style: const TextStyle(
                                                     color: Colors.black87,
                                                     fontSize: 14.5,
                                                     height: 1.35,
                                                   ),
                                                 ),
                                                 if (redirectToolId != null) ...[
-                                                  SizedBox(height: 10),
+                                                  const SizedBox(height: 10),
                                                   SizedBox(
                                                     width: double.infinity,
                                                     child: OutlinedButton.icon(
                                                       style: OutlinedButton.styleFrom(
-                                                        side: BorderSide(color: Color(0xFFC89D93), width: 1.5),
+                                                        side: const BorderSide(color: Color(0xFFC89D93), width: 1.5),
                                                         foregroundColor: const Color(0xFFC89D93),
                                                         shape: RoundedRectangleBorder(
                                                           borderRadius: BorderRadius.circular(20),
                                                         ),
                                                         padding: const EdgeInsets.symmetric(vertical: 8),
                                                       ),
-                                                      icon: Icon(Icons.auto_awesome, size: 14),
-                                                      label: Text(
+                                                      icon: const Icon(Icons.auto_awesome, size: 14),
+                                                      label: const Text(
                                                         'Abrir herramienta en Ideas IA',
                                                         style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
                                                       ),
@@ -629,7 +627,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                                   ),
                                                 ],
                                                 if (isRec) ...[
-                                                  SizedBox(height: 12),
+                                                  const SizedBox(height: 12),
                                                   SizedBox(
                                                     width: double.infinity,
                                                     child: ElevatedButton.icon(
@@ -721,13 +719,13 @@ class _ChatScreenState extends State<ChatScreen> {
                                                                       BorderRadius
                                                                           .circular(
                                                                               24)),
-                                                              title: Text(
+                                                              title: const Text(
                                                                   '¡De una parce!',
                                                                   style: TextStyle(
                                                                       fontWeight:
                                                                           FontWeight
                                                                               .bold)),
-                                                              content: Text(
+                                                              content: const Text(
                                                                   'Te redirigiremos con los prestadores de Fontibón para agendar este estilo de inmediato, vecino.'),
                                                               actions: [
                                                                 TextButton(
@@ -740,7 +738,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                                                       'serviceName': meta['serviceName'] ?? 'Servicio'
                                                                     });
                                                                   },
-                                                                  child: Text(
+                                                                  child: const Text(
                                                                       'Listo',
                                                                       style: TextStyle(
                                                                           color: Color(
@@ -753,10 +751,10 @@ class _ChatScreenState extends State<ChatScreen> {
                                                           );
                                                         }
                                                       },
-                                                      icon: Icon(
+                                                      icon: const Icon(
                                                           Icons.calendar_month,
                                                           size: 14),
-                                                      label: Text(
+                                                      label: const Text(
                                                           'Agendar este estilo',
                                                           style: TextStyle(
                                                               fontSize: 11.5,
@@ -766,7 +764,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                                     ),
                                                   ),
                                                 ],
-                                                SizedBox(height: 4),
+                                                const SizedBox(height: 4),
                                                 Align(
                                                   alignment:
                                                       Alignment.bottomRight,
@@ -831,7 +829,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                           fontSize: 15,
                                         ),
                                       ),
-                                      SizedBox(height: 4),
+                                      const SizedBox(height: 4),
                                       Text(
                                         time,
                                         style: TextStyle(
@@ -850,7 +848,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: Colors.white,
               border: Border(
                 top: BorderSide(color: Colors.black12, width: 0.5),
@@ -877,14 +875,14 @@ class _ChatScreenState extends State<ChatScreen> {
                       onSubmitted: (_) => _sendMessage(),
                     ),
                   ),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                   GestureDetector(
                     onTap: _sendMessage,
                     child: CircleAvatar(
                       radius: 22,
                       backgroundColor: const Color(0xFFC89D93),
                       child: _isSending
-                          ? SizedBox(
+                          ? const SizedBox(
                               width: 20,
                               height: 20,
                               child: CircularProgressIndicator(
@@ -892,7 +890,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                 strokeWidth: 2,
                               ),
                             )
-                          : Icon(
+                          : const Icon(
                               Icons.send,
                               color: Colors.white,
                               size: 20,

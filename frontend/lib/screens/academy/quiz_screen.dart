@@ -93,7 +93,7 @@ class _QuizScreenState extends State<QuizScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final themeColor = const Color(0xFFC89D93);
+    const themeColor = Color(0xFFC89D93);
 
     if (_isLoading) {
       return Scaffold(
@@ -165,7 +165,7 @@ class _QuizScreenState extends State<QuizScreen> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.amber.withOpacity(0.1),
+                      color: Colors.amber.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: Colors.amber, width: 2),
                     ),
@@ -284,7 +284,7 @@ class _QuizScreenState extends State<QuizScreen> {
                                   return Container(
                                     margin: const EdgeInsets.only(bottom: 8.0),
                                     decoration: BoxDecoration(
-                                      color: isSelected ? themeColor.withOpacity(0.08) : Colors.transparent,
+                                      color: isSelected ? themeColor.withValues(alpha: 0.08) : Colors.transparent,
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
                                         color: isSelected ? themeColor : Colors.grey[300]!,

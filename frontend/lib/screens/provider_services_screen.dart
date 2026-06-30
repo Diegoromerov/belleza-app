@@ -76,7 +76,7 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('✅ Servicio creado con éxito'),
+              content: const Text('✅ Servicio creado con éxito'),
               backgroundColor: const Color(0xFFC89D93),
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
@@ -97,7 +97,7 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('✅ Servicio actualizado con éxito'),
+              content: const Text('✅ Servicio actualizado con éxito'),
               backgroundColor: const Color(0xFFC89D93),
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
@@ -159,34 +159,34 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
                               borderRadius: BorderRadius.circular(10)),
                         ),
                       ),
-                      SizedBox(height: 16),
+                      const SizedBox(height: 16),
                       Text(
                         service == null ? 'Nuevo Servicio' : 'Editar Servicio',
-                        style: TextStyle(
+                        style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                             color: Colors.black87,
                             letterSpacing: -0.5),
                         textAlign: TextAlign.center,
                       ),
-                      SizedBox(height: 20),
+                      const SizedBox(height: 20),
                       TextFormField(
                         controller: nameCtrl,
                         decoration: _inputDecoration(
                             'Nombre del servicio *', Icons.cut),
-                        style: TextStyle(fontSize: 14),
+                        style: const TextStyle(fontSize: 14),
                         validator: (v) =>
                             v == null || v.trim().isEmpty ? 'Requerido' : null,
                       ),
-                      SizedBox(height: 12),
+                      const SizedBox(height: 12),
                       TextFormField(
                         controller: descCtrl,
                         decoration: _inputDecoration('Descripción (opcional)',
                             Icons.description_outlined),
-                        style: TextStyle(fontSize: 14),
+                        style: const TextStyle(fontSize: 14),
                         maxLines: 2,
                       ),
-                      SizedBox(height: 12),
+                      const SizedBox(height: 12),
                       Row(
                         children: [
                           Expanded(
@@ -194,7 +194,7 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
                               controller: priceCtrl,
                               decoration: _inputDecoration(
                                   'Precio (\$) *', Icons.attach_money_outlined),
-                              style: TextStyle(fontSize: 14),
+                              style: const TextStyle(fontSize: 14),
                               keyboardType:
                                   const TextInputType.numberWithOptions(
                                       decimal: true),
@@ -211,13 +211,13 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
                               },
                             ),
                           ),
-                          SizedBox(width: 12),
+                          const SizedBox(width: 12),
                           Expanded(
                             child: TextFormField(
                               controller: durationCtrl,
                               decoration: _inputDecoration('Duración (min) *',
                                   Icons.access_time_outlined),
-                              style: TextStyle(fontSize: 14),
+                              style: const TextStyle(fontSize: 14),
                               keyboardType: TextInputType.number,
                               validator: (v) {
                                 if (v == null || v.isEmpty) {
@@ -233,15 +233,15 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
                           ),
                         ],
                       ),
-                      SizedBox(height: 8),
-                      Text(
+                      const SizedBox(height: 8),
+                      const Text(
                         'Selección rápida de duración:',
                         style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey,
                             fontWeight: FontWeight.w500),
                       ),
-                      SizedBox(height: 6),
+                      const SizedBox(height: 6),
                       StatefulBuilder(builder: (context, setChipState) {
                         return Wrap(
                           spacing: 8,
@@ -274,9 +274,9 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
                           }).toList(),
                         );
                       }),
-                      SizedBox(height: 12),
+                      const SizedBox(height: 12),
                       DropdownButtonFormField<String>(
-                        value: categoryCtrl.text.trim().isEmpty
+                        initialValue: categoryCtrl.text.trim().isEmpty
                             ? null
                             : ([
                                 'Cabello',
@@ -288,7 +288,7 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
                               ].contains(categoryCtrl.text.trim())
                                 ? categoryCtrl.text.trim()
                                 : 'Otros'),
-                        style: TextStyle(
+                        style: const TextStyle(
                             color: Colors.black87,
                             fontSize: 14,
                             fontWeight: FontWeight.w500),
@@ -313,9 +313,9 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
                         validator: (v) =>
                             v == null || v.isEmpty ? 'Requerido' : null,
                       ),
-                      SizedBox(height: 16),
+                      const SizedBox(height: 16),
                       SwitchListTile(
-                        title: Text('Servicio activo'),
+                        title: const Text('Servicio activo'),
                         subtitle: Text(isActive
                             ? 'Visible para clientes'
                             : 'Oculto para clientes'),
@@ -325,7 +325,7 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
                         onChanged: (v) => setModalState(() => isActive = v),
                         contentPadding: EdgeInsets.zero,
                       ),
-                      SizedBox(height: 24),
+                      const SizedBox(height: 24),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFC89D93),
@@ -358,10 +358,10 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
                             service == null
                                 ? 'Crear Servicio'
                                 : 'Guardar Cambios',
-                            style: TextStyle(
+                            style: const TextStyle(
                                 fontSize: 16, fontWeight: FontWeight.bold)),
                       ),
-                      SizedBox(height: 24),
+                      const SizedBox(height: 24),
                     ],
                   ),
                 ),
@@ -376,7 +376,7 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
   InputDecoration _inputDecoration(String label, IconData icon) {
     return InputDecoration(
       labelText: label,
-      labelStyle: TextStyle(color: Colors.grey, fontSize: 13),
+      labelStyle: const TextStyle(color: Colors.grey, fontSize: 13),
       prefixIcon: Icon(icon, color: const Color(0xFFC89D93)),
       floatingLabelBehavior: FloatingLabelBehavior.auto,
       filled: true,
@@ -389,7 +389,7 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(30),
-        borderSide: BorderSide(color: Color(0xFFC89D93), width: 1.5),
+        borderSide: const BorderSide(color: Color(0xFFC89D93), width: 1.5),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
     );
@@ -410,12 +410,12 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
               color: isCurrentlyActive ? Colors.redAccent : Colors.green,
               size: 28,
             ),
-            SizedBox(width: 8),
+            const SizedBox(width: 8),
             Text(
               isCurrentlyActive
                   ? '¿Desactivar servicio?'
                   : '¿Activar servicio?',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
           ],
         ),
@@ -427,7 +427,7 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Volver',
+            child: const Text('Volver',
                 style:
                     TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
           ),
@@ -447,7 +447,7 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
             ),
             child: Text(
               isCurrentlyActive ? 'Desactivar' : 'Activar',
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -462,7 +462,7 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('✅ Servicio desactivado'),
+                content: const Text('✅ Servicio desactivado'),
                 backgroundColor: const Color(0xFFC89D93),
                 behavior: SnackBarBehavior.floating,
                 shape: RoundedRectangleBorder(
@@ -483,7 +483,7 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('✅ Servicio activado'),
+                content: const Text('✅ Servicio activado'),
                 backgroundColor: const Color(0xFFC89D93),
                 behavior: SnackBarBehavior.floating,
                 shape: RoundedRectangleBorder(
@@ -511,20 +511,20 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.inventory_2_outlined,
+            const Icon(Icons.inventory_2_outlined,
                 size: 64, color: Color(0xFFC89D93)),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Text(message,
-                style: TextStyle(
+                style: const TextStyle(
                     fontSize: 15,
                     color: Colors.grey,
                     fontWeight: FontWeight.w500),
                 textAlign: TextAlign.center),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             ElevatedButton.icon(
               onPressed: () => _showServiceForm(),
-              icon: Icon(Icons.add),
-              label: Text('Agregar Primer Servicio'),
+              icon: const Icon(Icons.add),
+              label: const Text('Agregar Primer Servicio'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFC89D93),
                 foregroundColor: Colors.white,
@@ -578,7 +578,7 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
                         children: [
                           Text(
                             service.name,
-                            style: TextStyle(
+                            style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
                                 letterSpacing: -0.3),
@@ -593,10 +593,10 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
                                   style: TextStyle(
                                       color: Colors.grey[600], fontSize: 13),
                                 ),
-                                SizedBox(width: 8),
-                                Text('•',
+                                const SizedBox(width: 8),
+                                const Text('•',
                                     style: TextStyle(color: Colors.grey)),
-                                SizedBox(width: 8),
+                                const SizedBox(width: 8),
                               ],
                               Container(
                                 padding: const EdgeInsets.symmetric(
@@ -608,12 +608,12 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.star,
+                                    const Icon(Icons.star,
                                         color: Colors.amber, size: 12),
-                                    SizedBox(width: 2),
+                                    const SizedBox(width: 2),
                                     Text(
                                       '${service.bookingsCount} reservas',
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                         color: Color(0xFFC89D93),
                                         fontSize: 11,
                                         fontWeight: FontWeight.bold,
@@ -646,7 +646,7 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
                   ],
                 ),
                 if (service.description.isNotEmpty) ...[
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Text(
                     service.description,
                     style: TextStyle(
@@ -663,7 +663,7 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
                       children: [
                         Icon(Icons.access_time_filled_rounded,
                             size: 14, color: Colors.grey[500]),
-                        SizedBox(width: 4),
+                        const SizedBox(width: 4),
                         Text('${service.durationMinutes} min',
                             style: TextStyle(
                                 color: Colors.grey[600], fontSize: 13)),
@@ -671,35 +671,35 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
                     ),
                     Text(
                       service.formattedPrice,
-                      style: TextStyle(
+                      style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFFC89D93)),
                     ),
                   ],
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 Row(
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: () => _showServiceForm(service: service),
-                        icon: Icon(Icons.edit_outlined, size: 16),
-                        label: Text('Editar'),
+                        icon: const Icon(Icons.edit_outlined, size: 16),
+                        label: const Text('Editar'),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: const Color(0xFFC89D93),
-                          side: BorderSide(color: Color(0xFFE5CECA)),
+                          side: const BorderSide(color: Color(0xFFE5CECA)),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30)),
                           padding: const EdgeInsets.symmetric(vertical: 10),
                         ),
                       ),
                     ),
-                    SizedBox(width: 12),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: () => _confirmDelete(service),
-                        icon: Icon(Icons.block_outlined, size: 16),
+                        icon: const Icon(Icons.block_outlined, size: 16),
                         label:
                             Text(service.isActive ? 'Desactivar' : 'Activar'),
                         style: OutlinedButton.styleFrom(
@@ -730,14 +730,14 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
     if (_isLoading && _services.isEmpty) {
       return Scaffold(
         appBar: AppBar(
-          title: Text('Mis Servicios',
+          title: const Text('Mis Servicios',
               style:
                   TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5)),
           backgroundColor: Colors.white,
           foregroundColor: Colors.black,
           elevation: 0,
         ),
-        body: Center(
+        body: const Center(
             child: CircularProgressIndicator(color: Color(0xFFC89D93))),
       );
     }
@@ -745,7 +745,7 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
     if (_error != null && _services.isEmpty) {
       return Scaffold(
         appBar: AppBar(
-          title: Text('Mis Servicios',
+          title: const Text('Mis Servicios',
               style:
                   TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5)),
           backgroundColor: Colors.white,
@@ -756,17 +756,17 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.wifi_off_rounded,
+              const Icon(Icons.wifi_off_rounded,
                   color: Colors.redAccent, size: 48),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               Text('Error de conexión:\n$_error',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey)),
-              SizedBox(height: 16),
+                  style: const TextStyle(color: Colors.grey)),
+              const SizedBox(height: 16),
               ElevatedButton.icon(
                 onPressed: _loadServices,
-                icon: Icon(Icons.refresh),
-                label: Text('Reintentar'),
+                icon: const Icon(Icons.refresh),
+                label: const Text('Reintentar'),
                 style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFC89D93),
                     foregroundColor: Colors.white),
@@ -783,14 +783,14 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text('Mis Servicios',
+        title: const Text('Mis Servicios',
             style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5)),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
         actions: [
           IconButton(
-            icon: Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh),
             tooltip: 'Actualizar',
             onPressed: _loadServices,
           ),
@@ -828,7 +828,7 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
                 color: const Color(0xFFC89D93),
                 onRefresh: _loadServices,
                 child: inactive.isEmpty
-                    ? Center(
+                    ? const Center(
                         child: Padding(
                           padding: EdgeInsets.all(24.0),
                           child: Text(
@@ -853,7 +853,7 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
           if (_isLoading)
             Container(
               color: const Color(0x1E000000),
-              child: Center(
+              child: const Center(
                   child: CircularProgressIndicator(color: Color(0xFFC89D93))),
             ),
         ],
@@ -864,7 +864,7 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
         foregroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         elevation: 4,
-        child: Icon(Icons.add),
+        child: const Icon(Icons.add),
       ),
     );
   }

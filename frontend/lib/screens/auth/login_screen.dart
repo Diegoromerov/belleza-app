@@ -187,7 +187,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       fit: BoxFit.contain,
                     ),
                   ),
-                  SizedBox(height: 24),
+                  const SizedBox(height: 24),
 
                   // Tarjeta Glassmorphic
                   ClipRRect(
@@ -197,10 +197,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(28.0),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.85),
+                          color: Colors.white.withValues(alpha: 0.85),
                           borderRadius: BorderRadius.circular(28),
                           border: Border.all(
-                            color: Colors.white.withOpacity(0.6),
+                            color: Colors.white.withValues(alpha: 0.6),
                             width: 1.5,
                           ),
                           boxShadow: AppTheme.glassShadow,
@@ -210,7 +210,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              SizedBox(height: 8),
+                              const SizedBox(height: 8),
 
                               // Email Input
                               TextFormField(
@@ -223,9 +223,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                                 validator: (v) =>
                                     v!.isEmpty ? 'Ingresa tu correo' : null,
-                                style: TextStyle(fontSize: 15),
+                                style: const TextStyle(fontSize: 15),
                               ),
-                              SizedBox(height: 16),
+                              const SizedBox(height: 16),
 
                               // Password Input
                               TextFormField(
@@ -250,9 +250,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                 validator: (v) => v!.length < 6
                                     ? 'Mínimo 6 caracteres'
                                     : null,
-                                style: TextStyle(fontSize: 15),
+                                style: const TextStyle(fontSize: 15),
                               ),
-                              SizedBox(height: 24),
+                              const SizedBox(height: 24),
 
                               if (_error != null)
                                 Padding(
@@ -260,7 +260,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   child: Text(
                                     _error!,
                                     textAlign: TextAlign.center,
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                         color: Colors.redAccent,
                                         fontWeight: FontWeight.w600,
                                         fontSize: 13),
@@ -283,14 +283,14 @@ class _LoginScreenState extends State<LoginScreen> {
                                   shadowColor: const Color(0x3FC89D93),
                                 ),
                                 child: _isLoading
-                                    ? SizedBox(
+                                    ? const SizedBox(
                                         width: 24,
                                         height: 24,
                                         child: CircularProgressIndicator(
                                             color: Colors.white,
                                             strokeWidth: 2.5),
                                       )
-                                    : Text(
+                                    : const Text(
                                         'Entrar con Correo',
                                         style: TextStyle(
                                             fontSize: 16,
@@ -299,7 +299,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ),
                               ),
 
-                              SizedBox(height: 24),
+                              const SizedBox(height: 24),
 
                               // Separador para Social Logins
                               Row(
@@ -307,8 +307,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                   Expanded(
                                       child: Divider(
                                           color: const Color(0xFFE8D7D3)
-                                              .withOpacity(0.6))),
-                                  Padding(
+                                              .withValues(alpha: 0.6))),
+                                  const Padding(
                                     padding:
                                         EdgeInsets.symmetric(horizontal: 16),
                                     child: Text(
@@ -322,10 +322,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                   Expanded(
                                       child: Divider(
                                           color: const Color(0xFFE8D7D3)
-                                              .withOpacity(0.6))),
+                                              .withValues(alpha: 0.6))),
                                 ],
                               ),
-                              SizedBox(height: 20),
+                              const SizedBox(height: 20),
 
                               // Social Buttons en Igualdad de Condiciones (Google, Outlook, Apple)
                               Row(
@@ -333,7 +333,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     MainAxisAlignment.spaceEvenly,
                                 children: [
                                   _buildSocialButton(
-                                    icon: Icon(Icons.g_mobiledata,
+                                    icon: const Icon(Icons.g_mobiledata,
                                         color: Color(0xFFD32F2F), size: 36),
                                     onTap: _isLoading
                                         ? null
@@ -341,7 +341,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     label: 'Google',
                                   ),
                                   _buildSocialButton(
-                                    icon: Icon(Icons.mail_outline,
+                                    icon: const Icon(Icons.mail_outline,
                                         color: Color(0xFF1976D2), size: 24),
                                     onTap: _isLoading
                                         ? null
@@ -349,7 +349,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     label: 'Outlook',
                                   ),
                                   _buildSocialButton(
-                                    icon: Icon(Icons.apple,
+                                    icon: const Icon(Icons.apple,
                                         color: Colors.black87, size: 28),
                                     onTap: _isLoading
                                         ? null
@@ -364,7 +364,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ),
-                  SizedBox(height: 28),
+                  const SizedBox(height: 28),
 
                   // Link de Registro
                   TextButton(

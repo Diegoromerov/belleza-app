@@ -16,13 +16,13 @@ class VerificationPendingScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Icon(
+              const Icon(
                 Icons.verified_user_outlined,
                 size: 100,
                 color: Color(0xFFC89D93),
               ),
-              SizedBox(height: 32),
-              Text(
+              const SizedBox(height: 32),
+              const Text(
                 'Perfil en proceso de verificación',
                 textAlign: TextAlign.center,
                 style: TextStyle(
@@ -32,8 +32,8 @@ class VerificationPendingScreen extends StatelessWidget {
                   letterSpacing: -0.5,
                 ),
               ),
-              SizedBox(height: 16),
-              Text(
+              const SizedBox(height: 16),
+              const Text(
                 'El equipo de Belleza App está validando físicamente tus documentos de identidad, RUT y acreditación profesional para garantizar la seguridad del servicio en Fontibón.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
@@ -42,8 +42,8 @@ class VerificationPendingScreen extends StatelessWidget {
                   height: 1.5,
                 ),
               ),
-              SizedBox(height: 12),
-              Text(
+              const SizedBox(height: 12),
+              const Text(
                 'Recibirás una notificación y podrás acceder a tu panel de prestador tan pronto como el estado cambie a APROBADO.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
@@ -53,7 +53,7 @@ class VerificationPendingScreen extends StatelessWidget {
                   height: 1.4,
                 ),
               ),
-              SizedBox(height: 48),
+              const SizedBox(height: 48),
               OutlinedButton.icon(
                 onPressed: () async {
                   await AuthService.logout();
@@ -61,8 +61,8 @@ class VerificationPendingScreen extends StatelessWidget {
                     Navigator.pushReplacementNamed(context, '/login');
                   }
                 },
-                icon: Icon(Icons.logout, color: Color(0xFFC89D93)),
-                label: Text(
+                icon: const Icon(Icons.logout, color: Color(0xFFC89D93)),
+                label: const Text(
                   'Cerrar Sesión',
                   style: TextStyle(
                       color: Color(0xFFC89D93), fontWeight: FontWeight.bold),
@@ -71,7 +71,7 @@ class VerificationPendingScreen extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30)),
-                  side: BorderSide(color: Color(0xFFC89D93), width: 1.5),
+                  side: const BorderSide(color: Color(0xFFC89D93), width: 1.5),
                 ),
               ),
             ],

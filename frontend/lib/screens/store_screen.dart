@@ -196,7 +196,7 @@ class _StoreScreenState extends State<StoreScreen> {
                             top: 12,
                             right: 12,
                             child: CircleAvatar(
-                              backgroundColor: Colors.white.withOpacity(0.9),
+                              backgroundColor: Colors.white.withValues(alpha: 0.9),
                               child: IconButton(
                                 icon: const Icon(Icons.close, color: AppTheme.text),
                                 onPressed: () => Navigator.pop(ctx),
@@ -213,7 +213,7 @@ class _StoreScreenState extends State<StoreScreen> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
-                                color: AppTheme.primary.withOpacity(0.12),
+                                color: AppTheme.primary.withValues(alpha: 0.12),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
@@ -288,7 +288,7 @@ class _StoreScreenState extends State<StoreScreen> {
                               product['descripcion']?.toString() ?? 'Sin descripción disponible.',
                               style: TextStyle(
                                 fontSize: 13,
-                                color: AppTheme.text.withOpacity(0.8),
+                                color: AppTheme.text.withValues(alpha: 0.8),
                                 height: 1.4,
                               ),
                             ),
@@ -406,7 +406,7 @@ class _StoreScreenState extends State<StoreScreen> {
     final TextEditingController nameCtrl = TextEditingController();
     final TextEditingController addressCtrl = TextEditingController();
     final TextEditingController cardCtrl = TextEditingController();
-    final _formKey = GlobalKey<FormState>();
+    final formKey = GlobalKey<FormState>();
     bool processing = false;
 
     showDialog(
@@ -438,7 +438,7 @@ class _StoreScreenState extends State<StoreScreen> {
                         'Conectando con la pasarela de GlowApp...',
                         style: TextStyle(
                           fontSize: 12,
-                          color: AppTheme.text.withOpacity(0.6),
+                          color: AppTheme.text.withValues(alpha: 0.6),
                         ),
                       ),
                     ],
@@ -453,7 +453,7 @@ class _StoreScreenState extends State<StoreScreen> {
             final Widget formColumn = Padding(
               padding: const EdgeInsets.all(24.0),
               child: Form(
-                key: _formKey,
+                key: formKey,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -466,7 +466,7 @@ class _StoreScreenState extends State<StoreScreen> {
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            color: AppTheme.primary.withOpacity(0.8),
+                            color: AppTheme.primary.withValues(alpha: 0.8),
                           ),
                         ),
                       ],
@@ -540,7 +540,7 @@ class _StoreScreenState extends State<StoreScreen> {
                         Expanded(
                           child: ElevatedButton(
                             onPressed: () async {
-                              if (_formKey.currentState!.validate()) {
+                              if (formKey.currentState!.validate()) {
                                 setCheckoutState(() {
                                   processing = true;
                                 });
@@ -791,7 +791,7 @@ class _StoreScreenState extends State<StoreScreen> {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14,
-                    color: AppTheme.text.withOpacity(0.8),
+                    color: AppTheme.text.withValues(alpha: 0.8),
                     height: 1.4,
                   ),
                 ),
@@ -827,7 +827,7 @@ class _StoreScreenState extends State<StoreScreen> {
           label,
           style: TextStyle(
             fontSize: 13,
-            color: AppTheme.text.withOpacity(0.6),
+            color: AppTheme.text.withValues(alpha: 0.6),
           ),
         ),
         Text(
@@ -945,7 +945,7 @@ class _StoreScreenState extends State<StoreScreen> {
                                                   label: Text(cat),
                                                   selected: isSelected,
                                                   onSelected: (_) => _selectCategory(cat),
-                                                  selectedColor: AppTheme.primary.withOpacity(0.12),
+                                                  selectedColor: AppTheme.primary.withValues(alpha: 0.12),
                                                   disabledColor: Colors.transparent,
                                                   backgroundColor: Colors.transparent,
                                                   labelStyle: TextStyle(
@@ -1052,7 +1052,7 @@ class _StoreScreenState extends State<StoreScreen> {
         border: Border.all(color: Colors.grey.shade100, width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -1204,7 +1204,7 @@ class _StoreScreenState extends State<StoreScreen> {
         border: Border(left: BorderSide(color: Colors.grey.shade200, width: 1.5)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 20,
             offset: const Offset(-4, 0),
           ),
@@ -1301,7 +1301,7 @@ class _StoreScreenState extends State<StoreScreen> {
                                   _formatCOP(pPrice),
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: AppTheme.text.withOpacity(0.6),
+                                    color: AppTheme.text.withValues(alpha: 0.6),
                                   ),
                                 ),
                                 const SizedBox(height: 8),

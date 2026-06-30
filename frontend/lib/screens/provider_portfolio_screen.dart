@@ -94,7 +94,7 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
           return AlertDialog(
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-            title: Text(
+            title: const Text(
               'Agregar al Portafolio',
               style: TextStyle(
                   color: Colors.black87,
@@ -117,17 +117,17 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                         fit: BoxFit.cover,
                       ),
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     Text('Ponle un título a tu trabajo y elige la categoría.',
                         style:
                             TextStyle(color: Colors.grey[600], fontSize: 13)),
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
                     TextFormField(
                       controller: titleCtrl,
-                      style: TextStyle(fontSize: 14),
+                      style: const TextStyle(fontSize: 14),
                       decoration: InputDecoration(
                         labelText: 'Título o Descripción *',
-                        labelStyle: TextStyle(color: Colors.grey),
+                        labelStyle: const TextStyle(color: Colors.grey),
                         floatingLabelBehavior: FloatingLabelBehavior.auto,
                         filled: true,
                         fillColor: const Color(0xFFF5EBE6),
@@ -139,7 +139,7 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                             borderSide: BorderSide.none),
                         focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(30),
-                            borderSide: BorderSide(
+                            borderSide: const BorderSide(
                                 color: Color(0xFFC89D93), width: 1.5)),
                         contentPadding: const EdgeInsets.symmetric(
                             horizontal: 20, vertical: 16),
@@ -148,16 +148,16 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                           ? 'Ingresa un título'
                           : null,
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
                       initialValue: category,
-                      style: TextStyle(
+                      style: const TextStyle(
                           color: Colors.black87,
                           fontSize: 14,
                           fontWeight: FontWeight.w500),
                       decoration: InputDecoration(
                         labelText: 'Categoría',
-                        labelStyle: TextStyle(color: Colors.grey),
+                        labelStyle: const TextStyle(color: Colors.grey),
                         floatingLabelBehavior: FloatingLabelBehavior.auto,
                         filled: true,
                         fillColor: const Color(0xFFF5EBE6),
@@ -169,7 +169,7 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                             borderSide: BorderSide.none),
                         focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(30),
-                            borderSide: BorderSide(
+                            borderSide: const BorderSide(
                                 color: Color(0xFFC89D93), width: 1.5)),
                         contentPadding: const EdgeInsets.symmetric(
                             horizontal: 20, vertical: 12),
@@ -191,7 +191,7 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text('Cancelar',
+                child: const Text('Cancelar',
                     style: TextStyle(
                         color: Colors.grey, fontWeight: FontWeight.bold)),
               ),
@@ -213,7 +213,7 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 ),
-                child: Text('Subir Foto',
+                child: const Text('Subir Foto',
                     style: TextStyle(fontWeight: FontWeight.bold)),
               ),
             ],
@@ -239,7 +239,7 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('✅ Foto agregada al portafolio con éxito'),
+            content: const Text('✅ Foto agregada al portafolio con éxito'),
             backgroundColor: const Color(0xFFC89D93),
             behavior: SnackBarBehavior.floating,
             shape:
@@ -284,7 +284,7 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
         return AlertDialog(
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: Text(
+          title: const Text(
             'Editar Información',
             style: TextStyle(
                 color: Colors.black87,
@@ -309,20 +309,20 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                         height: 120,
                         color: const Color(0xFFF5EBE6),
                         child:
-                            Icon(Icons.broken_image, color: Colors.grey),
+                            const Icon(Icons.broken_image, color: Colors.grey),
                       ),
                     ),
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   Text('Edita el título o categoría de este trabajo.',
                       style: TextStyle(color: Colors.grey[600], fontSize: 13)),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   TextFormField(
                     controller: titleCtrl,
-                    style: TextStyle(fontSize: 14),
+                    style: const TextStyle(fontSize: 14),
                     decoration: InputDecoration(
                       labelText: 'Título o Descripción *',
-                      labelStyle: TextStyle(color: Colors.grey),
+                      labelStyle: const TextStyle(color: Colors.grey),
                       floatingLabelBehavior: FloatingLabelBehavior.auto,
                       filled: true,
                       fillColor: const Color(0xFFF5EBE6),
@@ -334,7 +334,7 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                           borderSide: BorderSide.none),
                       focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(30),
-                          borderSide: BorderSide(
+                          borderSide: const BorderSide(
                               color: Color(0xFFC89D93), width: 1.5)),
                       contentPadding: const EdgeInsets.symmetric(
                           horizontal: 20, vertical: 16),
@@ -343,16 +343,16 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                         ? 'Ingresa un título'
                         : null,
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
-                    value: category,
-                    style: TextStyle(
+                    initialValue: category,
+                    style: const TextStyle(
                         color: Colors.black87,
                         fontSize: 14,
                         fontWeight: FontWeight.w500),
                     decoration: InputDecoration(
                       labelText: 'Categoría',
-                      labelStyle: TextStyle(color: Colors.grey),
+                      labelStyle: const TextStyle(color: Colors.grey),
                       floatingLabelBehavior: FloatingLabelBehavior.auto,
                       filled: true,
                       fillColor: const Color(0xFFF5EBE6),
@@ -364,7 +364,7 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                           borderSide: BorderSide.none),
                       focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(30),
-                          borderSide: BorderSide(
+                          borderSide: const BorderSide(
                               color: Color(0xFFC89D93), width: 1.5)),
                       contentPadding: const EdgeInsets.symmetric(
                           horizontal: 20, vertical: 12),
@@ -385,7 +385,7 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Cancelar',
+              child: const Text('Cancelar',
                   style: TextStyle(
                       color: Colors.grey, fontWeight: FontWeight.bold)),
             ),
@@ -407,7 +407,7 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               ),
-              child: Text('Guardar',
+              child: const Text('Guardar',
                   style: TextStyle(fontWeight: FontWeight.bold)),
             ),
           ],
@@ -428,7 +428,7 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content:
-                Text('✅ Elemento del portafolio actualizado con éxito'),
+                const Text('✅ Elemento del portafolio actualizado con éxito'),
             backgroundColor: const Color(0xFFC89D93),
             behavior: SnackBarBehavior.floating,
             shape:
@@ -454,7 +454,7 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Row(
+        title: const Row(
           children: [
             Icon(Icons.warning_amber_rounded,
                 color: Colors.redAccent, size: 28),
@@ -463,12 +463,12 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
           ],
         ),
-        content: Text(
+        content: const Text(
             '⚠️ Atención: Esta imagen se borrará de forma permanente de tu portafolio y los clientes potenciales ya no podrán verla como referencia de tu trabajo. ¿Deseas proceder?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Conservar Imagen',
+            child: const Text('Conservar Imagen',
                 style:
                     TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
           ),
@@ -482,7 +482,7 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                   borderRadius: BorderRadius.circular(30)),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             ),
-            child: Text('Sí, Eliminar',
+            child: const Text('Sí, Eliminar',
                 style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
@@ -496,7 +496,7 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('✅ Imagen eliminada'),
+              content: const Text('✅ Imagen eliminada'),
               backgroundColor: const Color(0xFFC89D93),
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
@@ -525,10 +525,10 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.photo_library_outlined,
+            const Icon(Icons.photo_library_outlined,
                 size: 80, color: Color(0xFFC89D93)),
-            SizedBox(height: 16),
-            Text(
+            const SizedBox(height: 16),
+            const Text(
               'Tu portafolio está vacío',
               style: TextStyle(
                   fontSize: 18,
@@ -536,18 +536,18 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                   color: Colors.black87,
                   letterSpacing: -0.3),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
               'Agrega fotos de tus mejores trabajos para que los clientes puedan ver la calidad de tus servicios.',
               style:
                   TextStyle(color: Colors.grey[600], height: 1.4, fontSize: 13),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             ElevatedButton.icon(
               onPressed: _pickAndUploadImage,
-              icon: Icon(Icons.add_photo_alternate_outlined),
-              label: Text('Agregar Foto'),
+              icon: const Icon(Icons.add_photo_alternate_outlined),
+              label: const Text('Agregar Foto'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFC89D93),
                 foregroundColor: Colors.white,
@@ -620,7 +620,7 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                     padding: const EdgeInsets.all(24.0),
                     child: Text(
                       'No hay elementos en la categoría "$_selectedCategory".',
-                      style: TextStyle(
+                      style: const TextStyle(
                           fontSize: 15,
                           color: Colors.grey,
                           fontWeight: FontWeight.w500),
@@ -684,7 +684,7 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                                           (context, error, stackTrace) =>
                                               Container(
                                         color: const Color(0xFFF5EBE6),
-                                        child: Icon(Icons.broken_image,
+                                        child: const Icon(Icons.broken_image,
                                             color: Colors.grey),
                                       ),
                                     ),
@@ -698,16 +698,16 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                                     children: [
                                       Text(
                                         title,
-                                        style: TextStyle(
+                                        style: const TextStyle(
                                             fontWeight: FontWeight.bold,
                                             fontSize: 13),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                       ),
-                                      SizedBox(height: 2),
+                                      const SizedBox(height: 2),
                                       Text(
                                         category,
-                                        style: TextStyle(
+                                        style: const TextStyle(
                                             color: Color(0xFFC89D93),
                                             fontSize: 11,
                                             fontWeight: FontWeight.bold),
@@ -726,19 +726,19 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                                     color: Colors.black54,
                                     borderRadius: BorderRadius.circular(20),
                                     child: IconButton(
-                                      icon: Icon(Icons.edit_outlined,
+                                      icon: const Icon(Icons.edit_outlined,
                                           color: Colors.white, size: 18),
                                       constraints: const BoxConstraints(
                                           minWidth: 34, minHeight: 34),
                                       onPressed: () => _editPortfolioItem(item),
                                     ),
                                   ),
-                                  SizedBox(width: 4),
+                                  const SizedBox(width: 4),
                                   Material(
                                     color: Colors.black54,
                                     borderRadius: BorderRadius.circular(20),
                                     child: IconButton(
-                                      icon: Icon(Icons.delete_outline,
+                                      icon: const Icon(Icons.delete_outline,
                                           color: Colors.white, size: 18),
                                       constraints: const BoxConstraints(
                                           minWidth: 34, minHeight: 34),
@@ -764,14 +764,14 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text('Mi Portafolio',
+        title: const Text('Mi Portafolio',
             style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5)),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
         actions: [
           IconButton(
-            icon: Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh),
             onPressed: _loadPortfolio,
             tooltip: 'Actualizar',
           ),
@@ -786,14 +786,14 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.error_outline,
+                  const Icon(Icons.error_outline,
                       color: Colors.redAccent, size: 48),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   Text('Error: $_error', textAlign: TextAlign.center),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: _loadPortfolio,
-                    child: Text('Reintentar'),
+                    child: const Text('Reintentar'),
                   ),
                 ],
               ),
@@ -803,7 +803,7 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
           if (_isLoading)
             Container(
               color: const Color(0x1E000000),
-              child: Center(
+              child: const Center(
                 child: CircularProgressIndicator(color: Color(0xFFC89D93)),
               ),
             ),
@@ -818,7 +818,7 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20)),
               elevation: 4,
-              child: Icon(Icons.add_a_photo_outlined),
+              child: const Icon(Icons.add_a_photo_outlined),
             )
           : null,
     );
@@ -845,7 +845,7 @@ class FullScreenImageViewer extends StatelessWidget {
         iconTheme: const IconThemeData(color: Colors.white),
         title: Text(
           title.isNotEmpty ? title : 'Ver Imagen',
-          style: TextStyle(
+          style: const TextStyle(
               color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
         ),
       ),
@@ -858,10 +858,10 @@ class FullScreenImageViewer extends StatelessWidget {
             fit: BoxFit.contain,
             loadingBuilder: (context, child, loadingProgress) {
               if (loadingProgress == null) return child;
-              return Center(
+              return const Center(
                   child: CircularProgressIndicator(color: Colors.white));
             },
-            errorBuilder: (context, error, stackTrace) => Icon(
+            errorBuilder: (context, error, stackTrace) => const Icon(
               Icons.broken_image,
               color: Colors.white54,
               size: 64,

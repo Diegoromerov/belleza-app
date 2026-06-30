@@ -623,8 +623,8 @@ class _BookingScreenState extends State<BookingScreen> {
           color: const Color(0xFFFEE2E2),
           borderRadius: BorderRadius.circular(20),
         ),
-        child: Column(
-          children: const [
+        child: const Column(
+          children: [
             Icon(Icons.calendar_today, color: Color(0xFFDC2626), size: 24),
             SizedBox(height: 8),
             Text(
@@ -668,21 +668,21 @@ class _BookingScreenState extends State<BookingScreen> {
           color: isSelected
               ? AppTheme.primary
               : isAvailable
-                  ? const Color(0xFFF5EBE6).withOpacity(0.4)
+                  ? const Color(0xFFF5EBE6).withValues(alpha: 0.4)
                   : const Color(0xFFF3F4F6),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected
                 ? AppTheme.primary
                 : isAvailable
-                    ? const Color(0xFFC89D93).withOpacity(0.3)
+                    ? const Color(0xFFC89D93).withValues(alpha: 0.3)
                     : const Color(0xFFE5E7EB),
             width: isSelected ? 2 : 1,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: AppTheme.primary.withOpacity(0.2),
+                    color: AppTheme.primary.withValues(alpha: 0.2),
                     blurRadius: 6,
                     offset: const Offset(0, 2),
                   )
@@ -735,7 +735,7 @@ class _BookingScreenState extends State<BookingScreen> {
             'Notas adicionales (opcional)',
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black87),
           ),
-          leading: Icon(Icons.note_alt_outlined, color: AppTheme.primary),
+          leading: const Icon(Icons.note_alt_outlined, color: AppTheme.primary),
           children: [
             Padding(
               padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
@@ -767,21 +767,21 @@ class _BookingScreenState extends State<BookingScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [AppTheme.primary, const Color(0xFFE8A2B6)],
+            gradient: const LinearGradient(
+              colors: [AppTheme.primary, Color(0xFFE8A2B6)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(20),
           ),
-          child: Row(
+          child: const Row(
             children: [
-              const Icon(Icons.spa_outlined, color: Colors.white, size: 32),
-              const SizedBox(width: 16),
+              Icon(Icons.spa_outlined, color: Colors.white, size: 32),
+              SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
+                  children: [
                     Text(
                       'Completa tu experiencia',
                       style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
@@ -805,8 +805,8 @@ class _BookingScreenState extends State<BookingScreen> {
             border: Border.all(color: const Color(0xFFFDE68A)),
             borderRadius: BorderRadius.circular(16),
           ),
-          child: Row(
-            children: const [
+          child: const Row(
+            children: [
               Icon(Icons.people_alt, color: Color(0xFFD97706), size: 20),
               SizedBox(width: 8),
               Expanded(
@@ -826,8 +826,8 @@ class _BookingScreenState extends State<BookingScreen> {
             border: Border.all(color: const Color(0xFFA7F3D0)),
             borderRadius: BorderRadius.circular(16),
           ),
-          child: Row(
-            children: const [
+          child: const Row(
+            children: [
               Icon(Icons.local_offer, color: Color(0xFF059669), size: 20),
               SizedBox(width: 8),
               Expanded(
@@ -864,7 +864,7 @@ class _BookingScreenState extends State<BookingScreen> {
               duration: const Duration(milliseconds: 200),
               margin: const EdgeInsets.only(bottom: 12),
               decoration: BoxDecoration(
-                color: isSelected ? const Color(0xFFF5EBE6).withOpacity(0.3) : Colors.white,
+                color: isSelected ? const Color(0xFFF5EBE6).withValues(alpha: 0.3) : Colors.white,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: isSelected ? AppTheme.primary : const Color(0xFFF3EAE8),
@@ -872,7 +872,7 @@ class _BookingScreenState extends State<BookingScreen> {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.02),
+                    color: Colors.black.withValues(alpha: 0.02),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   )
@@ -894,9 +894,9 @@ class _BookingScreenState extends State<BookingScreen> {
                           ? Image.network(
                               image,
                               fit: BoxFit.cover,
-                              errorBuilder: (c, o, s) => Icon(Icons.shopping_bag_outlined, color: AppTheme.primary),
+                              errorBuilder: (c, o, s) => const Icon(Icons.shopping_bag_outlined, color: AppTheme.primary),
                             )
-                          : Icon(Icons.shopping_bag_outlined, color: AppTheme.primary),
+                          : const Icon(Icons.shopping_bag_outlined, color: AppTheme.primary),
                     ),
                   ),
                   Expanded(
@@ -912,7 +912,7 @@ class _BookingScreenState extends State<BookingScreen> {
                           const SizedBox(height: 4),
                           Text(
                             '\$${precio.toStringAsFixed(0)} COP',
-                            style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primary, fontSize: 12),
+                            style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primary, fontSize: 12),
                           ),
                         ],
                       ),
@@ -978,10 +978,10 @@ class _BookingScreenState extends State<BookingScreen> {
                                     child: Container(
                                       padding: const EdgeInsets.all(4),
                                       decoration: BoxDecoration(
-                                        color: AppTheme.primary.withOpacity(0.1),
+                                        color: AppTheme.primary.withValues(alpha: 0.1),
                                         shape: BoxShape.circle,
                                       ),
-                                      child: Icon(Icons.add, size: 12, color: AppTheme.primary),
+                                      child: const Icon(Icons.add, size: 12, color: AppTheme.primary),
                                     ),
                                   ),
                                 ],
@@ -990,7 +990,7 @@ class _BookingScreenState extends State<BookingScreen> {
                 ],
               ),
             );
-          }).toList(),
+          }),
       ],
     );
   }
@@ -1108,7 +1108,7 @@ class _BookingScreenState extends State<BookingScreen> {
                     ),
                     Text(
                       '\$${grandTotal.toStringAsFixed(0)} COP',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.primary),
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.primary),
                     ),
                   ],
                 ),
@@ -1228,7 +1228,7 @@ class _BookingScreenState extends State<BookingScreen> {
               boxShadow: isSelected
                   ? [
                       BoxShadow(
-                        color: const Color(0xFFC89D93).withOpacity(0.15),
+                        color: const Color(0xFFC89D93).withValues(alpha: 0.15),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       )
@@ -1305,7 +1305,7 @@ class _BookingScreenState extends State<BookingScreen> {
         border: const Border(top: BorderSide(color: Color(0xFFF3EAE8))),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 8,
             offset: const Offset(0, -4),
           ),
@@ -1418,7 +1418,7 @@ class WompiCheckoutWidget extends StatefulWidget {
   final double price;
   final String providerName;
 
-  const WompiCheckoutWidget({
+  const WompiCheckoutWidget({super.key, 
     required this.bookingId,
     required this.serviceName,
     required this.price,
@@ -1489,7 +1489,7 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
       padding:
           EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(28),
@@ -1511,7 +1511,7 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
                 ),
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -1525,8 +1525,8 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
                         borderRadius: BorderRadius.circular(4),
                       ),
                     ),
-                    SizedBox(width: 8),
-                    Text(
+                    const SizedBox(width: 8),
+                    const Text(
                       'wompi',
                       style: TextStyle(
                         fontSize: 22,
@@ -1535,11 +1535,11 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
                         letterSpacing: -1.0,
                       ),
                     ),
-                    SizedBox(width: 4),
+                    const SizedBox(width: 4),
                     Container(
                       width: 6,
                       height: 6,
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         color: Color(0xFFF12A7B),
                         shape: BoxShape.circle,
                       ),
@@ -1547,12 +1547,12 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
                   ],
                 ),
                 IconButton(
-                  icon: Icon(Icons.close, color: Colors.grey),
+                  icon: const Icon(Icons.close, color: Colors.grey),
                   onPressed: () => Navigator.pop(context),
                 ),
               ],
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             if (_successData != null)
               _buildSuccessView()
             else
@@ -1571,21 +1571,21 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
 
     return Column(
       children: [
-        SizedBox(height: 16),
-        Icon(Icons.check_circle, color: Color(0xFF10B981), size: 72),
-        SizedBox(height: 16),
-        Text(
+        const SizedBox(height: 16),
+        const Icon(Icons.check_circle, color: Color(0xFF10B981), size: 72),
+        const SizedBox(height: 16),
+        const Text(
           '¡Pago Exitoso!',
           style: TextStyle(
               fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87),
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         Text(
           'Tu cita con ${widget.providerName} ha sido confirmada.',
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 14, color: Colors.black54),
+          style: const TextStyle(fontSize: 14, color: Colors.black54),
         ),
-        SizedBox(height: 24),
+        const SizedBox(height: 24),
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -1596,17 +1596,17 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
           child: Column(
             children: [
               _buildReceiptRow('Servicio', widget.serviceName),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               _buildReceiptRow(
                   'Valor Pagado', '\$${amount.toStringAsFixed(0)} COP'),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               _buildReceiptRow('Medio de Pago', method),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               _buildReceiptRow('Ref. Wompi', ref),
             ],
           ),
         ),
-        SizedBox(height: 32),
+        const SizedBox(height: 32),
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
@@ -1626,11 +1626,11 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
                 (route) => route.settings.name == '/home',
               );
             },
-            child: Text('Listo',
+            child: const Text('Listo',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           ),
         ),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
       ],
     );
   }
@@ -1656,25 +1656,25 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
                     children: [
                       Text(
                         widget.serviceName,
-                        style: TextStyle(
+                        style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
                             color: Colors.black87),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      SizedBox(height: 4),
+                      const SizedBox(height: 4),
                       Text(
                         'Prestador: ${widget.providerName}',
                         style:
-                            TextStyle(fontSize: 12, color: Colors.grey),
+                            const TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                     ],
                   ),
                 ),
                 Text(
                   '\$${widget.price.toStringAsFixed(0)} COP',
-                  style: TextStyle(
+                  style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                       color: Color(0xFF5C288D)),
@@ -1682,7 +1682,7 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
               ],
             ),
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           Container(
             height: 50,
             decoration: BoxDecoration(
@@ -1763,20 +1763,20 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
               ],
             ),
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           if (_selectedTab == 0) _buildNequiForm() else _buildCardForm(),
           if (_errorMsg != null) ...[
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Text(
               '❌ $_errorMsg',
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: const TextStyle(
                   color: Colors.redAccent,
                   fontSize: 13,
                   fontWeight: FontWeight.w500),
             ),
           ],
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF5C288D),
@@ -1789,13 +1789,13 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
             ),
             onPressed: _isProcessing ? null : _handlePayment,
             child: _isProcessing
-                ? SizedBox(
+                ? const SizedBox(
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(
                         color: Colors.white, strokeWidth: 2),
                   )
-                : Row(
+                : const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.lock_outline, size: 18),
@@ -1806,8 +1806,8 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
                     ],
                   ),
           ),
-          SizedBox(height: 8),
-          Row(
+          const SizedBox(height: 8),
+          const Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(Icons.security, size: 12, color: Colors.grey),
@@ -1828,7 +1828,7 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
       controller: _nequiCtrl,
       keyboardType: TextInputType.phone,
       enabled: !_isProcessing,
-      style: TextStyle(fontSize: 14),
+      style: const TextStyle(fontSize: 14),
       decoration:
           _inputDecoration('Número de celular (Nequi)', Icons.phone_android),
       validator: (val) {
@@ -1848,18 +1848,19 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
           controller: _cardCtrl,
           keyboardType: TextInputType.number,
           enabled: !_isProcessing,
-          style: TextStyle(fontSize: 14),
+          style: const TextStyle(fontSize: 14),
           decoration: _inputDecoration('Número de Tarjeta', Icons.credit_card),
           validator: (val) {
-            if (val == null || val.isEmpty)
+            if (val == null || val.isEmpty) {
               return 'El número de tarjeta es requerido';
+            }
             if (val.length != 16 || !RegExp(r'^[0-9]+$').hasMatch(val)) {
               return 'Debe tener 16 dígitos';
             }
             return null;
           },
         ),
-        SizedBox(height: 12),
+        const SizedBox(height: 12),
         Row(
           children: [
             Expanded(
@@ -1867,7 +1868,7 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
                 controller: _expCtrl,
                 keyboardType: TextInputType.datetime,
                 enabled: !_isProcessing,
-                style: TextStyle(fontSize: 14),
+                style: const TextStyle(fontSize: 14),
                 decoration:
                     _inputDecoration('Exp (MM/AA)', Icons.calendar_month),
                 validator: (val) {
@@ -1879,13 +1880,13 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
                 },
               ),
             ),
-            SizedBox(width: 12),
+            const SizedBox(width: 12),
             Expanded(
               child: TextFormField(
                 controller: _cvvCtrl,
                 keyboardType: TextInputType.number,
                 enabled: !_isProcessing,
-                style: TextStyle(fontSize: 14),
+                style: const TextStyle(fontSize: 14),
                 decoration: _inputDecoration('CVV', Icons.lock_outline),
                 validator: (val) {
                   if (val == null || val.isEmpty) return 'Requerido';
@@ -1898,17 +1899,18 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
             ),
           ],
         ),
-        SizedBox(height: 12),
+        const SizedBox(height: 12),
         TextFormField(
           controller: _holderCtrl,
           keyboardType: TextInputType.name,
           enabled: !_isProcessing,
-          style: TextStyle(fontSize: 14),
+          style: const TextStyle(fontSize: 14),
           decoration:
               _inputDecoration('Titular de la tarjeta', Icons.person_outline),
           validator: (val) {
-            if (val == null || val.isEmpty)
+            if (val == null || val.isEmpty) {
               return 'El nombre del titular es requerido';
+            }
             return null;
           },
         ),
@@ -1922,12 +1924,12 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
       children: [
         Text(
           label,
-          style: TextStyle(
+          style: const TextStyle(
               fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black54),
         ),
         Text(
           value,
-          style: TextStyle(
+          style: const TextStyle(
               fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black87),
         ),
       ],
@@ -1937,7 +1939,7 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
   InputDecoration _inputDecoration(String label, IconData icon) {
     return InputDecoration(
       labelText: label,
-      labelStyle: TextStyle(color: Colors.grey, fontSize: 13),
+      labelStyle: const TextStyle(color: Colors.grey, fontSize: 13),
       prefixIcon: Icon(icon, color: const Color(0xFF5C288D)),
       floatingLabelBehavior: FloatingLabelBehavior.never,
       filled: true,
@@ -1950,7 +1952,7 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(30),
-        borderSide: BorderSide(color: Color(0xFF5C288D), width: 1.5),
+        borderSide: const BorderSide(color: Color(0xFF5C288D), width: 1.5),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
     );
