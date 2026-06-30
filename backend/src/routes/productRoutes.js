@@ -14,6 +14,12 @@ router.get('/products/:id', authMiddleware, productController.getProductById);
 // Cargar un producto (Administrador)
 router.post('/admin/products', authMiddleware, productController.createProduct);
 
+// Actualizar un producto (Administrador)
+router.put('/admin/products/:id', authMiddleware, productController.updateProduct);
+
+// Eliminar un producto (Administrador)
+router.delete('/admin/products/:id', authMiddleware, productController.deleteProduct);
+
 // --- Rutas de Pedidos de GlowStore ---
 router.post('/store/checkout', authMiddleware, orderController.createOrder);
 router.get('/store/orders', authMiddleware, orderController.getOrders);
