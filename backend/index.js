@@ -1464,6 +1464,19 @@ const initDatabase = async () => {
       }
     }
 
+    // 🔸 Ejecutar migración del trigger de comisiones continuas (011_update_commission_trigger.sql)
+    const commissionMigrationPath = path.join(__dirname, 'migrations/011_update_commission_trigger.sql');
+    if (fs.existsSync(commissionMigrationPath)) {
+      try {
+        const commissionSql = fs.readFileSync(commissionMigrationPath, 'utf8');
+        await pool.query(commissionSql);
+        console.log('✅ Base de datos: Migración de Comisión Continua aplicada.');
+      } catch (cErr) {
+        console.warn('⚠️ Advertencia en migración de Comisión Continua:', cErr.message);
+      }
+    }
+
+
     const checkUser = await pool.query("SELECT id FROM usuarios WHERE email = 'provider@beautyapp.com';");
     const needsSeed = checkUser.rows.length === 0;
 
