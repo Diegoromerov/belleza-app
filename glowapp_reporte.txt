@@ -1,0 +1,243 @@
+﻿A continuaci├│n, te proporciono un ejemplo de c├│digo para cada archivo:
+
+**admin.controller.js**
+```javascript
+const { getAllActiveAlerts, resolveSOSAlert, getPendingProvidersList, appro[5D[K
+approveProvider, rejectProvider, verifyProvider, approvePayout, verifyProvi[11D[K
+verifyProviderAuto, getFinancialSummary } = require('./admin.controller');
+
+module.exports = {
+  getAllActiveAlerts,
+  resolveSOSAlert,
+  getPendingProvidersList,
+  approveProvider,
+  rejectProvider,
+  verifyProvider,
+  approvePayout,
+  verifyProviderAuto,
+  getFinancialSummary
+};
+```
+
+**admin.controller.js**
+```javascript
+const db = require('../db');
+
+module.exports = {
+  getAllActiveAlerts: async (req, res) => {
+    const alerts = await db.getAllActiveAlerts();
+    return res.json(alerts);
+  },
+
+  resolveSOSAlert: async (req, res) => {
+    const alertId = req.params.id;
+    await db.resolveSOSAlert(alertId);
+    return res.json({ message: 'Alerta resuelta con ├⌐xito' });
+  },
+
+  getPendingProvidersList: async (req, res) => {
+    const providers = await db.getPendingProvidersList();
+    return res.json(providers);
+  },
+
+  approveProvider: async (req, res) => {
+    const providerId = req.params.id;
+    await db.approveProvider(providerId);
+    return res.json({ message: 'Proveedor aprobado con ├⌐xito' });
+  },
+
+  rejectProvider: async (req, res) => {
+    const providerId = req.params.id;
+    await db.rejectProvider(providerId);
+    return res.json({ message: 'Proveedor rechazado con ├⌐xito' });
+  },
+
+  verifyProvider: async (req, res) => {
+    const providerId = req.params.id;
+    await db.verifyProvider(providerId);
+    return res.json({ message: 'Proveedor verificado con ├⌐xito' });
+  },
+
+  approvePayout: async (req, res) => {
+    const payoutId = req.params.id;
+    await db.approvePayout(payoutId);
+    return res.json({ message: 'Pago aprobado con ├⌐xito' });
+  },
+
+  verifyProviderAuto: async (req, res) => {
+    const providerId = req.params.id;
+    await db.verifyProviderAuto(providerId);
+    return res.json({ message: 'Proveedor verificado autom├íticamente con ├⌐x[2D[K
+├⌐xito' });
+  },
+
+  getFinancialSummary: async (req, res) => {
+    const summary = await db.getFinancialSummary();
+    return res.json(summary);
+  }
+};
+```
+
+**authAdmin.middleware.js**
+```javascript
+const jwt = require('jsonwebtoken');
+const { getJwtSecret } = require('../config/jwt');
+
+module.exports = function authAdmin(req, res, next) {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Acceso no autorizado. Se requie[6D[K
+requiere token Bearer.' });
+    }
+
+    const token = authHeader.split(' ')[1];
+    
+    // Verificar firma y expiraci??n del JWT
+    let decoded;
+    try {
+      decoded = jwt.verify(token, getJwtSecret());
+    } catch (err) {
+      if (err.name === 'TokenExpiredError') {
+        return res.status(401).json({ error: 'Sesi??n expirada. Por favor i[1D[K
+inicie sesi??n nuevamente.' });
+      }
+      return res.status(401).json({ error: 'Token de acceso inv??lido.' });[3D[K
+});
+    }
+
+    // Verificar que el payload del token contenga la informaci??n requerid[8D[K
+requerida
+    const tokenRole = decoded.rol || decoded.role;
+    if (!decoded || !decoded.id || !tokenRole) {
+      return res.status(401).json({ error: 'Token de acceso malformado o in[2D[K
+incompleto.' });
+    }
+
+    // Validar rol estrictamente 'ADMIN'
+    if (tokenRole.toUpperCase() !== 'ADMIN') {
+      return res.status(403).json({ error: 'Acceso denegado. Se requieren p[1D[K
+permisos de administrador.' });
+    }
+
+    // Guardar los datos decodificados en el objeto de la petici??n (req)
+    req.admin = {
+      id: decoded.id,
+      email: decoded.email,
+      rol: 'ADMIN'
+    };
+
+    next();
+  } catch (error) {
+    console.error('Error en middleware authAdmin:', error);
+    res.status(500).json({ error: 'Error interno al procesar autorizaci??n [K
+de administrador.' });
+  }
+};
+```
+
+**financial.helper.js**
+```javascript
+const calcularLiquidacion = require('./calcular-liquidacion');
+
+module.exports = {
+  calcularLiquidacion
+};
+```
+
+**admin.routes.js**
+```javascript
+const express = require('express');
+const router = express.Router();
+const authAdmin = require('../authAdmin.middleware');
+
+router.use(authAdmin);
+
+/**
+ * @route GET /api/glow-admin/sos/active
+ * @desc Obtiene todas las alertas SOS en estado 'ACTIVO'
+ */
+router.get('/sos/active', async (req, res) => {
+  const alerts = await adminController.getAllActiveAlerts(req);
+  return res.json(alerts);
+});
+
+/**
+ * @route PATCH /api/glow-admin/sos/resolve/:id
+ * @desc Resuelve una alerta SOS marc??ndola como atendida
+ */
+router.patch('/sos/resolve/:id', async (req, res) => {
+  const result = await adminController.resolveSOSAlert(req);
+  return res.json(result);
+});
+
+/**
+ * @route GET /api/glow-admin/provider/pending
+ * @desc Obtiene todos los prestadores pendientes de verificaci??n
+ */
+router.get('/provider/pending', async (req, res) => {
+  const providers = await adminController.getPendingProvidersList(req);
+  return res.json(providers);
+});
+
+/**
+ * @route POST /api/glow-admin/provider/approve
+ * @desc Aprueba la verificaci??n del perfil de un prestador
+ */
+router.post('/provider/approve', async (req, res) => {
+  const result = await adminController.approveProvider(req);
+  return res.json(result);
+});
+
+/**
+ * @route POST /api/glow-admin/provider/reject
+ * @desc Rechaza la verificaci??n del perfil de un prestador
+ */
+router.post('/provider/reject', async (req, res) => {
+  const result = await adminController.rejectProvider(req);
+  return res.json(result);
+});
+
+/**
+ * @route POST /api/glow-admin/provider/verify
+ * @desc Verifica el perfil de un prestador para habilitar su etiqueta verd[4D[K
+verde
+ */
+router.post('/provider/verify', async (req, res) => {
+  const result = await adminController.verifyProvider(req);
+  return res.json(result);
+});
+
+/**
+ * @route POST /api/glow-admin/payout/approve
+ * @desc Aprueba la dispersi??n y retiro de fondos de un prestador
+ */
+router.post('/payout/approve', async (req, res) => {
+  const result = await adminController.approvePayout(req);
+  return res.json(result);
+});
+
+/**
+ * @route POST /api/glow-admin/provider/verify-auto
+ * @desc Verifica autom??ticamente un prestador (mock KYC)
+ */
+router.post('/provider/verify-auto', async (req, res) => {
+  const result = await adminController.verifyProviderAuto(req);
+  return res.json(result);
+});
+
+/**
+ * @route GET /api/glow-admin/dashboard/financial-summary
+ * @desc Obtiene el resumen financiero consolidado para el panel de adminis[7D[K
+administraci??n
+ */
+router.get('/dashboard/financial-summary', async (req, res) => {
+  const summary = await adminController.getFinancialSummary(req);
+  return res.json(summary);
+});
+
+module.exports = router;
+```
+Espero que esta informaci├│n te sea ├║til. Recuerda adaptar y personalizar el[2D[K
+el c├│digo seg├║n las necesidades espec├¡ficas de tu proyecto.
+
