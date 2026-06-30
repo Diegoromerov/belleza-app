@@ -1,0 +1,86 @@
+===============================================================================
+GUÍA DE ACTUALIZACIÓN Y DESPLIEGUE — GLOWAPP (beauty-app)
+===============================================================================
+
+Sigue esta guía paso a paso cada vez que quieras sincronizar los últimos cambios
+del repositorio original (Diego Romero / upstream) y subir tus propios cambios 
+a tu repositorio personal de GitHub (origin) para activar el despliegue automático en Railway.
+
+Asegúrate de estar ubicado en la carpeta raíz del proyecto local:
+Ruta: c:\beauty-app
+
+-------------------------------------------------------------------------------
+PASO 1: VERIFICAR LA CONFIGURACIÓN DE REMOTOS
+-------------------------------------------------------------------------------
+Antes de empezar, comprueba que tienes agregados los repositorios correctos:
+
+Comando:
+git remote -v
+
+Deberías ver una salida similar a esta:
+origin    https://github.com/TU-USUARIO/belleza-app.git (fetch)  <-- Tu copia propia (fork)
+origin    https://github.com/TU-USUARIO/belleza-app.git (push)
+upstream  https://github.com/Diegoromerov/belleza-app.git (fetch) <-- Original
+upstream  https://github.com/Diegoromerov/belleza-app.git (push)
+
+* Nota: Actualmente tienes tanto "origin" como "upstream" apuntando al repositorio de Diego.
+  Si no tienes permisos de escritura en su repositorio, debes cambiar el URL de "origin"
+  al URL de tu propio fork en GitHub usando:
+  git remote set-url origin https://github.com/TU-USUARIO-GITHUB/belleza-app.git
+
+-------------------------------------------------------------------------------
+PASO 2: LIMPIAR Y PREPARAR TUS CAMBIOS LOCALES
+-------------------------------------------------------------------------------
+Si has realizado modificaciones locales (como los cambios de la Tienda) y deseas
+guardarlos para subirlos a tu GitHub:
+
+1. Revisa qué archivos has modificado:
+   git status
+
+2. Añade todos los archivos modificados a la cola:
+   git add .
+
+3. Guarda los cambios localmente creando un commit:
+   git commit -m "feat: implementar tienda en prestador y correcciones de seguridad"
+
+-------------------------------------------------------------------------------
+PASO 3: TRAER LAS ÚLTIMAS ACTUALIZACIONES DEL REPOSITORIO ORIGINAL (UPSTREAM)
+-------------------------------------------------------------------------------
+Para integrar cambios nuevos que el propietario original haya subido al proyecto:
+
+1. Trae los cambios del repositorio original sin aplicarlos todavía:
+   git fetch upstream
+
+2. Integra los cambios de upstream/main en tu rama local actual (main):
+   git merge upstream/main
+
+   * Nota: Si se abre un editor de texto pidiéndote un mensaje de combinación (merge),
+     guárdalo y ciérralo. Si hay conflictos de código, VS Code te los mostrará
+     para que elijas qué versión conservar.
+
+-------------------------------------------------------------------------------
+PASO 4: SUBIR LOS CAMBIOS A TU GITHUB (ORIGIN) Y ACTIVAR RAILWAY
+-------------------------------------------------------------------------------
+Una vez que tu rama local tiene integrados tus cambios y los de upstream:
+
+Comando para subir a tu repositorio en la nube:
+git push origin main
+
+Al finalizar con éxito este comando, tu repositorio personal de GitHub se 
+actualizará. Railway detectará la nueva subida automáticamente e iniciará
+la compilación y despliegue del sitio en vivo en pocos minutos.
+
+===============================================================================
+SOLUCIÓN A PROBLEMAS DE CONEXIÓN (Connection was reset / Recv failure)
+===============================================================================
+Si obtienes un error de conexión al hacer "git push", ejecuta estas soluciones en tu terminal:
+
+A) Aumentar el tamaño del buffer de subida de Git:
+   git config --global http.postBuffer 524288000
+
+B) Desactivar la verificación SSL temporalmente si es un problema de red local:
+   git config --global http.sslVerify false
+
+C) Usar SSH en lugar de HTTPS si tu cuenta utiliza llaves públicas para autenticar:
+   git remote set-url origin git@github.com:TU-USUARIO-GITHUB/belleza-app.git
+===============================================================================
