@@ -321,6 +321,51 @@ router.post('/bookings/:id/confirm-otp', authMiddleware, async (req, res) => {
       [id, JSON.stringify({ madura_at: maduraAt.toISOString() })]
     );
 
+    // ─── LIBERAR COMISIÓN DE GLOWSTORE SI APLICA ───
+    const storeOrderRes = await client.query(
+      'SELECT id, comision_total_prestador FROM pedidos_tienda WHERE booking_id = $1 AND prestador_comisionado_id = $2;',
+      [id, otp.provider_id]
+    );
+
+    if (storeOrderRes.rows.length > 0) {
+      const storeOrder = storeOrderRes.rows[0];
+      const comisionTienda = parseFloat(storeOrder.comision_total_prestador);
+
+      if (comisionTienda > 0) {
+        // Actualizar wallet sumando la comisión de la tienda al saldo pendiente
+        const walletTiendaResult = await client.query(
+          `UPDATE provider_wallet 
+           SET saldo_pendiente = saldo_pendiente + $2,
+               total_ganado    = total_ganado + $2,
+               updated_at      = NOW()
+           WHERE provider_id = $1
+           RETURNING *`,
+          [otp.provider_id, comisionTienda]
+        );
+        const walletTienda = walletTiendaResult.rows[0];
+
+        // Insertar transacción de tipo CREDITO_PRODUCTO
+        await client.query(
+          `INSERT INTO wallet_transactions
+             (provider_id, booking_id, tipo, monto, saldo_resultante, estado, descripcion, metadata)
+           VALUES ($1, $2, 'CREDITO_PRODUCTO', $3, $4, 'PENDIENTE', $5, $6)`,
+          [
+            otp.provider_id, 
+            id, 
+            comisionTienda,
+            parseFloat(walletTienda.saldo_disponible) + parseFloat(walletTienda.saldo_pendiente),
+            `Comisión de productos en GlowStore - Pedido #${storeOrder.id}`,
+            JSON.stringify({
+              madura_at: maduraAt.toISOString(),
+              pedido_id: storeOrder.id,
+              comision_total: comisionTienda
+            })
+          ]
+        );
+        console.log(`💰 Acreditada comisión de tienda de $${comisionTienda} para el prestador ${otp.provider_id}`);
+      }
+    }
+
     await auditLog(client, {
       actorId: req.user.id,
       accion: 'OTP_CONFIRMADO',
@@ -357,7 +402,7 @@ router.get('/wallet', authMiddleware, async (req, res) => {
     await pool.query(
       `UPDATE wallet_transactions
        SET estado = 'COMPLETADO'
-       WHERE tipo = 'CREDITO_SERVICIO'
+       WHERE tipo IN ('CREDITO_SERVICIO', 'CREDITO_PRODUCTO')
          AND estado = 'PENDIENTE'
          AND (metadata->>'madura_at')::timestamptz <= NOW()
          AND provider_id = $1`,
@@ -367,7 +412,7 @@ router.get('/wallet', authMiddleware, async (req, res) => {
     const madurados = await pool.query(
       `SELECT COALESCE(SUM(monto), 0) as total
        FROM wallet_transactions
-       WHERE tipo = 'CREDITO_SERVICIO'
+       WHERE tipo IN ('CREDITO_SERVICIO', 'CREDITO_PRODUCTO')
          AND estado = 'COMPLETADO'
          AND provider_id = $1
          AND (metadata->>'acreditado') IS NULL`,
@@ -386,7 +431,7 @@ router.get('/wallet', authMiddleware, async (req, res) => {
       await pool.query(
         `UPDATE wallet_transactions
          SET metadata = metadata || '{"acreditado": true}'::jsonb
-         WHERE tipo = 'CREDITO_SERVICIO'
+         WHERE tipo IN ('CREDITO_SERVICIO', 'CREDITO_PRODUCTO')
            AND estado = 'COMPLETADO'
            AND provider_id = $1
            AND (metadata->>'acreditado') IS NULL`,
