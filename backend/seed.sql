@@ -22,20 +22,20 @@ ON CONFLICT (id) DO NOTHING;
 -- 3. Servicios para prestadores
 -- Servicios de María López (id=2)
 INSERT INTO services (id, provider_id, name, description, price, duration_minutes, category, is_active) VALUES
-('a0000000-0000-0000-0000-000000000002', 2, 'Corte + Lavado', 'Incluye diagnóstico capilar', 35.00, 45, 'hair', true),
-('a0000000-0000-0000-0000-000000000102', 2, 'Balayage Completo', 'Técnica de iluminación personalizada', 120.00, 150, 'hair', true)
+('a0000000-0000-0000-0000-000000000002', 2, 'Corte + Lavado', 'Incluye diagnóstico capilar', 35000.00, 45, 'hair', true),
+('a0000000-0000-0000-0000-000000000102', 2, 'Balayage Completo', 'Técnica de iluminación personalizada', 120000.00, 150, 'hair', true)
 ON CONFLICT (id) DO NOTHING;
 
 -- Servicios de Carlos Ruiz (id=3)
 INSERT INTO services (id, provider_id, name, description, price, duration_minutes, category, is_active) VALUES
-('a0000000-0000-0000-0000-000000000003', 3, 'Manicura Semipermanente', 'Limpieza, limado y esmaltado duradero', 25.00, 60, 'nails', true)
+('a0000000-0000-0000-0000-000000000003', 3, 'Manicura Semipermanente', 'Limpieza, limado y esmaltado duradero', 25000.00, 60, 'nails', true)
 ON CONFLICT (id) DO NOTHING;
 
 -- Servicios de Ana Silva (id=5)
 INSERT INTO services (id, provider_id, name, description, price, duration_minutes, category, is_active) VALUES
-('a0000000-0000-0000-0000-000000000005', 5, 'Corte de Cabello Premium + Peinado', 'Corte personalizado adaptado a tu rostro, lavado orgánico con masaje capilar y cepillado estilizado profesional.', 45.00, 60, 'hair', true),
-('a0000000-0000-0000-0000-000000000105', 5, 'Maquillaje Profesional de Noche', 'Maquillaje glam de alta duración para eventos, incluye preparación e hidratación de piel y pestañas por punto.', 80.00, 90, 'makeup', true),
-('a0000000-0000-0000-0000-000000000205', 5, 'Manicura + Pedicura Spa', 'Limpieza profunda, exfoliación de sales minerales, esmaltado semipermanente de larga duración y diseños minimalistas a elección.', 50.00, 80, 'nails', true)
+('a0000000-0000-0000-0000-000000000005', 5, 'Corte de Cabello Premium + Peinado', 'Corte personalizado adaptado a tu rostro, lavado orgánico con masaje capilar y cepillado estilizado profesional.', 45000.00, 60, 'hair', true),
+('a0000000-0000-0000-0000-000000000105', 5, 'Maquillaje Profesional de Noche', 'Maquillaje glam de alta duración para eventos, incluye preparación e hidratación de piel y pestañas por punto.', 80000.00, 90, 'makeup', true),
+('a0000000-0000-0000-0000-000000000205', 5, 'Manicura + Pedicura Spa', 'Limpieza profunda, exfoliación de sales minerales, esmaltado semipermanente de larga duración y diseños minimalistas a elección.', 50000.00, 80, 'nails', true)
 ON CONFLICT (id) DO NOTHING;
 
 -- 4. Portafolio de Trabajos (Books de Fotos con Unsplash de alta resolución)
@@ -48,13 +48,13 @@ ON CONFLICT (id) DO NOTHING;
 -- 5. Citas de prueba para historial y reseñas
 -- Cita vieja de María López
 INSERT INTO bookings (id, client_id, provider_id, service_id, scheduled_at, valor_bruto, estado, pin_verificacion) VALUES
-('b0000000-0000-0000-0000-000000000002', 4, 2, 'a0000000-0000-0000-0000-000000000002', '2026-05-25 15:00:00+00', 35.00, 'COMPLETADA', '4821')
+('b0000000-0000-0000-0000-000000000002', 4, 2, 'a0000000-0000-0000-0000-000000000002', '2026-05-25 15:00:00+00', 35000.00, 'COMPLETADA', '4821')
 ON CONFLICT (id) DO NOTHING;
 
 -- Citas de Ana Silva (Para construir el historial y promedio de valoración)
 INSERT INTO bookings (id, client_id, provider_id, service_id, scheduled_at, valor_bruto, estado, pin_verificacion) VALUES
-('b0000000-0000-0000-0000-000000000005', 4, 5, 'a0000000-0000-0000-0000-000000000005', '2026-05-20 10:00:00+00', 45.00, 'COMPLETADA', '1122'),
-('b0000000-0000-0000-0000-000000000105', 6, 5, 'a0000000-0000-0000-0000-000000000105', '2026-05-22 18:00:00+00', 80.00, 'COMPLETADA', '3344')
+('b0000000-0000-0000-0000-000000000005', 4, 5, 'a0000000-0000-0000-0000-000000000005', '2026-05-20 10:00:00+00', 45000.00, 'COMPLETADA', '1122'),
+('b0000000-0000-0000-0000-000000000105', 6, 5, 'a0000000-0000-0000-0000-000000000105', '2026-05-22 18:00:00+00', 80000.00, 'COMPLETADA', '3344')
 ON CONFLICT (id) DO NOTHING;
 
 -- 6. Reseñas históricas

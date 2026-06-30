@@ -47,6 +47,11 @@ const Booking = sequelize.define('Booking', {
     allowNull: true,
     field: 'pago_neto_prestador'
   },
+  tarifa_reserva: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true,
+    field: 'tarifa_reserva'
+  },
   service_address: {
     type: DataTypes.TEXT,
     allowNull: true,

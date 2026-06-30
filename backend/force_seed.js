@@ -51,9 +51,9 @@ async function main() {
     await client.query(`
       INSERT INTO services (id, provider_id, name, description, price, duration_minutes, category, is_active) 
       VALUES 
-      ('a0000000-0000-0000-0000-000000000005', 5, 'Corte de Cabello Premium + Peinado', 'Corte personalizado adaptado a tu rostro, lavado orgánico con masaje capilar y cepillado estilizado profesional.', 45.00, 60, 'hair', true),
-      ('a0000000-0000-0000-0000-000000000105', 5, 'Maquillaje Profesional de Noche', 'Maquillaje glam de alta duración para eventos, incluye preparación e hidratación de piel y pestañas por punto.', 80.00, 90, 'makeup', true),
-      ('a0000000-0000-0000-0000-000000000205', 5, 'Manicura + Pedicura Spa', 'Limpieza profunda, exfoliación de sales minerales, esmaltado semipermanente de larga duración y diseños minimalistas a elección.', 50.00, 80, 'nails', true)
+      ('a0000000-0000-0000-0000-000000000005', 5, 'Corte de Cabello Premium + Peinado', 'Corte personalizado adaptado a tu rostro, lavado orgánico con masaje capilar y cepillado estilizado profesional.', 45000.00, 60, 'hair', true),
+      ('a0000000-0000-0000-0000-000000000105', 5, 'Maquillaje Profesional de Noche', 'Maquillaje glam de alta duración para eventos, incluye preparación e hidratación de piel y pestañas por punto.', 80000.00, 90, 'makeup', true),
+      ('a0000000-0000-0000-0000-000000000205', 5, 'Manicura + Pedicura Spa', 'Limpieza profunda, exfoliación de sales minerales, esmaltado semipermanente de larga duración y diseños minimalistas a elección.', 50000.00, 80, 'nails', true)
       ON CONFLICT (id) DO NOTHING;
     `);
 
@@ -71,8 +71,8 @@ async function main() {
     await client.query(`
       INSERT INTO bookings (id, client_id, provider_id, service_id, scheduled_at, valor_bruto, estado, pin_verificacion) 
       VALUES 
-      ('b0000000-0000-0000-0000-000000000005', 4, 5, 'a0000000-0000-0000-0000-000000000005', '2026-05-20 10:00:00+00', 45.00, 'COMPLETADA', '1122'),
-      ('b0000000-0000-0000-0000-000000000105', 6, 5, 'a0000000-0000-0000-0000-000000000105', '2026-05-22 18:00:00+00', 80.00, 'COMPLETADA', '3344')
+      ('b0000000-0000-0000-0000-000000000005', 4, 5, 'a0000000-0000-0000-0000-000000000005', '2026-05-20 10:00:00+00', 45000.00, 'COMPLETADA', '1122'),
+      ('b0000000-0000-0000-0000-000000000105', 6, 5, 'a0000000-0000-0000-0000-000000000105', '2026-05-22 18:00:00+00', 80000.00, 'COMPLETADA', '3344')
       ON CONFLICT (id) DO NOTHING;
     `);
 
