@@ -109,7 +109,7 @@ const searchRealPinterestImages = async (query) => {
 
     return data.results.slice(0, 6).map(item => ({
       title: item.title || 'Diseño de uñas',
-      image_url: item.image,
+      image_url: `/api/designs/proxy?url=${encodeURIComponent(item.image)}`,
       link: item.url || 'https://pinterest.com'
     }));
 
@@ -204,7 +204,7 @@ Devuelve ÚNICAMENTE la consulta de búsqueda optimizada final de 3 a 6 palabras
 
     const formattedResults = searchData.items.map(item => ({
       title: item.title || 'Diseño de uñas',
-      image_url: item.link, 
+      image_url: `/api/designs/proxy?url=${encodeURIComponent(item.link)}`, 
       link: item.image?.contextLink || 'https://pinterest.com'
     }));
 
@@ -599,5 +599,32 @@ ${jsonTemplate}`;
       error: 'Error al analizar la imagen con IA',
       details: error.message 
     });
+  }
+};
+
+exports.proxyImage = async (req, res) => {
+  try {
+    const { url } = req.query;
+    if (!url) {
+      return res.status(400).json({ error: 'Falta el parámetro url' });
+    }
+
+    const response = await fetch(url);
+    if (!response.ok) {
+      return res.status(response.status).json({ error: 'Error al obtener la imagen' });
+    }
+
+    const contentType = response.headers.get('content-type');
+    if (contentType) {
+      res.setHeader('Content-Type', contentType);
+    }
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+
+    const buffer = await response.arrayBuffer();
+    res.send(Buffer.from(buffer));
+  } catch (error) {
+    console.error('Error en proxy de imagen:', error.message);
+    res.status(500).json({ error: 'Error interno del proxy de imagen' });
   }
 };
