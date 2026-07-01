@@ -1,6 +1,8 @@
 // backend/src/services/websocketService.js
 const { WebSocketServer } = require('ws');
 const { pool } = require('../config/db');
+const jwt = require('jsonwebtoken');
+const { getJwtSecret } = require('../config/jwt');
 
 let wss = null;
 const wsClients = new Map(); // userId -> Set of WS connections
@@ -49,9 +51,22 @@ const initWebSocketServer = (server) => {
     ws.on('message', (message) => {
       try {
         const data = JSON.parse(message);
-        if (data.type === 'register' && data.userId) {
-          registerClient(data.userId, ws);
-          ws.send(JSON.stringify({ status: 'registered', userId: data.userId.toString() }));
+        if (data.type === 'register') {
+          if (data.token) {
+            try {
+              const decoded = jwt.verify(data.token, getJwtSecret());
+              const verifiedUserId = decoded.id;
+              registerClient(verifiedUserId, ws);
+              ws.send(JSON.stringify({ status: 'registered', userId: verifiedUserId.toString() }));
+            } catch (jwtErr) {
+              console.error('WebSocket JWT verification failed:', jwtErr.message);
+              ws.send(JSON.stringify({ error: 'Token inválido o expirado' }));
+            }
+          } else if (data.userId) {
+            console.warn(`⚠️ WebSocket registrado por ID plano (sin token) para pruebas. Usuario: ${data.userId}`);
+            registerClient(data.userId, ws);
+            ws.send(JSON.stringify({ status: 'registered', userId: data.userId.toString(), warning: 'No token verification' }));
+          }
         }
         // Integración de Geolocalización en Tiempo Real vía WebSockets para Tracking
         if (data.type === 'join_booking_room' && data.bookingId) {
@@ -101,9 +116,28 @@ const initWebSocketServer = (server) => {
   return wss;
 };
 
+const notifyProviderNewBooking = (providerId, message) => {
+  const providerIdStr = providerId.toString();
+  if (wsClients.has(providerIdStr)) {
+    const payload = JSON.stringify({
+      type: 'new_booking',
+      data: {
+        message: message,
+        sound_text: 'glowapp'
+      }
+    });
+    for (const conn of wsClients.get(providerIdStr)) {
+      if (conn.readyState === 1) { // OPEN
+        conn.send(payload);
+      }
+    }
+  }
+};
+
 module.exports = {
   registerClient,
   unregisterClient,
   notifyUserChatMessage,
-  initWebSocketServer
+  initWebSocketServer,
+  notifyProviderNewBooking
 };

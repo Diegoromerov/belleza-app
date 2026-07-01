@@ -3,6 +3,8 @@
 
 const { pool } = require('../config/db');
 const wompiService = require('../services/wompiService');
+const { aplicarPricingDinamico } = require('./dynamicPricing');
+const { enviarNotificacionesRetencion } = require('./retentionNotification');
 
 /**
  * Lee un parámetro de configuración de la plataforma.
@@ -259,6 +261,18 @@ function inicializarJobs() {
   setInterval(async () => {
     const hora = new Date().getHours();
     if (hora === 2) await conciliacionDiaria();
+  }, 60 * 60 * 1000);
+
+  // Pricing dinámico: cada día a las 3 AM
+  setInterval(async () => {
+    const hora = new Date().getHours();
+    if (hora === 3) await aplicarPricingDinamico();
+  }, 60 * 60 * 1000);
+
+  // Notificaciones de retención: cada día a las 10 AM
+  setInterval(async () => {
+    const hora = new Date().getHours();
+    if (hora === 10) await enviarNotificacionesRetencion();
   }, 60 * 60 * 1000);
 
   // Ejecutar maduración inmediatamente al iniciar

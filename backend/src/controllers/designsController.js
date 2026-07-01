@@ -126,12 +126,31 @@ exports.searchPinterestDesigns = async (req, res) => {
       return res.status(400).json({ error: 'El parámetro de búsqueda "q" es obligatorio' });
     }
 
+    let optimizedQuery = q;
+    if (ai) {
+      try {
+        const model = ai.getGenerativeModel({ model: 'gemini-2.5-flash' });
+        const prompt = `Actúa como un experto en SEO y tendencias de belleza. Recibes un término de búsqueda para buscar ideas en Pinterest: "${q}".
+Optimiza y expande este término a una consulta de búsqueda corta en inglés y español que consiga los mejores y más estéticos resultados de diseño de uñas o belleza en Pinterest.
+Ejemplo: "uñas rosas" -> "elegant pink nails design aesthetic".
+Devuelve ÚNICAMENTE la consulta de búsqueda optimizada final de 3 a 6 palabras, sin comillas ni texto adicional.`;
+        const response = await model.generateContent(prompt);
+        const text = response.response.text().trim();
+        if (text && text.length > 2 && text.length < 100) {
+          optimizedQuery = text;
+          console.log(`🤖 Consulta de búsqueda optimizada con Gemini: "${q}" -> "${optimizedQuery}"`);
+        }
+      } catch (geminiErr) {
+        console.error('⚠️ Error optimizando query con Gemini:', geminiErr.message);
+      }
+    }
+
     const apiKey = process.env.GOOGLE_SEARCH_API_KEY;
     const cx = process.env.GOOGLE_SEARCH_CX;
 
     if (!apiKey || !cx) {
-      console.log('🔍 Buscando imágenes reales de Pinterest mediante motor alternativo...');
-      const realImages = await searchRealPinterestImages(q);
+      console.log(`🔍 Buscando imágenes reales de Pinterest mediante motor alternativo para: "${optimizedQuery}"...`);
+      const realImages = await searchRealPinterestImages(optimizedQuery);
       
       if (realImages && realImages.length > 0) {
         return res.status(200).json({
@@ -165,7 +184,7 @@ exports.searchPinterestDesigns = async (req, res) => {
       });
     }
 
-    const searchQuery = `${q} uñas manicure site:pinterest.com`;
+    const searchQuery = `${optimizedQuery} uñas manicure site:pinterest.com`;
     const searchUrl = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cx}&q=${encodeURIComponent(searchQuery)}&searchType=image&num=6`;
 
     const response = await fetch(searchUrl);
