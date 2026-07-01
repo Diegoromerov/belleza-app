@@ -177,12 +177,20 @@ exports.getProviderSlots = async (req, res) => {
       return res.status(400).json({ error: 'Faltan parámetros requeridos (date, service_id)' });
     }
 
-    // 1. Obtener la duración del servicio solicitado
-    const serviceRes = await pool.query('SELECT duration_minutes FROM services WHERE id = $1 AND provider_id = $2 AND is_active = true;', [service_id, providerId]);
-    if (serviceRes.rows.length === 0) {
-      return res.status(404).json({ error: 'Servicio no encontrado o inactivo' });
+    const serviceIds = service_id.split(',').map(s => s.trim()).filter(s => s.length > 0);
+    if (serviceIds.length === 0) {
+      return res.status(400).json({ error: 'Formato de service_id inválido' });
     }
-    const selectedDuration = parseInt(serviceRes.rows[0].duration_minutes);
+
+    // 1. Obtener la duración total acumulada de los servicios solicitados
+    const serviceRes = await pool.query(
+      'SELECT SUM(duration_minutes) as total_duration, COUNT(*) as match_count FROM services WHERE id = ANY($1) AND provider_id = $2 AND is_active = true;',
+      [serviceIds, providerId]
+    );
+    if (serviceRes.rows.length === 0 || parseInt(serviceRes.rows[0].match_count) !== serviceIds.length) {
+      return res.status(404).json({ error: 'Uno o más servicios no fueron encontrados o están inactivos' });
+    }
+    const selectedDuration = parseInt(serviceRes.rows[0].total_duration);
 
     // 2. Obtener todas las citas activas para ese día
     const bookingsQuery = `

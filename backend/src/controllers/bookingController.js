@@ -29,20 +29,37 @@ const verifyWompiSignature = (req) => {
 exports.createBooking = async (req, res) => {
   try {
     const clientId = req.user.id;
-    const { provider_id, service_id, scheduled_at, service_address, notes, productos_adicionales } = req.body;
+    let { provider_id, service_id, service_ids, scheduled_at, service_address, notes, productos_adicionales } = req.body;
 
-    if (!provider_id || !service_id || !scheduled_at) {
-      return res.status(400).json({ error: 'Faltan campos requeridos' });
+    if (!service_ids && service_id) {
+      service_ids = [service_id];
     }
 
-    const service = await Service.findByPk(service_id);
-    if (!service) {
-      return res.status(404).json({ error: 'Servicio no encontrado' });
+    if (!provider_id || !service_ids || !Array.isArray(service_ids) || service_ids.length === 0 || !scheduled_at) {
+      return res.status(400).json({ error: 'Faltan campos requeridos o formato inválido para service_ids' });
     }
 
-    const price = parseFloat(service.price);
-    const durationMinutes = parseInt(service.duration_minutes);
-    let total_amount = price;
+    // Obtener y validar todos los servicios solicitados
+    const services = await Service.findAll({
+      where: {
+        id: service_ids,
+        provider_id
+      }
+    });
+
+    if (services.length !== service_ids.length) {
+      return res.status(404).json({ error: 'Uno o más servicios no fueron encontrados' });
+    }
+
+    // Ordenar los servicios en base al orden recibido en service_ids
+    const servicesMap = {};
+    services.forEach(s => { servicesMap[s.id] = s; });
+    const orderedServices = service_ids.map(id => servicesMap[id]);
+
+    const totalServicesPrice = orderedServices.reduce((sum, s) => sum + parseFloat(s.price), 0);
+    const totalDurationMinutes = orderedServices.reduce((sum, s) => sum + parseInt(s.duration_minutes), 0);
+
+    let total_amount = totalServicesPrice;
     let cleanProductsList = [];
 
     // Validar y acumular productos adicionales
@@ -78,9 +95,9 @@ exports.createBooking = async (req, res) => {
       }
     }
 
-    // 🔸 Validación de solapamiento de horarios (Collision Check)
+    // 🔸 Validación de solapamiento de horarios (Collision Check de la duración acumulada)
     const newStart = new Date(scheduled_at);
-    const newEnd = new Date(newStart.getTime() + durationMinutes * 60 * 1000);
+    const newEnd = new Date(newStart.getTime() + totalDurationMinutes * 60 * 1000);
     
     // Filtrar citas del mismo día únicamente para optimizar el rendimiento
     const startOfDay = new Date(newStart.getTime());
@@ -103,7 +120,6 @@ exports.createBooking = async (req, res) => {
       }]
     });
 
-    const dateStr = newStart.toISOString().split('T')[0];
     // Verificar solapamiento en el subconjunto filtrado
     for (const b of overlaps) {
       const bStart = new Date(b.scheduled_at);
@@ -124,21 +140,53 @@ exports.createBooking = async (req, res) => {
     const ivaFee = feeTotal * 0.19;
     const tarifaReserva = Math.round(feeTotal + ivaFee);
 
-    const newBooking = await Booking.create({
-      client_id: clientId,
-      provider_id,
-      service_id,
-      scheduled_at: newStart,
-      valor_bruto: total_amount,
-      tarifa_reserva: tarifaReserva,
-      service_address: service_address || null,
-      notes: notes || null,
-      estado: 'PENDIENTE_PAGO',
-      pin_verificacion: pin,
-      productos_adicionales: cleanProductsList.length > 0 ? cleanProductsList : []
+    // Crear las múltiples citas secuenciales en la base de datos dentro de una transacción
+    const generatedIds = orderedServices.map(() => crypto.randomUUID());
+    let currentScheduledTime = new Date(scheduled_at);
+    const createdBookings = [];
+
+    await sequelize.transaction(async (t) => {
+      for (let i = 0; i < orderedServices.length; i++) {
+        const currentService = orderedServices[i];
+        const currentId = generatedIds[i];
+        const isPrimary = (i === 0);
+        const durationMinutes = parseInt(currentService.duration_minutes);
+
+        const bookingProducts = isPrimary ? (cleanProductsList.length > 0 ? cleanProductsList : []) : [];
+        const bookingBruto = isPrimary ? total_amount : 0;
+        const bookingTarife = isPrimary ? tarifaReserva : 0;
+
+        const metadata = {
+          products: bookingProducts,
+          linked_booking_ids: generatedIds.filter(id => id !== currentId),
+          is_primary: isPrimary,
+          primary_booking_id: generatedIds[0]
+        };
+
+        const booking = await Booking.create({
+          id: currentId,
+          client_id: clientId,
+          provider_id,
+          service_id: currentService.id,
+          scheduled_at: new Date(currentScheduledTime),
+          valor_bruto: bookingBruto,
+          tarifa_reserva: bookingTarife,
+          service_address: service_address || null,
+          notes: notes || null,
+          estado: 'PENDIENTE_PAGO',
+          pin_verificacion: pin,
+          productos_adicionales: metadata
+        }, { transaction: t });
+
+        createdBookings.push(booking);
+
+        // Incrementar el tiempo de inicio para la siguiente cita
+        currentScheduledTime = new Date(currentScheduledTime.getTime() + durationMinutes * 60 * 1000);
+      }
     });
 
-    console.log(`📅 Nueva cita creada: ${newBooking.id} para usuario ${clientId} con PIN ${pin} y ${cleanProductsList.length} productos.`);
+    const primaryBooking = createdBookings[0];
+    console.log(`📅 Nuevas citas enlazadas creadas: [${generatedIds.join(', ')}] para usuario ${clientId} con PIN ${pin}.`);
 
     // Enviar SMS simulado y notificar vía WebSocket con alerta auditiva "GlowApp"
     try {
@@ -159,11 +207,12 @@ exports.createBooking = async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Cita reservada exitosamente',
-      booking_id: newBooking.id,
-      pin_verificacion: pin
+      message: 'Citas reservadas exitosamente',
+      booking_id: primaryBooking.id,
+      pin_verificacion: pin,
+      booking: primaryBooking,
+      bookings: createdBookings
     });
-
   } catch (error) {
     console.error('❌ ERROR EN /api/bookings:', { message: error.message, code: error.code });
     res.status(500).json({ error: 'Error al crear la reserva' });
@@ -398,16 +447,32 @@ exports.payBooking = async (req, res) => {
 
     const referenceToken = 'wompi_sim_' + Math.random().toString(36).substring(2, 11).toUpperCase();
 
-    // Transacción nativa usando Sequelize (Simulando Wompi de forma local e inmediata)
     const result = await sequelize.transaction(async (t) => {
       // 1. Actualizar el estado de la cita
       booking.estado = 'CONFIRMADA';
       booking.payment_status = 'paid';
       await booking.save({ transaction: t });
 
+      // Propagar a citas hijas enlazadas
+      if (booking.productos_adicionales && Array.isArray(booking.productos_adicionales.linked_booking_ids)) {
+        const linkedIds = booking.productos_adicionales.linked_booking_ids;
+        if (linkedIds.length > 0) {
+          await Booking.update(
+            { estado: 'CONFIRMADA', payment_status: 'paid' },
+            { where: { id: linkedIds }, transaction: t }
+          );
+        }
+      }
+
       // Decrementar stock de productos con validación preventiva (FOR UPDATE)
-      if (booking.productos_adicionales && Array.isArray(booking.productos_adicionales)) {
-        for (const item of booking.productos_adicionales) {
+      const productsList = Array.isArray(booking.productos_adicionales)
+        ? booking.productos_adicionales
+        : (booking.productos_adicionales && Array.isArray(booking.productos_adicionales.products)
+            ? booking.productos_adicionales.products
+            : []);
+
+      if (productsList.length > 0) {
+        for (const item of productsList) {
           const prodRes = await sequelize.query(
             'SELECT stock, nombre FROM productos WHERE id = :productId FOR UPDATE;',
             {
@@ -503,10 +568,29 @@ exports.wompiWebhook = async (req, res) => {
             { where: { id: bookingId }, transaction: t }
           );
 
-          // Decrementar stock de productos con validación preventiva (FOR UPDATE)
+          // Obtener la cita y propagar a citas hijas vinculadas si existen
           const booking = await Booking.findByPk(bookingId, { transaction: t });
-          if (booking && booking.productos_adicionales && Array.isArray(booking.productos_adicionales)) {
-            for (const item of booking.productos_adicionales) {
+          if (booking && booking.productos_adicionales && Array.isArray(booking.productos_adicionales.linked_booking_ids)) {
+            const linkedIds = booking.productos_adicionales.linked_booking_ids;
+            if (linkedIds.length > 0) {
+              await Booking.update(
+                { estado: 'CONFIRMADA', payment_status: 'paid' },
+                { where: { id: linkedIds }, transaction: t }
+              );
+            }
+          }
+
+          // Decrementar stock de productos con validación preventiva (FOR UPDATE)
+          const productsList = booking && booking.productos_adicionales
+            ? (Array.isArray(booking.productos_adicionales)
+                ? booking.productos_adicionales
+                : (Array.isArray(booking.productos_adicionales.products)
+                    ? booking.productos_adicionales.products
+                    : []))
+            : [];
+
+          if (productsList.length > 0) {
+            for (const item of productsList) {
               const prodRes = await sequelize.query(
                 'SELECT stock, nombre FROM productos WHERE id = :productId FOR UPDATE;',
                 {

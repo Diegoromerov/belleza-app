@@ -251,6 +251,7 @@ class ApiService {
   static Future<Map<String, dynamic>> createBooking({
     required String providerId,
     required String serviceId,
+    List<String>? serviceIds,
     required String scheduledAt,
     required String serviceAddress,
     String? notes,
@@ -264,6 +265,7 @@ class ApiService {
           body: json.encode({
             'provider_id': providerId,
             'service_id': serviceId,
+            'service_ids': serviceIds ?? [serviceId],
             'scheduled_at': scheduledAt,
             'service_address': serviceAddress,
             'notes': notes,

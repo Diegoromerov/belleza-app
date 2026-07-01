@@ -30,6 +30,7 @@ class _BookingScreenState extends State<BookingScreen> {
   bool isLoading = false;
   DateTime? selectedDate;
   String? selectedServiceId;
+  List<String> selectedServiceIds = [];
   String serviceAddress = '';
   String notes = '';
 
@@ -74,6 +75,9 @@ class _BookingScreenState extends State<BookingScreen> {
     _calendarMonth = selectedDate!;
     if (widget.services.isNotEmpty) {
       selectedServiceId = widget.services.first['id']?.toString();
+      if (selectedServiceId != null) {
+        selectedServiceIds = [selectedServiceId!];
+      }
     }
     _loadSlots();
     _loadRecommendedProducts();
@@ -191,7 +195,7 @@ class _BookingScreenState extends State<BookingScreen> {
   }
 
   Future<void> _loadSlots() async {
-    if (selectedDate == null || selectedServiceId == null) {
+    if (selectedDate == null || selectedServiceIds.isEmpty) {
       return;
     }
     setState(() {
@@ -206,7 +210,7 @@ class _BookingScreenState extends State<BookingScreen> {
       final data = await ApiService.fetchAvailableSlots(
         providerId: widget.providerId,
         date: dateStr,
-        serviceId: selectedServiceId!,
+        serviceId: selectedServiceIds.join(','),
       );
       setState(() {
         _slots = data;
@@ -279,6 +283,7 @@ class _BookingScreenState extends State<BookingScreen> {
       final res = await ApiService.createBooking(
         providerId: widget.providerId,
         serviceId: selectedServiceId!,
+        serviceIds: selectedServiceIds,
         scheduledAt: scheduledDateTime.toIso8601String(),
         serviceAddress: serviceAddress.trim(),
         notes: notes.isNotEmpty ? notes : null,
@@ -290,13 +295,19 @@ class _BookingScreenState extends State<BookingScreen> {
         throw Exception('No se recibió el ID de la reserva');
       }
 
-      final selectedService = widget.services.firstWhere(
-        (s) => s['id']?.toString() == selectedServiceId,
-        orElse: () => <String, dynamic>{},
-      );
-      final serviceName =
-          selectedService['name']?.toString() ?? 'Servicio de Belleza';
-      final servicePrice = _parseDouble(selectedService['price']);
+      double servicesPrice = 0.0;
+      List<String> serviceNames = [];
+      for (final id in selectedServiceIds) {
+        final s = widget.services.firstWhere(
+          (srv) => srv['id']?.toString() == id,
+          orElse: () => <String, dynamic>{},
+        );
+        if (s.isNotEmpty) {
+          servicesPrice += _parseDouble(s['price']);
+          serviceNames.add(s['name']?.toString() ?? 'Servicio');
+        }
+      }
+      final serviceName = serviceNames.isNotEmpty ? serviceNames.join(', ') : 'Servicios de Belleza';
 
       double productsSubtotal = 0.0;
       int totalProductsQty = 0;
@@ -314,7 +325,7 @@ class _BookingScreenState extends State<BookingScreen> {
         discount = productsSubtotal * 0.15;
       }
 
-      double subtotal = servicePrice + productsSubtotal - discount;
+      double subtotal = servicesPrice + productsSubtotal - discount;
       double tax = subtotal * 0.19;
       double totalBookingPrice = subtotal + tax;
 
@@ -997,12 +1008,19 @@ class _BookingScreenState extends State<BookingScreen> {
   }
 
   Widget _buildStep3SummaryAndPay() {
-    final selectedService = widget.services.firstWhere(
-      (s) => s['id']?.toString() == selectedServiceId,
-      orElse: () => <String, dynamic>{},
-    );
-    final serviceName = selectedService['name']?.toString() ?? 'Servicio';
-    final servicePrice = _parseDouble(selectedService['price']);
+    double servicesPrice = 0.0;
+    List<String> serviceNames = [];
+    for (final id in selectedServiceIds) {
+      final s = widget.services.firstWhere(
+        (srv) => srv['id']?.toString() == id,
+        orElse: () => <String, dynamic>{},
+      );
+      if (s.isNotEmpty) {
+        servicesPrice += _parseDouble(s['price']);
+        serviceNames.add(s['name']?.toString() ?? 'Servicio');
+      }
+    }
+    final serviceName = serviceNames.isNotEmpty ? serviceNames.join(', ') : 'Servicios';
 
     double productsSubtotal = 0.0;
     int totalProductsQty = 0;
@@ -1021,7 +1039,7 @@ class _BookingScreenState extends State<BookingScreen> {
       discount = productsSubtotal * 0.15;
     }
 
-    double subtotal = servicePrice + productsSubtotal - discount;
+    double subtotal = servicesPrice + productsSubtotal - discount;
     double tax = subtotal * 0.19;
     double grandTotal = subtotal + tax;
 
@@ -1203,12 +1221,21 @@ class _BookingScreenState extends State<BookingScreen> {
         final name = service['name']?.toString() ?? 'Sin nombre';
         final id = service['id']?.toString() ?? '';
         final description = service['description']?.toString() ?? '';
-        final isSelected = selectedServiceId == id;
+        final isSelected = selectedServiceIds.contains(id);
 
         return GestureDetector(
           onTap: () {
             setState(() {
-              selectedServiceId = id;
+              if (selectedServiceIds.contains(id)) {
+                if (selectedServiceIds.length > 1) {
+                  selectedServiceIds.remove(id);
+                }
+              } else {
+                selectedServiceIds.add(id);
+              }
+              if (selectedServiceIds.isNotEmpty) {
+                selectedServiceId = selectedServiceIds.first;
+              }
             });
             _loadSlots();
             _loadRecommendedProducts();
