@@ -12,6 +12,9 @@ import 'store_screen.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
 import '../services/analytics_service.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
+import 'dart:convert';
+import '../services/audio_player.dart';
 
 class ProviderDashboardScreen extends StatefulWidget {
   const ProviderDashboardScreen({super.key});
@@ -37,11 +40,93 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
   bool _loadingSOS = false;
   bool _isTogglingStatus = false;
 
+  WebSocketChannel? _webSocketChannel;
+
   @override
   void initState() {
     super.initState();
     _fetchBookings();
     _fetchProfile();
+    _initWebSocket();
+  }
+
+  @override
+  void dispose() {
+    _webSocketChannel?.sink.close();
+    super.dispose();
+  }
+
+  void _initWebSocket() async {
+    try {
+      final token = await AuthService.getToken();
+      final baseUrl = await AuthService.getBaseUrl();
+      final wsBase = baseUrl.replaceFirst('http', 'ws');
+      final wsUrl = '$wsBase/chat';
+
+      _webSocketChannel = WebSocketChannel.connect(Uri.parse(wsUrl));
+
+      // Registrar prestador en WebSocket enviando el token
+      _webSocketChannel!.sink.add(jsonEncode({
+        'type': 'register',
+        'token': token,
+      }));
+
+      _webSocketChannel!.stream.listen(
+        (message) {
+          try {
+            final data = jsonDecode(message);
+            if (data['type'] == 'new_booking') {
+              // Reproducir audio "GlowApp"
+              playGlowAppAlert();
+
+              // Mostrar alerta visual persistente
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Row(
+                      children: [
+                        const Icon(Icons.notifications_active, color: Colors.white),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            data['data']['message'] ?? '¡Nueva reserva en GlowApp!',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ),
+                    backgroundColor: const Color(0xFFC89D93),
+                    behavior: SnackBarBehavior.floating,
+                    duration: const Duration(seconds: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  ),
+                );
+                // Actualizar la lista de citas en el dashboard
+                _fetchBookings();
+              }
+            }
+          } catch (e) {
+            debugPrint('Error decodificando evento WS: $e');
+          }
+        },
+        onError: (err) {
+          debugPrint('Error en WebSocket del dashboard: $err');
+          // Reconectar automáticamente en 5 segundos
+          Future.delayed(const Duration(seconds: 5), () {
+            if (mounted) _initWebSocket();
+          });
+        },
+        onDone: () {
+          debugPrint('WebSocket del dashboard desconectado.');
+          // Reconectar automáticamente en 5 segundos
+          Future.delayed(const Duration(seconds: 5), () {
+            if (mounted) _initWebSocket();
+          });
+        },
+      );
+    } catch (e) {
+      debugPrint('Error inicializando WebSocket: $e');
+    }
   }
 
   Future<void> _fetchBookings() async {
