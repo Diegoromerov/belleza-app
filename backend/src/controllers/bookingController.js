@@ -140,6 +140,23 @@ exports.createBooking = async (req, res) => {
 
     console.log(`📅 Nueva cita creada: ${newBooking.id} para usuario ${clientId} con PIN ${pin} y ${cleanProductsList.length} productos.`);
 
+    // Enviar SMS simulado y notificar vía WebSocket con alerta auditiva "GlowApp"
+    try {
+      const { rows: providerRows } = await pool.query('SELECT nombre, phone FROM usuarios WHERE id = $1', [provider_id]);
+      if (providerRows.length > 0) {
+        const provider = providerRows[0];
+        const providerPhone = provider.phone || 'no-phone';
+        const msgText = `¡Tienes una nueva reserva en GlowApp! Alerta auditiva: GlowApp`;
+        
+        console.log(`[SMS SENDER] Enviando SMS a ${providerPhone} (${provider.nombre}): "${msgText}"`);
+        
+        const { notifyProviderNewBooking } = require('../services/websocketService');
+        notifyProviderNewBooking(provider_id, msgText);
+      }
+    } catch (notifyErr) {
+      console.error('⚠️ Error al notificar al prestador de nueva cita:', notifyErr.message);
+    }
+
     res.json({
       success: true,
       message: 'Cita reservada exitosamente',

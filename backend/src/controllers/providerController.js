@@ -43,13 +43,13 @@ exports.getProviders = async (req, res) => {
         ST_X(p.ubicacion::geometry) AS longitude,
         ST_Y(p.ubicacion::geometry) AS latitude,
         COALESCE(pl.tier, 'Creative Edge') as loyalty_tier,
-        ST_Distance(p.ubicacion::geography, ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography) AS distance_meters
+        ST_Distance(p.ubicacion, ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography) AS distance_meters
       FROM perfiles_prestador p
       INNER JOIN usuarios u ON p.id = u.id
       LEFT JOIN provider_loyalty pl ON p.id = pl.provider_id
       WHERE p.is_active = true AND p.estatus_verificacion = 'APROBADO'
         AND ST_DWithin(
-          p.ubicacion::geography, 
+          p.ubicacion, 
           ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography,
           CASE 
             WHEN COALESCE(pl.tier, 'Creative Edge') = 'Visage Pro' THEN $3 * 1.15

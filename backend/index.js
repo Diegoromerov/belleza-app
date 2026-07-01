@@ -31,7 +31,7 @@ const adminMiddleware = async (req, res, next) => {
       return res.status(401).json({ error: 'Usuario no encontrado.' });
     }
     const user = rows[0];
-    if (user.rol === 'ADMIN' || user.email === 'admin@beautyapp.com' || user.email === 'admin') {
+    if (user.rol === 'ADMIN') {
       return next();
     }
     return res.status(403).json({ error: 'Acceso denegado. Se requieren permisos de administrador.' });
