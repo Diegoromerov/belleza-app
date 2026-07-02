@@ -254,6 +254,33 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                   ],
                 ),
               ),
+              if (_email == 'usuario_pruebas@gmail.com') ...[
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.shade100,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.amber.shade400),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.bug_report, color: Colors.amber.shade800, size: 20),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'MODO PRUEBAS: Este usuario no tiene límites de diagnóstico.',
+                          style: TextStyle(
+                            color: Colors.amber.shade900,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               const SizedBox(height: 32),
 
               // 2. Formularios de edición

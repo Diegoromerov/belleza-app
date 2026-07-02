@@ -3709,6 +3709,30 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
             ],
           ),
         ),
+        // Banner de Usuario de Pruebas
+        if (_userProfile?['email'] == 'usuario_pruebas@gmail.com') ...[
+          Container(
+            padding: const EdgeInsets.all(12),
+            margin: const EdgeInsets.only(bottom: 16),
+            decoration: BoxDecoration(
+              color: Colors.amber.shade100,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.amber.shade400),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.bug_report, color: Colors.amber.shade800, size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'MODO PRUEBAS ACTIVO: Sin límites de diagnóstico.',
+                    style: TextStyle(color: Colors.amber.shade900, fontSize: 11.5, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
         // Banner de Suscripción / Plan Premium
         if (glowaiPlan == 'premium') ...[
           Container(
