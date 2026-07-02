@@ -1292,21 +1292,6 @@ const initDatabase = async () => {
       console.warn('⚠️ No se encontró loyalty_migration.sql. Se omitió la migración de lealtad.');
     }
 
-    // 🔸 Ejecutar migración del sistema de pagos (001_payment_system.sql)
-    const paymentMigrationPath = path.join(__dirname, 'migrations/001_payment_system.sql');
-    if (fs.existsSync(paymentMigrationPath)) {
-      try {
-        const paymentSql = fs.readFileSync(paymentMigrationPath, 'utf8');
-        await pool.query(paymentSql);
-        console.log('✅ Base de datos: Migración del sistema de pagos aplicada.');
-      } catch (pmErr) {
-        // Ignorar errores de "ya existe" (idempotente con IF NOT EXISTS)
-        if (!pmErr.message.includes('already exists') && !pmErr.message.includes('ya existe')) {
-          console.warn('⚠️ Advertencia en migración de pagos:', pmErr.message);
-        }
-      }
-    }
-
     // 🔸 Ejecutar migración de disputas y schedule (disputas table, triggers, indexes y weekly_schedule)
     try {
       // 1. Crear tabla disputas
@@ -1403,87 +1388,32 @@ const initDatabase = async () => {
     await pool.query(aiUserQuery);
     console.log('🤖 Usuario Asistente de IA verificado/creado con ID 0.');
 
-    // 🔸 Ejecutar migración de Habeas Data y Configuración Dinámica (003_habeas_data_and_config.sql)
-    const configMigrationPath = path.join(__dirname, 'migrations/003_habeas_data_and_config.sql');
-    if (fs.existsSync(configMigrationPath)) {
+    // 🔸 EJECUTAR MIGRACIONES AUTOMÁTICAS DESDE LA CARPETA MIGRATIONS
+    const migrationsDir = path.join(__dirname, 'migrations');
+    if (fs.existsSync(migrationsDir)) {
       try {
-        const configSql = fs.readFileSync(configMigrationPath, 'utf8');
-        await pool.query(configSql);
-        console.log('✅ Base de datos: Migración de Habeas Data y Configuración Dinámica aplicada.');
-      } catch (cErr) {
-        console.warn('⚠️ Advertencia en migración de Habeas Data/Configuración:', cErr.message);
-      }
-    }
-
-    // 🔸 Ejecutar migración de soporte y PQRSF (007_soporte_y_pqrsf.sql)
-    const soporteMigrationPath = path.join(__dirname, 'migrations/007_soporte_y_pqrsf.sql');
-    if (fs.existsSync(soporteMigrationPath)) {
-      try {
-        const soporteSql = fs.readFileSync(soporteMigrationPath, 'utf8');
-        await pool.query(soporteSql);
-        console.log('✅ Base de datos: Migración de Soporte y PQRSF aplicada.');
-      } catch (sErr) {
-        console.warn('⚠️ Advertencia en migración de Soporte y PQRSF:', sErr.message);
-      }
-    }
-
-    // 🔸 Ejecutar migración de la Academia Glow (008_academia_glow.sql)
-    const academyMigrationPath = path.join(__dirname, 'migrations/008_academia_glow.sql');
-    if (fs.existsSync(academyMigrationPath)) {
-      try {
-        const academySql = fs.readFileSync(academyMigrationPath, 'utf8');
-        await pool.query(academySql);
-        console.log('✅ Base de datos: Migración de Academia Glow aplicada.');
-      } catch (aErr) {
-        console.warn('⚠️ Advertencia en migración de Academia Glow:', aErr.message);
-      }
-    }
-
-    // 🔸 Ejecutar migración de la Tienda de Productos (009_create_productos_table.sql)
-    const productosMigrationPath = path.join(__dirname, 'migrations/009_create_productos_table.sql');
-    if (fs.existsSync(productosMigrationPath)) {
-      try {
-        const productosSql = fs.readFileSync(productosMigrationPath, 'utf8');
-        await pool.query(productosSql);
-        console.log('✅ Base de datos: Migración de Tienda de Productos aplicada.');
-      } catch (pErr) {
-        console.warn('⚠️ Advertencia en migración de Tienda de Productos:', pErr.message);
-      }
-    }
-
-    // 🔸 Ejecutar migración del esquema técnico de GlowStore (010_implement_glowstore_schema.sql)
-    const glowstoreMigrationPath = path.join(__dirname, 'migrations/010_implement_glowstore_schema.sql');
-    if (fs.existsSync(glowstoreMigrationPath)) {
-      try {
-        const glowstoreSql = fs.readFileSync(glowstoreMigrationPath, 'utf8');
-        await pool.query(glowstoreSql);
-        console.log('✅ Base de datos: Migración del esquema técnico de GlowStore aplicada.');
-      } catch (gErr) {
-        console.warn('⚠️ Advertencia en migración del esquema técnico de GlowStore:', gErr.message);
-      }
-    }
-
-    // 🔸 Ejecutar migración del trigger de comisiones continuas (011_update_commission_trigger.sql)
-    const commissionMigrationPath = path.join(__dirname, 'migrations/011_update_commission_trigger.sql');
-    if (fs.existsSync(commissionMigrationPath)) {
-      try {
-        const commissionSql = fs.readFileSync(commissionMigrationPath, 'utf8');
-        await pool.query(commissionSql);
-        console.log('✅ Base de datos: Migración de Comisión Continua aplicada.');
-      } catch (cErr) {
-        console.warn('⚠️ Advertencia en migración de Comisión Continua:', cErr.message);
-      }
-    }
-
-    // 🔸 Ejecutar migración de la reingeniería del Planificador de Skincare (012_skincare_planner_reengineering.sql)
-    const skincareMigrationPath = path.join(__dirname, 'migrations/012_skincare_planner_reengineering.sql');
-    if (fs.existsSync(skincareMigrationPath)) {
-      try {
-        const skincareSql = fs.readFileSync(skincareMigrationPath, 'utf8');
-        await pool.query(skincareSql);
-        console.log('✅ Base de datos: Migración de reingeniería del Planificador de Skincare aplicada.');
-      } catch (skErr) {
-        console.warn('⚠️ Advertencia en migración de reingeniería del Planificador de Skincare:', skErr.message);
+        const files = fs.readdirSync(migrationsDir)
+          .filter(file => file.endsWith('.sql'))
+          .sort(); // Orden alfabético: 001, 002, 003, etc.
+        
+        console.log(`🔍 Encontradas ${files.length} migraciones en la carpeta migrations.`);
+        for (const file of files) {
+          const filePath = path.join(migrationsDir, file);
+          try {
+            const sql = fs.readFileSync(filePath, 'utf8');
+            await pool.query(sql);
+            console.log(`✅ Base de datos: Migración ${file} aplicada exitosamente.`);
+          } catch (err) {
+            // Ignorar errores comunes de "ya existe" o de alteración idempotente para mantener robustez
+            if (!err.message.includes('already exists') && !err.message.includes('ya existe') && !err.message.includes('duplicate key value') && !err.message.includes('already a column')) {
+              console.warn(`⚠️ Advertencia en migración ${file}:`, err.message);
+            } else {
+              console.log(`ℹ️ Migración ${file} ya aplicada anteriormente o con elementos existentes.`);
+            }
+          }
+        }
+      } catch (dirErr) {
+        console.error('❌ Error leyendo la carpeta de migraciones:', dirErr.message);
       }
     }
 
