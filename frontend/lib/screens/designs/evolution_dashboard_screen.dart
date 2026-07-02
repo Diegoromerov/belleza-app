@@ -15,6 +15,7 @@ class _EvolutionDashboardScreenState extends State<EvolutionDashboardScreen> {
   String _track = 'facial';
   bool _isLoading = true;
   String? _error;
+  String? _email;
   
   List<Map<String, dynamic>> _historyData = [];
   String _insight = '';
@@ -50,6 +51,7 @@ class _EvolutionDashboardScreenState extends State<EvolutionDashboardScreen> {
         _insight = insight;
         _attribution = attribution;
         _plan = profile['glowai_plan'] ?? 'free';
+        _email = profile['email'];
         _isLoading = false;
       });
     } catch (e) {
@@ -89,6 +91,22 @@ class _EvolutionDashboardScreenState extends State<EvolutionDashboardScreen> {
         alignment: Alignment.center,
         child: const Icon(Icons.broken_image_outlined, color: Colors.grey),
       ),
+    );
+  }
+
+  Widget _buildDeterioratedImage(String? url) {
+    final isTestUser = _email == 'usuario_pruebas@gmail.com';
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        _buildDiagnosticImage(url),
+        if (isTestUser)
+          Positioned.fill(
+            child: CustomPaint(
+              painter: SkinDeteriorationPainter(),
+            ),
+          ),
+      ],
     );
   }
 
@@ -249,7 +267,7 @@ class _EvolutionDashboardScreenState extends State<EvolutionDashboardScreen> {
                                       borderRadius: BorderRadius.circular(16),
                                       child: AspectRatio(
                                         aspectRatio: 1.0,
-                                        child: _buildDiagnosticImage(
+                                        child: _buildDeterioratedImage(
                                           _historyData.isNotEmpty ? _historyData.first['image_url'] : null,
                                         ),
                                       ),
@@ -509,4 +527,38 @@ class TrendLineChartPainter extends CustomPainter {
   bool shouldRepaint(covariant TrendLineChartPainter oldDelegate) {
     return oldDelegate.data != data || oldDelegate.isFreePlan != isFreePlan;
   }
+}
+
+class SkinDeteriorationPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    // 1. Capa de enrojecimiento / deshidratación (tono sepia/rojizo semi-transparente)
+    final rect = Offset.zero & size;
+    final paintRed = Paint()
+      ..color = const Color(0xFFC89D93).withValues(alpha: 0.15)
+      ..blendMode = BlendMode.colorBurn;
+    canvas.drawRect(rect, paintRed);
+
+    // 2. Dibujar algunas imperfecciones / granitos simulados en coordenadas fijas de la cara
+    final paintBlemish = Paint()
+      ..color = const Color(0xFFE57373).withValues(alpha: 0.45)
+      ..style = PaintingStyle.fill
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3); // Bordes suaves difuminados
+
+    // Dibujar 4 imperfecciones de acné sutiles distribuidas por el rostro
+    canvas.drawCircle(Offset(size.width * 0.4, size.height * 0.48), 5.0, paintBlemish); // Mejilla izquierda
+    canvas.drawCircle(Offset(size.width * 0.65, size.height * 0.52), 4.0, paintBlemish); // Mejilla derecha
+    canvas.drawCircle(Offset(size.width * 0.52, size.height * 0.35), 4.5, paintBlemish); // Frente
+    canvas.drawCircle(Offset(size.width * 0.48, size.height * 0.68), 5.5, paintBlemish); // Barbilla
+    
+    // Un puntito rojo adicional
+    final paintBlemishCore = Paint()
+      ..color = const Color(0xFFD32F2F).withValues(alpha: 0.55)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(Offset(size.width * 0.4, size.height * 0.48), 1.5, paintBlemishCore);
+    canvas.drawCircle(Offset(size.width * 0.52, size.height * 0.35), 1.0, paintBlemishCore);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
