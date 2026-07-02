@@ -2014,10 +2014,17 @@ Responde obligatoriamente en formato JSON válido, sin bloques de código markdo
 
     const response = await result.response;
     let text = response.text().trim();
-    if (text.startsWith('```json')) {
-      text = text.substring(7, text.length - 3).trim();
-    } else if (text.startsWith('```')) {
-      text = text.substring(3, text.length - 3).trim();
+    
+    // Extractor de JSON súper robusto
+    const jsonMatch = text.match(/```json\s*([\s\S]*?)\s*```/) || text.match(/```\s*([\s\S]*?)\s*```/);
+    if (jsonMatch) {
+      text = jsonMatch[1].trim();
+    } else {
+      const firstBrace = text.indexOf('{');
+      const lastBrace = text.lastIndexOf('}');
+      if (firstBrace !== -1 && lastBrace !== -1) {
+        text = text.substring(firstBrace, lastBrace + 1).trim();
+      }
     }
 
     const classification = JSON.parse(text);
@@ -2108,10 +2115,17 @@ Responde obligatoriamente única y estrictamente con un JSON válido en este for
     
     const response = await result.response;
     let text = response.text().trim();
-    if (text.startsWith('```json')) {
-      text = text.substring(7, text.length - 3).trim();
-    } else if (text.startsWith('```')) {
-      text = text.substring(3, text.length - 3).trim();
+    
+    // Extractor de JSON súper robusto
+    const jsonMatch = text.match(/```json\s*([\s\S]*?)\s*```/) || text.match(/```\s*([\s\S]*?)\s*```/);
+    if (jsonMatch) {
+      text = jsonMatch[1].trim();
+    } else {
+      const firstBrace = text.indexOf('{');
+      const lastBrace = text.lastIndexOf('}');
+      if (firstBrace !== -1 && lastBrace !== -1) {
+        text = text.substring(firstBrace, lastBrace + 1).trim();
+      }
     }
 
     const recomendacion = JSON.parse(text);
