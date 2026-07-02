@@ -1845,6 +1845,122 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
             ),
           ),
         ),
+        // -------------------------------------------------
+        // GlowStyle subsection
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          sliver: SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Clóset Inteligente & Outfits (GlowStyle)',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.text,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pushNamed(context, '/wardrobe');
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(24),
+                      color: Colors.white,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.04),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                      border: Border.all(
+                        color: const Color(0xFFC89D93).withValues(alpha: 0.25),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ClipRRect(
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(22),
+                            topRight: Radius.circular(22),
+                          ),
+                          child: Image.asset(
+                            'assets/images/design_ideas_skin_tone_1781572896303.png',
+                            height: 100,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.style,
+                                    color: Color(0xFFC89D93),
+                                    size: 16,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF3ECE6),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: const Text(
+                                      'IA',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFFC89D93),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              const Text(
+                                'Clóset Inteligente & Outfits',
+                                style: TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.text,
+                                  height: 1.2,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              const Text(
+                                'Cataloga tu ropa y genera outfits por IA basados en tu colorimetría.',
+                                maxLines: 4,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.grey,
+                                  height: 1.25,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        // -------------------------------------------------
       ],
     );
   }
