@@ -1016,7 +1016,7 @@ exports.checkGlowAIQuota = async (req, res, next) => {
   try {
     const userId = req.user.id;
     const userQuery = `
-      SELECT glowai_plan, glowai_diagnosticos_mes, glowai_ciclo_reset_at
+      SELECT email, glowai_plan, glowai_diagnosticos_mes, glowai_ciclo_reset_at
       FROM usuarios
       WHERE id = $1;
     `;
@@ -1025,7 +1025,13 @@ exports.checkGlowAIQuota = async (req, res, next) => {
       return res.status(404).json({ error: 'Usuario no encontrado.' });
     }
 
-    let { glowai_plan, glowai_diagnosticos_mes, glowai_ciclo_reset_at } = result.rows[0];
+    let { email, glowai_plan, glowai_diagnosticos_mes, glowai_ciclo_reset_at } = result.rows[0];
+    
+    // Bypass quota for testing account
+    if (email === 'usuario_pruebas@gmail.com') {
+      return next();
+    }
+
     const ahora = new Date();
     const resetDate = new Date(glowai_ciclo_reset_at || ahora);
 
