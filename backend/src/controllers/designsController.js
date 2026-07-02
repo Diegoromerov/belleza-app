@@ -32,7 +32,7 @@ const updateSkinProfile = async (userId, tipoPiel) => {
       SELECT score_hidratacion, score_impurezas, score_luminosidad
       FROM ai_diagnostics
       WHERE user_id = $1 AND tool_type = 'care-routine'
-      ORDER BY creado_en DESC
+      ORDER BY created_at DESC
       LIMIT 5;
     `;
     const diags = await pool.query(lastDiagQuery, [userId]);
