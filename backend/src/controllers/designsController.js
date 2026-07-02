@@ -125,9 +125,17 @@ const apiKey = process.env.GEMINI_API_KEY;
 const ai = apiKey ? new GoogleGenerativeAI(apiKey) : null;
 
 // Función helper para buscar imágenes reales de Pinterest usando DuckDuckGo sin llaves
-const searchRealPinterestImages = async (query) => {
+const searchRealPinterestImages = async (query, category) => {
   try {
-    const searchQuery = `${query} uñas manicure site:pinterest.com`;
+    let suffix = ' uñas manicure';
+    if (category === 'hair' || category === 'capilar') {
+      suffix = ' cabello peinado';
+    } else if (category === 'skin' || category === 'facial' || category === 'facials') {
+      suffix = ' piel rostro skincare';
+    } else if (category === 'eyebrow' || category === 'ceja') {
+      suffix = ' cejas visagismo';
+    }
+    const searchQuery = `${query}${suffix} site:pinterest.com`;
     const url = `https://duckduckgo.com/?q=${encodeURIComponent(searchQuery)}`;
     
     const response = await fetch(url, {
@@ -166,11 +174,17 @@ const searchRealPinterestImages = async (query) => {
     const data = await imageResponse.json();
     if (!data.results || data.results.length === 0) return [];
 
-    return data.results.slice(0, 6).map(item => ({
-      title: item.title || 'Diseño de uñas',
-      image_url: `/api/designs/proxy?url=${encodeURIComponent(item.image)}`,
-      link: item.url || 'https://pinterest.com'
-    }));
+    return data.results.slice(0, 6).map(item => {
+      let defaultTitle = 'Diseño de uñas';
+      if (category === 'hair' || category === 'capilar') defaultTitle = 'Diseño de cabello';
+      else if (category === 'skin' || category === 'facial' || category === 'facials') defaultTitle = 'Cuidado de piel';
+      else if (category === 'eyebrow' || category === 'ceja') defaultTitle = 'Diseño de cejas';
+      return {
+        title: item.title || defaultTitle,
+        image_url: `/api/designs/proxy?url=${encodeURIComponent(item.image)}`,
+        link: item.url || 'https://pinterest.com'
+      };
+    });
 
   } catch (err) {
     console.error('⚠️ Error buscando en DuckDuckGo:', err.message);
@@ -180,7 +194,7 @@ const searchRealPinterestImages = async (query) => {
 
 exports.searchPinterestDesigns = async (req, res) => {
   try {
-    const { q } = req.query;
+    const { q, category } = req.query;
     if (!q) {
       return res.status(400).json({ error: 'El parámetro de búsqueda "q" es obligatorio' });
     }
@@ -189,8 +203,17 @@ exports.searchPinterestDesigns = async (req, res) => {
     if (ai) {
       try {
         const model = ai.getGenerativeModel({ model: 'gemini-2.5-flash' });
+        let topicPrompt = 'diseño de uñas o belleza';
+        if (category === 'hair' || category === 'capilar') {
+          topicPrompt = 'cuidado del cabello, peinados o coloración capilar';
+        } else if (category === 'skin' || category === 'facial' || category === 'facials') {
+          topicPrompt = 'cuidado de la piel, skincare o tratamientos faciales';
+        } else if (category === 'eyebrow' || category === 'ceja') {
+          topicPrompt = 'diseño de cejas o visagismo';
+        }
+        
         const prompt = `Actúa como un experto en SEO y tendencias de belleza. Recibes un término de búsqueda para buscar ideas en Pinterest: "${q}".
-Optimiza y expande este término a una consulta de búsqueda corta en inglés y español que consiga los mejores y más estéticos resultados de diseño de uñas o belleza en Pinterest.
+Optimiza y expande este término a una consulta de búsqueda corta en inglés y español que consiga los mejores y más estéticos resultados de ${topicPrompt} en Pinterest.
 Ejemplo: "uñas rosas" -> "elegant pink nails design aesthetic".
 Devuelve ÚNICAMENTE la consulta de búsqueda optimizada final de 3 a 6 palabras, sin comillas ni texto adicional.`;
         const response = await model.generateContent(prompt);
@@ -209,7 +232,7 @@ Devuelve ÚNICAMENTE la consulta de búsqueda optimizada final de 3 a 6 palabras
 
     if (!apiKey || !cx) {
       console.log(`🔍 Buscando imágenes reales de Pinterest mediante motor alternativo para: "${optimizedQuery}"...`);
-      const realImages = await searchRealPinterestImages(optimizedQuery);
+      const realImages = await searchRealPinterestImages(optimizedQuery, category);
       
       if (realImages && realImages.length > 0) {
         return res.status(200).json({
@@ -243,7 +266,16 @@ Devuelve ÚNICAMENTE la consulta de búsqueda optimizada final de 3 a 6 palabras
       });
     }
 
-    const searchQuery = `${optimizedQuery} uñas manicure site:pinterest.com`;
+    let suffix = ' uñas manicure';
+    if (category === 'hair' || category === 'capilar') {
+      suffix = ' cabello peinado';
+    } else if (category === 'skin' || category === 'facial' || category === 'facials') {
+      suffix = ' piel rostro skincare';
+    } else if (category === 'eyebrow' || category === 'ceja') {
+      suffix = ' cejas visagismo';
+    }
+
+    const searchQuery = `${optimizedQuery}${suffix} site:pinterest.com`;
     const searchUrl = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cx}&q=${encodeURIComponent(searchQuery)}&searchType=image&num=6`;
 
     const response = await fetch(searchUrl);
@@ -261,11 +293,17 @@ Devuelve ÚNICAMENTE la consulta de búsqueda optimizada final de 3 a 6 palabras
       });
     }
 
-    const formattedResults = searchData.items.map(item => ({
-      title: item.title || 'Diseño de uñas',
-      image_url: `/api/designs/proxy?url=${encodeURIComponent(item.link)}`, 
-      link: item.image?.contextLink || 'https://pinterest.com'
-    }));
+    const formattedResults = searchData.items.map(item => {
+      let defaultTitle = 'Diseño de uñas';
+      if (category === 'hair' || category === 'capilar') defaultTitle = 'Diseño de cabello';
+      else if (category === 'skin' || category === 'facial' || category === 'facials') defaultTitle = 'Cuidado de piel';
+      else if (category === 'eyebrow' || category === 'ceja') defaultTitle = 'Diseño de cejas';
+      return {
+        title: item.title || defaultTitle,
+        image_url: `/api/designs/proxy?url=${encodeURIComponent(item.link)}`, 
+        link: item.image?.contextLink || 'https://pinterest.com'
+      };
+    });
 
     return res.status(200).json({
       success: true,
@@ -456,17 +494,32 @@ exports.analyzeDesign = async (req, res) => {
         };
       } else if (type === 'care-routine') {
         const concernLabel = concern ? ` (Enfocado en ${concern})` : '';
-        mockResult = {
-          skin_type: "Mixta con tendencia a deshidratación",
-          scalp_status: "Normal",
-          explanation: `Tu piel muestra brillo leve en la zona T con mejillas deshidratadas. Requiere una rutina que equilibre la producción de grasa e hidrate a profundidad${concernLabel}.`,
-          recommended_routine: [
-            `Paso 1: Limpiador suave hidratante${concern ? ' especializado para ' + concern : ''}`,
-            `Paso 2: Sérum activo${concern ? ' enfocado en ' + concern : ' de Ácido Hialurónico'}`,
-            "Paso 3: Crema gel ligera selladora con FPS"
-          ],
-          pinterest_query: "rutina skincare semanal piel mixta"
-        };
+        if (track === 'capilar') {
+          mockResult = {
+            skin_type: "Cabello seco con hebras deshidratadas",
+            scalp_status: "Seco con frizz leve",
+            explanation: `Tu cabello muestra deshidratación moderada con puntas abiertas. Requiere una rutina de nutrición y sellado térmico${concernLabel}.`,
+            recommended_routine: [
+              "Paso 1: Champú nutritivo sin sal con extracto de Argán",
+              `Paso 2: Mascarilla ultra-hidratante${concern ? ' enfocada en ' + concern : ' de Queratina'}`,
+              "Paso 3: Sérum sellador de cutícula y protector térmico"
+            ],
+            pinterest_query: "tratamiento hidratacion cabello antes y despues"
+          };
+        } else {
+          mockResult = {
+            skin_type: "Mixta con tendencia a deshidratación",
+            scalp_status: "Normal",
+            explanation: `Tu piel muestra brillo leve en la zona T con mejillas deshidratadas. Requiere una rutina que equilibre la producción de grasa e hidrate a profundidad${concernLabel}.`,
+            recommended_routine: [
+              `Paso 1: Limpiador suave hidratante${concern ? ' especializado para ' + concern : ''}`,
+              `Paso 2: Sérum activo${concern ? ' enfocado en ' + concern : ' de Ácido Hialurónico'}`,
+              "Paso 3: Crema gel ligera selladora con FPS"
+            ],
+            pinterest_query: "rutina skincare semanal piel mixta"
+          };
+        }
+      }
       } else if (type === 'hair-color') {
         mockResult = {
           skin_undertone: "Cálido (Otoño Suave)",
