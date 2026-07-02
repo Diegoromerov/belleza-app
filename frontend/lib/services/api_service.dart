@@ -836,11 +836,12 @@ class ApiService {
   }
 
   // 🔹 NUEVO: Buscar ideas de diseños de manicura (Pinterest / Google CSE)
-  static Future<List<Map<String, dynamic>>> fetchDesignIdeas(String query) async {
+  static Future<List<Map<String, dynamic>>> fetchDesignIdeas(String query, {String? category}) async {
     final headers = await _getAuthHeaders();
+    final urlSuffix = category != null ? '&category=${Uri.encodeComponent(category)}' : '';
     final response = await http
         .get(
-          Uri.parse('$_baseUrl$_apiPath/designs/search?q=${Uri.encodeComponent(query)}'),
+          Uri.parse('$_baseUrl$_apiPath/designs/search?q=${Uri.encodeComponent(query)}$urlSuffix'),
           headers: headers,
         )
         .timeout(const Duration(seconds: 30));

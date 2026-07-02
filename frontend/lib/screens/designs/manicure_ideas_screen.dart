@@ -944,7 +944,7 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
     });
 
     try {
-      final results = await ApiService.fetchDesignIdeas(query);
+      final results = await ApiService.fetchDesignIdeas(query, category: 'nails');
       final List<Map<String, dynamic>> updatedResults = results.take(5).toList();
       updatedResults.insert(0, _getSimulatedProduct());
       setState(() {
@@ -1288,9 +1288,22 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
         final analysis = response['analysis'];
         final pinterestQuery = analysis['pinterest_query'] ?? 'diseño de belleza';
 
+        String? category;
+        if (_activeToolId == 'care-routine') {
+          category = _selectedSkincareTrack == 'capilar' ? 'hair' : 'skin';
+        } else if (_activeToolId == 'hair-diagnostic' || _activeToolId == 'hair-color') {
+          category = 'hair';
+        } else if (_activeToolId == 'skin-texture' || _activeToolId == 'skin-tone') {
+          category = 'skin';
+        } else if (_activeToolId == 'eyebrow-visagism') {
+          category = 'eyebrow';
+        } else if (_activeToolId == 'nails-style') {
+          category = 'nails';
+        }
+
         List<Map<String, dynamic>> images = [];
         try {
-          final searchResults = await ApiService.fetchDesignIdeas(pinterestQuery);
+          final searchResults = await ApiService.fetchDesignIdeas(pinterestQuery, category: category);
           final List<Map<String, dynamic>> updatedResults = searchResults.take(5).toList();
           updatedResults.insert(0, _getSimulatedProduct());
           images = updatedResults;
@@ -2949,7 +2962,7 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
 
   Map<String, dynamic> _getSimulatedProduct() {
     final tool = _activeToolId ?? 'nails-classic';
-    if (tool.contains('hair')) {
+    if (tool.contains('hair') || (tool == 'care-routine' && _selectedSkincareTrack == 'capilar')) {
       return {
         'is_product': true,
         'id': '1',
@@ -2958,7 +2971,7 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
         'description': 'Champú y acondicionador para el mantenimiento de tonos rubios y balayage en casa.',
         'image_url': 'https://images.unsplash.com/photo-1535585209827-a15fcdbc4c2d?q=80&w=200',
       };
-    } else if (tool.contains('skin') || tool.contains('facial')) {
+    } else if (tool.contains('skin') || tool.contains('facial') || (tool == 'care-routine' && _selectedSkincareTrack == 'facial')) {
       return {
         'is_product': true,
         'id': '4',
