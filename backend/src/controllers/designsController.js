@@ -519,7 +519,6 @@ exports.analyzeDesign = async (req, res) => {
             pinterest_query: "rutina skincare semanal piel mixta"
           };
         }
-      }
       } else if (type === 'hair-color') {
         mockResult = {
           skin_undertone: "Cálido (Otoño Suave)",
