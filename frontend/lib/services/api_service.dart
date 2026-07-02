@@ -883,7 +883,7 @@ class ApiService {
   }
 
   // 🔹 NUEVO: Analizar diseño por IA (Colorimetría, Capilar, Textura, Cejas, Uñas)
-  static Future<Map<String, dynamic>> analyzeDesignWithAI(Uint8List imageBytes, String filename, String type) async {
+  static Future<Map<String, dynamic>> analyzeDesignWithAI(Uint8List imageBytes, String filename, String type, {String? concern}) async {
     await ensureBaseUrl();
     final token = await _getToken();
     final uri = Uri.parse('$_baseUrl$_apiPath/designs/analyze');
@@ -894,6 +894,9 @@ class ApiService {
     }
     
     request.fields['type'] = type;
+    if (concern != null) {
+      request.fields['concern'] = concern;
+    }
     request.files.add(
       http.MultipartFile.fromBytes(
         'image',
@@ -911,6 +914,33 @@ class ApiService {
     }
     final errorMsg = data['details'] != null ? "${data['error']}: ${data['details']}" : (data['error'] ?? 'Error ${response.statusCode}');
     throw Exception(errorMsg);
+  }
+
+  static Future<List<Map<String, dynamic>>> fetchAIHistory({String? toolType}) async {
+    await ensureBaseUrl();
+    final token = await _getToken();
+    String url = '$_baseUrl$_apiPath/designs/history';
+    if (toolType != null) {
+      url += '?tool_type=$toolType';
+    }
+    
+    final headers = <String, String>{};
+    if (token != null && token.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+
+    final response = await http
+        .get(
+          Uri.parse(url),
+          headers: headers,
+        )
+        .timeout(const Duration(seconds: 30));
+        
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return List<Map<String, dynamic>>.from(data['data']);
+    }
+    throw Exception(json.decode(response.body)['error'] ?? 'Error ${response.statusCode}');
   }
 }
 

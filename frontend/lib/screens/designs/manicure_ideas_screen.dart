@@ -473,6 +473,14 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
   List<Map<String, dynamic>> _pinterestImages = [];
   bool _privacyConsentAccepted = false;
 
+  // --- VARIABLES PLANIFICADOR SKINCARE ---
+  String _selectedSkincareConcern = 'Hidratación';
+  bool _showSkincareHistory = false;
+  List<Map<String, dynamic>> _skincareHistory = [];
+  bool _isLoadingSkincareHistory = false;
+  bool _dailySkincareReminder = false;
+  final List<String> _skincareConcerns = const ['Hidratación', 'Acné/Impurezas', 'Antiedad', 'Luminosidad/Manchas', 'Sensibilidad'];
+
   // Textos dinámicos para el escáner láser según el tipo de análisis
   final Map<String, List<String>> _scanningTexts = {
     'skin-tone': [
@@ -928,6 +936,7 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
         _analysisImageBytes!,
         _selectedAnalysisImage!.name,
         _activeToolId!,
+        concern: _activeToolId == 'care-routine' ? _selectedSkincareConcern : null,
       );
 
       if (response['success'] == true && response['analysis'] != null) {
@@ -1648,6 +1657,59 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
       'Generando diagnóstico...',
     ];
 
+    if (_activeToolId == 'care-routine') {
+      return SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Pestañas Locales
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: !_showSkincareHistory ? AppTheme.primary : Colors.grey.shade100,
+                      foregroundColor: !_showSkincareHistory ? Colors.white : Colors.black87,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _showSkincareHistory = false;
+                      });
+                    },
+                    child: const Text('Nueva Rutina'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _showSkincareHistory ? AppTheme.primary : Colors.grey.shade100,
+                      foregroundColor: _showSkincareHistory ? Colors.white : Colors.black87,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _showSkincareHistory = true;
+                      });
+                      _loadSkincareHistory();
+                    },
+                    child: const Text('Historial'),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            if (_showSkincareHistory)
+              _buildSkincareHistoryView()
+            else
+              _buildNewSkincareRoutineView(cameraIcon, instructionText, currentScanningTexts),
+          ],
+        ),
+      );
+    }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -2000,6 +2062,33 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
           );
         }).toList(),
       ));
+      details.add(const SizedBox(height: 16));
+      details.add(
+        Card(
+          elevation: 0,
+          color: AppTheme.primary.withValues(alpha: 0.05),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: SwitchListTile(
+            title: const Text('Recordatorio diario de Skincare', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.text)),
+            subtitle: const Text('Recibe alertas para tus rutinas de Mañana y Noche', style: TextStyle(fontSize: 11)),
+            activeColor: AppTheme.primary,
+            value: _dailySkincareReminder,
+            onChanged: (val) {
+              setState(() {
+                _dailySkincareReminder = val;
+              });
+              if (val) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('🔔 ¡Recordatorios diarios activados con éxito!'),
+                    backgroundColor: AppTheme.primary,
+                  ),
+                );
+              }
+            },
+          ),
+        )
+      );
     } else if (_activeToolId == 'hair-color') {
       details.add(_buildResultRow('Subtono de piel:', _analysisResult!['skin_undertone']));
       details.add(_buildResultRow('Forma de rostro:', _analysisResult!['face_shape']));
@@ -2537,37 +2626,402 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
                         strokeWidth: 2,
                         valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primary),
                       ),
-                    ),
-                  ),
-                );
-              },
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  color: Colors.grey.shade200,
-                  child: const Center(
-                    child: Icon(Icons.broken_image_outlined, size: 32, color: Colors.grey),
-                  ),
-                );
-              },
-            ),
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Container(
-                color: Colors.black54,
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                child: Text(
-                  item['title'] ?? 'Diseño',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: Colors.white, fontSize: 11),
-                ),
-              ),
-            )
-          ],
+  }
+
+  // --- MÉTODOS DEL PLANIFICADOR DE SKINCARE ---
+  Future<void> _loadSkincareHistory() async {
+    setState(() {
+      _isLoadingSkincareHistory = true;
+    });
+    try {
+      final history = await ApiService.fetchAIHistory(toolType: 'care-routine');
+      setState(() {
+        _skincareHistory = history;
+        _isLoadingSkincareHistory = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoadingSkincareHistory = false;
+      });
+      debugPrint('Error al cargar historial: $e');
+    }
+  }
+
+  Widget _buildSkincareHistoryView() {
+    if (_isLoadingSkincareHistory) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(24.0),
+          child: CircularProgressIndicator(color: AppTheme.primary),
         ),
-      ),
+      );
+    }
+    if (_skincareHistory.isEmpty) {
+      return const Card(
+        child: Padding(
+          padding: EdgeInsets.all(24.0),
+          child: Center(
+            child: Text(
+              'Aún no tienes análisis de skincare guardados. ¡Sube tu primera foto!',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.black54),
+            ),
+          ),
+        ),
+      );
+    }
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: _skincareHistory.length,
+      itemBuilder: (context, index) {
+        final diag = _skincareHistory[index];
+        final result = diag['result_data'] ?? {};
+        final date = DateTime.tryParse(diag['created_at'] ?? '') ?? DateTime.now();
+        final dateStr = '${date.day}/${date.month}/${date.year}';
+        
+        return Card(
+          key: ValueKey(diag['id'] ?? index.toString()),
+          margin: const EdgeInsets.only(bottom: 12),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: ExpansionTile(
+            title: Text(
+              'Diagnóstico: ${result['skin_type'] ?? 'Piel/Cabello'}',
+              style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.text),
+            ),
+            subtitle: Text('Fecha: $dateStr - Estado: ${result['scalp_status'] ?? 'Normal'}'),
+            leading: const Icon(Icons.calendar_month_rounded, color: AppTheme.primary),
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(result['explanation'] ?? '', style: const TextStyle(fontSize: 13.5, color: Colors.black87)),
+                    const SizedBox(height: 12),
+                    const Text('Rutina recomendada:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                    const SizedBox(height: 6),
+                    Column(
+                      children: ((result['recommended_routine'] ?? []) as List<dynamic>).map((step) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4.0),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.check_circle_outline, color: AppTheme.accent, size: 16),
+                              const SizedBox(width: 8),
+                              Expanded(child: Text(step.toString(), style: const TextStyle(fontSize: 12.5))),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ],
+                ),
+              )
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildNewSkincareRoutineView(IconData cameraIcon, String instructionText, List<String> currentScanningTexts) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Selector de Preocupación de Piel
+        if (_analysisImageBytes == null) ...[
+          const Text(
+            '1. ¿Cuál es tu preocupación u objetivo principal?',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.text),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: _selectedSkincareConcern,
+                isExpanded: true,
+                onChanged: (newValue) {
+                  setState(() {
+                    _selectedSkincareConcern = newValue ?? 'Hidratación';
+                  });
+                },
+                items: _skincareConcerns.map((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value, style: const TextStyle(fontSize: 13.5)),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+
+        // Área de Análisis y Carga
+        Center(
+          child: Column(
+            children: [
+              if (_analysisImageBytes != null)
+                _isAnalyzing
+                    ? LaserScannerWidget(
+                        imageBytes: _analysisImageBytes!,
+                        scanningTexts: currentScanningTexts,
+                      )
+                    : Container(
+                        width: 150,
+                        height: 150,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppTheme.primary, width: 4),
+                          image: DecorationImage(
+                            image: MemoryImage(_analysisImageBytes!),
+                            fit: BoxFit.cover,
+                          ),
+                          boxShadow: AppTheme.cardShadow,
+                        ),
+                      )
+              else
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 120,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppTheme.primary.withValues(alpha: 0.1),
+                        border: Border.all(color: AppTheme.primary.withValues(alpha: 0.3), width: 2),
+                      ),
+                      child: Icon(
+                        cameraIcon,
+                        size: 50,
+                        color: AppTheme.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Sube tu foto para análisis',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.text,
+                      ),
+                    ),
+                  ],
+                ),
+              const SizedBox(height: 12),
+              if (!_isAnalyzing)
+                Text(
+                  instructionText,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 12.5, color: Colors.grey.shade600, fontStyle: FontStyle.italic),
+                ),
+              const SizedBox(height: 16),
+              
+              if (_analysisImageBytes == null) ...[
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.grey.shade200),
+                  ),
+                  child: CheckboxListTile(
+                    activeColor: AppTheme.primary,
+                    title: Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'Acepto el análisis temporal biométrico',
+                            style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.info_outline, size: 18, color: Color(0xFFC89D93)),
+                          onPressed: _showPrivacyInfoBottomSheet,
+                          tooltip: 'Más información de privacidad',
+                        ),
+                      ],
+                    ),
+                    value: _privacyConsentAccepted,
+                    onChanged: (val) {
+                      setState(() {
+                        _privacyConsentAccepted = val ?? false;
+                      });
+                    },
+                    controlAffinity: ListTileControlAffinity.leading,
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+
+              if (_analysisImageBytes == null)
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    elevation: _privacyConsentAccepted ? 2 : 0,
+                  ),
+                  onPressed: _isLimitReached || !_privacyConsentAccepted 
+                      ? null 
+                      : _showGenericImageSourceSelector,
+                  icon: const Icon(Icons.add_a_photo),
+                  label: const Text('Subir Foto para Análisis', style: TextStyle(fontWeight: FontWeight.bold)),
+                )
+              else if (!_isAnalyzing)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    TextButton.icon(
+                      onPressed: _showGenericImageSourceSelector,
+                      icon: const Icon(Icons.refresh, color: AppTheme.accent),
+                      label: const Text('Cambiar foto', style: TextStyle(color: AppTheme.accent)),
+                    ),
+                    const SizedBox(width: 12),
+                    TextButton.icon(
+                      onPressed: _resetAnalysisState,
+                      icon: const Icon(Icons.delete, color: Colors.redAccent),
+                      label: const Text('Eliminar', style: TextStyle(color: Colors.redAccent)),
+                    ),
+                  ],
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+
+        // Loader
+        if (_isAnalyzing) ...[
+          Center(
+            child: Column(
+              children: [
+                const SizedBox(height: 10),
+                const CircularProgressIndicator(color: AppTheme.primary),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: AppTheme.softShadow,
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        'Generando sugerencias con Inteligencia Artificial...',
+                        style: AppTheme.subtitle.copyWith(color: AppTheme.text, fontWeight: FontWeight.w600),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Gemini 2.5 Flash está evaluando tu imagen para darte las mejores sugerencias.',
+                        style: TextStyle(color: Colors.black54, fontSize: 13),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+
+        // Resultados
+        if (_analysisResult != null) ...[
+          _buildAnalysisResultsCard(),
+          const SizedBox(height: 24),
+        ],
+
+        // Galería Pinterest
+        if (_pinterestImages.isNotEmpty) ...[
+          const Text(
+            'Ideas de inspiración y cuidados recomendados:',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.text),
+          ),
+          const SizedBox(height: 12),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+              childAspectRatio: 0.85,
+            ),
+            itemCount: _pinterestImages.length,
+            itemBuilder: (context, index) {
+              final item = _pinterestImages[index];
+              if (item['is_product'] == true) {
+                return _buildProductCard(item);
+              }
+              return GestureDetector(
+                onTap: () => _showImageFullscreen(item),
+                child: Card(
+                  clipBehavior: Clip.antiAlias,
+                  elevation: 2,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Image.network(
+                        item['image_url'],
+                        fit: BoxFit.cover,
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Container(
+                            color: Colors.grey.shade100,
+                            child: const Center(
+                              child: SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primary),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            color: Colors.grey.shade200,
+                            child: const Center(
+                              child: Icon(Icons.broken_image_outlined, size: 32, color: Colors.grey),
+                            ),
+                          );
+                        },
+                      ),
+                      Positioned(
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        child: Container(
+                          color: Colors.black54,
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          child: Text(
+                            item['title'] ?? 'Diseño',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(color: Colors.white, fontSize: 11),
+                          ),
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ],
     );
   }
 }
