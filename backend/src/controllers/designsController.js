@@ -342,7 +342,7 @@ Responde de manera obligatoria únicamente con un objeto JSON válido, sin forma
 
 exports.analyzeDesign = async (req, res) => {
   try {
-    const { type } = req.body;
+    const { type, concern } = req.body;
     if (!req.file) {
       return res.status(400).json({ error: 'Es obligatorio subir una imagen para el análisis.' });
     }
@@ -395,11 +395,16 @@ exports.analyzeDesign = async (req, res) => {
           pinterest_query: "unas almendradas color nude beige"
         };
       } else if (type === 'care-routine') {
+        const concernLabel = concern ? ` (Enfocado en ${concern})` : '';
         mockResult = {
           skin_type: "Mixta con tendencia a deshidratación",
           scalp_status: "Normal",
-          explanation: "Tu piel muestra brillo leve en la zona T con mejillas deshidratadas. Requiere una rutina que equilibre la producción de grasa e hidrate a profundidad.",
-          recommended_routine: ["Paso 1: Limpiador suave hidratante", "Paso 2: Sérum de Ácido Hialurónico", "Paso 3: Crema gel ligera selladora"],
+          explanation: `Tu piel muestra brillo leve en la zona T con mejillas deshidratadas. Requiere una rutina que equilibre la producción de grasa e hidrate a profundidad${concernLabel}.`,
+          recommended_routine: [
+            `Paso 1: Limpiador suave hidratante${concern ? ' especializado para ' + concern : ''}`,
+            `Paso 2: Sérum activo${concern ? ' enfocado en ' + concern : ' de Ácido Hialurónico'}`,
+            "Paso 3: Crema gel ligera selladora con FPS"
+          ],
           pinterest_query: "rutina skincare semanal piel mixta"
         };
       } else if (type === 'hair-color') {
@@ -512,9 +517,11 @@ Genera una consulta corta (máximo 6 palabras) en español para buscar estilos d
   "pinterest_query": "consulta corta de pinterest"
 }`;
     } else if (type === 'care-routine') {
+      const concernStr = concern ? `La preocupación u objetivo principal del usuario es: "${concern}". Asegúrate de orientar los pasos de la rutina y las explicaciones para mitigar este problema específicamente.` : '';
       prompt = `Analiza detalladamente la piel del rostro o la textura de cabello que se observa en esta foto.
 Determina el tipo de piel o cabello (ej. Piel Mixta, Cabello Seco/Fino) y el estado general observando el brillo, resequedad o texturas.
 Proporciona una explicación detallada del diagnóstico y genera una rutina semanal paso a paso en casa (3 pasos específicos).
+${concernStr}
 Genera una consulta corta (máximo 6 palabras) en español para buscar rutinas de skincare o haircare recomendadas en Pinterest.`;
       jsonTemplate = `{
   "skin_type": "Tipo de piel o cabello detectado",
@@ -626,5 +633,41 @@ exports.proxyImage = async (req, res) => {
   } catch (error) {
     console.error('Error en proxy de imagen:', error.message);
     res.status(500).json({ error: 'Error interno del proxy de imagen' });
+  }
+};
+
+exports.getAIHistory = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { tool_type } = req.query;
+
+    let query = `
+      SELECT id, tool_type, result_data, created_at 
+      FROM ai_diagnostics 
+      WHERE user_id = $1
+    `;
+    const params = [userId];
+
+    if (tool_type) {
+      query += ` AND tool_type = $2`;
+      params.push(tool_type);
+    }
+
+    query += ` ORDER BY created_at DESC;`;
+
+    const result = await pool.query(query, params);
+
+    res.json({
+      success: true,
+      data: result.rows.map(row => ({
+        id: row.id,
+        tool_type: row.tool_type,
+        result_data: typeof row.result_data === 'string' ? JSON.parse(row.result_data) : row.result_data,
+        created_at: row.created_at
+      }))
+    });
+  } catch (error) {
+    console.error('❌ ERROR AL OBTENER HISTORIAL DE IA:', error);
+    res.status(500).json({ error: 'Error al obtener el historial de diagnósticos' });
   }
 };
