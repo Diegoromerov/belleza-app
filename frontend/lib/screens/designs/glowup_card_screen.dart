@@ -18,16 +18,21 @@ class _GlowUpCardScreenState extends State<GlowUpCardScreen> {
   bool _isLoading = true;
   String? _error;
   Map<String, dynamic>? _cardData;
+  bool _initialized = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final args = ModalRoute.of(context)!.settings.arguments;
-    if (args is Map<String, dynamic>) {
-      _favoriteUrl = args['favorite_url'];
-      _track = args['track'] ?? 'piel';
+    if (!_initialized) {
+      final route = ModalRoute.of(context);
+      if (route != null && route.settings.arguments is Map<String, dynamic>) {
+        final args = route.settings.arguments as Map<String, dynamic>;
+        _favoriteUrl = args['favorite_url'];
+        _track = args['track'] ?? 'piel';
+      }
+      _initialized = true;
+      Future.microtask(() => _generateCard());
     }
-    _generateCard();
   }
 
   Future<void> _generateCard() async {
