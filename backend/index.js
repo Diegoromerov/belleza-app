@@ -873,7 +873,7 @@ app.patch('/api/admin/disputes/:id/resolve', authMiddleware, adminMiddleware, as
 // 🔹 NUEVO: Obtener perfil del usuario autenticado (incluye avatar_url)
 app.get('/api/users/profile', authMiddleware, async (req, res) => {
   try {
-    const result = await pool.query('SELECT id, email, nombre as full_name, phone, foto_url as avatar_url, rol as role, onboarding_completo FROM usuarios WHERE id = $1', [req.user.id]);
+    const result = await pool.query('SELECT id, email, nombre as full_name, phone, foto_url as avatar_url, rol as role, onboarding_completo, glowai_plan, glowai_diagnosticos_mes, glowai_ciclo_reset_at, streak_actual, streak_maximo, streak_ultimo_registro FROM usuarios WHERE id = $1', [req.user.id]);
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Usuario no encontrado' });
     }
@@ -1472,6 +1472,18 @@ const initDatabase = async () => {
         console.log('✅ Base de datos: Migración de Comisión Continua aplicada.');
       } catch (cErr) {
         console.warn('⚠️ Advertencia en migración de Comisión Continua:', cErr.message);
+      }
+    }
+
+    // 🔸 Ejecutar migración de la reingeniería del Planificador de Skincare (012_skincare_planner_reengineering.sql)
+    const skincareMigrationPath = path.join(__dirname, 'migrations/012_skincare_planner_reengineering.sql');
+    if (fs.existsSync(skincareMigrationPath)) {
+      try {
+        const skincareSql = fs.readFileSync(skincareMigrationPath, 'utf8');
+        await pool.query(skincareSql);
+        console.log('✅ Base de datos: Migración de reingeniería del Planificador de Skincare aplicada.');
+      } catch (skErr) {
+        console.warn('⚠️ Advertencia en migración de reingeniería del Planificador de Skincare:', skErr.message);
       }
     }
 
