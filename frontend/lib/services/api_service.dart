@@ -883,7 +883,7 @@ class ApiService {
   }
 
   // 🔹 NUEVO: Analizar diseño por IA (Colorimetría, Capilar, Textura, Cejas, Uñas)
-  static Future<Map<String, dynamic>> analyzeDesignWithAI(Uint8List imageBytes, String filename, String type, {String? concern}) async {
+  static Future<Map<String, dynamic>> analyzeDesignWithAI(Uint8List imageBytes, String filename, String type, {String? concern, String? track}) async {
     await ensureBaseUrl();
     final token = await _getToken();
     final uri = Uri.parse('$_baseUrl$_apiPath/designs/analyze');
@@ -896,6 +896,9 @@ class ApiService {
     request.fields['type'] = type;
     if (concern != null) {
       request.fields['concern'] = concern;
+    }
+    if (track != null) {
+      request.fields['track'] = track;
     }
     request.files.add(
       http.MultipartFile.fromBytes(
@@ -932,6 +935,169 @@ class ApiService {
     final response = await http
         .get(
           Uri.parse(url),
+          headers: headers,
+        )
+        .timeout(const Duration(seconds: 30));
+        
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return List<Map<String, dynamic>>.from(data['data']);
+    }
+    throw Exception(json.decode(response.body)['error'] ?? 'Error ${response.statusCode}');
+  }
+
+  static Future<Map<String, dynamic>> compareDiagnostics({
+    required Uint8List imageBefore,
+    required String filenameBefore,
+    required Uint8List imageAfter,
+    required String filenameAfter,
+    String? diagnosticId,
+  }) async {
+    await ensureBaseUrl();
+    final token = await _getToken();
+    final uri = Uri.parse('$_baseUrl$_apiPath/designs/compare');
+    final request = http.MultipartRequest('POST', uri);
+    
+    if (token != null && token.isNotEmpty) {
+      request.headers['Authorization'] = 'Bearer $token';
+    }
+    
+    if (diagnosticId != null) {
+      request.fields['diagnostic_id'] = diagnosticId;
+    }
+
+    request.files.add(
+      http.MultipartFile.fromBytes(
+        'imageBefore',
+        imageBefore,
+        filename: filenameBefore,
+      ),
+    );
+
+    request.files.add(
+      http.MultipartFile.fromBytes(
+        'imageAfter',
+        imageAfter,
+        filename: filenameAfter,
+      ),
+    );
+
+    final streamedResponse = await request.send().timeout(const Duration(seconds: 45));
+    final response = await http.Response.fromStream(streamedResponse);
+    
+    final data = json.decode(response.body);
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return Map<String, dynamic>.from(data);
+    }
+    throw Exception(data['error'] ?? 'Error ${response.statusCode}');
+  }
+
+  static Future<Map<String, dynamic>?> fetchSkinProfile() async {
+    await ensureBaseUrl();
+    final token = await _getToken();
+    final uri = Uri.parse('$_baseUrl$_apiPath/designs/profile');
+    
+    final headers = <String, String>{};
+    if (token != null && token.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+
+    final response = await http
+        .get(
+          uri,
+          headers: headers,
+        )
+        .timeout(const Duration(seconds: 30));
+        
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return data['data'] != null ? Map<String, dynamic>.from(data['data']) : null;
+    }
+    throw Exception(json.decode(response.body)['error'] ?? 'Error ${response.statusCode}');
+  }
+
+  static Future<Map<String, dynamic>> subscribePremium() async {
+    await ensureBaseUrl();
+    final token = await _getToken();
+    final uri = Uri.parse('$_baseUrl$_apiPath/designs/payments/glowai-premium');
+    
+    final headers = <String, String>{};
+    if (token != null && token.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+
+    final response = await http
+        .post(
+          uri,
+          headers: headers,
+        )
+        .timeout(const Duration(seconds: 30));
+        
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return Map<String, dynamic>.from(json.decode(response.body));
+    }
+    throw Exception(json.decode(response.body)['error'] ?? 'Error ${response.statusCode}');
+  }
+
+  static Future<Map<String, dynamic>> checkInStreak() async {
+    await ensureBaseUrl();
+    final token = await _getToken();
+    final uri = Uri.parse('$_baseUrl$_apiPath/designs/streak/check-in');
+    
+    final headers = <String, String>{};
+    if (token != null && token.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+
+    final response = await http
+        .post(
+          uri,
+          headers: headers,
+        )
+        .timeout(const Duration(seconds: 30));
+        
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return Map<String, dynamic>.from(json.decode(response.body));
+    }
+    throw Exception(json.decode(response.body)['error'] ?? 'Error ${response.statusCode}');
+  }
+
+  static Future<Map<String, dynamic>> fetchShareCode() async {
+    await ensureBaseUrl();
+    final token = await _getToken();
+    final uri = Uri.parse('$_baseUrl$_apiPath/designs/share/code');
+    
+    final headers = <String, String>{};
+    if (token != null && token.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+
+    final response = await http
+        .get(
+          uri,
+          headers: headers,
+        )
+        .timeout(const Duration(seconds: 30));
+        
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return Map<String, dynamic>.from(json.decode(response.body));
+    }
+    throw Exception(json.decode(response.body)['error'] ?? 'Error ${response.statusCode}');
+  }
+
+  static Future<List<Map<String, dynamic>>> fetchRecommendedDoctors() async {
+    await ensureBaseUrl();
+    final token = await _getToken();
+    final uri = Uri.parse('$_baseUrl$_apiPath/designs/profesionales/recommend');
+    
+    final headers = <String, String>{};
+    if (token != null && token.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+
+    final response = await http
+        .get(
+          uri,
           headers: headers,
         )
         .timeout(const Duration(seconds: 30));
