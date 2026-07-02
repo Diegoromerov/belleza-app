@@ -3,17 +3,76 @@ const path = require('path');
 require('dotenv').config();
 const { pool } = require('../config/db');
 
-const saveAnalysisToDb = async (userId, toolType, resultData) => {
+const saveAnalysisToDb = async (userId, toolType, resultData, track = 'piel') => {
   if (!userId) return;
   try {
+    const scores = resultData.scores || {};
+    const hidratacion = scores.hidratacion !== undefined ? parseInt(scores.hidratacion) : null;
+    const impurezas = scores.impurezas !== undefined ? parseInt(scores.impurezas) : null;
+    const luminosidad = scores.luminosidad !== undefined ? parseInt(scores.luminosidad) : null;
+
     const query = `
-      INSERT INTO ai_diagnostics (user_id, tool_type, result_data)
-      VALUES ($1, $2, $3);
+      INSERT INTO ai_diagnostics (user_id, tool_type, result_data, score_hidratacion, score_impurezas, score_luminosidad, track)
+      VALUES ($1, $2, $3, $4, $5, $6, $7);
     `;
-    await pool.query(query, [userId, toolType, JSON.stringify(resultData)]);
+    await pool.query(query, [userId, toolType, JSON.stringify(resultData), hidratacion, impurezas, luminosidad, track]);
     console.log(`💾 [DB] Guardado historial de IA (${toolType}) para usuario ${userId}`);
+
+    if (toolType === 'care-routine') {
+      await updateSkinProfile(userId, resultData.skin_type || 'Piel Mixta');
+    }
   } catch (err) {
     console.error('⚠️ [DB ERROR] Error guardando historial de IA:', err.message);
+  }
+};
+
+const updateSkinProfile = async (userId, tipoPiel) => {
+  try {
+    const lastDiagQuery = `
+      SELECT score_hidratacion, score_impurezas, score_luminosidad
+      FROM ai_diagnostics
+      WHERE user_id = $1 AND tool_type = 'care-routine'
+      ORDER BY creado_en DESC
+      LIMIT 5;
+    `;
+    const diags = await pool.query(lastDiagQuery, [userId]);
+    
+    if (diags.rows.length === 0) return;
+
+    let totalHidra = 0, totalAcne = 0, totalSens = 0;
+    let countH = 0, countI = 0;
+    
+    diags.rows.forEach(r => {
+      if (r.score_hidratacion !== null) {
+        totalHidra += r.score_hidratacion;
+        countH++;
+      }
+      if (r.score_impurezas !== null) {
+        totalAcne += r.score_impurezas;
+        countI++;
+      }
+    });
+
+    const avgHidra = countH > 0 ? Math.round(totalHidra / countH) : 50;
+    const avgAcne = countI > 0 ? Math.round(totalAcne / countI) : 30;
+    const avgSens = 15;
+
+    const upsertQuery = `
+      INSERT INTO skin_profiles (user_id, tipo_piel, hidratacion_promedio, tendencia_acne, sensibilidad_score, diagnosticos_count, ultimo_diagnostico_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5, 1, NOW(), NOW())
+      ON CONFLICT (user_id) DO UPDATE SET
+        tipo_piel = EXCLUDED.tipo_piel,
+        hidratacion_promedio = EXCLUDED.hidratacion_promedio,
+        tendencia_acne = EXCLUDED.tendencia_acne,
+        sensibilidad_score = EXCLUDED.sensibilidad_score,
+        diagnosticos_count = skin_profiles.diagnosticos_count + 1,
+        ultimo_diagnostico_at = NOW(),
+        updated_at = NOW();
+    `;
+    await pool.query(upsertQuery, [userId, tipoPiel, avgHidra, avgAcne, avgSens]);
+    console.log(`💾 [DB] Perfil de piel actualizado para usuario ${userId}`);
+  } catch (err) {
+    console.error('⚠️ [DB ERROR] Error actualizando perfil de piel:', err.message);
   }
 };
 
@@ -341,8 +400,9 @@ Responde de manera obligatoria únicamente con un objeto JSON válido, sin forma
 };
 
 exports.analyzeDesign = async (req, res) => {
+  let weatherInfo = null;
   try {
-    const { type, concern } = req.body;
+    const { type, concern, track } = req.body;
     if (!req.file) {
       return res.status(400).json({ error: 'Es obligatorio subir una imagen para el análisis.' });
     }
@@ -451,6 +511,23 @@ exports.analyzeDesign = async (req, res) => {
 
     let prompt = '';
     let jsonTemplate = '';
+    let profileContext = '';
+
+    if (req.user && req.user.id && type === 'care-routine') {
+      const profRes = await pool.query('SELECT tipo_piel, hidratacion_promedio, tendencia_acne, sensibilidad_score, diagnosticos_count FROM skin_profiles WHERE user_id = $1', [req.user.id]);
+      if (profRes.rows.length > 0) {
+        const prof = profRes.rows[0];
+        profileContext = `
+[PERFIL HISTÓRICO DEL USUARIO]
+Tipo de piel inferido: ${prof.tipo_piel}
+Hidratación promedio histórica: ${prof.hidratacion_promedio}/100
+Tendencia de acné: ${prof.tendencia_acne}/100
+Sensibilidad histórica: ${prof.sensibilidad_score}/100
+Diagnósticos anteriores: ${prof.diagnosticos_count}
+Usa este contexto para personalizar la rutina sin pedirle al usuario que lo explique de nuevo.
+`;
+      }
+    }
 
     if (type === 'skin-tone') {
       prompt = `Analiza detalladamente la colorimetría de la piel en esta foto de rostro.
@@ -517,19 +594,72 @@ Genera una consulta corta (máximo 6 palabras) en español para buscar estilos d
   "pinterest_query": "consulta corta de pinterest"
 }`;
     } else if (type === 'care-routine') {
+      weatherInfo = { temp: 14, humidity: 80, description: 'Llovizna/Nublado' };
+      try {
+        const weatherApiKey = process.env.OPENWEATHER_API_KEY;
+        if (weatherApiKey) {
+          const resW = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=Bogota,CO&appid=${weatherApiKey}&units=metric`);
+          if (resW.ok) {
+            const dataW = await resW.json();
+            weatherInfo = {
+              temp: dataW.main.temp,
+              humidity: dataW.main.humidity,
+              description: dataW.weather[0].description
+            };
+          }
+        }
+      } catch (wErr) {
+        console.warn('⚠️ No se pudo obtener clima en tiempo real, usando clima promedio de Bogotá:', wErr.message);
+      }
+
       const concernStr = concern ? `La preocupación u objetivo principal del usuario es: "${concern}". Asegúrate de orientar los pasos de la rutina y las explicaciones para mitigar este problema específicamente.` : '';
-      prompt = `Analiza detalladamente la piel del rostro o la textura de cabello que se observa en esta foto.
+      const weatherPrompt = `
+[CONTEXTO CLIMÁTICO ACTUAL - BOGOTÁ]
+Temperatura: ${weatherInfo.temp}°C | Humedad: ${weatherInfo.humidity}% | Condición: ${weatherInfo.description}
+Ajusta las recomendaciones considerando cómo este clima afecta el tipo de piel del usuario.
+`;
+
+      const isCapilar = track === 'capilar';
+      if (isCapilar) {
+        prompt = `Analiza detalladamente la hebra capilar o el cuero cabelludo que se observa en esta foto.
+Determina el tipo de cabello (ej. Seco, Graso, Mixto) y el estado general (frizz, puntas abiertas, caspa).
+Proporciona una explicación detallada del diagnóstico y genera una rutina semanal paso a paso en casa (3 pasos específicos).
+${concernStr}
+${weatherPrompt}
+Genera una consulta corta (máximo 6 palabras) en español para buscar tratamientos capilares en Pinterest.`;
+        jsonTemplate = `{
+  "skin_type": "Tipo de cabello/cuero cabelludo",
+  "scalp_status": "Estado del cuero cabelludo",
+  "explanation": "Explicación de hebra y porosidad...",
+  "recommended_routine": ["Paso 1...", "Paso 2...", "Paso 3..."],
+  "scores": {
+    "hidratacion": 70,
+    "impurezas": 10,
+    "luminosidad": 80
+  },
+  "pinterest_query": "consulta corta de pinterest"
+}`;
+      } else {
+        prompt = `Analiza detalladamente la piel del rostro o la textura de cabello que se observa en esta foto.
 Determina el tipo de piel o cabello (ej. Piel Mixta, Cabello Seco/Fino) y el estado general observando el brillo, resequedad o texturas.
 Proporciona una explicación detallada del diagnóstico y genera una rutina semanal paso a paso en casa (3 pasos específicos).
 ${concernStr}
+${profileContext}
+${weatherPrompt}
 Genera una consulta corta (máximo 6 palabras) en español para buscar rutinas de skincare o haircare recomendadas en Pinterest.`;
-      jsonTemplate = `{
+        jsonTemplate = `{
   "skin_type": "Tipo de piel o cabello detectado",
   "scalp_status": "Estado/Condición general",
   "explanation": "Explicación detallada del cuidado recomendado...",
   "recommended_routine": ["Paso 1...", "Paso 2...", "Paso 3..."],
+  "scores": {
+    "hidratacion": 80,
+    "impurezas": 20,
+    "luminosidad": 75
+  },
   "pinterest_query": "consulta corta de pinterest"
 }`;
+      }
     } else if (type === 'hair-color') {
       prompt = `Analiza el rostro de la persona en esta foto, enfocándose en el subtono cromático de su piel (Cálido, Frío o Neutro) y la forma del rostro.
 Determina el subtono cromático detectado y el tipo de rostro (Ovalado, Redondo, Cuadrado, etc.).
@@ -576,6 +706,9 @@ ${jsonTemplate}`;
     let analysisJson;
     try {
       analysisJson = JSON.parse(text);
+      if (weatherInfo) {
+        analysisJson.weather_snapshot = weatherInfo;
+      }
     } catch (parseErr) {
       console.error('Error al parsear respuesta JSON de Gemini para análisis:', text);
       if (req.file && req.file.buffer) req.file.buffer.fill(0);
@@ -587,8 +720,37 @@ ${jsonTemplate}`;
       req.file.buffer.fill(0);
     }
 
+    if (type === 'care-routine') {
+      const targetConcern = concern || 'Hidratación';
+      try {
+        const prodRes = await pool.query(
+          `SELECT nombre, marca, url_afiliado as url, comision_pct 
+           FROM affiliate_products 
+           WHERE objetivo = $1 AND activo = TRUE 
+           LIMIT 1;`,
+          [targetConcern]
+        );
+        if (prodRes.rows.length > 0) {
+          analysisJson.recommended_product = prodRes.rows[0];
+        }
+
+        const sponsorRes = await pool.query(
+          `SELECT marca, nombre_rutina, descripcion, producto_destacado, logo_url 
+           FROM brand_sponsorships 
+           WHERE objetivo_target = $1 AND activo = TRUE 
+           LIMIT 1;`,
+          [targetConcern]
+        );
+        if (sponsorRes.rows.length > 0) {
+          analysisJson.brand_sponsorship = sponsorRes.rows[0];
+        }
+      } catch (prodErr) {
+        console.warn('⚠️ No se pudo cargar recomendación de afiliado o patrocinio:', prodErr.message);
+      }
+    }
+
     if (req.user && req.user.id) {
-      await saveAnalysisToDb(req.user.id, type, analysisJson);
+      await saveAnalysisToDb(req.user.id, type, analysisJson, track);
     }
 
     return res.status(200).json({
@@ -669,5 +831,343 @@ exports.getAIHistory = async (req, res) => {
   } catch (error) {
     console.error('❌ ERROR AL OBTENER HISTORIAL DE IA:', error);
     res.status(500).json({ error: 'Error al obtener el historial de diagnósticos' });
+  }
+};
+
+exports.compareDesigns = async (req, res) => {
+  try {
+    const { diagnostic_id } = req.body;
+
+    if (!req.files || !req.files.imageBefore || !req.files.imageAfter) {
+      return res.status(400).json({ error: 'Es obligatorio subir ambas imágenes (Antes y Después) para realizar la comparación.' });
+    }
+
+    const fileBefore = req.files.imageBefore[0];
+    const fileAfter = req.files.imageAfter[0];
+
+    const imageBeforePart = {
+      inlineData: {
+        data: fileBefore.buffer.toString('base64'),
+        mimeType: fileBefore.mimetype || 'image/jpeg'
+      }
+    };
+
+    const imageAfterPart = {
+      inlineData: {
+        data: fileAfter.buffer.toString('base64'),
+        mimeType: fileAfter.mimetype || 'image/jpeg'
+      }
+    };
+
+    let comparisonResult = {};
+
+    if (!ai) {
+      console.warn('⚠️ GEMINI_API_KEY no configurada. Retornando comparación simulada.');
+      comparisonResult = {
+        delta_hidratacion: 15,
+        delta_impurezas: -10,
+        delta_luminosidad: 20,
+        resumen: "Se observa una notable mejora en la textura y el brillo general de la piel. Las zonas deshidratadas lucen más uniformes.",
+        recomendacion: "Mantener la rutina actual y considerar un sellador ligero adicional por las noches."
+      };
+    } else {
+      const prompt = `Eres un especialista en análisis de piel. Se te proporcionan DOS fotografías del mismo usuario tomadas en momentos diferentes (foto A = antes, foto B = después). Analiza ambas y genera un JSON con esta estructura exacta:
+{
+  "delta_hidratacion": número entre -100 y 100 (positivo = mejoró),
+  "delta_impurezas": número entre -100 y 100 (negativo = disminuyeron las impurezas, positivo = aumentaron),
+  "delta_luminosidad": número entre -100 y 100,
+  "resumen": "texto de máximo 2 oraciones en español describiendo el cambio observable",
+  "recomendacion": "texto de máximo 2 oraciones con ajuste a la rutina si aplica"
+}
+Responde SOLO con el JSON. Sin texto adicional, sin backticks, sin explicación.`;
+
+      const model = ai.getGenerativeModel({ model: 'gemini-2.5-flash' });
+      const result = await model.generateContent({
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              { text: prompt },
+              imageBeforePart,
+              imageAfterPart
+            ]
+          }
+        ]
+      });
+
+      const response = await result.response;
+      let text = response.text().trim();
+      if (text.startsWith('```json')) {
+        text = text.substring(7, text.length - 3).trim();
+      } else if (text.startsWith('```')) {
+        text = text.substring(3, text.length - 3).trim();
+      }
+
+      try {
+        comparisonResult = JSON.parse(text);
+      } catch (parseErr) {
+        console.error('Error al parsear JSON de comparación:', text);
+        throw new Error('La IA no retornó un formato de comparación JSON válido.');
+      }
+    }
+
+    // Purga de RAM
+    if (fileBefore.buffer) fileBefore.buffer.fill(0);
+    if (fileAfter.buffer) fileAfter.buffer.fill(0);
+
+    if (diagnostic_id) {
+      const updateQuery = `
+        UPDATE ai_diagnostics
+        SET comparison_photo_url = $1, comparison_delta = $2
+        WHERE id = $3;
+      `;
+      await pool.query(updateQuery, ['http://dummy-url.com/comparison.jpg', JSON.stringify(comparisonResult), diagnostic_id]);
+    }
+
+    res.json({
+      success: true,
+      comparison: comparisonResult
+    });
+
+  } catch (error) {
+    console.error('❌ ERROR EN DIAGNÓSTICO SECUENCIAL DE DOBLE CAPA:', error);
+    res.status(500).json({ error: 'Error al realizar el análisis comparativo' });
+  }
+};
+
+exports.getSkinProfile = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const query = `
+      SELECT id, tipo_piel, hidratacion_promedio, tendencia_acne, sensibilidad_score, diagnosticos_count, ultimo_diagnostico_at
+      FROM skin_profiles
+      WHERE user_id = $1;
+    `;
+    const result = await pool.query(query, [userId]);
+    if (result.rows.length === 0) {
+      return res.json({
+        success: true,
+        data: null
+      });
+    }
+    res.json({
+      success: true,
+      data: result.rows[0]
+    });
+  } catch (error) {
+    console.error('❌ ERROR AL OBTENER PERFIL DE PIEL:', error);
+    res.status(500).json({ error: 'Error al obtener el perfil de piel' });
+  }
+};
+
+exports.checkGlowAIQuota = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const userQuery = `
+      SELECT glowai_plan, glowai_diagnosticos_mes, glowai_ciclo_reset_at
+      FROM usuarios
+      WHERE id = $1;
+    `;
+    const result = await pool.query(userQuery, [userId]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Usuario no encontrado.' });
+    }
+
+    let { glowai_plan, glowai_diagnosticos_mes, glowai_ciclo_reset_at } = result.rows[0];
+    const ahora = new Date();
+    const resetDate = new Date(glowai_ciclo_reset_at || ahora);
+
+    const diffTime = Math.abs(ahora - resetDate);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays >= 30) {
+      await pool.query(
+        `UPDATE usuarios 
+         SET glowai_diagnosticos_mes = 0, glowai_ciclo_reset_at = NOW() 
+         WHERE id = $1;`,
+        [userId]
+      );
+      glowai_diagnosticos_mes = 0;
+    }
+
+    if (glowai_plan === 'free' && glowai_diagnosticos_mes >= 2) {
+      return res.status(402).json({
+        error: 'quota_exceeded',
+        message: 'Has alcanzado el límite mensual de diagnósticos gratuitos.',
+        upgrade_url: '/glowaipremium'
+      });
+    }
+
+    await pool.query(
+      `UPDATE usuarios SET glowai_diagnosticos_mes = COALESCE(glowai_diagnosticos_mes, 0) + 1 WHERE id = $1;`,
+      [userId]
+    );
+    
+    next();
+
+  } catch (error) {
+    console.error('❌ ERROR EN MIDDLEWARE DE CUOTA GLOWAI:', error);
+    res.status(500).json({ error: 'Error al verificar la cuota de diagnósticos' });
+  }
+};
+
+exports.subscribePremium = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    await pool.query(
+      `UPDATE usuarios 
+       SET glowai_plan = 'premium', glowai_ciclo_reset_at = NOW() 
+       WHERE id = $1;`,
+      [userId]
+    );
+    res.json({
+      success: true,
+      message: 'Suscripción a GlowAI Premium activada con éxito.'
+    });
+  } catch (error) {
+    console.error('❌ ERROR AL SUSCRIBIR A PREMIUM:', error);
+    res.status(500).json({ error: 'Error al procesar el pago de la suscripción' });
+  }
+};
+
+exports.checkInStreak = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const userQuery = `
+      SELECT streak_actual, streak_maximo, streak_ultimo_registro
+      FROM usuarios
+      WHERE id = $1;
+    `;
+    const userRes = await pool.query(userQuery, [userId]);
+    if (userRes.rows.length === 0) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    let { streak_actual, streak_maximo, streak_ultimo_registro } = userRes.rows[0];
+    const hoy = new Date().toISOString().split('T')[0];
+    
+    // Si la fecha coincide con la del último registro (teniendo en cuenta la zona horaria)
+    // Para simplificar, convertimos ambas fechas a strings YYYY-MM-DD
+    let lastDateStr = null;
+    if (streak_ultimo_registro) {
+      const dbDate = new Date(streak_ultimo_registro);
+      lastDateStr = dbDate.toISOString().split('T')[0];
+    }
+
+    if (lastDateStr === hoy) {
+      return res.status(400).json({
+        error: 'already_checked_in',
+        message: 'Ya has registrado tu rutina de hoy. ¡Vuelve mañana!',
+        streak_actual,
+        streak_maximo
+      });
+    }
+
+    let nuevoStreak = 1;
+    if (lastDateStr) {
+      const ayer = new Date();
+      ayer.setDate(ayer.getDate() - 1);
+      const ayerStr = ayer.toISOString().split('T')[0];
+      
+      if (lastDateStr === ayerStr) {
+        nuevoStreak = (streak_actual || 0) + 1;
+      }
+    }
+
+    const nuevoMaximo = Math.max(streak_maximo || 0, nuevoStreak);
+    
+    let rewardUnlocked = false;
+    let updatePlanQuery = '';
+    if (nuevoStreak >= 7) {
+      updatePlanQuery = `, glowai_plan = 'premium'`;
+      rewardUnlocked = true;
+    }
+
+    const updateQuery = `
+      UPDATE usuarios
+      SET streak_actual = $1, streak_maximo = $2, streak_ultimo_registro = $3 ${updatePlanQuery}
+      WHERE id = $4;
+    `;
+    await pool.query(updateQuery, [nuevoStreak, nuevoMaximo, hoy, userId]);
+
+    res.json({
+      success: true,
+      message: rewardUnlocked 
+        ? '¡Racha registrada! Has completado 7 días seguidos y desbloqueado GlowAI Premium Gratis por esta semana. 🎉' 
+        : '¡Rutina diaria registrada con éxito! Sigue así.',
+      streak_actual: nuevoStreak,
+      streak_maximo: nuevoMaximo,
+      reward_unlocked: rewardUnlocked
+    });
+
+  } catch (error) {
+    console.error('❌ ERROR AL REGISTRAR RACHA DE RUTINA:', error);
+    res.status(500).json({ error: 'Error al registrar la racha de la rutina' });
+  }
+};
+
+exports.getShareCode = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const checkQuery = `SELECT codigo FROM referidos WHERE referidor_user_id = $1;`;
+    const checkRes = await pool.query(checkQuery, [userId]);
+    
+    if (checkRes.rows.length > 0) {
+      return res.json({
+        success: true,
+        code: checkRes.rows[0].codigo
+      });
+    }
+
+    const code = 'GLOW' + Math.random().toString(36).substring(2, 8).toUpperCase();
+    const insertQuery = `
+      INSERT INTO referidos (referidor_user_id, codigo)
+      VALUES ($1, $2)
+      RETURNING codigo;
+    `;
+    const insertRes = await pool.query(insertQuery, [userId, code]);
+    
+    res.json({
+      success: true,
+      code: insertRes.rows[0].codigo
+    });
+
+  } catch (error) {
+    console.error('❌ ERROR AL OBTENER CÓDIGO DE REFERIDO:', error);
+    res.status(500).json({ error: 'Error al generar código de referido' });
+  }
+};
+
+exports.redirectReferral = async (req, res) => {
+  try {
+    const { code } = req.params;
+    
+    await pool.query(
+      `UPDATE referidos SET clicks = clicks + 1 WHERE codigo = $1;`,
+      [code]
+    );
+
+    res.redirect('/');
+  } catch (error) {
+    console.error('❌ ERROR EN REDIRECCIÓN DE REFERIDO:', error);
+    res.status(500).send('Error al procesar el enlace de referido');
+  }
+};
+
+exports.getRecommendedDoctors = async (req, res) => {
+  try {
+    const query = `
+      SELECT id, nombre, especialidad, registro_medico, telefono, email, ciudad, foto_url, condiciones_tratadas
+      FROM profesionales_medicos
+      WHERE membresia_activa = TRUE;
+    `;
+    const result = await pool.query(query);
+    res.json({
+      success: true,
+      data: result.rows
+    });
+  } catch (error) {
+    console.error('❌ ERROR AL OBTENER DERMATÓLOGOS RECOMENDADOS:', error);
+    res.status(500).json({ error: 'Error al obtener dermatólogos' });
   }
 };

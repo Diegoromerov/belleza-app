@@ -3,10 +3,12 @@ import 'dart:async';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/api_service.dart';
 import '../../shared/theme.dart';
 import '../booking_screen.dart';
+import 'comparison_screen.dart';
 
 // ============================================================================
 // NUEVO WIDGET: Escáner Láser Animado (Seguro con Timer)
@@ -477,6 +479,9 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
   String _selectedSkincareConcern = 'Hidratación';
   bool _showSkincareHistory = false;
   List<Map<String, dynamic>> _skincareHistory = [];
+  Map<String, dynamic>? _skinProfile;
+  Map<String, dynamic>? _userProfile;
+  String _selectedSkincareTrack = 'facial';
   bool _isLoadingSkincareHistory = false;
   bool _dailySkincareReminder = false;
   final List<String> _skincareConcerns = const ['Hidratación', 'Acné/Impurezas', 'Antiedad', 'Luminosidad/Manchas', 'Sensibilidad'];
@@ -531,6 +536,7 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
   void initState() {
     super.initState();
     _loadLocalCredits();
+    _loadUserProfile();
   }
 
   Future<void> _loadLocalCredits() async {
@@ -543,6 +549,344 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
     } catch (e) {
       debugPrint('Error loading local credits: $e');
     }
+  }
+
+  Future<void> _loadUserProfile() async {
+    try {
+      final up = await ApiService.fetchUserProfile();
+      setState(() {
+        _userProfile = up;
+      });
+    } catch (e) {
+      debugPrint('Error al cargar perfil de usuario: $e');
+    }
+  }
+
+  void _showPremiumModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 50,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              const Center(
+                child: Icon(Icons.stars_rounded, color: AppTheme.primary, size: 64),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Desbloquea GlowAI Premium',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.text),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Obtén análisis ilimitados, diagnóstico estacional avanzado y recomendaciones personalizadas sin límites.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 13, color: Colors.grey, height: 1.4),
+              ),
+              const SizedBox(height: 24),
+              _buildPremiumFeatureRow(Icons.check_circle_outline, 'Escaneos y diagnósticos ilimitados de piel/cabello'),
+              const SizedBox(height: 12),
+              _buildPremiumFeatureRow(Icons.check_circle_outline, 'Seguimiento de historial detallado ilimitado'),
+              const SizedBox(height: 12),
+              _buildPremiumFeatureRow(Icons.check_circle_outline, 'Descuentos exclusivos en marcas patrocinadas'),
+              const SizedBox(height: 32),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                  elevation: 2,
+                ),
+                onPressed: () async {
+                  Navigator.pop(context);
+                  try {
+                    await ApiService.subscribePremium();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('🎉 ¡Felicidades! Ya eres miembro de GlowAI Premium.'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                    _loadUserProfile();
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('⚠️ Error al procesar suscripción: $e'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                },
+                child: const Text('Suscribirse por \$9,900 COP / mes', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Tal vez más tarde', style: TextStyle(color: Colors.grey)),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildPremiumFeatureRow(IconData icon, String text) {
+    return Row(
+      children: [
+        Icon(icon, color: AppTheme.primary, size: 20),
+        const SizedBox(width: 12),
+        Expanded(child: Text(text, style: const TextStyle(fontSize: 13, color: AppTheme.text))),
+      ],
+    );
+  }
+
+  Future<void> _bookWithProfessional() async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: Card(
+          child: Padding(
+            padding: EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(color: AppTheme.primary),
+                SizedBox(height: 16),
+                Text(
+                  'Conectando con la agenda...',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    try {
+      final providers = await ApiService.fetchProvidersSecured();
+      if (!mounted) return;
+      Navigator.pop(context); // Cerrar cargando
+
+      if (providers.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No hay profesionales disponibles en este momento.'),
+            backgroundColor: AppTheme.error,
+          ),
+        );
+        return;
+      }
+
+      final provider = providers.first;
+      final details = await ApiService.fetchProviderDetails(provider.id);
+      if (!mounted) return;
+
+      final services = List<Map<String, dynamic>>.from(details['services'] ?? []);
+      
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BookingScreen(
+            providerId: provider.id,
+            providerName: provider.businessName,
+            services: services,
+            initialNotes: 'Diagnóstico de Skincare recomendó valoración con especialista.',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Cerrar cargando
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al conectar con la agenda: $e'),
+            backgroundColor: AppTheme.error,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showDoctorsAllianceBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (context) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.6,
+          maxChildSize: 0.9,
+          expand: false,
+          builder: (context, scrollController) {
+            return FutureBuilder<List<Map<String, dynamic>>>(
+              future: ApiService.fetchRecommendedDoctors(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Text('Error: ${snapshot.error}', textAlign: TextAlign.center),
+                    ),
+                  );
+                }
+                final doctors = snapshot.data ?? [];
+                if (doctors.isEmpty) {
+                  return const Center(
+                    child: Text('No hay dermatólogos disponibles en este momento.'),
+                  );
+                }
+
+                return Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade300,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Dermatólogos de la Alianza GlowApp',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.text),
+                      ),
+                      const SizedBox(height: 6),
+                      const Text(
+                        'Profesionales con licencia verificada listos para ayudarte con tu diagnóstico.',
+                        style: TextStyle(fontSize: 12, color: Colors.black54),
+                      ),
+                      const SizedBox(height: 16),
+                      Expanded(
+                        child: ListView.builder(
+                          controller: scrollController,
+                          itemCount: doctors.length,
+                          itemBuilder: (context, index) {
+                            final doc = doctors[index];
+                            final List<dynamic> conditions = doc['condiciones_tratadas'] ?? [];
+                            return Card(
+                              elevation: 0,
+                              margin: const EdgeInsets.only(bottom: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                side: BorderSide(color: Colors.grey.shade200),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(12.0),
+                                child: Row(
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 28,
+                                      backgroundColor: AppTheme.primary.withValues(alpha: 0.1),
+                                      child: const Icon(Icons.person, color: AppTheme.primary, size: 28),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            doc['nombre'] ?? '',
+                                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            doc['especialidad'] ?? '',
+                                            style: const TextStyle(fontSize: 11, color: Colors.blueAccent, fontWeight: FontWeight.w600),
+                                          ),
+                                          Text(
+                                            'Registro: ${doc['registro_medico'] ?? ''}',
+                                            style: const TextStyle(fontSize: 10, color: Colors.grey),
+                                          ),
+                                          const SizedBox(height: 6),
+                                          Wrap(
+                                            spacing: 4,
+                                            children: conditions.map((c) {
+                                              return Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.grey.shade100,
+                                                  borderRadius: BorderRadius.circular(8),
+                                                ),
+                                                child: Text(
+                                                  c.toString(),
+                                                  style: const TextStyle(fontSize: 9, color: Colors.black54),
+                                                ),
+                                              );
+                                            }).toList(),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.green,
+                                        foregroundColor: Colors.white,
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                      ),
+                                      onPressed: () {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text('Abriendo consulta por WhatsApp con ${doc['nombre']}...'),
+                                            backgroundColor: Colors.green,
+                                          ),
+                                        );
+                                      },
+                                      child: const Icon(Icons.phone, size: 16),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
+    );
   }
 
   Future<void> _incrementSearchCount() async {
@@ -937,6 +1281,7 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
         _selectedAnalysisImage!.name,
         _activeToolId!,
         concern: _activeToolId == 'care-routine' ? _selectedSkincareConcern : null,
+        track: _activeToolId == 'care-routine' ? _selectedSkincareTrack : null,
       );
 
       if (response['success'] == true && response['analysis'] != null) {
@@ -964,10 +1309,18 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
         throw Exception('No se recibió la estructura de análisis esperada');
       }
     } catch (e) {
-      setState(() {
-        _analysisError = 'Ocurrió un error en el análisis de IA: $e';
-        _isAnalyzing = false;
-      });
+      final errorStr = e.toString();
+      if (errorStr.contains('402') || errorStr.contains('quota_exceeded')) {
+        setState(() {
+          _isAnalyzing = false;
+        });
+        _showPremiumModal();
+      } else {
+        setState(() {
+          _analysisError = 'Ocurrió un error en el análisis de IA: $e';
+          _isAnalyzing = false;
+        });
+      }
     }
   }
 
@@ -2089,6 +2442,244 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
           ),
         )
       );
+
+      if (_analysisResult!['recommended_product'] != null) {
+        final prod = _analysisResult!['recommended_product'];
+        details.add(const SizedBox(height: 16));
+        details.add(
+          Card(
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: const BorderSide(color: Color(0xFFF3EAE8), width: 1.5),
+            ),
+            color: Colors.white,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.shopping_bag_outlined, color: AppTheme.primary, size: 22),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Producto Recomendado para ${prod['marca'] ?? 'Tienda'}',
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.text),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    prod['nombre'] ?? '',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Marca: ${prod['marca'] ?? ''} | ¡Comisión de Afiliado incluida!',
+                    style: const TextStyle(fontSize: 11, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primary,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                      ),
+                      onPressed: () {
+                        final url = prod['url'] ?? 'https://beautyapp.com';
+                        debugPrint('Abrir enlace de afiliado: $url');
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Redirigiendo a la tienda de ${prod['marca']}: $url'),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.open_in_new, size: 16),
+                      label: const Text('Comprar con descuento', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }
+
+      final scoreH = _analysisResult!['scores']?['hidratacion'] ?? 100;
+      final scoreI = _analysisResult!['scores']?['impurezas'] ?? 0;
+      final scoreL = _analysisResult!['scores']?['luminosidad'] ?? 100;
+      final requiereProf = _analysisResult!['requiere_profesional'] == true || scoreH < 25 || scoreI > 75 || scoreL < 25;
+
+      if (requiereProf) {
+        details.add(const SizedBox(height: 16));
+        details.add(
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.red.shade50,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.red.shade200),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.warning_amber_rounded, color: Colors.red, size: 22),
+                    SizedBox(width: 8),
+                    Text(
+                      'Atención Especializada Recomendada',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.red),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Tus niveles están fuera del rango normal recomendado para autocuidado. Te sugerimos agendar una valoración con un profesional de la salud o estética.',
+                  style: TextStyle(fontSize: 12, color: Colors.black87, height: 1.4),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    onPressed: _bookWithProfessional,
+                    icon: const Icon(Icons.calendar_month, size: 18),
+                    label: const Text('Reservar cita con especialista', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.red.shade800,
+                      side: BorderSide(color: Colors.red.shade300),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    onPressed: _showDoctorsAllianceBottomSheet,
+                    icon: const Icon(Icons.medical_services_outlined, size: 18),
+                    label: const Text('Consultar Dermatólogos Alianza', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+
+      if (_analysisResult!['brand_sponsorship'] != null) {
+        final sponsor = _analysisResult!['brand_sponsorship'];
+        details.add(const SizedBox(height: 16));
+        details.add(
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFE3F2FD), Color(0xFFBBDEFB)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.blue.shade200),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.verified, color: Colors.blue, size: 20),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Rutina Patrocinada por ${sponsor['marca'] ?? ''}',
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5, color: Colors.blueAccent),
+                        ),
+                      ],
+                    ),
+                    const Text(
+                      'PRO',
+                      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue, fontSize: 10),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  sponsor['nombre_rutina'] ?? '',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.text),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  sponsor['descripcion'] ?? '',
+                  style: const TextStyle(fontSize: 12, color: Colors.black87, height: 1.4),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    const Icon(Icons.star, color: Colors.amber, size: 16),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        'Producto estrella: ${sponsor['producto_destacado'] ?? ''}',
+                        style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Colors.black54),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+
+      details.add(const SizedBox(height: 16));
+      details.add(
+        ElevatedButton.icon(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppTheme.primary,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          ),
+          onPressed: () async {
+            try {
+              final res = await ApiService.fetchShareCode();
+              final code = res['code'];
+              final shareUrl = 'https://belleza-app-production.up.railway.app/api/designs/share/go/$code';
+              
+              await Clipboard.setData(ClipboardData(text: shareUrl));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('🎉 ¡Enlace de referido copiado al portapapeles! Compártelo con tus amigos.'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            } catch (e) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('⚠️ Error al generar enlace de referido: $e'),
+                  backgroundColor: AppTheme.error,
+                ),
+              );
+            }
+          },
+          icon: const Icon(Icons.share),
+          label: const Text('Compartir rutina con amigos', style: TextStyle(fontWeight: FontWeight.bold)),
+        ),
+      );
     } else if (_activeToolId == 'hair-color') {
       details.add(_buildResultRow('Subtono de piel:', _analysisResult!['skin_undertone']));
       details.add(_buildResultRow('Forma de rostro:', _analysisResult!['face_shape']));
@@ -2667,15 +3258,17 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
     });
     try {
       final history = await ApiService.fetchAIHistory(toolType: 'care-routine');
+      final profile = await ApiService.fetchSkinProfile();
       setState(() {
         _skincareHistory = history;
+        _skinProfile = profile;
         _isLoadingSkincareHistory = false;
       });
     } catch (e) {
       setState(() {
         _isLoadingSkincareHistory = false;
       });
-      debugPrint('Error al cargar historial: $e');
+      debugPrint('Error al cargar historial y perfil: $e');
     }
   }
 
@@ -2702,10 +3295,35 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
         ),
       );
     }
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: _skincareHistory.length,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildSkinProfileCard(),
+        if (_skincareHistory.length >= 2) ...[
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ComparisonScreen(diagnosticId: _skincareHistory.first['id']?.toString()),
+                ),
+              );
+            },
+            icon: const Icon(Icons.compare_arrows),
+            label: const Text('Comparar con diagnóstico anterior', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+          const SizedBox(height: 16),
+        ],
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: _skincareHistory.length,
       itemBuilder: (context, index) {
         final diag = _skincareHistory[index];
         final result = diag['result_data'] ?? {};
@@ -2754,13 +3372,374 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
           ),
         );
       },
+    ),
+  ],
+);
+}
+
+  Widget _buildSkinProfileCard() {
+    if (_skinProfile == null) return const SizedBox.shrink();
+
+    final tipo = _skinProfile!['tipo_piel'] ?? 'Mixta';
+    final hidra = _skinProfile!['hidratacion_promedio'] ?? 50;
+    final acne = _skinProfile!['tendencia_acne'] ?? 30;
+    final sens = _skinProfile!['sensibilidad_score'] ?? 15;
+    final count = _skinProfile!['diagnosticos_count'] ?? 0;
+
+    return Card(
+      elevation: 0,
+      margin: const EdgeInsets.only(bottom: 20),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+        side: const BorderSide(color: Color(0xFFF3EAE8), width: 1.5),
+      ),
+      color: Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.face_retouching_natural_rounded, color: AppTheme.primary, size: 28),
+                    SizedBox(width: 8),
+                    Text(
+                      'Mi Perfil de Piel',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppTheme.text),
+                    ),
+                  ],
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    tipo,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11.5, color: AppTheme.primary),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Basado en $count diagnósticos anteriores',
+              style: const TextStyle(fontSize: 11, color: Colors.grey),
+            ),
+            const Divider(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildCircularGauge('Hidratación', hidra / 100.0, '$hidra%', Colors.blue),
+                _buildCircularGauge('Impurezas', acne / 100.0, '$acne%', Colors.red),
+                _buildCircularGauge('Sensibilidad', sens / 100.0, '$sens%', Colors.orange),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCircularGauge(String label, double progress, String text, Color color) {
+    return Column(
+      children: [
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            SizedBox(
+              width: 55,
+              height: 55,
+              child: CircularProgressIndicator(
+                value: progress,
+                strokeWidth: 5,
+                backgroundColor: color.withValues(alpha: 0.1),
+                valueColor: AlwaysStoppedAnimation<Color>(color),
+              ),
+            ),
+            Text(
+              text,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppTheme.text),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.black54),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStreakTracker() {
+    final streak = _userProfile?['streak_actual'] ?? 0;
+    final maxStreak = _userProfile?['streak_maximo'] ?? 0;
+
+    return Card(
+      elevation: 0,
+      margin: const EdgeInsets.only(bottom: 20),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+        side: const BorderSide(color: Color(0xFFF3EAE8), width: 1.5),
+      ),
+      color: Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.local_fire_department, color: Colors.orange, size: 28),
+                    const SizedBox(width: 8),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Racha de Cuidado',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.text),
+                        ),
+                        Text(
+                          'Máxima racha histórica: $maxStreak días',
+                          style: const TextStyle(fontSize: 10, color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.shade50,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    '$streak DÍAS Seguidos',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11.5, color: Colors.orange.shade800),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: List.generate(7, (index) {
+                final dayNum = index + 1;
+                final isCompleted = dayNum <= (streak % 7 == 0 && streak > 0 ? 7 : streak % 7);
+                return Column(
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: isCompleted ? Colors.orange : Colors.grey.shade100,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isCompleted ? Colors.orange : Colors.grey.shade300,
+                          width: 1.5,
+                        ),
+                      ),
+                      alignment: Alignment.center,
+                      child: isCompleted
+                          ? const Icon(Icons.check, color: Colors.white, size: 16)
+                          : Text(
+                              '$dayNum',
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Día $dayNum',
+                      style: TextStyle(fontSize: 9, color: Colors.grey.shade500),
+                    ),
+                  ],
+                );
+              }),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                elevation: 1,
+              ),
+              onPressed: () async {
+                try {
+                  final res = await ApiService.checkInStreak();
+                  _loadUserProfile();
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                      title: const Row(
+                        children: [
+                          Icon(Icons.stars, color: Colors.orange, size: 28),
+                          SizedBox(width: 10),
+                          Text('¡Racha Registrada!'),
+                        ],
+                      ),
+                      content: Text(res['message'] ?? 'Has registrado tu rutina del día. ¡Sigue así!'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('¡Excelente!', style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold)),
+                        )
+                      ],
+                    ),
+                  );
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('⚠️ ${e.toString().replaceAll('Exception: ', '')}'),
+                      backgroundColor: Colors.orange,
+                    ),
+                  );
+                }
+              },
+              child: const Text('Registrar mi rutina de hoy', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
   Widget _buildNewSkincareRoutineView(IconData cameraIcon, String instructionText, List<String> currentScanningTexts) {
+    final glowaiPlan = _userProfile?['glowai_plan'] ?? 'free';
+    final diagnosMes = _userProfile?['glowai_diagnosticos_mes'] ?? 0;
+    const maxFree = 2;
+    final remaining = (maxFree - diagnosMes).clamp(0, maxFree);
+
+    final dynamicInstruction = _selectedSkincareTrack == 'capilar'
+        ? 'Sube una foto de tu cuero cabelludo o hebra capilar para el análisis capilar.'
+        : instructionText;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Tab selector de track (Facial vs Capilar)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 16.0),
+          child: Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _selectedSkincareTrack = 'facial';
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      color: _selectedSkincareTrack == 'facial' ? AppTheme.primary : Colors.white,
+                      borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
+                      border: Border.all(color: AppTheme.primary),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      'Facial',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: _selectedSkincareTrack == 'facial' ? Colors.white : AppTheme.primary,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _selectedSkincareTrack = 'capilar';
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      color: _selectedSkincareTrack == 'capilar' ? AppTheme.primary : Colors.white,
+                      borderRadius: const BorderRadius.horizontal(right: Radius.circular(16)),
+                      border: Border.all(color: AppTheme.primary),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      'Capilar',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: _selectedSkincareTrack == 'capilar' ? Colors.white : AppTheme.primary,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Banner de Suscripción / Plan Premium
+        if (glowaiPlan == 'premium') ...[
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            margin: const EdgeInsets.only(bottom: 16),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(colors: [Color(0xFFFFD700), Color(0xFFFFA500)]),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: AppTheme.softShadow,
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.stars, color: Colors.white, size: 20),
+                SizedBox(width: 8),
+                Text(
+                  'GlowAI Premium Activado — Escaneos Ilimitados',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+        ] else ...[
+          GestureDetector(
+            onTap: _showPremiumModal,
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: Colors.orange.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.orange.shade200),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.info_outline, color: Colors.orange, size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Plan Gratuito: Te quedan $remaining/2 diagnósticos este mes. ¡Haz clic aquí para pasarte a Premium!',
+                      style: TextStyle(color: Colors.orange.shade900, fontSize: 11.5, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                  const Icon(Icons.arrow_forward_ios, size: 12, color: Colors.orange),
+                ],
+              ),
+            ),
+          ),
+        ],
+        _buildStreakTracker(),
         // Selector de Preocupación de Piel
         if (_analysisImageBytes == null) ...[
           const Text(
@@ -2851,7 +3830,7 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
               const SizedBox(height: 12),
               if (!_isAnalyzing)
                 Text(
-                  instructionText,
+                  dynamicInstruction,
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 12.5, color: Colors.grey.shade600, fontStyle: FontStyle.italic),
                 ),
