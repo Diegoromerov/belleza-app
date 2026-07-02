@@ -1094,7 +1094,7 @@ class _BookingScreenState extends State<BookingScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _buildPriceRow('Servicio Base', servicePrice),
+                _buildPriceRow('Servicio Base', servicesPrice),
                 if (productsSubtotal > 0) ...[
                   const SizedBox(height: 8),
                   _buildPriceRow('Productos de Venta Cruzada', productsSubtotal),
