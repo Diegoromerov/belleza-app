@@ -1681,6 +1681,14 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
         'tag': 'IA',
         'image': 'assets/images/design_ideas_hair_diagnostic_1781572914936.png',
       },
+      {
+        'id': 'glowstyle',
+        'title': 'Clóset Inteligente & Outfits',
+        'description': 'Cataloga tu ropa y genera outfits por IA basados en tu colorimetría.',
+        'icon': Icons.checkroom_rounded,
+        'tag': 'IA',
+        'image': 'assets/images/design_ideas_skin_tone_1781572896303.png',
+      },
     ];
 
     return CustomScrollView(
@@ -1711,6 +1719,10 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
 
                 return GestureDetector(
                   onTap: () {
+                    if (tool['id'] == 'glowstyle') {
+                      Navigator.pushNamed(context, '/wardrobe');
+                      return;
+                    }
                     setState(() {
                       _activeToolId = tool['id'] as String;
                     });
