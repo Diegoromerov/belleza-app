@@ -927,6 +927,96 @@ class ApiService {
     throw Exception(json.decode(response.body)['error'] ?? 'Error ${response.statusCode}');
   }
 
+  // 🔹 NUEVO: Clóset e Imagen Digital (GlowStyle)
+  static Future<Map<String, dynamic>> classifyGarment(Uint8List imageBytes, String filename) async {
+    await ensureBaseUrl();
+    final token = await _getToken();
+    final uri = Uri.parse('$_baseUrl$_apiPath/designs/wardrobe/garment');
+    final request = http.MultipartRequest('POST', uri);
+    
+    if (token != null && token.isNotEmpty) {
+      request.headers['Authorization'] = 'Bearer $token';
+    }
+    
+    request.files.add(
+      http.MultipartFile.fromBytes(
+        'image',
+        imageBytes,
+        filename: filename,
+      ),
+    );
+
+    final streamedResponse = await request.send().timeout(const Duration(seconds: 40));
+    final response = await http.Response.fromStream(streamedResponse);
+    final data = json.decode(response.body);
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(data['data']);
+    }
+    throw Exception(data['error'] ?? 'Error ${response.statusCode}');
+  }
+
+  static Future<List<Map<String, dynamic>>> fetchWardrobe() async {
+    final headers = await _getAuthHeaders();
+    final response = await http
+        .get(
+          Uri.parse('$_baseUrl$_apiPath/designs/wardrobe'),
+          headers: headers,
+        )
+        .timeout(const Duration(seconds: 30));
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return List<Map<String, dynamic>>.from(data['data']);
+    }
+    throw Exception(json.decode(response.body)['error'] ?? 'Error ${response.statusCode}');
+  }
+
+  static Future<void> deleteGarment(String id) async {
+    final headers = await _getAuthHeaders();
+    final response = await http
+        .delete(
+          Uri.parse('$_baseUrl$_apiPath/designs/wardrobe/garment/$id'),
+          headers: headers,
+        )
+        .timeout(const Duration(seconds: 20));
+    if (response.statusCode != 200) {
+      throw Exception(json.decode(response.body)['error'] ?? 'Error ${response.statusCode}');
+    }
+  }
+
+  static Future<Map<String, dynamic>> generateOutfit(String ocasion) async {
+    await ensureBaseUrl();
+    final token = await _getToken();
+    final uri = Uri.parse('$_baseUrl$_apiPath/designs/wardrobe/outfit/generate');
+    
+    final headers = <String, String>{'Content-Type': 'application/json'};
+    if (token != null && token.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+
+    final body = json.encode({'ocasion': ocasion});
+    final response = await http.post(uri, headers: headers, body: body).timeout(const Duration(seconds: 40));
+    final data = json.decode(response.body);
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(data['data']);
+    }
+    throw Exception(data['error'] ?? 'Error ${response.statusCode}');
+  }
+
+  static Future<List<Map<String, dynamic>>> fetchOutfitHistory() async {
+    final headers = await _getAuthHeaders();
+    final response = await http
+        .get(
+          Uri.parse('$_baseUrl$_apiPath/designs/wardrobe/outfits/history'),
+          headers: headers,
+        )
+        .timeout(const Duration(seconds: 30));
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return List<Map<String, dynamic>>.from(data['data']);
+    }
+    throw Exception(json.decode(response.body)['error'] ?? 'Error ${response.statusCode}');
+  }
+
   // 🔹 NUEVO: Analizar forma del rostro por IA
   static Future<Map<String, dynamic>> analyzeFaceShape(Uint8List imageBytes, String filename) async {
     await ensureBaseUrl();

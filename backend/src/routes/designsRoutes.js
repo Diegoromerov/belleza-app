@@ -28,7 +28,13 @@ const {
   getExclusiveCollections,
   generateGlowUpCard,
   checkColorimetriaQuota,
-  getColorimetriaHistorial
+  getColorimetriaHistorial,
+  classifyGarment,
+  generateOutfit,
+  getWardrobe,
+  deleteGarment,
+  getOutfitHistorial,
+  checkOutfitQuota
 } = require('../controllers/designsController');
 const authMiddleware = require('../middleware/auth');
 
@@ -78,5 +84,12 @@ router.get('/validation/:id', authMiddleware, getValidationById);
 router.get('/collections', authMiddleware, getCuratedCollections);
 router.get('/collections/exclusive', authMiddleware, getExclusiveCollections);
 router.post('/glowup-card/generate', authMiddleware, generateGlowUpCard);
+
+// 🔹 NUEVO: Clóset e Imagen Digital (GlowStyle)
+router.post('/wardrobe/garment', authMiddleware, upload.single('image'), classifyGarment);
+router.get('/wardrobe', authMiddleware, getWardrobe);
+router.delete('/wardrobe/garment/:id', authMiddleware, deleteGarment);
+router.post('/wardrobe/outfit/generate', authMiddleware, checkOutfitQuota, generateOutfit);
+router.get('/wardrobe/outfits/history', authMiddleware, getOutfitHistorial);
 
 module.exports = router;

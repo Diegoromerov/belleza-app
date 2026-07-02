@@ -1890,3 +1890,321 @@ exports.getColorimetriaHistorial = async (req, res) => {
     res.status(500).json({ error: 'Error al obtener historial de colorimetría' });
   }
 };
+
+// 🔹 NUEVO: Middleware de cuota para outfits IA (GlowStyle)
+exports.checkOutfitQuota = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+
+    const userQuery = `
+      SELECT email, glowai_plan, glowstyle_outfits_mes, glowstyle_mes_referencia
+      FROM usuarios
+      WHERE id = $1;
+    `;
+    const result = await pool.query(userQuery, [userId]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Usuario no encontrado.' });
+    }
+
+    let { email, glowai_plan, glowstyle_outfits_mes, glowstyle_mes_referencia } = result.rows[0];
+
+    // Bypass de pruebas
+    if (email === 'usuario_pruebas@gmail.com') {
+      return next();
+    }
+
+    // Reset mensual para Premium
+    const ahora = new Date();
+    const resetDate = new Date(glowstyle_mes_referencia || ahora);
+    const diffTime = Math.abs(ahora - resetDate);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays >= 30) {
+      await pool.query(
+        `UPDATE usuarios 
+         SET glowstyle_outfits_mes = 0, glowstyle_mes_referencia = NOW() 
+         WHERE id = $1;`,
+         [userId]
+      );
+      glowstyle_outfits_mes = 0;
+    }
+
+    if (glowai_plan === 'free') {
+      // Máximo 2 combinaciones gratuitas históricas
+      const countRes = await pool.query(
+        'SELECT COUNT(*) FROM guardarropa_outfits WHERE user_id = $1',
+        [userId]
+      );
+      const count = parseInt(countRes.rows[0].count || 0);
+
+      if (count >= 2) {
+        return res.status(402).json({
+          error: 'quota_exceeded',
+          message: 'Has alcanzado el límite de 2 combinaciones de outfit gratuitas de por vida. Suscríbete a GlowAI Premium para diseñar outfits ilimitados diariamente.',
+          upgrade_url: '/glowaipremium'
+        });
+      }
+    } else {
+      // Límite Premium: 20 outfits al mes
+      if (glowstyle_outfits_mes >= 20) {
+        return res.status(402).json({
+          error: 'quota_exceeded',
+          message: 'Has alcanzado el límite mensual de 20 outfits personalizados por IA en tu plan Premium.'
+        });
+      }
+    }
+
+    next();
+
+  } catch (error) {
+    console.error('❌ ERROR EN MIDDLEWARE DE CUOTA OUTFIT:', error);
+    res.status(500).json({ error: 'Error al verificar la cuota de outfits' });
+  }
+};
+
+// 🔹 NUEVO: Analizar y clasificar prenda de ropa
+exports.classifyGarment = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    if (!req.file) {
+      return res.status(400).json({ error: 'Debes subir una foto de la prenda.' });
+    }
+
+    if (!ai) {
+      return res.status(500).json({ error: 'El servicio de IA no está configurado.' });
+    }
+
+    const fileBuffer = req.file.buffer;
+    const mimeType = req.file.mimetype || 'image/jpeg';
+    const base64Data = fileBuffer.toString('base64');
+    const imageUri = `data:${mimeType};base64,${base64Data}`;
+
+    const imagePart = {
+      inlineData: {
+        data: base64Data,
+        mimeType
+      }
+    };
+
+    const prompt = `Analiza detalladamente esta prenda de vestir.
+Dime qué tipo de prenda es y clasifícala.
+Determina su categoría estrictamente entre: "superior", "inferior", "calzado", "accesorio", "abrigo".
+Identifica el color predominante.
+Sugiere un estilo de ocasión adecuado entre: "urbano", "clasico", "noche", "fiesta", "casual".
+Responde obligatoriamente en formato JSON válido, sin bloques de código markdown (\`\`\`json) y sin caracteres extras:
+{
+  "nombre": "Nombre descriptivo de la prenda (ej: Blazer Negro Sastre)",
+  "categoria": "categoría",
+  "color_predominante": "color",
+  "estilo_sugerido": "estilo"
+}`;
+
+    const model = ai.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    const result = await model.generateContent({
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            { text: prompt },
+            imagePart
+          ]
+        }
+      ]
+    });
+
+    const response = await result.response;
+    let text = response.text().trim();
+    if (text.startsWith('```json')) {
+      text = text.substring(7, text.length - 3).trim();
+    } else if (text.startsWith('```')) {
+      text = text.substring(3, text.length - 3).trim();
+    }
+
+    const classification = JSON.parse(text);
+
+    // Insertar en la base de datos
+    const insertQuery = `
+      INSERT INTO guardarropa_prendas (user_id, nombre, categoria, color_predominante, estilo_sugerido, image_url)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING *;
+    `;
+    const dbResult = await pool.query(insertQuery, [
+      userId,
+      classification.nombre || 'Prenda sin nombre',
+      classification.categoria || 'superior',
+      classification.color_predominante || 'Desconocido',
+      classification.estilo_sugerido || 'casual',
+      imageUri
+    ]);
+
+    res.status(200).json({
+      success: true,
+      data: dbResult.rows[0]
+    });
+
+  } catch (error) {
+    console.error('❌ Error al catalogar prenda:', error.message);
+    res.status(500).json({ error: 'Error al catalogar la prenda de ropa' });
+  }
+};
+
+// 🔹 NUEVO: Generar combinación de outfits inteligente
+exports.generateOutfit = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { ocasion } = req.body; // 'urbano', 'clasico', 'noche', 'fiesta', 'casual'
+
+    // 1. Obtener prendas del armario del usuario
+    const prendasRes = await pool.query(
+      'SELECT id, nombre, categoria, color_predominante, estilo_sugerido FROM guardarropa_prendas WHERE user_id = $1',
+      [userId]
+    );
+
+    if (prendasRes.rows.length === 0) {
+      return res.status(400).json({ error: 'Primero debes subir algunas prendas a tu clóset para generar un outfit.' });
+    }
+
+    const clóset = prendasRes.rows;
+
+    // 2. Obtener colorimetría del usuario
+    const colorimetriaRes = await pool.query(
+      `SELECT result FROM ai_diagnostics 
+       WHERE user_id = $1 AND type IN ('skin-tone', 'hair-color') 
+       ORDER BY created_at DESC LIMIT 1`,
+      [userId]
+    );
+
+    let infoColor = "Subtono: Neutro. Colores clave sugeridos: Negro, Blanco, Azul, Rojo.";
+    if (colorimetriaRes.rows.length > 0) {
+      const col = colorimetriaRes.rows[0].result || {};
+      const subtono = col.undertone || col.skin_undertone || 'Neutro';
+      const recomendados = col.recommended_colors || col.recommended_shades || [];
+      infoColor = `Subtono de piel detectado: ${subtono}. Colores cromáticos ideales: ${recomendados.join(', ')}.`;
+    }
+
+    // 3. Consultar a Gemini para proponer la combinación
+    const prompt = `Actúa como un Personal Stylist y Asesor de Imagen experto.
+Tengo el siguiente clóset de prendas reales registradas (en formato JSON):
+${JSON.stringify(clóset)}
+
+Los datos de mi colorimetría personal son:
+${infoColor}
+
+Por favor, diseña un outfit ideal seleccionando de 2 a 4 prendas de mi clóset para la ocasión / estilo: "${ocasion || 'casual'}".
+Explica en un párrafo corto en español por qué estas prendas combinan bien juntas y cómo armonizan cromáticamente con mi subtono de piel y colores clave de colorimetría.
+Genera además una consulta en español de no más de 5 palabras para buscar referencias visuales inspiracionales similares en Pinterest.
+
+Responde obligatoriamente única y estrictamente con un JSON válido en este formato:
+{
+  "nombre": "Nombre creativo del look (ej: Noche Elegante de Contraste)",
+  "prendas_ids": ["array-de-ids-de-prendas-seleccionadas-del-closet"],
+  "estilo": "estilo-seleccionado",
+  "sugerencia_texto": "Tu explicación e insight de estilismo personalizada...",
+  "pinterest_query": "consulta de pinterest"
+}`;
+
+    const model = ai.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    const result = await model.generateContent(prompt);
+    
+    const response = await result.response;
+    let text = response.text().trim();
+    if (text.startsWith('```json')) {
+      text = text.substring(7, text.length - 3).trim();
+    } else if (text.startsWith('```')) {
+      text = text.substring(3, text.length - 3).trim();
+    }
+
+    const recomendacion = JSON.parse(text);
+
+    // 4. Guardar outfit en base de datos
+    const insertQuery = `
+      INSERT INTO guardarropa_outfits (user_id, nombre, prendas_ids, estilo, sugerencia_texto)
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING *;
+    `;
+    const outfitResult = await pool.query(insertQuery, [
+      userId,
+      recomendacion.nombre || 'Mi Combinación Especial',
+      recomendacion.prendas_ids || [],
+      ocasion || 'casual',
+      recomendacion.sugerencia_texto || 'Combinación inteligente recomendada por GlowStyle.'
+    ]);
+
+    // 5. Incrementar el contador mensual en usuarios
+    await pool.query(
+      'UPDATE usuarios SET glowstyle_outfits_mes = COALESCE(glowstyle_outfits_mes, 0) + 1 WHERE id = $1',
+      [userId]
+    );
+
+    res.status(200).json({
+      success: true,
+      data: {
+        ...outfitResult.rows[0],
+        pinterest_query: recomendacion.pinterest_query
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Error al generar outfit:', error.message);
+    res.status(500).json({ error: 'Error al diseñar outfit por IA' });
+  }
+};
+
+// 🔹 NUEVO: Obtener armario digital
+exports.getWardrobe = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const result = await pool.query(
+      'SELECT * FROM guardarropa_prendas WHERE user_id = $1 ORDER BY created_at DESC',
+      [userId]
+    );
+
+    res.status(200).json({
+      success: true,
+      data: result.rows
+    });
+  } catch (error) {
+    console.error('❌ Error al obtener guardarropa:', error.message);
+    res.status(500).json({ error: 'Error al obtener guardarropa' });
+  }
+};
+
+// 🔹 NUEVO: Eliminar prenda del guardarropa
+exports.deleteGarment = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+
+    await pool.query(
+      'DELETE FROM guardarropa_prendas WHERE id = $1 AND user_id = $2',
+      [id, userId]
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Prenda eliminada correctamente.'
+    });
+  } catch (error) {
+    console.error('❌ Error al eliminar prenda:', error.message);
+    res.status(500).json({ error: 'Error al eliminar prenda' });
+  }
+};
+
+// 🔹 NUEVO: Obtener historial de outfits sugeridos
+exports.getOutfitHistorial = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const result = await pool.query(
+      'SELECT * FROM guardarropa_outfits WHERE user_id = $1 ORDER BY created_at DESC',
+      [userId]
+    );
+
+    res.status(200).json({
+      success: true,
+      data: result.rows
+    });
+  } catch (error) {
+    console.error('❌ Error al obtener historial de outfits:', error.message);
+    res.status(500).json({ error: 'Error al obtener historial de outfits' });
+  }
+};

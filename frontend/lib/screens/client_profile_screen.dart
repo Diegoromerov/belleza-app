@@ -369,6 +369,11 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                 onTap: () => Navigator.pushNamed(context, '/evolution', arguments: 'facial'),
               ),
               _buildSettingsTile(
+                icon: Icons.checkroom_rounded,
+                title: 'Mi Clóset Inteligente (GlowStyle)',
+                onTap: () => Navigator.pushNamed(context, '/wardrobe'),
+              ),
+              _buildSettingsTile(
                 icon: Icons.verified_user_outlined,
                 title: 'Validación Médica de IA',
                 onTap: () => Navigator.pushNamed(context, '/medical-validation'),
