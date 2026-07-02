@@ -2435,6 +2435,30 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
       ));
       details.add(const SizedBox(height: 16));
       details.add(
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: () {
+              Navigator.pushNamed(
+                context, 
+                '/evolution', 
+                arguments: _selectedSkincareTrack == 'capilar' ? 'capilar' : 'facial'
+              );
+            },
+            icon: const Icon(Icons.show_chart_rounded),
+            label: const Text('Ver mi Evolución Histórica'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primary.withValues(alpha: 0.1),
+              foregroundColor: AppTheme.primary,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            ),
+          ),
+        ),
+      );
+      details.add(const SizedBox(height: 16));
+      details.add(
         Card(
           elevation: 0,
           color: AppTheme.primary.withValues(alpha: 0.05),
@@ -2589,6 +2613,29 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
                     onPressed: _showDoctorsAllianceBottomSheet,
                     icon: const Icon(Icons.medical_services_outlined, size: 18),
                     label: const Text('Consultar Dermatólogos Alianza', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    onPressed: () {
+                      Navigator.pushNamed(
+                        context, 
+                        '/medical-validation', 
+                        arguments: {
+                          'diagnostic_id': _analysisResult!['id']
+                        }
+                      );
+                    },
+                    icon: const Icon(Icons.verified_user_outlined, size: 18),
+                    label: const Text('Solicitar Validación Médica de IA', style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ),
               ],

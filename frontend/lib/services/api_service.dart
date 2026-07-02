@@ -1109,6 +1109,144 @@ class ApiService {
     }
     throw Exception(json.decode(response.body)['error'] ?? 'Error ${response.statusCode}');
   }
+
+  // 🔹 NUEVO: Evolución Premium
+  static Future<List<Map<String, dynamic>>> fetchEvolutionData(String track) async {
+    await ensureBaseUrl();
+    final token = await _getToken();
+    final uri = Uri.parse('$_baseUrl$_apiPath/designs/evolution/$track');
+    
+    final headers = <String, String>{};
+    if (token != null && token.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+
+    final response = await http.get(uri, headers: headers).timeout(const Duration(seconds: 30));
+    final data = json.decode(response.body);
+    if (response.statusCode == 200) {
+      return List<Map<String, dynamic>>.from(data['data']);
+    }
+    throw Exception(data['error'] ?? 'Error ${response.statusCode}');
+  }
+
+  static Future<String> fetchEvolutionInsight(String track) async {
+    await ensureBaseUrl();
+    final token = await _getToken();
+    final uri = Uri.parse('$_baseUrl$_apiPath/designs/evolution/$track/insight');
+    
+    final headers = <String, String>{};
+    if (token != null && token.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+
+    final response = await http.get(uri, headers: headers).timeout(const Duration(seconds: 30));
+    final data = json.decode(response.body);
+    if (response.statusCode == 200) {
+      return data['insight'] ?? '';
+    }
+    throw Exception(data['error'] ?? 'Error ${response.statusCode}');
+  }
+
+  static Future<String?> fetchEvolutionAttribution(String track) async {
+    await ensureBaseUrl();
+    final token = await _getToken();
+    final uri = Uri.parse('$_baseUrl$_apiPath/designs/evolution/$track/attribution');
+    
+    final headers = <String, String>{};
+    if (token != null && token.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+
+    final response = await http.get(uri, headers: headers).timeout(const Duration(seconds: 30));
+    final data = json.decode(response.body);
+    if (response.statusCode == 200) {
+      return data['attribution'];
+    }
+    throw Exception(data['error'] ?? 'Error ${response.statusCode}');
+  }
+
+  // 🔹 NUEVO: Validación Médica
+  static Future<Map<String, dynamic>> requestMedicalValidation(int? diagnosticId, String profesionalId) async {
+    await ensureBaseUrl();
+    final token = await _getToken();
+    final uri = Uri.parse('$_baseUrl$_apiPath/designs/validation/request');
+    
+    final headers = <String, String>{'Content-Type': 'application/json'};
+    if (token != null && token.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+
+    final body = json.encode({
+      'ai_diagnostic_id': diagnosticId,
+      'profesional_id': profesionalId,
+    });
+
+    final response = await http.post(uri, headers: headers, body: body).timeout(const Duration(seconds: 30));
+    final data = json.decode(response.body);
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return Map<String, dynamic>.from(data['data']);
+    }
+    throw Exception(data['error'] ?? 'Error ${response.statusCode}');
+  }
+
+  static Future<Map<String, dynamic>> payMedicalValidation(int? diagnosticId, String profesionalId) async {
+    await ensureBaseUrl();
+    final token = await _getToken();
+    final uri = Uri.parse('$_baseUrl$_apiPath/designs/validation/pay');
+    
+    final headers = <String, String>{'Content-Type': 'application/json'};
+    if (token != null && token.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+
+    final body = json.encode({
+      'ai_diagnostic_id': diagnosticId,
+      'profesional_id': profesionalId,
+    });
+
+    final response = await http.post(uri, headers: headers, body: body).timeout(const Duration(seconds: 30));
+    final data = json.decode(response.body);
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return Map<String, dynamic>.from(data['data']);
+    }
+    throw Exception(data['error'] ?? 'Error ${response.statusCode}');
+  }
+
+  static Future<List<Map<String, dynamic>>> fetchValidationHistory() async {
+    await ensureBaseUrl();
+    final token = await _getToken();
+    final uri = Uri.parse('$_baseUrl$_apiPath/designs/validation/user/history');
+    
+    final headers = <String, String>{};
+    if (token != null && token.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+
+    final response = await http.get(uri, headers: headers).timeout(const Duration(seconds: 30));
+    final data = json.decode(response.body);
+    if (response.statusCode == 200) {
+      return List<Map<String, dynamic>>.from(data['data']);
+    }
+    throw Exception(data['error'] ?? 'Error ${response.statusCode}');
+  }
+
+  static Future<Map<String, dynamic>> fetchValidationById(String id) async {
+    await ensureBaseUrl();
+    final token = await _getToken();
+    final uri = Uri.parse('$_baseUrl$_apiPath/designs/validation/$id');
+    
+    final headers = <String, String>{};
+    if (token != null && token.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+
+    final response = await http.get(uri, headers: headers).timeout(const Duration(seconds: 30));
+    final data = json.decode(response.body);
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(data['data']);
+    }
+    throw Exception(data['error'] ?? 'Error ${response.statusCode}');
+  }
 }
 
 class MapSettings {

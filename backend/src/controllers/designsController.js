@@ -3,8 +3,8 @@ const path = require('path');
 require('dotenv').config();
 const { pool } = require('../config/db');
 
-const saveAnalysisToDb = async (userId, toolType, resultData, track = 'piel') => {
-  if (!userId) return;
+const saveAnalysisToDb = async (userId, toolType, resultData, track = 'piel', imageUrl = null) => {
+  if (!userId) return null;
   try {
     const scores = resultData.scores || {};
     const hidratacion = scores.hidratacion !== undefined ? parseInt(scores.hidratacion) : null;
@@ -12,17 +12,21 @@ const saveAnalysisToDb = async (userId, toolType, resultData, track = 'piel') =>
     const luminosidad = scores.luminosidad !== undefined ? parseInt(scores.luminosidad) : null;
 
     const query = `
-      INSERT INTO ai_diagnostics (user_id, tool_type, result_data, score_hidratacion, score_impurezas, score_luminosidad, track)
-      VALUES ($1, $2, $3, $4, $5, $6, $7);
+      INSERT INTO ai_diagnostics (user_id, tool_type, result_data, score_hidratacion, score_impurezas, score_luminosidad, track, image_url)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING id;
     `;
-    await pool.query(query, [userId, toolType, JSON.stringify(resultData), hidratacion, impurezas, luminosidad, track]);
-    console.log(`💾 [DB] Guardado historial de IA (${toolType}) para usuario ${userId}`);
+    const dbRes = await pool.query(query, [userId, toolType, JSON.stringify(resultData), hidratacion, impurezas, luminosidad, track, imageUrl]);
+    const generatedId = dbRes.rows[0].id;
+    console.log(`💾 [DB] Guardado historial de IA (${toolType}) para usuario ${userId} con ID: ${generatedId}`);
 
     if (toolType === 'care-routine') {
       await updateSkinProfile(userId, resultData.skin_type || 'Piel Mixta');
     }
+    return generatedId;
   } catch (err) {
     console.error('⚠️ [DB ERROR] Error guardando historial de IA:', err.message);
+    return null;
   }
 };
 
@@ -532,9 +536,12 @@ exports.analyzeDesign = async (req, res) => {
         return res.status(400).json({ error: `Tipo de análisis "${type}" no reconocido.` });
       }
 
+      let dbId = null;
       if (req.user && req.user.id) {
-        await saveAnalysisToDb(req.user.id, type, mockResult);
+        const mockTrack = (type === 'care-routine' && track) ? track : 'piel';
+        dbId = await saveAnalysisToDb(req.user.id, type, mockResult, mockTrack, null);
       }
+      mockResult.id = dbId;
 
       return res.status(200).json({
         success: true,
@@ -801,9 +808,12 @@ ${jsonTemplate}`;
       }
     }
 
+    let dbId = null;
     if (req.user && req.user.id) {
-      await saveAnalysisToDb(req.user.id, type, analysisJson, track);
+      const base64Image = req.file ? `data:${mimeType};base64,${fileBuffer.toString('base64')}` : null;
+      dbId = await saveAnalysisToDb(req.user.id, type, analysisJson, track, base64Image);
     }
+    analysisJson.id = dbId;
 
     return res.status(200).json({
       success: true,
@@ -1228,4 +1238,282 @@ exports.getRecommendedDoctors = async (req, res) => {
     console.error('❌ ERROR AL OBTENER DERMATÓLOGOS RECOMENDADOS:', error);
     res.status(500).json({ error: 'Error al obtener dermatólogos' });
   }
+};
+
+exports.getEvolutionData = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    let { track } = req.params;
+    const dbTrack = track === 'facial' ? 'piel' : 'capilar';
+
+    const userPlanRes = await pool.query('SELECT glowai_plan FROM usuarios WHERE id = $1', [userId]);
+    const plan = userPlanRes.rows[0]?.glowai_plan || 'free';
+
+    let query = `
+      SELECT id, score_hidratacion, score_impurezas, score_luminosidad, image_url, comparison_photo_url, comparison_delta, created_at
+      FROM ai_diagnostics
+      WHERE user_id = $1 AND track = $2 AND score_hidratacion IS NOT NULL
+      ORDER BY created_at ASC;
+    `;
+    
+    const result = await pool.query(query, [userId, dbTrack]);
+    let list = result.rows;
+
+    if (plan !== 'premium') {
+      list = list.slice(-1);
+    }
+
+    res.json({
+      success: true,
+      plan,
+      data: list
+    });
+  } catch (error) {
+    console.error('❌ ERROR AL OBTENER DATOS DE EVOLUCIÓN:', error);
+    res.status(500).json({ error: 'Error al obtener datos de evolución' });
+  }
+};
+
+exports.getEvolutionInsight = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    let { track } = req.params;
+    const dbTrack = track === 'facial' ? 'piel' : 'capilar';
+
+    const query = `
+      SELECT score_hidratacion, score_impurezas, score_luminosidad, created_at
+      FROM ai_diagnostics
+      WHERE user_id = $1 AND track = $2 AND score_hidratacion IS NOT NULL
+      ORDER BY created_at ASC;
+    `;
+    const result = await pool.query(query, [userId, dbTrack]);
+    const list = result.rows;
+
+    if (list.length === 0) {
+      return res.json({
+        success: true,
+        insight: "Aún no tienes diagnósticos registrados en este track. Realiza tu primer escaneo para iniciar tu evolución."
+      });
+    }
+
+    if (list.length === 1) {
+      return res.json({
+        success: true,
+        insight: "¡Felicidades por iniciar tu rutina! En tu próximo escaneo analizaremos tu progreso comparando tus fotos y métricas actuales."
+      });
+    }
+
+    const first = list[0];
+    const last = list[list.length - 1];
+
+    const diffHydration = last.score_hidratacion - first.score_hidratacion;
+    const diffImpures = last.score_impurezas - first.score_impurezas;
+    const diffLuminosity = last.score_luminosidad - first.score_luminosidad;
+
+    let insightText = `Analizando tu evolución desde tu primer registro: `;
+    const parts = [];
+
+    if (diffHydration !== 0) {
+      parts.push(`la hidratación ha ${diffHydration > 0 ? 'aumentado' : 'disminuido'} un ${Math.abs(diffHydration)}%`);
+    }
+    if (diffImpures !== 0) {
+      parts.push(`las impurezas se han ${diffImpures < 0 ? 'reducido' : 'incrementado'} un ${Math.abs(diffImpures)}%`);
+    }
+    if (diffLuminosity !== 0) {
+      parts.push(`la luminosidad facial se ha ${diffLuminosity > 0 ? 'incrementado' : 'reducido'} un ${Math.abs(diffLuminosity)}%`);
+    }
+
+    if (parts.length > 0) {
+      insightText += parts.join(', ') + `.`;
+    } else {
+      insightText += `Tus métricas de cuidado de la piel se mantienen estables en un nivel balanceado.`;
+    }
+
+    res.json({
+      success: true,
+      insight: insightText
+    });
+  } catch (error) {
+    console.error('❌ ERROR AL GENERAR INSIGHT DE EVOLUCIÓN:', error);
+    res.status(500).json({ error: 'Error al generar nota interpretativa de evolución' });
+  }
+};
+
+exports.getEvolutionAttribution = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    let { track } = req.params;
+    const dbTrack = track === 'facial' ? 'piel' : 'capilar';
+
+    const query = `
+      SELECT result_data
+      FROM ai_diagnostics
+      WHERE user_id = $1 AND track = $2
+      ORDER BY created_at DESC
+      LIMIT 1;
+    `;
+    const result = await pool.query(query, [userId, dbTrack]);
+    
+    if (result.rows.length === 0) {
+      return res.json({ success: true, attribution: null });
+    }
+
+    const lastDiag = result.rows[0];
+    const data = lastDiag.result_data;
+
+    let attributionText = null;
+
+    if (data.recommended_product) {
+      attributionText = `Tu evolución positiva coincide con el uso sugerido del producto ${data.recommended_product.nombre} de ${data.recommended_product.marca}.`;
+    } else if (data.brand_sponsorship) {
+      attributionText = `Tu evolución coincide con la rutina patrocinada "${data.brand_sponsorship.nombre_rutina}" de la marca ${data.brand_sponsorship.marca}.`;
+    }
+
+    res.json({
+      success: true,
+      attribution: attributionText
+    });
+  } catch (error) {
+    console.error('❌ ERROR AL OBTENER ATRIBUCIÓN COMERCIAL:', error);
+    res.status(500).json({ error: 'Error al obtener la atribución del producto' });
+  }
+};
+
+exports.requestMedicalValidation = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { ai_diagnostic_id, profesional_id } = req.body;
+
+    if (!profesional_id) {
+      return res.status(400).json({ error: 'Debes seleccionar un profesional médico.' });
+    }
+
+    const userRes = await pool.query('SELECT glowai_plan FROM usuarios WHERE id = $1', [userId]);
+    const plan = userRes.rows[0]?.glowai_plan || 'free';
+
+    if (plan !== 'premium') {
+      return res.status(403).json({ error: 'Esta solicitud gratuita solo está disponible en planes Premium.' });
+    }
+
+    const insertQuery = `
+      INSERT INTO validaciones_medicas (user_id, ai_diagnostic_id, profesional_id, estado, payment_reference)
+      VALUES ($1, $2, $3, 'pendiente', 'premium_plan')
+      RETURNING *;
+    `;
+    const dbRes = await pool.query(insertQuery, [userId, ai_diagnostic_id || null, profesional_id]);
+    const reqId = dbRes.rows[0].id;
+
+    simulateDoctorReview(reqId);
+
+    res.status(201).json({
+      success: true,
+      message: 'Solicitud de validación médica enviada con éxito.',
+      data: dbRes.rows[0]
+    });
+  } catch (error) {
+    console.error('❌ ERROR AL SOLICITAR VALIDACIÓN MÉDICA:', error);
+    res.status(500).json({ error: 'Error al solicitar validación médica' });
+  }
+};
+
+exports.payMedicalValidation = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { ai_diagnostic_id, profesional_id } = req.body;
+
+    if (!profesional_id) {
+      return res.status(400).json({ error: 'Debes seleccionar un profesional médico.' });
+    }
+
+    const refToken = 'wompi_val_ref_' + Math.random().toString(36).substring(2, 11).toUpperCase();
+
+    const insertQuery = `
+      INSERT INTO validaciones_medicas (user_id, ai_diagnostic_id, profesional_id, estado, payment_reference)
+      VALUES ($1, $2, $3, 'pendiente', $4)
+      RETURNING *;
+    `;
+    const dbRes = await pool.query(insertQuery, [userId, ai_diagnostic_id || null, profesional_id, refToken]);
+    const reqId = dbRes.rows[0].id;
+
+    simulateDoctorReview(reqId);
+
+    res.status(201).json({
+      success: true,
+      message: 'Pago de $15.000 COP verificado por Wompi y solicitud registrada con éxito.',
+      payment_reference: refToken,
+      data: dbRes.rows[0]
+    });
+  } catch (error) {
+    console.error('❌ ERROR AL PROCESAR PAGO DE VALIDACIÓN:', error);
+    res.status(500).json({ error: 'Error al procesar pago de validación' });
+  }
+};
+
+exports.getValidationHistory = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const query = `
+      SELECT vm.id, vm.estado, vm.nota_profesional, vm.payment_reference, vm.created_at, vm.fecha_respuesta,
+             pm.nombre AS profesional_nombre, pm.especialidad AS profesional_especialidad, pm.foto_url AS profesional_foto
+      FROM validaciones_medicas vm
+      JOIN profesionales_medicos pm ON vm.profesional_id = pm.id
+      WHERE vm.user_id = $1
+      ORDER BY vm.created_at DESC;
+    `;
+    const result = await pool.query(query, [userId]);
+    res.json({
+      success: true,
+      data: result.rows
+    });
+  } catch (error) {
+    console.error('❌ ERROR AL OBTENER HISTORIAL DE VALIDACIONES:', error);
+    res.status(500).json({ error: 'Error al obtener historial de validaciones' });
+  }
+};
+
+exports.getValidationById = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+    const query = `
+      SELECT vm.id, vm.estado, vm.nota_profesional, vm.payment_reference, vm.created_at, vm.fecha_respuesta,
+             pm.nombre AS profesional_nombre, pm.especialidad AS profesional_especialidad, pm.foto_url AS profesional_foto
+      FROM validaciones_medicas vm
+      JOIN profesionales_medicos pm ON vm.profesional_id = pm.id
+      WHERE vm.id = $1 AND vm.user_id = $2;
+    `;
+    const result = await pool.query(query, [id, userId]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Solicitud de validación no encontrada.' });
+    }
+    res.json({
+      success: true,
+      data: result.rows[0]
+    });
+  } catch (error) {
+    console.error('❌ ERROR AL OBTENER VALIDACIÓN POR ID:', error);
+    res.status(500).json({ error: 'Error al obtener detalles de la validación' });
+  }
+};
+
+const simulateDoctorReview = (requestId) => {
+  setTimeout(async () => {
+    try {
+      const notes = [
+        "Se percibe una respuesta positiva de regeneración cutánea. Continúa con hidratantes con ácido hialurónico y no olvides el FPS cada 4 horas.",
+        "Se observa reducción de impurezas y sebo. Recomiendo no sobre-exfoliar la piel; mantén una limpieza suave en las mañanas y noches.",
+        "La hebra capilar muestra mejor elasticidad. Mantén el uso del sérum térmico sin sal y evita el calor directo por 2 semanas."
+      ];
+      const randomNote = notes[Math.floor(Math.random() * notes.length)];
+      await pool.query(
+        `UPDATE validaciones_medicas 
+         SET estado = 'revisado', nota_profesional = $1, fecha_respuesta = NOW(), updated_at = NOW() 
+         WHERE id = $2;`,
+        [randomNote, requestId]
+      );
+      console.log(`🩺 [SIMULATOR SUCCESS] Solicitud de validación ${requestId} revisada por el dermatólogo.`);
+    } catch (err) {
+      console.error('❌ ERROR AL SIMULAR RESPUESTA DEL DOCTOR:', err.message);
+    }
+  }, 15000);
 };

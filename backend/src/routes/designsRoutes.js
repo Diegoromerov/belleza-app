@@ -3,7 +3,28 @@ const express = require('express');
 const router = express.Router();
 const path = require('path');
 const multer = require('multer');
-const { searchPinterestDesigns, analyzeFaceShape, analyzeDesign, proxyImage, getAIHistory, compareDesigns, getSkinProfile, checkGlowAIQuota, subscribePremium, checkInStreak, getShareCode, redirectReferral, getRecommendedDoctors } = require('../controllers/designsController');
+const { 
+  searchPinterestDesigns, 
+  analyzeFaceShape, 
+  analyzeDesign, 
+  proxyImage, 
+  getAIHistory, 
+  compareDesigns, 
+  getSkinProfile, 
+  checkGlowAIQuota, 
+  subscribePremium, 
+  checkInStreak, 
+  getShareCode, 
+  redirectReferral, 
+  getRecommendedDoctors,
+  getEvolutionData,
+  getEvolutionInsight,
+  getEvolutionAttribution,
+  requestMedicalValidation,
+  payMedicalValidation,
+  getValidationHistory,
+  getValidationById
+} = require('../controllers/designsController');
 const authMiddleware = require('../middleware/auth');
 
 const upload = multer({
@@ -33,5 +54,16 @@ router.post('/analyze', authMiddleware, checkGlowAIQuota, upload.single('image')
 router.post('/compare', authMiddleware, upload.fields([{ name: 'imageBefore', maxCount: 1 }, { name: 'imageAfter', maxCount: 1 }]), compareDesigns);
 router.post('/payments/glowai-premium', authMiddleware, subscribePremium);
 router.post('/streak/check-in', authMiddleware, checkInStreak);
+
+// 🔹 NUEVO: Evolución Premium
+router.get('/evolution/:track', authMiddleware, getEvolutionData);
+router.get('/evolution/:track/insight', authMiddleware, getEvolutionInsight);
+router.get('/evolution/:track/attribution', authMiddleware, getEvolutionAttribution);
+
+// 🔹 NUEVO: Validación Médica
+router.post('/validation/request', authMiddleware, requestMedicalValidation);
+router.post('/validation/pay', authMiddleware, payMedicalValidation);
+router.get('/validation/user/history', authMiddleware, getValidationHistory);
+router.get('/validation/:id', authMiddleware, getValidationById);
 
 module.exports = router;
