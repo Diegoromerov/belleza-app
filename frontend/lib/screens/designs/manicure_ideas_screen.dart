@@ -620,18 +620,21 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
                   elevation: 2,
                 ),
                 onPressed: () async {
+                  final messenger = ScaffoldMessenger.of(context);
                   Navigator.pop(context);
                   try {
                     await ApiService.subscribePremium();
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    messenger.showSnackBar(
                       const SnackBar(
                         content: Text('🎉 ¡Felicidades! Ya eres miembro de GlowAI Premium.'),
                         backgroundColor: Colors.green,
                       ),
                     );
-                    _loadUserProfile();
+                    if (mounted) {
+                      _loadUserProfile();
+                    }
                   } catch (e) {
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    messenger.showSnackBar(
                       SnackBar(
                         content: Text('⚠️ Error al procesar suscripción: $e'),
                         backgroundColor: Colors.red,
@@ -1311,6 +1314,7 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
           debugPrint('Error buscando imágenes en Pinterest: $searchErr');
         }
 
+        if (!mounted) return;
         setState(() {
           _analysisResult = analysis;
           _pinterestImages = images;
@@ -1322,6 +1326,7 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
         throw Exception('No se recibió la estructura de análisis esperada');
       }
     } catch (e) {
+      if (!mounted) return;
       final errorStr = e.toString();
       if (errorStr.contains('402') || errorStr.contains('quota_exceeded')) {
         setState(() {
