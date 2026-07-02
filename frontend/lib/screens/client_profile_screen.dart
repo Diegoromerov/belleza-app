@@ -364,6 +364,16 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                 onTap: () => Navigator.pushNamed(context, '/client-bookings'),
               ),
               _buildSettingsTile(
+                icon: Icons.show_chart_rounded,
+                title: 'Mi Evolución Facial/Capilar',
+                onTap: () => Navigator.pushNamed(context, '/evolution', arguments: 'facial'),
+              ),
+              _buildSettingsTile(
+                icon: Icons.verified_user_outlined,
+                title: 'Validación Médica de IA',
+                onTap: () => Navigator.pushNamed(context, '/medical-validation'),
+              ),
+              _buildSettingsTile(
                 icon: Icons.chat_bubble_outline_rounded,
                 title: 'Mensajes y Chats',
                 onTap: () => Navigator.pushNamed(context, '/chat'),
