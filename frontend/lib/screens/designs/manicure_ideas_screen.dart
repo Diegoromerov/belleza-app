@@ -2626,6 +2626,38 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
                         strokeWidth: 2,
                         valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primary),
                       ),
+                    ),
+                  ),
+                );
+              },
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  color: Colors.grey.shade200,
+                  child: const Center(
+                    child: Icon(Icons.broken_image_outlined, size: 32, color: Colors.grey),
+                  ),
+                );
+              },
+            ),
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                color: Colors.black54,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: Text(
+                  item['title'] ?? 'Diseño',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: Colors.white, fontSize: 11),
+                ),
+              ),
+            )
+          ],
+        ),
+      ),
+    );
   }
 
   // --- MÉTODOS DEL PLANIFICADOR DE SKINCARE ---
