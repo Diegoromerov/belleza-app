@@ -248,7 +248,7 @@ class _WardrobeDashboardScreenState extends State<WardrobeDashboardScreen> with 
           unselectedLabelColor: Colors.grey,
           indicatorColor: AppTheme.primary,
           tabs: const [
-            Tab(icon: Icon(Icons.checkroom_rounded), text: 'Mi Clóset'),
+            Tab(icon: Icon(Icons.style), text: 'Mi Clóset'),
             Tab(icon: Icon(Icons.brush_rounded), text: 'Outfits IA'),
           ],
         ),

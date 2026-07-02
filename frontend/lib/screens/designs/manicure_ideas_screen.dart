@@ -1685,7 +1685,7 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
         'id': 'glowstyle',
         'title': 'Clóset Inteligente & Outfits',
         'description': 'Cataloga tu ropa y genera outfits por IA basados en tu colorimetría.',
-        'icon': Icons.checkroom_rounded,
+        'icon': Icons.style,
         'tag': 'IA',
         'image': 'assets/images/design_ideas_skin_tone_1781572896303.png',
       },
