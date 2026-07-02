@@ -295,7 +295,7 @@ exports.searchPinterestDesigns = async (req, res) => {
     let optimizedQuery = q;
     if (ai) {
       try {
-        const model = ai.getGenerativeModel({ model: 'gemini-2.5-flash' });
+        const model = ai.getGenerativeModel({ model: 'gemini-2.0-flash' });
         let topicPrompt = 'diseño de uñas o belleza';
         if (category === 'hair' || category === 'capilar') {
           topicPrompt = 'cuidado del cabello, peinados o coloración capilar';
@@ -482,7 +482,7 @@ Responde de manera obligatoria únicamente con un objeto JSON válido, sin forma
   "pinterest_query": "consulta de búsqueda para pinterest"
 }`;
 
-    const model = ai.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    const model = ai.getGenerativeModel({ model: 'gemini-2.0-flash' });
     const result = await model.generateContent({
       contents: [
         {
@@ -891,7 +891,7 @@ Genera una consulta corta (máximo 6 palabras) en español para buscar ideas vis
 Responde de manera obligatoria únicamente con un objeto JSON válido, sin formato markdown (sin bloques de código \`\`\`json) y sin caracteres adicionales, usando este formato exacto:
 ${jsonTemplate}`;
 
-    const model = ai.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    const model = ai.getGenerativeModel({ model: 'gemini-2.0-flash' });
     const result = await model.generateContent({
       contents: [
         {
@@ -1093,7 +1093,7 @@ exports.compareDesigns = async (req, res) => {
 }
 Responde SOLO con el JSON. Sin texto adicional, sin backticks, sin explicación.`;
 
-      const model = ai.getGenerativeModel({ model: 'gemini-2.5-flash' });
+      const model = ai.getGenerativeModel({ model: 'gemini-2.0-flash' });
       const result = await model.generateContent({
         contents: [
           {
@@ -1999,7 +1999,7 @@ Responde obligatoriamente en formato JSON válido, sin bloques de código markdo
   "estilo_sugerido": "estilo"
 }`;
 
-    const model = ai.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    const model = ai.getGenerativeModel({ model: 'gemini-2.0-flash' });
     const result = await model.generateContent({
       contents: [
         {
@@ -2110,7 +2110,7 @@ Responde obligatoriamente única y estrictamente con un JSON válido en este for
   "pinterest_query": "consulta de pinterest"
 }`;
 
-    const model = ai.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    const model = ai.getGenerativeModel({ model: 'gemini-2.0-flash' });
     const result = await model.generateContent(prompt);
     
     const response = await result.response;
