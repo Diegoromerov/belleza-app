@@ -2157,8 +2157,30 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          if (_activeToolId == 'skin-tone' || _activeToolId == 'hair-color') ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  _activeToolId == 'skin-tone' ? 'Colorimetría Facial' : 'Colorimetría Capilar',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.text),
+                ),
+                TextButton.icon(
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/colorimetria-historial');
+                  },
+                  icon: const Icon(Icons.history, size: 16, color: AppTheme.primary),
+                  label: const Text(
+                    'Ver Historial',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.primary),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+          ],
           Center(
             child: Column(
               children: [
@@ -2257,7 +2279,7 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
                   const SizedBox(height: 16),
                 ],
 
-                if (_analysisImageBytes == null)
+                if (_analysisImageBytes == null) ...[
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primary,
@@ -2271,7 +2293,10 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
                         : _showGenericImageSourceSelector,
                     icon: const Icon(Icons.add_a_photo),
                     label: const Text('Subir Foto para Análisis', style: TextStyle(fontWeight: FontWeight.bold)),
-                  )
+                  ),
+                  const SizedBox(height: 12),
+                  _buildColorimetryQuotaText(),
+                ]
                 else if (!_isAnalyzing)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -2394,6 +2419,22 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
             side: BorderSide.none,
           );
         }).toList(),
+      ));
+      details.add(const SizedBox(height: 16));
+      details.add(SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppTheme.primary,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          ),
+          onPressed: () {
+            Navigator.pushNamed(context, '/palette-card', arguments: _analysisResult);
+          },
+          icon: const Icon(Icons.palette_rounded, size: 16),
+          label: const Text('Ver mi Paleta Cromática Completa', style: TextStyle(fontWeight: FontWeight.bold)),
+        ),
       ));
     } else if (_activeToolId == 'hair-diagnostic') {
       details.add(_buildResultRow('Nivel de daño:', _analysisResult!['damage_level']));
@@ -2848,6 +2889,22 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
             side: BorderSide.none,
           );
         }).toList(),
+      ));
+      details.add(const SizedBox(height: 16));
+      details.add(SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppTheme.primary,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          ),
+          onPressed: () {
+            Navigator.pushNamed(context, '/palette-card', arguments: _analysisResult);
+          },
+          icon: const Icon(Icons.palette_rounded, size: 16),
+          label: const Text('Ver mi Paleta Cromática Completa', style: TextStyle(fontWeight: FontWeight.bold)),
+        ),
       ));
     }
 
@@ -4414,6 +4471,41 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
           )
         ],
       ),
+    );
+  }
+
+  Widget _buildColorimetryQuotaText() {
+    if (_activeToolId != 'skin-tone' && _activeToolId != 'hair-color') {
+      final glowaiPlan = _userProfile?['glowai_plan'] ?? 'free';
+      if (glowaiPlan == 'premium' || _userProfile?['email'] == 'usuario_pruebas@gmail.com') {
+        return const Text(
+          'GlowAI ilimitado activo ✨',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 11, color: Colors.green, fontWeight: FontWeight.bold),
+        );
+      }
+      final diagnosMes = _userProfile?['glowai_diagnosticos_mes'] ?? 0;
+      final remaining = (2 - diagnosMes).clamp(0, 2);
+      return Text(
+        'Te quedan $remaining de 2 diagnósticos de IA generales gratis este mes.',
+        textAlign: TextAlign.center,
+        style: const TextStyle(fontSize: 11, color: Colors.grey),
+      );
+    }
+
+    final glowaiPlan = _userProfile?['glowai_plan'] ?? 'free';
+    if (glowaiPlan == 'premium' || _userProfile?['email'] == 'usuario_pruebas@gmail.com') {
+      return const Text(
+        'Colorimetría ilimitada activa ✨',
+        textAlign: TextAlign.center,
+        style: TextStyle(fontSize: 11, color: Colors.green, fontWeight: FontWeight.bold),
+      );
+    }
+
+    return Text(
+      'Límite: 1 análisis de ${_activeToolId == 'skin-tone' ? 'colorimetría facial' : 'colorimetría capilar'} gratis al mes.',
+      textAlign: TextAlign.center,
+      style: const TextStyle(fontSize: 11, color: Colors.grey, fontStyle: FontStyle.italic),
     );
   }
 }

@@ -243,6 +243,27 @@ const personalizeSearchResults = async (results, userId, category) => {
       }
     }
 
+    const colorimetryRes = await pool.query(
+      `SELECT result FROM ai_diagnostics 
+       WHERE user_id = $1 AND type IN ('skin-tone', 'hair-color') 
+       ORDER BY created_at DESC LIMIT 1`,
+      [userId]
+    );
+
+    if (colorimetryRes.rows.length > 0) {
+      const colResult = colorimetryRes.rows[0].result || {};
+      const recommendedColors = colResult.recommended_colors || colResult.recommended_shades || [];
+      recommendedColors.forEach(color => {
+        targetKeywords.push(color.toLowerCase());
+      });
+      if (colResult.undertone) {
+        targetKeywords.push(colResult.undertone.toLowerCase());
+      }
+      if (colResult.skin_undertone) {
+        targetKeywords.push(colResult.skin_undertone.toLowerCase());
+      }
+    }
+
     const scoredResults = results.map(item => {
       let score = 0;
       const title = (item.title || '').toLowerCase();
@@ -533,6 +554,12 @@ exports.analyzeDesign = async (req, res) => {
       return res.status(400).json({ error: 'El campo "type" es obligatorio para identificar el análisis.' });
     }
 
+    const userId = req.user.id;
+    const userRes = await pool.query('SELECT glowai_plan, email FROM usuarios WHERE id = $1', [userId]);
+    const userPlan = userRes.rows[0]?.glowai_plan || 'free';
+    const userEmail = userRes.rows[0]?.email || '';
+    const isPremium = userPlan === 'premium' || userEmail === 'usuario_pruebas@gmail.com';
+
     // Mock responses in case Gemini API is not configured
     if (!ai) {
       console.warn(`⚠️ GEMINI_API_KEY no configurada. Retornando análisis simulado para "${type}".`);
@@ -545,6 +572,31 @@ exports.analyzeDesign = async (req, res) => {
           recommended_colors: ["Rosa Pastel", "Azul Marino", "Gris Perla", "Rojo Cereza"],
           pinterest_query: "paleta de colores invierno frio ropa maquillaje"
         };
+        if (isPremium) {
+          mockResult.paleta_completa = {
+            ropa: [
+              { nombre: "Rosa Pastel", hex: "#FFD1DC" },
+              { nombre: "Azul Marino", hex: "#000080" },
+              { nombre: "Gris Perla", hex: "#E5E4E2" },
+              { nombre: "Rojo Cereza", hex: "#D23B51" },
+              { nombre: "Blanco Puro", hex: "#FFFFFF" },
+              { nombre: "Verde Esmeralda", hex: "#50C878" }
+            ],
+            maquillaje: [
+              { nombre: "Rosa Fucsia", hex: "#FF007F" },
+              { nombre: "Nude Frío", hex: "#D9A0A0" },
+              { nombre: "Sombras Plata", hex: "#C0C0C0" },
+              { nombre: "Boca Fresa", hex: "#E63946" },
+              { nombre: "Rubor Malva", hex: "#C8A2C8" }
+            ],
+            tinte_cabello: [
+              { nombre: "Negro Azulado", hex: "#000814" },
+              { nombre: "Rubio Platino", hex: "#E5E5E5" },
+              { nombre: "Castaño Oscuro Frío", hex: "#2B1B17" },
+              { nombre: "Rubio Cenizo", hex: "#B7A896" }
+            ]
+          };
+        }
       } else if (type === 'hair-diagnostic') {
         mockResult = {
           damage_level: "Medio",
@@ -675,13 +727,30 @@ Identifica el subtono de piel (Cálido, Frío o Neutro) y el tono general (Claro
 Proporciona una explicación detallada sobre qué colores de cabello, prendas y maquillaje le favorecen según su estación de color.
 Sugiere una lista de 4 colores específicos recomendados.
 Genera una consulta corta (máximo 6 palabras) en español para buscar paletas de color inspiracionales en Pinterest.`;
-      jsonTemplate = `{
+      
+      if (isPremium) {
+        prompt += `\nAdicionalmente, genera una paleta cromática profesional completa ("paleta_completa") con tres categorías: "ropa", "maquillaje" y "tinte_cabello". Cada categoría debe contener entre 6 y 8 colores específicos en formato HEX (ej. #E89E8C) con un "nombre" descriptivo en español.`;
+        jsonTemplate = `{
+  "undertone": "Subtono de piel",
+  "skin_tone": "Tono general",
+  "explanation": "Explicación detallada de colorimetría facial...",
+  "recommended_colors": ["Color 1", "Color 2", "Color 3", "Color 4"],
+  "pinterest_query": "consulta corta de pinterest",
+  "paleta_completa": {
+    "ropa": [{"nombre": "Rojo Cereza", "hex": "#C41E3A"}, {"nombre": "Azul Marino", "hex": "#000080"}],
+    "maquillaje": [{"nombre": "Nude Rosa", "hex": "#E89E8C"}, {"nombre": "Labios Fresa", "hex": "#D23B51"}],
+    "tinte_cabello": [{"nombre": "Castaño Claro", "hex": "#A07855"}, {"nombre": "Rubio Cenizo", "hex": "#C9AE87"}]
+  }
+}`;
+      } else {
+        jsonTemplate = `{
   "undertone": "Subtono de piel",
   "skin_tone": "Tono general",
   "explanation": "Explicación detallada de colorimetría facial...",
   "recommended_colors": ["Color 1", "Color 2", "Color 3", "Color 4"],
   "pinterest_query": "consulta corta de pinterest"
 }`;
+      }
     } else if (type === 'hair-diagnostic') {
       prompt = `Analiza la condición de la hebra capilar o cuero cabelludo que se observa de cerca en esta foto.
 Evalúa el nivel de daño (Bajo, Medio, Alto) y la condición general (Seco, Graso, Mixto o Saludable).
@@ -1105,6 +1174,10 @@ exports.getSkinProfile = async (req, res) => {
 
 exports.checkGlowAIQuota = async (req, res, next) => {
   try {
+    const { type } = req.body;
+    if (type === 'skin-tone' || type === 'hair-color') {
+      return next();
+    }
     const userId = req.user.id;
     const userQuery = `
       SELECT email, glowai_plan, glowai_diagnosticos_mes, glowai_ciclo_reset_at
@@ -1704,5 +1777,116 @@ exports.generateGlowUpCard = async (req, res) => {
   } catch (error) {
     console.error('❌ Error al generar tarjeta Glow Up:', error.message);
     res.status(500).json({ error: 'Error al generar la tarjeta Glow Up' });
+  }
+};
+
+// 🔹 NUEVO: Middleware de cuota independiente para colorimetría
+exports.checkColorimetriaQuota = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const { type } = req.body;
+
+    if (type !== 'skin-tone' && type !== 'hair-color') {
+      return next(); // Solo aplica a colorimetría
+    }
+
+    const userQuery = `
+      SELECT email, glowai_plan, colorimetria_diagnosticos_mes, colorimetria_mes_referencia
+      FROM usuarios
+      WHERE id = $1;
+    `;
+    const result = await pool.query(userQuery, [userId]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Usuario no encontrado.' });
+    }
+
+    let { email, glowai_plan, colorimetria_diagnosticos_mes, colorimetria_mes_referencia } = result.rows[0];
+    
+    // Bypass de pruebas
+    if (email === 'usuario_pruebas@gmail.com') {
+      return next();
+    }
+
+    // Reset mensual
+    const ahora = new Date();
+    const resetDate = new Date(colorimetria_mes_referencia || ahora);
+    const diffTime = Math.abs(ahora - resetDate);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays >= 30) {
+      await pool.query(
+        `UPDATE usuarios 
+         SET colorimetria_diagnosticos_mes = 0, colorimetria_mes_referencia = NOW() 
+         WHERE id = $1;`,
+         [userId]
+      );
+      colorimetria_diagnosticos_mes = 0;
+    }
+
+    // Para el plan Free, límite de 1 diagnóstico de skin-tone y 1 de hair-color
+    if (glowai_plan === 'free') {
+      const cycleStart = colorimetria_mes_referencia || ahora;
+      const countRes = await pool.query(
+        `SELECT COUNT(*) FROM ai_diagnostics 
+         WHERE user_id = $1 AND type = $2 AND created_at >= $3`,
+        [userId, type, cycleStart]
+      );
+      const count = parseInt(countRes.rows[0].count || 0);
+
+      if (count >= 1) {
+        return res.status(402).json({
+          error: 'quota_exceeded',
+          message: `Has alcanzado el límite mensual de 1 diagnóstico gratuito para ${type === 'skin-tone' ? 'Colorimetría Facial' : 'Colorimetría Capilar'}.`,
+          upgrade_url: '/glowaipremium'
+        });
+      }
+    }
+
+    // Incrementar contador de control (informativo general)
+    await pool.query(
+      `UPDATE usuarios SET colorimetria_diagnosticos_mes = COALESCE(colorimetria_diagnosticos_mes, 0) + 1 WHERE id = $1;`,
+      [userId]
+    );
+    
+    next();
+
+  } catch (error) {
+    console.error('❌ ERROR EN MIDDLEWARE DE CUOTA COLORIMETRÍA:', error);
+    res.status(500).json({ error: 'Error al verificar la cuota de colorimetría' });
+  }
+};
+
+// 🔹 NUEVO: Historial de Colorimetría
+exports.getColorimetriaHistorial = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const userRes = await pool.query('SELECT glowai_plan, email FROM usuarios WHERE id = $1', [userId]);
+    if (userRes.rows.length === 0) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    const { glowai_plan, email } = userRes.rows[0];
+    const isPremium = glowai_plan === 'premium' || email === 'usuario_pruebas@gmail.com';
+
+    const query = `
+      SELECT id, type, result, created_at, image_url 
+      FROM ai_diagnostics 
+      WHERE user_id = $1 AND type IN ('skin-tone', 'hair-color') 
+      ORDER BY created_at DESC;
+    `;
+    const result = await pool.query(query, [userId]);
+
+    let data = result.rows;
+    if (!isPremium && data.length > 1) {
+      data = [data[0]];
+    }
+
+    res.status(200).json({
+      success: true,
+      data
+    });
+  } catch (error) {
+    console.error('❌ Error al obtener historial de colorimetría:', error.message);
+    res.status(500).json({ error: 'Error al obtener historial de colorimetría' });
   }
 };

@@ -26,7 +26,9 @@ const {
   getValidationById,
   getCuratedCollections,
   getExclusiveCollections,
-  generateGlowUpCard
+  generateGlowUpCard,
+  checkColorimetriaQuota,
+  getColorimetriaHistorial
 } = require('../controllers/designsController');
 const authMiddleware = require('../middleware/auth');
 
@@ -53,10 +55,13 @@ router.get('/share/code', authMiddleware, getShareCode);
 router.get('/share/go/:code', redirectReferral);
 router.get('/profesionales/recommend', authMiddleware, getRecommendedDoctors);
 router.post('/face-analysis', authMiddleware, upload.single('image'), analyzeFaceShape);
-router.post('/analyze', authMiddleware, checkGlowAIQuota, upload.single('image'), analyzeDesign);
+router.post('/analyze', authMiddleware, checkColorimetriaQuota, checkGlowAIQuota, upload.single('image'), analyzeDesign);
 router.post('/compare', authMiddleware, upload.fields([{ name: 'imageBefore', maxCount: 1 }, { name: 'imageAfter', maxCount: 1 }]), compareDesigns);
 router.post('/payments/glowai-premium', authMiddleware, subscribePremium);
 router.post('/streak/check-in', authMiddleware, checkInStreak);
+
+// 🔹 NUEVO: Historial de Colorimetría
+router.get('/colorimetria/historial', authMiddleware, getColorimetriaHistorial);
 
 // 🔹 NUEVO: Evolución Premium
 router.get('/evolution/:track', authMiddleware, getEvolutionData);

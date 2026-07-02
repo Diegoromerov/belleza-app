@@ -38,6 +38,8 @@ import 'screens/store_screen.dart';
 import 'screens/designs/evolution_dashboard_screen.dart';
 import 'screens/designs/medical_validation_screen.dart';
 import 'screens/designs/glowup_card_screen.dart';
+import 'screens/designs/palette_card_screen.dart';
+import 'screens/designs/colorimetria_historial_screen.dart';
 import 'models/provider_model.dart';
 import 'shared/theme.dart';
 
@@ -126,6 +128,8 @@ class BeautyApp extends StatelessWidget {
             '/evolution': (_) => const EvolutionDashboardScreen(),
             '/medical-validation': (_) => const MedicalValidationScreen(),
             '/glowup-card': (_) => const GlowUpCardScreen(),
+            '/palette-card': (_) => const PaletteCardScreen(),
+            '/colorimetria-historial': (_) => const ColorimetriaHistorialScreen(),
           },
         );
       },
