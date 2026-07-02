@@ -836,9 +836,15 @@ class ApiService {
   }
 
   // 🔹 NUEVO: Buscar ideas de diseños de manicura (Pinterest / Google CSE)
-  static Future<List<Map<String, dynamic>>> fetchDesignIdeas(String query, {String? category}) async {
+  static Future<List<Map<String, dynamic>>> fetchDesignIdeas(String query, {String? category, bool? personalize}) async {
     final headers = await _getAuthHeaders();
-    final urlSuffix = category != null ? '&category=${Uri.encodeComponent(category)}' : '';
+    String urlSuffix = '';
+    if (category != null) {
+      urlSuffix += '&category=${Uri.encodeComponent(category)}';
+    }
+    if (personalize != null) {
+      urlSuffix += '&personalize=$personalize';
+    }
     final response = await http
         .get(
           Uri.parse('$_baseUrl$_apiPath/designs/search?q=${Uri.encodeComponent(query)}$urlSuffix'),
@@ -851,6 +857,59 @@ class ApiService {
     }
     throw Exception(
         json.decode(response.body)['error'] ?? 'Error ${response.statusCode}');
+  }
+
+  static Future<List<Map<String, dynamic>>> fetchCuratedCollections(String category) async {
+    final headers = await _getAuthHeaders();
+    final response = await http
+        .get(
+          Uri.parse('$_baseUrl$_apiPath/designs/collections?category=${Uri.encodeComponent(category)}'),
+          headers: headers,
+        )
+        .timeout(const Duration(seconds: 30));
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return List<Map<String, dynamic>>.from(data['data']);
+    }
+    throw Exception(json.decode(response.body)['error'] ?? 'Error ${response.statusCode}');
+  }
+
+  static Future<List<Map<String, dynamic>>> fetchExclusiveCollections() async {
+    final headers = await _getAuthHeaders();
+    final response = await http
+        .get(
+          Uri.parse('$_baseUrl$_apiPath/designs/collections/exclusive'),
+          headers: headers,
+        )
+        .timeout(const Duration(seconds: 30));
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return List<Map<String, dynamic>>.from(data['data']);
+    }
+    throw Exception(json.decode(response.body)['error'] ?? 'Error ${response.statusCode}');
+  }
+
+  static Future<Map<String, dynamic>> generateGlowUpCard(String favoriteUrl, String track) async {
+    await ensureBaseUrl();
+    final token = await _getToken();
+    final uri = Uri.parse('$_baseUrl$_apiPath/designs/glowup-card/generate');
+    
+    final headers = <String, String>{'Content-Type': 'application/json'};
+    if (token != null && token.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+
+    final body = json.encode({
+      'favorite_design_url': favoriteUrl,
+      'track': track,
+    });
+
+    final response = await http.post(uri, headers: headers, body: body).timeout(const Duration(seconds: 30));
+    final data = json.decode(response.body);
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(data['data']);
+    }
+    throw Exception(data['error'] ?? 'Error ${response.statusCode}');
   }
 
   // 🔹 NUEVO: Analizar forma del rostro por IA

@@ -196,9 +196,77 @@ const searchRealPinterestImages = async (query, category) => {
   }
 };
 
+const personalizeSearchResults = async (results, userId, category) => {
+  try {
+    const userRes = await pool.query('SELECT glowai_plan, email FROM usuarios WHERE id = $1', [userId]);
+    if (userRes.rows.length === 0) return results;
+    
+    const user = userRes.rows[0];
+    const isPremium = user.glowai_plan === 'premium' || user.email === 'usuario_pruebas@gmail.com';
+    if (!isPremium) return results;
+
+    let track = 'piel';
+    if (category === 'hair' || category === 'capilar') {
+      track = 'capilar';
+    }
+    
+    const diagRes = await pool.query(
+      'SELECT result_data, score_hidratacion, score_impurezas, score_luminosidad FROM ai_diagnostics WHERE user_id = $1 AND track = $2 AND score_hidratacion IS NOT NULL ORDER BY created_at DESC LIMIT 1',
+      [userId, track]
+    );
+
+    if (diagRes.rows.length === 0) return results;
+    const diag = diagRes.rows[0];
+    const resultData = diag.result_data || {};
+    
+    const skinType = (resultData.skin_type || '').toLowerCase();
+    const explanation = (resultData.explanation || '').toLowerCase();
+    
+    let targetKeywords = [];
+    if (track === 'piel') {
+      if (skinType.includes('seco') || skinType.includes('deshidratad') || explanation.includes('seco') || explanation.includes('hidrat')) {
+        targetKeywords.push('hydrate', 'dewy', 'glow', 'moist', 'hidratación', 'brillo', 'suave', 'nude', 'pink');
+      }
+      if (skinType.includes('grasa') || skinType.includes('acné') || skinType.includes('impureza') || explanation.includes('grasa') || explanation.includes('acné')) {
+        targetKeywords.push('matte', 'clean', 'oil-free', 'purifying', 'mate', 'limpio', 'poros', 'dark', 'negro');
+      }
+      if (skinType.includes('mixta')) {
+        targetKeywords.push('balance', 'clean', 'natural', 'equilibrio', 'minimalist');
+      }
+    } else {
+      const scalpStatus = (resultData.scalp_status || '').toLowerCase();
+      if (scalpStatus.includes('seco') || explanation.includes('seco') || explanation.includes('daño') || explanation.includes('porosidad')) {
+        targetKeywords.push('repair', 'nourish', 'oil', 'damage', 'seco', 'nutrición', 'reparación', 'aceite');
+      }
+      if (scalpStatus.includes('graso') || explanation.includes('graso') || explanation.includes('caspa')) {
+        targetKeywords.push('volume', 'clean', 'fresh', 'detox', 'graso', 'volumen', 'fresco');
+      }
+    }
+
+    const scoredResults = results.map(item => {
+      let score = 0;
+      const title = (item.title || '').toLowerCase();
+      
+      targetKeywords.forEach(kw => {
+        if (title.includes(kw)) {
+          score += 5;
+        }
+      });
+      
+      return { ...item, _sortScore: score };
+    });
+
+    scoredResults.sort((a, b) => b._sortScore - a._sortScore);
+    return scoredResults.map(({ _sortScore, ...rest }) => rest);
+  } catch (err) {
+    console.error('⚠️ Error al personalizar resultados de búsqueda:', err.message);
+    return results;
+  }
+};
+
 exports.searchPinterestDesigns = async (req, res) => {
   try {
-    const { q, category } = req.query;
+    const { q, category, personalize } = req.query;
     if (!q) {
       return res.status(400).json({ error: 'El parámetro de búsqueda "q" es obligatorio' });
     }
@@ -239,10 +307,14 @@ Devuelve ÚNICAMENTE la consulta de búsqueda optimizada final de 3 a 6 palabras
       const realImages = await searchRealPinterestImages(optimizedQuery, category);
       
       if (realImages && realImages.length > 0) {
+        let finalData = realImages;
+        if (personalize === 'true') {
+          finalData = await personalizeSearchResults(finalData, req.user.id, category);
+        }
         return res.status(200).json({
           success: true,
           source: 'ddg-pinterest',
-          data: realImages
+          data: finalData
         });
       }
 
@@ -263,10 +335,14 @@ Devuelve ÚNICAMENTE la consulta de búsqueda optimizada final de 3 a 6 palabras
         ];
       }
       
+      let finalData = filteredMocks.slice(0, 6);
+      if (personalize === 'true') {
+        finalData = await personalizeSearchResults(finalData, req.user.id, category);
+      }
       return res.status(200).json({
         success: true,
         source: 'mock',
-        data: filteredMocks.slice(0, 6)
+        data: finalData
       });
     }
 
@@ -309,10 +385,15 @@ Devuelve ÚNICAMENTE la consulta de búsqueda optimizada final de 3 a 6 palabras
       };
     });
 
+    let finalData = formattedResults;
+    if (personalize === 'true') {
+      finalData = await personalizeSearchResults(finalData, req.user.id, category);
+    }
+
     return res.status(200).json({
       success: true,
       source: 'google',
-      data: formattedResults
+      data: finalData
     });
 
   } catch (error) {
@@ -1516,4 +1597,112 @@ const simulateDoctorReview = (requestId) => {
       console.error('❌ ERROR AL SIMULAR RESPUESTA DEL DOCTOR:', err.message);
     }
   }, 15000);
+};
+
+// 🔹 NUEVO: Colecciones Curadas Editoriales
+exports.getCuratedCollections = async (req, res) => {
+  try {
+    const { category } = req.query;
+    if (!category) {
+      return res.status(400).json({ error: 'La categoría es requerida' });
+    }
+    
+    const dbCategory = category === 'nails' ? 'nails' : (category === 'hair' ? 'hair' : (category === 'skin' ? 'skin' : 'eyebrow'));
+    const result = await pool.query(
+      'SELECT id, nombre, categoria, query_base, orden_visual, exclusiva_streak FROM curated_collections WHERE categoria = $1 AND activo = TRUE ORDER BY orden_visual ASC',
+      [dbCategory]
+    );
+    
+    res.status(200).json({ success: true, data: result.rows });
+  } catch (error) {
+    console.error('❌ Error al obtener colecciones curadas:', error.message);
+    res.status(500).json({ error: 'Error al obtener colecciones' });
+  }
+};
+
+// 🔹 NUEVO: Colecciones Exclusivas por Racha de 7 días
+exports.getExclusiveCollections = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const userRes = await pool.query('SELECT streak_actual FROM usuarios WHERE id = $1', [userId]);
+    if (userRes.rows.length === 0) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+    
+    const streak = userRes.rows[0].streak_actual || 0;
+    if (streak < 7) {
+      return res.status(403).json({ error: 'Racha insuficiente. Necesitas al menos 7 días de racha.' });
+    }
+
+    const result = await pool.query(
+      'SELECT id, nombre, categoria, query_base, orden_visual, exclusiva_streak FROM curated_collections WHERE exclusiva_streak = TRUE AND activo = TRUE ORDER BY orden_visual ASC'
+    );
+    
+    res.status(200).json({ success: true, data: result.rows });
+  } catch (error) {
+    console.error('❌ Error al obtener colecciones exclusivas:', error.message);
+    res.status(500).json({ error: 'Error al obtener colecciones exclusivas' });
+  }
+};
+
+// 🔹 NUEVO: Tarjeta Glow Up Compartible (Sólo Premium)
+exports.generateGlowUpCard = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { favorite_design_url, track } = req.body;
+
+    const userRes = await pool.query('SELECT glowai_plan, email, nombre FROM usuarios WHERE id = $1', [userId]);
+    if (userRes.rows.length === 0) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+    
+    const user = userRes.rows[0];
+    const isPremium = user.glowai_plan === 'premium' || user.email === 'usuario_pruebas@gmail.com';
+    if (!isPremium) {
+      return res.status(402).json({ error: 'La tarjeta Glow Up compartible es una característica exclusiva de GlowAI Premium.' });
+    }
+
+    const activeTrack = track || 'piel';
+    const historyRes = await pool.query(
+      'SELECT score_hidratacion, score_impurezas, score_luminosidad, created_at FROM ai_diagnostics WHERE user_id = $1 AND track = $2 AND score_hidratacion IS NOT NULL ORDER BY created_at ASC',
+      [userId, activeTrack]
+    );
+
+    let progressDelta = "+0%";
+    let scoreName = "Hidratación";
+    
+    if (historyRes.rows.length >= 2) {
+      const first = historyRes.rows[0];
+      const last = historyRes.rows[historyRes.rows.length - 1];
+      
+      const diffHydration = (last.score_hidratacion || 0) - (first.score_hidratacion || 0);
+      const diffLuminosity = (last.score_luminosidad || 0) - (first.score_luminosidad || 0);
+      
+      if (Math.abs(diffHydration) >= Math.abs(diffLuminosity)) {
+        progressDelta = `${diffHydration >= 0 ? '+' : ''}${diffHydration}%`;
+        scoreName = "Hidratación";
+      } else {
+        progressDelta = `${diffLuminosity >= 0 ? '+' : ''}${diffLuminosity}%`;
+        scoreName = "Luminosidad";
+      }
+    } else if (historyRes.rows.length === 1) {
+      const diag = historyRes.rows[0];
+      progressDelta = `${diag.score_hidratacion}%`;
+      scoreName = "Hidratación";
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        favorite_image_url: favorite_design_url || '',
+        progress_metric: progressDelta,
+        metric_name: scoreName,
+        user_name: user.nombre || 'Usuario GlowApp',
+        created_at: new Date()
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error al generar tarjeta Glow Up:', error.message);
+    res.status(500).json({ error: 'Error al generar la tarjeta Glow Up' });
+  }
 };

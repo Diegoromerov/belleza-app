@@ -23,7 +23,10 @@ const {
   requestMedicalValidation,
   payMedicalValidation,
   getValidationHistory,
-  getValidationById
+  getValidationById,
+  getCuratedCollections,
+  getExclusiveCollections,
+  generateGlowUpCard
 } = require('../controllers/designsController');
 const authMiddleware = require('../middleware/auth');
 
@@ -65,5 +68,10 @@ router.post('/validation/request', authMiddleware, requestMedicalValidation);
 router.post('/validation/pay', authMiddleware, payMedicalValidation);
 router.get('/validation/user/history', authMiddleware, getValidationHistory);
 router.get('/validation/:id', authMiddleware, getValidationById);
+
+// 🔹 NUEVO: Colecciones y Tarjetas de Conversión (Mejoras de Rediseño)
+router.get('/collections', authMiddleware, getCuratedCollections);
+router.get('/collections/exclusive', authMiddleware, getExclusiveCollections);
+router.post('/glowup-card/generate', authMiddleware, generateGlowUpCard);
 
 module.exports = router;
