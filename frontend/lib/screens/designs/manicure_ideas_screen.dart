@@ -473,6 +473,9 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
   String? _analysisError;
   Map<String, dynamic>? _analysisResult;
   List<Map<String, dynamic>> _pinterestImages = [];
+  List<Map<String, dynamic>> _curatedCollections = [];
+  bool _personalizeResults = false;
+  bool _isLoadingCollections = false;
   bool _privacyConsentAccepted = false;
 
   // --- VARIABLES PLANIFICADOR SKINCARE ---
@@ -556,9 +559,36 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
       final up = await ApiService.fetchUserProfile();
       setState(() {
         _userProfile = up;
+        final isPremium = up['glowai_plan'] == 'premium' || up['email'] == 'usuario_pruebas@gmail.com';
+        if (isPremium) {
+          _personalizeResults = true;
+        }
       });
+      _loadCuratedCollections();
     } catch (e) {
       debugPrint('Error al cargar perfil de usuario: $e');
+    }
+  }
+
+  Future<void> _loadCuratedCollections() async {
+    if (!mounted) return;
+    setState(() {
+      _isLoadingCollections = true;
+    });
+    try {
+      final cols = await ApiService.fetchCuratedCollections('nails');
+      if (!mounted) return;
+      setState(() {
+        _curatedCollections = cols;
+        _isLoadingCollections = false;
+      });
+    } catch (e) {
+      debugPrint('Error al cargar colecciones curadas: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingCollections = false;
+        });
+      }
     }
   }
 
@@ -947,7 +977,7 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
     });
 
     try {
-      final results = await ApiService.fetchDesignIdeas(query, category: 'nails');
+      final results = await ApiService.fetchDesignIdeas(query, category: 'nails', personalize: _personalizeResults);
       final List<Map<String, dynamic>> updatedResults = results.take(5).toList();
       updatedResults.insert(0, _getSimulatedProduct());
       setState(() {
@@ -1433,6 +1463,48 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
                     },
                     icon: const Icon(Icons.map_outlined),
                     label: const Text('Ver en el mapa quién hace este estilo', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                  const SizedBox(height: 8),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2E7D32),
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 44),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    ),
+                    onPressed: () {
+                      final bool isPremium = _userProfile != null &&
+                          (_userProfile!['glowai_plan'] == 'premium' || _userProfile!['email'] == 'usuario_pruebas@gmail.com');
+                      if (isPremium) {
+                        Navigator.pop(context);
+                        Navigator.pushNamed(context, '/glowup-card', arguments: {
+                          'favorite_url': image['image_url'],
+                          'track': _selectedSkincareTrack,
+                        });
+                      } else {
+                        Navigator.pop(context);
+                        _showPremiumUpgradeBottomSheet();
+                      }
+                    },
+                    icon: const Icon(Icons.stars_rounded, color: Colors.amber, size: 18),
+                    label: const Text('Crear mi Glow Up', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                  const SizedBox(height: 12),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(context, '/medical-validation');
+                    },
+                    child: const Text(
+                      '¿Este estilo le queda bien a tu piel? Pregúntale a nuestra experta',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 11,
+                        decoration: TextDecoration.underline,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -1987,7 +2059,8 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
                   ),
           ),
           const SizedBox(height: 24),
-
+          _buildCuratedCollectionsCarousel(),
+          _buildPersonalizationBadge(),
           _buildImagesGrid(_images, _error),
         ],
       ),
@@ -4122,6 +4195,225 @@ class _ManicureIdeasScreenState extends State<ManicureIdeasScreen> {
           ),
         ],
       ],
+    );
+  }
+
+  Widget _buildCuratedCollectionsCarousel() {
+    if (_isLoadingCollections) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 12.0),
+        child: Center(
+          child: SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primary)),
+          ),
+        ),
+      );
+    }
+    if (_curatedCollections.isEmpty) return const SizedBox.shrink();
+
+    final streak = _userProfile != null ? (_userProfile!['streak_actual'] ?? 0) as int : 0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Colecciones Curadas Editoriales',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.text),
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          height: 90,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: _curatedCollections.length,
+            itemBuilder: (context, index) {
+              final col = _curatedCollections[index];
+              final isExclusive = col['exclusiva_streak'] == true;
+              final isLocked = isExclusive && streak < 7;
+
+              return GestureDetector(
+                onTap: () {
+                  if (isLocked) {
+                    _showStreakLockDialog();
+                  } else {
+                    _customQueryController.text = col['nombre'];
+                    _searchDesignsWithQuery(col['query_base']);
+                  }
+                },
+                child: Container(
+                  width: 140,
+                  margin: const EdgeInsets.only(right: 12),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: isLocked ? Colors.grey.shade100 : Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isLocked ? Colors.grey.shade300 : AppTheme.primary.withValues(alpha: 0.15),
+                      width: 1.2,
+                    ),
+                    boxShadow: [
+                      if (!isLocked)
+                        BoxShadow(
+                          color: AppTheme.primary.withValues(alpha: 0.04),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        )
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            isLocked ? Icons.lock_outline_rounded : Icons.auto_awesome,
+                            size: 14,
+                            color: isLocked ? Colors.grey : AppTheme.primary,
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              isLocked ? 'Exclusiva' : 'Colección',
+                              style: TextStyle(
+                                fontSize: 9, 
+                                fontWeight: FontWeight.bold, 
+                                color: isLocked ? Colors.grey : AppTheme.primary
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                         col['nombre'] ?? '',
+                         maxLines: 2,
+                         overflow: TextOverflow.ellipsis,
+                         style: TextStyle(
+                           fontWeight: FontWeight.bold,
+                           fontSize: 12,
+                           color: isLocked ? Colors.grey.shade600 : AppTheme.text,
+                         ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 20),
+      ],
+    );
+  }
+
+  Widget _buildPersonalizationBadge() {
+    final bool isPremium = _userProfile != null &&
+        (_userProfile!['glowai_plan'] == 'premium' || _userProfile!['email'] == 'usuario_pruebas@gmail.com');
+    
+    if (isPremium) {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: const Color(0xFFE8F5E9),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFC8E6C9)),
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.auto_awesome, color: Color(0xFF2E7D32), size: 14),
+            SizedBox(width: 6),
+            Text(
+              'Resultados personalizados para tu perfil',
+              style: TextStyle(color: Color(0xFF2E7D32), fontSize: 11, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+      );
+    } else {
+      return GestureDetector(
+        onTap: () {
+          _showPremiumUpgradeBottomSheet();
+        },
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: Color(0xFFFFF8E1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Color(0xFFFFECE0)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.stars_rounded, color: Colors.amber, size: 14),
+              const SizedBox(width: 6),
+              const Text(
+                'Personalizar resultados con tu diagnóstico (Premium)',
+                style: TextStyle(color: Colors.amber, fontSize: 11, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(width: 4),
+              Icon(Icons.chevron_right, color: Colors.amber.shade700, size: 12),
+            ],
+          ),
+        ),
+      );
+    }
+  }
+
+  Future<void> _searchDesignsWithQuery(String queryBase) async {
+    if (_isLimitReached) {
+      _showPremiumUpgradeBottomSheet();
+      return;
+    }
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      final results = await ApiService.fetchDesignIdeas(queryBase, category: 'nails', personalize: _personalizeResults);
+      final List<Map<String, dynamic>> updatedResults = results.take(5).toList();
+      updatedResults.insert(0, _getSimulatedProduct());
+      setState(() {
+        _images = updatedResults;
+        _isLoading = false;
+      });
+      _incrementSearchCount();
+      _incrementImagesCount(_images.length);
+    } catch (e) {
+      setState(() {
+        _error = 'Ocurrió un error al buscar: $e';
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _showStreakLockDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Row(
+          children: [
+            Icon(Icons.lock_clock, color: Colors.orange),
+            SizedBox(width: 8),
+            Text('Colección Bloqueada', style: TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: const Text(
+          'Esta colección exclusiva requiere mantener una racha de al menos 7 días registrando tus diagnósticos de cuidado de la piel. ¡Haz tu diagnóstico diario y desbloquéala!',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Entendido', style: TextStyle(fontWeight: FontWeight.bold)),
+          )
+        ],
+      ),
     );
   }
 }
