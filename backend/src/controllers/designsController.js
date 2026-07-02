@@ -2051,7 +2051,7 @@ Responde obligatoriamente en formato JSON válido, sin bloques de código markdo
 
   } catch (error) {
     console.error('❌ Error al catalogar prenda:', error.message);
-    res.status(500).json({ error: 'Error al catalogar la prenda de ropa' });
+    res.status(500).json({ error: 'Error al catalogar la prenda de ropa: ' + error.message });
   }
 };
 
@@ -2160,7 +2160,7 @@ Responde obligatoriamente única y estrictamente con un JSON válido en este for
 
   } catch (error) {
     console.error('❌ Error al generar outfit:', error.message);
-    res.status(500).json({ error: 'Error al diseñar outfit por IA' });
+    res.status(500).json({ error: 'Error al diseñar outfit por IA: ' + error.message });
   }
 };
 
