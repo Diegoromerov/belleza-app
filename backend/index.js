@@ -1,6 +1,7 @@
 // backend/index.js - Loopback updated
 const express = require('express');
 const cors = require('cors');
+const compression = require('compression'); // ← GZIP para reducir main.dart.js de 4MB a ~1MB
 const { pool, testConnection } = require('./src/config/db');
 const path = require('path');
 const fs = require('fs');
@@ -106,6 +107,7 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
       'https://belleza-app-production.up.railway.app'
     ];
 
+app.use(compression()); // GZIP — debe ir antes de las rutas y estáticos
 app.use(cors({
   origin: (origin, callback) => {
     // Permitir peticiones sin origen (ej: curl, Postman, apps móviles nativas)
