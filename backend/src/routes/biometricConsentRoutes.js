@@ -23,7 +23,7 @@ router.post('/', authMiddleware, async (req, res) => {
       `UPDATE biometric_consents 
        SET active = false, revoked_at = NOW() 
        WHERE user_id = $1 AND active = true`,
-      [userId]
+      [parseInt(userId, 10)]
     );
 
     // Insertar nuevo consentimiento activo
@@ -31,7 +31,7 @@ router.post('/', authMiddleware, async (req, res) => {
       `INSERT INTO biometric_consents (user_id, version, ip, user_agent, active) 
        VALUES ($1, $2, $3, $4, true) 
        RETURNING id`,
-      [userId, version || '1.0', clientIP, userAgent]
+      [parseInt(userId, 10), version || '1.0', clientIP, userAgent]
     );
 
     res.status(201).json({ 
@@ -55,7 +55,7 @@ router.post('/revoke', authMiddleware, async (req, res) => {
        SET active = false, revoked_at = NOW() 
        WHERE user_id = $1 AND active = true 
        RETURNING id`,
-      [userId]
+      [parseInt(userId, 10)]
     );
 
     res.json({ 
