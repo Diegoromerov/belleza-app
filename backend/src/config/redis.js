@@ -12,7 +12,12 @@ const redisClient = redis.createClient({
   url: redisUrl,
 });
 
-redisClient.on('error', (err) => console.error('Redis Client Error', err));
+redisClient.on('error', (err) => {
+  // Solo imprimimos un aviso simple una vez o cuando hay cambios de estado para evitar inundar la terminal/logs de Railway
+  if (process.env.NODE_ENV !== 'production') {
+    console.warn('⚠️  Redis Client Error:', err.message);
+  }
+});
 redisClient.on('connect', () => console.log('Redis connected'));
 
 (async () => {
