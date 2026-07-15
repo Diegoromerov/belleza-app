@@ -80,7 +80,7 @@ router.get('/status/:userId', authMiddleware, async (req, res) => {
        FROM biometric_consents 
        WHERE user_id = $1 AND active = true 
        LIMIT 1`,
-      [userId]
+      [parseInt(userId, 10)]
     );
 
     if (result.rows.length > 0) {
