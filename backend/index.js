@@ -130,20 +130,20 @@ const upload = multer({
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 
-// Límite de peticiones general
-const generalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 100, // 100 solicitudes por IP
-  message: 'Demasiadas solicitudes. Intenta de nuevo en 15 minutos.',
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
 // Límite específico para /analyze (más restrictivo)
 const analyzeLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hora
   max: 10, // 10 análisis por hora por IP
   message: 'Has excedido el límite de análisis. Espera 1 hora.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Límite de peticiones general
+const globalGeneralLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 100, // 100 solicitudes por IP
+  message: 'Demasiadas solicitudes. Intenta de nuevo en 15 minutos.',
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -160,7 +160,7 @@ app.use(helmet({
   },
 }));
 app.use('/api/biometric/analyze', analyzeLimiter);
-app.use('/api', generalLimiter);
+app.use('/api', globalGeneralLimiter);
 
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
