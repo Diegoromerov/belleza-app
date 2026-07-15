@@ -31,6 +31,8 @@ import 'screens/provider_profile_screen.dart';
 import 'screens/booking_tracking_screen.dart';
 import 'screens/provider_route_screen.dart';
 import 'screens/ideas/ideas_empty_screen.dart';
+import 'screens/ideas/biometric_consent_screen.dart';
+import 'screens/ideas/welcome_screen.dart';
 import 'screens/support/support_center_screen.dart';
 import 'screens/disputes/disputes_list_screen.dart';
 import 'screens/disputes/open_dispute_screen.dart';
@@ -114,6 +116,8 @@ class BeautyApp extends StatelessWidget {
             '/verification-pending': (_) => const VerificationPendingScreen(),
             '/profile': (_) => const ClientProfileScreen(),
             '/ideas': (_) => const IdeasEmptyScreen(),
+            '/biometric-consent': (_) => const BiometricConsentScreen(),
+            '/biometric-welcome': (_) => const BiometricWelcomeScreen(),
             '/booking-tracking': (context) {
               final args = ModalRoute.of(context)!.settings.arguments
                   as Map<String, dynamic>;

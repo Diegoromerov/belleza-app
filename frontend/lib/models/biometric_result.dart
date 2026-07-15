@@ -1,0 +1,148 @@
+// frontend/lib/models/biometric_result.dart
+
+class BiometricResult {
+  final String? profileId;
+  final FaceScores? face;
+  final HandsDiagnosis? hands;
+  final String? recommendation;
+  final List<Product>? products;
+
+  BiometricResult({
+    this.profileId,
+    this.face,
+    this.hands,
+    this.recommendation,
+    this.products,
+  });
+
+  factory BiometricResult.fromJson(Map<String, dynamic> json) {
+    return BiometricResult(
+      profileId: json['profileId'],
+      face: json['face'] != null ? FaceScores.fromJson(json['face']) : null,
+      hands: json['hands'] != null ? HandsDiagnosis.fromJson(json['hands']) : null,
+      recommendation: json['recommendation'],
+      products: json['products'] != null
+          ? (json['products'] as List).map((p) => Product.fromJson(p)).toList()
+          : null,
+    );
+  }
+}
+
+class FaceScores {
+  final int hydration;
+  final int wrinkles;
+  final int spots;
+  final int pores;
+  final String subtono;
+  final int bioAge;
+
+  FaceScores({
+    required this.hydration,
+    required this.wrinkles,
+    required this.spots,
+    required this.pores,
+    required this.subtono,
+    required this.bioAge,
+  });
+
+  factory FaceScores.fromJson(Map<String, dynamic> json) {
+    return FaceScores(
+      hydration: json['hydration'] ?? 0,
+      wrinkles: json['wrinkles'] ?? 0,
+      spots: json['spots'] ?? 0,
+      pores: json['pores'] ?? 0,
+      subtono: json['subtono'] ?? 'neutro',
+      bioAge: json['bioAge'] ?? 30,
+    );
+  }
+}
+
+class HandsDiagnosis {
+  final String manchasSolares;
+  final String sequedad;
+  final String cuticulas;
+  final String unas;
+  final int edadAparente;
+
+  HandsDiagnosis({
+    required this.manchasSolares,
+    required this.sequedad,
+    required this.cuticulas,
+    required this.unas,
+    required this.edadAparente,
+  });
+
+  factory HandsDiagnosis.fromJson(Map<String, dynamic> json) {
+    return HandsDiagnosis(
+      manchasSolares: json['manchas_solares'] ?? 'leve',
+      sequedad: json['sequedad'] ?? 'leve',
+      cuticulas: json['cuticulas'] ?? 'sanas',
+      unas: json['unas'] ?? json['uñas'] ?? 'sanas',
+      edadAparente: json['edad_aparente'] ?? 30,
+    );
+  }
+}
+
+class Product {
+  final String name;
+  final String brand;
+  final String imageUrl;
+  final String price;
+  final bool compatible;
+
+  Product({
+    required this.name,
+    required this.brand,
+    required this.imageUrl,
+    required this.price,
+    this.compatible = false,
+  });
+
+  factory Product.fromJson(Map<String, dynamic> json) {
+    return Product(
+      name: json['name'] ?? 'Producto',
+      brand: json['brand'] ?? 'Marca',
+      imageUrl: json['image'] ?? '',
+      price: json['price'] ?? '\$',
+      compatible: json['compatible'] ?? false,
+    );
+  }
+}
+
+class ProductDetail {
+  final String barcode;
+  final String name;
+  final String brand;
+  final String imageUrl;
+  final String ingredients;
+  final String categories;
+  final String price;
+  final bool compatible;
+  final String compatibilityReason;
+
+  ProductDetail({
+    required this.barcode,
+    required this.name,
+    required this.brand,
+    this.imageUrl = '',
+    this.ingredients = '',
+    this.categories = '',
+    this.price = '',
+    this.compatible = false,
+    this.compatibilityReason = '',
+  });
+
+  factory ProductDetail.fromJson(Map<String, dynamic> json) {
+    return ProductDetail(
+      barcode: json['barcode'] ?? '',
+      name: json['name'] ?? 'Producto',
+      brand: json['brand'] ?? 'Marca',
+      imageUrl: json['image'] ?? json['imageUrl'] ?? '',
+      ingredients: json['ingredients'] ?? '',
+      categories: json['categories'] ?? '',
+      price: json['price'] ?? '',
+      compatible: json['compatible'] ?? false,
+      compatibilityReason: json['compatibilityReason'] ?? '',
+    );
+  }
+}
