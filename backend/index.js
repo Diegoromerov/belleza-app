@@ -52,6 +52,7 @@ const crypto = require('crypto');
 let lastDbInitError = null;
 
 const app = express();
+app.set('trust proxy', 1); // Confiar en el proxy reverso (WAF de Railway / Cloudflare)
 const PORT = process.env.PORT || 8080;
 
 const statusMonitor = require('express-status-monitor');
