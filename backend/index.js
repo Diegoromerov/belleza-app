@@ -1259,6 +1259,8 @@ app.put('/api/portfolio/:id', authMiddleware, async (req, res) => {
 // 🔹 RUTAS DE CHAT REFACTORIZADAS (Movidas a chatRoutes.js y chatController.js)
 
 const initDatabase = async () => {
+  const dbErrors = [];
+  
   try {
     const tableCheck = await pool.query("SELECT to_regclass('public.usuarios') as exists;");
     const hasTable = tableCheck.rows[0].exists !== null;
@@ -1275,33 +1277,60 @@ const initDatabase = async () => {
         console.warn('⚠️ No se encontró schema.sql. Se omitió la creación automática de tablas.');
       }
     }
+  } catch (error) {
+    console.error('❌ Error al verificar/crear esquema base:', error);
+    dbErrors.push({ stage: 'schema-base', message: error.message });
+  }
 
-    // Agregar 'APPLE' al tipo_auth_provider ENUM si no existe
-    try {
-      await pool.query("ALTER TYPE tipo_auth_provider ADD VALUE 'APPLE';");
-      console.log('✅ Base de datos: Añadido valor "APPLE" al tipo_auth_provider');
-    } catch (e) {
-      if (e.code !== '42710') { // 42710 = duplicate_object, ignorar si ya existe
-        console.warn('⚠️ Error al agregar "APPLE" al tipo_auth_provider:', e.message);
-      }
+  // Agregar 'APPLE' al tipo_auth_provider ENUM si no existe
+  try {
+    await pool.query("ALTER TYPE tipo_auth_provider ADD VALUE 'APPLE';");
+    console.log('✅ Base de datos: Añadido valor "APPLE" al tipo_auth_provider');
+  } catch (e) {
+    if (e.code !== '42710') { // 42710 = duplicate_object, ignorar si ya existe
+      console.warn('⚠️ Error al agregar "APPLE" al tipo_auth_provider:', e.message);
+      dbErrors.push({ stage: 'auth-provider-enum', message: e.message });
     }
+  }
 
-    // Ejecutar migraciones y tablas adicionales ahora que el esquema base está garantizado
+  // 1. Aislamiento de alteración de la tabla 'usuarios'
+  try {
     await pool.query(`
       ALTER TABLE usuarios
       ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;
     `);
+    console.log('✅ Alteraciónusuarios: is_active columna asegurada.');
+  } catch (e) {
+    console.warn('⚠️ Error en alteración de tabla usuarios:', e.message);
+    dbErrors.push({ stage: 'alter-usuarios', message: e.message });
+  }
 
+  // 2. Aislamiento de alteración de la tabla 'perfiles_prestador'
+  try {
     await pool.query(`
       ALTER TABLE perfiles_prestador
       ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;
     `);
+    console.log('✅ Alteración perfiles_prestador: is_active columna asegurada.');
+  } catch (e) {
+    console.warn('⚠️ Error en alteración de tabla perfiles_prestador:', e.message);
+    dbErrors.push({ stage: 'alter-perfiles-prestador', message: e.message });
+  }
 
+  // 3. Aislamiento de alteración de la tabla 'bookings'
+  try {
     await pool.query(`
       ALTER TABLE bookings
       ADD COLUMN IF NOT EXISTS service_address TEXT;
     `);
+    console.log('✅ Alteración bookings: service_address columna asegurada.');
+  } catch (e) {
+    console.warn('⚠️ Error en alteración de tabla bookings:', e.message);
+    dbErrors.push({ stage: 'alter-bookings', message: e.message });
+  }
 
+  // 4. Aislamiento de creación de tabla 'sos_alerts' e índices
+  try {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS sos_alerts (
         id SERIAL PRIMARY KEY,
@@ -1313,12 +1342,18 @@ const initDatabase = async () => {
         creado_en TIMESTAMPTZ DEFAULT NOW()
       );
     `);
-
     await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_sos_alerts_user ON sos_alerts(user_id);
       CREATE INDEX IF NOT EXISTS idx_sos_alerts_booking ON sos_alerts(booking_id);
     `);
+    console.log('✅ Tabla e índices sos_alerts inicializados/verificados.');
+  } catch (e) {
+    console.warn('⚠️ Error al inicializar sos_alerts:', e.message);
+    dbErrors.push({ stage: 'create-sos-alerts', message: e.message });
+  }
 
+  // 5. Aislamiento de creación de tabla 'user_activity_logs' (Analíticas) e índices
+  try {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS user_activity_logs (
         id BIGSERIAL PRIMARY KEY,
@@ -1331,12 +1366,18 @@ const initDatabase = async () => {
         creado_en TIMESTAMPTZ DEFAULT NOW()
       );
     `);
-
     await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_activity_logs_session ON user_activity_logs(session_id);
       CREATE INDEX IF NOT EXISTS idx_activity_logs_event ON user_activity_logs(event_type);
     `);
+    console.log('✅ Tabla e índices user_activity_logs inicializados/verificados.');
+  } catch (e) {
+    console.warn('⚠️ Error al inicializar user_activity_logs:', e.message);
+    dbErrors.push({ stage: 'create-user-activity-logs', message: e.message });
+  }
 
+  // 6. Aislamiento de creación de tabla 'admin_actions'
+  try {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS admin_actions (
         id SERIAL PRIMARY KEY,
@@ -1346,8 +1387,14 @@ const initDatabase = async () => {
         fecha_creacion TIMESTAMPTZ DEFAULT NOW()
       );
     `);
+    console.log('✅ Tabla admin_actions inicializada/verificada.');
+  } catch (e) {
+    console.warn('⚠️ Error al inicializar admin_actions:', e.message);
+    dbErrors.push({ stage: 'create-admin-actions', message: e.message });
+  }
 
-    // Crear índices de rendimiento para bookings, reviews y services si no existen
+  // 7. Aislamiento de creación de índices de rendimiento generales
+  try {
     await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_bookings_client ON bookings(client_id);
       CREATE INDEX IF NOT EXISTS idx_bookings_provider ON bookings(provider_id);
@@ -1355,8 +1402,14 @@ const initDatabase = async () => {
       CREATE INDEX IF NOT EXISTS idx_reviews_provider ON reviews(provider_id);
       CREATE INDEX IF NOT EXISTS idx_services_provider ON services(provider_id);
     `);
+    console.log('✅ Índices de rendimiento generales verificados.');
+  } catch (e) {
+    console.warn('⚠️ Error al inicializar índices de rendimiento generales:', e.message);
+    dbErrors.push({ stage: 'performance-indexes', message: e.message });
+  }
 
-    // 🔸 Ejecutar migración de lealtad y fraude (loyalty_migration.sql)
+  // 8. Aislamiento de ejecución del script externo de lealtad y fraude (loyalty_migration.sql)
+  try {
     const loyaltyMigrationPath = path.join(__dirname, 'src/config/loyalty_migration.sql');
     if (fs.existsSync(loyaltyMigrationPath)) {
       const loyaltySql = fs.readFileSync(loyaltyMigrationPath, 'utf8');
@@ -1365,87 +1418,95 @@ const initDatabase = async () => {
     } else {
       console.warn('⚠️ No se encontró loyalty_migration.sql. Se omitió la migración de lealtad.');
     }
+  } catch (e) {
+    console.warn('⚠️ Error al ejecutar migración de lealtad y fraude:', e.message);
+    dbErrors.push({ stage: 'loyalty-migration', message: e.message });
+  }
 
-    // 🔸 Ejecutar migración de disputas y schedule (disputas table, triggers, indexes y weekly_schedule)
-    try {
-      // 1. Crear tabla disputas
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS disputas (
-          id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-          booking_id      UUID NOT NULL REFERENCES bookings(id) ON DELETE RESTRICT,
-          iniciado_por    INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE RESTRICT,
-          tipo_actor      VARCHAR(20) NOT NULL CHECK (tipo_actor IN ('CLIENTE','PRESTADOR','SISTEMA')),
-          tipo            VARCHAR(50) NOT NULL,
-          descripcion     TEXT,
-          evidencia_urls  TEXT[] DEFAULT '{}',
-          monto_disputado NUMERIC(12,2) NOT NULL,
-          estado          VARCHAR(20) NOT NULL DEFAULT 'ABIERTA',
-          resuelto_por    INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
-          resolucion      VARCHAR(50),
-          porcentaje_prestador NUMERIC(5,2),
-          nota_resolucion TEXT,
-          creado_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-          actualizado_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-          resuelto_at     TIMESTAMPTZ,
-          sla_limite_at   TIMESTAMPTZ
-        );
-      `);
+  // 9. Aislamiento de ejecución de migración de disputas, weekly_schedule y horarios de disponibilidad
+  try {
+    const defaultSchedule = JSON.stringify({
+      lunes: { activo: true, inicio: 6, fin: 20 },
+      martes: { activo: true, inicio: 6, fin: 20 },
+      miercoles: { activo: true, inicio: 6, fin: 20 },
+      jueves: { activo: true, inicio: 6, fin: 20 },
+      viernes: { activo: true, inicio: 6, fin: 20 },
+      sabado: { activo: true, inicio: 8, fin: 18 },
+      domingo: { activo: false, inicio: 8, fin: 18 }
+    });
 
-      // 2. Crear índices
-      await pool.query(`CREATE INDEX IF NOT EXISTS idx_disputas_booking ON disputas(booking_id);`);
-      await pool.query(`CREATE INDEX IF NOT EXISTS idx_disputas_estado ON disputas(estado, creado_at DESC);`);
-      await pool.query(`CREATE INDEX IF NOT EXISTS idx_disputas_sla ON disputas(sla_limite_at) WHERE estado IN ('ABIERTA','EN_REVISION');`);
+    // 1. Crear tabla disputas
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS disputas (
+        id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        booking_id      UUID NOT NULL REFERENCES bookings(id) ON DELETE RESTRICT,
+        iniciado_por    INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE RESTRICT,
+        tipo_actor      VARCHAR(20) NOT NULL CHECK (tipo_actor IN ('CLIENTE','PRESTADOR','SISTEMA')),
+        tipo            VARCHAR(50) NOT NULL,
+        descripcion     TEXT,
+        evidencia_urls  TEXT[] DEFAULT '{}',
+        monto_disputado NUMERIC(12,2) NOT NULL,
+        estado          VARCHAR(20) NOT NULL DEFAULT 'ABIERTA',
+        resuelto_por    INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+        resolucion      VARCHAR(50),
+        porcentaje_prestador NUMERIC(5,2),
+        nota_resolucion TEXT,
+        creado_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        actualizado_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        resuelto_at     TIMESTAMPTZ,
+        sla_limite_at   TIMESTAMPTZ
+      );
+    `);
 
-      // 3. Crear función de trigger SLA
-      await pool.query(`
-        CREATE OR REPLACE FUNCTION set_disputa_sla()
-        RETURNS TRIGGER AS $$
-        BEGIN
-          IF NEW.sla_limite_at IS NULL THEN
-            NEW.sla_limite_at = NEW.creado_at + INTERVAL '48 hours';
-          END IF;
-          RETURN NEW;
-        END;
-        $$ LANGUAGE plpgsql;
-      `);
+    // 2. Crear índices
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_disputas_booking ON disputas(booking_id);`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_disputas_estado ON disputas(estado, creado_at DESC);`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_disputas_sla ON disputas(sla_limite_at) WHERE estado IN ('ABIERTA','EN_REVISION');`);
 
-      // 4. Vincular triggers
-      await pool.query(`DROP TRIGGER IF EXISTS trg_disputa_sla ON disputas;`);
-      await pool.query(`
-        CREATE TRIGGER trg_disputa_sla
-        BEFORE INSERT ON disputas
-        FOR EACH ROW EXECUTE FUNCTION set_disputa_sla();
-      `);
+    // 3. Crear función de trigger SLA
+    await pool.query(`
+      CREATE OR REPLACE FUNCTION set_disputa_sla()
+      RETURNS TRIGGER AS $$
+      BEGIN
+        IF NEW.sla_limite_at IS NULL THEN
+          NEW.sla_limite_at = NEW.creado_at + INTERVAL '48 hours';
+        END IF;
+        RETURN NEW;
+      END;
+      $$ LANGUAGE plpgsql;
+    `);
 
-      await pool.query(`DROP TRIGGER IF EXISTS trg_disputa_updated_at ON disputas;`);
-      await pool.query(`
-        CREATE TRIGGER trg_disputa_updated_at
-        BEFORE UPDATE ON disputas
-        FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-      `);
+    // 4. Vincular triggers
+    await pool.query(`DROP TRIGGER IF EXISTS trg_disputa_sla ON disputas;`);
+    await pool.query(`
+      CREATE TRIGGER trg_disputa_sla
+      BEFORE INSERT ON disputas
+      FOR EACH ROW EXECUTE FUNCTION set_disputa_sla();
+    `);
 
-      // 5. Agregar weekly_schedule y active_start_hour / active_end_hour a perfiles_prestador
-      const defaultSchedule = JSON.stringify({
-        lunes: { activo: true, inicio: 6, fin: 20 },
-        martes: { activo: true, inicio: 6, fin: 20 },
-        miercoles: { activo: true, inicio: 6, fin: 20 },
-        jueves: { activo: true, inicio: 6, fin: 20 },
-        viernes: { activo: true, inicio: 6, fin: 20 },
-        sabado: { activo: true, inicio: 8, fin: 18 },
-        domingo: { activo: false, inicio: 8, fin: 18 }
-      });
-      await pool.query(`
-        ALTER TABLE perfiles_prestador 
-        ADD COLUMN IF NOT EXISTS weekly_schedule JSONB DEFAULT '${defaultSchedule}'::jsonb,
-        ADD COLUMN IF NOT EXISTS active_start_hour INTEGER DEFAULT 6,
-        ADD COLUMN IF NOT EXISTS active_end_hour INTEGER DEFAULT 20;
-      `);
+    await pool.query(`DROP TRIGGER IF EXISTS trg_disputa_updated_at ON disputas;`);
+    await pool.query(`
+      CREATE TRIGGER trg_disputa_updated_at
+      BEFORE UPDATE ON disputas
+      FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+    `);
 
-      console.log('✅ Base de datos: Migración de disputas, weekly_schedule y horarios de disponibilidad verificados/aplicados.');
-    } catch (migErr) {
-      console.warn('⚠️ Error al aplicar migración de disputas/weekly_schedule/horarios:', migErr.message);
-    }
+    // 5. Agregar weekly_schedule y active_start_hour / active_end_hour a perfiles_prestador
+    await pool.query(`
+      ALTER TABLE perfiles_prestador 
+      ADD COLUMN IF NOT EXISTS weekly_schedule JSONB DEFAULT '${defaultSchedule}'::jsonb,
+      ADD COLUMN IF NOT EXISTS active_start_hour INTEGER DEFAULT 6,
+      ADD COLUMN IF NOT EXISTS active_end_hour INTEGER DEFAULT 20;
+    `);
 
+    console.log('✅ Base de datos: Migración de disputas, weekly_schedule y horarios de disponibilidad verificados/aplicados.');
+  } catch (migErr) {
+    console.warn('⚠️ Error al aplicar migración de disputas/weekly_schedule/horarios:', migErr.message);
+    dbErrors.push({ stage: 'disputas-schedule-migration', message: migErr.message });
+  }
+
+  // 10. Aislamiento de creación de usuario Asistente virtual
+  try {
     const aiUserQuery = `
       INSERT INTO usuarios (id, email, nombre, auth_provider, provider_id, rol, onboarding_completo)
       VALUES (
@@ -1461,37 +1522,44 @@ const initDatabase = async () => {
     `;
     await pool.query(aiUserQuery);
     console.log('🤖 Usuario Asistente de IA verificado/creado con ID 0.');
+  } catch (e) {
+    console.warn('⚠️ Error al inicializar usuario Asistente Virtual:', e.message);
+    dbErrors.push({ stage: 'assistant-user', message: e.message });
+  }
 
-    // 🔸 EJECUTAR MIGRACIONES AUTOMÁTICAS DESDE LA CARPETA MIGRATIONS
+  // 11. Ejecución de migraciones automáticas (.sql en la carpeta migrations)
+  try {
     const migrationsDir = path.join(__dirname, 'migrations');
     if (fs.existsSync(migrationsDir)) {
-      try {
-        const files = fs.readdirSync(migrationsDir)
-          .filter(file => file.endsWith('.sql'))
-          .sort(); // Orden alfabético: 001, 002, 003, etc.
-        
-        console.log(`🔍 Encontradas ${files.length} migraciones en la carpeta migrations.`);
-        for (const file of files) {
-          const filePath = path.join(migrationsDir, file);
-          try {
-            const sql = fs.readFileSync(filePath, 'utf8');
-            await pool.query(sql);
-            console.log(`✅ Base de datos: Migración ${file} aplicada exitosamente.`);
-          } catch (err) {
-            // Ignorar errores comunes de "ya existe" o de alteración idempotente para mantener robustez
-            if (!err.message.includes('already exists') && !err.message.includes('ya existe') && !err.message.includes('duplicate key value') && !err.message.includes('already a column')) {
-              console.warn(`⚠️ Advertencia en migración ${file}:`, err.message);
-            } else {
-              console.log(`ℹ️ Migración ${file} ya aplicada anteriormente o con elementos existentes.`);
-            }
+      const files = fs.readdirSync(migrationsDir)
+        .filter(file => file.endsWith('.sql'))
+        .sort(); // Orden alfabético: 001, 002, 003, etc.
+      
+      console.log(`🔍 Encontradas ${files.length} migraciones en la carpeta migrations.`);
+      for (const file of files) {
+        const filePath = path.join(migrationsDir, file);
+        try {
+          const sql = fs.readFileSync(filePath, 'utf8');
+          await pool.query(sql);
+          console.log(`✅ Base de datos: Migración ${file} aplicada exitosamente.`);
+        } catch (err) {
+          // Ignorar errores comunes de "ya existe" o de alteración idempotente para mantener robustez
+          if (!err.message.includes('already exists') && !err.message.includes('ya existe') && !err.message.includes('duplicate key value') && !err.message.includes('already a column')) {
+            console.warn(`⚠️ Advertencia en migración ${file}:`, err.message);
+            dbErrors.push({ stage: `migration-file-${file}`, message: err.message });
+          } else {
+            console.log(`ℹ️ Migración ${file} ya aplicada anteriormente o con elementos existentes.`);
           }
         }
-      } catch (dirErr) {
-        console.error('❌ Error leyendo la carpeta de migraciones:', dirErr.message);
       }
     }
+  } catch (dirErr) {
+    console.error('❌ Error leyendo la carpeta de migraciones:', dirErr.message);
+    dbErrors.push({ stage: 'migrations-dir-read', message: dirErr.message });
+  }
 
-
+  // 12. Aislamiento de siembra (seed) si es necesario
+  try {
     const checkUser = await pool.query("SELECT id FROM usuarios WHERE email = 'provider@beautyapp.com';");
     const needsSeed = checkUser.rows.length === 0;
 
@@ -1501,19 +1569,21 @@ const initDatabase = async () => {
       } else if (process.env.SEED_DATABASE === 'true') {
         const seedPath = path.join(__dirname, 'seed.sql');
         if (fs.existsSync(seedPath)) {
-          try {
-            const seedSql = fs.readFileSync(seedPath, 'utf8');
-            await pool.query(seedSql);
-            console.log('🌱 Datos de prueba (seed.sql) sembrados exitosamente.');
-          } catch (seedErr) {
-            console.warn('⚠️ Advertencia al sembrar datos de prueba:', seedErr.message);
-          }
+          const seedSql = fs.readFileSync(seedPath, 'utf8');
+          await pool.query(seedSql);
+          console.log('🌱 Datos de prueba (seed.sql) sembrados exitosamente.');
         }
       } else {
         console.log('⚠️  Omitiendo la siembra de base de datos (SEED_DATABASE no está establecida como "true").');
       }
     }
+  } catch (seedErr) {
+    console.warn('⚠️ Advertencia al sembrar datos de prueba:', seedErr.message);
+    dbErrors.push({ stage: 'database-seeding', message: seedErr.message });
+  }
 
+  // 13. Aislamiento de aprobación automática de prestadores en desarrollo
+  try {
     if (process.env.AUTO_APPROVE_PROVIDERS === 'true') {
       if (process.env.NODE_ENV === 'production') {
         console.warn('⚠️  Omitiendo aprobación automática de prestadores: prohibida en entornos de producción.');
@@ -1522,13 +1592,20 @@ const initDatabase = async () => {
         console.log('✅ Base de datos: Todos los perfiles de prestador han sido aprobados automáticamente.');
       }
     }
-  } catch (error) {
-    console.error('❌ Error al inicializar la base de datos:', error);
+  } catch (e) {
+    console.warn('⚠️ Error al aprobar automáticamente perfiles de prestador:', e.message);
+    dbErrors.push({ stage: 'auto-approve-providers', message: e.message });
+  }
+
+  // Estructurar el diagnóstico si hubo errores
+  if (dbErrors.length > 0) {
     lastDbInitError = {
-      message: error.message,
-      stack: error.stack,
+      message: `${dbErrors.length} errores/advertencias no bloqueantes ocurrieron durante la inicialización de la base de datos.`,
+      errors: dbErrors,
       timestamp: new Date().toISOString()
     };
+  } else {
+    lastDbInitError = null;
   }
 };
 
