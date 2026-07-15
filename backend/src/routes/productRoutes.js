@@ -6,10 +6,10 @@ const productController = require('../controllers/productController');
 const orderController = require('../controllers/orderController');
 
 // Obtener catálogo de productos (soporta filtros por tag de especialidad)
-router.get('/products', authMiddleware, productController.getProducts);
+router.get('/products', productController.getProducts);
 
 // Obtener un producto por ID
-router.get('/products/:id', authMiddleware, productController.getProductById);
+router.get('/products/:id', productController.getProductById);
 
 // Cargar un producto (Administrador)
 router.post('/admin/products', authMiddleware, productController.createProduct);
