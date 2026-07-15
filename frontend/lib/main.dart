@@ -33,6 +33,7 @@ import 'screens/provider_route_screen.dart';
 import 'screens/designs/manicure_ideas_screen.dart';
 import 'screens/support/support_center_screen.dart';
 import 'screens/disputes/disputes_list_screen.dart';
+import 'screens/disputes/open_dispute_screen.dart';
 import 'screens/academy/academy_screen.dart';
 import 'screens/store_screen.dart';
 import 'screens/designs/evolution_dashboard_screen.dart';
@@ -125,6 +126,13 @@ class BeautyApp extends StatelessWidget {
             },
             '/support': (_) => const SupportCenterScreen(),
             '/disputes': (_) => const DisputesListScreen(),
+            '/dispute': (context) {
+              final args = ModalRoute.of(context)?.settings.arguments
+                  as Map<String, dynamic>?;
+              return OpenDisputeScreen(
+                preselectedBookingId: args?['booking_id'],
+              );
+            },
             '/provider/academy': (_) => const AcademyScreen(),
             '/store': (_) => const StoreScreen(),
             '/evolution': (_) => const EvolutionDashboardScreen(),
