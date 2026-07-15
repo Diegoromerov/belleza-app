@@ -5,7 +5,7 @@ const { pool } = require('../config/db');
 exports.getProducts = async (req, res) => {
   try {
     const { tag } = req.query;
-    const userRole = req.user.role; // 'client', 'provider', 'admin'
+    const userRole = req.user ? req.user.role : 'client'; // 'client', 'provider', 'admin'
 
     let query = '';
     const params = [];
@@ -53,7 +53,7 @@ exports.getProducts = async (req, res) => {
 exports.getProductById = async (req, res) => {
   try {
     const productId = req.params.id;
-    const userRole = req.user.role;
+    const userRole = req.user ? req.user.role : 'client';
 
     const { rows } = await pool.query(
       'SELECT id, nombre, descripcion, precio_al_publico, precio_con_reserva, precio_prestador, comision_prestador, stock, imagen_url, tag_especialidad, tipo_visibilidad FROM productos WHERE id = $1;',
