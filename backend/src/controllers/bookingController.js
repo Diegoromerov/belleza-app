@@ -7,8 +7,13 @@ const crypto = require('crypto');
 
 const verifyWompiSignature = (req) => {
   const secret = process.env.WOMPI_WEBHOOK_SECRET;
-  if (!secret && process.env.NODE_ENV === 'production') return false;
-  if (!secret) return true;
+  if (!secret) {
+    console.warn('⚠️ ADVERTENCIA CRÍTICA: WOMPI_WEBHOOK_SECRET no está configurado. En producción y staging las solicitudes de webhook serán bloqueadas.');
+    if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'staging') {
+      return false;
+    }
+    return true; // Permitir en desarrollo local sin configuración
+  }
 
   const signature = req.header('x-wompi-signature') || req.header('x-signature');
   if (!signature) return false;
