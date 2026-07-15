@@ -2,8 +2,14 @@
 const redis = require('redis');
 require('dotenv').config();
 
+// Validar y limpiar la URL de Redis para evitar crashes por strings como 'redis://:'
+let redisUrl = process.env.REDIS_URL;
+if (!redisUrl || redisUrl === 'redis://:' || redisUrl.trim() === '') {
+  redisUrl = 'redis://localhost:6379';
+}
+
 const redisClient = redis.createClient({
-  url: process.env.REDIS_URL || 'redis://localhost:6379',
+  url: redisUrl,
 });
 
 redisClient.on('error', (err) => console.error('Redis Client Error', err));
