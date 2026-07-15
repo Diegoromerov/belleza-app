@@ -10,6 +10,9 @@ require('dotenv').config();
 
 // ⚠️ IMPORTANTE: Imports al inicio para evitar ReferenceError
 const authRoutes = require('./src/routes/authRoutes');
+const biometricConsentRoutes = require('./src/routes/biometricConsentRoutes');
+const biometricRoutes = require('./src/routes/biometricRoutes');
+const colorRoutes = require('./src/routes/colorRoutes');
 const paymentRoutes = require('./src/routes/paymentRoutes');
 const bookingRoutes = require('./src/routes/bookingRoutes');
 const serviceRoutes = require('./src/routes/serviceRoutes');
@@ -51,6 +54,39 @@ let lastDbInitError = null;
 const app = express();
 const PORT = process.env.PORT || 8080;
 
+const statusMonitor = require('express-status-monitor');
+const swaggerJsdoc = require('swagger-jsdoc');
+const swaggerUi = require('swagger-ui-express');
+
+// Configuración de Swagger
+const swaggerOptions = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'GlowApp Biometric Hub API',
+      version: '1.0.0',
+      description: 'API para el módulo de lectura biométrica facial y de manos',
+    },
+    servers: [
+      { url: 'https://belleza-app-production.up.railway.app', description: 'Producción' },
+      { url: 'http://localhost:8080', description: 'Desarrollo' },
+    ],
+  },
+  apis: ['./src/routes/*.js'],
+};
+const specs = swaggerJsdoc(swaggerOptions);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
+
+app.use(statusMonitor({
+  title: 'GlowApp Biometric API Status',
+  path: '/status',
+  spans: [
+    { interval: 1, retention: 60 },
+    { interval: 5, retention: 60 },
+    { interval: 15, retention: 60 },
+  ],
+}));
+
 // Configuración de Multer para almacenamiento estático local
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
@@ -91,9 +127,41 @@ const upload = multer({
   }
 });
 
-// ==========================================
-// MIDDLEWARE
-// ==========================================
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+
+// Límite de peticiones general
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 100, // 100 solicitudes por IP
+  message: 'Demasiadas solicitudes. Intenta de nuevo en 15 minutos.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Límite específico para /analyze (más restrictivo)
+const analyzeLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hora
+  max: 10, // 10 análisis por hora por IP
+  message: 'Has excedido el límite de análisis. Espera 1 hora.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      imgSrc: ["'self'", "data:", "https://world.openbeautyfacts.org", "*"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      connectSrc: ["'self'", "*"],
+    },
+  },
+}));
+app.use('/api/biometric/analyze', analyzeLimiter);
+app.use('/api', generalLimiter);
+
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
   : [
@@ -170,6 +238,9 @@ app.use('/api', productRoutes);
 app.use('/api', providerRoutes);
 app.use('/api', ticketRoutes);
 app.use('/api', disputeRoutes);
+app.use('/api/consent', biometricConsentRoutes);
+app.use('/api/biometric', biometricRoutes);
+app.use('/api/color', colorRoutes);
 app.use('/api/academy', academyRoutes);
 app.use('/api/glow-admin', glowAdminRoutes);
 

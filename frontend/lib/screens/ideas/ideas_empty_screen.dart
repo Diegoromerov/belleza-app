@@ -1,17 +1,48 @@
 import 'package:flutter/material.dart';
+import '../../services/biometric_service.dart';
+import 'biometric_consent_screen.dart';
+import 'welcome_screen.dart';
 
-class IdeasEmptyScreen extends StatelessWidget {
+class IdeasEmptyScreen extends StatefulWidget {
   const IdeasEmptyScreen({super.key});
+
+  @override
+  State<IdeasEmptyScreen> createState() => _IdeasEmptyScreenState();
+}
+
+class _IdeasEmptyScreenState extends State<IdeasEmptyScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _checkConsentAndNavigate();
+  }
+
+  Future<void> _checkConsentAndNavigate() async {
+    final consentActive = await BiometricService.hasConsent();
+    if (!mounted) return;
+
+    if (consentActive) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const BiometricWelcomeScreen()),
+      );
+    } else {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const BiometricConsentScreen()),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
       body: Center(
-        child: Text(
-          'Ideas',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w300),
+        child: CircularProgressIndicator(
+          color: Colors.purple,
         ),
       ),
     );
   }
 }
+
