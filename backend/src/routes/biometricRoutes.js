@@ -73,7 +73,7 @@ router.get('/profile/:userId', authMiddleware, async (req, res) => {
   const { userId } = req.params;
 
   try {
-    const profile = await profileService.getProfile(userId);
+    const profile = await profileService.getProfile(parseInt(userId, 10));
     if (!profile) {
       return res.status(404).json({ error: 'Perfil biométrico no encontrado' });
     }
@@ -89,7 +89,7 @@ router.delete('/profile/:userId', authMiddleware, async (req, res) => {
   const { userId } = req.params;
 
   try {
-    await profileService.deleteProfile(userId);
+    await profileService.deleteProfile(parseInt(userId, 10));
     res.json({ success: true, message: 'Perfil biométrico eliminado correctamente (Habeas Data aplicado).' });
   } catch (error) {
     console.error('❌ Error eliminando perfil biométrico:', error.message);
