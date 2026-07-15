@@ -208,7 +208,7 @@ const debugRouteMiddleware = (req, res, next) => {
 const rateLimiter = require('./src/middleware/rateLimiter');
 
 // Limitador general para toda la API pública (max 100 peticiones por minuto por IP)
-const generalLimiter = rateLimiter({
+const customGeneralLimiter = rateLimiter({
   windowMs: 60 * 1000,
   max: 100,
   message: 'Demasiadas solicitudes desde esta IP. Por favor intenta de nuevo en un minuto.'
@@ -222,7 +222,7 @@ const authAndWebhookLimiter = rateLimiter({
 });
 
 // Aplicar limitadores
-app.use('/api', generalLimiter);
+app.use('/api', customGeneralLimiter);
 app.use('/api/auth/login', authAndWebhookLimiter);
 app.use('/api/auth/register', authAndWebhookLimiter);
 app.use('/api/payments/wompi-webhook', authAndWebhookLimiter);
