@@ -292,7 +292,7 @@ exports.acceptBiometricsConsent = async (req, res) => {
     await pool.query(
       `INSERT INTO auditoria_consentimiento_biometrico (user_id, consentimiento_otorgado, version_politica, ip_registro, dispositivo)
        VALUES ($1, $2, $3, $4, $5)`,
-      [userId, consentimiento_otorgado, version_politica, clientIp, dispositivo || 'Unknown']
+      [parseInt(userId, 10), consentimiento_otorgado, version_politica, clientIp, dispositivo || 'Unknown']
     );
 
     console.log(`🛡️ Auditoría de consentimiento biométrico registrada para usuario ID ${userId}. Consentimiento: ${consentimiento_otorgado}`);
