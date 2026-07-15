@@ -30,7 +30,7 @@ import 'screens/client_profile_screen.dart';
 import 'screens/provider_profile_screen.dart';
 import 'screens/booking_tracking_screen.dart';
 import 'screens/provider_route_screen.dart';
-import 'screens/designs/manicure_ideas_screen.dart';
+import 'screens/ideas/ideas_empty_screen.dart';
 import 'screens/support/support_center_screen.dart';
 import 'screens/disputes/disputes_list_screen.dart';
 import 'screens/disputes/open_dispute_screen.dart';
@@ -113,7 +113,7 @@ class BeautyApp extends StatelessWidget {
             '/onboarding': (_) => const OnboardingScreen(),
             '/verification-pending': (_) => const VerificationPendingScreen(),
             '/profile': (_) => const ClientProfileScreen(),
-            '/ideas': (_) => const ManicureIdeasScreen(),
+            '/ideas': (_) => const IdeasEmptyScreen(),
             '/booking-tracking': (context) {
               final args = ModalRoute.of(context)!.settings.arguments
                   as Map<String, dynamic>;

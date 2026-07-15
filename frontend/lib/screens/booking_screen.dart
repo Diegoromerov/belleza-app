@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import '../services/api_service.dart';
 import '../shared/theme.dart';
 import '../services/booking_recovery_service.dart';
-import 'designs/manicure_ideas_screen.dart';
+
 import '../widgets/wompi_payment_sheet.dart';
 
 class BookingScreen extends StatefulWidget {
@@ -57,17 +57,7 @@ class _BookingScreenState extends State<BookingScreen> {
   void initState() {
     super.initState();
     notes = widget.initialNotes ?? '';
-    try {
-      final ref = ManicureIdeasScreen.selectedReference;
-      if (ref != null && ref['image_url'] != null) {
-        if (notes.isNotEmpty) {
-          notes += '\n';
-        }
-        notes += 'Referencia visual: ${ref['image_url']} (${ref['title']})';
-        // Clear it once consumed so it doesn't leak to future unrelated bookings
-        ManicureIdeasScreen.selectedReference = null;
-      }
-    } catch (_) {}
+
     _notesController.text = notes;
     final now = DateTime.now();
     // Default to tomorrow
