@@ -10,9 +10,11 @@ CREATE TABLE IF NOT EXISTS biometric_consents (
     ip VARCHAR(45),
     user_agent TEXT,
     revoked_at TIMESTAMP WITH TIME ZONE,
-    active BOOLEAN DEFAULT TRUE,
-    CONSTRAINT unique_active_consent UNIQUE (user_id) WHERE active = TRUE
+    active BOOLEAN DEFAULT TRUE
 );
+
+-- Índice único parcial para garantizar un solo consentimiento activo
+CREATE UNIQUE INDEX IF NOT EXISTS unique_active_consent ON biometric_consents (user_id) WHERE active = TRUE;
 
 -- 2. Tabla de perfiles biométricos
 CREATE TABLE IF NOT EXISTS beauty_profiles (
