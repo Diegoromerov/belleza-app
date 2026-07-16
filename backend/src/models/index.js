@@ -1,8 +1,24 @@
 // Association setups between models
+const { sequelize } = require('../config/database');
 const User = require('./User');
 const Service = require('./Service');
 const Booking = require('./Booking');
 const Transaction = require('./Transaction');
+const LearningPath = require('./LearningPath');
+const PathCourse = require('./PathCourse');
+const XpLog = require('./XpLog');
+const Badge = require('./Badge');
+const CommunityPost = require('./CommunityPost');
+const CommunityComment = require('./CommunityComment');
+const Portfolio = require('./Portfolio');
+const MentorshipSession = require('./MentorshipSession');
+const QrCertificate = require('./QrCertificate');
+const Event = require('./Event');
+const EventRegistration = require('./EventRegistration');
+const AnalyticsEvent = require('./AnalyticsEvent');
+const AppLocale = require('./AppLocale');
+const UserConsent = require('./UserConsent');
+const UserBadge = require('./UserBadge');
 
 // A Service belongs to a Provider (User)
 Service.belongsTo(User, { foreignKey: 'provider_id', as: 'provider' });
@@ -25,8 +41,24 @@ Transaction.belongsTo(Booking, { foreignKey: 'booking_id', as: 'booking' });
 Booking.hasOne(Transaction, { foreignKey: 'booking_id', as: 'transaction' });
 
 module.exports = {
+  sequelize,
   User,
   Service,
   Booking,
-  Transaction
+  Transaction,
+  LearningPath,
+  PathCourse,
+  XpLog,
+  Badge,
+  CommunityPost,
+  CommunityComment,
+  Portfolio,
+  MentorshipSession,
+  QrCertificate,
+  Event,
+  EventRegistration,
+  AnalyticsEvent,
+  AppLocale,
+  UserConsent,
+  UserBadge
 };
