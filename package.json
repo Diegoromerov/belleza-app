@@ -1,0 +1,20 @@
+{
+  "name": "beauty-app",
+  "version": "1.0.0",
+  "description": "- **Backend:** Node.js + Express + PostgreSQL (PostGIS) + Redis\r - **Frontend:** Flutter (iOS/Android)\r - **Base de Datos:** PostgreSQL con extensión PostGIS para geolocalización",
+  "main": "run_seed.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "joi": "^18.2.3",
+    "turbo": "^2.10.3"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

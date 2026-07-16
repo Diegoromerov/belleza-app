@@ -23,8 +23,15 @@ const providerRoutes = require('./src/routes/providerRoutes');
 const ticketRoutes = require('./src/routes/ticketRoutes');
 const disputeRoutes = require('./src/routes/disputeRoutes');
 const academyRoutes = require('./src/routes/academyRoutes');
-const glowAdminRoutes = require('./src/modules/admin-glow/admin.routes');
 const authMiddleware = require('./src/middleware/auth');
+const glowProRoutes = require('./src/routes/glowProRoutes');
+const analyticsRoutes = require('./src/routes/analyticsRoutes');
+const portfolioRoutes = require('./src/routes/portfolioRoutes');
+const communityRoutes = require('./src/routes/communityRoutes');
+const mentorshipRoutes = require('./src/routes/mentorshipRoutes');
+const xpLogRoutes = require('./src/routes/xpLogRoutes');
+const eventRoutes = require('./src/routes/eventRoutes');
+const eventRegistrationRoutes = require('./src/routes/eventRegistrationRoutes');
 const adminMiddleware = async (req, res, next) => {
   try {
     if (!req.user || !req.user.id) {
@@ -243,7 +250,15 @@ app.use('/api/consent', biometricConsentRoutes);
 app.use('/api/biometric', biometricRoutes);
 app.use('/api/color', colorRoutes);
 app.use('/api/academy', academyRoutes);
-app.use('/api/glow-admin', glowAdminRoutes);
+app.use('/api/glow-pro', glowProRoutes);
+app.use('/api/glow-pro/events', eventRoutes);
+app.use('/api/glow-pro/event-registrations', eventRegistrationRoutes);
+app.use('/api', analyticsRoutes);
+app.use('/api/portfolio', portfolioRoutes);
+app.use('/api/community', communityRoutes);
+app.use('/api/mentorship', mentorshipRoutes);
+app.use('/api/xp-logs', xpLogRoutes);
+
 
 // ==========================================
 // RUTAS PÚBLICAS
