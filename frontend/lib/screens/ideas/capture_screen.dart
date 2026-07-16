@@ -337,21 +337,25 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 300),
             child: isFaceStep
-                ? CustomPaint(
-                    key: const ValueKey('face_painter'),
-                    painter: FaceOverlayPainter(
-                      detectedFace: _detectedFace,
-                      isValid: _isFaceValid,
-                      quality: _qualityScore,
-                      screenSize: screenSize,
+                ? Positioned.fill(
+                    child: CustomPaint(
+                      key: const ValueKey('face_painter'),
+                      painter: FaceOverlayPainter(
+                        detectedFace: _detectedFace,
+                        isValid: _isFaceValid,
+                        quality: _qualityScore,
+                        screenSize: screenSize,
+                      ),
                     ),
                   )
-                : CustomPaint(
-                    key: const ValueKey('hands_painter'),
-                    painter: HandOverlayPainter(
-                      isValid: _isHandValid,
-                      quality: _qualityScore,
-                      screenSize: screenSize,
+                : Positioned.fill(
+                    child: CustomPaint(
+                      key: const ValueKey('hands_painter'),
+                      painter: HandOverlayPainter(
+                        isValid: _isHandValid,
+                        quality: _qualityScore,
+                        screenSize: screenSize,
+                      ),
                     ),
                   ),
           ),
