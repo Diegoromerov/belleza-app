@@ -9,6 +9,7 @@ import 'wallet_screen.dart';
 import 'chat_list_screen.dart';
 import 'provider_profile_screen.dart';
 import 'store_screen.dart';
+import 'academy/academy_screen.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
 import '../services/analytics_service.dart';
@@ -2362,9 +2363,12 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
         bodyWidget = const StoreScreen();
         break;
       case 4:
-        bodyWidget = const ChatListScreen();
+        bodyWidget = const AcademyScreen();
         break;
       case 5:
+        bodyWidget = const ChatListScreen();
+        break;
+      case 6:
         bodyWidget = const ProviderProfileScreen(isEmbedded: true);
         break;
       default:
@@ -2410,7 +2414,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
         children: [
           Padding(
             padding: EdgeInsets.only(
-              bottom: _currentIndex == 3 ? 0 : 88.0, // Tienda manages its own margins
+              bottom: _currentIndex == 3 ? 0 : 88.0, // GlowShop manages its own margins
             ),
             child: bodyWidget,
           ),
@@ -2455,21 +2459,28 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                     label: 'Wallet',
                   ),
                   
-                  // Central Prominent floating button for the store
+                  // Botón central prominente: GlowShop
                   _buildProminentCenterNavItem(
                     index: 3,
                     icon: Icons.shopping_bag_outlined,
-                    label: 'Tienda',
+                    label: 'GlowShop',
                   ),
-                  
-                  _buildNavItem(
+
+                  // Botón central prominente: GlowAcademy
+                  _buildProminentCenterNavItem(
                     index: 4,
-                    icon: _currentIndex == 4 ? Icons.chat_bubble : Icons.chat_bubble_outline,
+                    icon: Icons.auto_stories,
+                    label: 'GlowAcademy',
+                  ),
+
+                  _buildNavItem(
+                    index: 5,
+                    icon: _currentIndex == 5 ? Icons.chat_bubble : Icons.chat_bubble_outline,
                     label: 'Chat',
                   ),
                   _buildNavItem(
-                    index: 5,
-                    icon: _currentIndex == 5 ? Icons.person : Icons.person_outline,
+                    index: 6,
+                    icon: _currentIndex == 6 ? Icons.person : Icons.person_outline,
                     label: 'Perfil',
                   ),
                 ],
