@@ -6,7 +6,12 @@ const connectionString = process.env.DATABASE_URL;
 let sequelize;
 
 if (process.env.NODE_ENV === 'test') {
-  sequelize = new Sequelize('sqlite::memory:', {
+  const { newDb } = require('pg-mem');
+  const pgMem = newDb();
+  const pg = pgMem.adapters.createPg();
+  sequelize = new Sequelize('postgres://', {
+    dialect: 'postgres',
+    dialectModule: pg,
     logging: false
   });
 } else if (connectionString) {
