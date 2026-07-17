@@ -1639,16 +1639,19 @@ app.set('notifyUserChatMessage', notifyUserChatMessage);
 // ==========================================
 // INICIO DEL SERVIDOR
 // ==========================================
-const server = app.listen(PORT, async () => {
-  console.log(`🚀 Servidor en http://localhost:${PORT}`);
-  console.log(`📦 Entorno: ${process.env.NODE_ENV || 'development'}`);
-  await testConnection();
-  await initDatabase();
-  // Iniciar jobs de pagos (maduración, retiros automáticos, conciliación)
-  inicializarJobs();
-  // Inicializar servidor WebSocket compartiendo puerto HTTP
-  initWebSocketServer(server);
-});
+if (process.env.NODE_ENV !== 'test') {
+  const server = app.listen(PORT, async () => {
+    console.log(`🚀 Servidor en http://localhost:${PORT}`);
+    console.log(`📦 Entorno: ${process.env.NODE_ENV || 'development'}`);
+    await testConnection();
+    await initDatabase();
+    // Iniciar jobs de pagos (maduración, retiros automáticos, conciliación)
+    inicializarJobs();
+    // Inicializar servidor WebSocket compartiendo puerto HTTP
+    initWebSocketServer(server);
+  });
+}
+
 
 // ==========================================
 // MANEJO GLOBAL DE ERRORES
