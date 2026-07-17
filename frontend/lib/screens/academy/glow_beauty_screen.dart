@@ -1,13 +1,9 @@
 // frontend/lib/screens/academy/glow_beauty_screen.dart
-// BeautyScreen migrada de glowapp_frontend — adaptada a StatefulWidget puro (sin Riverpod)
+// BeautyScreen migrada — adaptada a la paleta oficial AppTheme (fondo crema, tarjetas blancas con sombra)
 import 'package:flutter/material.dart';
-import 'glow_glass_card.dart';
+import '../../shared/theme.dart';
 
-// ─── Constantes de tema ───────────────────────────────────────────────────────
-const Color _kBackground = Color(0xFF0F172A);
-const Color _kPrimary    = Color(0xFFC89D93);
-
-// ─── Modelo de item (portado de beauty_provider.dart) ────────────────────────
+// ─── Modelo de item ──────────────────────────────────────────────────────────
 class _BeautyItem {
   final String title;
   final String description;
@@ -22,7 +18,7 @@ class _BeautyItem {
   });
 }
 
-// Lista estática de contenidos educativos (portada de BeautyProvider)
+// Lista estática de contenidos educativos armonizada
 const List<_BeautyItem> _beautyItems = [
   _BeautyItem(
     title: 'Cuidado de la piel',
@@ -69,27 +65,27 @@ class GlowBeautyScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _kBackground,
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: const Text(
           'Belleza & Educación',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+          style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.text, fontSize: 17),
         ),
-        backgroundColor: _kBackground,
-        iconTheme: const IconThemeData(color: Colors.white),
+        backgroundColor: AppTheme.background,
+        foregroundColor: AppTheme.text,
         elevation: 0,
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ── Header ──
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(20, 4, 20, 16),
             child: Text(
               'Aprende, mejora y brilla ✨',
               style: TextStyle(
-                color: Colors.white.withOpacity(0.7),
-                fontSize: 15,
+                color: Color(0xFF8E7D7A),
+                fontSize: 14,
               ),
             ),
           ),
@@ -113,14 +109,21 @@ class GlowBeautyScreen extends StatelessWidget {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text('Próximamente: ${item.title}'),
-                          backgroundColor: _kPrimary,
+                          backgroundColor: AppTheme.primary,
                           behavior: SnackBarBehavior.floating,
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12)),
                         ),
                       );
                     },
-                    child: GlowGlassCard(
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: AppTheme.cardShadow,
+                        border: Border.all(color: AppTheme.surface, width: 1),
+                      ),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -128,7 +131,7 @@ class GlowBeautyScreen extends StatelessWidget {
                             width: 56,
                             height: 56,
                             decoration: BoxDecoration(
-                              color: item.color.withOpacity(0.2),
+                              color: item.color.withOpacity(0.12),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(item.icon, color: item.color, size: 28),
@@ -138,8 +141,8 @@ class GlowBeautyScreen extends StatelessWidget {
                             item.title,
                             style: const TextStyle(
                               fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.text,
                             ),
                             textAlign: TextAlign.center,
                           ),
@@ -148,7 +151,7 @@ class GlowBeautyScreen extends StatelessWidget {
                             item.description,
                             style: const TextStyle(
                               fontSize: 11,
-                              color: Colors.white60,
+                              color: Color(0xFF8E7D7A),
                             ),
                             textAlign: TextAlign.center,
                             maxLines: 2,
@@ -162,7 +165,6 @@ class GlowBeautyScreen extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 100), // espacio para menú inferior flotante
         ],
       ),
     );
