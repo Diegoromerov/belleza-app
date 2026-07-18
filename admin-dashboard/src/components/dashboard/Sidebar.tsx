@@ -11,35 +11,44 @@ import {
   MessageSquare, 
   LogOut, 
   User as UserIcon,
-  Scissors
+  Scissors,
+  GraduationCap,
+  LayoutDashboard
 } from 'lucide-react';
 
 export default function Sidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
 
-  const links = [
-    {
-      href: user?.rol === 'PRESTADOR' ? '/prestador' : '/cliente',
-      label: 'Panel Principal',
-      icon: Home,
-    },
-    {
-      href: user?.rol === 'PRESTADOR' ? '/prestador/citas' : '/cliente/citas',
-      label: 'Mis Citas',
-      icon: Calendar,
-    },
-    {
-      href: '/chat',
-      label: 'Mensajes',
-      icon: MessageSquare,
-    },
-    {
-      href: '/perfil',
-      label: 'Mi Perfil',
-      icon: UserIcon,
-    },
-  ];
+  // Links based on role
+  const getLinks = () => {
+    if (user?.rol === 'PRESTADOR') {
+      return [
+        { href: '/prestador', label: 'Panel Principal', icon: LayoutDashboard },
+        { href: '/prestador/citas', label: 'Mis Citas', icon: Calendar },
+        { href: '/chat', label: 'Mensajes', icon: MessageSquare },
+        { href: '/perfil', label: 'Mi Perfil', icon: UserIcon },
+      ];
+    }
+    
+    if (user?.rol === 'ADMIN') {
+      return [
+        { href: '/admin/academia', label: 'Academia Glow', icon: GraduationCap },
+        { href: '/chat', label: 'Mensajes', icon: MessageSquare },
+        { href: '/perfil', label: 'Mi Perfil', icon: UserIcon },
+      ];
+    }
+    
+    // CLIENTE
+    return [
+      { href: '/cliente', label: 'Panel Principal', icon: Home },
+      { href: '/cliente/citas', label: 'Mis Citas', icon: Calendar },
+      { href: '/chat', label: 'Mensajes', icon: MessageSquare },
+      { href: '/perfil', label: 'Mi Perfil', icon: UserIcon },
+    ];
+  };
+
+  const links = getLinks();
 
   return (
     <aside className="w-64 bg-slate-900 text-white min-h-screen flex flex-col justify-between border-r border-slate-800">
