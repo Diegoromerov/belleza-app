@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 import '../../shared/theme.dart';
 import 'glow_nback_screen.dart';
-import 'glow_beauty_screen.dart';
+import 'glow_color_screen.dart';
 
 class AcademyScreen extends StatelessWidget {
   const AcademyScreen({super.key});
@@ -114,6 +114,24 @@ class AcademyScreen extends StatelessWidget {
                   context,
                   MaterialPageRoute(
                       builder: (_) => const GlowBeautyScreen()),
+                ),
+              ),
+
+              const SizedBox(height: 14),
+
+              // ── Tarjeta: Colorimetría Capilar ────────────────────────────────
+              _ModuleCard(
+                icon: Icons.palette_outlined,
+                gradient: AppTheme.premiumGradient,
+                tag: 'COLOR DE CABELLO',
+                title: 'Colorimetría Capilar',
+                subtitle: 'Curso profesional',
+                description:
+                    'Domina el arte del color en el cabello, desde fundamentos hasta técnicas avanzadas.',
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const GlowColorScreen()),
                 ),
               ),
 
