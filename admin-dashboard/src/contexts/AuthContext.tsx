@@ -7,8 +7,8 @@ import axios from 'axios';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, password_hash: string) => Promise<any>;
-  register: (data: { email: string; nombre: string; phone?: string; rol: 'CLIENTE' | 'PRESTADOR'; password_hash: string }) => Promise<any>;
+  login: (email: string, password: string) => Promise<any>;
+  register: (data: { email: string; nombre: string; phone?: string; rol: 'CLIENTE' | 'PRESTADOR'; password: string }) => Promise<any>;
   logout: () => void;
 }
 
@@ -37,13 +37,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const login = async (email: string, password_hash: string) => {
-    setLoading(true);
-    try {
-      const response = await axios.post(`${API_URL}/api/auth/login`, {
-        email,
-        password_hash,
-      });
+  const login = async (email: string, password: string) => {
+      setLoading(true);
+      try {
+        const response = await axios.post(`${API_URL}/api/auth/login`, {
+          email,
+          password,
+        });
 
       const { token, usuario } = response.data;
       if (token && usuario) {
@@ -59,7 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const register = async (data: { email: string; nombre: string; phone?: string; rol: 'CLIENTE' | 'PRESTADOR'; password_hash: string }) => {
+  const register = async (data: { email: string; nombre: string; phone?: string; rol: 'CLIENTE' | 'PRESTADOR'; password: string }) => {
     setLoading(true);
     try {
       const response = await axios.post(`${API_URL}/api/auth/register`, data);
