@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import '../../shared/theme.dart';
 import 'glow_nback_screen.dart';
+import 'glow_beauty_screen.dart';
 import 'glow_color_screen.dart';
 
 class AcademyScreen extends StatelessWidget {
@@ -84,19 +85,19 @@ class AcademyScreen extends StatelessWidget {
               const SizedBox(height: 16),
 
               // ── Tarjeta: Entrenamiento Cognitivo ─────────────────────────
-              _ModuleCard(
-                icon: Icons.psychology_outlined,
-                gradient: AppTheme.terracottaMatteGradient,
-                tag: 'NEUROCIENCIA',
-                title: 'Entrenamiento Cognitivo',
-                subtitle: 'Juego N‑Back',
-                description:
-                    'Mejora tu memoria de trabajo y concentración con ejercicios N‑Back de dificultad progresiva.',
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) => const GlowNBackScreen()),
-                ),
+                            _ModuleCard(
+                              icon: Icons.psychology_outlined,
+                              gradient: AppTheme.terracottaMatteGradient,
+                              tag: 'NEUROCIENCIA',
+                              title: 'Entrenamiento Cognitivo',
+                              subtitle: 'Juego N‑Back',
+                              description:
+                                  'Mejora tu memoria de trabajo y concentración con ejercicios N‑Back de dificultad progresiva.',
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => GlowNBackScreen())),
+                            ),
               ),
 
               const SizedBox(height: 14),
@@ -113,26 +114,26 @@ class AcademyScreen extends StatelessWidget {
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (_) => const GlowBeautyScreen()),
+                      builder: (_) => GlowBeautyScreen()),
                 ),
               ),
 
               const SizedBox(height: 14),
 
               // ── Tarjeta: Colorimetría Capilar ────────────────────────────────
-              _ModuleCard(
-                icon: Icons.palette_outlined,
-                gradient: AppTheme.premiumGradient,
-                tag: 'COLOR DE CABELLO',
-                title: 'Colorimetría Capilar',
-                subtitle: 'Curso profesional',
-                description:
-                    'Domina el arte del color en el cabello, desde fundamentos hasta técnicas avanzadas.',
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) => const GlowColorScreen()),
-                ),
+                            _ModuleCard(
+                              icon: Icons.palette_outlined,
+                              gradient: AppTheme.premiumGradient,
+                              tag: 'COLOR DE CABELLO',
+                              title: 'Colorimetría Capilar',
+                              subtitle: 'Curso profesional',
+                              description:
+                                  'Domina el arte del color en el cabello, desde fundamentos hasta técnicas avanzadas.',
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => GlowColorScreen())),
+                            ),
               ),
 
               const SizedBox(height: 28),
@@ -164,7 +165,7 @@ class _ModuleCard extends StatelessWidget {
   final String description;
   final VoidCallback onTap;
 
-  const _ModuleCard({
+  _ModuleCard({
     required this.icon,
     required this.gradient,
     required this.tag,
