@@ -100,7 +100,8 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
       'http://localhost:3001',
       'http://127.0.0.1:3001',
       'https://belleza-app-production.up.railway.app',
-      'https://glowapp-frontend-production.up.railway.app'
+      'https://glowapp-frontend-production.up.railway.app',
+      'https://admin-dashboard-production-4183.up.railway.app'
     ];
 
 // GZIP Compression & Cors setup
