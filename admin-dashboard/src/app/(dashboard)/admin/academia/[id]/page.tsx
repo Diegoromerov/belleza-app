@@ -481,15 +481,15 @@ export default function EditarCursoPage() {
           <div>
             <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">{course?.title}</h1>
             <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
-              <span className="px-2 py-0.5 bg-rose-50 text-rose-700 rounded-full">
-                {course?.category?.charAt(0).toUpperCase() + course?.category?.slice(1)}
-              </span>
-              <span>•</span>
-              <span className="flex items-center gap-1">
-                <GraduationCap className="w-4 h-4" />
-                {course?.badge_name}
-              </span>
-            </div>
+                          <span className="px-2 py-0.5 bg-rose-50 text-rose-700 rounded-full">
+                            {course?.category ? course.category.charAt(0).toUpperCase() + course.category.slice(1) : '—'}
+                          </span>
+                          <span>•</span>
+                          <span className="flex items-center gap-1">
+                            <GraduationCap className="w-4 h-4" />
+                            {course?.badge_name}
+                          </span>
+                        </div>
           </div>
         </div>
         <Link
