@@ -12,6 +12,7 @@
     "turbo": "^2.10.3"
   },
   "scripts": {
+    "seed": "node run_seed.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
