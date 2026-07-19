@@ -53,9 +53,21 @@ exports.register = async (req, res) => {
 // ==========================================
 exports.login = async (req, res) => {
   try {
+    // ==========================================
+    // 🔍 DIAGNÓSTICO PROFUNDO (Eliminar después de fix)
+    // ==========================================
+    console.log("==========================================");
+    console.log("🔍 1. RAW REQ.BODY:", JSON.stringify(req.body));
+    console.log("🔍 2. CONTENT-TYPE:", req.headers['content-type']);
+    console.log("🔍 3. CONTENT-LENGTH:", req.headers['content-length']);
+    console.log("🔍 4. IP / PROXY:", req.ip, "|", req.headers['x-forwarded-for']);
+    console.log("🔍 5. DESTRUCTURED:", "email =", req.body?.email, "| password =", req.body?.password ? "****" : "undefined");
+    console.log("==========================================");
+
     const { email, password } = req.body;
     
     if (!email || !password) {
+      console.log("❌ VALIDACIÓN FALLIDA: Faltan campos. Email:", email, "Password:", password);
       return res.status(400).json({ error: 'Email y contraseña son obligatorios' });
     }
 
