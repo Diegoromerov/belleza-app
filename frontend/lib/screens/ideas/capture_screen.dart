@@ -170,14 +170,16 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
     }
 
     final face = faces.first;
+    final imageSize = inputImage.metadata?.size ?? const Size(480, 640);
+    
     if (mounted) {
       setState(() {
         _detectedFace = face;
-        _isFaceValid = _validateFace(face);
-        _qualityScore = _calculateFaceQuality(face);
+        _isFaceValid = _validateFace(face, imageSize);
+        _qualityScore = _calculateFaceQuality(face, imageSize);
         _instruction = _isFaceValid
             ? '✅ ¡Perfecto! Mantén la posición...'
-            : _getFaceInstruction(face);
+            : _getFaceInstruction(face, imageSize);
       });
     }
 
@@ -189,53 +191,59 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
     }
   }
 
-  bool _validateFace(Face face) {
+  bool _validateFace(Face face, Size imageSize) {
     final faceWidth = face.boundingBox.width;
-    final screenWidth = MediaQuery.of(context).size.width;
-    if (faceWidth < screenWidth * 0.25) return false;
+    final imageWidth = imageSize.width;
+    
+    // Validar que la cara tenga un tamaño adecuado respecto a la imagen (entre 20% y 75% del ancho)
+    if (faceWidth < imageWidth * 0.20 || faceWidth > imageWidth * 0.75) return false;
     
     final aspectRatio = face.boundingBox.height / face.boundingBox.width;
-    if (aspectRatio > 1.5 || aspectRatio < 0.9) return false;
+    if (aspectRatio > 1.6 || aspectRatio < 0.8) return false;
     
     return true;
   }
 
-  double _calculateFaceQuality(Face face) {
+  double _calculateFaceQuality(Face face, Size imageSize) {
     double score = 0.0;
-    final screenWidth = MediaQuery.of(context).size.width;
+    final imageWidth = imageSize.width;
     
-    final sizeScore = (face.boundingBox.width / screenWidth).clamp(0.0, 0.4) * 100;
-    score += sizeScore;
+    // Puntuación por tamaño (óptimo alrededor del 45% del ancho de la imagen)
+    final sizeRatio = face.boundingBox.width / imageWidth;
+    final sizeScore = (1 - (sizeRatio - 0.45).abs() / 0.25) * 40;
+    score += sizeScore.clamp(0.0, 40.0);
     
+    // Puntuación por centrado horizontal
     final faceCenterX = face.boundingBox.center.dx;
-    final centerOffset = (faceCenterX - screenWidth / 2).abs();
-    final centerScore = (1 - (centerOffset / (screenWidth / 2))) * 30;
+    final centerOffset = (faceCenterX - imageWidth / 2).abs();
+    final centerScore = (1 - (centerOffset / (imageWidth / 2))) * 30;
     score += centerScore.clamp(0.0, 30.0);
     
+    // Puntuación por proporción de aspecto
     final aspectRatio = face.boundingBox.height / face.boundingBox.width;
-    final ratioScore = (1 - (aspectRatio - 1.2).abs() / 0.5) * 30;
+    final ratioScore = (1 - (aspectRatio - 1.2).abs() / 0.4) * 30;
     score += ratioScore.clamp(0.0, 30.0);
     
     return score.clamp(0.0, 100.0);
   }
 
-  String _getFaceInstruction(Face face) {
-    final screenWidth = MediaQuery.of(context).size.width;
+  String _getFaceInstruction(Face face, Size imageSize) {
+    final imageWidth = imageSize.width;
     final faceWidth = face.boundingBox.width;
     
-    if (faceWidth < screenWidth * 0.25) {
+    if (faceWidth < imageWidth * 0.20) {
       return '📱 Acércate un poco más a la cámara';
     }
-    if (faceWidth > screenWidth * 0.8) {
+    if (faceWidth > imageWidth * 0.75) {
       return '📱 Aléjate un poco de la cámara';
     }
     
     final faceCenterX = face.boundingBox.center.dx;
-    if (faceCenterX < screenWidth * 0.3) {
-      return '👈 Mueve tu rostro hacia la derecha';
+    if (faceCenterX < imageWidth * 0.35) {
+      return '👈 Mueve tu rostro hacia el centro';
     }
-    if (faceCenterX > screenWidth * 0.7) {
-      return '👉 Mueve tu rostro hacia la izquierda';
+    if (faceCenterX > imageWidth * 0.65) {
+      return '👉 Mueve tu rostro hacia el centro';
     }
     
     return '🔄 Ajusta ligeramente tu posición';
