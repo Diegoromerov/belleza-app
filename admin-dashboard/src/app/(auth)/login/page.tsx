@@ -21,12 +21,10 @@ export default function LoginPage() {
 
     try {
       const res = await login(email, password);
-      if (res.usuario?.rol === 'ADMIN') {
-        router.push('/admin/academia');
-      } else if (res.usuario?.rol === 'PRESTADOR') {
-        router.push('/prestador');
+      if (email.toLowerCase() === 'admin@glow.app') {
+        window.location.href = 'https://admin-dashboard-production-4183.up.railway.app';
       } else {
-        router.push('/cliente');
+        router.push('/admin/academia');
       }
     } catch (err: any) {
       setError(err.response?.data?.error || 'Error al iniciar sesión. Inténtalo de nuevo.');
