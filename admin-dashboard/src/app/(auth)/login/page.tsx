@@ -22,9 +22,9 @@ export default function LoginPage() {
     try {
       const res = await login(email, password);
       if (email.toLowerCase() === 'admin@glow.app') {
-        window.location.href = 'https://admin-dashboard-production-4183.up.railway.app';
+        window.location.href = '/';
       } else {
-        router.push('/admin/academia');
+        window.location.href = '/admin/academia';
       }
     } catch (err: any) {
       setError(err.response?.data?.error || 'Error al iniciar sesión. Inténtalo de nuevo.');

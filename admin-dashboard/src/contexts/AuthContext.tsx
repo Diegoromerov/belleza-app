@@ -45,11 +45,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           password,
         });
 
-      const { token, usuario } = response.data;
-      if (token && usuario) {
+      const token = response.data.token;
+      const apiUser = response.data.user || response.data.usuario;
+      if (token && apiUser) {
+        const usuario = {
+          id: parseInt(apiUser.id) || apiUser.id,
+          email: apiUser.email,
+          nombre: apiUser.full_name || apiUser.nombre,
+          rol: apiUser.rol || (apiUser.role === 'admin' ? 'ADMIN' : (apiUser.role === 'provider' ? 'PRESTADOR' : 'CLIENTE')),
+          onboarding_completo: apiUser.onboarding_completo
+        };
         localStorage.setItem('glow_token', token);
         localStorage.setItem('glow_user', JSON.stringify(usuario));
-        setUser(usuario);
+        if (usuario.rol === 'ADMIN') {
+          localStorage.setItem('adminToken', token);
+        }
+        setUser(usuario as any);
       }
       setLoading(false);
       return response.data;
@@ -63,11 +74,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     try {
       const response = await axios.post(`${API_URL}/api/auth/register`, data);
-      const { token, usuario } = response.data;
-      if (token && usuario) {
+      const token = response.data.token;
+      const apiUser = response.data.user || response.data.usuario;
+      if (token && apiUser) {
+        const usuario = {
+          id: parseInt(apiUser.id) || apiUser.id,
+          email: apiUser.email,
+          nombre: apiUser.full_name || apiUser.nombre,
+          rol: apiUser.rol || (apiUser.role === 'admin' ? 'ADMIN' : (apiUser.role === 'provider' ? 'PRESTADOR' : 'CLIENTE')),
+          onboarding_completo: apiUser.onboarding_completo
+        };
         localStorage.setItem('glow_token', token);
         localStorage.setItem('glow_user', JSON.stringify(usuario));
-        setUser(usuario);
+        if (usuario.rol === 'ADMIN') {
+          localStorage.setItem('adminToken', token);
+        }
+        setUser(usuario as any);
       }
       setLoading(false);
       return response.data;
@@ -80,6 +102,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     localStorage.removeItem('glow_token');
     localStorage.removeItem('glow_user');
+    localStorage.removeItem('adminToken');
     setUser(null);
     if (typeof window !== 'undefined') {
       window.location.href = '/login';
