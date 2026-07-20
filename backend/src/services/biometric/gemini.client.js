@@ -23,15 +23,15 @@ class GeminiClient {
       }
 
       const response = await axios.post(
-        `${this.baseUrl}/models/gemini-2.0-flash-vision:generateContent?key=${this.apiKey}`,
+        `${this.baseUrl}/models/gemini-2.0-flash:generateContent?key=${this.apiKey}`,
         {
           contents: [
             {
               parts: [
                 { text: HANDS_ANALYSIS_PROMPT },
                 {
-                  inline_data: {
-                    mime_type: 'image/jpeg',
+                  inlineData: {
+                    mimeType: 'image/jpeg',
                     data: base64Image,
                   },
                 },

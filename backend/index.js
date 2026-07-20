@@ -1669,3 +1669,5 @@ process.on('uncaughtException', (error) => {
   }
 });
 // Nodemon trigger reload to reconnect to beauty-postgres database - updated weekly schedule logic
+
+module.exports = app;

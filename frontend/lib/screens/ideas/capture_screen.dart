@@ -56,6 +56,9 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
 
   @override
   void dispose() {
+    if (_cameraController != null && _cameraController!.value.isStreamingImages) {
+      _cameraController!.stopImageStream();
+    }
     _cameraController?.dispose();
     _faceDetector.close();
     super.dispose();
@@ -124,8 +127,20 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
       }
       final bytes = allBytes.done().buffer.asUint8List();
 
-      final imageRotation = InputImageRotation.rotation0deg;
-      final inputImageFormat = InputImageFormat.nv21;
+      final sensorOrientation = _cameraController?.description.sensorOrientation ?? 270;
+      InputImageRotation imageRotation = InputImageRotation.rotation270deg;
+      if (sensorOrientation == 90) {
+        imageRotation = InputImageRotation.rotation90deg;
+      } else if (sensorOrientation == 180) {
+        imageRotation = InputImageRotation.rotation180deg;
+      } else if (sensorOrientation == 0) {
+        imageRotation = InputImageRotation.rotation0deg;
+      }
+
+      InputImageFormat inputImageFormat = InputImageFormat.nv21;
+      if (Platform.isIOS) {
+        inputImageFormat = InputImageFormat.bgra8888;
+      }
 
       final inputImageMetadata = InputImageMetadata(
         size: Size(image.width.toDouble(), image.height.toDouble()),
@@ -230,6 +245,9 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
     if (_step == CaptureStep.done) return;
     
     try {
+      if (_cameraController != null && _cameraController!.value.isStreamingImages) {
+        await _cameraController!.stopImageStream();
+      }
       final image = await _cameraController!.takePicture();
       final file = File(image.path);
       _faceImage = await file.readAsBytes();
@@ -240,6 +258,7 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
         _isHandValid = false;
         _qualityScore = 0.0;
       });
+      _startDetection();
     } catch (e) {
       debugPrint('Error al capturar rostro: $e');
     }
@@ -248,7 +267,15 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
   Future<void> _processHands(CameraImage image) async {
     // MediaPipe Hand Detection on-device en Flutter sin C++ / bindings nativos pesados es inestable o requiere TensorFlow.
     // Simulamos la validación geométrica de encuadre en base a frames con buena luminosidad.
-    final hasEnoughLight = image.planes[0].bytes[0] > 40; 
+    // Promediamos varias muestras del canal de luminancia (Plano 0) para robustecer la detección de luz
+    final bytes = image.planes[0].bytes;
+    final step = bytes.length ~/ 5;
+    double sum = 0;
+    for (int i = 0; i < 5; i++) {
+      sum += bytes[i * step];
+    }
+    final averageLuminosity = sum / 5;
+    final hasEnoughLight = averageLuminosity > 40;
     
     if (mounted) {
       setState(() {
@@ -272,6 +299,9 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
     if (_step == CaptureStep.done) return;
     
     try {
+      if (_cameraController != null && _cameraController!.value.isStreamingImages) {
+        await _cameraController!.stopImageStream();
+      }
       final image = await _cameraController!.takePicture();
       final file = File(image.path);
       _handsImage = await file.readAsBytes();
