@@ -449,8 +449,26 @@ export default function EditarCursoPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-8 h-8 text-rose-500 animate-spin" />
+      <div className="max-w-6xl mx-auto space-y-8 animate-pulse">
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 bg-gray-200 rounded-xl"></div>
+          <div className="space-y-2 flex-1">
+            <div className="h-6 bg-gray-200 rounded-md w-48"></div>
+            <div className="h-4 bg-gray-200 rounded-md w-32"></div>
+          </div>
+        </div>
+        <div className="bg-white rounded-2xl border border-gray-150 p-6 space-y-6">
+          <div className="flex gap-4 border-b border-gray-100 pb-3">
+            <div className="h-8 bg-gray-200 rounded-lg w-36"></div>
+            <div className="h-8 bg-gray-200 rounded-lg w-44"></div>
+            <div className="h-8 bg-gray-200 rounded-lg w-32"></div>
+          </div>
+          <div className="space-y-4">
+            <div className="h-12 bg-gray-50 rounded-xl w-full"></div>
+            <div className="h-12 bg-gray-50 rounded-xl w-full"></div>
+            <div className="h-12 bg-gray-50 rounded-xl w-full"></div>
+          </div>
+        </div>
       </div>
     );
   }

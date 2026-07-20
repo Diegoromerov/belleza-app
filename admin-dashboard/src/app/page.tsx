@@ -198,6 +198,24 @@ export default function Dashboard() {
     alert(`El prestador #${providerId} ha sido RECHAZADO.`);
   };
 
+  // Alarma acústica para emergencias SOS
+  useEffect(() => {
+    let audio: HTMLAudioElement | null = null;
+    if (sosAlerts.length > 0) {
+      audio = new Audio('https://assets.mixkit.co/active_storage/sfx/951/951-84.wav');
+      audio.loop = true;
+      const playAlarm = () => {
+        audio?.play().catch(() => {});
+      };
+      playAlarm();
+      window.addEventListener('click', playAlarm);
+      return () => {
+        audio?.pause();
+        window.removeEventListener('click', playAlarm);
+      };
+    }
+  }, [sosAlerts]);
+
   const toggleChecklist = (director: string, itemId: number) => {
     setChecklists(prev => {
       const updated = prev[director as keyof typeof prev].map(item => {
@@ -817,6 +835,20 @@ export default function Dashboard() {
                             </span>
                           </div>
                         </div>
+                      </div>
+
+                      {/* Mapa Interactivo de Emergencia */}
+                      <div className="w-full h-36 rounded-2xl overflow-hidden border border-rose-500/20 relative shadow-inner">
+                        <iframe
+                          width="100%"
+                          height="100%"
+                          frameBorder="0"
+                          scrolling="no"
+                          marginHeight={0}
+                          marginWidth={0}
+                          title={`Mapa Alerta ${alert.id}`}
+                          src={`https://maps.google.com/maps?q=${alert.latitude},${alert.longitude}&z=14&output=embed`}
+                        />
                       </div>
 
                       <div className="flex gap-4">
