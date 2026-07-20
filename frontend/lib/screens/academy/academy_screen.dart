@@ -85,19 +85,18 @@ class AcademyScreen extends StatelessWidget {
               const SizedBox(height: 16),
 
               // ── Tarjeta: Entrenamiento Cognitivo ─────────────────────────
-                            _ModuleCard(
-                              icon: Icons.psychology_outlined,
-                              gradient: AppTheme.terracottaMatteGradient,
-                              tag: 'NEUROCIENCIA',
-                              title: 'Entrenamiento Cognitivo',
-                              subtitle: 'Juego N‑Back',
-                              description:
-                                  'Mejora tu memoria de trabajo y concentración con ejercicios N‑Back de dificultad progresiva.',
-                              onTap: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (_) => GlowNBackScreen())),
-                            ),
+              _ModuleCard(
+                icon: Icons.psychology_outlined,
+                gradient: AppTheme.terracottaMatteGradient,
+                tag: 'NEUROCIENCIA',
+                title: 'Entrenamiento Cognitivo',
+                subtitle: 'Juego N‑Back',
+                description:
+                    'Mejora tu memoria de trabajo y concentración con ejercicios N‑Back de dificultad progresiva.',
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => GlowNBackScreen())),
               ),
 
               const SizedBox(height: 14),
@@ -114,26 +113,24 @@ class AcademyScreen extends StatelessWidget {
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (_) => GlowBeautyScreen()),
-                ),
+                      builder: (_) => GlowBeautyScreen())),
               ),
 
               const SizedBox(height: 14),
 
               // ── Tarjeta: Colorimetría Capilar ────────────────────────────────
-                            _ModuleCard(
-                              icon: Icons.palette_outlined,
-                              gradient: AppTheme.premiumGradient,
-                              tag: 'COLOR DE CABELLO',
-                              title: 'Colorimetría Capilar',
-                              subtitle: 'Curso profesional',
-                              description:
-                                  'Domina el arte del color en el cabello, desde fundamentos hasta técnicas avanzadas.',
-                              onTap: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (_) => GlowColorScreen())),
-                            ),
+              _ModuleCard(
+                icon: Icons.palette_outlined,
+                gradient: AppTheme.premiumGradient,
+                tag: 'COLOR DE CABELLO',
+                title: 'Colorimetría Capilar',
+                subtitle: 'Curso profesional',
+                description:
+                    'Domina el arte del color en el cabello, desde fundamentos hasta técnicas avanzadas.',
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => GlowColorScreen())),
               ),
 
               const SizedBox(height: 28),
@@ -213,7 +210,7 @@ class _ModuleCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: AppTheme.primary.withValues(alpha: 0.12),
+                        color: AppTheme.primary.withOpacity(0.12),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
@@ -253,7 +250,7 @@ class _ModuleCard extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(right: 14),
               child: Icon(Icons.arrow_forward_ios,
-                  color: AppTheme.primary.withValues(alpha: 0.5),
+                  color: AppTheme.primary.withOpacity(0.5),
                   size: 13),
             ),
           ],
