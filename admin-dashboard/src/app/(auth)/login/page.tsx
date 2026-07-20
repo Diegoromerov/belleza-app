@@ -21,7 +21,9 @@ export default function LoginPage() {
 
     try {
       const res = await login(email, password);
-      if (res.usuario?.rol === 'PRESTADOR') {
+      if (res.usuario?.rol === 'ADMIN') {
+        router.push('/admin/academia');
+      } else if (res.usuario?.rol === 'PRESTADOR') {
         router.push('/prestador');
       } else {
         router.push('/cliente');
