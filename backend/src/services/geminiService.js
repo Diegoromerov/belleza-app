@@ -152,7 +152,7 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
     // 3. Formatear el historial y agrupar mensajes consecutivos del mismo emisor (user/model)
     const contents = [];
     rawMessages.forEach(msg => {
-      const role = msg.sender_id === userId ? 'user' : 'model';
+      const role = parseInt(msg.sender_id, 10) === parsedUserId ? 'user' : 'model';
       if (contents.length > 0 && contents[contents.length - 1].role === role) {
         // Si el rol es el mismo que el anterior, concatenamos el texto con un salto de línea
         contents[contents.length - 1].parts[0].text += `\n${msg.message}`;
