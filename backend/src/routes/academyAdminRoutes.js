@@ -4,28 +4,7 @@ const express = require('express');
 const router = express.Router();
 const { pool } = require('../config/db');
 const authMiddleware = require('../middleware/auth');
-
-// Middleware para verificar rol ADMIN
-const adminMiddleware = async (req, res, next) => {
-  try {
-    if (!req.user || !req.user.id) {
-      return res.status(401).json({ error: 'No autorizado. Token inválido.' });
-    }
-    const { rows } = await pool.query('SELECT rol, email FROM usuarios WHERE id = $1', [req.user.id]);
-    if (!rows.length) {
-      return res.status(401).json({ error: 'Usuario no encontrado.' });
-    }
-    const user = rows[0];
-    if (user.rol !== 'ADMIN') {
-      return res.status(403).json({ error: 'Acceso denegado. Se requieren permisos de administrador.' });
-    }
-    req.admin = { email: user.email };
-    next();
-  } catch (error) {
-    console.error('Error en adminMiddleware:', error);
-    res.status(500).json({ error: 'Error interno de autorización.' });
-  }
-};
+const adminMiddleware = require('../middleware/admin');
 
 // Aplicar middlewares a todas las rutas
 router.use(authMiddleware, adminMiddleware);
@@ -40,17 +19,34 @@ router.get('/courses', async (req, res) => {
     const { rows } = await pool.query(`
       SELECT 
         c.*,
-        (SELECT COUNT(*) FROM academy_modules m WHERE m.course_id = c.id) as modules_count,
-        (SELECT COUNT(*) FROM academy_lessons l 
-         JOIN academy_modules m ON l.module_id = m.id 
-         WHERE m.course_id = c.id) as lessons_count,
-        (SELECT COUNT(*) FROM academy_quizzes q WHERE q.course_id = c.id) as quizzes_count,
-        (SELECT COUNT(*) FROM academy_certificates cert WHERE cert.course_id = c.id) as certificates_issued,
-        (SELECT COUNT(DISTINCT p.provider_id) FROM academy_progress p
-         JOIN academy_lessons l ON p.lesson_id = l.id
-         JOIN academy_modules m ON l.module_id = m.id
-         WHERE m.course_id = c.id) as enrolled_providers
+        COALESCE(m.count, 0) as modules_count,
+        COALESCE(l.count, 0) as lessons_count,
+        COALESCE(q.count, 0) as quizzes_count,
+        COALESCE(cert.count, 0) as certificates_issued,
+        COALESCE(prog.count, 0) as enrolled_providers
       FROM academy_courses c
+      LEFT JOIN (
+        SELECT course_id, COUNT(*) as count FROM academy_modules GROUP BY course_id
+      ) m ON m.course_id = c.id
+      LEFT JOIN (
+        SELECT m.course_id, COUNT(*) as count 
+        FROM academy_lessons l 
+        JOIN academy_modules m ON l.module_id = m.id 
+        GROUP BY m.course_id
+      ) l ON l.course_id = c.id
+      LEFT JOIN (
+        SELECT course_id, COUNT(*) as count FROM academy_quizzes GROUP BY course_id
+      ) q ON q.course_id = c.id
+      LEFT JOIN (
+        SELECT course_id, COUNT(*) as count FROM academy_certificates GROUP BY course_id
+      ) cert ON cert.course_id = c.id
+      LEFT JOIN (
+        SELECT m.course_id, COUNT(DISTINCT p.provider_id) as count
+        FROM academy_progress p
+        JOIN academy_lessons l ON p.lesson_id = l.id
+        JOIN academy_modules m ON l.module_id = m.id
+        GROUP BY m.course_id
+      ) prog ON prog.course_id = c.id
       ORDER BY c.created_at DESC
     `);
     res.json(rows);

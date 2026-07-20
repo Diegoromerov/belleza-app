@@ -158,7 +158,9 @@ router.post('/courses/:id/submit-quiz', authMiddleware, async (req, res) => {
       }
     }
 
-    const approved = score === total; // Requiere 100% de aciertos para el certificado
+    const passPct = parseInt(process.env.QUIZ_PASS_PCT) || 80;
+    const correctPct = (score / total) * 100;
+    const approved = correctPct >= passPct;
 
     if (approved) {
       await pool.query(`
@@ -174,14 +176,14 @@ router.post('/courses/:id/submit-quiz', authMiddleware, async (req, res) => {
         score,
         total,
         badgeName: courseRes.rows[0]?.badge_name || 'Certificado de Aprobación',
-        mensaje: `¡Excelente! Aprobaste con puntuación perfecta (${score}/${total}). Insignia desbloqueada.`
+        mensaje: `¡Excelente! Aprobaste con ${score} de ${total} aciertos (${correctPct.toFixed(0)}%). Insignia desbloqueada.`
       });
     } else {
       res.json({
         approved: false,
         score,
         total,
-        mensaje: `No has aprobado. Obtuviste ${score} de ${total} aciertos. Revisa el contenido e inténtalo de nuevo.`
+        mensaje: `No has aprobado. Obtuviste ${score} de ${total} aciertos (${correctPct.toFixed(0)}%). El mínimo requerido para aprobar es ${passPct}%.`
       });
     }
   } catch (err) {
