@@ -96,7 +96,8 @@ class AcademyScreen extends StatelessWidget {
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (_) => GlowNBackScreen())),
+                      builder: (_) => GlowNBackScreen()),
+                ),
               ),
 
               const SizedBox(height: 14),
@@ -113,7 +114,8 @@ class AcademyScreen extends StatelessWidget {
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (_) => GlowBeautyScreen())),
+                      builder: (_) => GlowBeautyScreen()),
+                ),
               ),
 
               const SizedBox(height: 14),
@@ -130,7 +132,8 @@ class AcademyScreen extends StatelessWidget {
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (_) => GlowColorScreen())),
+                      builder: (_) => GlowColorScreen()),
+                ),
               ),
 
               const SizedBox(height: 28),
