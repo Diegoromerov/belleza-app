@@ -273,9 +273,12 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
     final faceWidth = face.boundingBox.width;
     final imageWidth = imageSize.width;
 
-    if (faceWidth < imageWidth * 0.20 || faceWidth > imageWidth * 0.75) return false;
+    // Relajar los umbrales de validación (tamaño de cara entre 15% y 85% del ancho de imagen)
+    if (faceWidth < imageWidth * 0.15 || faceWidth > imageWidth * 0.85) return false;
+    
+    // Relajar la relación de aspecto a 0.7 - 1.8
     final aspectRatio = face.boundingBox.height / face.boundingBox.width;
-    if (aspectRatio > 1.6 || aspectRatio < 0.8) return false;
+    if (aspectRatio > 1.8 || aspectRatio < 0.7) return false;
     return true;
   }
 
@@ -283,8 +286,9 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
     double score = 0.0;
     final imageWidth = imageSize.width;
 
+    // Puntuación por tamaño (óptimo alrededor del 50% del ancho de la imagen, con rango relajado de tolerancia 0.35)
     final sizeRatio = face.boundingBox.width / imageWidth;
-    final sizeScore = (1 - (sizeRatio - 0.45).abs() / 0.25) * 40;
+    final sizeScore = (1 - (sizeRatio - 0.50).abs() / 0.35) * 40;
     score += sizeScore.clamp(0.0, 40.0);
 
     final faceCenterX = face.boundingBox.center.dx;
@@ -293,7 +297,7 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
     score += centerScore.clamp(0.0, 30.0);
 
     final aspectRatio = face.boundingBox.height / face.boundingBox.width;
-    final ratioScore = (1 - (aspectRatio - 1.2).abs() / 0.4) * 30;
+    final ratioScore = (1 - (aspectRatio - 1.25).abs() / 0.55) * 30;
     score += ratioScore.clamp(0.0, 30.0);
 
     return score.clamp(0.0, 100.0);
@@ -303,10 +307,10 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
     final imageWidth = imageSize.width;
     final faceWidth = face.boundingBox.width;
 
-    if (faceWidth < imageWidth * 0.20) {
+    if (faceWidth < imageWidth * 0.15) {
       return '📱 Acércate un poco más a la cámara';
     }
-    if (faceWidth > imageWidth * 0.75) {
+    if (faceWidth > imageWidth * 0.85) {
       return '📱 Aléjate un poco de la cámara';
     }
 
