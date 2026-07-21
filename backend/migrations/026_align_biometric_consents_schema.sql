@@ -83,11 +83,22 @@
 
 BEGIN;
 
--- 1. Renombrar columnas al contrato que espera el código actual
-ALTER TABLE biometric_consents RENAME COLUMN consent_type TO version;
-ALTER TABLE biometric_consents RENAME COLUMN ip_address TO ip;
-ALTER TABLE biometric_consents RENAME COLUMN device_info TO user_agent;
-ALTER TABLE biometric_consents RENAME COLUMN created_at TO accepted_at;
+-- 1. Renombrar columnas al contrato que espera el código actual (de forma idempotente)
+DO $$ 
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'biometric_consents' AND column_name = 'consent_type') THEN
+        ALTER TABLE biometric_consents RENAME COLUMN consent_type TO version;
+    END IF;
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'biometric_consents' AND column_name = 'ip_address') THEN
+        ALTER TABLE biometric_consents RENAME COLUMN ip_address TO ip;
+    END IF;
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'biometric_consents' AND column_name = 'device_info') THEN
+        ALTER TABLE biometric_consents RENAME COLUMN device_info TO user_agent;
+    END IF;
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'biometric_consents' AND column_name = 'created_at') THEN
+        ALTER TABLE biometric_consents RENAME COLUMN created_at TO accepted_at;
+    END IF;
+END $$;
 
 -- 2. Agregar la columna que falta por completo (usada por /api/consent/revoke)
 ALTER TABLE biometric_consents ADD COLUMN IF NOT EXISTS revoked_at TIMESTAMP WITH TIME ZONE;
