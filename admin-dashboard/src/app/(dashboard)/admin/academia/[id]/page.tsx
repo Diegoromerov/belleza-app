@@ -644,6 +644,19 @@ export default function EditarCursoPage() {
               formData={module}
               setFormData={(val: Partial<Module>) => setModules(prev => prev.map(m => m.id === module.id ? { ...m, ...val } : m))}
               modulesLength={modules.length}
+              showAddLesson={showAddLesson}
+              setShowAddLesson={setShowAddLesson}
+              lessonForm={lessonForm}
+              setLessonForm={setLessonForm}
+              modules={modules}
+              saving={saving}
+              handleAddLesson={handleAddLesson}
+              editingLessonId={editingLessonId}
+              setEditingLessonId={setEditingLessonId}
+              handleUpdateLesson={handleUpdateLesson}
+              handleDeleteLesson={handleDeleteLesson}
+              moveLesson={moveLesson}
+              setLessons={setLessons}
             />
           ))}
         </div>
@@ -804,7 +817,20 @@ function ModuleCard({
   onMoveDown,
   formData,
   setFormData,
-  modulesLength
+  modulesLength,
+  showAddLesson,
+  setShowAddLesson,
+  lessonForm,
+  setLessonForm,
+  modules,
+  saving,
+  handleAddLesson,
+  editingLessonId,
+  setEditingLessonId,
+  handleUpdateLesson,
+  handleDeleteLesson,
+  moveLesson,
+  setLessons
 }: { 
   module: any; 
   index: number; 
@@ -822,6 +848,19 @@ function ModuleCard({
   formData: any; 
   setFormData: (prev: any) => any;
   modulesLength: number;
+  showAddLesson: string | null;
+  setShowAddLesson: (val: string | null) => void;
+  lessonForm: any;
+  setLessonForm: any;
+  modules: any[];
+  saving: boolean;
+  handleAddLesson: any;
+  editingLessonId: string | null;
+  setEditingLessonId: (val: string | null) => void;
+  handleUpdateLesson: any;
+  handleDeleteLesson: any;
+  moveLesson: any;
+  setLessons: any;
 }) {
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
