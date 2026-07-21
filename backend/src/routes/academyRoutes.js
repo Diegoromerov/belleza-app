@@ -109,6 +109,95 @@ router.post('/lessons/:id/complete', authMiddleware, async (req, res) => {
 });
 
 /**
+ * POST /api/academy/consent
+ * Registra o actualiza consentimiento Habeas Data Ley 1581
+ */
+router.post('/consent', authMiddleware, async (req, res) => {
+  try {
+    const { aceptado } = req.body;
+    const result = await pool.query(`
+      INSERT INTO academy_consentimientos (provider_id, aceptado, fecha_aceptacion, fecha_revocacion)
+      VALUES ($1, $2, NOW(), NULL)
+      ON CONFLICT (provider_id)
+      DO UPDATE SET aceptado = $2, fecha_aceptacion = NOW(), fecha_revocacion = NULL
+      RETURNING id, aceptado
+    `, [req.user.id, aceptado === true]);
+    
+    res.json({ ok: true, consentId: result.rows[0].id, aceptado: result.rows[0].aceptado });
+  } catch (err) {
+    console.error('Error al registrar consentimiento:', err);
+    res.status(500).json({ error: 'Error al registrar consentimiento.' });
+  }
+});
+
+/**
+ * GET /api/academy/consent/status
+ * Verifica el estado actual del consentimiento biométrico
+ */
+router.get('/consent/status', authMiddleware, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT id, aceptado FROM academy_consentimientos WHERE provider_id = $1', [req.user.id]);
+    if (result.rows.length === 0) {
+      return res.json({ hasConsent: false, aceptado: false });
+    }
+    res.json({ hasConsent: true, consentId: result.rows[0].id, aceptado: result.rows[0].aceptado });
+  } catch (err) {
+    console.error('Error al obtener estado del consentimiento:', err);
+    res.status(500).json({ error: 'Error al consultar consentimiento.' });
+  }
+});
+
+/**
+ * POST /api/academy/worksheets/submit
+ * Envía respuestas del taller práctico e imágenes de evidencia
+ */
+router.post('/worksheets/submit', authMiddleware, async (req, res) => {
+  try {
+    const { lessonId, respuestas, evidenciaFotoUrl, consentId } = req.body;
+    
+    // Validar existencia de consentimiento activo si hay imágenes biométricas
+    if (evidenciaFotoUrl) {
+      const consentCheck = await pool.query('SELECT 1 FROM academy_consentimientos WHERE id = $1 AND provider_id = $2 AND aceptado = true', [consentId, req.user.id]);
+      if (consentCheck.rows.length === 0) {
+        return res.status(400).json({ error: 'Debe aceptar y firmar el consentimiento de Habeas Data antes de subir fotografías.' });
+      }
+    }
+
+    await pool.query(`
+      INSERT INTO academy_worksheet_submissions (provider_id, lesson_id, respuestas_texto, evidencia_foto_url, consentimiento_id, enviado_at)
+      VALUES ($1, $2, $3::jsonb, $4, $5, NOW())
+      ON CONFLICT (provider_id, lesson_id)
+      DO UPDATE SET respuestas_texto = $3::jsonb, evidencia_foto_url = $4, consentimiento_id = $5, enviado_at = NOW()
+    `, [req.user.id, lessonId, JSON.stringify(respuestas || {}), evidenciaFotoUrl || null, consentId || null]);
+
+    res.json({ ok: true, mensaje: 'Respuestas del taller enviadas con éxito.' });
+  } catch (err) {
+    console.error('Error al subir worksheet:', err);
+    res.status(500).json({ error: 'Error al enviar el taller.' });
+  }
+});
+
+/**
+ * POST /api/academy/ai-discrepancy/log
+ * Guarda discrepancias de diagnóstico entre el motor de IA y el estilista (Módulo 6)
+ */
+router.post('/ai-discrepancy/log', authMiddleware, async (req, res) => {
+  try {
+    const { leccionId, diagnosticoIA, criterioHumano, comentarios } = req.body;
+    
+    await pool.query(`
+      INSERT INTO academy_ai_discrepancy_log (provider_id, leccion_id, diagnostico_ia, criterio_humano, comentarios, created_at)
+      VALUES ($1, $2, $3::jsonb, $4::jsonb, $5, NOW())
+    `, [req.user.id, leccionId, JSON.stringify(diagnosticoIA), JSON.stringify(criterioHumano), comentarios || '']);
+
+    res.json({ ok: true, mensaje: 'Discrepancia registrada para reentrenamiento de IA.' });
+  } catch (err) {
+    console.error('Error al registrar logs de discrepancia IA:', err);
+    res.status(500).json({ error: 'Error interno de calibración de IA.' });
+  }
+});
+
+/**
  * GET /api/academy/courses/:id/quiz
  * Obtiene el cuestionario evaluativo de un curso.
  */
@@ -176,7 +265,7 @@ router.post('/courses/:id/submit-quiz', authMiddleware, async (req, res) => {
         score,
         total,
         badgeName: courseRes.rows[0]?.badge_name || 'Certificado de Aprobación',
-        mensaje: `¡Excelente! Aprobaste con ${score} de ${total} aciertos (${correctPct.toFixed(0)}%). Insignia desbloqueada.`
+        mensaje: `¡Excelente! Aprobaste con ${score} de ${total} aciertos (${correctPct.toFixed(0)}%). Insignia de certificación obtenida.`
       });
     } else {
       res.json({

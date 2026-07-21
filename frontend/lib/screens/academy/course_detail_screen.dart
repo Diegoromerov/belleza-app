@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
 import 'quiz_screen.dart';
+import 'glow_consent_widget.dart';
 
 class CourseDetailScreen extends StatefulWidget {
   final String courseId;
@@ -224,6 +225,19 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                   ),
                   const SizedBox(height: 8),
+                  
+                  // Inyectar el consentimiento interactivo de la Ley 1581 si es la lección de bienvenida del Módulo 0
+                  if (_activeLesson!['lesson_id'] == 'a0000000-0000-0000-0000-000000000000') ...[
+                    const SizedBox(height: 10),
+                    GlowConsentWidget(
+                      onConsentGranted: () {
+                        // Callback cuando el consentimiento es otorgado
+                        print("Consentimiento biométrico otorgado por el usuario.");
+                      },
+                    ),
+                    const SizedBox(height: 15),
+                  ],
+
                   Text(
                     _activeLesson!['content_text'] ?? '',
                     style: TextStyle(fontSize: 14, color: Colors.grey[800], height: 1.4),
@@ -234,11 +248,11 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                     children: [
                       if (_activeLesson!['lesson_completed'] == true)
                         const Row(
-                          children: [
-                            Icon(Icons.check_circle, color: Colors.green),
-                            SizedBox(width: 6),
-                            Text('Completada', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
-                          ],
+                           children: [
+                             Icon(Icons.check_circle, color: Colors.green),
+                             SizedBox(width: 6),
+                             Text('Completada', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+                           ],
                         )
                       else
                         ElevatedButton.icon(
@@ -277,7 +291,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.amber.withValues(alpha: 0.1),
+                        color: Colors.amber.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: Colors.amber, width: 1),
                       ),
