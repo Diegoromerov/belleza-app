@@ -169,7 +169,7 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
       int height = image.height;
       int bytesPerRow = image.planes[0].bytesPerRow;
 
-      if (format == CameraImageFormatGroup.nv21 || format == CameraImageFormatGroup.yuv420) {
+      if (format == ImageFormatGroup.nv21 || format == ImageFormatGroup.yuv420) {
         // En NV21 o YUV420, el plano 0 es el canal Y (luminancia)
         // y el plano 1 contiene U y V intercalados.
         // Para ML Kit, necesitamos un solo buffer con el formato nativo.
@@ -185,7 +185,7 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
         bytes = Uint8List(yBytes.length + uvBytes.length);
         bytes.setAll(0, yBytes);
         bytes.setAll(yBytes.length, uvBytes);
-      } else if (format == CameraImageFormatGroup.bgra8888) {
+      } else if (format == ImageFormatGroup.bgra8888) {
         // iOS o cuando se fuerza BGRA
         final plane = image.planes[0];
         bytes = plane.bytes;
@@ -212,7 +212,7 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
       }
 
       InputImageFormat inputImageFormat;
-      if (format == CameraImageFormatGroup.bgra8888 || Platform.isIOS) {
+      if (format == ImageFormatGroup.bgra8888 || Platform.isIOS) {
         inputImageFormat = InputImageFormat.bgra8888;
       } else {
         inputImageFormat = InputImageFormat.nv21; // Android por defecto
