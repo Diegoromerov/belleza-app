@@ -970,6 +970,7 @@ function ModuleCard({
                   onMoveDown={() => lIndex < lessons.length - 1 && moveLesson(lesson.id, 'down')}
                   formData={lesson}
                   setFormData={(val: Partial<Lesson>) => setLessons(prev => prev.map(l => l.id === lesson.id ? { ...l, ...val } : l))}
+                  lessons={lessons}
                 />
               ))}
               {!showAddLesson && (
