@@ -643,6 +643,7 @@ export default function EditarCursoPage() {
               onMoveDown={() => index < modules.length - 1 && moveModule(index, index + 1)}
               formData={module}
               setFormData={(val: Partial<Module>) => setModules(prev => prev.map(m => m.id === module.id ? { ...m, ...val } : m))}
+              modulesLength={modules.length}
             />
           ))}
         </div>
@@ -802,7 +803,8 @@ function ModuleCard({
   onMoveUp,
   onMoveDown,
   formData,
-  setFormData
+  setFormData,
+  modulesLength
 }: { 
   module: any; 
   index: number; 
@@ -819,6 +821,7 @@ function ModuleCard({
   onMoveDown: () => void; 
   formData: any; 
   setFormData: (prev: any) => any;
+  modulesLength: number;
 }) {
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -834,7 +837,7 @@ function ModuleCard({
               <ChevronUp size={18} />
             </button>
           )}
-          {index < modules.length - 1 && (
+          {index < modulesLength - 1 && (
             <button onClick={onMoveDown} className="p-1 hover:bg-gray-100 rounded" title="Bajar">
               <ChevronDown size={18} />
             </button>
