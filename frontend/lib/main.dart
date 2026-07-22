@@ -1532,17 +1532,6 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 if (_isMapMenuOpen) ...[
-                  // Botón Tienda
-                  FloatingActionButton.small(
-                    heroTag: 'store_fab',
-                    onPressed: () => _checkAuthAndNavigate('/store'),
-                    backgroundColor: AppTheme.surface,
-                    foregroundColor: AppTheme.primary,
-                    elevation: 3,
-                    shape: const CircleBorder(),
-                    child: const Icon(Icons.shopping_bag_outlined, size: 20),
-                  ),
-                  const SizedBox(height: 10),
                   // Botón Tema de Mapa
                   FloatingActionButton.small(
                     heroTag: 'map_theme_main_fab',
