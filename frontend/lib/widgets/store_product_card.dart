@@ -1,5 +1,8 @@
 // frontend/lib/widgets/store_product_card.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:shimmer/shimmer.dart';
 import '../shared/theme.dart';
 
 class StoreProductCard extends StatelessWidget {
@@ -57,12 +60,17 @@ class StoreProductCard extends StatelessWidget {
             child: Stack(
               children: [
                 imageUrl.isNotEmpty
-                    ? Image.network(
-                        imageUrl,
+                    ? CachedNetworkImage(
+                        imageUrl: imageUrl,
                         width: double.infinity,
                         height: double.infinity,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => _buildPlaceholderImage(),
+                        placeholder: (context, url) => Shimmer.fromColors(
+                          baseColor: Colors.grey.shade300,
+                          highlightColor: Colors.grey.shade100,
+                          child: Container(color: Colors.white),
+                        ),
+                        errorWidget: (context, url, error) => _buildPlaceholderImage(),
                       )
                     : _buildPlaceholderImage(),
                 // Botón Vista Rápida
@@ -191,7 +199,10 @@ class StoreProductCard extends StatelessWidget {
                     if (stock > 0)
                       IconButton(
                         icon: const Icon(Icons.add_shopping_cart, color: AppTheme.primary, size: 20),
-                        onPressed: () => onAddToCart(product),
+                        onPressed: () {
+                          HapticFeedback.lightImpact();
+                          onAddToCart(product);
+                        },
                       )
                     else
                       const Text(
