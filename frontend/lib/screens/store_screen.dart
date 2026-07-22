@@ -4,6 +4,7 @@ import '../shared/theme.dart';
 import '../services/api_service.dart';
 import '../widgets/store_product_card.dart';
 import '../widgets/product_quick_view_dialog.dart';
+import '../widgets/wompi_payment_sheet.dart';
 
 class StoreScreen extends StatefulWidget {
   final String? bookingId;
@@ -186,7 +187,6 @@ class _StoreScreenState extends State<StoreScreen> {
 
     final TextEditingController nameCtrl = TextEditingController();
     final TextEditingController addressCtrl = TextEditingController();
-    final TextEditingController cardCtrl = TextEditingController();
     final formKey = GlobalKey<FormState>();
     bool processing = false;
 
@@ -281,26 +281,29 @@ class _StoreScreenState extends State<StoreScreen> {
                       ),
                       validator: (v) => (v == null || v.isEmpty) ? 'Campo obligatorio' : null,
                     ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Detalles del Pago',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.text,
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primary.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: AppTheme.primary.withValues(alpha: 0.2)),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: cardCtrl,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Número de Tarjeta (16 dígitos)',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.credit_card),
-                        hintText: '4111 2222 3333 4444',
+                      child: Row(
+                        children: [
+                          const Icon(Icons.verified_user_rounded, color: AppTheme.primary, size: 20),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Pago procesado y protegido de forma segura mediante Wompi Colombia (Nequi, PSE, Tarjetas y Bancolombia).',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: AppTheme.text.withValues(alpha: 0.8),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      validator: (v) => (v == null || v.length < 16) ? 'Ingresa una tarjeta válida' : null,
                     ),
                     const SizedBox(height: 24),
                     Row(
@@ -327,6 +330,14 @@ class _StoreScreenState extends State<StoreScreen> {
                                 });
                                 
                                 try {
+                                  showWompiCheckoutSheet(
+                                    context: context,
+                                    bookingId: widget.bookingId ?? 'STORE_${DateTime.now().millisecondsSinceEpoch}',
+                                    serviceName: 'Compra GlowShop (${_cart.length} productos)',
+                                    price: total,
+                                    providerName: 'GlowShop Oficial',
+                                  );
+
                                   final itemsList = _cart.values.map((item) {
                                     final prod = item['product'] as Map<String, dynamic>;
                                     final qty = item['quantity'] as int;
@@ -353,7 +364,7 @@ class _StoreScreenState extends State<StoreScreen> {
                                     });
                                     _showOrderSuccessDialog();
                                   } else {
-                                    throw Exception(response?['error'] ?? 'Error en el pago');
+                                    throw Exception(response?['error'] ?? 'Error en la orden');
                                   }
                                 } catch (e) {
                                   setCheckoutState(() {
