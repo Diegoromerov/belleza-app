@@ -54,12 +54,15 @@ class _ProductQuickViewDialogState extends State<ProductQuickViewDialog> {
               Stack(
                 children: [
                   imageUrl.isNotEmpty
-                      ? Image.network(
-                          imageUrl,
-                          height: 250,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => _buildPlaceholderImage(250),
+                      ? Hero(
+                          tag: 'product_hero_${widget.product['id']}',
+                          child: Image.network(
+                            imageUrl,
+                            height: 250,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => _buildPlaceholderImage(250),
+                          ),
                         )
                       : _buildPlaceholderImage(250),
                   Positioned(

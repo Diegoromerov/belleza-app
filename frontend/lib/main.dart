@@ -1370,23 +1370,26 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                                   ),
                                 ],
                               ),
-                              child: CircleAvatar(
-                                radius: 18,
-                                backgroundColor: const Color(0xFFF5EBE6),
-                                backgroundImage: p.avatarUrl.isNotEmpty
-                                    ? NetworkImage(p.avatarUrl)
-                                    : null,
-                                child: p.avatarUrl.isEmpty
-                                    ? Text(
-                                        p.fullName.isNotEmpty
-                                            ? p.fullName[0].toUpperCase()
-                                            : '?',
-                                        style: TextStyle(
-                                            fontSize: 14,
-                                            color: AppTheme.primary,
-                                            fontWeight: FontWeight.bold),
-                                      )
-                                    : null,
+                              child: Hero(
+                                tag: 'provider_avatar_${p.id}',
+                                child: CircleAvatar(
+                                  radius: 18,
+                                  backgroundColor: const Color(0xFFF5EBE6),
+                                  backgroundImage: p.avatarUrl.isNotEmpty
+                                      ? NetworkImage(p.avatarUrl)
+                                      : null,
+                                  child: p.avatarUrl.isEmpty
+                                      ? Text(
+                                          p.fullName.isNotEmpty
+                                              ? p.fullName[0].toUpperCase()
+                                              : '?',
+                                          style: TextStyle(
+                                              fontSize: 14,
+                                              color: AppTheme.primary,
+                                              fontWeight: FontWeight.bold),
+                                        )
+                                      : null,
+                                ),
                               ),
                             ),
                           ],

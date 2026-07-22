@@ -65,17 +65,20 @@ class StoreProductCard extends StatelessWidget {
             child: Stack(
               children: [
                 imageUrl.isNotEmpty
-                    ? CachedNetworkImage(
-                        imageUrl: imageUrl,
-                        width: double.infinity,
-                        height: double.infinity,
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) => Shimmer.fromColors(
-                          baseColor: Colors.grey.shade300,
-                          highlightColor: Colors.grey.shade100,
-                          child: Container(color: Colors.white),
+                    ? Hero(
+                        tag: 'product_hero_${product['id']}',
+                        child: CachedNetworkImage(
+                          imageUrl: imageUrl,
+                          width: double.infinity,
+                          height: double.infinity,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Shimmer.fromColors(
+                            baseColor: Colors.grey.shade300,
+                            highlightColor: Colors.grey.shade100,
+                            child: Container(color: Colors.white),
+                          ),
+                          errorWidget: (context, url, error) => _buildPlaceholderImage(),
                         ),
-                        errorWidget: (context, url, error) => _buildPlaceholderImage(),
                       )
                     : _buildPlaceholderImage(),
                 // Botón Vista Rápida
