@@ -1,8 +1,8 @@
-// frontend/lib/widgets/store_product_card.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
+import '../services/api_service.dart';
 import '../shared/theme.dart';
 
 class StoreProductCard extends StatelessWidget {
@@ -38,14 +38,19 @@ class StoreProductCard extends StatelessWidget {
     final stock = product['stock'] as int? ?? 0;
     final imageUrl = product['imagen_url']?.toString() ?? '';
 
+    final isDark = MapSettings.isDark;
+    final cardBg = isDark ? const Color(0xFF24232B) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF33313D) : Colors.grey.shade100;
+    final textColor = isDark ? Colors.white : AppTheme.text;
+
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade100, width: 1.5),
+        border: Border.all(color: borderColor, width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withOpacity(0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -141,10 +146,10 @@ class StoreProductCard extends StatelessWidget {
                   product['nombre']?.toString() ?? 'Producto',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: AppTheme.text,
+                    color: textColor,
                   ),
                 ),
                 const SizedBox(height: 4),

@@ -635,15 +635,21 @@ class _StoreScreenState extends State<StoreScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = MapSettings.isDark;
+    final bgColor = isDark ? const Color(0xFF18171C) : Colors.grey.shade50;
+    final cardBgColor = isDark ? const Color(0xFF24232B) : Colors.white;
+    final textColor = isDark ? Colors.white : AppTheme.text;
+
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: bgColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: cardBgColor,
         elevation: 0.5,
-        title: const Text(
+        iconTheme: IconThemeData(color: textColor),
+        title: Text(
           'GlowApp Store',
           style: TextStyle(
-            color: AppTheme.text,
+            color: textColor,
             fontWeight: FontWeight.w800,
           ),
         ),
@@ -654,7 +660,7 @@ class _StoreScreenState extends State<StoreScreen> {
             alignment: Alignment.center,
             children: [
               IconButton(
-                icon: const Icon(Icons.shopping_bag_outlined, color: AppTheme.text),
+                icon: Icon(Icons.shopping_bag_outlined, color: textColor),
                 onPressed: () {
                   setState(() {
                     _isCartOpen = !_isCartOpen;
@@ -758,7 +764,7 @@ class _StoreScreenState extends State<StoreScreen> {
                               children: [
                                 // Filtros + Buscador (Shopify Header)
                                 Container(
-                                  color: Colors.white,
+                                  color: cardBgColor,
                                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                                   child: Row(
                                     children: [
