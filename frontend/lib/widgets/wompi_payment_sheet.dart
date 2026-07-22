@@ -241,11 +241,10 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
               elevation: 0,
             ),
             onPressed: () {
+              Navigator.pop(context, true);
               if (widget.onSuccess != null) {
-                Navigator.pop(context, true);
                 widget.onSuccess!();
-              } else {
-                Navigator.pop(context, true);
+              } else if (!widget.bookingId.startsWith('STORE_')) {
                 Navigator.pushNamedAndRemoveUntil(
                   context,
                   '/client-bookings',

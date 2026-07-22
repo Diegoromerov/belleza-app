@@ -154,29 +154,34 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = MapSettings.isDark;
+    final bgColor = isDark ? const Color(0xFF18171C) : Colors.white;
+    final cardBgColor = isDark ? const Color(0xFF24232B) : Colors.white;
+    final textColor = isDark ? Colors.white : Colors.black;
+
     if (_isLoading) {
-      return const Scaffold(
-        backgroundColor: Colors.white,
+      return Scaffold(
+        backgroundColor: bgColor,
         body:
-            Center(child: CircularProgressIndicator(color: Color(0xFFC89D93))),
+            const Center(child: CircularProgressIndicator(color: Color(0xFFC89D93))),
       );
     }
 
     final avatarProvider = _getAvatarProvider();
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: bgColor,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Mi Perfil',
           style: TextStyle(
-              fontWeight: FontWeight.bold, letterSpacing: -0.5, fontSize: 18),
+              fontWeight: FontWeight.bold, letterSpacing: -0.5, fontSize: 18, color: textColor),
         ),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: cardBgColor,
+        foregroundColor: textColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: Icon(Icons.arrow_back, color: textColor),
           onPressed: () => Navigator.pop(context,
               true), // Retorna true para refrescar la pantalla principal
         ),
@@ -416,12 +421,17 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
     required String title,
     required VoidCallback onTap,
   }) {
+    final isDark = MapSettings.isDark;
+    final cardBg = isDark ? const Color(0xFF24232B) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF33313D) : const Color(0xFFF3EAE8);
+    final textColor = isDark ? Colors.white : Colors.black87;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFF3EAE8)),
+        border: Border.all(color: borderColor),
       ),
       child: ListTile(
         leading: Container(
@@ -434,10 +444,10 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
         ),
         title: Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: 14,
-            color: Colors.black87,
+            color: textColor,
           ),
         ),
         trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.grey),
