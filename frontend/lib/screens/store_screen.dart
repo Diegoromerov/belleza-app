@@ -181,9 +181,9 @@ class _StoreScreenState extends State<StoreScreen> {
     if (_cart.isEmpty) return;
 
     final double subtotal = _getCartSubtotal();
-    final double envio = widget.bookingId != null ? 0.0 : 12000.0;
+    final double envio = 0.0;
     final double iva = subtotal * 0.19;
-    final double total = subtotal + envio + iva;
+    final double total = subtotal + iva;
 
     final TextEditingController nameCtrl = TextEditingController();
     final TextEditingController addressCtrl = TextEditingController();
@@ -486,8 +486,6 @@ class _StoreScreenState extends State<StoreScreen> {
                   const Divider(),
                   const SizedBox(height: 10),
                   _buildSummaryRow('Subtotal', _formatCOP(subtotal)),
-                  const SizedBox(height: 6),
-                  _buildSummaryRow('Envío', _formatCOP(envio)),
                   const SizedBox(height: 6),
                   _buildSummaryRow('IVA (19%)', _formatCOP(iva)),
                   const SizedBox(height: 10),
