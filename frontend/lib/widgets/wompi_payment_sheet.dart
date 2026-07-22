@@ -4,14 +4,15 @@ import 'package:flutter/services.dart';
 import '../services/api_service.dart';
 import '../services/booking_recovery_service.dart';
 
-void showWompiCheckoutSheet({
+Future<bool?> showWompiCheckoutSheet({
   required BuildContext context,
   required String bookingId,
   required String serviceName,
   required double price,
   required String providerName,
+  VoidCallback? onSuccess,
 }) {
-  showModalBottomSheet(
+  return showModalBottomSheet<bool>(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
@@ -20,6 +21,7 @@ void showWompiCheckoutSheet({
       serviceName: serviceName,
       price: price,
       providerName: providerName,
+      onSuccess: onSuccess,
     ),
   );
 }
@@ -29,6 +31,7 @@ class WompiCheckoutWidget extends StatefulWidget {
   final String serviceName;
   final double price;
   final String providerName;
+  final VoidCallback? onSuccess;
 
   const WompiCheckoutWidget({
     super.key,
@@ -36,6 +39,7 @@ class WompiCheckoutWidget extends StatefulWidget {
     required this.serviceName,
     required this.price,
     required this.providerName,
+    this.onSuccess,
   });
 
   @override
@@ -227,12 +231,17 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
               elevation: 0,
             ),
             onPressed: () {
-              Navigator.pop(context); // Cerrar bottom sheet
-              Navigator.pushNamedAndRemoveUntil(
-                context,
-                '/client-bookings',
-                (route) => route.settings.name == '/home',
-              );
+              if (widget.onSuccess != null) {
+                Navigator.pop(context, true);
+                widget.onSuccess!();
+              } else {
+                Navigator.pop(context, true);
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  '/client-bookings',
+                  (route) => route.settings.name == '/home',
+                );
+              }
             },
             child: const Text('Listo', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           ),

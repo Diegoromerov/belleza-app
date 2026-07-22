@@ -325,54 +325,54 @@ class _StoreScreenState extends State<StoreScreen> {
                           child: ElevatedButton(
                             onPressed: () async {
                               if (formKey.currentState!.validate()) {
-                                setCheckoutState(() {
-                                  processing = true;
-                                });
-                                
-                                try {
-                                  showWompiCheckoutSheet(
-                                    context: context,
-                                    bookingId: widget.bookingId ?? 'STORE_${DateTime.now().millisecondsSinceEpoch}',
-                                    serviceName: 'Compra GlowShop (${_cart.length} productos)',
-                                    price: total,
-                                    providerName: 'GlowShop Oficial',
-                                  );
-
-                                  final itemsList = _cart.values.map((item) {
-                                    final prod = item['product'] as Map<String, dynamic>;
-                                    final qty = item['quantity'] as int;
-                                    return {
-                                      'producto_id': prod['id'],
-                                      'cantidad': qty
-                                    };
-                                  }).toList();
-
-                                  final checkoutData = {
-                                    'nombre_entrega': nameCtrl.text,
-                                    'direccion_entrega': addressCtrl.text,
-                                    'items': itemsList,
-                                    if (widget.bookingId != null) 'booking_id': widget.bookingId,
+                                final itemsList = _cart.values.map((item) {
+                                  final prod = item['product'] as Map<String, dynamic>;
+                                  final qty = item['quantity'] as int;
+                                  return {
+                                    'producto_id': prod['id'],
+                                    'cantidad': qty
                                   };
+                                }).toList();
 
-                                  final response = await ApiService.post('/api/store/checkout', checkoutData);
+                                final checkoutData = {
+                                  'nombre_entrega': nameCtrl.text,
+                                  'direccion_entrega': addressCtrl.text,
+                                  'items': itemsList,
+                                  if (widget.bookingId != null) 'booking_id': widget.bookingId,
+                                };
 
-                                  if (response != null && response['success'] == true) {
-                                    Navigator.pop(ctx);
-                                    setState(() {
-                                      _cart.clear();
-                                      _isCartOpen = false;
-                                    });
-                                    _showOrderSuccessDialog();
-                                  } else {
-                                    throw Exception(response?['error'] ?? 'Error en la orden');
-                                  }
-                                } catch (e) {
+                                final paymentResult = await showWompiCheckoutSheet(
+                                  context: context,
+                                  bookingId: widget.bookingId ?? 'STORE_${DateTime.now().millisecondsSinceEpoch}',
+                                  serviceName: 'Compra GlowShop (${_cart.length} productos)',
+                                  price: total,
+                                  providerName: 'GlowShop Oficial',
+                                );
+
+                                if (paymentResult == true) {
                                   setCheckoutState(() {
-                                    processing = false;
+                                    processing = true;
                                   });
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Error al realizar pedido: $e')),
-                                  );
+                                  try {
+                                    final response = await ApiService.post('/api/store/checkout', checkoutData);
+                                    if (response != null && response['success'] == true) {
+                                      Navigator.pop(ctx);
+                                      setState(() {
+                                        _cart.clear();
+                                        _isCartOpen = false;
+                                      });
+                                      _showOrderSuccessDialog();
+                                    } else {
+                                      throw Exception(response?['error'] ?? 'Error registrando pedido');
+                                    }
+                                  } catch (e) {
+                                    setCheckoutState(() {
+                                      processing = false;
+                                    });
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('Error registrando pedido: $e')),
+                                    );
+                                  }
                                 }
                               }
                             },
@@ -385,7 +385,7 @@ class _StoreScreenState extends State<StoreScreen> {
                               ),
                             ),
                             child: const Text(
-                              'Finalizar',
+                              'Pagar',
                               style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                           ),
