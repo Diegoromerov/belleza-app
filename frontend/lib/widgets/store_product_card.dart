@@ -177,8 +177,9 @@ class StoreProductCard extends StatelessWidget {
                             ],
                           );
                         }
+                        final priceWithIva = price * 1.19;
                         return Text(
-                          _formatCOP(price),
+                          _formatCOP(priceWithIva),
                           style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,

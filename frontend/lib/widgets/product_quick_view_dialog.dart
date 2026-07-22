@@ -164,8 +164,9 @@ class _ProductQuickViewDialogState extends State<ProductQuickViewDialog> {
                             ],
                           );
                         }
+                        final priceWithIva = price * 1.19;
                         return Text(
-                          _formatCOP(price),
+                          _formatCOP(priceWithIva),
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
