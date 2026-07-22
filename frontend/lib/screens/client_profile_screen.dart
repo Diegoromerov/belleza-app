@@ -416,15 +416,34 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
     required String title,
     required VoidCallback onTap,
   }) {
-    return ListTile(
-      leading: Icon(icon, color: const Color(0xFFC89D93)),
-      title: Text(title,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFF3EAE8)),
+      ),
+      child: ListTile(
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: const Color(0xFFC89D93).withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: const Color(0xFFC89D93), size: 20),
+        ),
+        title: Text(
+          title,
           style: const TextStyle(
-              fontWeight: FontWeight.w500, color: Colors.black87)),
-      trailing:
-          const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 4.0),
-      onTap: onTap,
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+            color: Colors.black87,
+          ),
+        ),
+        trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.grey),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+        onTap: onTap,
+      ),
     );
   }
 

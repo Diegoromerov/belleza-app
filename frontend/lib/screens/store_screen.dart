@@ -690,7 +690,51 @@ class _StoreScreenState extends State<StoreScreen> {
               children: [
                 Expanded(
                   child: _isLoading
-                      ? const Center(child: CircularProgressIndicator(color: AppTheme.primary))
+                      ? GridView.builder(
+                          padding: const EdgeInsets.all(24),
+                          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                            maxCrossAxisExtent: 260,
+                            mainAxisExtent: 350,
+                            crossAxisSpacing: 18,
+                            mainAxisSpacing: 18,
+                          ),
+                          itemCount: 6,
+                          itemBuilder: (ctx, index) {
+                            return Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: Colors.grey.shade200),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey.shade200,
+                                        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                                      ),
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(12.0),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Container(width: 60, height: 10, color: Colors.grey.shade200),
+                                        const SizedBox(height: 8),
+                                        Container(width: 120, height: 14, color: Colors.grey.shade200),
+                                        const SizedBox(height: 12),
+                                        Container(width: 80, height: 14, color: Colors.grey.shade200),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        )
                       : _errorMessage.isNotEmpty
                           ? Center(
                               child: Column(

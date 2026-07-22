@@ -1482,12 +1482,18 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
               height: 72,
               padding: const EdgeInsets.symmetric(horizontal: 8),
               decoration: BoxDecoration(
-                color: AppTheme.surface.withOpacity(0.92),
-                borderRadius: BorderRadius.circular(36),
+                color: Colors.white.withValues(alpha: 0.95),
+                borderRadius: BorderRadius.circular(28),
                 border: Border.all(
-                    color: AppTheme.accent.withOpacity(0.4),
-                    width: 1.5),
-                boxShadow: AppTheme.glassShadow,
+                    color: AppTheme.primary.withValues(alpha: 0.15),
+                    width: 1.0),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: Row(
                 children: [
