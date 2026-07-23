@@ -134,9 +134,19 @@ app.get('/api/admin/events/stream', authMiddleware, adminMiddleware, (req, res) 
   res.write(`data: ${JSON.stringify({ type: 'connected', timestamp: new Date().toISOString() })}\n\n`);
 });
 
-// Servir la aplicación Flutter Web
-app.get(/^(?!\/api(?:\/|$))(?!\/uploads(?:\/|$))(?!\/admin(?:\/|$)).*/, (req, res) => {
-  res.sendFile(path.join(__dirname, '../../public/index.html'));
+// 🏥 ENDPOINT DE DIAGNÓSTICO Y HEALTHCHECK DE CONTENEDOR (DOCKER / RAILWAY)
+app.get('/api/health', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT 1 as alive');
+    res.json({
+      status: 'OK',
+      uptime: process.uptime(),
+      db: rows.length > 0 ? 'CONNECTED' : 'DISCONNECTED',
+      timestamp: new Date().toISOString()
+    });
+  } catch (err) {
+    res.status(500).json({ status: 'ERROR', db: 'DISCONNECTED', error: err.message });
+  }
 });
 
 // Configurar Rate Limiters
