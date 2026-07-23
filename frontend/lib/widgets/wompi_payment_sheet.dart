@@ -366,7 +366,7 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
                         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5, color: Colors.black87),
                       ),
                       Text(
-                        '+ Ampolla Capilar Nutritiva por $15.000 COP',
+                        '+ Ampolla Capilar Nutritiva por \$15.000 COP',
                         style: TextStyle(fontSize: 11, color: Colors.black54),
                       ),
                     ],
@@ -416,7 +416,7 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
                         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5, color: Colors.black87),
                       ),
                       Text(
-                        'Descontar $5.000 COP de tu saldo XP acumulado',
+                        'Descontar \$5.000 COP de tu saldo XP acumulado',
                         style: TextStyle(fontSize: 11, color: Colors.black54),
                       ),
                     ],
