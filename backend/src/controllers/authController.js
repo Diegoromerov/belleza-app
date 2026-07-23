@@ -120,9 +120,10 @@ exports.login = async (req, res) => {
 // ==========================================
 exports.oauth = async (req, res) => {
   try {
-    if (process.env.ALLOW_MOCK_AUTH !== 'true' && process.env.NODE_ENV !== 'test') {
-      return res.status(410).json({
-        error: 'OAuth directo deshabilitado. Usa /api/auth/google u otro proveedor verificado o configure ALLOW_MOCK_AUTH=true.'
+    // 🛡️ PARCHE DE SEGURIDAD (OWASP API2:2023): Bloquear mock OAuth en producción
+    if (process.env.NODE_ENV === 'production' || (process.env.ALLOW_MOCK_AUTH !== 'true' && process.env.NODE_ENV !== 'test')) {
+      return res.status(403).json({
+        error: 'El método OAuth directo de pruebas está deshabilitado en este entorno. Usa /api/auth/google.'
       });
     }
 
@@ -307,6 +308,80 @@ exports.acceptBiometricsConsent = async (req, res) => {
   } catch (error) {
     console.error('❌ ERROR ACCEPT BIOMETRICS CONSENT:', error.message);
     res.status(500).json({ error: 'Error al guardar el consentimiento de datos biométricos.' });
+  }
+};
+
+// ==========================================
+// 🔔 GUARDAR TOKEN DE NOTIFICACIONES PUSH (FCM)
+// ==========================================
+exports.saveFcmToken = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { fcm_token, device_os } = req.body;
+
+    if (!fcm_token) {
+      return res.status(400).json({ error: 'fcm_token es requerido' });
+    }
+
+    await pool.query(
+      `UPDATE usuarios 
+       SET fcm_token = $1, last_active_at = NOW() 
+       WHERE id = $2`,
+      [fcm_token, userId]
+    );
+
+    console.log(`🔔 Token FCM registrado para usuario ID ${userId} (${device_os || 'web/mobile'})`);
+
+    res.json({
+      success: true,
+      message: 'Token FCM registrado exitosamente'
+    });
+  } catch (error) {
+    console.error('❌ ERROR SAVE FCM TOKEN:', error.message);
+    res.status(500).json({ error: 'Error al registrar token FCM' });
+  }
+};
+
+// ==========================================
+// 🎁 OBTENER CÓDIGO E INFORMACIÓN DE REFERIDOS (K-FACTOR)
+// ==========================================
+exports.getReferralInfo = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Obtener o generar código de referido de 6 caracteres único para el usuario
+    const userRes = await pool.query(
+      `SELECT id, nombre, email, referral_code FROM usuarios WHERE id = $1`,
+      [userId]
+    );
+
+    if (userRes.rows.length === 0) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    let user = userRes.rows[0];
+    let referralCode = user.referral_code;
+
+    if (!referralCode) {
+      // Generar código único ej: GLOW + 4 caracteres aleatorios
+      const crypto = require('crypto');
+      referralCode = 'GLOW' + crypto.randomBytes(2).toString('hex').toUpperCase();
+      await pool.query(`UPDATE usuarios SET referral_code = $1 WHERE id = $2`, [referralCode, userId]);
+    }
+
+    const shareUrl = `https://glowapp-frontend-production.up.railway.app/#/register?ref=${referralCode}`;
+    const shareMessage = `¡Te regalo $10.000 COP para tu primer servicio de belleza en GlowApp! Usá mi código ${referralCode} o registrate aquí: ${shareUrl}`;
+
+    res.json({
+      success: true,
+      referral_code: referralCode,
+      share_url: shareUrl,
+      share_message: shareMessage,
+      reward_per_referral: 10000,
+    });
+  } catch (error) {
+    console.error('❌ ERROR GET REFERRAL INFO:', error.message);
+    res.status(500).json({ error: 'Error al obtener información de referidos' });
   }
 };
 

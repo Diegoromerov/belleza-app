@@ -202,7 +202,7 @@ const personalizeSearchResults = async (results, userId, category) => {
     if (userRes.rows.length === 0) return results;
     
     const user = userRes.rows[0];
-    const isPremium = user.glowai_plan === 'premium' || user.email === 'usuario_pruebas@gmail.com';
+    const isPremium = user.glowai_plan === 'premium';
     if (!isPremium) return results;
 
     let track = 'piel';
@@ -558,7 +558,7 @@ exports.analyzeDesign = async (req, res) => {
     const userRes = await pool.query('SELECT glowai_plan, email FROM usuarios WHERE id = $1', [userId]);
     const userPlan = userRes.rows[0]?.glowai_plan || 'free';
     const userEmail = userRes.rows[0]?.email || '';
-    const isPremium = userPlan === 'premium' || userEmail === 'usuario_pruebas@gmail.com';
+    const isPremium = userPlan === 'premium';
 
     // Mock responses in case Gemini API is not configured
     if (!ai) {
@@ -1730,7 +1730,7 @@ exports.generateGlowUpCard = async (req, res) => {
     }
     
     const user = userRes.rows[0];
-    const isPremium = user.glowai_plan === 'premium' || user.email === 'usuario_pruebas@gmail.com';
+    const isPremium = user.glowai_plan === 'premium';
     if (!isPremium) {
       return res.status(402).json({ error: 'La tarjeta Glow Up compartible es una característica exclusiva de GlowAI Premium.' });
     }
@@ -1866,7 +1866,7 @@ exports.getColorimetriaHistorial = async (req, res) => {
     }
 
     const { glowai_plan, email } = userRes.rows[0];
-    const isPremium = glowai_plan === 'premium' || email === 'usuario_pruebas@gmail.com';
+    const isPremium = glowai_plan === 'premium';
 
     const query = `
       SELECT id, type, result, created_at, image_url 
