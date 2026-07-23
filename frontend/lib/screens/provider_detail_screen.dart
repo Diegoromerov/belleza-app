@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
+import '../services/analytics_service.dart';
 import '../shared/theme.dart';
 import 'booking_screen.dart';
 import 'chat_screen.dart';
@@ -34,6 +35,10 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
         details = data;
         isLoading = false;
       });
+      AnalyticsService().logViewProviderProfile(
+        providerId: widget.providerId,
+        businessName: data['business_name'] ?? data['full_name'] ?? 'Prestador',
+      );
     } catch (e) {
       setState(() => isLoading = false);
     }

@@ -29,4 +29,8 @@ router.get('/', authMiddleware, xpLogController.getLogs);
 // Create a new XP log entry
 router.post('/', authMiddleware, validate(xpLogSchema), xpLogController.createLog);
 
+// Convert XP to Wallet Cashback balance
+router.post('/convert-cashback', authMiddleware, xpLogController.convertXpToCashback);
+
 module.exports = router;
+

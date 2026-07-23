@@ -64,6 +64,69 @@ class AnalyticsService {
     );
   }
 
+  void logAddToCart({required String productId, required String productName, required double price, Map<String, dynamic>? metadata}) {
+    logEvent(
+      eventType: 'ADD_TO_CART',
+      screenName: '/store',
+      elementId: productId,
+      metadata: {
+        'product_name': productName,
+        'price': price,
+        ...?metadata,
+      },
+    );
+  }
+
+  void logInitiateCheckout({required String itemType, required String itemId, required double totalAmount, Map<String, dynamic>? metadata}) {
+    logEvent(
+      eventType: 'INITIATE_CHECKOUT',
+      screenName: '/checkout',
+      elementId: itemId,
+      metadata: {
+        'item_type': itemType, // 'service' | 'product' | 'course'
+        'total_amount': totalAmount,
+        ...?metadata,
+      },
+    );
+  }
+
+  void logPurchaseSuccess({required String transactionId, required double totalAmount, required String paymentMethod, Map<String, dynamic>? metadata}) {
+    logEvent(
+      eventType: 'PURCHASE_SUCCESS',
+      screenName: '/payment-success',
+      elementId: transactionId,
+      metadata: {
+        'transaction_id': transactionId,
+        'total_amount': totalAmount,
+        'payment_method': paymentMethod,
+        ...?metadata,
+      },
+    );
+  }
+
+  void logViewProviderProfile({required String providerId, required String businessName}) {
+    logEvent(
+      eventType: 'VIEW_PROVIDER_PROFILE',
+      screenName: '/provider-detail',
+      elementId: providerId,
+      metadata: {
+        'business_name': businessName,
+      },
+    );
+  }
+
+  void logCourseLessonView({required String courseId, required String lessonId, required String lessonTitle}) {
+    logEvent(
+      eventType: 'COURSE_LESSON_VIEW',
+      screenName: '/course-detail',
+      elementId: lessonId,
+      metadata: {
+        'course_id': courseId,
+        'lesson_title': lessonTitle,
+      },
+    );
+  }
+
   Future<void> flushEvents() async {
     if (_queue.isEmpty || _isSending) return;
 

@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import '../shared/theme.dart';
 import '../services/api_service.dart';
+import '../services/analytics_service.dart';
 import 'package:shimmer/shimmer.dart';
 import '../widgets/store_product_card.dart';
 import '../widgets/product_quick_view_dialog.dart';
@@ -123,6 +124,13 @@ class _StoreScreenState extends State<StoreScreen> {
       }
       _isCartOpen = true; // Abrir automáticamente el Cart Drawer
     });
+
+    AnalyticsService().logAddToCart(
+      productId: id.toString(),
+      productName: product['nombre'] ?? 'Producto',
+      price: _getProductPrice(product),
+      metadata: {'quantity': quantity},
+    );
   }
 
   void _updateCartQuantity(int id, int newQty) {
