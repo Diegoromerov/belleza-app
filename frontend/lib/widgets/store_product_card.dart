@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 import '../services/api_service.dart';
 import '../shared/theme.dart';
+import '../shared/currency_formatter.dart';
 
 class StoreProductCard extends StatelessWidget {
   final Map<String, dynamic> product;
@@ -20,7 +21,7 @@ class StoreProductCard extends StatelessWidget {
   });
 
   String _formatCOP(double amount) {
-    return '\$${amount.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')} COP';
+    return CurrencyFormatter.formatCOP(amount);
   }
 
   Widget _buildPlaceholderImage() {
