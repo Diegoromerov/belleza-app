@@ -264,4 +264,25 @@ app.post('/api/v1/beauty-scan', authMiddleware, upload.fields([
   }
 });
 
+// 🛡️ CAPTURADOR GLOBAL DE RECHAZOS DE PROMESAS Y EXCEPCIONES EN NODE.JS
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('🚨 [UNHANDLED PROMISE REJECTION]:', reason);
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('🚨 [UNCAUGHT EXCEPTION]:', error.message);
+});
+
+// 🛡️ MIDDLEWARE FINAL DE CAPTURA DE ERRORES EXPRESS (Garantiza respuestas JSON 500)
+app.use((err, req, res, next) => {
+  console.error('❌ [EXPRESS ERROR HANDLER]:', err.stack);
+  res.status(err.status || 500).json({
+    success: false,
+    error: process.env.NODE_ENV === 'production' 
+      ? 'Ocurrió un error interno en el servidor.' 
+      : err.message
+  });
+});
+
 module.exports = { app, sseClients };
+

@@ -48,18 +48,43 @@ import 'screens/designs/outfit_result_screen.dart';
 import 'models/provider_model.dart';
 import 'shared/theme.dart';
 
+import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await initializeDateFormatting('es', null);
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
-  AnalyticsService().init();
-  await AppTheme.loadThemePreference();
-  runApp(const BeautyApp());
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+    if (kDebugMode) {
+      print('🔴 [FLUTTER ERROR DETECTED]: ${details.exception}');
+    }
+    AnalyticsService().logEvent(
+      eventType: 'APP_CRASH_FLUTTER',
+      screenName: 'global',
+      metadata: {'error': details.exceptionAsString(), 'stack': details.stack.toString()},
+    );
+  };
+
+  runZonedGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    await initializeDateFormatting('es', null);
+    await SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+    AnalyticsService().init();
+    await AppTheme.loadThemePreference();
+    runApp(const BeautyApp());
+  }, (Object error, StackTrace stack) {
+    if (kDebugMode) {
+      print('🔴 [UNHANDLED ASYNC ERROR]: $error');
+    }
+    AnalyticsService().logEvent(
+      eventType: 'APP_CRASH_ASYNC',
+      screenName: 'global',
+      metadata: {'error': error.toString(), 'stack': stack.toString()},
+    );
+  });
 }
 
 class BeautyApp extends StatelessWidget {
