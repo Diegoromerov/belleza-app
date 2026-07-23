@@ -16,7 +16,10 @@ const verifyWompiSignature = (req) => {
   }
 
   const signature = req.header('x-wompi-signature') || req.header('x-signature');
-  if (!signature) return false;
+  if (!signature) {
+    console.warn(`🚨 [FINTECH SECURITY ALERT] Webhook recibido sin firma desde IP ${req.ip}`);
+    return false;
+  }
 
   const expected = crypto
     .createHmac('sha256', secret)
@@ -26,8 +29,14 @@ const verifyWompiSignature = (req) => {
   const signatureBuffer = Buffer.from(signature, 'hex');
   const expectedBuffer = Buffer.from(expected, 'hex');
 
-  return signatureBuffer.length === expectedBuffer.length &&
+  const isValid = signatureBuffer.length === expectedBuffer.length &&
     crypto.timingSafeEqual(signatureBuffer, expectedBuffer);
+
+  if (!isValid) {
+    console.warn(`🚨 [FINTECH SECURITY ALERT] Intentos de spoofing o firma de Webhook Wompi inválida desde IP ${req.ip}`);
+  }
+
+  return isValid;
 };
 
 // 🔹 CREAR RESERVA

@@ -385,3 +385,41 @@ exports.getReferralInfo = async (req, res) => {
   }
 };
 
+// ==========================================
+// ⚖️ CUMPLIMIENTO APPLE APP STORE 5.1.1(v): ELIMINACIÓN DE CUENTA DE USUARIO
+// ==========================================
+exports.deleteAccount = async (req, res) => {
+  const userId = req.user.id;
+  try {
+    // 1. Anonimizar datos personales en la base de datos
+    await pool.query(
+      `UPDATE usuarios 
+       SET nombre = 'Usuario Eliminado', 
+           email = $1, 
+           password_hash = '', 
+           phone = NULL, 
+           is_active = false,
+           fcm_token = NULL
+       WHERE id = $2`,
+      [`deleted_${userId}_${Date.now()}@glowapp.deleted`, userId]
+    );
+
+    // 2. Revocar consentimientos biométricos activos si la tabla existe
+    await pool.query(
+      `UPDATE biometric_consents SET active = false, revoked_at = NOW() WHERE user_id = $1`,
+      [userId]
+    ).catch(() => {});
+
+    console.log(`⚖️ [LEGAL COMPLIANCE] Cuenta de usuario ID ${userId} eliminada a solicitud del titular.`);
+
+    res.json({
+      success: true,
+      message: 'Tu cuenta y datos personales han sido eliminados de GlowApp exitosamente.'
+    });
+  } catch (error) {
+    console.error('❌ Error al eliminar cuenta:', error.message);
+    res.status(500).json({ error: 'Error al procesar la solicitud de eliminación de cuenta.' });
+  }
+};
+
+
