@@ -113,11 +113,12 @@ exports.createBooking = async (req, res) => {
     const newStart = new Date(scheduled_at);
     const newEnd = new Date(newStart.getTime() + totalDurationMinutes * 60 * 1000);
     
-    // Filtrar citas del mismo día únicamente para optimizar el rendimiento
-    const startOfDay = new Date(newStart.getTime());
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(newStart.getTime());
-    endOfDay.setHours(23, 59, 59, 999);
+    // 🇨🇴 Filtrar citas del mismo día considerando la zona horaria de Colombia (America/Bogota UTC-5)
+    const baseDate = new Date(scheduled_at);
+    // 05:00 UTC corresponde a 00:00:00 hora Colombia del mismo día
+    const startOfDay = new Date(Date.UTC(baseDate.getUTCFullYear(), baseDate.getUTCMonth(), baseDate.getUTCDate(), 5, 0, 0, 0));
+    // 04:59:59 UTC del día siguiente corresponde a 23:59:59 hora Colombia
+    const endOfDay = new Date(Date.UTC(baseDate.getUTCFullYear(), baseDate.getUTCMonth(), baseDate.getUTCDate() + 1, 4, 59, 59, 999));
 
     const overlaps = await Booking.findAll({
       where: {

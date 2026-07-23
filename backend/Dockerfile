@@ -1,5 +1,8 @@
 FROM node:20-alpine
 
+# Configurar Zona Horaria de Colombia globalmente en el contenedor
+ENV TZ=America/Bogota
+
 WORKDIR /app
 
 COPY package*.json ./
