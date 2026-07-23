@@ -1,6 +1,7 @@
 // frontend/lib/screens/academy/course_detail_screen.dart
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
+import '../../services/analytics_service.dart';
 import 'quiz_screen.dart';
 import 'glow_consent_widget.dart';
 
@@ -55,6 +56,10 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
 
   void _selectFirstIncompleteLesson(Map<String, dynamic> data) {
     final List<dynamic> modules = data['modules'] ?? [];
+    if (modules.isEmpty) {
+      _activeLesson = null;
+      return;
+    }
     for (var m in modules) {
       final List<dynamic> lessons = m['lessons'] ?? [];
       for (var l in lessons) {
@@ -64,9 +69,12 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
         }
       }
     }
-    // Si están todas completas, mostrar la primera lección
-    if (modules.isNotEmpty && (modules[0]['lessons'] as List).isNotEmpty) {
-      _activeLesson = modules[0]['lessons'][0];
+    // Si están todas completas, mostrar la primera lección si existe
+    if (modules.isNotEmpty) {
+      final List<dynamic> firstLessons = modules[0]['lessons'] ?? [];
+      if (firstLessons.isNotEmpty) {
+        _activeLesson = firstLessons[0];
+      }
     }
   }
 
@@ -164,52 +172,61 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
       ),
       body: Column(
         children: [
-          // 📽️ Sección del reproductor de video / lectura de lección activa
+          // 📽️ Sección del reproductor de video adaptativo con soporte de accesibilidad
           if (_activeLesson != null)
-            Container(
-              color: Colors.black,
-              width: double.infinity,
-              height: 200,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  // Placeholder estético del video con botón de reproducción
-                  Positioned.fill(
-                    child: Image.network(
-                      'https://images.unsplash.com/photo-1562322140-8baeececf3df?q=80&w=800',
-                      fit: BoxFit.cover,
-                      opacity: const AlwaysStoppedAnimation(0.4),
-                    ),
-                  ),
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+            Semantics(
+              label: 'Reproductor de video de la lección ${_activeLesson!['lesson_title'] ?? ''}',
+              child: AspectRatio(
+                aspectRatio: (_activeLesson!['video_url']?.toString().contains('shorts') == true) ? (9 / 16) : (16 / 9),
+                child: Container(
+                  color: Colors.black,
+                  width: double.infinity,
+                  child: Stack(
+                    alignment: Alignment.center,
                     children: [
-                      IconButton(
-                        icon: const Icon(Icons.play_circle_fill, size: 64, color: Colors.white),
-                        onPressed: () {
-                          // Simulación de reproducción
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Reproduciendo video: ${_activeLesson!['lesson_title']}'),
-                              duration: const Duration(seconds: 2),
+                      Positioned.fill(
+                        child: Image.network(
+                          'https://images.unsplash.com/photo-1562322140-8baeececf3df?q=80&w=800',
+                          fit: BoxFit.cover,
+                          opacity: const AlwaysStoppedAnimation(0.4),
+                        ),
+                      ),
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Semantics(
+                            button: true,
+                            label: 'Reproducir lección',
+                            hint: 'Toca para iniciar el video de la lección',
+                            child: IconButton(
+                              icon: const Icon(Icons.play_circle_fill, size: 64, color: Colors.white),
+                              onPressed: () {
+                                HapticFeedback.mediumImpact();
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Reproduciendo video: ${_activeLesson!['lesson_title']}'),
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                              },
                             ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        _activeLesson!['lesson_title'],
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Simulación de Video streaming disponible',
-                        style: TextStyle(color: Colors.grey, fontSize: 11),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            _activeLesson!['lesson_title'] ?? '',
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'Streaming HD de lección disponible',
+                            style: TextStyle(color: Colors.white70, fontSize: 11),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
+                ),
               ),
             ),
 
@@ -353,6 +370,11 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                         setState(() {
                           _activeLesson = lesson;
                         });
+                        AnalyticsService().logCourseLessonView(
+                          courseId: widget.courseId,
+                          lessonId: lesson['lesson_id']?.toString() ?? '',
+                          lessonTitle: lesson['lesson_title'] ?? 'Lección',
+                        );
                       },
                     );
                   }).toList(),

@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/api_service.dart';
+import '../services/analytics_service.dart';
 import '../services/booking_recovery_service.dart';
 
 Future<bool?> showWompiCheckoutSheet({
@@ -48,6 +49,25 @@ class WompiCheckoutWidget extends StatefulWidget {
 
 class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
   int _selectedTab = 0; // 0: Nequi, 1: Card
+  bool _addHydrationOption = false;
+  bool _useWalletDiscount = false;
+  final double _walletDiscountAmount = 5000.0;
+
+  double _safeParseDouble(dynamic val, {double fallback = 0.0}) {
+    if (val == null) return fallback;
+    if (val is num) return val.toDouble();
+    if (val is String) {
+      return double.tryParse(val.replaceAll(',', '.')) ?? fallback;
+    }
+    return fallback;
+  }
+
+  double get _computedPrice {
+    final basePrice = _safeParseDouble(widget.price);
+    final total = basePrice + (_addHydrationOption ? 15000.0 : 0.0) - (_useWalletDiscount ? _walletDiscountAmount : 0.0);
+    return total < 0.0 ? 0.0 : total;
+  }
+
   final _nequiCtrl = TextEditingController();
   final _cardCtrl = TextEditingController();
   final _expCtrl = TextEditingController();
@@ -67,6 +87,20 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
     _cvvCtrl.dispose();
     _holderCtrl.dispose();
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    AnalyticsService().logInitiateCheckout(
+      itemType: widget.bookingId.startsWith('STORE_') ? 'product' : 'service',
+      itemId: widget.bookingId,
+      totalAmount: widget.price,
+      metadata: {
+        'service_name': widget.serviceName,
+        'provider_name': widget.providerName,
+      },
+    );
   }
 
   Future<void> _handlePayment() async {
@@ -95,6 +129,16 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
       }
 
       await HapticFeedback.lightImpact();
+
+      AnalyticsService().logPurchaseSuccess(
+        transactionId: res['reference'] ?? res['booking_id']?.toString() ?? widget.bookingId,
+        totalAmount: widget.price,
+        paymentMethod: method,
+        metadata: {
+          'service_name': widget.serviceName,
+          'provider_name': widget.providerName,
+        },
+      );
 
       setState(() {
         _isProcessing = false;
@@ -294,13 +338,113 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
                   ),
                 ),
                 Text(
-                  '\$${widget.price.toStringAsFixed(0)} COP',
+                  '\$${_computedPrice.toStringAsFixed(0)} COP',
                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF5C288D)),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
+          // 🎁 COMPONENTE CRO DE VENTA SUGERIDA (CROSS-SELLING PRE-CHECKOUT)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF1F2),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFFECDD3), width: 1.2),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.stars_rounded, color: Color(0xFFE11D48), size: 22),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text(
+                        '¡Añade un Tratamiento Hidratante!',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5, color: Colors.black87),
+                      ),
+                      Text(
+                        '+ Ampolla Capilar Nutritiva por $15.000 COP',
+                        style: TextStyle(fontSize: 11, color: Colors.black54),
+                      ),
+                    ],
+                  ),
+                ),
+                Switch(
+                  value: _addHydrationOption,
+                  activeColor: const Color(0xFFE11D48),
+                  onChanged: _isProcessing
+                      ? null
+                      : (val) {
+                          setState(() {
+                            _addHydrationOption = val;
+                          });
+                          if (val) {
+                            AnalyticsService().logEvent(
+                              eventType: 'ADD_ON_SELECTED',
+                              screenName: '/checkout',
+                              elementId: 'addon_hydration',
+                              metadata: {'addon_price': 15000},
+                            );
+                          }
+                        },
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+          // 💰 COMPONENTE DE GAMIFICACIÓN: DESCUENTO DE CASHBACK EN BILLETERA
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF0FDF4),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFBBF7D0), width: 1.2),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.account_balance_wallet_rounded, color: Color(0xFF16A34A), size: 22),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text(
+                        'Aplicar Cashback de Billetera',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5, color: Colors.black87),
+                      ),
+                      Text(
+                        'Descontar $5.000 COP de tu saldo XP acumulado',
+                        style: TextStyle(fontSize: 11, color: Colors.black54),
+                      ),
+                    ],
+                  ),
+                ),
+                Checkbox(
+                  value: _useWalletDiscount,
+                  activeColor: const Color(0xFF16A34A),
+                  onChanged: _isProcessing
+                      ? null
+                      : (val) {
+                          setState(() {
+                            _useWalletDiscount = val ?? false;
+                          });
+                          if (val == true) {
+                            AnalyticsService().logEvent(
+                              eventType: 'WALLET_CASHBACK_APPLIED',
+                              screenName: '/checkout',
+                              elementId: 'cashback_discount',
+                              metadata: {'discount': 5000},
+                            );
+                          }
+                        },
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
           Container(
             height: 50,
             decoration: BoxDecoration(

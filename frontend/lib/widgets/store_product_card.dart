@@ -205,12 +205,23 @@ class StoreProductCard extends StatelessWidget {
                       }
                     ),
                     if (stock > 0)
-                      IconButton(
-                        icon: const Icon(Icons.add_shopping_cart, color: AppTheme.primary, size: 20),
-                        onPressed: () {
-                          HapticFeedback.lightImpact();
-                          onAddToCart(product);
-                        },
+                      Semantics(
+                        button: true,
+                        label: 'Añadir ${product['nombre'] ?? 'producto'} al carrito',
+                        hint: 'Toca para agregar una unidad de este producto a tu pedido',
+                        child: InkWell(
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            onAddToCart(product);
+                          },
+                          borderRadius: BorderRadius.circular(24),
+                          child: Container(
+                            width: 48,
+                            height: 48,
+                            alignment: Alignment.center,
+                            child: const Icon(Icons.add_shopping_cart, color: AppTheme.primary, size: 22),
+                          ),
+                        ),
                       )
                     else
                       const Text(
