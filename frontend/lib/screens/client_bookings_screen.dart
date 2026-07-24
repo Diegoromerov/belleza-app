@@ -205,10 +205,10 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.payment_rounded,
+              Icon(Icons.payment_rounded,
                   size: 50, color: AppTheme.primary),
               const SizedBox(height: 20),
-               const CircularProgressIndicator(color: AppTheme.primary),
+              CircularProgressIndicator(color: AppTheme.primary),
               const SizedBox(height: 20),
               const Text(
                 'Procesando Pago Seguro Wompi',

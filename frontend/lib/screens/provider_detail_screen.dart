@@ -269,7 +269,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                             child: !hasAvatar
                                 ? Text(
                                     initialLetter,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                         fontSize: 36,
                                         fontWeight: FontWeight.bold,
                                         color: AppTheme.primary),
@@ -387,12 +387,12 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                 color: AppTheme.primary.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(6),
                               ),
-                              child: const Row(
+                              child: Row(
                                 children: [
                                   Icon(Icons.verified,
                                       color: AppTheme.primary, size: 16),
-                                  SizedBox(width: 4),
-                                  Text(
+                                  const SizedBox(width: 4),
+                                  const Text(
                                     'Verificado',
                                     style: TextStyle(
                                       color: AppTheme.primary,
