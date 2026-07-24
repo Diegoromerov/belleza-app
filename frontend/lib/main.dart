@@ -538,15 +538,16 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
         final name = p.fullName.toLowerCase();
 
         if (audience == AudienceMode.men) {
-          matchesAudience = desc.contains('barber') ||
+          final isMakeupOrNails = desc.contains('maquillaje') || desc.contains('manicura') || desc.contains('pedicura') || desc.contains('uñas');
+          final isBarberOrMen = desc.contains('barber') ||
               desc.contains('hombres') ||
               desc.contains('corte masculino') ||
               desc.contains('barba') ||
               biz.contains('barber') ||
               biz.contains('hombres') ||
-              biz.contains('barba') ||
-              name.contains('carlos') ||
-              p.isVerified; // Priorizar prestadores verificados con especialidad masculina
+              biz.contains('barba');
+          
+          matchesAudience = isBarberOrMen && !isMakeupOrNails;
         } else if (audience == AudienceMode.women) {
           matchesAudience = !desc.contains('exclusivo hombres') && !biz.contains('barberia masculina');
         }
