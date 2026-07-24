@@ -663,30 +663,39 @@ class _StoreScreenState extends State<StoreScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = MapSettings.isDark;
-    final bgColor = isDark ? const Color(0xFF18171C) : Colors.grey.shade50;
-    final cardBgColor = isDark ? const Color(0xFF24232B) : Colors.white;
-    final textColor = isDark ? Colors.white : AppTheme.text;
+    return ValueListenableBuilder<AudienceMode>(
+      valueListenable: AudienceService.currentAudience,
+      builder: (context, audienceMode, child) {
+        final isMen = audienceMode == AudienceMode.men;
+        final isDark = isMen || MapSettings.isDark;
 
-    return Scaffold(
-      backgroundColor: bgColor,
-      appBar: AppBar(
-        backgroundColor: cardBgColor,
-        elevation: 0.5,
-        iconTheme: IconThemeData(color: textColor),
-        title: Text(
-          'GlowApp Store',
-          style: TextStyle(
-            color: textColor,
+        final bgColor = isMen
+            ? MensTheme.obsidianBg
+            : (isDark ? const Color(0xFF18171C) : Colors.grey.shade50);
+        final cardBgColor = isMen
+            ? MensTheme.obsidianCard
+            : (isDark ? const Color(0xFF24232B) : Colors.white);
+        final textColor = isMen ? MensTheme.textPrimary : (isDark ? Colors.white : AppTheme.text);
+        final accentColor = isMen ? MensTheme.champagneGold : AppTheme.primary;
+
+        return Scaffold(
+          backgroundColor: bgColor,
+          appBar: AppBar(
+            backgroundColor: cardBgColor,
+            elevation: 0.5,
+            iconTheme: IconThemeData(color: textColor),
+            title: Text(
+              'GlowApp Store',
+              style: TextStyle(
+                color: textColor,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
             fontWeight: FontWeight.w800,
           ),
         ),
         centerTitle: false,
         actions: [
-          const Padding(
-            padding: EdgeInsets.only(right: 8.0),
-            child: AudienceToggleWidget(compact: true),
-          ),
           // Icono Carrito con Badge
           Stack(
             alignment: Alignment.center,
@@ -1143,9 +1152,8 @@ class _StoreScreenState extends State<StoreScreen> {
                   ),
                 ],
               ),
-            ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

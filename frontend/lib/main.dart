@@ -1379,24 +1379,30 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Stack(
-        children: [
-          // Capa 0: Mapa a pantalla completa centrado en Bogotá
-          FlutterMap(
-            mapController: _mapController,
-            options: MapOptions(
-              initialCenter: _bogotaCenter,
-              initialZoom: 13.5,
-            ),
+    return ValueListenableBuilder<AudienceMode>(
+      valueListenable: AudienceService.currentAudience,
+      builder: (context, audienceMode, child) {
+        final isMen = audienceMode == AudienceMode.men;
+        final useDarkMap = isMen || MapSettings.isDark;
+
+        return Scaffold(
+          backgroundColor: isMen ? MensTheme.obsidianBg : Colors.white,
+          body: Stack(
             children: [
-              TileLayer(
-                urlTemplate: MapSettings.isDark
-                    ? 'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
-                    : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.beautyapp.map',
-              ),
+              // Capa 0: Mapa a pantalla completa centrado en Bogotá
+              FlutterMap(
+                mapController: _mapController,
+                options: MapOptions(
+                  initialCenter: _bogotaCenter,
+                  initialZoom: 13.5,
+                ),
+                children: [
+                  TileLayer(
+                    urlTemplate: useDarkMap
+                        ? 'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
+                        : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    userAgentPackageName: 'com.beautyapp.map',
+                  ),
               // Marcadores de prestadores en el mapa + marcador de ubicación del usuario
               MarkerLayer(
                 markers: [
@@ -1724,6 +1730,8 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
             _buildTutorialOverlay(),
         ],
       ),
+    );
+      },
     );
   }
 
