@@ -815,69 +815,83 @@ class _StoreScreenState extends State<StoreScreen> {
                             )
                           : Column(
                               children: [
-                                // Filtros + Buscador (Shopify Header)
+                                // Filtros + Buscador Responsive (Shopify Header)
                                 Container(
                                   color: cardBgColor,
-                                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                                  child: Row(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
                                     children: [
-                                      // Filtros Categoría
-                                      Expanded(
-                                        child: SingleChildScrollView(
-                                          scrollDirection: Axis.horizontal,
-                                          child: Row(
-                                            children: _categories.map((cat) {
-                                              final isSelected = _selectedCategory == cat;
-                                              return Padding(
-                                                padding: const EdgeInsets.only(right: 8.0),
-                                                child: ChoiceChip(
-                                                  label: Text(cat),
-                                                  selected: isSelected,
-                                                  onSelected: (_) => _selectCategory(cat),
-                                                  selectedColor: AppTheme.primary.withValues(alpha: 0.12),
-                                                  disabledColor: Colors.transparent,
-                                                  backgroundColor: Colors.transparent,
-                                                  labelStyle: TextStyle(
-                                                    color: isSelected ? AppTheme.primary : AppTheme.text,
-                                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                                  ),
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius: BorderRadius.circular(18),
-                                                    side: BorderSide(
-                                                      color: isSelected ? AppTheme.primary : Colors.grey.shade300,
-                                                    ),
-                                                  ),
-                                                ),
-                                              );
-                                            }).toList(),
+                                      // 1. Barra de Búsqueda (Ocupa el ancho completo)
+                                      Container(
+                                        height: 42,
+                                        decoration: BoxDecoration(
+                                          color: isMen ? MensTheme.obsidianCard : Colors.grey.shade100,
+                                          borderRadius: BorderRadius.circular(21),
+                                          border: Border.all(
+                                            color: isMen ? MensTheme.bronzeAccent.withValues(alpha: 0.3) : Colors.grey.shade300,
                                           ),
                                         ),
-                                      ),
-                                      const SizedBox(width: 24),
-                                      // Barra de Búsqueda
-                                      Container(
-                                        width: 280,
-                                        height: 40,
-                                        decoration: BoxDecoration(
-                                          color: Colors.grey.shade100,
-                                          borderRadius: BorderRadius.circular(20),
-                                        ),
-                                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                                        padding: const EdgeInsets.symmetric(horizontal: 14),
                                         child: Row(
                                           children: [
-                                            const Icon(Icons.search, size: 18, color: Colors.grey),
+                                            Icon(Icons.search, size: 20, color: isMen ? MensTheme.champagneGold : Colors.grey),
                                             const SizedBox(width: 8),
                                             Expanded(
                                               child: TextField(
                                                 controller: _searchController,
-                                                decoration: const InputDecoration(
+                                                style: TextStyle(color: textColor),
+                                                decoration: InputDecoration(
                                                   hintText: 'Buscar productos...',
-                                                  hintStyle: TextStyle(fontSize: 13, color: Colors.grey),
+                                                  hintStyle: TextStyle(fontSize: 14, color: isMen ? Colors.grey.shade400 : Colors.grey),
                                                   border: InputBorder.none,
+                                                  isDense: true,
+                                                  contentPadding: const EdgeInsets.symmetric(vertical: 10),
                                                 ),
                                               ),
                                             ),
+                                            if (_searchController.text.isNotEmpty)
+                                              GestureDetector(
+                                                onTap: () {
+                                                  _searchController.clear();
+                                                  _filterProducts();
+                                                },
+                                                child: Icon(Icons.close, size: 18, color: isMen ? MensTheme.champagneGold : Colors.grey),
+                                              ),
                                           ],
+                                        ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      // 2. Filtros de Categoría Deslizables (Visualmente claros y accesibles en móvil)
+                                      SingleChildScrollView(
+                                        scrollDirection: Axis.horizontal,
+                                        physics: const BouncingScrollPhysics(),
+                                        child: Row(
+                                          children: _categories.map((cat) {
+                                            final isSelected = _selectedCategory == cat;
+                                            return Padding(
+                                              padding: const EdgeInsets.only(right: 8.0),
+                                              child: ChoiceChip(
+                                                label: Text(cat),
+                                                selected: isSelected,
+                                                onSelected: (_) => _selectCategory(cat),
+                                                selectedColor: primaryColor.withValues(alpha: 0.2),
+                                                disabledColor: Colors.transparent,
+                                                backgroundColor: isMen ? MensTheme.obsidianCard : Colors.transparent,
+                                                labelStyle: TextStyle(
+                                                  color: isSelected ? primaryColor : (isMen ? Colors.grey.shade300 : AppTheme.text),
+                                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                                  fontSize: 13,
+                                                ),
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(18),
+                                                  side: BorderSide(
+                                                    color: isSelected ? primaryColor : (isMen ? MensTheme.bronzeAccent.withValues(alpha: 0.4) : Colors.grey.shade300),
+                                                  ),
+                                                ),
+                                              ),
+                                            );
+                                          }).toList(),
                                         ),
                                       ),
                                     ],
