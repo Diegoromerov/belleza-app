@@ -8,12 +8,12 @@ class AppTheme {
   static Future<void> loadThemePreference() async {}
   static Future<void> toggleTheme() async {}
 
-  // Colores principales dinámicos (Responden al Modo Hombres / AudienceService)
-  static Color get primary => AudienceService.isMenMode ? MensTheme.champagneGold : const Color(0xFFC89D93);
-  static Color get accent => AudienceService.isMenMode ? MensTheme.bronzeAccent : const Color(0xFFC89D93);
-  static Color get text => AudienceService.isMenMode ? MensTheme.textPrimary : const Color(0xFF2D2C2A);
-  static Color get background => AudienceService.isMenMode ? MensTheme.obsidianBg : const Color(0xFFFDFBF7);
-  static Color get surface => AudienceService.isMenMode ? MensTheme.obsidianCard : const Color(0xFFF7F4EF);
+  // Colores principales de la marca (GlowApp) - Fijos como constantes de compilación
+  static const Color primary = Color(0xFFC89D93);
+  static const Color accent = Color(0xFFC89D93);
+  static const Color text = Color(0xFF2D2C2A);
+  static const Color background = Color(0xFFFDFBF7);
+  static const Color surface = Color(0xFFF7F4EF);
 
   static const LinearGradient premiumGradient = LinearGradient(
     begin: Alignment.topCenter,
@@ -118,7 +118,7 @@ class AppTheme {
   }
 
   // Especificación de Tipografía de la Guía Maestra
-  static TextStyle get h1 => TextStyle(
+  static const TextStyle h1 = TextStyle(
     fontSize: 24,
     fontWeight: FontWeight.w300,
     color: text,
@@ -127,7 +127,7 @@ class AppTheme {
     letterSpacing: 0.5,
   );
 
-  static TextStyle get subtitle => TextStyle(
+  static const TextStyle subtitle = TextStyle(
     fontSize: 16,
     fontWeight: FontWeight.w400,
     color: text,
@@ -135,14 +135,14 @@ class AppTheme {
     fontFamily: 'serif',
   );
 
-  static TextStyle get body => TextStyle(
+  static const TextStyle body = TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.w400,
     color: text,
     height: 1.25,
   );
 
-  static TextStyle get buttonLabel => TextStyle(
+  static const TextStyle buttonLabel = TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.w600,
     color: text,
