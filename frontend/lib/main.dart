@@ -315,12 +315,6 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
     }
   }
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
   Future<void> _determineUserLocation() async {
     try {
       final pos = await getWebGeolocation();
