@@ -146,60 +146,59 @@ class BeautyApp extends StatelessWidget {
                   foregroundColor: textColor,
                   elevation: 0,
                 ),
-              );
+              ),
+              initialRoute: '/home',
+              routes: {
+                '/login': (_) => const LoginScreen(),
+                '/register': (_) => const RegisterScreen(),
+                '/home': (_) => const ProvidersScreen(),
+                '/provider': (_) => const ProviderDashboardScreen(),
+                '/client-bookings': (_) => const ClientBookingsScreen(),
+                '/provider/services': (_) => const ProviderServicesScreen(),
+                '/provider/portfolio': (_) => const ProviderPortfolioScreen(),
+                '/provider/profile': (_) => const ProviderProfileScreen(),
+                '/chat': (_) => const ChatListScreen(),
+                '/onboarding': (_) => const OnboardingScreen(),
+                '/verification-pending': (_) => const VerificationPendingScreen(),
+                '/profile': (_) => const ClientProfileScreen(),
+                '/ideas': (_) => const IdeasEmptyScreen(),
+                '/biometric-consent': (_) => const BiometricConsentScreen(),
+                '/biometric-welcome': (_) => const BiometricWelcomeScreen(),
+                '/booking-tracking': (context) {
+                  final args = ModalRoute.of(context)!.settings.arguments
+                      as Map<String, dynamic>;
+                  return BookingTrackingScreen(booking: args);
+                },
+                '/provider-route': (context) {
+                  final args = ModalRoute.of(context)!.settings.arguments
+                      as Map<String, dynamic>;
+                  return ProviderRouteScreen(booking: args);
+                },
+                '/support': (_) => const SupportCenterScreen(),
+                '/disputes': (_) => const DisputesListScreen(),
+                '/dispute': (context) {
+                  final args = ModalRoute.of(context)?.settings.arguments
+                      as Map<String, dynamic>?;
+                  return OpenDisputeScreen(
+                    preselectedBookingId: args?['booking_id'],
+                  );
+                },
+                '/provider/academy': (_) => const AcademyScreen(),
+                '/store': (_) => const StoreScreen(),
+                '/evolution': (_) => const EvolutionDashboardScreen(),
+                '/medical-validation': (_) => const MedicalValidationScreen(),
+                '/glowup-card': (_) => const GlowUpCardScreen(),
+                '/palette-card': (_) => const PaletteCardScreen(),
+                '/colorimetria-historial': (_) => const ColorimetriaHistorialScreen(),
+                '/wardrobe': (_) => const WardrobeDashboardScreen(),
+                '/outfit-result': (_) => const OutfitResultScreen(),
+              },
+            );
           },
         );
       },
     );
-          initialRoute: '/home',
-          routes: {
-            '/login': (_) => const LoginScreen(),
-            '/register': (_) => const RegisterScreen(),
-            '/home': (_) => const ProvidersScreen(),
-            '/provider': (_) => const ProviderDashboardScreen(),
-            '/client-bookings': (_) => const ClientBookingsScreen(),
-            '/provider/services': (_) => const ProviderServicesScreen(),
-            '/provider/portfolio': (_) => const ProviderPortfolioScreen(),
-            '/provider/profile': (_) => const ProviderProfileScreen(),
-            '/chat': (_) => const ChatListScreen(),
-            '/onboarding': (_) => const OnboardingScreen(),
-            '/verification-pending': (_) => const VerificationPendingScreen(),
-            '/profile': (_) => const ClientProfileScreen(),
-            '/ideas': (_) => const IdeasEmptyScreen(),
-            '/biometric-consent': (_) => const BiometricConsentScreen(),
-            '/biometric-welcome': (_) => const BiometricWelcomeScreen(),
-            '/booking-tracking': (context) {
-              final args = ModalRoute.of(context)!.settings.arguments
-                  as Map<String, dynamic>;
-              return BookingTrackingScreen(booking: args);
-            },
-            '/provider-route': (context) {
-              final args = ModalRoute.of(context)!.settings.arguments
-                  as Map<String, dynamic>;
-              return ProviderRouteScreen(booking: args);
-            },
-            '/support': (_) => const SupportCenterScreen(),
-            '/disputes': (_) => const DisputesListScreen(),
-            '/dispute': (context) {
-              final args = ModalRoute.of(context)?.settings.arguments
-                  as Map<String, dynamic>?;
-              return OpenDisputeScreen(
-                preselectedBookingId: args?['booking_id'],
-              );
-            },
-            '/provider/academy': (_) => const AcademyScreen(),
-            '/store': (_) => const StoreScreen(),
-            '/evolution': (_) => const EvolutionDashboardScreen(),
-            '/medical-validation': (_) => const MedicalValidationScreen(),
-            '/glowup-card': (_) => const GlowUpCardScreen(),
-            '/palette-card': (_) => const PaletteCardScreen(),
-            '/colorimetria-historial': (_) => const ColorimetriaHistorialScreen(),
-            '/wardrobe': (_) => const WardrobeDashboardScreen(),
-            '/outfit-result': (_) => const OutfitResultScreen(),
-          },
-        );
-      },
-    );
+  }
   }
 }
 
