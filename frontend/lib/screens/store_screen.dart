@@ -875,18 +875,18 @@ class _StoreScreenState extends State<StoreScreen> {
                                                 label: Text(cat),
                                                 selected: isSelected,
                                                 onSelected: (_) => _selectCategory(cat),
-                                                selectedColor: primaryColor.withValues(alpha: 0.2),
+                                                selectedColor: accentColor.withValues(alpha: 0.2),
                                                 disabledColor: Colors.transparent,
                                                 backgroundColor: isMen ? MensTheme.obsidianCard : Colors.transparent,
                                                 labelStyle: TextStyle(
-                                                  color: isSelected ? primaryColor : (isMen ? Colors.grey.shade300 : AppTheme.text),
+                                                  color: isSelected ? accentColor : (isMen ? Colors.grey.shade300 : AppTheme.text),
                                                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                                                   fontSize: 13,
                                                 ),
                                                 shape: RoundedRectangleBorder(
                                                   borderRadius: BorderRadius.circular(18),
                                                   side: BorderSide(
-                                                    color: isSelected ? primaryColor : (isMen ? MensTheme.bronzeAccent.withValues(alpha: 0.4) : Colors.grey.shade300),
+                                                    color: isSelected ? accentColor : (isMen ? MensTheme.bronzeAccent.withValues(alpha: 0.4) : Colors.grey.shade300),
                                                   ),
                                                 ),
                                               ),
