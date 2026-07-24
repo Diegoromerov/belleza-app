@@ -691,16 +691,13 @@ class _StoreScreenState extends State<StoreScreen> {
                 fontWeight: FontWeight.w800,
               ),
             ),
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        centerTitle: false,
-        actions: [
-          // Icono Carrito con Badge
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              IconButton(
+            centerTitle: false,
+            actions: [
+              // Icono Carrito con Badge
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  IconButton(
                 icon: Icon(Icons.shopping_bag_outlined, color: textColor),
                 onPressed: () {
                   setState(() {
