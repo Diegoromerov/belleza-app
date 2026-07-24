@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGC-DOC-009: Gestión del Talento Humano y Perfiles de Cargo - GlowApp S.A.S.</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --espresso: #4A3428;
+            --rose-gold: #B76E79;
+            --crema: #FDF6F0;
+            --carbono: #2B2B2B;
+            --blanco: #FFFFFF;
+            --border-light: #E8D8D0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Manrope', 'Helvetica', sans-serif;
+            color: var(--carbono);
+            background-color: #F4EFEA;
+            line-height: 1.35;
+            font-size: 10.5pt;
+            padding: 20px;
+        }
+
+        .document-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--blanco);
+            box-shadow: 0 4px 20px rgba(74, 52, 40, 0.08);
+            padding: 25mm 20mm 25mm 20mm;
+            position: relative;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--espresso);
+            color: var(--blanco);
+            padding: 14px 24px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .btn-pdf {
+            background: var(--rose-gold);
+            color: var(--blanco);
+            border: none;
+            padding: 10px 18px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+
+        .btn-pdf:hover {
+            background: #a35b66;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 0.5pt solid var(--rose-gold);
+            padding-bottom: 8px;
+            margin-bottom: 24px;
+        }
+
+        .page-header-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-box {
+            width: 40px;
+            height: 40px;
+            background-color: var(--crema);
+            border: 1px solid var(--rose-gold);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Fraunces', serif;
+            font-weight: 700;
+            color: var(--espresso);
+            font-size: 1.1rem;
+        }
+
+        .page-header-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--espresso);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .doc-control-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 28px;
+            border: 1px solid var(--espresso);
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .doc-control-table td {
+            border: 1px solid var(--espresso);
+            padding: 8px 12px;
+            font-size: 9pt;
+            vertical-align: middle;
+        }
+
+        .doc-control-title {
+            text-align: center;
+            background: var(--crema);
+        }
+
+        .doc-control-title h1 {
+            font-family: 'Fraunces', serif;
+            font-size: 16pt;
+            color: var(--espresso);
+            margin-bottom: 2px;
+        }
+
+        .doc-control-title h2 {
+            font-size: 10pt;
+            color: var(--rose-gold);
+            font-weight: 600;
+        }
+
+        h2.doc-h2 {
+            font-family: 'Manrope', sans-serif;
+            font-size: 14pt;
+            font-weight: 700;
+            color: var(--espresso);
+            margin-top: 24px;
+            margin-bottom: 12px;
+            border-bottom: 1px solid var(--crema);
+            padding-bottom: 4px;
+            page-break-after: avoid;
+            break-after: avoid;
+        }
+
+        h3.doc-h3 {
+            font-family: 'Manrope', sans-serif;
+            font-size: 12pt;
+            font-weight: 700;
+            color: var(--rose-gold);
+            margin-top: 18px;
+            margin-bottom: 8px;
+            page-break-after: avoid;
+            break-after: avoid;
+        }
+
+        p {
+            color: var(--carbono);
+            margin-bottom: 12px;
+            text-align: justify;
+        }
+
+        .callout-box {
+            background-color: var(--crema);
+            border-left: 3pt solid var(--rose-gold);
+            padding: 14px 18px;
+            margin: 18px 0;
+            border-radius: 0 6px 6px 0;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .callout-box h4 {
+            color: var(--espresso);
+            font-size: 10.5pt;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .corporate-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 18px 0;
+            font-size: 8.5pt;
+            border: 1px solid var(--border-light);
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .corporate-table th {
+            background-color: var(--espresso);
+            color: var(--blanco);
+            padding: 8px 10px;
+            text-align: left;
+            font-weight: 600;
+            border: none;
+        }
+
+        .corporate-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--border-light);
+            vertical-align: top;
+        }
+
+        .corporate-table tr {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .corporate-table tr:nth-child(even) {
+            background-color: var(--crema);
+        }
+
+        .corporate-table tr:nth-child(odd) {
+            background-color: var(--blanco);
+        }
+
+        .page-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 0.5pt solid var(--rose-gold);
+            padding-top: 10px;
+            margin-top: 40px;
+            font-size: 8.5pt;
+            color: var(--carbono);
+        }
+
+        .approval-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 30px;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .approval-card {
+            border: 1px solid var(--border-light);
+            background-color: var(--crema);
+            padding: 12px;
+            text-align: center;
+            border-radius: 6px;
+            font-size: 8.5pt;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .approval-card strong {
+            color: var(--espresso);
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .signature-area {
+            margin-top: 24px;
+            border-top: 1px dashed var(--rose-gold);
+            padding-top: 4px;
+            color: #777;
+        }
+
+        @media print {
+            @page {
+                size: A4;
+                margin: 20mm 15mm 20mm 15mm;
+                @bottom-left {
+                    content: "GlowApp S.A.S.- Corporativo";
+                    font-family: 'Manrope', sans-serif;
+                    font-size: 8.5pt;
+                    color: #2B2B2B;
+                }
+                @bottom-right {
+                    content: "Página " counter(page) " de " counter(pages);
+                    font-family: 'Manrope', sans-serif;
+                    font-size: 8.5pt;
+                    color: #2B2B2B;
+                }
+            }
+
+            body {
+                background: white !important;
+                padding: 0 !important;
+                font-size: 10pt;
+            }
+
+            .toolbar {
+                display: none !important;
+            }
+
+            .document-container {
+                box-shadow: none !important;
+                padding: 0 !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+            }
+
+            .doc-control-table,
+            .corporate-table,
+            .corporate-table tr,
+            .callout-box,
+            .approval-grid,
+            .approval-card {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+
+            h2.doc-h2, h3.doc-h3 {
+                page-break-after: avoid !important;
+                break-after: avoid !important;
+            }
+
+            .corporate-table th {
+                background-color: #4A3428 !important;
+                color: #FFFFFF !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .corporate-table tr:nth-child(even), .callout-box, .doc-control-title, .approval-card, .logo-box {
+                background-color: #FDF6F0 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .page-footer {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Toolbar de Pantalla -->
+    <div class="toolbar">
+        <div>
+            <strong>GlowApp S.A.S. - Sistema de Gestión de la Calidad (ISO 9001:2015)</strong>
+        </div>
+        <button class="btn-pdf" onclick="window.print()">
+            📄 Exportar / Descargar PDF
+        </button>
+    </div>
+
+    <div class="document-container">
+
+        <!-- Encabezado de Página Corporativo -->
+        <header class="page-header">
+            <div class="page-header-logo">
+                <div class="logo-box">G</div>
+                <span style="font-weight: 700; color: var(--espresso); font-size: 0.95rem;">GlowApp S.A.S.</span>
+            </div>
+            <div class="page-header-title">Operaciones & Calidad | SGC ISO 9001</div>
+        </header>
+
+        <!-- Tabla de Control de Documento Normativo -->
+        <table class="doc-control-table">
+            <tr>
+                <td style="width: 20%; text-align: center;">
+                    <div style="font-family: 'Fraunces', serif; font-size: 1.4rem; font-weight: 700; color: var(--espresso);">GlowApp</div>
+                    <span style="font-size: 7.5pt; color: var(--rose-gold);">S.A.S.</span>
+                </td>
+                <td class="doc-control-title" style="width: 55%;">
+                    <h1>MANUAL DE CALIDAD SGC</h1>
+                    <h2>GESTIÓN DEL TALENTO HUMANO Y PERFILES DE CARGO</h2>
+                </td>
+                <td style="width: 25%;">
+                    <div><strong>Código:</strong> SGC-DOC-009</div>
+                    <div><strong>Versión:</strong> 1.0</div>
+                    <div><strong>Fecha:</strong> 2026-07-23</div>
+                </td>
+            </tr>
+        </table>
+
+        <!-- Sección 1: Procedimiento Talento Humano -->
+        <h2 class="doc-h2">1. Procedimiento de Gestión del Talento Humano (Cláusula 7.2)</h2>
+        <p>
+            GlowApp S.A.S. asegura la competencia de su personal interno y la idoneidad de los prestadores independientes que se conectan a la plataforma mediante procesos estandarizados de selección, formación e inducción:
+        </p>
+
+        <div class="callout-box">
+            <h4>Fases de la Gestión de Competencia y Capacitación</h4>
+            <p style="margin-bottom: 0;">
+                1. <strong>Definición de Perfiles:</strong> Establecimiento de la educación, formación y experiencia necesaria para cada cargo.<br>
+                2. <strong>Selección y Filtro:</strong> Entrevistas técnicas para equipo interno y verificación de antecedentes para prestadores.<br>
+                3. <strong>Programa de Inducción:</strong> Formación obligatoria en la Política SGC, uso de la App y normas de bioseguridad.<br>
+                4. <strong>Capacitación Continua:</strong> Módulos de actualización técnica y académica a través de **Glow Academy**.
+            </p>
+        </div>
+
+        <!-- Sección 2: Matriz de Perfiles de Cargo Internos -->
+        <h2 class="doc-h2">2. Matriz de Perfiles de Cargo del Equipo Interno de GlowApp S.A.S.</h2>
+        <table class="corporate-table">
+            <thead>
+                <tr>
+                    <th>Cargo Interno</th>
+                    <th>Educación Mínima</th>
+                    <th>Experiencia Requerida</th>
+                    <th>Competencias Clave SGC</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>CEO / Dirección General</strong></td>
+                    <td>Profesional en Administración, Ingeniería o Afines (+Posgrado).</td>
+                    <td>≥ 5 años en dirección de empresas tecnológicas.</td>
+                    <td>Liderazgo estratégico, toma de decisiones y gestión de calidad.</td>
+                </tr>
+                <tr>
+                    <td><strong>CTO / Dirección de Tecnología</strong></td>
+                    <td>Ingeniería de Sistemas, Software o Computación.</td>
+                    <td>≥ 4 años en arquitectura Cloud, Node.js y DevOps.</td>
+                    <td>Gestión de infraestructura, Uptime 99.5% y releases CI/CD.</td>
+                </tr>
+                <tr>
+                    <td><strong>COO / Operaciones & Marketplace</strong></td>
+                    <td>Profesional en Logística, Industrial o Negocios.</td>
+                    <td>≥ 3 años en operaciones digital u e-commerce.</td>
+                    <td>Trazabilidad logística, control de SLA y gestión de proveedores.</td>
+                </tr>
+                <tr>
+                    <td><strong>Líder de Biometría e IA</strong></td>
+                    <td>Ingeniería de Sistemas / Data Science / IA.</td>
+                    <td>≥ 3 años en biometría facial, ML y visión por computador.</td>
+                    <td>Cifrado de datos (AES-256), auditoría de consentimiento y calibración de IA.</td>
+                </tr>
+                <tr>
+                    <td><strong>Líder de Glow Academy</strong></td>
+                    <td>Licenciatura en Educación, Pedagogía o Afines.</td>
+                    <td>≥ 3 años en gestión de programas e-learning.</td>
+                    <td>Auditoría de mallas académicas y relación con instituciones aliadas.</td>
+                </tr>
+                <tr>
+                    <td><strong>Líder de QA / Calidad de Código</strong></td>
+                    <td>Ingeniería de Sistemas o Análisis de Software.</td>
+                    <td>≥ 2 años en pruebas de software automatizadas.</td>
+                    <td>Garantía de 0 Bugs bloqueantes en producción.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Sección 3: Perfil y Requisitos del Prestador Freelance -->
+        <h2 class="doc-h2">3. Perfil y Requisitos de Admisión para Prestadores Independientes</h2>
+        <p>
+            Requisitos obligatorios de filtro para la conexión de profesionales freelance de belleza en GlowApp:
+        </p>
+
+        <table class="corporate-table">
+            <thead>
+                <tr>
+                    <th>Requisito de Filtro</th>
+                    <th>Documento o Evidencia Exigida</th>
+                    <th>Mecanismo de Verificación</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Identificación Oficial</strong></td>
+                    <td>Cédula de Ciudadanía / Documento de Identidad Oficial Válido.</td>
+                    <td>Verificación facial biométrica en el **Hub Biométrico**.</td>
+                </tr>
+                <tr>
+                    <td><strong>Certificación de Habilidades</strong></td>
+                    <td>Título o Certificado de Capacitación en Cosmetología/Estética.</td>
+                    <td>Auditoría de validez del diploma o certificación Glow Academy.</td>
+                </tr>
+                <tr>
+                    <td><strong>Verificación de Antecedentes</strong></td>
+                    <td>Certificado judicial y de medidas correctivas.</td>
+                    <td>Consulta en bases de datos públicas oficiales de policía y control.</td>
+                </tr>
+                <tr>
+                    <td><strong>Formación en Bioseguridad</strong></td>
+                    <td>Certificado vigente de Bioseguridad aplicada a la estética.</td>
+                    <td>Verificación de vigencia no mayor a 2 años.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Cuadro de Firmas y Aprobación -->
+        <div class="approval-grid">
+            <div class="approval-card">
+                <strong>ELABORÓ</strong>
+                Equipo de Contenido / Calidad
+                <div class="signature-area">2026-07-23</div>
+            </div>
+            <div class="approval-card">
+                <strong>REVISÓ</strong>
+                Dirección de Operaciones
+                <div class="signature-area">2026-07-23</div>
+            </div>
+            <div class="approval-card">
+                <strong>APROBÓ</strong>
+                Dirección General / CEO
+                <div class="signature-area">2026-07-23</div>
+            </div>
+        </div>
+
+        <!-- Pie de Página Corporativo -->
+        <footer class="page-footer">
+            <div>GlowApp S.A.S.- Corporativo</div>
+            <div>Documentación Controlada SGC</div>
+        </footer>
+
+    </div>
+
+</body>
+</html>

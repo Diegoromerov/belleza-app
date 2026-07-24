@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGC-DOC-007: Cuadro de Control Estratégico SGC - GlowApp S.A.S.</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --espresso: #4A3428;
+            --rose-gold: #B76E79;
+            --crema: #FDF6F0;
+            --carbono: #2B2B2B;
+            --blanco: #FFFFFF;
+            --border-light: #E8D8D0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Manrope', 'Helvetica', sans-serif;
+            color: var(--carbono);
+            background-color: #F4EFEA;
+            line-height: 1.35;
+            font-size: 10.5pt;
+            padding: 20px;
+        }
+
+        .document-container {
+            max-width: 950px;
+            margin: 0 auto;
+            background: var(--blanco);
+            box-shadow: 0 4px 20px rgba(74, 52, 40, 0.08);
+            padding: 25mm 20mm 25mm 20mm;
+            position: relative;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--espresso);
+            color: var(--blanco);
+            padding: 14px 24px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            max-width: 950px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .btn-pdf {
+            background: var(--rose-gold);
+            color: var(--blanco);
+            border: none;
+            padding: 10px 18px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+
+        .btn-pdf:hover {
+            background: #a35b66;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 0.5pt solid var(--rose-gold);
+            padding-bottom: 8px;
+            margin-bottom: 24px;
+        }
+
+        .page-header-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-box {
+            width: 40px;
+            height: 40px;
+            background-color: var(--crema);
+            border: 1px solid var(--rose-gold);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Fraunces', serif;
+            font-weight: 700;
+            color: var(--espresso);
+            font-size: 1.1rem;
+        }
+
+        .page-header-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--espresso);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .doc-control-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 28px;
+            border: 1px solid var(--espresso);
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .doc-control-table td {
+            border: 1px solid var(--espresso);
+            padding: 8px 12px;
+            font-size: 9pt;
+            vertical-align: middle;
+        }
+
+        .doc-control-title {
+            text-align: center;
+            background: var(--crema);
+        }
+
+        .doc-control-title h1 {
+            font-family: 'Fraunces', serif;
+            font-size: 16pt;
+            color: var(--espresso);
+            margin-bottom: 2px;
+        }
+
+        .doc-control-title h2 {
+            font-size: 10pt;
+            color: var(--rose-gold);
+            font-weight: 600;
+        }
+
+        h2.doc-h2 {
+            font-family: 'Manrope', sans-serif;
+            font-size: 14pt;
+            font-weight: 700;
+            color: var(--espresso);
+            margin-top: 24px;
+            margin-bottom: 12px;
+            border-bottom: 1px solid var(--crema);
+            padding-bottom: 4px;
+            page-break-after: avoid;
+            break-after: avoid;
+        }
+
+        h3.doc-h3 {
+            font-family: 'Manrope', sans-serif;
+            font-size: 12pt;
+            font-weight: 700;
+            color: var(--rose-gold);
+            margin-top: 18px;
+            margin-bottom: 8px;
+            page-break-after: avoid;
+            break-after: avoid;
+        }
+
+        p {
+            color: var(--carbono);
+            margin-bottom: 12px;
+            text-align: justify;
+        }
+
+        .perspective-box {
+            border: 1.5px solid var(--espresso);
+            border-radius: 8px;
+            background-color: var(--blanco);
+            margin: 20px 0;
+            overflow: hidden;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .perspective-header {
+            background-color: var(--espresso);
+            color: var(--blanco);
+            padding: 10px 16px;
+            font-family: 'Fraunces', serif;
+            font-size: 11pt;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .perspective-header span.code {
+            background: var(--rose-gold);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 8.5pt;
+            font-family: 'Manrope', sans-serif;
+        }
+
+        .corporate-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 8.5pt;
+            border: none;
+        }
+
+        .corporate-table th {
+            background-color: var(--crema);
+            color: var(--espresso);
+            padding: 8px 10px;
+            text-align: left;
+            font-weight: 700;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .corporate-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--border-light);
+            vertical-align: middle;
+        }
+
+        .corporate-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .status-pill {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 7.5pt;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .status-pill.cumple { background-color: #dcfce7; color: #15803d; }
+        .status-pill.alerta { background-color: #fef3c7; color: #b45309; }
+        .status-pill.critico { background-color: #fecaca; color: #991b1b; }
+
+        .page-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 0.5pt solid var(--rose-gold);
+            padding-top: 10px;
+            margin-top: 40px;
+            font-size: 8.5pt;
+            color: var(--carbono);
+        }
+
+        .approval-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 30px;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .approval-card {
+            border: 1px solid var(--border-light);
+            background-color: var(--crema);
+            padding: 12px;
+            text-align: center;
+            border-radius: 6px;
+            font-size: 8.5pt;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .approval-card strong {
+            color: var(--espresso);
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .signature-area {
+            margin-top: 24px;
+            border-top: 1px dashed var(--rose-gold);
+            padding-top: 4px;
+            color: #777;
+        }
+
+        @media print {
+            @page {
+                size: A4;
+                margin: 20mm 15mm 20mm 15mm;
+                @bottom-left {
+                    content: "GlowApp S.A.S.- Corporativo";
+                    font-family: 'Manrope', sans-serif;
+                    font-size: 8.5pt;
+                    color: #2B2B2B;
+                }
+                @bottom-right {
+                    content: "Página " counter(page) " de " counter(pages);
+                    font-family: 'Manrope', sans-serif;
+                    font-size: 8.5pt;
+                    color: #2B2B2B;
+                }
+            }
+
+            body {
+                background: white !important;
+                padding: 0 !important;
+                font-size: 10pt;
+            }
+
+            .toolbar {
+                display: none !important;
+            }
+
+            .document-container {
+                box-shadow: none !important;
+                padding: 0 !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+            }
+
+            .doc-control-table,
+            .perspective-box,
+            .corporate-table,
+            .corporate-table tr,
+            .approval-grid,
+            .approval-card {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+
+            h2.doc-h2, h3.doc-h3 {
+                page-break-after: avoid !important;
+                break-after: avoid !important;
+            }
+
+            .perspective-header, .status-pill {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .corporate-table th, .doc-control-title, .approval-card, .logo-box {
+                background-color: #FDF6F0 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .page-footer {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Toolbar de Pantalla -->
+    <div class="toolbar">
+        <div>
+            <strong>GlowApp S.A.S. - Sistema de Gestión de la Calidad (ISO 9001:2015)</strong>
+        </div>
+        <button class="btn-pdf" onclick="window.print()">
+            📄 Exportar / Descargar PDF
+        </button>
+    </div>
+
+    <div class="document-container">
+
+        <!-- Encabezado de Página Corporativo -->
+        <header class="page-header">
+            <div class="page-header-logo">
+                <div class="logo-box">G</div>
+                <span style="font-weight: 700; color: var(--espresso); font-size: 0.95rem;">GlowApp S.A.S.</span>
+            </div>
+            <div class="page-header-title">Operaciones & Calidad | SGC ISO 9001</div>
+        </header>
+
+        <!-- Tabla de Control de Documento Normativo -->
+        <table class="doc-control-table">
+            <tr>
+                <td style="width: 20%; text-align: center;">
+                    <div style="font-family: 'Fraunces', serif; font-size: 1.4rem; font-weight: 700; color: var(--espresso);">GlowApp</div>
+                    <span style="font-size: 7.5pt; color: var(--rose-gold);">S.A.S.</span>
+                </td>
+                <td class="doc-control-title" style="width: 55%;">
+                    <h1>MANUAL DE CALIDAD SGC</h1>
+                    <h2>CUADRO DE CONTROL ESTRATÉGICO (BALANCED SCORECARD SGC)</h2>
+                </td>
+                <td style="width: 25%;">
+                    <div><strong>Código:</strong> SGC-DOC-007</div>
+                    <div><strong>Versión:</strong> 1.0</div>
+                    <div><strong>Fecha:</strong> 2026-07-23</div>
+                </td>
+            </tr>
+        </table>
+
+        <!-- Introducción -->
+        <h2 class="doc-h2">1. Marco Estratégico de Control y Mando Integral (Cláusulas 5.1 y 9.3)</h2>
+        <p>
+            El **Cuadro de Control Estratégico** del SGC es el instrumento directivo maestro mediante el cual la Alta Dirección de **GlowApp S.A.S.** monitorea el cumplimiento de las metas organizacionales divididas en las 4 perspectivas fundamentales del Balanced Scorecard: Financiera, Clientes/Prestadores, Procesos Internos y Aprendizaje/Innovación.
+        </p>
+
+        <!-- PERSPECTIVA 1: FINANCIERA Y NEGOCIO -->
+        <div class="perspective-box">
+            <div class="perspective-header">
+                <div>1. PERSPECTIVA FINANCIERA & SOSTENIBILIDAD DEL NEGOCIO</div>
+                <span class="code">PERS-01</span>
+            </div>
+            <table class="corporate-table">
+                <thead>
+                    <tr>
+                        <th>Objetivo Estratégico</th>
+                        <th>KPI / Indicador Clave</th>
+                        <th>Meta (SLA)</th>
+                        <th>Frecuencia</th>
+                        <th>Estado Actual</th>
+                        <th>Responsable</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Crecimiento Marketplace</strong></td>
+                        <td>Tasa de incremento mensual en volumen de ventas cosméticas</td>
+                        <td>≥ 15% mensual</td>
+                        <td>Mensual</td>
+                        <td><span class="status-pill cumple">CONFORME</span></td>
+                        <td>COO / Comercial</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Eficiencia Transaccional</strong></td>
+                        <td>Costo operativo por procesamiento de reserva/pago</td>
+                        <td>&lt; 3.5% comisión</td>
+                        <td>Mensual</td>
+                        <td><span class="status-pill cumple">CONFORME</span></td>
+                        <td>CFO / Finanzas</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- PERSPECTIVA 2: CLIENTES Y PRESTADORES FREELANCE -->
+        <div class="perspective-box">
+            <div class="perspective-header">
+                <div>2. PERSPECTIVA DE CLIENTES & PRESTADORES FREELANCE</div>
+                <span class="code">PERS-02</span>
+            </div>
+            <table class="corporate-table">
+                <thead>
+                    <tr>
+                        <th>Objetivo Estratégico</th>
+                        <th>KPI / Indicador Clave</th>
+                        <th>Meta (SLA)</th>
+                        <th>Frecuencia</th>
+                        <th>Estado Actual</th>
+                        <th>Responsable</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Satisfacción de Usuarios (CSAT)</strong></td>
+                        <td>Valoración media obtenida al finalizar el servicio agendado</td>
+                        <td>≥ 4.6 / 5.0</td>
+                        <td>Mensual</td>
+                        <td><span class="status-pill cumple">CONFORME</span></td>
+                        <td>COO / Soporte</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Lealtad de Marca (NPS)</strong></td>
+                        <td>Índice de recomendación neta por usuarios finales</td>
+                        <td>≥ 70% Promotores</td>
+                        <td>Trimestral</td>
+                        <td><span class="status-pill cumple">CONFORME</span></td>
+                        <td>Marketing / COO</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Retención de Prestadores</strong></td>
+                        <td>Porcentaje de profesionales independientes activos que renuevan suscripción</td>
+                        <td>≥ 92%</td>
+                        <td>Trimestral</td>
+                        <td><span class="status-pill cumple">CONFORME</span></td>
+                        <td>Dirección Comercial</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- PERSPECTIVA 3: PROCESOS INTERNOS Y EXCELENCIA TECNOLÓGICA -->
+        <div class="perspective-box">
+            <div class="perspective-header">
+                <div>3. PERSPECTIVA DE PROCESOS INTERNOS & EXCELENCIA TECNOLÓGICA</div>
+                <span class="code">PERS-03</span>
+            </div>
+            <table class="corporate-table">
+                <thead>
+                    <tr>
+                        <th>Objetivo Estratégico</th>
+                        <th>KPI / Indicador Clave</th>
+                        <th>Meta (SLA)</th>
+                        <th>Frecuencia</th>
+                        <th>Estado Actual</th>
+                        <th>Responsable</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Disponibilidad Plataforma</strong></td>
+                        <td>Porcentaje de tiempo de servicio Cloud activo (Uptime)</td>
+                        <td>≥ 99.5%</td>
+                        <td>Mensual</td>
+                        <td><span class="status-pill cumple">CONFORME</span></td>
+                        <td>CTO / DevOps</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Auditoría Biométrico</strong></td>
+                        <td>Porcentaje de registros biométricos con consentimiento legal firmado</td>
+                        <td>100% Auditado</td>
+                        <td>Mensual</td>
+                        <td><span class="status-pill cumple">CONFORME</span></td>
+                        <td>Líder Biometría</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Precisión del Motor de IA</strong></td>
+                        <td>Aceptación de sugerencias personalizadas de estética por usuarios</td>
+                        <td>≥ 90% Aceptación</td>
+                        <td>Mensual</td>
+                        <td><span class="status-pill cumple">CONFORME</span></td>
+                        <td>Líder IA</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Cumplimiento Despachos</strong></td>
+                        <td>Entregas del Marketplace dentro del plazo de 24 horas</td>
+                        <td>≥ 98% a tiempo</td>
+                        <td>Semanal</td>
+                        <td><span class="status-pill cumple">CONFORME</span></td>
+                        <td>Operaciones Marketplace</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Calidad de Software (QA)</strong></td>
+                        <td>Errores severidad bloqueante encontrados en producción post-release</td>
+                        <td>0 Bugs</td>
+                        <td>Por Release</td>
+                        <td><span class="status-pill cumple">CONFORME</span></td>
+                        <td>Líder QA</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- PERSPECTIVA 4: APRENDIZAJE, INNOVACIÓN Y GLOW ACADEMY -->
+        <div class="perspective-box">
+            <div class="perspective-header">
+                <div>4. PERSPECTIVA DE APRENDIZAJE, INNOVACIÓN & GLOW ACADEMY</div>
+                <span class="code">PERS-04</span>
+            </div>
+            <table class="corporate-table">
+                <thead>
+                    <tr>
+                        <th>Objetivo Estratégico</th>
+                        <th>KPI / Indicador Clave</th>
+                        <th>Meta (SLA)</th>
+                        <th>Frecuencia</th>
+                        <th>Estado Actual</th>
+                        <th>Responsable</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Conformidad Convenios</strong></td>
+                        <td>No conformidades detectadas en auditorías académicas externas</td>
+                        <td>0 No Conformidades</td>
+                        <td>Semestral</td>
+                        <td><span class="status-pill cumple">CONFORME</span></td>
+                        <td>Líder Academy</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Graduación Prestadores</strong></td>
+                        <td>Porcentaje de prestadores independientes que completan módulos en Academy</td>
+                        <td>≥ 85% Aprobados</td>
+                        <td>Semestral</td>
+                        <td><span class="status-pill cumple">CONFORME</span></td>
+                        <td>Líder Academy</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Capacitación Interna</strong></td>
+                        <td>Horas anuales de formación recibidas por colaboradores en el SGC</td>
+                        <td>≥ 40 hrs / año</td>
+                        <td>Anual</td>
+                        <td><span class="status-pill cumple">CONFORME</span></td>
+                        <td>Talento Humano</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Cuadro de Firmas y Aprobación -->
+        <div class="approval-grid">
+            <div class="approval-card">
+                <strong>ELABORÓ</strong>
+                Equipo de Contenido / Calidad
+                <div class="signature-area">2026-07-23</div>
+            </div>
+            <div class="approval-card">
+                <strong>REVISÓ</strong>
+                Dirección de Operaciones
+                <div class="signature-area">2026-07-23</div>
+            </div>
+            <div class="approval-card">
+                <strong>APROBÓ</strong>
+                Dirección General / CEO
+                <div class="signature-area">2026-07-23</div>
+            </div>
+        </div>
+
+        <!-- Pie de Página Corporativo -->
+        <footer class="page-footer">
+            <div>GlowApp S.A.S.- Corporativo</div>
+            <div>Documentación Controlada SGC</div>
+        </footer>
+
+    </div>
+
+</body>
+</html>

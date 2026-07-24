@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGC-DOC-002: Política, Liderazgo y Planificación de Objetivos - GlowApp S.A.S.</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --espresso: #4A3428;
+            --rose-gold: #B76E79;
+            --crema: #FDF6F0;
+            --carbono: #2B2B2B;
+            --blanco: #FFFFFF;
+            --border-light: #E8D8D0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Manrope', 'Helvetica', sans-serif;
+            color: var(--carbono);
+            background-color: #F4EFEA;
+            line-height: 1.35;
+            font-size: 10.5pt;
+            padding: 20px;
+        }
+
+        .document-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--blanco);
+            box-shadow: 0 4px 20px rgba(74, 52, 40, 0.08);
+            padding: 25mm 20mm 25mm 20mm;
+            position: relative;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--espresso);
+            color: var(--blanco);
+            padding: 14px 24px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .btn-pdf {
+            background: var(--rose-gold);
+            color: var(--blanco);
+            border: none;
+            padding: 10px 18px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+
+        .btn-pdf:hover {
+            background: #a35b66;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 0.5pt solid var(--rose-gold);
+            padding-bottom: 8px;
+            margin-bottom: 24px;
+        }
+
+        .page-header-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-box {
+            width: 40px;
+            height: 40px;
+            background-color: var(--crema);
+            border: 1px solid var(--rose-gold);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Fraunces', serif;
+            font-weight: 700;
+            color: var(--espresso);
+            font-size: 1.1rem;
+        }
+
+        .page-header-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--espresso);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .doc-control-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 28px;
+            border: 1px solid var(--espresso);
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .doc-control-table td {
+            border: 1px solid var(--espresso);
+            padding: 8px 12px;
+            font-size: 9pt;
+            vertical-align: middle;
+        }
+
+        .doc-control-title {
+            text-align: center;
+            background: var(--crema);
+        }
+
+        .doc-control-title h1 {
+            font-family: 'Fraunces', serif;
+            font-size: 16pt;
+            color: var(--espresso);
+            margin-bottom: 2px;
+        }
+
+        .doc-control-title h2 {
+            font-size: 10pt;
+            color: var(--rose-gold);
+            font-weight: 600;
+        }
+
+        h2.doc-h2 {
+            font-family: 'Manrope', sans-serif;
+            font-size: 14pt;
+            font-weight: 700;
+            color: var(--espresso);
+            margin-top: 24px;
+            margin-bottom: 12px;
+            border-bottom: 1px solid var(--crema);
+            padding-bottom: 4px;
+            page-break-after: avoid;
+            break-after: avoid;
+        }
+
+        h3.doc-h3 {
+            font-family: 'Manrope', sans-serif;
+            font-size: 12pt;
+            font-weight: 700;
+            color: var(--rose-gold);
+            margin-top: 18px;
+            margin-bottom: 8px;
+            page-break-after: avoid;
+            break-after: avoid;
+        }
+
+        p {
+            color: var(--carbono);
+            margin-bottom: 12px;
+            text-align: justify;
+        }
+
+        .callout-box {
+            background-color: var(--crema);
+            border-left: 3pt solid var(--rose-gold);
+            padding: 16px 20px;
+            margin: 18px 0;
+            border-radius: 0 6px 6px 0;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .callout-box h4 {
+            color: var(--espresso);
+            font-size: 11pt;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .corporate-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 18px 0;
+            font-size: 8.5pt;
+            border: 1px solid var(--border-light);
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .corporate-table th {
+            background-color: var(--espresso);
+            color: var(--blanco);
+            padding: 9px 10px;
+            text-align: left;
+            font-weight: 600;
+            border: none;
+        }
+
+        .corporate-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--border-light);
+            vertical-align: top;
+        }
+
+        .corporate-table tr {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .corporate-table tr:nth-child(even) {
+            background-color: var(--crema);
+        }
+
+        .corporate-table tr:nth-child(odd) {
+            background-color: var(--blanco);
+        }
+
+        .raci-legend-box {
+            background-color: var(--crema);
+            border: 1px solid var(--border-light);
+            border-left: 3pt solid var(--rose-gold);
+            padding: 14px 18px;
+            margin-top: 12px;
+            margin-bottom: 24px;
+            border-radius: 4px;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .raci-legend-box h4 {
+            font-size: 9.5pt;
+            color: var(--espresso);
+            font-weight: 700;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .raci-legend-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px 16px;
+            font-size: 9pt;
+        }
+
+        .raci-legend-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+        }
+
+        .raci-badge {
+            background-color: var(--espresso);
+            color: var(--blanco);
+            font-weight: 700;
+            padding: 1px 6px;
+            border-radius: 3px;
+            font-size: 8.5pt;
+            min-width: 20px;
+            text-align: center;
+        }
+
+        .page-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 0.5pt solid var(--rose-gold);
+            padding-top: 10px;
+            margin-top: 40px;
+            font-size: 8.5pt;
+            color: var(--carbono);
+        }
+
+        .approval-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 30px;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .approval-card {
+            border: 1px solid var(--border-light);
+            background-color: var(--crema);
+            padding: 12px;
+            text-align: center;
+            border-radius: 6px;
+            font-size: 8.5pt;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .approval-card strong {
+            color: var(--espresso);
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .signature-area {
+            margin-top: 24px;
+            border-top: 1px dashed var(--rose-gold);
+            padding-top: 4px;
+            color: #777;
+        }
+
+        @media print {
+            @page {
+                size: A4;
+                margin: 20mm 15mm 20mm 15mm;
+                @bottom-left {
+                    content: "GlowApp S.A.S.- Corporativo";
+                    font-family: 'Manrope', sans-serif;
+                    font-size: 8.5pt;
+                    color: #2B2B2B;
+                }
+                @bottom-right {
+                    content: "Página " counter(page) " de " counter(pages);
+                    font-family: 'Manrope', sans-serif;
+                    font-size: 8.5pt;
+                    color: #2B2B2B;
+                }
+            }
+
+            body {
+                background: white !important;
+                padding: 0 !important;
+                font-size: 10pt;
+            }
+
+            .toolbar {
+                display: none !important;
+            }
+
+            .document-container {
+                box-shadow: none !important;
+                padding: 0 !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+            }
+
+            .doc-control-table,
+            .corporate-table,
+            .corporate-table tr,
+            .callout-box,
+            .raci-legend-box,
+            .approval-grid,
+            .approval-card {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+
+            h2.doc-h2, h3.doc-h3 {
+                page-break-after: avoid !important;
+                break-after: avoid !important;
+            }
+
+            .corporate-table th, .raci-badge {
+                background-color: #4A3428 !important;
+                color: #FFFFFF !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .corporate-table tr:nth-child(even), .callout-box, .raci-legend-box, .doc-control-title, .approval-card, .logo-box {
+                background-color: #FDF6F0 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .page-footer {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Toolbar de Pantalla -->
+    <div class="toolbar">
+        <div>
+            <strong>GlowApp S.A.S. - Sistema de Gestión de la Calidad (ISO 9001:2015)</strong>
+        </div>
+        <button class="btn-pdf" onclick="window.print()">
+            📄 Exportar / Descargar PDF
+        </button>
+    </div>
+
+    <div class="document-container">
+
+        <!-- Encabezado de Página Corporativo -->
+        <header class="page-header">
+            <div class="page-header-logo">
+                <div class="logo-box">G</div>
+                <span style="font-weight: 700; color: var(--espresso); font-size: 0.95rem;">GlowApp S.A.S.</span>
+            </div>
+            <div class="page-header-title">Operaciones & Calidad | SGC ISO 9001</div>
+        </header>
+
+        <!-- Tabla de Control de Documento Normativo -->
+        <table class="doc-control-table">
+            <tr>
+                <td style="width: 20%; text-align: center;">
+                    <div style="font-family: 'Fraunces', serif; font-size: 1.4rem; font-weight: 700; color: var(--espresso);">GlowApp</div>
+                    <span style="font-size: 7.5pt; color: var(--rose-gold);">S.A.S.</span>
+                </td>
+                <td class="doc-control-title" style="width: 55%;">
+                    <h1>MANUAL DE CALIDAD SGC</h1>
+                    <h2>FASE 2: POLÍTICA, LIDERAZGO Y OBJETIVOS DE CALIDAD</h2>
+                </td>
+                <td style="width: 25%;">
+                    <div><strong>Código:</strong> SGC-DOC-002</div>
+                    <div><strong>Versión:</strong> 1.3</div>
+                    <div><strong>Fecha:</strong> 2026-07-23</div>
+                </td>
+            </tr>
+        </table>
+
+        <!-- Sección 1: Liderazgo y Compromiso -->
+        <h2 class="doc-h2">1. Liderazgo y Compromiso de la Dirección (Cláusula 5.1)</h2>
+        <p>
+            La alta dirección de <strong>GlowApp S.A.S.</strong> lidera el desarrollo y consolidación del SGC integrando la visión estratégica del negocio en los cinco pilares de la plataforma: Conexión con Prestadores Independientes, Marketplace de Productos, Módulo de IA, Hub Biométrico y Educación (Glow Academy por convenio).
+        </p>
+
+        <!-- Sección 2: Política de la Calidad -->
+        <h2 class="doc-h2">2. Política de la Calidad (Cláusula 5.2)</h2>
+        
+        <div class="callout-box">
+            <h4>Declaración Oficial de la Política de Calidad</h4>
+            <p style="margin-bottom: 0;">
+                "En <strong>GlowApp S.A.S.</strong> nos comprometemos a brindar una experiencia tecnológica superior conectando a usuarios con prestadores independientes de belleza, garantizando la seguridad en la autenticación biométrica, la precisión de nuestras herramientas de Inteligencia Artificial, la trazabilidad del Marketplace y la excelencia académica de Glow Academy mediante convenios institucionales; asumiendo expresamente el <strong>compromiso de cumplir con todos los requisitos aplicables</strong> (legales, reglamentarios, contractuales y normativos) y el <strong>compromiso de la mejora continua del Sistema de Gestión de la Calidad</strong>."
+            </p>
+        </div>
+
+        <!-- Sección 3: Matriz RACI -->
+        <h2 class="doc-h2">3. Roles, Responsabilidades y Autoridades (Cláusula 5.3)</h2>
+        <p>Asignación de roles clave en la operación tecnológica y comercial de GlowApp S.A.S. mediante la Matriz RACI:</p>
+
+        <table class="corporate-table">
+            <thead>
+                <tr>
+                    <th>Actividad / Módulo SGC</th>
+                    <th>CEO</th>
+                    <th>CTO</th>
+                    <th>COO</th>
+                    <th>Líder Biometría/IA</th>
+                    <th>Líder Academy</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Garantía de disponibilidad Cloud de la App (SLA)</td>
+                    <td>I</td>
+                    <td><strong>A / R</strong></td>
+                    <td>C</td>
+                    <td>C</td>
+                    <td>I</td>
+                </tr>
+                <tr>
+                    <td>Auditoría de seguridad y consentimiento en Hub Biométrico</td>
+                    <td>I</td>
+                    <td>A</td>
+                    <td>C</td>
+                    <td><strong>R</strong></td>
+                    <td>I</td>
+                </tr>
+                <tr>
+                    <td>Gestión y actualización de algoritmos de Inteligencia Artificial</td>
+                    <td>I</td>
+                    <td>A</td>
+                    <td>I</td>
+                    <td><strong>R</strong></td>
+                    <td>I</td>
+                </tr>
+                <tr>
+                    <td>Gestión de convenios institucionales y contenidos de Glow Academy</td>
+                    <td>A</td>
+                    <td>I</td>
+                    <td>C</td>
+                    <td>I</td>
+                    <td><strong>R</strong></td>
+                </tr>
+                <tr>
+                    <td>Operación y trazabilidad de pedidos del Marketplace</td>
+                    <td>I</td>
+                    <td>C</td>
+                    <td><strong>A / R</strong></td>
+                    <td>I</td>
+                    <td>I</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Convenciones y Referente del Significado de las Letras RACI -->
+        <div class="raci-legend-box">
+            <h4>Leyenda de Convenciones y Significado de Letras (Matriz RACI)</h4>
+            <div class="raci-legend-grid">
+                <div class="raci-legend-item">
+                    <span class="raci-badge">R</span>
+                    <div><strong>Responsable (Responsible):</strong> Quien ejecuta directamente la tarea o actividad.</div>
+                </div>
+                <div class="raci-legend-item">
+                    <span class="raci-badge">A</span>
+                    <div><strong>Aprobador (Accountable):</strong> Quien rinde cuentas y tiene la autoridad final para aprobar la tarea.</div>
+                </div>
+                <div class="raci-legend-item">
+                    <span class="raci-badge">C</span>
+                    <div><strong>Consultado (Consulted):</strong> Experto a quien se solicita insumos o asesoría previa.</div>
+                </div>
+                <div class="raci-legend-item">
+                    <span class="raci-badge">I</span>
+                    <div><strong>Informado (Informed):</strong> Persona notificada del progreso o resultado del proceso.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección 4: Planificación y Gestión de Objetivos de Calidad -->
+        <h2 class="doc-h2">4. Planificación y Gestión de los Objetivos de Calidad (Cláusula 6.2)</h2>
+        <p>
+            En cumplimiento estricto con la Cláusula 6.2 de la norma ISO 9001:2015, a continuación se especifica la **planificación operativa detallada** para alcanzar cada Objetivo de Calidad de GlowApp S.A.S., definiendo *qué se hará, qué recursos se requerirán, quién será el responsable, cuándo se completará y cómo se evaluarán los resultados*:
+        </p>
+
+        <table class="corporate-table">
+            <thead>
+                <tr>
+                    <th>Objetivo de Calidad</th>
+                    <th>¿Qué se va a hacer? (Plan de Acción)</th>
+                    <th>Recursos Requeridos</th>
+                    <th>Responsable</th>
+                    <th>Frecuencia & Plazo</th>
+                    <th>¿Cómo se evaluará? (KPI & Meta)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>1. Disponibilidad de la Plataforma</strong></td>
+                    <td>Implementar arquitectura de alta disponibilidad Cloud, réplicas de DB y monitoreo de Uptime 24/7.</td>
+                    <td>Infraestructura Cloud, balanceadores y herramientas APM.</td>
+                    <td>CTO / DevOps</td>
+                    <td>Medición Mensual (Continuo)</td>
+                    <td>(Horas Disponibles / Horas Totales) * 100<br><strong>Meta: ≥ 99.5%</strong></td>
+                </tr>
+                <tr>
+                    <td><strong>2. Conformidad Hub Biométrico</strong></td>
+                    <td>Auditar el 100% de los consentimientos biométricos y aplicar cifrado de plantillas faciales (AES-256).</td>
+                    <td>Servicios de encriptación y scripts de auditoría en PostgreSQL.</td>
+                    <td>Líder Biometría</td>
+                    <td>Revisión Mensual</td>
+                    <td>(Registros con Consentimiento / Total Registros) * 100<br><strong>Meta: 100%</strong></td>
+                </tr>
+                <tr>
+                    <td><strong>3. Satisfacción en Servicios Freelance</strong></td>
+                    <td>Monitorear valoraciones de citas, capacitar a prestadores e intervenir cuentas con bajas calificaciones.</td>
+                    <td>Módulo de calificaciones en App y mesa de ayuda Tier 2.</td>
+                    <td>COO / Soporte</td>
+                    <td>Evaluación Semanal / Mensual</td>
+                    <td>Promedio de calificaciones CSAT<br><strong>Meta: ≥ 4.6 / 5.0</strong></td>
+                </tr>
+                <tr>
+                    <td><strong>4. Eficiencia Logística Marketplace</strong></td>
+                    <td>Establecer SLA obligatorio de despacho a 24h con marcas aliadas y seguimiento en tiempo real.</td>
+                    <td>Módulo de trazabilidad logística y acuerdos con distribuidores.</td>
+                    <td>Operaciones Marketplace</td>
+                    <td>Medición Semanal</td>
+                    <td>(Pedidos entregados a tiempo / Total Pedidos) * 100<br><strong>Meta: ≥ 98%</strong></td>
+                </tr>
+                <tr>
+                    <td><strong>5. Excelencia en Glow Academy</strong></td>
+                    <td>Auditar mallas curriculares con instituciones externas aliadas y renovar convenios semestrales.</td>
+                    <td>Plataforma e-learning y equipo pedagógico.</td>
+                    <td>Líder Academy</td>
+                    <td>Auditoría Semestral</td>
+                    <td>Conteo de no conformidades académicas<br><strong>Meta: 0 No Conformidades</strong></td>
+                </tr>
+                <tr>
+                    <td><strong>6. Calidad de Software & Releases</strong></td>
+                    <td>Ejecutar suite de pruebas QA automatizadas en Staging antes de cada despliegue a producción.</td>
+                    <td>Ambiente Staging, scripts de integración y pruebas CI/CD.</td>
+                    <td>Líder QA</td>
+                    <td>Por cada Release de Software</td>
+                    <td>Conteo de bugs severidad bloqueante en producción<br><strong>Meta: 0 Bugs Bloqueantes</strong></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Cuadro de Firmas y Aprobación -->
+        <div class="approval-grid">
+            <div class="approval-card">
+                <strong>ELABORÓ</strong>
+                Equipo de Contenido / Calidad
+                <div class="signature-area">2026-07-23</div>
+            </div>
+            <div class="approval-card">
+                <strong>REVISÓ</strong>
+                Dirección de Operaciones
+                <div class="signature-area">2026-07-23</div>
+            </div>
+            <div class="approval-card">
+                <strong>APROBÓ</strong>
+                Dirección General / CEO
+                <div class="signature-area">2026-07-23</div>
+            </div>
+        </div>
+
+        <!-- Pie de Página Corporativo para vista web -->
+        <footer class="page-footer">
+            <div>GlowApp S.A.S.- Corporativo</div>
+            <div>Documentación Controlada SGC</div>
+        </footer>
+
+    </div>
+
+</body>
+</html>

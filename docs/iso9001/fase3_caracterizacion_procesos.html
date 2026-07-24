@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGC-DOC-003: Mapa y Caracterización de Procesos (SIPOC) - GlowApp S.A.S.</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --espresso: #4A3428;
+            --rose-gold: #B76E79;
+            --crema: #FDF6F0;
+            --carbono: #2B2B2B;
+            --blanco: #FFFFFF;
+            --border-light: #E8D8D0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Manrope', 'Helvetica', sans-serif;
+            color: var(--carbono);
+            background-color: #F4EFEA;
+            line-height: 1.35;
+            font-size: 10.5pt;
+            padding: 20px;
+        }
+
+        .document-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--blanco);
+            box-shadow: 0 4px 20px rgba(74, 52, 40, 0.08);
+            padding: 25mm 20mm 25mm 20mm;
+            position: relative;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--espresso);
+            color: var(--blanco);
+            padding: 14px 24px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .btn-pdf {
+            background: var(--rose-gold);
+            color: var(--blanco);
+            border: none;
+            padding: 10px 18px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+
+        .btn-pdf:hover {
+            background: #a35b66;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 0.5pt solid var(--rose-gold);
+            padding-bottom: 8px;
+            margin-bottom: 24px;
+        }
+
+        .page-header-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-box {
+            width: 40px;
+            height: 40px;
+            background-color: var(--crema);
+            border: 1px solid var(--rose-gold);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Fraunces', serif;
+            font-weight: 700;
+            color: var(--espresso);
+            font-size: 1.1rem;
+        }
+
+        .page-header-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--espresso);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .doc-control-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 28px;
+            border: 1px solid var(--espresso);
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .doc-control-table td {
+            border: 1px solid var(--espresso);
+            padding: 8px 12px;
+            font-size: 9pt;
+            vertical-align: middle;
+        }
+
+        .doc-control-title {
+            text-align: center;
+            background: var(--crema);
+        }
+
+        .doc-control-title h1 {
+            font-family: 'Fraunces', serif;
+            font-size: 16pt;
+            color: var(--espresso);
+            margin-bottom: 2px;
+        }
+
+        .doc-control-title h2 {
+            font-size: 10pt;
+            color: var(--rose-gold);
+            font-weight: 600;
+        }
+
+        h2.doc-h2 {
+            font-family: 'Manrope', sans-serif;
+            font-size: 14pt;
+            font-weight: 700;
+            color: var(--espresso);
+            margin-top: 24px;
+            margin-bottom: 12px;
+            border-bottom: 1px solid var(--crema);
+            padding-bottom: 4px;
+            page-break-after: avoid;
+            break-after: avoid;
+        }
+
+        h3.doc-h3 {
+            font-family: 'Manrope', sans-serif;
+            font-size: 12pt;
+            font-weight: 700;
+            color: var(--rose-gold);
+            margin-top: 18px;
+            margin-bottom: 8px;
+            page-break-after: avoid;
+            break-after: avoid;
+        }
+
+        p {
+            color: var(--carbono);
+            margin-bottom: 12px;
+            text-align: justify;
+        }
+
+        .callout-box {
+            background-color: var(--crema);
+            border-left: 3pt solid var(--rose-gold);
+            padding: 14px 18px;
+            margin: 18px 0;
+            border-radius: 0 6px 6px 0;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .callout-box h4 {
+            color: var(--espresso);
+            font-size: 10.5pt;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .corporate-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 18px 0;
+            font-size: 9pt;
+            border: 1px solid var(--border-light);
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .corporate-table th {
+            background-color: var(--espresso);
+            color: var(--blanco);
+            padding: 9px 11px;
+            text-align: left;
+            font-weight: 600;
+            border: none;
+        }
+
+        .corporate-table td {
+            padding: 8px 11px;
+            border-bottom: 1px solid var(--border-light);
+            vertical-align: top;
+        }
+
+        .corporate-table tr {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .corporate-table tr:nth-child(even) {
+            background-color: var(--crema);
+        }
+
+        .corporate-table tr:nth-child(odd) {
+            background-color: var(--blanco);
+        }
+
+        /* DISEÑO VISUAL MAESTRO DEL MAPA DE PROCESOS */
+        .process-map-diagram {
+            border: 2px solid var(--espresso);
+            border-radius: 10px;
+            background-color: var(--blanco);
+            padding: 20px;
+            margin: 24px 0;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .map-section {
+            margin-bottom: 16px;
+            padding: 14px;
+            border-radius: 8px;
+        }
+
+        .map-section.estrat {
+            background-color: var(--crema);
+            border: 1px solid var(--border-light);
+        }
+
+        .map-section.operat {
+            background-color: #FDF1F3;
+            border: 1.5px solid var(--rose-gold);
+        }
+
+        .map-section.soport {
+            background-color: #F0F4F8;
+            border: 1px solid #B0C4DE;
+        }
+
+        .map-title {
+            font-family: 'Fraunces', serif;
+            font-size: 11pt;
+            font-weight: 700;
+            color: var(--espresso);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .map-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 10px;
+        }
+
+        .map-card {
+            background: white;
+            border: 1px solid var(--border-light);
+            border-radius: 6px;
+            padding: 10px 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+        }
+
+        .map-card-code {
+            font-size: 7.5pt;
+            font-weight: 700;
+            color: var(--rose-gold);
+            text-transform: uppercase;
+        }
+
+        .map-card-name {
+            font-size: 9pt;
+            font-weight: 700;
+            color: var(--espresso);
+            margin-top: 2px;
+        }
+
+        .map-flow-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            margin: 15px 0;
+        }
+
+        .side-box {
+            background: var(--espresso);
+            color: white;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 8.5pt;
+            width: 140px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .side-box h5 {
+            font-family: 'Fraunces', serif;
+            color: var(--crema);
+            font-size: 9.5pt;
+            margin-bottom: 4px;
+        }
+
+        .page-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 0.5pt solid var(--rose-gold);
+            padding-top: 10px;
+            margin-top: 40px;
+            font-size: 8.5pt;
+            color: var(--carbono);
+        }
+
+        .approval-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 30px;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .approval-card {
+            border: 1px solid var(--border-light);
+            background-color: var(--crema);
+            padding: 12px;
+            text-align: center;
+            border-radius: 6px;
+            font-size: 8.5pt;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .approval-card strong {
+            color: var(--espresso);
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .signature-area {
+            margin-top: 24px;
+            border-top: 1px dashed var(--rose-gold);
+            padding-top: 4px;
+            color: #777;
+        }
+
+        @media print {
+            @page {
+                size: A4;
+                margin: 20mm 15mm 20mm 15mm;
+                @bottom-left {
+                    content: "GlowApp S.A.S.- Corporativo";
+                    font-family: 'Manrope', sans-serif;
+                    font-size: 8.5pt;
+                    color: #2B2B2B;
+                }
+                @bottom-right {
+                    content: "Página " counter(page) " de " counter(pages);
+                    font-family: 'Manrope', sans-serif;
+                    font-size: 8.5pt;
+                    color: #2B2B2B;
+                }
+            }
+
+            body {
+                background: white !important;
+                padding: 0 !important;
+                font-size: 10pt;
+            }
+
+            .toolbar {
+                display: none !important;
+            }
+
+            .document-container {
+                box-shadow: none !important;
+                padding: 0 !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+            }
+
+            .doc-control-table,
+            .corporate-table,
+            .corporate-table tr,
+            .callout-box,
+            .process-map-diagram,
+            .approval-grid,
+            .approval-card {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+
+            h2.doc-h2, h3.doc-h3 {
+                page-break-after: avoid !important;
+                break-after: avoid !important;
+            }
+
+            .corporate-table th, .side-box {
+                background-color: #4A3428 !important;
+                color: #FFFFFF !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .corporate-table tr:nth-child(even), .callout-box, .doc-control-title, .approval-card, .logo-box, .map-section {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .page-footer {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Toolbar de Pantalla -->
+    <div class="toolbar">
+        <div>
+            <strong>GlowApp S.A.S. - Sistema de Gestión de la Calidad (ISO 9001:2015)</strong>
+        </div>
+        <button class="btn-pdf" onclick="window.print()">
+            📄 Exportar / Descargar PDF
+        </button>
+    </div>
+
+    <div class="document-container">
+
+        <!-- Encabezado de Página Corporativo -->
+        <header class="page-header">
+            <div class="page-header-logo">
+                <div class="logo-box">G</div>
+                <span style="font-weight: 700; color: var(--espresso); font-size: 0.95rem;">GlowApp S.A.S.</span>
+            </div>
+            <div class="page-header-title">Operaciones & Calidad | SGC ISO 9001</div>
+        </header>
+
+        <!-- Tabla de Control de Documento Normativo -->
+        <table class="doc-control-table">
+            <tr>
+                <td style="width: 20%; text-align: center;">
+                    <div style="font-family: 'Fraunces', serif; font-size: 1.4rem; font-weight: 700; color: var(--espresso);">GlowApp</div>
+                    <span style="font-size: 7.5pt; color: var(--rose-gold);">S.A.S.</span>
+                </td>
+                <td class="doc-control-title" style="width: 55%;">
+                    <h1>MANUAL DE CALIDAD SGC</h1>
+                    <h2>FASE 3: MAPA Y CARACTERIZACIÓN DE PROCESOS (SIPOC)</h2>
+                </td>
+                <td style="width: 25%;">
+                    <div><strong>Código:</strong> SGC-DOC-003</div>
+                    <div><strong>Versión:</strong> 1.1</div>
+                    <div><strong>Fecha:</strong> 2026-07-23</div>
+                </td>
+            </tr>
+        </table>
+
+        <!-- Sección 1: Diagrama Oficial Mapa de Procesos -->
+        <h2 class="doc-h2">1. Diagrama del Mapa de Procesos del SGC (Cláusula 4.4)</h2>
+        <p>
+            Representación gráfica de la interacción entre los **Procesos Estratégicos, Operativos (Cadena de Valor) y de Soporte** de GlowApp S.A.S. para transformar las necesidades de los usuarios y prestadores independientes en soluciones de calidad:
+        </p>
+
+        <!-- MAPA VISUAL INTEGRADO -->
+        <div class="process-map-diagram">
+            
+            <!-- Procesos Estratégicos -->
+            <div class="map-section estrat">
+                <div class="map-title">👑 PROCESOS ESTRATÉGICOS</div>
+                <div class="map-grid">
+                    <div class="map-card">
+                        <div class="map-card-code">PE-01</div>
+                        <div class="map-card-name">Dirección Estratégica & Calidad SGC</div>
+                    </div>
+                    <div class="map-card">
+                        <div class="map-card-code">PE-02</div>
+                        <div class="map-card-name">Gestión de Convenios Institucionales</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Flujo Central: Entradas -> Operativos -> Salidas -->
+            <div class="map-flow-container">
+                <div class="side-box">
+                    <h5>ENTRADAS</h5>
+                    • Necesidad de Servicios<br>
+                    • Prestadores Freelance<br>
+                    • Biometría / IA<br>
+                    • Pedidos Marketplace
+                </div>
+
+                <div style="flex-grow: 1;">
+                    <div class="map-section operat" style="margin-bottom: 0;">
+                        <div class="map-title" style="color: var(--rose-gold);">⚡ PROCESOS OPERATIVOS (Cadena de Valor)</div>
+                        <div class="map-grid">
+                            <div class="map-card">
+                                <div class="map-card-code">PO-01</div>
+                                <div class="map-card-name">Ingeniería de Software & CI/CD</div>
+                            </div>
+                            <div class="map-card">
+                                <div class="map-card-code">PO-02</div>
+                                <div class="map-card-name">Onboarding Prestadores Freelance</div>
+                            </div>
+                            <div class="map-card">
+                                <div class="map-card-code">PO-03</div>
+                                <div class="map-card-name">Reservas & Hub Biométrico</div>
+                            </div>
+                            <div class="map-card">
+                                <div class="map-card-code">PO-04</div>
+                                <div class="map-card-name">Motor de Inteligencia Artificial</div>
+                            </div>
+                            <div class="map-card">
+                                <div class="map-card-code">PO-05</div>
+                                <div class="map-card-name">Logística & Ventas Marketplace</div>
+                            </div>
+                            <div class="map-card">
+                                <div class="map-card-code">PO-06</div>
+                                <div class="map-card-name">Glow Academy (Convenios)</div>
+                            </div>
+                            <div class="map-card">
+                                <div class="map-card-code">PO-07</div>
+                                <div class="map-card-name">Atención al Cliente & Soporte</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="side-box">
+                    <h5>SALIDAS</h5>
+                    • Servicio Atendido<br>
+                    • Biometría Protegida<br>
+                    • Producto Entregado<br>
+                    • Certificado Academy<br>
+                    • CSAT ≥ 4.6 / 5.0
+                </div>
+            </div>
+
+            <!-- Procesos de Soporte -->
+            <div class="map-section soport">
+                <div class="map-title" style="color: #2c3e50;">🛠️ PROCESOS DE SOPORTE / APOYO</div>
+                <div class="map-grid">
+                    <div class="map-card">
+                        <div class="map-card-code">PS-01</div>
+                        <div class="map-card-name">Infraestructura Cloud & Ciberseguridad</div>
+                    </div>
+                    <div class="map-card">
+                        <div class="map-card-code">PS-02</div>
+                        <div class="map-card-name">Gestión Financiera & Dispersión de Pagos</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Sección 2: Caracterización SIPOC -->
+        <h2 class="doc-h2">2. Fichas de Caracterización SIPOC de Procesos Operativos</h2>
+        <p>
+            Estructuración detallada **SIPOC** (Proveedores, Entradas, Proceso, Salidas, Clientes) para cada proceso operativo:
+        </p>
+
+        <!-- Ficha 1: PO-01 -->
+        <h3 class="doc-h3">2.1 Ficha SIPOC: PO-01 Ingeniería de Software, QA y DevOps</h3>
+        <table class="corporate-table">
+            <thead>
+                <tr>
+                    <th>Proveedores (S)</th>
+                    <th>Entradas (I)</th>
+                    <th>Subprocesos / Actividades (P)</th>
+                    <th>Salidas (O)</th>
+                    <th>Clientes (C)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Dirección / Usuarios / QA</td>
+                    <td>Requerimientos UX/UI, tickets de bugs y backlog de producto.</td>
+                    <td>1. Análisis de requerimientos.<br>2. Programación backend/frontend.<br>3. Pruebas QA funcionales.<br>4. Despliegue CI/CD en servidores.</td>
+                    <td>Versión de software ejecutable sin errores críticos.</td>
+                    <td>Usuarios Finales, Prestadores y Operaciones.</td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="callout-box">
+            <strong>KPI Asociado:</strong> 0 Bugs bloqueantes en producción | <strong>Responsable:</strong> CTO / Líder QA
+        </div>
+
+        <!-- Ficha 2: PO-03 -->
+        <h3 class="doc-h3">2.2 Ficha SIPOC: PO-03 Reservas y Hub Biométrico</h3>
+        <table class="corporate-table">
+            <thead>
+                <tr>
+                    <th>Proveedores (S)</th>
+                    <th>Entradas (I)</th>
+                    <th>Subprocesos / Actividades (P)</th>
+                    <th>Salidas (O)</th>
+                    <th>Clientes (C)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Usuarios App / Prestadores Independientes</td>
+                    <td>Solicitud de agendamiento, datos de biometría facial y aceptación de términos.</td>
+                    <td>1. Verificación facial en Hub Biométrico.<br>2. Auditoría de consentimiento informado.<br>3. Confirmación de disponibilidad de agenda.<br>4. Procesamiento de cobro reserva.</td>
+                    <td>Cita agendada, token de biometría auditado y comprobante de reserva.</td>
+                    <td>Usuarios Finales y Prestadores Independientes.</td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="callout-box">
+            <strong>KPI Asociado:</strong> 100% registros biométricos con consentimiento auditado | <strong>Responsable:</strong> Líder Biometría
+        </div>
+
+        <!-- Ficha 3: PO-05 -->
+        <h3 class="doc-h3">2.3 Ficha SIPOC: PO-05 Operación Comercial Marketplace</h3>
+        <table class="corporate-table">
+            <thead>
+                <tr>
+                    <th>Proveedores (S)</th>
+                    <th>Entradas (I)</th>
+                    <th>Subprocesos / Actividades (P)</th>
+                    <th>Salidas (O)</th>
+                    <th>Clientes (C)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Marcas Aliadas / Fabricantes Cosméticos</td>
+                    <td>Catálogo de productos, stock disponible y precios.</td>
+                    <td>1. Publicación de productos en Marketplace.<br>2. Procesamiento de compra.<br>3. Notificación a logística de despacho.<br>4. Confirmación de entrega.</td>
+                    <td>Producto entregado al usuario y pago dispersado al vendedor.</td>
+                    <td>Compradores finales y Marcas Marketplace.</td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="callout-box">
+            <strong>KPI Asociado:</strong> Cumplimiento de entregas ≥ 98% | <strong>Responsable:</strong> COO / Operaciones
+        </div>
+
+        <!-- Ficha 4: PO-06 -->
+        <h3 class="doc-h3">2.4 Ficha SIPOC: PO-06 Gestión Educativa Glow Academy</h3>
+        <table class="corporate-table">
+            <thead>
+                <tr>
+                    <th>Proveedores (S)</th>
+                    <th>Entradas (I)</th>
+                    <th>Subprocesos / Actividades (P)</th>
+                    <th>Salidas (O)</th>
+                    <th>Clientes (C)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Instituciones Educativas Aliadas</td>
+                    <td>Convenios académicos, mallas curriculares y certificadores.</td>
+                    <td>1. Carga de módulos educativos.<br>2. Inscripción de prestadores.<br>3. Evaluaciones en línea.<br>4. Emisión de certificados digitales.</td>
+                    <td>Prestador de belleza capacitado y certificado en la plataforma.</td>
+                    <td>Prestadores Independientes e Instituciones Educativas.</td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="callout-box">
+            <strong>KPI Asociado:</strong> 0 No conformidades en auditorías de convenio | <strong>Responsable:</strong> Líder Academy
+        </div>
+
+        <!-- Cuadro de Firmas y Aprobación -->
+        <div class="approval-grid">
+            <div class="approval-card">
+                <strong>ELABORÓ</strong>
+                Equipo de Contenido / Calidad
+                <div class="signature-area">2026-07-23</div>
+            </div>
+            <div class="approval-card">
+                <strong>REVISÓ</strong>
+                Dirección de Operaciones
+                <div class="signature-area">2026-07-23</div>
+            </div>
+            <div class="approval-card">
+                <strong>APROBÓ</strong>
+                Dirección General / CEO
+                <div class="signature-area">2026-07-23</div>
+            </div>
+        </div>
+
+        <!-- Pie de Página Corporativo -->
+        <footer class="page-footer">
+            <div>GlowApp S.A.S.- Corporativo</div>
+            <div>Documentación Controlada SGC</div>
+        </footer>
+
+    </div>
+
+</body>
+</html>

@@ -7,10 +7,11 @@ class GeminiClient {
     this.apiKey = process.env.GEMINI_API_KEY;
     this.baseUrl = 'https://generativelanguage.googleapis.com/v1beta';
     this.timeout = 15000; // 15 segundos
+    this.modelName = 'gemini-3.1-flash-lite'; // Estandarizado 100% en la app
   }
 
   /**
-   * Analiza una imagen de manos usando Gemini Vision
+   * Analiza una imagen de manos usando Gemini 3.1 Flash-Lite (Visión ultra-rápida y económica)
    * @param {Buffer|string} image - Imagen en base64 o buffer
    * @returns {Promise<Object>} Diagnóstico de manos
    */
@@ -22,8 +23,9 @@ class GeminiClient {
         return this.getFallbackHandsDiagnosis();
       }
 
+      // Consulta directa a Gemini 3.1 Flash-Lite
       const response = await axios.post(
-        `${this.baseUrl}/models/gemini-2.0-flash:generateContent?key=${this.apiKey}`,
+        `${this.baseUrl}/models/${this.modelName}:generateContent?key=${this.apiKey}`,
         {
           contents: [
             {
@@ -63,7 +65,7 @@ class GeminiClient {
         edadAparente: diagnosis.edad_aparente || 30,
       };
     } catch (error) {
-      console.error('Gemini Vision error:', error.response?.data || error.message);
+      console.error('Gemini 3.1 Flash-Lite Vision error:', error.response?.data || error.message);
       return this.getFallbackHandsDiagnosis();
     }
   }
@@ -79,7 +81,7 @@ class GeminiClient {
   }
 
   /**
-   * Genera recomendación personalizada usando Gemini Text
+   * Genera recomendación personalizada usando Gemini 3.1 Flash-Lite
    * @param {Object} faceScores - Scores de YouCam
    * @param {Object} handsDiagnosis - Diagnóstico de manos
    * @returns {Promise<string>} Recomendación en texto
@@ -102,8 +104,9 @@ class GeminiClient {
         return this.getFallbackRecommendation();
       }
 
+      // Configurado globalmente con Gemini 3.1 Flash-Lite para máxima eficiencia de costos en toda la app
       const response = await axios.post(
-        `${this.baseUrl}/models/gemini-2.0-flash:generateContent?key=${this.apiKey}`,
+        `${this.baseUrl}/models/${this.modelName}:generateContent?key=${this.apiKey}`,
         {
           contents: [
             {

@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGC-DOC-001: Contexto de la Organización y Alcance del SGC - GlowApp S.A.S.</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --espresso: #4A3428;
+            --rose-gold: #B76E79;
+            --crema: #FDF6F0;
+            --carbono: #2B2B2B;
+            --blanco: #FFFFFF;
+            --border-light: #E8D8D0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Manrope', 'Helvetica', sans-serif;
+            color: var(--carbono);
+            background-color: #F4EFEA;
+            line-height: 1.35;
+            font-size: 10.5pt;
+            padding: 20px;
+        }
+
+        .document-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--blanco);
+            box-shadow: 0 4px 20px rgba(74, 52, 40, 0.08);
+            padding: 25mm 20mm 25mm 20mm;
+            position: relative;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--espresso);
+            color: var(--blanco);
+            padding: 14px 24px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .btn-pdf {
+            background: var(--rose-gold);
+            color: var(--blanco);
+            border: none;
+            padding: 10px 18px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+
+        .btn-pdf:hover {
+            background: #a35b66;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 0.5pt solid var(--rose-gold);
+            padding-bottom: 8px;
+            margin-bottom: 24px;
+        }
+
+        .page-header-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-box {
+            width: 40px;
+            height: 40px;
+            background-color: var(--crema);
+            border: 1px solid var(--rose-gold);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Fraunces', serif;
+            font-weight: 700;
+            color: var(--espresso);
+            font-size: 1.1rem;
+        }
+
+        .page-header-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--espresso);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .doc-control-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 28px;
+            border: 1px solid var(--espresso);
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .doc-control-table td {
+            border: 1px solid var(--espresso);
+            padding: 8px 12px;
+            font-size: 9pt;
+            vertical-align: middle;
+        }
+
+        .doc-control-title {
+            text-align: center;
+            background: var(--crema);
+        }
+
+        .doc-control-title h1 {
+            font-family: 'Fraunces', serif;
+            font-size: 16pt;
+            color: var(--espresso);
+            margin-bottom: 2px;
+        }
+
+        .doc-control-title h2 {
+            font-size: 10pt;
+            color: var(--rose-gold);
+            font-weight: 600;
+        }
+
+        h2.doc-h2 {
+            font-family: 'Manrope', sans-serif;
+            font-size: 14pt;
+            font-weight: 700;
+            color: var(--espresso);
+            margin-top: 24px;
+            margin-bottom: 12px;
+            border-bottom: 1px solid var(--crema);
+            padding-bottom: 4px;
+            page-break-after: avoid;
+            break-after: avoid;
+        }
+
+        h3.doc-h3 {
+            font-family: 'Manrope', sans-serif;
+            font-size: 12pt;
+            font-weight: 700;
+            color: var(--rose-gold);
+            margin-top: 18px;
+            margin-bottom: 8px;
+            page-break-after: avoid;
+            break-after: avoid;
+        }
+
+        p {
+            color: var(--carbono);
+            margin-bottom: 12px;
+            text-align: justify;
+        }
+
+        .callout-box {
+            background-color: var(--crema);
+            border-left: 3pt solid var(--rose-gold);
+            padding: 14px 18px;
+            margin: 18px 0;
+            border-radius: 0 6px 6px 0;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .callout-box h4 {
+            color: var(--espresso);
+            font-size: 10.5pt;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .corporate-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 18px 0;
+            font-size: 9.5pt;
+            border: 1px solid var(--border-light);
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .corporate-table th {
+            background-color: var(--espresso);
+            color: var(--blanco);
+            padding: 10px 12px;
+            text-align: left;
+            font-weight: 600;
+            border: none;
+        }
+
+        .corporate-table td {
+            padding: 9px 12px;
+            border-bottom: 1px solid var(--border-light);
+            vertical-align: top;
+        }
+
+        .corporate-table tr {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .corporate-table tr:nth-child(even) {
+            background-color: var(--crema);
+        }
+
+        .corporate-table tr:nth-child(odd) {
+            background-color: var(--blanco);
+        }
+
+        .swot-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin: 16px 0;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .swot-box {
+            border: 1px solid var(--border-light);
+            border-radius: 6px;
+            padding: 14px;
+            background-color: var(--blanco);
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .swot-box.fortalezas { border-top: 3px solid var(--espresso); }
+        .swot-box.debilidades { border-top: 3px solid var(--rose-gold); }
+        .swot-box.oportunidades { border-top: 3px solid #6b8e23; }
+        .swot-box.amenazas { border-top: 3px solid #c0392b; }
+
+        .swot-box h4 {
+            font-size: 10.5pt;
+            color: var(--espresso);
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .swot-box ul {
+            padding-left: 18px;
+            font-size: 9.5pt;
+        }
+
+        .swot-box li {
+            margin-bottom: 4px;
+        }
+
+        .page-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 0.5pt solid var(--rose-gold);
+            padding-top: 10px;
+            margin-top: 40px;
+            font-size: 8.5pt;
+            color: var(--carbono);
+        }
+
+        .approval-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 30px;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .approval-card {
+            border: 1px solid var(--border-light);
+            background-color: var(--crema);
+            padding: 12px;
+            text-align: center;
+            border-radius: 6px;
+            font-size: 8.5pt;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .approval-card strong {
+            color: var(--espresso);
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .signature-area {
+            margin-top: 24px;
+            border-top: 1px dashed var(--rose-gold);
+            padding-top: 4px;
+            color: #777;
+        }
+
+        @media print {
+            @page {
+                size: A4;
+                margin: 20mm 15mm 20mm 15mm;
+                @bottom-left {
+                    content: "GlowApp S.A.S.- Corporativo";
+                    font-family: 'Manrope', sans-serif;
+                    font-size: 8.5pt;
+                    color: #2B2B2B;
+                }
+                @bottom-right {
+                    content: "Página " counter(page) " de " counter(pages);
+                    font-family: 'Manrope', sans-serif;
+                    font-size: 8.5pt;
+                    color: #2B2B2B;
+                }
+            }
+
+            body {
+                background: white !important;
+                padding: 0 !important;
+                font-size: 10pt;
+            }
+
+            .toolbar {
+                display: none !important;
+            }
+
+            .document-container {
+                box-shadow: none !important;
+                padding: 0 !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+            }
+
+            .doc-control-table,
+            .swot-grid,
+            .swot-box,
+            .corporate-table,
+            .corporate-table tr,
+            .callout-box,
+            .approval-grid,
+            .approval-card {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+
+            h2.doc-h2, h3.doc-h3 {
+                page-break-after: avoid !important;
+                break-after: avoid !important;
+            }
+
+            .corporate-table th {
+                background-color: #4A3428 !important;
+                color: #FFFFFF !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .corporate-table tr:nth-child(even), .callout-box, .doc-control-title, .approval-card, .logo-box {
+                background-color: #FDF6F0 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .page-footer {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Toolbar de Pantalla -->
+    <div class="toolbar">
+        <div>
+            <strong>GlowApp S.A.S. - Sistema de Gestión de la Calidad (ISO 9001:2015)</strong>
+        </div>
+        <button class="btn-pdf" onclick="window.print()">
+            📄 Exportar / Descargar PDF
+        </button>
+    </div>
+
+    <!-- Contenedor Oficial del Documento -->
+    <div class="document-container">
+
+        <!-- Encabezado de Página Corporativo -->
+        <header class="page-header">
+            <div class="page-header-logo">
+                <div class="logo-box">G</div>
+                <span style="font-weight: 700; color: var(--espresso); font-size: 0.95rem;">GlowApp S.A.S.</span>
+            </div>
+            <div class="page-header-title">Operaciones & Calidad | SGC ISO 9001</div>
+        </header>
+
+        <!-- Tabla de Control de Documento Normativo -->
+        <table class="doc-control-table">
+            <tr>
+                <td style="width: 20%; text-align: center;">
+                    <div style="font-family: 'Fraunces', serif; font-size: 1.4rem; font-weight: 700; color: var(--espresso);">GlowApp</div>
+                    <span style="font-size: 7.5pt; color: var(--rose-gold);">S.A.S.</span>
+                </td>
+                <td class="doc-control-title" style="width: 55%;">
+                    <h1>MANUAL DE CALIDAD SGC</h1>
+                    <h2>FASE 1: CONTEXTO DE LA ORGANIZACIÓN Y ALCANCE</h2>
+                </td>
+                <td style="width: 25%;">
+                    <div><strong>Código:</strong> SGC-DOC-001</div>
+                    <div><strong>Versión:</strong> 1.2</div>
+                    <div><strong>Fecha:</strong> 2026-07-23</div>
+                </td>
+            </tr>
+        </table>
+
+        <!-- Sección 4.1 -->
+        <h2 class="doc-h2">1. Comprensión de la Organización y su Contexto (Cláusula 4.1)</h2>
+        <p>
+            <strong>GlowApp S.A.S.</strong> es una empresa de base tecnológica cuyo modelo de negocio conecta de manera directa y exclusiva a <strong>usuarios finales con prestadores independientes de servicios de belleza y estética</strong> (profesionales autónomos/freelance). La plataforma integra cinco pilares estratégicos de alto valor tecnológico: Agendamiento Directo, Marketplace de Productos, Módulo de Inteligencia Artificial (IA), Hub Biométrico y Educación (Glow Academy por convenio).
+        </p>
+
+        <!-- SUBSECCIÓN: MISIÓN, VISIÓN Y OBJETIVOS ESTRATÉGICOS DE LA EMPRESA -->
+        <h3 class="doc-h3">1.1 Dirección Estratégica Organizacional</h3>
+
+        <div class="callout-box">
+            <h4>MISIÓN CORPORATIVA</h4>
+            <p style="margin-bottom: 0;">
+                "Conectar de manera ágil, transparente y segura a usuarios finales con <strong>prestadores independientes</strong> de servicios de belleza y estética, mediante una plataforma tecnológica multiservicio que integra <strong>Inteligencia Artificial</strong>, un <strong>Hub Biométrico</strong> de alta seguridad, un <strong>Marketplace</strong> de productos cosméticos y educación técnica certificada a través de <strong>convenios institucionales</strong>; impulsando la formalización y el crecimiento profesional de nuestros aliados, y garantizando la máxima satisfacción del cliente con un compromiso constante de mejora continua bajo la norma ISO 9001."
+            </p>
+        </div>
+
+        <div class="callout-box">
+            <h4>VISIÓN CORPORATIVA</h4>
+            <p style="margin-bottom: 0;">
+                "Ser reconocidos para el año 2030 como el <strong>ecosistema tecnológico líder en América Latina</strong> en la digitalización, profesionalización y conexión de la industria de la belleza y estética; constituyéndonos en el referente del mercado por nuestra innovación en Inteligencia Artificial, la máxima seguridad en la protección de datos biométricos, la excelencia logística en el Marketplace y la calidad académica certificada en Glow Academy."
+            </p>
+        </div>
+
+        <div class="callout-box">
+            <h4>OBJETIVO GENERAL DEL SGC</h4>
+            <p style="margin-bottom: 0;">
+                "Desarrollar, operar y consolidar la plataforma digital multiservicio de <strong>GlowApp S.A.S.</strong> mediante un Sistema de Gestión de la Calidad (ISO 9001:2015) eficiente y escalable, que garantice la alta disponibilidad tecnológica, la protección estricta de datos biométricos, la precisión en recomendaciones de IA, la oportunidad en las entregas del Marketplace y la excelencia educativa de los prestadores independientes a través de convenios institucionales."
+            </p>
+        </div>
+
+        <h3 class="doc-h3">1.2 Matriz de Análisis FODA Organizacional</h3>
+        <p>Evaluación de los factores internos y externos clave para la operación tecnológica de GlowApp S.A.S.:</p>
+
+        <div class="swot-grid">
+            <div class="swot-box fortalezas">
+                <h4>Fortalezas (Internas)</h4>
+                <ul>
+                    <li>Hub Biométrico propio para autenticación segura y auditoría de consentimientos.</li>
+                    <li>Algoritmos de Inteligencia Artificial aplicados a recomendaciones y perfiles.</li>
+                    <li>Ecosistema diversificado: Agendamiento + Marketplace + Glow Academy.</li>
+                    <li>Conexión directa con prestadores independientes reduciendo costos de intermediación física.</li>
+                </ul>
+            </div>
+            <div class="swot-box debilidades">
+                <h4>Debilidades (Internas)</h4>
+                <ul>
+                    <li>Dependencia de la disciplina operativa de los prestadores independientes.</li>
+                    <li>Costo computacional y de almacenamiento de modelos de IA y registros biométricos.</li>
+                    <li>Necesidad de actualización continua de contenidos en convenios educativos.</li>
+                </ul>
+            </div>
+            <div class="swot-box oportunidades">
+                <h4>Oportunidades (Externas)</h4>
+                <ul>
+                    <li>Certificación ISO 9001 como estándar de confianza en biometría e IA.</li>
+                    <li>Alianzas de valor con nuevas instituciones educativas para certificar prestadores.</li>
+                    <li>Crecimiento de la demanda de productos cosméticos en el Marketplace.</li>
+                </ul>
+            </div>
+            <div class="swot-box amenazas">
+                <h4>Amenazas (Externas)</h4>
+                <ul>
+                    <li>Regulaciones estrictas sobre tratamiento de datos biométricos y modelos de IA.</li>
+                    <li>Ciberataques dirigidos a servicios de autenticación y bases de datos sensibles.</li>
+                    <li>Riesgos reputacionales por malas prácticas de prestadores independientes.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Sección 4.2 -->
+        <h2 class="doc-h2">2. Partes Interesadas y sus Necesidades (Cláusula 4.2)</h2>
+        <p>Requisitos de las partes interesadas relevantes en el modelo de negocio integral de GlowApp S.A.S.:</p>
+
+        <table class="corporate-table">
+            <thead>
+                <tr>
+                    <th>Parte Interesada</th>
+                    <th>Necesidades y Expectativas</th>
+                    <th>Requisito SGC</th>
+                    <th>Seguimiento</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Usuarios Finales</strong></td>
+                    <td>Reservas ágiles, biometría segura, productos confiables en Marketplace y atención IA oportuna.</td>
+                    <td>Seguridad de datos biométricos y SLA App</td>
+                    <td>CSAT, NPS y auditorías de datos</td>
+                </tr>
+                <tr>
+                    <td><strong>Prestadores Independientes</strong></td>
+                    <td>Herramientas de agendamiento, cobros puntuales y acceso a educación certificada en Glow Academy.</td>
+                    <td>Dispersión de pagos y acceso a cursos</td>
+                    <td>SLA de soporte y tasa de graduación</td>
+                </tr>
+                <tr>
+                    <td><strong>Instituciones Educativas Aliadas</strong></td>
+                    <td>Cumplimiento de convenios, validez académica e informes de estudiantes.</td>
+                    <td>Garantía de calidad académica</td>
+                    <td>Revisiones semestrales de convenio</td>
+                </tr>
+                <tr>
+                    <td><strong>Marcas y Vendedores Marketplace</strong></td>
+                    <td>Procesamiento seguro de pedidos, pagos transparentes y visibilidad.</td>
+                    <td>Trazabilidad de órdenes y entregas</td>
+                    <td>Evaluación de proveedores (8.4)</td>
+                </tr>
+                <tr>
+                    <td><strong>Entes Reguladores de Datos/Biometría</strong></td>
+                    <td>Estricto cumplimiento de privacidad de datos biométricos (Habeas Data / Leyes de Biometría).</td>
+                    <td>Cumplimiento normativo y auditoría de consentimiento</td>
+                    <td>Auditorías de cumplimiento legal</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Sección 4.3 -->
+        <h2 class="doc-h2">3. Determinación del Alcance del SGC (Cláusula 4.3)</h2>
+        
+        <div class="callout-box">
+            <h4>Declaración Oficial del Alcance del SGC</h4>
+            <p style="margin-bottom: 0;">
+                "El Sistema de Gestión de la Calidad de <strong>GlowApp S.A.S.</strong> abarca el diseño, desarrollo, infraestructura tecnológica, operación y soporte integral de su plataforma multiservicio, que comprende: la conexión directa entre usuarios finales y <strong>prestadores independientes</strong> de belleza, la gestión transaccional del <strong>Marketplace de productos</strong>, el procesamiento inteligente mediante el <strong>Módulo de Inteligencia Artificial (IA)</strong>, la autenticación y control mediante el <strong>Hub Biométrico</strong>, y la gestión del programa de <strong>Educación (Glow Academy)</strong> estructurado a través de convenios con instituciones educativas externas."
+            </p>
+        </div>
+
+        <p><strong>Exclusiones Justificadas:</strong> No aplican exclusiones en el SGC de GlowApp S.A.S. La cláusula 8.3 (Diseño y Desarrollo de Productos y Servicios) aplica completamente al desarrollo propio de software, modelos de IA y módulos de biometría.</p>
+
+        <!-- Cuadro de Firmas y Aprobación -->
+        <div class="approval-grid">
+            <div class="approval-card">
+                <strong>ELABORÓ</strong>
+                Equipo de Contenido / Calidad
+                <div class="signature-area">2026-07-23</div>
+            </div>
+            <div class="approval-card">
+                <strong>REVISÓ</strong>
+                Dirección de Operaciones
+                <div class="signature-area">2026-07-23</div>
+            </div>
+            <div class="approval-card">
+                <strong>APROBÓ</strong>
+                Dirección General / CEO
+                <div class="signature-area">2026-07-23</div>
+            </div>
+        </div>
+
+        <!-- Pie de Página Corporativo -->
+        <footer class="page-footer">
+            <div>GlowApp S.A.S.- Corporativo</div>
+            <div>Documentación Controlada SGC</div>
+        </footer>
+
+    </div>
+
+</body>
+</html>

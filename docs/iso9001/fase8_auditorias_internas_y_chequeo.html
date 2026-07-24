@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGC-DOC-008: Sistema de Auditorías Internas y Lista de Chequeo - GlowApp S.A.S.</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --espresso: #4A3428;
+            --rose-gold: #B76E79;
+            --crema: #FDF6F0;
+            --carbono: #2B2B2B;
+            --blanco: #FFFFFF;
+            --border-light: #E8D8D0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Manrope', 'Helvetica', sans-serif;
+            color: var(--carbono);
+            background-color: #F4EFEA;
+            line-height: 1.35;
+            font-size: 10.5pt;
+            padding: 20px;
+        }
+
+        .document-container {
+            max-width: 950px;
+            margin: 0 auto;
+            background: var(--blanco);
+            box-shadow: 0 4px 20px rgba(74, 52, 40, 0.08);
+            padding: 25mm 20mm 25mm 20mm;
+            position: relative;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--espresso);
+            color: var(--blanco);
+            padding: 14px 24px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            max-width: 950px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .btn-pdf {
+            background: var(--rose-gold);
+            color: var(--blanco);
+            border: none;
+            padding: 10px 18px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+
+        .btn-pdf:hover {
+            background: #a35b66;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 0.5pt solid var(--rose-gold);
+            padding-bottom: 8px;
+            margin-bottom: 24px;
+        }
+
+        .page-header-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-box {
+            width: 40px;
+            height: 40px;
+            background-color: var(--crema);
+            border: 1px solid var(--rose-gold);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Fraunces', serif;
+            font-weight: 700;
+            color: var(--espresso);
+            font-size: 1.1rem;
+        }
+
+        .page-header-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--espresso);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .doc-control-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 28px;
+            border: 1px solid var(--espresso);
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .doc-control-table td {
+            border: 1px solid var(--espresso);
+            padding: 8px 12px;
+            font-size: 9pt;
+            vertical-align: middle;
+        }
+
+        .doc-control-title {
+            text-align: center;
+            background: var(--crema);
+        }
+
+        .doc-control-title h1 {
+            font-family: 'Fraunces', serif;
+            font-size: 16pt;
+            color: var(--espresso);
+            margin-bottom: 2px;
+        }
+
+        .doc-control-title h2 {
+            font-size: 10pt;
+            color: var(--rose-gold);
+            font-weight: 600;
+        }
+
+        h2.doc-h2 {
+            font-family: 'Manrope', sans-serif;
+            font-size: 14pt;
+            font-weight: 700;
+            color: var(--espresso);
+            margin-top: 24px;
+            margin-bottom: 12px;
+            border-bottom: 1px solid var(--crema);
+            padding-bottom: 4px;
+            page-break-after: avoid;
+            break-after: avoid;
+        }
+
+        h3.doc-h3 {
+            font-family: 'Manrope', sans-serif;
+            font-size: 12pt;
+            font-weight: 700;
+            color: var(--rose-gold);
+            margin-top: 18px;
+            margin-bottom: 8px;
+            page-break-after: avoid;
+            break-after: avoid;
+        }
+
+        p {
+            color: var(--carbono);
+            margin-bottom: 12px;
+            text-align: justify;
+        }
+
+        .callout-box {
+            background-color: var(--crema);
+            border-left: 3pt solid var(--rose-gold);
+            padding: 14px 18px;
+            margin: 18px 0;
+            border-radius: 0 6px 6px 0;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .callout-box h4 {
+            color: var(--espresso);
+            font-size: 10.5pt;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .corporate-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 18px 0;
+            font-size: 8.5pt;
+            border: 1px solid var(--border-light);
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .corporate-table th {
+            background-color: var(--espresso);
+            color: var(--blanco);
+            padding: 8px 10px;
+            text-align: left;
+            font-weight: 600;
+            border: none;
+        }
+
+        .corporate-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--border-light);
+            vertical-align: top;
+        }
+
+        .corporate-table tr {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .corporate-table tr:nth-child(even) {
+            background-color: var(--crema);
+        }
+
+        .corporate-table tr:nth-child(odd) {
+            background-color: var(--blanco);
+        }
+
+        .page-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 0.5pt solid var(--rose-gold);
+            padding-top: 10px;
+            margin-top: 40px;
+            font-size: 8.5pt;
+            color: var(--carbono);
+        }
+
+        .approval-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 30px;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .approval-card {
+            border: 1px solid var(--border-light);
+            background-color: var(--crema);
+            padding: 12px;
+            text-align: center;
+            border-radius: 6px;
+            font-size: 8.5pt;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .approval-card strong {
+            color: var(--espresso);
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .signature-area {
+            margin-top: 24px;
+            border-top: 1px dashed var(--rose-gold);
+            padding-top: 4px;
+            color: #777;
+        }
+
+        @media print {
+            @page {
+                size: A4;
+                margin: 20mm 15mm 20mm 15mm;
+                @bottom-left {
+                    content: "GlowApp S.A.S.- Corporativo";
+                    font-family: 'Manrope', sans-serif;
+                    font-size: 8.5pt;
+                    color: #2B2B2B;
+                }
+                @bottom-right {
+                    content: "Página " counter(page) " de " counter(pages);
+                    font-family: 'Manrope', sans-serif;
+                    font-size: 8.5pt;
+                    color: #2B2B2B;
+                }
+            }
+
+            body {
+                background: white !important;
+                padding: 0 !important;
+                font-size: 10pt;
+            }
+
+            .toolbar {
+                display: none !important;
+            }
+
+            .document-container {
+                box-shadow: none !important;
+                padding: 0 !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+            }
+
+            .doc-control-table,
+            .corporate-table,
+            .corporate-table tr,
+            .callout-box,
+            .approval-grid,
+            .approval-card {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+
+            h2.doc-h2, h3.doc-h3 {
+                page-break-after: avoid !important;
+                break-after: avoid !important;
+            }
+
+            .corporate-table th {
+                background-color: #4A3428 !important;
+                color: #FFFFFF !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .corporate-table tr:nth-child(even), .callout-box, .doc-control-title, .approval-card, .logo-box {
+                background-color: #FDF6F0 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .page-footer {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Toolbar de Pantalla -->
+    <div class="toolbar">
+        <div>
+            <strong>GlowApp S.A.S. - Sistema de Gestión de la Calidad (ISO 9001:2015)</strong>
+        </div>
+        <button class="btn-pdf" onclick="window.print()">
+            📄 Exportar / Descargar PDF
+        </button>
+    </div>
+
+    <div class="document-container">
+
+        <!-- Encabezado de Página Corporativo -->
+        <header class="page-header">
+            <div class="page-header-logo">
+                <div class="logo-box">G</div>
+                <span style="font-weight: 700; color: var(--espresso); font-size: 0.95rem;">GlowApp S.A.S.</span>
+            </div>
+            <div class="page-header-title">Operaciones & Calidad | SGC ISO 9001</div>
+        </header>
+
+        <!-- Tabla de Control de Documento Normativo -->
+        <table class="doc-control-table">
+            <tr>
+                <td style="width: 20%; text-align: center;">
+                    <div style="font-family: 'Fraunces', serif; font-size: 1.4rem; font-weight: 700; color: var(--espresso);">GlowApp</div>
+                    <span style="font-size: 7.5pt; color: var(--rose-gold);">S.A.S.</span>
+                </td>
+                <td class="doc-control-title" style="width: 55%;">
+                    <h1>MANUAL DE CALIDAD SGC</h1>
+                    <h2>LISTA DE CHEQUEO DE AUDITORÍA INTERNA COMPLETA (30 ÍTEMS)</h2>
+                </td>
+                <td style="width: 25%;">
+                    <div><strong>Código:</strong> SGC-DOC-008</div>
+                    <div><strong>Versión:</strong> 1.1</div>
+                    <div><strong>Fecha:</strong> 2026-07-23</div>
+                </td>
+            </tr>
+        </table>
+
+        <!-- Sección 1: Procedimiento de Auditorías -->
+        <h2 class="doc-h2">1. Procedimiento de Auditorías Internas de Calidad (Cláusula 9.2)</h2>
+        <p>
+            GlowApp S.A.S. evalúa periódicamente la conformidad y eficacia de su Sistema de Gestión de la Calidad mediante auditorías internas planificadas e independientes:
+        </p>
+
+        <div class="callout-box">
+            <h4>Ciclo de Ejecución de Auditoría Interna SGC</h4>
+            <p style="margin-bottom: 0;">
+                1. <strong>Programa Anual:</strong> Definición previa de fechas y procesos a auditar durante el año.<br>
+                2. <strong>Plan de Auditoría:</strong> Elaboración del plan detallado con horarios y auditores asignados.<br>
+                3. <strong>Ejecución con Lista de Chequeo:</strong> Verificación de 30 puntos normativos clave (Cláusulas 4 a 10).<br>
+                4. <strong>Informe de Resultados:</strong> Redacción del reporte de hallazgos, fortalezas y no conformidades.<br>
+                5. <strong>Evaluación del Auditor:</strong> Calificación de las competencias del auditor interno.
+            </p>
+        </div>
+
+        <!-- Sección 2: Cronograma Anual -->
+        <h2 class="doc-h2">2. Cronograma y Programa Anual de Auditorías SGC</h2>
+        <table class="corporate-table">
+            <thead>
+                <tr>
+                    <th>Proceso Auditar</th>
+                    <th>Cláusula ISO 9001</th>
+                    <th>Frecuencia</th>
+                    <th>Mes Programado</th>
+                    <th>Auditor Asignado</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Dirección & Calidad SGC</strong></td>
+                    <td>Cláusulas 4, 5 y 6</td>
+                    <td>Semestral</td>
+                    <td>Junio / Diciembre</td>
+                    <td>Auditor Líder Certificado</td>
+                </tr>
+                <tr>
+                    <td><strong>Ingeniería de Software & IA</strong></td>
+                    <td>Cláusula 8.3 y 8.5.6</td>
+                    <td>Semestral</td>
+                    <td>Mayo / Noviembre</td>
+                    <td>Auditor Técnico Interno</td>
+                </tr>
+                <tr>
+                    <td><strong>Hub Biométrico & Ciberseguridad</strong></td>
+                    <td>Cláusula 8.5 y Habeas Data</td>
+                    <td>Trimestral</td>
+                    <td>Marzo, Junio, Sept, Dic</td>
+                    <td>Auditor de Seguridad / Datos</td>
+                </tr>
+                <tr>
+                    <td><strong>Operaciones & Marketplace</strong></td>
+                    <td>Cláusula 8.4 y 8.5</td>
+                    <td>Semestral</td>
+                    <td>Abril / Octubre</td>
+                    <td>Auditor de Calidad Operativa</td>
+                </tr>
+                <tr>
+                    <td><strong>Glow Academy & Convenios</strong></td>
+                    <td>Cláusula 8.4.1 y 8.5</td>
+                    <td>Semestral</td>
+                    <td>Mayo / Noviembre</td>
+                    <td>Auditor Académico</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Sección 3: Lista de Chequeo Completa de 30 Ítems -->
+        <h2 class="doc-h2">3. Lista de Chequeo Oficial de Auditoría Interna (30 Ítems Auditables)</h2>
+        <p>Matriz completa de verificación de la norma ISO 9001:2015 adaptada a GlowApp S.A.S.:</p>
+
+        <table class="corporate-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Cláusula ISO</th>
+                    <th>Pregunta / Verificación de Auditoría</th>
+                    <th>Evidencia Requerida en GlowApp S.A.S.</th>
+                    <th>Resultado</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>1</td><td><strong>4.1 Contexto</strong></td><td>¿Se identifican las cuestiones internas y externas relevantes?</td><td>Matriz FODA en SGC-DOC-001.</td><td>[ ] C [ ] NC</td></tr>
+                <tr><td>2</td><td><strong>4.2 Partes Int.</strong></td><td>¿Están identificadas las necesidades de usuarios y prestadores?</td><td>Matriz de Partes Interesadas SGC-DOC-001.</td><td>[ ] C [ ] NC</td></tr>
+                <tr><td>3</td><td><strong>4.3 Alcance</strong></td><td>¿El alcance incluye los 5 pilares del modelo de negocio?</td><td>Alcance formal en SGC-DOC-001.</td><td>[ ] C [ ] NC</td></tr>
+                <tr><td>4</td><td><strong>4.4 Procesos</strong></td><td>¿Existe caracterización SIPOC para cada proceso clave?</td><td>Fichas SIPOC en SGC-DOC-003.</td><td>[ ] C [ ] NC</td></tr>
+                <tr><td>5</td><td><strong>5.1 Liderazgo</strong></td><td>¿La dirección demuestra compromiso con la calidad y recursos?</td><td>Presupuesto Cloud y SGC-DOC-007.</td><td>[ ] C [ ] NC</td></tr>
+                <tr><td>6</td><td><strong>5.2 Política</strong></td><td>¿La Política de Calidad incluye compromisos de requisitos y mejora?</td><td>Declaración textual en SGC-DOC-002.</td><td>[ ] C [ ] NC</td></tr>
+                <tr><td>7</td><td><strong>5.3 RACI</strong></td><td>¿Están asignados los roles y responsabilidades de la App?</td><td>Matriz RACI con leyenda en SGC-DOC-002.</td><td>[ ] C [ ] NC</td></tr>
+                <tr><td>8</td><td><strong>6.1 Riesgos</strong></td><td>¿Existen controles para riesgos de biometría e IA?</td><td>Matriz de Riesgos SGC-DOC-004.</td><td>[ ] C [ ] NC</td></tr>
+                <tr><td>9</td><td><strong>6.2 Objetivos</strong></td><td>¿Están planificados los 6 Objetivos de Calidad con KPIs y metas?</td><td>Planificación 6.2 en SGC-DOC-002.</td><td>[ ] C [ ] NC</td></tr>
+                <tr><td>10</td><td><strong>6.3 Cambios</strong></td><td>¿Se planifican las modificaciones estructurales o de código?</td><td>Procedimiento de Cambios SGC-DOC-006.</td><td>[ ] C [ ] NC</td></tr>
+                <tr><td>11</td><td><strong>7.1.3 Infraest.</strong></td><td>¿Se garantiza la disponibilidad de servidores Cloud y BD?</td><td>Contrato Cloud y Uptime ≥ 99.5%.</td><td>[ ] C [ ] NC</td></tr>
+                <tr><td>12</td><td><strong>7.1.5 Medición</strong></td><td>¿Se cuenta con herramientas APM para monitoreo de Uptime 24/7?</td><td>Logs de monitoreo y APM.</td><td>[ ] C [ ] NC</td></tr>
+                <tr><td>13</td><td><strong>7.2 Competencia</strong></td><td>¿Se verifican las competencias del personal y prestadores?</td><td>Perfiles de cargo SGC-DOC-009.</td><td>[ ] C [ ] NC</td></tr>
+                <tr><td>14</td><td><strong>7.3 Conciencia</strong></td><td>¿El personal conoce el impacto de su trabajo en la calidad?</td><td>Registros de capacitación SGC-DOC-007.</td><td>[ ] C [ ] NC</td></tr>
+                <tr><td>15</td><td><strong>7.4 Comunic.</strong></td><td>¿Existe Matriz de Comunicación para avisos de mantenimiento?</td><td>Matriz de Comunicación SGC-DOC-007.</td><td>[ ] C [ ] NC</td></tr>
+                <tr><td>16</td><td><strong>7.5.3 Control Doc</strong></td><td>¿Los documentos y código tienen control de versión y código?</td><td>Código `SGC-DOC-XXX` e index.html.</td><td>[ ] C [ ] NC</td></tr>
+                <tr><td>17</td><td><strong>8.1 Operación</strong></td><td>¿Se controlan los procesos de reserva y agendamiento?</td><td>Módulo de reservas y backend.</td><td>[ ] C [ ] NC</td></tr>
+                <tr><td>18</td><td><strong>8.2 Requisitos</strong></td><td>¿Se confirman los requisitos del cliente antes de agendar?</td><td>Formulario de agendamiento en la App.</td><td>[ ] C [ ] NC</td></tr>
+                <tr><td>19</td><td><strong>8.3 Diseño/QA</strong></td><td>¿Se ejecutan pruebas QA antes de liberar código a producción?</td><td>Logs de QA e integración CI/CD.</td><td>[ ] C [ ] NC</td></tr>
+                <tr><td>20</td><td><strong>8.4 Proveedores</strong></td><td>¿Se evalúa semestralmente a proveedores Cloud y Marcas?</td><td>Evaluación de proveedores SGC-DOC-005.</td><td>[ ] C [ ] NC</td></tr>
+                <tr><td>21</td><td><strong>8.4.1 Convenios</strong></td><td>¿Se audita la validez de los convenios de Glow Academy?</td><td>Contratos e informe de convenio.</td><td>[ ] C [ ] NC</td></tr>
+                <tr><td>22</td><td><strong>8.5.1 Control Op</strong></td><td>¿Se valida la identidad del prestador en el onboarding?</td><td>Verificación en Hub Biométrico.</td><td>[ ] C [ ] NC</td></tr>
+                <tr><td>23</td><td><strong>8.5.3 Datos Prob</strong></td><td>¿El 100% de perfiles biométricos tiene consentimiento firmado?</td><td>Query a tabla `biometric_consents`.</td><td>[ ] C [ ] NC</td></tr>
+                <tr><td>24</td><td><strong>8.5.5 Post-Venta</strong></td><td>¿Se ofrece garantía y seguimiento a productos del Marketplace?</td><td>Procedimiento de garantías SGC-PRO-16.</td><td>[ ] C [ ] NC</td></tr>
+                <tr><td>25</td><td><strong>8.5.6 Cambios Op</strong></td><td>¿Se diferencian los repositorios canónicos Web y Móvil?</td><td>Matriz de Arquitectura SGC-DOC-012.</td><td>[ ] C [ ] NC</td></tr>
+                <tr><td>26</td><td><strong>9.1.2 CSAT/NPS</strong></td><td>¿Se mide la satisfacción del usuario tras cada servicio?</td><td>Encuestas automáticas en la App.</td><td>[ ] C [ ] NC</td></tr>
+                <tr><td>27</td><td><strong>9.2 Auditoría</strong></td><td>¿Se ejecuta el programa anual de auditorías internas?</td><td>Programa e informes en SGC-DOC-008.</td><td>[ ] C [ ] NC</td></tr>
+                <tr><td>28</td><td><strong>9.3 Dirección</strong></td><td>¿Existe Acta de Revisión por la Dirección con las 9 entradas?</td><td>Acta Oficial SGC-DOC-011.</td><td>[ ] C [ ] NC</td></tr>
+                <tr><td>29</td><td><strong>10.2 CAPA</strong></td><td>¿Se investiga causa raíz en no conformidades reportadas?</td><td>Registros CAPA e Ishikawa en 006.</td><td>[ ] C [ ] NC</td></tr>
+                <tr><td>30</td><td><strong>10.3 Mejora</strong></td><td>¿Se evidencia aplicación del Ciclo PHVA en el SGC?</td><td>Informes de mejora continua.</td><td>[ ] C [ ] NC</td></tr>
+            </tbody>
+        </table>
+
+        <!-- Cuadro de Firmas y Aprobación -->
+        <div class="approval-grid">
+            <div class="approval-card">
+                <strong>ELABORÓ</strong>
+                Equipo de Contenido / Calidad
+                <div class="signature-area">2026-07-23</div>
+            </div>
+            <div class="approval-card">
+                <strong>REVISÓ</strong>
+                Dirección de Operaciones
+                <div class="signature-area">2026-07-23</div>
+            </div>
+            <div class="approval-card">
+                <strong>APROBÓ</strong>
+                Dirección General / CEO
+                <div class="signature-area">2026-07-23</div>
+            </div>
+        </div>
+
+        <!-- Pie de Página Corporativo -->
+        <footer class="page-footer">
+            <div>GlowApp S.A.S.- Corporativo</div>
+            <div>Documentación Controlada SGC</div>
+        </footer>
+
+    </div>
+
+</body>
+</html>

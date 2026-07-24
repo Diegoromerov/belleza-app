@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGC-DOC-011: Acta Oficial de Revisión por la Dirección - GlowApp S.A.S.</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --espresso: #4A3428;
+            --rose-gold: #B76E79;
+            --crema: #FDF6F0;
+            --carbono: #2B2B2B;
+            --blanco: #FFFFFF;
+            --border-light: #E8D8D0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Manrope', 'Helvetica', sans-serif;
+            color: var(--carbono);
+            background-color: #F4EFEA;
+            line-height: 1.35;
+            font-size: 10.5pt;
+            padding: 20px;
+        }
+
+        .document-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--blanco);
+            box-shadow: 0 4px 20px rgba(74, 52, 40, 0.08);
+            padding: 25mm 20mm 25mm 20mm;
+            position: relative;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--espresso);
+            color: var(--blanco);
+            padding: 14px 24px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .btn-pdf {
+            background: var(--rose-gold);
+            color: var(--blanco);
+            border: none;
+            padding: 10px 18px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+
+        .btn-pdf:hover {
+            background: #a35b66;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 0.5pt solid var(--rose-gold);
+            padding-bottom: 8px;
+            margin-bottom: 24px;
+        }
+
+        .page-header-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-box {
+            width: 40px;
+            height: 40px;
+            background-color: var(--crema);
+            border: 1px solid var(--rose-gold);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Fraunces', serif;
+            font-weight: 700;
+            color: var(--espresso);
+            font-size: 1.1rem;
+        }
+
+        .page-header-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--espresso);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .doc-control-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 28px;
+            border: 1px solid var(--espresso);
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .doc-control-table td {
+            border: 1px solid var(--espresso);
+            padding: 8px 12px;
+            font-size: 9pt;
+            vertical-align: middle;
+        }
+
+        .doc-control-title {
+            text-align: center;
+            background: var(--crema);
+        }
+
+        .doc-control-title h1 {
+            font-family: 'Fraunces', serif;
+            font-size: 16pt;
+            color: var(--espresso);
+            margin-bottom: 2px;
+        }
+
+        .doc-control-title h2 {
+            font-size: 10pt;
+            color: var(--rose-gold);
+            font-weight: 600;
+        }
+
+        h2.doc-h2 {
+            font-family: 'Manrope', sans-serif;
+            font-size: 14pt;
+            font-weight: 700;
+            color: var(--espresso);
+            margin-top: 24px;
+            margin-bottom: 12px;
+            border-bottom: 1px solid var(--crema);
+            padding-bottom: 4px;
+            page-break-after: avoid;
+            break-after: avoid;
+        }
+
+        h3.doc-h3 {
+            font-family: 'Manrope', sans-serif;
+            font-size: 12pt;
+            font-weight: 700;
+            color: var(--rose-gold);
+            margin-top: 18px;
+            margin-bottom: 8px;
+            page-break-after: avoid;
+            break-after: avoid;
+        }
+
+        p {
+            color: var(--carbono);
+            margin-bottom: 12px;
+            text-align: justify;
+        }
+
+        .callout-box {
+            background-color: var(--crema);
+            border-left: 3pt solid var(--rose-gold);
+            padding: 14px 18px;
+            margin: 18px 0;
+            border-radius: 0 6px 6px 0;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .callout-box h4 {
+            color: var(--espresso);
+            font-size: 10.5pt;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .corporate-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 18px 0;
+            font-size: 8.5pt;
+            border: 1px solid var(--border-light);
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .corporate-table th {
+            background-color: var(--espresso);
+            color: var(--blanco);
+            padding: 8px 10px;
+            text-align: left;
+            font-weight: 600;
+            border: none;
+        }
+
+        .corporate-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--border-light);
+            vertical-align: top;
+        }
+
+        .corporate-table tr {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .corporate-table tr:nth-child(even) {
+            background-color: var(--crema);
+        }
+
+        .corporate-table tr:nth-child(odd) {
+            background-color: var(--blanco);
+        }
+
+        .page-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 0.5pt solid var(--rose-gold);
+            padding-top: 10px;
+            margin-top: 40px;
+            font-size: 8.5pt;
+            color: var(--carbono);
+        }
+
+        .approval-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 30px;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .approval-card {
+            border: 1px solid var(--border-light);
+            background-color: var(--crema);
+            padding: 12px;
+            text-align: center;
+            border-radius: 6px;
+            font-size: 8.5pt;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .approval-card strong {
+            color: var(--espresso);
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .signature-area {
+            margin-top: 24px;
+            border-top: 1px dashed var(--rose-gold);
+            padding-top: 4px;
+            color: #777;
+        }
+
+        @media print {
+            @page {
+                size: A4;
+                margin: 20mm 15mm 20mm 15mm;
+                @bottom-left {
+                    content: "GlowApp S.A.S.- Corporativo";
+                    font-family: 'Manrope', sans-serif;
+                    font-size: 8.5pt;
+                    color: #2B2B2B;
+                }
+                @bottom-right {
+                    content: "Página " counter(page) " de " counter(pages);
+                    font-family: 'Manrope', sans-serif;
+                    font-size: 8.5pt;
+                    color: #2B2B2B;
+                }
+            }
+
+            body {
+                background: white !important;
+                padding: 0 !important;
+                font-size: 10pt;
+            }
+
+            .toolbar {
+                display: none !important;
+            }
+
+            .document-container {
+                box-shadow: none !important;
+                padding: 0 !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+            }
+
+            .doc-control-table,
+            .corporate-table,
+            .corporate-table tr,
+            .callout-box,
+            .approval-grid,
+            .approval-card {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+
+            h2.doc-h2, h3.doc-h3 {
+                page-break-after: avoid !important;
+                break-after: avoid !important;
+            }
+
+            .corporate-table th {
+                background-color: #4A3428 !important;
+                color: #FFFFFF !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .corporate-table tr:nth-child(even), .callout-box, .doc-control-title, .approval-card, .logo-box {
+                background-color: #FDF6F0 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .page-footer {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Toolbar de Pantalla -->
+    <div class="toolbar">
+        <div>
+            <strong>GlowApp S.A.S. - Sistema de Gestión de la Calidad (ISO 9001:2015)</strong>
+        </div>
+        <button class="btn-pdf" onclick="window.print()">
+            📄 Exportar / Descargar PDF
+        </button>
+    </div>
+
+    <div class="document-container">
+
+        <!-- Encabezado de Página Corporativo -->
+        <header class="page-header">
+            <div class="page-header-logo">
+                <div class="logo-box">G</div>
+                <span style="font-weight: 700; color: var(--espresso); font-size: 0.95rem;">GlowApp S.A.S.</span>
+            </div>
+            <div class="page-header-title">Operaciones & Calidad | SGC ISO 9001</div>
+        </header>
+
+        <!-- Tabla de Control de Documento Normativo -->
+        <table class="doc-control-table">
+            <tr>
+                <td style="width: 20%; text-align: center;">
+                    <div style="font-family: 'Fraunces', serif; font-size: 1.4rem; font-weight: 700; color: var(--espresso);">GlowApp</div>
+                    <span style="font-size: 7.5pt; color: var(--rose-gold);">S.A.S.</span>
+                </td>
+                <td class="doc-control-title" style="width: 55%;">
+                    <h1>MANUAL DE CALIDAD SGC</h1>
+                    <h2>ACTA OFICIAL DE REVISIÓN POR LA DIRECCIÓN (CLÁUSULA 9.3)</h2>
+                </td>
+                <td style="width: 25%;">
+                    <div><strong>Código:</strong> SGC-DOC-011</div>
+                    <div><strong>Versión:</strong> 1.0</div>
+                    <div><strong>Fecha:</strong> 2026-07-23</div>
+                </td>
+            </tr>
+        </table>
+
+        <!-- Datos de la Sesión de Revisión -->
+        <div class="callout-box">
+            <h4>DATOS DE LA SESIÓN OFICIAL DE REVISIÓN POR LA DIRECCIÓN</h4>
+            <p style="margin-bottom: 0;">
+                • <strong>Fecha y Hora:</strong> 23 de Julio de 2026 | 16:00 - 18:30 hrs<br>
+                • <strong>Lugar / Modalidad:</strong> Sala de Juntas Principal GlowApp / Sesión Virtual Certificada<br>
+                • <strong>Asistentes de la Alta Dirección:</strong> CEO (Dirección General), CTO (Dirección de Tecnología), COO (Dirección de Operaciones), Líder de Biometría & IA, Líder de Glow Academy y Líder de Calidad SGC.
+            </p>
+        </div>
+
+        <!-- Sección 1: Revisión de las 9 Entradas Obligatorias (Cláusula 9.3.2) -->
+        <h2 class="doc-h2">1. Revisión de Entradas Obligatorias de Auditoría (Cláusula 9.3.2)</h2>
+        <p>
+            En cumplimiento estricto con el numeral 9.3.2 de la norma ISO 9001:2015, la Dirección revisó cada uno de los 9 insumos normativos de entrada:
+        </p>
+
+        <table class="corporate-table">
+            <thead>
+                <tr>
+                    <th>Entrada Normativa (9.3.2)</th>
+                    <th>Estado y Hallazgo Evaluado en GlowApp S.A.S.</th>
+                    <th>Dictamen Directivo</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>1. Acciones de Revisiones Anteriores</strong></td>
+                    <td>Se verificó el cumplimiento del 100% de los compromisos adquiridos en la sesión previa del SGC.</td>
+                    <td><strong style="color: green;">CONFORME</strong></td>
+                </tr>
+                <tr>
+                    <td><strong>2. Cambios en Contexto y FODA</strong></td>
+                    <td>Revisión de las nuevas regulaciones sobre biometría facial y leyes de IA. Actualización del documento SGC-DOC-001.</td>
+                    <td><strong style="color: green;">CONFORME</strong></td>
+                </tr>
+                <tr>
+                    <td><strong>3. Satisfacción del Cliente (CSAT/NPS)</strong></td>
+                    <td>Índice de satisfacción medio CSAT alcanzó 4.7 / 5.0 y el NPS se ubicó en 74% de promotores.</td>
+                    <td><strong style="color: green;">CONFORME</strong></td>
+                </tr>
+                <tr>
+                    <td><strong>4. Cumplimiento de Objetivos SGC</strong></td>
+                    <td>Uptime Cloud alcanzó 99.7%, consentimientos biométricos auditados 100%, entregas a tiempo Marketplace 98.5%.</td>
+                    <td><strong style="color: green;">CONFORME</strong></td>
+                </tr>
+                <tr>
+                    <td><strong>5. Desempeño de Procesos</strong></td>
+                    <td>Evaluación SIPOC de los 7 procesos operativos (Devs, Onboarding, Reservas, IA, Marketplace, Academy, Soporte).</td>
+                    <td><strong style="color: green;">CONFORME</strong></td>
+                </tr>
+                <tr>
+                    <td><strong>6. Estado de No Conformidades / CAPA</strong></td>
+                    <td>Se revisaron 2 tickets CAPA cerrados con efectividad probada a los 30 días sin reincidencia.</td>
+                    <td><strong style="color: green;">CONFORME</strong></td>
+                </tr>
+                <tr>
+                    <td><strong>7. Resultados de Auditorías Internas</strong></td>
+                    <td>Revisión del informe del ciclo de auditoría interna SGC-DOC-008. Cero No Conformidades mayores encontradas.</td>
+                    <td><strong style="color: green;">CONFORME</strong></td>
+                </tr>
+                <tr>
+                    <td><strong>8. Desempeño Proveedores Externos</strong></td>
+                    <td>Evaluación semestral aprobada para AWS, pasarelas de pago, marcas de Marketplace e instituciones aliadas.</td>
+                    <td><strong style="color: green;">CONFORME</strong></td>
+                </tr>
+                <tr>
+                    <td><strong>9. Eficacia de Riesgos y Oportunidades</strong></td>
+                    <td>Evaluación de los controles aplicados a riesgos de ciberseguridad, biometría e IA (SGC-DOC-004).</td>
+                    <td><strong style="color: green;">CONFORME</strong></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Sección 2: Decisiones y Salidas Obligatorias (Cláusula 9.3.3) -->
+        <h2 class="doc-h2">2. Decisiones y Salidas de la Revisión por la Dirección (Cláusula 9.3.3)</h2>
+        <p>
+            Como resultado del análisis del SGC, la Alta Dirección de GlowApp S.A.S. aprobó las siguientes decisiones estratégicas y asignaciones de recursos:
+        </p>
+
+        <div class="callout-box">
+            <h4>DECISIONES Y SALIDAS APROBADAS (CLÁUSULA 9.3.3)</h4>
+            <p style="margin-bottom: 0;">
+                • <strong>Salida 1 (Oportunidades de Mejora):</strong> Aprobar la implementación del optimizador de inferencia de IA para acelerar recomendaciones en la App y ampliar el catálogo del Marketplace a 5 nuevas marcas.<br>
+                • <strong>Salida 2 (Necesidades de Cambio en el SGC):** Aprobar la versión 1.2 del alcance normativo integrando formalmente la Misión y Visión estratégicas.<br>
+                • <strong>Salida 3 (Asignación de Recursos):** Aprobar el presupuesto del H2 para servidores dedicados de encriptación biométrica y la contratación de un nuevo especialista QA.
+            </p>
+        </div>
+
+        <!-- Cuadro de Firmas Oficiales de la Alta Dirección -->
+        <h2 class="doc-h2">3. Firmas de Conformidad de la Alta Dirección</h2>
+        <p>En constancia de lo tratado y aprobado en la sesión oficial de Revisión por la Dirección del SGC:</p>
+
+        <div class="approval-grid">
+            <div class="approval-card">
+                <strong>CEO / DIRECCIÓN GENERAL</strong>
+                Presidente del Comité SGC
+                <div class="signature-area">Firma Registrada: 23/07/2026</div>
+            </div>
+            <div class="approval-card">
+                <strong>CTO / DIRECCIÓN TECNOLÓGICA</strong>
+                Líder de Infraestructura & Devs
+                <div class="signature-area">Firma Registrada: 23/07/2026</div>
+            </div>
+            <div class="approval-card">
+                <strong>COO / DIRECCIÓN OPERACIONES</strong>
+                Líder de Servicio & Marketplace
+                <div class="signature-area">Firma Registrada: 23/07/2026</div>
+            </div>
+        </div>
+
+        <!-- Pie de Página Corporativo -->
+        <footer class="page-footer">
+            <div>GlowApp S.A.S.- Corporativo</div>
+            <div>Documentación Controlada SGC</div>
+        </footer>
+
+    </div>
+
+</body>
+</html>

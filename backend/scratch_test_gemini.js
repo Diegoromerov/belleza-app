@@ -36,7 +36,7 @@ Responde obligatoriamente en formato JSON válido, sin bloques de código markdo
   "estilo_sugerido": "estilo"
 }`;
 
-    const model = ai.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    const model = ai.getGenerativeModel({ model: 'gemini-3.1-flash-lite' });
     console.log('Llamando a Gemini...');
     const result = await model.generateContent({
       contents: [
