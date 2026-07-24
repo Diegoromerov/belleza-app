@@ -199,7 +199,6 @@ class BeautyApp extends StatelessWidget {
       },
     );
   }
-  }
 }
 
 class ProvidersScreen extends StatefulWidget {
