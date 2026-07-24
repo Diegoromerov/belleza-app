@@ -50,17 +50,24 @@ class ProfileService {
     const profile = upsertRes.rows[0];
 
     // Guardar en historial biométrico para auditoría y trazabilidad
-    const historyQuery = `
-      INSERT INTO biometric_history (user_id, profile_id, face_scores, hands_diagnosis, recommendation)
-      VALUES ($1, $2, $3, $4, $5);
-    `;
-    await pool.query(historyQuery, [
-      userId,
-      profile.id,
-      faceScoresStr,
-      handsDiagnosisStr,
-      recommendation,
-    ]);
+    try {
+      const isValidUuid = (str) => typeof str === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(str);
+      const validProfileId = profile && profile.id ? profile.id.toString() : null;
+
+      const historyQuery = `
+        INSERT INTO biometric_history (user_id, profile_id, face_scores, hands_diagnosis, recommendation)
+        VALUES ($1, $2, $3, $4, $5);
+      `;
+      await pool.query(historyQuery, [
+        userId,
+        validProfileId,
+        faceScoresStr,
+        handsDiagnosisStr,
+        recommendation,
+      ]);
+    } catch (historyErr) {
+      console.warn('⚠️ No se pudo registrar entrada en biometric_history:', historyErr.message);
+    }
 
     // Cachear en Redis
     const cacheData = {
