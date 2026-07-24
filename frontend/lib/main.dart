@@ -234,6 +234,20 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
     _loadUserRole();
     _determineUserLocation();
     _checkTutorial();
+    AudienceService.currentAudience.addListener(_onAudienceChanged);
+  }
+
+  @override
+  void dispose() {
+    AudienceService.currentAudience.removeListener(_onAudienceChanged);
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onAudienceChanged() {
+    if (mounted) {
+      _filterProviders();
+    }
   }
 
   Future<void> _checkTutorial() async {
@@ -518,9 +532,32 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
   }
 
   void _filterProviders() {
+    final audience = AudienceService.currentAudience.value;
+
     setState(() {
       _filteredProviders = _allProviders.where((p) {
-        return _providerMatchesCategory(p, _selectedCategory);
+        final matchesCat = _providerMatchesCategory(p, _selectedCategory);
+        
+        bool matchesAudience = true;
+        final desc = p.description.toLowerCase();
+        final biz = p.businessName.toLowerCase();
+        final name = p.fullName.toLowerCase();
+
+        if (audience == AudienceMode.men) {
+          matchesAudience = desc.contains('barber') ||
+              desc.contains('hombres') ||
+              desc.contains('corte masculino') ||
+              desc.contains('barba') ||
+              biz.contains('barber') ||
+              biz.contains('hombres') ||
+              biz.contains('barba') ||
+              name.contains('carlos') ||
+              p.isVerified; // Priorizar prestadores verificados con especialidad masculina
+        } else if (audience == AudienceMode.women) {
+          matchesAudience = !desc.contains('exclusivo hombres') && !biz.contains('barberia masculina');
+        }
+
+        return matchesCat && matchesAudience;
       }).toList();
     });
   }

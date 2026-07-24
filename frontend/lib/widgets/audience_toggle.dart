@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/audience_service.dart';
 import '../shared/mens_theme.dart';
+import '../shared/theme.dart';
 
 class AudienceToggleWidget extends StatelessWidget {
   final bool compact;
@@ -18,17 +19,25 @@ class AudienceToggleWidget extends StatelessWidget {
         final isMen = currentMode == AudienceMode.men;
 
         return Container(
-          padding: const EdgeInsets.all(3),
+          padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
-            color: isMen ? MensTheme.obsidianCard : Colors.black.withValues(alpha: 0.06),
+            color: isMen ? MensTheme.obsidianCard : const Color(0xFFEFE8E6),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
               color: isMen
-                  ? MensTheme.champagneGold.withValues(alpha: 0.4)
-                  : Colors.transparent,
-              width: 1.2,
+                  ? MensTheme.champagneGold
+                  : AppTheme.primary.withValues(alpha: 0.5),
+              width: 1.5,
             ),
-            boxShadow: isMen ? MensTheme.goldGlow : [],
+            boxShadow: [
+              BoxShadow(
+                color: isMen
+                    ? MensTheme.champagneGold.withValues(alpha: 0.3)
+                    : Colors.black.withValues(alpha: 0.08),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -74,9 +83,9 @@ class AudienceToggleWidget extends StatelessWidget {
   }) {
     Color selectedBg = isMenMode
         ? MensTheme.champagneGold
-        : Theme.of(context).primaryColor;
+        : AppTheme.primary;
     Color selectedText = isMenMode ? Colors.black : Colors.white;
-    Color unselectedText = isMenMode ? MensTheme.textSecondary : Colors.grey.shade700;
+    Color unselectedText = isMenMode ? MensTheme.textPrimary : const Color(0xFF4A4442);
 
     return GestureDetector(
       onTap: () {
@@ -91,6 +100,17 @@ class AudienceToggleWidget extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSelected ? selectedBg : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: isMenMode
+                        ? MensTheme.champagneGold.withValues(alpha: 0.4)
+                        : AppTheme.primary.withValues(alpha: 0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : [],
         ),
         child: Row(
           children: [
@@ -99,17 +119,15 @@ class AudienceToggleWidget extends StatelessWidget {
               size: compact ? 14 : 16,
               color: isSelected ? selectedText : unselectedText,
             ),
-            if (!compact || isSelected) ...[
-              const SizedBox(width: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: compact ? 11 : 12,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                  color: isSelected ? selectedText : unselectedText,
-                ),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: compact ? 11 : 12,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                color: isSelected ? selectedText : unselectedText,
               ),
-            ],
+            ),
           ],
         ),
       ),

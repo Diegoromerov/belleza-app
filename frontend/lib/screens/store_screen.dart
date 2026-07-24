@@ -47,10 +47,13 @@ class _StoreScreenState extends State<StoreScreen> {
     super.initState();
     _fetchProducts();
     _searchController.addListener(_filterProducts);
+    AudienceService.currentAudience.addListener(_filterProducts);
   }
 
   @override
   void dispose() {
+    _searchController.removeListener(_filterProducts);
+    AudienceService.currentAudience.removeListener(_filterProducts);
     _searchController.dispose();
     super.dispose();
   }
@@ -67,7 +70,7 @@ class _StoreScreenState extends State<StoreScreen> {
         final List<dynamic> productsData = response['data'] ?? [];
         setState(() {
           _allProducts = List<Map<String, dynamic>>.from(productsData);
-          _filteredProducts = _allProducts;
+          _filterProducts();
           _isLoading = false;
         });
       } else {
@@ -83,16 +86,30 @@ class _StoreScreenState extends State<StoreScreen> {
 
   void _filterProducts() {
     final query = _searchController.text.toLowerCase().trim();
+    final audience = AudienceService.currentAudience.value;
+
     setState(() {
       _filteredProducts = _allProducts.where((p) {
+        // Filtro por Categoría
         final matchesCat = _selectedCategory == 'Todos' || 
             (p['tag_especialidad']?.toString().toLowerCase() == _selectedCategory.toLowerCase());
         
+        // Filtro por Búsqueda de texto
         final matchesQuery = query.isEmpty ||
             (p['nombre']?.toString().toLowerCase().contains(query) ?? false) ||
             (p['descripcion']?.toString().toLowerCase().contains(query) ?? false);
 
-        return matchesCat && matchesQuery;
+        // Filtro por Audiencia (Hombres / Mujeres / Todos)
+        bool matchesAudience = true;
+        final genderTarget = (p['gender_target'] ?? p['genero_objetivo'] ?? p['tag_genero'] ?? 'unisex').toString().toLowerCase();
+
+        if (audience == AudienceMode.men) {
+          matchesAudience = genderTarget == 'male' || genderTarget == 'men' || genderTarget == 'hombres' || genderTarget == 'unisex';
+        } else if (audience == AudienceMode.women) {
+          matchesAudience = genderTarget == 'female' || genderTarget == 'women' || genderTarget == 'mujeres' || genderTarget == 'unisex';
+        }
+
+        return matchesCat && matchesQuery && matchesAudience;
       }).toList();
     });
   }
