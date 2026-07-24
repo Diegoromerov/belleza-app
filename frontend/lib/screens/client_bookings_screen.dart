@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import 'otp_confirm_screen.dart';
 import '../shared/theme.dart';
+import '../services/audience_service.dart';
+import '../shared/mens_theme.dart';
 
 class ClientBookingsScreen extends StatefulWidget {
   const ClientBookingsScreen({super.key});
@@ -712,11 +714,17 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
     final isReviewed = booking['is_reviewed'] == true;
     final reviewData = booking['review'] as Map<String, dynamic>?;
 
+    final isMen = AudienceService.isMenMode;
+    final cardBg = isMen ? MensTheme.obsidianCard : Colors.white;
+    final primaryColor = isMen ? MensTheme.champagneGold : AppTheme.primary;
+    final textColor = isMen ? MensTheme.textPrimary : Colors.black87;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(24),
+        border: isMen ? Border.all(color: MensTheme.champagneGold.withValues(alpha: 0.2)) : null,
         boxShadow: AppTheme.softShadow,
       ),
       child: Padding(
@@ -1160,33 +1168,45 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
           status == 'CANCELADA';
     }).toList();
 
-    return Scaffold(
-      backgroundColor: AppTheme.background,
-      appBar: AppBar(
-        title: const Text('Mis Citas',
-            style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5)),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Actualizar',
-            onPressed: _loadBookings,
+    return ValueListenableBuilder<AudienceMode>(
+      valueListenable: AudienceService.currentAudience,
+      builder: (context, audienceMode, child) {
+        final isMen = audienceMode == AudienceMode.men;
+        final bgColor = isMen ? MensTheme.obsidianBg : AppTheme.background;
+        final surfaceColor = isMen ? MensTheme.obsidianCard : Colors.white;
+        final textColor = isMen ? MensTheme.textPrimary : Colors.black;
+        final primaryColor = isMen ? MensTheme.champagneGold : AppTheme.primary;
+
+        return Scaffold(
+          backgroundColor: bgColor,
+          appBar: AppBar(
+            title: Text('Mis Citas',
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: -0.5,
+                    color: textColor)),
+            backgroundColor: surfaceColor,
+            foregroundColor: textColor,
+            elevation: 0,
+            actions: [
+              IconButton(
+                icon: Icon(Icons.refresh, color: textColor),
+                tooltip: 'Actualizar',
+                onPressed: _loadBookings,
+              ),
+            ],
+            bottom: TabBar(
+              controller: _tabController,
+              labelColor: primaryColor,
+              unselectedLabelColor: isMen ? MensTheme.textMuted : Colors.grey,
+              indicatorColor: primaryColor,
+              indicatorSize: TabBarIndicatorSize.tab,
+              tabs: const [
+                Tab(text: 'Próximas'),
+                Tab(text: 'Historial'),
+              ],
+            ),
           ),
-        ],
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: AppTheme.primary,
-          unselectedLabelColor: Colors.grey,
-          indicatorColor: AppTheme.primary,
-          indicatorSize: TabBarIndicatorSize.tab,
-          tabs: const [
-            Tab(text: 'Próximas'),
-            Tab(text: 'Historial'),
-          ],
-        ),
-      ),
       body: Stack(
         children: [
           TabBarView(
@@ -1299,6 +1319,8 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
             ),
         ],
       ),
+    );
+      },
     );
   }
 }

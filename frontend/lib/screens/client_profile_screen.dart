@@ -3,8 +3,10 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import '../services/api_service.dart';
-import '../services/auth_service.dart';
+import '../services/audience_service.dart';
+import '../shared/mens_theme.dart';
+import '../shared/theme.dart';
+import '../main.dart';
 
 class ClientProfileScreen extends StatefulWidget {
   const ClientProfileScreen({super.key});
@@ -154,29 +156,38 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = MapSettings.isDark;
-    final bgColor = isDark ? const Color(0xFF18171C) : Colors.white;
-    final cardBgColor = isDark ? const Color(0xFF24232B) : Colors.white;
-    final textColor = isDark ? Colors.white : Colors.black;
+    return ValueListenableBuilder<AudienceMode>(
+      valueListenable: AudienceService.currentAudience,
+      builder: (context, audienceMode, child) {
+        final isMen = audienceMode == AudienceMode.men;
+        final isDark = isMen || MapSettings.isDark;
 
-    if (_isLoading) {
-      return Scaffold(
-        backgroundColor: bgColor,
-        body:
-            const Center(child: CircularProgressIndicator(color: Color(0xFFC89D93))),
-      );
-    }
+        final bgColor = isMen
+            ? MensTheme.obsidianBg
+            : (isDark ? const Color(0xFF18171C) : Colors.white);
+        final cardBgColor = isMen
+            ? MensTheme.obsidianCard
+            : (isDark ? const Color(0xFF24232B) : Colors.white);
+        final textColor = isMen ? MensTheme.textPrimary : (isDark ? Colors.white : Colors.black);
+        final primaryColor = isMen ? MensTheme.champagneGold : const Color(0xFFC89D93);
 
-    final avatarProvider = _getAvatarProvider();
+        if (_isLoading) {
+          return Scaffold(
+            backgroundColor: bgColor,
+            body: Center(child: CircularProgressIndicator(color: primaryColor)),
+          );
+        }
 
-    return Scaffold(
-      backgroundColor: bgColor,
-      appBar: AppBar(
-        title: Text(
-          'Mi Perfil',
-          style: TextStyle(
-              fontWeight: FontWeight.bold, letterSpacing: -0.5, fontSize: 18, color: textColor),
-        ),
+        final avatarProvider = _getAvatarProvider();
+
+        return Scaffold(
+          backgroundColor: bgColor,
+          appBar: AppBar(
+            title: Text(
+              'Mi Perfil',
+              style: TextStyle(
+                  fontWeight: FontWeight.bold, letterSpacing: -0.5, fontSize: 18, color: textColor),
+            ),
         backgroundColor: cardBgColor,
         foregroundColor: textColor,
         elevation: 0,
@@ -414,6 +425,8 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
         ),
       ),
     );
+      },
+    );
   }
 
   Widget _buildSettingsTile({
@@ -421,10 +434,11 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
     required String title,
     required VoidCallback onTap,
   }) {
-    final isDark = MapSettings.isDark;
-    final cardBg = isDark ? const Color(0xFF24232B) : Colors.white;
-    final borderColor = isDark ? const Color(0xFF33313D) : const Color(0xFFF3EAE8);
-    final textColor = isDark ? Colors.white : Colors.black87;
+    final isMen = AudienceService.isMenMode;
+    final isDark = isMen || MapSettings.isDark;
+    final cardBg = isMen ? MensTheme.obsidianCard : (isDark ? const Color(0xFF24232B) : Colors.white);
+    final borderColor = isMen ? MensTheme.champagneGold.withValues(alpha: 0.2) : (isDark ? const Color(0xFF33313D) : const Color(0xFFF3EAE8));
+    final textColor = isMen ? MensTheme.textPrimary : (isDark ? Colors.white : Colors.black87);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
