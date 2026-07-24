@@ -33,7 +33,12 @@ class _StoreScreenState extends State<StoreScreen> {
   final Map<int, Map<String, dynamic>> _cart = {};
   bool _isCartOpen = false;
 
-  final List<String> _categories = ['Todos', 'Cabello', 'Uñas', 'Maquillaje', 'Estética'];
+  List<String> get _categories {
+    if (AudienceService.isMenMode) {
+      return ['Todos', 'Barba & Bigote', 'Corte & Capilar', 'Grooming', 'Skincare Masculino', 'Tratamientos'];
+    }
+    return ['Todos', 'Cabello', 'Uñas', 'Maquillaje', 'Estética'];
+  }
 
   double _getProductPrice(Map<String, dynamic> product) {
     if (widget.bookingId != null && product.containsKey('precio_con_reserva')) {
@@ -91,8 +96,13 @@ class _StoreScreenState extends State<StoreScreen> {
     setState(() {
       _filteredProducts = _allProducts.where((p) {
         // Filtro por Categoría
+        final tagEsp = (p['tag_especialidad'] ?? p['categoria'] ?? '').toString().toLowerCase();
         final matchesCat = _selectedCategory == 'Todos' || 
-            (p['tag_especialidad']?.toString().toLowerCase() == _selectedCategory.toLowerCase());
+            tagEsp.contains(_selectedCategory.toLowerCase()) ||
+            (_selectedCategory == 'Barba & Bigote' && (tagEsp.contains('barba') || tagEsp.contains('bigote'))) ||
+            (_selectedCategory == 'Corte & Capilar' && (tagEsp.contains('corte') || tagEsp.contains('cabello') || tagEsp.contains('capilar'))) ||
+            (_selectedCategory == 'Grooming' && (tagEsp.contains('grooming') || tagEsp.contains('cuidado'))) ||
+            (_selectedCategory == 'Skincare Masculino' && (tagEsp.contains('skincare') || tagEsp.contains('facial') || tagEsp.contains('piel')));
         
         // Filtro por Búsqueda de texto
         final matchesQuery = query.isEmpty ||
@@ -102,9 +112,14 @@ class _StoreScreenState extends State<StoreScreen> {
         // Filtro por Audiencia (Hombres / Mujeres / Todos)
         bool matchesAudience = true;
         final genderTarget = (p['gender_target'] ?? p['genero_objetivo'] ?? p['tag_genero'] ?? 'unisex').toString().toLowerCase();
+        final nombreProd = (p['nombre'] ?? '').toString().toLowerCase();
+        final descProd = (p['descripcion'] ?? '').toString().toLowerCase();
 
         if (audience == AudienceMode.men) {
-          matchesAudience = genderTarget == 'male' || genderTarget == 'men' || genderTarget == 'hombres' || genderTarget == 'unisex';
+          final isExclusivelyFemale = nombreProd.contains('maquillaje') || nombreProd.contains('uñas') || nombreProd.contains('cutículas') || nombreProd.contains('balayage') || descProd.contains('femenino');
+          final isMaleOrUnisex = genderTarget == 'male' || genderTarget == 'men' || genderTarget == 'hombres' || genderTarget == 'unisex' || nombreProd.contains('barba') || nombreProd.contains('grooming') || nombreProd.contains('masculino') || nombreProd.contains('cera');
+
+          matchesAudience = isMaleOrUnisex && !isExclusivelyFemale;
         } else if (audience == AudienceMode.women) {
           matchesAudience = genderTarget == 'female' || genderTarget == 'women' || genderTarget == 'mujeres' || genderTarget == 'unisex';
         }
