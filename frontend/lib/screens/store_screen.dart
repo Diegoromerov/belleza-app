@@ -917,6 +917,8 @@ class _StoreScreenState extends State<StoreScreen> {
         ],
       ),
     );
+      },
+    );
   }
 
   Widget _buildPlaceholderImage(double height) {
@@ -1149,8 +1151,9 @@ class _StoreScreenState extends State<StoreScreen> {
                   ),
                 ],
               ),
-        );
-      },
+            ),
+        ],
+      ),
     );
   }
 }
