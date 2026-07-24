@@ -13,22 +13,19 @@ jest.mock('../services/websocketService', () => ({
   notifyUserChatMessage: jest.fn()
 }));
 
-// Mockear la API de Google Generative AI
-const mockGenerate = jest.fn().mockResolvedValue({
-  response: {
-    text: () => "Respuesta de Aura de prueba"
+// Mockear axios para las llamadas a DeepSeek
+const axios = require('axios');
+jest.mock('axios');
+axios.post.mockResolvedValue({
+  data: {
+    choices: [
+      {
+        message: {
+          content: "Respuesta de Aura de prueba"
+        }
+      }
+    ]
   }
-});
-const mockGetModel = jest.fn().mockReturnValue({
-  generateContent: mockGenerate
-});
-
-jest.mock('@google/generative-ai', () => {
-  return {
-    GoogleGenerativeAI: jest.fn().mockImplementation(() => ({
-      getGenerativeModel: mockGetModel
-    }))
-  };
 });
 
 // Importar después de configurar mocks
@@ -67,13 +64,10 @@ describe('Pruebas unitarias de Asistente de IA (geminiService.js)', () => {
     // 2. Invocar la función con el mensaje actual
     await processAssistantMessage(1, "Hola Aura, recomiéndame algo", null);
 
-    // 3. Verificar los argumentos pasados a Gemini
-    expect(mockGetModel).toHaveBeenCalled();
-    const contentsSent = mockGenerate.mock.calls[0][0].contents;
-
-    // Verificar alternancia estricta de roles: no deben haber dos roles consecutivos iguales
-    for (let i = 0; i < contentsSent.length - 1; i++) {
-      expect(contentsSent[i].role).not.toBe(contentsSent[i + 1].role);
-    }
+    // 3. Verificar los argumentos pasados a DeepSeek API vía axios
+    expect(axios.post).toHaveBeenCalled();
+    const payload = axios.post.mock.calls[0][1];
+    expect(payload.model).toBe('deepseek-v4-flash');
+    expect(payload.messages.length).toBeGreaterThan(1);
   });
 });

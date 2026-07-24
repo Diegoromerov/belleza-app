@@ -1,4 +1,5 @@
 // backend/src/services/geminiService.js
+const axios = require('axios');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { pool } = require('../config/db');
 const { notifyUserChatMessage } = require('./websocketService');
@@ -6,14 +7,16 @@ const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
 
-// Inicializar el cliente de la API de Gemini
-// Si no hay API Key configurada, usaremos un fallback en modo simulación/debug
+// Configuración de API Key y modelo de DeepSeek para el Asistente Virtual Aura
+const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || 'sk-a212dc7bff15430ca06a3e51d269fe48';
+const DEEPSEEK_MODEL = process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash';
+const DEEPSEEK_BASE_URL = process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com/chat/completions';
+
+// Compatibilidad opcional con Gemini API Key como fallback secundario
 const apiKey = process.env.GEMINI_API_KEY;
 let ai;
 if (apiKey) {
   ai = new GoogleGenerativeAI(apiKey);
-} else {
-  console.warn('⚠️  No se encontró la variable GEMINI_API_KEY. El asistente operará en modo simulación.');
 }
 
 const AI_USER_ID = 0;
@@ -149,49 +152,49 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
       rawMessages = rawMessages.slice(rawMessages.length - 8);
     }
 
-    // 3. Formatear el historial y agrupar mensajes consecutivos del mismo emisor (user/model)
+    // 3. Formatear el historial para el estándar OpenAI/DeepSeek (system, user, assistant)
+    const messages = [
+      { role: 'system', content: systemInstruction }
+    ];
+
+    // Formatear la estructura alternativa 'contents' para compatibilidad con Gemini en tests/fallbacks
     const contents = [];
+
     rawMessages.forEach(msg => {
-      const role = parseInt(msg.sender_id, 10) === parsedUserId ? 'user' : 'model';
-      if (contents.length > 0 && contents[contents.length - 1].role === role) {
-        // Si el rol es el mismo que el anterior, concatenamos el texto con un salto de línea
+      const isUser = parseInt(msg.sender_id, 10) === parsedUserId;
+      const role = isUser ? 'user' : 'assistant';
+      const geminiRole = isUser ? 'user' : 'model';
+
+      messages.push({
+        role: role,
+        content: msg.message
+      });
+
+      if (contents.length > 0 && contents[contents.length - 1].role === geminiRole) {
         contents[contents.length - 1].parts[0].text += `\n${msg.message}`;
       } else {
         contents.push({
-          role: role,
+          role: geminiRole,
           parts: [{ text: msg.message }]
         });
       }
     });
 
-    // 4. Preparar el turno actual (con soporte multimodal si hay imagen)
-    const userParts = [{ text: userMessageText }];
-    
+    // 4. Preparar el turno actual
+    let currentUserContent = userMessageText;
     if (imageRelativePath) {
-      const fullPath = path.join(__dirname, '../../', imageRelativePath);
-      if (fs.existsSync(fullPath)) {
-        const ext = path.extname(fullPath).toLowerCase();
-        let mimeType = 'image/jpeg';
-        if (ext === '.png') mimeType = 'image/png';
-        else if (ext === '.webp') mimeType = 'image/webp';
-        else if (ext === '.gif') mimeType = 'image/gif';
-        
-        try {
-          const imagePart = fileToGenerativePart(fullPath, mimeType);
-          userParts.push(imagePart);
-          console.log(`📸 Imagen agregada a la consulta de Gemini: ${fullPath} (${mimeType})`);
-        } catch (imgError) {
-          console.error('Error al codificar imagen para Gemini:', imgError);
-        }
-      }
+      currentUserContent += `\n[El usuario ha enviado una imagen adjunta: ${imageRelativePath}]`;
     }
 
-    // Agregar el turno actual del usuario al historial a enviar de forma segura (evitando turnos consecutivos del mismo rol)
+    messages.push({
+      role: 'user',
+      content: currentUserContent
+    });
+
+    // Gemini contents helper
+    const userParts = [{ text: userMessageText }];
     if (contents.length > 0 && contents[contents.length - 1].role === 'user') {
       contents[contents.length - 1].parts[0].text += `\n${userMessageText}`;
-      if (userParts.length > 1) {
-        contents[contents.length - 1].parts.push(...userParts.slice(1));
-      }
     } else {
       contents.push({
         role: 'user',
@@ -201,23 +204,56 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
 
     let aiResponseText = '';
 
-    // 5. Invocar la API de Gemini (o simular en ausencia de API Key)
-    if (ai) {
+    // 5. Invocar la API de DeepSeek (modelo: deepseek-v4-flash)
+    if (DEEPSEEK_API_KEY) {
       try {
-        const model = ai.getGenerativeModel({
-          model: 'gemini-3.1-flash-lite',
-          systemInstruction: systemInstruction,
-        });
+        console.log(`🤖 Invocando DeepSeek API (${DEEPSEEK_MODEL}) para el asistente Aura...`);
+        const response = await axios.post(
+          DEEPSEEK_BASE_URL,
+          {
+            model: DEEPSEEK_MODEL,
+            messages: messages,
+            temperature: 0.7,
+            max_tokens: 1000
+          },
+          {
+            headers: {
+              'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+              'Content-Type': 'application/json'
+            },
+            timeout: 25000
+          }
+        );
 
-        const result = await model.generateContent({ contents });
-        const response = await result.response;
-        aiResponseText = response.text();
-      } catch (geminiError) {
-        console.error('❌ Error de llamada a la API de Gemini:', geminiError);
-        aiResponseText = '¡Hola! Lo siento, en este momento tengo un problema de conexión con el servidor central. Pero dime, ¿en qué te puedo ayudar hoy con tus servicios o tips de belleza?';
+        if (response.data && response.data.choices && response.data.choices[0]?.message?.content) {
+          aiResponseText = response.data.choices[0].message.content;
+          console.log(`✅ Respuesta obtenida con éxito de DeepSeek (${DEEPSEEK_MODEL}).`);
+        } else {
+          throw new Error('Formato de respuesta inesperado de DeepSeek API');
+        }
+      } catch (deepseekError) {
+        console.error('⚠️ Error al llamar a DeepSeek API, intentando fallback:', deepseekError.response?.data || deepseekError.message);
+        
+        // Fallback a Gemini si está disponible
+        if (ai) {
+          try {
+            console.log('🔄 Ejecutando fallback a Gemini API...');
+            const model = ai.getGenerativeModel({
+              model: 'gemini-3.1-flash-lite',
+              systemInstruction: systemInstruction,
+            });
+            const result = await model.generateContent({ contents });
+            const response = await result.response;
+            aiResponseText = response.text();
+          } catch (geminiError) {
+            console.error('❌ Error de llamada a la API de Gemini (fallback):', geminiError);
+          }
+        }
       }
-    } else {
-      // Simulación en modo desarrollo
+    }
+
+    // Si no hubo respuesta de DeepSeek ni de Gemini, usamos respuesta de simulación
+    if (!aiResponseText) {
       if (imageRelativePath) {
         aiResponseText = `¡Hola! He analizado tu imagen y veo una manicura contemporánea increíble. Aquí tienes una opción del catálogo que te encantará:
 

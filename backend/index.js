@@ -139,23 +139,40 @@ const upload = multer({
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 
-// Límite específico para /analyze (más restrictivo)
-const analyzeLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hora
-  max: 10, // 10 análisis por hora por IP
-  message: 'Has excedido el límite de análisis. Espera 1 hora.',
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+// Configuración robusta de CORS y orígenes permitidos
+const defaultOrigins = [
+  'http://localhost:8080',
+  'http://localhost:8081',
+  'http://localhost:7357',
+  'http://127.0.0.1:8080',
+  'http://localhost:8082',
+  'http://localhost:3001',
+  'http://127.0.0.1:3001',
+  'https://belleza-app-production.up.railway.app',
+  'https://glowapp-frontend-production.up.railway.app',
+  'https://admin-dashboard-production-4183.up.railway.app'
+];
 
-// Límite de peticiones general
-const globalGeneralLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 100, // 100 solicitudes por IP
-  message: 'Demasiadas solicitudes. Intenta de nuevo en 15 minutos.',
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+const envOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+  : [];
+
+const allowedOrigins = Array.from(new Set([...defaultOrigins, ...envOrigins]));
+
+app.use(compression()); // GZIP — debe ir antes de las rutas y estáticos
+
+// ⚠️ CORS DEBE IR PRIMERO para garantizar encabezados Access-Control-Allow-Origin en todas las respuestas (incluyendo errores 429/500)
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.up.railway.app')) {
+      return callback(null, true);
+    }
+    return callback(new Error('CORS bloqueado por política de seguridad'));
+  },
+  credentials: true
+}));
+
+app.use(express.json({ limit: '10mb' }));
 
 app.use(helmet({
   contentSecurityPolicy: {
@@ -169,36 +186,28 @@ app.use(helmet({
     },
   },
 }));
+
+// Límite específico para /analyze (más restrictivo)
+const analyzeLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hora
+  max: 30, // 30 análisis por hora por IP
+  message: { error: 'Has excedido el límite de análisis. Espera 1 hora.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Límite de peticiones general para SPA web (1000 peticiones por 15 minutos)
+const globalGeneralLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 1000, // 1000 solicitudes por IP para evitar bloqueos por analítica y reintentos
+  message: { error: 'Demasiadas solicitudes. Intenta de nuevo en 15 minutos.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 app.use('/api/biometric/analyze', analyzeLimiter);
 app.use('/api', globalGeneralLimiter);
 
-const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
-  : [
-      'http://localhost:8080',
-      'http://localhost:8081',
-      'http://localhost:7357',
-      'http://127.0.0.1:8080',
-      'http://localhost:8082',
-      'http://localhost:3001',
-      'http://127.0.0.1:3001',
-      'https://belleza-app-production.up.railway.app',
-      'https://glowapp-frontend-production.up.railway.app',
-      'https://admin-dashboard-production-4183.up.railway.app'
-    ];
-
-app.use(compression()); // GZIP — debe ir antes de las rutas y estáticos
-app.use(cors({
-  origin: (origin, callback) => {
-    // Permitir peticiones sin origen (ej: curl, Postman, apps móviles nativas)
-    if (!origin || allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-    return callback(new Error('CORS bloqueado por política de seguridad'));
-  },
-  credentials: true
-}));
-app.use(express.json({ limit: '10mb' }));
 app.use('/uploads', express.static(uploadsDir));
 app.use('/admin', express.static(path.join(__dirname, 'public/admin')));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -216,25 +225,16 @@ const debugRouteMiddleware = (req, res, next) => {
   return next();
 };
 
-
 const rateLimiter = require('./src/middleware/rateLimiter');
 
-// Limitador general para toda la API pública (max 100 peticiones por minuto por IP)
-const customGeneralLimiter = rateLimiter({
-  windowMs: 60 * 1000,
-  max: 100,
-  message: 'Demasiadas solicitudes desde esta IP. Por favor intenta de nuevo en un minuto.'
-});
-
-// Limitador estricto para endpoints de autenticación y webhooks de pagos (max 10 peticiones por minuto)
+// Limitador estricto para endpoints de autenticación y webhooks de pagos (max 30 peticiones por minuto)
 const authAndWebhookLimiter = rateLimiter({
   windowMs: 60 * 1000,
-  max: 10,
+  max: 30,
   message: 'Límite de solicitudes de autenticación/pagos superado. Por favor espera un minuto antes de reintentar.'
 });
 
-// Aplicar limitadores
-app.use('/api', customGeneralLimiter);
+// Aplicar limitadores específicos
 app.use('/api/auth/login', authAndWebhookLimiter);
 app.use('/api/auth/register', authAndWebhookLimiter);
 app.use('/api/payments/wompi-webhook', authAndWebhookLimiter);

@@ -89,26 +89,30 @@ const upload = multer({
 });
 
 // Orígenes permitidos CORS
-const allowedOrigins = process.env.ALLOWED_ORIGINS
+const defaultOrigins = [
+  'http://localhost:8080',
+  'http://localhost:8081',
+  'http://localhost:7357',
+  'http://127.0.0.1:8080',
+  'http://localhost:8082',
+  'http://localhost:3001',
+  'http://127.0.0.1:3001',
+  'https://belleza-app-production.up.railway.app',
+  'https://glowapp-frontend-production.up.railway.app',
+  'https://admin-dashboard-production-4183.up.railway.app'
+];
+
+const envOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
-  : [
-      'http://localhost:8080',
-      'http://localhost:8081',
-      'http://localhost:7357',
-      'http://127.0.0.1:8080',
-      'http://localhost:8082',
-      'http://localhost:3001',
-      'http://127.0.0.1:3001',
-      'https://belleza-app-production.up.railway.app',
-      'https://glowapp-frontend-production.up.railway.app',
-      'https://admin-dashboard-production-4183.up.railway.app'
-    ];
+  : [];
+
+const allowedOrigins = Array.from(new Set([...defaultOrigins, ...envOrigins]));
 
 // GZIP Compression & Cors setup
 app.use(compression());
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.up.railway.app')) {
       return callback(null, true);
     }
     return callback(new Error('CORS bloqueado por política de seguridad'));
@@ -151,14 +155,14 @@ app.get('/api/health', async (req, res) => {
 
 // Configurar Rate Limiters
 const generalLimiter = rateLimiter({
-  windowMs: 60 * 1000,
-  max: 100,
-  message: 'Demasiadas solicitudes desde esta IP. Por favor intenta de nuevo en un minuto.'
+  windowMs: 15 * 60 * 1000,
+  max: 1000,
+  message: 'Demasiadas solicitudes desde esta IP. Por favor intenta de nuevo más tarde.'
 });
 
 const authAndWebhookLimiter = rateLimiter({
   windowMs: 60 * 1000,
-  max: 10,
+  max: 30,
   message: 'Límite de solicitudes de autenticación/pagos superado. Por favor espera un minuto.'
 });
 
