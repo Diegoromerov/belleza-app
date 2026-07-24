@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import '../services/api_service.dart';
+import '../services/auth_service.dart';
 import '../services/audience_service.dart';
 import '../shared/mens_theme.dart';
 import '../shared/theme.dart';

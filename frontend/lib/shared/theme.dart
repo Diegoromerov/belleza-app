@@ -118,7 +118,7 @@ class AppTheme {
   }
 
   // Especificación de Tipografía de la Guía Maestra
-  static const TextStyle h1 = TextStyle(
+  static TextStyle get h1 => TextStyle(
     fontSize: 24,
     fontWeight: FontWeight.w300,
     color: text,
@@ -127,7 +127,7 @@ class AppTheme {
     letterSpacing: 0.5,
   );
 
-  static const TextStyle subtitle = TextStyle(
+  static TextStyle get subtitle => TextStyle(
     fontSize: 16,
     fontWeight: FontWeight.w400,
     color: text,
@@ -135,14 +135,14 @@ class AppTheme {
     fontFamily: 'serif',
   );
 
-  static const TextStyle body = TextStyle(
+  static TextStyle get body => TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.w400,
     color: text,
     height: 1.25,
   );
 
-  static const TextStyle buttonLabel = TextStyle(
+  static TextStyle get buttonLabel => TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.w600,
     color: text,
