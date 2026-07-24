@@ -15,6 +15,7 @@ import 'package:geocoding/geocoding.dart' as geo;
 import 'services/secure_storage_service.dart';
 import 'services/audience_service.dart';
 import 'widgets/audience_toggle.dart';
+import 'shared/mens_theme.dart';
 
 import 'services/notification_service.dart';
 import 'screens/auth/login_screen.dart';
@@ -98,37 +99,58 @@ class BeautyApp extends StatelessWidget {
     return ValueListenableBuilder<bool>(
       valueListenable: AppTheme.isModernTheme,
       builder: (context, isModern, child) {
-        return MaterialApp(
-          title: 'GlowApp',
-          navigatorKey: NotificationService.navigatorKey,
-          debugShowCheckedModeBanner: false,
-          navigatorObservers: [AnalyticsRouteObserver()],
-          theme: ThemeData(
-            primaryColor: AppTheme.primary,
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: AppTheme.primary,
-              primary: AppTheme.primary,
-              secondary: AppTheme.accent,
-              surface: AppTheme.surface,
-              background: AppTheme.background,
-            ),
-            scaffoldBackgroundColor: AppTheme.background,
-            useMaterial3: true,
-            cardTheme: CardThemeData(
-              color: AppTheme.surface,
-              elevation: 0,
-              shadowColor: const Color(0x0A8C6F65),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
-                side: BorderSide(color: Color(0xFFF3EAE8), width: 1),
-              ),
-            ),
-            appBarTheme: AppBarTheme(
-              backgroundColor: AppTheme.surface,
-              foregroundColor: AppTheme.text,
-              elevation: 0,
-            ),
-          ),
+        return ValueListenableBuilder<AudienceMode>(
+          valueListenable: AudienceService.currentAudience,
+          builder: (context, audienceMode, child) {
+            final isMen = audienceMode == AudienceMode.men;
+
+            final primaryColor = isMen ? MensTheme.champagneGold : AppTheme.primary;
+            final bgColor = isMen ? MensTheme.obsidianBg : AppTheme.background;
+            final surfaceColor = isMen ? MensTheme.obsidianCard : AppTheme.surface;
+            final textColor = isMen ? MensTheme.textPrimary : AppTheme.text;
+
+            return MaterialApp(
+              title: 'GlowApp',
+              navigatorKey: NotificationService.navigatorKey,
+              debugShowCheckedModeBanner: false,
+              navigatorObservers: [AnalyticsRouteObserver()],
+              theme: ThemeData(
+                brightness: isMen ? Brightness.dark : Brightness.light,
+                primaryColor: primaryColor,
+                colorScheme: ColorScheme.fromSeed(
+                  brightness: isMen ? Brightness.dark : Brightness.light,
+                  seedColor: primaryColor,
+                  primary: primaryColor,
+                  secondary: isMen ? MensTheme.bronzeAccent : AppTheme.accent,
+                  surface: surfaceColor,
+                  background: bgColor,
+                ),
+                scaffoldBackgroundColor: bgColor,
+                useMaterial3: true,
+                cardTheme: CardThemeData(
+                  color: surfaceColor,
+                  elevation: 0,
+                  shadowColor: isMen ? Colors.black38 : const Color(0x0A8C6F65),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
+                    side: BorderSide(
+                      color: isMen
+                          ? MensTheme.champagneGold.withValues(alpha: 0.2)
+                          : const Color(0xFFF3EAE8),
+                      width: 1,
+                    ),
+                  ),
+                ),
+                appBarTheme: AppBarTheme(
+                  backgroundColor: surfaceColor,
+                  foregroundColor: textColor,
+                  elevation: 0,
+                ),
+              );
+          },
+        );
+      },
+    );
           initialRoute: '/home',
           routes: {
             '/login': (_) => const LoginScreen(),
