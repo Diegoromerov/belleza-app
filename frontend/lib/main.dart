@@ -14,6 +14,7 @@ import 'services/web_geolocation.dart';
 import 'package:geocoding/geocoding.dart' as geo;
 import 'services/secure_storage_service.dart';
 import 'services/audience_service.dart';
+import 'widgets/audience_toggle.dart';
 
 import 'services/notification_service.dart';
 import 'screens/auth/login_screen.dart';
@@ -1430,14 +1431,19 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
           ),
 
 
-          // Capa 1: Floating Transaccional Search Bar with Aura Trigger
+          // Capa 1: Floating Transaccional Search Bar with Audience Toggle
           Positioned(
-            top: MediaQuery.of(context).padding.top + 16,
+            top: MediaQuery.of(context).padding.top + 12,
             left: 16,
             right: 16,
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
+                // Selector Global de Audiencia (Hombres / Mujeres / Todos)
+                const Padding(
+                  padding: EdgeInsets.only(bottom: 8.0),
+                  child: AudienceToggleWidget(compact: false),
+                ),
                 Container(
                   height: 54,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
