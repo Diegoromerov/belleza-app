@@ -13,6 +13,7 @@ import 'services/auth_service.dart';
 import 'services/web_geolocation.dart';
 import 'package:geocoding/geocoding.dart' as geo;
 import 'services/secure_storage_service.dart';
+import 'services/audience_service.dart';
 
 import 'services/notification_service.dart';
 import 'screens/auth/login_screen.dart';
@@ -74,6 +75,7 @@ void main() async {
     ]);
     AnalyticsService().init();
     await AppTheme.loadThemePreference();
+    await AudienceService.init();
     runApp(const BeautyApp());
   }, (Object error, StackTrace stack) {
     if (kDebugMode) {

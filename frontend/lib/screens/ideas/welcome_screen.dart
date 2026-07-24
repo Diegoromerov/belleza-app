@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../services/audience_service.dart';
+import '../../shared/mens_theme.dart';
 import 'capture_screen.dart';
 
 class BiometricWelcomeScreen extends StatelessWidget {
@@ -6,128 +8,154 @@ class BiometricWelcomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const Spacer(),
-              Container(
-                width: 140,
-                height: 140,
-                decoration: BoxDecoration(
-                  color: Colors.purple.withOpacity(0.08),
-                  shape: BoxShape.circle,
-                ),
-                child: const Center(
-                  child: Icon(
-                    Icons.face_retouching_natural_outlined,
-                    size: 64,
-                    color: Colors.purple,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 40),
-              const Text(
-                '¡Te damos la bienvenida al\nHub Biométrico!',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                  height: 1.3,
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.0),
-                child: Text(
-                  'A continuación realizaremos un escaneo facial de 15 segundos y de manos para analizar tus tonos y recomendar la rutina y paletas ideales.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: Colors.black54,
-                    height: 1.5,
-                  ),
-                ),
-              ),
-              const Spacer(),
-              // Lista de recomendaciones para la captura
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: Column(
-                  children: [
-                    _buildGuidelineRow(Icons.wb_sunny_outlined, 'Asegura una buena iluminación natural.'),
-                    const SizedBox(height: 12),
-                    _buildGuidelineRow(Icons.no_photography_outlined, 'Evita accesorios como gafas o gorras.'),
-                    const SizedBox(height: 12),
-                    _buildGuidelineRow(Icons.center_focus_strong_outlined, 'Mantén la mirada al centro del visor.'),
-                  ],
-                ),
-              ),
-              const Spacer(),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    // Navegar a la pantalla de captura
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const CaptureScreen(),
+    return ValueListenableBuilder<AudienceMode>(
+      valueListenable: AudienceService.currentAudience,
+      builder: (context, currentMode, child) {
+        final isMen = currentMode == AudienceMode.men;
+
+        final bgColor = isMen ? MensTheme.obsidianBg : Colors.white;
+        final cardColor = isMen ? MensTheme.obsidianCard : Colors.purple.withOpacity(0.08);
+        final primaryColor = isMen ? MensTheme.champagneGold : Colors.purple;
+        final scannerColor = isMen ? MensTheme.cyberCyan : Colors.purple;
+        final textColor = isMen ? MensTheme.textPrimary : Colors.black87;
+        final subtextColor = isMen ? MensTheme.textSecondary : Colors.black54;
+
+        return Scaffold(
+          backgroundColor: bgColor,
+          body: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const Spacer(),
+                  Container(
+                    width: 140,
+                    height: 140,
+                    decoration: BoxDecoration(
+                      color: cardColor,
+                      shape: BoxShape.circle,
+                      border: isMen
+                          ? Border.all(color: MensTheme.cyberCyan.withOpacity(0.5), width: 2)
+                          : null,
+                      boxShadow: isMen ? MensTheme.cyanScannerGlow : [],
+                    ),
+                    child: Center(
+                      child: Icon(
+                        isMen ? Icons.face_retouching_natural_rounded : Icons.face_retouching_natural_outlined,
+                        size: 64,
+                        color: scannerColor,
                       ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 18),
-                    backgroundColor: Colors.purple,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
                     ),
-                    elevation: 0,
                   ),
-                  child: const Text(
-                    'COMENZAR ESCANEO',
+                  const SizedBox(height: 40),
+                  Text(
+                    isMen
+                        ? '¡Hub Biométrico IA\nVisagismo, Barba & Corte!'
+                        : '¡Te damos la bienvenida al\nHub Biométrico!',
+                    textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 26,
                       fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
+                      color: textColor,
+                      height: 1.3,
                     ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text(
-                  'Volver a Ideas',
-                  style: TextStyle(
-                    color: Colors.black54,
-                    fontWeight: FontWeight.bold,
+                  const SizedBox(height: 16),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Text(
+                      isMen
+                          ? 'Escanearemos las proporciones de tu rostro para analizar tu visagismo, mandíbula y recomendar el estilo de barba y corte ideal.'
+                          : 'A continuación realizaremos un escaneo facial de 15 segundos para analizar tus tonos y recomendar la rutina y paletas ideales.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: subtextColor,
+                        height: 1.5,
+                      ),
+                    ),
                   ),
-                ),
+                  const Spacer(),
+                  // Recomendaciones
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    child: Column(
+                      children: [
+                        _buildGuidelineRow(
+                            Icons.wb_sunny_outlined,
+                            'Asegura una buena iluminación natural.',
+                            isMen),
+                        const SizedBox(height: 12),
+                        _buildGuidelineRow(
+                            Icons.no_photography_outlined,
+                            isMen
+                                ? 'Despeja la barbilla y frente para precisión 3D.'
+                                : 'Evita accesorios como gafas o gorras.',
+                            isMen),
+                        const SizedBox(height: 12),
+                        _buildGuidelineRow(
+                            Icons.center_focus_strong_outlined,
+                            'Mantén la mirada fija al centro del visor.',
+                            isMen),
+                      ],
+                    ),
+                  ),
+                  const Spacer(),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const CaptureScreen(),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor,
+                        foregroundColor: isMen ? Colors.black : Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        elevation: isMen ? 8 : 2,
+                        shadowColor: isMen ? MensTheme.champagneGold.withOpacity(0.4) : null,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: Text(
+                        isMen ? 'INICIAR ESCANEO DE VISAGISMO' : 'CONTINUAR',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.1,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildGuidelineRow(IconData icon, String text) {
+  Widget _buildGuidelineRow(IconData icon, String text, bool isMen) {
+    final iconColor = isMen ? MensTheme.cyberCyan : Colors.purple;
+    final textColor = isMen ? MensTheme.textSecondary : Colors.black87;
+
     return Row(
       children: [
-        Icon(icon, color: Colors.purple, size: 20),
-        const SizedBox(width: 16),
+        Icon(icon, size: 20, color: iconColor),
+        const SizedBox(width: 12),
         Expanded(
           child: Text(
             text,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
-              color: Colors.black87,
+              color: textColor,
             ),
           ),
         ),

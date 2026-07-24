@@ -7,6 +7,9 @@ import 'package:shimmer/shimmer.dart';
 import '../widgets/store_product_card.dart';
 import '../widgets/product_quick_view_dialog.dart';
 import '../widgets/wompi_payment_sheet.dart';
+import '../widgets/audience_toggle.dart';
+import '../services/audience_service.dart';
+import '../shared/mens_theme.dart';
 
 class StoreScreen extends StatefulWidget {
   final String? bookingId;
@@ -663,6 +666,10 @@ class _StoreScreenState extends State<StoreScreen> {
         ),
         centerTitle: false,
         actions: [
+          const Padding(
+            padding: EdgeInsets.only(right: 8.0),
+            child: AudienceToggleWidget(compact: true),
+          ),
           // Icono Carrito con Badge
           Stack(
             alignment: Alignment.center,
