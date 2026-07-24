@@ -6,6 +6,10 @@
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="Beauty App - Servicios de belleza a domicilio">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Meta tags para prevenir caché agresivo en navegadores móviles Safari/Chrome Mobile -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>GlowApp - Servicios de Belleza & Estética a Domicilio</title>
 
   <!-- Schema.org JSON-LD Structured Data para Google Rich Snippets -->
@@ -80,6 +84,16 @@
   fbq('track', 'PageView');
   </script>
 
+  <script>
+    // Limpieza automática de Service Workers viejos en navegadores móviles (iOS Safari / Android Chrome)
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        for (let registration of registrations) {
+          registration.unregister();
+        }
+      });
+    }
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </head>
 <body>
