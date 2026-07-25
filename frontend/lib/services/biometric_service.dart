@@ -83,35 +83,52 @@ class BiometricService {
     final compressedFace = compressionResults[0];
     final compressedHands = compressionResults[1];
 
-    final response = await http.post(
-      Uri.parse('$baseUrl/api/biometric/analyze'),
-      headers: {
-        'Content-Type': 'application/json',
-        if (token != null) 'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({
-        'userId': userId,
-        'faceImage': base64Encode(compressedFace),
-        'handsImage': base64Encode(compressedHands),
-        'lat': lat,
-        'lng': lng,
-      }),
-    ).timeout(const Duration(seconds: 90));
+    final response = await http
+        .post(
+          Uri.parse('$baseUrl/api/biometric/analyze'),
+          headers: {
+            'Content-Type': 'application/json',
+            if (token != null) 'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode({
+            'userId': userId,
+            'faceImage': base64Encode(compressedFace),
+            'handsImage': base64Encode(compressedHands),
+            'lat': lat,
+            'lng': lng,
+          }),
+        )
+        .timeout(const Duration(seconds: 90));
 
     if (response.statusCode != 200) {
-      final errorBody = jsonDecode(response.body);
-      throw Exception(errorBody['error'] ?? 'Error al analizar datos biométricos');
+      String serverMessage;
+      try {
+        final errorBody = jsonDecode(response.body);
+        serverMessage = errorBody is Map<String, dynamic>
+            ? (errorBody['error'] ?? errorBody['message'] ?? response.body)
+                .toString()
+            : response.body;
+      } catch (_) {
+        serverMessage = response.body;
+      }
+
+      final detail = serverMessage.trim().isEmpty
+          ? 'El servidor no devolvió detalles.'
+          : serverMessage.trim();
+      throw Exception('HTTP ${response.statusCode}: $detail');
     }
 
     return jsonDecode(response.body);
   }
 
-  static Future<List<ColorPaletteItem>> getColorPalette(String hex, {int count = 5, String mode = 'analogic'}) async {
+  static Future<List<ColorPaletteItem>> getColorPalette(String hex,
+      {int count = 5, String mode = 'analogic'}) async {
     final baseUrl = await getBaseUrl();
     final token = await AuthService.getToken();
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/api/color/palette?hex=$hex&count=$count&mode=$mode'),
+        Uri.parse(
+            '$baseUrl/api/color/palette?hex=$hex&count=$count&mode=$mode'),
         headers: {
           if (token != null) 'Authorization': 'Bearer $token',
         },
@@ -139,7 +156,8 @@ class BiometricService {
 
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/api/biometric/check-uv?lat=${position.latitude}&lng=${position.longitude}'),
+        Uri.parse(
+            '$baseUrl/api/biometric/check-uv?lat=${position.latitude}&lng=${position.longitude}'),
         headers: {
           if (token != null) 'Authorization': 'Bearer $token',
         },
@@ -235,7 +253,11 @@ class ColorPaletteItem {
   final String hsl;
   final String rgb;
 
-  ColorPaletteItem({required this.hex, required this.name, required this.hsl, required this.rgb});
+  ColorPaletteItem(
+      {required this.hex,
+      required this.name,
+      required this.hsl,
+      required this.rgb});
 
   factory ColorPaletteItem.fromJson(Map<String, dynamic> json) {
     return ColorPaletteItem(
