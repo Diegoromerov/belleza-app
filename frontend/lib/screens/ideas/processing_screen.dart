@@ -70,16 +70,19 @@ class _ProcessingScreenState extends State<ProcessingScreen> {
 
       // Etapa 4: Procesamiento de resultados
       _updateProgress(90, 'Procesando resultados...');
+      final parsedResult = BiometricResult.fromJson(resultData);
 
-      setState(() {
-        _result = BiometricResult.fromJson(resultData);
-        _progress = 100;
-        _status = '✅ ¡Completado!';
-        _isComplete = true;
-        _showRetry = false;
-      });
+      if (mounted) {
+        setState(() {
+          _result = parsedResult;
+          _progress = 100;
+          _status = '✅ ¡Completado!';
+          _isComplete = true;
+          _showRetry = false;
+        });
+      }
 
-      await Future.delayed(const Duration(seconds: 1));
+      await Future.delayed(const Duration(milliseconds: 500));
 
       if (mounted && _result != null) {
         Navigator.pushReplacement(
@@ -89,16 +92,17 @@ class _ProcessingScreenState extends State<ProcessingScreen> {
           ),
         );
       }
-    } catch (e) {
-      setState(() {
-        _status = '❌ Error al procesar: ${e.toString()}';
-        _isComplete = true;
-        _showRetry = true;
-      });
-
+    } catch (e, stack) {
+      debugPrint('❌ [PROCESSING SCREEN] Error procesando análisis biométrico: $e\n$stack');
       if (mounted) {
+        setState(() {
+          _status = '❌ Error al procesar: ${e.toString()}';
+          _isComplete = true;
+          _showRetry = true;
+        });
+
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error al analizar. Intenta de nuevo.')),
+          SnackBar(content: Text('Error al analizar: $e')),
         );
       }
     }

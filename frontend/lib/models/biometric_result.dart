@@ -21,12 +21,12 @@ class BiometricResult {
         : json;
 
     return BiometricResult(
-      profileId: json['profileId'],
-      face: data['face'] != null ? FaceScores.fromJson(data['face']) : null,
-      hands: data['hands'] != null ? HandsDiagnosis.fromJson(data['hands']) : null,
-      recommendation: data['recommendation'] ?? json['recommendation'],
-      products: data['products'] != null
-          ? (data['products'] as List).map((p) => Product.fromJson(p)).toList()
+      profileId: json['profileId']?.toString() ?? data['profileId']?.toString(),
+      face: data['face'] is Map<String, dynamic> ? FaceScores.fromJson(data['face']) : null,
+      hands: data['hands'] is Map<String, dynamic> ? HandsDiagnosis.fromJson(data['hands']) : null,
+      recommendation: (data['recommendation'] ?? json['recommendation'])?.toString(),
+      products: data['products'] is List
+          ? (data['products'] as List).whereType<Map<String, dynamic>>().map((p) => Product.fromJson(p)).toList()
           : null,
     );
   }
@@ -51,12 +51,12 @@ class FaceScores {
 
   factory FaceScores.fromJson(Map<String, dynamic> json) {
     return FaceScores(
-      hydration: json['hydration'] ?? 0,
-      wrinkles: json['wrinkles'] ?? 0,
-      spots: json['spots'] ?? 0,
-      pores: json['pores'] ?? 0,
-      subtono: json['subtono'] ?? 'neutro',
-      bioAge: json['bioAge'] ?? 30,
+      hydration: (json['hydration'] is num) ? (json['hydration'] as num).toInt() : (int.tryParse(json['hydration']?.toString() ?? '') ?? 0),
+      wrinkles: (json['wrinkles'] is num) ? (json['wrinkles'] as num).toInt() : (int.tryParse(json['wrinkles']?.toString() ?? '') ?? 0),
+      spots: (json['spots'] is num) ? (json['spots'] as num).toInt() : (int.tryParse(json['spots']?.toString() ?? '') ?? 0),
+      pores: (json['pores'] is num) ? (json['pores'] as num).toInt() : (int.tryParse(json['pores']?.toString() ?? '') ?? 0),
+      subtono: json['subtono']?.toString() ?? 'neutro',
+      bioAge: (json['bioAge'] is num) ? (json['bioAge'] as num).toInt() : (int.tryParse(json['bioAge']?.toString() ?? '') ?? 30),
     );
   }
 }
@@ -77,12 +77,13 @@ class HandsDiagnosis {
   });
 
   factory HandsDiagnosis.fromJson(Map<String, dynamic> json) {
+    final rawEdad = json['edadAparente'] ?? json['edad_aparente'];
     return HandsDiagnosis(
-      manchasSolares: json['manchas_solares'] ?? 'leve',
-      sequedad: json['sequedad'] ?? 'leve',
-      cuticulas: json['cuticulas'] ?? 'sanas',
-      unas: json['unas'] ?? json['uñas'] ?? 'sanas',
-      edadAparente: json['edad_aparente'] ?? 30,
+      manchasSolares: (json['manchasSolares'] ?? json['manchas_solares'])?.toString() ?? 'leve',
+      sequedad: json['sequedad']?.toString() ?? 'leve',
+      cuticulas: json['cuticulas']?.toString() ?? 'sanas',
+      unas: (json['unas'] ?? json['uñas'])?.toString() ?? 'sanas',
+      edadAparente: (rawEdad is num) ? rawEdad.toInt() : (int.tryParse(rawEdad?.toString() ?? '') ?? 30),
     );
   }
 }
