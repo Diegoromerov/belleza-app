@@ -72,6 +72,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
   Future<void> _loadUV() async {
     try {
       final uvData = await BiometricService.getUV();
+      if (!mounted) return;
       if (uvData != null && uvData['recommendation'] != null) {
         setState(() {
           _uvRecommendation = uvData['recommendation'];
@@ -81,7 +82,9 @@ class _ResultsScreenState extends State<ResultsScreen> {
         setState(() => _isLoadingUV = false);
       }
     } catch (e) {
-      setState(() => _isLoadingUV = false);
+      if (mounted) {
+        setState(() => _isLoadingUV = false);
+      }
     }
   }
 
@@ -125,13 +128,15 @@ class _ResultsScreenState extends State<ResultsScreen> {
             _buildHandsSection(),
             const SizedBox(height: 24),
             RecommendationCard(
-              recommendation: widget.result.recommendation ?? 'No se generaron recomendaciones específicas.',
+              recommendation: widget.result.recommendation ??
+                  'No se generaron recomendaciones específicas.',
             ),
             const SizedBox(height: 24),
             if (!_isLoadingUV && _uvRecommendation != null) ...[
               Card(
                 color: Colors.orange[50],
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
                 child: Padding(
                   padding: const EdgeInsets.all(12),
                   child: Row(
@@ -141,7 +146,8 @@ class _ResultsScreenState extends State<ResultsScreen> {
                       Expanded(
                         child: Text(
                           '☀️ $_uvRecommendation',
-                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                          style: const TextStyle(
+                              fontSize: 14, fontWeight: FontWeight.w500),
                         ),
                       ),
                     ],
@@ -341,7 +347,9 @@ class _ResultsScreenState extends State<ResultsScreen> {
           )
         else
           Column(
-            children: _recommendedProducts.map((p) => ProductCard(product: p)).toList(),
+            children: _recommendedProducts
+                .map((p) => ProductCard(product: p))
+                .toList(),
           ),
         const SizedBox(height: 12),
         ElevatedButton.icon(

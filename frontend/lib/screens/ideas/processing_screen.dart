@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
 import '../../services/biometric_service.dart';
 import '../../services/location_service.dart';
 import '../../models/biometric_result.dart';
@@ -26,7 +25,6 @@ class _ProcessingScreenState extends State<ProcessingScreen> {
   String _status = 'Preparando imágenes...';
   bool _isComplete = false;
   bool _showRetry = false;
-  BiometricResult? _result;
   Timer? _timeoutTimer;
 
   @override
@@ -72,9 +70,9 @@ class _ProcessingScreenState extends State<ProcessingScreen> {
       _updateProgress(90, 'Procesando resultados...');
       final parsedResult = BiometricResult.fromJson(resultData);
 
+      if (!mounted) return;
       if (mounted) {
         setState(() {
-          _result = parsedResult;
           _progress = 100;
           _status = '✅ ¡Completado!';
           _isComplete = true;
@@ -82,18 +80,16 @@ class _ProcessingScreenState extends State<ProcessingScreen> {
         });
       }
 
-      await Future.delayed(const Duration(milliseconds: 500));
-
-      if (mounted && _result != null) {
-        Navigator.pushReplacement(
-          context,
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        Navigator.of(context).pushReplacement(
           MaterialPageRoute(
-            builder: (_) => ResultsScreen(result: _result!),
-          ),
+              builder: (_) => ResultsScreen(result: parsedResult)),
         );
-      }
+      });
     } catch (e, stack) {
-      debugPrint('❌ [PROCESSING SCREEN] Error procesando análisis biométrico: $e\n$stack');
+      debugPrint(
+          '❌ [PROCESSING SCREEN] Error procesando análisis biométrico: $e\n$stack');
       if (mounted) {
         setState(() {
           _status = '❌ Error al procesar: ${e.toString()}';
@@ -180,9 +176,11 @@ class _ProcessingScreenState extends State<ProcessingScreen> {
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.purple,
-                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 32, vertical: 16),
                   ),
-                  child: const Text('Reintentar', style: TextStyle(color: Colors.white)),
+                  child: const Text('Reintentar',
+                      style: TextStyle(color: Colors.white)),
                 ),
               ],
             ],
