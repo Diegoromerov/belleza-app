@@ -22,6 +22,7 @@ import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/auth/onboarding_screen.dart';
 import 'screens/auth/verification_pending_screen.dart';
+import 'screens/auth/forgot_password_screen.dart';
 import 'screens/provider_detail_screen.dart';
 import 'screens/provider_dashboard_screen.dart';
 import 'screens/client_bookings_screen.dart';
@@ -151,6 +152,7 @@ class BeautyApp extends StatelessWidget {
               routes: {
                 '/login': (_) => const LoginScreen(),
                 '/register': (_) => const RegisterScreen(),
+                '/forgot-password': (_) => const ForgotPasswordScreen(),
                 '/home': (_) => const ProvidersScreen(),
                 '/provider': (_) => const ProviderDashboardScreen(),
                 '/client-bookings': (_) => const ClientBookingsScreen(),

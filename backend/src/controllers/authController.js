@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { pool } = require('../config/db');
 const { getJwtSecret, toApiRole } = require('../config/jwt');
+const redisClient = require('../config/redis');
 
 // ==========================================
 // 📝 REGISTRO LOCAL
@@ -421,5 +422,141 @@ exports.deleteAccount = async (req, res) => {
     res.status(500).json({ error: 'Error al procesar la solicitud de eliminación de cuenta.' });
   }
 };
+
+// ==========================================
+// 🚪 CIERRE DE SESIÓN (LOGOUT & TOKEN BLACKLISTING)
+// ==========================================
+exports.logout = async (req, res) => {
+  try {
+    const authHeader = req.header('Authorization') || '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : null;
+
+    if (token) {
+      const decoded = jwt.decode(token);
+      let ttl = 7 * 24 * 60 * 60; // 7 días por defecto
+      if (decoded && decoded.exp) {
+        const now = Math.floor(Date.now() / 1000);
+        ttl = Math.max(decoded.exp - now, 60);
+      }
+      try {
+        await redisClient.setEx(`beauty:token_blacklist:${token}`, ttl, 'revoked');
+      } catch (redisErr) {
+        console.warn('⚠️ No se pudo registrar token en la lista negra de Redis:', redisErr.message);
+      }
+    }
+
+    res.json({
+      success: true,
+      message: 'Sesión cerrada exitosamente.'
+    });
+  } catch (error) {
+    console.error('❌ ERROR LOGOUT:', error.message);
+    res.status(500).json({ error: 'Error al cerrar sesión' });
+  }
+};
+
+// ==========================================
+// 🔑 SOLICITAR RECUPERACIÓN DE CONTRASEÑA (FORGOT PASSWORD OTP)
+// ==========================================
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: 'El correo electrónico es obligatorio.' });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+
+    // Verificar si el usuario existe
+    const userRes = await pool.query(
+      `SELECT id, nombre FROM usuarios WHERE LOWER(email) = $1 AND auth_provider = 'LOCAL'`,
+      [cleanEmail]
+    );
+
+    if (userRes.rows.length === 0) {
+      // Retornar mensaje genérico por seguridad
+      return res.json({
+        success: true,
+        message: 'Si el correo está registrado, recibirás un código OTP de recuperación.'
+      });
+    }
+
+    // Generar código OTP de 6 dígitos aleatorio
+    const crypto = require('crypto');
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Guardar OTP en Redis con TTL de 10 minutos (600s)
+    try {
+      await redisClient.setEx(`beauty:otp:${cleanEmail}`, 600, otp);
+    } catch (redisErr) {
+      console.warn('⚠️ Error guardando OTP en Redis:', redisErr.message);
+    }
+
+    console.log(`🔑 [PASSWORD RESET] Código OTP generado para ${cleanEmail}: ${otp}`);
+
+    res.json({
+      success: true,
+      message: 'Código de recuperación enviado a tu correo electrónico.',
+      otp: process.env.NODE_ENV !== 'production' ? otp : undefined
+    });
+  } catch (error) {
+    console.error('❌ ERROR FORGOT PASSWORD:', error.message);
+    res.status(500).json({ error: 'Error al solicitar recuperación de contraseña' });
+  }
+};
+
+// ==========================================
+// 🔄 RESTABLECER CONTRASEÑA CON OTP (RESET PASSWORD)
+// ==========================================
+exports.resetPassword = async (req, res) => {
+  try {
+    const { email, otp, new_password } = req.body;
+
+    if (!email || !otp || !new_password) {
+      return res.status(400).json({ error: 'Email, OTP y nueva contraseña son requeridos.' });
+    }
+
+    if (new_password.length < 6) {
+      return res.status(400).json({ error: 'La nueva contraseña debe tener al menos 6 caracteres.' });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+
+    // Validar OTP desde Redis
+    let storedOtp = null;
+    try {
+      storedOtp = await redisClient.get(`beauty:otp:${cleanEmail}`);
+    } catch (redisErr) {
+      console.warn('⚠️ Error leyendo OTP de Redis:', redisErr.message);
+    }
+
+    if (!storedOtp || storedOtp !== otp.toString().trim()) {
+      return res.status(400).json({ error: 'Código OTP inválido o expirado. Por favor solicita uno nuevo.' });
+    }
+
+    // Hash de la nueva contraseña y actualización en BD
+    const hashedPassword = await bcrypt.hash(new_password, 10);
+    await pool.query(
+      `UPDATE usuarios SET password_hash = $1 WHERE LOWER(email) = $2 AND auth_provider = 'LOCAL'`,
+      [hashedPassword, cleanEmail]
+    );
+
+    // Eliminar el OTP usado de Redis
+    try {
+      await redisClient.del(`beauty:otp:${cleanEmail}`);
+    } catch (_) {}
+
+    console.log(`✅ [PASSWORD RESET] Contraseña restablecida con éxito para ${cleanEmail}`);
+
+    res.json({
+      success: true,
+      message: 'Contraseña actualizada exitosamente. Ya puedes iniciar sesión con tu nueva clave.'
+    });
+  } catch (error) {
+    console.error('❌ ERROR RESET PASSWORD:', error.message);
+    res.status(500).json({ error: 'Error al restablecer la contraseña' });
+  }
+};
+
 
 

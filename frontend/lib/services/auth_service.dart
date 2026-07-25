@@ -131,11 +131,53 @@ class AuthService {
   }
 
   static Future<void> logout() async {
+    try {
+      final baseUrl = await getBaseUrl();
+      final token = await getToken();
+      if (token != null) {
+        await http.post(
+          Uri.parse('$baseUrl/api/auth/logout'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ).timeout(const Duration(seconds: 5));
+      }
+    } catch (_) {}
+
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
     // 🛡️ PARCHE DE SEGURIDAD (GLOW-SEC-02): Limpiar almacenamiento cifrado
     await SecureStorageService().clearAll();
     ApiService.resetCachedBaseUrl();
+  }
+
+  static Future<Map<String, dynamic>> forgotPassword(String email) async {
+    final baseUrl = await getBaseUrl();
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/auth/forgot-password'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({'email': email}),
+    );
+    return json.decode(response.body);
+  }
+
+  static Future<Map<String, dynamic>> resetPassword({
+    required String email,
+    required String otp,
+    required String newPassword,
+  }) async {
+    final baseUrl = await getBaseUrl();
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/auth/reset-password'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        'email': email,
+        'otp': otp,
+        'new_password': newPassword,
+      }),
+    );
+    return json.decode(response.body);
   }
 
   static Future<Map<String, dynamic>?> loginWithGoogle(String idToken) async {
