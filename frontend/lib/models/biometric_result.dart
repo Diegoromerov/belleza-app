@@ -16,13 +16,17 @@ class BiometricResult {
   });
 
   factory BiometricResult.fromJson(Map<String, dynamic> json) {
+    final data = json['results'] is Map<String, dynamic>
+        ? json['results'] as Map<String, dynamic>
+        : json;
+
     return BiometricResult(
       profileId: json['profileId'],
-      face: json['face'] != null ? FaceScores.fromJson(json['face']) : null,
-      hands: json['hands'] != null ? HandsDiagnosis.fromJson(json['hands']) : null,
-      recommendation: json['recommendation'],
-      products: json['products'] != null
-          ? (json['products'] as List).map((p) => Product.fromJson(p)).toList()
+      face: data['face'] != null ? FaceScores.fromJson(data['face']) : null,
+      hands: data['hands'] != null ? HandsDiagnosis.fromJson(data['hands']) : null,
+      recommendation: data['recommendation'] ?? json['recommendation'],
+      products: data['products'] != null
+          ? (data['products'] as List).map((p) => Product.fromJson(p)).toList()
           : null,
     );
   }
