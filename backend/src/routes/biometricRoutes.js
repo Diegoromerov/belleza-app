@@ -25,13 +25,13 @@ router.post('/analyze', authMiddleware, async (req, res) => {
 
   const { userId, faceImage, handsImage, entryPoint, lat, lng } = value;
 
-  // Validar tamaño aproximado del payload base64 (máx 5MB)
+  // Validar tamaño aproximado del payload base64 (máx 20MB)
   const faceSize = Buffer.from(faceImage, 'base64').length;
   const handsSize = Buffer.from(handsImage, 'base64').length;
 
-  if (faceSize > 5 * 1024 * 1024 || handsSize > 5 * 1024 * 1024) {
+  if (faceSize > 20 * 1024 * 1024 || handsSize > 20 * 1024 * 1024) {
     return res.status(400).json({
-      error: 'Las imágenes no pueden superar el tamaño límite de 5MB por archivo.',
+      error: 'Las imágenes no pueden superar el tamaño límite de 20MB por archivo.',
     });
   }
 
