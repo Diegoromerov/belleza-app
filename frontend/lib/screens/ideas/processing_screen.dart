@@ -23,7 +23,7 @@ class ProcessingScreen extends StatefulWidget {
 
 class _ProcessingScreenState extends State<ProcessingScreen> {
   double _progress = 0.0;
-  String _status = 'Analizando tu rostro...';
+  String _status = 'Preparando imágenes...';
   bool _isComplete = false;
   bool _showRetry = false;
   BiometricResult? _result;
@@ -33,7 +33,8 @@ class _ProcessingScreenState extends State<ProcessingScreen> {
   void initState() {
     super.initState();
     _startProcessing();
-    _timeoutTimer = Timer(const Duration(seconds: 12), () {
+    // Fix 5: Timer de advertencia ajustado a 30s (antes 12s)
+    _timeoutTimer = Timer(const Duration(seconds: 30), () {
       if (mounted && !_isComplete) {
         setState(() {
           _status = '⏳ Está tomando más tiempo de lo esperado...';
@@ -50,33 +51,26 @@ class _ProcessingScreenState extends State<ProcessingScreen> {
   }
 
   Future<void> _startProcessing() async {
-    _updateProgress(10, 'Preparando imágenes...');
-    await Future.delayed(const Duration(milliseconds: 500));
-
-    _updateProgress(25, 'Analizando rostro con IA...');
-    await Future.delayed(const Duration(milliseconds: 800));
-
-    _updateProgress(45, 'Detectando textura y arrugas...');
-    await Future.delayed(const Duration(milliseconds: 600));
-
-    _updateProgress(60, 'Analizando manos...');
-    await Future.delayed(const Duration(milliseconds: 800));
-
-    _updateProgress(75, 'Generando recomendaciones personalizadas...');
-    await Future.delayed(const Duration(milliseconds: 700));
-
-    _updateProgress(90, 'Casi listo...');
-    await Future.delayed(const Duration(milliseconds: 500));
-
     try {
+      // Etapa 1: Obtener ubicación (real)
+      _updateProgress(10, 'Obteniendo ubicación...');
       final position = await LocationService.getCurrentPosition();
+
+      // Etapa 2: Compresión y preparación de imágenes (real — se ejecuta en Isolate)
+      _updateProgress(25, 'Comprimiendo imágenes...');
+
+      // Etapa 3: Envío y análisis con IA (real — la llamada HTTP al backend)
+      _updateProgress(40, 'Analizando rostro y manos con IA...');
       final resultData = await BiometricService.analyze(
         faceImageBytes: widget.faceImage,
         handsImageBytes: widget.handsImage,
         lat: position?.latitude,
         lng: position?.longitude,
       );
-      
+
+      // Etapa 4: Procesamiento de resultados
+      _updateProgress(90, 'Procesando resultados...');
+
       setState(() {
         _result = BiometricResult.fromJson(resultData);
         _progress = 100;
@@ -86,7 +80,7 @@ class _ProcessingScreenState extends State<ProcessingScreen> {
       });
 
       await Future.delayed(const Duration(seconds: 1));
-      
+
       if (mounted && _result != null) {
         Navigator.pushReplacement(
           context,
@@ -101,7 +95,7 @@ class _ProcessingScreenState extends State<ProcessingScreen> {
         _isComplete = true;
         _showRetry = true;
       });
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Error al analizar. Intenta de nuevo.')),

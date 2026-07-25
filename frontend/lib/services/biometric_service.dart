@@ -77,8 +77,12 @@ class BiometricService {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('userId') ?? '7';
 
-    final compressedFace = _compressImage(Uint8List.fromList(faceImageBytes));
-    final compressedHands = _compressImage(Uint8List.fromList(handsImageBytes));
+    final compressionResults = await Future.wait([
+      compute(_compressImageIsolate, Uint8List.fromList(faceImageBytes)),
+      compute(_compressImageIsolate, Uint8List.fromList(handsImageBytes)),
+    ]);
+    final compressedFace = compressionResults[0];
+    final compressedHands = compressionResults[1];
 
     final response = await http.post(
       Uri.parse('$baseUrl/api/biometric/analyze'),
@@ -93,7 +97,7 @@ class BiometricService {
         'lat': lat,
         'lng': lng,
       }),
-    ).timeout(const Duration(seconds: 60));
+    ).timeout(const Duration(seconds: 90));
 
     if (response.statusCode != 200) {
       final errorBody = jsonDecode(response.body);
@@ -201,7 +205,9 @@ class BiometricService {
     return null;
   }
 
-  static Uint8List _compressImage(Uint8List bytes) {
+  /// Compresión de imagen ejecutada en un Isolate separado para no bloquear el main thread.
+  /// Se usa como top-level function compatible con `compute()`.
+  static Uint8List _compressImageIsolate(Uint8List bytes) {
     if (bytes.isEmpty) return bytes;
     try {
       final decodedImage = img.decodeImage(bytes);

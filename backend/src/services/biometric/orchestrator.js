@@ -19,13 +19,21 @@ class BiometricOrchestrator {
     const parsedUserId = parseInt(userId, 10);
     logger.info('Iniciando análisis biométrico para el usuario', { userId: parsedUserId });
 
-    // 1. Analizar rostro con YouCam Client
-    let faceScores;
-    try {
-      faceScores = await youcamClient.analyzeFace(faceImage);
+    // 1-3. Ejecutar análisis de rostro, manos y UV EN PARALELO
+    let faceScores, handsDiagnosis, uvData = null;
+
+    const [faceResult, handsResult, uvResult] = await Promise.allSettled([
+      youcamClient.analyzeFace(faceImage),
+      geminiClient.analyzeHands(handsImage),
+      (lat && lng) ? openUV.getUV(lat, lng) : Promise.resolve(null),
+    ]);
+
+    // Procesar resultado de rostro (con fallback)
+    if (faceResult.status === 'fulfilled') {
+      faceScores = faceResult.value;
       logger.info('Análisis YouCam finalizado con éxito', { userId: parsedUserId });
-    } catch (error) {
-      logger.warn('YouCam falló, aplicando fallback local:', { userId: parsedUserId, error: error.message });
+    } else {
+      logger.warn('YouCam falló, aplicando fallback local:', { userId: parsedUserId, error: faceResult.reason?.message });
       faceScores = {
         hydration: 60,
         wrinkles: 30,
@@ -36,13 +44,12 @@ class BiometricOrchestrator {
       };
     }
 
-    // 2. Analizar manos con Gemini Vision
-    let handsDiagnosis;
-    try {
-      handsDiagnosis = await geminiClient.analyzeHands(handsImage);
+    // Procesar resultado de manos (con fallback)
+    if (handsResult.status === 'fulfilled') {
+      handsDiagnosis = handsResult.value;
       logger.info('Análisis Gemini Vision de manos finalizado con éxito', { userId: parsedUserId });
-    } catch (error) {
-      logger.warn('Gemini Vision falló, aplicando fallback local:', { userId: parsedUserId, error: error.message });
+    } else {
+      logger.warn('Gemini Vision falló, aplicando fallback local:', { userId: parsedUserId, error: handsResult.reason?.message });
       handsDiagnosis = {
         manchasSolares: 'leve',
         sequedad: 'moderada',
@@ -52,15 +59,12 @@ class BiometricOrchestrator {
       };
     }
 
-    // 3. Obtener índice UV (si se proporcionan coordenadas)
-    let uvData = null;
-    if (lat && lng) {
-      try {
-        uvData = await openUV.getUV(lat, lng);
-        logger.info('OpenUV datos obtenidos', { userId: parsedUserId, uvData });
-      } catch (error) {
-        logger.warn('OpenUV falló:', { userId: parsedUserId, error: error.message });
-      }
+    // Procesar resultado UV (opcional)
+    if (uvResult.status === 'fulfilled' && uvResult.value) {
+      uvData = uvResult.value;
+      logger.info('OpenUV datos obtenidos', { userId: parsedUserId, uvData });
+    } else if (uvResult.status === 'rejected') {
+      logger.warn('OpenUV falló:', { userId: parsedUserId, error: uvResult.reason?.message });
     }
 
     // 4. Generar recomendación con Gemini Text
