@@ -75,7 +75,7 @@ class BiometricService {
     final baseUrl = await getBaseUrl();
     final token = await AuthService.getToken();
     final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
+    final userId = prefs.getString('userId') ?? '7';
 
     final compressedFace = _compressImage(Uint8List.fromList(faceImageBytes));
     final compressedHands = _compressImage(Uint8List.fromList(handsImageBytes));
@@ -93,10 +93,11 @@ class BiometricService {
         'lat': lat,
         'lng': lng,
       }),
-    );
+    ).timeout(const Duration(seconds: 60));
 
     if (response.statusCode != 200) {
-      throw Exception('Error al analizar datos biométricos');
+      final errorBody = jsonDecode(response.body);
+      throw Exception(errorBody['error'] ?? 'Error al analizar datos biométricos');
     }
 
     return jsonDecode(response.body);
@@ -201,15 +202,22 @@ class BiometricService {
   }
 
   static Uint8List _compressImage(Uint8List bytes) {
-    // Si la imagen ya pesa menos de 1MB (1,048,576 bytes), no hacemos nada
-    if (bytes.length <= 1024 * 1024) {
-      return bytes;
-    }
+    if (bytes.isEmpty) return bytes;
     try {
-      // Usar el image package importado para decodificar y recomprimir con menor calidad (80%)
       final decodedImage = img.decodeImage(bytes);
       if (decodedImage == null) return bytes;
-      return Uint8List.fromList(img.encodeJpg(decodedImage, quality: 80));
+
+      img.Image resized;
+      if (decodedImage.width > 1024 || decodedImage.height > 1024) {
+        if (decodedImage.width > decodedImage.height) {
+          resized = img.copyResize(decodedImage, width: 1024);
+        } else {
+          resized = img.copyResize(decodedImage, height: 1024);
+        }
+      } else {
+        resized = decodedImage;
+      }
+      return Uint8List.fromList(img.encodeJpg(resized, quality: 75));
     } catch (e) {
       return bytes;
     }
