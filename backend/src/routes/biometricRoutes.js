@@ -9,8 +9,8 @@ const Joi = require('joi');
 
 const analyzeSchema = Joi.object({
   userId: Joi.string().required(),
-  faceImage: Joi.string().base64().required(),
-  handsImage: Joi.string().base64().required(),
+  faceImage: Joi.string().required(),
+  handsImage: Joi.string().required(),
   entryPoint: Joi.string().valid('ideas', 'other').default('ideas'),
   lat: Joi.number().min(-90).max(90).optional().allow(null),
   lng: Joi.number().min(-180).max(180).optional().allow(null),
@@ -18,8 +18,11 @@ const analyzeSchema = Joi.object({
 
 // POST /api/biometric/analyze
 router.post('/analyze', authMiddleware, async (req, res) => {
+  console.log(`📥 [BIOMETRIC] Request recibida en POST /analyze - IP: ${req.ip}, User ID de Token: ${req.user?.id}, Content-Length: ${req.headers['content-length'] || 'N/A'}`);
+
   const { error, value } = analyzeSchema.validate(req.body);
   if (error) {
+    console.warn(`⚠️ [BIOMETRIC] Error de validación Joi en /analyze: ${error.details[0].message}`);
     return res.status(400).json({ error: error.details[0].message });
   }
 
