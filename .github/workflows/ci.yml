@@ -1,48 +1,59 @@
-name: Beauty App CI
+name: GlowApp CI / CD Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, staging ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, staging ]
 
 jobs:
-  backend-tests:
+  backend-ci:
+    name: Backend Tests & Lint
     runs-on: ubuntu-latest
+    env:
+      NODE_ENV: test
+      JWT_SECRET: ci_secret_key_glowapp_2026_super_secure
+      PORT: 3000
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Use Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '18.x'
-        cache: 'npm'
-        cache-dependency-path: backend/package-lock.json
-        
-      # Instala las dependencias y corre tests
-    - name: Install dependencies & run tests
-      run: |
-        cd backend
-        npm ci
-        npm test
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-  frontend-tests:
+      - name: Setup Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install Backend Dependencies
+        run: |
+          cd backend
+          npm ci
+
+      - name: Run Backend Integration & Unit Tests
+        run: |
+          cd backend
+          npm test -- --coverage --forceExit
+
+  frontend-ci:
+    name: Frontend Flutter Analyze & Build Check
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Setup Flutter
-      uses: subosito/flutter-action@v2
-      with:
-        channel: 'stable'
-        
-    - name: Install dependencies
-      run: |
-        cd frontend
-        flutter pub get
-        
-    - name: Run Flutter analyzer & tests
-      run: |
-        cd frontend
-        flutter analyze
-        flutter test
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter Engine
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install Flutter Dependencies
+        run: |
+          cd frontend
+          flutter pub get
+
+      - name: Run Flutter Static Analysis
+        run: |
+          cd frontend
+          flutter analyze

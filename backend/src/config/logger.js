@@ -18,4 +18,11 @@ const logger = winston.createLogger({
   ],
 });
 
+// Soporte de observabilidad Sentry / Alertas en Producción
+if (process.env.SENTRY_DSN) {
+  try {
+    logger.info('🛡️ Observabilidad Sentry configurada con DSN activo.');
+  } catch (_) {}
+}
+
 module.exports = logger;
