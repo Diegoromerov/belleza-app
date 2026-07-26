@@ -38,6 +38,7 @@ import 'screens/ideas/ideas_empty_screen.dart';
 import 'screens/ideas/biometric_consent_screen.dart';
 import 'screens/ideas/welcome_screen.dart';
 import 'screens/support/support_center_screen.dart';
+import 'screens/support/terms_conditions_screen.dart';
 import 'screens/disputes/disputes_list_screen.dart';
 import 'screens/disputes/open_dispute_screen.dart';
 import 'screens/academy/academy_screen.dart';
@@ -177,6 +178,7 @@ class BeautyApp extends StatelessWidget {
                   return ProviderRouteScreen(booking: args);
                 },
                 '/support': (_) => const SupportCenterScreen(),
+                '/terms': (_) => const TermsConditionsScreen(),
                 '/disputes': (_) => const DisputesListScreen(),
                 '/dispute': (context) {
                   final args = ModalRoute.of(context)?.settings.arguments
