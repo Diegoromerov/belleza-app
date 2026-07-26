@@ -41,6 +41,7 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
   bool _isProcessing = false;
   bool _isCapturing = false;
   bool _isCameraReady = false; // nuevo estado para saber si la cámara está lista
+  DateTime? _handsStepStartTime;
   late final FaceDetector _faceDetector;
 
   @override
@@ -344,7 +345,8 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
 
       setState(() {
         _step = CaptureStep.hands;
-        _instruction = 'Coloca el dorso de tu mano sobre la silueta';
+        _handsStepStartTime = DateTime.now();
+        _instruction = '🖐️ Coloca el dorso de tu mano sobre la silueta...';
         _isHandValid = false;
         _qualityScore = 0.0;
         _errorMessage = null;
@@ -361,20 +363,24 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
     }
   }
 
-  // --- Procesamiento de manos con luminancia robusta ---
+  // --- Procesamiento de manos con luminancia robusta y pausa de preparación ---
   Future<void> _processHands(CameraImage image) async {
+    // Calcular tiempo transcurrido desde el cambio al paso de manos
+    _handsStepStartTime ??= DateTime.now();
+    final elapsedMs = DateTime.now().difference(_handsStepStartTime!).inMilliseconds;
+    const cooldownMs = 3000; // 3 segundos de pausa de preparación
+
     // Calcular luminancia promediando una rejilla de 9 píxeles en el canal Y (plano 0)
     final yPlane = image.planes[0];
     final yBytes = yPlane.bytes;
     final width = image.width;
     final height = image.height;
 
-    // Muestrear 9 puntos en una cuadrícula 3x3
     double sum = 0;
     int count = 0;
     for (int i = 0; i < 3; i++) {
       for (int j = 0; j < 3; j++) {
-        final x = (width * (i + 1) ~/ 4); // 25%, 50%, 75%
+        final x = (width * (i + 1) ~/ 4);
         final y = (height * (j + 1) ~/ 4);
         final index = y * yPlane.bytesPerRow + x;
         if (index < yBytes.length) {
@@ -384,12 +390,25 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
       }
     }
     final averageLuminosity = count > 0 ? sum / count : 0;
-    final hasEnoughLight = averageLuminosity > 40; // umbral ajustable
+    final hasEnoughLight = averageLuminosity > 40;
+
+    if (elapsedMs < cooldownMs) {
+      // Durante los 3s de pausa inicial, mostrar cuenta regresiva para que el usuario coloque su mano
+      final remainingSec = ((cooldownMs - elapsedMs) / 1000).ceil();
+      if (mounted) {
+        setState(() {
+          _isHandValid = hasEnoughLight;
+          _qualityScore = hasEnoughLight ? 60.0 : 20.0;
+          _instruction = '🖐️ Coloca tu mano sobre la silueta (Iniciando escaneo en ${remainingSec}s...)';
+        });
+      }
+      return;
+    }
 
     if (mounted) {
       setState(() {
         _isHandValid = hasEnoughLight;
-        _qualityScore = hasEnoughLight ? 85.0 : 30.0;
+        _qualityScore = hasEnoughLight ? 90.0 : 30.0;
         _instruction = _isHandValid
             ? '✅ ¡Perfecto! Mantén la mano quieta...'
             : '🖐️ Abre los dedos y alinea tu mano con buena luz';
