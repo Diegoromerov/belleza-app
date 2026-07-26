@@ -1,6 +1,14 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
+// 🛡️ PARCHE DE SEGURIDAD Y AISLAMIENTO DE ENTORNOS
+const isProduction = process.env.NODE_ENV === 'production';
+const isStaging = process.env.NODE_ENV === 'staging';
+
+if (isProduction && !process.env.DATABASE_URL) {
+  console.warn('⚠️ [ENTORNO PRODUCCIÓN] DATABASE_URL no configurada explícitamente en producción.');
+}
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ...(process.env.DATABASE_URL ? {} : {
@@ -10,8 +18,8 @@ const pool = new Pool({
     password: process.env.DB_PASSWORD,
     port: process.env.DB_PORT,
   }),
-  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
-  max: 20,
+  ssl: (process.env.DATABASE_URL || isProduction || isStaging) ? { rejectUnauthorized: false } : false,
+  max: isProduction ? 30 : 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 5000,
 });
@@ -23,8 +31,9 @@ pool.on('error', (err) => {
 const testConnection = async () => {
   try {
     const client = await pool.connect();
+    const res = await client.query('SELECT current_database(), current_user');
     client.release();
-    console.log('✅ Conexión exitosa a PostgreSQL');
+    console.log(`✅ Conexión exitosa a PostgreSQL [DB: ${res.rows[0].current_database}, Entorno: ${process.env.NODE_ENV || 'development'}]`);
     return true;
   } catch (err) {
     console.error('❌ Error conectando a PostgreSQL:', err.message);

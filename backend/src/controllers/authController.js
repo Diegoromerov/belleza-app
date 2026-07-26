@@ -3,6 +3,8 @@ const jwt = require('jsonwebtoken');
 const { pool } = require('../config/db');
 const { getJwtSecret, toApiRole } = require('../config/jwt');
 const redisClient = require('../config/redis');
+const emailService = require('../services/email.service');
+
 
 // ==========================================
 // 📝 REGISTRO LOCAL
@@ -493,6 +495,17 @@ exports.forgotPassword = async (req, res) => {
     }
 
     console.log(`🔑 [PASSWORD RESET] Código OTP generado para ${cleanEmail}: ${otp}`);
+
+    // Enviar correo transaccional con el código OTP
+    try {
+      await emailService.sendOtpEmail({
+        to: cleanEmail,
+        otp,
+        userName: userRes.rows[0].nombre,
+      });
+    } catch (emailErr) {
+      console.warn('⚠️ Error al enviar correo OTP:', emailErr.message);
+    }
 
     res.json({
       success: true,
