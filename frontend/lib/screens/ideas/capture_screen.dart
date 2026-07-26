@@ -39,6 +39,7 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
   String? _errorMessage;
 
   bool _isProcessing = false;
+  bool _isCapturing = false;
   bool _isCameraReady = false; // nuevo estado para saber si la cámara está lista
   late final FaceDetector _faceDetector;
 
@@ -326,11 +327,12 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
 
   // --- Captura de rostro ---
   Future<void> _captureFace() async {
-    if (_step == CaptureStep.done || _cameraController == null) return;
+    if (_step == CaptureStep.done || _cameraController == null || _isCapturing) return;
     if (!_cameraController!.value.isInitialized) {
       _showError('La cámara no está lista');
       return;
     }
+    _isCapturing = true;
 
     try {
       if (_cameraController!.value.isStreamingImages) {
@@ -351,10 +353,11 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
     } catch (e) {
       debugPrint('Error al capturar rostro: $e');
       _showError('Error al capturar rostro. Intenta de nuevo.');
-      // Reanudar el stream si falló
       if (_cameraController != null && !_cameraController!.value.isStreamingImages) {
         _startDetection();
       }
+    } finally {
+      _isCapturing = false;
     }
   }
 
@@ -393,9 +396,9 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
       });
     }
 
-    if (_isHandValid && _qualityScore > 80.0) {
+    if (_isHandValid && _qualityScore > 80.0 && !_isCapturing) {
       await Future.delayed(const Duration(milliseconds: 1000));
-      if (_isHandValid && mounted) {
+      if (_isHandValid && mounted && !_isCapturing) {
         _captureHands();
       }
     }
@@ -403,11 +406,12 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
 
   // --- Captura de manos ---
   Future<void> _captureHands() async {
-    if (_step == CaptureStep.done || _cameraController == null) return;
+    if (_step == CaptureStep.done || _cameraController == null || _isCapturing) return;
     if (!_cameraController!.value.isInitialized) {
       _showError('La cámara no está lista');
       return;
     }
+    _isCapturing = true;
 
     try {
       if (_cameraController!.value.isStreamingImages) {
@@ -438,6 +442,8 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
       if (_cameraController != null && !_cameraController!.value.isStreamingImages) {
         _startDetection();
       }
+    } finally {
+      _isCapturing = false;
     }
   }
 
