@@ -26,9 +26,9 @@ class AISearchBar extends StatelessWidget {
             height: 54,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
-              color: AppTheme.surface.withOpacity(0.95),
+              color: AppTheme.surface.withValues(alpha: 0.95),
               borderRadius: BorderRadius.circular(30),
-              border: Border.all(color: AppTheme.accent.withOpacity(0.4), width: 1.5),
+              border: Border.all(color: AppTheme.accent.withValues(alpha: 0.4), width: 1.5),
               boxShadow: AppTheme.softShadow,
             ),
             child: Row(

@@ -22,7 +22,7 @@ class BookingRecoveryBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFFEE2E2).withOpacity(0.95),
+        color: const Color(0xFFFEE2E2).withValues(alpha: 0.95),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: const Color(0xFFFCA5A5), width: 1.5),
         boxShadow: AppTheme.softShadow,

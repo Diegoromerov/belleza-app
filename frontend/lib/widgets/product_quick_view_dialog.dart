@@ -69,7 +69,7 @@ class _ProductQuickViewDialogState extends State<ProductQuickViewDialog> {
                     top: 12,
                     right: 12,
                     child: CircleAvatar(
-                      backgroundColor: Colors.white.withOpacity(0.9),
+                      backgroundColor: Colors.white.withValues(alpha: 0.9),
                       child: IconButton(
                         icon: const Icon(Icons.close, color: AppTheme.text),
                         onPressed: () => Navigator.pop(context),
@@ -89,7 +89,7 @@ class _ProductQuickViewDialogState extends State<ProductQuickViewDialog> {
                         borderRadius: BorderRadius.circular(8),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
+                            color: Colors.black.withValues(alpha: 0.1),
                             blurRadius: 4,
                             offset: const Offset(0, 2),
                           ),
@@ -118,7 +118,7 @@ class _ProductQuickViewDialogState extends State<ProductQuickViewDialog> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppTheme.primary.withOpacity(0.12),
+                        color: AppTheme.primary.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -132,14 +132,41 @@ class _ProductQuickViewDialogState extends State<ProductQuickViewDialog> {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      widget.product['nombre']?.toString() ?? 'Producto sin Nombre',
+                      widget.product['nombre']?.toString() ?? 'Producto',
                       style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
                         color: AppTheme.text,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 4),
+                    Text(
+                      widget.product['marca']?.toString() ?? 'GlowStore',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppTheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Descripción del Producto',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.text,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      widget.product['descripcion']?.toString() ?? 'Sin descripción disponible.',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppTheme.text.withValues(alpha: 0.8),
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
                     Builder(
                       builder: (context) {
                         if (widget.bookingId != null && widget.product.containsKey('precio_con_reserva')) {

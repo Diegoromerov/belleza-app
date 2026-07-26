@@ -374,7 +374,7 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
                 ),
                 Switch(
                   value: _addHydrationOption,
-                  activeColor: const Color(0xFFE11D48),
+                  activeThumbColor: const Color(0xFFE11D48),
                   onChanged: _isProcessing
                       ? null
                       : (val) {

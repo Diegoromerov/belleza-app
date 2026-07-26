@@ -84,7 +84,7 @@ class FloatingNavigationDock extends StatelessWidget {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFC89D93).withOpacity(0.4),
+                      color: const Color(0xFFC89D93).withValues(alpha: 0.4),
                       blurRadius: 10,
                       spreadRadius: 2,
                       offset: const Offset(0, 4),
@@ -122,8 +122,8 @@ class FloatingNavigationDock extends StatelessWidget {
     return GlassCard(
       borderRadius: 30,
       padding: const EdgeInsets.symmetric(horizontal: 8),
-      backgroundColor: const Color(0xFFF9F2ED).withOpacity(0.25),
-      borderColor: const Color(0xFFE5D9D4).withOpacity(0.5),
+      backgroundColor: const Color(0xFFF9F2ED).withValues(alpha: 0.25),
+      borderColor: const Color(0xFFE5D9D4).withValues(alpha: 0.5),
       child: SizedBox(
         height: 56,
         child: Row(
