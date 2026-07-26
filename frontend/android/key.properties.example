@@ -1,0 +1,6 @@
+# frontend/android/key.properties.example
+# Copiar este archivo como key.properties y configurar las credenciales del KeyStore oficial de release
+storePassword=tu_store_password_aqui
+keyPassword=tu_key_password_aqui
+keyAlias=upload
+storeFile=../upload-keystore.jks
