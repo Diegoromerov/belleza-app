@@ -47,8 +47,8 @@ class _ColorPaletteWidgetState extends State<ColorPaletteWidget> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return const SizedBox(
-        height: 80,
-        child: Center(child: CircularProgressIndicator()),
+        height: 85,
+        child: Center(child: CircularProgressIndicator(color: Colors.purple)),
       );
     }
 
@@ -59,53 +59,74 @@ class _ColorPaletteWidgetState extends State<ColorPaletteWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          '🎨 Paleta de colores sugerida',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        Row(
+          children: const [
+            Icon(Icons.palette_outlined, color: Colors.purple, size: 22),
+            SizedBox(width: 8),
+            Text(
+              'Paleta de colores sugerida',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+            ),
+          ],
         ),
-        const SizedBox(height: 8),
-        SizedBox(
-          height: 80,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: _palette.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
-            itemBuilder: (context, index) {
-              final color = _palette[index];
-              final hexString = color.hex.replaceFirst('#', '');
-              Color displayColor;
-              try {
-                displayColor = Color(int.parse('FF$hexString', radix: 16));
-              } catch (_) {
-                displayColor = Colors.grey;
-              }
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.purple.withValues(alpha: 0.12), width: 1.2),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.purple.withValues(alpha: 0.04),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: SizedBox(
+            height: 75,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: _palette.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 14),
+              itemBuilder: (context, index) {
+                final color = _palette[index];
+                final hexString = color.hex.replaceFirst('#', '');
+                Color displayColor;
+                try {
+                  displayColor = Color(int.parse('FF$hexString', radix: 16));
+                } catch (_) {
+                  displayColor = Colors.grey;
+                }
 
-              return Column(
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: displayColor,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.grey[300]!, width: 1),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        )
-                      ]
+                return Column(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: displayColor,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.black12, width: 1),
+                        boxShadow: [
+                          BoxShadow(
+                            color: displayColor.withValues(alpha: 0.3),
+                            blurRadius: 6,
+                            offset: const Offset(0, 3),
+                          )
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    color.name.length > 8 ? '${color.name.substring(0, 6)}...' : color.name,
-                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500),
-                  ),
-                ],
-              );
-            },
+                    const SizedBox(height: 6),
+                    Text(
+                      color.name.length > 9 ? '${color.name.substring(0, 7)}...' : color.name,
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.black87),
+                    ),
+                  ],
+                );
+              },
+            ),
           ),
         ),
       ],
