@@ -498,36 +498,38 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
         children: [
           CameraPreview(_cameraController!),
           // Envolver los painters con RepaintBoundary para optimizar el renderizado
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
-            child: isFaceStep
-                ? RepaintBoundary(
-                    key: const ValueKey('face_painter_boundary'),
-                    child: Positioned.fill(
-                      child: CustomPaint(
-                        key: const ValueKey('face_painter'),
-                        painter: FaceOverlayPainter(
-                          detectedFace: _detectedFace,
-                          isValid: _isFaceValid,
-                          quality: _qualityScore,
-                          screenSize: screenSize,
+          Positioned.fill(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: isFaceStep
+                  ? RepaintBoundary(
+                      key: const ValueKey('face_painter_boundary'),
+                      child: SizedBox.expand(
+                        child: CustomPaint(
+                          key: const ValueKey('face_painter'),
+                          painter: FaceOverlayPainter(
+                            detectedFace: _detectedFace,
+                            isValid: _isFaceValid,
+                            quality: _qualityScore,
+                            screenSize: screenSize,
+                          ),
+                        ),
+                      ),
+                    )
+                  : RepaintBoundary(
+                      key: const ValueKey('hands_painter_boundary'),
+                      child: SizedBox.expand(
+                        child: CustomPaint(
+                          key: const ValueKey('hands_painter'),
+                          painter: HandOverlayPainter(
+                            isValid: _isHandValid,
+                            quality: _qualityScore,
+                            screenSize: screenSize,
+                          ),
                         ),
                       ),
                     ),
-                  )
-                : RepaintBoundary(
-                    key: const ValueKey('hands_painter_boundary'),
-                    child: Positioned.fill(
-                      child: CustomPaint(
-                        key: const ValueKey('hands_painter'),
-                        painter: HandOverlayPainter(
-                          isValid: _isHandValid,
-                          quality: _qualityScore,
-                          screenSize: screenSize,
-                        ),
-                      ),
-                    ),
-                  ),
+            ),
           ),
           Positioned(
             bottom: 120,
@@ -536,7 +538,7 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.7),
+                color: Colors.black.withValues(alpha: 0.7),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
