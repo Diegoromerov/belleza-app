@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import '../../../widgets/glass_card.dart';
 
 class RecommendationCard extends StatelessWidget {
@@ -11,8 +11,8 @@ class RecommendationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GlassCard(
       borderRadius: 16.0,
-      backgroundColor: const Color(0xFFF9F2ED).withOpacity(0.22),
-      borderColor: const Color(0xFFE5D9D4).withOpacity(0.55),
+      backgroundColor: const Color(0xFFF9F2ED).withValues(alpha: 0.22),
+      borderColor: const Color(0xFFE5D9D4).withValues(alpha: 0.55),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
