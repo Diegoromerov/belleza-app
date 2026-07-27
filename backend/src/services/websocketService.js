@@ -42,6 +42,21 @@ const notifyUserChatMessage = (userId, messageData) => {
   }
 };
 
+const notifyUserAuraStatus = (userId, statusData) => {
+  const userIdStr = userId.toString();
+  if (wsClients.has(userIdStr)) {
+    const payload = JSON.stringify({
+      type: 'aura_status',
+      data: statusData
+    });
+    for (const conn of wsClients.get(userIdStr)) {
+      if (conn.readyState === 1) { // OPEN
+        conn.send(payload);
+      }
+    }
+  }
+};
+
 const initWebSocketServer = (server) => {
   wss = new WebSocketServer({ server });
   
@@ -138,6 +153,7 @@ module.exports = {
   registerClient,
   unregisterClient,
   notifyUserChatMessage,
+  notifyUserAuraStatus,
   initWebSocketServer,
   notifyProviderNewBooking
 };

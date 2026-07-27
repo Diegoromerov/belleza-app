@@ -10,7 +10,8 @@ jest.mock('../config/db', () => ({
 
 // Mockear el servicio de websockets para evitar envíos en la prueba
 jest.mock('../services/websocketService', () => ({
-  notifyUserChatMessage: jest.fn()
+  notifyUserChatMessage: jest.fn(),
+  notifyUserAuraStatus: jest.fn()
 }));
 
 // Mockear axios para las llamadas a DeepSeek

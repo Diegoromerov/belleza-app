@@ -2,7 +2,8 @@
 const axios = require('axios');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { pool } = require('../config/db');
-const { notifyUserChatMessage } = require('./websocketService');
+const { notifyUserChatMessage, notifyUserAuraStatus } = require('./websocketService');
+const { AURA_TOOLS_DEFINITIONS, executeAuraTool } = require('./auraToolExecutor');
 const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
@@ -32,6 +33,10 @@ Tu personalidad e identidad de comunicación:
    - Solo cuando el tratamiento requiera refuerzo profesional, recomiéndale de forma sutil un servicio de nuestro catálogo para potenciar el resultado.
 3. **Respuestas Muy Cortas y Directas (Reducir Latencia)**: Escribe respuestas cortas, directas y al grano (máximo 1 o 2 párrafos cortos, con un límite de 2 o 3 frases breves por párrafo). Evita saludos largos, introducciones repetitivas o explicaciones extensas. Esto es crucial para que el chat responda rápido y sea fácil de leer.
 
+Herramientas Disponibles (Tool Calling):
+- Tienes acceso a herramientas para consultar el perfil biométrico del usuario, buscar servicios y prestadores cercanos usando geolocalización PostGIS, verificar disponibilidad de agenda, buscar conocimiento técnico de belleza y generar etiquetas de redirección a módulos visuales.
+- Úsalas de forma inteligente cuando la consulta del usuario lo requiera.
+
 Catálogo Contextual y Recomendación Estructurada:
 - Cuando recomiendes un servicio específico del catálogo para que el usuario pueda agendarlo directamente en la app, incluye al final de tu respuesta la etiqueta "Estilo Recomendado:" y los siguientes metadatos estructurados:
 
@@ -59,18 +64,6 @@ Las herramientas disponibles y sus claves exactas son:
 * Para visagismo/diseño de cejas: Redirección Módulo Ideas: eyebrow-visagism
 * Para estilo de manos/uñas IA: Redirección Módulo Ideas: nails-style
 `;
-
-/**
- * Convierte un archivo local a la estructura inlineData de Gemini
- */
-function fileToGenerativePart(filePath, mimeType) {
-  return {
-    inlineData: {
-      data: Buffer.from(fs.readFileSync(filePath)).toString('base64'),
-      mimeType
-    },
-  };
-}
 
 let servicesContextCache = null;
 let lastCacheTime = 0;
@@ -111,7 +104,7 @@ async function getServicesContext() {
 }
 
 /**
- * Procesa asíncronamente el mensaje de un usuario y genera la respuesta de Gemini
+ * Procesa asíncronamente el mensaje de un usuario y genera la respuesta de DeepSeek con Tool Calling o Fallback a Gemini
  */
 async function processAssistantMessage(userId, userMessageText, imageRelativePath) {
   try {
@@ -121,11 +114,13 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
       return;
     }
 
+    notifyUserAuraStatus(parsedUserId, { state: 'thinking', message: 'AURA está analizando tu mensaje...' });
+
     // 1. Obtener contexto de servicios en tiempo real
     const servicesContext = await getServicesContext();
-    const systemInstruction = `${BASE_SYSTEM_INSTRUCTION}\n${servicesContext}`;
+    const systemInstruction = `${BASE_SYSTEM_INSTRUCTION}\n\nCatálogo de Servicios Activos:\n${servicesContext}`;
 
-    // 2. Obtener los últimos 9 mensajes en orden descendente para filtrar correctamente
+    // 2. Obtener los últimos 9 mensajes para la ventana deslizante (Sliding Window Context)
     const historyQuery = `
       SELECT sender_id, receiver_id, message, created_at
       FROM messages
@@ -135,30 +130,24 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
       LIMIT 9;
     `;
     const historyRes = await pool.query(historyQuery, [parsedUserId, AI_USER_ID]);
-    
-    // Invertir el orden para que sea cronológico (de más antiguo a más reciente)
     let rawMessages = historyRes.rows.reverse();
 
-    // Eliminar el mensaje que el usuario acaba de enviar si coincide con el último de la BD.
-    // Lo hacemos porque lo agregaremos explícitamente con soporte multimodal al final de 'contents'.
     if (rawMessages.length > 0 && 
         rawMessages[rawMessages.length - 1].sender_id === parsedUserId && 
         rawMessages[rawMessages.length - 1].message === userMessageText) {
       rawMessages.pop();
     }
 
-    // Asegurarse de que queden máximo 8 mensajes de historial de contexto previo
     if (rawMessages.length > 8) {
       rawMessages = rawMessages.slice(rawMessages.length - 8);
     }
 
-    // 3. Formatear el historial para el estándar OpenAI/DeepSeek (system, user, assistant)
+    // 3. Formatear el historial para DeepSeek API
     const messages = [
       { role: 'system', content: systemInstruction }
     ];
 
-    // Formatear la estructura alternativa 'contents' para compatibilidad con Gemini en tests/fallbacks
-    const contents = [];
+    const contents = []; // Para Gemini fallback
 
     rawMessages.forEach(msg => {
       const isUser = parseInt(msg.sender_id, 10) === parsedUserId;
@@ -180,7 +169,6 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
       }
     });
 
-    // 4. Preparar el turno actual
     let currentUserContent = userMessageText;
     if (imageRelativePath) {
       currentUserContent += `\n[El usuario ha enviado una imagen adjunta: ${imageRelativePath}]`;
@@ -191,28 +179,28 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
       content: currentUserContent
     });
 
-    // Gemini contents helper
-    const userParts = [{ text: userMessageText }];
     if (contents.length > 0 && contents[contents.length - 1].role === 'user') {
       contents[contents.length - 1].parts[0].text += `\n${userMessageText}`;
     } else {
       contents.push({
         role: 'user',
-        parts: userParts
+        parts: [{ text: userMessageText }]
       });
     }
 
     let aiResponseText = '';
 
-    // 5. Invocar la API de DeepSeek (modelo: deepseek-v4-flash)
+    // 4. Invocar DeepSeek API con Tool Calling
     if (DEEPSEEK_API_KEY) {
       try {
-        console.log(`🤖 Invocando DeepSeek API (${DEEPSEEK_MODEL}) para el asistente Aura...`);
-        const response = await axios.post(
+        console.log(`🤖 Invocando DeepSeek API (${DEEPSEEK_MODEL}) con Tool Calling para AURA...`);
+        let response = await axios.post(
           DEEPSEEK_BASE_URL,
           {
             model: DEEPSEEK_MODEL,
             messages: messages,
+            tools: AURA_TOOLS_DEFINITIONS,
+            tool_choice: 'auto',
             temperature: 0.7,
             max_tokens: 1000
           },
@@ -225,16 +213,60 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
           }
         );
 
-        if (response.data && response.data.choices && response.data.choices[0]?.message?.content) {
-          aiResponseText = response.data.choices[0].message.content;
+        let choiceMessage = response.data?.choices?.[0]?.message;
+
+        // Si DeepSeek solicita ejecutar una o más herramientas (Tool Calls)
+        if (choiceMessage && choiceMessage.tool_calls && choiceMessage.tool_calls.length > 0) {
+          messages.push(choiceMessage);
+
+          for (const toolCall of choiceMessage.tool_calls) {
+            const functionName = toolCall.function.name;
+            const functionArgs = JSON.parse(toolCall.function.arguments || '{}');
+
+            notifyUserAuraStatus(parsedUserId, { state: 'executing_tool', tool: functionName });
+
+            const toolResult = await executeAuraTool(functionName, functionArgs, parsedUserId);
+
+            messages.push({
+              role: 'tool',
+              tool_call_id: toolCall.id,
+              content: JSON.stringify(toolResult)
+            });
+          }
+
+          // Invocación final de síntesis a DeepSeek tras ejecutar las herramientas
+          console.log(`🔄 Sintetizando respuesta final en DeepSeek con los resultados de las herramientas...`);
+          const secondResponse = await axios.post(
+            DEEPSEEK_BASE_URL,
+            {
+              model: DEEPSEEK_MODEL,
+              messages: messages,
+              temperature: 0.7,
+              max_tokens: 1000
+            },
+            {
+              headers: {
+                'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+                'Content-Type': 'application/json'
+              },
+              timeout: 25000
+            }
+          );
+
+          if (secondResponse.data?.choices?.[0]?.message?.content) {
+            aiResponseText = secondResponse.data.choices[0].message.content;
+          }
+        } else if (choiceMessage?.content) {
+          aiResponseText = choiceMessage.content;
+        }
+
+        if (aiResponseText) {
           console.log(`✅ Respuesta obtenida con éxito de DeepSeek (${DEEPSEEK_MODEL}).`);
-        } else {
-          throw new Error('Formato de respuesta inesperado de DeepSeek API');
         }
       } catch (deepseekError) {
-        console.error('⚠️ Error al llamar a DeepSeek API, intentando fallback:', deepseekError.response?.data || deepseekError.message);
+        console.error('⚠️ Error al llamar a DeepSeek API, ejecutando fallback:', deepseekError.response?.data || deepseekError.message);
         
-        // Fallback a Gemini si está disponible
+        // Fallback a Gemini si está configurado
         if (ai) {
           try {
             console.log('🔄 Ejecutando fallback a Gemini API...');
@@ -252,36 +284,16 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
       }
     }
 
-    // Si no hubo respuesta de DeepSeek ni de Gemini, usamos respuesta de simulación
+    // Respuesta por defecto si no hubo respuesta de DeepSeek ni Gemini
     if (!aiResponseText) {
       if (imageRelativePath) {
-        aiResponseText = `¡Hola! He analizado tu imagen y veo una manicura contemporánea increíble. Aquí tienes una opción del catálogo que te encantará:
-
-Estilo Recomendado: Manicura Semi-Permanente
-Tratamiento Sugerido: Manicura Semi-Permanente
-Profesional/Establecimiento: Sonia Spa
-Precio de Referencia: 45000 COP
-Valoración: 4.8★
-ID Prestador: 5
-Servicio ID: 22222222-2222-2222-2222-222222222222`;
+        aiResponseText = `¡Hola! He analizado tu imagen y veo una manicura contemporánea increíble. Te sugiero revisar las opciones del catálogo disponibles para agendar.`;
       } else {
-        aiResponseText = `¡Hola! Qué gusto saludarte. Te dejo un tip de belleza rápido:
-
-- **Cabello**: Aplica aceites naturales de medios a puntas una vez por semana para evitar el frizz.
-
-Para mejores resultados, te recomiendo agendar:
-
-Estilo Recomendado: Corte y Lavado
-Tratamiento Sugerido: Corte y Lavado
-Profesional/Establecimiento: Salón Ana Beauty
-Precio de Referencia: 35000 COP
-Valoración: 4.9★
-ID Prestador: 5
-Servicio ID: 11111111-1111-1111-1111-111111111111`;
+        aiResponseText = `¡Hola! Qué gusto saludarte. Te dejo un tip de belleza rápido: aplica aceites naturales de medios a puntas una vez por semana para evitar el frizz y mantener tu cabello radiante. ¿En qué más puedo ayudarte hoy?`;
       }
     }
 
-    // 6. Guardar la respuesta de la IA en la tabla de mensajes
+    // 5. Guardar la respuesta de AURA en la base de datos
     const insertQuery = `
       INSERT INTO messages (sender_id, receiver_id, message)
       VALUES ($1, $2, $3)
@@ -295,13 +307,13 @@ Servicio ID: 11111111-1111-1111-1111-111111111111`;
       receiver_id: row.receiver_id.toString()
     };
 
-    console.log(`🤖 Respuesta de IA enviada con éxito al usuario ${parsedUserId}.`);
+    console.log(`🤖 Respuesta de AURA enviada con éxito al usuario ${parsedUserId}.`);
 
-    // Notificar en tiempo real al usuario vía WebSocket de la respuesta de la IA
+    notifyUserAuraStatus(parsedUserId, { state: 'idle' });
     notifyUserChatMessage(parsedUserId, formatted);
 
   } catch (error) {
-    console.error('❌ Error crítico en processAssistantMessage:', error);
+    console.error('❌ Error crítico en processAssistantMessage (AURA):', error);
   }
 }
 
