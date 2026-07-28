@@ -10,12 +10,12 @@ class ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlassCard(
+    final cardContent = GlassCard(
       margin: const EdgeInsets.only(bottom: 8),
       borderRadius: 12.0,
       padding: const EdgeInsets.all(8.0),
-      backgroundColor: const Color(0xFFF9F2ED).withOpacity(0.18),
-      borderColor: const Color(0xFFE5D9D4).withOpacity(0.4),
+      backgroundColor: const Color(0xFFF9F2ED).withValues(alpha: 0.18),
+      borderColor: const Color(0xFFE5D9D4).withValues(alpha: 0.4),
       child: Row(
         children: [
           Container(
@@ -57,12 +57,12 @@ class ProductCard extends StatelessWidget {
                   product.brand,
                   style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                 ),
-                if (product.compatible) ...[
-                  const SizedBox(height: 4),
+                const SizedBox(height: 4),
+                if (product.compatible)
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: Colors.green.withOpacity(0.2),
+                      color: Colors.green.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Text(
@@ -73,8 +73,23 @@ class ProductCard extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+                  )
+                else
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF791F1F).withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Text(
+                      '⚠ Revisar antes de usar',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF791F1F),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
-                ],
               ],
             ),
           ),
@@ -86,5 +101,19 @@ class ProductCard extends StatelessWidget {
         ],
       ),
     );
+
+    final widgetWithOpacity = Opacity(
+      opacity: product.compatible ? 1.0 : 0.7,
+      child: cardContent,
+    );
+
+    if (product.compatibilityReason.isNotEmpty) {
+      return Tooltip(
+        message: product.compatibilityReason,
+        child: widgetWithOpacity,
+      );
+    }
+
+    return widgetWithOpacity;
   }
 }

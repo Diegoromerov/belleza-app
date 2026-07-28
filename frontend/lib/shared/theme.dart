@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import '../services/audience_service.dart';
-import 'mens_theme.dart';
 
 class AppTheme {
   static final ValueNotifier<bool> isModernTheme = ValueNotifier<bool>(true);
@@ -14,6 +12,12 @@ class AppTheme {
   static const Color text = Color(0xFF2D2C2A);
   static const Color background = Color(0xFFFDFBF7);
   static const Color surface = Color(0xFFF7F4EF);
+
+  // Tokens de diseño estilo Editorial Pasaporte
+  static const Color passportPrimary = Color(0xFFD85A30);
+  static const Color passportBackground = Color(0xFFFBF6F1);
+  static const Color passportSurface = Color(0xFFFFFFFF);
+  static const Color passportAccentText = Color(0xFF4A1B0C);
 
   static const LinearGradient premiumGradient = LinearGradient(
     begin: Alignment.topCenter,
@@ -94,24 +98,24 @@ class AppTheme {
     return InputDecoration(
       hintText: hintText,
       labelText: labelText,
-      hintStyle: TextStyle(color: Color(0xFFB19F9C), fontSize: 14),
-      labelStyle: TextStyle(color: Color(0xFF8E7D7A), fontSize: 14),
+      hintStyle: const TextStyle(color: Color(0xFFB19F9C), fontSize: 14),
+      labelStyle: const TextStyle(color: Color(0xFF8E7D7A), fontSize: 14),
       prefixIcon: Icon(prefixIcon, color: primary, size: 22),
       suffixIcon: suffixIcon,
       floatingLabelBehavior: FloatingLabelBehavior.auto,
       filled: true,
-      fillColor: Colors.white.withOpacity(0.8),
+      fillColor: Colors.white.withValues(alpha: 0.8),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: Color(0xFFEADCD6), width: 1),
+        borderSide: const BorderSide(color: Color(0xFFEADCD6), width: 1),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: Color(0xFFEADCD6), width: 1),
+        borderSide: const BorderSide(color: Color(0xFFEADCD6), width: 1),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: primary, width: 1.8),
+        borderSide: const BorderSide(color: primary, width: 1.8),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
     );

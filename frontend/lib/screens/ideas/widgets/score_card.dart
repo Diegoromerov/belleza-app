@@ -21,7 +21,7 @@ class ScoreCard extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: color.withValues(alpha: 0.18), width: 1.2),
       ),
       child: Column(
@@ -47,6 +47,7 @@ class ScoreCard extends StatelessWidget {
               Text(
                 '$value%',
                 style: TextStyle(
+                  fontFamily: 'serif',
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                   color: color,

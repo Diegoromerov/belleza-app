@@ -1,6 +1,7 @@
 // frontend/lib/screens/ideas/widgets/color_palette.dart
 import 'package:flutter/material.dart';
 import '../../../services/biometric_service.dart';
+import '../../../shared/theme.dart';
 
 class ColorPaletteWidget extends StatefulWidget {
   final String hexColor;
@@ -48,7 +49,7 @@ class _ColorPaletteWidgetState extends State<ColorPaletteWidget> {
     if (_isLoading) {
       return const SizedBox(
         height: 85,
-        child: Center(child: CircularProgressIndicator(color: Colors.purple)),
+        child: Center(child: CircularProgressIndicator(color: AppTheme.passportPrimary)),
       );
     }
 
@@ -59,13 +60,18 @@ class _ColorPaletteWidgetState extends State<ColorPaletteWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: const [
-            Icon(Icons.palette_outlined, color: Colors.purple, size: 22),
+        const Row(
+          children: [
+            Icon(Icons.palette_outlined, color: AppTheme.passportPrimary, size: 22),
             SizedBox(width: 8),
             Text(
               'Paleta de colores sugerida',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+              style: TextStyle(
+                fontFamily: 'serif',
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.passportAccentText,
+              ),
             ),
           ],
         ),
@@ -73,12 +79,12 @@ class _ColorPaletteWidgetState extends State<ColorPaletteWidget> {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppTheme.passportSurface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.purple.withValues(alpha: 0.12), width: 1.2),
+            border: Border.all(color: AppTheme.passportPrimary.withValues(alpha: 0.15), width: 1.2),
             boxShadow: [
               BoxShadow(
-                color: Colors.purple.withValues(alpha: 0.04),
+                color: AppTheme.passportPrimary.withValues(alpha: 0.04),
                 blurRadius: 8,
                 offset: const Offset(0, 3),
               ),
@@ -121,7 +127,7 @@ class _ColorPaletteWidgetState extends State<ColorPaletteWidget> {
                     const SizedBox(height: 6),
                     Text(
                       color.name.length > 9 ? '${color.name.substring(0, 7)}...' : color.name,
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.black87),
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppTheme.passportAccentText),
                     ),
                   ],
                 );

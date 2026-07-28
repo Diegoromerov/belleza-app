@@ -17,17 +17,23 @@ class RecommendationCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '💡 Recomendación Personalizada',
+            'RECOMENDACIÓN DE AURA',
             style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+              fontSize: 10,
+              fontWeight: FontWeight.w500,
+              letterSpacing: 0.3,
+              color: Color(0xFF993C1D),
             ),
           ),
           const SizedBox(height: 8),
           MarkdownBody(
             data: recommendation,
             styleSheet: MarkdownStyleSheet(
-              p: const TextStyle(fontSize: 15, height: 1.6),
+              p: const TextStyle(
+                fontSize: 15,
+                height: 1.6,
+                fontFamily: 'serif',
+              ),
               strong: const TextStyle(fontWeight: FontWeight.bold),
               listBullet: const TextStyle(fontSize: 16),
             ),
