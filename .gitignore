@@ -2,50 +2,17 @@
 .vscode/
 *.log
 
-.agent/
-
 # Environment variables
 .env
 .env.local
 .env.*.local
+!.env.example
 
-# Environment variables
-.env
-.env.local
-.env.*.local
+# Scratch/test files
+scratch/
 
-# Environment variables
-.env
-.env.local
-.env.*.local
+# Android build artifacts
+*.apk
 
-# Environment variables
-.env
-.env.local
-.env.*.local
-
-# Environment variables
-.env
-.env.local
-.env.*.local
-
-# Environment variables
-.env
-.env.local
-.env.*.local
-
-# Environment variables
-.env
-.env.local
-.env.*.local
-
-# Environment variables
-.env
-.env.local
-.env.*.local
-
-# Environment variables
-.env
-.env.local
-.env.*.local
+# Dependencies
 node_modules/
