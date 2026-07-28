@@ -1,6 +1,8 @@
+// frontend/lib/screens/ideas/results_screen.dart
 import 'package:flutter/material.dart';
 import '../../models/biometric_result.dart';
 import '../../services/biometric_service.dart';
+import '../../shared/theme.dart';
 import 'product_scanner_screen.dart';
 import 'widgets/score_card.dart';
 import 'widgets/recommendation_card.dart';
@@ -30,13 +32,6 @@ class _ResultsScreenState extends State<ResultsScreen> {
     super.initState();
     _loadRecommendedProducts();
     _loadUV();
-    _scrollController.addListener(() {
-      if (_scrollController.position.pixels >=
-          _scrollController.position.maxScrollExtent - 200) {
-        // En un catálogo real aquí dispararíamos la paginación incrementando la página.
-        // Simulamos completado o aviso de scroll
-      }
-    });
   }
 
   @override
@@ -102,69 +97,208 @@ class _ResultsScreenState extends State<ResultsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Pasaporte de Belleza'),
-        backgroundColor: Colors.purple,
-        foregroundColor: Colors.white,
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () => _goBackToIdeas(),
+    return DefaultTabController(
+      length: 3,
+      child: Scaffold(
+        backgroundColor: AppTheme.background,
+        appBar: AppBar(
+          title: const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Pasaporte de Belleza',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+              Text(
+                'Análisis Biométrico de Rostro & Manos',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.normal, color: Colors.white70),
+              ),
+            ],
+          ),
+          backgroundColor: AppTheme.primary,
+          foregroundColor: Colors.white,
+          elevation: 2,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => _goBackToIdeas(),
+          ),
+          bottom: const TabBar(
+            indicatorColor: Colors.white,
+            indicatorWeight: 3,
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white70,
+            labelStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+            tabs: [
+              Tab(
+                icon: Icon(Icons.face_retouching_natural, size: 20),
+                text: 'Análisis',
+              ),
+              Tab(
+                icon: Icon(Icons.auto_awesome, size: 20),
+                text: 'Recomendación',
+              ),
+              Tab(
+                icon: Icon(Icons.palette_outlined, size: 20),
+                text: 'Paleta & Productos',
+              ),
+            ],
+          ),
         ),
-      ),
-      body: SingleChildScrollView(
-        controller: _scrollController,
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        body: Column(
           children: [
-            const Text(
-              '🎉 ¡Listo! Este es tu Pasaporte de Belleza',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            _buildFaceSection(),
-            const SizedBox(height: 24),
-            _buildHandsSection(),
-            const SizedBox(height: 24),
-            RecommendationCard(
-              recommendation: widget.result.recommendation ??
-                  'No se generaron recomendaciones específicas.',
-            ),
-            const SizedBox(height: 24),
-            if (!_isLoadingUV && _uvRecommendation != null) ...[
-              Card(
-                color: Colors.orange[50],
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.wb_sunny, color: Colors.orange),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          '☀️ $_uvRecommendation',
-                          style: const TextStyle(
-                              fontSize: 14, fontWeight: FontWeight.w500),
+            Expanded(
+              child: TabBarView(
+                children: [
+                  // PESTAÑA 1: ANÁLISIS FACIAL Y DE MANOS
+                  SingleChildScrollView(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // CABECERA DE BIENVENIDA CON ESTILO SATINADO
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            gradient: AppTheme.terracottaMatteGradient,
+                            borderRadius: BorderRadius.circular(18),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppTheme.primary.withValues(alpha: 0.25),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.2),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.verified, color: Colors.white, size: 28),
+                              ),
+                              const SizedBox(width: 14),
+                              const Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '🎉 Diagnosticado con Éxito',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    SizedBox(height: 2),
+                                    Text(
+                                      'Tu pasaporte personalizado con IA ha sido actualizado.',
+                                      style: TextStyle(fontSize: 13, color: Colors.white70),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 20),
+
+                        // SECCIÓN 1: ANÁLISIS FACIAL REESTRUCTURADO
+                        _buildFaceSection(),
+                        const SizedBox(height: 20),
+
+                        // SECCIÓN 2: ANÁLISIS DE MANOS REESTRUCTURADO
+                        _buildHandsSection(),
+                        const SizedBox(height: 20),
+                      ],
+                    ),
                   ),
-                ),
+
+                  // PESTAÑA 2: RECOMENDACIÓN PERSONALIZADA DE IA Y ADVERTENCIA UV
+                  SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        RecommendationCard(
+                          recommendation: widget.result.recommendation ??
+                              'No se generaron recomendaciones específicas.',
+                        ),
+                        const SizedBox(height: 20),
+
+                        // ADVERTENCIA CLIMÁTICA Y UV
+                        if (!_isLoadingUV && _uvRecommendation != null) ...[
+                          Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: AppTheme.surface,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: AppTheme.warning.withValues(alpha: 0.4)),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.wb_sunny_rounded, color: AppTheme.warning, size: 24),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    '☀️ $_uvRecommendation',
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppTheme.text,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                        ],
+                      ],
+                    ),
+                  ),
+
+                  // PESTAÑA 3: PALETA DE COLORES Y PRODUCTOS RECOMENDADOS
+                  SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (widget.result.face != null) ...[
+                          ColorPaletteWidget(
+                            hexColor: _getHexColorFromSubtono(widget.result.face!.subtono),
+                          ),
+                          const SizedBox(height: 20),
+                        ],
+                        _buildProductsSection(),
+                        const SizedBox(height: 20),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 24),
-            ],
-            if (widget.result.face != null) ...[
-              ColorPaletteWidget(
-                hexColor: _getHexColorFromSubtono(widget.result.face!.subtono),
+            ),
+
+            // BARRA FIJA DE ACCIONES INFERIORES
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 10,
+                    offset: const Offset(0, -4),
+                  ),
+                ],
               ),
-              const SizedBox(height: 24),
-            ],
-            _buildProductsSection(),
-            const SizedBox(height: 24),
-            _buildActionButtons(),
+              child: SafeArea(
+                child: _buildActionButtons(),
+              ),
+            ),
           ],
         ),
       ),
@@ -178,39 +312,65 @@ class _ResultsScreenState extends State<ResultsScreen> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.purple.withValues(alpha: 0.12), width: 1.2),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppTheme.primary.withValues(alpha: 0.3), width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: Colors.purple.withValues(alpha: 0.05),
-            blurRadius: 10,
+            color: AppTheme.primary.withValues(alpha: 0.08),
+            blurRadius: 12,
             offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // TITULO DE SECCIÓN CON BADGE DE EDAD
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.purple.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(Icons.face_retouching_natural, color: Colors.purple, size: 20),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primary.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.face_retouching_natural, color: AppTheme.primary, size: 22),
+                    ),
+                    const SizedBox(width: 10),
+                    const Text(
+                      'Análisis Facial',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.text),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 10),
-                const Text(
-                  'Análisis Facial',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppTheme.primary.withValues(alpha: 0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.cake_outlined, size: 14, color: AppTheme.primary),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Piel: ${face.bioAge} años',
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.primary),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 16),
+
+            // GRID 2X2 DE PUNTUACIONES MÉTRICAS
             Row(
               children: [
                 Expanded(
@@ -248,59 +408,33 @@ class _ResultsScreenState extends State<ResultsScreen> {
                   child: ScoreCard(
                     label: 'Poros',
                     value: face.pores,
-                    color: const Color(0xFF10B981),
+                    color: AppTheme.success,
                     icon: Icons.grain,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 14),
-            Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.amber.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.palette, size: 16, color: Colors.amber),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Subtono: ${face.subtono}',
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black87),
-                        ),
-                      ],
-                    ),
+
+            // PILL BADGE DE SUBTONO
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppTheme.surface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppTheme.primary.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.palette_outlined, size: 18, color: AppTheme.primary),
+                  const SizedBox(width: 8),
+                  const Text('Subtono de Piel: ', style: TextStyle(fontSize: 13, color: AppTheme.text)),
+                  Text(
+                    face.subtono,
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.primary),
                   ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.purple.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.purple.withValues(alpha: 0.3)),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.cake_outlined, size: 16, color: Colors.purple),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Edad piel: ${face.bioAge} años',
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black87),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),
@@ -315,58 +449,69 @@ class _ResultsScreenState extends State<ResultsScreen> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.teal.withValues(alpha: 0.15), width: 1.2),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppTheme.primary.withValues(alpha: 0.3), width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: Colors.teal.withValues(alpha: 0.04),
-            blurRadius: 10,
+            color: AppTheme.primary.withValues(alpha: 0.08),
+            blurRadius: 12,
             offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // TITULO DE SECCIÓN CON BADGE DE EDAD
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.teal.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(Icons.pan_tool, color: Colors.teal, size: 20),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primary.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.pan_tool_outlined, color: AppTheme.primary, size: 22),
+                    ),
+                    const SizedBox(width: 10),
+                    const Text(
+                      'Análisis de Manos',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.text),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 10),
-                const Text(
-                  'Análisis de Manos',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppTheme.primary.withValues(alpha: 0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.back_hand_outlined, size: 14, color: AppTheme.primary),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Manos: ${hands.edadAparente} años',
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.primary),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 16),
+
+            // DIAGNÓSTICOS EN PILL CHIPS
             _buildDiagnosticRow('Manchas solares', hands.manchasSolares, Icons.wb_sunny_outlined),
             _buildDiagnosticRow('Sequedad', hands.sequedad, Icons.water_drop_outlined),
-            _buildDiagnosticRow('Cutículas', hands.cuticulas, Icons.clean_hands),
-            _buildDiagnosticRow('Uñas', hands.unas, Icons.back_hand_outlined),
-            const SizedBox(height: 12),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.teal.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Center(
-                child: Text(
-                  '🖐️ Edad aparente de manos: ${hands.edadAparente} años',
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.teal),
-                ),
-              ),
-            ),
+            _buildDiagnosticRow('Cutículas', hands.cuticulas, Icons.clean_hands_outlined),
+            _buildDiagnosticRow('Estado de uñas', hands.unas, Icons.back_hand_outlined),
           ],
         ),
       ),
@@ -375,20 +520,21 @@ class _ResultsScreenState extends State<ResultsScreen> {
 
   Widget _buildDiagnosticRow(String label, String value, IconData icon) {
     final color = value == 'leve' || value == 'sanas'
-        ? Colors.green[700]!
+        ? AppTheme.success
         : value == 'moderado' || value == 'dañadas'
-            ? Colors.orange[800]!
-            : Colors.red[700]!;
+            ? AppTheme.warning
+            : AppTheme.error;
+
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 5),
       child: Row(
         children: [
           Icon(icon, size: 16, color: Colors.grey[600]),
           const SizedBox(width: 8),
-          Text('$label:', style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13)),
+          Text(label, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13, color: AppTheme.text)),
           const Spacer(),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(12),
@@ -413,16 +559,16 @@ class _ResultsScreenState extends State<ResultsScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          '🛍️ Productos Sugeridos',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          '🛍️ Productos Recomendados para tu Piel',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.text),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         if (_isLoadingProducts)
-          const Center(child: CircularProgressIndicator())
+          const Center(child: CircularProgressIndicator(color: AppTheme.primary))
         else if (_productLoadError)
           Column(
             children: [
-              const Icon(Icons.error_outline, color: Colors.orange, size: 48),
+              const Icon(Icons.error_outline, color: AppTheme.warning, size: 48),
               const SizedBox(height: 8),
               const Text('No pudimos cargar los productos sugeridos.'),
               const SizedBox(height: 8),
@@ -444,22 +590,28 @@ class _ResultsScreenState extends State<ResultsScreen> {
                 .toList(),
           ),
         const SizedBox(height: 12),
-        ElevatedButton.icon(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => const ProductScannerScreen(),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const ProductScannerScreen(),
+                ),
+              );
+            },
+            icon: const Icon(Icons.qr_code_scanner),
+            label: const Text('📷 Escanear producto que ya tengo'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.surface,
+              foregroundColor: AppTheme.primary,
+              elevation: 0,
+              side: BorderSide(color: AppTheme.primary.withValues(alpha: 0.4)),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
               ),
-            );
-          },
-          icon: const Icon(Icons.qr_code_scanner),
-          label: const Text('📷 Escanear producto que ya tengo'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.purple[50],
-            foregroundColor: Colors.purple,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
             ),
           ),
         ),
@@ -469,42 +621,58 @@ class _ResultsScreenState extends State<ResultsScreen> {
 
   Widget _buildActionButtons() {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         SizedBox(
           width: double.infinity,
-          height: 56,
-          child: ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context, {
-                'action': 'apply_filters',
-                'subtono': widget.result.face?.subtono,
-                'nails': widget.result.hands?.unas,
-              });
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.purple,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(28),
-              ),
+          height: 52,
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: AppTheme.roseGoldSatinGradient,
+              borderRadius: BorderRadius.circular(26),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.primary.withValues(alpha: 0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-            child: const Text(
-              '✨ Ver Ideas Relacionadas',
-              style: TextStyle(fontSize: 16, color: Colors.white),
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context, {
+                  'action': 'apply_filters',
+                  'subtono': widget.result.face?.subtono,
+                  'nails': widget.result.hands?.unas,
+                });
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(26),
+                ),
+              ),
+              child: const Text(
+                '✨ Ver Ideas Relacionadas para tu Piel',
+                style: TextStyle(fontSize: 15, color: Colors.white, fontWeight: FontWeight.bold),
+              ),
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         SizedBox(
           width: double.infinity,
-          height: 48,
+          height: 44,
           child: OutlinedButton(
             onPressed: () => _goBackToIdeas(),
             style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: AppTheme.primary, width: 1.2),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(28),
+                borderRadius: BorderRadius.circular(22),
               ),
             ),
-            child: const Text('↩ Volver a Ideas sin filtros'),
+            child: const Text('↩ Volver a Ideas sin filtros', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
           ),
         ),
       ],

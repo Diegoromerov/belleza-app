@@ -79,30 +79,30 @@ class YouCamClient {
 
   /**
    * Paso 3: crea la tarea de análisis referenciando el file_id ya subido.
-   * La API espera src_file_id (el file_id del paso 1) a nivel raíz, no dentro de payload.
-   * Solo acciones HD para evitar "cannot mix HD and SD dst_actions".
    */
   async _createAnalysisTask(fileId) {
     const response = await axios.post(
       `${this.baseUrl}/task/skin-analysis`,
       {
         request_id: 1,
-        src_file_id: fileId,
-        dst_actions: [
-          'hd_moisture',
-          'hd_wrinkle',
-          'hd_pore',
-          'hd_age_spot',
-          'hd_texture',
-        ],
+        payload: {
+          src_ids: [fileId],
+          dst_actions: [
+            'hd_moisture',
+            'hd_wrinkle',
+            'hd_pore',
+            'hd_age_spot',
+            'hd_texture',
+            'skin_type',
+          ],
+        },
       },
       { headers: this.authHeaders, httpsAgent, timeout: this.timeout }
     );
 
-    logger.debug('YouCam create task response', { data: response.data });
-    const taskId = response.data?.result?.task_id || response.data?.task_id || response.data?.data?.task_id;
+    const taskId = response.data?.result?.task_id || response.data?.task_id;
     if (!taskId) {
-      throw new Error(`YouCam no devolvió un task_id al crear la tarea de análisis. Respuesta: ${JSON.stringify(response.data)}`);
+      throw new Error('YouCam no devolvió un task_id al crear la tarea de análisis.');
     }
     return taskId;
   }

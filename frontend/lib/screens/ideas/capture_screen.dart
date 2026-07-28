@@ -1,16 +1,17 @@
 // frontend/lib/screens/ideas/capture_screen.dart
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
+import 'package:image_picker/image_picker.dart';
+import '../../shared/theme.dart';
 import 'processing_screen.dart';
 import 'widgets/face_overlay_painter.dart';
 import 'widgets/hand_overlay_painter.dart';
 import 'widgets/quality_indicator.dart';
 
-enum CaptureStep { face, hands, done }
+enum CaptureStep { face, faceConfirm, hands, handsConfirm, done }
 
 class CaptureScreen extends StatefulWidget {
   const CaptureScreen({super.key});
@@ -19,7 +20,8 @@ class CaptureScreen extends StatefulWidget {
   State<CaptureScreen> createState() => _CaptureScreenState();
 }
 
-class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserver {
+class _CaptureScreenState extends State<CaptureScreen>
+    with WidgetsBindingObserver, SingleTickerProviderStateMixin {
   CameraController? _cameraController;
   List<CameraDescription>? _cameras;
 
@@ -32,7 +34,7 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
   Uint8List? _handsImage;
 
   // Estado de validación
-  String _instruction = 'Coloca tu rostro dentro del óvalo';
+  String _instruction = 'Coloca tu rostro dentro del óvalo y presiona el botón para tomar la foto';
   bool _isFaceValid = false;
   bool _isHandValid = false;
   double _qualityScore = 0.0;
@@ -40,9 +42,13 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
 
   bool _isProcessing = false;
   bool _isCapturing = false;
-  bool _isCameraReady = false; // nuevo estado para saber si la cámara está lista
-  DateTime? _handsStepStartTime;
+  bool _isCameraReady = false;
+  bool _isFlashOn = false;
+  bool _isSwitchingCamera = false;
+
   late final FaceDetector _faceDetector;
+  late final AnimationController _laserController;
+  late final Animation<double> _laserAnimation;
 
   @override
   void initState() {
@@ -55,11 +61,22 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
         minFaceSize: 0.2,
       ),
     );
+
+    _laserController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2200),
+    )..repeat(reverse: true);
+
+    _laserAnimation = Tween<double>(begin: 0.05, end: 0.95).animate(
+      CurvedAnimation(parent: _laserController, curve: Curves.easeInOut),
+    );
+
     _initializeCamera();
   }
 
   @override
   void dispose() {
+    _laserController.dispose();
     _disposeCamera();
     _faceDetector.close();
     super.dispose();
@@ -67,42 +84,47 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
 
   void _disposeCamera() {
     if (_cameraController != null) {
-      if (_cameraController!.value.isStreamingImages) {
-        _cameraController!.stopImageStream();
+      try {
+        if (_cameraController!.value.isStreamingImages) {
+          _cameraController!.stopImageStream();
+        }
+      } catch (e) {
+        debugPrint('Error al detener stream de cámara: $e');
       }
-      _cameraController!.dispose();
+      try {
+        _cameraController!.dispose();
+      } catch (e) {
+        debugPrint('Error al dispose controller: $e');
+      }
       _cameraController = null;
     }
-    _isCameraReady = false;
   }
 
   Future<void> _initializeCamera() async {
     try {
-      // 1. Verificar y solicitar permisos (usando el manejo nativo del paquete camera)
-      final cameras = await availableCameras();
-      if (cameras.isEmpty) {
+      _cameras = await availableCameras();
+      if (_cameras == null || _cameras!.isEmpty) {
         _showError('No se encontró ninguna cámara en el dispositivo.');
         return;
       }
-      _cameras = cameras;
 
       final frontCamera = _cameras!.firstWhere(
         (c) => c.lensDirection == CameraLensDirection.front,
         orElse: () => _cameras!.first,
       );
 
-      _cameraController = CameraController(
+      final controller = CameraController(
         frontCamera,
         ResolutionPreset.medium,
         enableAudio: false,
+        imageFormatGroup: Platform.isAndroid ? ImageFormatGroup.nv21 : ImageFormatGroup.bgra8888,
       );
 
-      // Inicializar con manejo de excepciones de permisos
       try {
-        await _cameraController!.initialize();
+        await controller.initialize();
       } on CameraException catch (e) {
         if (e.code == 'cameraPermission' || e.code == 'CameraAccessDenied') {
-          _showError('Permiso de cámara denegado. Por favor, otorga el permiso en los ajustes del dispositivo.');
+          _showError('Permiso de cámara denegado. Por favor, otorga el permiso en ajustes.');
           return;
         } else {
           rethrow;
@@ -110,6 +132,7 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
       }
 
       if (mounted) {
+        _cameraController = controller;
         setState(() {
           _isCameraReady = true;
         });
@@ -120,28 +143,184 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
     }
   }
 
+  // --- CAMBIO AUTOMÁTICO Y MANUAL BLINDADO DE CÁMARA ---
+  Future<void> _switchCameraTo(CameraLensDirection targetDirection) async {
+    if (_isSwitchingCamera) return;
+
+    // Verificar si ya estamos en esa orientación y el controlador está activo
+    if (_cameraController != null &&
+        _cameraController!.value.isInitialized &&
+        _cameraController!.description.lensDirection == targetDirection) {
+      return;
+    }
+
+    setState(() {
+      _isSwitchingCamera = true;
+    });
+
+    try {
+      _cameras = await availableCameras();
+      if (_cameras == null || _cameras!.isEmpty) return;
+
+      // 1. Detener el stream de imágenes y dar tiempo al sistema operativo Android para liberar el hardware
+      if (_cameraController != null) {
+        if (_cameraController!.value.isStreamingImages) {
+          try {
+            await _cameraController!.stopImageStream();
+          } catch (e) {
+            debugPrint('Pausa de stream anterior: $e');
+          }
+        }
+        await Future.delayed(const Duration(milliseconds: 250));
+        try {
+          await _cameraController!.dispose();
+        } catch (e) {
+          debugPrint('Dispose previo: $e');
+        }
+        _cameraController = null;
+      }
+
+      await Future.delayed(const Duration(milliseconds: 250));
+
+      // 2. Buscar lentes compatibles con la dirección objetivo
+      final matchingCameras = _cameras!.where((c) => c.lensDirection == targetDirection).toList();
+      if (matchingCameras.isEmpty) {
+        matchingCameras.add(_cameras!.first);
+      }
+
+      CameraController? newController;
+
+      // Probar los lentes compatibles uno por uno (para soportar celulares con múltiples cámaras traseras)
+      for (final cam in matchingCameras) {
+        try {
+          final candidate = CameraController(
+            cam,
+            ResolutionPreset.medium,
+            enableAudio: false,
+            imageFormatGroup: Platform.isAndroid ? ImageFormatGroup.nv21 : ImageFormatGroup.bgra8888,
+          );
+          await candidate.initialize();
+          newController = candidate;
+          break; // Conectado exitosamente
+        } catch (err) {
+          debugPrint('⚠️ Error probando cámara ${cam.name}: $err. Intentando alternativa...');
+        }
+      }
+
+      // 3. RED DE SEGURIDAD ABSOLUTA: Si la cámara posterior no abrió, restaurar la cámara frontal automáticamente
+      if (newController == null) {
+        debugPrint('❌ Ninguna cámara posterior respondió. Restaurando cámara frontal de respaldo...');
+        final fallbackCam = _cameras!.firstWhere(
+          (c) => c.lensDirection == CameraLensDirection.front,
+          orElse: () => _cameras!.first,
+        );
+        final fallbackController = CameraController(
+          fallbackCam,
+          ResolutionPreset.medium,
+          enableAudio: false,
+        );
+        await fallbackController.initialize();
+        newController = fallbackController;
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Uso de cámara posterior no disponible en este hardware. Usando cámara activa.'),
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+      }
+
+      if (mounted) {
+        _cameraController = newController;
+        setState(() {
+          _isCameraReady = true;
+          _isFlashOn = false;
+        });
+        _startDetection();
+      }
+    } catch (e) {
+      debugPrint('Error fatal en cambio de cámara: $e');
+      if (mounted) {
+        _showError('No se pudo inicializar la cámara seleccionada.');
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSwitchingCamera = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _switchCamera() async {
+    final currentLens = _cameraController?.description.lensDirection ?? CameraLensDirection.front;
+    final targetLens = (currentLens == CameraLensDirection.front)
+        ? CameraLensDirection.back
+        : CameraLensDirection.front;
+    await _switchCameraTo(targetLens);
+  }
+
+  Future<void> _toggleFlash() async {
+    if (_cameraController == null || !_cameraController!.value.isInitialized) return;
+    try {
+      _isFlashOn = !_isFlashOn;
+      await _cameraController!.setFlashMode(
+        _isFlashOn ? FlashMode.torch : FlashMode.off,
+      );
+      setState(() {});
+    } catch (e) {
+      debugPrint('Error al cambiar linterna/flash: $e');
+    }
+  }
+
+  Future<void> _pickFromGallery() async {
+    try {
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+      if (picked != null) {
+        final bytes = await picked.readAsBytes();
+        if (_step == CaptureStep.face || _step == CaptureStep.faceConfirm) {
+          setState(() {
+            _faceImage = bytes;
+            _step = CaptureStep.faceConfirm;
+            _instruction = '✨ Foto de rostro cargada. Revisa o presiona Siguiente.';
+          });
+        } else {
+          setState(() {
+            _handsImage = bytes;
+            _step = CaptureStep.handsConfirm;
+            _instruction = '✨ Foto de mano cargada. Presiona Finalizar para procesar.';
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error al seleccionar imagen de galería: $e');
+      _showError('No se pudo cargar la imagen de la galería.');
+    }
+  }
+
   void _startDetection() {
     if (_cameraController == null || !_cameraController!.value.isInitialized) return;
-    _cameraController!.startImageStream(_processCameraImage);
-    // Delay de estabilización: dar tiempo al hardware para auto-enfoque y exposición
-    Future.delayed(const Duration(milliseconds: 200), () {
-      // No hacemos nada especial, solo aseguramos que el stream esté activo
-      if (mounted && _cameraController != null && _cameraController!.value.isStreamingImages) {
-        // Todo ok
+    if (_step == CaptureStep.faceConfirm || _step == CaptureStep.handsConfirm) return;
+    if (!_cameraController!.value.isStreamingImages) {
+      try {
+        _cameraController!.startImageStream(_processCameraImage);
+      } catch (e) {
+        debugPrint('Error al iniciar stream de imágenes: $e');
       }
-    });
+    }
   }
 
   Future<void> _processCameraImage(CameraImage image) async {
-    if (_isProcessing || _step == CaptureStep.done || !_isCameraReady) return;
+    if (_isProcessing || _step == CaptureStep.done || !_isCameraReady || _isSwitchingCamera) return;
+    if (_step == CaptureStep.faceConfirm || _step == CaptureStep.handsConfirm) return;
     _isProcessing = true;
 
     try {
       final inputImage = _convertCameraImageToInputImage(image);
-      if (inputImage == null) {
-        debugPrint('Error: No se pudo convertir la imagen de la cámara a InputImage');
-        return;
-      }
+      if (inputImage == null) return;
 
       if (_step == CaptureStep.face) {
         await _processFace(inputImage);
@@ -150,21 +329,13 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
       }
     } catch (e, stack) {
       debugPrint('Error en procesamiento de imagen: $e\n$stack');
-      if (mounted) {
-        setState(() {
-          _errorMessage = 'Error: $e. Reinicia la app.';
-          _instruction = _errorMessage!;
-        });
-      }
     } finally {
       _isProcessing = false;
     }
   }
 
-  // --- Conversión robusta de CameraImage a InputImage (soporte YUV_420_888) ---
   InputImage? _convertCameraImageToInputImage(CameraImage image) {
     try {
-      // Determinar formato y construir los bytes adecuadamente
       final format = image.format.group;
       Uint8List bytes;
       int width = image.width;
@@ -172,29 +343,19 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
       int bytesPerRow = image.planes[0].bytesPerRow;
 
       if (format == ImageFormatGroup.nv21 || format == ImageFormatGroup.yuv420) {
-        // En NV21 o YUV420, el plano 0 es el canal Y (luminancia)
-        // y el plano 1 contiene U y V intercalados.
-        // Para ML Kit, necesitamos un solo buffer con el formato nativo.
         final yPlane = image.planes[0];
         final uvPlane = image.planes[1];
         final yBytes = yPlane.bytes;
         final uvBytes = uvPlane.bytes;
 
-        // NV21 = YYYY... + VUVU... (para Android)
-        // La mayoría de los dispositivos Android entregan NV21.
-        // Si es YUV420, el orden puede ser Y, U, V en planos separados.
-        // Para simplificar, asumimos NV21 y concatenamos Y + UV.
         bytes = Uint8List(yBytes.length + uvBytes.length);
         bytes.setAll(0, yBytes);
         bytes.setAll(yBytes.length, uvBytes);
       } else if (format == ImageFormatGroup.bgra8888) {
-        // iOS o cuando se fuerza BGRA
         final plane = image.planes[0];
         bytes = plane.bytes;
         bytesPerRow = plane.bytesPerRow;
       } else {
-        // Fallback: concatenar todos los planos (no ideal pero evita crash)
-        debugPrint('Formato de cámara no reconocido: $format. Intentando concatenar planos.');
         final allBytes = WriteBuffer();
         for (final plane in image.planes) {
           allBytes.putUint8List(plane.bytes);
@@ -202,7 +363,6 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
         bytes = allBytes.done().buffer.asUint8List();
       }
 
-      // Determinar rotación según el sensor
       final sensorOrientation = _cameraController?.description.sensorOrientation ?? 270;
       InputImageRotation imageRotation = InputImageRotation.rotation270deg;
       if (sensorOrientation == 90) {
@@ -217,7 +377,7 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
       if (format == ImageFormatGroup.bgra8888 || Platform.isIOS) {
         inputImageFormat = InputImageFormat.bgra8888;
       } else {
-        inputImageFormat = InputImageFormat.nv21; // Android por defecto
+        inputImageFormat = InputImageFormat.nv21;
       }
 
       final inputImageMetadata = InputImageMetadata(
@@ -234,7 +394,7 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
     }
   }
 
-  // --- Procesamiento de rostro ---
+  // --- Procesamiento de rostro (Toma 100% MANUAL) ---
   Future<void> _processFace(InputImage inputImage) async {
     final faces = await _faceDetector.processImage(inputImage);
     if (faces.isEmpty) {
@@ -242,7 +402,7 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
         setState(() {
           _detectedFace = null;
           _isFaceValid = false;
-          _instruction = 'No detectamos tu rostro. Acércate a la cámara.';
+          _instruction = 'No detectamos tu rostro. Enfuécalo y presiona el botón.';
           _qualityScore = 0.0;
         });
       }
@@ -258,37 +418,28 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
         _isFaceValid = _validateFace(face, imageSize);
         _qualityScore = _calculateFaceQuality(face, imageSize);
         _instruction = _isFaceValid
-            ? '✅ ¡Perfecto! Mantén la posición...'
+            ? '📸 Toca el botón central para tomar la foto del rostro'
             : _getFaceInstruction(face, imageSize);
       });
-    }
-
-    if (_isFaceValid && _qualityScore > 80.0) {
-      await Future.delayed(const Duration(milliseconds: 500));
-      if (_isFaceValid && _qualityScore > 80.0 && mounted) {
-        _captureFace();
-      }
     }
   }
 
   bool _validateFace(Face face, Size imageSize) {
     final faceWidth = face.boundingBox.width;
     final imageWidth = imageSize.width;
-
-    // Relajar los umbrales de validación (tamaño de cara entre 15% y 85% del ancho de imagen)
-    if (faceWidth < imageWidth * 0.15 || faceWidth > imageWidth * 0.85) return false;
-    
-    // Relajar la relación de aspecto a 0.7 - 1.8
+    if (faceWidth < imageWidth * 0.22 || faceWidth > imageWidth * 0.85) return false;
     final aspectRatio = face.boundingBox.height / face.boundingBox.width;
     if (aspectRatio > 1.8 || aspectRatio < 0.7) return false;
+    
+    // Validar rotación de la cabeza para fotos frontales sin sesgo
+    if (face.headEulerAngleY != null && face.headEulerAngleY!.abs() > 15) return false;
+    if (face.headEulerAngleZ != null && face.headEulerAngleZ!.abs() > 15) return false;
     return true;
   }
 
   double _calculateFaceQuality(Face face, Size imageSize) {
     double score = 0.0;
     final imageWidth = imageSize.width;
-
-    // Puntuación por tamaño (óptimo alrededor del 50% del ancho de la imagen, con rango relajado de tolerancia 0.35)
     final sizeRatio = face.boundingBox.width / imageWidth;
     final sizeScore = (1 - (sizeRatio - 0.50).abs() / 0.35) * 40;
     score += sizeScore.clamp(0.0, 40.0);
@@ -309,7 +460,14 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
     final imageWidth = imageSize.width;
     final faceWidth = face.boundingBox.width;
 
-    if (faceWidth < imageWidth * 0.15) {
+    if (face.headEulerAngleY != null && face.headEulerAngleY!.abs() > 15) {
+      return '👤 Mira de frente a la cámara';
+    }
+    if (face.headEulerAngleZ != null && face.headEulerAngleZ!.abs() > 15) {
+      return '👤 Mantén tu cabeza erguida';
+    }
+
+    if (faceWidth < imageWidth * 0.22) {
       return '📱 Acércate un poco más a la cámara';
     }
     if (faceWidth > imageWidth * 0.85) {
@@ -323,13 +481,11 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
     if (faceCenterX > imageWidth * 0.65) {
       return '👉 Mueve tu rostro hacia el centro';
     }
-    return '🔄 Ajusta ligeramente tu posición';
+    return '📸 Presiona el botón para capturar foto';
   }
 
-  // --- Captura de rostro ---
   Future<void> _captureFace() async {
-    if (_step == CaptureStep.done || _cameraController == null || _isCapturing) return;
-    if (!_cameraController!.value.isInitialized) {
+    if (_cameraController == null || !_cameraController!.value.isInitialized || _isCapturing) {
       _showError('La cámara no está lista');
       return;
     }
@@ -343,15 +499,12 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
       final file = File(image.path);
       _faceImage = await file.readAsBytes();
 
-      setState(() {
-        _step = CaptureStep.hands;
-        _handsStepStartTime = DateTime.now();
-        _instruction = '🖐️ Coloca el dorso de tu mano sobre la silueta...';
-        _isHandValid = false;
-        _qualityScore = 0.0;
-        _errorMessage = null;
-      });
-      _startDetection();
+      if (mounted) {
+        setState(() {
+          _step = CaptureStep.faceConfirm;
+          _instruction = '✨ Foto de rostro capturada. Presiona Siguiente para escanear manos.';
+        });
+      }
     } catch (e) {
       debugPrint('Error al capturar rostro: $e');
       _showError('Error al capturar rostro. Intenta de nuevo.');
@@ -363,14 +516,36 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
     }
   }
 
-  // --- Procesamiento de manos con luminancia robusta y pausa de preparación ---
-  Future<void> _processHands(CameraImage image) async {
-    // Calcular tiempo transcurrido desde el cambio al paso de manos
-    _handsStepStartTime ??= DateTime.now();
-    final elapsedMs = DateTime.now().difference(_handsStepStartTime!).inMilliseconds;
-    const cooldownMs = 3000; // 3 segundos de pausa de preparación
+  // --- TRANSICIÓN AUTOMÁTICA AL PASO 2 (GIRA AUTOMÁTICAMENTE A CÁMARA POSTERIOR) ---
+  void _proceedToHandsStep() async {
+    setState(() {
+      _step = CaptureStep.hands;
+      _instruction = '🖐️ Girando a cámara posterior... Coloca el dorso de tu mano y presiona el botón';
+      _isHandValid = false;
+      _qualityScore = 0.0;
+      _errorMessage = null;
+    });
 
-    // Calcular luminancia promediando una rejilla de 9 píxeles en el canal Y (plano 0)
+    // GIRO AUTOMÁTICO A CÁMARA POSTERIOR
+    await _switchCameraTo(CameraLensDirection.back);
+  }
+
+  // --- REPETIR ROSTRO (GIRA AUTOMÁTICAMENTE A CÁMARA FRONTAL) ---
+  void _retakeFace() async {
+    setState(() {
+      _faceImage = null;
+      _step = CaptureStep.face;
+      _instruction = 'Coloca tu rostro dentro del óvalo y presiona el botón para tomar la foto';
+      _isFaceValid = false;
+      _qualityScore = 0.0;
+    });
+
+    // GIRO AUTOMÁTICO A CÁMARA FRONTAL
+    await _switchCameraTo(CameraLensDirection.front);
+  }
+
+  // --- Procesamiento de manos (Toma 100% MANUAL) ---
+  Future<void> _processHands(CameraImage image) async {
     final yPlane = image.planes[0];
     final yBytes = yPlane.bytes;
     final width = image.width;
@@ -392,41 +567,19 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
     final averageLuminosity = count > 0 ? sum / count : 0;
     final hasEnoughLight = averageLuminosity > 40;
 
-    if (elapsedMs < cooldownMs) {
-      // Durante los 3s de pausa inicial, mostrar cuenta regresiva para que el usuario coloque su mano
-      final remainingSec = ((cooldownMs - elapsedMs) / 1000).ceil();
-      if (mounted) {
-        setState(() {
-          _isHandValid = hasEnoughLight;
-          _qualityScore = hasEnoughLight ? 60.0 : 20.0;
-          _instruction = '🖐️ Coloca tu mano sobre la silueta (Iniciando escaneo en ${remainingSec}s...)';
-        });
-      }
-      return;
-    }
-
     if (mounted) {
       setState(() {
         _isHandValid = hasEnoughLight;
-        _qualityScore = hasEnoughLight ? 90.0 : 30.0;
+        _qualityScore = hasEnoughLight ? 90.0 : 40.0;
         _instruction = _isHandValid
-            ? '✅ ¡Perfecto! Mantén la mano quieta...'
-            : '🖐️ Abre los dedos y alinea tu mano con buena luz';
+            ? '📸 Toca el botón central para tomar la foto de la mano'
+            : '🖐️ Alinea tu mano con buena luz y presiona el botón';
       });
-    }
-
-    if (_isHandValid && _qualityScore > 80.0 && !_isCapturing) {
-      await Future.delayed(const Duration(milliseconds: 1000));
-      if (_isHandValid && mounted && !_isCapturing) {
-        _captureHands();
-      }
     }
   }
 
-  // --- Captura de manos ---
   Future<void> _captureHands() async {
-    if (_step == CaptureStep.done || _cameraController == null || _isCapturing) return;
-    if (!_cameraController!.value.isInitialized) {
+    if (_cameraController == null || !_cameraController!.value.isInitialized || _isCapturing) {
       _showError('La cámara no está lista');
       return;
     }
@@ -440,20 +593,11 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
       final file = File(image.path);
       _handsImage = await file.readAsBytes();
 
-      setState(() {
-        _step = CaptureStep.done;
-      });
-
-      if (mounted && _faceImage != null && _handsImage != null) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => ProcessingScreen(
-              faceImage: _faceImage!,
-              handsImage: _handsImage!,
-            ),
-          ),
-        );
+      if (mounted) {
+        setState(() {
+          _step = CaptureStep.handsConfirm;
+          _instruction = '✨ Foto de mano capturada. Presiona Finalizar para iniciar el análisis.';
+        });
       }
     } catch (e) {
       debugPrint('Error al capturar manos: $e');
@@ -464,6 +608,36 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
     } finally {
       _isCapturing = false;
     }
+  }
+
+  void _retakeHands() {
+    setState(() {
+      _handsImage = null;
+      _step = CaptureStep.hands;
+      _instruction = '🖐️ Coloca el dorso de tu mano sobre la silueta y presiona el botón';
+      _isHandValid = false;
+      _qualityScore = 0.0;
+    });
+
+    if (_cameraController != null && _cameraController!.value.isInitialized) {
+      _startDetection();
+    }
+  }
+
+  void _finishAndStartProcessing() {
+    if (_faceImage == null || _handsImage == null) return;
+    setState(() {
+      _step = CaptureStep.done;
+    });
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ProcessingScreen(
+          faceImage: _faceImage!,
+          handsImage: _handsImage!,
+        ),
+      ),
+    );
   }
 
   void _showError(String message) {
@@ -478,84 +652,214 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
     }
   }
 
-  // --- Build ---
+  // WIDGET: CÁMARA EN PANTALLA COMPLETA (FULL SCREEN EDGE-TO-EDGE)
+  Widget _buildFullScreenCamera() {
+    if (_cameraController == null || !_cameraController!.value.isInitialized) {
+      return const SizedBox.expand();
+    }
+    final size = MediaQuery.of(context).size;
+    final cameraSize = _cameraController!.value.previewSize!;
+
+    var scale = size.aspectRatio * (cameraSize.width / cameraSize.height);
+    if (scale < 1) scale = 1 / scale;
+
+    return SizedBox.expand(
+      child: ClipRect(
+        child: Transform.scale(
+          scale: scale,
+          child: Center(
+            child: CameraPreview(_cameraController!),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
+    final isFaceStep = _step == CaptureStep.face;
+    final isFaceConfirm = _step == CaptureStep.faceConfirm;
+    final isHandsStep = _step == CaptureStep.hands;
+    final isHandsConfirm = _step == CaptureStep.handsConfirm;
+
     if (_cameraController == null || !_cameraController!.value.isInitialized || !_isCameraReady) {
       return Scaffold(
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const CircularProgressIndicator(),
+              const CircularProgressIndicator(color: AppTheme.primary),
               const SizedBox(height: 16),
               Text(
                 _errorMessage ?? 'Inicializando cámara...',
-                style: const TextStyle(color: Colors.white),
+                style: const TextStyle(color: AppTheme.text),
                 textAlign: TextAlign.center,
               ),
             ],
           ),
         ),
-        backgroundColor: Colors.black,
+        backgroundColor: AppTheme.background,
       );
     }
 
-    final screenSize = MediaQuery.of(context).size;
-    final isFaceStep = _step == CaptureStep.face;
-    final isValid = isFaceStep ? _isFaceValid : _isHandValid;
-
     return Scaffold(
       backgroundColor: Colors.black,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.close, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
+        leading: Container(
+          margin: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: AppTheme.text.withValues(alpha: 0.5),
+            shape: BoxShape.circle,
+          ),
+          child: IconButton(
+            icon: const Icon(Icons.close, color: Colors.white),
+            onPressed: () => Navigator.pop(context),
+          ),
         ),
-        title: Text(
-          isFaceStep ? 'Escanear rostro' : 'Escanear manos',
-          style: const TextStyle(color: Colors.white),
+        title: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          decoration: BoxDecoration(
+            color: AppTheme.text.withValues(alpha: 0.65),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            isFaceStep || isFaceConfirm
+                ? 'Paso 1/2: Escanear rostro'
+                : 'Paso 2/2: Escanear manos',
+            style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
+          ),
         ),
+        actions: [
+          Container(
+            margin: const EdgeInsets.only(right: 6),
+            decoration: BoxDecoration(
+              color: AppTheme.text.withValues(alpha: 0.5),
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              tooltip: 'Cambiar Linterna',
+              icon: Icon(_isFlashOn ? Icons.flash_on : Icons.flash_off,
+                  color: _isFlashOn ? Colors.amber : Colors.white),
+              onPressed: _toggleFlash,
+            ),
+          ),
+          Container(
+            margin: const EdgeInsets.only(right: 6),
+            decoration: BoxDecoration(
+              color: AppTheme.text.withValues(alpha: 0.5),
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              tooltip: 'Cambiar Cámara Frontal/Posterior',
+              icon: const Icon(Icons.cameraswitch_outlined, color: Colors.white),
+              onPressed: _switchCamera,
+            ),
+          ),
+          Container(
+            margin: const EdgeInsets.only(right: 12),
+            decoration: BoxDecoration(
+              color: AppTheme.text.withValues(alpha: 0.5),
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              tooltip: 'Cargar de Galería',
+              icon: const Icon(Icons.photo_library_outlined, color: Colors.white),
+              onPressed: _pickFromGallery,
+            ),
+          ),
+        ],
       ),
       body: Stack(
         children: [
-          CameraPreview(_cameraController!),
-          // Envolver los painters con RepaintBoundary para optimizar el renderizado
-          Positioned.fill(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              child: isFaceStep
-                  ? RepaintBoundary(
-                      key: const ValueKey('face_painter_boundary'),
-                      child: SizedBox.expand(
-                        child: CustomPaint(
-                          key: const ValueKey('face_painter'),
-                          painter: FaceOverlayPainter(
-                            detectedFace: _detectedFace,
-                            isValid: _isFaceValid,
-                            quality: _qualityScore,
-                            screenSize: screenSize,
-                          ),
-                        ),
-                      ),
-                    )
-                  : RepaintBoundary(
-                      key: const ValueKey('hands_painter_boundary'),
-                      child: SizedBox.expand(
-                        child: CustomPaint(
-                          key: const ValueKey('hands_painter'),
-                          painter: HandOverlayPainter(
-                            isValid: _isHandValid,
-                            quality: _qualityScore,
-                            screenSize: screenSize,
-                          ),
-                        ),
-                      ),
-                    ),
+          // VISTA 1: Cámara en Vivo (PANTALLA COMPLETA 100% FULL SCREEN)
+          if (isFaceStep || isHandsStep) Positioned.fill(child: _buildFullScreenCamera()),
+
+          // VISTA 2: Confirmación de vista previa de foto capturada (Full Screen)
+          if (isFaceConfirm && _faceImage != null)
+            Positioned.fill(
+              child: Image.memory(
+                _faceImage!,
+                fit: BoxFit.cover,
+              ),
             ),
-          ),
+
+          if (isHandsConfirm && _handsImage != null)
+            Positioned.fill(
+              child: Image.memory(
+                _handsImage!,
+                fit: BoxFit.cover,
+              ),
+            ),
+
+          // OVERLAY DE CARGA FLUIDO AL CAMBIAR LENTE
+          if (_isSwitchingCamera)
+            Positioned.fill(
+              child: Container(
+                color: Colors.black87,
+                child: const Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircularProgressIndicator(color: AppTheme.primary),
+                      SizedBox(height: 16),
+                      Text(
+                        'Girando lente de la cámara...',
+                        style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+          // OVERLAY VIRTUAL LÁSER CON PALETA GLOWAPP (solo activo durante la cámara)
+          if ((isFaceStep || isHandsStep) && !_isSwitchingCamera)
+            Positioned.fill(
+              child: AnimatedBuilder(
+                animation: _laserAnimation,
+                builder: (context, child) {
+                  return AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    child: isFaceStep
+                        ? RepaintBoundary(
+                            key: const ValueKey('face_painter_boundary'),
+                            child: SizedBox.expand(
+                              child: CustomPaint(
+                                key: const ValueKey('face_painter'),
+                                painter: FaceOverlayPainter(
+                                  detectedFace: _detectedFace,
+                                  isValid: _isFaceValid,
+                                  quality: _qualityScore,
+                                  screenSize: screenSize,
+                                  scanLineProgress: _laserAnimation.value,
+                                ),
+                              ),
+                            ),
+                          )
+                        : RepaintBoundary(
+                            key: const ValueKey('hands_painter_boundary'),
+                            child: SizedBox.expand(
+                              child: CustomPaint(
+                                key: const ValueKey('hands_painter'),
+                                painter: HandOverlayPainter(
+                                  isValid: _isHandValid,
+                                  quality: _qualityScore,
+                                  screenSize: screenSize,
+                                  scanLineProgress: _laserAnimation.value,
+                                ),
+                              ),
+                            ),
+                          ),
+                  );
+                },
+              ),
+            ),
+
+          // CARD INFORMATIVA DE INSTRUCCIONES CON ESTILO GLOWAPP
           Positioned(
             bottom: 120,
             left: 24,
@@ -563,19 +867,23 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.7),
-                borderRadius: BorderRadius.circular(12),
+                color: AppTheme.text.withValues(alpha: 0.85),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: AppTheme.primary.withValues(alpha: 0.6),
+                  width: 1.2,
+                ),
               ),
               child: Column(
                 children: [
-                  QualityIndicator(quality: _qualityScore),
+                  if (isFaceStep || isHandsStep) QualityIndicator(quality: _qualityScore),
                   const SizedBox(height: 8),
                   Text(
                     _instruction,
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -583,7 +891,7 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
                     const SizedBox(height: 4),
                     Text(
                       _errorMessage!,
-                      style: const TextStyle(color: Colors.redAccent, fontSize: 14),
+                      style: const TextStyle(color: AppTheme.errorBg, fontSize: 13),
                       textAlign: TextAlign.center,
                     ),
                   ],
@@ -591,18 +899,104 @@ class _CaptureScreenState extends State<CaptureScreen> with WidgetsBindingObserv
               ),
             ),
           ),
+
+          // BOTONES INFERIORES DE ACCIÓN DE TOMA MANUAL CON PALETA GLOWAPP (TERRACOTA / ORO ROSA)
           Positioned(
-            bottom: 40,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: FloatingActionButton(
-                onPressed: (isFaceStep && _isFaceValid) || (!isFaceStep && _isHandValid)
-                    ? (isFaceStep ? _captureFace : _captureHands)
-                    : null,
-                backgroundColor: isValid ? Colors.purple : Colors.grey,
-                child: const Icon(Icons.camera_alt, color: Colors.white),
-              ),
+            bottom: 36,
+            left: 24,
+            right: 24,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // CASO 1: Toma de foto manual (Cámara activa para Rostro o Manos)
+                if (isFaceStep || isHandsStep)
+                  FloatingActionButton.large(
+                    onPressed: isFaceStep ? _captureFace : _captureHands,
+                    backgroundColor: AppTheme.primary,
+                    elevation: 6,
+                    child: const Icon(
+                      Icons.camera,
+                      size: 36,
+                      color: Colors.white,
+                    ),
+                  ),
+
+                // CASO 2: Confirmación de Foto 1 (Rostro)
+                if (isFaceConfirm) ...[
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _retakeFace,
+                      icon: const Icon(Icons.refresh, color: Colors.white),
+                      label: const Text('Repetir', style: TextStyle(color: Colors.white)),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.white54),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    flex: 2,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: AppTheme.terracottaMatteGradient,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: ElevatedButton.icon(
+                        onPressed: _proceedToHandsStep,
+                        icon: const Icon(Icons.arrow_forward, color: Colors.white),
+                        label: const Text(
+                          'Siguiente: Manos ➔',
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+
+                // CASO 3: Confirmación de Foto 2 (Manos)
+                if (isHandsConfirm) ...[
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _retakeHands,
+                      icon: const Icon(Icons.refresh, color: Colors.white),
+                      label: const Text('Repetir', style: TextStyle(color: Colors.white)),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.white54),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    flex: 2,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: AppTheme.roseGoldSatinGradient,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: ElevatedButton.icon(
+                        onPressed: _finishAndStartProcessing,
+                        icon: const Icon(Icons.rocket_launch, color: Colors.white),
+                        label: const Text(
+                          'Finalizar e Iniciar ➔',
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
         ],
