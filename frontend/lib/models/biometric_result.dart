@@ -5,6 +5,7 @@ class BiometricResult {
   final FaceScores? face;
   final HandsDiagnosis? hands;
   final String? recommendation;
+  final Map<String, dynamic>? vtoTones;
   final List<Product>? products;
 
   BiometricResult({
@@ -12,6 +13,7 @@ class BiometricResult {
     this.face,
     this.hands,
     this.recommendation,
+    this.vtoTones,
     this.products,
   });
 
@@ -25,6 +27,7 @@ class BiometricResult {
       face: data['face'] is Map<String, dynamic> ? FaceScores.fromJson(data['face']) : null,
       hands: data['hands'] is Map<String, dynamic> ? HandsDiagnosis.fromJson(data['hands']) : null,
       recommendation: (data['recommendation'] ?? json['recommendation'])?.toString(),
+      vtoTones: data['vtoTones'] is Map<String, dynamic> ? data['vtoTones'] as Map<String, dynamic> : null,
       products: data['products'] is List
           ? (data['products'] as List).whereType<Map<String, dynamic>>().map((p) => Product.fromJson(p)).toList()
           : null,

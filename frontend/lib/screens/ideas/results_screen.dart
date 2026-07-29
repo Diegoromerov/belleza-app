@@ -4,6 +4,8 @@ import '../../models/biometric_result.dart';
 import '../../services/biometric_service.dart';
 import '../../shared/theme.dart';
 import 'product_scanner_screen.dart';
+import 'vto_live_screen.dart';
+import 'nail_vto_screen.dart';
 import 'widgets/score_card.dart';
 import 'widgets/recommendation_card.dart';
 import 'widgets/product_card.dart';
@@ -151,6 +153,52 @@ class _ResultsScreenState extends State<ResultsScreen> {
                     if (face != null) ...[
                       ColorPaletteWidget(
                         hexColor: _getHexColorFromSubtono(face.subtono),
+                      ),
+                      const SizedBox(height: 12),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => VtoLiveScreen(biometricResult: widget.result),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.auto_awesome, color: Colors.white),
+                        label: const Text(
+                          '💄 Probar Maquillaje en VTO Live (DeepSeek IA)',
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _PassportColors.primary,
+                          minimumSize: const Size(double.infinity, 48),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => NailVtoScreen(biometricResult: widget.result),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.back_hand, color: _PassportColors.primary),
+                        label: const Text(
+                          '💅 Probar Manicura & Uñas en VTO Live',
+                          style: TextStyle(color: _PassportColors.textAccent, fontWeight: FontWeight.bold),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size(double.infinity, 48),
+                          side: const BorderSide(color: _PassportColors.primary),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
                       ),
                       const SizedBox(height: 20),
                     ],

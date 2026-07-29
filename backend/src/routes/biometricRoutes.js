@@ -59,6 +59,7 @@ router.post('/analyze', authMiddleware, async (req, res) => {
         hands: result.hands,
         recommendation: result.recommendation,
         keyIngredients: result.keyIngredients,
+        vtoTones: result.vtoTones,
       },
       createdAt: result.createdAt,
     });
