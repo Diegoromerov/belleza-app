@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:vibration/vibration.dart';
 import 'package:glowapp_frontend/core/theme/app_theme.dart';
 import 'package:glowapp_frontend/providers/training_provider.dart';
@@ -67,7 +66,7 @@ class _NBackScreenState extends ConsumerState<NBackScreen> {
                   icon: const Icon(Icons.check),
                   label: const Text('Coincide'),
                   style: ElevatedButton.styleFrom(
-                    primary: GlowTheme.accent,
+                    backgroundColor: GlowTheme.accent,
                     padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
                   ),
                 ),

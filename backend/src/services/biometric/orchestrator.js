@@ -1,5 +1,6 @@
 const youcamClient = require('./youcam.client');
 const geminiClient = require('./gemini.client');
+const deepseekClient = require('./deepseek.client');
 const profileService = require('./profile.service');
 const openUV = require('../openUV');
 const logger = require('../../config/logger');
@@ -47,9 +48,9 @@ class BiometricOrchestrator {
     // Procesar resultado de manos (con fallback)
     if (handsResult.status === 'fulfilled') {
       handsDiagnosis = handsResult.value;
-      logger.info('Análisis Gemini Vision de manos finalizado con éxito', { userId: parsedUserId });
+      logger.info('Análisis Gemini 3.1 Vision de manos finalizado con éxito', { userId: parsedUserId });
     } else {
-      logger.warn('Gemini Vision falló, aplicando fallback local:', { userId: parsedUserId, error: handsResult.reason?.message });
+      logger.warn('Gemini 3.1 Vision falló, aplicando fallback local:', { userId: parsedUserId, error: handsResult.reason?.message });
       handsDiagnosis = {
         manchasSolares: 'leve',
         sequedad: 'moderada',
@@ -67,14 +68,26 @@ class BiometricOrchestrator {
       logger.warn('OpenUV falló:', { userId: parsedUserId, error: uvResult.reason?.message });
     }
 
-    // 4. Generar recomendación con Gemini Text
+    // 4. Generar recomendación con DeepSeek V4 Flash (con fallback a Gemini 3.1)
     let recommendation;
     try {
-      recommendation = await geminiClient.generateRecommendation(faceScores, handsDiagnosis);
-      logger.info('Recomendación de Gemini Text generada con éxito', { userId: parsedUserId });
+      recommendation = await deepseekClient.generateRecommendation(faceScores, handsDiagnosis);
+      logger.info('Recomendación de DeepSeek V4 Flash generada con éxito', { userId: parsedUserId });
     } catch (error) {
-      logger.warn('Gemini Text falló, aplicando fallback local:', { userId: parsedUserId, error: error.message });
-      recommendation = geminiClient.getFallbackRecommendation();
+      logger.warn('DeepSeek V4 Flash falló, intentando Gemini 3.1:', { userId: parsedUserId, error: error.message });
+      try {
+        recommendation = await geminiClient.generateRecommendation(faceScores, handsDiagnosis);
+      } catch (err) {
+        recommendation = deepseekClient.getFallbackRecommendation();
+      }
+    }
+
+    // 5. Obtener tonos VTO recomendados según subtono biométrico (DeepSeek V4 Flash)
+    let vtoTones = null;
+    try {
+      vtoTones = await deepseekClient.getVtoToneMatching(faceScores.subtono);
+    } catch (e) {
+      vtoTones = deepseekClient.getFallbackVtoTones(faceScores.subtono);
     }
 
     if (uvData) {
@@ -103,6 +116,7 @@ class BiometricOrchestrator {
       hands: handsDiagnosis,
       recommendation,
       keyIngredients,
+      vtoTones,
       createdAt: profile.createdAt,
     };
   }

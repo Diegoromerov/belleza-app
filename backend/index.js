@@ -12,6 +12,7 @@ require('dotenv').config();
 const authRoutes = require('./src/routes/authRoutes');
 const biometricConsentRoutes = require('./src/routes/biometricConsentRoutes');
 const biometricRoutes = require('./src/routes/biometricRoutes');
+const vtoRoutes = require('./src/routes/vtoRoutes');
 const colorRoutes = require('./src/routes/colorRoutes');
 const paymentRoutes = require('./src/routes/paymentRoutes');
 const bookingRoutes = require('./src/routes/bookingRoutes');
@@ -255,6 +256,7 @@ app.use('/api', ticketRoutes);
 app.use('/api', disputeRoutes);
 app.use('/api/consent', biometricConsentRoutes);
 app.use('/api/biometric', biometricRoutes);
+app.use('/api/vto', vtoRoutes);
 app.use('/api/color', colorRoutes);
 app.use('/api/academy', academyRoutes);
 app.use('/api/admin/academy', academyAdminRoutes);
@@ -377,10 +379,13 @@ app.get('/api/debug-db', debugRouteMiddleware, async (req, res) => {
 // 🔹 LISTA DE PRESTADORES Y DETALLE (Refactorizados a providerRoutes.js y providerController.js)
 
 // ==========================================
-// RUTAS DE AUTENTICACIÓN
+// RUTAS DE NIA BEAUTY & AURA IA
 // ==========================================
+const niaBeautyRoutes = require('./src/routes/niaBeautyRoutes');
+
 app.use('/api/auth', authRoutes);
 app.use('/api/designs', designsRoutes);
+app.use('/api/nia-beauty', niaBeautyRoutes);
 
 // ==========================================
 // RUTAS PROTEGIDAS (Requieren JWT)
