@@ -34,12 +34,6 @@ void main() {
   });
 }
 
-import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mockito/mockito.dart';
-import 'package:glowapp_frontend/models/user.dart';
-import 'package:glowapp_frontend/providers/auth_provider.dart';
-import 'package:glowapp_frontend/services/api_service.dart';
 
 class MockApiService extends Mock implements ApiService {}
 
@@ -69,12 +63,6 @@ void main() {
   });
 }
 
-import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mockito/mockito.dart';
-import 'package:glowapp_frontend/models/user.dart';
-import 'package:glowapp_frontend/providers/auth_provider.dart';
-import 'package:glowapp_frontend/services/api_service.dart';
 
 class MockApiService extends Mock implements ApiService {}
 

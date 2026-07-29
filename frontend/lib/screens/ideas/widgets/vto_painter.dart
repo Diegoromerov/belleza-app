@@ -1,4 +1,5 @@
 // frontend/lib/screens/ideas/widgets/vto_painter.dart
+import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';

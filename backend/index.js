@@ -379,10 +379,13 @@ app.get('/api/debug-db', debugRouteMiddleware, async (req, res) => {
 // 🔹 LISTA DE PRESTADORES Y DETALLE (Refactorizados a providerRoutes.js y providerController.js)
 
 // ==========================================
-// RUTAS DE AUTENTICACIÓN
+// RUTAS DE NIA BEAUTY & AURA IA
 // ==========================================
+const niaBeautyRoutes = require('./src/routes/niaBeautyRoutes');
+
 app.use('/api/auth', authRoutes);
 app.use('/api/designs', designsRoutes);
+app.use('/api/nia-beauty', niaBeautyRoutes);
 
 // ==========================================
 // RUTAS PROTEGIDAS (Requieren JWT)
