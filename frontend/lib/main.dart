@@ -1343,15 +1343,15 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                   shape: BoxShape.circle,
                   gradient: const LinearGradient(
                     colors: [
-                      Color(0xFFF4EFEA), // LuxeColors.nude100
-                      Color(0xFFC5A052), // LuxeColors.gold871
+                      Color(0xFFE8B6AD), // Oro Rosa Claro Satinado (coincide con el logo)
+                      Color(0xFFB57E74), // Oro Rosa Profundo Satinado
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFC5A052).withOpacity(0.4),
+                      color: const Color(0xFFB57E74).withOpacity(0.4),
                       blurRadius: 10,
                       spreadRadius: 2,
                       offset: const Offset(0, 4),
