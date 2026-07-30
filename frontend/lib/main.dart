@@ -1285,7 +1285,8 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
 
   Widget _buildNavItem({
     Key? key,
-    required IconData icon,
+    IconData? icon,
+    String? assetPath,
     required String label,
     required VoidCallback onTap,
     Color? color,
@@ -1302,8 +1303,15 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: resolvedColor, size: 20),
-              SizedBox(height: 3),
+              assetPath != null
+                  ? Image.asset(
+                      assetPath,
+                      width: 22,
+                      height: 22,
+                      fit: BoxFit.contain,
+                    )
+                  : Icon(icon ?? Icons.circle, color: resolvedColor, size: 20),
+              const SizedBox(height: 3),
               Text(
                 label,
                 textAlign: TextAlign.center,
@@ -1612,16 +1620,16 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
               ),
               child: Row(
                 children: [
-                   // Botón 1: Citas
+                  // Botón 1: Citas (Icono 3D Calendario Luxe)
                   _buildNavItem(
-                    icon: Icons.calendar_today_outlined,
+                    assetPath: 'assets/images/nav_citas_icon.png',
                     label: 'Citas',
                     onTap: () => _checkAuthAndNavigate('/client-bookings'),
                   ),
 
-                  // Botón 2: GlowShop
+                  // Botón 2: GlowShop (Icono 3D Bolso Luxe)
                   _buildProminentCenterNavItem(
-                    icon: Icons.shopping_bag_outlined,
+                    assetPath: 'assets/images/nav_glowshop_icon.png',
                     label: 'GlowShop',
                     onTap: () => _checkAuthAndNavigate('/store'),
                   ),
