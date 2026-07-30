@@ -1620,7 +1620,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
               ),
               child: Row(
                 children: [
-                  // Botón 1: Citas (Icono 3D Calendario Luxe - Agrandado a 44px)
+                  // Botón 1: Citas -> nav_citas_icon.png (Calendario 3D "19")
                   _buildNavItem(
                     assetPath: 'assets/images/nav_citas_icon.png',
                     assetSize: 44,
@@ -1628,7 +1628,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                     onTap: () => _checkAuthAndNavigate('/client-bookings'),
                   ),
 
-                  // Botón 2: GlowShop (Icono 3D Bolso Luxe - Fondo Blanco con Borde Oro Champán)
+                  // Botón 2: GlowShop -> nav_glowshop_icon.png (Bolso 3D Nude)
                   _buildProminentCenterNavItem(
                     assetPath: 'assets/images/nav_glowshop_icon.png',
                     gradientColors: const [
@@ -1641,19 +1641,19 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                     onTap: () => _checkAuthAndNavigate('/store'),
                   ),
 
-                  // Botón 3: Glow IA+ (Avatar de Malla 3D Biométrica)
+                  // Botón 3: Glow IA+ -> glow_ia_mesh_avatar.jpg (Rostro 3D Malla)
                   _buildProminentCenterNavItem(
                     assetPath: 'assets/images/glow_ia_mesh_avatar.jpg',
                     gradientColors: const [
-                      Color(0xFFF3D5C8), // Nude Cálido Satinado (coincide con la imagen 3D)
-                      Color(0xFFD4AF37), // Oro Champán
+                      Color(0xFFF3D5C8),
+                      Color(0xFFD4AF37),
                     ],
                     shadowColor: const Color(0xFFD4AF37),
                     label: 'Glow IA+',
                     onTap: () => _checkAuthAndNavigate('/ideas'),
                   ),
 
-                  // Botón 4: Perfil Concierge (Escudo 3D Luxe)
+                  // Botón 4: Perfil -> nav_perfil_icon.png (Escudo/Silueta 3D)
                   _buildNavItem(
                     assetPath: 'assets/images/nav_perfil_icon.png',
                     assetSize: 44,
