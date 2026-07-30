@@ -6,12 +6,12 @@ class AppTheme {
   static Future<void> loadThemePreference() async {}
   static Future<void> toggleTheme() async {}
 
-  // Colores principales de la marca (GlowApp) - Fijos como constantes de compilación
-  static const Color primary = Color(0xFFC89D93);
-  static const Color accent = Color(0xFFC89D93);
-  static const Color text = Color(0xFF2D2C2A);
-  static const Color background = Color(0xFFFDFBF7);
-  static const Color surface = Color(0xFFF7F4EF);
+  // Colores principales de la marca (GlowApp - Design System BELLEZA LUXE)
+  static const Color primary = Color(0xFFC5A052); // LuxeColors.gold871
+  static const Color accent = Color(0xFFC5A052);
+  static const Color text = Color(0xFF1C1917); // LuxeColors.nude900
+  static const Color background = Color(0xFFFAF8F5); // LuxeColors.nude50
+  static const Color surface = Color(0xFFF4EFEA); // LuxeColors.nude100
 
   // Tokens de diseño estilo Editorial Pasaporte
   static const Color passportPrimary = Color(0xFFD85A30);

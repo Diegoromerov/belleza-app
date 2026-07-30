@@ -138,7 +138,7 @@ class BeautyApp extends StatelessWidget {
                     side: BorderSide(
                       color: isMen
                           ? MensTheme.champagneGold.withValues(alpha: 0.2)
-                          : const Color(0xFFF3EAE8),
+                          : const Color(0xFFE8E0D5), // LuxeColors.nude200
                       width: 1,
                     ),
                   ),
