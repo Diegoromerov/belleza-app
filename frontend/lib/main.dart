@@ -1287,6 +1287,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
     Key? key,
     IconData? icon,
     String? assetPath,
+    double? assetSize,
     required String label,
     required VoidCallback onTap,
     Color? color,
@@ -1306,8 +1307,8 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
               assetPath != null
                   ? Image.asset(
                       assetPath,
-                      width: 22,
-                      height: 22,
+                      width: assetSize ?? 28,
+                      height: assetSize ?? 28,
                       fit: BoxFit.contain,
                     )
                   : Icon(icon ?? Icons.circle, color: resolvedColor, size: 20),
@@ -1620,16 +1621,22 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
               ),
               child: Row(
                 children: [
-                  // Botón 1: Citas (Icono 3D Calendario Luxe)
+                  // Botón 1: Citas (Icono 3D Calendario Luxe - Agrandado)
                   _buildNavItem(
                     assetPath: 'assets/images/nav_citas_icon.png',
+                    assetSize: 30,
                     label: 'Citas',
                     onTap: () => _checkAuthAndNavigate('/client-bookings'),
                   ),
 
-                  // Botón 2: GlowShop (Icono 3D Bolso Luxe)
+                  // Botón 2: GlowShop (Icono 3D Bolso Luxe - Fondo Blanco)
                   _buildProminentCenterNavItem(
                     assetPath: 'assets/images/nav_glowshop_icon.png',
+                    gradientColors: const [
+                      Colors.white,
+                      Colors.white,
+                    ],
+                    shadowColor: Colors.black12,
                     label: 'GlowShop',
                     onTap: () => _checkAuthAndNavigate('/store'),
                   ),
