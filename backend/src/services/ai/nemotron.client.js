@@ -12,7 +12,7 @@ async function callNemotronOrchestrator(userPrompt) {
   }
 
   const payload = {
-    model: "nvidia/nemotron-4-340b-instruct", // ⚠️ REEMPLAZAR CON EL ID EXACTO DE HERMES AGENT-NEMOTRON 3 550 ULTRA EN TU DASHBOARD
+    model: "nvidia/nvidia/nemotron-3-ultra-550b-a55b", // ⚠️ REEMPLAZAR CON EL ID EXACTO DE HERMES AGENT-NEMOTRON 3 550 ULTRA EN TU DASHBOARD
     messages: [
       {
         role: "system",
