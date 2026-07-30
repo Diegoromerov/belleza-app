@@ -1380,12 +1380,9 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                 ),
                 child: ClipOval(
                   child: assetPath != null
-                      ? Padding(
-                          padding: const EdgeInsets.all(4.0),
-                          child: Image.asset(
-                            assetPath,
-                            fit: BoxFit.cover,
-                          ),
+                      ? Image.asset(
+                          assetPath,
+                          fit: BoxFit.cover,
                         )
                       : Icon(
                           icon ?? Icons.auto_awesome,
