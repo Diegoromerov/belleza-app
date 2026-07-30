@@ -1325,9 +1325,17 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
   Widget _buildProminentCenterNavItem({
     IconData? icon,
     String? assetPath,
+    List<Color>? gradientColors,
+    Color? shadowColor,
     required String label,
     required VoidCallback onTap,
   }) {
+    final colors = gradientColors ?? const [
+      Color(0xFFF4EFEA), // LuxeColors.nude100 por defecto
+      Color(0xFFC5A052), // LuxeColors.gold871 por defecto
+    ];
+    final shadow = shadowColor ?? const Color(0xFFC5A052);
+
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
@@ -1341,17 +1349,14 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                 height: 52,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFFE8B6AD), // Oro Rosa Claro Satinado (coincide con el logo)
-                      Color(0xFFB57E74), // Oro Rosa Profundo Satinado
-                    ],
+                  gradient: LinearGradient(
+                    colors: colors,
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFB57E74).withOpacity(0.4),
+                      color: shadow.withOpacity(0.4),
                       blurRadius: 10,
                       spreadRadius: 2,
                       offset: const Offset(0, 4),
@@ -1621,9 +1626,14 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                     onTap: () => _checkAuthAndNavigate('/store'),
                   ),
 
-                  // Botón 3: Glow IA+ (Antes Ideas, con emblema del rostro)
+                  // Botón 3: Glow IA+ (Exclusivo con tono rosa satinado)
                   _buildProminentCenterNavItem(
                     assetPath: 'assets/images/aura_3d_emblem.jpg',
+                    gradientColors: const [
+                      Color(0xFFE8B6AD), // Oro Rosa Claro Satinado
+                      Color(0xFFB57E74), // Oro Rosa Profundo Satinado
+                    ],
+                    shadowColor: const Color(0xFFB57E74),
                     label: 'Glow IA+',
                     onTap: () => _checkAuthAndNavigate('/ideas'),
                   ),
