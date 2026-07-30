@@ -1626,14 +1626,14 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                     onTap: () => _checkAuthAndNavigate('/store'),
                   ),
 
-                  // Botón 3: Glow IA+ (Exclusivo con tono rosa satinado)
+                  // Botón 3: Glow IA+ (Avatar de Malla 3D Biométrica)
                   _buildProminentCenterNavItem(
-                    assetPath: 'assets/images/aura_3d_emblem.jpg',
+                    assetPath: 'assets/images/glow_ia_mesh_avatar.jpg',
                     gradientColors: const [
-                      Color(0xFFE8B6AD), // Oro Rosa Claro Satinado
-                      Color(0xFFB57E74), // Oro Rosa Profundo Satinado
+                      Color(0xFFF3D5C8), // Nude Cálido Satinado (coincide con la imagen 3D)
+                      Color(0xFFD4AF37), // Oro Champán
                     ],
-                    shadowColor: const Color(0xFFB57E74),
+                    shadowColor: const Color(0xFFD4AF37),
                     label: 'Glow IA+',
                     onTap: () => _checkAuthAndNavigate('/ideas'),
                   ),
