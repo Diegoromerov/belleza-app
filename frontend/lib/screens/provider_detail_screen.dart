@@ -80,9 +80,9 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
       'maquillaje': const Color(0xFFE8A2B6),
       'spa': const Color(0xFF4A9B8E),
       'barbería': const Color(0xFF2F4F4F),
-      'belleza': const Color(0xFFC89D93),
+      'belleza': const Color(0xFFC5A052),
     };
-    return specialtyColors[specialty] ?? const Color(0xFFC89D93);
+    return specialtyColors[specialty] ?? const Color(0xFFC5A052);
   }
 
   IconData _getSpecialtyIcon(String specialty) {
@@ -124,7 +124,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
     if (isLoading) {
       return const Scaffold(
           body: Center(
-              child: CircularProgressIndicator(color: Color(0xFFC89D93))));
+              child: CircularProgressIndicator(color: Color(0xFFC5A052))));
     }
     if (details == null) {
       return Scaffold(
