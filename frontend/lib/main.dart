@@ -31,6 +31,7 @@ import 'screens/provider_portfolio_screen.dart';
 import 'screens/chat_list_screen.dart';
 import 'screens/chat_screen.dart';
 import 'screens/client_profile_screen.dart';
+import 'screens/profile/user_profile.dart';
 import 'screens/provider_profile_screen.dart';
 import 'screens/booking_tracking_screen.dart';
 import 'screens/provider_route_screen.dart';
@@ -163,7 +164,7 @@ class BeautyApp extends StatelessWidget {
                 '/chat': (_) => const ChatListScreen(),
                 '/onboarding': (_) => const OnboardingScreen(),
                 '/verification-pending': (_) => const VerificationPendingScreen(),
-                '/profile': (_) => const ClientProfileScreen(),
+                '/profile': (_) => const UserProfileScreen(),
                 '/ideas': (_) => const BiometricWelcomeScreen(),
                 '/biometric-consent': (_) => const BiometricConsentScreen(),
                 '/biometric-welcome': (_) => const BiometricWelcomeScreen(),
