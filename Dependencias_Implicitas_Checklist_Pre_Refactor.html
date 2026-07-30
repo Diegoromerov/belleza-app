@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BELLEZA APP — DEPENDENCIAS IMPLÍCITAS Y CHECKLIST PRE-REFACTORIZACIÓN</title>
+  
+  <!-- Google Fonts: Cormorant Garamond (Serif Luxe) + Inter (Sans precision) + Fira Code -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- Mermaid JS para renderizar los diagramas -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'neutral',
+      themeVariables: {
+        primaryColor: '#F9F6F0',
+        primaryBorderColor: '#C5A058',
+        lineColor: '#555555',
+        fontFamily: 'Inter, sans-serif'
+      }
+    });
+  </script>
+
+  <style>
+    :root {
+      --primary-gold: #C5A058;
+      --gold-dark: #8C6F34;
+      --gold-light: #F4EFE6;
+      --text-main: #1C1C1C;
+      --text-muted: #555555;
+      --bg-card: #FAF8F5;
+      --border-color: #E5DED0;
+      
+      --danger-bg: #FDF2F2;
+      --danger-border: #E57373;
+      --danger-text: #C62828;
+
+      --success-bg: #F1F8E9;
+      --success-border: #81C784;
+      --success-text: #2E7D32;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      color: var(--text-main);
+      background-color: #FFFFFF;
+      line-height: 1.6;
+      font-size: 13.5px;
+      padding: 2.5rem;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    /* BARRA FLOTANTE DE IMPRESIÓN */
+    .print-actions {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      display: flex;
+      gap: 12px;
+      z-index: 1000;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 8px 16px;
+      border-radius: 30px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-print {
+      background: var(--primary-gold);
+      color: #FFF;
+      border: none;
+      padding: 8px 20px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 10px rgba(197, 160, 88, 0.3);
+    }
+
+    .btn-print:hover {
+      background: var(--gold-dark);
+      transform: translateY(-1px);
+    }
+
+    /* ENCABEZADO "HAUTE COUTURE" */
+    .header-branding {
+      text-align: center;
+      border-bottom: 2px solid var(--primary-gold);
+      padding-bottom: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .brand-sub {
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      color: var(--primary-gold);
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    h1.doc-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: #000;
+      line-height: 1.2;
+      margin-bottom: 8px;
+    }
+
+    .doc-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* SECCIONES Y TIPOGRAFÍA */
+    h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: #000;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 4px;
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    h2::before {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 18px;
+      background-color: var(--primary-gold);
+    }
+
+    h3 {
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--gold-dark);
+      margin-top: 1.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    p {
+      margin-bottom: 1rem;
+      color: #2D2D2D;
+    }
+
+    strong {
+      color: #000;
+      font-weight: 600;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid var(--border-color);
+      margin: 2rem 0;
+    }
+
+    /* TABLAS HAUTE COUTURE */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      font-size: 12px;
+      background: #FFFFFF;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    th {
+      background-color: var(--gold-light);
+      color: var(--gold-dark);
+      font-family: 'Inter', sans-serif;
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 10.5px;
+      letter-spacing: 0.5px;
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    td {
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: top;
+    }
+
+    tr:nth-child(even) {
+      background-color: #FAF9F6;
+    }
+
+    /* BADGES Y ETIQUETAS */
+    .badge-critica {
+      display: inline-block;
+      background-color: var(--danger-bg);
+      color: var(--danger-text);
+      border: 1px solid var(--danger-border);
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 11px;
+    }
+
+    .badge-alta {
+      display: inline-block;
+      background-color: #FFF8E1;
+      color: #F57F17;
+      border: 1px solid #FFE082;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 11px;
+    }
+
+    .badge-media {
+      display: inline-block;
+      background-color: #E1F5FE;
+      color: #0288D1;
+      border: 1px solid #81D4FA;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 11px;
+    }
+
+    .badge-baja {
+      display: inline-block;
+      background-color: #F3E5F5;
+      color: #7B1FA2;
+      border: 1px solid #CE93D8;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 11px;
+    }
+
+    /* CODE BLOCKS & PRE */
+    code {
+      font-family: 'Fira Code', monospace;
+      background-color: #F4F1EA;
+      color: #8C2424;
+      padding: 2px 5px;
+      border-radius: 3px;
+      font-size: 12px;
+    }
+
+    pre {
+      background-color: #1E1E1E;
+      color: #D4D4D4;
+      padding: 1rem;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 1rem 0;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    pre code {
+      background-color: transparent;
+      color: inherit;
+      padding: 0;
+    }
+
+    ul, ol {
+      margin-left: 1.2rem;
+      margin-bottom: 1rem;
+    }
+
+    li {
+      margin-bottom: 4px;
+    }
+
+    /* MERMAID DIAGRAM CONTAINER */
+    .mermaid-container {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+      text-align: center;
+    }
+
+    /* ESTILOS DE IMPRESIÓN (PDF PDF/A READY) */
+    @media print {
+      body {
+        padding: 0;
+        max-width: 100%;
+        font-size: 10.5pt;
+        line-height: 1.45;
+        color: #000;
+      }
+
+      .print-actions {
+        display: none !important;
+      }
+
+      h2 {
+        page-break-after: avoid;
+        margin-top: 1.5rem;
+      }
+
+      table, tr, td, th, pre {
+        page-break-inside: avoid;
+      }
+
+      .mermaid-container {
+        page-break-inside: avoid;
+      }
+
+      @page {
+        margin: 20mm 15mm 20mm 15mm;
+        @bottom-right {
+          content: counter(page);
+        }
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Botón Flotante para Generar PDF -->
+  <div class="print-actions">
+    <button class="btn-print" onclick="window.print()">🖨️ Guardar / Imprimir PDF</button>
+  </div>
+
+  <!-- Encabezado del Documento -->
+  <header class="header-branding">
+    <div class="brand-sub">Belleza App — Análisis de Código & Seguridad</div>
+    <h1 class="doc-title">Dependencias Implícitas & Checklist Pre-Refactorización</h1>
+    <div class="doc-meta">Auditoría Técnica y Deuda Crítica • Fecha: 2026-07-30</div>
+  </header>
+
+  <!-- Contenido Principal -->
+  <section>
+    <h2>1. Resumen Ejecutivo</h2>
+    <p>Este documento presenta el <strong>análisis exhaustivo de dependencias implícitas</strong> detectadas en el código del módulo biométrico de Belleza App (<code>niaBeautyRoutes.js</code>, <code>biometricConsentRoutes.js</code>, <code>vtoRoutes.js</code>, middlewares globales, configuración Express/PostgreSQL). Cada dependencia se evalúa por <strong>tipo, impacto si falla, estado actual y acción requerida</strong>.</p>
+    
+    <p>Adicionalmente, se incluye un <strong>checklist de validación pre-refactorización</strong> con 12 puntos obligatorios que deben resolverse antes de cualquier refactor mayor. El análisis revela <strong>6 hallazgos CRÍTICOS</strong>, <strong>5 de ALTO impacto</strong> y <strong>3 de MEDIO/BAJO</strong>.</p>
+
+    <p><strong>Objetivo:</strong> Proporcionar una hoja de ruta técnica accionable para eliminar deuda técnica crítica, garantizar integridad de datos, cumplimiento legal (GDPR/Ley 1581) y estabilidad operativa antes de la refactorización "Haute Couture".</p>
+  </section>
+
+  <hr>
+
+  <section>
+    <h2>2. Arquitectura General — Mapa de Dependencias Críticas</h2>
+    <div class="mermaid-container">
+      <pre class="mermaid">
+flowchart TD
+    subgraph Routes["Capa Routes (Endpoints)"]
+        NB["niaBeautyRoutes.js<br>POST /scan"]
+        BC["biometricConsentRoutes.js<br>GET/POST/PATCH /consent"]
+        VT["vtoRoutes.js<br>GET/POST /vto/*"]
+    end
+
+    subgraph Services["Capa Servicios (Lógica)"]
+        AI["aiOrchestrator<br>processBiometricScan()"]
+        VTO["vtoService<br>getCatalog, createNailJob"]
+    end
+
+    subgraph Infra["Infraestructura / Middleware"]
+        AUTH["authMiddleware<br>JWT -> req.user.id"]
+        PG[(pool: PostgreSQL<br>config/db.js)]
+        EXP["express.json()<br>body parser"]
+    end
+
+    subgraph External["Servicios Externos"]
+        PY["Python Worker<br>YouCam + Gemini + DeepSeek"]
+        YC["YouCam AR<br>Catálogo + Nail Try-On"]
+    end
+
+    subgraph Data["Esquema BD"]
+        UB[(user_biometrics)]
+        BC_T[(biometric_consents)]
+    end
+
+    NB -->|Contrato implícito| AI
+    NB -->|Pool PG opaco| PG
+    NB -->|Coerción insegura| UB
+    NB -->|INSERT sin transacción| UB
+    BC -->|Auth guard ausente| AUTH
+    BC -->|UPDATE+INSERT sin transacción| BC_T
+    BC -->|IP spoofeable| BC_T
+    VT -->|Auth bypass hardcoded 1| VTO
+    VT -->|colorHex sin validación| VTO
+    EXP -->|Límite 100kb default| NB
+
+    AI --> PY
+    VTO --> YC
+
+    classDef crit fill:#FDF2F2,stroke:#E57373,stroke-width:2px;
+    classDef high fill:#FFF8E1,stroke:#FFE082,stroke-width:2px;
+
+    class NB,BC,VT crit;
+    class AI,VTO,AUTH,PG,EXP,UB,BC_T high;
+      </pre>
+    </div>
+  </section>
+
+  <hr>
+
+  <section>
+    <h2>3. Tabla de Especificaciones — Análisis de Dependencias</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Componente Origen</th>
+          <th>Dependencia Implícita</th>
+          <th>Tipo</th>
+          <th>Impacto si Falla</th>
+          <th>Estado Actual</th>
+          <th>Acción Requerida</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td><code>niaBeautyRoutes.js</code></td>
+          <td><code>processBiometricScan()</code> retorna objeto estructurado fijo</td>
+          <td>Contrato de Datos</td>
+          <td>Crash silencioso o datos corruptos si cambia el Worker</td>
+          <td><span class="badge-critica">CRÍTICO</span></td>
+          <td>Definir Zod / JSON Schema contract en runtime</td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td><code>niaBeautyRoutes.js</code></td>
+          <td><code>user_id || 'guest'</code> coerción de string a columna ID</td>
+          <td>Coerción Insegura</td>
+          <td>Error PG <code>22P02</code> (invalid text representation)</td>
+          <td><span class="badge-critica">CRÍTICO</span></td>
+          <td>Validar UUID/INT obligatorio, rechazar 'guest' suelto</td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td><code>biometricConsentRoutes.js</code></td>
+          <td><code>authMiddleware</code> no valida <code>req.user?.id</code></td>
+          <td>Auth Guard Ausente</td>
+          <td><code>parseInt(undefined)</code> → <code>NaN</code> en query SQL</td>
+          <td><span class="badge-critica">CRÍTICO</span></td>
+          <td>Validar <code>req.user?.id</code> previa a ejecución</td>
+        </tr>
+        <tr>
+          <td>4</td>
+          <td><code>vtoRoutes.js</code></td>
+          <td><code>req.user?.id || req.body.userId || 1</code> fallback a ID 1</td>
+          <td>Auth Bypass</td>
+          <td>Vulnerabilidad de suplantación en jobs VTO</td>
+          <td><span class="badge-critica">CRÍTICO</span></td>
+          <td>Auth obligatorio sin fallbacks hardcodeados</td>
+        </tr>
+        <tr>
+          <td>5</td>
+          <td><code>vtoRoutes.js</code></td>
+          <td><code>colorHex</code> entrada directa a workers/service</td>
+          <td>Input Sanitization</td>
+          <td>Superficie de ataque / inyección en worker</td>
+          <td><span class="badge-alta">ALTO</span></td>
+          <td>Validar regex <code>^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$</code></td>
+        </tr>
+        <tr>
+          <td>6</td>
+          <td>Global Express</td>
+          <td><code>express.json()</code> límite por defecto (100kb)</td>
+          <td>Config Infra</td>
+          <td>413 Payload Too Large en imágenes Base64 HQ</td>
+          <td><span class="badge-alta">ALTO</span></td>
+          <td>Extender a <code>limit: '10mb'</code> en ruta `/scan`</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <hr>
+
+  <section>
+    <h2>4. Checklist Validación Pre-Refactorización (12 Puntos)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Checkpoint</th>
+          <th>Descripción Técnica</th>
+          <th>Prioridad</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td>Contratos Tipados</td>
+          <td>Definir interfaces Zod/TypeScript para inputs/outputs de <code>aiOrchestrator</code>.</td>
+          <td><span class="badge-critica">Crítica</span></td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td>Transacciones Atómicas</td>
+          <td>UPDATE+INSERT en consentimientos y registros de escaneo bajo bloques <code>BEGIN/COMMIT</code>.</td>
+          <td><span class="badge-critica">Crítica</span></td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td>Idempotencia Header</td>
+          <td>Header <code>Idempotency-Key</code> obligatorio para evitar duplicación por red móvil inestable.</td>
+          <td><span class="badge-critica">Crítica</span></td>
+        </tr>
+        <tr>
+          <td>4</td>
+          <td>Validación Estricta Entrada</td>
+          <td>Sanitizar Base64, UUIDs de usuario y expresiones hexadecimales de color.</td>
+          <td><span class="badge-critica">Crítica</span></td>
+        </tr>
+        <tr>
+          <td>5</td>
+          <td>Índices PostgreSQL</td>
+          <td>Añadir índice compuesto <code>user_biometrics(user_id, created_at DESC)</code>.</td>
+          <td><span class="badge-critica">Crítica</span></td>
+        </tr>
+        <tr>
+          <td>6</td>
+          <td>Auth Guards Reales</td>
+          <td>Eliminar todos los fallbacks <code>|| 'guest'</code> y <code>|| 1</code>. Auth 100% obligatorio.</td>
+          <td><span class="badge-critica">Crítica</span></td>
+        </tr>
+        <tr>
+          <td>7</td>
+          <td>Auditoría IP Confiable</td>
+          <td>Activar <code>trust proxy</code> en Express y validar headers contra CIDRs conocidos.</td>
+          <td><span class="badge-alta">Alta</span></td>
+        </tr>
+        <tr>
+          <td>8</td>
+          <td>Monitoreo de Pool PG</td>
+          <td>Exponer `/health/db` con métricas de <code>idleCount</code> y <code>waitingCount</code>.</td>
+          <td><span class="badge-alta">Alta</span></td>
+        </tr>
+        <tr>
+          <td>9</td>
+          <td>Mapeo de Errores SQL</td>
+          <td>Mapear errores PostgreSQL a respuestas HTTP estándar (22P02 → 400, 23505 → 409).</td>
+          <td><span class="badge-alta">Alta</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <hr>
+
+  <section>
+    <h2>5. Hoja de Ruta de Ejecución (Sprint 0: 5 Días)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Día</th>
+          <th>Enfoque Técnico</th>
+          <th>Entregables Principales</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Día 1</strong></td>
+          <td>Contratos & Zod</td>
+          <td>Schemas Zod en <code>shared/contracts/</code> y eliminación de <code>JSON.stringify</code> manual.</td>
+        </tr>
+        <tr>
+          <td><strong>Día 2</strong></td>
+          <td>Transacciones</td>
+          <td>Bloques CTE / atómicos para consentimientos y escaneos con deduplicación.</td>
+        </tr>
+        <tr>
+          <td><strong>Día 3</strong></td>
+          <td>Guards & Proxy IP</td>
+          <td>Middlewares de Auth estrictos, limpieza de fallbacks y configuración <code>trust proxy</code>.</td>
+        </tr>
+        <tr>
+          <td><strong>Día 4</strong></td>
+          <td>DB Performance</td>
+          <td>Creación de índices <code>CONCURRENTLY</code> y configuración de pool sizing de PostgreSQL.</td>
+        </tr>
+        <tr>
+          <td><strong>Día 5</strong></td>
+          <td>Tests & Healthcheck</td>
+          <td>Error Handler global, tests E2E de validación y carga de 100 requests simultáneas.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <footer style="margin-top: 3rem; text-align: center; font-size: 11px; color: var(--text-muted); border-top: 1px solid var(--border-color); padding-top: 1rem;">
+    Fin del Documento • Belleza App Implicit Dependencies & Pre-Refactor Checklist • Confidencial
+  </footer>
+
+</body>
+</html>

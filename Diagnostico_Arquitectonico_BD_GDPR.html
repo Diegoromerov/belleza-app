@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BELLEZA APP — DIAGNÓSTICO ARQUITECTÓNICO BIOMETRÍA Y CUMPLIMIENTO</title>
+  
+  <!-- Google Fonts: Cormorant Garamond (Serif Luxe) + Inter (Sans precision) + Fira Code -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- Mermaid JS para renderizar los diagramas -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'neutral',
+      themeVariables: {
+        primaryColor: '#F9F6F0',
+        primaryBorderColor: '#C5A058',
+        lineColor: '#555555',
+        fontFamily: 'Inter, sans-serif'
+      }
+    });
+  </script>
+
+  <style>
+    :root {
+      --primary-gold: #C5A058;
+      --gold-dark: #8C6F34;
+      --gold-light: #F4EFE6;
+      --text-main: #1C1C1C;
+      --text-muted: #555555;
+      --bg-card: #FAF8F5;
+      --border-color: #E5DED0;
+      
+      --danger-bg: #FDF2F2;
+      --danger-border: #E57373;
+      --danger-text: #C62828;
+
+      --success-bg: #F1F8E9;
+      --success-border: #81C784;
+      --success-text: #2E7D32;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      color: var(--text-main);
+      background-color: #FFFFFF;
+      line-height: 1.6;
+      font-size: 13.5px;
+      padding: 2.5rem;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    /* BARRA FLOTANTE DE IMPRESIÓN */
+    .print-actions {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      display: flex;
+      gap: 12px;
+      z-index: 1000;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 8px 16px;
+      border-radius: 30px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-print {
+      background: var(--primary-gold);
+      color: #FFF;
+      border: none;
+      padding: 8px 20px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 10px rgba(197, 160, 88, 0.3);
+    }
+
+    .btn-print:hover {
+      background: var(--gold-dark);
+      transform: translateY(-1px);
+    }
+
+    /* ENCABEZADO "HAUTE COUTURE" */
+    .header-branding {
+      text-align: center;
+      border-bottom: 2px solid var(--primary-gold);
+      padding-bottom: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .brand-sub {
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      color: var(--primary-gold);
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    h1.doc-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: #000;
+      line-height: 1.2;
+      margin-bottom: 8px;
+    }
+
+    .doc-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* SECCIONES Y TIPOGRAFÍA */
+    h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: #000;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 4px;
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    h2::before {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 18px;
+      background-color: var(--primary-gold);
+    }
+
+    h3 {
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--gold-dark);
+      margin-top: 1.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    p {
+      margin-bottom: 1rem;
+      color: #2D2D2D;
+    }
+
+    strong {
+      color: #000;
+      font-weight: 600;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid var(--border-color);
+      margin: 2rem 0;
+    }
+
+    /* TABLAS HAUTE COUTURE */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      font-size: 12px;
+      background: #FFFFFF;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    th {
+      background-color: var(--gold-light);
+      color: var(--gold-dark);
+      font-family: 'Inter', sans-serif;
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 10.5px;
+      letter-spacing: 0.5px;
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    td {
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: top;
+    }
+
+    tr:nth-child(even) {
+      background-color: #FAF9F6;
+    }
+
+    /* BADGES Y ETIQUETAS */
+    .badge-critica {
+      display: inline-block;
+      background-color: var(--danger-bg);
+      color: var(--danger-text);
+      border: 1px solid var(--danger-border);
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 11px;
+    }
+
+    .badge-alta {
+      display: inline-block;
+      background-color: #FFF8E1;
+      color: #F57F17;
+      border: 1px solid #FFE082;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 11px;
+    }
+
+    .badge-media {
+      display: inline-block;
+      background-color: #E1F5FE;
+      color: #0288D1;
+      border: 1px solid #81D4FA;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 11px;
+    }
+
+    .badge-baja {
+      display: inline-block;
+      background-color: #F3E5F5;
+      color: #7B1FA2;
+      border: 1px solid #CE93D8;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 11px;
+    }
+
+    /* CODE BLOCKS & PRE */
+    code {
+      font-family: 'Fira Code', monospace;
+      background-color: #F4F1EA;
+      color: #8C2424;
+      padding: 2px 5px;
+      border-radius: 3px;
+      font-size: 12px;
+    }
+
+    pre {
+      background-color: #1E1E1E;
+      color: #D4D4D4;
+      padding: 1rem;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 1rem 0;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    pre code {
+      background-color: transparent;
+      color: inherit;
+      padding: 0;
+    }
+
+    ul, ol {
+      margin-left: 1.2rem;
+      margin-bottom: 1rem;
+    }
+
+    li {
+      margin-bottom: 4px;
+    }
+
+    /* MERMAID DIAGRAM CONTAINER */
+    .mermaid-container {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+      text-align: center;
+    }
+
+    /* ESTILOS DE IMPRESIÓN (PDF PDF/A READY) */
+    @media print {
+      body {
+        padding: 0;
+        max-width: 100%;
+        font-size: 10.5pt;
+        line-height: 1.45;
+        color: #000;
+      }
+
+      .print-actions {
+        display: none !important;
+      }
+
+      h2 {
+        page-break-after: avoid;
+        margin-top: 1.5rem;
+      }
+
+      table, tr, td, th, pre {
+        page-break-inside: avoid;
+      }
+
+      .mermaid-container {
+        page-break-inside: avoid;
+      }
+
+      @page {
+        margin: 20mm 15mm 20mm 15mm;
+        @bottom-right {
+          content: counter(page);
+        }
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Botón Flotante para Generar PDF -->
+  <div class="print-actions">
+    <button class="btn-print" onclick="window.print()">🖨️ Guardar / Imprimir PDF</button>
+  </div>
+
+  <!-- Encabezado del Documento -->
+  <header class="header-branding">
+    <div class="brand-sub">Belleza App — Diagnóstico Arquitectónico</div>
+    <h1 class="doc-title">Módulo Biometría y Belleza: Esquema BD & Cumplimiento GDPR / Ley 1581</h1>
+    <div class="doc-meta">Auditoría Técnica de BD & Privacidad • Fecha: 2026-07-30</div>
+  </header>
+
+  <!-- Contenido Principal -->
+  <section>
+    <h2>1. Resumen Ejecutivo</h2>
+    <p>Este documento presenta el <strong>diagnóstico arquitectónico del módulo de biometría y belleza</strong> de Belleza App, centrado en el <strong>mapa de dependencias implícitas</strong>, la <strong>reconstrucción del esquema de base de datos</strong> desde el código existente, la <strong>identificación de índices faltantes</strong>, el <strong>análisis de campos sensibles bajo GDPR (Art. 9) y Ley 1581 Colombia</strong>, y un <strong>resumen de riesgos críticos de severidad alta</strong>.</p>
+    
+    <p><strong>Contexto:</strong> El diagnóstico se realiza mediante ingeniería inversa sobre código de rutas (<code>biometricScanRoutes</code>, <code>vtoRoutes</code>, <code>authMiddleware</code>) y consultas SQL embebidas. Se detectan <strong>violaciones bloqueantes de cumplimiento legal</strong> (GDPR Art. 6, 7, 9, 25, 32; Ley 1581 Art. 5, 9, 15) que impiden el despliegue en producción sin remediación inmediata.</p>
+    
+    <p><strong>Objetivo:</strong> Proporcionar una especificación técnica accionable para generar migraciones de base de datos, refactorización de servicios y controles de seguridad que elevan el módulo a un estándar empresarial de <em>privacy by design</em>.</p>
+  </section>
+
+  <hr>
+
+  <section>
+    <h2>2. Arquitectura General — Mapa de Dependencias Implícitas</h2>
+    <div class="mermaid-container">
+      <pre class="mermaid">
+flowchart TD
+    subgraph Backend["Backend Node/Express"]
+        ORCH["aiOrchestrator<br>processBiometricScan()"]
+        VTO["vtoService<br>getCatalog() / createNailJob()"]
+        AUTH["authMiddleware<br>JWT/Session"]
+        PG[(pool: PostgreSQL + pgvector)]
+    end
+
+    subgraph External["Servicios Externos"]
+        YC["YouCam SDK/API<br>Tracking facial + análisis piel"]
+        GM["Gemini (Google AI)<br>Inferencia multimodal"]
+        DS["DeepSeek<br>Fallback / razonamiento"]
+        YCAR["YouCam AR Render<br>Catálogo VTO"]
+        YCNAIL["YouCam Nail AR<br>Job try-on uñas"]
+    end
+
+    subgraph Legal["Cumplimiento Legal"]
+        GDPR["GDPR Art. 6,7,9,25,32"]
+        LEY1581["Ley 1581 Colombia<br>Art. 5,9,15"]
+    end
+
+    ORCH --> YC
+    ORCH --> GM
+    ORCH --> DS
+    VTO --> YCAR
+    VTO --> YCNAIL
+    AUTH --> PG
+    ORCH --> PG
+    VTO --> PG
+    PG --> GDPR
+    PG --> LEY1581
+
+    classDef ext fill:#E3F2FD,stroke:#1565C0,stroke-width:2px;
+    classDef legal fill:#FDF2F2,stroke:#C62828,stroke-width:2px;
+    class YC,GM,DS,YCAR,YCNAIL ext;
+    class GDPR,LEY1581 legal;
+      </pre>
+    </div>
+  </section>
+
+  <hr>
+
+  <section>
+    <h2>3. Esquema DB Reconstruido — Tabla user_biometrics</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Columna</th>
+          <th>Tipo Inferido</th>
+          <th>Nulable</th>
+          <th>Sensible GDPR / Ley 1581</th>
+          <th>Observación / Violación</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>id</code></td>
+          <td>SERIAL / BIGSERIAL</td>
+          <td>NO</td>
+          <td>No</td>
+          <td>PK implícita en tabla</td>
+        </tr>
+        <tr>
+          <td><code>user_id</code></td>
+          <td>VARCHAR / UUID</td>
+          <td>NO</td>
+          <td><span class="badge-critica">SÍ</span></td>
+          <td>Inconsistencia de tipo: <code>'guest'</code> string vs ID numérico/UUID</td>
+        </tr>
+        <tr>
+          <td><code>subtono</code></td>
+          <td>VARCHAR(50)</td>
+          <td>SÍ</td>
+          <td><span class="badge-critica">SÍ</span></td>
+          <td>Dato biométrico derivado (cálido, frío, neutro, oliva)</td>
+        </tr>
+        <tr>
+          <td><code>paleta</code></td>
+          <td>JSONB</td>
+          <td>SÍ</td>
+          <td><span class="badge-critica">SÍ</span></td>
+          <td>Actualmente stringificado como TEXT → Debe ser JSONB nativo</td>
+        </tr>
+        <tr>
+          <td><code>hidratacion</code></td>
+          <td>SMALLINT</td>
+          <td>SÍ</td>
+          <td><span class="badge-critica">SÍ</span></td>
+          <td>Escala biométrica de piel (0-100%)</td>
+        </tr>
+        <tr>
+          <td><code>sebo</code></td>
+          <td>SMALLINT</td>
+          <td>SÍ</td>
+          <td><span class="badge-critica">SÍ</span></td>
+          <td>Escala biométrica de piel (0-100%)</td>
+        </tr>
+        <tr>
+          <td><code>consent_id</code></td>
+          <td>BIGINT</td>
+          <td>NO</td>
+          <td><span class="badge-critica">SÍ</span></td>
+          <td>🚨 <strong>NO EXISTE EN CÓDIGO ACTUAL</strong> — FK a <code>biometric_consents.id</code> requerida</td>
+        </tr>
+        <tr>
+          <td><code>created_at</code></td>
+          <td>TIMESTAMPTZ</td>
+          <td>NO</td>
+          <td>No</td>
+          <td>🚨 <strong>FALTA EN INSERT ACTUAL</strong> — Imposibilita auditoría temporal (GDPR Art. 17)</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <hr>
+
+  <section>
+    <h2>4. Esquema DB Reconstruido — Tabla biometric_consents</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Columna</th>
+          <th>Tipo Inferido</th>
+          <th>Sensible</th>
+          <th>Violación Detectada</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>user_id</code></td>
+          <td>BIGINT</td>
+          <td>SÍ</td>
+          <td>Sin <code>FOREIGN KEY</code> explícita con CASCADE en tabla <code>users</code>.</td>
+        </tr>
+        <tr>
+          <td><code>ip</code></td>
+          <td>INET / VARCHAR</td>
+          <td><span class="badge-critica">SÍ</span></td>
+          <td>Almacenado en texto plano → Violación de minimización y cifrado (Art. 32).</td>
+        </tr>
+        <tr>
+          <td><code>user_agent</code></td>
+          <td>TEXT</td>
+          <td><span class="badge-critica">SÍ</span></td>
+          <td>Huella digital del dispositivo expuesta en texto plano.</td>
+        </tr>
+        <tr>
+          <td><code>active</code></td>
+          <td>BOOLEAN</td>
+          <td>No</td>
+          <td>Falta índice único parcial <code>UNIQUE(user_id) WHERE active = true</code>. Permite race conditions.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <hr>
+
+  <section>
+    <h2>5. Índices Faltantes Requeridos</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Tabla</th>
+          <th>Índice Requerido</th>
+          <th>Tipo</th>
+          <th>Query Afectada / Justificación</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>user_biometrics</code></td>
+          <td><code>idx_ub_user_created</code></td>
+          <td>BTREE (user_id, created_at DESC)</td>
+          <td>Historial por usuario en Flutter: "Mis escaneos".</td>
+        </tr>
+        <tr>
+          <td><code>user_biometrics</code></td>
+          <td><code>idx_ub_consent</code></td>
+          <td>BTREE (consent_id)</td>
+          <td>Join obligatorio para validación de base legal.</td>
+        </tr>
+        <tr>
+          <td><code>biometric_consents</code></td>
+          <td><code>uq_bc_user_active</code></td>
+          <td>UNIQUE (user_id) WHERE active = true</td>
+          <td>🚨 <strong>CRÍTICO</strong>: Previene consentimientos duplicados activos.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <hr>
+
+  <section>
+    <h2>6. Campos Sensibles & Estrategia de Cifrado (pgcrypto)</h2>
+    <p>Bajo el GDPR (Art. 9) y la Ley 1581 de Colombia (Art. 5), los datos derivados del análisis de piel y rostro son <strong>categorías especiales de datos biológicos/sensibles</strong>.</p>
+    <ul>
+      <li><strong>Cifrado en reposo:</strong> Aplicar <code>pgcrypto</code> con claves gestionadas en AWS KMS / HashiCorp Vault.</li>
+      <li><strong>Campos a cifrar:</strong> <code>subtono</code>, <code>estacion</code>, <code>paleta</code>, <code>hidratacion</code>, <code>sebo</code>, <code>mensaje_aura</code>, así como la <code>ip</code> y el <code>user_agent</code> del consentimiento.</li>
+      <li><strong>Vistas Seguras:</strong> Creación de vistas <code>SECURITY DEFINER</code> para la desencriptación controlada en tiempo de ejecución.</li>
+    </ul>
+  </section>
+
+  <hr>
+
+  <section>
+    <h2>7. Resumen de Riesgos Críticos (Severidad Alta)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Riesgo</th>
+          <th>Impacto</th>
+          <th>Mitigación Inmediata</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td>Sin <code>consent_id</code> en <code>user_biometrics</code></td>
+          <td>Ilegalidad del procesamiento (multas hasta 4% facturación global GDPR).</td>
+          <td>Migración 024 para vincular obligatoriamente el <code>consent_id</code>.</td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td>IP y User-Agent en texto plano</td>
+          <td>Exposición de metadatos de localización y huella digital.</td>
+          <td>Aplicar cifrado simétrico mediante <code>pgp_sym_encrypt</code>.</td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td>Race condition en consentimiento</td>
+          <td>Múltiples consentimientos activos en paralelo.</td>
+          <td>Índice único parcial <code>uq_bc_user_active</code>.</td>
+        </tr>
+        <tr>
+          <td>4</td>
+          <td><code>user_id</code> tipo mixto ('guest' vs UUID)</td>
+          <td>Imposibilidad de aplicar Integrity Constraints (FKs).</td>
+          <td>Migrar a <code>UUID</code> y canalizar guests mediante tabla <code>anonymous_sessions</code>.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <hr>
+
+  <section>
+    <h2>8. Cambios Requeridos & Hoja de Ruta (Sprint 0)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Día</th>
+          <th>Foco Principal</th>
+          <th>Entregables Clave</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Día 1</strong></td>
+          <td>Migraciones Críticas</td>
+          <td>Migración 024 (columnas faltantes) + Migración 025 (FKs e índices únicos).</td>
+        </tr>
+        <tr>
+          <td><strong>Día 2</strong></td>
+          <td>Cifrado pgcrypto</td>
+          <td>Cifrado de campos biométricos y metadatos IP/UA + Vistas <code>SECURITY DEFINER</code>.</td>
+        </tr>
+        <tr>
+          <td><strong>Día 3</strong></td>
+          <td>Estructuración UUID</td>
+          <td>Conversión de <code>user_id</code> a UUID + creación de tabla <code>anonymous_sessions</code>.</td>
+        </tr>
+        <tr>
+          <td><strong>Día 4</strong></td>
+          <td>Índices & Pool PG</td>
+          <td>Crear índices <code>CONCURRENTLY</code> + Configurar pool sizing (min: 2, max: 20).</td>
+        </tr>
+        <tr>
+          <td><strong>Día 5</strong></td>
+          <td>Validación & E2E</td>
+          <td>Tests de integración legal + Auditoría de desencriptación en ciphertext.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <footer style="margin-top: 3rem; text-align: center; font-size: 11px; color: var(--text-muted); border-top: 1px solid var(--border-color); padding-top: 1rem;">
+    Fin del Documento • Belleza App Architectural Diagnosis • Confidencial
+  </footer>
+
+</body>
+</html>

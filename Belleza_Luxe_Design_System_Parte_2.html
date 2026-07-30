@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BELLEZA LUXE DESIGN SYSTEM — ESPECIFICACIÓN TÉCNICA (PARTE 2)</title>
+  
+  <!-- Google Fonts: Cormorant Garamond (Serif Luxe) + Inter (Sans precision) + Fira Code -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- Mermaid JS para renderizar los diagramas -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'neutral',
+      themeVariables: {
+        primaryColor: '#F9F6F0',
+        primaryBorderColor: '#C5A058',
+        lineColor: '#555555',
+        fontFamily: 'Inter, sans-serif'
+      }
+    });
+  </script>
+
+  <style>
+    :root {
+      --primary-gold: #C5A058;
+      --gold-dark: #8C6F34;
+      --gold-light: #F4EFE6;
+      --text-main: #1C1C1C;
+      --text-muted: #555555;
+      --bg-card: #FAF8F5;
+      --border-color: #E5DED0;
+      
+      --danger-bg: #FDF2F2;
+      --danger-border: #E57373;
+      --danger-text: #C62828;
+
+      --success-bg: #F1F8E9;
+      --success-border: #81C784;
+      --success-text: #2E7D32;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      color: var(--text-main);
+      background-color: #FFFFFF;
+      line-height: 1.6;
+      font-size: 13.5px;
+      padding: 2.5rem;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    /* BARRA FLOTANTE DE IMPRESIÓN */
+    .print-actions {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      display: flex;
+      gap: 12px;
+      z-index: 1000;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 8px 16px;
+      border-radius: 30px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-print {
+      background: var(--primary-gold);
+      color: #FFF;
+      border: none;
+      padding: 8px 20px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 10px rgba(197, 160, 88, 0.3);
+    }
+
+    .btn-print:hover {
+      background: var(--gold-dark);
+      transform: translateY(-1px);
+    }
+
+    /* ENCABEZADO "HAUTE COUTURE" */
+    .header-branding {
+      text-align: center;
+      border-bottom: 2px solid var(--primary-gold);
+      padding-bottom: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .brand-sub {
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      color: var(--primary-gold);
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    h1.doc-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: #000;
+      line-height: 1.2;
+      margin-bottom: 8px;
+    }
+
+    .doc-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* SECCIONES Y TIPOGRAFÍA */
+    h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: #000;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 4px;
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    h2::before {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 18px;
+      background-color: var(--primary-gold);
+    }
+
+    h3 {
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--gold-dark);
+      margin-top: 1.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    p {
+      margin-bottom: 1rem;
+      color: #2D2D2D;
+    }
+
+    strong {
+      color: #000;
+      font-weight: 600;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid var(--border-color);
+      margin: 2rem 0;
+    }
+
+    /* TABLAS HAUTE COUTURE */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      font-size: 12px;
+      background: #FFFFFF;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    th {
+      background-color: var(--gold-light);
+      color: var(--gold-dark);
+      font-family: 'Inter', sans-serif;
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 10.5px;
+      letter-spacing: 0.5px;
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    td {
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: top;
+    }
+
+    tr:nth-child(even) {
+      background-color: #FAF9F6;
+    }
+
+    /* BADGES Y ETIQUETAS */
+    .badge-critica {
+      display: inline-block;
+      background-color: var(--danger-bg);
+      color: var(--danger-text);
+      border: 1px solid var(--danger-border);
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 11px;
+    }
+
+    .badge-alta {
+      display: inline-block;
+      background-color: #FFF8E1;
+      color: #F57F17;
+      border: 1px solid #FFE082;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 11px;
+    }
+
+    .badge-media {
+      display: inline-block;
+      background-color: #E1F5FE;
+      color: #0288D1;
+      border: 1px solid #81D4FA;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 11px;
+    }
+
+    .badge-baja {
+      display: inline-block;
+      background-color: #F3E5F5;
+      color: #7B1FA2;
+      border: 1px solid #CE93D8;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 11px;
+    }
+
+    /* CODE BLOCKS & PRE */
+    code {
+      font-family: 'Fira Code', monospace;
+      background-color: #F4F1EA;
+      color: #8C2424;
+      padding: 2px 5px;
+      border-radius: 3px;
+      font-size: 12px;
+    }
+
+    pre {
+      background-color: #1E1E1E;
+      color: #D4D4D4;
+      padding: 1rem;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 1rem 0;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    pre code {
+      background-color: transparent;
+      color: inherit;
+      padding: 0;
+    }
+
+    ul, ol {
+      margin-left: 1.2rem;
+      margin-bottom: 1rem;
+    }
+
+    li {
+      margin-bottom: 4px;
+    }
+
+    /* BLOCKQUOTE / CALLOUTS */
+    blockquote {
+      background-color: var(--gold-light);
+      border-left: 4px solid var(--primary-gold);
+      padding: 10px 15px;
+      margin: 1rem 0;
+      font-style: italic;
+      color: var(--gold-dark);
+      border-radius: 0 4px 4px 0;
+    }
+
+    /* MERMAID DIAGRAM CONTAINER */
+    .mermaid-container {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+      text-align: center;
+    }
+
+    /* ESTILOS DE IMPRESIÓN (PDF PDF/A READY) */
+    @media print {
+      body {
+        padding: 0;
+        max-width: 100%;
+        font-size: 10.5pt;
+        line-height: 1.45;
+        color: #000;
+      }
+
+      .print-actions {
+        display: none !important;
+      }
+
+      h2 {
+        page-break-after: avoid;
+        margin-top: 1.5rem;
+      }
+
+      table, tr, td, th, pre {
+        page-break-inside: avoid;
+      }
+
+      .mermaid-container {
+        page-break-inside: avoid;
+      }
+
+      @page {
+        margin: 20mm 15mm 20mm 15mm;
+        @bottom-right {
+          content: counter(page);
+        }
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Botón Flotante para Generar PDF -->
+  <div class="print-actions">
+    <button class="btn-print" onclick="window.print()">🖨️ Guardar / Imprimir PDF</button>
+  </div>
+
+  <!-- Encabezado del Documento -->
+  <header class="header-branding">
+    <div class="brand-sub">Belleza Luxe Design System — Especificación Técnica</div>
+    <h1 class="doc-title">Tokens de Diseño, ThemeData & Componentes Premium</h1>
+    <div class="doc-meta">Parte 2 • Stack: Flutter 3.22+ & Dart 3.4+ • Fecha: 2026-07-30</div>
+  </header>
+
+  <!-- Contenido Principal -->
+  <section>
+    <h2>1. Resumen Ejecutivo</h2>
+    <p>Este documento constituye la <strong>segunda parte de la especificación técnica del Design System "Belleza Luxe"</strong>, completando la definición de tokens de diseño iniciada en el documento anterior. Cubre:</p>
+    <ul>
+      <li><strong>Tipografía fluida</strong> con familias <em>Didot LT Std</em> (display) y <em>Cormorant Garamond</em> (body/UI), implementada vía <code>clamp()</code> / interpolación lineal en Flutter.</li>
+      <li><strong>Sistema de espaciado</strong> basado en 4px + razón áurea (φ = 1.618), con tokens semánticos obligatorios.</li>
+      <li><strong>Integración en <code>ThemeData</code></strong> de Flutter (Material 3 + Cupertino hybrids) y configuración de fuentes en <code>pubspec.yaml</code>.</li>
+      <li><strong>Fundamentos para componentes</strong> (botones, tarjetas, inputs, overlays AR) que se detallan en documentos subsiguientes.</li>
+    </ul>
+    <p><strong>Stack objetivo:</strong> Flutter 3.22+, Dart 3.4+, Material 3, variable fonts. Alineación estética: Dior / La Mer / SK-II / Chanel Beauty / Guerlain.</p>
+  </section>
+
+  <hr>
+
+  <section>
+    <h2>2. Arquitectura del Sistema de Tokens</h2>
+    <div class="mermaid-container">
+      <pre class="mermaid">
+flowchart TD
+    subgraph Tokens["Design Tokens (Single Source of Truth)"]
+        COL["Colores<br>§1 Paleta Nude/Gold"]
+        TYP["Tipografía<br>§2 Didot + Cormorant"]
+        SPC["Espaciado<br>§3 Base 4px + φ"]
+        MOT["Motion<br>§5 Duraciones + Easing"]
+        RAD["Radio<br>§6 Border Radius"]
+        SHA["Sombras<br>§7 Elevation"]
+    end
+
+    subgraph Flutter["Flutter Implementation"]
+        THEME["ThemeData<br>luxeLightTheme / luxeDarkTheme"]
+        COMP["Componentes<br>LuxeButton, LuxeCard, ..."]
+        SCAN["Biometric Scanner<br>Overlay AR"]
+    end
+
+    subgraph Web["Web (CSS Custom Props)"]
+        CSS["--luxe-* variables"]
+        WCOMP["Web Components"]
+    end
+
+    Tokens --> Flutter
+    Tokens --> Web
+    THEME --> COMP
+    THEME --> SCAN
+    CSS --> WCOMP
+
+    classDef token fill:#FAF8F5,stroke:#C5A05A,stroke-width:2px;
+    classDef impl fill:#F5F0EB,stroke:#BFA896,stroke-width:2px;
+    class Tokens token;
+    class Flutter,Web impl;
+      </pre>
+    </div>
+    <p><strong>Principio:</strong> Los tokens son la <strong>única fuente de verdad</strong>. Código Dart y CSS se generan/derivan de ellos (futuro: Style Dictionary). Hoy: Dart como referencia canónica.</p>
+  </section>
+
+  <hr>
+
+  <section>
+    <h2>3. Tabla de Especificaciones — Tipografía</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Token Dart</th>
+          <th>Familia</th>
+          <th>Mín</th>
+          <th>Mid</th>
+          <th>Máx</th>
+          <th>Weight</th>
+          <th>Line Height</th>
+          <th>Letter Spac.</th>
+          <th>Uso Semántico</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>displayLarge</code></td>
+          <td>Didot</td>
+          <td>48</td>
+          <td>56</td>
+          <td>64</td>
+          <td>w300</td>
+          <td>1.15</td>
+          <td>-0.5</td>
+          <td>Hero, splash, pantalla bienvenida</td>
+        </tr>
+        <tr>
+          <td><code>displayMedium</code></td>
+          <td>Didot</td>
+          <td>36</td>
+          <td>42</td>
+          <td>48</td>
+          <td>w300</td>
+          <td>1.20</td>
+          <td>-0.3</td>
+          <td>Títulos de sección principal</td>
+        </tr>
+        <tr>
+          <td><code>displaySmall</code></td>
+          <td>Didot</td>
+          <td>28</td>
+          <td>32</td>
+          <td>36</td>
+          <td>w400</td>
+          <td>1.25</td>
+          <td>-0.2</td>
+          <td>Subtítulos destacados</td>
+        </tr>
+        <tr>
+          <td><code>headlineLarge</code></td>
+          <td>Didot</td>
+          <td>24</td>
+          <td>27</td>
+          <td>30</td>
+          <td>w400</td>
+          <td>1.30</td>
+          <td>-0.1</td>
+          <td>Tarjetas de diagnóstico, headers</td>
+        </tr>
+        <tr>
+          <td><code>headlineMedium</code></td>
+          <td>Didot</td>
+          <td>20</td>
+          <td>22</td>
+          <td>24</td>
+          <td>w500</td>
+          <td>1.35</td>
+          <td>0.0</td>
+          <td>Nombres de producto, métricas clave</td>
+        </tr>
+        <tr>
+          <td><code>headlineSmall</code></td>
+          <td>Didot</td>
+          <td>18</td>
+          <td>19.5</td>
+          <td>21</td>
+          <td>w500</td>
+          <td>1.40</td>
+          <td>0.1</td>
+          <td>Labels prominentes, chips</td>
+        </tr>
+        <tr>
+          <td><code>bodyLarge</code></td>
+          <td>Cormorant</td>
+          <td>16</td>
+          <td>17</td>
+          <td>18</td>
+          <td>w400</td>
+          <td>1.60</td>
+          <td>0.15</td>
+          <td>Párrafos, descripción producto</td>
+        </tr>
+        <tr>
+          <td><code>bodyMedium</code></td>
+          <td>Cormorant</td>
+          <td>14</td>
+          <td>15</td>
+          <td>16</td>
+          <td>w400</td>
+          <td>1.60</td>
+          <td>0.20</td>
+          <td>Texto UI estándar, formularios</td>
+        </tr>
+        <tr>
+          <td><code>bodySmall</code></td>
+          <td>Cormorant</td>
+          <td>12</td>
+          <td>13</td>
+          <td>14</td>
+          <td>w400</td>
+          <td>1.50</td>
+          <td>0.30</td>
+          <td>Caption, ayuda, legal</td>
+        </tr>
+        <tr>
+          <td><code>labelLarge</code></td>
+          <td>Cormorant</td>
+          <td>14</td>
+          <td>15</td>
+          <td>16</td>
+          <td>w600</td>
+          <td>1.40</td>
+          <td>0.50</td>
+          <td>Botones primarios, tabs</td>
+        </tr>
+        <tr>
+          <td><code>labelMedium</code></td>
+          <td>Cormorant</td>
+          <td>12</td>
+          <td>13</td>
+          <td>14</td>
+          <td>w600</td>
+          <td>1.40</td>
+          <td>0.80</td>
+          <td>Botones secundarios, chips</td>
+        </tr>
+        <tr>
+          <td><code>labelSmall</code></td>
+          <td>Cormorant</td>
+          <td>10</td>
+          <td>11</td>
+          <td>12</td>
+          <td>w600</td>
+          <td>1.30</td>
+          <td>1.00</td>
+          <td>Overline, badges, metadata</td>
+        </tr>
+        <tr>
+          <td><code>numbersLarge</code></td>
+          <td>Didot</td>
+          <td>32</td>
+          <td>40</td>
+          <td>48</td>
+          <td>w300</td>
+          <td>1.10</td>
+          <td>-0.3</td>
+          <td>Métricas hero (hidratación 87%)</td>
+        </tr>
+        <tr>
+          <td><code>numbersMedium</code></td>
+          <td>Didot</td>
+          <td>20</td>
+          <td>24</td>
+          <td>28</td>
+          <td>w400</td>
+          <td>1.20</td>
+          <td>-0.1</td>
+          <td>KPIs tarjetas, valores dashboard</td>
+        </tr>
+        <tr>
+          <td><code>numbersSmall</code></td>
+          <td>Cormorant</td>
+          <td>14</td>
+          <td>16</td>
+          <td>18</td>
+          <td>w500</td>
+          <td>1.40</td>
+          <td>0.20</td>
+          <td>Datos tabla, specs producto</td>
+        </tr>
+      </tbody>
+    </table>
+    <p><strong>Nota de implementación:</strong> <code>_fluid()</code> interpola linealmente entre <code>min</code> (320px) y <code>max</code> (1440px). Para producción, migrar a <code>clamp()</code> nativo vía <code>MediaQuery.textScaler</code> + <code>FontFeature.tabularFigures()</code> para números.</p>
+  </section>
+
+  <hr>
+
+  <section>
+    <h2>4. Tabla de Especificaciones — Espaciado</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Token</th>
+          <th>Valor (px)</th>
+          <th>Fórmula φ</th>
+          <th>Uso Semántico Obligatorio</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>space-0</code></td>
+          <td>0</td>
+          <td>—</td>
+          <td>Reset, márgenes negativos controlados</td>
+        </tr>
+        <tr>
+          <td><code>space-1</code></td>
+          <td>4</td>
+          <td>4 × φ⁰</td>
+          <td>Micro gap: icon + label, chip interno</td>
+        </tr>
+        <tr>
+          <td><code>space-2</code></td>
+          <td>6</td>
+          <td>4 × φ⁰·⁵ ≈ 6.47 → 6</td>
+          <td>Inline gap, chip padding horizontal, input icon gap</td>
+        </tr>
+        <tr>
+          <td><code>space-3</code></td>
+          <td>8</td>
+          <td>4 × φ¹ ≈ 6.47 → 8*</td>
+          <td><strong>Unidad base</strong>: padding botón, input gap, avatar gap</td>
+        </tr>
+        <tr>
+          <td><code>space-4</code></td>
+          <td>12</td>
+          <td>4 × φ¹·⁵ ≈ 10.4 → 12</td>
+          <td>Card padding, list item gap, sheet padding</td>
+        </tr>
+        <tr>
+          <td><code>space-5</code></td>
+          <td>16</td>
+          <td>4 × φ² ≈ 16.8 → 16*</td>
+          <td>Section gap, screen padding horizontal, dialog padding</td>
+        </tr>
+        <tr>
+          <td><code>space-6</code></td>
+          <td>24</td>
+          <td>4 × φ²·⁵ ≈ 27.1 → 24*</td>
+          <td>Major section gap, page vertical rhythm</td>
+        </tr>
+        <tr>
+          <td><code>space-7</code></td>
+          <td>32</td>
+          <td>4 × φ³ ≈ 43.8 → 32*</td>
+          <td>Hero section gap, bottom sheet handle gap</td>
+        </tr>
+        <tr>
+          <td><code>space-8</code></td>
+          <td>48</td>
+          <td>4 × φ³·⁵ ≈ 70.8 → 48*</td>
+          <td>Pantalla completa spacing, onboarding steps</td>
+        </tr>
+      </tbody>
+    </table>
+    <p>* Redondeo a múltiplos de 4px para alineación de píxel perfecta en pantallas estándar.</p>
+    <p><strong>Regla de oro: Cero valores mágicos.</strong> Todo <code>padding</code>, <code>margin</code>, <code>gap</code>, <code>borderRadius</code> <strong>debe</strong> usar estos tokens. En Dart: <code>LuxeSpacing.space4</code>. En CSS: <code>var(--luxe-space-4)</code>.</p>
+  </section>
+
+  <hr>
+
+  <section>
+    <h2>5. Integración en Flutter — ThemeData y pubspec.yaml</h2>
+    
+    <h3>5.1 <code>pubspec.yaml</code> — Fuentes (Variable Fonts)</h3>
+    <pre><code>flutter:
+  fonts:
+    - family: Didot
+      fonts:
+        - asset: assets/fonts/DidotLTStd-VariableFont_wght.ttf
+          weight: 300
+        - asset: assets/fonts/DidotLTStd-VariableFont_wght.ttf
+          weight: 400
+        - asset: assets/fonts/DidotLTStd-VariableFont_wght.ttf
+          weight: 500
+        - asset: assets/fonts/DidotLTStd-VariableFont_wght_ital.ttf
+          weight: 300
+          style: italic
+        - asset: assets/fonts/DidotLTStd-VariableFont_wght_ital.ttf
+          weight: 400
+          style: italic
+    - family: CormorantGaramond
+      fonts:
+        - asset: assets/fonts/CormorantGaramond-VariableFont_wght.ttf
+          weight: 300
+        - asset: assets/fonts/CormorantGaramond-VariableFont_wght.ttf
+          weight: 400
+        - asset: assets/fonts/CormorantGaramond-VariableFont_wght.ttf
+          weight: 500
+        - asset: assets/fonts/CormorantGaramond-VariableFont_wght.ttf
+          weight: 600
+        - asset: assets/fonts/CormorantGaramond-VariableFont_wght_ital.ttf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/CormorantGaramond-VariableFont_wght_ital.ttf
+          weight: 500
+          style: italic</code></pre>
+    <blockquote>
+      <strong>Licencias:</strong> Didot LT Std requiere licencia comercial (Adobe Fonts / Linotype). Cormorant Garamond es SIL OFL 1.1 (gratis comercial). Verificar cobertura de glifos latinos extendidos + tabular figures.
+    </blockquote>
+
+    <h3>5.2 <code>luxe_theme.dart</code> — ThemeData Completo (Light & Dark)</h3>
+    <pre><code>// lib/design/theme/luxe_theme.dart
+import 'package:flutter/material.dart';
+import '../tokens/colors.dart';
+import '../tokens/typography.dart';
+import '../tokens/spacing.dart';
+import '../tokens/motion.dart';
+import '../tokens/radius.dart';
+import '../tokens/shadows.dart';
+
+ThemeData luxeLightTheme(BuildContext context) => ThemeData(
+  useMaterial3: true,
+  brightness: Brightness.light,
+  colorScheme: ColorScheme.light(
+    surface: LuxeColors.surface,                 // nude-50 #F5F0EB
+    onSurface: LuxeColors.onSurface,             // nude-800 #4A382E
+    onSurfaceVariant: LuxeColors.onSurfaceVariant, // nude-600 #7A5E4D
+    primary: LuxeColors.primary,                 // gold-871 #C5A05A
+    onPrimary: LuxeColors.onPrimary,             // nude-950 #1C1511
+    primaryContainer: LuxeColors.primaryHover,   // gold-300 #E8D4A8
+    onPrimaryContainer: LuxeColors.onSurface,    // nude-800
+    secondary: LuxeColors.outline,               // nude-150 #DCCCC3
+    onSecondary: LuxeColors.onSurface,           // nude-800
+    outline: LuxeColors.outline,                 // nude-150
+    outlineVariant: LuxeColors.outlineFocus,     // gold-871
+    surfaceContainerHighest: LuxeColors.surfaceHover, // nude-75
+    shadow: LuxeColors.onSurface.withOpacity(0.08),
+  ),
+
+  // --- Tipografía fluida ---
+  textTheme: _buildTextTheme(context),
+
+  // --- Card Theme ---
+  cardTheme: CardTheme(
+    elevation: 0,
+    margin: EdgeInsets.zero,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(LuxeRadius.lg), // 16px
+      side: BorderSide(color: LuxeColors.outline, width: 0.5),
+    ),
+    color: LuxeColors.surfaceElevated, // nude-25
+    shadowColor: LuxeColors.onSurface.withOpacity(0.04),
+  ),
+
+  // --- Input Theme ---
+  inputDecorationTheme: InputDecorationTheme(
+    filled: true,
+    fillColor: LuxeColors.surfaceHover, // nude-75
+    contentPadding: EdgeInsets.symmetric(
+      horizontal: LuxeSpacing.space4, // 12px
+      vertical: LuxeSpacing.space3,   // 8px
+    ),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(LuxeRadius.md), // 12px
+      borderSide: BorderSide(color: LuxeColors.outline, width: 1),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(LuxeRadius.md),
+      borderSide: BorderSide(color: LuxeColors.outlineFocus, width: 2),
+    ),
+  ),
+
+  // --- Button Theme ---
+  elevatedButtonTheme: ElevatedButtonThemeData(
+    style: ElevatedButton.styleFrom(
+      elevation: 0,
+      backgroundColor: LuxeColors.primary,
+      foregroundColor: LuxeColors.onPrimary,
+      padding: EdgeInsets.symmetric(
+        horizontal: LuxeSpacing.space5, // 16px
+        vertical: LuxeSpacing.space3,   // 8px
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(LuxeRadius.full), // pill
+      ),
+      minimumSize: Size(0, 56),
+    ),
+  ),
+);</code></pre>
+  </section>
+
+  <hr>
+
+  <section>
+    <h2>6. Tokens Complementarios</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Categoría</th>
+          <th>Tokens Clave</th>
+          <th>Valores</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Motion</strong></td>
+          <td><code>durationFast</code>, <code>durationMedium</code>, <code>durationLong</code>, <code>easeStandard</code>, <code>easeEmphasized</code></td>
+          <td>150ms, 300ms, 500ms; <code>Cubic(0.4, 0.0, 0.2, 1)</code>, <code>Cubic(0.05, 0.7, 0.1, 1)</code></td>
+        </tr>
+        <tr>
+          <td><strong>Radius</strong></td>
+          <td><code>xs</code>, <code>sm</code>, <code>md</code>, <code>lg</code>, <code>xl</code>, <code>full</code></td>
+          <td>4, 8, 12, 16, 24, 9999 px</td>
+        </tr>
+        <tr>
+          <td><strong>Shadows</strong></td>
+          <td><code>elevation1</code>–<code>elevation5</code></td>
+          <td><code>BoxShadow</code> con <code>color: onSurface.withOpacity(0.04–0.16)</code>, <code>blur: 4–24</code></td>
+        </tr>
+        <tr>
+          <td><strong>Breakpoints</strong></td>
+          <td><code>mobile</code>, <code>tablet</code>, <code>desktop</code></td>
+          <td>&lt;600, 600–1024, &gt;1024 dp</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <hr>
+
+  <section>
+    <h2>7. Componentes Principales — Especificación Funcional</h2>
+    
+    <h3>7.1 <code>LuxeButton</code> — Botón Premium Unificado</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Prop</th>
+          <th>Tipo</th>
+          <th>Default</th>
+          <th>Descripción</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>variant</code></td>
+          <td><code>LuxeButtonVariant</code></td>
+          <td><code>filled</code></td>
+          <td><code>filled</code>, <code>tonal</code>, <code>outlined</code>, <code>text</code>, <code>goldShimmer</code></td>
+        </tr>
+        <tr>
+          <td><code>size</code></td>
+          <td><code>LuxeButtonSize</code></td>
+          <td><code>medium</code></td>
+          <td><code>small</code> (40h), <code>medium</code> (48h), <code>large</code> (56h), <code>fullWidth</code></td>
+        </tr>
+        <tr>
+          <td><code>label</code></td>
+          <td><code>String</code></td>
+          <td><em>required</em></td>
+          <td>Texto principal del botón</td>
+        </tr>
+        <tr>
+          <td><code>isLoading</code></td>
+          <td><code>bool</code></td>
+          <td><code>false</code></td>
+          <td>Spinner integrado, deshabilita interacciones</td>
+        </tr>
+      </tbody>
+    </table>
+    <p><strong>Estados visuales:</strong> <code>enabled</code> (primary bg), <code>hover</code> (scale 1.02), <code>pressed</code> (scale 0.98 + haptics), <code>disabled</code> (outline bg, sin sombra).</p>
+
+    <h3>7.2 <code>LuxeCard</code>, <code>LuxeInput</code> y <code>BiometricScannerOverlay</code></h3>
+    <p>Componentes diseñados bajo los tokens semánticos de radio, color y espaciado para mantener la cohesión en Flutter y Web.</p>
+  </section>
+
+  <hr>
+
+  <section>
+    <h2>8. Cambios Requeridos & Hoja de Ruta</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Prioridad</th>
+          <th>Tarea</th>
+          <th>Descripción</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="badge-critica">Crítica</span></td>
+          <td>Licenciar Didot LT Std</td>
+          <td>Fuente display obligatoria. Verificar cobertura glifos + variable font.</td>
+        </tr>
+        <tr>
+          <td><span class="badge-critica">Crítica</span></td>
+          <td>Añadir fuentes a <code>pubspec.yaml</code></td>
+          <td>Estructura exacta según §5.1.</td>
+        </tr>
+        <tr>
+          <td><span class="badge-critica">Crítica</span></td>
+          <td>Implementar Tokens Dart</td>
+          <td>Archivos Dart en <code>lib/design/tokens/</code>.</td>
+        </tr>
+        <tr>
+          <td><span class="badge-alta">Alta</span></td>
+          <td>Crear <code>LuxeButton</code> widget</td>
+          <td>Componente unificado con soporte de variantes y haptics.</td>
+        </tr>
+        <tr>
+          <td><span class="badge-media">Media</span></td>
+          <td>Auditoría WCAG AA</td>
+          <td>Validar contraste en modo oscuro (Gold-300 sobre Nude-950).</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <footer style="margin-top: 3rem; text-align: center; font-size: 11px; color: var(--text-muted); border-top: 1px solid var(--border-color); padding-top: 1rem;">
+    Fin de Especificación • Belleza Luxe Design System Part 2 • Confidencial
+  </footer>
+
+</body>
+</html>

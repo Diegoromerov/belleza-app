@@ -548,7 +548,7 @@ class _CaptureScreenState extends State<CaptureScreen>
     await _switchCameraTo(CameraLensDirection.back);
   }
 
-  // --- REPETIR ROSTRO (GIRA AUTOMÁTICAMENTE A CÁMARA FRONTAL) ---
+  // --- REPETIR ROSTRO (GIRA AUTOMÁTICAMENTE A CÁMARA FRONTAL Y REINICIA STREAM) ---
   void _retakeFace() async {
     setState(() {
       _faceImage = null;
@@ -556,10 +556,14 @@ class _CaptureScreenState extends State<CaptureScreen>
       _instruction = 'Coloca tu rostro dentro del óvalo y presiona el botón para tomar la foto';
       _isFaceValid = false;
       _qualityScore = 0.0;
+      _validFramesCount = 0;
     });
 
-    // GIRO AUTOMÁTICO A CÁMARA FRONTAL
+    // GIRO AUTOMÁTICO A CÁMARA FRONTAL Y REINICIO DE STREAM
     await _switchCameraTo(CameraLensDirection.front);
+    if (_cameraController != null && _cameraController!.value.isInitialized) {
+      _startDetection();
+    }
   }
 
   // --- Procesamiento de manos (Toma 100% MANUAL) ---

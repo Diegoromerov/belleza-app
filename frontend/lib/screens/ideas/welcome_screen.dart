@@ -3,7 +3,7 @@ import '../../services/audience_service.dart';
 import '../../services/biometric_service.dart';
 import '../../shared/mens_theme.dart';
 import '../../shared/glow_tokens.dart';
-import '../../widgets/chromatic_sphere.dart';
+import '../../widgets/aura_3d_emblem.dart';
 import '../../widgets/glow_glass_card.dart';
 import 'capture_screen.dart';
 
@@ -151,67 +151,73 @@ class _BiometricWelcomeScreenState extends State<BiometricWelcomeScreen> {
         final isMen = currentMode == AudienceMode.men;
 
         return Scaffold(
-          body: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: isMen
-                    ? [
-                        MensTheme.obsidianBg,
-                        MensTheme.obsidianCard,
-                        MensTheme.obsidianBg,
-                      ]
-                    : [
-                        GlowTokens.creamSilk,
-                        GlowTokens.amber.withValues(alpha: 0.25),
-                        GlowTokens.terracota.withValues(alpha: 0.4),
-                        GlowTokens.nightAndean,
-                      ],
-                stops: isMen ? const [0.0, 0.5, 1.0] : const [0.0, 0.35, 0.7, 1.0],
-              ),
-            ),
-            child: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 12),
-                    const ChromaticSphere(
-                      size: 220.0,
-                      duration: Duration(seconds: 2),
-                    ),
-                    const SizedBox(height: 36),
-                    GlowGlassCard(
-                      child: Column(
-                        children: [
-                          Text(
-                            isMen ? 'Aura Men Visagismo' : 'Hola, soy Aura',
-                            style: TextStyle(
-                              fontSize: 26,
-                              fontWeight: FontWeight.bold,
-                              color: isMen ? MensTheme.champagneGold : GlowTokens.nightAndean,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            isMen
-                                ? 'Tu asesora IA de Visagismo. Analizaré la estructura facial y barometría de tu mandíbula para recomendar tu corte de cabello y barba ideal.'
-                                : 'Tu asesora de belleza y bienestar con Inteligencia Artificial. Diagnosticaré tu tipo de piel, rostro e higiene capilar para sugerirte el ritual perfecto.',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: isMen ? MensTheme.textSecondary : GlowTokens.nightAndean,
-                              height: 1.4,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
+          body: SizedBox.expand(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: isMen
+                      ? [
+                          MensTheme.obsidianBg,
+                          MensTheme.obsidianCard,
+                          MensTheme.obsidianBg,
+                        ]
+                      : [
+                          GlowTokens.creamSilk,
+                          GlowTokens.amber.withValues(alpha: 0.25),
+                          GlowTokens.terracota.withValues(alpha: 0.4),
+                          GlowTokens.nightAndean,
                         ],
-                      ),
-                    ),
-                    const Spacer(),
+                  stops: isMen ? const [0.0, 0.5, 1.0] : const [0.0, 0.35, 0.7, 1.0],
+                ),
+              ),
+              child: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                          child: IntrinsicHeight(
+                            child: Column(
+                              children: [
+                                const SizedBox(height: 12),
+                                const Aura3DEmblemWidget(
+                                  size: 210.0,
+                                ),
+                                const SizedBox(height: 24),
+                                GlowGlassCard(
+                                  child: Column(
+                                    children: [
+                                      Text(
+                                        isMen ? 'Aura Men Visagismo' : 'Hola, soy Aura',
+                                        style: TextStyle(
+                                          fontSize: 26,
+                                          fontWeight: FontWeight.bold,
+                                          color: isMen ? MensTheme.champagneGold : GlowTokens.nightAndean,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        isMen
+                                            ? 'Tu asesora IA de Visagismo. Analizaré la estructura facial y barometría de tu mandíbula para recomendar tu corte de cabello y barba ideal.'
+                                            : 'Tu asesora de belleza y bienestar con Inteligencia Artificial. Diagnosticaré tu tipo de piel, rostro e higiene capilar para sugerirte el ritual perfecto.',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: isMen ? MensTheme.textSecondary : GlowTokens.nightAndean,
+                                          height: 1.4,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const Spacer(),
+
                     
                     // 🛡️ BOTÓN DISCRETO & CASILLA DE HABEAS DATA / TRAZABLE AUDITABLE
                     Container(
@@ -292,11 +298,16 @@ class _BiometricWelcomeScreenState extends State<BiometricWelcomeScreen> {
                               ),
                       ),
                     ),
-                    const SizedBox(height: 16),
-                  ],
+                        const SizedBox(height: 16),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ),
-            ),
             ),
           ),
         );
@@ -304,3 +315,4 @@ class _BiometricWelcomeScreenState extends State<BiometricWelcomeScreen> {
     );
   }
 }
+

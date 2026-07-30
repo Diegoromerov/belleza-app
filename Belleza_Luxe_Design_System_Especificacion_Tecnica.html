@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BELLEZA LUXE DESIGN SYSTEM — ESPECIFICACIÓN TÉCNICA PROFESIONAL</title>
+  
+  <!-- Google Fonts: Cormorant Garamond (Serif Luxe) + Inter (Sans precision) + Fira Code -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- Mermaid JS para renderizar los diagramas -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'neutral',
+      themeVariables: {
+        primaryColor: '#F9F6F0',
+        primaryBorderColor: '#C5A058',
+        lineColor: '#555555',
+        fontFamily: 'Inter, sans-serif'
+      }
+    });
+  </script>
+
+  <style>
+    :root {
+      --primary-gold: #C5A058;
+      --gold-dark: #8C6F34;
+      --gold-light: #F4EFE6;
+      --text-main: #1C1C1C;
+      --text-muted: #555555;
+      --bg-card: #FAF8F5;
+      --border-color: #E5DED0;
+      
+      --danger-bg: #FDF2F2;
+      --danger-border: #E57373;
+      --danger-text: #C62828;
+
+      --success-bg: #F1F8E9;
+      --success-border: #81C784;
+      --success-text: #2E7D32;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      color: var(--text-main);
+      background-color: #FFFFFF;
+      line-height: 1.6;
+      font-size: 13.5px;
+      padding: 2.5rem;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    /* BARRA FLOTANTE DE IMPRESIÓN */
+    .print-actions {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      display: flex;
+      gap: 12px;
+      z-index: 1000;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 8px 16px;
+      border-radius: 30px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-print {
+      background: var(--primary-gold);
+      color: #FFF;
+      border: none;
+      padding: 8px 20px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 10px rgba(197, 160, 88, 0.3);
+    }
+
+    .btn-print:hover {
+      background: var(--gold-dark);
+      transform: translateY(-1px);
+    }
+
+    /* ENCABEZADO "HAUTE COUTURE" */
+    .header-branding {
+      text-align: center;
+      border-bottom: 2px solid var(--primary-gold);
+      padding-bottom: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .brand-sub {
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      color: var(--primary-gold);
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    h1.doc-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: #000;
+      line-height: 1.2;
+      margin-bottom: 8px;
+    }
+
+    .doc-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* SECCIONES Y TIPOGRAFÍA */
+    h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: #000;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 4px;
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    h2::before {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 18px;
+      background-color: var(--primary-gold);
+    }
+
+    h3 {
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--gold-dark);
+      margin-top: 1.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    p {
+      margin-bottom: 1rem;
+      color: #2D2D2D;
+    }
+
+    strong {
+      color: #000;
+      font-weight: 600;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid var(--border-color);
+      margin: 2rem 0;
+    }
+
+    /* TABLAS HAUTE COUTURE */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      font-size: 12px;
+      background: #FFFFFF;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    th {
+      background-color: var(--gold-light);
+      color: var(--gold-dark);
+      font-family: 'Inter', sans-serif;
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 10.5px;
+      letter-spacing: 0.5px;
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    td {
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: top;
+    }
+
+    tr:nth-child(even) {
+      background-color: #FAF9F6;
+    }
+
+    /* BADGES Y ETIQUETAS */
+    .badge-critica {
+      display: inline-block;
+      background-color: var(--danger-bg);
+      color: var(--danger-text);
+      border: 1px solid var(--danger-border);
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 11px;
+    }
+
+    .badge-alta {
+      display: inline-block;
+      background-color: #FFF8E1;
+      color: #F57F17;
+      border: 1px solid #FFE082;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 11px;
+    }
+
+    .badge-media {
+      display: inline-block;
+      background-color: #E1F5FE;
+      color: #0288D1;
+      border: 1px solid #81D4FA;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 11px;
+    }
+
+    .badge-baja {
+      display: inline-block;
+      background-color: #F3E5F5;
+      color: #7B1FA2;
+      border: 1px solid #CE93D8;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 11px;
+    }
+
+    /* CODE BLOCKS & PRE */
+    code {
+      font-family: 'Fira Code', monospace;
+      background-color: #F4F1EA;
+      color: #8C2424;
+      padding: 2px 5px;
+      border-radius: 3px;
+      font-size: 12px;
+    }
+
+    pre {
+      background-color: #1E1E1E;
+      color: #D4D4D4;
+      padding: 1rem;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 1rem 0;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    pre code {
+      background-color: transparent;
+      color: inherit;
+      padding: 0;
+    }
+
+    ul, ol {
+      margin-left: 1.2rem;
+      margin-bottom: 1rem;
+    }
+
+    li {
+      margin-bottom: 4px;
+    }
+
+    /* MERMAID DIAGRAM CONTAINER */
+    .mermaid-container {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+      text-align: center;
+    }
+
+    /* ESTILOS DE IMPRESIÓN (PDF PDF/A READY) */
+    @media print {
+      body {
+        padding: 0;
+        max-width: 100%;
+        font-size: 10.5pt;
+        line-height: 1.45;
+        color: #000;
+      }
+
+      .print-actions {
+        display: none !important;
+      }
+
+      h2 {
+        page-break-after: avoid;
+        margin-top: 1.5rem;
+      }
+
+      table, tr, td, th, pre {
+        page-break-inside: avoid;
+      }
+
+      .mermaid-container {
+        page-break-inside: avoid;
+      }
+
+      @page {
+        margin: 20mm 15mm 20mm 15mm;
+        @bottom-right {
+          content: counter(page);
+        }
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Botón Flotante para Generar PDF -->
+  <div class="print-actions">
+    <button class="btn-print" onclick="window.print()">🖨️ Guardar / Imprimir PDF</button>
+  </div>
+
+  <!-- Encabezado del Documento -->
+  <header class="header-branding">
+    <div class="brand-sub">Belleza Luxe Design System</div>
+    <h1 class="doc-title">Especificación Técnica Profesional</h1>
+    <div class="doc-meta">Módulo Biométrico & AR YouCam • Fecha: 2026-07-30</div>
+  </header>
+
+  <!-- Contenido Principal -->
+  <section>
+    <h2>1. Resumen Ejecutivo</h2>
+    <p>Este documento especifica el <strong>Design System "Belleza Luxe"</strong> para el módulo de Biometría y Belleza Premium de la aplicación Belleza App. Define un sistema de diseño de lujo/ultra-premium (referencias: Dior, La Mer, SK-II, Chanel, Guerlain) que abarca paleta de colores, tipografía, espaciado, componentes Flutter core y el overlay AR premium para escaneo biométrico con integración YouCam SDK.</p>
+    
+    <p>El objetivo es estandarizar la experiencia visual y de interacción en el módulo de escaneo facial, cutáneo y de manos, garantizando consistencia de marca premium, accesibilidad WCAG AA y rendimiento fluido en Flutter (iOS/Android/Web).</p>
+
+    <p><strong>Principales entregables:</strong></p>
+    <ul>
+      <li>Sistema de tokens de diseño (colores, tipografía, espaciado, motion) implementables en CSS y compatible con Flutter y Web.</li>
+      <li>Componentes core reutilizables: <code>LuxeButton</code> (5 variantes, micro-interacciones hápticas) y <code>BiometricScannerOverlay</code> (overlay AR multi-zona con YouCam SDK, partículas, haptics, ciclo de vida completo).</li>
+      <li>Especificación de integración YouCam SDK (4 pasos: upload slot → S3 upload → create task → poll results) con manejo de timeouts, haptics y ciclo de vida de app.</li>
+    </ul>
+  </section>
+
+  <hr>
+
+  <section>
+    <h2>2. Arquitectura General</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Capa</th>
+          <th>Responsabilidad</th>
+          <th>Tecnologías</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Design Tokens</strong></td>
+          <td>Definición centralizada de colores, tipografía, espaciado, motion, gradientes</td>
+          <td>Dart (<code>lib/design/tokens.dart</code>), CSS Custom Properties (Web)</td>
+        </tr>
+        <tr>
+          <td><strong>Core Components</strong></td>
+          <td>Componentes base reutilizables (<code>LuxeButton</code>, <code>LuxeCard</code>, <code>LuxeInput</code>)</td>
+          <td>Flutter (<code>lib/design/components/</code>)</td>
+        </tr>
+        <tr>
+          <td><strong>Biometric Module</strong></td>
+          <td>Overlay AR premium, integración YouCam SDK, orquestación de escaneo multi-zona</td>
+          <td>Flutter (<code>lib/presentation/biometric/scanner/</code>) + YouCam SDK (iOS/Android)</td>
+        </tr>
+        <tr>
+          <td><strong>AI Worker (FastAPI)</strong></td>
+          <td>Orquestación IA (Gemini), análisis biométrico, almacenamiento resultados</td>
+          <td>FastAPI @ <code>ai-worker:8001/api/v1/beauty-scan</code></td>
+        </tr>
+        <tr>
+          <td><strong>Backend (Node/Express)</strong></td>
+          <td>API Gateway, autenticación, orquestación flujos, persistencia PostgreSQL</td>
+          <td>Node/Express @ <code>backend/src/startup/app.js</code></td>
+        </tr>
+        <tr>
+          <td><strong>Frontend Flutter</strong></td>
+          <td>App móvil (iOS/Android) + Web, consume Design System y Biometric Module</td>
+          <td>Flutter 3.x, Dart 3.x</td>
+        </tr>
+        <tr>
+          <td><strong>Admin Dashboard</strong></td>
+          <td>Panel de administración, métricas, gestión usuarios</td>
+          <td>Next.js 14, React 18</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <hr>
+
+  <section>
+    <h2>3. Tabla de Especificaciones</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Componente</th>
+          <th>Valor / Especificación</th>
+          <th>Uso</th>
+          <th>Notas</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Design Tokens — Color</strong></td>
+          <td>12 escalas <code>nude-50</code> a <code>nude-990</code> + <code>gold-871</code>, <code>gold-872</code>, <code>gold-shimmer</code></td>
+          <td>Fondos, texto, bordes, CTAs, focus rings</td>
+          <td><code>gold-871/872</code> solo sobre <code>nude-500+</code> o fondos oscuros. WCAG AA.</td>
+        </tr>
+        <tr>
+          <td><strong>Design Tokens — Tipografía</strong></td>
+          <td>Didot LT Std / Cormorant Garamond / JetBrains Mono. Escalas fluidas <code>clamp()</code>.</td>
+          <td>Display (hero/títulos), Body (párrafos), Mono (métricas biométricas)</td>
+          <td>Fuentes empaquetadas en <code>assets/fonts/</code>. Mapeo a <code>TextStyle</code> Flutter.</td>
+        </tr>
+        <tr>
+          <td><strong>Design Tokens — Espaciado</strong></td>
+          <td>Base 4px + φ (1.618). Tokens: <code>xs=2</code>, <code>sm=4</code>, <code>md=6.5</code>, <code>lg=10.5</code>, <code>xl=17</code>, <code>xxl=27.5</code>.</td>
+          <td>Padding, margin, gap, borderRadius.</td>
+          <td>Implementado en <code>LuxeSpacing</code> (Dart) y <code>--space-*</code> (CSS). Cero valores mágicos.</td>
+        </tr>
+        <tr>
+          <td><strong>LuxeButton</strong></td>
+          <td>5 variantes: <code>filled</code>, <code>tonal</code>, <code>outlined</code>, <code>text</code>, <code>goldShimmer</code>. Micro-interacciones (scale 0.96, glow, haptics).</td>
+          <td>CTAs primarios, secundarios, ghost, enlaces hero.</td>
+          <td>Usa <code>LuxeColors</code>, <code>LuxeSpacing</code>, <code>LuxeTypography</code>. Accesible con <code>Semantics</code>.</td>
+        </tr>
+        <tr>
+          <td><strong>BiometricScannerOverlay</strong></td>
+          <td>Overlay AR multi-zona (Face, Skin, Hands). Validación calidad: landmarks (&gt;0.85), quality (&gt;0.8), lighting (&gt;0.7).</td>
+          <td>Módulo de escaneo biométrico premium.</td>
+          <td>Gestión completa de ciclo de vida en <code>dispose()</code> (limpieza timers/controllers).</td>
+        </tr>
+        <tr>
+          <td><strong>AI Worker (FastAPI)</strong></td>
+          <td>Endpoint: <code>POST /api/v1/beauty-scan</code>. Recibe <code>ScanResult</code>, llama a Gemini.</td>
+          <td>Procesamiento IA post-escaneo.</td>
+          <td>Despliegue interno en Docker network (<code>ai-worker:8001</code>).</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <hr>
+
+  <section>
+    <h2>4. Diagrama Mermaid</h2>
+    <div class="mermaid-container">
+      <pre class="mermaid">
+flowchart TD
+    subgraph Flutter_App["Flutter App (iOS/Android/Web)"]
+        UI["BiometricScannerOverlay"] -->|Inicia sesión| YC["YouCam SDK Wrapper"]
+        YC -->|Frame stream + landmarks| UI
+        UI -->|Valida calidad zona| UI
+        UI -->|ScanResult completo| API["Backend API /api/ai/orchestrate"]
+        UI -.->|Haptics / Particles| UX["Luxe Motion + Haptics"]
+    end
+
+    subgraph Backend["Backend Node/Express (AWS EKS)"]
+        API -->|Proxy HTTP| AIW["AI Worker FastAPI :8001"]
+        API -->|Persiste| PG[(PostgreSQL Railway)]
+        API -->|Auth| JWT["JWT + LocalStorage"]
+    end
+
+    subgraph AI_Worker["AI Worker (FastAPI + Gemini)"]
+        AIW -->|Analiza ScanResult| GM["Gemini API"]
+        GM -->|BeautyAnalysisResult| AIW
+        AIW -->|Response| API
+    end
+
+    subgraph Admin["Admin Dashboard (Next.js)"]
+        ADM["Admin UI"] --> API
+    end
+
+    classDef flutter fill:#FAF8F5,stroke:#C5A052,stroke-width:2px;
+    classDef backend fill:#F3EFEB,stroke:#B8A493,stroke-width:2px;
+    classDef ai fill:#E8E2D9,stroke:#A68F7B,stroke-width:2px;
+
+    class Flutter_App flutter;
+    class Backend,Admin backend;
+    class AI_Worker ai;
+      </pre>
+    </div>
+  </section>
+
+  <hr>
+
+  <section>
+    <h2>5. Componentes Principales</h2>
+    
+    <h3>5.1 Design Tokens (<code>lib/design/tokens.dart</code>)</h3>
+    <p>Fuente única de verdad para decisiones visuales. Define paletas de colores Pantone, tipografía fluida, espaciado por razón áurea, y curvas de animación motion.</p>
+
+    <h3>5.2 LuxeButton (<code>lib/design/components/luxe_button.dart</code>)</h3>
+    <p>Botón unificado con soporte de 5 variantes, animación háptica y control del estado de carga / deshabilitado con accesibilidad integrada mediante <code>Semantics</code>.</p>
+
+    <h3>5.3 BiometricScannerOverlay</h3>
+    <p>Overlay AR inmersivo que coordina el escaneo de rostro, piel y manos con validación de calidad por frame, control de timers por zona, renderizado de partículas y limpieza estricta en el método <code>dispose()</code>.</p>
+
+    <h3>5.4 AI Worker FastAPI (<code>ai-worker/main.py</code>)</h3>
+    <p>Servicio en Python que procesa los resultados biométricos mediante modelos Gemini, devolviendo rutinas personalizadas y diagnósticos estructurados.</p>
+  </section>
+
+  <hr>
+
+  <section>
+    <h2>6. Cambios Requeridos & Hoja de Ruta (Checklist)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Prioridad</th>
+          <th>Tarea</th>
+          <th>Descripción</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="badge-critica">Crítica</span></td>
+          <td>Wrapper YouCam SDK Nativo</td>
+          <td>Implementar puente MethodChannel / Pigeon para iOS y Android.</td>
+        </tr>
+        <tr>
+          <td><span class="badge-critica">Crítica</span></td>
+          <td>Limpieza JWT Expire</td>
+          <td>Limpiar <code>localStorage</code> en Flutter Web cuando expira el token de autenticación.</td>
+        </tr>
+        <tr>
+          <td><span class="badge-critica">Crítica</span></td>
+          <td>Eliminar Dead Code</td>
+          <td>Remover <code>beautyScanWorker.js</code> ya que el Worker oficial corre en FastAPI.</td>
+        </tr>
+        <tr>
+          <td><span class="badge-alta">Alta</span></td>
+          <td>Golden Tests Componentes</td>
+          <td>Añadir pruebas de regresión visual para <code>LuxeButton</code> y <code>BiometricScannerOverlay</code>.</td>
+        </tr>
+        <tr>
+          <td><span class="badge-media">Media</span></td>
+          <td>Auditoría Contraste Dorados</td>
+          <td>Validar el uso de <code>gold-871/872</code> para cumplir estricto WCAG AA (4.5:1).</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <hr>
+
+  <section>
+    <h2>7. Riesgos Técnicos & Mitigaciones</h2>
+    <ul>
+      <li><strong>Licencia YouCam SDK no disponible:</strong> Riesgo de bloquear escaneo real. Mitigación: Prototipar alternativa abierta con <em>MediaPipe Face Mesh + Hands</em>.</li>
+      <li><strong>Contraste Dorado Insuficiente:</strong> Riesgo de incumplir accesibilidad. Mitigación: Restringir colores metálicos a bordes/iconos y usar variantes <code>gold-on-dark</code>.</li>
+      <li><strong>JWT Expirado sin Limpieza:</strong> Causa bucles 401. Mitigación: Crear <code>AuthInterceptor</code> en cliente HTTP de Flutter.</li>
+    </ul>
+  </section>
+
+  <footer style="margin-top: 3rem; text-align: center; font-size: 11px; color: var(--text-muted); border-top: 1px solid var(--border-color); padding-top: 1rem;">
+    Fin del Documento • Belleza Luxe Design System Professional Spec • Confidencial
+  </footer>
+
+</body>
+</html>

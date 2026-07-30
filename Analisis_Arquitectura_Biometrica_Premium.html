@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BELLEZA APP — ANÁLISIS ARQUITECTURA BIOMÉTRICA PREMIUM</title>
+  
+  <!-- Google Fonts: Cormorant Garamond (Serif Luxe) + Inter (Sans precision) + Fira Code -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- Mermaid JS para renderizar los diagramas -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'neutral',
+      themeVariables: {
+        primaryColor: '#F9F6F0',
+        primaryBorderColor: '#C5A058',
+        lineColor: '#555555',
+        fontFamily: 'Inter, sans-serif'
+      }
+    });
+  </script>
+
+  <style>
+    :root {
+      --primary-gold: #C5A058;
+      --gold-dark: #8C6F34;
+      --gold-light: #F4EFE6;
+      --text-main: #1C1C1C;
+      --text-muted: #555555;
+      --bg-card: #FAF8F5;
+      --border-color: #E5DED0;
+      
+      --danger-bg: #FDF2F2;
+      --danger-border: #E57373;
+      --danger-text: #C62828;
+
+      --success-bg: #F1F8E9;
+      --success-border: #81C784;
+      --success-text: #2E7D32;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      color: var(--text-main);
+      background-color: #FFFFFF;
+      line-height: 1.6;
+      font-size: 13.5px;
+      padding: 2.5rem;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    /* BARRA FLOTANTE DE IMPRESIÓN (Sólo visible en pantalla) */
+    .print-actions {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      display: flex;
+      gap: 12px;
+      z-index: 1000;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 8px 16px;
+      border-radius: 30px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-print {
+      background: var(--primary-gold);
+      color: #FFF;
+      border: none;
+      padding: 8px 20px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 10px rgba(197, 160, 88, 0.3);
+    }
+
+    .btn-print:hover {
+      background: var(--gold-dark);
+      transform: translateY(-1px);
+    }
+
+    /* ENCABEZADO "HAUTE COUTURE" */
+    .header-branding {
+      text-align: center;
+      border-bottom: 2px solid var(--primary-gold);
+      padding-bottom: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .brand-sub {
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      color: var(--primary-gold);
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    h1.doc-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: #000;
+      line-height: 1.2;
+      margin-bottom: 8px;
+    }
+
+    .doc-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* SECCIONES Y TIPOGRAFÍA */
+    h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: #000;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 4px;
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    h2::before {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 18px;
+      background-color: var(--primary-gold);
+    }
+
+    h3 {
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--gold-dark);
+      margin-top: 1.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    p {
+      margin-bottom: 1rem;
+      color: #2D2D2D;
+    }
+
+    strong {
+      color: #000;
+      font-weight: 600;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid var(--border-color);
+      margin: 2rem 0;
+    }
+
+    /* TABLAS HAUTE COUTURE */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      font-size: 12.5px;
+      background: #FFFFFF;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    th {
+      background-color: var(--gold-light);
+      color: var(--gold-dark);
+      font-family: 'Inter', sans-serif;
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: top;
+    }
+
+    tr:nth-child(even) {
+      background-color: #FAF9F6;
+    }
+
+    /* BADGES Y ETIQUETAS */
+    .badge-critica {
+      display: inline-block;
+      background-color: var(--danger-bg);
+      color: var(--danger-text);
+      border: 1px solid var(--danger-border);
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 11px;
+    }
+
+    .badge-alta {
+      display: inline-block;
+      background-color: #FFF8E1;
+      color: #F57F17;
+      border: 1px solid #FFE082;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 11px;
+    }
+
+    .badge-media {
+      display: inline-block;
+      background-color: #E1F5FE;
+      color: #0288D1;
+      border: 1px solid #81D4FA;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 11px;
+    }
+
+    .badge-baja {
+      display: inline-block;
+      background-color: #F3E5F5;
+      color: #7B1FA2;
+      border: 1px solid #CE93D8;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 11px;
+    }
+
+    /* CODE & LISTS */
+    code {
+      font-family: 'Fira Code', monospace;
+      background-color: #F4F1EA;
+      color: #8C2424;
+      padding: 2px 5px;
+      border-radius: 3px;
+      font-size: 12px;
+    }
+
+    ul {
+      margin-left: 1.2rem;
+      margin-bottom: 1rem;
+    }
+
+    li {
+      margin-bottom: 4px;
+    }
+
+    /* MERMAID DIAGRAM CONTAINER */
+    .mermaid-container {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+      text-align: center;
+    }
+
+    /* ESTILOS DE IMPRESIÓN (PDF PDF/A READY) */
+    @media print {
+      body {
+        padding: 0;
+        max-width: 100%;
+        font-size: 11pt;
+        line-height: 1.5;
+        color: #000;
+      }
+
+      .print-actions {
+        display: none !important;
+      }
+
+      h2 {
+        page-break-after: avoid;
+        margin-top: 1.5rem;
+      }
+
+      table, tr, td, th {
+        page-break-inside: avoid;
+      }
+
+      .mermaid-container {
+        page-break-inside: avoid;
+      }
+
+      @page {
+        margin: 20mm 15mm 20mm 15mm;
+        @bottom-right {
+          content: counter(page);
+        }
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Botón Flotante para Generar PDF en 1-Clic -->
+  <div class="print-actions">
+    <button class="btn-print" onclick="window.print()">🖨️ Guardar / Imprimir PDF</button>
+  </div>
+
+  <!-- Encabezado del Documento -->
+  <header class="header-branding">
+    <div class="brand-sub">Belleza App — Haute Couture Architecture</div>
+    <h1 class="doc-title">Análisis de Arquitectura Biométrica Premium</h1>
+    <div class="doc-meta">Refactorización de Grado Médico & Lujo • Fecha: 2026-07-30</div>
+  </header>
+
+  <!-- Contenido Principal -->
+  <section>
+    <h2>1. Resumen Ejecutivo</h2>
+    <p>Este documento presenta el <strong>análisis de arquitectura y propuesta de refactorización premium</strong> para el módulo biométrico de Belleza App, elevando los estándares a nivel <strong>Dior / La Mer / Perfect Corp</strong>. Identifica brechas críticas en tres componentes clave (<code>biometricScanRoutes</code>, <code>biometricConsentRoutes</code>, <code>vtoRoutes</code>) y propone una arquitectura "Haute Couture" basada en cinco principios rectores: <strong>Zero-Friction Consent</strong>, <strong>Clinical Precision UI</strong>, <strong>Fluid AR Choreography</strong>, <strong>Serif Minimalism</strong> y <strong>Privacy by Design</strong>.</p>
+    
+    <p><strong>Contexto:</strong> Auditoría técnica sobre código no accesible (archivos no encontrados en rutas esperadas). El diagnóstico se basa en patrones observados y estándares de la industria del lujo beauty-tech.</p>
+    
+    <p><strong>Objetivo:</strong> Transformar endpoints funcionales en experiencias biométricas de ultra-premium con cumplimiento legal riguroso (GDPR Art. 7, 9, 15, 17, 25, 30, 32; Ley 1581 Colombia), observabilidad completa y escalabilidad elástica.</p>
+  </section>
+
+  <hr>
+
+  <section>
+    <h2>2. Arquitectura General — Estado Actual vs. Objetivo Premium</h2>
+    <div class="mermaid-container">
+      <pre class="mermaid">
+flowchart TD
+    subgraph Current["ESTADO ACTUAL - Brechas Detectadas"]
+        SCAN["biometricScanRoutes.js<br>• Sin consent guard<br>• Validación básica<br>• Orquestación monolítica<br>• INSERT sin transacción<br>• Guest fallback riesgoso"]
+        CONS["biometricConsentRoutes.js<br>• Granularidad todo o nada<br>• Sin TTL automático<br>• Sin evidencia legal hash<br>• Sin export GDPR Art.15"]
+        VTO["vtoRoutes.js<br>• BYPASS AUTH: userId || 1<br>• Catálogo sin personalización<br>• YouCam opaco, sin CDN"]
+    end
+
+    subgraph Target["OBJETIVO PREMIUM - Haute Couture"]
+        ORCH["BiometricDiagnosisOrchestrator<br>• Consent granular pre-vuelo<br>• Validación clínica imagen<br>• Orquestación Circuit Breaker<br>• Persistencia transaccional<br>• Respuesta narrativa + trazabilidad"]
+        CMGT["BiometricConsentManagementSystem<br>• Scopes granulares 6+<br>• Dashboard privacidad Apple-style<br>• Expiración 12m + renovación<br>• Firma legal hash inmutable<br>• Export/portabilidad GDPR"]
+        VTOE["VirtualTryOnExperienceEngine<br>• Catálogo ranking biométrico<br>• Sesión AR calibrada por scan<br>• Assets pre-cargados CDN edge<br>• Auth obligatorio + session fallback"]
+    end
+
+    Current -->|Refactorización| Target
+
+    classDef current fill:#FDF2F2,stroke:#E57373,stroke-width:2px;
+    classDef target fill:#F1F8E9,stroke:#81C784,stroke-width:2px;
+    class SCAN,CONS,VTO current;
+    class ORCH,CMGT,VTOE target;
+      </pre>
+    </div>
+  </section>
+
+  <hr>
+
+  <section>
+    <h2>3. Tabla de Especificaciones — Auditoría Técnica Comparativa</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Componente</th>
+          <th>Estado Actual (Brechas)</th>
+          <th>Objetivo Premium (Solución)</th>
+          <th>Prioridad</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong><code>biometricScanRoutes.js</code></strong></td>
+          <td>• Sin verificación <code>biometric_consents</code> previo<br>• Validación solo <code>image_base64</code> (sin MIME, tamaño, liveness)<br>• <code>processBiometricScan</code> monolítico<br>• INSERT directo sin transacción/auditoría<br>• Response datos crudos sin metadata confianza<br>• <code>user_id || 'guest'</code> → riesgo legal</td>
+          <td><strong><code>BiometricDiagnosisOrchestrator</code></strong><br>• Consentimiento granular pre-vuelo por <code>scan_type</code><br>• Validación clínica: MIME, ≤5MB, luminosidad, ángulo, liveness heuristics<br>• Orquestación YouCam + Gemini + DeepSeek con Circuit Breaker<br>• Transacción ACID + auditoría inmutable<br>• Response curada: <code>confidence_score</code>, <code>clinical_summary</code>, <code>visual_overlay_url</code>, <code>traceability</code><br>• Rate limit 5/hora/usuario</td>
+          <td><span class="badge-critica">🔴 Crítica</span></td>
+        </tr>
+        <tr>
+          <td><strong><code>biometricConsentRoutes.js</code></strong></td>
+          <td>• Consentimiento "todo o nada" (6+ scopes mezclados)<br>• Sin TTL/expiración automática<br>• Sin hash documento legal aceptado<br>• Sin endpoint export historial (GDPR Art. 15)<br>• Sin fingerprint versión consentimiento</td>
+          <td><strong><code>BiometricConsentManagementSystem</code></strong><br>• 6 scopes granulares: <code>skin_analysis</code>, <code>facial_mapping</code>, <code>hand_analysis</code>, <code>ar_tryon</code>, <code>model_training</code>, <code>marketing_insights</code><br>• Dashboard privacidad estilo Apple/Google<br>• Expiración 12 meses + notificación proactiva 30d<br>• <code>legal_signature_hash</code> inmutable<br>• <code>GET /export</code> → JSON portable (GDPR Art. 15)<br>• Revocación parcial por scope</td>
+          <td><span class="badge-critica">🔴 Crítica</span></td>
+        </tr>
+        <tr>
+          <td><strong><code>vtoRoutes.js</code></strong></td>
+          <td>• 🚨 <strong>VULNERABILIDAD CRÍTICA</strong>: <code>userId || 1</code> bypass auth<br>• Catálogo filtro básico sin ranking biométrico<br>• <code>vtoService</code> opaco: sin CDN, sin fallback<br>• Sin vinculación a diagnóstico previo</td>
+          <td><strong><code>VirtualTryOnExperienceEngine</code></strong><br>• Auth obligatorio + <code>x-session-id</code> header para guest controlado<br>• Catálogo personalizado: ranking por <code>beauty_profile</code> + estacionalidad + stock + hora<br>• Sesión AR calibrada por <code>scan_reference_id</code><br>• Assets pre-firmados CDN edge, <code>supports_instant_tryon</code><br>• Device capabilities detection (WebGL, NPU)</td>
+          <td><span class="badge-critica">🔴 Crítica</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <hr>
+
+  <section>
+    <h2>4. Componentes Principales — Refactorización Propuesta</h2>
+    
+    <h3>4.1 BiometricDiagnosisOrchestrator (<code>backend/src/routes/biometricDiagnosisRoutes.js</code>)</h3>
+    <p>Endpoint único para diagnóstico biométrico integral premium con consentimiento granular, validación clínica, orquestación resiliente y respuesta narrativa.</p>
+    <ul>
+      <li><strong>Responsabilidades:</strong> Verificar consent pre-vuelo, validación clínica de imagen (MIME, ≤5MB, liveness), pipeline YouCam/Gemini/DeepSeek con Circuit Breaker (opossum), transacción ACID en DB y respuesta estructurada con narrativa clínica.</li>
+      <li><strong>Entradas:</strong> <code>image_base64</code>, <code>scan_type</code>, <code>metadata{device_id, lighting_score, angle_deviation}</code>, <code>user</code>, <code>consent_version</code>.</li>
+      <li><strong>Salidas:</strong> <code>diagnosis_id</code>, <code>confidence_score</code>, <code>clinical_summary</code>, <code>biomarkers{}</code>, <code>visual_overlay_url</code>, <code>recommendations</code>.</li>
+    </ul>
+
+    <h3>4.2 BiometricConsentManagementSystem (<code>backend/src/routes/biometricConsentRoutes.js</code>)</h3>
+    <p>Centro de gestión de consentimientos biométricos granulares, transparentes y legalmente robustos (GDPR Art. 7, 15, 30; Ley 1581).</p>
+    <ul>
+      <li><strong>Responsabilidades:</strong> Dashboard de privacidad, gestión de 6 scopes granulares, revocación parcial, exportación portable JSON (Art. 15), renovación automática a 12 meses.</li>
+    </ul>
+
+    <h3>4.3 VirtualTryOnExperienceEngine (<code>backend/src/routes/vtoExperienceRoutes.js</code>)</h3>
+    <p>Motor de experiencia AR/VTO inmersiva, personalizada y segura, integrado con diagnóstico biométrico.</p>
+    <ul>
+      <li><strong>Responsabilidades:</strong> Ranking del catálogo por <code>beauty_profile</code>, inicialización AR calibrada por <code>scan_reference_id</code>, detección de capacidades del dispositivo (`WebGL/NPU`) y CDN pre-firmado.</li>
+    </ul>
+  </section>
+
+  <hr>
+
+  <section>
+    <h2>5. Cambios Requeridos (Checklist Accionable Priorizado)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Prioridad</th>
+          <th>Comp.</th>
+          <th>Tarea</th>
+          <th>Descripción</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="badge-critica">Crítica</span></td>
+          <td>Scan</td>
+          <td>Crear <code>biometricDiagnosisRoutes.js</code></td>
+          <td>Nuevo endpoint <code>/api/v1/biometric/diagnosis</code> con OpenAPI spec completo.</td>
+        </tr>
+        <tr>
+          <td><span class="badge-critica">Crítica</span></td>
+          <td>Scan</td>
+          <td>Middleware <code>validateScanInput</code></td>
+          <td>MIME, size ≤5MB, Base64 decode, liveness (lighting ≥0.6, angle ≤15°).</td>
+        </tr>
+        <tr>
+          <td><span class="badge-critica">Crítica</span></td>
+          <td>Consent</td>
+          <td>Implementar scopes granulares (6)</td>
+          <td><code>skin_analysis</code>, <code>facial_mapping</code>, <code>hand_analysis</code>, <code>ar_tryon</code>, <code>model_training</code>, <code>marketing_insights</code>.</td>
+        </tr>
+        <tr>
+          <td><span class="badge-critica">Crítica</span></td>
+          <td>VTO</td>
+          <td><strong>ELIMINAR <code>userId || 1</code></strong></td>
+          <td>Vulnerabilidad crítica: Auth obligatorio + session token guest.</td>
+        </tr>
+        <tr>
+          <td><span class="badge-alta">Alta</span></td>
+          <td>Scan</td>
+          <td>Rate limit 5/hora/usuario</td>
+          <td>Limitador por <code>user_id</code> en ventana de 3600000ms.</td>
+        </tr>
+        <tr>
+          <td><span class="badge-alta">Alta</span></td>
+          <td>Consent</td>
+          <td>Dashboard Privacidad Apple-Style</td>
+          <td>Vista transparente de revocación, expiración e historial.</td>
+        </tr>
+        <tr>
+          <td><span class="badge-media">Media</span></td>
+          <td>All</td>
+          <td>Métricas Prometheus</td>
+          <td>Latencias, solicitudes totales, revocaciones y fallos de IA.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <hr>
+
+  <section>
+    <h2>6. Riesgos Técnicos y Mitigaciones</h2>
+    <ul>
+      <li><strong>Procesamiento biométrico sin consent validado (Crítico):</strong> Riesgo de multas GDPR/1581. Mitigación: Middleware gate <code>validateBiometricConsent</code> obligatorio.</li>
+      <li><strong>Vulnerabilidad <code>userId || 1</code> en VTO (Crítico):</strong> Exposición de PII. Mitigación: Eliminación inmediata y autenticación obligatoria.</li>
+      <li><strong>Fallos en cascada en IA externa (Alto):</strong> Latencias descontroladas. Mitigación: Circuit Breaker con <code>opossum</code> (timeout 10s).</li>
+    </ul>
+  </section>
+
+  <hr>
+
+  <section>
+    <h2>7. Referencias de Estándar Premium (Benchmark)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Marca / Estándar</th>
+          <th>Aplicación en Esta Arquitectura</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Dior Beauty</strong></td>
+          <td>Serif minimalism, paleta con acento dorado <code>#C5A058</code>, tipografía editorial.</td>
+        </tr>
+        <tr>
+          <td><strong>La Mer</strong></td>
+          <td>Diagnóstico médico de lujo: narrativa clínica, biomarkers estructurados y ritual sugerido.</td>
+        </tr>
+        <tr>
+          <td><strong>Perfect Corp (YouCam)</strong></td>
+          <td>Fluid AR a 60fps, calibración dimensional a partir del escaneo facial.</td>
+        </tr>
+        <tr>
+          <td><strong>Apple Privacy</strong></td>
+          <td>Dashboard transparente, exportación de datos en 1-clic y expiración proactiva.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <footer style="margin-top: 3rem; text-align: center; font-size: 11px; color: var(--text-muted); border-top: 1px solid var(--border-color); padding-top: 1rem;">
+    Fin del Documento • Belleza App Haute Couture Architecture Document • Confidencial
+  </footer>
+
+</body>
+</html>
