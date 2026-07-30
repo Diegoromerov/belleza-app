@@ -1656,9 +1656,10 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                     onTap: () => _checkAuthAndNavigate('/ideas'),
                   ),
 
-                  // Botón 4: Perfil
+                  // Botón 4: Perfil Concierge (Escudo 3D Luxe)
                   _buildNavItem(
-                    icon: Icons.person_outline_rounded,
+                    assetPath: 'assets/images/nav_perfil_icon.png',
+                    assetSize: 44,
                     label: 'Perfil',
                     onTap: () => _checkAuthAndNavigate('/profile'),
                   ),
