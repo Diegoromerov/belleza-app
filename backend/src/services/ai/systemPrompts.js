@@ -1,4 +1,4 @@
-// ✅ CommonJS Compatible
+// ✅ CommonJS Compatible - Archivo Completo
 const MASTER_SYSTEM_PROMPT = `
 <system_prompt>
 <identity>
