@@ -1670,7 +1670,7 @@ if (process.env.NODE_ENV !== 'test') {
   // Configurar timeouts explícitos para alineación con el proxy reverso de Railway
   server.keepAliveTimeout = 65000; // 65 segundos (mayor que el idle timeout típico de 60s de Railway)
   server.headersTimeout = 70000; // 70 segundos (mayor que keepAliveTimeout)
-  server.timeout = 120000; // 2 minutos (suficiente para YouCam + Gemini + DB)
+  server.timeout = 240000; // 4 minutos para llamadas complejas de IA
 }
 
 

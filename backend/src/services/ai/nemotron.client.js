@@ -7,7 +7,7 @@ const NVIDIA_API_KEY = process.env.NVIDIA_API_KEY;
 const API_URL = 'https://integrate.api.nvidia.com/v1/chat/completions';
 
 // Timeout por defecto para la llamada a la API (en ms)
-const REQUEST_TIMEOUT_MS = 30000;
+const REQUEST_TIMEOUT_MS = 180000; // 3 minutos
 
 /**
  * Normaliza SWARM_DEFINITIONS a string, sin importar si viene como
@@ -55,8 +55,9 @@ ${swarmContext}
     stream: false
   };
 
+  // Reemplaza tu fetch actual por este:
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS); // 3 minutos
 
   try {
     const response = await fetch(API_URL, {
@@ -66,7 +67,7 @@ ${swarmContext}
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(payload),
-      signal: controller.signal
+      signal: controller.signal // ← timeout aplicado
     });
 
     clearTimeout(timeoutId);
@@ -94,8 +95,7 @@ ${swarmContext}
   } catch (error) {
     clearTimeout(timeoutId);
     if (error.name === 'AbortError') {
-      console.error('Timeout al llamar a Nemotron Orchestrator (30s excedidos).');
-      throw new Error('Timeout: la API de NVIDIA no respondió a tiempo.');
+      throw new Error('Timeout: La API de NVIDIA no respondió en 3 minutos.');
     }
     console.error('Error al llamar a Nemotron Orchestrator:', error);
     throw error;
