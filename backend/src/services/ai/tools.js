@@ -1,4 +1,5 @@
-export const TOOLS = [
+// ✅ CommonJS Compatible
+const TOOLS = [
   {
     type: "function",
     function: {
@@ -51,3 +52,5 @@ export const TOOLS = [
     }
   }
 ];
+
+module.exports = { TOOLS };

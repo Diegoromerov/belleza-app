@@ -1,4 +1,5 @@
-export const SWARM_DEFINITIONS = `
+// ✅ CommonJS Compatible
+const SWARM_DEFINITIONS = `
 <swarm_definitions>
 
 <agent_ux_researcher>
@@ -33,3 +34,5 @@ export const SWARM_DEFINITIONS = `
 
 </swarm_definitions>
 `;
+
+module.exports = { SWARM_DEFINITIONS };

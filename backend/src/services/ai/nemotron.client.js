@@ -1,17 +1,18 @@
-import { MASTER_SYSTEM_PROMPT } from './systemPrompts.js';
-import { SWARM_DEFINITIONS } from './swarmDefinitions.js';
-import { TOOLS } from './tools.js';
+// ✅ CommonJS Compatible
+const { MASTER_SYSTEM_PROMPT } = require('./systemPrompts');
+const { SWARM_DEFINITIONS } = require('./swarmDefinitions');
+const { TOOLS } = require('./tools');
 
 const NVIDIA_API_KEY = process.env.NVIDIA_API_KEY;
 const API_URL = 'https://integrate.api.nvidia.com/v1/chat/completions';
 
-export async function callNemotronOrchestrator(userPrompt) {
+async function callNemotronOrchestrator(userPrompt) {
   if (!NVIDIA_API_KEY) {
     throw new Error('NVIDIA_API_KEY no está configurada en las variables de entorno.');
   }
 
   const payload = {
-    model: "nvidia/nemotron-4-340b-instruct", // Ajusta al nombre exacto de Hermes Agent-Nemotron 3 550 Ultra en tu dashboard de NVIDIA
+    model: "nvidia/nemotron-4-340b-instruct", // ⚠️ REEMPLAZAR CON EL ID EXACTO DE HERMES AGENT-NEMOTRON 3 550 ULTRA EN TU DASHBOARD
     messages: [
       {
         role: "system",
@@ -29,7 +30,7 @@ export async function callNemotronOrchestrator(userPrompt) {
       }
     ],
     tools: TOOLS,
-    temperature: 0.2, // Baja para precisión, código y tool calling
+    temperature: 0.2,
     max_tokens: 4096,
     stream: false
   };
@@ -50,10 +51,12 @@ export async function callNemotronOrchestrator(userPrompt) {
     }
 
     const data = await response.json();
-    return data.choices[0].message; // Devuelve el mensaje con tool_calls o content
+    return data.choices[0].message;
 
   } catch (error) {
     console.error('Error al llamar a Nemotron Orchestrator:', error);
     throw error;
   }
 }
+
+module.exports = { callNemotronOrchestrator };

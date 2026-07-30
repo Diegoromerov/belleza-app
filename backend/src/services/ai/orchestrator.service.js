@@ -1,13 +1,13 @@
-import { callNemotronOrchestrator } from './nemotron.client.js';
-import { formatOrchestratorResponse, parseJsonSafely } from './parsers.js';
-import fs from 'fs/promises';
-import path from 'path';
+// ✅ CommonJS Compatible
+const { callNemotronOrchestrator } = require('./nemotron.client');
+const { formatOrchestratorResponse, parseJsonSafely } = require('./parsers');
+const fs = require('fs/promises');
+const path = require('path');
 
 // Mapeo de herramientas disponibles (Solo lectura/consultivas)
 const AVAILABLE_TOOLS = {
   read_repository_code: async (args) => {
     try {
-      // Aseguramos que solo lea archivos dentro del proyecto (seguridad)
       const basePath = path.resolve(process.cwd(), '../../'); 
       const filePath = path.join(basePath, args.file_path);
       const content = await fs.readFile(filePath, 'utf-8');
@@ -18,7 +18,6 @@ const AVAILABLE_TOOLS = {
   },
   
   search_luxury_benchmarks: async (args) => {
-    // Simulación de búsqueda (aquí podrías integrar una API real como Tavily o Serper)
     return { 
       success: true, 
       query: args.query, 
@@ -27,7 +26,6 @@ const AVAILABLE_TOOLS = {
   },
 
   query_postgres_schema: async (args) => {
-    // Simulación de consulta a DB (aquí conectarías con tu servicio de DB real)
     return { 
       success: true, 
       table: args.table_name, 
@@ -39,12 +37,11 @@ const AVAILABLE_TOOLS = {
 /**
  * Función principal que maneja la interacción con el Agente Líder.
  */
-export async function handleOrchestration(userPrompt) {
+async function handleOrchestration(userPrompt) {
   try {
     // 1. Llamada inicial al modelo
     let message = await callNemotronOrchestrator(userPrompt);
-    let finalOutput = [];
-
+    
     // 2. Si el modelo pide usar herramientas (Tool Calling)
     if (message.tool_calls && message.tool_calls.length > 0) {
       const toolResults = [];
@@ -63,9 +60,7 @@ export async function handleOrchestration(userPrompt) {
         }
       }
 
-      // 3. Segunda llamada al modelo con los resultados de las herramientas
-      // (En un flujo real de Nemotron, se envía el historial completo de mensajes)
-      // Para simplificar, aquí simulamos que el modelo procesa los resultados y da la respuesta final.
+      // 3. Segunda llamada con los resultados de las herramientas
       message = await callNemotronOrchestrator(
         `${userPrompt}\n\n<tool_results>${JSON.stringify(toolResults)}</tool_results>\n\nProcede con tu análisis y propuesta final.`
       );
@@ -79,3 +74,5 @@ export async function handleOrchestration(userPrompt) {
     throw new Error('El Agente Líder encontró un error procesando tu solicitud.');
   }
 }
+
+module.exports = { handleOrchestration };
