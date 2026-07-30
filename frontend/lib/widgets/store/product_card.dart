@@ -116,7 +116,7 @@ class ProductCard extends StatelessWidget {
           // PRECIO Y BOTÓN AGREGAR
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
                 '\$${price.toStringAsFixed(0)}',

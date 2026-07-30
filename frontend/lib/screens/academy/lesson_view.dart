@@ -118,7 +118,7 @@ class _LessonViewScreenState extends State<LessonViewScreen> {
                   // TÍTULO DIDOT Y BOTÓN DE ESTADO DE COMPLETADO
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
                         child: Text(
