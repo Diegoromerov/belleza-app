@@ -71,20 +71,23 @@ class _BiometricConsentScreenState extends State<BiometricConsentScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              CheckboxListTile(
-                title: const Text(
-                  'Acepto el tratamiento de mis datos biométricos',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              Material(
+                color: Colors.transparent,
+                child: CheckboxListTile(
+                  title: const Text(
+                    'Acepto el tratamiento de mis datos biométricos',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                  ),
+                  value: _accepted,
+                  onChanged: (value) {
+                    setState(() {
+                      _accepted = value ?? false;
+                    });
+                  },
+                  activeColor: Colors.purple,
+                  controlAffinity: ListTileControlAffinity.leading,
+                  contentPadding: EdgeInsets.zero,
                 ),
-                value: _accepted,
-                onChanged: (value) {
-                  setState(() {
-                    _accepted = value ?? false;
-                  });
-                },
-                activeColor: Colors.purple,
-                controlAffinity: ListTileControlAffinity.leading,
-                contentPadding: EdgeInsets.zero,
               ),
               const SizedBox(height: 16),
               Row(

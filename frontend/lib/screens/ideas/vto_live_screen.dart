@@ -1,6 +1,7 @@
 // frontend/lib/screens/ideas/vto_live_screen.dart
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import '../../models/biometric_result.dart';
 import '../../shared/theme.dart';
 import 'widgets/vto_painter.dart';
@@ -86,18 +87,35 @@ class _VtoLiveScreenState extends State<VtoLiveScreen> {
       ),
       body: Stack(
         children: [
-          // Imagen capturada del usuario o representación VTO
+          // Imagen capturada del usuario o representación VTO con cámara en vivo
           Positioned.fill(
             child: widget.faceImage != null
                 ? Image.memory(
                     widget.faceImage!,
                     fit: BoxFit.cover,
                   )
-                : Container(
-                    color: Colors.grey[900],
-                    child: const Center(
-                      child: Icon(Icons.person, size: 120, color: Colors.white24),
-                    ),
+                : Stack(
+                    children: [
+                      Positioned.fill(
+                        child: Container(
+                          color: Colors.grey[900],
+                          child: const Center(
+                            child: Icon(Icons.face_retouching_natural, size: 100, color: Colors.white30),
+                          ),
+                        ),
+                      ),
+                      Positioned.fill(
+                        child: CustomPaint(
+                          painter: VtoPainter(
+                            lipstickColor: _selectedColor,
+                            lipstickOpacity: _opacity,
+                            finish: _selectedFinish,
+                            imageSize: const Size(640, 480),
+                            rotation: InputImageRotation.rotation0deg,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
           ),
 

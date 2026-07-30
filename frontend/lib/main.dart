@@ -164,7 +164,7 @@ class BeautyApp extends StatelessWidget {
                 '/onboarding': (_) => const OnboardingScreen(),
                 '/verification-pending': (_) => const VerificationPendingScreen(),
                 '/profile': (_) => const ClientProfileScreen(),
-                '/ideas': (_) => const IdeasEmptyScreen(),
+                '/ideas': (_) => const BiometricWelcomeScreen(),
                 '/biometric-consent': (_) => const BiometricConsentScreen(),
                 '/biometric-welcome': (_) => const BiometricWelcomeScreen(),
                 '/booking-tracking': (context) {

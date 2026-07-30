@@ -45,6 +45,7 @@ class _CaptureScreenState extends State<CaptureScreen>
   bool _isCameraReady = false;
   bool _isFlashOn = false;
   bool _isSwitchingCamera = false;
+  int _validFramesCount = 0;
 
   late final FaceDetector _faceDetector;
   late final AnimationController _laserController;
@@ -344,13 +345,17 @@ class _CaptureScreenState extends State<CaptureScreen>
 
       if (format == ImageFormatGroup.nv21 || format == ImageFormatGroup.yuv420) {
         final yPlane = image.planes[0];
-        final uvPlane = image.planes[1];
         final yBytes = yPlane.bytes;
-        final uvBytes = uvPlane.bytes;
 
-        bytes = Uint8List(yBytes.length + uvBytes.length);
-        bytes.setAll(0, yBytes);
-        bytes.setAll(yBytes.length, uvBytes);
+        if (image.planes.length > 1) {
+          final uvPlane = image.planes[1];
+          final uvBytes = uvPlane.bytes;
+          bytes = Uint8List(yBytes.length + uvBytes.length);
+          bytes.setAll(0, yBytes);
+          bytes.setAll(yBytes.length, uvBytes);
+        } else {
+          bytes = yBytes;
+        }
       } else if (format == ImageFormatGroup.bgra8888) {
         final plane = image.planes[0];
         bytes = plane.bytes;
@@ -411,16 +416,29 @@ class _CaptureScreenState extends State<CaptureScreen>
 
     final face = faces.first;
     final imageSize = inputImage.metadata?.size ?? const Size(480, 640);
+    final isValid = _validateFace(face, imageSize);
+    final quality = _calculateFaceQuality(face, imageSize);
 
     if (mounted) {
       setState(() {
         _detectedFace = face;
-        _isFaceValid = _validateFace(face, imageSize);
-        _qualityScore = _calculateFaceQuality(face, imageSize);
-        _instruction = _isFaceValid
-            ? '📸 Toca el botón central para tomar la foto del rostro'
+        _isFaceValid = isValid;
+        _qualityScore = quality;
+        _instruction = isValid
+            ? '✨ ¡Rostro Alineado 3D! Mantén la posición (Captura en 1.5s...)'
             : _getFaceInstruction(face, imageSize);
       });
+
+      // AUTO-DISPARO AUTOMÁTICO INTELIGENTE (Sin tocar la pantalla)
+      if (isValid && !_isCapturing) {
+        _validFramesCount++;
+        if (_validFramesCount >= 5) { // Estabilidad alcanzada durante ~1.5 segundos
+          _validFramesCount = 0;
+          _captureFace();
+        }
+      } else {
+        _validFramesCount = 0;
+      }
     }
   }
 

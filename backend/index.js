@@ -34,6 +34,7 @@ const mentorshipRoutes = require('./src/routes/mentorshipRoutes');
 const xpLogRoutes = require('./src/routes/xpLogRoutes');
 const eventRoutes = require('./src/routes/eventRoutes');
 const eventRegistrationRoutes = require('./src/routes/eventRegistrationRoutes');
+const aiOrchestratorRoutes = require('./src/routes/aiOrchestratorRoutes');
 const adminMiddleware = async (req, res, next) => {
   try {
     if (!req.user || !req.user.id) {
@@ -272,8 +273,10 @@ app.use('/api/xp-logs', xpLogRoutes);
 
 // ==========================================
 // RUTAS PÚBLICAS
+// ===// ==========================================
+// RUTAS DE ORQUESTADOR IA MULTI-AGENTE
 // ==========================================
-
+app.use('/api/ai', aiOrchestratorRoutes);
 // Health check
 app.get('/api/health', async (req, res) => {
   try {

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../models/biometric_result.dart';
 import '../../services/biometric_service.dart';
 import '../../shared/theme.dart';
+import '../../widgets/glow_glass_card.dart';
+import 'glowstore_recipe_screen.dart';
 import 'product_scanner_screen.dart';
 import 'vto_live_screen.dart';
 import 'nail_vto_screen.dart';
@@ -111,7 +113,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
   }
 
   void _goBackToIdeas() {
-    Navigator.pop(context, {'action': 'no_filters'});
+    Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
   }
 
   @override
@@ -190,6 +192,29 @@ class _ResultsScreenState extends State<ResultsScreen> {
                         icon: const Icon(Icons.back_hand, color: _PassportColors.primary),
                         label: const Text(
                           '💅 Probar Manicura & Uñas en VTO Live',
+                          style: TextStyle(color: _PassportColors.textAccent, fontWeight: FontWeight.bold),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size(double.infinity, 48),
+                          side: const BorderSide(color: _PassportColors.primary),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const GlowstoreRecipeScreen(),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.shopping_bag_outlined, color: _PassportColors.primary),
+                        label: const Text(
+                          '🛍️ Ver Receta Personalizada en GlowStore',
                           style: TextStyle(color: _PassportColors.textAccent, fontWeight: FontWeight.bold),
                         ),
                         style: OutlinedButton.styleFrom(
