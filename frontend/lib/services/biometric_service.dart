@@ -20,11 +20,13 @@ class BiometricService {
     final token = await AuthService.getToken();
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('userId') ?? 'test-user';
+    final idempotencyKey = 'consent_${DateTime.now().millisecondsSinceEpoch}_$userId';
 
     final response = await http.post(
       Uri.parse('$baseUrl/api/consent'),
       headers: {
         'Content-Type': 'application/json',
+        'Idempotency-Key': idempotencyKey,
         if (token != null) 'Authorization': 'Bearer $token',
       },
       body: jsonEncode({
@@ -75,6 +77,7 @@ class BiometricService {
     final token = await AuthService.getToken();
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('userId') ?? '7';
+    final idempotencyKey = 'scan_${DateTime.now().millisecondsSinceEpoch}_$userId';
 
     final compressionResults = await Future.wait([
       compute(_compressImageIsolate, Uint8List.fromList(faceImageBytes)),
@@ -88,6 +91,7 @@ class BiometricService {
           Uri.parse('$baseUrl/api/biometric/analyze'),
           headers: {
             'Content-Type': 'application/json',
+            'Idempotency-Key': idempotencyKey,
             if (token != null) 'Authorization': 'Bearer $token',
           },
           body: jsonEncode({
@@ -100,7 +104,7 @@ class BiometricService {
         )
         .timeout(const Duration(seconds: 90));
 
-    if (response.statusCode != 200) {
+    if (response.statusCode != 200 && response.statusCode != 201) {
       String serverMessage;
       try {
         final errorBody = jsonDecode(response.body);

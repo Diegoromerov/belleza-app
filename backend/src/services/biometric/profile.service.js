@@ -1,12 +1,13 @@
 // backend/src/services/biometric/profile.service.js
 const { pool } = require('../../config/db');
 const redisClient = require('../../config/redis');
+const biometricCryptoService = require('../biometricCryptoService');
 
 const PROFILE_TTL = 30 * 24 * 60 * 60; // 30 días en segundos
 
 class ProfileService {
   /**
-   * Guarda o actualiza un perfil biométrico
+   * Guarda o actualiza un perfil biométrico con cifrado en reposo (AES-256-GCM / ADR-001)
    */
   async saveProfile(profileData) {
     const {
@@ -19,8 +20,9 @@ class ProfileService {
       keyIngredients = [],
     } = profileData;
 
-    const faceScoresStr = JSON.stringify(faceScores);
-    const handsDiagnosisStr = JSON.stringify(handsDiagnosis);
+    // Cifrar datos biométricos sensibles antes de almacenar en BD
+    const encryptedFaceScores = biometricCryptoService.encrypt(faceScores);
+    const encryptedHandsDiagnosis = biometricCryptoService.encrypt(handsDiagnosis);
     const recommendedProductsStr = JSON.stringify(recommendedProducts);
 
     // Upsert en PostgreSQL
@@ -40,8 +42,8 @@ class ProfileService {
 
     const upsertRes = await pool.query(upsertQuery, [
       userId,
-      faceScoresStr,
-      handsDiagnosisStr,
+      encryptedFaceScores,
+      encryptedHandsDiagnosis,
       recommendation,
       recommendedProductsStr,
       entryPoint,
@@ -49,9 +51,8 @@ class ProfileService {
 
     const profile = upsertRes.rows[0];
 
-    // Guardar en historial biométrico para auditoría y trazabilidad
+    // Guardar en historial biométrico
     try {
-      const isValidUuid = (str) => typeof str === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(str);
       const validProfileId = profile && profile.id ? profile.id.toString() : null;
 
       const historyQuery = `
@@ -61,15 +62,15 @@ class ProfileService {
       await pool.query(historyQuery, [
         userId,
         validProfileId,
-        faceScoresStr,
-        handsDiagnosisStr,
+        encryptedFaceScores,
+        encryptedHandsDiagnosis,
         recommendation,
       ]);
     } catch (historyErr) {
       console.warn('⚠️ No se pudo registrar entrada en biometric_history:', historyErr.message);
     }
 
-    // Cachear en Redis
+    // Cachear objeto des-cifrado en Redis
     const cacheData = {
       id: profile.id,
       userId: profile.user_id,
@@ -97,7 +98,7 @@ class ProfileService {
   }
 
   /**
-   * Obtiene el perfil de un usuario (primero de Redis, luego BD)
+   * Obtiene el perfil de un usuario (descifrando de BD si es necesario)
    */
   async getProfile(userId) {
     try {
@@ -118,13 +119,9 @@ class ProfileService {
 
     const profile = res.rows[0];
 
-    const faceScores = typeof profile.face_scores === 'string'
-      ? JSON.parse(profile.face_scores)
-      : profile.face_scores;
-
-    const handsDiagnosis = typeof profile.hands_diagnosis === 'string'
-      ? JSON.parse(profile.hands_diagnosis)
-      : profile.hands_diagnosis;
+    // Descifrar campos sensibles
+    const faceScores = biometricCryptoService.decrypt(profile.face_scores);
+    const handsDiagnosis = biometricCryptoService.decrypt(profile.hands_diagnosis);
 
     const recommendedProducts = typeof profile.recommended_products === 'string'
       ? JSON.parse(profile.recommended_products)
