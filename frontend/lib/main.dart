@@ -1323,7 +1323,8 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
   }
 
   Widget _buildProminentCenterNavItem({
-    required IconData icon,
+    IconData? icon,
+    String? assetPath,
     required String label,
     required VoidCallback onTap,
   }) {
@@ -1361,16 +1362,26 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                     width: 2.5,
                   ),
                 ),
-                child: Icon(
-                  icon,
-                  color: Colors.white,
-                  size: 26,
+                child: ClipOval(
+                  child: assetPath != null
+                      ? Padding(
+                          padding: const EdgeInsets.all(4.0),
+                          child: Image.asset(
+                            assetPath,
+                            fit: BoxFit.cover,
+                          ),
+                        )
+                      : Icon(
+                          icon ?? Icons.auto_awesome,
+                          color: Colors.white,
+                          size: 26,
+                        ),
                 ),
               ),
-              SizedBox(height: 2),
+              const SizedBox(height: 2),
               Text(
                 label,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w800,
                   color: Color(0xFFB07D62),
@@ -1610,10 +1621,10 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                     onTap: () => _checkAuthAndNavigate('/store'),
                   ),
 
-                  // Botón 3: Ideas (Botón central prominente)
+                  // Botón 3: Glow IA+ (Antes Ideas, con emblema del rostro)
                   _buildProminentCenterNavItem(
-                    icon: Icons.lightbulb_outline_rounded,
-                    label: 'Ideas',
+                    assetPath: 'assets/images/aura_3d_emblem.jpg',
+                    label: 'Glow IA+',
                     onTap: () => _checkAuthAndNavigate('/ideas'),
                   ),
 
