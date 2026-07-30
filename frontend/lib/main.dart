@@ -1336,6 +1336,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
     String? assetPath,
     List<Color>? gradientColors,
     Color? shadowColor,
+    Color? borderColor,
     required String label,
     required VoidCallback onTap,
   }) {
@@ -1344,6 +1345,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
       Color(0xFFC5A052), // LuxeColors.gold871 por defecto
     ];
     final shadow = shadowColor ?? const Color(0xFFC5A052);
+    final borderC = borderColor ?? Colors.white;
 
     return Expanded(
       child: GestureDetector(
@@ -1372,7 +1374,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                     ),
                   ],
                   border: Border.all(
-                    color: Colors.white,
+                    color: borderC,
                     width: 2.5,
                   ),
                 ),
@@ -1624,19 +1626,20 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                   // Botón 1: Citas (Icono 3D Calendario Luxe - Agrandado)
                   _buildNavItem(
                     assetPath: 'assets/images/nav_citas_icon.png',
-                    assetSize: 30,
+                    assetSize: 36,
                     label: 'Citas',
                     onTap: () => _checkAuthAndNavigate('/client-bookings'),
                   ),
 
-                  // Botón 2: GlowShop (Icono 3D Bolso Luxe - Fondo Blanco)
+                  // Botón 2: GlowShop (Icono 3D Bolso Luxe - Fondo Blanco con Borde Oro Champán)
                   _buildProminentCenterNavItem(
                     assetPath: 'assets/images/nav_glowshop_icon.png',
                     gradientColors: const [
                       Colors.white,
                       Colors.white,
                     ],
-                    shadowColor: Colors.black12,
+                    shadowColor: const Color(0xFFC5A052),
+                    borderColor: const Color(0xFFC5A052),
                     label: 'GlowShop',
                     onTap: () => _checkAuthAndNavigate('/store'),
                   ),
