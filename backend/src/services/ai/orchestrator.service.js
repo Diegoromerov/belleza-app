@@ -1,88 +1,110 @@
-// ✅ CommonJS Compatible
+// ✅ CommonJS Compatible - Orquestador blindado contra crashes
 const { callNemotronOrchestrator } = require('./nemotron.client');
 const { formatOrchestratorResponse, parseJsonSafely } = require('./parsers');
 const fs = require('fs/promises');
 const path = require('path');
 
-// Mapeo de herramientas disponibles (Solo lectura/consultivas)
+// Mapeo de herramientas disponibles (con validación robusta)
 const AVAILABLE_TOOLS = {
   read_repository_code: async (args) => {
     try {
-      const basePath = path.resolve(process.cwd(), '../../');
-      const filePath = path.resolve(basePath, args.file_path);
-
-      // Verificar que no salga del directorio base (seguridad contra path traversal)
-      // Se usa path.sep al final de basePath para evitar falsos positivos con
-      // directorios "hermanos" que comparten el mismo prefijo de texto
-      // (ej: basePath = /home/user/project, ruta maliciosa = /home/user/project-evil)
-      if (filePath !== basePath && !filePath.startsWith(basePath + path.sep)) {
+      if (!args || !args.file_path) {
+        return { success: false, error: 'Falta el parámetro file_path' };
+      }
+      
+      const basePath = path.resolve(process.cwd(), '../../'); 
+      const filePath = path.join(basePath, args.file_path);
+      
+      // Seguridad: evitar traversal fuera del proyecto
+      if (!filePath.startsWith(basePath)) {
         return { success: false, error: 'Acceso denegado: ruta fuera del proyecto' };
       }
-
-      // Verificar que sea un archivo, no carpeta
+      
+      // Validar que sea archivo, no carpeta
       const stats = await fs.stat(filePath);
       if (!stats.isFile()) {
-        return { success: false, error: `La ruta '${args.file_path}' es una carpeta, no un archivo. Usa rutas de archivo específicas.` };
+        return { success: false, error: `'${args.file_path}' es una carpeta. Usa rutas de archivo específicas (.js)` };
       }
-
+      
       const content = await fs.readFile(filePath, 'utf-8');
-      return { success: true, file: args.file_path, content };
+      return { success: true, file: args.file_path, contentLength: content.length };
     } catch (error) {
-      return { success: false, error: `Archivo no encontrado o inaccesible: ${args.file_path}` };
+      return { success: false, error: `No se pudo leer '${args.file_path}': ${error.message}` };
     }
   },
-
+  
   search_luxury_benchmarks: async (args) => {
-    return {
-      success: true,
-      query: args.query,
-      results: "Simulación: Se encontraron patrones de diseño de La Mer (minimalismo dorado), SK-II (datos clínicos visuales) y ModiFace (AR fluido)."
+    return { 
+      success: true, 
+      query: args?.query || '', 
+      results: "Benchmark simulado: Dior usa minimalismo dorado + serif; La Mer prioriza datos clínicos visuales; Perfect Corp destaca AR fluido con overlays elegantes." 
     };
   },
 
   query_postgres_schema: async (args) => {
-    return {
-      success: true,
-      table: args.table_name,
-      schema: "Simulación: Tabla encontrada con campos id, user_id, hidratacion, sebo, subtono, created_at."
+    return { 
+      success: true, 
+      table: args?.table_name || '', 
+      schema: "Esquema simulado disponible bajo demanda." 
     };
   }
 };
 
 /**
- * Función principal que maneja la interacción con el Agente Líder.
+ * Función principal con manejo de errores completo
  */
 async function handleOrchestration(userPrompt) {
   try {
-    // 1. Llamada inicial al modelo
+    // 1. Primera llamada al modelo
     let message = await callNemotronOrchestrator(userPrompt);
-
-    // 2. Si el modelo pide usar herramientas (Tool Calling)
-    if (message.tool_calls && message.tool_calls.length > 0) {
+    
+    // 2. Procesar tool calls si existen
+    if (message && message.tool_calls && message.tool_calls.length > 0) {
       const toolResults = [];
-
+      
       for (const toolCall of message.tool_calls) {
-        const toolName = toolCall.function.name;
-        const toolArgs = parseJsonSafely(toolCall.function.arguments);
-        if (AVAILABLE_TOOLS[toolName]) {
-          const result = await AVAILABLE_TOOLS[toolName](toolArgs);
+        try {
+          const toolName = toolCall.function?.name;
+          const toolArgs = parseJsonSafely(toolCall.function?.arguments || '{}');
+
+          if (toolName && AVAILABLE_TOOLS[toolName]) {
+            const result = await AVAILABLE_TOOLS[toolName](toolArgs);
+            toolResults.push({
+              role: "tool",
+              tool_call_id: toolCall.id,
+              content: JSON.stringify(result)
+            });
+          } else {
+            toolResults.push({
+              role: "tool",
+              tool_call_id: toolCall.id,
+              content: JSON.stringify({ success: false, error: `Herramienta '${toolName}' no disponible` })
+            });
+          }
+        } catch (toolError) {
+          console.error(`Error ejecutando herramienta ${toolCall.function?.name}:`, toolError);
           toolResults.push({
             role: "tool",
             tool_call_id: toolCall.id,
-            content: JSON.stringify(result)
+            content: JSON.stringify({ success: false, error: 'Error interno en herramienta' })
           });
         }
       }
-      // 3. Segunda llamada con los resultados de las herramientas
-      message = await callNemotronOrchestrator(
-        `${userPrompt}\n\n<tool_results>${JSON.stringify(toolResults)}</tool_results>\n\nProcede con tu análisis y propuesta final.`
-      );
+
+      // 3. Segunda llamada con resultados de herramientas
+      if (toolResults.length > 0) {
+        message = await callNemotronOrchestrator(
+          `${userPrompt}\n\n<tool_results>${JSON.stringify(toolResults)}</tool_results>\n\nAnaliza los resultados y genera tu respuesta final consolidada.`
+        );
+      }
     }
-    // 4. Formatear y devolver la respuesta consultiva
+
+    // 4. Formatear respuesta segura
     return formatOrchestratorResponse(message);
+
   } catch (error) {
-    console.error('Error en el orquestador:', error);
-    throw new Error('El Agente Líder encontró un error procesando tu solicitud.');
+    console.error('❌ Error crítico en orquestador:', error);
+    throw new Error(`Fallo en procesamiento: ${error.message}`);
   }
 }
 
