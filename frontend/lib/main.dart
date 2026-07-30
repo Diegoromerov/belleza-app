@@ -42,11 +42,7 @@ import 'screens/support/terms_conditions_screen.dart';
 import 'screens/disputes/disputes_list_screen.dart';
 import 'screens/disputes/open_dispute_screen.dart';
 import 'screens/academy/academy_screen.dart';
-import 'screens/academy/course_list.dart';
 import 'screens/store_screen.dart';
-import 'screens/store/product_list.dart';
-import 'screens/home/home_screen.dart';
-import 'screens/profile/user_profile.dart';
 import 'screens/designs/evolution_dashboard_screen.dart';
 import 'screens/designs/medical_validation_screen.dart';
 import 'screens/designs/glowup_card_screen.dart';
@@ -158,11 +154,7 @@ class BeautyApp extends StatelessWidget {
                 '/login': (_) => const LoginScreen(),
                 '/register': (_) => const RegisterScreen(),
                 '/forgot-password': (_) => const ForgotPasswordScreen(),
-                '/home': (_) => HomeScreen(
-                  onOpenBiometricScanner: () => Navigator.pushNamed(context, '/ideas'),
-                  onOpenStore: () => Navigator.pushNamed(context, '/store'),
-                  onOpenAcademy: () => Navigator.pushNamed(context, '/academy'),
-                ),
+                '/home': (_) => const ProvidersScreen(),
                 '/provider': (_) => const ProviderDashboardScreen(),
                 '/client-bookings': (_) => const ClientBookingsScreen(),
                 '/provider/services': (_) => const ProviderServicesScreen(),
@@ -171,7 +163,7 @@ class BeautyApp extends StatelessWidget {
                 '/chat': (_) => const ChatListScreen(),
                 '/onboarding': (_) => const OnboardingScreen(),
                 '/verification-pending': (_) => const VerificationPendingScreen(),
-                '/profile': (_) => const UserProfileScreen(),
+                '/profile': (_) => const ClientProfileScreen(),
                 '/ideas': (_) => const BiometricWelcomeScreen(),
                 '/biometric-consent': (_) => const BiometricConsentScreen(),
                 '/biometric-welcome': (_) => const BiometricWelcomeScreen(),
@@ -195,49 +187,8 @@ class BeautyApp extends StatelessWidget {
                     preselectedBookingId: args?['booking_id'],
                   );
                 },
-                '/academy': (_) => const CourseListScreen(courses: [
-                  {
-                    'id': 1,
-                    'titulo': 'Master en Visagismo y Análisis Morfológico',
-                    'duracion': '4.5 hrs',
-                    'nivel': 'Avanzado Master',
-                    'total_lecciones': 8,
-                  },
-                  {
-                    'id': 2,
-                    'titulo': 'Diagnóstico Dermo-Estético Clínico',
-                    'duracion': '3.0 hrs',
-                    'nivel': 'Intermedio',
-                    'total_lecciones': 6,
-                  },
-                ]),
                 '/provider/academy': (_) => const AcademyScreen(),
-                '/store': (_) => const ProductListScreen(products: [
-                  {
-                    'id': 1,
-                    'nombre': 'Sérum Botánico Elixir Aura',
-                    'precio': 145000,
-                    'categoria': 'Skincare',
-                    'sku': 'SKU-AURA-01',
-                    'is_premium': true,
-                  },
-                  {
-                    'id': 2,
-                    'nombre': 'Crema Nutritiva de Seda Andina',
-                    'precio': 189000,
-                    'categoria': 'Tratamiento',
-                    'sku': 'SKU-AURA-02',
-                    'is_premium': false,
-                  },
-                  {
-                    'id': 3,
-                    'nombre': 'Aceite de Cutículas Frutales Orgánico',
-                    'precio': 45000,
-                    'categoria': 'Uñas',
-                    'sku': 'SKU-GLOW-03',
-                    'is_premium': false,
-                  },
-                ]),
+                '/store': (_) => const StoreScreen(),
                 '/evolution': (_) => const EvolutionDashboardScreen(),
                 '/medical-validation': (_) => const MedicalValidationScreen(),
                 '/glowup-card': (_) => const GlowUpCardScreen(),
