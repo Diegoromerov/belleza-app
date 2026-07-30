@@ -1623,10 +1623,10 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
               ),
               child: Row(
                 children: [
-                  // Botón 1: Citas (Icono 3D Calendario Luxe - Agrandado a 40px)
+                  // Botón 1: Citas (Icono 3D Calendario Luxe - Agrandado a 44px)
                   _buildNavItem(
                     assetPath: 'assets/images/nav_citas_icon.png',
-                    assetSize: 40,
+                    assetSize: 44,
                     label: 'Citas',
                     onTap: () => _checkAuthAndNavigate('/client-bookings'),
                   ),
