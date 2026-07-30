@@ -144,7 +144,12 @@ class _Aura3DEmblemWidgetState extends State<Aura3DEmblemWidget>
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: Colors.white.withValues(alpha: 0.35),
-                          blurRadius: 15.0,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.white.withValues(alpha: 0.35),
+                              blurRadius: 15.0,
+                            ),
+                          ],
                         ),
                       ),
                     ),

@@ -105,345 +105,274 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFFAF5F2),
-              Color(0xFFE8D4CB),
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Botón de Volver
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: IconButton(
-                      icon: const Icon(Icons.arrow_back_ios_new,
-                          color: Color(0xFF8A7A77), size: 20),
-                      onPressed: () => Navigator.pop(context),
-                    ),
+      backgroundColor: const Color(0xFFFAF8F5), // LuxeColors.nude50
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Botón de Volver
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF1F1A15), size: 20),
+                    onPressed: () => Navigator.pop(context),
                   ),
+                ),
 
-                  // Encabezado
-                  Hero(
-                    tag: 'logo',
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: const BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Color(0x1F8A6B63),
-                              blurRadius: 20,
-                              offset: Offset(0, 8),
-                            )
-                          ]),
-                      child: const Icon(Icons.face_retouching_natural,
-                          size: 48, color: Color(0xFFC89D93)),
+                // Encabezado
+                Hero(
+                  tag: 'logo',
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF4EFEA),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: const Color(0xFFC5A052), width: 1),
                     ),
+                    child: const Icon(Icons.face_retouching_natural,
+                        size: 40, color: Color(0xFFC5A052)),
                   ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'Crear Cuenta',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w900,
-                      color: Color(0xFF4A3E3D),
-                      letterSpacing: -0.8,
-                    ),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'REGISTRO CONCIERGE',
+                  style: TextStyle(
+                    fontFamily: 'Didot',
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1F1A15),
+                    letterSpacing: 1.0,
                   ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Únete a nuestra comunidad de belleza',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Color(0xFF8A7A77),
-                      fontWeight: FontWeight.w500,
-                    ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Únete a la comunidad de alta belleza y salud',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF9E8C78),
+                    fontFamily: 'CormorantGaramond',
                   ),
-                  const SizedBox(height: 24),
+                ),
+                const SizedBox(height: 24),
 
-                  // Tarjeta Glassmorphic
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(28),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                      child: Container(
-                        padding: const EdgeInsets.all(28.0),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.85),
-                          borderRadius: BorderRadius.circular(28),
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.6),
-                            width: 1.5,
+                // Tarjeta Luxe
+                Container(
+                  padding: const EdgeInsets.all(28.0),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF4EFEA), // LuxeColors.nude100
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: const Color(0xFFE8E0D5), // LuxeColors.nude200
+                      width: 1.0,
+                    ),
+                  ),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Text(
+                          'TIPO DE USUARIO',
+                          style: TextStyle(
+                            fontFamily: 'Didot',
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1F1A15),
+                            letterSpacing: 0.8,
                           ),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color(0x0A000000),
-                              blurRadius: 24,
-                              offset: Offset(0, 12),
-                            ),
-                          ],
                         ),
-                        child: Form(
-                          key: _formKey,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                        const SizedBox(height: 12),
+
+                        // Selector de Rol Luxe
+                        Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE8E0D5),
+                            borderRadius: BorderRadius.circular(10.5),
+                          ),
+                          child: Row(
                             children: [
-                              const Text(
-                                'Tipo de Usuario',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF4A3E3D),
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-
-                              // Selector de Rol Premium
-                              Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: BoxDecoration(
-                                  color:
-                                      const Color(0xFFEADCD6).withValues(alpha: 0.5),
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: GestureDetector(
-                                        onTap: () => setState(
-                                            () => _selectedRole = 'CLIENTE'),
-                                        child: AnimatedContainer(
-                                          duration:
-                                              const Duration(milliseconds: 200),
-                                          padding: const EdgeInsets.symmetric(
-                                              vertical: 12),
-                                          decoration: BoxDecoration(
-                                            color: _selectedRole == 'CLIENTE'
-                                                ? Colors.white
-                                                : Colors.transparent,
-                                            borderRadius:
-                                                BorderRadius.circular(12),
-                                            boxShadow: _selectedRole ==
-                                                    'CLIENTE'
-                                                ? [
-                                                    const BoxShadow(
-                                                        color:
-                                                            Color(0x1F000000),
-                                                        blurRadius: 4,
-                                                        offset: Offset(0, 2))
-                                                  ]
-                                                : [],
-                                          ),
-                                          child: Center(
-                                            child: Text(
-                                              'Cliente',
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                color: _selectedRole ==
-                                                        'CLIENTE'
-                                                    ? const Color(0xFF8A5D54)
-                                                    : const Color(0xFF8A7A77),
-                                                fontSize: 14,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () => setState(() => _selectedRole = 'CLIENTE'),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 200),
+                                    padding: const EdgeInsets.symmetric(vertical: 10),
+                                    decoration: BoxDecoration(
+                                      color: _selectedRole == 'CLIENTE'
+                                          ? const Color(0xFFFAF8F5)
+                                          : Colors.transparent,
+                                      borderRadius: BorderRadius.circular(8),
                                     ),
-                                    Expanded(
-                                      child: GestureDetector(
-                                        onTap: () => setState(
-                                            () => _selectedRole = 'PRESTADOR'),
-                                        child: AnimatedContainer(
-                                          duration:
-                                              const Duration(milliseconds: 200),
-                                          padding: const EdgeInsets.symmetric(
-                                              vertical: 12),
-                                          decoration: BoxDecoration(
-                                            color: _selectedRole == 'PRESTADOR'
-                                                ? Colors.white
-                                                : Colors.transparent,
-                                            borderRadius:
-                                                BorderRadius.circular(12),
-                                            boxShadow: _selectedRole ==
-                                                    'PRESTADOR'
-                                                ? [
-                                                    const BoxShadow(
-                                                        color:
-                                                            Color(0x1F000000),
-                                                        blurRadius: 4,
-                                                        offset: Offset(0, 2))
-                                                  ]
-                                                : [],
-                                          ),
-                                          child: Center(
-                                            child: Text(
-                                              'Prestador',
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                color: _selectedRole ==
-                                                        'PRESTADOR'
-                                                    ? const Color(0xFF8A5D54)
-                                                    : const Color(0xFF8A7A77),
-                                                fontSize: 14,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-
-                              // Caja informativa de rol
-                              AnimatedContainer(
-                                duration: const Duration(milliseconds: 250),
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFFCF8F5),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                      color: const Color(0xFFEADCD6), width: 1),
-                                ),
-                                child: Text(
-                                  _selectedRole == 'CLIENTE'
-                                      ? '✨ Agenda citas, encuentra estilistas locales en Fontibón y califica los servicios recibidos.'
-                                      : '💼 Ofrece tus servicios, fija tus precios y horarios. Requiere cargar tus documentos (Cédula, RUT, Certificaciones) en el siguiente paso.',
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Color(0xFF8A7A77),
-                                    height: 1.3,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 20),
-
-                              // Form Fields
-                              TextFormField(
-                                controller: _nameCtrl,
-                                decoration: _inputDecoration(
-                                    'Nombre completo', Icons.person_outline),
-                                validator: (v) => v!.isEmpty
-                                    ? 'Ingresa tu nombre completo'
-                                    : null,
-                                style: const TextStyle(fontSize: 14),
-                              ),
-                              const SizedBox(height: 14),
-
-                              TextFormField(
-                                controller: _emailCtrl,
-                                keyboardType: TextInputType.emailAddress,
-                                decoration: _inputDecoration(
-                                    'Correo electrónico', Icons.email_outlined),
-                                validator: (v) =>
-                                    v!.isEmpty ? 'Ingresa tu correo' : null,
-                                style: const TextStyle(fontSize: 14),
-                              ),
-                              const SizedBox(height: 14),
-
-                              TextFormField(
-                                controller: _passCtrl,
-                                obscureText: _obscurePassword,
-                                decoration: _inputDecoration(
-                                  'Contraseña',
-                                  Icons.lock_outline,
-                                  suffixIcon: IconButton(
-                                    icon: Icon(
-                                      _obscurePassword
-                                          ? Icons.visibility_outlined
-                                          : Icons.visibility_off_outlined,
-                                      color: const Color(0xFFC89D93),
-                                      size: 20,
-                                    ),
-                                    onPressed: () => setState(() =>
-                                        _obscurePassword = !_obscurePassword),
-                                  ),
-                                ),
-                                validator: (v) => v!.length < 6
-                                    ? 'Mínimo 6 caracteres'
-                                    : null,
-                                style: const TextStyle(fontSize: 14),
-                              ),
-                              const SizedBox(height: 14),
-
-                              TextFormField(
-                                controller: _phoneCtrl,
-                                keyboardType: TextInputType.phone,
-                                decoration: _inputDecoration(
-                                    'Teléfono (opcional)',
-                                    Icons.phone_outlined),
-                                style: const TextStyle(fontSize: 14),
-                              ),
-                              const SizedBox(height: 24),
-
-                              if (_error != null)
-                                Padding(
-                                  padding: const EdgeInsets.only(bottom: 16),
-                                  child: Text(
-                                    _error!,
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(
-                                        color: Colors.redAccent,
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 13),
-                                  ),
-                                ),
-
-                              // Submit Button
-                              ElevatedButton(
-                                onPressed: _isLoading ? null : _handleRegister,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFFC89D93),
-                                  foregroundColor: Colors.white,
-                                  disabledBackgroundColor:
-                                      const Color(0xFFE6D6D3),
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 16),
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16)),
-                                  elevation: 2,
-                                  shadowColor: const Color(0x3FC89D93),
-                                ),
-                                child: _isLoading
-                                    ? const SizedBox(
-                                        width: 24,
-                                        height: 24,
-                                        child: CircularProgressIndicator(
-                                            color: Colors.white,
-                                            strokeWidth: 2.5),
-                                      )
-                                    : const Text(
-                                        'Crear Cuenta',
+                                    child: Center(
+                                      child: Text(
+                                        'Cliente',
                                         style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                            letterSpacing: -0.2),
+                                          fontWeight: FontWeight.bold,
+                                          color: _selectedRole == 'CLIENTE'
+                                              ? const Color(0xFF1F1A15)
+                                              : const Color(0xFF9E8C78),
+                                          fontSize: 13,
+                                          fontFamily: 'CormorantGaramond',
+                                        ),
                                       ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () => setState(() => _selectedRole = 'PRESTADOR'),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 200),
+                                    padding: const EdgeInsets.symmetric(vertical: 10),
+                                    decoration: BoxDecoration(
+                                      color: _selectedRole == 'PRESTADOR'
+                                          ? const Color(0xFFFAF8F5)
+                                          : Colors.transparent,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        'Prestador / Pro',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: _selectedRole == 'PRESTADOR'
+                                              ? const Color(0xFF1F1A15)
+                                              : const Color(0xFF9E8C78),
+                                          fontSize: 13,
+                                          fontFamily: 'CormorantGaramond',
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
                               ),
                             ],
                           ),
                         ),
-                      ),
+                        const SizedBox(height: 12),
+
+                        // Caja informativa de rol
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFAF8F5),
+                            borderRadius: BorderRadius.circular(10.5),
+                            border: Border.all(color: const Color(0xFFE8E0D5), width: 0.5),
+                          ),
+                          child: Text(
+                            _selectedRole == 'CLIENTE'
+                                ? '✨ Acceso a diagnósticos de IA Aura, GlowStore y reserva de servicios concierge.'
+                                : '💼 Ofrece tus servicios, gestiona tu agenda y recibe pagos con comisión preferencial.',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF6B5A48),
+                              fontFamily: 'CormorantGaramond',
+                              height: 1.3,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Form Fields
+                        TextFormField(
+                          controller: _nameCtrl,
+                          decoration: _inputDecoration('Nombre completo', Icons.person_outline),
+                          validator: (v) => v!.isEmpty ? 'Ingresa tu nombre completo' : null,
+                          style: const TextStyle(fontSize: 14, fontFamily: 'CormorantGaramond'),
+                        ),
+                        const SizedBox(height: 14),
+
+                        TextFormField(
+                          controller: _emailCtrl,
+                          keyboardType: TextInputType.emailAddress,
+                          decoration: _inputDecoration('Correo electrónico', Icons.email_outlined),
+                          validator: (v) => v!.isEmpty ? 'Ingresa tu correo' : null,
+                          style: const TextStyle(fontSize: 14, fontFamily: 'CormorantGaramond'),
+                        ),
+                        const SizedBox(height: 14),
+
+                        TextFormField(
+                          controller: _passCtrl,
+                          obscureText: _obscurePassword,
+                          decoration: _inputDecoration(
+                            'Contraseña',
+                            Icons.lock_outline,
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePassword
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
+                                color: const Color(0xFFC5A052),
+                                size: 20,
+                              ),
+                              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                            ),
+                          ),
+                          validator: (v) => v!.length < 6 ? 'Mínimo 6 caracteres' : null,
+                          style: const TextStyle(fontSize: 14, fontFamily: 'CormorantGaramond'),
+                        ),
+                        const SizedBox(height: 14),
+
+                        TextFormField(
+                          controller: _phoneCtrl,
+                          keyboardType: TextInputType.phone,
+                          decoration: _inputDecoration('Teléfono (opcional)', Icons.phone_outlined),
+                          style: const TextStyle(fontSize: 14, fontFamily: 'CormorantGaramond'),
+                        ),
+                        const SizedBox(height: 24),
+
+                        if (_error != null)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: Text(
+                              _error!,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                  color: Color(0xFFB00020),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13),
+                            ),
+                          ),
+
+                        // Submit Button
+                        ElevatedButton(
+                          onPressed: _isLoading ? null : _handleRegister,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFC5A052),
+                            foregroundColor: const Color(0xFF1F1A15),
+                            disabledBackgroundColor: const Color(0xFFE8E0D5),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10.5)),
+                            elevation: 0,
+                          ),
+                          child: _isLoading
+                              ? const SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                      color: Color(0xFF1F1A15),
+                                      strokeWidth: 2.5),
+                                )
+                              : const Text(
+                                  'CREAR MI CUENTA',
+                                  style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 0.8),
+                                ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 20),
-                ],
-              ),
+                ),
+                const SizedBox(height: 20),
+              ],
             ),
           ),
         ),
@@ -451,29 +380,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  InputDecoration _inputDecoration(String label, IconData icon,
-      {Widget? suffixIcon}) {
+  InputDecoration _inputDecoration(String label, IconData icon, {Widget? suffixIcon}) {
     return InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(color: Color(0xFF8A7A77), fontSize: 14),
-      prefixIcon: Icon(icon, color: const Color(0xFFC89D93), size: 20),
+      labelStyle: const TextStyle(color: Color(0xFF9E8C78), fontSize: 14, fontFamily: 'CormorantGaramond'),
+      prefixIcon: Icon(icon, color: const Color(0xFFC5A052), size: 20),
       suffixIcon: suffixIcon,
       floatingLabelBehavior: FloatingLabelBehavior.auto,
       filled: true,
-      fillColor: Colors.white.withValues(alpha: 0.7),
+      fillColor: const Color(0xFFFAF8F5),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: Color(0xFFEADCD6)),
+        borderRadius: BorderRadius.circular(10.5),
+        borderSide: const BorderSide(color: Color(0xFFE8E0D5)),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: Color(0xFFEADCD6)),
+        borderRadius: BorderRadius.circular(10.5),
+        borderSide: const BorderSide(color: Color(0xFFE8E0D5)),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: Color(0xFFC89D93), width: 1.5),
+        borderRadius: BorderRadius.circular(10.5),
+        borderSide: const BorderSide(color: Color(0xFFC5A052), width: 1.5),
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
     );
   }
 }
