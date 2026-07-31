@@ -1662,30 +1662,23 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
               ),
               child: Row(
                 children: [
-                  // Botón 1: Citas -> nav_citas_icon.png (Calendario 3D "19")
+                  // Botón 1: Citas
                   _buildNavItem(
-                    assetPath: 'assets/images/nav_citas_icon.png',
-                    assetSize: 44,
+                    icon: Icons.calendar_today_outlined,
                     label: 'Citas',
                     onTap: () => _checkAuthAndNavigate('/client-bookings'),
                   ),
 
-                  // Botón 2: GlowShop -> nav_glowshop_icon.png (Bolso 3D Nude)
+                  // Botón 2: GlowShop
                   _buildProminentCenterNavItem(
-                    assetPath: 'assets/images/nav_glowshop_icon.png',
-                    gradientColors: const [
-                      Colors.white,
-                      Colors.white,
-                    ],
-                    shadowColor: const Color(0xFFC5A052),
-                    borderColor: const Color(0xFFC5A052),
+                    icon: Icons.shopping_bag_outlined,
                     label: 'GlowShop',
                     onTap: () => _checkAuthAndNavigate('/store'),
                   ),
 
-                  // Botón 3: Glow IA+ -> glow_ia_mesh_avatar.jpg (Rostro 3D Malla)
+                  // Botón 3: Glow IA+
                   _buildProminentCenterNavItem(
-                    assetPath: 'assets/images/glow_ia_mesh_avatar.jpg',
+                    icon: Icons.auto_awesome,
                     gradientColors: const [
                       Color(0xFFF3D5C8),
                       Color(0xFFD4AF37),
@@ -1695,10 +1688,9 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                     onTap: () => _checkAuthAndNavigate('/ideas'),
                   ),
 
-                  // Botón 4: Perfil -> nav_perfil_icon.png (Escudo/Silueta 3D)
+                  // Botón 4: Perfil
                   _buildNavItem(
-                    assetPath: 'assets/images/nav_perfil_icon.png',
-                    assetSize: 44,
+                    icon: Icons.person_outline_rounded,
                     label: 'Perfil',
                     onTap: () => _checkAuthAndNavigate('/profile'),
                   ),
