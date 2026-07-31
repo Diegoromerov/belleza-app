@@ -1662,24 +1662,24 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
               ),
               child: Row(
                 children: [
-                  // Botón 1: Citas
+                  // Botón 1: Citas (3. nav_citas_icon.png)
                   _buildNavItem(
                     assetPath: 'assets/images/nav_citas_icon.png',
-                    assetSize: 44,
+                    assetSize: 28,
                     label: 'Citas',
                     onTap: () => _checkAuthAndNavigate('/client-bookings'),
                   ),
 
-                  // Botón 2: GlowShop
+                  // Botón 2: GlowShop (2. nav_glowshop_icon.png)
                   _buildProminentCenterNavItem(
-                    icon: Icons.shopping_bag_outlined,
+                    assetPath: 'assets/images/nav_glowshop_icon.png',
                     label: 'GlowShop',
                     onTap: () => _checkAuthAndNavigate('/store'),
                   ),
 
-                  // Botón 3: Glow IA+
+                  // Botón 3: Glow IA+ (4. glow_ia_mesh_avatar.jpg)
                   _buildProminentCenterNavItem(
-                    icon: Icons.auto_awesome,
+                    assetPath: 'assets/images/glow_ia_mesh_avatar.jpg',
                     gradientColors: const [
                       Color(0xFFF3D5C8),
                       Color(0xFFD4AF37),
@@ -1689,9 +1689,10 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                     onTap: () => _checkAuthAndNavigate('/ideas'),
                   ),
 
-                  // Botón 4: Perfil
+                  // Botón 4: Perfil (1. nav_perfil_icon.png)
                   _buildNavItem(
-                    icon: Icons.person_outline_rounded,
+                    assetPath: 'assets/images/nav_perfil_icon.png',
+                    assetSize: 28,
                     label: 'Perfil',
                     onTap: () => _checkAuthAndNavigate('/profile'),
                   ),
