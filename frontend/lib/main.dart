@@ -797,7 +797,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('❌ Error al enviar alerta SOS: $e'),
+          content: Text('�?Error al enviar alerta SOS: $e'),
           backgroundColor: Colors.redAccent,
         ),
       );
@@ -1662,7 +1662,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
               ),
               child: Row(
                 children: [
-                  // Botón 1: Citas (3. nav_citas_icon.png)
+                  // Botón 1: Citas (nav_citas_icon.png)
                   _buildNavItem(
                     assetPath: 'assets/images/nav_citas_icon.png',
                     assetSize: 28,
@@ -1670,14 +1670,14 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                     onTap: () => _checkAuthAndNavigate('/client-bookings'),
                   ),
 
-                  // Botón 2: GlowShop (2. nav_glowshop_icon.png)
+                  // Botón 2: GlowShop (nav_glowshop_icon.png)
                   _buildProminentCenterNavItem(
                     assetPath: 'assets/images/nav_glowshop_icon.png',
                     label: 'GlowShop',
                     onTap: () => _checkAuthAndNavigate('/store'),
                   ),
 
-                  // Botón 3: Glow IA+ (4. glow_ia_mesh_avatar.jpg)
+                  // Botón 3: Glow IA+ (glow_ia_mesh_avatar.jpg)
                   _buildProminentCenterNavItem(
                     assetPath: 'assets/images/glow_ia_mesh_avatar.jpg',
                     gradientColors: const [
@@ -1689,7 +1689,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                     onTap: () => _checkAuthAndNavigate('/ideas'),
                   ),
 
-                  // Botón 4: Perfil (1. nav_perfil_icon.png)
+                  // Botón 4: Perfil (nav_perfil_icon.png)
                   _buildNavItem(
                     assetPath: 'assets/images/nav_perfil_icon.png',
                     assetSize: 28,
