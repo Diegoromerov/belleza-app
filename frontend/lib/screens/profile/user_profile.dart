@@ -4,6 +4,10 @@ import '../../core/theme/belleza_luxe_theme.dart';
 import '../../widgets/profile/profile_header.dart';
 import '../../widgets/profile/luxe_list_tile.dart';
 import 'settings_screen.dart';
+import 'biometric_history_screen.dart';
+import 'glowstore_orders_screen.dart';
+import 'rewards_xp_screen.dart';
+import 'habeas_data_screen.dart';
 
 class UserProfileScreen extends StatefulWidget {
   final String userName;
@@ -75,20 +79,35 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 icon: Icons.history_edu_outlined,
                 title: 'Historial de Diagnósticos Biométricos',
                 subtitle: 'Revisa tus escaneos faciales y análisis de piel',
-                onTap: () {},
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const BiometricHistoryScreen()),
+                  );
+                },
               ),
               LuxeProfileTile(
                 icon: Icons.shopping_bag_outlined,
                 title: 'Mis Pedidos GlowStore',
                 subtitle: 'Seguimiento de compras y envíos directos',
-                onTap: () {},
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const GlowStoreOrdersScreen()),
+                  );
+                },
               ),
               LuxeProfileTile(
                 icon: Icons.card_membership_outlined,
                 title: 'Beneficios y Puntos de Experiencia (XP)',
                 subtitle: '350 XP acumulados este mes',
                 showDivider: false,
-                onTap: () {},
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const RewardsXpScreen()),
+                  );
+                },
               ),
 
               const SizedBox(height: LuxeSpacing.xxl),
@@ -130,7 +149,12 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 title: 'Consentimiento Biométrico y Habeas Data',
                 subtitle: 'Gestión de datos sensibles (Ley 1581)',
                 showDivider: false,
-                onTap: () {},
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const HabeasDataScreen()),
+                  );
+                },
               ),
 
               const SizedBox(height: LuxeSpacing.xxl),
