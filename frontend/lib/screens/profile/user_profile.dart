@@ -149,13 +149,25 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 icon: Icons.security_outlined,
                 title: 'Consentimiento Biométrico y Habeas Data',
                 subtitle: 'Gestión de datos sensibles (Ley 1581)',
-                showDivider: false,
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (_) => const HabeasDataScreen()),
                   );
                 },
+              ),
+              LuxeProfileTile(
+                icon: Icons.headset_mic_outlined,
+                title: 'Centro de Soporte y PQRSF',
+                subtitle: 'Atención a peticiones, quejas y reclamos',
+                onTap: () => Navigator.pushNamed(context, '/support'),
+              ),
+              LuxeProfileTile(
+                icon: Icons.gavel_outlined,
+                title: 'Mis Disputas de Servicio',
+                subtitle: 'Gestión y seguimiento de arbitrajes de pago',
+                showDivider: false,
+                onTap: () => Navigator.pushNamed(context, '/disputes'),
               ),
 
               const SizedBox(height: LuxeSpacing.xxl),
