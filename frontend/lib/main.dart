@@ -1,5 +1,6 @@
 // frontend/lib/main.dart
 import 'dart:convert';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -901,299 +902,340 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
-        return Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(28),
-              topRight: Radius.circular(28),
-            ),
+        return ClipRRect(
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(32),
+            topRight: Radius.circular(32),
           ),
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2),
-                  ),
+          child: BackdropFilter(
+            filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+            child: Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFFFAF8F5).withOpacity(0.92), // Nude Seda Satinado
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(32),
+                  topRight: Radius.circular(32),
                 ),
-              ),
-              SizedBox(height: 16),
-              Row(
-                children: [
-                  CircleAvatar(
-                    radius: 28,
-                    backgroundColor: const Color(0xFFE8D7D3),
-                    backgroundImage: provider.avatarUrl.isNotEmpty
-                        ? NetworkImage(provider.avatarUrl)
-                        : null,
-                    child: provider.avatarUrl.isEmpty
-                        ? Text(
-                            provider.fullName.isNotEmpty
-                                ? provider.fullName[0].toUpperCase()
-                                : '?',
-                            style: TextStyle(
-                                fontSize: 20,
-                                color: Color(0xFFC89D93),
-                                fontWeight: FontWeight.bold),
-                          )
-                        : null,
+                border: Border.all(
+                  color: const Color(0xFFC5A052).withOpacity(0.35), // Oro Champán 871
+                  width: 1.2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFC5A052).withOpacity(0.15),
+                    blurRadius: 24,
+                    offset: const Offset(0, -8),
                   ),
-                  SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
+                ],
+              ),
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 44,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFC5A052).withOpacity(0.4),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: const Color(0xFFC5A052),
+                            width: 2,
+                          ),
+                        ),
+                        child: CircleAvatar(
+                          radius: 28,
+                          backgroundColor: const Color(0xFFF4EFEA),
+                          backgroundImage: provider.avatarUrl.isNotEmpty
+                              ? NetworkImage(provider.avatarUrl)
+                              : null,
+                          child: provider.avatarUrl.isEmpty
+                              ? Text(
+                                  provider.fullName.isNotEmpty
+                                      ? provider.fullName[0].toUpperCase()
+                                      : '?',
+                                  style: const TextStyle(
+                                      fontSize: 20,
+                                      color: Color(0xFFC5A052),
+                                      fontWeight: FontWeight.bold),
+                                )
+                              : null,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(
-                              child: Text(
-                                provider.businessName.isNotEmpty
-                                    ? provider.businessName
-                                    : provider.fullName,
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 18,
-                                    color: Colors.black87,
-                                    letterSpacing: -0.5),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    provider.businessName.isNotEmpty
+                                        ? provider.businessName
+                                        : provider.fullName,
+                                    style: const TextStyle(
+                                        fontFamily: 'Didot',
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 19,
+                                        color: Color(0xFF1C1917),
+                                        letterSpacing: -0.3),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                if (provider.isVerified) ...[
+                                  const SizedBox(width: 4),
+                                  const Icon(Icons.verified,
+                                      color: Color(0xFFC5A052), size: 18),
+                                ],
+                              ],
                             ),
-                            if (provider.isVerified) ...[
-                              SizedBox(width: 4),
-                              Icon(Icons.verified,
-                                  color: Color(0xFFC89D93), size: 18),
-                            ],
+                            const SizedBox(height: 4),
+                            Text(
+                              provider.fullName,
+                              style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey[700],
+                                  fontWeight: FontWeight.w500),
+                            ),
                           ],
                         ),
-                        SizedBox(height: 4),
-                        Text(
-                          provider.fullName,
-                          style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey[500],
-                              fontWeight: FontWeight.w500),
+                      ),
+                      Container(
+                        padding:
+                            const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF4EFEA),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: const Color(0xFFC5A052).withOpacity(0.3),
+                            width: 1,
+                          ),
                         ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF5EBE6),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.star,
-                            color: Color(0xFFC89D93), size: 15),
-                        SizedBox(width: 4),
-                        Text(
-                          provider.ratingAvg.toStringAsFixed(1),
-                          style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFFC89D93)),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.star,
+                                color: Color(0xFFC5A052), size: 15),
+                            const SizedBox(width: 4),
+                            Text(
+                              provider.ratingAvg.toStringAsFixed(1),
+                              style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFFC5A052)),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              SizedBox(height: 16),
-              Text(
-                provider.description,
-                style: TextStyle(
-                    color: Colors.grey[600], fontSize: 14, height: 1.4),
-              ),
-              SizedBox(height: 16),
-              Row(
-                children: [
-                  Icon(Icons.location_on,
-                      color: Color(0xFFC89D93), size: 16),
-                  SizedBox(width: 4),
+                  const SizedBox(height: 16),
                   Text(
-                    'A ${(provider.distanceMeters / 1000).toStringAsFixed(1)} km en Fontibón',
+                    provider.description,
                     style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey[600],
-                        fontWeight: FontWeight.w600),
+                        color: Colors.grey[800], fontSize: 14, height: 1.4),
                   ),
-                ],
-              ),
-              SizedBox(height: 20),
-              Text(
-                'Galería del Profesional',
-                style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                    color: Colors.black87),
-              ),
-              SizedBox(height: 10),
-              FutureBuilder<Map<String, dynamic>>(
-                future: ApiService.fetchProviderDetails(provider.id),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return SizedBox(
-                      height: 100,
-                      child: Row(
-                        children: List.generate(
-                            2,
-                            (index) => Expanded(
-                                  child: Container(
-                                    margin: const EdgeInsets.only(right: 8),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFF5EBE6),
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                    child: Center(
-                                      child: SizedBox(
-                                        width: 20,
-                                        height: 20,
-                                        child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            color: Color(0xFFC89D93)),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      const Icon(Icons.location_on,
+                          color: Color(0xFFC5A052), size: 16),
+                      const SizedBox(width: 4),
+                      Text(
+                        'A ${(provider.distanceMeters / 1000).toStringAsFixed(1)} km en Fontibón',
+                        style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey[800],
+                            fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Galería del Profesional',
+                    style: TextStyle(
+                        fontFamily: 'Didot',
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        color: Color(0xFF1C1917)),
+                  ),
+                  const SizedBox(height: 10),
+                  FutureBuilder<Map<String, dynamic>>(
+                    future: ApiService.fetchProviderDetails(provider.id),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return SizedBox(
+                          height: 100,
+                          child: Row(
+                            children: List.generate(
+                                2,
+                                (index) => Expanded(
+                                      child: Container(
+                                        margin: const EdgeInsets.only(right: 8),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFF4EFEA),
+                                          borderRadius: BorderRadius.circular(16),
+                                        ),
+                                        child: const Center(
+                                          child: SizedBox(
+                                            width: 20,
+                                            height: 20,
+                                            child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                color: Color(0xFFC5A052)),
+                                          ),
+                                        ),
                                       ),
+                                    )),
+                          ),
+                        );
+                      }
+                      final portfolio =
+                          (snapshot.data?['portfolio'] as List<dynamic>?) ?? [];
+                      if (portfolio.isEmpty) {
+                        return Container(
+                          height: 100,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF4EFEA),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: const Color(0xFFE8E0D5),
+                              width: 1,
+                            ),
+                          ),
+                          child: const Center(
+                            child: Text(
+                              'No hay fotos cargadas en el portafolio',
+                              style: TextStyle(color: Colors.grey, fontSize: 13),
+                            ),
+                          ),
+                        );
+                      }
+                      return SizedBox(
+                        height: 110,
+                        child: Row(
+                          children: List.generate(
+                              portfolio.length > 2 ? 2 : portfolio.length, (idx) {
+                            final item = portfolio[idx];
+                            final imgUrl = item['image_url'] as String? ?? '';
+                            return Expanded(
+                              child: Container(
+                                margin: EdgeInsets.only(right: idx == 0 ? 8 : 0),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: Image.network(
+                                    imgUrl,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => Container(
+                                      color: const Color(0xFFF4EFEA),
+                                      child: const Icon(Icons.broken_image,
+                                          color: Color(0xFFC5A052)),
                                     ),
                                   ),
-                                )),
-                      ),
-                    );
-                  }
-                  final portfolio =
-                      (snapshot.data?['portfolio'] as List<dynamic>?) ?? [];
-                  if (portfolio.isEmpty) {
-                    return Container(
-                      height: 100,
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF5EBE6),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Center(
-                        child: Text(
-                          'No hay fotos cargadas en el portafolio',
-                          style: TextStyle(color: Colors.grey, fontSize: 13),
-                        ),
-                      ),
-                    );
-                  }
-                  return SizedBox(
-                    height: 110,
-                    child: Row(
-                      children: List.generate(
-                          portfolio.length > 2 ? 2 : portfolio.length, (idx) {
-                        final item = portfolio[idx];
-                        final imgUrl = item['image_url'] as String? ?? '';
-                        return Expanded(
-                          child: Container(
-                            margin: EdgeInsets.only(right: idx == 0 ? 8 : 0),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(16),
-                              child: Image.network(
-                                imgUrl,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => Container(
-                                  color: const Color(0xFFF5EBE6),
-                                  child: Icon(Icons.broken_image,
-                                      color: Color(0xFFC89D93)),
                                 ),
                               ),
-                            ),
-                          ),
-                        );
-                      }),
-                    ),
-                  );
-                },
-              ),
-              SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        side: BorderSide(
-                            color: Color(0xFFC89D93), width: 1.5),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20)),
-                      ),
-                      onPressed: () async {
-                        final token = await AuthService.getToken();
-                        if (token == null) {
-                          if (context.mounted) {
-                            Navigator.pushNamed(context, '/login');
-                          }
-                          return;
-                        }
-                        if (context.mounted) {
-                          Navigator.pop(context);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => ChatScreen(
-                                partnerId: provider.id,
-                                partnerName: provider.businessName.isNotEmpty
-                                    ? provider.businessName
-                                    : provider.fullName,
-                                partnerRole: 'provider',
-                                partnerAvatar: provider.avatarUrl,
-                              ),
-                            ),
-                          );
-                        }
-                      },
-                      icon: Icon(Icons.chat_bubble_outline_rounded,
-                          color: Color(0xFFC89D93), size: 18),
-                      label: Text(
-                        'Chat Directo',
-                        style: TextStyle(
-                            color: Color(0xFFC89D93),
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14),
-                      ),
-                    ),
+                            );
+                          }),
+                        ),
+                      );
+                    },
                   ),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFC89D93),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20)),
-                        elevation: 0,
-                      ),
-                      onPressed: () {
-                        Navigator.pop(context);
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                ProviderDetailScreen(providerId: provider.id),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            side: const BorderSide(
+                                color: Color(0xFFC5A052), width: 1.5),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20)),
                           ),
-                        );
-                      },
-                      child: Text(
-                        'Ver Perfil Completo',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 14),
+                          onPressed: () async {
+                            final token = await AuthService.getToken();
+                            if (token == null) {
+                              if (context.mounted) {
+                                Navigator.pushNamed(context, '/login');
+                              }
+                              return;
+                            }
+                            if (context.mounted) {
+                              Navigator.pop(context);
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => ChatScreen(
+                                    partnerId: provider.id,
+                                    partnerName: provider.businessName.isNotEmpty
+                                        ? provider.businessName
+                                        : provider.fullName,
+                                    partnerRole: 'provider',
+                                    partnerAvatar: provider.avatarUrl,
+                                  ),
+                                ),
+                              );
+                            }
+                          },
+                          icon: const Icon(Icons.chat_bubble_outline_rounded,
+                              color: Color(0xFFC5A052), size: 18),
+                          label: const Text(
+                            'Chat Directo',
+                            style: TextStyle(
+                                color: Color(0xFFC5A052),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14),
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFC5A052),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20)),
+                            elevation: 2,
+                            shadowColor: const Color(0xFFC5A052).withOpacity(0.4),
+                          ),
+                          onPressed: () {
+                            Navigator.pop(context);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    ProviderDetailScreen(providerId: provider.id),
+                              ),
+                            );
+                          },
+                          child: const Text(
+                            'Ver Perfil Completo',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 14),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
+            ),
           ),
         );
       },
