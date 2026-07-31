@@ -1398,8 +1398,8 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 52,
-                height: 52,
+                width: 50,
+                height: 50,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: LinearGradient(
@@ -1665,7 +1665,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                   // Botón 1: Citas (nav_citas_icon.png)
                   _buildNavItem(
                     assetPath: 'assets/images/nav_citas_icon.png',
-                    assetSize: 28,
+                    assetSize: 38,
                     label: 'Citas',
                     onTap: () => _checkAuthAndNavigate('/client-bookings'),
                   ),
@@ -1692,7 +1692,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                   // Botón 4: Perfil (nav_perfil_icon.png)
                   _buildNavItem(
                     assetPath: 'assets/images/nav_perfil_icon.png',
-                    assetSize: 28,
+                    assetSize: 38,
                     label: 'Perfil',
                     onTap: () => _checkAuthAndNavigate('/profile'),
                   ),
