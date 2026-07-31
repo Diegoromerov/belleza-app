@@ -23,6 +23,272 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _marketingEmails = false;
   bool _anonymizedAnalytics = true;
 
+  // DIÁLOGO DE CAMBIO DE CONTRASEÑA
+  void _showChangePasswordDialog(BuildContext context) {
+    final currentPasswordController = TextEditingController();
+    final newPasswordController = TextEditingController();
+    final confirmPasswordController = TextEditingController();
+    bool obscureCurrent = true;
+    bool obscureNew = true;
+    bool obscureConfirm = true;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: LuxeColors.nude100,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(LuxeSpacing.md),
+            side: const BorderSide(color: LuxeColors.nude200),
+          ),
+          title: const Text(
+            'CAMBIAR CONTRASEÑA',
+            style: TextStyle(
+              fontFamily: 'Didot',
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: LuxeColors.nude900,
+              letterSpacing: 1.0,
+            ),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: currentPasswordController,
+                  obscureText: obscureCurrent,
+                  decoration: InputDecoration(
+                    labelText: 'Contraseña Actual',
+                    labelStyle: const TextStyle(fontSize: 13, color: LuxeColors.nude600),
+                    suffixIcon: IconButton(
+                      icon: Icon(obscureCurrent ? Icons.visibility_off : Icons.visibility, size: 18),
+                      onPressed: () => setDialogState(() => obscureCurrent = !obscureCurrent),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: newPasswordController,
+                  obscureText: obscureNew,
+                  decoration: InputDecoration(
+                    labelText: 'Nueva Contraseña',
+                    labelStyle: const TextStyle(fontSize: 13, color: LuxeColors.nude600),
+                    suffixIcon: IconButton(
+                      icon: Icon(obscureNew ? Icons.visibility_off : Icons.visibility, size: 18),
+                      onPressed: () => setDialogState(() => obscureNew = !obscureNew),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: confirmPasswordController,
+                  obscureText: obscureConfirm,
+                  decoration: InputDecoration(
+                    labelText: 'Confirmar Nueva Contraseña',
+                    labelStyle: const TextStyle(fontSize: 13, color: LuxeColors.nude600),
+                    suffixIcon: IconButton(
+                      icon: Icon(obscureConfirm ? Icons.visibility_off : Icons.visibility, size: 18),
+                      onPressed: () => setDialogState(() => obscureConfirm = !obscureConfirm),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar', style: TextStyle(color: LuxeColors.nude700)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: LuxeColors.nude900,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () {
+                if (newPasswordController.text.isEmpty ||
+                    newPasswordController.text != confirmPasswordController.text) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Las contraseñas no coinciden o están vacías.'),
+                      backgroundColor: Color(0xFFB00020),
+                    ),
+                  );
+                  return;
+                }
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Contraseña actualizada con éxito.'),
+                    backgroundColor: LuxeColors.nude900,
+                  ),
+                );
+              },
+              child: const Text('Actualizar'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // MODAL TÉRMINOS DE SERVICIO
+  void _showTermsOfServiceModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: LuxeColors.nude50,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.75,
+        maxChildSize: 0.9,
+        minChildSize: 0.5,
+        expand: false,
+        builder: (context, scrollController) => Container(
+          padding: const EdgeInsets.all(LuxeSpacing.xl),
+          child: ListView(
+            controller: scrollController,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: LuxeColors.nude300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'TÉRMINOS DE SERVICIO CONCIERGE',
+                style: TextStyle(
+                  fontFamily: 'Didot',
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: LuxeColors.nude900,
+                  letterSpacing: 1.2,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                '1. ACEPTACIÓN DE CONDICIONES\n'
+                'Al acceder a la plataforma GlowApp Belleza Luxe y hacer uso de los servicios Concierge, el usuario acepta de forma incondicional los presentes términos de servicio.\n\n'
+                '2. SERVICIOS BIOMÉTRICOS & IA\n'
+                'El algoritmo de análisis facial Aura AI ofrece sugerencias de cuidado estético. Dichos análisis no constituyen un diagnóstico médico dermatológico oficial.\n\n'
+                '3. POLÍTICA DE RESERVAS Y CANCELACIONES\n'
+                'Las citas agendadas a través del Concierge pueden ser reprogramadas con hasta 4 horas de anticipación sin penalización.\n\n'
+                '4. PROPIEDAD INTELECTUAL\n'
+                'Todos los diseños, nombres, marcas y modelos de diagnóstico 3D son propiedad exclusiva del Club Glow Luxe.',
+                style: TextStyle(
+                  fontFamily: 'CormorantGaramond',
+                  fontSize: 15,
+                  color: LuxeColors.nude800,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: LuxeColors.nude900,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Entendido & Aceptar'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // MODAL POLÍTICA DE PRIVACIDAD LEY 1581
+  void _showPrivacyPolicyModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: LuxeColors.nude50,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.75,
+        maxChildSize: 0.9,
+        minChildSize: 0.5,
+        expand: false,
+        builder: (context, scrollController) => Container(
+          padding: const EdgeInsets.all(LuxeSpacing.xl),
+          child: ListView(
+            controller: scrollController,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: LuxeColors.nude300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'POLÍTICA DE PRIVACIDAD LEY 1581 DE 2012',
+                style: TextStyle(
+                  fontFamily: 'Didot',
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: LuxeColors.nude900,
+                  letterSpacing: 1.2,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'TRATAMIENTO DE DATOS PERSONALES Y SENSIBLES\n'
+                'GlowApp da estricto cumplimiento a la Ley Estatutaria 1581 de 2012 y al Decreto 1377 de 2013 sobre la protección de datos personales en Colombia.\n\n'
+                '1. DATOS RECOPILADOS\n'
+                'Recopilamos información de contacto y datos biométricos faciales necesarios para personalizar la experiencia de diagnóstico de belleza.\n\n'
+                '2. FINALIDAD DE LA INFORMACIÓN\n'
+                'Sus datos serán usados única y exclusivamente para la prestación de servicios estéticos, recomendaciones de productos en GlowStore y agendamiento de citas.\n\n'
+                '3. DERECHOS ARCO\n'
+                'Como titular, usted tiene derecho a Conocer, Actualizar, Rectificar y Solicitar la Supresión de sus datos personales en cualquier momento a través del panel de configuración de la app.',
+                style: TextStyle(
+                  fontFamily: 'CormorantGaramond',
+                  fontSize: 15,
+                  color: LuxeColors.nude800,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: LuxeColors.nude900,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Entendido'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   void _showDeleteAccountConfirmation(BuildContext context) {
     showDialog(
       context: context,
@@ -129,7 +395,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 icon: Icons.lock_outline,
                 title: 'Cambiar Contraseña',
                 showDivider: false,
-                onTap: () {},
+                onTap: () => _showChangePasswordDialog(context),
               ),
 
               const SizedBox(height: LuxeSpacing.xxl),
@@ -225,7 +491,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         GestureDetector(
-                          onTap: () {},
+                          onTap: () => _showTermsOfServiceModal(context),
                           child: const Text(
                             'Términos de Servicio',
                             style: TextStyle(fontSize: 11, color: LuxeColors.nude500, decoration: TextDecoration.underline),
@@ -233,7 +499,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                         const Text(' • ', style: TextStyle(color: LuxeColors.nude500)),
                         GestureDetector(
-                          onTap: () {},
+                          onTap: () => _showPrivacyPolicyModal(context),
                           child: const Text(
                             'Política de Privacidad Ley 1581',
                             style: TextStyle(fontSize: 11, color: LuxeColors.nude500, decoration: TextDecoration.underline),
