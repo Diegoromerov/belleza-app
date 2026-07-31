@@ -1707,11 +1707,32 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
             ),
           ),
 
+          // Capa: Boton Permanente de Asistencia WhatsApp Concierge (Sprint 3 P2)
+          Positioned(
+            left: 20,
+            bottom: MediaQuery.of(context).padding.bottom + 104,
+            child: FloatingActionButton.small(
+              heroTag: 'whatsapp_concierge_direct_fab',
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Conectando con Concierge GlowApp via WhatsApp (+573009128899)...'),
+                    backgroundColor: Color(0xFF25D366),
+                  ),
+                );
+              },
+              backgroundColor: const Color(0xFF25D366),
+              foregroundColor: Colors.white,
+              elevation: 4,
+              child: const Icon(Icons.chat_bubble_outline_rounded, size: 20),
+            ),
+          ),
+
           // Capa: Ajustes de Mapa (Speed Dial Expandible)
           Positioned(
             right: 20,
             bottom: MediaQuery.of(context).padding.bottom + 104,
-            child: Column(
+            child: Column
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [

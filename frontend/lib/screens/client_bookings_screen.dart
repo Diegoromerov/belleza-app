@@ -1056,21 +1056,49 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                     status.toLowerCase() == 'confirmed' ||
                     status.toLowerCase() == 'confirmada')) ...[
               const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () =>
-                      _confirmCancelBooking(booking['id'], providerName),
-                  icon: const Icon(Icons.cancel_outlined, size: 18),
-                  label: const Text('Cancelar Cita'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppTheme.error,
-                    side: const BorderSide(color: AppTheme.errorBg),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30)),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () =>
+                          _confirmCancelBooking(booking['id'], providerName),
+                      icon: const Icon(Icons.cancel_outlined, size: 16),
+                      label: const Text('Cancelar', style: TextStyle(fontSize: 12)),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppTheme.error,
+                        side: const BorderSide(color: AppTheme.errorBg),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20)),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                      ),
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Selecciona nueva fecha en el perfil de la proveedora')),
+                        );
+                        Navigator.pushNamed(
+                          context,
+                          '/provider-detail',
+                          arguments: booking['provider_id'],
+                        );
+                      },
+                      icon: const Icon(Icons.calendar_month_outlined, size: 16),
+                      label: const Text('Reprogramar', style: TextStyle(fontSize: 12)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFC5A052),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20)),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        elevation: 0,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
             if (!isUpcoming && status == 'completed' && !isReviewed) ...[
