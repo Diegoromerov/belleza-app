@@ -1663,8 +1663,10 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
               child: Row(
                 children: [
                   // Botón 1: Citas (nav_citas_icon.png)
-                  _buildNavItem(
+                  _buildProminentCenterNavItem(
                     assetPath: 'assets/images/nav_citas_icon.png',
+                    gradientColors: const [Color(0xFFF3D5C8), Color(0xFFD4AF37)],
+                    shadowColor: const Color(0xFFD4AF37),
                     assetSize: 38,
                     label: 'Citas',
                     onTap: () => _checkAuthAndNavigate('/client-bookings'),
@@ -1673,6 +1675,8 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                   // Botón 2: GlowShop (nav_glowshop_icon.png)
                   _buildProminentCenterNavItem(
                     assetPath: 'assets/images/nav_glowshop_icon.png',
+                    gradientColors: const [Color(0xFFF3D5C8), Color(0xFFD4AF37)],
+                    shadowColor: const Color(0xFFD4AF37),
                     label: 'GlowShop',
                     onTap: () => _checkAuthAndNavigate('/store'),
                   ),
@@ -1690,8 +1694,10 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                   ),
 
                   // Botón 4: Perfil (nav_perfil_icon.png)
-                  _buildNavItem(
+                  _buildProminentCenterNavItem(
                     assetPath: 'assets/images/nav_perfil_icon.png',
+                    gradientColors: const [Color(0xFFF3D5C8), Color(0xFFD4AF37)],
+                    shadowColor: const Color(0xFFD4AF37),
                     assetSize: 38,
                     label: 'Perfil',
                     onTap: () => _checkAuthAndNavigate('/profile'),
