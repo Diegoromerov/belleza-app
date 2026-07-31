@@ -8,16 +8,18 @@ import '../widgets/wompi_payment_sheet.dart';
 
 class BookingScreen extends StatefulWidget {
   final String providerId;
-  final String providerName;
-  final List<Map<String, dynamic>> services;
+  final String? providerName;
+  final List<Map<String, dynamic>>? services;
+  final String? initialServiceId;
   final String? initialNotes;
   final String? preselectedProductId;
 
   const BookingScreen({
     super.key,
     required this.providerId,
-    required this.providerName,
-    required this.services,
+    this.providerName,
+    this.services,
+    this.initialServiceId,
     this.initialNotes,
     this.preselectedProductId,
   });

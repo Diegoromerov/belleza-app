@@ -1113,12 +1113,15 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
         heroTag: 'express_booking_4clicks_fab',
         onPressed: () {
           final services = (details?['services'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+          final providerName = (details?['business_name'] ?? details?['full_name'] ?? 'Prestador').toString();
           final firstServiceId = services.isNotEmpty ? services.first['id']?.toString() : null;
           Navigator.push(
             context,
             MaterialPageRoute(
               builder: (_) => BookingScreen(
                 providerId: widget.providerId,
+                providerName: providerName,
+                services: services,
                 initialServiceId: firstServiceId,
               ),
             ),

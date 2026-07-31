@@ -10,7 +10,9 @@ class LuxeColors {
   static const Color nude200 = Color(0xFFE8E0D5);
   static const Color nude300 = Color(0xFFD6C8B8);
   static const Color nude500 = Color(0xFF9E8C78);
+  static const Color nude600 = Color(0xFF857360);
   static const Color nude700 = Color(0xFF6B5A48);
+  static const Color nude800 = Color(0xFF453A2E);
   static const Color nude900 = Color(0xFF1F1A15);
 
   // Acentos de Lujo (Oro Champán 871)
