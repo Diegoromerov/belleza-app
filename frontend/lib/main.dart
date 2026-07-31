@@ -1664,7 +1664,8 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                 children: [
                   // Botón 1: Citas
                   _buildNavItem(
-                    icon: Icons.calendar_today_outlined,
+                    assetPath: 'assets/images/nav_citas_icon.png',
+                    assetSize: 44,
                     label: 'Citas',
                     onTap: () => _checkAuthAndNavigate('/client-bookings'),
                   ),
