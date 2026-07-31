@@ -1667,7 +1667,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                     assetPath: 'assets/images/nav_citas_icon.png',
                     gradientColors: const [Color(0xFFF3D5C8), Color(0xFFD4AF37)],
                     shadowColor: const Color(0xFFD4AF37),
-                    assetSize: 38,
+                    
                     label: 'Citas',
                     onTap: () => _checkAuthAndNavigate('/client-bookings'),
                   ),
@@ -1698,7 +1698,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                     assetPath: 'assets/images/nav_perfil_icon.png',
                     gradientColors: const [Color(0xFFF3D5C8), Color(0xFFD4AF37)],
                     shadowColor: const Color(0xFFD4AF37),
-                    assetSize: 38,
+                    
                     label: 'Perfil',
                     onTap: () => _checkAuthAndNavigate('/profile'),
                   ),
