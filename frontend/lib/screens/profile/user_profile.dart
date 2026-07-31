@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/belleza_luxe_theme.dart';
 import '../../widgets/profile/profile_header.dart';
 import '../../widgets/profile/luxe_list_tile.dart';
+import '../../services/auth_service.dart';
 import 'settings_screen.dart';
 import 'biometric_history_screen.dart';
 import 'glowstore_orders_screen.dart';
@@ -165,7 +166,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 child: SizedBox(
                   width: double.infinity,
                   child: TextButton.icon(
-                    onPressed: widget.onLogout,
+                    onPressed: widget.onLogout ?? () async { await AuthService.logout(); if (context.mounted) { Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false); } },
                     icon: const Icon(Icons.logout, color: LuxeColors.nude500, size: 18),
                     label: const Text(
                       'Cerrar Sesión Concierge',
