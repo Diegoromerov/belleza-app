@@ -1732,7 +1732,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
           Positioned(
             right: 20,
             bottom: MediaQuery.of(context).padding.bottom + 104,
-            child: Column
+            child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
