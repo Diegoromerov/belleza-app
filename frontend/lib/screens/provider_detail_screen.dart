@@ -1099,15 +1099,34 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
               Icon(Icons.calendar_today_outlined, size: 18),
               SizedBox(width: 8),
               Text(
-                'RESERVAR CITA CON PAGO SEGURO (WOMPI)',
+                'RESERVAR CITA (WOMPI)',
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 12,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ],
           ),
         ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'express_booking_4clicks_fab',
+        onPressed: () {
+          final services = (details?['services'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+          final firstServiceId = services.isNotEmpty ? services.first['id']?.toString() : null;
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => BookingScreen(
+                providerId: widget.providerId,
+                initialServiceId: firstServiceId,
+              ),
+            ),
+          );
+        },
+        backgroundColor: const Color(0xFFC5A052),
+        icon: const Icon(Icons.bolt, color: Colors.white),
+        label: const Text('Reserva Exprés (4 Clics)', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 12)),
       ),
     );
   }

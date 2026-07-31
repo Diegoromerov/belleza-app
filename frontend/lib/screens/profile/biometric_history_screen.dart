@@ -56,6 +56,33 @@ class BiometricHistoryScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // BADGE AUDITORÍA PRIVACIDAD CERO-HUELLA
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF059669).withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: const Color(0xFF059669), width: 0.8),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.verified_user_outlined, color: Color(0xFF10B981), size: 12),
+                          SizedBox(width: 6),
+                          Text(
+                            'AUDITORÍA CERO-HUELLA: IMAGEN DE ORIGEN PURGADA',
+                            style: TextStyle(
+                              fontFamily: 'JetBrainsMono',
+                              fontSize: 8,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF10B981),
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
