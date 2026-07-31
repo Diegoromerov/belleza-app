@@ -156,7 +156,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('✓ Borrador guardado. Puedes completar tu perfil más tarde.'),
-            backgroundColor: Color(0xFFC89D93),
+            backgroundColor: AppTheme.primary,
           ),
         );
         Navigator.pushReplacementNamed(context, '/verification-pending');
@@ -313,7 +313,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             'Acepto la Política de Tratamiento de Datos Personales (Habeas Data - Ley 1581 de 2012).',
             style: TextStyle(fontSize: 12, color: Colors.black87),
           ),
-          activeColor: const Color(0xFFC89D93),
+          activeColor: AppTheme.primary,
           contentPadding: EdgeInsets.zero,
           controlAffinity: ListTileControlAffinity.leading,
         ),
@@ -324,7 +324,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             'Acepto los Términos y Condiciones de Uso de la plataforma GlowApp.',
             style: TextStyle(fontSize: 12, color: Colors.black87),
           ),
-          activeColor: const Color(0xFFC89D93),
+          activeColor: AppTheme.primary,
           contentPadding: EdgeInsets.zero,
           controlAffinity: ListTileControlAffinity.leading,
         ),
@@ -332,7 +332,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         ElevatedButton(
           onPressed: (_isLoading || !_habeasDataAccepted || !_terminosAccepted) ? null : _submitOnboarding,
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFC89D93),
+            backgroundColor: AppTheme.primary,
             foregroundColor: Colors.white,
             disabledBackgroundColor: const Color(0xFFE5CECA),
             padding: const EdgeInsets.symmetric(vertical: 16),
@@ -372,7 +372,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         const SizedBox(height: 8),
         const Row(
           children: [
-            Icon(Icons.access_time, color: Color(0xFFC89D93)),
+            Icon(Icons.access_time, color: AppTheme.primary),
             SizedBox(width: 8),
             Expanded(
               child: Text(
@@ -385,7 +385,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         const SizedBox(height: 8),
         const Row(
           children: [
-            Icon(Icons.account_balance_wallet, color: Color(0xFFC89D93)),
+            Icon(Icons.account_balance_wallet, color: AppTheme.primary),
             SizedBox(width: 8),
             Expanded(
               child: Text(
@@ -398,7 +398,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         const SizedBox(height: 8),
         const Row(
           children: [
-            Icon(Icons.trending_up, color: Color(0xFFC89D93)),
+            Icon(Icons.trending_up, color: AppTheme.primary),
             SizedBox(width: 8),
             Expanded(
               child: Text(
@@ -456,7 +456,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           child: const Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.info_outline, color: Color(0xFFC89D93), size: 24),
+              Icon(Icons.info_outline, color: AppTheme.primary, size: 24),
               SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -492,7 +492,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             'Acepto la política de protección de datos (Habeas Data - Ley 1581 de 2012) de la aplicación Belleza App.',
             style: TextStyle(fontSize: 12, color: Colors.black87),
           ),
-          activeColor: const Color(0xFFC89D93),
+          activeColor: AppTheme.primary,
           contentPadding: EdgeInsets.zero,
           controlAffinity: ListTileControlAffinity.leading,
         ),
@@ -504,7 +504,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             'Acepto los Términos y Condiciones y el Contrato de Prestación de Servicios de GlowApp.',
             style: TextStyle(fontSize: 12, color: Colors.black87),
           ),
-          activeColor: const Color(0xFFC89D93),
+          activeColor: AppTheme.primary,
           contentPadding: EdgeInsets.zero,
           controlAffinity: ListTileControlAffinity.leading,
         ),
@@ -521,7 +521,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           onPressed:
               (_isLoading || !isSubmitEnabled) ? null : _submitOnboarding,
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFC89D93),
+            backgroundColor: AppTheme.primary,
             foregroundColor: Colors.white,
             disabledBackgroundColor: const Color(0xFFE5CECA),
             padding: const EdgeInsets.symmetric(vertical: 16),
@@ -577,8 +577,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         OutlinedButton(
           onPressed: _isLoading ? null : _saveDraft,
           style: OutlinedButton.styleFrom(
-            foregroundColor: const Color(0xFFC89D93),
-            side: const BorderSide(color: Color(0xFFC89D93)),
+            foregroundColor: AppTheme.primary,
+            side: const BorderSide(color: AppTheme.primary),
             padding: const EdgeInsets.symmetric(vertical: 16),
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
@@ -604,7 +604,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           Expanded(
             child: Container(
               height: 2,
-              color: const Color(0xFFC89D93),
+              color: AppTheme.primary,
             ),
           ),
           _buildStepCircle('2', 'Documentos', currentStep >= 2),
@@ -612,7 +612,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             child: Container(
               height: 2,
               color: currentStep >= 3
-                  ? const Color(0xFFC89D93)
+                  ? AppTheme.primary
                   : const Color(0xFFE8D7D3),
             ),
           ),
@@ -630,10 +630,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           height: 28,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: isCompleted ? const Color(0xFFC89D93) : Colors.white,
+            color: isCompleted ? AppTheme.primary : Colors.white,
             border: Border.all(
               color: isCompleted
-                  ? const Color(0xFFC89D93)
+                  ? AppTheme.primary
                   : const Color(0xFFE8D7D3),
               width: 2,
             ),
@@ -678,7 +678,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               Row(
                 children: [
                   const CircleAvatar(
-                    backgroundColor: Color(0xFFC89D93),
+                    backgroundColor: AppTheme.primary,
                     radius: 20,
                     child: Text(
                       'VP',
@@ -790,7 +790,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color:
-                isUploaded ? const Color(0xFFC89D93) : const Color(0xFFEADCD6),
+                isUploaded ? AppTheme.primary : const Color(0xFFEADCD6),
             width: 1.5,
           ),
           boxShadow: AppTheme.softShadow,
@@ -801,7 +801,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               isUploaded
                   ? Icons.check_circle_outline
                   : Icons.cloud_upload_outlined,
-              color: isUploaded ? Colors.green : const Color(0xFFC89D93),
+              color: isUploaded ? Colors.green : AppTheme.primary,
               size: 28,
             ),
             const SizedBox(width: 16),
@@ -829,7 +829,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 width: 20,
                 height: 20,
                 child: CircularProgressIndicator(
-                    color: Color(0xFFC89D93), strokeWidth: 2),
+                    color: AppTheme.primary, strokeWidth: 2),
               )
             else if (isUploaded)
               const Row(
@@ -880,7 +880,7 @@ class _RoleCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
             color:
-                isSelected ? const Color(0xFFC89D93) : const Color(0xFFF3EAE8),
+                isSelected ? AppTheme.primary : const Color(0xFFF3EAE8),
             width: isSelected ? 2 : 1,
           ),
           boxShadow: isSelected ? AppTheme.cardShadow : AppTheme.softShadow,
@@ -890,7 +890,7 @@ class _RoleCard extends StatelessWidget {
             Icon(
               icon,
               size: 40,
-              color: isSelected ? const Color(0xFFC89D93) : Colors.grey,
+              color: isSelected ? AppTheme.primary : Colors.grey,
             ),
             const SizedBox(height: 16),
             Text(

@@ -171,7 +171,7 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
             ? MensTheme.obsidianCard
             : (isDark ? const Color(0xFF24232B) : Colors.white);
         final textColor = isMen ? MensTheme.textPrimary : (isDark ? Colors.white : Colors.black);
-        final primaryColor = isMen ? MensTheme.champagneGold : const Color(0xFFC89D93);
+        final primaryColor = isMen ? MensTheme.champagneGold : AppTheme.primary;
 
         if (_isLoading) {
           return Scaffold(
@@ -243,7 +243,7 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                                     : 'U',
                                 style: const TextStyle(
                                     fontSize: 40,
-                                    color: Color(0xFFC89D93),
+                                    color: AppTheme.primary,
                                     fontWeight: FontWeight.bold),
                               )
                             : null,
@@ -256,7 +256,7 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                         onTap: _isUploading ? null : _pickAndUploadAvatar,
                         child: const CircleAvatar(
                           radius: 18,
-                          backgroundColor: Color(0xFFC89D93),
+                          backgroundColor: AppTheme.primary,
                           child: Icon(Icons.camera_alt,
                               color: Colors.white, size: 16),
                         ),
@@ -352,7 +352,7 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
               ElevatedButton(
                 onPressed: _isSaving ? null : _saveProfileChanges,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFC89D93),
+                  backgroundColor: AppTheme.primary,
                   foregroundColor: Colors.white,
                   disabledBackgroundColor: const Color(0xFFE5CECA),
                   padding: const EdgeInsets.symmetric(vertical: 16),
@@ -453,10 +453,10 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: const Color(0xFFC89D93).withValues(alpha: 0.12),
+            color: AppTheme.primary.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(icon, color: const Color(0xFFC89D93), size: 20),
+          child: Icon(icon, color: AppTheme.primary, size: 20),
         ),
         title: Text(
           title,
@@ -494,7 +494,7 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
             onPressed: () => Navigator.pop(context),
             child: const Text('Entendido',
                 style: TextStyle(
-                    color: Color(0xFFC89D93), fontWeight: FontWeight.bold)),
+                    color: AppTheme.primary, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -505,7 +505,7 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
     return InputDecoration(
       labelText: label,
       labelStyle: const TextStyle(color: Colors.grey, fontSize: 14),
-      prefixIcon: Icon(icon, color: const Color(0xFFC89D93)),
+      prefixIcon: Icon(icon, color: AppTheme.primary),
       floatingLabelBehavior: FloatingLabelBehavior.never,
       filled: true,
       fillColor: const Color(0xFFF5EBE6),
@@ -519,7 +519,7 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(30),
-        borderSide: const BorderSide(color: Color(0xFFC89D93), width: 1.5),
+        borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
     );

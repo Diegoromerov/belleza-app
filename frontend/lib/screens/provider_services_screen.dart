@@ -77,7 +77,7 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: const Text('✅ Servicio creado con éxito'),
-              backgroundColor: const Color(0xFFC89D93),
+              backgroundColor: AppTheme.primary,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20)),
@@ -98,7 +98,7 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: const Text('✅ Servicio actualizado con éxito'),
-              backgroundColor: const Color(0xFFC89D93),
+              backgroundColor: AppTheme.primary,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20)),
@@ -265,7 +265,7 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
                               backgroundColor: const Color(0xFFF5EBE6),
                               labelStyle: TextStyle(
                                 color: isSelected
-                                    ? const Color(0xFFC89D93)
+                                    ? AppTheme.primary
                                     : Colors.black87,
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
@@ -328,7 +328,7 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
                       const SizedBox(height: 24),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFC89D93),
+                          backgroundColor: AppTheme.primary,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
@@ -377,7 +377,7 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
     return InputDecoration(
       labelText: label,
       labelStyle: const TextStyle(color: Colors.grey, fontSize: 13),
-      prefixIcon: Icon(icon, color: const Color(0xFFC89D93)),
+      prefixIcon: Icon(icon, color: AppTheme.primary),
       floatingLabelBehavior: FloatingLabelBehavior.auto,
       filled: true,
       fillColor: const Color(0xFFF5EBE6),
@@ -389,7 +389,7 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(30),
-        borderSide: const BorderSide(color: Color(0xFFC89D93), width: 1.5),
+        borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
     );
@@ -463,7 +463,7 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: const Text('✅ Servicio desactivado'),
-                backgroundColor: const Color(0xFFC89D93),
+                backgroundColor: AppTheme.primary,
                 behavior: SnackBarBehavior.floating,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20)),
@@ -484,7 +484,7 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: const Text('✅ Servicio activado'),
-                backgroundColor: const Color(0xFFC89D93),
+                backgroundColor: AppTheme.primary,
                 behavior: SnackBarBehavior.floating,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20)),
@@ -512,7 +512,7 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(Icons.inventory_2_outlined,
-                size: 64, color: Color(0xFFC89D93)),
+                size: 64, color: AppTheme.primary),
             const SizedBox(height: 16),
             Text(message,
                 style: const TextStyle(
@@ -526,7 +526,7 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
               icon: const Icon(Icons.add),
               label: const Text('Agregar Primer Servicio'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFC89D93),
+                backgroundColor: AppTheme.primary,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30)),
@@ -614,7 +614,7 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
                                     Text(
                                       '${service.bookingsCount} reservas',
                                       style: const TextStyle(
-                                        color: Color(0xFFC89D93),
+                                        color: AppTheme.primary,
                                         fontSize: 11,
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -674,7 +674,7 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
                       style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFFC89D93)),
+                          color: AppTheme.primary),
                     ),
                   ],
                 ),
@@ -687,7 +687,7 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
                         icon: const Icon(Icons.edit_outlined, size: 16),
                         label: const Text('Editar'),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFFC89D93),
+                          foregroundColor: AppTheme.primary,
                           side: const BorderSide(color: Color(0xFFE5CECA)),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30)),
@@ -738,7 +738,7 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
           elevation: 0,
         ),
         body: const Center(
-            child: CircularProgressIndicator(color: Color(0xFFC89D93))),
+            child: CircularProgressIndicator(color: AppTheme.primary)),
       );
     }
 
@@ -768,7 +768,7 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
                 icon: const Icon(Icons.refresh),
                 label: const Text('Reintentar'),
                 style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFC89D93),
+                    backgroundColor: AppTheme.primary,
                     foregroundColor: Colors.white),
               ),
             ],
@@ -797,9 +797,9 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
         ],
         bottom: TabBar(
           controller: _tabController,
-          labelColor: const Color(0xFFC89D93),
+          labelColor: AppTheme.primary,
           unselectedLabelColor: Colors.grey,
-          indicatorColor: const Color(0xFFC89D93),
+          indicatorColor: AppTheme.primary,
           tabs: [
             Tab(text: 'Activos (${active.length})'),
             Tab(text: 'Inactivos (${inactive.length})'),
@@ -812,7 +812,7 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
             controller: _tabController,
             children: [
               RefreshIndicator(
-                color: const Color(0xFFC89D93),
+                color: AppTheme.primary,
                 onRefresh: _loadServices,
                 child: active.isEmpty
                     ? _buildEmptyState(
@@ -825,7 +825,7 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
                       ),
               ),
               RefreshIndicator(
-                color: const Color(0xFFC89D93),
+                color: AppTheme.primary,
                 onRefresh: _loadServices,
                 child: inactive.isEmpty
                     ? const Center(
@@ -854,13 +854,13 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
             Container(
               color: const Color(0x1E000000),
               child: const Center(
-                  child: CircularProgressIndicator(color: Color(0xFFC89D93))),
+                  child: CircularProgressIndicator(color: AppTheme.primary)),
             ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showServiceForm(),
-        backgroundColor: const Color(0xFFC89D93),
+        backgroundColor: AppTheme.primary,
         foregroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         elevation: 4,

@@ -124,7 +124,7 @@ class _MapScreenState extends State<MapScreen> {
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
                                     border: Border.all(
-                                        color: const Color(0xFFC89D93),
+                                        color: AppTheme.primary,
                                         width: 2),
                                     boxShadow: const [
                                       BoxShadow(
@@ -143,7 +143,7 @@ class _MapScreenState extends State<MapScreen> {
                                         ? const Icon(
                                             Icons.face_retouching_natural,
                                             size: 20,
-                                            color: Color(0xFFC89D93))
+                                            color: AppTheme.primary)
                                         : null,
                                   ),
                                 ),
@@ -195,7 +195,7 @@ class _MapScreenState extends State<MapScreen> {
                 });
               },
               backgroundColor: Colors.white,
-              foregroundColor: const Color(0xFFC89D93),
+              foregroundColor: AppTheme.primary,
               elevation: 4,
               shape: const CircleBorder(),
               child: Icon(

@@ -140,7 +140,7 @@ class _WalkthroughDialogState extends State<_WalkthroughDialog> {
                   'Instrucciones (${_currentStep + 1}/${_steps.length})',
                   style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFFC89D93),
+                      color: AppTheme.primary,
                       fontSize: 12,
                       letterSpacing: 0.5),
                 ),
@@ -152,7 +152,7 @@ class _WalkthroughDialogState extends State<_WalkthroughDialog> {
                       height: 6,
                       decoration: BoxDecoration(
                         color: _currentStep == idx
-                            ? const Color(0xFFC89D93)
+                            ? AppTheme.primary
                             : const Color(0xFFE8D7D3),
                         borderRadius: BorderRadius.circular(3),
                       ),
@@ -174,7 +174,7 @@ class _WalkthroughDialogState extends State<_WalkthroughDialog> {
                 child: Icon(
                   step.icon,
                   size: 44,
-                  color: const Color(0xFFC89D93),
+                  color: AppTheme.primary,
                 ),
               ),
             ),
@@ -215,14 +215,14 @@ class _WalkthroughDialogState extends State<_WalkthroughDialog> {
                   Row(
                     children: [
                       Icon(Icons.play_circle_outline,
-                          color: Color(0xFFC89D93), size: 18),
+                          color: AppTheme.primary, size: 18),
                       SizedBox(width: 6),
                       Text(
                         'Simulación de Uso',
                         style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFFC89D93)),
+                            color: AppTheme.primary),
                       ),
                     ],
                   ),
@@ -245,7 +245,7 @@ class _WalkthroughDialogState extends State<_WalkthroughDialog> {
                 'No volver a mostrar instructivo',
                 style: TextStyle(fontSize: 12, color: Colors.black87),
               ),
-              activeColor: const Color(0xFFC89D93),
+              activeColor: AppTheme.primary,
               contentPadding: EdgeInsets.zero,
               controlAffinity: ListTileControlAffinity.leading,
             ),
@@ -259,7 +259,7 @@ class _WalkthroughDialogState extends State<_WalkthroughDialog> {
                     child: OutlinedButton(
                       onPressed: () => setState(() => _currentStep--),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFFC89D93),
+                        foregroundColor: AppTheme.primary,
                         side: BorderSide(color: Color(0xFFE8D7D3)),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30)),
@@ -276,7 +276,7 @@ class _WalkthroughDialogState extends State<_WalkthroughDialog> {
                         ? _handleClose
                         : () => setState(() => _currentStep++),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFC89D93),
+                      backgroundColor: AppTheme.primary,
                       foregroundColor: Colors.white,
                       elevation: 0,
                       shape: RoundedRectangleBorder(

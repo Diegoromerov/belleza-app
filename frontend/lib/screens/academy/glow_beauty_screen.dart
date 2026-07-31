@@ -24,7 +24,7 @@ const List<_BeautyItem> _beautyItems = [
     title: 'Cuidado de la piel',
     description: 'Rutinas y tips para una piel radiante.',
     icon: Icons.spa,
-    color: Color(0xFFC89D93),
+    color: AppTheme.primary,
   ),
   _BeautyItem(
     title: 'Maquillaje básico',

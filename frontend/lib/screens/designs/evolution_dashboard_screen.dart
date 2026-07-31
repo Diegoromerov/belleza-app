@@ -535,7 +535,7 @@ class SkinDeteriorationPainter extends CustomPainter {
     // 1. Capa de enrojecimiento / deshidratación (tono sepia/rojizo semi-transparente)
     final rect = Offset.zero & size;
     final paintRed = Paint()
-      ..color = const Color(0xFFC89D93).withValues(alpha: 0.15)
+      ..color = AppTheme.primary.withValues(alpha: 0.15)
       ..blendMode = BlendMode.colorBurn;
     canvas.drawRect(rect, paintRed);
 

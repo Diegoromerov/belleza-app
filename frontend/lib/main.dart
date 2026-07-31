@@ -354,7 +354,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
               title: Row(
                 children: [
-                  Icon(Icons.location_off, color: Color(0xFFC89D93), size: 28),
+                  Icon(Icons.location_off, color: AppTheme.primary, size: 28),
                   SizedBox(width: 8),
                   Text(
                     'Ingresa tu Ubicación',
@@ -383,7 +383,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                   if (resolving) ...[
                     SizedBox(height: 16),
                     Center(
-                      child: CircularProgressIndicator(color: Color(0xFFC89D93)),
+                      child: CircularProgressIndicator(color: AppTheme.primary),
                     )
                   ]
                 ],
@@ -401,7 +401,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFC89D93),
+                    backgroundColor: const AppTheme.primary,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                   ),
@@ -501,7 +501,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Sin conexión. Mostrando datos sin conexión.'),
-                backgroundColor: Color(0xFFC89D93),
+                backgroundColor: AppTheme.primary,
               ),
             );
           }
@@ -884,7 +884,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                   child: Text(
                     'Entendido / Cerrar',
                     style: TextStyle(
-                        color: Color(0xFFC89D93), fontWeight: FontWeight.bold),
+                        color: AppTheme.primary, fontWeight: FontWeight.bold),
                   ),
                 ),
               ],
@@ -1288,11 +1288,11 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: isSelected
-                          ? const Color(0xFFC89D93).withOpacity(0.15)
+                          ? const AppTheme.primary.withOpacity(0.15)
                           : Colors.grey.shade50,
                       border: Border.all(
                         color: isSelected
-                            ? const Color(0xFFC89D93)
+                            ? const AppTheme.primary
                             : Colors.grey.shade200,
                         width: 1.2,
                       ),
@@ -1301,7 +1301,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                       iconData,
                       size: 20,
                       color: isSelected
-                          ? const Color(0xFFC89D93)
+                          ? const AppTheme.primary
                           : Colors.grey.shade600,
                     ),
                   ),
@@ -1310,7 +1310,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                     cat['name'] as String,
                     style: TextStyle(
                       color: isSelected
-                          ? const Color(0xFFC89D93)
+                          ? const AppTheme.primary
                           : Colors.grey.shade600,
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                       fontSize: 11,
@@ -1795,7 +1795,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
             Container(
               color: Colors.black12,
               child: Center(
-                child: CircularProgressIndicator(color: Color(0xFFC89D93)),
+                child: CircularProgressIndicator(color: AppTheme.primary),
               ),
             ),
 

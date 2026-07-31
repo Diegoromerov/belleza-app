@@ -122,7 +122,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
               ),
               ListTile(
                 leading:
-                    const Icon(Icons.photo_library, color: Color(0xFFC89D93)),
+                    const Icon(Icons.photo_library, color: AppTheme.primary),
                 title: const Text('Galería de fotos'),
                 onTap: () {
                   Navigator.pop(context);
@@ -130,7 +130,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.camera_alt, color: Color(0xFFC89D93)),
+                leading: const Icon(Icons.camera_alt, color: AppTheme.primary),
                 title: const Text('Cámara de fotos'),
                 onTap: () {
                   Navigator.pop(context);
@@ -273,7 +273,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                 '$displayPercent%',
                 style: const TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFFC89D93),
+                    color: AppTheme.primary,
                     fontSize: 13),
               ),
             ],
@@ -285,7 +285,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
               value: percent,
               backgroundColor: Colors.white,
               valueColor:
-                  const AlwaysStoppedAnimation<Color>(Color(0xFFC89D93)),
+                  const AlwaysStoppedAnimation<Color>(AppTheme.primary),
               minHeight: 8,
             ),
           ),
@@ -378,7 +378,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
         children: [
           const Row(
             children: [
-              Icon(Icons.calendar_month, color: Color(0xFFC89D93), size: 20),
+              Icon(Icons.calendar_month, color: AppTheme.primary, size: 20),
               SizedBox(width: 8),
               Text(
                 'Horario de Disponibilidad Semanal',
@@ -412,7 +412,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                       children: [
                         Checkbox(
                           value: isActive,
-                          activeColor: const Color(0xFFC89D93),
+                          activeColor: AppTheme.primary,
                           onChanged: (val) {
                             if (val != null) {
                               setState(() {
@@ -596,7 +596,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
       return const Scaffold(
         backgroundColor: Colors.white,
         body:
-            Center(child: CircularProgressIndicator(color: Color(0xFFC89D93))),
+            Center(child: CircularProgressIndicator(color: AppTheme.primary)),
       );
     }
 
@@ -656,7 +656,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                                     : 'P',
                                 style: const TextStyle(
                                     fontSize: 40,
-                                    color: Color(0xFFC89D93),
+                                    color: AppTheme.primary,
                                     fontWeight: FontWeight.bold),
                               )
                             : null,
@@ -669,7 +669,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                         onTap: _isUploading ? null : _showPhotoSourceSheet,
                         child: const CircleAvatar(
                           radius: 18,
-                          backgroundColor: Color(0xFFC89D93),
+                          backgroundColor: AppTheme.primary,
                           child: Icon(Icons.camera_alt,
                               color: Colors.white, size: 16),
                         ),
@@ -784,7 +784,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
               ElevatedButton(
                 onPressed: _isSaving ? null : _saveProfileChanges,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFC89D93),
+                  backgroundColor: AppTheme.primary,
                   foregroundColor: Colors.white,
                   disabledBackgroundColor: const Color(0xFFE5CECA),
                   padding: const EdgeInsets.symmetric(vertical: 16),
@@ -869,7 +869,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
     required VoidCallback onTap,
   }) {
     return ListTile(
-      leading: Icon(icon, color: const Color(0xFFC89D93)),
+      leading: Icon(icon, color: AppTheme.primary),
       title: Text(title,
           style: const TextStyle(
               fontWeight: FontWeight.w500, color: Colors.black87)),
@@ -901,7 +901,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
             onPressed: () => Navigator.pop(context),
             child: const Text('Entendido',
                 style: TextStyle(
-                    color: Color(0xFFC89D93), fontWeight: FontWeight.bold)),
+                    color: AppTheme.primary, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -912,7 +912,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
     return InputDecoration(
       labelText: label,
       labelStyle: const TextStyle(color: Colors.grey, fontSize: 14),
-      prefixIcon: Icon(icon, color: const Color(0xFFC89D93)),
+      prefixIcon: Icon(icon, color: AppTheme.primary),
       floatingLabelBehavior: FloatingLabelBehavior.auto,
       filled: true,
       fillColor: const Color(0xFFF5EBE6),
@@ -926,7 +926,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(30),
-        borderSide: const BorderSide(color: Color(0xFFC89D93), width: 1.5),
+        borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
     );
