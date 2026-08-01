@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { pool } = require('../db');
-const { authMiddleware, adminMiddleware } = require('../middleware/auth');
+const { pool } = require('../config/db');
+const authMiddleware = require('../middleware/auth');
+const adminMiddleware = require('../middleware/admin');
 
-// 🔹 Obtenes lista completa de disputas para panel administrativo
+// 🔹 Obtener lista completa de disputas para panel administrativo
 router.get('/disputes', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const result = await pool.query(`
