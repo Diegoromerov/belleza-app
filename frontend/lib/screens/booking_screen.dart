@@ -5,6 +5,7 @@ import '../shared/theme.dart';
 import '../services/booking_recovery_service.dart';
 
 import '../widgets/wompi_payment_sheet.dart';
+import '../widgets/bogota_address_form.dart';
 
 class BookingScreen extends StatefulWidget {
   final String providerId;
@@ -31,7 +32,7 @@ class _BookingScreenState extends State<BookingScreen> {
   DateTime? selectedDate;
   String? selectedServiceId;
   List<String> selectedServiceIds = [];
-  String serviceAddress = '';
+  AddressData? serviceAddressData;
   String notes = '';
 
   // slots variables
@@ -50,7 +51,6 @@ class _BookingScreenState extends State<BookingScreen> {
   DateTime _calendarMonth = DateTime.now();
 
   // text controllers
-  final TextEditingController _addressController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
 
   @override
@@ -76,7 +76,6 @@ class _BookingScreenState extends State<BookingScreen> {
   @override
   void dispose() {
     _pageController.dispose();
-    _addressController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -238,11 +237,22 @@ class _BookingScreenState extends State<BookingScreen> {
       return;
     }
 
-    if (serviceAddress.trim().isEmpty) {
+    bool _isAddressValid() {
+      final a = serviceAddressData;
+      if (a == null) return false;
+      if (a.tipoVia.trim().isEmpty) return false;
+      if (a.numeroVia.trim().isEmpty) return false;
+      if (a.numeroPlaca.trim().isEmpty) return false;
+      if (a.numeroComplemento.trim().isEmpty) return false;
+      if (a.localidad.trim().isEmpty) return false;
+      return true;
+    }
+
+    if (!_isAddressValid()) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text(
-                '⚠️ Ingresa la dirección donde llegará el prestador'),
+                '⚠️ Ingresa la dirección completa donde llegará el prestador'),
             backgroundColor: Colors.orange),
       );
       return;
@@ -275,7 +285,8 @@ class _BookingScreenState extends State<BookingScreen> {
         serviceId: selectedServiceId!,
         serviceIds: selectedServiceIds,
         scheduledAt: scheduledDateTime.toIso8601String(),
-        serviceAddress: serviceAddress.trim(),
+        serviceAddress: serviceAddressData?.formatted ?? '',
+        addressStructured: serviceAddressData?.toJson(),
         notes: notes.isNotEmpty ? notes : null,
         productosAdicionales: productosAdicionales.isNotEmpty ? productosAdicionales : null,
       );
@@ -454,18 +465,11 @@ class _BookingScreenState extends State<BookingScreen> {
         const SizedBox(height: 24),
         _buildSectionTitle('4. Dirección del servicio'),
         const SizedBox(height: 12),
-        TextField(
-          controller: _addressController,
-          maxLines: 2,
-          style: const TextStyle(fontSize: 14),
-          decoration: AppTheme.inputDecoration(
-            hintText: 'Ej: Calle 24 # 95-32, Torre 2, Apto 402, Fontibón',
-            labelText: 'Dirección del servicio',
-            prefixIcon: Icons.location_on_outlined,
-          ),
-          onChanged: (value) {
+        BogotaAddressForm(
+          initialValue: null,
+          onAddressChanged: (addr) {
             setState(() {
-              serviceAddress = value;
+              serviceAddressData = addr;
             });
           },
         ),
@@ -1064,7 +1068,7 @@ class _BookingScreenState extends State<BookingScreen> {
                 const Divider(height: 24, color: Color(0xFFF3EAE8)),
                 _buildSummaryRow(Icons.calendar_today, 'Fecha y hora', '$formattedDate a las $_selectedSlotTime'),
                 const Divider(height: 24, color: Color(0xFFF3EAE8)),
-                _buildSummaryRow(Icons.location_on, 'Dirección', serviceAddress),
+                _buildSummaryRow(Icons.location_on, 'Dirección', serviceAddressData?.formatted ?? ''),
                 const Divider(height: 24, color: Color(0xFFF3EAE8)),
                 _buildSummaryRow(Icons.person, 'Prestador', widget.providerName),
               ],
@@ -1307,7 +1311,7 @@ class _BookingScreenState extends State<BookingScreen> {
       canNext = selectedServiceId != null &&
           selectedDate != null &&
           _selectedSlotTime != null &&
-          serviceAddress.trim().isNotEmpty;
+          (serviceAddressData != null && serviceAddressData!.formatted.trim().isNotEmpty);
     } else if (_currentStep == 1) {
       canNext = true;
     } else if (_currentStep == 2) {

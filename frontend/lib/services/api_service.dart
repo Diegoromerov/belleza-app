@@ -254,23 +254,29 @@ class ApiService {
     List<String>? serviceIds,
     required String scheduledAt,
     required String serviceAddress,
+    Map<String, dynamic>? addressStructured,
     String? notes,
     List<Map<String, dynamic>>? productosAdicionales,
   }) async {
     final headers = await _getAuthHeaders();
+    final body = {
+      'provider_id': providerId,
+      'service_id': serviceId,
+      'service_ids': serviceIds ?? [serviceId],
+      'scheduled_at': scheduledAt,
+      'service_address': serviceAddress,
+      'notes': notes,
+      'productos_adicionales': productosAdicionales,
+    };
+    if (addressStructured != null) {
+      body.addAll(addressStructured.map((k, v) => MapEntry(k, v)));
+    }
+
     final response = await http
         .post(
           Uri.parse('$_baseUrl$_apiPath/bookings'),
           headers: headers,
-          body: json.encode({
-            'provider_id': providerId,
-            'service_id': serviceId,
-            'service_ids': serviceIds ?? [serviceId],
-            'scheduled_at': scheduledAt,
-            'service_address': serviceAddress,
-            'notes': notes,
-            'productos_adicionales': productosAdicionales,
-          }),
+          body: json.encode(body),
         )
         .timeout(const Duration(seconds: 30));
     if (response.statusCode == 200 || response.statusCode == 201)

@@ -1352,9 +1352,16 @@ const initDatabase = async () => {
   try {
     await pool.query(`
       ALTER TABLE bookings
-      ADD COLUMN IF NOT EXISTS service_address TEXT;
+      ADD COLUMN IF NOT EXISTS service_address TEXT,
+      ADD COLUMN IF NOT EXISTS tipo_via TEXT,
+      ADD COLUMN IF NOT EXISTS numero_via TEXT,
+      ADD COLUMN IF NOT EXISTS numero_placa TEXT,
+      ADD COLUMN IF NOT EXISTS numero_complemento TEXT,
+      ADD COLUMN IF NOT EXISTS complemento_interior TEXT,
+      ADD COLUMN IF NOT EXISTS barrio TEXT,
+      ADD COLUMN IF NOT EXISTS localidad TEXT;
     `);
-    console.log('✅ Alteración bookings: service_address columna asegurada.');
+    console.log('✅ Alteración bookings: columnas de dirección aseguradas (service_address, tipo_via, numero_via, numero_placa, numero_complemento, complemento_interior, barrio, localidad).');
   } catch (e) {
     console.warn('⚠️ Error en alteración de tabla bookings:', e.message);
     dbErrors.push({ stage: 'alter-bookings', message: e.message });

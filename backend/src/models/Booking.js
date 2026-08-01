@@ -57,6 +57,41 @@ const Booking = sequelize.define('Booking', {
     allowNull: true,
     field: 'service_address'
   },
+  tipo_via: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    field: 'tipo_via'
+  },
+  numero_via: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    field: 'numero_via'
+  },
+  numero_placa: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    field: 'numero_placa'
+  },
+  numero_complemento: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    field: 'numero_complemento'
+  },
+  complemento_interior: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    field: 'complemento_interior'
+  },
+  barrio: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    field: 'barrio'
+  },
+  localidad: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    field: 'localidad'
+  },
   notes: {
     type: DataTypes.TEXT,
     allowNull: true

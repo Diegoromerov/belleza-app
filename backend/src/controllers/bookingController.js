@@ -43,7 +43,9 @@ const verifyWompiSignature = (req) => {
 exports.createBooking = async (req, res) => {
   try {
     const clientId = req.user.id;
-    let { provider_id, service_id, service_ids, scheduled_at, service_address, notes, productos_adicionales } = req.body;
+    let { provider_id, service_id, service_ids, scheduled_at, service_address, notes, productos_adicionales,
+      tipo_via, numero_via, numero_placa, numero_complemento, complemento_interior, barrio, localidad, referencia
+    } = req.body;
 
     if (!service_ids && service_id) {
       service_ids = [service_id];
@@ -187,6 +189,13 @@ exports.createBooking = async (req, res) => {
           valor_bruto: bookingBruto,
           tarifa_reserva: bookingTarife,
           service_address: service_address || null,
+          tipo_via: tipo_via || null,
+          numero_via: numero_via || null,
+          numero_placa: numero_placa || null,
+          numero_complemento: numero_complemento || null,
+          complemento_interior: complemento_interior || null,
+          barrio: barrio || null,
+          localidad: localidad || null,
           notes: notes || null,
           estado: 'PENDIENTE_PAGO',
           pin_verificacion: pin,
