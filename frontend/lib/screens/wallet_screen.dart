@@ -200,7 +200,7 @@ class _WalletScreenState extends State<WalletScreen>
             ElevatedButton(
               onPressed: () => Navigator.pop(ctx, true),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFC89D93),
+                backgroundColor: AppTheme.primary,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
@@ -263,13 +263,13 @@ class _WalletScreenState extends State<WalletScreen>
             ? null
             : IconButton(
                 icon:
-                    const Icon(Icons.arrow_back_ios, color: Color(0xFFC89D93)),
+                    const Icon(Icons.arrow_back_ios, color: AppTheme.primary),
                 onPressed: () => Navigator.pop(context),
               ),
         title: const Text(
           'Error de Wallet',
           style: TextStyle(
-            color: Color(0xFFC89D93),
+            color: AppTheme.primary,
             fontWeight: FontWeight.bold,
             fontSize: 18,
           ),
@@ -291,7 +291,7 @@ class _WalletScreenState extends State<WalletScreen>
             ElevatedButton(
               onPressed: _cargarWallet,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFC89D93),
+                backgroundColor: AppTheme.primary,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
@@ -317,7 +317,7 @@ class _WalletScreenState extends State<WalletScreen>
 
     return RefreshIndicator(
       onRefresh: _cargarWallet,
-      color: const Color(0xFFC89D93),
+      color: AppTheme.primary,
       child: CustomScrollView(
         slivers: [
           // ─── Header con saldo principal ──────────────────────────────
@@ -531,9 +531,9 @@ class _WalletScreenState extends State<WalletScreen>
             delegate: _TabDelegate(
               TabBar(
                 controller: _tabController,
-                labelColor: const Color(0xFFC89D93),
+                labelColor: AppTheme.primary,
                 unselectedLabelColor: const Color(0xFF8E7D7A),
-                indicatorColor: const Color(0xFFC89D93),
+                indicatorColor: AppTheme.primary,
                 tabs: const [
                   Tab(text: 'Movimientos'),
                   Tab(text: 'Retiros'),
@@ -562,7 +562,7 @@ class _WalletScreenState extends State<WalletScreen>
   Widget _buildMovimientos() {
     if (_loadingTx) {
       return const Center(
-          child: CircularProgressIndicator(color: Color(0xFFC89D93)));
+          child: CircularProgressIndicator(color: AppTheme.primary));
     }
     if (_transacciones.isEmpty) {
       return const Center(
@@ -585,7 +585,7 @@ class _WalletScreenState extends State<WalletScreen>
             return const Padding(
               padding: EdgeInsets.all(16.0),
               child: Center(
-                  child: CircularProgressIndicator(color: Color(0xFFC89D93))),
+                  child: CircularProgressIndicator(color: AppTheme.primary)),
             );
           }
           return Padding(
@@ -593,8 +593,8 @@ class _WalletScreenState extends State<WalletScreen>
             child: OutlinedButton(
               onPressed: () => _cargarTransacciones(loadMore: true),
               style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Color(0xFFC89D93)),
-                foregroundColor: const Color(0xFFC89D93),
+                side: const BorderSide(color: AppTheme.primary),
+                foregroundColor: AppTheme.primary,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
               ),
@@ -613,7 +613,7 @@ class _WalletScreenState extends State<WalletScreen>
         _transacciones.where((tx) => tx['tipo'] == 'DEBITO_RETIRO').toList();
     if (_loadingTx) {
       return const Center(
-          child: CircularProgressIndicator(color: Color(0xFFC89D93)));
+          child: CircularProgressIndicator(color: AppTheme.primary));
     }
     if (retiros.isEmpty) {
       return const Center(
@@ -666,11 +666,11 @@ class _WalletScreenState extends State<WalletScreen>
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFC89D93).withValues(alpha: 0.15),
+                  color: AppTheme.primary.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(Icons.account_balance_wallet,
-                    color: Color(0xFFC89D93), size: 20),
+                    color: AppTheme.primary, size: 20),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -749,7 +749,7 @@ class _WalletScreenState extends State<WalletScreen>
           titulo: 'Total retirado',
           monto: totalRetirado,
           icon: Icons.arrow_upward,
-          color: const Color(0xFFC89D93),
+          color: AppTheme.primary,
         ),
         const SizedBox(height: 24),
         Container(
@@ -884,7 +884,7 @@ class _WalletScreenState extends State<WalletScreen>
               ].map((m) => RadioListTile<String>(
                     value: m.$1,
                     groupValue: modeloSeleccionado,
-                    activeColor: const Color(0xFFC89D93),
+                    activeColor: AppTheme.primary,
                     title: Text(m.$2,
                         style: const TextStyle(color: Color(0xFF4A3E3D))),
                     subtitle: Text(m.$3,
@@ -921,7 +921,7 @@ class _WalletScreenState extends State<WalletScreen>
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFC89D93),
+                    backgroundColor: AppTheme.primary,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
@@ -1018,7 +1018,7 @@ class _TransaccionTile extends StatelessWidget {
         ),
       'DEBITO_RETIRO' => (
           Icons.arrow_upward,
-          const Color(0xFFC89D93),
+          AppTheme.primary,
           'Retiro'
         ),
       'RETENCION_DISPUTA' => (Icons.gavel, Colors.orange, 'Fondos retenidos'),
@@ -1082,7 +1082,7 @@ class _TransaccionTile extends StatelessWidget {
             '${esCredito ? '+' : '-'}${NumberFormat.currency(locale: 'es_CO', symbol: '\$', decimalDigits: 0).format(monto)}',
             style: TextStyle(
               color:
-                  esCredito ? const Color(0xFF10B981) : const Color(0xFFC89D93),
+                  esCredito ? const Color(0xFF10B981) : AppTheme.primary,
               fontWeight: FontWeight.bold,
               fontSize: 15,
             ),
@@ -1171,7 +1171,7 @@ class _RetiroBottomSheetState extends State<_RetiroBottomSheet> {
       onPressed: () => _setPercent(percent),
       style: ElevatedButton.styleFrom(
         backgroundColor: const Color(0xFFF7ECE9),
-        foregroundColor: const Color(0xFFC89D93),
+        foregroundColor: AppTheme.primary,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
@@ -1237,7 +1237,7 @@ class _RetiroBottomSheetState extends State<_RetiroBottomSheet> {
             decoration: InputDecoration(
               prefixText: '\$ ',
               prefixStyle: const TextStyle(
-                  color: Color(0xFFC89D93),
+                  color: AppTheme.primary,
                   fontSize: 24,
                   fontWeight: FontWeight.bold),
               helperText:
@@ -1263,7 +1263,7 @@ class _RetiroBottomSheetState extends State<_RetiroBottomSheet> {
             child: Row(
               children: [
                 const Icon(Icons.account_balance,
-                    color: Color(0xFFC89D93), size: 18),
+                    color: AppTheme.primary, size: 18),
                 const SizedBox(width: 10),
                 Text(widget.cuenta,
                     style: const TextStyle(
@@ -1282,7 +1282,7 @@ class _RetiroBottomSheetState extends State<_RetiroBottomSheet> {
             child: ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFC89D93),
+                backgroundColor: AppTheme.primary,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),

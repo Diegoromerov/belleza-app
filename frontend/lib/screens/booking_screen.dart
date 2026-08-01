@@ -11,14 +11,16 @@ class BookingScreen extends StatefulWidget {
   final String providerId;
   final String providerName;
   final List<Map<String, dynamic>> services;
+  final String? initialServiceId;
   final String? initialNotes;
   final String? preselectedProductId;
 
   const BookingScreen({
     super.key,
     required this.providerId,
-    required this.providerName,
-    required this.services,
+    this.providerName = 'Prestador',
+    this.services = const [],
+    this.initialServiceId,
     this.initialNotes,
     this.preselectedProductId,
   });
@@ -404,7 +406,7 @@ class _BookingScreenState extends State<BookingScreen> {
             : const BackButton(color: Colors.black87),
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFFC89D93)))
+          ? const Center(child: CircularProgressIndicator(color: AppTheme.primary))
           : Column(
               children: [
                 _buildProgressBar(),
@@ -618,7 +620,7 @@ class _BookingScreenState extends State<BookingScreen> {
       return const Center(
         child: Padding(
           padding: EdgeInsets.all(16.0),
-          child: CircularProgressIndicator(color: Color(0xFFC89D93)),
+          child: CircularProgressIndicator(color: AppTheme.primary),
         ),
       );
     }
@@ -681,7 +683,7 @@ class _BookingScreenState extends State<BookingScreen> {
             color: isSelected
                 ? AppTheme.primary
                 : isAvailable
-                    ? const Color(0xFFC89D93).withValues(alpha: 0.3)
+                    ? AppTheme.primary.withValues(alpha: 0.3)
                     : const Color(0xFFE5E7EB),
             width: isSelected ? 2 : 1,
           ),
@@ -764,7 +766,7 @@ class _BookingScreenState extends State<BookingScreen> {
 
   Widget _buildStep2CrossSelling() {
     if (_isLoadingProducts) {
-      return const Center(child: CircularProgressIndicator(color: Color(0xFFC89D93)));
+      return const Center(child: CircularProgressIndicator(color: AppTheme.primary));
     }
 
     return ListView(
@@ -1243,14 +1245,14 @@ class _BookingScreenState extends State<BookingScreen> {
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
                 color: isSelected
-                    ? const Color(0xFFC89D93)
+                    ? AppTheme.primary
                     : const Color(0xFFF3EAE8),
                 width: isSelected ? 2 : 1,
               ),
               boxShadow: isSelected
                   ? [
                       BoxShadow(
-                        color: const Color(0xFFC89D93).withValues(alpha: 0.15),
+                        color: AppTheme.primary.withValues(alpha: 0.15),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       )
@@ -1263,7 +1265,7 @@ class _BookingScreenState extends State<BookingScreen> {
                   isSelected
                       ? Icons.radio_button_checked
                       : Icons.radio_button_off,
-                  color: const Color(0xFFC89D93),
+                  color: AppTheme.primary,
                   size: 20,
                 ),
                 const SizedBox(width: 12),
@@ -1294,7 +1296,7 @@ class _BookingScreenState extends State<BookingScreen> {
                   '\$${price.toStringAsFixed(0)} COP',
                   style: const TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFFC89D93),
+                      color: AppTheme.primary,
                       fontSize: 13),
                 ),
               ],
@@ -1341,10 +1343,10 @@ class _BookingScreenState extends State<BookingScreen> {
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  side: const BorderSide(color: Color(0xFFC89D93)),
+                  side: const BorderSide(color: AppTheme.primary),
                 ),
                 onPressed: _prevStep,
-                child: const Text('Atrás', style: TextStyle(color: Color(0xFFC89D93), fontWeight: FontWeight.bold)),
+                child: const Text('Atrás', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
               ),
               const SizedBox(width: 12),
             ],

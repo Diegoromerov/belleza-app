@@ -11,7 +11,7 @@ class GlowTokens {
   static const Color creamSilk = Color(0xFFFCF8F6);
 
   /// Terracota (#C89D93) - Primario suave / acentos cálidos
-  static const Color terracota = Color(0xFFC89D93);
+  static const Color terracota = AppTheme.primary;
 
   /// Rose Gold (#D4AF7A) - Acentuación premium / detalles
   static const Color roseGold = Color(0xFFD4AF7A);

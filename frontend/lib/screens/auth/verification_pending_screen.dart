@@ -19,7 +19,7 @@ class VerificationPendingScreen extends StatelessWidget {
               const Icon(
                 Icons.verified_user_outlined,
                 size: 100,
-                color: Color(0xFFC89D93),
+                color: AppTheme.primary,
               ),
               const SizedBox(height: 32),
               const Text(
@@ -61,17 +61,17 @@ class VerificationPendingScreen extends StatelessWidget {
                     Navigator.pushReplacementNamed(context, '/login');
                   }
                 },
-                icon: const Icon(Icons.logout, color: Color(0xFFC89D93)),
+                icon: const Icon(Icons.logout, color: AppTheme.primary),
                 label: const Text(
                   'Cerrar Sesión',
                   style: TextStyle(
-                      color: Color(0xFFC89D93), fontWeight: FontWeight.bold),
+                      color: AppTheme.primary, fontWeight: FontWeight.bold),
                 ),
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30)),
-                  side: const BorderSide(color: Color(0xFFC89D93), width: 1.5),
+                  side: const BorderSide(color: AppTheme.primary, width: 1.5),
                 ),
               ),
             ],

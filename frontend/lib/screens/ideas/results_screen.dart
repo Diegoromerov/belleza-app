@@ -12,6 +12,7 @@ import 'widgets/score_card.dart';
 import 'widgets/recommendation_card.dart';
 import 'widgets/product_card.dart';
 import 'widgets/color_palette.dart';
+import '../../services/social_share_service.dart';
 
 // ---------------------------------------------------------------------------
 // Tokens de marca para esta pantalla estilo Pasaporte Editorial
@@ -224,6 +225,79 @@ class _ResultsScreenState extends State<ResultsScreen> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
+                      ),
+                      const SizedBox(height: 10),
+                      // ─── Exportación Social (TikTok / Instagram) ───
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () async {
+                                final consent = await SocialShareService.showConsentModal(
+                                  context,
+                                  platformName: 'TikTok',
+                                  contentTypeLabel: 'Colorimetría IA',
+                                );
+                                if (consent && context.mounted) {
+                                  final res = await SocialShareService.logShare(
+                                    platform: 'TIKTOK',
+                                    contentType: 'AI_COLORIMETRY',
+                                  );
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(res['message'] ?? '¡Palette DNA compartida en TikTok! +50 XP'),
+                                        backgroundColor: const Color(0xFF25F4EE),
+                                      ),
+                                    );
+                                  }
+                                }
+                              },
+                              icon: const Icon(Icons.video_library_rounded, size: 18),
+                              label: const Text('TikTok', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.black,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () async {
+                                final consent = await SocialShareService.showConsentModal(
+                                  context,
+                                  platformName: 'Instagram Stories',
+                                  contentTypeLabel: 'Colorimetría IA',
+                                );
+                                if (consent && context.mounted) {
+                                  final res = await SocialShareService.logShare(
+                                    platform: 'INSTAGRAM',
+                                    contentType: 'AI_COLORIMETRY',
+                                  );
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(res['message'] ?? '¡Look publicado en Instagram Stories! +50 XP'),
+                                        backgroundColor: const Color(0xFFE1306C),
+                                      ),
+                                    );
+                                  }
+                                }
+                              },
+                              icon: const Icon(Icons.camera_alt_outlined, size: 18),
+                              label: const Text('Instagram', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFE1306C),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 20),
                     ],

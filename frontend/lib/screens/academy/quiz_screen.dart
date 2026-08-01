@@ -93,12 +93,12 @@ class _QuizScreenState extends State<QuizScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const themeColor = Color(0xFFC89D93);
+    const themeColor = AppTheme.primary;
 
     if (_isLoading) {
       return Scaffold(
         appBar: AppBar(title: const Text('Examen de Certificación')),
-        body: const Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation(Color(0xFFC89D93)))),
+        body: const Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation(AppTheme.primary))),
       );
     }
 
@@ -246,7 +246,7 @@ class _QuizScreenState extends State<QuizScreen> {
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: _isSubmitting
-          ? const Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation(Color(0xFFC89D93))))
+          ? const Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation(AppTheme.primary)))
           : Column(
               children: [
                 Expanded(

@@ -77,14 +77,14 @@ class FloatingNavigationDock extends StatelessWidget {
                   gradient: const LinearGradient(
                     colors: [
                       Color(0xFFE8D7D3),
-                      Color(0xFFC89D93),
+                      AppTheme.primary,
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFC89D93).withValues(alpha: 0.4),
+                      color: AppTheme.primary.withValues(alpha: 0.4),
                       blurRadius: 10,
                       spreadRadius: 2,
                       offset: const Offset(0, 4),

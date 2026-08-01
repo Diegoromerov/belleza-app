@@ -15,6 +15,21 @@ class BiometricWelcomeScreen extends StatefulWidget {
 }
 
 class _BiometricWelcomeScreenState extends State<BiometricWelcomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _checkExistingConsent();
+  }
+
+  Future<void> _checkExistingConsent() async {
+    final hasConsent = await BiometricService.hasConsent();
+    if (hasConsent && mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const CaptureScreen()),
+      );
+    }
+  }
   bool _consentAccepted = false;
   bool _isRegisteringConsent = false;
 

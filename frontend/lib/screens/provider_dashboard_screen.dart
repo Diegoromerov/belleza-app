@@ -96,7 +96,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                         ),
                       ],
                     ),
-                    backgroundColor: const Color(0xFFC89D93),
+                    backgroundColor: AppTheme.primary,
                     behavior: SnackBarBehavior.floating,
                     duration: const Duration(seconds: 8),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -216,7 +216,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                 Text('🚀 Servicio iniciado. ¡A dar el mejor look, vecino!'),
               ],
             ),
-            backgroundColor: const Color(0xFFC89D93),
+            backgroundColor: AppTheme.primary,
             behavior: SnackBarBehavior.floating,
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -297,7 +297,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
             children: [
               Icon(
                 immediate ? Icons.stars_rounded : Icons.receipt_long_outlined,
-                color: immediate ? Colors.green : const Color(0xFFC89D93),
+                color: immediate ? Colors.green : AppTheme.primary,
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -400,17 +400,17 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                 });
               },
               icon: const Icon(Icons.account_balance_wallet_outlined,
-                  size: 18, color: Color(0xFFC89D93)),
+                  size: 18, color: AppTheme.primary),
               label: const Text(
                 'Ver Wallet',
                 style: TextStyle(
-                    fontWeight: FontWeight.bold, color: Color(0xFFC89D93)),
+                    fontWeight: FontWeight.bold, color: AppTheme.primary),
               ),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(context),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFC89D93),
+                backgroundColor: AppTheme.primary,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20)),
@@ -458,7 +458,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
         child: Padding(
           padding: EdgeInsets.all(8.0),
           child: CircularProgressIndicator(
-              color: Color(0xFFC89D93), strokeWidth: 2),
+              color: AppTheme.primary, strokeWidth: 2),
         ),
       );
     }
@@ -486,8 +486,8 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
               label:
                   const Text('Iniciar Ruta', style: TextStyle(fontSize: 12.5)),
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFFC89D93),
-                side: const BorderSide(color: Color(0xFFC89D93), width: 1.5),
+                foregroundColor: AppTheme.primary,
+                side: const BorderSide(color: AppTheme.primary, width: 1.5),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30)),
                 padding: const EdgeInsets.symmetric(vertical: 10),
@@ -502,7 +502,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
               label: const Text('Iniciar Servicio',
                   style: TextStyle(fontSize: 12.5)),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFC89D93),
+                backgroundColor: AppTheme.primary,
                 foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
@@ -538,9 +538,9 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                   icon: const Icon(Icons.chat_bubble_outline_rounded, size: 16),
                   label: const Text('Chat', style: TextStyle(fontSize: 12.5)),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFFC89D93),
+                    foregroundColor: AppTheme.primary,
                     side:
-                        const BorderSide(color: Color(0xFFC89D93), width: 1.5),
+                        const BorderSide(color: AppTheme.primary, width: 1.5),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30)),
                     padding: const EdgeInsets.symmetric(vertical: 10),
@@ -566,9 +566,9 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                   label:
                       const Text('Ver Mapa', style: TextStyle(fontSize: 12.5)),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFFC89D93),
+                    foregroundColor: AppTheme.primary,
                     side:
-                        const BorderSide(color: Color(0xFFC89D93), width: 1.5),
+                        const BorderSide(color: AppTheme.primary, width: 1.5),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30)),
                     padding: const EdgeInsets.symmetric(vertical: 10),
@@ -691,8 +691,8 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
               label: const Text('Ver Liquidación',
                   style: TextStyle(fontSize: 12.5)),
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFFC89D93),
-                side: const BorderSide(color: Color(0xFFC89D93), width: 1.5),
+                foregroundColor: AppTheme.primary,
+                side: const BorderSide(color: AppTheme.primary, width: 1.5),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30)),
                 padding: const EdgeInsets.symmetric(vertical: 10),
@@ -720,7 +720,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
               icon: const Icon(Icons.chat_bubble_outline_rounded, size: 16),
               label: const Text('Chatear', style: TextStyle(fontSize: 12.5)),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFC89D93),
+                backgroundColor: AppTheme.primary,
                 foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
@@ -754,8 +754,8 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
               icon: const Icon(Icons.chat_bubble_outline_rounded, size: 16),
               label: const Text('Chat', style: TextStyle(fontSize: 12.5)),
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFFC89D93),
-                side: const BorderSide(color: Color(0xFFC89D93), width: 1.5),
+                foregroundColor: AppTheme.primary,
+                side: const BorderSide(color: AppTheme.primary, width: 1.5),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30)),
                 padding: const EdgeInsets.symmetric(vertical: 10),
@@ -939,7 +939,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
             content: Text(value
                 ? '🟢 Ahora estás En Línea'
                 : '⚫ Ahora estás Fuera de Línea'),
-            backgroundColor: const Color(0xFFC89D93),
+            backgroundColor: AppTheme.primary,
             behavior: SnackBarBehavior.floating,
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -1293,7 +1293,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                   child: const Text(
                     'Entendido / Cerrar',
                     style: TextStyle(
-                        color: Color(0xFFC89D93), fontWeight: FontWeight.bold),
+                        color: AppTheme.primary, fontWeight: FontWeight.bold),
                   ),
                 ),
               ],
@@ -1711,7 +1711,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
         await _fetchBookings();
         await _fetchProfile();
       },
-      color: const Color(0xFFC89D93),
+      color: AppTheme.primary,
       child: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         children: [
@@ -1752,7 +1752,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                         'Citas Hoy',
                         _todayBookingsCount.toString(),
                         Icons.today_rounded,
-                        const Color(0xFFC89D93),
+                        AppTheme.primary,
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -1956,7 +1956,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                             child: Text(
                               clientInitial,
                               style: const TextStyle(
-                                  color: Color(0xFFC89D93),
+                                  color: AppTheme.primary,
                                   fontWeight: FontWeight.bold),
                             ),
                           ),
@@ -1975,7 +1975,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                                   'Contacto seguro vía Chat',
                                   style: TextStyle(
                                       fontSize: 12,
-                                      color: Color(0xFFC89D93),
+                                      color: AppTheme.primary,
                                       fontWeight: FontWeight.w500),
                                 ),
                               ],
@@ -2018,7 +2018,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                             style: const TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFFC89D93)),
+                                color: AppTheme.primary),
                           ),
                         ],
                       ),
@@ -2075,7 +2075,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                               },
                               child: const Icon(
                                 Icons.map_outlined,
-                                color: Color(0xFFC89D93),
+                                color: AppTheme.primary,
                                 size: 20,
                               ),
                             ),
@@ -2148,7 +2148,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
     required String label,
   }) {
     final isSelected = _currentIndex == index;
-    final color = isSelected ? const Color(0xFFC89D93) : Colors.grey[500]!;
+    final color = isSelected ? AppTheme.primary : Colors.grey[500]!;
     return Expanded(
       child: Material(
         color: Colors.transparent,
@@ -2209,14 +2209,14 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                   gradient: const LinearGradient(
                     colors: [
                       Color(0xFFE8D7D3), // Golden soft rose
-                      Color(0xFFC89D93), // Warm primary pink
+                      AppTheme.primary, // Warm primary pink
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFC89D93).withOpacity(0.4),
+                      color: AppTheme.primary.withOpacity(0.4),
                       blurRadius: 10,
                       spreadRadius: 2,
                       offset: const Offset(0, 4),
@@ -2239,7 +2239,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w800,
-                  color: isSelected ? const Color(0xFFC89D93) : const Color(0xFFB07D62),
+                  color: isSelected ? AppTheme.primary : const Color(0xFFB07D62),
                 ),
               ),
             ],
@@ -2255,7 +2255,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
     if (isPageLoading) {
       return const Scaffold(
         body: Center(
-          child: CircularProgressIndicator(color: Color(0xFFC89D93)),
+          child: CircularProgressIndicator(color: AppTheme.primary),
         ),
       );
     }
@@ -2306,7 +2306,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                 label: const Text('Cerrar sesión'),
                 style: ElevatedButton.styleFrom(
                   foregroundColor: Colors.white,
-                  backgroundColor: const Color(0xFFC89D93),
+                  backgroundColor: AppTheme.primary,
                 ),
               ),
             ],
@@ -2327,7 +2327,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
             await _fetchBookings();
             await _fetchProfile();
           },
-          color: const Color(0xFFC89D93),
+          color: AppTheme.primary,
           child: ListView(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             children: [
@@ -2939,7 +2939,7 @@ class _SegmentedPinDialogState extends State<SegmentedPinDialog> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       title: const Row(
         children: [
-          Icon(Icons.verified_user_outlined, color: Color(0xFFC89D93)),
+          Icon(Icons.verified_user_outlined, color: AppTheme.primary),
           SizedBox(width: 8),
           Text('Verificación Escrow',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
@@ -2965,7 +2965,7 @@ class _SegmentedPinDialogState extends State<SegmentedPinDialog> {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: _focusNodes[index].hasFocus
-                        ? const Color(0xFFC89D93)
+                        ? AppTheme.primary
                         : Colors.transparent,
                     width: 2,
                   ),
@@ -3014,7 +3014,7 @@ class _SegmentedPinDialogState extends State<SegmentedPinDialog> {
                   width: 14,
                   height: 14,
                   child: CircularProgressIndicator(
-                      strokeWidth: 2, color: Color(0xFFC89D93)),
+                      strokeWidth: 2, color: AppTheme.primary),
                 ),
                 SizedBox(width: 8),
                 Text(

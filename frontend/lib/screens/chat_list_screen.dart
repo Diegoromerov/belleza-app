@@ -162,7 +162,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
       ),
       body: _isLoading
           ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFFC89D93)))
+              child: CircularProgressIndicator(color: AppTheme.primary))
           : _error != null
               ? Center(
                   child: Column(
@@ -177,7 +177,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                       ElevatedButton(
                         onPressed: () => _fetchConversations(showLoading: true),
                         style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFC89D93),
+                            backgroundColor: AppTheme.primary,
                             foregroundColor: Colors.white),
                         child: const Text('Reintentar'),
                       ),
@@ -185,7 +185,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                   ),
                 )
               : RefreshIndicator(
-                  color: const Color(0xFFC89D93),
+                  color: AppTheme.primary,
                   onRefresh: () => _fetchConversations(showLoading: false),
                   child: Column(
                     children: [
@@ -196,7 +196,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(24),
                             gradient: const LinearGradient(
-                              colors: [Color(0xFFC89D93), Color(0xFFE5CECA)],
+                              colors: [AppTheme.primary, Color(0xFFE5CECA)],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
@@ -375,7 +375,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                                     : 'U',
                                                 style: const TextStyle(
                                                   fontWeight: FontWeight.bold,
-                                                  color: Color(0xFFC89D93),
+                                                  color: AppTheme.primary,
                                                   fontSize: 18,
                                                 ),
                                               )
@@ -402,7 +402,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                               style: TextStyle(
                                                 fontSize: 11,
                                                 color: unreadCount > 0
-                                                    ? const Color(0xFFC89D93)
+                                                    ? AppTheme.primary
                                                     : Colors.grey[600],
                                                 fontWeight: unreadCount > 0
                                                     ? FontWeight.bold
@@ -441,7 +441,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                                         vertical: 4),
                                                 decoration: BoxDecoration(
                                                   color:
-                                                      const Color(0xFFC89D93),
+                                                      AppTheme.primary,
                                                   borderRadius:
                                                       BorderRadius.circular(12),
                                                 ),

@@ -47,7 +47,7 @@ class AppTheme {
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [
-      Color(0xFFC89D93), // Terracota Suave
+      AppTheme.primary, // Terracota Suave
       Color(0xFF8C6F65), // Terracota Profundo
     ],
   );

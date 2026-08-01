@@ -140,7 +140,7 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                         focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(30),
                             borderSide: const BorderSide(
-                                color: Color(0xFFC89D93), width: 1.5)),
+                                color: AppTheme.primary, width: 1.5)),
                         contentPadding: const EdgeInsets.symmetric(
                             horizontal: 20, vertical: 16),
                       ),
@@ -170,7 +170,7 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                         focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(30),
                             borderSide: const BorderSide(
-                                color: Color(0xFFC89D93), width: 1.5)),
+                                color: AppTheme.primary, width: 1.5)),
                         contentPadding: const EdgeInsets.symmetric(
                             horizontal: 20, vertical: 12),
                       ),
@@ -205,7 +205,7 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFC89D93),
+                  backgroundColor: AppTheme.primary,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30)),
@@ -240,7 +240,7 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('✅ Foto agregada al portafolio con éxito'),
-            backgroundColor: const Color(0xFFC89D93),
+            backgroundColor: AppTheme.primary,
             behavior: SnackBarBehavior.floating,
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -335,7 +335,7 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                       focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(30),
                           borderSide: const BorderSide(
-                              color: Color(0xFFC89D93), width: 1.5)),
+                              color: AppTheme.primary, width: 1.5)),
                       contentPadding: const EdgeInsets.symmetric(
                           horizontal: 20, vertical: 16),
                     ),
@@ -365,7 +365,7 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                       focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(30),
                           borderSide: const BorderSide(
-                              color: Color(0xFFC89D93), width: 1.5)),
+                              color: AppTheme.primary, width: 1.5)),
                       contentPadding: const EdgeInsets.symmetric(
                           horizontal: 20, vertical: 12),
                     ),
@@ -399,7 +399,7 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                 }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFC89D93),
+                backgroundColor: AppTheme.primary,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30)),
@@ -429,7 +429,7 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
           SnackBar(
             content:
                 const Text('✅ Elemento del portafolio actualizado con éxito'),
-            backgroundColor: const Color(0xFFC89D93),
+            backgroundColor: AppTheme.primary,
             behavior: SnackBarBehavior.floating,
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -497,7 +497,7 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: const Text('✅ Imagen eliminada'),
-              backgroundColor: const Color(0xFFC89D93),
+              backgroundColor: AppTheme.primary,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20)),
@@ -526,7 +526,7 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(Icons.photo_library_outlined,
-                size: 80, color: Color(0xFFC89D93)),
+                size: 80, color: AppTheme.primary),
             const SizedBox(height: 16),
             const Text(
               'Tu portafolio está vacío',
@@ -549,7 +549,7 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
               icon: const Icon(Icons.add_photo_alternate_outlined),
               label: const Text('Agregar Foto'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFC89D93),
+                backgroundColor: AppTheme.primary,
                 foregroundColor: Colors.white,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
@@ -596,10 +596,10 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                   },
                   selectedColor: const Color(0xFFE5CECA),
                   backgroundColor: const Color(0xFFF5EBE6),
-                  checkmarkColor: const Color(0xFFC89D93),
+                  checkmarkColor: AppTheme.primary,
                   labelStyle: TextStyle(
                     color:
-                        isSelected ? const Color(0xFFC89D93) : Colors.black87,
+                        isSelected ? AppTheme.primary : Colors.black87,
                     fontWeight:
                         isSelected ? FontWeight.bold : FontWeight.normal,
                     fontSize: 12,
@@ -708,7 +708,7 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                                       Text(
                                         category,
                                         style: const TextStyle(
-                                            color: Color(0xFFC89D93),
+                                            color: AppTheme.primary,
                                             fontSize: 11,
                                             fontWeight: FontWeight.bold),
                                       ),
@@ -804,7 +804,7 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
             Container(
               color: const Color(0x1E000000),
               child: const Center(
-                child: CircularProgressIndicator(color: Color(0xFFC89D93)),
+                child: CircularProgressIndicator(color: AppTheme.primary),
               ),
             ),
         ],
@@ -812,7 +812,7 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
       floatingActionButton: _portfolioItems.isNotEmpty
           ? FloatingActionButton(
               onPressed: _pickAndUploadImage,
-              backgroundColor: const Color(0xFFC89D93),
+              backgroundColor: AppTheme.primary,
               foregroundColor: Colors.white,
               tooltip: 'Agregar Imagen',
               shape: RoundedRectangleBorder(

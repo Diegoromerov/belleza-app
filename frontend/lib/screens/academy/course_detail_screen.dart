@@ -127,12 +127,12 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const themeColor = Color(0xFFC89D93);
+    const themeColor = AppTheme.primary;
 
     if (_isLoading) {
       return Scaffold(
         appBar: AppBar(title: const Text('Cargando Curso...', style: TextStyle(color: Colors.white))),
-        body: const Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation(Color(0xFFC89D93)))),
+        body: const Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation(AppTheme.primary))),
       );
     }
 

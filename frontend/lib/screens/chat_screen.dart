@@ -585,7 +585,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                                             FontWeight.bold,
                                                         fontSize: 14,
                                                         color:
-                                                            Color(0xFFC89D93)),
+                                                            AppTheme.primary),
                                                   ),
                                                   const SizedBox(height: 4),
                                                 ],
@@ -603,8 +603,8 @@ class _ChatScreenState extends State<ChatScreen> {
                                                     width: double.infinity,
                                                     child: OutlinedButton.icon(
                                                       style: OutlinedButton.styleFrom(
-                                                        side: const BorderSide(color: Color(0xFFC89D93), width: 1.5),
-                                                        foregroundColor: const Color(0xFFC89D93),
+                                                        side: const BorderSide(color: AppTheme.primary, width: 1.5),
+                                                        foregroundColor: AppTheme.primary,
                                                         shape: RoundedRectangleBorder(
                                                           borderRadius: BorderRadius.circular(20),
                                                         ),
@@ -801,7 +801,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                       horizontal: 16, vertical: 10),
                                   decoration: BoxDecoration(
                                     color: isMe
-                                        ? const Color(0xFFC89D93)
+                                        ? AppTheme.primary
                                         : const Color(0xFFF3ECE6),
                                     borderRadius: BorderRadius.only(
                                       topLeft: const Radius.circular(18),
@@ -880,7 +880,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     onTap: _sendMessage,
                     child: CircleAvatar(
                       radius: 22,
-                      backgroundColor: const Color(0xFFC89D93),
+                      backgroundColor: AppTheme.primary,
                       child: _isSending
                           ? const SizedBox(
                               width: 20,

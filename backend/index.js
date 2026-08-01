@@ -897,81 +897,52 @@ app.patch('/api/admin/users/:id/verify', authMiddleware, adminMiddleware, async 
   }
 });
 
-// 🔹 NUEVOS: Endpoints Administrativos para Gestión y Resolución de Disputas
-app.get('/api/admin/disputes', authMiddleware, adminMiddleware, async (req, res) => {
+// 🔹 MÓDULO ADMINISTRATIVO (Gestión de Disputas, Usuarios y Métricas)
+const adminRoutes = require('./src/routes/adminRoutes');
+app.use('/api/admin', adminRoutes);
+
+// 🔹 NUEVO: Endpoints de Integración Social (TikTok, Instagram, Facebook) & Recompensas XP
+app.post('/api/social/log-share', authMiddleware, async (req, res) => {
   try {
-    const result = await pool.query(`
-      SELECT d.id, d.booking_id, d.tipo_actor, d.tipo, d.descripcion, d.evidencia_urls, d.monto_disputado, d.estado, d.nota_resolucion, d.creado_at, d.sla_limite_at,
-             u_init.nombre AS iniciado_por_nombre, u_init.email AS iniciado_por_email,
-             u_client.nombre AS cliente_nombre, u_client.email AS cliente_email,
-             u_prov.nombre AS prestador_nombre, u_prov.email AS prestador_email
-      FROM disputas d
-      JOIN usuarios u_init ON d.iniciado_por = u_init.id
-      JOIN bookings b ON d.booking_id = b.id
-      JOIN usuarios u_client ON b.client_id = u_client.id
-      JOIN usuarios u_prov ON b.provider_id = u_prov.id
-      ORDER BY d.creado_at DESC;
-    `);
+    const userId = req.user.id;
+    const { platform, content_type, share_reference_id } = req.body;
+
+    if (!platform || !content_type) {
+      return res.status(400).json({ error: 'Plataforma y tipo de contenido son requeridos.' });
+    }
+
+    const pointsToAward = 50; // 50 XP por compartir resultado estético
+
+    const logRes = await pool.query(`
+      INSERT INTO social_shares_log (user_id, platform, content_type, share_reference_id, reward_granted, points_awarded)
+      VALUES ($1, $2, $3, $4, TRUE, $5)
+      RETURNING *;
+    `, [userId, platform, content_type, share_reference_id || null, pointsToAward]);
+
+    // Opcional: Acreditar XP al usuario en su perfil
     res.json({
       success: true,
-      disputes: result.rows
+      message: `¡Contenido compartido con éxito en ${platform}! Se han acreditado ${pointsToAward} XP.`,
+      share: logRes.rows[0],
+      points_awarded: pointsToAward
     });
   } catch (error) {
-    console.error('❌ ERROR EN GET /api/admin/disputes:', error);
-    res.status(500).json({ error: 'Error al obtener lista de disputas.' });
+    console.error('❌ ERROR EN POST /api/social/log-share:', error);
+    res.status(500).json({ error: 'Error al registrar contenido compartido.' });
   }
 });
 
-app.patch('/api/admin/disputes/:id/resolve', authMiddleware, adminMiddleware, async (req, res) => {
+app.get('/api/social/accounts', authMiddleware, async (req, res) => {
   try {
-    const disputeId = req.params.id;
-    const adminId = req.user.id;
-    const { resolucion, porcentaje_prestador, nota_resolucion } = req.body;
-
-    if (!resolucion || porcentaje_prestador === undefined || !nota_resolucion) {
-      return res.status(400).json({ error: 'Todos los campos de resolución son requeridos.' });
-    }
-
-    const pct = parseFloat(porcentaje_prestador);
-
-    // 1. Obtener la disputa
-    const checkDispute = await pool.query('SELECT * FROM disputas WHERE id = $1', [disputeId]);
-    if (checkDispute.rows.length === 0) {
-      return res.status(404).json({ error: 'Disputa no encontrada.' });
-    }
-
-    const dispute = checkDispute.rows[0];
-
-    // 2. Actualizar la disputa
-    const result = await pool.query(`
-      UPDATE disputas
-      SET estado = 'RESUELTA',
-          resuelto_por = $1,
-          resolucion = $2,
-          porcentaje_prestador = $3,
-          nota_resolucion = $4,
-          resuelto_at = NOW(),
-          actualizado_at = NOW()
-      WHERE id = $5
-      RETURNING *;
-    `, [adminId, resolucion, pct, nota_resolucion, disputeId]);
-
-    // 3. Sincronizar el estado del booking. Si el prestador recibe > 0%, marcar como completada. De lo contrario cancelada.
-    const finalBookingStatus = pct > 0 ? 'COMPLETADA' : 'CANCELADA';
-    await pool.query(`
-      UPDATE bookings
-      SET estado = $1
-      WHERE id = $2;
-    `, [finalBookingStatus, dispute.booking_id]);
-
-    res.json({
-      success: true,
-      message: 'Disputa resuelta con éxito.',
-      dispute: result.rows[0]
-    });
+    const userId = req.user.id;
+    const result = await pool.query(
+      'SELECT id, provider, provider_user_id, is_active, created_at FROM user_social_accounts WHERE user_id = $1',
+      [userId]
+    );
+    res.json({ success: true, accounts: result.rows });
   } catch (error) {
-    console.error('❌ ERROR EN PATCH /api/admin/disputes/:id/resolve:', error);
-    res.status(500).json({ error: 'Error al resolver la disputa.' });
+    console.error('❌ ERROR EN GET /api/social/accounts:', error);
+    res.status(500).json({ error: 'Error al obtener cuentas sociales.' });
   }
 });
 

@@ -15,6 +15,61 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
+  bool _useExactGps = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _showLocationPrecisionDialog();
+    });
+  }
+
+  void _showLocationPrecisionDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.security, color: Color(0xFFC5A052)),
+            SizedBox(width: 8),
+            Text('Privacidad de Ubicación', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: const Text(
+          'Selecciona el nivel de precisión deseado para encontrar especialistas cerca de ti. Puedes cambiarlo en cualquier momento.',
+          style: TextStyle(fontSize: 13, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              setState(() => _useExactGps = false);
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Búsqueda por Ubicación Aproximada (Barrio / Ciudad)')),
+              );
+            },
+            child: const Text('Aproximada (Barrio)'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFC5A052),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () {
+              setState(() => _useExactGps = true);
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Búsqueda por GPS Exacto activada')),
+              );
+            },
+            child: const Text('Exacta (GPS)'),
+          ),
+        ],
+      ),
+    );
+  }
   @override
   Widget build(BuildContext context) {
     final valid = widget.providers
@@ -69,7 +124,7 @@ class _MapScreenState extends State<MapScreen> {
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
                                     border: Border.all(
-                                        color: const Color(0xFFC89D93),
+                                        color: AppTheme.primary,
                                         width: 2),
                                     boxShadow: const [
                                       BoxShadow(
@@ -88,7 +143,7 @@ class _MapScreenState extends State<MapScreen> {
                                         ? const Icon(
                                             Icons.face_retouching_natural,
                                             size: 20,
-                                            color: Color(0xFFC89D93))
+                                            color: AppTheme.primary)
                                         : null,
                                   ),
                                 ),
@@ -140,7 +195,7 @@ class _MapScreenState extends State<MapScreen> {
                 });
               },
               backgroundColor: Colors.white,
-              foregroundColor: const Color(0xFFC89D93),
+              foregroundColor: AppTheme.primary,
               elevation: 4,
               shape: const CircleBorder(),
               child: Icon(
