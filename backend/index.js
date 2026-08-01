@@ -945,8 +945,6 @@ app.get('/api/social/accounts', authMiddleware, async (req, res) => {
     res.status(500).json({ error: 'Error al obtener cuentas sociales.' });
   }
 });
-=======
->>>>>>> d4258573 (fix(backend): add adminRoutes module with correct db import path)
 
 // 🔹 NUEVO: Obtener perfil del usuario autenticado (incluye avatar_url)
 app.get('/api/users/profile', authMiddleware, async (req, res) => {
