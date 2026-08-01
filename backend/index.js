@@ -975,6 +975,51 @@ app.patch('/api/admin/disputes/:id/resolve', authMiddleware, adminMiddleware, as
   }
 });
 
+// 🔹 NUEVO: Endpoints de Integración Social (TikTok, Instagram, Facebook) & Recompensas XP
+app.post('/api/social/log-share', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { platform, content_type, share_reference_id } = req.body;
+
+    if (!platform || !content_type) {
+      return res.status(400).json({ error: 'Plataforma y tipo de contenido son requeridos.' });
+    }
+
+    const pointsToAward = 50; // 50 XP por compartir resultado estético
+
+    const logRes = await pool.query(`
+      INSERT INTO social_shares_log (user_id, platform, content_type, share_reference_id, reward_granted, points_awarded)
+      VALUES ($1, $2, $3, $4, TRUE, $5)
+      RETURNING *;
+    `, [userId, platform, content_type, share_reference_id || null, pointsToAward]);
+
+    // Opcional: Acreditar XP al usuario en su perfil
+    res.json({
+      success: true,
+      message: `¡Contenido compartido con éxito en ${platform}! Se han acreditado ${pointsToAward} XP.`,
+      share: logRes.rows[0],
+      points_awarded: pointsToAward
+    });
+  } catch (error) {
+    console.error('❌ ERROR EN POST /api/social/log-share:', error);
+    res.status(500).json({ error: 'Error al registrar contenido compartido.' });
+  }
+});
+
+app.get('/api/social/accounts', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const result = await pool.query(
+      'SELECT id, provider, provider_user_id, is_active, created_at FROM user_social_accounts WHERE user_id = $1',
+      [userId]
+    );
+    res.json({ success: true, accounts: result.rows });
+  } catch (error) {
+    console.error('❌ ERROR EN GET /api/social/accounts:', error);
+    res.status(500).json({ error: 'Error al obtener cuentas sociales.' });
+  }
+});
+
 // 🔹 NUEVO: Obtener perfil del usuario autenticado (incluye avatar_url)
 app.get('/api/users/profile', authMiddleware, async (req, res) => {
   try {
