@@ -1,5 +1,6 @@
 // frontend/lib/screens/auth/verification_pending_screen.dart
 import 'package:flutter/material.dart';
+import 'package:beauty_app/shared/theme.dart';
 import '../../services/auth_service.dart';
 
 class VerificationPendingScreen extends StatelessWidget {

@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:beauty_app/shared/theme.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
 import 'chat_screen.dart';

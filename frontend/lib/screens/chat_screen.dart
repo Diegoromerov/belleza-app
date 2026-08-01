@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:beauty_app/shared/theme.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';

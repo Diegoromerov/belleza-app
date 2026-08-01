@@ -1,5 +1,6 @@
 // frontend/lib/shared/onboarding_helper.dart
 import 'package:flutter/material.dart';
+import 'package:beauty_app/shared/theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class OnboardingWalkthroughHelper {

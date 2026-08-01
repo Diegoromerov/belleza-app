@@ -1,5 +1,6 @@
 // frontend/lib/screens/provider_services_screen.dart
 import 'package:flutter/material.dart';
+import 'package:beauty_app/shared/theme.dart';
 import '../services/api_service.dart';
 import '../models/service_model.dart';
 

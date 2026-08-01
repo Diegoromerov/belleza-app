@@ -1,5 +1,6 @@
 // frontend/lib/screens/academy/quiz_screen.dart
 import 'package:flutter/material.dart';
+import 'package:beauty_app/shared/theme.dart';
 import '../../services/api_service.dart';
 
 class QuizScreen extends StatefulWidget {

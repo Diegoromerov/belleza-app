@@ -1,5 +1,6 @@
 // frontend/lib/screens/academy/course_detail_screen.dart
 import 'package:flutter/material.dart';
+import 'package:beauty_app/shared/theme.dart';
 import 'package:flutter/services.dart';
 import '../../services/api_service.dart';
 import '../../services/analytics_service.dart';

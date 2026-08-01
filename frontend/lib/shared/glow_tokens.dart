@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:beauty_app/shared/theme.dart';
 
 /// Tokens de diseño principales para la identidad de marca GlowApp.
 class GlowTokens {

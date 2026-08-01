@@ -2,6 +2,7 @@
 import 'dart:async';
 import '../services/web_geolocation.dart';
 import 'package:flutter/material.dart';
+import 'package:beauty_app/shared/theme.dart';
 import 'package:flutter/services.dart';
 import 'chat_screen.dart';
 import 'provider_route_screen.dart';
