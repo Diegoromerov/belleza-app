@@ -256,6 +256,8 @@ CREATE TABLE IF NOT EXISTS admin_mfa (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- ... (todo tu código anterior) ...
+
 -- 19. Tabla productos (Tienda en línea de GlowApp)
 CREATE TABLE IF NOT EXISTS productos (
   id SERIAL PRIMARY KEY,
@@ -266,6 +268,25 @@ CREATE TABLE IF NOT EXISTS productos (
   imagen_url TEXT,
   tag_especialidad VARCHAR(50) NOT NULL,
   creado_en TIMESTAMPTZ DEFAULT NOW()
+); -- <--- ¡ESTE PUNTO Y COMA ES CRUCIAL!
+
+-- ============================================
+-- 20. Base de Conocimiento GlowApp (RAG + pgvector)
+-- NOTA: Esta imagen NO trae pgvector por defecto. 
+-- Si falla, usaremos la instalación manual o cambiaremos de imagen.
+-- ============================================
+
+-- Intentamos crear la extensión. Si falla, tendremos que instalarla vía apt-get.
+CREATE EXTENSION IF NOT EXISTS vector;
+
+CREATE TABLE IF NOT EXISTS beauty_knowledge_embeddings (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    category VARCHAR(100) NOT NULL,
+    content TEXT NOT NULL,
+    metadata JSONB DEFAULT '{}'::jsonb,
+    embedding vector(768),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-
+CREATE INDEX IF NOT EXISTS idx_beauty_knowledge_category ON beauty_knowledge_embeddings(category);

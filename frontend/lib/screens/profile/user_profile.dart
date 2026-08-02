@@ -163,6 +163,17 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 onTap: () => Navigator.pushNamed(context, '/support'),
               ),
               LuxeProfileTile(
+                icon: Icons.help_outline_rounded,
+                title: 'Preguntas Frecuentes (FAQ)',
+                subtitle: 'Respuestas claras sobre pagos, seguridad y citas',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const FaqScreen()),
+                  );
+                },
+              ),
+              LuxeProfileTile(
                 icon: Icons.gavel_outlined,
                 title: 'Mis Disputas de Servicio',
                 subtitle: 'Gestión y seguimiento de arbitrajes de pago',

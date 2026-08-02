@@ -1,8 +1,8 @@
-version: '3.8'
-
 services:
   postgres:
-    image: postgis/postgis:15-3.3
+    build:
+      context: .
+      dockerfile: Dockerfile.postgres
     container_name: beauty-postgres
     environment:
       POSTGRES_USER: admin
@@ -12,7 +12,8 @@ services:
       - "5435:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./schema.sql:/docker-entrypoint-initdb.d/init.sql
+      # Comentamos schema.sql temporalmente para evitar errores de init si la extensión aún no está lista
+      # - ./schema.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U admin -d beauty_db"]
       interval: 10s

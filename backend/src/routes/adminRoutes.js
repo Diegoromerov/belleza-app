@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const { pool } = require('../db');
+// CORRECCIÓN: Se agregó la comilla de cierre y el nombre del archivo 'db'
+const { pool } = require('../config/db'); 
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 
 // 🔹 Obtenes lista completa de disputas para panel administrativo
