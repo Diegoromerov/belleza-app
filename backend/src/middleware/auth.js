@@ -1,9 +1,11 @@
+// backend/src/middleware/auth.js
 const jwt = require('jsonwebtoken');
 const { pool } = require('../config/db');
 const { getJwtSecret, toApiRole } = require('../config/jwt');
 const redisClient = require('../config/redis');
 
-module.exports = async (req, res, next) => {
+// 1. Middleware para verificar autenticación
+const authMiddleware = async (req, res, next) => {
   const authHeader = req.header('Authorization') || '';
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : null;
   if (!token) return res.status(401).json({ error: 'Acceso denegado. Token requerido.' });
@@ -21,7 +23,7 @@ module.exports = async (req, res, next) => {
 
     const verified = jwt.verify(token, getJwtSecret());
     
-    // Consultar el rol actual del usuario en la base de datos para evitar JWT desactualizados
+    // Consultar el rol actual del usuario en la base de datos
     const userRes = await pool.query('SELECT rol FROM usuarios WHERE id = $1', [verified.id]);
     if (userRes.rows.length === 0) {
       return res.status(401).json({ error: 'Usuario no encontrado en el sistema.' });
@@ -39,4 +41,23 @@ module.exports = async (req, res, next) => {
   } catch (err) {
     res.status(400).json({ error: 'Token inválido o expirado.' });
   }
+};
+
+// 2. Middleware para verificar que el usuario sea admin
+const adminMiddleware = async (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Acceso denegado. Autenticación requerida.' });
+  }
+  
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Acceso denegado. Se requieren privilegios de administrador.' });
+  }
+  
+  next();
+};
+
+// 3. EXPORTAR AMBOS COMO UN OBJETO (Esto es lo que faltaba)
+module.exports = {
+  authMiddleware,
+  adminMiddleware
 };
