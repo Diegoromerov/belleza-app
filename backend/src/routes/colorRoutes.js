@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const theColorApi = require('../services/theColorApi');
-const authMiddleware = require('../middleware/auth');
+const { authMiddleware } = require('../middleware/auth');
 
 // GET /api/color/palette?hex=FF6B6B&count=5&mode=analogic
 router.get('/palette', authMiddleware, async (req, res) => {

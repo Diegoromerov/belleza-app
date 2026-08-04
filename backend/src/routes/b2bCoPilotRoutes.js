@@ -1,7 +1,7 @@
 // backend/src/routes/b2bCoPilotRoutes.js
 const express = require('express');
 const router = express.Router();
-const authMiddleware = require('../middleware/auth');
+const { authMiddleware } = require('../middleware/auth');
 const b2bCoPilotService = require('../services/b2bCoPilotService');
 
 // POST /api/b2b/auto-reply-review → Auto-respuesta a reseñas

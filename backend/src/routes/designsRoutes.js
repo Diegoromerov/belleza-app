@@ -36,7 +36,7 @@ const {
   getOutfitHistorial,
   checkOutfitQuota
 } = require('../controllers/designsController');
-const authMiddleware = require('../middleware/auth');
+const { authMiddleware } = require('../middleware/auth');
 
 const upload = multer({
   storage: multer.memoryStorage(),

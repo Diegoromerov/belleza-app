@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const Joi = require('joi');
-const authMiddleware = require('../middleware/auth');
+const { authMiddleware } = require('../middleware/auth');
 
 // Validation schemas for community posts and comments
 const postSchema = Joi.object({

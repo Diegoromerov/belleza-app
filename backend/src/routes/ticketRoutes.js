@@ -1,7 +1,7 @@
 // backend/src/routes/ticketRoutes.js
 const express = require('express');
 const router = express.Router();
-const authMiddleware = require('../middleware/auth');
+const { authMiddleware } = require('../middleware/auth');
 const ticketController = require('../controllers/ticketController');
 
 // Crear un nuevo ticket de soporte

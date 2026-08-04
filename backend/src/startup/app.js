@@ -30,7 +30,7 @@ const shortcutRoutes = require('../routes/shortcutRoutes');
 const b2bCoPilotRoutes = require('../routes/b2bCoPilotRoutes');
 
 // Middlewares
-const authMiddleware = require('../middleware/auth');
+const { authMiddleware } = require('../middleware/auth');
 const rateLimiter = require('../middleware/rateLimiter');
 const { pool } = require('../config/db');
 

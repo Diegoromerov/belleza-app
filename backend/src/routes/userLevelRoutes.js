@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const { UserLevel } = require('../models');
-const authMiddleware = require('../middleware/auth');
+const { authMiddleware } = require('../middleware/auth');
 
 // Obtener todos los niveles de usuario
 router.get('/', authMiddleware, async (req, res) => {

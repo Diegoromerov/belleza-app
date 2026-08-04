@@ -1,7 +1,7 @@
 // src/routes/portfolioRoutes.js
 const express = require('express');
 const router = express.Router();
-const authMiddleware = require('../middleware/auth');
+const { authMiddleware } = require('../middleware/auth');
 const Joi = require('joi');
 
 // Validation schema for creating a portfolio item

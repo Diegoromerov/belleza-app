@@ -1,7 +1,7 @@
 // backend/src/routes/serviceRoutes.js
 const express = require('express');
 const router = express.Router();
-const authMiddleware = require('../middleware/auth');
+const { authMiddleware } = require('../middleware/auth');
 const serviceController = require('../controllers/serviceController');
 
 router.get('/services/provider', authMiddleware, serviceController.getProviderServices);

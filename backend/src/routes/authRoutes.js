@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { register, login, logout, forgotPassword, resetPassword, oauth, onboarding, acceptBiometricsConsent, saveFcmToken, getReferralInfo, deleteAccount } = require('../controllers/authController');
 const { googleSignIn } = require('../controllers/oauthController');
-const authMiddleware = require('../middleware/auth');
+const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 const rateLimiter = require('../middleware/rateLimiter');
 
 // Rate limiter específico para endpoints de autenticación (10 intentos por ventana de 15 minutos por IP)

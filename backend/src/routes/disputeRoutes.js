@@ -1,7 +1,7 @@
 // backend/src/routes/disputeRoutes.js
 const express = require('express');
 const router = express.Router();
-const authMiddleware = require('../middleware/auth');
+const { authMiddleware } = require('../middleware/auth');
 const disputeController = require('../controllers/disputeController');
 
 // Abrir una disputa para una reserva

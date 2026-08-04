@@ -1,7 +1,7 @@
 // src/routes/glowProRoutes.js
 const express = require('express');
 const router = express.Router();
-const authMiddleware = require('../middleware/auth');
+const { authMiddleware } = require('../middleware/auth');
 
 // Import models used directly (if needed) – most logic moved to dedicated controllers
 const { UserBadge, QrCertificate, Event, EventRegistration } = require('../models');

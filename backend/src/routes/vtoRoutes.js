@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const vtoService = require('../services/vto/vtoService');
-const authMiddleware = require('../middleware/auth');
+const { authMiddleware } = require('../middleware/auth');
 
 // GET /api/vto/catalog?category=makeup&subtono=cálido
 router.get('/catalog', async (req, res) => {

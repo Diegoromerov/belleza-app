@@ -1,7 +1,7 @@
 // backend/src/routes/productRoutes.js
 const express = require('express');
 const router = express.Router();
-const authMiddleware = require('../middleware/auth');
+const { authMiddleware } = require('../middleware/auth');
 const productController = require('../controllers/productController');
 const orderController = require('../controllers/orderController');
 const openBeautyFacts = require('../services/openBeautyFacts');

@@ -1,7 +1,7 @@
 // src/routes/xpLogRoutes.js
 const express = require('express');
 const router = express.Router();
-const authMiddleware = require('../middleware/auth');
+const { authMiddleware } = require('../middleware/auth');
 const xpLogController = require('../controllers/xpLogController');
 const Joi = require('joi');
 
