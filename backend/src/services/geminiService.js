@@ -353,22 +353,22 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
         );
 
         // ── 6. Fallback a Gemini API ──────────────────────────────────────
-        if (ai) {
-          try {
-            console.log('🔄 Ejecutando fallback a Gemini API...');
-            const model = ai.getGenerativeModel({
-              model: 'gemini-2.0-flash-lite',
-              systemInstruction
-            });
-            const result = await model.generateContent({ contents });
-            const geminiResponse = await result.response;
-            aiResponseText = geminiResponse.text();
-          } catch (geminiError) {
-            console.error('❌ Error de llamada a la API de Gemini (fallback):', geminiError);
-          }
-        } else {
-          console.warn('⚠️ Gemini API no configurada (GEMINI_API_KEY ausente). No hay fallback disponible.');
-        }
+                if (ai) {
+                  try {
+                    console.log('🔄 Ejecutando fallback a Gemini API...');
+                    const model = ai.getGenerativeModel({
+                      model: 'gemini-1.5-flash',
+                      systemInstruction
+                    });
+                    const result = await model.generateContent({ contents });
+                    const geminiResponse = await result.response;
+                    aiResponseText = geminiResponse.text();
+                  } catch (geminiError) {
+                    console.error('❌ Error de llamada a la API de Gemini (fallback):', geminiError);
+                  }
+                } else {
+                  console.warn('⚠️ Gemini API no configurada (GEMINI_API_KEY ausente). No hay fallback disponible.');
+                }
       }
     } else {
       console.warn('⚠️ DEEPSEEK_API_KEY no configurada. AURA no puede generar respuestas de IA.');
