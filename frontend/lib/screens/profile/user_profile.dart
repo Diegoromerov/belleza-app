@@ -9,6 +9,7 @@ import 'biometric_history_screen.dart';
 import 'glowstore_orders_screen.dart';
 import 'rewards_xp_screen.dart';
 import 'habeas_data_screen.dart';
+import 'faq_screen.dart';
 
 class UserProfileScreen extends StatefulWidget {
   final String userName;
