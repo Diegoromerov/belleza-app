@@ -1,4 +1,5 @@
 -- Migración 011: Agregar productos exclusivos masculinos para la Tienda GlowApp
+-- La tabla productos ya tiene las columnas añadidas en migración 010
 INSERT INTO productos (nombre, descripcion, precio, precio_al_publico, precio_con_reserva, precio_prestador, comision_prestador, stock, imagen_url, tag_especialidad, tipo_visibilidad)
 VALUES
   (
@@ -60,6 +61,7 @@ VALUES
     46000.00,
     39100.00,
     29900.00,
+    4600.00,
     40,
     'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?q=80&w=400&auto=format&fit=crop',
     'Skincare Masculino',

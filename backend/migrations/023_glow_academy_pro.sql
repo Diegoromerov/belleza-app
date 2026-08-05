@@ -1,5 +1,6 @@
 -- Migration: 023_glow_academy_pro.sql
 -- Nuevas tablas para Glow Academy Pro
+-- NOTA: Las FKs a academy_certificates(id) se añaden en migración 034 (después de que 033 cree la columna id)
 
 -- 1. Learning Paths
 CREATE TABLE learning_paths (
@@ -8,7 +9,7 @@ CREATE TABLE learning_paths (
     description TEXT,
     level VARCHAR(20) CHECK (level IN ('beginner', 'intermediate', 'advanced')),
     estimated_hours INTEGER,
-    badge_id INTEGER REFERENCES academy_certificates(id),
+    badge_id INTEGER, -- FK añadida en migración 034
     created_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -37,7 +38,7 @@ CREATE TABLE user_levels (
     user_id INTEGER NOT NULL,
     level VARCHAR(20) CHECK (level IN ('novice', 'intermediate', 'advanced', 'expert')),
     total_xp INTEGER NOT NULL,
-    badge_id INTEGER REFERENCES academy_certificates(id),
+    badge_id INTEGER, -- FK añadida en migración 034
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -95,7 +96,7 @@ CREATE TABLE mentorship_sessions (
 CREATE TABLE qr_certificates (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
-    certificate_id INTEGER REFERENCES academy_certificates(id),
+    certificate_id INTEGER, -- FK añadida en migración 034
     qr_code VARCHAR(500) NOT NULL,
     verification_url VARCHAR(500),
     issued_at TIMESTAMP DEFAULT NOW()
