@@ -239,7 +239,7 @@ class _GlowUpCardScreenState extends State<GlowUpCardScreen> {
                         children: [
                           Container(
                             padding: const EdgeInsets.all(8),
-                            decoration: const BoxDecoration(color: AppTheme.primary, shape: BoxShape.circle),
+                            decoration: BoxDecoration(color: AppTheme.primary, shape: BoxShape.circle),
                             child: const Icon(Icons.auto_awesome, color: Colors.white, size: 16),
                           ),
                           const SizedBox(width: 12),

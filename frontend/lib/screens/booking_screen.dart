@@ -395,8 +395,8 @@ class _BookingScreenState extends State<BookingScreen> {
             : const BackButton(color: Colors.black87),
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppTheme.primary))
-          : Column(
+                ? Center(child: CircularProgressIndicator(color: AppTheme.primary))
+                : Column(
               children: [
                 _buildProgressBar(),
                 Expanded(
@@ -739,7 +739,7 @@ class _BookingScreenState extends State<BookingScreen> {
             'Notas adicionales (opcional)',
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black87),
           ),
-          leading: const Icon(Icons.note_alt_outlined, color: AppTheme.primary),
+          leading: Icon(Icons.note_alt_outlined, color: AppTheme.primary),
           children: [
             Padding(
               padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
@@ -761,9 +761,9 @@ class _BookingScreenState extends State<BookingScreen> {
   }
 
   Widget _buildStep2CrossSelling() {
-    if (_isLoadingProducts) {
-      return const Center(child: CircularProgressIndicator(color: AppTheme.primary));
-    }
+      if (_isLoadingProducts) {
+        return Center(child: CircularProgressIndicator(color: AppTheme.primary));
+      }
 
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16),
@@ -893,15 +893,15 @@ class _BookingScreenState extends State<BookingScreen> {
                       color: const Color(0xFFF5EBE6),
                     ),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: image.isNotEmpty
-                          ? Image.network(
-                              image,
-                              fit: BoxFit.cover,
-                              errorBuilder: (c, o, s) => const Icon(Icons.shopping_bag_outlined, color: AppTheme.primary),
-                            )
-                          : const Icon(Icons.shopping_bag_outlined, color: AppTheme.primary),
-                    ),
+                                          borderRadius: BorderRadius.circular(12),
+                                          child: image.isNotEmpty
+                                              ? Image.network(
+                                                  image,
+                                                  fit: BoxFit.cover,
+                                                  errorBuilder: (c, o, s) => Icon(Icons.shopping_bag_outlined, color: AppTheme.primary),
+                                                )
+                                              : Icon(Icons.shopping_bag_outlined, color: AppTheme.primary),
+                                        ),
                   ),
                   Expanded(
                     child: Padding(
@@ -915,9 +915,9 @@ class _BookingScreenState extends State<BookingScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '\$${precio.toStringAsFixed(0)} COP',
-                            style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primary, fontSize: 12),
-                          ),
+                                                      '\$${precio.toStringAsFixed(0)} COP',
+                                                      style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primary, fontSize: 12),
+                                                    ),
                         ],
                       ),
                     ),
@@ -980,13 +980,13 @@ class _BookingScreenState extends State<BookingScreen> {
                                       }
                                     },
                                     child: Container(
-                                      padding: const EdgeInsets.all(4),
-                                      decoration: BoxDecoration(
-                                        color: AppTheme.primary.withValues(alpha: 0.1),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(Icons.add, size: 12, color: AppTheme.primary),
-                                    ),
+                                                                          padding: const EdgeInsets.all(4),
+                                                                          decoration: BoxDecoration(
+                                                                            color: AppTheme.primary.withValues(alpha: 0.1),
+                                                                            shape: BoxShape.circle,
+                                                                          ),
+                                                                          child: Icon(Icons.add, size: 12, color: AppTheme.primary),
+                                                                        ),
                                   ),
                                 ],
                               ),
@@ -1118,9 +1118,9 @@ class _BookingScreenState extends State<BookingScreen> {
                       style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black87),
                     ),
                     Text(
-                      '\$${grandTotal.toStringAsFixed(0)} COP',
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.primary),
-                    ),
+                                          '\$${grandTotal.toStringAsFixed(0)} COP',
+                                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.primary),
+                                        ),
                   ],
                 ),
               ],
@@ -1335,17 +1335,17 @@ class _BookingScreenState extends State<BookingScreen> {
         child: Row(
           children: [
             if (_currentStep > 0) ...[
-              OutlinedButton(
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  side: const BorderSide(color: AppTheme.primary),
-                ),
-                onPressed: _prevStep,
-                child: const Text('Atrás', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
-              ),
-              const SizedBox(width: 12),
-            ],
+                          OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                              side: BorderSide(color: AppTheme.primary),
+                            ),
+                            onPressed: _prevStep,
+                            child: Text('Atrás', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
+                          ),
+                          const SizedBox(width: 12),
+                        ],
             Expanded(
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(

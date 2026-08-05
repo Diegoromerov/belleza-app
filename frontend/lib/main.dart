@@ -401,11 +401,11 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                   child: Text('Usar Bogotá (Defecto)', style: TextStyle(color: Colors.grey)),
                 ),
                 ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const AppTheme.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppTheme.primary,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                  ),
                   onPressed: resolving ? null : () async {
                     final address = addressController.text.trim();
                     if (address.isEmpty) return;
@@ -1283,41 +1283,41 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Container(
-                    width: 46,
-                    height: 46,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isSelected
-                          ? const AppTheme.primary.withOpacity(0.15)
-                          : Colors.grey.shade50,
-                      border: Border.all(
-                        color: isSelected
-                            ? const AppTheme.primary
-                            : Colors.grey.shade200,
-                        width: 1.2,
-                      ),
-                    ),
-                    child: Icon(
-                      iconData,
-                      size: 20,
-                      color: isSelected
-                          ? const AppTheme.primary
-                          : Colors.grey.shade600,
-                    ),
-                  ),
-                  SizedBox(height: 6),
-                  Text(
-                    cat['name'] as String,
-                    style: TextStyle(
-                      color: isSelected
-                          ? const AppTheme.primary
-                          : Colors.grey.shade600,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                      fontSize: 11,
-                    ),
-                  ),
-                ],
+                                  Container(
+                                    width: 46,
+                                    height: 46,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: isSelected
+                                          ? AppTheme.primary.withValues(alpha: 0.15)
+                                          : Colors.grey.shade50,
+                                      border: Border.all(
+                                        color: isSelected
+                                            ? AppTheme.primary
+                                            : Colors.grey.shade200,
+                                        width: 1.2,
+                                      ),
+                                    ),
+                                    child: Icon(
+                                      iconData,
+                                      size: 20,
+                                      color: isSelected
+                                          ? AppTheme.primary
+                                          : Colors.grey.shade600,
+                                    ),
+                                  ),
+                                  SizedBox(height: 6),
+                                  Text(
+                                    cat['name'] as String,
+                                    style: TextStyle(
+                                      color: isSelected
+                                          ? AppTheme.primary
+                                          : Colors.grey.shade600,
+                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                ],
               ),
             ),
           );

@@ -52,7 +52,7 @@ class _ColorimetriaHistorialScreenState extends State<ColorimetriaHistorialScree
         foregroundColor: Colors.black,
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppTheme.primary))
+          ? Center(child: CircularProgressIndicator(color: AppTheme.primary))
           : _error != null
               ? Center(
                   child: Padding(
@@ -60,7 +60,7 @@ class _ColorimetriaHistorialScreenState extends State<ColorimetriaHistorialScree
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.error_outline, color: AppTheme.error, size: 48),
+                        Icon(Icons.error_outline, color: AppTheme.error, size: 48),
                         const SizedBox(height: 16),
                         Text(
                           'Error al cargar el historial:\n$_error',

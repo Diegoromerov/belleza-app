@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
+import '../shared/theme.dart';
 
 class ProviderProfileScreen extends StatefulWidget {
   final bool isEmbedded;

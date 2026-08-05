@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
+import '../shared/theme.dart';
 import 'booking_screen.dart';
 import 'provider_detail_screen.dart';
 
@@ -598,24 +599,24 @@ class _ChatScreenState extends State<ChatScreen> {
                                                   ),
                                                 ),
                                                 if (redirectToolId != null) ...[
-                                                  const SizedBox(height: 10),
-                                                  SizedBox(
-                                                    width: double.infinity,
-                                                    child: OutlinedButton.icon(
-                                                      style: OutlinedButton.styleFrom(
-                                                        side: const BorderSide(color: AppTheme.primary, width: 1.5),
-                                                        foregroundColor: AppTheme.primary,
-                                                        shape: RoundedRectangleBorder(
-                                                          borderRadius: BorderRadius.circular(20),
-                                                        ),
-                                                        padding: const EdgeInsets.symmetric(vertical: 8),
-                                                      ),
-                                                      icon: const Icon(Icons.auto_awesome, size: 14),
-                                                      label: const Text(
-                                                        'Abrir herramienta en Ideas IA',
-                                                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-                                                      ),
-                                                      onPressed: () {
+                                                                                                  const SizedBox(height: 10),
+                                                                                                  SizedBox(
+                                                                                                    width: double.infinity,
+                                                                                                    child: OutlinedButton.icon(
+                                                                                                      style: OutlinedButton.styleFrom(
+                                                                                                        side: BorderSide(color: AppTheme.primary, width: 1.5),
+                                                                                                        foregroundColor: AppTheme.primary,
+                                                                                                        shape: RoundedRectangleBorder(
+                                                                                                          borderRadius: BorderRadius.circular(20),
+                                                                                                        ),
+                                                                                                        padding: const EdgeInsets.symmetric(vertical: 8),
+                                                                                                      ),
+                                                                                                      icon: const Icon(Icons.auto_awesome, size: 14),
+                                                                                                      label: const Text(
+                                                                                                        'Abrir herramienta en Ideas IA',
+                                                                                                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                                                                                                      ),
+                                                                                                      onPressed: () {
                                                         // Navigate to /ideas using arguments to pre-load a tool
                                                         Navigator.pushNamed(
                                                           context,

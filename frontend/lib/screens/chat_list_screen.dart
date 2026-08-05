@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
+import '../shared/theme.dart';
 import 'chat_screen.dart';
 
 class ChatListScreen extends StatefulWidget {

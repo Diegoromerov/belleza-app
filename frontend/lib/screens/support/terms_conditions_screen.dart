@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../shared/theme.dart';
 
 class TermsConditionsScreen extends StatelessWidget {
   const TermsConditionsScreen({super.key});
@@ -17,14 +18,14 @@ class TermsConditionsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Términos y Condiciones de Uso de GlowApp',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.primary,
-              ),
-            ),
+            Text(
+                          'Términos y Condiciones de Uso de GlowApp',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.primary,
+                          ),
+                        ),
             const SizedBox(height: 8),
             Text(
               'Última actualización: Julio 2026',

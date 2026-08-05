@@ -1,6 +1,7 @@
 // frontend/lib/screens/academy/quiz_screen.dart
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
+import '../../shared/theme.dart';
 
 class QuizScreen extends StatefulWidget {
   final String courseId;
@@ -92,15 +93,15 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    const themeColor = AppTheme.primary;
+    Widget build(BuildContext context) {
+      final themeColor = AppTheme.primary;
 
-    if (_isLoading) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Examen de Certificación')),
-        body: const Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation(AppTheme.primary))),
-      );
-    }
+      if (_isLoading) {
+        return Scaffold(
+          appBar: AppBar(title: const Text('Examen de Certificación')),
+          body: Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation(AppTheme.primary))),
+        );
+      }
 
     if (_error != null) {
       return Scaffold(
@@ -246,8 +247,8 @@ class _QuizScreenState extends State<QuizScreen> {
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: _isSubmitting
-          ? const Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation(AppTheme.primary)))
-          : Column(
+                ? Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation(AppTheme.primary)))
+                : Column(
               children: [
                 Expanded(
                   child: ListView.builder(

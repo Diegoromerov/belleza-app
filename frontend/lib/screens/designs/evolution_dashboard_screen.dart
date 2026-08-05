@@ -325,10 +325,10 @@ class _EvolutionDashboardScreenState extends State<EvolutionDashboardScreen> {
                         border: Border.all(color: const Color(0xFFEADCD3)),
                       ),
                       child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Icon(Icons.auto_awesome_outlined, color: AppTheme.primary, size: 20),
-                          const SizedBox(width: 12),
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Icon(Icons.auto_awesome_outlined, color: AppTheme.primary, size: 20),
+                                                const SizedBox(width: 12),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,

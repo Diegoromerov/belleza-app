@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/api_service.dart';
+import '../shared/theme.dart';
 
 class ProviderPortfolioScreen extends StatefulWidget {
   const ProviderPortfolioScreen({super.key});

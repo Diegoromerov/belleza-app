@@ -70,10 +70,10 @@ class _GlowConsentWidgetState extends State<GlowConsentWidget> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    if (_isChecking) {
-      return const Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation(AppTheme.primary)));
-    }
+    Widget build(BuildContext context) {
+      if (_isChecking) {
+        return Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation(AppTheme.primary)));
+      }
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -86,10 +86,10 @@ class _GlowConsentWidgetState extends State<GlowConsentWidget> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            children: const [
-              Icon(Icons.gavel_outlined, color: AppTheme.primary, size: 24),
-              SizedBox(width: 8),
-              Text(
+                      children: [
+                        Icon(Icons.gavel_outlined, color: AppTheme.primary, size: 24),
+                        SizedBox(width: 8),
+                        Text(
                 'Consentimiento de Datos (Ley 1581)',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppTheme.text),
               ),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../services/api_service.dart';
 import '../../services/analytics_service.dart';
+import '../../shared/theme.dart';
 import 'quiz_screen.dart';
 import 'glow_consent_widget.dart';
 
@@ -126,15 +127,15 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    const themeColor = AppTheme.primary;
+    Widget build(BuildContext context) {
+      final themeColor = AppTheme.primary;
 
-    if (_isLoading) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Cargando Curso...', style: TextStyle(color: Colors.white))),
-        body: const Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation(AppTheme.primary))),
-      );
-    }
+      if (_isLoading) {
+        return Scaffold(
+          appBar: AppBar(title: const Text('Cargando Curso...', style: TextStyle(color: Colors.white))),
+          body: Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation(AppTheme.primary))),
+        );
+      }
 
     if (_error != null || _courseData == null) {
       return Scaffold(

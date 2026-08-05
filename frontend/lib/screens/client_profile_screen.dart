@@ -518,9 +518,9 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
         borderSide: BorderSide.none,
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(30),
-        borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
-      ),
+              borderRadius: BorderRadius.circular(30),
+              borderSide: BorderSide(color: AppTheme.primary, width: 1.5),
+            ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
     );
   }
