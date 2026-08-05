@@ -373,11 +373,11 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
                   }];
 
                   const model = ai.getGenerativeModel({
-                    model: 'gemini-1.5-flash',
-                    systemInstruction,
-                    tools: geminiTools,
-                    toolConfig: { functionCallingConfig: { mode: 'AUTO' } }
-                  });
+                                      model: 'gemini-pro',
+                                      systemInstruction,
+                                      tools: geminiTools,
+                                      toolConfig: { functionCallingConfig: { mode: 'AUTO' } }
+                                    });
 
                   let result = await model.generateContent({ contents });
                   let response = await result.response;
