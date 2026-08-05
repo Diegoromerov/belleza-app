@@ -347,29 +347,88 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
         }
 
       } catch (deepseekError) {
-        console.error(
-          '⚠️ Error al llamar a DeepSeek API, ejecutando fallback a Gemini:',
-          deepseekError.response?.data || deepseekError.message
-        );
+              console.error(
+                '⚠️ Error al llamar a DeepSeek API, ejecutando fallback a Gemini:',
+                deepseekError.response?.data || deepseekError.message
+              );
 
-        // ── 6. Fallback a Gemini API ──────────────────────────────────────
-                if (ai) {
-                  try {
-                    console.log('🔄 Ejecutando fallback a Gemini API...');
-                    const model = ai.getGenerativeModel({
-                      model: 'gemini-pro',
-                      systemInstruction
+              // ── 6. Fallback a Gemini API con Function Calling ──────────────────
+              if (ai) {
+                try {
+                  console.log('🔄 Ejecutando fallback a Gemini API con Function Calling...');
+            
+                  // Definición de herramientas compatible con Google Generative AI SDK v1beta
+                  const geminiTools = [{
+                    functionDeclarations: [{
+                      name: 'searchBeautyKnowledge',
+                      description: 'Busca información relevante en la base de conocimiento de belleza y skincare.',
+                      parameters: {
+                        type: 'OBJECT',
+                        properties: {
+                          query: { type: 'STRING', description: 'La consulta o pregunta del usuario sobre belleza.' }
+                        },
+                        required: ['query']
+                      }
+                    }]
+                  }];
+
+                  const model = ai.getGenerativeModel({
+                    model: 'gemini-1.5-flash',
+                    systemInstruction,
+                    tools: geminiTools,
+                    toolConfig: { functionCallingConfig: { mode: 'AUTO' } }
+                  });
+
+                  let result = await model.generateContent({ contents });
+                  let response = await result.response;
+
+                  // Manejar Function Calling si el modelo lo solicita
+                  const functionCalls = response.functionCalls?.() || [];
+                  if (functionCalls.length > 0) {
+                    console.log('🔄 [Fallback Gemini] Function Calling activado');
+              
+                    const toolResponses = [];
+                    for (const functionCall of functionCalls) {
+                      const functionName = functionCall.name;
+                      const functionArgs = functionCall.args || {};
+
+                      notifyUserAuraStatus(parsedUserId, { state: 'executing_tool', tool: functionName });
+                      console.log(`🛠️  [Fallback Gemini] Ejecutando herramienta: ${functionName}`);
+
+                      const toolResult = await executeAuraTool(functionName, functionArgs, parsedUserId);
+
+                      toolResponses.push({
+                        name: functionName,
+                        response: { result: JSON.stringify(toolResult) }
+                      });
+                    }
+
+                    // Segunda llamada con los resultados de las herramientas
+                    console.log('🔄 [Fallback Gemini] Sintetizando respuesta final...');
+                    const synthesisResult = await model.generateContent({
+                      contents: [
+                        ...contents,
+                        { role: 'model', parts: [{ functionCalls }] },
+                        { role: 'user', parts: [{ functionResponses: toolResponses }] }
+                      ]
                     });
-                    const result = await model.generateContent({ contents });
-                    const geminiResponse = await result.response;
-                    aiResponseText = geminiResponse.text();
-                  } catch (geminiError) {
-                    console.error('❌ Error de llamada a la API de Gemini (fallback):', geminiError);
+
+                    const synthesisResponse = await synthesisResult.response;
+                    aiResponseText = synthesisResponse.text() || '';
+                    console.log('✅ [Fallback Gemini] Respuesta sintetizada con Function Calling');
+                  } else if (response.text()) {
+                    // Respuesta directa sin function calls
+                    aiResponseText = response.text();
+                    console.log('✅ [Fallback Gemini] Respuesta directa sin Function Calling');
                   }
-                } else {
-                  console.warn('⚠️ Gemini API no configurada (GEMINI_API_KEY ausente). No hay fallback disponible.');
+                } catch (geminiError) {
+                  console.error('❌ Error de llamada a la API de Gemini (fallback):', geminiError.message || geminiError);
+                  // Fallback silencioso - no colapsar, usar respuesta por defecto
                 }
-      }
+              } else {
+                console.warn('⚠️ Gemini API no configurada (GEMINI_API_KEY ausente). No hay fallback disponible.');
+              }
+            }
     } else {
       console.warn('⚠️ DEEPSEEK_API_KEY no configurada. AURA no puede generar respuestas de IA.');
     }
