@@ -357,7 +357,7 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
                   try {
                     console.log('🔄 Ejecutando fallback a Gemini API...');
                     const model = ai.getGenerativeModel({
-                      model: 'gemini-1.5-flash',
+                      model: 'gemini-pro',
                       systemInstruction
                     });
                     const result = await model.generateContent({ contents });
