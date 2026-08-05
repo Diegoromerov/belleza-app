@@ -17,6 +17,7 @@ import 'services/secure_storage_service.dart';
 import 'services/audience_service.dart';
 import 'widgets/audience_toggle.dart';
 import 'shared/mens_theme.dart';
+import 'shared/theme.dart';
 
 import 'services/notification_service.dart';
 import 'screens/auth/login_screen.dart';
@@ -797,7 +798,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('‚ù?Error al enviar alerta SOS: $e'),
+          content: Text('ÔøΩ?Error al enviar alerta SOS: $e'),
           backgroundColor: Colors.redAccent,
         ),
       );
