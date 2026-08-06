@@ -1,6 +1,7 @@
 // backend/src/tests/auraToolExecutor.test.js
 const { pool } = require('../config/db');
 const { executeAuraTool, AURA_TOOLS_DEFINITIONS } = require('../services/auraToolExecutor');
+const { checkConsent, logAccess } = require('../services/consentService');
 
 jest.mock('../config/db', () => ({
   pool: {
@@ -12,6 +13,11 @@ jest.mock('../config/redis', () => ({
   isOpen: false,
   get: jest.fn(),
   set: jest.fn()
+}));
+
+jest.mock('../services/consentService', () => ({
+  checkConsent: jest.fn(),
+  logAccess: jest.fn().mockResolvedValue(undefined),
 }));
 
 describe('Pruebas unitarias de AURA Tool Executor (auraToolExecutor.js)', () => {
@@ -39,6 +45,10 @@ describe('Pruebas unitarias de AURA Tool Executor (auraToolExecutor.js)', () => 
   });
 
   test('Debería ejecutar query_user_biometric_profile delegando en ATENA', async () => {
+    // Mock consent check
+    checkConsent.mockResolvedValue({ granted: true, grantedAt: new Date(), version: '1.0' });
+    logAccess.mockResolvedValue(undefined);
+    
     pool.query.mockResolvedValueOnce({
       rows: [
         {
@@ -54,6 +64,16 @@ describe('Pruebas unitarias de AURA Tool Executor (auraToolExecutor.js)', () => 
     expect(pool.query).toHaveBeenCalled();
     expect(result.status).toBe('success');
     expect(result.recommendationText).toBe('Usar hidratante facial');
+  });
+
+  test('Debería ejecutar query_user_biometric_profile y retornar error si no hay consentimiento', async () => {
+    // Mock consent check - no consent
+    checkConsent.mockResolvedValue({ granted: false });
+    logAccess.mockResolvedValue(undefined);
+    
+    const result = await executeAuraTool('query_user_biometric_profile', { userId: 1 }, 1);
+    expect(result.error).toBe('consent_required');
+    expect(result.message).toContain('consentimiento biométrico');
   });
 
   test('Debería ejecutar search_nearby_services delegando en HERMES con PostGIS', async () => {

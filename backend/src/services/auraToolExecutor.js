@@ -5,6 +5,7 @@ const chronosAgent = require('./agents/chronosAgent');
 const hestiaAgent = require('./agents/hestiaAgent');
 const valkyrieAgent = require('./agents/valkyrieAgent');
 const { searchBeautyKnowledge } = require('./ragService');
+const { checkConsent, logAccess } = require('./consentService');
 
 /**
  * Definicón de JSON Schemas de las herramientas (Tool Definitions) para DeepSeek / Gemini Function Calling
@@ -140,6 +141,38 @@ const AURA_TOOLS_DEFINITIONS = [
  */
 async function executeAuraTool(toolName, args, userId) {
   console.log(`🛠️ [AURA Orchestration] Ejecutando herramienta: ${toolName}, Args:`, args);
+
+  // Verificar consentimiento para herramientas que acceden a datos biométricos
+  const BIOMETRIC_TOOLS = ['query_user_biometric_profile'];
+  if (BIOMETRIC_TOOLS.includes(toolName)) {
+    const targetUserId = args.userId || userId;
+    const consent = await checkConsent(targetUserId, 'all_biometric');
+    
+    if (!consent.granted) {
+      // Log intento sin consentimiento
+      await logAccess({
+        userId: targetUserId,
+        accessedBy: 'ATENA',
+        accessType: 'attempt_biometric_profile',
+        ip: null,
+        details: { toolName, requiredConsent: 'all_biometric' }
+      });
+      
+      return { 
+        error: 'consent_required', 
+        message: 'No tienes consentimiento biométrico activo. Por favor otórgalo en Configuración > Privacidad > Datos Biométricos.' 
+      };
+    }
+
+    // Log acceso autorizado
+    await logAccess({
+      userId: targetUserId,
+      accessedBy: 'ATENA',
+      accessType: 'read_biometric_profile',
+      ip: null,
+      details: { toolName }
+    });
+  }
 
   try {
     switch (toolName) {

@@ -666,7 +666,6 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
             
             let result = await model.generateContent({ contents: sanitizedContents });
             let response = await result.response;
-            const rawModelParts = response.candidates?.[0]?.content?.parts || [];
             llmUsed = 'gemini';
             
             // Manejar Function Calling si el modelo lo solicita
@@ -726,18 +725,14 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
               }
               
               // Segunda llamada con los resultados de las herramientas
+              console.log('🔄 [Fallback Gemini] Sintetizando respuesta final...');
               const synthesisResult = await model.generateContent({
                 contents: [
-                 ...sanitizedContents,
-                 { role: 'model', parts: rawModelParts },
-               { role: 'user', parts: toolResponses.map(tr => ({ 
-                functionResponse: { 
-                 name: tr.name, 
-                response: JSON.parse(tr.response.result) 
-                } 
-               })) }
-  ]
-});
+                  ...sanitizedContents,
+                  { role: 'model', parts: [{ functionCalls }] },
+                  { role: 'user', parts: [{ functionResponses: toolResponses }] }
+                ]
+              });
               
               const synthesisResponse = await synthesisResult.response;
               aiResponseText = synthesisResponse.text() || '';

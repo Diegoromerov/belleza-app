@@ -57,6 +57,16 @@ class CircuitBreaker {
       console.error(`🚨 [CIRCUIT_BREAKER] ${this.name} ha ABIERTO el circuito. Cooldown: ${this.cooldownPeriod}ms`);
     }
   }
+
+  /**
+   * Resetea el circuit breaker a estado inicial (CLOSED)
+   * Útil para tests
+   */
+  reset() {
+    this.state = 'CLOSED';
+    this.failureCount = 0;
+    this.nextAttempt = Date.now();
+  }
 }
 
 const breakers = {

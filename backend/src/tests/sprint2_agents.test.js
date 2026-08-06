@@ -3,6 +3,7 @@ const { pool } = require('../config/db');
 const atenaAgent = require('../services/agents/atenaAgent');
 const hermesAgent = require('../services/agents/hermesAgent');
 const { executeAuraTool } = require('../services/auraToolExecutor');
+const { checkConsent, logAccess } = require('../services/consentService');
 
 jest.mock('../config/db', () => ({
   pool: {
@@ -14,6 +15,11 @@ jest.mock('../config/redis', () => ({
   isOpen: false,
   get: jest.fn(),
   set: jest.fn()
+}));
+
+jest.mock('../services/consentService', () => ({
+  checkConsent: jest.fn(),
+  logAccess: jest.fn().mockResolvedValue(undefined),
 }));
 
 describe('Pruebas unitarias de Sprint 2 (Agente ATENA y Agente HERMES)', () => {
@@ -107,6 +113,10 @@ describe('Pruebas unitarias de Sprint 2 (Agente ATENA y Agente HERMES)', () => {
   describe('Integración con auraToolExecutor', () => {
 
     test('executeAuraTool debería delegar query_user_biometric_profile a ATENA', async () => {
+      // Mock consent check
+      checkConsent.mockResolvedValue({ granted: true, grantedAt: new Date(), version: '1.0' });
+      logAccess.mockResolvedValue(undefined);
+      
       pool.query.mockResolvedValueOnce({
         rows: [
           {
@@ -142,7 +152,6 @@ describe('Pruebas unitarias de Sprint 2 (Agente ATENA y Agente HERMES)', () => {
       expect(result.status).toBe('success');
       expect(result.services[0].name).toBe('Visajismo de Cejas');
     });
-
   });
 
 });
