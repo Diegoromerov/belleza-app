@@ -1,4 +1,4 @@
-/**
+﻿/**
  * backend/src/routes/biometricConsentRoutes.js
  * Rutas API para gestion de consentimientos biometricos
  * Cumple Ley 1581/2012: derechos de acceso, rectificacion, supresion
@@ -289,7 +289,8 @@ router.get('/terms', async (req, res) => {
           title: '5. Transferencia Internacional',
           content: 'Embeddings pueden procesarse en servidores NVIDIA (EE.UU.) para inferencia. No se almacenan alli. Clausulas contractuales tipo aprobadas por la SIC.'
         }
-      ];
+      ]
+    };
     
     res.json({
       success: true,
