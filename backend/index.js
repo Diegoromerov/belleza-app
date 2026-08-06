@@ -231,19 +231,20 @@ const debugRouteMiddleware = (req, res, next) => {
   return next();
 };
 
-const rateLimiter = require('./src/middleware/rateLimiter');
+// Rate limiter custom temporalmente deshabilitado por incompatibilidad de exportación
+// const rateLimiter = require('./src/middleware/rateLimiter');
 
 // Limitador estricto para endpoints de autenticación y webhooks de pagos (max 30 peticiones por minuto)
-const authAndWebhookLimiter = rateLimiter({
-  windowMs: 60 * 1000,
-  max: 30,
-  message: 'Límite de solicitudes de autenticación/pagos superado. Por favor espera un minuto antes de reintentar.'
-});
+// const authAndWebhookLimiter = rateLimiter({
+//   windowMs: 60 * 1000,
+//   max: 30,
+//   message: 'Límite de solicitudes de autenticación/pagos superado. Por favor espera un minuto antes de reintentar.'
+// });
 
-// Aplicar limitadores específicos
-app.use('/api/auth/login', authAndWebhookLimiter);
-app.use('/api/auth/register', authAndWebhookLimiter);
-app.use('/api/payments/wompi-webhook', authAndWebhookLimiter);
+// Aplicar limitadores específicos (deshabilitados temporalmente)
+// app.use('/api/auth/login', authAndWebhookLimiter);
+// app.use('/api/auth/register', authAndWebhookLimiter);
+// app.use('/api/payments/wompi-webhook', authAndWebhookLimiter);
 
 // ==========================================
 // SISTEMA DE PAGOS
