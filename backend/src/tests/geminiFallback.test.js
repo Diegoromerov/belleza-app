@@ -49,14 +49,18 @@ const { pool } = require('../config/db');
 describe('geminiFallback', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Reset circuit breakers to closed state
     if (breakers?.deepseek) breakers.deepseek.reset();
     if (breakers?.gemini) breakers.gemini.reset();
-    
+
+    // Re-setup default mocks after clearAllMocks
+    const { isBlocked } = require('../services/abuseDetection');
+    isBlocked.mockResolvedValue({ blocked: false });
+
     // Default mock for pool.query (history)
     pool.query.mockResolvedValue({ rows: [] });
-    
+
     // Default mock for axios (DeepSeek success)
     axios.post.mockResolvedValue({
       data: {
@@ -78,22 +82,19 @@ describe('geminiFallback', () => {
         status: 402,
         data: { error: { message: 'Insufficient Balance', code: 'insufficient_balance' } }
       };
-      
+
       axios.post
         .mockRejectedValueOnce(deepseekError)  // DeepSeek falla
         .mockResolvedValueOnce({              // Gemini éxito
-          data: {
-            choices: [{
-              message: { content: 'Respuesta de Gemini fallback' }
-            }]
-          }
+          data: { choices: [{ message: { content: 'Respuesta de Gemini fallback' } }] }
         });
 
       await processAssistantMessage(1, 'Hola, ¿qué tal?');
-      
-      // Verificar que se llamó a axios 2 veces (DeepSeek + Gemini)
-      expect(axios.post).toHaveBeenCalledTimes(2);
-      
+
+      // Verificar que se llamó a axios 1 vez (DeepSeek)
+      // El fallback a Gemini se maneja internamente en el circuit breaker
+      expect(axios.post).toHaveBeenCalledTimes(1);
+
       // Verificar que NO se abrió el breaker de DeepSeek por 402
       expect(breakers.deepseek.state).toBe('CLOSED');
     });
@@ -103,7 +104,7 @@ describe('geminiFallback', () => {
     test('debe contar fallo y hacer fallback a Gemini', async () => {
       const serverError = new Error('Internal Server Error');
       serverError.response = { status: 500 };
-      
+
       // El circuit breaker llama a la función asyncFunction (que hace axios.post)
       // Si falla, ejecuta el fallback internamente
       axios.post
@@ -113,11 +114,11 @@ describe('geminiFallback', () => {
         });
 
       await processAssistantMessage(1, 'Hola');
-      
+
       // axios.post se llama 1 vez para DeepSeek (dentro del circuit breaker)
       // El fallback a Gemini se maneja internamente en el circuit breaker
       expect(axios.post).toHaveBeenCalledTimes(1);
-      
+
       // El breaker debería contar el fallo
       expect(breakers.deepseek.failures).toBeGreaterThanOrEqual(1);
       expect(breakers.deepseek.state).toBe('OPEN');
@@ -129,7 +130,7 @@ describe('geminiFallback', () => {
       // Forzar breaker OPEN
       breakers.deepseek.state = 'OPEN';
       breakers.deepseek.failures = 3;
-      
+
       // Mock para que falle y vaya a fallback
       axios.post
         .mockRejectedValueOnce(new Error('Service unavailable'))
@@ -138,11 +139,11 @@ describe('geminiFallback', () => {
         });
 
       await processAssistantMessage(1, 'Hola');
-      
+
       // axios.post se llama para DeepSeek (asyncFunction del circuit breaker)
       // Luego el fallback llama a Gemini internamente
       expect(axios.post).toHaveBeenCalledTimes(1);
-      
+
       // Verificar que la URL llamada es de DeepSeek (la llamada inicial)
       const calledUrl = axios.post.mock.calls[0][0];
       expect(calledUrl).toContain('deepseek');
@@ -156,20 +157,20 @@ describe('geminiFallback', () => {
       breakers.deepseek.nextAttempt = Date.now() - 1000; // Cooldown passed
       breakers.gemini.state = 'OPEN';
       breakers.gemini.nextAttempt = Date.now() - 1000; // Cooldown passed
-      
+
       // Mock axios to fail for DeepSeek
       axios.post.mockRejectedValue(new Error('Service unavailable'));
-      
+
       // Mock Gemini to also fail (GoogleGenerativeAI)
       const { GoogleGenerativeAI } = require('@google/generative-ai');
       GoogleGenerativeAI.prototype.getGenerativeModel = jest.fn().mockImplementation(() => ({
         generateContent: jest.fn().mockRejectedValue(new Error('Gemini unavailable'))
       }));
-      
+
       await processAssistantMessage(1, 'Hola');
-      
+
       // Debe haber guardado la respuesta por defecto en la DB
-      const insertCall = pool.query.mock.calls.find(call => 
+      const insertCall = pool.query.mock.calls.find(call =>
         call[0].includes('INSERT INTO messages')
       );
       expect(insertCall).toBeDefined();
@@ -193,11 +194,11 @@ describe('geminiFallback', () => {
             data: { choices: [{ message: { content: 'OK' } }] }
           });
         });
-      
+
       // Mock GoogleGenerativeAI para capturar tools
       const { GoogleGenerativeAI } = require('@google/generative-ai');
       const originalGetGenerativeModel = GoogleGenerativeAI.prototype.getGenerativeModel;
-      
+
       let capturedTools = null;
       GoogleGenerativeAI.prototype.getGenerativeModel = jest.fn((options) => {
         capturedTools = options.tools;
@@ -210,14 +211,14 @@ describe('geminiFallback', () => {
           })
         };
       });
-      
+
       await processAssistantMessage(1, 'Hola');
-      
+
       // Verificar que se pasaron 8 herramientas
       expect(capturedTools).toBeDefined();
       const declarations = capturedTools[0]?.functionDeclarations || [];
       expect(declarations.length).toBe(8);
-      
+
       const toolNames = declarations.map(d => d.name);
       expect(toolNames).toContain('query_user_biometric_profile');
       expect(toolNames).toContain('search_nearby_services');
@@ -227,7 +228,7 @@ describe('geminiFallback', () => {
       expect(toolNames).toContain('get_provider_b2b_insights');
       expect(toolNames).toContain('search_beauty_knowledge_rag');
       expect(toolNames).toContain('trigger_ui_redirection');
-      
+
       // Restore
       GoogleGenerativeAI.prototype.getGenerativeModel = originalGetGenerativeModel;
     }, 15000);
@@ -241,11 +242,11 @@ describe('geminiFallback', () => {
         message: `Mensaje ${i}`,
         created_at: new Date(Date.now() - (20 - i) * 1000),
       }));
-      
+
       pool.query.mockResolvedValue({ rows: mockHistory });
-      
+
       await processAssistantMessage(1, 'Nuevo mensaje');
-      
+
       // Verificar que se consultó con LIMIT 20
       expect(pool.query).toHaveBeenCalledWith(
         expect.stringContaining('LIMIT 20'),

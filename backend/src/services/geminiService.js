@@ -10,6 +10,7 @@ const { sanitizeForLog, hashIdForLog } = require('../utils/piiSanitizer');
 const { logRagQuery, generateTraceId } = require('./ragLogger');
 const { trackAbuse, isBlocked } = require('./abuseDetection');
 const { checkConsent } = require('./consentService');
+const { findSimilarInCache, setCache } = require('./semanticCache');
 require('dotenv').config();
 
 // ─────────────────────────────────────────────────────────────────
@@ -208,18 +209,19 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
   let queryEmbeddingLatencyMs = 0;
   let retrievalLatencyMs = 0;
   let llmLatencyMs = 0;
-  let llmUsed = 'unknown';
-  let toolCalls = [];
-  let retrievalChunks = [];
-  let retrievalFilters = {};
-  let errorMessage = null;
-  
-  try {
-    const parsedUserId = parseInt(userId, 10);
-    if (isNaN(parsedUserId)) {
-      console.error('❌ ERROR: userId no es un número válido:', userId);
-      return;
-    }
+    let llmUsed = 'unknown';
+    let toolCalls = [];
+    let retrievalChunks = [];
+    let retrievalFilters = {};
+    let errorMessage = null;
+    let parsedUserId = 0;
+
+    try {
+      parsedUserId = parseInt(userId, 10);
+      if (isNaN(parsedUserId)) {
+        console.error('❌ ERROR: userId no es un número válido:', userId);
+        return;
+      }
 
     // Verificar bloqueo por abuso
     const { blocked, blockUntil } = await isBlocked(parsedUserId);
@@ -276,11 +278,62 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
       : '';
 
     const systemInstruction =
-      `${BASE_SYSTEM_INSTRUCTION}` +
-      `\n\n--- CATÁLOGO DE SERVICIOS ACTIVOS EN GLOWAPP ---\n${servicesContext}` +
-      `${beautySection}`;
+          `${BASE_SYSTEM_INSTRUCTION}` +
+          `\n\n--- CATÁLOGO DE SERVICIOS ACTIVOS EN GLOWAPP ---\n${servicesContext}` +
+          `${beautySection}`;
 
-    // ── 3. Recuperar historial de conversación (ventana deslizante de 20 con compresión) ───
+        // 🔍 CACHE SEMÁNTICO: Verificar si ya tenemos respuesta para query similar
+        let cachedResponse = null;
+        let queryEmbeddingForCache = null;
+    
+        if (knowledgeSearchEnabled && beautyChunks.length > 0) {
+          try {
+            queryEmbeddingForCache = await generateEmbedding(userMessageText, 'query');
+            const cached = await findSimilarInCache(queryEmbeddingForCache);
+            if (cached) {
+              cachedResponse = cached.response;
+              console.log('🎯 Cache semántico HIT - Retornando respuesta cacheada');
+              // Guardar en BD y retornar respuesta cacheada
+              const insertQuery = `
+                INSERT INTO messages (sender_id, receiver_id, message)
+                VALUES ($1, $2, $3)
+                RETURNING id, sender_id, receiver_id, message, is_read, created_at;
+              `;
+              const insertRes = await pool.query(insertQuery, [AI_USER_ID, parsedUserId, cachedResponse]);
+              const row = insertRes.rows[0];
+              const formatted = {
+                ...row,
+                sender_id: row.sender_id.toString(),
+                receiver_id: row.receiver_id.toString()
+              };
+          
+              notifyUserAuraStatus(parsedUserId, { state: 'idle' });
+              notifyUserChatMessage(parsedUserId, formatted);
+          
+              await logRagQuery({
+                trace_id: generateTraceId(),
+                user_id: parsedUserId,
+                query: userMessageText,
+                query_embedding_latency_ms: 0,
+                retrieval_latency_ms: 0,
+                chunks: [],
+                filters: retrievalFilters,
+                llm_used: 'semantic_cache',
+                llm_latency_ms: 0,
+                tool_calls: [],
+                total_latency_ms: Date.now() - totalStartTime,
+                error: null,
+                cache_hit: true,
+              });
+          
+              return formatted; // Retorno temprano
+            }
+          } catch (cacheError) {
+            console.warn('⚠️ Error en cache semántico:', cacheError.message);
+          }
+        }
+
+        // ── 3. Recuperar historial de conversación (ventana deslizante de 20 con compresión) ───
     const historyQuery = `
       SELECT sender_id, receiver_id, message, created_at
       FROM messages
@@ -510,13 +563,27 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
         errorMessage = deepseekError.message;
 
         // ── 6. Fallback a Gemini API con Function Calling ──────────────────
-        if (ai) {
-          try {
-            console.log('🔄 Ejecutando fallback a Gemini API con Function Calling...');
-        
-            // Definición de herramientas compatible con Google Generative AI SDK v1beta
-            // Las 8 herramientas AURA replicadas para Gemini Function Calling
-            const geminiTools = [
+                if (ai) {
+                  try {
+                    console.log('🔄 Ejecutando fallback a Gemini API con Function Calling...');
+
+                    // 🔍 RAG en Fallback: buscar conocimiento técnico si la query lo requiere
+                    let beautyChunksFallback = [];
+                    if (knowledgeSearchEnabled) {
+                      try {
+                        console.log(`🔍 RAG Vectorial en fallback para: "${userMessageText.substring(0, 60)}..."`);
+                        const fallbackRetrievalStart = Date.now();
+                        beautyChunksFallback = await searchBeautyKnowledge(userMessageText, { topK: 5, threshold: 0.65 });
+                        const fallbackRetrievalLatency = Date.now() - fallbackRetrievalStart;
+                        console.log(`✅ RAG Fallback: ${beautyChunksFallback.length} chunks encontrados (latencia: ${fallbackRetrievalLatency}ms)`);
+                      } catch (ragError) {
+                        console.warn('⚠️ Error en RAG fallback:', ragError.message);
+                      }
+                    }
+
+                    // Definición de herramientas compatible con Google Generative AI SDK v1beta
+                    // Las 8 herramientas AURA replicadas para Gemini Function Calling
+                    const geminiTools = [
               {
                 functionDeclarations: [
                   {
@@ -632,7 +699,16 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
             }));
             
             // Sanitizar systemInstruction para Gemini
-            const sanitizedSystemInstruction = sanitizeContextForLLM(systemInstruction, parsedUserId);
+                        // Inyectar RAG chunks del fallback si existen
+                        let fallbackSystemInstruction = systemInstruction;
+                        if (beautyChunksFallback.length > 0) {
+                          const fallbackBeautyKnowledge = formatKnowledgeContext(beautyChunksFallback);
+                          if (fallbackBeautyKnowledge) {
+                            fallbackSystemInstruction += `\n\n--- CONOCIMIENTO TÉCNICO DE BELLEZA (RAG FALLBACK) ---\n${fallbackBeautyKnowledge}`;
+                          }
+                        }
+            
+                        const sanitizedSystemInstruction = sanitizeContextForLLM(fallbackSystemInstruction, parsedUserId);
             
             // Usar circuit breaker para Gemini si está disponible
             let model;
@@ -780,17 +856,32 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
     const row = insertRes.rows[0];
 
     const formatted = {
-      ...row,
-      sender_id: row.sender_id.toString(),
-      receiver_id: row.receiver_id.toString()
-    };
+          ...row,
+          sender_id: row.sender_id.toString(),
+          receiver_id: row.receiver_id.toString()
+        };
 
-    console.log(`🤖 Respuesta de AURA enviada con éxito al usuario ${parsedUserId}.`);
+        console.log(`🤖 Respuesta de AURA enviada con éxito al usuario ${parsedUserId}.`);
 
-    notifyUserAuraStatus(parsedUserId, { state: 'idle' });
-    notifyUserChatMessage(parsedUserId, formatted);
+        notifyUserAuraStatus(parsedUserId, { state: 'idle' });
+        notifyUserChatMessage(parsedUserId, formatted);
 
-    // ── 9. Registrar trazabilidad RAG ────────────────────────────────────
+        // 💾 CACHE SEMÁNTICO: Guardar respuesta para queries similares futuras
+        if (knowledgeSearchEnabled && queryEmbeddingForCache && !cachedResponse) {
+          try {
+            await setCache(queryEmbeddingForCache, aiResponseText, {
+              chunks: retrievalChunks,
+              tools: toolCalls,
+              llm_used: llmUsed,
+              timestamp: Date.now(),
+            });
+            console.log('💾 Cache semántico guardado para query');
+          } catch (cacheError) {
+            console.warn('⚠️ Error guardando en cache semántico:', cacheError.message);
+          }
+        }
+
+        // ── 9. Registrar trazabilidad RAG ────────────────────────────────────
     const totalLatencyMs = Date.now() - totalStartTime;
     
     await logRagQuery({

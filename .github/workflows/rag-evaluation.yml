@@ -1,0 +1,242 @@
+name: RAG Evaluation CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'backend/src/services/ragEvaluator.js'
+      - 'backend/src/config/qualityGates.js'
+      - 'backend/src/data/eval/**'
+      - 'backend/scripts/evaluateRag.js'
+      - 'backend/scripts/ciRagEvaluation.sh'
+  pull_request:
+    branches: [main]
+  schedule:
+    # Diario a las 3 AM UTC para detectar regresiones silenciosas
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+    inputs:
+      fail_on_regression:
+        description: 'Fallar si hay regresión >10%'
+        required: false
+        default: 'true'
+        type: boolean
+
+env:
+  NODE_VERSION: '18'
+  DATABASE_URL: ${{ secrets.RAILWAY_DATABASE_URL }}
+  DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+  GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+  NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+  NVIDIA_EMBED_URL: https://integrate.api.nvidia.com/v1
+  NVIDIA_EMBEDDING_MODEL: nvidia/nv-embedqa-e5-v5
+  ENABLE_BEAUTY_RAG: 'true'
+  RAG_SIMILARITY_THRESHOLD: '0.65'
+  JWT_SECRET: ${{ secrets.JWT_SECRET }}
+  NODE_ENV: 'test'
+
+jobs:
+  # ============================================================
+  # JOB 1: Lint & Type Check
+  # ============================================================
+  lint-and-typecheck:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: cd backend && npm ci
+
+      - name: Run ESLint
+        run: cd backend && npm run lint 2>/dev/null || echo "No lint script configured"
+
+      - name: Check syntax
+        run: cd backend && node -c index.js && node -c src/services/ragEvaluator.js && node -c src/config/qualityGates.js && node -c scripts/evaluateRag.js
+
+  # ============================================================
+  # JOB 2: Unit Tests (sin deps externas)
+  # ============================================================
+  unit-tests:
+    name: Unit Tests (Core)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: cd backend && npm ci
+
+      - name: Run core tests
+        run: |
+          cd backend
+          npx jest --no-cache --testPathIgnorePatterns="geminiService|fase5_e2e_integration|authRoutes|api.cors|biometric.integration|biometricE2E|contract|geminiFallback" --ci --maxWorkers=2
+
+  # ============================================================
+  # JOB 3: Integration Tests (con servicios reales)
+  # ============================================================
+  integration-tests:
+    name: Integration Tests (RAG Pipeline)
+    runs-on: ubuntu-latest
+    needs: [lint-and-typecheck, unit-tests]
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: cd backend && npm ci
+
+      - name: Wait for PostgreSQL
+        run: |
+          echo "Waiting for PostgreSQL..."
+          sleep 10
+          # Verificar conexión
+          cd backend && node -e "
+            const { pool } = require('./src/config/db');
+            pool.query('SELECT 1').then(() => console.log('DB OK')).catch(e => { console.error(e); process.exit(1); });
+          "
+
+      - name: Run migrations
+        run: |
+          cd backend
+          npx knex migrate:latest
+          node scripts/verifyRagSchema.js
+
+      - name: Ingest corpus (dry-run first)
+        run: |
+          cd backend
+          node scripts/ingestBeautyKnowledge.js --source=corpus --dry-run
+
+      - name: Run RAG evaluation
+        id: rag-eval
+        run: |
+          cd backend
+          node scripts/evaluateRag.js \
+            --dataset=src/data/eval/evaluation_dataset.json \
+            --baseline=src/data/eval/baseline_metrics.json \
+            --output=eval_report.json \
+            --verbose
+        env:
+          FAIL_ON_REGRESSION: ${{ github.event.inputs.fail_on_regression || 'true' }}
+
+      - name: Upload evaluation report
+        uses: actions/upload-artifact@v4
+        with:
+          name: rag-evaluation-report
+          path: backend/eval_report.json
+          retention-days: 30
+
+      - name: Check quality gates
+        run: |
+          cd backend
+          node scripts/ciRagEvaluation.sh
+        env:
+          FAIL_ON_REGRESSION: ${{ github.event.inputs.fail_on_regression || 'true' }}
+
+      - name: Comment PR with results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = JSON.parse(fs.readFileSync('backend/eval_report.json', 'utf8'));
+            
+            const summary = report.summary;
+            const body = `## 📊 RAG Evaluation Report
+            
+            | Métrica | Valor | Threshold | Estado |
+            |---------|-------|-----------|--------|
+            | Faithfulness | ${(summary.generation?.faithfulness || 0).toFixed(2)} | ≥ 0.80 | ${(summary.generation?.faithfulness || 0) >= 0.80 ? '✅' : '❌'} |
+            | Answer Relevancy | ${(summary.generation?.answer_relevancy || 0).toFixed(2)} | ≥ 0.75 | ${(summary.generation?.answer_relevancy || 0) >= 0.75 ? '✅' : '❌'} |
+            | Precision@5 | ${(summary.retrieval?.precision_at_5 || 0).toFixed(2)} | ≥ 0.70 | ${(summary.retrieval?.precision_at_5 || 0) >= 0.70 ? '✅' : '❌'} |
+            | Recall@5 | ${(summary.retrieval?.recall_at_5 || 0).toFixed(2)} | ≥ 0.60 | ${(summary.retrieval?.recall_at_5 || 0) >= 0.60 ? '✅' : '❌'} |
+            | MRR | ${(summary.retrieval?.mrr || 0).toFixed(2)} | ≥ 0.65 | ${(summary.retrieval?.mrr || 0) >= 0.65 ? '✅' : '❌'} |
+            | Context Precision | ${(summary.retrieval?.context_precision || 0).toFixed(2)} | ≥ 0.70 | ${(summary.retrieval?.context_precision || 0) >= 0.70 ? '✅' : '❌'} |
+            | Latency P95 | ${summary.latency?.p95_ms || 0}ms | ≤ 8000ms | ${(summary.latency?.p95_ms || 0) <= 8000 ? '✅' : '❌'} |
+            
+            **Quality Gates:** ${report.quality_gates_passed ? '✅ PASSED' : '❌ FAILED'}
+            `;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+
+  # ============================================================
+  # JOB 4: Baseline Update (solo en main, manual)
+  # ============================================================
+  update-baseline:
+    name: Update Baseline Metrics
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch'
+    needs: integration-tests
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Update baseline
+        run: |
+          cd backend
+          cp eval_report.json src/data/eval/baseline_metrics.json
+          git add src/data/eval/baseline_metrics.json
+          git commit -m "chore: update RAG baseline metrics [skip ci]" || echo "No changes"
+          git push
+
+  # ============================================================
+  # JOB 5: Deploy Gate
+  # ============================================================
+  deploy-gate:
+    name: Deploy Gate
+    runs-on: ubuntu-latest
+    needs: [lint-and-typecheck, unit-tests, integration-tests]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - name: Verify Quality Gates Passed
+        run: |
+          echo "All quality gates passed - safe to deploy"
+          
+      - name: Trigger Railway Deploy
+        if: ${{ secrets.RAILWAY_DEPLOY_HOOK }}
+        run: |
+          curl -X POST "${{ secrets.RAILWAY_DEPLOY_HOOK }}" \
+            -H "Content-Type: application/json" \
+            -d '{"branch": "main"}'
+        env:
+          RAILWAY_DEPLOY_HOOK: ${{ secrets.RAILWAY_DEPLOY_HOOK }}

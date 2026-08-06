@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# Railway CLI wrapper for Hermes Agent (Windows Git Bash compatible)
+# Usage: railway <command> [args...]
+# Requires: RAILWAY_TOKEN env var, Python 3, requests library
+
+# Use absolute Windows path to avoid MSYS path conversion issues
+PYTHON_SCRIPT="C:/beauty-app/.hermes/scripts/railway/railway_api.py"
+
+# Check if Python script exists
+if [[ ! -f "$PYTHON_SCRIPT" ]]; then
+    echo "Error: railway_api.py not found at $PYTHON_SCRIPT" >&2
+    exit 1
+fi
+
+# Check for RAILWAY_TOKEN
+if [[ -z "$RAILWAY_TOKEN" ]]; then
+    echo "Error: RAILWAY_TOKEN environment variable not set" >&2
+    echo "Get your token from: https://railway.app/account/tokens" >&2
+    exit 1
+fi
+
+# Check Python and requests
+if ! command -v python3 &> /dev/null && ! command -v python &> /dev/null; then
+    echo "Error: Python not found. Install Python 3." >&2
+    exit 1
+fi
+
+PYTHON_CMD="python3"
+command -v python3 &> /dev/null || PYTHON_CMD="python"
+
+# Check requests module
+if ! $PYTHON_CMD -c "import requests" 2>/dev/null; then
+    echo "Error: Python 'requests' module not installed. Run: pip install requests" >&2
+    exit 1
+fi
+
+# Execute
+exec "$PYTHON_CMD" "$PYTHON_SCRIPT" "$@"

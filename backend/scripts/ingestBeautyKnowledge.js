@@ -14,7 +14,7 @@
 const fs = require('fs');
 const path = require('path');
 const { pool } = require('../src/config/db');
-const { chunkMarkdownDocument } = require('../src/services/chunkingService');
+const { chunkMarkdownDocument, processDocumentWithFrontmatter } = require('../src/services/chunkingService');
 const { enrichChunkMetadata } = require('../src/services/metadataEnricher');
 const { generateEmbedding, generateBatchEmbeddings } = require('../src/services/embeddingService');
 const { sanitizeForLog } = require('../src/utils/piiSanitizer');
@@ -202,51 +202,49 @@ async function readSqlSeed() {
  */
 async function processDocument(doc, options = {}) {
   const { dryRun, verbose } = options;
-  const { metadata, content, filePath } = doc;
+  const { content, filePath } = doc;
+  // content aquí ya viene con frontmatter incluido (raw content del archivo)
   
   if (!content || content.trim().length < 50) {
     console.warn(`⚠️ Contenido muy corto en ${filePath}, omitiendo`);
     return [];
   }
-  
-  // 1. Chunking semántico
-  const chunks = require('../src/services/chunkingService').chunkMarkdownDocument(content, {
+
+  // 1. Chunking semántico + extracción metadata semántica (frontmatter + contenido)
+  // Usar la nueva función unificada que maneja frontmatter + chunking + metadata semántica
+  const { processDocumentWithFrontmatter } = require('../src/services/chunkingService');
+  const chunks = processDocumentWithFrontmatter(content, {
     maxTokens: 600,
     overlapTokens: 50,
     respectSentences: true,
     respectParagraphs: true,
   });
-  
+
   if (verbose) {
     console.log(`📄 ${path.basename(filePath)}: ${chunks.length} chunks generados`);
   }
-  
-  // 2. Enriquecer metadata + generar embeddings
+
+  // 2. Generar embeddings (metadata ya viene enriquecida en chunk.metadata)
   const processedChunks = [];
-  
+
   for (let i = 0; i < chunks.length; i++) {
     const chunk = chunks[i];
-    
+
     try {
-      // Enriquecer metadata
-      const enrichedMetadata = await enrichChunkMetadata(chunk.content, {
-        ...metadata,
-        source: metadata.source || 'corpus',
-        sourceFile: filePath,
-      });
-      
+      // Metadata ya viene enriquecida (frontmatter + semántica)
+      const enrichedMetadata = chunk.metadata || {};
+
       // Generar embedding (input_type='passage' para indexar)
       const embedding = await require('../src/services/embeddingService').generateEmbedding(
         chunk.content,
         'passage'
       );
-      
+
       processedChunks.push({
-        title: `${metadata.title || 'Sin título'} - Parte ${chunk.index + 1}`,
-        category: enrichedMetadata.category || metadata.category || 'skincare',
+        title: `${enrichedMetadata.title || 'Sin título'} - Parte ${chunk.index + 1}`,
+        category: enrichedMetadata.category || 'skincare',
         content: chunk.content,
         metadata: {
-          ...metadata,
           ...enrichedMetadata,
           chunkIndex: chunk.index,
           totalChunks: chunk.totalChunks,
@@ -254,7 +252,7 @@ async function processDocument(doc, options = {}) {
           sectionLevel: chunk.sectionLevel,
         },
         embedding,
-        source: metadata.source || 'corpus',
+        source: enrichedMetadata.source || 'corpus',
         sourceFile: filePath,
         contentHash: chunk.contentHash,
         skinType: enrichedMetadata.skin_type,
@@ -263,17 +261,17 @@ async function processDocument(doc, options = {}) {
         ingredients: enrichedMetadata.ingredients,
         contraindications: enrichedMetadata.contraindications,
       });
-      
+
       if (verbose) {
         console.log(`  ✅ Chunk ${i + 1}/${chunks.length}: ${require('../src/utils/piiSanitizer').sanitizeForLog(chunk.content.slice(0, 80))}`);
       }
-      
+
     } catch (error) {
       console.error(`❌ Error procesando chunk ${i + 1} de ${filePath}:`, error.message);
       // Continuar con siguiente chunk
     }
   }
-  
+
   return processedChunks;
 }
 

@@ -12,6 +12,16 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+# Help early exit
+if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
+  echo "CI RAG Evaluation Script"
+  echo "Usage: ciRagEvaluation.sh [options]"
+  echo "Options:"
+  echo "  --help, -h     Show this help"
+  echo "  --fail-on-regression  Exit with code 1 if quality gates fail"
+  exit 0
+fi
+
 # Configuración
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
