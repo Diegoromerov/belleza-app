@@ -41,4 +41,35 @@ const testConnection = async () => {
   }
 };
 
-module.exports = { pool, testConnection };
+// ── Conexión a la base de datos RAG (pgvector) ──
+// Solo se crea si existe la variable RAG_DATABASE_URL
+const ragPool = process.env.RAG_DATABASE_URL
+  ? new Pool({
+      connectionString: process.env.RAG_DATABASE_URL,
+      ssl: process.env.RAG_DATABASE_URL.includes('railway.internal')
+        ? false
+        : { rejectUnauthorized: false },
+      max: isProduction ? 15 : 10,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 5000,
+    })
+  : null;
+
+const testRagConnection = async () => {
+  if (!ragPool) {
+    console.warn('⚠️ ragPool no configurado — RAG_DATABASE_URL ausente');
+    return false;
+  }
+  try {
+    const client = await ragPool.connect();
+    const res = await client.query('SELECT current_database()');
+    client.release();
+    console.log(`✅ RAG conectado a: ${res.rows[0].current_database}`);
+    return true;
+  } catch (err) {
+    console.error('❌ Error conectando a RAG:', err.message);
+    return false;
+  }
+};
+
+module.exports = { pool, testConnection, ragPool, testRagConnection };
