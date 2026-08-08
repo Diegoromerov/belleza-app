@@ -4,7 +4,7 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { pool } = require('../config/db');
 const { notifyUserChatMessage, notifyUserAuraStatus } = require('./websocketService');
 const { AURA_TOOLS_DEFINITIONS, executeAuraTool } = require('./auraToolExecutor');
-const { searchBeautyKnowledge, formatKnowledgeContext } = require('./ragService');
+const { searchBeautyKnowledge, formatKnowledgeContext, generateEmbedding } = require('./ragService');
 const { breakers } = require('./circuitBreakerService');
 const { sanitizeForLog, hashIdForLog } = require('../utils/piiSanitizer');
 const { logRagQuery, generateTraceId } = require('./ragLogger');
@@ -321,7 +321,7 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
     
         if (knowledgeSearchEnabled && beautyChunks.length > 0) {
           try {
-            queryEmbeddingForCache = await generateEmbedding(userMessageText, 'query');
+            queryEmbeddingForCache = await generateEmbedding(userMessageText);
             const cached = await findSimilarInCache(queryEmbeddingForCache);
             if (cached) {
               cachedResponse = cached.response;
