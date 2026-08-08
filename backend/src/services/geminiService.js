@@ -74,7 +74,32 @@ const CACHE_TTL = 300000; // 5 minutos en ms
  * Palabras clave que activan la búsqueda RAG de conocimiento técnico de belleza.
  * Ampliar este array si se añaden nuevas categorías de consulta.
  */
-const RAG_TRIGGER_KEYWORDS = ['piel', 'cabello', 'ingrediente', 'ingredientes', 'rutina'];
+const RAG_TRIGGER_KEYWORDS = [
+  // Categorías principales
+  'piel', 'cabello', 'ingrediente', 'ingredientes', 'rutina',
+  // Procedimientos estéticos (alto riesgo)
+  'microblading', 'micropigmentacion', 'nanoblading', 'microshading', 'tatuaje', 'cejas',
+  // Ingredientes activos
+  'retinol', 'bakuchiol', 'hidroquinona', 'niacinamida', 'acido salicilico', 'acido glicolico',
+  'acido hialuronico', 'vitamina c', 'acido azelaico', 'acido tranexamico', 'AHA', 'BHA',
+  // Contraindicaciones y seguridad
+  'embarazo', 'embarazada', 'lactancia', 'lactando', 'contraindicacion', 'alergia', 'reaccion',
+  'queloide', 'cicatriz', 'infeccion', 'granuloma', 'dermatologo',
+  // Regulación
+  'regulado', 'regulacion', 'norma', 'normativa', 'ley', 'resolucion', 'invima', 'fda',
+  'minsalud', 'anvisa', 'sanidad',
+  // Uñas y manos
+  'unas', 'manicura', 'pedicura', 'onicomicosis', 'esmalte', 'gel', 'acrilico',
+  // Colorimetría y visajismo
+  'undertone', 'subtono', 'fototipo', 'fitzpatrick', 'colorimetria', 'tinte', 'decoloracion',
+  // Diagnóstico capilar
+  'alopecia', 'caida del cabello', 'caspa', 'porosidad', 'frizz', 'rizos',
+  // Síntomas y problemas
+  'acne', 'espinilla', 'poro', 'mancha', 'melasma', 'rosacea', 'dermatitis', 'eczema',
+  'arrugas', 'envejecimiento', 'flacidez',
+  // Consultas de conocimiento
+  'que es', 'como funciona', 'para que sirve', 'es seguro', 'puedo usar', 'recomiendas'
+];
 
 /**
  * Obtiene el catálogo actual de servicios de la base de datos con caché de 5 minutos.
@@ -254,7 +279,7 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
       
       const [servicesCtx, chunks] = await Promise.all([
         getServicesContext(),
-        searchBeautyKnowledge(userMessageText, { topK: 5, threshold: 0.72 })
+        searchBeautyKnowledge(userMessageText, { topK: 5, threshold: 0.45 })
       ]);
       
       servicesContext = servicesCtx;
@@ -573,7 +598,7 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
                       try {
                         console.log(`🔍 RAG Vectorial en fallback para: "${userMessageText.substring(0, 60)}..."`);
                         const fallbackRetrievalStart = Date.now();
-                        beautyChunksFallback = await searchBeautyKnowledge(userMessageText, { topK: 5, threshold: 0.65 });
+                        beautyChunksFallback = await searchBeautyKnowledge(userMessageText, { topK: 5, threshold: 0.45 });
                         const fallbackRetrievalLatency = Date.now() - fallbackRetrievalStart;
                         console.log(`✅ RAG Fallback: ${beautyChunksFallback.length} chunks encontrados (latencia: ${fallbackRetrievalLatency}ms)`);
                       } catch (ragError) {
