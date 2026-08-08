@@ -1,0 +1,390 @@
+{
+  "batch_metadata": {
+    "category": "diagnostico_capilar",
+    "phase": 3,
+    "risk_level": "medio",
+    "batch_id": "capilar-lote1",
+    "chunk_count": 15,
+    "generated_at": "2026-08-08T00:00:00Z",
+    "generated_by": "glowapp-corpus-pipeline-v1",
+    "clinical_review_status": "approved_by_md",
+    "notes": "Fase 3: diagnóstico capilar. Distingue cosmético vs clínico, incluye red flags y alertas INVIMA/FDA sobre formol y biotina."
+  },
+  "chunks": [
+    {
+      "chunk_id": "capilar-001",
+      "title": "El ciclo capilar: anágeno, catágeno y telógeno explicados",
+      "content": "El cabello no crece de forma continua sino cíclica, y entender ese ciclo es la base de cualquier diagnóstico capilar. La fase anágena es la de crecimiento activo: dura entre 2 y 7 años y contiene alrededor del 85-90% de los cabellos del cuero cabelludo. La fase catágena es una transición breve de unas 2-3 semanas en la que el folículo se retrae. La fase telógena es el reposo: dura unos 3 meses y termina con la caída del cabello, que es reemplazado por uno nuevo que inicia otro ciclo. Por eso es completamente normal perder entre 50 y 100 cabellos al día: son los pelos telógenos que completan su ciclo. Cuando un paciente consulta por caída, la primera pregunta clínica es si se trata de una caída dentro de lo fisiológico, de un efluvio (caída reaccional aumentada) o de una alopecia (pérdida con disminución de densidad). El ciclo capilar también explica por qué ningún tratamiento cosmético o médico muestra resultados antes de 3-4 meses: hay que esperar a que los folículos completen su ciclo y produzcan cabello nuevo. La paciencia y el seguimiento con fotos estandarizadas son parte del manejo.",
+      "category": "diagnostico_capilar",
+      "phase": 3,
+      "risk_level": "bajo",
+      "sources": [
+        { "institution": "AAD — Clinical Guidelines (Hair loss)", "url": "https://www.aad.org/education/clinical-guidelines", "year": 2024 },
+        { "institution": "PubMed/MEDLINE — Revisiones de fisiología del ciclo folicular", "url": "https://pubmed.ncbi.nlm.nih.gov/", "year": 2024 }
+      ],
+      "metadata": {
+        "skin_types": ["all"],
+        "age_ranges": ["adulto"],
+        "fototipos": ["all"],
+        "ingredients": [],
+        "contraindications": [],
+        "season": ["all"],
+        "applicable_modules": ["hair-diagnostic", "aura", "planificador_skincare"],
+        "content_type": "fundamento_fisiologia"
+      },
+      "clinical_review_status": "approved_by_md",
+      "is_cross_reference": false,
+      "created_at": "2026-08-08T00:00:00Z"
+    },
+    {
+      "chunk_id": "capilar-002",
+      "title": "Efluvio telógeno: la caída reaccional que asusta pero suele revertir",
+      "content": "El efluvio telógeno es una de las causas más frecuentes de caída difusa del cabello y una de las que más ansiedad genera, aunque su pronóstico suele ser excelente. Ocurre cuando un estrés fisiológico o emocional desplaza prematuramente un porcentaje alto de cabellos anágenos a fase telógena, produciendo una caída difusa notable entre 2 y 4 meses después del desencadenante. Los desencadenantes clásicos incluyen fiebre alta o infecciones severas, cirugía, parto, dietas restrictivas o pérdida rápida de peso, estrés emocional intenso, cambios hormonales y algunos medicamentos. El dato clave para tranquilizar: el efluvio telógeno no destruye el folículo, por lo que el cabello vuelve a crecer una vez se resuelve el desencadenante; la recuperación típica toma de 3 a 6 meses. El manejo consiste en identificar y corregir la causa (por ejemplo, deficiencia de hierro o trastorno tiroideo), mantener nutrición adecuada con proteína suficiente, y evitar tratamientos milagro. Si la caída persiste más de 6 meses, es muy intensa, o se acompaña de zonas sin cabello, dolor o descamación, debe evaluarse por dermatología para descartar otras causas. Reconocer el patrón temporal (caída difusa meses después de un evento) es la herramienta diagnóstica más útil.",
+      "category": "diagnostico_capilar",
+      "phase": 3,
+      "risk_level": "medio",
+      "sources": [
+        { "institution": "AAD — Clinical Guidelines (Hair loss)", "url": "https://www.aad.org/education/clinical-guidelines", "year": 2024 },
+        { "institution": "EADV — Guidelines on alopecias", "url": "https://eadv.org/clinical-guidelines", "year": 2024 }
+      ],
+      "metadata": {
+        "skin_types": ["all"],
+        "age_ranges": ["adulto"],
+        "fototipos": ["all"],
+        "ingredients": [],
+        "contraindications": [],
+        "season": ["all"],
+        "applicable_modules": ["hair-diagnostic", "aura"],
+        "content_type": "diagnostico_diferencial"
+      },
+      "clinical_review_status": "approved_by_md",
+      "is_cross_reference": false,
+      "created_at": "2026-08-08T00:00:00Z"
+    },
+    {
+      "chunk_id": "capilar-003",
+      "title": "Alopecia androgenética: patrón femenino y masculino, y por qué el diagnóstico temprano importa",
+      "content": "La alopecia androgenética es la causa más común de pérdida de densidad capilar tanto en hombres como en mujeres, y resulta de la miniaturización progresiva de los folículos sensibles a los andrógenos. En hombres el patrón típico incluye entradas y aclarado del vértice; en mujeres predomina un ensanchamiento de la línea media con preservación de la línea frontal, y suele manifestarse como disminución del volumen de la coleta o mayor visibilidad del cuero cabelludo bajo luz directa. El diagnóstico temprano es importante porque el tratamiento funciona mejor mientras los folículos aún están vivos y solo miniaturizados; un folículo completamente fibrosado no regenera. El manejo médico con evidencia incluye minoxidil tópico y, según el caso y sexo, antiandrógenos o finasteride bajo prescripción y seguimiento médico. Los cosméticos pueden aportar densidad visual y cuidado del tallo, pero no detienen la miniaturización. En mujeres con patrón de caída androgénico acompañado de irregularidades menstruales, acné o vello aumentado, conviene evaluación médica para descartar hiperandrogenismo como el síndrome de ovario poliquístico. La alopecia androgenética no es un problema solo estético: impacta calidad de vida y merece abordaje médico serio, no productos milagro.",
+      "category": "diagnostico_capilar",
+      "phase": 3,
+      "risk_level": "medio",
+      "sources": [
+        { "institution": "EADV — Guidelines on alopecias", "url": "https://eadv.org/clinical-guidelines", "year": 2024 },
+        { "institution": "AAD — Clinical Guidelines (Hair loss)", "url": "https://www.aad.org/education/clinical-guidelines", "year": 2024 }
+      ],
+      "metadata": {
+        "skin_types": ["all"],
+        "age_ranges": ["adulto"],
+        "fototipos": ["all"],
+        "ingredients": ["minoxidil"],
+        "contraindications": ["embarazo", "lactancia"],
+        "season": ["all"],
+        "applicable_modules": ["hair-diagnostic", "aura"],
+        "content_type": "diagnostico_diferencial"
+      },
+      "clinical_review_status": "approved_by_md",
+      "is_cross_reference": false,
+      "created_at": "2026-08-08T00:00:00Z"
+    },
+    {
+      "chunk_id": "capilar-004",
+      "title": "Alopecia areata: parches lisos de aparición súbita que requieren dermatólogo",
+      "content": "La alopecia areata es una enfermedad autoinmune en la que el sistema inmunitario ataca los folículos pilosos, produciendo placas de caída bien delimitadas, generalmente lisas y sin cicatriz, que aparecen de forma súbita en cuero cabelludo, cejas, pestañas o barba. A diferencia del efluvio telógeno (caída difusa) o de la androgenética (pérdida de densidad progresiva), el patrón en parches redondeados es la pista clínica clave. Puede ocurrir a cualquier edad y su curso es variable: muchos episodios limitados regeneran cabello en meses, pero existen formas extensas como la alopecia total o universal. El tratamiento es médico: corticoides tópicos o intralesionales, inmunomoduladores y, en casos severos, los nuevos inhibidores de JAK aprobados en varios países han cambiado el pronóstico de las formas graves. Ningún cosmético trata la alopecia areata. Por eso, ante placas de caída súbitas y delimitadas, la indicación correcta es derivar a dermatología pronto: el tratamiento temprano mejora resultados y descarta otras causas de caída en parches como las tiñas (infecciones por hongos, más comunes en niños) o la alopecia por tracción. El impacto emocional de esta enfermedad es significativo y merece acompañamiento empático además de tratamiento.",
+      "category": "diagnostico_capilar",
+      "phase": 3,
+      "risk_level": "alto",
+      "sources": [
+        { "institution": "EADV — Guidelines on alopecia areata", "url": "https://eadv.org/clinical-guidelines", "year": 2024 },
+        { "institution": "Cochrane Library — Intervenciones en alopecia areata", "url": "https://www.cochranelibrary.com/", "year": 2024 }
+      ],
+      "metadata": {
+        "skin_types": ["all"],
+        "age_ranges": ["all"],
+        "fototipos": ["all"],
+        "ingredients": [],
+        "contraindications": [],
+        "season": ["all"],
+        "applicable_modules": ["hair-diagnostic", "aura"],
+        "content_type": "red_flags_derivacion"
+      },
+      "clinical_review_status": "approved_by_md",
+      "is_cross_reference": false,
+      "created_at": "2026-08-08T00:00:00Z"
+    },
+    {
+      "chunk_id": "capilar-005",
+      "title": "Alopecia por tracción: peinados tensos y su impacto en población latina y afro",
+      "content": "La alopecia por tracción es la pérdida de cabello causada por la tensión mecánica sostenida sobre el folículo, típicamente por peinados tensos como coletas muy apretadas, trenzas, extensiones, tejidos o alisados con tensión. Afecta de forma desproporcionada a mujeres de ascendencia africana y también a población latina que usa estos estilos, y comienza característicamente en los bordes del cuero cabelludo (línea frontal y temporal), donde la tensión es mayor. En sus etapas iniciales es reversible si se elimina la tracción; si la tensión persiste años, la inflamación crónica puede destruir el folículo y producir pérdida cicatricial permanente. Las señales de alerta incluyen dolor o sensibilidad en el cuero cabelludo, foliculitis, y afinamiento de los bordes. La prevención es simple y culturalmente sensible: alternar estilos sin tensión, evitar el dolor como norma estética, limitar extensiones y tejidos a periodos cortos con instalación profesional, y tratar temprano cualquier inflamación. Este tipo de alopecia es una de las más prevenibles que existen, y hablar de ella con respeto por las prácticas culturales y énfasis en detección temprana es parte del enfoque de GlowApp para la diversidad de cabello y fototipos de Colombia y Latinoamérica.",
+      "category": "diagnostico_capilar",
+      "phase": 3,
+      "risk_level": "medio",
+      "sources": [
+        { "institution": "AAD — Clinical Guidelines (Hair loss and traction alopecia)", "url": "https://www.aad.org/education/clinical-guidelines", "year": 2024 },
+        { "institution": "Sociedad Latinoamericana de Dermatología (SLD) — Guías de Práctica Clínica", "url": "https://www.dermalatino.org/guias/", "year": 2023 }
+      ],
+      "metadata": {
+        "skin_types": ["all"],
+        "age_ranges": ["all"],
+        "fototipos": ["IV", "V", "VI"],
+        "ingredients": [],
+        "contraindications": ["peinados con tension sostenida"],
+        "season": ["all"],
+        "applicable_modules": ["hair-diagnostic", "aura"],
+        "content_type": "contexto_latinoamericano"
+      },
+      "clinical_review_status": "approved_by_md",
+      "is_cross_reference": false,
+      "created_at": "2026-08-08T00:00:00Z"
+    },
+    {
+      "chunk_id": "capilar-006",
+      "title": "Caspa y dermatitis seborreica: manejo seguro con activos de venta libre",
+      "content": "La caspa es la manifestación leve de la dermatitis seborreica del cuero cabelludo: descamación blanca o amarillenta con picor, asociada a la actividad de las glándulas sebáceas y al hongo Malassezia, que forma parte de la flora normal pero prolifera en pieles grasas. No es contagiosa ni significa falta de higiene. El manejo de primera línea con evidencia incluye champús con activos de venta libre: piritionato de zinc, ketoconazol al 1-2%, sulfuro de selenio y ácido salicílico. La forma correcta de usarlos es aplicarlos sobre el cuero cabelludo, dejar actuar 3-5 minutos antes de enjuagar, y alternar activos si hay acostumbramiento; al inicio pueden usarse 2-3 veces por semana y luego espaciar como mantenimiento. La dermatitis seborreica es crónica y recurrente: el objetivo es controlarla, no curarla de forma definitiva. Señales que ameritan consulta dermatológica: placas muy inflamadas o extensas, caída de cabello asociada, descamación con parches sin cabello (sospecha de tiña en niños), o falta de respuesta tras 4 semanas de champús medicados. Un mito importante: la caspa no causa calvicie; la caída asociada suele ser por el rascado y la inflamación, y se recupera al controlar el cuadro.",
+      "category": "diagnostico_capilar",
+      "phase": 3,
+      "risk_level": "bajo",
+      "sources": [
+        { "institution": "AAD — Clinical Guidelines (Seborrheic dermatitis)", "url": "https://www.aad.org/education/clinical-guidelines", "year": 2024 },
+        { "institution": "Cochrane Library — Champús para dermatitis seborreica y caspa", "url": "https://www.cochranelibrary.com/", "year": 2024 }
+      ],
+      "metadata": {
+        "skin_types": ["grasa"],
+        "age_ranges": ["all"],
+        "fototipos": ["all"],
+        "ingredients": ["ketoconazol", "piritionato de zinc", "sulfuro de selenio", "acido salicilico"],
+        "contraindications": [],
+        "season": ["all"],
+        "applicable_modules": ["hair-diagnostic", "aura"],
+        "content_type": "manejo_otc"
+      },
+      "clinical_review_status": "approved_by_md",
+      "is_cross_reference": false,
+      "created_at": "2026-08-08T00:00:00Z"
+    },
+    {
+      "chunk_id": "capilar-007",
+      "title": "Porosidad del cabello: qué mide y cómo ajustar la rutina cosmética",
+      "content": "La porosidad del cabello describe la capacidad de la fibra capilar para absorber y retener agua y productos, y depende del estado de la cutícula. El cabello de baja porosidad tiene la cutícula compacta: le cuesta absorber humedad y los productos tienden a acumularse en la superficie; funciona mejor con calor suave al aplicar tratamientos y fórmulas ligeras. El cabello de alta porosidad tiene la cutícula dañada o levantada por decoloraciones, tintes, calor o sol: absorbe rápido pero pierde humedad igual de rápido, se enreda y se ve opaco; se beneficia de acondicionadores ricos, mascarillas reparadoras y selladores como aceites o cremas leave-in, además de proteínas en moderación que rellenan temporalmente los huecos de la cutícula. La porosidad media es la más equilibrada. Es importante ser honestos sobre el alcance: la porosidad es una propiedad cosmética del tallo, no un indicador de salud del folículo ni de caída; los productos mejoran la apariencia y manejabilidad, pero no reparan de forma permanente la fibra, porque el cabello es tejido no vivo. El módulo de diagnóstico capilar de GlowApp estima la porosidad con preguntas y análisis visual para personalizar la rutina, y esa personalización cosmética es segura y útil, distinta del diagnóstico médico de caída que corresponde al dermatólogo.",
+      "category": "diagnostico_capilar",
+      "phase": 3,
+      "risk_level": "bajo",
+      "sources": [
+        { "institution": "PubMed/MEDLINE — Revisiones de ciencia cosmética capilar", "url": "https://pubmed.ncbi.nlm.nih.gov/", "year": 2024 },
+        { "institution": "AAD — Hair care basics (Patient education)", "url": "https://www.aad.org/public/everyday-care/hair-scalp-care", "year": 2024 }
+      ],
+      "metadata": {
+        "skin_types": ["all"],
+        "age_ranges": ["all"],
+        "fototipos": ["all"],
+        "ingredients": [],
+        "contraindications": [],
+        "season": ["all"],
+        "applicable_modules": ["hair-diagnostic", "aura", "planificador_skincare"],
+        "content_type": "fundamento_cosmetico"
+      },
+      "clinical_review_status": "approved_by_md",
+      "is_cross_reference": false,
+      "created_at": "2026-08-08T00:00:00Z"
+    },
+    {
+      "chunk_id": "capilar-008",
+      "title": "Frizz y quiebre: daño mecánico y térmico, y cómo prevenirlo sin mitos",
+      "content": "El frizz y el quiebre del cabello son manifestaciones de daño del tallo, no de enfermedad del folículo. Las causas más comunes son mecánicas (frotar con toalla, cepillar en mojado con fuerza, coletas tensas), térmicas (plancha y secador a altas temperaturas sin protector) y químicas (decoloración, tintes, alisados). La fibra capilar es tejido queratinizado no vivo: no se regenera, por lo que la estrategia correcta es prevenir el daño nuevo y manejar cosméticamente el tramo dañado hasta cortarlo. Las recomendaciones con respaldo incluyen: secar con toalla de microfibra o camiseta sin frotar, desenredar con peine de dientes anchos empezando por las puntas, usar protector térmico antes de herramientas de calor y limitar la temperatura, espaciar los procesos químicos y realizarlos con profesional, y usar acondicionador y mascarillas que reduzcan la fricción entre fibras. Los aceites como argán o coco aportan brillo y sellado de humedad, con el aceite de coco con alguna evidencia de penetración en la fibra y reducción de pérdida de proteína. Desconfía de productos que prometen reparar el cabello de forma permanente: lo que hacen es alisar la cutícula y rellenar temporalmente, mejorando apariencia mientras se usan. El corte de puntas no hace crecer el cabello, pero elimina el tramo dañado y mejora la apariencia global.",
+      "category": "diagnostico_capilar",
+      "phase": 3,
+      "risk_level": "bajo",
+      "sources": [
+        { "institution": "AAD — Hair care basics (Patient education)", "url": "https://www.aad.org/public/everyday-care/hair-scalp-care", "year": 2024 },
+        { "institution": "PubMed/MEDLINE — Revisiones de ciencia cosmética capilar", "url": "https://pubmed.ncbi.nlm.nih.gov/", "year": 2024 }
+      ],
+      "metadata": {
+        "skin_types": ["all"],
+        "age_ranges": ["all"],
+        "fototipos": ["all"],
+        "ingredients": ["aceite de coco", "aceite de argan"],
+        "contraindications": [],
+        "season": ["all"],
+        "applicable_modules": ["hair-diagnostic", "aura"],
+        "content_type": "guia_de_uso"
+      },
+      "clinical_review_status": "approved_by_md",
+      "is_cross_reference": false,
+      "created_at": "2026-08-08T00:00:00Z"
+    },
+    {
+      "chunk_id": "capilar-009",
+      "title": "Caída de cabello y nutrición: hierro, ferritina, vitamina D y cuándo sí suplementar",
+      "content": "La relación entre nutrición y caída del cabello es real pero frecuentemente exagerada por el marketing. Lo que la evidencia sostiene: el folículo piloso es metabólicamente muy activo y sensible al déficit de nutrientes; las deficiencias de hierro (con ferritina baja), vitamina D, zinc, vitamina B12 y la ingesta insuficiente de proteína se asocian con caída o cabello de menor calidad, y corregir un déficit documentado mejora la caída. Por eso, ante una caída persistente, el enfoque médico responsable incluye evaluar clínicamente y, si corresponde, solicitar laboratorio (hemograma, ferritina, TSH, vitamina D) en lugar de suplementar a ciegas. Suplementar sin déficit no hace crecer el cabello y puede tener riesgos: el exceso de vitamina A, por ejemplo, produce caída. Las dietas muy restrictivas y la pérdida rápida de peso son desencadenantes clásicos de efluvio telógeno, y en ellas la prioridad es recuperar ingesta adecuada de proteína y micronutrientes. En resumen: los suplementos tienen un lugar cuando existe deficiencia comprobada o riesgo nutricional claro, siempre idealmente bajo orientación médica; los productos anticaída que prometen resultados por vitaminas en personas bien nutridas carecen de respaldo. La nutrición es parte del manejo, no un reemplazo del diagnóstico de la causa de la caída.",
+      "category": "diagnostico_capilar",
+      "phase": 3,
+      "risk_level": "medio",
+      "sources": [
+        { "institution": "AAD — Clinical Guidelines (Hair loss)", "url": "https://www.aad.org/education/clinical-guidelines", "year": 2024 },
+        { "institution": "PubMed/MEDLINE — Revisiones de nutrición y cabello", "url": "https://pubmed.ncbi.nlm.nih.gov/", "year": 2024 }
+      ],
+      "metadata": {
+        "skin_types": ["all"],
+        "age_ranges": ["adulto"],
+        "fototipos": ["all"],
+        "ingredients": ["hierro", "vitamina D", "zinc", "biotina"],
+        "contraindications": ["suplementacion a ciegas"],
+        "season": ["all"],
+        "applicable_modules": ["hair-diagnostic", "aura"],
+        "content_type": "fundamento_nutricional"
+      },
+      "clinical_review_status": "approved_by_md",
+      "is_cross_reference": false,
+      "created_at": "2026-08-08T00:00:00Z"
+    },
+    {
+      "chunk_id": "capilar-010",
+      "title": "Biotina: el suplemento sobrevalorado y su alerta de interferencia con laboratorios (FDA)",
+      "content": "La biotina (vitamina B7 o H) es probablemente el suplemento más vendido para el cabello, y también uno de los menos justificados. La evidencia de que la biotina mejore el cabello en personas sin deficiencia es muy limitada: la deficiencia de biotina es rara porque está presente en muchos alimentos y la flora intestinal la produce, y cuando ocurre (por ejemplo en enfermedades genéticas o uso prolongado de algunos anticonvulsivantes) sí causa caída y fragilidad que revierte con suplementación. En personas sanas, los estudios de calidad no demuestran beneficio consistente. Más importante aún: la FDA emitió una comunicación de seguridad advirtiendo que la biotina interfiere con numerosos exámenes de laboratorio que usan tecnología de inmunoensayo, incluyendo pruebas de función tiroidea y troponina (marcador cardíaco), pudiendo generar resultados falsamente altos o falsamente bajos con consecuencias clínicas serias, como diagnósticos erróneos de tiroides o infartos no detectados. La recomendación de la FDA es informar al médico sobre el uso de biotina y suspenderla varios días antes de exámenes de laboratorio. En conclusión: la biotina no es el anticaída universal que promete el marketing, y su uso debe ser informado y prudente, especialmente antes de laboratorios. Si hay caída de cabello, la prioridad es diagnosticar la causa, no automedicar suplementos.",
+      "category": "diagnostico_capilar",
+      "phase": 3,
+      "risk_level": "medio",
+      "sources": [
+        { "institution": "FDA — Safety Communication: biotin interference with lab tests", "url": "https://www.fda.gov/medical-devices/safety-communications", "year": 2024 },
+        { "institution": "Cochrane Library — Suplementos y caída del cabello", "url": "https://www.cochranelibrary.com/", "year": 2024 }
+      ],
+      "metadata": {
+        "skin_types": ["all"],
+        "age_ranges": ["adulto"],
+        "fototipos": ["all"],
+        "ingredients": ["biotina"],
+        "contraindications": ["antes de examenes de laboratorio sin aviso"],
+        "season": ["all"],
+        "applicable_modules": ["hair-diagnostic", "aura"],
+        "content_type": "mitos_vs_evidencia"
+      },
+      "clinical_review_status": "approved_by_md",
+      "is_cross_reference": false,
+      "created_at": "2026-08-08T00:00:00Z"
+    },
+    {
+      "chunk_id": "capilar-011",
+      "title": "Minoxidil tópico de venta libre: qué puede hacer, cómo usarlo y cuándo no usarlo",
+      "content": "El minoxidil tópico es el tratamiento de venta libre con mayor evidencia para la alopecia androgenética y también útil en otros tipos de caída seleccionados. Funciona como vasodilatador y estimulador folicular que acorta la fase telógena y prolonga la anágena, aumentando el grosor y número de cabellos con el uso continuo. Las concentraciones habituales son 2% y 5%, y la constancia es crítica: los primeros resultados visibles aparecen entre el cuarto y sexto mes, y al iniciar puede producir un shedding transitorio en las primeras semanas que es parte del mecanismo y no razón para suspender. Si se suspende, el cabello ganado se pierde en meses, porque el minoxidil no cura la miniaturización: la controla mientras se usa. Efectos adversos posibles: irritación o descamación del cuero cabelludo (más con vehículos con propilenglicol), y rara vez hipertricosis facial por contacto. Está contraindicado en embarazo y lactancia, y debe consultarse antes de usarlo si hay enfermedad cardiovascular o cuero cabelludo inflamado. No sirve para alopecias cicatriciales ni reemplaza el diagnóstico: usar minoxidil sin saber la causa de la caída puede retrasar el manejo correcto. La indicación responsable es: diagnóstico primero, minoxidil como parte de un plan, y seguimiento de resultados con fotos.",
+      "category": "diagnostico_capilar",
+      "phase": 3,
+      "risk_level": "alto",
+      "sources": [
+        { "institution": "FDA — Understanding Over-the-Counter Hair Loss Treatments", "url": "https://www.fda.gov/", "year": 2024 },
+        { "institution": "EADV — Guidelines on alopecias", "url": "https://eadv.org/clinical-guidelines", "year": 2024 }
+      ],
+      "metadata": {
+        "skin_types": ["all"],
+        "age_ranges": ["adulto"],
+        "fototipos": ["all"],
+        "ingredients": ["minoxidil"],
+        "contraindications": ["embarazo", "lactancia", "enfermedad cardiovascular sin consulta"],
+        "season": ["all"],
+        "applicable_modules": ["hair-diagnostic", "aura"],
+        "content_type": "manejo_otc"
+      },
+      "clinical_review_status": "approved_by_md",
+      "is_cross_reference": true,
+      "created_at": "2026-08-08T00:00:00Z"
+    },
+    {
+      "chunk_id": "capilar-012",
+      "title": "Red flags capilares: cuándo la caída de cabello necesita dermatólogo",
+      "content": "La mayoría de las consultas por cabello pueden manejarse con cuidado cosmético y paciencia, pero hay señales de alarma que requieren evaluación dermatológica. Caída en parches o placas delimitadas, especialmente si la piel se ve lisa o brillante. Caída súbita e intensa en días, o caída que persiste más de 6 meses sin explicación. Dolor, ardor, picor intenso, enrojecimiento o descamación gruesa del cuero cabelludo. Caída con fiebre, pérdida de peso o síntomas generales. Pérdida de cejas o pestañas. Caída en niños, donde deben descartarse tiñas (infección por hongos que requiere tratamiento médico y no champú cosmético). Sospecha de alopecia cicatricial, que es una emergencia dermatológica relativa porque el folículo destruido no regenera: se manifiesta con parches con piel brillante, pérdida de los orificios foliculares y a veces pústulas o dolor. En mujeres, caída con patrón masculino acompañada de irregularidades menstruales o vello facial que sugiere evaluación endocrina. Y cualquier caída que genere angustia significativa merece consulta, aunque el patrón sea benigno. El diagnóstico temprano marca la diferencia entre recuperar cabello y perder folículos de forma permanente.",
+      "category": "diagnostico_capilar",
+      "phase": 3,
+      "risk_level": "alto",
+      "sources": [
+        { "institution": "AAD — Clinical Guidelines (Hair loss)", "url": "https://www.aad.org/education/clinical-guidelines", "year": 2024 },
+        { "institution": "Sociedad Colombiana de Dermatología y Cirugía Dermatológica (SCD) — Consensos", "url": "https://www.scd.org.co/consensos/", "year": 2024 }
+      ],
+      "metadata": {
+        "skin_types": ["all"],
+        "age_ranges": ["all"],
+        "fototipos": ["all"],
+        "ingredients": [],
+        "contraindications": [],
+        "season": ["all"],
+        "applicable_modules": ["hair-diagnostic", "aura"],
+        "content_type": "red_flags_derivacion"
+      },
+      "clinical_review_status": "approved_by_md",
+      "is_cross_reference": false,
+      "created_at": "2026-08-08T00:00:00Z"
+    },
+    {
+      "chunk_id": "capilar-013",
+      "title": "Queratinas y alisados con formol: la alerta de INVIMA y FDA que debes conocer",
+      "content": "Los tratamientos alisadores y queratinas que liberan formaldehído (formol) representan uno de los riesgos más documentados en estética capilar. Tanto la FDA como el INVIMA han emitido alertas sobre productos alisadores con formaldehído o con liberadores de formaldehído (como metilén glicol o formalina), porque al calentarse con la plancha liberan vapores que irritan ojos, vías respiratorias y piel, y el formaldehído está clasificado como carcinógeno humano por la IARC. Los síntomas reportados incluyen ardor ocular, sangrado nasal, dificultad respiratoria y dermatitis, tanto en clientas como en estilistas que se exponen de forma repetida. En Colombia, el INVIMA ha alertado y retirado productos que superan los límites permitidos o que ocultan el formol en su etiquetado. Las recomendaciones de seguridad: desconfiar de alisados que prometen efecto liso extremo y duradero con humo u olor fuerte, exigir ventilación adecuada y guantes, preguntar por el registro INVIMA del producto, y evitar estos tratamientos durante embarazo, lactancia o con asma y dermatitis. Las alternativas de alisado sin formol (como tratamientos con ácidos orgánicos o queratinas verdaderas sin liberadores) tienen otro perfil de riesgo, aunque también deben aplicarse por profesionales. Tu salud respiratoria y tu cuero cabelludo valen más que un liso temporal.",
+      "category": "diagnostico_capilar",
+      "phase": 3,
+      "risk_level": "alto",
+      "sources": [
+        { "institution": "INVIMA — Alertas de productos cosméticos con formaldehído", "url": "https://www.invima.gov.co/", "year": 2024 },
+        { "institution": "FDA — Formaldehyde in hair smoothing products", "url": "https://www.fda.gov/cosmetics/", "year": 2024 }
+      ],
+      "metadata": {
+        "skin_types": ["all"],
+        "age_ranges": ["adulto"],
+        "fototipos": ["all"],
+        "ingredients": ["formaldehido", "formol"],
+        "contraindications": ["embarazo", "lactancia", "asma", "dermatitis"],
+        "season": ["all"],
+        "applicable_modules": ["hair-diagnostic", "aura"],
+        "content_type": "practicas_de_riesgo"
+      },
+      "clinical_review_status": "approved_by_md",
+      "is_cross_reference": false,
+      "created_at": "2026-08-08T00:00:00Z"
+    },
+    {
+      "chunk_id": "capilar-014",
+      "title": "Caída postparto: el efluvio que asusta a las mamás y casi siempre se resuelve solo",
+      "content": "La caída de cabello postparto, o efluvio telógeno del posparto, es una de las consultas más frecuentes y angustiantes, y afortunadamente una de las de mejor pronóstico. Durante el embarazo, los estrógenos altos mantienen más cabellos en fase de crecimiento; tras el parto, la caída hormonal sincroniza a esos cabellos en fase telógena, produciendo una caída difusa notable que típicamente comienza entre el segundo y cuarto mes posparto y alcanza su pico alrededor del cuarto o quinto mes. El mensaje clave para tranquilizar: es un proceso autolimitado que no deja calvicie, y el cabello vuelve a crecer, aunque la densidad completa puede tomar de 6 a 12 meses. El manejo es expectante y de apoyo: nutrición adecuada rica en proteína y hierro (especialmente relevante tras el parto y con lactancia), manejo suave del cabello, y paciencia. Durante la lactancia, la mayoría de los tratamientos anticaída cosméticos son irrelevantes y los medicamentos deben consultarse con el médico; el minoxidil, por ejemplo, no se recomienda en lactancia. Consultar al dermatólogo si la caída persiste más de 12 meses, es en parches, o se acompaña de fatiga intensa y otros síntomas que sugieran evaluar tiroides o anemia posparto. Validar la angustia y dar información honesta es parte del cuidado.",
+      "category": "diagnostico_capilar",
+      "phase": 3,
+      "risk_level": "medio",
+      "sources": [
+        { "institution": "AAD — Clinical Guidelines (Hair loss)", "url": "https://www.aad.org/education/clinical-guidelines", "year": 2024 },
+        { "institution": "PubMed — Ly et al. Treatment of conditions during pregnancy and lactation (Dermatol Ther 2023)", "pmid": "36447117", "url": "https://pubmed.ncbi.nlm.nih.gov/36447117/", "year": 2023 }
+      ],
+      "metadata": {
+        "skin_types": ["all"],
+        "age_ranges": ["adulto"],
+        "fototipos": ["all"],
+        "ingredients": [],
+        "contraindications": ["minoxidil en lactancia"],
+        "season": ["all"],
+        "applicable_modules": ["hair-diagnostic", "aura"],
+        "content_type": "contexto_embarazo"
+      },
+      "clinical_review_status": "approved_by_md",
+      "is_cross_reference": true,
+      "created_at": "2026-08-08T00:00:00Z"
+    },
+    {
+      "chunk_id": "capilar-015",
+      "title": "Mitos del cabello vs evidencia: cortarlo no lo engrosa y lavarlo no lo cae",
+      "content": "Pocos temas tienen tantos mitos arraigados como el cabello, y aclararlos evita gastos inútiles y ansiedad. Cortar las puntas no hace que el cabello crezca más grueso ni más rápido: el crecimiento ocurre en el folículo, no en la punta; el corte solo elimina el tramo dañado y mejora la apariencia. Lavar el cabello con frecuencia no lo cae: los cabellos que se desprenden en la ducha ya estaban en fase telógena y caerían igual; la higiene adecuada del cuero cabelludo es saludable y no acelera la caída. Cepillar cien veces al día no da brillo: causa fricción y quiebre. El cabello graso no necesita lavarse con productos agresivos: el exceso de detergente irrita sin cambiar la producción de sebo, que es hormonal. Las canas arrancadas no salen siete más: arrancarlas puede dañar el folículo, pero no multiplica canas. Los productos milagro que prometen densidad en semanas carecen de evidencia: el ciclo capilar impone esperar 3-4 meses para evaluar cualquier intervención seria. Y el estrés sí puede causar caída (efluvio telógeno), pero suele revertir al resolverse. La regla de oro: desconfía de promesas rápidas y universales, y ante caída persistente busca diagnóstico, no champú milagroso.",
+      "category": "diagnostico_capilar",
+      "phase": 3,
+      "risk_level": "bajo",
+      "sources": [
+        { "institution": "AAD — Hair care basics (Patient education)", "url": "https://www.aad.org/public/everyday-care/hair-scalp-care", "year": 2024 },
+        { "institution": "PubMed/MEDLINE — Revisiones de ciencia cosmética capilar", "url": "https://pubmed.ncbi.nlm.nih.gov/", "year": 2024 }
+      ],
+      "metadata": {
+        "skin_types": ["all"],
+        "age_ranges": ["all"],
+        "fototipos": ["all"],
+        "ingredients": [],
+        "contraindications": [],
+        "season": ["all"],
+        "applicable_modules": ["hair-diagnostic", "aura"],
+        "content_type": "mitos_vs_evidencia"
+      },
+      "clinical_review_status": "approved_by_md",
+      "is_cross_reference": false,
+      "created_at": "2026-08-08T00:00:00Z"
+    }
+  ]
+}
