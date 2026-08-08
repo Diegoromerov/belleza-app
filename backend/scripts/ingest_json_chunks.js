@@ -193,7 +193,7 @@ async function ingestChunks(jsonPath) {
   }
 
   const raw = fs.readFileSync(jsonPath, 'utf8');
-  const limpio = raw.charCodeAt(0) === 0xFEFF ? raw.slice(1) : raw;
+  const limpio = (raw.charCodeAt(0) === 0xFEFF ? raw.slice(1) : raw).replace(/[\r\n\t-]+/g, ' ');
   const parsed = JSON.parse(limpio);
   const chunks = Array.isArray(parsed) ? parsed : (parsed.chunks || []);
   console.log('📦 Archivo: ' + path.basename(jsonPath));
