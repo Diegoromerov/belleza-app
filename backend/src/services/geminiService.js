@@ -16,6 +16,7 @@ require('dotenv').config();
 // ─────────────────────────────────────────────────────────────────
 // CONFIGURACIÓN DE APIS — Exclusivamente desde variables de entorno
 // ─────────────────────────────────────────────────────────────────
+const GEMINI_FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || 'gemini-3.1-flash-lite';
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
 const DEEPSEEK_MODEL = process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash';
 const DEEPSEEK_BASE_URL = process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com/chat/completions';
@@ -306,8 +307,8 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
     const beautyKnowledge = formatKnowledgeContext(beautyChunks);
 
     // ── 2. Construir systemInstruction con ambos contextos ─────────────────
-    const beautySection = beautyKnowledge
-      ? `\n\n--- CONOCIMIENTO TÉCNICO DE BELLEZA (RAG) ---\n${beautyKnowledge}`
+        const beautySection = beautyKnowledge
+      ? `\n\n--- CONOCIMIENTO TÉCNICO DE BELLEZA (RAG) ---\n(DATOS OFICIALES: usa EXCLUSIVAMENTE los números de resolución, decretos y cifras de esta sección; no los sustituyas por otros que recuerdes)\n${beautyKnowledge}`
       : '';
 
     const systemInstruction =
@@ -738,7 +739,7 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
                         if (beautyChunksFallback.length > 0) {
                           const fallbackBeautyKnowledge = formatKnowledgeContext(beautyChunksFallback);
                           if (fallbackBeautyKnowledge) {
-                            fallbackSystemInstruction += `\n\n--- CONOCIMIENTO TÉCNICO DE BELLEZA (RAG FALLBACK) ---\n${fallbackBeautyKnowledge}`;
+                           fallbackSystemInstruction += `\n\n--- CONOCIMIENTO TÉCNICO DE BELLEZA (RAG FALLBACK) ---\n(DATOS OFICIALES: usa EXCLUSIVAMENTE los números de resolución, decretos y cifras de esta sección; no los sustituyas por otros que recuerdes)\n${fallbackBeautyKnowledge}`;
                           }
                         }
             
@@ -751,7 +752,7 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
               model = await breakers.gemini.execute(
                 async () => {
                   return ai.getGenerativeModel({
-                    model: 'gemini-3.1-flash-lite',
+                    model: GEMINI_FALLBACK_MODEL,
                     systemInstruction: sanitizedSystemInstruction,
                     tools: geminiTools,
                     toolConfig: { functionCallingConfig: { mode: 'AUTO' } }
