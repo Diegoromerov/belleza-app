@@ -1,376 +1,405 @@
 {
   "batch_metadata": {
-    "category": "diagnostico_capilar",
-    "phase": 3,
-    "risk_level": "medio",
-    "batch_id": "capilar-lote1",
-    "chunk_count": 15,
-    "generated_at": "2026-08-08T00:00:00Z",
+    "category": "colorimetria_capilar_tinte",
+    "phase": 4,
+    "risk_level": "alto",
+    "batch_id": "tinte-lote1",
+    "chunk_count": 18,
+    "generated_at": "2026-08-09T00:00:00Z",
     "generated_by": "glowapp-corpus-pipeline-v1",
     "clinical_review_status": "approved_by_md",
-    "notes": "Fase 3: diagnóstico capilar. Distingue cosmético vs clínico, incluye red flags y alertas INVIMA/FDA sobre formol y biotina."
+    "notes": "Fase 4: colorimetría capilar y tinte. Incluye alergia al PPD, henna negra (riesgo en turismo colombiano), decoloración y regulación INVIMA/FDA/UE."
   },
   "chunks": [
     {
-      "chunk_id": "capilar-001",
-      "title": "El ciclo capilar: anágeno, catágeno y telógeno explicados",
-      "content": "El cabello no crece de forma continua sino cíclica, y entender ese ciclo es la base de cualquier diagnóstico capilar. La fase anágena es la de crecimiento activo: dura entre 2 y 7 años y contiene alrededor del 85-90% de los cabellos del cuero cabelludo. La fase catágena es una transición breve de unas 2-3 semanas en la que el folículo se retrae. La fase telógena es el reposo: dura unos 3 meses y termina con la caída del cabello, que es reemplazado por uno nuevo que inicia otro ciclo. Por eso es completamente normal perder entre 50 y 100 cabellos al día: son los pelos telógenos que completan su ciclo. Cuando un paciente consulta por caída, la primera pregunta clínica es si se trata de una caída dentro de lo fisiológico, de un efluvio (caída reaccional aumentada) o de una alopecia (pérdida con disminución de densidad). El ciclo capilar también explica por qué ningún tratamiento cosmético o médico muestra resultados antes de 3-4 meses: hay que esperar a que los folículos completen su ciclo y produzcan cabello nuevo. La paciencia y el seguimiento con fotos estandarizadas son parte del manejo.",
-      "category": "diagnostico_capilar",
-      "phase": 3,
-      "risk_level": "bajo",
+      "chunk_id": "tinte-001",
+      "title": "Tipos de tinte capilar: temporal, semipermanente, permanente y decoloración",
+      "content": "Los tintes capilares se clasifican según su duración y mecanismo de acción, y entender esta diferencia es clave para evaluar riesgos y resultados. Los tintes temporales (como sprays o mascarillas de color) depositan pigmento en la superficie del tallo sin penetrar la cutícula, se eliminan con el primer lavado y tienen el menor potencial alérgico. Los semipermanentes (demipermanentes) penetran ligeramente la cutícula y duran entre 6 y 12 lavados; no suelen contener amoniaco ni altos niveles de peróxido, por lo que son menos agresivos. Los permanentes (oxidativos) son los más usados y los de mayor riesgo: abren la cutícula con amoniaco o etanolaminas, usan peróxido para decolorar el pigmento natural y permiten que precursores como el PPD (parafenilendiamina) penetren y polimericen dentro del tallo, dando color permanente. La decoloración (bleach) es el proceso químico más agresivo: usa persulfatos y peróxido de alta concentración para destruir la melanina natural, aclarando hasta 7 tonos, pero con alto riesgo de quiebre, quemaduras químicas del cuero cabelludo y daño irreversible de la fibra. Cada tipo tiene indicaciones y riesgos distintos, y la elección debe considerar el estado actual del cabello, el objetivo de color y el historial de sensibilidad.",
+      "category": "colorimetria_capilar_tinte",
+      "phase": 4,
+      "risk_level": "medio",
       "sources": [
-        { "institution": "AAD — Clinical Guidelines (Hair loss)", "url": "https://www.aad.org/education/clinical-guidelines", "year": 2024 },
-        { "institution": "PubMed/MEDLINE — Revisiones de fisiología del ciclo folicular", "url": "https://pubmed.ncbi.nlm.nih.gov/", "year": 2024 }
+        { "institution": "AAD — Hair dyes (Patient education)", "url": "https://www.aad.org/public/everyday-care/hair-scalp-care/hair-coloring", "year": 2024 },
+        { "institution": "PubMed/MEDLINE — Revisiones de química cosmética capilar", "url": "https://pubmed.ncbi.nlm.nih.gov/", "year": 2024 }
       ],
       "metadata": {
         "skin_types": ["all"],
         "age_ranges": ["adulto"],
         "fototipos": ["all"],
-        "ingredients": [],
+        "ingredients": ["PPD", "amoniaco", "peroxido"],
         "contraindications": [],
         "season": ["all"],
-        "applicable_modules": ["hair-diagnostic", "aura", "planificador_skincare"],
-        "content_type": "fundamento_fisiologia"
-      },
-      "clinical_review_status": "approved_by_md",
-      "is_cross_reference": false,
-      "created_at": "2026-08-08T00:00:00Z"
-    },
-    {
-      "chunk_id": "capilar-002",
-      "title": "Efluvio telógeno: la caída reaccional que asusta pero suele revertir",
-      "content": "El efluvio telógeno es una de las causas más frecuentes de caída difusa del cabello y una de las que más ansiedad genera, aunque su pronóstico suele ser excelente. Ocurre cuando un estrés fisiológico o emocional desplaza prematuramente un porcentaje alto de cabellos anágenos a fase telógena, produciendo una caída difusa notable entre 2 y 4 meses después del desencadenante. Los desencadenantes clásicos incluyen fiebre alta o infecciones severas, cirugía, parto, dietas restrictivas o pérdida rápida de peso, estrés emocional intenso, cambios hormonales y algunos medicamentos. El dato clave para tranquilizar: el efluvio telógeno no destruye el folículo, por lo que el cabello vuelve a crecer una vez se resuelve el desencadenante; la recuperación típica toma de 3 a 6 meses. El manejo consiste en identificar y corregir la causa (por ejemplo, deficiencia de hierro o trastorno tiroideo), mantener nutrición adecuada con proteína suficiente, y evitar tratamientos milagro. Si la caída persiste más de 6 meses, es muy intensa, o se acompaña de zonas sin cabello, dolor o descamación, debe evaluarse por dermatología para descartar otras causas. Reconocer el patrón temporal (caída difusa meses después de un evento) es la herramienta diagnóstica más útil.",
-      "category": "diagnostico_capilar",
-      "phase": 3,
-      "risk_level": "medio",
-      "sources": [
-        { "institution": "AAD — Clinical Guidelines (Hair loss)", "url": "https://www.aad.org/education/clinical-guidelines", "year": 2024 },
-        { "institution": "EADV — Guidelines on alopecias", "url": "https://eadv.org/clinical-guidelines", "year": 2024 }
-      ],
-      "metadata": {
-        "skin_types": ["all"],
-        "age_ranges": ["adulto"],
-        "fototipos": ["all"],
-        "ingredients": [],
-        "contraindications": [],
-        "season": ["all"],
-        "applicable_modules": ["hair-diagnostic", "aura"],
-        "content_type": "diagnostico_diferencial"
-      },
-      "clinical_review_status": "approved_by_md",
-      "is_cross_reference": false,
-      "created_at": "2026-08-08T00:00:00Z"
-    },
-    {
-      "chunk_id": "capilar-003",
-      "title": "Alopecia androgenética: patrón femenino y masculino, y por qué el diagnóstico temprano importa",
-      "content": "La alopecia androgenética es la causa más común de pérdida de densidad capilar tanto en hombres como en mujeres, y resulta de la miniaturización progresiva de los folículos sensibles a los andrógenos. En hombres el patrón típico incluye entradas y aclarado del vértice; en mujeres predomina un ensanchamiento de la línea media con preservación de la línea frontal, y suele manifestarse como disminución del volumen de la coleta o mayor visibilidad del cuero cabelludo bajo luz directa. El diagnóstico temprano es importante porque el tratamiento funciona mejor mientras los folículos aún están vivos y solo miniaturizados; un folículo completamente fibrosado no regenera. El manejo médico con evidencia incluye minoxidil tópico y, según el caso y sexo, antiandrógenos o finasteride bajo prescripción y seguimiento médico. Los cosméticos pueden aportar densidad visual y cuidado del tallo, pero no detienen la miniaturización. En mujeres con patrón de caída androgénico acompañado de irregularidades menstruales, acné o vello aumentado, conviene evaluación médica para descartar hiperandrogenismo como el síndrome de ovario poliquístico. La alopecia androgenética no es un problema solo estético: impacta calidad de vida y merece abordaje médico serio, no productos milagro.",
-      "category": "diagnostico_capilar",
-      "phase": 3,
-      "risk_level": "medio",
-      "sources": [
-        { "institution": "EADV — Guidelines on alopecias", "url": "https://eadv.org/clinical-guidelines", "year": 2024 },
-        { "institution": "AAD — Clinical Guidelines (Hair loss)", "url": "https://www.aad.org/education/clinical-guidelines", "year": 2024 }
-      ],
-      "metadata": {
-        "skin_types": ["all"],
-        "age_ranges": ["adulto"],
-        "fototipos": ["all"],
-        "ingredients": ["minoxidil"],
-        "contraindications": ["embarazo", "lactancia"],
-        "season": ["all"],
-        "applicable_modules": ["hair-diagnostic", "aura"],
-        "content_type": "diagnostico_diferencial"
-      },
-      "clinical_review_status": "approved_by_md",
-      "is_cross_reference": false,
-      "created_at": "2026-08-08T00:00:00Z"
-    },
-    {
-      "chunk_id": "capilar-004",
-      "title": "Alopecia areata: parches lisos de aparición súbita que requieren dermatólogo",
-      "content": "La alopecia areata es una enfermedad autoinmune en la que el sistema inmunitario ataca los folículos pilosos, produciendo placas de caída bien delimitadas, generalmente lisas y sin cicatriz, que aparecen de forma súbita en cuero cabelludo, cejas, pestañas o barba. A diferencia del efluvio telógeno (caída difusa) o de la androgenética (pérdida de densidad progresiva), el patrón en parches redondeados es la pista clínica clave. Puede ocurrir a cualquier edad y su curso es variable: muchos episodios limitados regeneran cabello en meses, pero existen formas extensas como la alopecia total o universal. El tratamiento es médico: corticoides tópicos o intralesionales, inmunomoduladores y, en casos severos, los nuevos inhibidores de JAK aprobados en varios países han cambiado el pronóstico de las formas graves. Ningún cosmético trata la alopecia areata. Por eso, ante placas de caída súbitas y delimitadas, la indicación correcta es derivar a dermatología pronto: el tratamiento temprano mejora resultados y descarta otras causas de caída en parches como las tiñas (infecciones por hongos, más comunes en niños) o la alopecia por tracción. El impacto emocional de esta enfermedad es significativo y merece acompañamiento empático además de tratamiento.",
-      "category": "diagnostico_capilar",
-      "phase": 3,
-      "risk_level": "alto",
-      "sources": [
-        { "institution": "EADV — Guidelines on alopecia areata", "url": "https://eadv.org/clinical-guidelines", "year": 2024 },
-        { "institution": "Cochrane Library — Intervenciones en alopecia areata", "url": "https://www.cochranelibrary.com/", "year": 2024 }
-      ],
-      "metadata": {
-        "skin_types": ["all"],
-        "age_ranges": ["all"],
-        "fototipos": ["all"],
-        "ingredients": [],
-        "contraindications": [],
-        "season": ["all"],
-        "applicable_modules": ["hair-diagnostic", "aura"],
-        "content_type": "red_flags_derivacion"
-      },
-      "clinical_review_status": "approved_by_md",
-      "is_cross_reference": false,
-      "created_at": "2026-08-08T00:00:00Z"
-    },
-    {
-      "chunk_id": "capilar-005",
-      "title": "Alopecia por tracción: peinados tensos y su impacto en población latina y afro",
-      "content": "La alopecia por tracción es la pérdida de cabello causada por la tensión mecánica sostenida sobre el folículo, típicamente por peinados tensos como coletas muy apretadas, trenzas, extensiones, tejidos o alisados con tensión. Afecta de forma desproporcionada a mujeres de ascendencia africana y también a población latina que usa estos estilos, y comienza característicamente en los bordes del cuero cabelludo (línea frontal y temporal), donde la tensión es mayor. En sus etapas iniciales es reversible si se elimina la tracción; si la tensión persiste años, la inflamación crónica puede destruir el folículo y producir pérdida cicatricial permanente. Las señales de alerta incluyen dolor o sensibilidad en el cuero cabelludo, foliculitis, y afinamiento de los bordes. La prevención es simple y culturalmente sensible: alternar estilos sin tensión, evitar el dolor como norma estética, limitar extensiones y tejidos a periodos cortos con instalación profesional, y tratar temprano cualquier inflamación. Este tipo de alopecia es una de las más prevenibles que existen, y hablar de ella con respeto por las prácticas culturales y énfasis en detección temprana es parte del enfoque de GlowApp para la diversidad de cabello y fototipos de Colombia y Latinoamérica.",
-      "category": "diagnostico_capilar",
-      "phase": 3,
-      "risk_level": "medio",
-      "sources": [
-        { "institution": "AAD — Clinical Guidelines (Hair loss and traction alopecia)", "url": "https://www.aad.org/education/clinical-guidelines", "year": 2024 },
-        { "institution": "Sociedad Latinoamericana de Dermatología (SLD) — Guías de Práctica Clínica", "url": "https://www.dermalatino.org/guias/", "year": 2023 }
-      ],
-      "metadata": {
-        "skin_types": ["all"],
-        "age_ranges": ["all"],
-        "fototipos": ["IV", "V", "VI"],
-        "ingredients": [],
-        "contraindications": ["peinados con tension sostenida"],
-        "season": ["all"],
-        "applicable_modules": ["hair-diagnostic", "aura"],
-        "content_type": "contexto_latinoamericano"
-      },
-      "clinical_review_status": "approved_by_md",
-      "is_cross_reference": false,
-      "created_at": "2026-08-08T00:00:00Z"
-    },
-    {
-      "chunk_id": "capilar-006",
-      "title": "Caspa y dermatitis seborreica: manejo seguro con activos de venta libre",
-      "content": "La caspa es la manifestación leve de la dermatitis seborreica del cuero cabelludo: descamación blanca o amarillenta con picor, asociada a la actividad de las glándulas sebáceas y al hongo Malassezia, que forma parte de la flora normal pero prolifera en pieles grasas. No es contagiosa ni significa falta de higiene. El manejo de primera línea con evidencia incluye champús con activos de venta libre: piritionato de zinc, ketoconazol al 1-2%, sulfuro de selenio y ácido salicílico. La forma correcta de usarlos es aplicarlos sobre el cuero cabelludo, dejar actuar 3-5 minutos antes de enjuagar, y alternar activos si hay acostumbramiento; al inicio pueden usarse 2-3 veces por semana y luego espaciar como mantenimiento. La dermatitis seborreica es crónica y recurrente: el objetivo es controlarla, no curarla de forma definitiva. Señales que ameritan consulta dermatológica: placas muy inflamadas o extensas, caída de cabello asociada, descamación con parches sin cabello (sospecha de tiña en niños), o falta de respuesta tras 4 semanas de champús medicados. Un mito importante: la caspa no causa calvicie; la caída asociada suele ser por el rascado y la inflamación, y se recupera al controlar el cuadro.",
-      "category": "diagnostico_capilar",
-      "phase": 3,
-      "risk_level": "bajo",
-      "sources": [
-        { "institution": "AAD — Clinical Guidelines (Seborrheic dermatitis)", "url": "https://www.aad.org/education/clinical-guidelines", "year": 2024 },
-        { "institution": "Cochrane Library — Champús para dermatitis seborreica y caspa", "url": "https://www.cochranelibrary.com/", "year": 2024 }
-      ],
-      "metadata": {
-        "skin_types": ["grasa"],
-        "age_ranges": ["all"],
-        "fototipos": ["all"],
-        "ingredients": ["ketoconazol", "piritionato de zinc", "sulfuro de selenio", "acido salicilico"],
-        "contraindications": [],
-        "season": ["all"],
-        "applicable_modules": ["hair-diagnostic", "aura"],
-        "content_type": "manejo_otc"
-      },
-      "clinical_review_status": "approved_by_md",
-      "is_cross_reference": false,
-      "created_at": "2026-08-08T00:00:00Z"
-    },
-    {
-      "chunk_id": "capilar-007",
-      "title": "Porosidad del cabello: qué mide y cómo ajustar la rutina cosmética",
-      "content": "La porosidad del cabello describe la capacidad de la fibra capilar para absorber y retener agua y productos, y depende del estado de la cutícula. El cabello de baja porosidad tiene la cutícula compacta: le cuesta absorber humedad y los productos tienden a acumularse en la superficie; funciona mejor con calor suave al aplicar tratamientos y fórmulas ligeras. El cabello de alta porosidad tiene la cutícula dañada o levantada por decoloraciones, tintes, calor o sol: absorbe rápido pero pierde humedad igual de rápido, se enreda y se ve opaco; se beneficia de acondicionadores ricos, mascarillas reparadoras y selladores como aceites o cremas leave-in, además de proteínas en moderación que rellenan temporalmente los huecos de la cutícula. La porosidad media es la más equilibrada. Es importante ser honestos sobre el alcance: la porosidad es una propiedad cosmética del tallo, no un indicador de salud del folículo ni de caída; los productos mejoran la apariencia y manejabilidad, pero no reparan de forma permanente la fibra, porque el cabello es tejido no vivo. El módulo de diagnóstico capilar de GlowApp estima la porosidad con preguntas y análisis visual para personalizar la rutina, y esa personalización cosmética es segura y útil, distinta del diagnóstico médico de caída que corresponde al dermatólogo.",
-      "category": "diagnostico_capilar",
-      "phase": 3,
-      "risk_level": "bajo",
-      "sources": [
-        { "institution": "PubMed/MEDLINE — Revisiones de ciencia cosmética capilar", "url": "https://pubmed.ncbi.nlm.nih.gov/", "year": 2024 },
-        { "institution": "AAD — Hair care basics (Patient education)", "url": "https://www.aad.org/public/everyday-care/hair-scalp-care", "year": 2024 }
-      ],
-      "metadata": {
-        "skin_types": ["all"],
-        "age_ranges": ["all"],
-        "fototipos": ["all"],
-        "ingredients": [],
-        "contraindications": [],
-        "season": ["all"],
-        "applicable_modules": ["hair-diagnostic", "aura", "planificador_skincare"],
+        "applicable_modules": ["hair-diagnostic", "analizador_colorimetria", "aura"],
         "content_type": "fundamento_cosmetico"
       },
       "clinical_review_status": "approved_by_md",
       "is_cross_reference": false,
-      "created_at": "2026-08-08T00:00:00Z"
+      "created_at": "2026-08-09T00:00:00Z"
     },
     {
-      "chunk_id": "capilar-008",
-      "title": "Frizz y quiebre: daño mecánico y térmico, y cómo prevenirlo sin mitos",
-      "content": "El frizz y el quiebre del cabello son manifestaciones de daño del tallo, no de enfermedad del folículo. Las causas más comunes son mecánicas (frotar con toalla, cepillar en mojado con fuerza, coletas tensas), térmicas (plancha y secador a altas temperaturas sin protector) y químicas (decoloración, tintes, alisados). La fibra capilar es tejido queratinizado no vivo: no se regenera, por lo que la estrategia correcta es prevenir el daño nuevo y manejar cosméticamente el tramo dañado hasta cortarlo. Las recomendaciones con respaldo incluyen: secar con toalla de microfibra o camiseta sin frotar, desenredar con peine de dientes anchos empezando por las puntas, usar protector térmico antes de herramientas de calor y limitar la temperatura, espaciar los procesos químicos y realizarlos con profesional, y usar acondicionador y mascarillas que reduzcan la fricción entre fibras. Los aceites como argán o coco aportan brillo y sellado de humedad, con el aceite de coco con alguna evidencia de penetración en la fibra y reducción de pérdida de proteína. Desconfía de productos que prometen reparar el cabello de forma permanente: lo que hacen es alisar la cutícula y rellenar temporalmente, mejorando apariencia mientras se usan. El corte de puntas no hace crecer el cabello, pero elimina el tramo dañado y mejora la apariencia global.",
-      "category": "diagnostico_capilar",
-      "phase": 3,
-      "risk_level": "bajo",
+      "chunk_id": "tinte-002",
+      "title": "PPD (parafenilendiamina): el alérgeno más importante de los tintes permanentes",
+      "content": "El PPD o parafenilendiamina es un precursor de color presente en la gran mayoría de los tintes capilares permanentes oscuros, y es también el alérgeno de contacto más relevante en tintes. La alergia al PPD es una dermatitis de contacto alérgica de tipo IV (retardada), mediada por linfocitos T, que puede aparecer desde horas hasta 48-72 horas después de la aplicación. Las manifestaciones van desde dermatitis local del cuero cabelludo con enrojecimiento, picazón intensa, edema y vesículas, hasta reacciones más extensas que afectan cara, párpados y cuello; en casos severos puede producir edema facial marcado (facies leonina) e incluso reacciones sistémicas. Una vez sensibilizada al PPD, la persona debe evitar de por vida los tintes que lo contengan, porque cada nueva exposición puede producir una reacción más severa. El PPD también presenta sensibilización cruzada con otros compuestos: la henna negra (henna con PPD añadido, muy común en turismo), algunos tintes textiles, la benzocaína (anestésico tópico), el PABA (antiguo filtro solar) y medicamentos como la sulfasalazina. Por eso, una reacción previa a un tatuaje de henna negra o a un anestésico dental puede ser señal de sensibilidad al PPD y contraindica el uso de tintes permanentes oscuros sin evaluación médica.",
+      "category": "colorimetria_capilar_tinte",
+      "phase": 4,
+      "risk_level": "alto",
       "sources": [
-        { "institution": "AAD — Hair care basics (Patient education)", "url": "https://www.aad.org/public/everyday-care/hair-scalp-care", "year": 2024 },
-        { "institution": "PubMed/MEDLINE — Revisiones de ciencia cosmética capilar", "url": "https://pubmed.ncbi.nlm.nih.gov/", "year": 2024 }
+        { "institution": "AAD — Hair dye allergy (Patient education)", "url": "https://www.aad.org/", "year": 2024 },
+        { "institution": "EADV — Contact dermatitis guidelines", "url": "https://eadv.org/clinical-guidelines", "year": 2024 },
+        { "institution": "PubMed — Reacciones alérgicas a tintes capilares (BJD/JAAD)", "url": "https://pubmed.ncbi.nlm.nih.gov/", "year": 2024 }
+      ],
+      "metadata": {
+        "skin_types": ["all"],
+        "age_ranges": ["adulto"],
+        "fototipos": ["all"],
+        "ingredients": ["PPD", "parafenilendiamina"],
+        "contraindications": ["alergia previa a PPD", "sensibilizacion cruzada"],
+        "season": ["all"],
+        "applicable_modules": ["analizador_colorimetria", "aura"],
+        "content_type": "fundamento_alergeno"
+      },
+      "clinical_review_status": "approved_by_md",
+      "is_cross_reference": false,
+      "created_at": "2026-08-09T00:00:00Z"
+    },
+    {
+      "chunk_id": "tinte-003",
+      "title": "Test de sensibilidad obligatorio: protocolo 48 horas antes de cada tinte",
+      "content": "Antes de aplicar cualquier tinte permanente o semipermanente, el test de sensibilidad es una medida de seguridad que debería ser obligatoria y que muchos salones y consumidores omiten. El protocolo estándar consiste en aplicar una pequeña cantidad del producto (mezcla del tinte con el desarrollador) en la piel del antebrazo interno o detrás de la oreja, cubrir y observar durante 48 horas sin lavar la zona. Si aparece enrojecimiento, picazón, hinchazón, vesículas o cualquier reacción, el producto NO debe aplicarse en el cuero cabelludo. Este test es importante incluso si has usado el mismo tinte antes sin problemas: la sensibilización al PPD puede desarrollarse en cualquier momento de la vida, y una reacción previa silenciosa puede desencadenar una reacción severa en la siguiente aplicación. Las guías dermatológicas y la regulación europea recomiendan el test en cada aplicación, no solo la primera vez. En Colombia, el INVIMA incluye esta recomendación en las fichas técnicas de productos colorantes. Los establecimientos serios ofrecen el test sin que tengas que pedirlo; si te lo niegan o minimizan, es una señal de alerta sobre la calidad del servicio. El test toma 5 minutos de aplicación y 48 horas de observación; la reacción alérgica severa puede requerir tratamiento médico y dejar secuelas.",
+      "category": "colorimetria_capilar_tinte",
+      "phase": 4,
+      "risk_level": "alto",
+      "sources": [
+        { "institution": "AAD — Hair dye allergy (Patient education)", "url": "https://www.aad.org/", "year": 2024 },
+        { "institution": "INVIMA — Fichas técnicas de productos colorantes capilares", "url": "https://www.invima.gov.co/", "year": 2024 },
+        { "institution": "Unión Europea — Cosmetic Regulation (Anexo III)", "url": "https://ec.europa.eu/", "year": 2024 }
+      ],
+      "metadata": {
+        "skin_types": ["all"],
+        "age_ranges": ["adulto"],
+        "fototipos": ["all"],
+        "ingredients": ["PPD"],
+        "contraindications": ["tinte sin test previo"],
+        "season": ["all"],
+        "applicable_modules": ["analizador_colorimetria", "aura"],
+        "content_type": "protocolo_seguridad"
+      },
+      "clinical_review_status": "approved_by_md",
+      "is_cross_reference": false,
+      "created_at": "2026-08-09T00:00:00Z"
+    },
+    {
+      "chunk_id": "tinte-004",
+      "title": "Henna negra temporal: por qué es uno de los riesgos más subestimados",
+      "content": "Los tatuajes temporales de henna negra, muy populares en zonas turísticas de Colombia (Cartagena, San Andrés, Santa Marta), en playas, ferias y fiestas, son una de las principales fuentes de sensibilización al PPD en la población joven. La henna natural es un polvo de la planta Lawsonia inermis que tiñe de naranja-rojizo y es generalmente segura; pero para obtener el color negro intenso que imita un tatuaje permanente y para que dure más, con frecuencia se le añade PPD en concentraciones altas, a veces muy superiores a las permitidas en tintes capilares. El resultado es que un tatuaje temporal puede sensibilizar a una persona al PPD de forma definitiva, y cuando esa misma persona años después quiera teñirse el cabello con un tinte permanente oscuro, puede sufrir una reacción alérgica severa. Las señales de alerta en un tatuaje de henna negra: el color es muy negro intenso (la henna natural es rojiza), se aplica rápido sin olor fuerte característico de la henna, o produce picazón o ampollas en los días siguientes. Las guías dermatológicas recomiendan evitar los tatuajes de henna negra, especialmente en niños, porque la sensibilización temprana condiciona alergias futuras a tintes capilares, tatuajes permanentes y otros productos con PPD o compuestos cruzados. Esta información es particularmente relevante para madres que llevan a sus hijos a este tipo de prácticas sin conocer el riesgo.",
+      "category": "colorimetria_capilar_tinte",
+      "phase": 4,
+      "risk_level": "alto",
+      "sources": [
+        { "institution": "AAD — Henna tattoos and PPD allergy", "url": "https://www.aad.org/", "year": 2024 },
+        { "institution": "FDA — Temporary tattoos and henna", "url": "https://www.fda.gov/cosmetics/", "year": 2024 },
+        { "institution": "Sociedad Colombiana de Dermatología (SCD) — Alertas sobre henna negra", "url": "https://www.scd.org.co/", "year": 2024 }
       ],
       "metadata": {
         "skin_types": ["all"],
         "age_ranges": ["all"],
         "fototipos": ["all"],
-        "ingredients": ["aceite de coco", "aceite de argan"],
+        "ingredients": ["PPD", "henna negra"],
+        "contraindications": ["tatuajes de henna negra", "ninos"],
+        "season": ["all"],
+        "applicable_modules": ["analizador_colorimetria", "aura"],
+        "content_type": "contexto_latinoamericano"
+      },
+      "clinical_review_status": "approved_by_md",
+      "is_cross_reference": false,
+      "created_at": "2026-08-09T00:00:00Z"
+    },
+    {
+      "chunk_id": "tinte-005",
+      "title": "Reacción alérgica al tinte: cuándo es emergencia y cómo actuar",
+      "content": "Si después de aplicar un tinte aparecen síntomas, es fundamental distinguir entre irritación leve y una reacción alérgica que requiere atención médica. Las señales de reacción alérgica moderada a severa incluyen: picazón intensa y ardor en cuero cabelludo, cara o cuello; enrojecimiento extenso y edema (hinchazón) especialmente de párpados, labios o cara; ampollas, supuración o costras en la zona de aplicación; urticaria generalizada; dificultad para respirar, opresión en el pecho, mareo o sensación de desmayo. Los dos últimos son signos de anafilaxia y requieren atención de urgencias inmediata. El manejo inicial mientras se busca atención médica incluye lavar abundantemente con agua tibia para retirar el producto, no aplicar remedios caseros ni más productos sobre la zona, y tomar un antihistamínico oral si hay uno disponible y la persona no tiene contraindicación conocida. Las reacciones leves localizadas pueden manejarse con corticoides tópicos bajo orientación médica. En cualquier reacción significativa, debe evitarse volver a usar ese producto o cualquier tinte con PPD hasta evaluación dermatológica con pruebas de parche. Documentar la reacción, el producto y el lote es útil para el reporte al INVIMA en Colombia. Nunca debe ignorarse una reacción por vergüenza o por no querer perder el dinero del servicio: la salud del cuero cabelludo y el riesgo de reacciones futuras más graves lo justifican.",
+      "category": "colorimetria_capilar_tinte",
+      "phase": 4,
+      "risk_level": "alto",
+      "sources": [
+        { "institution": "AAD — Hair dye allergy (Patient education)", "url": "https://www.aad.org/", "year": 2024 },
+        { "institution": "INVIMA — Sistema de farmacovigilancia y cosméticos", "url": "https://www.invima.gov.co/", "year": 2024 }
+      ],
+      "metadata": {
+        "skin_types": ["all"],
+        "age_ranges": ["adulto"],
+        "fototipos": ["all"],
+        "ingredients": ["PPD"],
         "contraindications": [],
         "season": ["all"],
-        "applicable_modules": ["hair-diagnostic", "aura"],
-        "content_type": "guia_de_uso"
+        "applicable_modules": ["analizador_colorimetria", "aura"],
+        "content_type": "manejo_emergencia"
       },
       "clinical_review_status": "approved_by_md",
       "is_cross_reference": false,
-      "created_at": "2026-08-08T00:00:00Z"
+      "created_at": "2026-08-09T00:00:00Z"
     },
     {
-      "chunk_id": "capilar-009",
-      "title": "Caída de cabello y nutrición: hierro, ferritina, vitamina D y cuándo sí suplementar",
-      "content": "La relación entre nutrición y caída del cabello es real pero frecuentemente exagerada por el marketing. Lo que la evidencia sostiene: el folículo piloso es metabólicamente muy activo y sensible al déficit de nutrientes; las deficiencias de hierro (con ferritina baja), vitamina D, zinc, vitamina B12 y la ingesta insuficiente de proteína se asocian con caída o cabello de menor calidad, y corregir un déficit documentado mejora la caída. Por eso, ante una caída persistente, el enfoque médico responsable incluye evaluar clínicamente y, si corresponde, solicitar laboratorio (hemograma, ferritina, TSH, vitamina D) en lugar de suplementar a ciegas. Suplementar sin déficit no hace crecer el cabello y puede tener riesgos: el exceso de vitamina A, por ejemplo, produce caída. Las dietas muy restrictivas y la pérdida rápida de peso son desencadenantes clásicos de efluvio telógeno, y en ellas la prioridad es recuperar ingesta adecuada de proteína y micronutrientes. En resumen: los suplementos tienen un lugar cuando existe deficiencia comprobada o riesgo nutricional claro, siempre idealmente bajo orientación médica; los productos anticaída que prometen resultados por vitaminas en personas bien nutridas carecen de respaldo. La nutrición es parte del manejo, no un reemplazo del diagnóstico de la causa de la caída.",
-      "category": "diagnostico_capilar",
-      "phase": 3,
-      "risk_level": "medio",
-      "sources": [
-        { "institution": "AAD — Clinical Guidelines (Hair loss)", "url": "https://www.aad.org/education/clinical-guidelines", "year": 2024 },
-        { "institution": "PubMed/MEDLINE — Revisiones de nutrición y cabello", "url": "https://pubmed.ncbi.nlm.nih.gov/", "year": 2024 }
-      ],
-      "metadata": {
-        "skin_types": ["all"],
-        "age_ranges": ["adulto"],
-        "fototipos": ["all"],
-        "ingredients": ["hierro", "vitamina D", "zinc", "biotina"],
-        "contraindications": ["suplementacion a ciegas"],
-        "season": ["all"],
-        "applicable_modules": ["hair-diagnostic", "aura"],
-        "content_type": "fundamento_nutricional"
-      },
-      "clinical_review_status": "approved_by_md",
-      "is_cross_reference": false,
-      "created_at": "2026-08-08T00:00:00Z"
-    },
-    {
-      "chunk_id": "capilar-010",
-      "title": "Biotina: el suplemento sobrevalorado y su alerta de interferencia con laboratorios (FDA)",
-      "content": "La biotina (vitamina B7 o H) es probablemente el suplemento más vendido para el cabello, y también uno de los menos justificados. La evidencia de que la biotina mejore el cabello en personas sin deficiencia es muy limitada: la deficiencia de biotina es rara porque está presente en muchos alimentos y la flora intestinal la produce, y cuando ocurre (por ejemplo en enfermedades genéticas o uso prolongado de algunos anticonvulsivantes) sí causa caída y fragilidad que revierte con suplementación. En personas sanas, los estudios de calidad no demuestran beneficio consistente. Más importante aún: la FDA emitió una comunicación de seguridad advirtiendo que la biotina interfiere con numerosos exámenes de laboratorio que usan tecnología de inmunoensayo, incluyendo pruebas de función tiroidea y troponina (marcador cardíaco), pudiendo generar resultados falsamente altos o falsamente bajos con consecuencias clínicas serias, como diagnósticos erróneos de tiroides o infartos no detectados. La recomendación de la FDA es informar al médico sobre el uso de biotina y suspenderla varios días antes de exámenes de laboratorio. En conclusión: la biotina no es el anticaída universal que promete el marketing, y su uso debe ser informado y prudente, especialmente antes de laboratorios. Si hay caída de cabello, la prioridad es diagnosticar la causa, no automedicar suplementos.",
-      "category": "diagnostico_capilar",
-      "phase": 3,
-      "risk_level": "medio",
-      "sources": [
-        { "institution": "FDA — Safety Communication: biotin interference with lab tests", "url": "https://www.fda.gov/medical-devices/safety-communications", "year": 2024 },
-        { "institution": "Cochrane Library — Suplementos y caída del cabello", "url": "https://www.cochranelibrary.com/", "year": 2024 }
-      ],
-      "metadata": {
-        "skin_types": ["all"],
-        "age_ranges": ["adulto"],
-        "fototipos": ["all"],
-        "ingredients": ["biotina"],
-        "contraindications": ["antes de examenes de laboratorio sin aviso"],
-        "season": ["all"],
-        "applicable_modules": ["hair-diagnostic", "aura"],
-        "content_type": "mitos_vs_evidencia"
-      },
-      "clinical_review_status": "approved_by_md",
-      "is_cross_reference": false,
-      "created_at": "2026-08-08T00:00:00Z"
-    },
-    {
-      "chunk_id": "capilar-011",
-      "title": "Minoxidil tópico de venta libre: qué puede hacer, cómo usarlo y cuándo no usarlo",
-      "content": "El minoxidil tópico es el tratamiento de venta libre con mayor evidencia para la alopecia androgenética y también útil en otros tipos de caída seleccionados. Funciona como vasodilatador y estimulador folicular que acorta la fase telógena y prolonga la anágena, aumentando el grosor y número de cabellos con el uso continuo. Las concentraciones habituales son 2% y 5%, y la constancia es crítica: los primeros resultados visibles aparecen entre el cuarto y sexto mes, y al iniciar puede producir un shedding transitorio en las primeras semanas que es parte del mecanismo y no razón para suspender. Si se suspende, el cabello ganado se pierde en meses, porque el minoxidil no cura la miniaturización: la controla mientras se usa. Efectos adversos posibles: irritación o descamación del cuero cabelludo (más con vehículos con propilenglicol), y rara vez hipertricosis facial por contacto. Está contraindicado en embarazo y lactancia, y debe consultarse antes de usarlo si hay enfermedad cardiovascular o cuero cabelludo inflamado. No sirve para alopecias cicatriciales ni reemplaza el diagnóstico: usar minoxidil sin saber la causa de la caída puede retrasar el manejo correcto. La indicación responsable es: diagnóstico primero, minoxidil como parte de un plan, y seguimiento de resultados con fotos.",
-      "category": "diagnostico_capilar",
-      "phase": 3,
+      "chunk_id": "tinte-006",
+      "title": "Decoloración: el proceso químico más agresivo y sus riesgos reales",
+      "content": "La decoloración (bleaching) es el proceso químico más agresivo que se aplica al cabello, y sus riesgos deben entenderse antes de decidirse por cambios drásticos de color. Funciona oxidando y destruyendo la melanina natural del cabello mediante persulfatos y peróxido de hidrógeno a concentraciones altas, lo que permite aclarar hasta 7 tonos pero también rompe enlaces estructurales de la queratina. Los riesgos clínicos incluyen: quiebre inmediato o diferido del tallo, especialmente en cabellos previamente teñidos, alisados o con daño previo; quemaduras químicas del cuero cabelludo si el producto contacta la piel por tiempo prolongado o en concentraciones altas; reacciones alérgicas a los persulfatos, que pueden causar urticaria, rinitis e incluso asma en estilistas expuestos crónicamente; textura gomosa irreversible si se sobrepasa el punto de decoloración; y pérdida de densidad si el daño llega al folículo en casos extremos. La regla de oro: entre más oscuro el punto de partida y más claro el objetivo, mayor el daño potencial y más sesiones espaciadas se necesitan. Un cabello sano y virgen resiste mejor que uno con historial químico. Las recomendaciones responsables incluyen: hacer prueba de mechón antes del procedimiento completo, espaciar sesiones de decoloración al menos 4-6 semanas, usar bond builders que protegen enlaces de queratina, y aceptar que algunos resultados no son alcanzables en un cabello específico sin comprometer su integridad. Ningún color justifica perder el cabello.",
+      "category": "colorimetria_capilar_tinte",
+      "phase": 4,
       "risk_level": "alto",
       "sources": [
-        { "institution": "FDA — Understanding Over-the-Counter Hair Loss Treatments", "url": "https://www.fda.gov/", "year": 2024 },
-        { "institution": "EADV — Guidelines on alopecias", "url": "https://eadv.org/clinical-guidelines", "year": 2024 }
+        { "institution": "AAD — Hair bleaching risks", "url": "https://www.aad.org/", "year": 2024 },
+        { "institution": "PubMed/MEDLINE — Daño químico del cabello", "url": "https://pubmed.ncbi.nlm.nih.gov/", "year": 2024 }
       ],
       "metadata": {
         "skin_types": ["all"],
         "age_ranges": ["adulto"],
         "fototipos": ["all"],
-        "ingredients": ["minoxidil"],
-        "contraindications": ["embarazo", "lactancia", "enfermedad cardiovascular sin consulta"],
+        "ingredients": ["persulfatos", "peroxido de hidrogeno"],
+        "contraindications": ["cabello muy danado previo", "cuero cabelludo irritado"],
         "season": ["all"],
-        "applicable_modules": ["hair-diagnostic", "aura"],
-        "content_type": "manejo_otc"
-      },
-      "clinical_review_status": "approved_by_md",
-      "is_cross_reference": true,
-      "created_at": "2026-08-08T00:00:00Z"
-    },
-    {
-      "chunk_id": "capilar-012",
-      "title": "Red flags capilares: cuándo la caída de cabello necesita dermatólogo",
-      "content": "La mayoría de las consultas por cabello pueden manejarse con cuidado cosmético y paciencia, pero hay señales de alarma que requieren evaluación dermatológica. Caída en parches o placas delimitadas, especialmente si la piel se ve lisa o brillante. Caída súbita e intensa en días, o caída que persiste más de 6 meses sin explicación. Dolor, ardor, picor intenso, enrojecimiento o descamación gruesa del cuero cabelludo. Caída con fiebre, pérdida de peso o síntomas generales. Pérdida de cejas o pestañas. Caída en niños, donde deben descartarse tiñas (infección por hongos que requiere tratamiento médico y no champú cosmético). Sospecha de alopecia cicatricial, que es una emergencia dermatológica relativa porque el folículo destruido no regenera: se manifiesta con parches con piel brillante, pérdida de los orificios foliculares y a veces pústulas o dolor. En mujeres, caída con patrón masculino acompañada de irregularidades menstruales o vello facial que sugiere evaluación endocrina. Y cualquier caída que genere angustia significativa merece consulta, aunque el patrón sea benigno. El diagnóstico temprano marca la diferencia entre recuperar cabello y perder folículos de forma permanente.",
-      "category": "diagnostico_capilar",
-      "phase": 3,
-      "risk_level": "alto",
-      "sources": [
-        { "institution": "AAD — Clinical Guidelines (Hair loss)", "url": "https://www.aad.org/education/clinical-guidelines", "year": 2024 },
-        { "institution": "Sociedad Colombiana de Dermatología y Cirugía Dermatológica (SCD) — Consensos", "url": "https://www.scd.org.co/consensos/", "year": 2024 }
-      ],
-      "metadata": {
-        "skin_types": ["all"],
-        "age_ranges": ["all"],
-        "fototipos": ["all"],
-        "ingredients": [],
-        "contraindications": [],
-        "season": ["all"],
-        "applicable_modules": ["hair-diagnostic", "aura"],
-        "content_type": "red_flags_derivacion"
-      },
-      "clinical_review_status": "approved_by_md",
-      "is_cross_reference": false,
-      "created_at": "2026-08-08T00:00:00Z"
-    },
-    {
-      "chunk_id": "capilar-013",
-      "title": "Queratinas y alisados con formol: la alerta de INVIMA y FDA que debes conocer",
-      "content": "Los tratamientos alisadores y queratinas que liberan formaldehído (formol) representan uno de los riesgos más documentados en estética capilar. Tanto la FDA como el INVIMA han emitido alertas sobre productos alisadores con formaldehído o con liberadores de formaldehído (como metilén glicol o formalina), porque al calentarse con la plancha liberan vapores que irritan ojos, vías respiratorias y piel, y el formaldehído está clasificado como carcinógeno humano por la IARC. Los síntomas reportados incluyen ardor ocular, sangrado nasal, dificultad respiratoria y dermatitis, tanto en clientas como en estilistas que se exponen de forma repetida. En Colombia, el INVIMA ha alertado y retirado productos que superan los límites permitidos o que ocultan el formol en su etiquetado. Las recomendaciones de seguridad: desconfiar de alisados que prometen efecto liso extremo y duradero con humo u olor fuerte, exigir ventilación adecuada y guantes, preguntar por el registro INVIMA del producto, y evitar estos tratamientos durante embarazo, lactancia o con asma y dermatitis. Las alternativas de alisado sin formol (como tratamientos con ácidos orgánicos o queratinas verdaderas sin liberadores) tienen otro perfil de riesgo, aunque también deben aplicarse por profesionales. Tu salud respiratoria y tu cuero cabelludo valen más que un liso temporal.",
-      "category": "diagnostico_capilar",
-      "phase": 3,
-      "risk_level": "alto",
-      "sources": [
-        { "institution": "INVIMA — Alertas de productos cosméticos con formaldehído", "url": "https://www.invima.gov.co/", "year": 2024 },
-        { "institution": "FDA — Formaldehyde in hair smoothing products", "url": "https://www.fda.gov/cosmetics/", "year": 2024 }
-      ],
-      "metadata": {
-        "skin_types": ["all"],
-        "age_ranges": ["adulto"],
-        "fototipos": ["all"],
-        "ingredients": ["formaldehido", "formol"],
-        "contraindications": ["embarazo", "lactancia", "asma", "dermatitis"],
-        "season": ["all"],
-        "applicable_modules": ["hair-diagnostic", "aura"],
+        "applicable_modules": ["analizador_colorimetria", "aura"],
         "content_type": "practicas_de_riesgo"
       },
       "clinical_review_status": "approved_by_md",
       "is_cross_reference": false,
-      "created_at": "2026-08-08T00:00:00Z"
+      "created_at": "2026-08-09T00:00:00Z"
     },
     {
-      "chunk_id": "capilar-014",
-      "title": "Caída postparto: el efluvio que asusta a las mamás y casi siempre se resuelve solo",
-      "content": "La caída de cabello postparto, o efluvio telógeno del posparto, es una de las consultas más frecuentes y angustiantes, y afortunadamente una de las de mejor pronóstico. Durante el embarazo, los estrógenos altos mantienen más cabellos en fase de crecimiento; tras el parto, la caída hormonal sincroniza a esos cabellos en fase telógena, produciendo una caída difusa notable que típicamente comienza entre el segundo y cuarto mes posparto y alcanza su pico alrededor del cuarto o quinto mes. El mensaje clave para tranquilizar: es un proceso autolimitado que no deja calvicie, y el cabello vuelve a crecer, aunque la densidad completa puede tomar de 6 a 12 meses. El manejo es expectante y de apoyo: nutrición adecuada rica en proteína y hierro (especialmente relevante tras el parto y con lactancia), manejo suave del cabello, y paciencia. Durante la lactancia, la mayoría de los tratamientos anticaída cosméticos son irrelevantes y los medicamentos deben consultarse con el médico; el minoxidil, por ejemplo, no se recomienda en lactancia. Consultar al dermatólogo si la caída persiste más de 12 meses, es en parches, o se acompaña de fatiga intensa y otros síntomas que sugieran evaluar tiroides o anemia posparto. Validar la angustia y dar información honesta es parte del cuidado.",
-      "category": "diagnostico_capilar",
-      "phase": 3,
+      "chunk_id": "tinte-007",
+      "title": "Tinte en embarazo y lactancia: qué dice la evidencia sobre seguridad",
+      "content": "La pregunta sobre la seguridad del tinte capilar durante el embarazo y la lactancia es una de las más frecuentes, y la evidencia disponible es tranquilizadora con matices. Los estudios epidemiológicos no han encontrado asociación entre el uso de tintes capilares durante el embarazo y efectos adversos fetales, probablemente porque la absorción sistémica a través del cuero cabelludo sano es mínima. Por esta razón, la mayoría de las guías dermatológicas consideran el tinte capilar aceptable en el embarazo, preferiblemente a partir del segundo trimestre cuando la organogénesis ya se completó, y evitando el contacto prolongado con el cuero cabelludo. Recomendaciones prudentes: aplicar el tinte en un espacio ventilado para minimizar inhalación de vapores de amoniaco, usar guantes, no dejar el producto más tiempo del indicado, considerar alternativas como mechas o reflejos que no tocan el cuero cabelludo, o tintes semipermanentes sin PPD ni amoniaco. En la lactancia, no hay evidencia de paso significativo al leche materna. La henna natural (sin PPD añadido) es una alternativa considerada segura en ambas etapas. Como siempre, la decisión debe ser informada y conversada con el médico tratante, especialmente si hay antecedentes de alergia o si el cuero cabelludo está irritado. La precaución razonable no implica prohibición absoluta, pero sí elegir productos y técnicas con menor perfil de riesgo.",
+      "category": "colorimetria_capilar_tinte",
+      "phase": 4,
       "risk_level": "medio",
       "sources": [
-        { "institution": "AAD — Clinical Guidelines (Hair loss)", "url": "https://www.aad.org/education/clinical-guidelines", "year": 2024 },
-        { "institution": "PubMed — Ly et al. Treatment of conditions during pregnancy and lactation (Dermatol Ther 2023)", "pmid": "36447117", "url": "https://pubmed.ncbi.nlm.nih.gov/36447117/", "year": 2023 }
+        { "institution": "AAD — Hair care during pregnancy", "url": "https://www.aad.org/", "year": 2024 },
+        { "institution": "PubMed — Ly et al. Cosmetic procedures in pregnancy and lactation (Dermatol Ther 2023)", "pmid": "36447117", "year": 2023 }
+      ],
+      "metadata": {
+        "skin_types": ["all"],
+        "age_ranges": ["adulto"],
+        "fototipos": ["all"],
+        "ingredients": ["PPD", "amoniaco"],
+        "contraindications": ["primer trimestre preferiblemente evitar", "cuero cabelludo irritado"],
+        "season": ["all"],
+        "applicable_modules": ["analizador_colorimetria", "aura"],
+        "content_type": "contexto_embarazo"
+      },
+      "clinical_review_status": "approved_by_md",
+      "is_cross_reference": true,
+      "created_at": "2026-08-09T00:00:00Z"
+    },
+    {
+      "chunk_id": "tinte-008",
+      "title": "Prueba de mecha (strand test): por qué es tan importante como el test de alergia",
+      "content": "La prueba de mecha o strand test consiste en aplicar el producto de decoloración o tinte en un mechón pequeño y discreto de cabello antes del procedimiento completo. Aunque es distinta del test de sensibilidad cutánea (que evalúa alergia), la prueba de mecha es igualmente importante porque evalúa la tolerancia del cabello al proceso químico y el resultado de color esperado. En la prueba se observa: si el cabello resiste la decoloración sin volverse gomoso o quebrarse, cuánto tarda en llegar al tono objetivo, qué tono final se obtiene considerando el color de partida (los resultados varían mucho según el historial químico y la porosidad), y si aparecen tonalidades no deseadas como naranjas o verdes que requieran corrección. Esta prueba es especialmente crítica cuando el cabello tiene historial complejo: teñidos previos, alisados, decoloraciones, o cuando se busca un cambio drástico (por ejemplo, de negro a rubio). Los estilistas profesionales deberían ofrecerla como parte del servicio; si te la niegan argumentando que no es necesaria, es una señal de alerta. La prueba de mecha toma unos minutos y puede prevenir un daño irreparable, una corrección costosa o un resultado estéticamente insatisfactorio. Combinada con el test de sensibilidad cutánea, forma la dupla mínima de seguridad antes de cualquier coloración química.",
+      "category": "colorimetria_capilar_tinte",
+      "phase": 4,
+      "risk_level": "medio",
+      "sources": [
+        { "institution": "AAD — Hair coloring best practices", "url": "https://www.aad.org/", "year": 2024 },
+        { "institution": "PubMed/MEDLINE — Ciencia cosmética capilar", "url": "https://pubmed.ncbi.nlm.nih.gov/", "year": 2024 }
       ],
       "metadata": {
         "skin_types": ["all"],
         "age_ranges": ["adulto"],
         "fototipos": ["all"],
         "ingredients": [],
-        "contraindications": ["minoxidil en lactancia"],
+        "contraindications": ["tinte sin prueba de mecha"],
         "season": ["all"],
-        "applicable_modules": ["hair-diagnostic", "aura"],
-        "content_type": "contexto_embarazo"
+        "applicable_modules": ["analizador_colorimetria", "aura"],
+        "content_type": "protocolo_seguridad"
+      },
+      "clinical_review_status": "approved_by_md",
+      "is_cross_reference": false,
+      "created_at": "2026-08-09T00:00:00Z"
+    },
+    {
+      "chunk_id": "tinte-009",
+      "title": "Fototipos y expectativas de color: por qué el punto de partida determina el resultado",
+      "content": "El resultado final de una coloración capilar depende críticamente del punto de partida, y esto tiene implicaciones tanto estéticas como de salud del cabello. Los fototipos más oscuros (IV-VI, prevalentes en la población colombiana y latinoamericana) tienen mayor concentración de eumelanina, por lo que alcanzar tonos muy claros requiere procesos de decoloración más agresivos, con mayor riesgo de daño. Las expectativas realistas son parte de una coloración responsable: pasar de un nivel 1-2 (negro oscuro) a rubios muy claros en una sola sesión es un escenario de alto riesgo y generalmente no recomendable; lo correcto es planificar varias sesiones espaciadas con tratamientos intermedios. Los tonos intermedios (castaños, chocolates, cobrizos) suelen ser más alcanzables con menor agresión química en cabellos oscuros. La colorimetría profesional también considera el subtono natural del cabello y de la piel para elegir tonos favorecedores, no solo el tono objetivo. Las tendencias de redes sociales muestran cambios drásticos que en muchos casos son resultado de ediciones, pelucas o procesos no replicables en cabello real con historial. Un colorista profesional honesto evalúa el punto de partida, el historial químico y la salud del cabello antes de comprometer un resultado, y te dirá cuando algo no es viable sin daño, en lugar de aceptar cualquier pedido. Esa honestidad es la marca del buen profesional.",
+      "category": "colorimetria_capilar_tinte",
+      "phase": 4,
+      "risk_level": "medio",
+      "sources": [
+        { "institution": "AAD — Hair coloring for different hair types", "url": "https://www.aad.org/", "year": 2024 },
+        { "institution": "Sociedad Latinoamericana de Dermatología (SLD) — Cabello en fototipos oscuros", "url": "https://www.dermalatino.org/", "year": 2023 }
+      ],
+      "metadata": {
+        "skin_types": ["all"],
+        "age_ranges": ["adulto"],
+        "fototipos": ["IV", "V", "VI"],
+        "ingredients": [],
+        "contraindications": ["cambios drásticos en una sesión"],
+        "season": ["all"],
+        "applicable_modules": ["analizador_colorimetria", "aura"],
+        "content_type": "contexto_latinoamericano"
+      },
+      "clinical_review_status": "approved_by_md",
+      "is_cross_reference": false,
+      "created_at": "2026-08-09T00:00:00Z"
+    },
+    {
+      "chunk_id": "tinte-010",
+      "title": "Alergia a acrilatos: otra sensibilización relevante en servicios capilares",
+      "content": "Aunque el PPD es el alérgeno más conocido en servicios capilares, los acrilatos son otro grupo de sensibilizantes con creciente relevancia clínica, especialmente por su uso en extensiones con adhesivos, pegamentos para pelucas, productos de fijación y también en uñas acrílicas. Los acrilatos (metacrilatos, cianoacrilatos) pueden producir dermatitis de contacto alérgica en párpados, cara, cuello y cuero cabelludo, a menudo por transferencia con las manos. La sensibilización cruzada es frecuente: una persona alérgica a las uñas acrílicas puede reaccionar a extensiones capilares con adhesivos acrílicos, y viceversa. Las reacciones pueden ser retardadas (24-72 horas) y afectar zonas distintas al punto de contacto, lo que dificulta el diagnóstico. El manejo incluye identificar el producto responsable, evitar los acrilatos en todas sus formas una vez confirmada la alergia, y consultar al dermatólogo para pruebas de parche específicas que determinen qué acrilatos concretos están implicados. Para prevenir, es útil preguntar por los componentes de los adhesivos antes de aplicar extensiones, y estar atenta a síntomas persistentes de dermatitis en párpados o cara cuando se usan extensiones capilares de forma regular. Esta sensibilización es otro ejemplo de por qué revelar al profesional tu historial de alergias es parte del cuidado responsable.",
+      "category": "colorimetria_capilar_tinte",
+      "phase": 4,
+      "risk_level": "medio",
+      "sources": [
+        { "institution": "EADV — Contact dermatitis guidelines", "url": "https://eadv.org/clinical-guidelines", "year": 2024 },
+        { "institution": "PubMed — Acrilatos en cosmética y dermatitis de contacto", "url": "https://pubmed.ncbi.nlm.nih.gov/", "year": 2024 }
+      ],
+      "metadata": {
+        "skin_types": ["all"],
+        "age_ranges": ["adulto"],
+        "fototipos": ["all"],
+        "ingredients": ["acrilatos", "metacrilatos", "cianoacrilatos"],
+        "contraindications": ["alergia previa a acrilatos"],
+        "season": ["all"],
+        "applicable_modules": ["analizador_colorimetria", "aura"],
+        "content_type": "fundamento_alergeno"
       },
       "clinical_review_status": "approved_by_md",
       "is_cross_reference": true,
-      "created_at": "2026-08-08T00:00:00Z"
+      "created_at": "2026-08-09T00:00:00Z"
     },
     {
-      "chunk_id": "capilar-015",
-      "title": "Mitos del cabello vs evidencia: cortarlo no lo engrosa y lavarlo no lo cae",
-      "content": "Pocos temas tienen tantos mitos arraigados como el cabello, y aclararlos evita gastos inútiles y ansiedad. Cortar las puntas no hace que el cabello crezca más grueso ni más rápido: el crecimiento ocurre en el folículo, no en la punta; el corte solo elimina el tramo dañado y mejora la apariencia. Lavar el cabello con frecuencia no lo cae: los cabellos que se desprenden en la ducha ya estaban en fase telógena y caerían igual; la higiene adecuada del cuero cabelludo es saludable y no acelera la caída. Cepillar cien veces al día no da brillo: causa fricción y quiebre. El cabello graso no necesita lavarse con productos agresivos: el exceso de detergente irrita sin cambiar la producción de sebo, que es hormonal. Las canas arrancadas no salen siete más: arrancarlas puede dañar el folículo, pero no multiplica canas. Los productos milagro que prometen densidad en semanas carecen de evidencia: el ciclo capilar impone esperar 3-4 meses para evaluar cualquier intervención seria. Y el estrés sí puede causar caída (efluvio telógeno), pero suele revertir al resolverse. La regla de oro: desconfía de promesas rápidas y universales, y ante caída persistente busca diagnóstico, no champú milagroso.",
-      "category": "diagnostico_capilar",
-      "phase": 3,
+      "chunk_id": "tinte-011",
+      "title": "Alternativas al PPD: tintes sin parafenilendiamina y sus límites",
+      "content": "Para personas sensibilizadas al PPD o que quieren evitarlo, existen alternativas con distintos perfiles de riesgo y resultados. Los tintes sin PPD pueden usar precursores diferentes como la tolueno-2,5-diamina sulfato (PTD), que tiene menor poder sensibilizante pero aún puede causar alergia en personas sensibles al PPD por sensibilización cruzada parcial; por eso no son completamente seguros para todos los alérgicos al PPD. Los tintes completamente vegetales, como la henna pura (Lawsonia inermis) y el índigo, son alternativas con buen perfil de seguridad, pero dan tonalidades limitadas (rojizos, cobrizos, oscuros con henna + índigo) y son menos duraderos. Los tintes metálicos progresivos contienen sales de plomo o plata y tienen limitaciones propias, incluyendo interacción con decoloraciones posteriores. Los productos denominados henna negra no son alternativa segura porque suelen contener PPD añadido. La recomendación responsable: si tienes alergia confirmada al PPD, consulta con dermatología qué precursores alternativos puedes tolerar, haz pruebas de parche específicas antes de usar cualquier tinte alternativo, y nunca asumas que un producto sin PPD es automáticamente seguro para ti. La sensibilización cruzada entre colorantes es real, y solo las pruebas específicas lo determinan.",
+      "category": "colorimetria_capilar_tinte",
+      "phase": 4,
+      "risk_level": "medio",
+      "sources": [
+        { "institution": "AAD — Alternatives to PPD hair dyes", "url": "https://www.aad.org/", "year": 2024 },
+        { "institution": "Cochrane Library — Hair dye allergy and alternatives", "url": "https://www.cochranelibrary.com/", "year": 2024 }
+      ],
+      "metadata": {
+        "skin_types": ["all"],
+        "age_ranges": ["adulto"],
+        "fototipos": ["all"],
+        "ingredients": ["PTD", "henna pura", "indigo"],
+        "contraindications": ["henna negra"],
+        "season": ["all"],
+        "applicable_modules": ["analizador_colorimetria", "aura"],
+        "content_type": "alternativas_seguras"
+      },
+      "clinical_review_status": "approved_by_md",
+      "is_cross_reference": false,
+      "created_at": "2026-08-09T00:00:00Z"
+    },
+    {
+      "chunk_id": "tinte-012",
+      "title": "Regulación INVIMA, FDA y UE sobre tintes capilares: qué revisar al comprar",
+      "content": "Los tintes capilares son productos regulados en Colombia por el INVIMA, en Estados Unidos por la FDA y en Europa por la regulación cosmética europea, con requisitos distintos pero con un objetivo común: seguridad del consumidor. En Colombia, los productos colorantes capilares deben tener registro sanitario INVIMA visible en el empaque, que verifica que el producto ha sido evaluado en sus componentes y etiquetado. La Unión Europea tiene una lista de colorantes permitidos (Anexo III de la regulación cosmética) con concentraciones máximas específicas para PPD y otros precursores, y exige advertencias sobre sensibilización en el etiquetado. La FDA en Estados Unidos no aprueba los tintes antes de su comercialización salvo los colorantes específicos, pero exige advertencias sobre pruebas de sensibilidad y puede emitir alertas cuando detecta productos con componentes peligrosos, como formaldehído o metales pesados. Como consumidora responsable, puedes verificar: que el producto tenga registro INVIMA si lo compras en Colombia, que el etiquetado incluya advertencias sobre sensibilización y la recomendación de prueba de alergia, que no esté en listas de alerta del INVIMA o FDA, y que la lista de ingredientes sea legible y completa. Los productos importados sin registro, vendidos en mercados informales o de dudosa procedencia, pueden contener concentraciones superiores a las permitidas o ingredientes no declarados, y son los de mayor riesgo.",
+      "category": "colorimetria_capilar_tinte",
+      "phase": 4,
+      "risk_level": "medio",
+      "sources": [
+        { "institution": "INVIMA — Registro sanitario de cosméticos", "url": "https://www.invima.gov.co/", "year": 2024 },
+        { "institution": "FDA — Hair dyes and cosmetics regulation", "url": "https://www.fda.gov/cosmetics/", "year": 2024 },
+        { "institution": "Unión Europea — Cosmetic Regulation 1223/2009", "url": "https://ec.europa.eu/", "year": 2024 }
+      ],
+      "metadata": {
+        "skin_types": ["all"],
+        "age_ranges": ["adulto"],
+        "fototipos": ["all"],
+        "ingredients": ["PPD"],
+        "contraindications": ["productos sin registro INVIMA"],
+        "season": ["all"],
+        "applicable_modules": ["analizador_colorimetria", "aura"],
+        "content_type": "regulacion"
+      },
+      "clinical_review_status": "approved_by_md",
+      "is_cross_reference": false,
+      "created_at": "2026-08-09T00:00:00Z"
+    },
+    {
+      "chunk_id": "tinte-013",
+      "title": "Cuidados post-tinte: cómo mantener el color y la salud del cabello",
+      "content": "Después de una coloración, el cabello tiene la cutícula más abierta y es más vulnerable, por lo que los cuidados en los días siguientes determinan tanto la duración del color como la salud del tallo. Recomendaciones con respaldo: evitar lavar el cabello las primeras 48-72 horas para permitir el cierre de la cutícula y la fijación del color; luego usar champú sin sulfatos, que limpian sin retirar agresivamente los pigmentos; incorporar acondicionadores y mascarillas específicas para cabello teñido que ayudan a sellar la cutícula y aportar humedad; usar protector térmico si se usa secador o plancha, porque el calor acelera la oxidación del color y el daño; y proteger el cabello de la radiación UV, que decolora los pigmentos artificiales, usando sombreros o productos con filtros UV. La frecuencia de lavado afecta la duración: lavar menos veces por semana conserva más el color. Los retoques de raíz en lugar de teñir todo el largo reducen la acumulación de daño químico. Es importante evitar decoloraciones o procesos químicos adicionales en el mismo cabello sin espaciar el tiempo suficiente y sin evaluación previa del estado del cabello. Una rutina post-tinte adecuada prolonga el color, reduce la necesidad de retoques frecuentes y preserva la integridad del cabello.",
+      "category": "colorimetria_capilar_tinte",
+      "phase": 4,
       "risk_level": "bajo",
       "sources": [
-        { "institution": "AAD — Hair care basics (Patient education)", "url": "https://www.aad.org/public/everyday-care/hair-scalp-care", "year": 2024 },
-        { "institution": "PubMed/MEDLINE — Revisiones de ciencia cosmética capilar", "url": "https://pubmed.ncbi.nlm.nih.gov/", "year": 2024 }
+        { "institution": "AAD — Hair care after coloring", "url": "https://www.aad.org/", "year": 2024 },
+        { "institution": "PubMed/MEDLINE — Ciencia cosmética capilar", "url": "https://pubmed.ncbi.nlm.nih.gov/", "year": 2024 }
+      ],
+      "metadata": {
+        "skin_types": ["all"],
+        "age_ranges": ["adulto"],
+        "fototipos": ["all"],
+        "ingredients": [],
+        "contraindications": [],
+        "season": ["all"],
+        "applicable_modules": ["analizador_colorimetria", "aura", "planificador_skincare"],
+        "content_type": "guia_de_uso"
+      },
+      "clinical_review_status": "approved_by_md",
+      "is_cross_reference": false,
+      "created_at": "2026-08-09T00:00:00Z"
+    },
+    {
+      "chunk_id": "tinte-014",
+      "title": "Cuero cabelludo sensible o con dermatitis: consideraciones antes de teñir",
+      "content": "Teñir el cabello cuando el cuero cabelludo tiene dermatitis activa, psoriasis, heridas, quemaduras solares o irritación aumenta significativamente el riesgo de reacciones adversas y de mayor absorción de los componentes químicos. En estas condiciones, la barrera cutánea está comprometida, los alérgenos penetran más fácilmente y la irritación del proceso químico puede desencadenar brotes severos. La recomendación médica es posponer la coloración hasta que el cuero cabelludo esté clínicamente sano, y tratar primero la dermatitis con el manejo adecuado (por ejemplo, champús con ketoconazol, corticoides tópicos u otros según la causa). Cuando el cuero cabelludo está sano pero es crónicamente sensible, las precauciones incluyen: test de sensibilidad riguroso, preferir tintes semipermanentes sin PPD ni amoniaco, aplicar el producto principalmente al tallo evitando contacto prolongado con la piel, y considerar técnicas como mechas o balayage que minimizan el contacto con el cuero cabelludo. Si tienes antecedentes de reacciones previas a tintes o cuero cabelludo reactivo, la evaluación dermatológica con pruebas de parche puede determinar a qué componentes específicos eres sensible y orientar productos seguros para ti. Nunca se debe aplicar tinte sobre cuero cabelludo con heridas abiertas, quemaduras o brotes inflamatorios activos.",
+      "category": "colorimetria_capilar_tinte",
+      "phase": 4,
+      "risk_level": "alto",
+      "sources": [
+        { "institution": "AAD — Hair dye safety in sensitive scalp", "url": "https://www.aad.org/", "year": 2024 },
+        { "institution": "Sociedad Colombiana de Dermatología (SCD) — Dermatitis y procedimientos cosméticos", "url": "https://www.scd.org.co/", "year": 2024 }
+      ],
+      "metadata": {
+        "skin_types": ["sensible"],
+        "age_ranges": ["adulto"],
+        "fototipos": ["all"],
+        "ingredients": ["PPD", "amoniaco"],
+        "contraindications": ["dermatitis activa", "cuero cabelludo lesionado", "quemaduras solares"],
+        "season": ["all"],
+        "applicable_modules": ["analizador_colorimetria", "aura"],
+        "content_type": "contraindicacion"
+      },
+      "clinical_review_status": "approved_by_md",
+      "is_cross_reference": false,
+      "created_at": "2026-08-09T00:00:00Z"
+    },
+    {
+      "chunk_id": "tinte-015",
+      "title": "Tintes con metales pesados: alerta sobre productos no regulados",
+      "content": "Aunque los tintes capilares regulados cumplen límites estrictos de metales pesados, los productos informales, importados sin registro o de mercados no regulados pueden contener concentraciones peligrosas de plomo, mercurio, arsénico, níquel o cadmio. El acetato de plomo, por ejemplo, se usa en algunos tintes progresivos oscuros y está prohibido o restringido en varios países por su toxicidad acumulativa y riesgo neurológico, especialmente en embarazadas y niños. El níquel es un alérgeno común que puede estar presente como impureza y causar reacciones en personas sensibles. Los riesgos de metales pesados en cosméticos incluyen toxicidad sistémica por uso repetido, sensibilización alérgica, y en el caso del plomo, efectos sobre el desarrollo neurológico fetal cuando la exposición ocurre en el embarazo. En Colombia, el INVIMA ha emitido alertas sobre productos capilares con metales pesados por encima de los límites permitidos, y su sistema de farmacovigilancia recibe reportes de efectos adversos. Como consumidora, las señales de alerta son: productos sin etiquetado legible en español, sin registro INVIMA visible, con precio sospechosamente bajo, o vendidos por canales informales. Si sospechas intoxicación por metales pesados por uso prolongado de un producto capilar, consulta al médico y reporta al INVIMA. La compra de tintes debe ser en canales formales que garanticen trazabilidad y cumplimiento normativo.",
+      "category": "colorimetria_capilar_tinte",
+      "phase": 4,
+      "risk_level": "alto",
+      "sources": [
+        { "institution": "INVIMA — Alertas sobre cosméticos con metales pesados", "url": "https://www.invima.gov.co/", "year": 2024 },
+        { "institution": "FDA — Lead in cosmetics", "url": "https://www.fda.gov/cosmetics/", "year": 2024 }
+      ],
+      "metadata": {
+        "skin_types": ["all"],
+        "age_ranges": ["adulto"],
+        "fototipos": ["all"],
+        "ingredients": ["plomo", "mercurio", "niquel"],
+        "contraindications": ["productos sin registro INVIMA", "embarazo"],
+        "season": ["all"],
+        "applicable_modules": ["analizador_colorimetria", "aura"],
+        "content_type": "alerta_seguridad"
+      },
+      "clinical_review_status": "approved_by_md",
+      "is_cross_reference": false,
+      "created_at": "2026-08-09T00:00:00Z"
+    },
+    {
+      "chunk_id": "tinte-016",
+      "title": "Red flags: cuándo una reacción al tinte requiere dermatólogo urgente",
+      "content": "La mayoría de las reacciones a tintes pueden manejarse con atención primaria, pero hay señales que requieren evaluación dermatológica o incluso urgencias. Búsqueda urgente o urgencias: dificultad respiratoria, opresión torácica, mareo o sensación de desmayo, edema severo de labios, lengua o párpados, urticaria generalizada intensa; estas son manifestaciones de posible anafilaxia que requieren atención inmediata. Evaluación dermatológica pronta: reacción extensa con ampollas, supuración o costras en cuero cabelludo, cara o cuello; edema facial importante (facies leonina); lesiones que se extienden fuera del área de aplicación; reacción que no mejora con manejo básico en 48-72 horas; reacción en párpados o genitales. También es recomendable la evaluación si es la primera reacción significativa al tinte, porque las pruebas de parche realizadas por el dermatólogo determinan los alérgenos específicos y orientan sobre productos seguros futuros, previniendo reacciones más graves en exposiciones posteriores. Documentar el producto (marca, lote, fecha) y el tiempo entre aplicación y síntomas es útil tanto para el diagnóstico como para el reporte al INVIMA. En población pediátrica, cualquier reacción a tinte o henna negra debe ser evaluada por pediatría o dermatología pediátrica.",
+      "category": "colorimetria_capilar_tinte",
+      "phase": 4,
+      "risk_level": "alto",
+      "sources": [
+        { "institution": "AAD — When to seek emergency care for cosmetic reactions", "url": "https://www.aad.org/", "year": 2024 },
+        { "institution": "INVIMA — Sistema de reporte de eventos adversos cosméticos", "url": "https://www.invima.gov.co/", "year": 2024 }
       ],
       "metadata": {
         "skin_types": ["all"],
@@ -379,12 +408,62 @@
         "ingredients": [],
         "contraindications": [],
         "season": ["all"],
-        "applicable_modules": ["hair-diagnostic", "aura"],
+        "applicable_modules": ["analizador_colorimetria", "aura"],
+        "content_type": "red_flags_derivacion"
+      },
+      "clinical_review_status": "approved_by_md",
+      "is_cross_reference": false,
+      "created_at": "2026-08-09T00:00:00Z"
+    },
+    {
+      "chunk_id": "tinte-017",
+      "title": "Mitos del tinte vs evidencia: canas, caída y crecimientos",
+      "content": "La colorimetría capilar tiene mitos muy arraigados que conviene aclarar con evidencia. El tinte no hace que salgan más canas: las canas son el resultado de la pérdida de melanocitos del folículo por edad y genética, y el tinte solo afecta el tallo, no el folículo; la percepción de más canas tras dejar de teñir es simplemente ver las que ya habían salido. Teñir el cabello no lo hace crecer más rápido ni más grueso: el crecimiento ocurre en el folículo y es independiente de los procesos químicos del tallo; la sensación de mayor volumen después del tinte suele ser por el aumento de diámetro temporal del tallo por la apertura de la cutícula. El tinte no causa caída en condiciones normales: la caída del cabello (efluvio) tiene causas médicas o reactivales distintas, aunque una reacción alérgica severa sí puede dañar folículos y producir caída. Arrancar las canas no hace que salgan siete más, pero sí puede dañar el folículo de forma permanente. Los productos naturales no son automáticamente seguros: la henna negra con PPD es un ejemplo claro, y otros productos botánicos pueden causar alergia. Los tintes modernos regulados son seguros para la mayoría de la población cuando se usan correctamente con pruebas previas; no son la amenaza que algunas narrativas sugieren, pero tampoco son inocuos si se omiten las precauciones básicas. La clave es uso informado, no miedo.",
+      "category": "colorimetria_capilar_tinte",
+      "phase": 4,
+      "risk_level": "bajo",
+      "sources": [
+        { "institution": "AAD — Hair dye myths vs facts", "url": "https://www.aad.org/", "year": 2024 },
+        { "institution": "PubMed/MEDLINE — Ciencia cosmética capilar", "url": "https://pubmed.ncbi.nlm.nih.gov/", "year": 2024 }
+      ],
+      "metadata": {
+        "skin_types": ["all"],
+        "age_ranges": ["adulto"],
+        "fototipos": ["all"],
+        "ingredients": [],
+        "contraindications": [],
+        "season": ["all"],
+        "applicable_modules": ["analizador_colorimetria", "aura"],
         "content_type": "mitos_vs_evidencia"
       },
       "clinical_review_status": "approved_by_md",
       "is_cross_reference": false,
-      "created_at": "2026-08-08T00:00:00Z"
+      "created_at": "2026-08-09T00:00:00Z"
+    },
+    {
+      "chunk_id": "tinte-018",
+      "title": "Cuándo el cambio de color debe ser planificado por un profesional",
+      "content": "No todos los cambios de color requieren el mismo nivel de expertise, y saber cuándo buscar un profesional calificado previene daño y decepción. Los escenarios que definitivamente deben ser manejados por un colorista profesional incluyen: cambios drásticos de tono (más de 3-4 niveles de diferencia con el color base), especialmente en cabellos oscuros; correcciones de color (cambiar un resultado no deseado, eliminar tintes previos oscuros, corregir tonalidades verdosas o naranjas); cabellos con historial químico complejo (múltiples tintes previos, alisados, decoloraciones, henna); uso de técnicas avanzadas como balayage, babylights o mechas que requieren precisión; y cabellos con daño previo o condiciones del cuero cabelludo. Los tintes de caja son adecuados para cambios pequeños y mantenimiento, pero tienen limitaciones en personalización y manejo de complejidad. Un buen profesional evalúa el historial completo, hace pruebas de mecha y sensibilidad, explica riesgos y límites realistas del resultado, y planifica sesiones espaciadas cuando es necesario. En Colombia, puedes verificar la formación del estilista y preferir establecimientos que ofrezcan consultas previas y pruebas. La inversión en un buen colorista es también inversión en salud capilar y en evitar costosas correcciones posteriores.",
+      "category": "colorimetria_capilar_tinte",
+      "phase": 4,
+      "risk_level": "bajo",
+      "sources": [
+        { "institution": "AAD — Professional vs home hair coloring", "url": "https://www.aad.org/", "year": 2024 },
+        { "institution": "Sociedad Colombiana de Dermatología (SCD) — Procedimientos estéticos y profesionales calificados", "url": "https://www.scd.org.co/", "year": 2024 }
+      ],
+      "metadata": {
+        "skin_types": ["all"],
+        "age_ranges": ["adulto"],
+        "fototipos": ["all"],
+        "ingredients": [],
+        "contraindications": [],
+        "season": ["all"],
+        "applicable_modules": ["analizador_colorimetria", "aura"],
+        "content_type": "guia_de_uso"
+      },
+      "clinical_review_status": "approved_by_md",
+      "is_cross_reference": false,
+      "created_at": "2026-08-09T00:00:00Z"
     }
   ]
 }
