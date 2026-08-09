@@ -1634,6 +1634,17 @@ app.set('notifyUserChatMessage', notifyUserChatMessage);
 if (process.env.NODE_ENV !== 'test') {
   const server = app.listen(PORT, async () => {
     console.log(`🚀 Servidor en http://localhost:${PORT}`);
+    // 🏭 Auto-ingesta de corpus en cada deploy
+try {
+  let mod = null;
+  for (const rel of ['./src/services/corpusAutoIngest', './services/corpusAutoIngest', '../services/corpusAutoIngest', '../../src/services/corpusAutoIngest']) {
+    try { mod = require(rel); break; } catch (e) {}
+  }
+  if (mod) { mod.startCorpusAutoIngest(); }
+  else { console.warn('⚠️ Auto-ingest: no se encontró el módulo.'); }
+} catch (e) {
+  console.warn('⚠️ Auto-ingest no disponible:', e.message);
+}
     console.log(`📦 Entorno: ${process.env.NODE_ENV || 'development'}`);
     await testConnection();
     await initDatabase();
