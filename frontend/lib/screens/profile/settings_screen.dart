@@ -1,7 +1,12 @@
 // lib/screens/profile/settings_screen.dart
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import '../../core/theme/belleza_luxe_theme.dart';
 import '../../widgets/profile/luxe_list_tile.dart';
+import '../../services/api_service.dart';
+import '../../services/auth_service.dart';
+import '../../services/analytics_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   final String userEmail;
@@ -22,6 +27,134 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _pushNotifications = true;
   bool _marketingEmails = false;
   bool _anonymizedAnalytics = true;
+  bool _isLoadingPreferences = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPreferences();
+  }
+
+  Future<void> _loadPreferences() async {
+    setState(() {
+      _isLoadingPreferences = true;
+      _errorMessage = null;
+    });
+    try {
+      final headers = await ApiService.getAuthHeaders();
+      final uri = Uri.parse('${ApiService.baseUrl}/api/users/preferences');
+      final response = await http.get(uri, headers: headers).timeout(const Duration(seconds: 10));
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final prefs = data['data'];
+        if (prefs != null && mounted) {
+          setState(() {
+            _pushNotifications = prefs['push_enabled'] ?? true;
+            _marketingEmails = prefs['marketing_enabled'] ?? false;
+            _anonymizedAnalytics = prefs['telemetry_enabled'] ?? true;
+            _isLoadingPreferences = false;
+          });
+          // Actualizar cache de AnalyticsService
+          AnalyticsService().invalidateTelemetryCache();
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _errorMessage = 'Error al cargar preferencias: ${response.statusCode}';
+            _isLoadingPreferences = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Error de conexión: $e';
+          _isLoadingPreferences = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _updatePreference(String key, bool value) async {
+    // Optimistic update
+    setState(() {
+      switch (key) {
+        case 'push_enabled':
+          _pushNotifications = value;
+          break;
+        case 'marketing_enabled':
+          _marketingEmails = value;
+          break;
+        case 'telemetry_enabled':
+          _anonymizedAnalytics = value;
+          break;
+      }
+    });
+
+    try {
+      final headers = await ApiService.getAuthHeaders();
+      final uri = Uri.parse('${ApiService.baseUrl}/api/users/preferences');
+      final response = await http.patch(
+        uri,
+        headers: headers,
+        body: json.encode({key: value}),
+      ).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode != 200) {
+        // Revert on error
+        if (mounted) {
+          setState(() {
+            switch (key) {
+              case 'push_enabled':
+                _pushNotifications = !value;
+                break;
+              case 'marketing_enabled':
+                _marketingEmails = !value;
+                break;
+              case 'telemetry_enabled':
+                _anonymizedAnalytics = !value;
+                break;
+            }
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error al guardar preferencia: ${response.statusCode}'),
+              backgroundColor: const Color(0xFFB00020),
+            ),
+          );
+        }
+      } else {
+        if (key == 'telemetry_enabled') {
+          AnalyticsService().invalidateTelemetryCache();
+        }
+      }
+    } catch (e) {
+      // Revert on error
+      if (mounted) {
+        setState(() {
+          switch (key) {
+            case 'push_enabled':
+              _pushNotifications = !value;
+              break;
+            case 'marketing_enabled':
+              _marketingEmails = !value;
+              break;
+            case 'telemetry_enabled':
+              _anonymizedAnalytics = !value;
+              break;
+          }
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error de conexión: $e'),
+            backgroundColor: const Color(0xFFB00020),
+          ),
+        );
+      }
+    }
+  }
 
   // DIÁLOGO DE CAMBIO DE CONTRASEÑA
   void _showChangePasswordDialog(BuildContext context) {
@@ -31,6 +164,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     bool obscureCurrent = true;
     bool obscureNew = true;
     bool obscureConfirm = true;
+    bool _isLoading = false;
 
     showDialog(
       context: context,
@@ -98,7 +232,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: _isLoading ? null : () => Navigator.pop(context),
               child: const Text('Cancelar', style: TextStyle(color: LuxeColors.nude700)),
             ),
             ElevatedButton(
@@ -106,7 +240,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 backgroundColor: LuxeColors.nude900,
                 foregroundColor: Colors.white,
               ),
-              onPressed: () {
+              onPressed: _isLoading ? null : () async {
                 if (newPasswordController.text.isEmpty ||
                     newPasswordController.text != confirmPasswordController.text) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -117,20 +251,180 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   );
                   return;
                 }
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Contraseña actualizada con éxito.'),
-                    backgroundColor: LuxeColors.nude900,
-                  ),
-                );
+                if (currentPasswordController.text.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Debes ingresar tu contraseña actual.'),
+                      backgroundColor: Color(0xFFB00020),
+                    ),
+                  );
+                  return;
+                }
+                setDialogState(() => _isLoading = true);
+                
+                try {
+                  final headers = await ApiService.getAuthHeaders();
+                  final uri = Uri.parse('${ApiService.baseUrl}/api/auth/change-password');
+                  final response = await http.patch(
+                    uri,
+                    headers: headers,
+                    body: json.encode({
+                      'current_password': currentPasswordController.text,
+                      'new_password': newPasswordController.text,
+                    }),
+                  ).timeout(const Duration(seconds: 15));
+
+                  if (mounted) {
+                    setDialogState(() => _isLoading = false);
+                    
+                    if (response.statusCode == 200) {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Contraseña actualizada con éxito.'),
+                          backgroundColor: LuxeColors.nude900,
+                        ),
+                      );
+                    } else {
+                      final data = json.decode(response.body);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(data['error'] ?? 'Error al cambiar contraseña'),
+                          backgroundColor: const Color(0xFFB00020),
+                        ),
+                      );
+                    }
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    setDialogState(() => _isLoading = false);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Error de conexión: $e'),
+                        backgroundColor: const Color(0xFFB00020),
+                      ),
+                    );
+                  }
+                }
               },
-              child: const Text('Actualizar'),
+              child: _isLoading
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Text('Actualizar'),
             ),
           ],
         ),
       ),
     );
+  }
+
+  // SOLICITAR SUPRESIÓN DE DATOS (ARCO)
+  void _requestDataDeletion(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: LuxeColors.nude100,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(LuxeSpacing.md),
+          side: const BorderSide(color: LuxeColors.nude200),
+        ),
+        title: const Text(
+          'Eliminar Cuenta Concierge',
+          style: TextStyle(
+            fontFamily: 'Didot',
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: LuxeColors.nude900,
+          ),
+        ),
+        content: const Text(
+          'Esta acción creará una solicitud formal de supresión de datos (ARCO) según Ley 1581/2012. '
+          'Tu solicitud será revisada por nuestro equipo y recibirás una confirmación con el número de ticket. '
+          'La eliminación se ejecutará tras verificación de identidad.',
+          style: LuxeTypography.bodyMd,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar', style: TextStyle(color: LuxeColors.nude900)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              'Confirmar Solicitud ARCO',
+              style: TextStyle(
+                fontFamily: 'CormorantGaramond',
+                color: Color(0xFFB00020),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Enviando solicitud ARCO...'),
+          backgroundColor: LuxeColors.nude900,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+
+    try {
+      final headers = await ApiService.getAuthHeaders();
+      final uri = Uri.parse('${ApiService.baseUrl}/api/tickets');
+      final response = await http.post(
+        uri,
+        headers: headers,
+        body: json.encode({
+          'tipo': 'PETICION',
+          'categoria': 'seguridad',
+          'asunto': 'Solicitud de Supresión de Datos (ARCO) - Ley 1581/2012',
+          'descripcion': 'El usuario solicita la supresión total de sus datos personales y biométricos '
+              'conforme al Artículo 15 de la Ley Estatutaria 1581 de 2012. '
+              'Se requiere revisión y ejecución manual por parte del equipo de privacidad.',
+        }),
+      ).timeout(const Duration(seconds: 15));
+
+      if (mounted) {
+        if (response.statusCode == 201 || response.statusCode == 200) {
+          final data = json.decode(response.body);
+          final ticketId = data['data']?['id'] ?? 'N/A';
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Solicitud ARCO registrada. Ticket: $ticketId. Recibirás confirmación por email.'),
+              backgroundColor: LuxeColors.nude900,
+              duration: const Duration(seconds: 8),
+            ),
+          );
+        } else {
+          final data = json.decode(response.body);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error al crear solicitud: ${data['error'] ?? response.statusCode}'),
+              backgroundColor: const Color(0xFFB00020),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error de conexión: $e'),
+            backgroundColor: const Color(0xFFB00020),
+          ),
+        );
+      }
+    }
   }
 
   // MODAL TÉRMINOS DE SERVICIO
@@ -289,57 +583,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  void _showDeleteAccountConfirmation(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: LuxeColors.nude100,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(LuxeSpacing.md),
-          side: const BorderSide(color: LuxeColors.nude200),
-        ),
-        title: const Text(
-          'Eliminar Cuenta Concierge',
-          style: TextStyle(
-            fontFamily: 'Didot',
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: LuxeColors.nude900,
-          ),
-        ),
-        content: const Text(
-          'Esta acción purgará tu historial biométrico y registros de escaneo de forma irreversible de nuestros servidores cifrados.',
-          style: LuxeTypography.bodyMd,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar', style: TextStyle(color: LuxeColors.nude900)),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Solicitud de eliminación registrada de acuerdo a Ley 1581.'),
-                  backgroundColor: LuxeColors.nude900,
-                ),
-              );
-            },
-            child: const Text(
-              'Confirmar Supresión',
-              style: TextStyle(
-                fontFamily: 'CormorantGaramond',
-                color: Color(0xFFB00020), // Rojo semántico sutil
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -364,157 +607,181 @@ class _SettingsScreenState extends State<SettingsScreen> {
         centerTitle: true,
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(LuxeSpacing.xl),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // SECCIÓN 1: SEGURIDAD DE SESIÓN
-              const Text(
-                'SEGURIDAD & AUTENTICACIÓN',
-                style: TextStyle(
-                  fontFamily: 'JetBrainsMono',
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: LuxeColors.nude500,
-                  letterSpacing: 1.2,
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              LuxeProfileTile(
-                icon: Icons.fingerprint,
-                title: 'Autenticación Biométrica',
-                subtitle: 'Ingreso rápido con FaceID / Huella',
-                trailing: LuxeToggle(
-                  value: _biometricAuthEnabled,
-                  onChanged: (val) => setState(() => _biometricAuthEnabled = val),
-                ),
-              ),
-              LuxeProfileTile(
-                icon: Icons.lock_outline,
-                title: 'Cambiar Contraseña',
-                showDivider: false,
-                onTap: () => _showChangePasswordDialog(context),
-              ),
-
-              const SizedBox(height: LuxeSpacing.xxl),
-
-              // SECCIÓN 2: NOTIFICACIONES
-              const Text(
-                'COMUNICACIÓN CONCIERGE',
-                style: TextStyle(
-                  fontFamily: 'JetBrainsMono',
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: LuxeColors.nude500,
-                  letterSpacing: 1.2,
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              LuxeProfileTile(
-                icon: Icons.notifications_none,
-                title: 'Notificaciones Push',
-                subtitle: 'Recordatorios de rutina de piel',
-                trailing: LuxeToggle(
-                  value: _pushNotifications,
-                  onChanged: (val) => setState(() => _pushNotifications = val),
-                ),
-              ),
-              LuxeProfileTile(
-                icon: Icons.mail_outline,
-                title: 'Novedades y Novedades Luxe',
-                subtitle: 'Boletín de lanzamientos de productos',
-                trailing: LuxeToggle(
-                  value: _marketingEmails,
-                  onChanged: (val) => setState(() => _marketingEmails = val),
-                ),
-                showDivider: false,
-              ),
-
-              const SizedBox(height: LuxeSpacing.xxl),
-
-              // SECCIÓN 3: PRIVACIDAD Y DATOS SENSIBLES
-              const Text(
-                'DATOS Y TELEMETRÍA',
-                style: TextStyle(
-                  fontFamily: 'JetBrainsMono',
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: LuxeColors.nude500,
-                  letterSpacing: 1.2,
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              LuxeProfileTile(
-                icon: Icons.analytics_outlined,
-                title: 'Telemetría Anónima de Uso',
-                subtitle: 'Ayuda a mejorar los modelos de escaneo de Aura',
-                trailing: LuxeToggle(
-                  value: _anonymizedAnalytics,
-                  onChanged: (val) => setState(() => _anonymizedAnalytics = val),
-                ),
-                showDivider: false,
-              ),
-
-              const SizedBox(height: LuxeSpacing.xxl),
-
-              // ACCIÓN DESTRUCTIVA: ELIMINAR CUENTA (CON TIPOGRAFÍA SERIF ROJA SUTIL)
-              ListTile(
-                onTap: () => _showDeleteAccountConfirmation(context),
-                leading: const Icon(Icons.delete_outline, color: Color(0xFFB00020)),
-                title: const Text(
-                  'Solicitar Supresión de Datos (ARCO)',
-                  style: TextStyle(
-                    fontFamily: 'CormorantGaramond',
-                    fontSize: 16,
-                    color: Color(0xFFB00020),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 32),
-
-              // INFORMACIÓN LEGAL Y VERSIÓN CON TEXTO NUDE400 Y ENLACES SUBRAYADOS
-              Center(
+        child: _isLoadingPreferences
+            ? const Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
+                padding: const EdgeInsets.all(LuxeSpacing.xl),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    if (_errorMessage != null) ...[
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFB00020).withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFB00020)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.warning_amber_rounded, color: Color(0xFFB00020)),
+                            const SizedBox(width: 8),
+                            Expanded(child: Text(_errorMessage!, style: const TextStyle(color: Color(0xFFB00020)))),
+                            IconButton(
+                              icon: const Icon(Icons.refresh, color: Color(0xFFB00020), size: 20),
+                              onPressed: _loadPreferences,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: LuxeSpacing.xl),
+                    ],
+                    // SECCIÓN 1: SEGURIDAD DE SESIÓN
                     const Text(
-                      'GlowApp Belleza Luxe • v2.4.0 (Build 2026)',
-                      style: TextStyle(fontFamily: 'JetBrainsMono', fontSize: 11, color: LuxeColors.nude500),
+                      'SEGURIDAD & AUTENTICACIÓN',
+                      style: TextStyle(
+                        fontFamily: 'JetBrainsMono',
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: LuxeColors.nude500,
+                        letterSpacing: 1.2,
+                      ),
                     ),
-                    const SizedBox(height: 6),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        GestureDetector(
-                          onTap: () => _showTermsOfServiceModal(context),
-                          child: const Text(
-                            'Términos de Servicio',
-                            style: TextStyle(fontSize: 11, color: LuxeColors.nude500, decoration: TextDecoration.underline),
-                          ),
-                        ),
-                        const Text(' • ', style: TextStyle(color: LuxeColors.nude500)),
-                        GestureDetector(
-                          onTap: () => _showPrivacyPolicyModal(context),
-                          child: const Text(
-                            'Política de Privacidad Ley 1581',
-                            style: TextStyle(fontSize: 11, color: LuxeColors.nude500, decoration: TextDecoration.underline),
-                          ),
-                        ),
-                      ],
+                    const SizedBox(height: 12),
+
+                    LuxeProfileTile(
+                      icon: Icons.fingerprint,
+                      title: 'Autenticación Biométrica',
+                      subtitle: 'Ingreso rápido con FaceID / Huella',
+                      trailing: LuxeToggle(
+                        value: _biometricAuthEnabled,
+                        onChanged: (val) => setState(() => _biometricAuthEnabled = val),
+                      ),
                     ),
+                    LuxeProfileTile(
+                      icon: Icons.lock_outline,
+                      title: 'Cambiar Contraseña',
+                      showDivider: false,
+                      onTap: () => _showChangePasswordDialog(context),
+                    ),
+
+                    const SizedBox(height: LuxeSpacing.xxl),
+
+                    // SECCIÓN 2: NOTIFICACIONES
+                    const Text(
+                      'COMUNICACIÓN CONCIERGE',
+                      style: TextStyle(
+                        fontFamily: 'JetBrainsMono',
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: LuxeColors.nude500,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    LuxeProfileTile(
+                      icon: Icons.notifications_none,
+                      title: 'Notificaciones Push',
+                      subtitle: 'Recordatorios de rutina de piel',
+                      trailing: LuxeToggle(
+                        value: _pushNotifications,
+                        onChanged: (val) => _updatePreference('push_enabled', val),
+                      ),
+                    ),
+                    LuxeProfileTile(
+                      icon: Icons.mail_outline,
+                      title: 'Novedades y Novedades Luxe',
+                      subtitle: 'Boletín de lanzamientos de productos',
+                      trailing: LuxeToggle(
+                        value: _marketingEmails,
+                        onChanged: (val) => _updatePreference('marketing_enabled', val),
+                      ),
+                      showDivider: false,
+                    ),
+
+                    const SizedBox(height: LuxeSpacing.xxl),
+
+                    // SECCIÓN 3: PRIVACIDAD Y DATOS SENSIBLES
+                    const Text(
+                      'DATOS Y TELEMETRÍA',
+                      style: TextStyle(
+                        fontFamily: 'JetBrainsMono',
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: LuxeColors.nude500,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    LuxeProfileTile(
+                      icon: Icons.analytics_outlined,
+                      title: 'Telemetría Anónima de Uso',
+                      subtitle: 'Ayuda a mejorar los modelos de escaneo de Aura',
+                      trailing: LuxeToggle(
+                        value: _anonymizedAnalytics,
+                        onChanged: (val) => _updatePreference('telemetry_enabled', val),
+                      ),
+                      showDivider: false,
+                    ),
+
+                    const SizedBox(height: LuxeSpacing.xxl),
+
+                    // ACCIÓN DESTRUCTIVA: ELIMINAR CUENTA (CON TIPOGRAFÍA SERIF ROJA SUTIL)
+                    ListTile(
+                      onTap: () => _requestDataDeletion(context),
+                      leading: const Icon(Icons.delete_outline, color: Color(0xFFB00020)),
+                      title: const Text(
+                        'Solicitar Supresión de Datos (ARCO)',
+                        style: TextStyle(
+                          fontFamily: 'CormorantGaramond',
+                          fontSize: 16,
+                          color: Color(0xFFB00020),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 32),
+
+                    // INFORMACIÓN LEGAL Y VERSIÓN CON TEXTO NUDE400 Y ENLACES SUBRAYADOS
+                    Center(
+                      child: Column(
+                        children: [
+                          const Text(
+                            'GlowApp Belleza Luxe • v2.4.0 (Build 2026)',
+                            style: TextStyle(fontFamily: 'JetBrainsMono', fontSize: 11, color: LuxeColors.nude500),
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              GestureDetector(
+                                onTap: () => _showTermsOfServiceModal(context),
+                                child: const Text(
+                                  'Términos de Servicio',
+                                  style: TextStyle(fontSize: 11, color: LuxeColors.nude500, decoration: TextDecoration.underline),
+                                ),
+                              ),
+                              const Text(' • ', style: TextStyle(color: LuxeColors.nude500)),
+                              GestureDetector(
+                                onTap: () => _showPrivacyPolicyModal(context),
+                                child: const Text(
+                                  'Política de Privacidad Ley 1581',
+                                  style: TextStyle(fontSize: 11, color: LuxeColors.nude500, decoration: TextDecoration.underline),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 32),
                   ],
                 ),
               ),
-              const SizedBox(height: 32),
-            ],
-          ),
-        ),
       ),
     );
   }
-}
+  }

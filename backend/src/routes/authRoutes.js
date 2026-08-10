@@ -24,5 +24,6 @@ router.patch('/biometrics/consent', authMiddleware, acceptBiometricsConsent);
 router.post('/fcm-token', authMiddleware, saveFcmToken);
 router.get('/referral-info', authMiddleware, getReferralInfo);
 router.delete('/delete-account', authMiddleware, deleteAccount);
+router.patch('/change-password', authMiddleware, changePassword);
 
 module.exports = router;

@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'api_service.dart';
+import 'auth_service.dart';
 
 class AnalyticsService {
   static final AnalyticsService _instance = AnalyticsService._internal();
@@ -18,6 +19,9 @@ class AnalyticsService {
   final List<Map<String, dynamic>> _queue = [];
   Timer? _flushTimer;
   bool _isSending = false;
+  bool? _telemetryEnabledCache;
+  DateTime? _cacheTimestamp;
+  static const Duration _cacheValidity = Duration(minutes: 5);
 
   void init() {
     sessionId = _generateUUIDv4();
@@ -27,33 +31,85 @@ class AnalyticsService {
     }
   }
 
+  Future<bool> _getTelemetryEnabled() async {
+      // Verificar cache primero
+      if (_telemetryEnabledCache != null &&
+          _cacheTimestamp != null &&
+          DateTime.now().difference(_cacheTimestamp!) < _cacheValidity) {
+        return _telemetryEnabledCache!;
+      }
+
+      try {
+        // Si no hay usuario logueado, por defecto permitir telemetría (comportamiento anterior)
+        final token = await AuthService.getToken();
+        if (token == null || token.isEmpty) {
+          _telemetryEnabledCache = true;
+          _cacheTimestamp = DateTime.now();
+          return true;
+        }
+
+        final headers = await ApiService.getAuthHeaders();
+        final uri = Uri.parse('${ApiService.baseUrl}/api/users/preferences');
+        final response = await http.get(uri, headers: headers).timeout(const Duration(seconds: 10));
+      
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+          _telemetryEnabledCache = data['data']?['telemetry_enabled'] ?? true;
+        } else {
+          _telemetryEnabledCache = true; // Default a true si falla
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          print('⚠️ AnalyticsService: Error obteniendo preferencia telemetría, default true: $e');
+        }
+        _telemetryEnabledCache = true;
+      }
+    
+      _cacheTimestamp = DateTime.now();
+      return _telemetryEnabledCache!;
+    }
+
+  void invalidateTelemetryCache() {
+    _telemetryEnabledCache = null;
+    _cacheTimestamp = null;
+  }
+
   void logEvent({
     required String eventType,
     required String screenName,
     String? elementId,
     Map<String, dynamic>? metadata,
   }) {
-    final event = {
-      'session_id': sessionId,
-      'event_type': eventType,
-      'screen_name': screenName,
-      'element_id': elementId,
-      'metadata': metadata,
-      'creado_en': DateTime.now().toUtc().toIso8601String(),
-    };
+    _getTelemetryEnabled().then((enabled) {
+      if (!enabled) {
+        if (kDebugMode) {
+          print('📊 AnalyticsService: Telemetría deshabilitada por preferencia de usuario, evento [$eventType] descartado');
+        }
+        return;
+      }
 
-    synchronized(() {
-      _queue.add(event);
-      if (kDebugMode) {
-        print(
-            '📊 AnalyticsService: Evento encolado [$eventType] en screen [$screenName]. Cola: ${_queue.length}');
+      final event = {
+        'session_id': sessionId,
+        'event_type': eventType,
+        'screen_name': screenName,
+        'element_id': elementId,
+        'metadata': metadata,
+        'creado_en': DateTime.now().toUtc().toIso8601String(),
+      };
+
+      synchronized(() {
+        _queue.add(event);
+        if (kDebugMode) {
+          print(
+              '📊 AnalyticsService: Evento encolado [$eventType] en screen [$screenName]. Cola: ${_queue.length}');
+        }
+      });
+
+      // Enviar inmediatamente si superamos el umbral
+      if (_queue.length >= 10) {
+        flushEvents();
       }
     });
-
-    // Enviar inmediatamente si superamos el umbral
-    if (_queue.length >= 10) {
-      flushEvents();
-    }
   }
 
   void logScreenView(String screenName, {Map<String, dynamic>? metadata}) {

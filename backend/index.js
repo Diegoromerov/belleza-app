@@ -11,6 +11,7 @@ require('dotenv').config();
 // ⚠️ IMPORTANTE: Imports al inicio para evitar ReferenceError
 const authRoutes = require('./src/routes/authRoutes');
 const biometricConsentRoutes = require('./src/routes/biometricConsentRoutes');
+const userPreferencesRoutes = require('./src/routes/userPreferencesRoutes');
 const biometricRoutes = require('./src/routes/biometricRoutes');
 const vtoRoutes = require('./src/routes/vtoRoutes');
 const colorRoutes = require('./src/routes/colorRoutes');
@@ -392,6 +393,7 @@ app.get('/api/debug-db', debugRouteMiddleware, async (req, res) => {
 const niaBeautyRoutes = require('./src/routes/niaBeautyRoutes');
 
 app.use('/api/auth', authRoutes);
+app.use('/api/users', userPreferencesRoutes);
 app.use('/api/designs', designsRoutes);
 app.use('/api/nia-beauty', niaBeautyRoutes);
 
@@ -1649,8 +1651,32 @@ try {
     await testConnection();
     await initDatabase();
     // Iniciar jobs de pagos (maduración, retiros automáticos, conciliación)
-    inicializarJobs();
-    // Inicializar servidor WebSocket compartiendo puerto HTTP
+        inicializarJobs();
+        // Iniciar worker de VTO de uñas
+        try {
+          const nailTryonWorker = require('./src/workers/nailTryonWorker');
+          nailTryonWorker.start();
+          console.log('✅ NailTryonWorker iniciado');
+        } catch (err) {
+          console.warn('⚠️ No se pudo iniciar NailTryonWorker:', err.message);
+        }
+        // Iniciar worker de revisión PQRSF (riesgo legal/clínico + candidatos a corpus)
+        try {
+          const pqrsfReviewWorker = require('./src/workers/pqrsfReviewWorker');
+          pqrsfReviewWorker.start();
+          console.log('✅ PqrsfReviewWorker iniciado');
+        } catch (err) {
+          console.warn('⚠️ No se pudo iniciar PqrsfReviewWorker:', err.message);
+        }
+        // Iniciar worker de atribución VTO (backfill y atribución manual)
+        try {
+          const vtoAttributionWorker = require('./src/workers/vtoAttributionWorker');
+          vtoAttributionWorker.start();
+          console.log('✅ VtoAttributionWorker iniciado');
+        } catch (err) {
+          console.warn('⚠️ No se pudo iniciar VtoAttributionWorker:', err.message);
+        }
+        // Inicializar servidor WebSocket compartiendo puerto HTTP
     initWebSocketServer(server);
   });
 

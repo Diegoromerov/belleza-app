@@ -415,18 +415,81 @@ exports.deleteAccount = async (req, res) => {
 
     console.log(`⚖️ [LEGAL COMPLIANCE] Cuenta de usuario ID ${userId} eliminada a solicitud del titular.`);
 
-    res.json({
-      success: true,
-      message: 'Tu cuenta y datos personales han sido eliminados de GlowApp exitosamente.'
-    });
-  } catch (error) {
-    console.error('❌ Error al eliminar cuenta:', error.message);
-    res.status(500).json({ error: 'Error al procesar la solicitud de eliminación de cuenta.' });
-  }
-};
+        res.json({
+          success: true,
+          message: 'Tu cuenta y datos personales han sido eliminados de GlowApp exitosamente.'
+        });
+      } catch (error) {
+        console.error('❌ Error al eliminar cuenta:', error.message);
+        res.status(500).json({ error: 'Error al procesar la solicitud de eliminación de cuenta.' });
+      }
+    };
 
-// ==========================================
-// 🚪 CIERRE DE SESIÓN (LOGOUT & TOKEN BLACKLISTING)
+    // ==========================================
+    // 🔐 CAMBIAR CONTRASEÑA (Usuario autenticado conoce contraseña actual)
+    // ==========================================
+    exports.changePassword = async (req, res) => {
+      try {
+        const userId = req.user.id;
+        const { current_password, new_password } = req.body;
+
+        if (!current_password || !new_password) {
+          return res.status(400).json({ error: 'Contraseña actual y nueva contraseña son requeridas.' });
+        }
+
+        if (new_password.length < 6) {
+          return res.status(400).json({ error: 'La nueva contraseña debe tener al menos 6 caracteres.' });
+        }
+
+        // Obtener hash actual del usuario
+        const userRes = await pool.query(
+          `SELECT password_hash, auth_provider FROM usuarios WHERE id = $1`,
+          [userId]
+        );
+
+        if (userRes.rows.length === 0) {
+          return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+
+        const user = userRes.rows[0];
+
+        // Solo permitir cambio de contraseña para usuarios LOCAL (no OAuth)
+        if (user.auth_provider !== 'LOCAL') {
+          return res.status(400).json({ 
+            error: 'No se puede cambiar contraseña: usuario autenticado via OAuth. Use "Olvidé mi contraseña" en su proveedor.' 
+          });
+        }
+
+        // Verificar contraseña actual
+        const isValid = await bcrypt.compare(current_password, user.password_hash);
+        if (!isValid) {
+          return res.status(401).json({ error: 'Contraseña actual incorrecta.' });
+        }
+
+        // Hash de la nueva contraseña
+        const hashedPassword = await bcrypt.hash(new_password, 10);
+        await pool.query(
+          `UPDATE usuarios SET password_hash = $1 WHERE id = $2`,
+          [hashedPassword, userId]
+        );
+
+        // Opcional: invalidar otros tokens (excepto el actual) - requiere lista negra en Redis
+        // Por ahora solo cambiamos el hash; el token actual sigue válido hasta expirar
+
+        console.log(`🔐 [CHANGE PASSWORD] Contraseña cambiada exitosamente para usuario ID ${userId}`);
+
+        res.json({
+          success: true,
+          message: 'Contraseña actualizada exitosamente.'
+        });
+      } catch (error) {
+        console.error('❌ ERROR CHANGE PASSWORD:', error.message);
+        res.status(500).json({ error: 'Error al cambiar contraseña' });
+      }
+    };
+
+    // ==========================================
+    // 🚪 CIERRE DE SESIÓN (LOGOUT & TOKEN BLACKLISTING)
 // ==========================================
 exports.logout = async (req, res) => {
   try {
