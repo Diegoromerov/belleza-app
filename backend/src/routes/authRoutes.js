@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { register, login, logout, forgotPassword, resetPassword, oauth, onboarding, acceptBiometricsConsent, saveFcmToken, getReferralInfo, deleteAccount } = require('../controllers/authController');
+const { register, login, logout, forgotPassword, resetPassword, oauth, onboarding, acceptBiometricsConsent, saveFcmToken, getReferralInfo, deleteAccount, changePassword } = require('../controllers/authController');
 const { googleSignIn } = require('../controllers/oauthController');
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 
