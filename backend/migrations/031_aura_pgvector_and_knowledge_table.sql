@@ -1,7 +1,6 @@
 -- Migration: 031_aura_pgvector_and_knowledge_table.sql
--- Description: Enamela pgvector extension for RAG beauty search and creates beauty_knowledge_embeddings table
-
-CREATE EXTENSION IF NOT EXISTS vector;
+-- Description: Creates beauty_knowledge_embeddings table for RAG beauty search
+-- Depends on: 030_enable_pgvector.sql (creates pgvector extension)
 
 CREATE TABLE IF NOT EXISTS beauty_knowledge_embeddings (
     id SERIAL PRIMARY KEY,

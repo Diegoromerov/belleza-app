@@ -6,6 +6,18 @@
 --   4. Idempotente y reversible
 --
 -- Tabla canónica: beauty_knowledge_embeddings (confirmada en migraciones 031 y schema.sql)
+-- NOTA: Requiere pgvector extension (ver migración 030_enable_pgvector.sql)
+
+-- Paso 0: Verificar si pgvector está disponible
+DO $$
+DECLARE
+    ext_exists boolean;
+BEGIN
+    SELECT EXISTS(SELECT 1 FROM pg_extension WHERE extname = 'vector') INTO ext_exists;
+    IF NOT ext_exists THEN
+        RAISE EXCEPTION 'pgvector extension not found. Execute migration 030_enable_pgvector.sql first.';
+    END IF;
+END $$;
 
 -- Paso 1: Verificar si la tabla existe y su estado actual
 DO $$

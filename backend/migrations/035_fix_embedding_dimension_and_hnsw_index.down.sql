@@ -6,6 +6,18 @@
 -- Ejecutar solo si es absolutamente necesario revertir a la versión anterior.
 --
 -- Tabla canónica: beauty_knowledge_embeddings
+-- NOTA: Requiere pgvector extension (ver migración 030_enable_pgvector.sql)
+
+-- Paso 0: Verificar si pgvector está disponible
+DO $$
+DECLARE
+    ext_exists boolean;
+BEGIN
+    SELECT EXISTS(SELECT 1 FROM pg_extension WHERE extname = 'vector') INTO ext_exists;
+    IF NOT ext_exists THEN
+        RAISE EXCEPTION 'pgvector extension not found. Cannot rollback vector operations.';
+    END IF;
+END $$;
 
 -- Paso 1: Dropear índices vectoriales (HNSW/IVFFlat) creados en UP
 DROP INDEX IF EXISTS idx_beauty_knowledge_embedding_hnsw;

@@ -1,0 +1,99 @@
+# railway.yml - Railway deployment configuration for pgvector PostgreSQL
+# CRITICAL: Service NAME must be UNIQUE to force new volume creation
+# Railway associates volumes with SERVICE NAME, not volumes.name in YAML
+# Changing service name from "postgres" to "pgvector-db" forces clean volume
+
+services:
+  pgvector-db:                    # ← UNIQUE name forces NEW volume (was "postgres")
+    dockerfilePath: Dockerfile.postgres
+    restartPolicyType: ON_FAILURE
+    variables:
+      - name: POSTGRES_DB
+        value: railway
+      - name: POSTGRES_USER
+        value: postgres
+      - name: POSTGRES_PASSWORD
+        value: ${POSTGRES_PASSWORD}
+    volumes:
+      - name: pgvector-db-data    # New volume name
+        mountPath: /var/lib/postgresql/data
+    healthCheckPath: /health
+    healthCheckInterval: 30
+
+  redis:
+    image: redis:7-alpine
+    container_name: beauty-redis
+    variables:
+      - name: REDIS_PASSWORD
+        value: ${REDIS_PASSWORD}
+    volumes:
+      - name: redis-data
+        mountPath: /data
+    healthCheckPath: /health
+    healthCheckInterval: 30
+
+  ai-worker:
+    build:
+      context: ../ai-worker
+      dockerfile: Dockerfile
+    container_name: beauty-ai-worker
+    variables:
+      - name: REDIS_HOST
+        value: redis
+      - name: REDIS_PORT
+        value: "6379"
+      - name: MOCK_MODE
+        value: "true"
+      - name: FAL_KEY
+        value: ${FAL_KEY:-}
+      - name: REPLICATE_API_TOKEN
+        value: ${REPLICATE_API_TOKEN:-}
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthCheckPath: /health
+    healthCheckInterval: 30
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: beauty-backend
+    variables:
+      - name: PORT
+        value: "8080"
+      - name: DB_HOST
+        value: pgvector-db          # ← Updated to new pgvector service name
+      - name: DB_PORT
+        value: "5432"
+      - name: DB_NAME
+        value: railway
+      - name: DB_USER
+        value: postgres
+      - name: DB_PASSWORD
+        value: ${POSTGRES_PASSWORD}
+      - name: REDIS_HOST
+        value: redis
+      - name: REDIS_PORT
+        value: "6379"
+      - name: JWT_SECRET
+        value: ${JWT_SECRET}
+      - name: NODE_ENV
+        value: production
+      - name: ALLOWED_ORIGINS
+        value: ${ALLOWED_ORIGINS}
+      - name: GEMINI_API_KEY
+        value: ${GEMINI_API_KEY}
+      - name: DEEPSEEK_API_KEY
+        value: ${DEEPSEEK_API_KEY}
+      - name: DEEPSEEK_MODEL
+        value: deepseek-v4-flash
+      - name: DEEPSEEK_BASE_URL
+        value: https://api.deepseek.com/v1/chat/completions
+    depends_on:
+      pgvector-db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthCheckPath: /health
+    healthCheckInterval: 30

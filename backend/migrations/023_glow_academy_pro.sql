@@ -14,11 +14,12 @@ CREATE TABLE learning_paths (
 );
 
 -- 2. Path Courses (relación muchos a muchos)
+-- academy_courses.id is UUID (from 008_academia_glow.sql)
 CREATE TABLE path_courses (
     path_id INTEGER REFERENCES learning_paths(id),
-    course_id INTEGER REFERENCES academy_courses(id),
+    course_id UUID REFERENCES academy_courses(id),
     position INTEGER NOT NULL,
-    prerequisite_course_id INTEGER REFERENCES academy_courses(id),
+    prerequisite_course_id UUID REFERENCES academy_courses(id),
     PRIMARY KEY (path_id, course_id)
 );
 
