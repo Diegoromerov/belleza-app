@@ -425,10 +425,10 @@ exports.deleteAccount = async (req, res) => {
       }
     };
 
-    // ==========================================
-    // 🔐 CAMBIAR CONTRASEÑA (Usuario autenticado conoce contraseña actual)
-    // ==========================================
-    exports.changePassword = async (req, res) => {
+// ==========================================
+// 🔐 CAMBIAR CONTRASEÑA (Usuario autenticado conoce contraseña actual)
+// ==========================================
+exports.changePassword = async (req, res) => {
       try {
         const userId = req.user.id;
         const { current_password, new_password } = req.body;
