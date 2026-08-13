@@ -1,5 +1,7 @@
 /**
- * INGESTOR DE CHUNKS A RAG (pgvector) — con AUTO-SPLIT de chunks largos
+ * HISTORICAL/AUXILIARY JSON INGESTOR. It is not the canonical Aura writer.
+ * New Aura corpus ingestion must use ingestBeautyKnowledge.js so that the
+ * database-backed traceability contract is present.
  * Uso: node scripts/ingest_json_chunks.js data/corpus/archivo.json
  */
 

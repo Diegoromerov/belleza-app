@@ -5,7 +5,6 @@
  */
 
 const axios = require('axios');
-const { breakers } = require('./circuitBreakerService');
 
 /**
  * Configuración por defecto
@@ -131,53 +130,10 @@ async function generateNvidiaEmbedding(text, inputType = 'query', options = {}) 
  * @returns {Promise<number[]>} Vector de embedding
  */
 async function generateEmbedding(text, inputType = 'query', options = {}) {
-  // Usar circuit breaker global si está disponible
-  if (breakers?.nvidiaEmbeddings) {
-    return await breakers.nvidiaEmbeddings.execute(
-      () => generateNvidiaEmbedding(text, inputType, options),
-      () => generateDummyEmbedding(text) // fallback
-    );
-  }
-  
-  // Fallback local si no hay breaker global
-  // Mantener contador local simple
-  if (!global.nvidiaEmbeddingFailureCount) global.nvidiaEmbeddingFailureCount = 0;
-  const MAX_FAILURES = 3;
-  
-  if (global.nvidiaEmbeddingFailureCount < MAX_FAILURES) {
-    try {
-      const embedding = await generateNvidiaEmbedding(text, inputType, options);
-      global.nvidiaEmbeddingFailureCount = 0;
-      return embedding;
-    } catch (error) {
-      global.nvidiaEmbeddingFailureCount++;
-      console.warn(`⚠️ NVIDIA Embedding fallo local #${global.nvidiaEmbeddingFailureCount}/3: ${error.message}`);
-      
-      if (global.nvidiaEmbeddingFailureCount >= MAX_FAILURES) {
-        console.error('🔴 NVIDIA Circuit breaker OPEN (local) para embeddings');
-      }
-      
-      return generateDummyEmbedding(text);
-    }
-  }
-  
-  console.warn('⚠️ Usando dummy embedding (circuit breaker open local)');
-  return generateDummyEmbedding(text);
-}
-
-/**
- * Genera embedding dummy determinístico (fallback)
- * @param {string} text - Texto para generar embedding determinístico
- * @returns {number[]} Vector normalizado de 1024 dimensiones
- */
-function generateDummyEmbedding(text) {
-  const crypto = require('crypto');
-  const hash = crypto.createHash('sha256').update(text).digest();
-  const embedding = new Array(1024).fill(0).map((_, i) => {
-    return (hash[i % 32] / 255 - 0.5) * 0.01;
-  });
-  const norm = Math.sqrt(embedding.reduce((sum, v) => sum + v * v, 0));
-  return embedding.map(v => v / norm);
+  // Ingestion must fail the affected chunk rather than storing a false vector.
+  // Retrieval callers use generateNvidiaEmbedding directly and choose their own
+  // non-vector fallback (FTS in ragService).
+  return generateNvidiaEmbedding(text, inputType, options);
 }
 
 /**
@@ -231,7 +187,6 @@ module.exports = {
   generateEmbedding,
   generateNvidiaEmbedding,
   generateBatchEmbeddings,
-  generateDummyEmbedding,
   validateEmbeddingDimension,
   checkNvidiaAvailability,
   DEFAULT_CONFIG,

@@ -5,39 +5,13 @@
 
 require('dotenv').config();
 const { ragPool } = require('../config/db');
-const axios = require('axios');
-
-const NVIDIA_API_KEY = process.env.NVIDIA_API_KEY;
-const NVIDIA_API_URL = process.env.NVIDIA_API_URL || 'https://integrate.api.nvidia.com/v1/embeddings';
-const NVIDIA_EMBEDDING_MODEL = process.env.NVIDIA_EMBEDDING_MODEL || 'nvidia/nv-embedqa-e5-v5';
-const EXPECTED_DIMS = 1024;
+const { generateNvidiaEmbedding } = require('./embeddingService');
 
 // ─── Generar embedding de un texto ───────────────────────────────────
 async function generateEmbedding(text) {
-  if (!NVIDIA_API_KEY) throw new Error('NVIDIA_API_KEY no configurada');
-
-  const response = await axios.post(
-    NVIDIA_API_URL,
-    {
-      model: NVIDIA_EMBEDDING_MODEL,
-      input: [text],
-      input_type: 'query',
-      encoding_format: 'float',
-    },
-    {
-      headers: {
-        'Authorization': `Bearer ${NVIDIA_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      timeout: 15000,
-    }
-  );
-
-  const embedding = response.data?.data?.[0]?.embedding;
-  if (!embedding || embedding.length !== EXPECTED_DIMS) {
-    throw new Error(`Embedding inválido: ${embedding ? embedding.length : 0} dims`);
-  }
-  return embedding;
+  // Retrieval must never use a synthetic vector. A NVIDIA failure is handled by
+  // searchBeautyKnowledge with PostgreSQL full-text search.
+  return generateNvidiaEmbedding(text, 'query');
 }
 
 // ─── Construir filtros de metadata ───────────────────────────────────
@@ -101,6 +75,12 @@ async function searchBeautyKnowledge(query, options = {}) {
         title,
         content,
         category,
+        document_id,
+        document_version,
+        chunk_id,
+        content_hash,
+        fuente,
+        seccion,
         1 - (embedding <=> $1::vector) AS similarity
       FROM beauty_knowledge_embeddings
       ${whereClause}
@@ -122,7 +102,7 @@ async function searchBeautyKnowledge(query, options = {}) {
 
     // FIX BUG #4: fallback full-text con manejo correcto de WHERE/AND
     try {
-      console.warn('⚠️ RAG Vectorial falló. Usando fallback full-text...');
+      console.warn('[RAG] NVIDIA embedding failed, using FTS fallback');
       const { whereClause, params: filterParams } = buildMetadataFilters(filters, 2);
       const textCondition = `(to_tsvector('spanish', title || ' ' || content) @@ plainto_tsquery('spanish', $1) OR title ILIKE $2 OR content ILIKE $2)`;
 
@@ -136,6 +116,12 @@ async function searchBeautyKnowledge(query, options = {}) {
           title,
           content,
           category,
+          document_id,
+          document_version,
+          chunk_id,
+          content_hash,
+          fuente,
+          seccion,
           0.5 AS similarity
         FROM beauty_knowledge_embeddings
         ${combinedWhere}

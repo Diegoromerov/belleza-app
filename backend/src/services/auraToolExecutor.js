@@ -218,7 +218,9 @@ async function executeAuraTool(toolName, args, userId) {
       }
 
       case 'search_beauty_knowledge_rag': {
-        const results = await searchBeautyKnowledge(args.queryText, args.category);
+        const results = await searchBeautyKnowledge(args.queryText, {
+          filters: args.category ? { category: args.category } : {},
+        });
         return { status: 'success', knowledge: results };
       }
 
