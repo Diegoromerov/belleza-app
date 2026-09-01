@@ -2,6 +2,8 @@
 const axios = require('axios');
 const https = require('https');
 const logger = require('../../config/logger');
+const { executeWithResilience } = require('../../services/resilienceService');
+const { defaultPolicy } = require('../../services/resiliencePolicy');
 
 const httpsAgent = new https.Agent({
   rejectUnauthorized: process.env.NODE_ENV === 'production' ? true : (process.env.REJECT_UNAUTHORIZED !== 'false'),
@@ -23,81 +25,79 @@ class YouCamClient {
     };
   }
 
-  /**
-   * Paso 1: solicita un slot de subida y obtiene la URL pre-firmada de S3.
-   */
+  /** Paso 1: solicita un slot de subida y obtiene la URL pre-firmada de S3. */
   async _requestUploadSlot(buffer) {
     const base64Image = buffer.toString('base64');
-    const response = await axios.post(
-      `${this.baseUrl}/file/skin-analysis`,
-      {
-        files: [
-          {
-            file_name: 'user_face.jpg',
-            file_size: buffer.length,
-            content_type: 'image/jpeg',
-            data: base64Image,
-          }
-        ]
-      },
-      { headers: this.authHeaders, httpsAgent, timeout: this.timeout }
-    );
-
-    const fileEntry = response.data?.files?.[0] || response.data?.data?.files?.[0];
-    if (!fileEntry) {
-      throw new Error('YouCam no devolvió información del archivo en el paso de upload slot.');
-    }
-
-    const uploadRequest = fileEntry.requests?.[0];
-    if (!uploadRequest?.url) {
-      throw new Error('YouCam no devolvió una URL de subida válida.');
-    }
-
-    return {
-      fileId: fileEntry.file_id,
-      uploadUrl: uploadRequest.url,
-      uploadHeaders: uploadRequest.headers || {},
-    };
-  }
-
-  /**
-   * Paso 2: sube la imagen directamente a S3 usando la URL pre-firmada.
-   */
-  async _uploadToS3(uploadUrl, uploadHeaders, buffer) {
-    await axios.put(uploadUrl, buffer, {
-      headers: {
-        ...uploadHeaders,
-        'Content-Type': uploadHeaders['Content-Type'] || 'image/jpeg',
-        'Content-Length': buffer.length,
-      },
-      httpsAgent,
+    return executeWithResilience(async () => {
+      const response = await axios.post(
+        `${this.baseUrl}/file/skin-analysis`,
+        {
+          files: [
+            {
+              file_name: 'user_face.jpg',
+              file_size: buffer.length,
+              content_type: 'image/jpeg',
+              data: base64Image,
+            }
+          ]
+        },
+        { headers: this.authHeaders, httpsAgent, timeout: this.timeout }
+      );
+      return response;
+    }, {
+      retry: defaultPolicy.retry,
+      retryDelay: defaultPolicy.retryDelay,
       timeout: this.timeout,
-      maxBodyLength: Infinity,
-      maxContentLength: Infinity,
+      circuitBreakerName: 'youcam'
     });
   }
 
-  /**
-   * Paso 3: crea la tarea de análisis referenciando el file_id ya subido.
-   * La API espera src_file_id (el file_id del paso 1) a nivel raíz, no dentro de payload.
-   * Solo acciones HD para evitar "cannot mix HD and SD dst_actions".
-   */
+  /** Paso 2: sube la imagen directamente a S3 usando la URL pre-firmada. */
+  async _uploadToS3(uploadUrl, uploadHeaders, buffer) {
+    await executeWithResilience(async () => {
+      await axios.put(uploadUrl, buffer, {
+        headers: {
+          ...uploadHeaders,
+          'Content-Type': uploadHeaders['Content-Type'] || 'image/jpeg',
+          'Content-Length': buffer.length,
+        },
+        httpsAgent,
+        timeout: this.timeout,
+        maxBodyLength: Infinity,
+        maxContentLength: Infinity,
+      });
+    }, {
+      retry: defaultPolicy.retry,
+      retryDelay: defaultPolicy.retryDelay,
+      timeout: this.timeout,
+      circuitBreakerName: 'youcam'
+    });
+  }
+
+  /** Paso 3: crea la tarea de análisis referenciando el file_id ya subido. */
   async _createAnalysisTask(fileId) {
-    const response = await axios.post(
-      `${this.baseUrl}/task/skin-analysis`,
-      {
-        request_id: 1,
-        src_file_id: fileId,
-        dst_actions: [
-          'hd_moisture',
-          'hd_wrinkle',
-          'hd_pore',
-          'hd_age_spot',
-          'hd_texture',
-        ],
-      },
-      { headers: this.authHeaders, httpsAgent, timeout: this.timeout }
-    );
+    const response = await executeWithResilience(async () => {
+      return await axios.post(
+        `${this.baseUrl}/task/skin-analysis`,
+        {
+          request_id: 1,
+          src_file_id: fileId,
+          dst_actions: [
+            'hd_moisture',
+            'hd_wrinkle',
+            'hd_pore',
+            'hd_age_spot',
+            'hd_texture',
+          ],
+        },
+        { headers: this.authHeaders, httpsAgent, timeout: this.timeout }
+      );
+    }, {
+      retry: defaultPolicy.retry,
+      retryDelay: defaultPolicy.retryDelay,
+      timeout: this.timeout,
+      circuitBreakerName: 'youcam'
+    });
 
     logger.debug('YouCam create task response', { data: response.data });
     const taskId = response.data?.result?.task_id || response.data?.task_id || response.data?.data?.task_id;
@@ -107,17 +107,22 @@ class YouCamClient {
     return taskId;
   }
 
-  /**
-   * Paso 4: consulta el resultado con polling hasta que la tarea termine.
-   */
+  /** Paso 4: consulta el resultado con polling hasta que la tarea termine. */
   async _pollTaskResult(taskId) {
     const start = Date.now();
 
     while (Date.now() - start < this.pollTimeoutMs) {
-      const response = await axios.get(
-        `${this.baseUrl}/task/skin-analysis/${taskId}`,
-        { headers: this.authHeaders, httpsAgent, timeout: this.timeout }
-      );
+      const response = await executeWithResilience(async () => {
+        return await axios.get(
+          `${this.baseUrl}/task/skin-analysis/${taskId}`,
+          { headers: this.authHeaders, httpsAgent, timeout: this.timeout }
+        );
+      }, {
+        retry: defaultPolicy.retry,
+        retryDelay: defaultPolicy.retryDelay,
+        timeout: this.timeout,
+        circuitBreakerName: 'youcam'
+      });
 
       const body = response.data;
       const status = body?.data?.task_status || body?.task_status;
@@ -137,9 +142,7 @@ class YouCamClient {
     throw new Error(`YouCam: tiempo de espera agotado consultando el resultado de la tarea ${taskId}.`);
   }
 
-  /**
-   * Convierte el array de outputs de YouCam en el formato plano que usa el resto de la app.
-   */
+  /** Convierte el array de outputs de YouCam en el plano que usa el resto de la app. */
   _mapResultsToScores(results) {
     const output = results?.output || [];
     const byType = {};
@@ -161,8 +164,7 @@ class YouCamClient {
     };
   }
 
-  /**
-   * Analiza una imagen de rostro y devuelve scores dérmicos.
+  /** Analiza una imagen de rostro y devuelve scores dérmicos.
    * Ejecuta el flujo completo de 4 pasos: upload slot -> subida S3 -> crear tarea -> poll resultado.
    * @param {Buffer|string} image - Imagen en base64 o buffer
    * @returns {Promise<Object>} Scores de piel
