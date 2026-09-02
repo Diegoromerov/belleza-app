@@ -7,7 +7,7 @@ const defaultPolicy = {
   retry: 3,
   retryDelay: 100, // base delay in ms for exponential backoff
   timeout: 5000, // timeout per attempt in ms
-  circuitBreakerFailureThreshold: 5,
+  circuitBreakerFailureThreshold: 3,
   circuitBreakerTimeout: 30000, // recovery timeout in ms
 };
 
