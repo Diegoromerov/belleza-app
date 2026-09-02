@@ -124,4 +124,28 @@ describe('Adaptive Transformation Engine - Tests', () => {
     expect(resCompleted.adaptationType).toBe('completed');
     expect(resCompleted.isGoalReached).toBe(true);
   });
+
+  test('Caso Multidominio: Soporte explícito de rutinas para Hands y Color', async () => {
+    hestiaAgent.recommendProducts.mockResolvedValue({ products: [] });
+
+    // Hands
+    const handsPlan = await transformationEngine.generateTransformationPlan({
+      userId: 1,
+      cycleType: 'hands',
+      handsDiagnosis: { hydration: 40 },
+      targetMetricKey: 'hydration'
+    });
+    expect(handsPlan.cycleType).toBe('hands');
+    expect(handsPlan.amRoutine[0].action).toContain('Bálsamo de Manos con Urea');
+    expect(handsPlan.pmRoutine[0].action).toContain('cutículas');
+
+    // Color
+    const colorPlan = await transformationEngine.generateTransformationPlan({
+      userId: 1,
+      cycleType: 'color',
+      targetMetricKey: 'harmony'
+    });
+    expect(colorPlan.cycleType).toBe('color');
+    expect(colorPlan.amRoutine[1].action).toContain('armonía personalizada');
+  });
 });

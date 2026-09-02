@@ -24,8 +24,8 @@ class TransformationEngine {
     const priorities = this._extractPriorities(faceScores, targetMetricKey);
 
     // 2. Construir la Rutina AM y PM ejecutable (Pasos y hábitos)
-    const amRoutine = this._buildAmRoutine(targetMetricKey, targetIngredients);
-    const pmRoutine = this._buildPmRoutine(targetMetricKey, targetIngredients);
+    const amRoutine = this._buildAmRoutine(targetMetricKey, targetIngredients, cycleType);
+    const pmRoutine = this._buildPmRoutine(targetMetricKey, targetIngredients, cycleType);
 
     // 3. Consultar productos adecuados con Hestia (Opcional, subordinado al plan)
     let recommendedProducts = [];
@@ -166,7 +166,45 @@ class TransformationEngine {
     return priorities;
   }
 
-  _buildAmRoutine(metricKey, ingredients) {
+  _buildAmRoutine(metricKey, ingredients, cycleType = 'skin') {
+    if (cycleType === 'hands') {
+      return [
+        {
+          step: 1,
+          time: '08:00',
+          action: 'Lavado con jabón sin fragancia + Aplicación de Bálsamo de Manos con Urea',
+          ingredient: 'Urea 10% + Pantenol',
+          reason: 'Restauración de la barrera cutánea en manos y cutículas.'
+        },
+        {
+          step: 2,
+          time: '08:05',
+          action: 'Protector solar para dorso de manos SPF 50',
+          ingredient: 'Filtro UV fotoestable',
+          reason: 'Prevención de fotoenvejecimiento y manchas pigmentarias en manos.'
+        }
+      ];
+    }
+
+    if (cycleType === 'color') {
+      return [
+        {
+          step: 1,
+          time: '08:00',
+          action: 'Preparación de tez con primer hidratante iluminador',
+          ingredient: 'Niacinamida + Perlas reflectoras',
+          reason: 'Neutralización de subtono y base uniforme para la paleta estacional.'
+        },
+        {
+          step: 2,
+          time: '08:15',
+          action: 'Aplicación de labial y rubor en tonos de armonía personalizada',
+          ingredient: 'Pigmentos botánicos calibrados',
+          reason: 'Realce del contraste natural conforme al test cromático.'
+        }
+      ];
+    }
+
     return [
       {
         step: 1,
@@ -192,7 +230,45 @@ class TransformationEngine {
     ];
   }
 
-  _buildPmRoutine(metricKey, ingredients) {
+  _buildPmRoutine(metricKey, ingredients, cycleType = 'skin') {
+    if (cycleType === 'hands') {
+      return [
+        {
+          step: 1,
+          time: '21:30',
+          action: 'Aceite nutritivo para cutículas y matriz ungueal',
+          ingredient: 'Aceite de Almendras dulces + Vitamina E',
+          reason: 'Nutrición intensiva y fortalecimiento de uñas.'
+        },
+        {
+          step: 2,
+          time: '21:35',
+          action: 'Capa oclusiva de ungüento reparador para manos',
+          ingredient: 'Manteca de Karité + Ceramidas',
+          reason: 'Tratamiento intensivo nocturno para sellar hidratación en manos.'
+        }
+      ];
+    }
+
+    if (cycleType === 'color') {
+      return [
+        {
+          step: 1,
+          time: '20:30',
+          action: 'Desmaquillado suave con bálsamo oleoso',
+          ingredient: 'Escualano + Camomila',
+          reason: 'Remoción de pigmentos sin irritar la barrera dérmica.'
+        },
+        {
+          step: 2,
+          time: '20:35',
+          action: 'Tratamiento iluminador nocturno',
+          ingredient: 'Vitamina C estable / Ácido Tranexámico',
+          reason: 'Unificación del tono para potenciar la luminosidad natural.'
+        }
+      ];
+    }
+
     return [
       {
         step: 1,
