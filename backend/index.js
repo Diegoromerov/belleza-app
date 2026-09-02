@@ -27,6 +27,7 @@ const disputeRoutes = require('./src/routes/disputeRoutes');
 const academyRoutes = require('./src/routes/academyRoutes');
 const academyAdminRoutes = require('./src/routes/academyAdminRoutes');
 const { authMiddleware } = require('./src/middleware/auth');
+const traceIdMiddleware = require('./src/middleware/traceId');
 const glowProRoutes = require('./src/routes/glowProRoutes');
 const analyticsRoutes = require('./src/routes/analyticsRoutes');
 const metricsRoutes = require('./src/routes/metricsRoutes');
@@ -178,6 +179,7 @@ app.use(cors({
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+app.use(traceIdMiddleware); // Trace ID middleware for consistent tracking
 const sanitizer = require('./src/middleware/sanitizer');
 app.use(sanitizer);
 
@@ -262,6 +264,9 @@ app.use('/api/consent', biometricConsentRoutes);
 const consentRoutes = require('./src/routes/consentRoutes');
 app.use('/api/consent', consentRoutes);
 app.use('/api/biometric', biometricRoutes);
+app.use('/api/glow-cycle', require('./src/routes/glowCycleRoutes'));
+app.use('/api/v1/beauty', require('./src/routes/v1/beautyRoutes'));
+app.use('/api/v1/workforce', require('./src/routes/v1/workforceRoutes'));
 app.use('/api/vto', vtoRoutes);
 app.use('/api/color', colorRoutes);
 app.use('/api/academy', academyRoutes);
