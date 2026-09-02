@@ -70,6 +70,7 @@ services:
       - DB_PASSWORD=admin123
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - REDIS_URL=redis://redis:6379
       - JWT_SECRET=beauty_app_super_secret_key_2026_change_in_production
       - NODE_ENV=development
       - SEED_DATABASE=true

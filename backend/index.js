@@ -146,6 +146,8 @@ const rateLimit = require('express-rate-limit');
 
 // Configuración robusta de CORS y orígenes permitidos
 const defaultOrigins = [
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
   'http://localhost:8080',
   'http://localhost:8081',
   'http://localhost:7357',
