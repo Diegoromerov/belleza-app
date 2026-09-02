@@ -7,6 +7,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:flutter/services.dart';
+import 'package:beauty_app/l10n/app_localizations.dart';
 
 import 'services/api_service.dart';
 import 'services/analytics_service.dart';
@@ -15,6 +16,8 @@ import 'services/web_geolocation.dart';
 import 'package:geocoding/geocoding.dart' as geo;
 import 'services/secure_storage_service.dart';
 import 'services/audience_service.dart';
+import 'design/icons/glow_icon_registry_init.dart';
+import 'design/icons/glow_icon.dart';
 import 'widgets/audience_toggle.dart';
 import 'shared/mens_theme.dart';
 import 'shared/theme.dart';
@@ -34,6 +37,7 @@ import 'screens/chat_list_screen.dart';
 import 'screens/chat_screen.dart';
 import 'screens/client_profile_screen.dart';
 import 'screens/profile/user_profile.dart';
+import 'screens/profile/my_glow_dashboard_screen.dart';
 import 'screens/provider_profile_screen.dart';
 import 'screens/booking_tracking_screen.dart';
 import 'screens/provider_route_screen.dart';
@@ -83,6 +87,7 @@ void main() async {
     AnalyticsService().init();
     await AppTheme.loadThemePreference();
     await AudienceService.init();
+    GlowIconRegistryInit.initialize();
     runApp(const BeautyApp());
   }, (Object error, StackTrace stack) {
     if (kDebugMode) {
@@ -115,43 +120,48 @@ class BeautyApp extends StatelessWidget {
             final textColor = isMen ? MensTheme.textPrimary : AppTheme.text;
 
             return MaterialApp(
-              title: 'GlowApp',
-              navigatorKey: NotificationService.navigatorKey,
-              debugShowCheckedModeBanner: false,
-              navigatorObservers: [AnalyticsRouteObserver()],
-              theme: ThemeData(
-                brightness: isMen ? Brightness.dark : Brightness.light,
-                primaryColor: primaryColor,
-                colorScheme: ColorScheme.fromSeed(
-                  brightness: isMen ? Brightness.dark : Brightness.light,
-                  seedColor: primaryColor,
-                  primary: primaryColor,
-                  secondary: isMen ? MensTheme.bronzeAccent : AppTheme.accent,
-                  surface: surfaceColor,
-                  background: bgColor,
-                ),
-                scaffoldBackgroundColor: bgColor,
-                useMaterial3: true,
-                cardTheme: CardThemeData(
-                  color: surfaceColor,
-                  elevation: 0,
-                  shadowColor: isMen ? Colors.black38 : const Color(0x0A8C6F65),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
-                    side: BorderSide(
-                      color: isMen
-                          ? MensTheme.champagneGold.withValues(alpha: 0.2)
-                          : const Color(0xFFE8E0D5), // LuxeColors.nude200
-                      width: 1,
-                    ),
-                  ),
-                ),
-                appBarTheme: AppBarTheme(
-                  backgroundColor: surfaceColor,
-                  foregroundColor: textColor,
-                  elevation: 0,
-                ),
-              ),
+                                      title: 'GlowApp',
+                                      localizationsDelegates: AppLocalizations.localizationsDelegates,
+                                      supportedLocales: AppLocalizations.supportedLocales,
+                                      navigatorKey: NotificationService.navigatorKey,
+                                      debugShowCheckedModeBanner: false,
+                                      navigatorObservers: [AnalyticsRouteObserver()],
+                          theme: ThemeData(
+                            brightness: isMen ? Brightness.dark : Brightness.light,
+                            primaryColor: primaryColor,
+                            colorScheme: ColorScheme.fromSeed(
+                              brightness: isMen ? Brightness.dark : Brightness.light,
+                              seedColor: primaryColor,
+                              primary: primaryColor,
+                              secondary: isMen ? MensTheme.bronzeAccent : AppTheme.accent,
+                              surface: surfaceColor,
+                              background: bgColor,
+                            ),
+                            scaffoldBackgroundColor: bgColor,
+                            useMaterial3: true,
+                            cardTheme: CardThemeData(
+                              color: surfaceColor,
+                              elevation: 0,
+                              shadowColor: isMen ? Colors.black38 : const Color(0x0A8C6F65),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(24),
+                                side: BorderSide(
+                                  color: isMen
+                                      ? MensTheme.champagneGold.withValues(alpha: 0.2)
+                                      : const Color(0xFFE8E0D5), // LuxeColors.nude200
+                                  width: 1,
+                                ),
+                              ),
+                            ),
+                            appBarTheme: AppBarTheme(
+                              backgroundColor: surfaceColor,
+                              foregroundColor: textColor,
+                              elevation: 0,
+                            ),
+                            extensions: <ThemeExtension<dynamic>>[
+                              GlowIconThemeExtension(isMenMode: isMen),
+                            ],
+                          ),
               initialRoute: '/home',
               routes: {
                 '/login': (_) => const LoginScreen(),
@@ -193,6 +203,7 @@ class BeautyApp extends StatelessWidget {
                 '/provider/academy': (_) => const AcademyScreen(),
                 '/store': (_) => const StoreScreen(),
                 '/evolution': (_) => const EvolutionDashboardScreen(),
+                '/my-glow': (_) => const MyGlowDashboardScreen(),
                 '/medical-validation': (_) => const MedicalValidationScreen(),
                 '/glowup-card': (_) => const GlowUpCardScreen(),
                 '/palette-card': (_) => const PaletteCardScreen(),
@@ -1382,6 +1393,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
     Color? borderColor,
     required String label,
     required VoidCallback onTap,
+    Widget? iconWidget,
   }) {
     final colors = gradientColors ?? const [
       Color(0xFFF4EFEA), // LuxeColors.nude100 por defecto
@@ -1422,16 +1434,18 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                   ),
                 ),
                 child: ClipOval(
-                  child: assetPath != null
+                  child: iconWidget != null
+                    ? iconWidget
+                    : assetPath != null
                       ? Image.asset(
                           assetPath,
                           fit: BoxFit.cover,
-                        )
+                      )
                       : Icon(
                           icon ?? Icons.auto_awesome,
                           color: Colors.white,
                           size: 26,
-                        ),
+                      ),
                 ),
               ),
               const SizedBox(height: 2),
@@ -1665,7 +1679,12 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                 children: [
                   // Botón 1: Citas (nav_citas_icon.png)
                   _buildProminentCenterNavItem(
-                    assetPath: 'assets/images/nav_citas_icon.png',
+                    iconWidget: GlowIcon.resolve(
+                      'calendar',
+                      size: 26,
+                      colorRole: GlowIconColorRole.neutral,
+                      semanticLabel: 'Citas',
+                      ),
                     gradientColors: const [Color(0xFFF3D5C8), Color(0xFFD4AF37)],
                     shadowColor: const Color(0xFFD4AF37),
                     
@@ -1675,7 +1694,12 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
 
                   // Botón 2: GlowShop (nav_glowshop_icon.png)
                   _buildProminentCenterNavItem(
-                    assetPath: 'assets/images/nav_glowshop_icon.png',
+                    iconWidget: GlowIcon.resolve(
+                      'bag',
+                      size: 26,
+                      colorRole: GlowIconColorRole.accent,
+                      semanticLabel: 'GlowShop',
+                      ),
                     gradientColors: const [Color(0xFFF3D5C8), Color(0xFFD4AF37)],
                     shadowColor: const Color(0xFFD4AF37),
                     label: 'GlowShop',
@@ -1684,7 +1708,12 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
 
                   // Botón 3: Glow IA+ (glow_ia_mesh_avatar.jpg)
                   _buildProminentCenterNavItem(
-                    assetPath: 'assets/images/glow_ia_mesh_avatar.jpg',
+                    iconWidget: GlowIcon.resolve(
+                      'aura',
+                      size: 26,
+                      colorRole: GlowIconColorRole.aura,
+                      semanticLabel: 'Glow IA+',
+                      ),
                     gradientColors: const [
                       Color(0xFFF3D5C8),
                       Color(0xFFD4AF37),
@@ -1696,7 +1725,12 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
 
                   // Botón 4: Perfil (nav_perfil_icon.png)
                   _buildProminentCenterNavItem(
-                    assetPath: 'assets/images/nav_perfil_icon.png',
+                    iconWidget: GlowIcon.resolve(
+                      'profile',
+                      size: 26,
+                      colorRole: GlowIconColorRole.secondary,
+                      semanticLabel: 'Perfil',
+                      ),
                     gradientColors: const [Color(0xFFF3D5C8), Color(0xFFD4AF37)],
                     shadowColor: const Color(0xFFD4AF37),
                     
@@ -1862,7 +1896,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
           shape: BoxShape.circle,
           border: Border.all(color: const Color(0xFFD4AF37), width: 3.5),
           image: const DecorationImage(
-            image: AssetImage('assets/images/avatar_aura.png'),
+            image: AssetImage('images/avatar_aura.png'),
             fit: BoxFit.cover,
           ),
         ),
@@ -1911,7 +1945,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                 height: 90,
                 decoration: BoxDecoration(
                   image: DecorationImage(
-                    image: AssetImage('assets/images/logo_maestro_v5.png'),
+                    image: AssetImage('images/logo_maestro_v5.png'),
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -1926,7 +1960,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         image: DecorationImage(
-                          image: AssetImage('assets/images/logo_maestro_v3.jpg'),
+                          image: AssetImage('images/logo_maestro_v3.jpg'),
                           fit: BoxFit.cover,
                         ),
                       ),
@@ -2065,7 +2099,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                               shape: BoxShape.circle,
                               border: Border.all(color: const Color(0xFFD4AF37), width: 2.0),
                               image: const DecorationImage(
-                                image: AssetImage('assets/images/avatar_aura.png'),
+                                image: AssetImage('images/avatar_aura.png'),
                                 fit: BoxFit.cover,
                               ),
                             ),

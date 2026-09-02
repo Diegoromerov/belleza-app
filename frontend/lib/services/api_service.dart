@@ -1411,6 +1411,54 @@ class ApiService {
     }
     throw Exception(data['error'] ?? 'Error ${response.statusCode}');
   }
+
+  // --- GLOW CYCLE ENGINE (GIA-01 / GIA-02 / GIA-03) ---
+  static Future<Map<String, dynamic>> getActiveGlowCycle() async {
+    await ensureBaseUrl();
+    final token = await _getToken();
+    final uri = Uri.parse('$_baseUrl$_apiPath/glow-cycle/active');
+
+    final headers = <String, String>{'Content-Type': 'application/json'};
+    if (token != null && token.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+
+    try {
+      final response = await http.get(uri, headers: headers).timeout(const Duration(seconds: 15));
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      }
+      return {'hasActiveCycle': false, 'cycle': null};
+    } catch (e) {
+      return {'hasActiveCycle': false, 'cycle': null, 'error': e.toString()};
+    }
+  }
+
+  static Future<Map<String, dynamic>> logCycleCheckin(String cycleId, {bool amCompleted = true, bool pmCompleted = true, String notes = ''}) async {
+    await ensureBaseUrl();
+    final token = await _getToken();
+    final uri = Uri.parse('$_baseUrl$_apiPath/glow-cycle/$cycleId/checkin');
+
+    final headers = <String, String>{'Content-Type': 'application/json'};
+    if (token != null && token.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+
+    final response = await http.post(
+      uri,
+      headers: headers,
+      body: json.encode({
+        'amCompleted': amCompleted,
+        'pmCompleted': pmCompleted,
+        'notes': notes,
+      }),
+    ).timeout(const Duration(seconds: 15));
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    }
+    throw Exception('Error al registrar check-in: ${response.statusCode}');
+  }
 }
 
 class MapSettings {
