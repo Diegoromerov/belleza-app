@@ -1635,7 +1635,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                       ),
                       InkWell(
                         onTap: () {
-                          _navigateToAIChat(_searchController.text);
+                          Navigator.pushNamed(context, '/my-glow');
                         },
                         borderRadius: BorderRadius.circular(20),
                         child: Padding(
