@@ -55,6 +55,7 @@ router.post('/analyze', authMiddleware, biometricConsentGuard, idempotencyMiddle
   try {
     const faceBuffer = Buffer.from(faceImage, 'base64');
     const handsBuffer = handsImage ? Buffer.from(handsImage, 'base64') : null;
+    const traceId = req.headers['x-trace-id'] || req.headers['x-request-id'] || `bio-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
     const result = await orchestrator.analyze(
       userId,
@@ -62,7 +63,8 @@ router.post('/analyze', authMiddleware, biometricConsentGuard, idempotencyMiddle
       handsBuffer,
       entryPoint || 'ideas',
       lat,
-      lng
+      lng,
+      traceId
     );
 
     res.status(201).json({

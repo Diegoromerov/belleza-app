@@ -10,16 +10,16 @@ class BiometricOrchestrator {
   /**
    * Orquesta el análisis completo con resiliencia y Circuit-Breakers (Sprint 2.3 ADR-001)
    */
-  async analyze(userId, faceImage, handsImage, entryPoint = 'ideas', lat, lng) {
+  async analyze(userId, faceImage, handsImage, entryPoint = 'ideas', lat, lng, traceId = null) {
     const parsedUserId = parseInt(userId, 10);
-    logger.info('Iniciando análisis biométrico resilietne para el usuario', { userId: parsedUserId });
+    logger.info('Iniciando análisis biométrico resilietne para el usuario', { userId: parsedUserId, traceId });
 
     // 1-3. Ejecutar análisis de rostro, manos y UV con Circuit Breakers
     let faceScores, handsDiagnosis, uvData = null;
 
     const [faceResult, handsResult, uvResult] = await Promise.allSettled([
       breakers.youcam.execute(
-        () => youcamClient.analyzeFace(faceImage),
+        () => youcamClient.analyzeFace(faceImage, traceId),
         () => ({
           hydration: 60,
           wrinkles: 30,
@@ -30,7 +30,7 @@ class BiometricOrchestrator {
         })
       ),
       breakers.gemini.execute(
-        () => geminiClient.analyzeHands(handsImage),
+        () => geminiClient.analyzeHands(handsImage, traceId),
         () => ({
           manchasSolares: 'leve',
           sequedad: 'moderada',
@@ -60,7 +60,7 @@ class BiometricOrchestrator {
       async () => {
         try {
           return await breakers.gemini.execute(
-            () => geminiClient.generateRecommendation(faceScores, handsDiagnosis),
+            () => geminiClient.generateRecommendation(faceScores, handsDiagnosis, traceId),
             () => deepseekClient.getFallbackRecommendation()
           );
         } catch (e) {
