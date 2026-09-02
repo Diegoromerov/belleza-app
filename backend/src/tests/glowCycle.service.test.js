@@ -22,6 +22,16 @@ jest.mock('../services/biometricCryptoService', () => ({
   decrypt: jest.fn(() => ({ hydration: 65, pores: 30 }))
 }));
 
+jest.mock('../services/transformationEngine', () => ({
+  generateTransformationPlan: jest.fn().mockResolvedValue({
+    planSummary: 'Plan de prueba',
+    amRoutine: [{ step: 1, action: 'Limpieza' }],
+    pmRoutine: [{ step: 1, action: 'Crema' }],
+    recommendedProducts: [],
+    recommendedServices: []
+  })
+}));
+
 describe('Glow Cycle Engine - Unit Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();

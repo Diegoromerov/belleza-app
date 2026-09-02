@@ -30,6 +30,33 @@ class GlowCycleService {
     const parsedUserId = parseInt(userId, 10);
     logger.info('Iniciando creación de Glow Cycle', { userId: parsedUserId, cycleType, targetMetricKey });
 
+    const transformationEngine = require('./transformationEngine');
+
+    // Si no se pasaron rutinas manuales, el Transformation Engine genera el plan adaptativo
+    let plan = {
+      planSummary,
+      amRoutine,
+      pmRoutine,
+      recommendedProducts,
+      recommendedServices
+    };
+
+    if (!amRoutine || amRoutine.length === 0) {
+      const generatedPlan = await transformationEngine.generateTransformationPlan({
+        userId: parsedUserId,
+        cycleType,
+        faceScores,
+        handsDiagnosis,
+        targetGoal,
+        targetMetricKey
+      });
+      plan.planSummary = generatedPlan.planSummary;
+      plan.amRoutine = generatedPlan.amRoutine;
+      plan.pmRoutine = generatedPlan.pmRoutine;
+      plan.recommendedProducts = generatedPlan.recommendedProducts;
+      plan.recommendedServices = generatedPlan.recommendedServices;
+    }
+
     // Determinar valor baseline de la métrica objetivo
     const baselineValue = faceScores && faceScores[targetMetricKey] !== undefined
       ? parseFloat(faceScores[targetMetricKey])
@@ -37,7 +64,7 @@ class GlowCycleService {
 
     const currentVal = baselineValue;
     const goalText = targetGoal || `Mejorar ${targetMetricKey} de ${baselineValue} a ${targetValue} en ${durationDays} días`;
-    const summary = planSummary || `Plan de cuidado para optimización de ${targetMetricKey} con rutina personalizada.`;
+    const summary = plan.planSummary || `Plan de cuidado para optimización de ${targetMetricKey} con rutina personalizada.`;
 
     // 1. Insertar el Ciclo en base de datos
     const insertCycleQuery = `
@@ -66,10 +93,10 @@ class GlowCycleService {
       currentVal,
       parseInt(durationDays, 10),
       summary,
-      JSON.stringify(amRoutine),
-      JSON.stringify(pmRoutine),
-      JSON.stringify(recommendedProducts),
-      JSON.stringify(recommendedServices)
+      JSON.stringify(plan.amRoutine),
+      JSON.stringify(plan.pmRoutine),
+      JSON.stringify(plan.recommendedProducts),
+      JSON.stringify(plan.recommendedServices)
     ]);
 
     const cycle = cycleRes.rows[0];
