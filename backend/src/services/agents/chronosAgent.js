@@ -79,6 +79,61 @@ class ChronosAgent {
       return { status: 'error', message: err.message };
     }
   }
+
+  /**
+   * Evalúa la continuidad temporal de un Glow Cycle activo
+   * @param {Object} cycle - Entidad GlowCycle
+   * @returns {Object} Estado temporal, recordatorios pendientes e hitos
+   */
+  evaluateCycleContinuity(cycle) {
+    if (!cycle || cycle.status !== 'active') {
+      return {
+        hasActiveContinuity: false,
+        temporalState: cycle?.status === 'completed' ? 'GRADUATION_READY' : 'NO_CYCLE',
+        message: 'No hay ciclo activo en curso.'
+      };
+    }
+
+    const startDate = new Date(cycle.start_date || cycle.created_at || Date.now());
+    const now = new Date();
+    const currentDay = Math.max(1, Math.floor((now - startDate) / (1000 * 60 * 60 * 24)) + 1);
+    const durationDays = cycle.duration_days || 30;
+
+    // Evaluar check-in de hoy
+    const todayStr = now.toISOString().split('T')[0];
+    const checkins = Array.isArray(cycle.checkin_history) ? cycle.checkin_history : [];
+    const todayCheckin = checkins.find(c => c.date === todayStr);
+
+    let temporalState = 'IN_PROGRESS_AM_PM';
+    let actionRequired = 'today_routine_checkin';
+    let reminderMessage = 'Recuerda completar los pasos de tu rutina AM/PM de hoy.';
+
+    if (currentDay >= durationDays) {
+      temporalState = 'DAY_30_FINAL_RESCAN';
+      actionRequired = 'final_rescan_and_graduation';
+      reminderMessage = '¡Día 30 alcanzado! Realiza tu re-escaneo final para graduar tu ciclo.';
+    } else if (currentDay >= 15 && currentDay < 18) {
+      temporalState = 'DAY_15_RESCAN_DUE';
+      actionRequired = 'milestone_15d_rescan';
+      reminderMessage = 'Hito del Día 15 listo: realiza tu re-escaneo para evaluar el avance y adaptar tu rutina.';
+    } else if (currentDay === 1) {
+      temporalState = 'DAY_1_BASELINE';
+      actionRequired = 'initial_habits_start';
+      reminderMessage = 'Primer día de tu Glow Cycle. Inicia con tu rutina matutina y nocturna.';
+    }
+
+    return {
+      hasActiveContinuity: true,
+      cycleId: cycle.id,
+      currentDayNumber: currentDay,
+      durationDays,
+      temporalState,
+      actionRequired,
+      reminderMessage,
+      isTodayCheckinCompleted: !!todayCheckin,
+      nextMilestoneDay: currentDay < 15 ? 15 : (currentDay < durationDays ? durationDays : durationDays)
+    };
+  }
 }
 
 module.exports = new ChronosAgent();

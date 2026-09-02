@@ -167,6 +167,20 @@ class GlowCycleService {
     if (res.rows.length === 0) return null;
 
     const cycle = res.rows[0];
+
+    // Consultar historial de mediciones (para visualización longitudinal)
+    const measQuery = `
+      SELECT id, measurement_type, day_number, score_delta, ai_evaluation_notes, created_at
+      FROM glow_cycle_measurements
+      WHERE cycle_id = $1
+      ORDER BY day_number ASC;
+    `;
+    const measRes = await pool.query(measQuery, [cycle.id]);
+    cycle.measurements = measRes.rows;
+
+    // Evaluar continuidad temporal con Chronos
+    cycle.continuity = chronosAgent.evaluateCycleContinuity(cycle);
+
     await this._cacheActiveCycle(parsedUserId, cycle);
     return cycle;
   }

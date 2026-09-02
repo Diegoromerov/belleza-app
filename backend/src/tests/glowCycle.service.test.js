@@ -177,4 +177,26 @@ describe('Glow Cycle Engine - Unit Tests', () => {
     expect(res.success).toBe(true);
     expect(res.status).toBe('completed');
   });
+
+  test('getActiveCycle should attach Chronos continuity evaluation and measurements', async () => {
+    const mockCycle = {
+      id: 'cycle-uuid-123',
+      user_id: 1,
+      status: 'active',
+      duration_days: 30,
+      start_date: new Date().toISOString(),
+      checkin_history: []
+    };
+
+    pool.query
+      .mockResolvedValueOnce({ rows: [mockCycle] }) // select active cycle
+      .mockResolvedValueOnce({ rows: [{ id: 'meas-1', day_number: 1 }] }); // select measurements
+
+    const res = await glowCycleService.getActiveCycle(1);
+    expect(res).not.toBeNull();
+    expect(res.continuity).toBeDefined();
+    expect(res.continuity.hasActiveContinuity).toBe(true);
+    expect(res.continuity.currentDayNumber).toBe(1);
+    expect(res.measurements.length).toBe(1);
+  });
 });

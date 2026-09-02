@@ -310,6 +310,11 @@ class _MyGlowDashboardScreenState extends State<MyGlowDashboardScreen> {
             ),
           ),
 
+          const SizedBox(height: LuxeSpacing.xl),
+
+          // LÍNEA TEMPORAL DE EVOLUCIÓN (CHRONOS CONTINUITY TIMELINE)
+          _buildEvolutionTimeline(cycle),
+
           const SizedBox(height: LuxeSpacing.xxl),
 
           // 3. PLAN DE HOY & RUTINA AM / PM
@@ -406,6 +411,111 @@ class _MyGlowDashboardScreenState extends State<MyGlowDashboardScreen> {
             ...cycle.recommendedProducts.map((p) => _buildProductTile(p)),
           ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildEvolutionTimeline(GlowCycle cycle) {
+    final currentDay = cycle.continuity?['currentDayNumber'] ?? 1;
+    final isD1Done = true;
+    final isD15Done = cycle.measurements.any((m) => (m is Map && (m['day_number'] == 15 || m['measurement_type']?.toString().contains('15') == true)));
+    final isD30Done = cycle.status == 'completed' || cycle.measurements.any((m) => (m is Map && m['day_number'] >= 30));
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: LuxeColors.nude200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'LÍNEA TEMPORAL DE EVOLUCIÓN',
+                style: TextStyle(
+                  fontFamily: 'JetBrainsMono',
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: LuxeColors.nude500,
+                  letterSpacing: 1.2,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFC5A052).withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  'DÍA $currentDay DE ${cycle.durationDays}',
+                  style: const TextStyle(
+                    fontFamily: 'JetBrainsMono',
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFFC5A052),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // HITOS VISUALES
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildMilestoneNode(label: 'DÍA 1\nBaseline', isCompleted: isD1Done, isCurrent: currentDay < 15),
+              _buildMilestoneLine(isPassed: currentDay >= 15),
+              _buildMilestoneNode(label: 'DÍA 15\nRe-scan', isCompleted: isD15Done, isCurrent: currentDay >= 15 && currentDay < 30),
+              _buildMilestoneLine(isPassed: currentDay >= 30),
+              _buildMilestoneNode(label: 'DÍA 30\nGraduación', isCompleted: isD30Done, isCurrent: currentDay >= 30),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMilestoneNode({required String label, required bool isCompleted, required bool isCurrent}) {
+    final color = isCompleted
+        ? const Color(0xFF059669)
+        : isCurrent
+            ? const Color(0xFFC5A052)
+            : LuxeColors.nude300;
+
+    return Column(
+      children: [
+        Icon(
+          isCompleted ? Icons.check_circle : (isCurrent ? Icons.radio_button_checked : Icons.radio_button_unchecked),
+          color: color,
+          size: 22,
+        ),
+        const SizedBox(height: 6),
+        Text(
+          label,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontFamily: 'JetBrainsMono',
+            fontSize: 9,
+            fontWeight: FontWeight.bold,
+            color: isCompleted || isCurrent ? LuxeColors.nude900 : LuxeColors.nude400,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMilestoneLine({required bool isPassed}) {
+    return Expanded(
+      child: Container(
+        height: 2,
+        margin: const EdgeInsets.only(bottom: 24, left: 4, right: 4),
+        color: isPassed ? const Color(0xFF059669) : LuxeColors.nude200,
       ),
     );
   }

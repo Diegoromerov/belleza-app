@@ -17,6 +17,8 @@ class GlowCycle {
   final List<dynamic> recommendedServices;
   final String? startDate;
   final String? endDate;
+  final Map<String, dynamic>? continuity;
+  final List<dynamic> measurements;
 
   GlowCycle({
     required this.id,
@@ -35,6 +37,8 @@ class GlowCycle {
     required this.recommendedServices,
     this.startDate,
     this.endDate,
+    this.continuity,
+    this.measurements = const [],
   });
 
   factory GlowCycle.fromJson(Map<String, dynamic> json) {
@@ -55,6 +59,8 @@ class GlowCycle {
       recommendedServices: json['recommended_service_ids'] is List ? json['recommended_service_ids'] : (json['recommendedServices'] is List ? json['recommendedServices'] : []),
       startDate: json['start_date']?.toString() ?? json['startDate']?.toString(),
       endDate: json['end_date']?.toString() ?? json['endDate']?.toString(),
+      continuity: json['continuity'] is Map<String, dynamic> ? json['continuity'] : null,
+      measurements: json['measurements'] is List ? json['measurements'] : [],
     );
   }
 }
