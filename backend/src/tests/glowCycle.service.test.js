@@ -22,19 +22,44 @@ jest.mock('../services/biometricCryptoService', () => ({
   decrypt: jest.fn(() => ({ hydration: 65, pores: 30 }))
 }));
 
+const mockGeneratePlan = jest.fn().mockResolvedValue({
+  planSummary: 'Plan de prueba',
+  amRoutine: [{ step: 1, action: 'Limpieza' }],
+  pmRoutine: [{ step: 1, action: 'Crema' }],
+  recommendedProducts: [],
+  recommendedServices: []
+});
+
+const mockAdaptPlan = jest.fn().mockReturnValue({
+  adaptationType: 'maintain',
+  adaptationReason: 'Progreso positivo sostenido (+15.00 puntos). Mantener la rutina.',
+  amRoutine: [{ step: 1, action: 'Limpieza' }],
+  pmRoutine: [{ step: 1, action: 'Crema' }],
+  isGoalReached: false
+});
+
 jest.mock('../services/transformationEngine', () => ({
-  generateTransformationPlan: jest.fn().mockResolvedValue({
-    planSummary: 'Plan de prueba',
-    amRoutine: [{ step: 1, action: 'Limpieza' }],
-    pmRoutine: [{ step: 1, action: 'Crema' }],
-    recommendedProducts: [],
-    recommendedServices: []
-  })
+  generateTransformationPlan: (...args) => mockGeneratePlan(...args),
+  adaptPlanBasedOnDelta: (...args) => mockAdaptPlan(...args)
 }));
 
 describe('Glow Cycle Engine - Unit Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockGeneratePlan.mockResolvedValue({
+      planSummary: 'Plan de prueba',
+      amRoutine: [{ step: 1, action: 'Limpieza' }],
+      pmRoutine: [{ step: 1, action: 'Crema' }],
+      recommendedProducts: [],
+      recommendedServices: []
+    });
+    mockAdaptPlan.mockReturnValue({
+      adaptationType: 'maintain',
+      adaptationReason: 'Progreso positivo sostenido (+15.00 puntos). Mantener la rutina.',
+      amRoutine: [{ step: 1, action: 'Limpieza' }],
+      pmRoutine: [{ step: 1, action: 'Crema' }],
+      isGoalReached: false
+    });
   });
 
   test('createCycle should create active cycle and record baseline measurement', async () => {
@@ -112,5 +137,44 @@ describe('Glow Cycle Engine - Unit Tests', () => {
 
     const decrease = glowCycleService.evaluateDelta('hydration', -5, 50, 75);
     expect(decrease).toContain('Variación detectada');
+  });
+
+  test('performRescan should calculate delta with adherence, adapt routine and update cycle', async () => {
+    const mockCycle = {
+      id: 'cycle-uuid-123',
+      user_id: 1,
+      target_metric_key: 'hydration',
+      baseline_value: '50.00',
+      target_value: '75.00',
+      duration_days: 30,
+      checkin_history: [{ date: '2026-09-01' }, { date: '2026-09-02' }],
+      am_routine: [],
+      pm_routine: []
+    };
+
+    pool.query
+      .mockResolvedValueOnce({ rows: [mockCycle] }) // select cycle
+      .mockResolvedValueOnce({ rows: [{ id: 'meas-uuid-rescan' }] }) // insert measurement
+      .mockResolvedValueOnce({ rows: [{ ...mockCycle, current_value: 65.00 }] }); // update cycle
+
+    const res = await glowCycleService.performRescan({
+      cycleId: 'cycle-uuid-123',
+      userId: 1,
+      dayNumber: 15,
+      faceScores: { hydration: 65 }
+    });
+
+    expect(res.success).toBe(true);
+    expect(res.delta).toBe(15); // 65 - 50 = +15
+    expect(res.currentValue).toBe(65);
+    expect(res.adaptationType).toBe('maintain');
+  });
+
+  test('graduateCycle should close active cycle successfully', async () => {
+    pool.query.mockResolvedValueOnce({ rows: [{ id: 'cycle-uuid-123', status: 'completed' }] });
+
+    const res = await glowCycleService.graduateCycle('cycle-uuid-123', 1);
+    expect(res.success).toBe(true);
+    expect(res.status).toBe('completed');
   });
 });

@@ -68,6 +68,63 @@ class _MyGlowDashboardScreenState extends State<MyGlowDashboardScreen> {
         SnackBar(content: Text('Error al registrar check-in: $e')),
       );
     }
+  Future<void> _handleRescanDialog(BuildContext context) async {
+    if (_activeCycle == null) return;
+    
+    // Simular medición de progreso intermedia (+12 en hidratación)
+    final newScore = (_activeCycle!.currentValue + 12.0).clamp(0.0, 100.0);
+    
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'RE-ESCANEO BIOMÉTRICO (DÍA 15)',
+          style: TextStyle(fontFamily: 'Didot', fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          'Se simulará la captura bio-óptica para evaluar tu progreso en ${_activeCycle!.targetMetricKey}.\n\nPuntaje anterior: ${_activeCycle!.currentValue.toStringAsFixed(0)}\nNuevo puntaje detectado: ${newScore.toStringAsFixed(0)}',
+          style: const TextStyle(fontFamily: 'CormorantGaramond', fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('CANCELAR', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF2C2623),
+              shape: BorderRadius.circular(8),
+            ),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              try {
+                final res = await ApiService.submitCycleRescan(
+                  _activeCycle!.id,
+                  dayNumber: 15,
+                  faceScores: { _activeCycle!.targetMetricKey: newScore },
+                );
+                await _loadActiveCycle();
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('✅ Re-escaneo completado. Delta: +${res['delta'] ?? 12} puntos. ${res['adaptationReason'] ?? ''}'),
+                      backgroundColor: const Color(0xFF059669),
+                    ),
+                  );
+                }
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Error en re-escaneo: $e')),
+                );
+              }
+            },
+            child: const Text('CONFIRMAR ESCANEO', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -301,6 +358,30 @@ class _MyGlowDashboardScreenState extends State<MyGlowDashboardScreen> {
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
+                  letterSpacing: 1.0,
+                ),
+              ),
+            ),
+          const SizedBox(height: 12),
+
+          // BOTÓN DE RE-ESCANEO / REEVALUACIÓN
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Color(0xFFC5A052), width: 1.5),
+                shape: BorderRadius.circular(12),
+              ),
+              onPressed: () => _handleRescanDialog(context),
+              icon: const Icon(Icons.camera_enhance_outlined, color: Color(0xFFC5A052), size: 20),
+              label: const Text(
+                'REALIZAR RE-ESCANEO (HITO DE PROGRESO)',
+                style: TextStyle(
+                  fontFamily: 'JetBrainsMono',
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFFC5A052),
                   letterSpacing: 1.0,
                 ),
               ),

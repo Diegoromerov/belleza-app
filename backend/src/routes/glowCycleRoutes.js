@@ -119,4 +119,51 @@ router.post('/:id/checkin', verifyToken, async (req, res) => {
   }
 });
 
+/**
+ * POST /api/glow-cycle/:id/re-scan
+ * Ejecuta el re-escaneo multimodal, calcula delta, aplica adherencia y adapta la rutina
+ */
+router.post('/:id/re-scan', verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const cycleId = req.params.id;
+    const { dayNumber, faceScores, handsDiagnosis } = req.body;
+
+    const result = await glowCycleService.performRescan({
+      cycleId,
+      userId,
+      dayNumber,
+      faceScores,
+      handsDiagnosis
+    });
+
+    res.status(200).json(result);
+  } catch (error) {
+    logger.error('Error en re-escaneo del Glow Cycle:', error.message);
+    res.status(500).json({ error: 'Fallo al procesar el re-escaneo', details: error.message });
+  }
+});
+
+/**
+ * POST /api/glow-cycle/:id/graduate
+ * Cierra formalmente un ciclo completado para avanzar al siguiente
+ */
+router.post('/:id/graduate', verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const cycleId = req.params.id;
+    const { nextGoal, nextMetricKey } = req.body;
+
+    const result = await glowCycleService.graduateCycle(cycleId, userId, {
+      nextGoal,
+      nextMetricKey
+    });
+
+    res.status(200).json(result);
+  } catch (error) {
+    logger.error('Error al graduar Glow Cycle:', error.message);
+    res.status(500).json({ error: 'Fallo al graduar el ciclo', details: error.message });
+  }
+});
+
 module.exports = router;

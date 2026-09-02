@@ -1459,6 +1459,57 @@ class ApiService {
     }
     throw Exception('Error al registrar check-in: ${response.statusCode}');
   }
+
+  static Future<Map<String, dynamic>> submitCycleRescan(String cycleId, {required int dayNumber, required Map<String, dynamic> faceScores, Map<String, dynamic>? handsDiagnosis}) async {
+    await ensureBaseUrl();
+    final token = await _getToken();
+    final uri = Uri.parse('$_baseUrl$_apiPath/glow-cycle/$cycleId/re-scan');
+
+    final headers = <String, String>{'Content-Type': 'application/json'};
+    if (token != null && token.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+
+    final response = await http.post(
+      uri,
+      headers: headers,
+      body: json.encode({
+        'dayNumber': dayNumber,
+        'faceScores': faceScores,
+        'handsDiagnosis': handsDiagnosis ?? {},
+      }),
+    ).timeout(const Duration(seconds: 20));
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    }
+    throw Exception('Error en re-escaneo: ${response.statusCode}');
+  }
+
+  static Future<Map<String, dynamic>> graduateCycle(String cycleId, {String? nextGoal, String nextMetricKey = 'pores'}) async {
+    await ensureBaseUrl();
+    final token = await _getToken();
+    final uri = Uri.parse('$_baseUrl$_apiPath/glow-cycle/$cycleId/graduate');
+
+    final headers = <String, String>{'Content-Type': 'application/json'};
+    if (token != null && token.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+
+    final response = await http.post(
+      uri,
+      headers: headers,
+      body: json.encode({
+        'nextGoal': nextGoal,
+        'nextMetricKey': nextMetricKey,
+      }),
+    ).timeout(const Duration(seconds: 15));
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    }
+    throw Exception('Error al graduar ciclo: ${response.statusCode}');
+  }
 }
 
 class MapSettings {

@@ -2,6 +2,7 @@
 const { pool } = require('../config/db');
 const redisClient = require('../config/redis');
 const biometricCryptoService = require('./biometricCryptoService');
+const transformationEngine = require('./transformationEngine');
 const atenaAgent = require('./agents/atenaAgent');
 const chronosAgent = require('./agents/chronosAgent');
 const logger = require('../config/logger');
@@ -288,6 +289,146 @@ class GlowCycleService {
     } else {
       return `Variación detectada: ${metricKey} presenta una leve disminución (${delta} puntos). El agente Atena ajustará los activos en tu próximo ciclo.`;
     }
+  }
+
+  /**
+   * Ejecuta un Re-escaneo completo, calcula el Delta, aplica adherencia y adapta el plan
+   */
+  async performRescan({
+    cycleId,
+    userId,
+    dayNumber = 15,
+    faceScores,
+    handsDiagnosis
+  }) {
+    const parsedUserId = parseInt(userId, 10);
+    logger.info('Iniciando Re-scan en Glow Cycle', { cycleId, userId: parsedUserId, dayNumber });
+
+    // 1. Obtener ciclo
+    const cycleRes = await pool.query('SELECT * FROM glow_cycles WHERE id = $1 AND user_id = $2;', [cycleId, parsedUserId]);
+    if (cycleRes.rows.length === 0) {
+      throw new Error('Glow Cycle no encontrado.');
+    }
+
+    const cycle = cycleRes.rows[0];
+    const metricKey = cycle.target_metric_key || 'hydration';
+    const baselineVal = parseFloat(cycle.baseline_value || 50);
+    const newScoreVal = faceScores && faceScores[metricKey] !== undefined ? parseFloat(faceScores[metricKey]) : baselineVal;
+    const targetVal = parseFloat(cycle.target_value || 75);
+
+    // 2. Calcular Delta
+    const deltaVal = parseFloat((newScoreVal - baselineVal).toFixed(2));
+
+    // 3. Evaluar adherencia
+    const checkins = Array.isArray(cycle.checkin_history) ? cycle.checkin_history : [];
+    const adherencePercent = dayNumber > 0 ? Math.min(100, Math.round((checkins.length / dayNumber) * 100)) : 100;
+
+    // 4. Adaptar Plan con TransformationEngine
+    const adaptationResult = transformationEngine.adaptPlanBasedOnDelta({
+      currentPlan: {
+        amRoutine: cycle.am_routine,
+        pmRoutine: cycle.pm_routine
+      },
+      delta: deltaVal,
+      metricKey,
+      currentValue: newScoreVal,
+      targetValue: targetVal
+    });
+
+    // 5. Guardar medición cifrada
+    const encryptedScores = biometricCryptoService.encrypt({ faceScores, handsDiagnosis });
+    const scoreDelta = {
+      [metricKey]: deltaVal,
+      previous_baseline: baselineVal,
+      current: newScoreVal,
+      adherence_rate: `${adherencePercent}%`
+    };
+
+    const measurementType = dayNumber >= cycle.duration_days ? 'final_30d' : `milestone_${dayNumber}d`;
+    const insertMeasurementQuery = `
+      INSERT INTO glow_cycle_measurements (
+        cycle_id, user_id, measurement_type, day_number, encrypted_scores, score_delta, ai_evaluation_notes
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING *;
+    `;
+
+    const measRes = await pool.query(insertMeasurementQuery, [
+      cycleId,
+      parsedUserId,
+      measurementType,
+      parseInt(dayNumber, 10),
+      encryptedScores,
+      JSON.stringify(scoreDelta),
+      adaptationResult.adaptationReason
+    ]);
+
+    // 6. Actualizar ciclo con nuevos valores y rutina adaptada
+    const nextStatus = adaptationResult.isGoalReached || dayNumber >= cycle.duration_days ? 'completed' : 'active';
+    const updateCycleQuery = `
+      UPDATE glow_cycles
+      SET current_value = $1,
+          status = $2,
+          am_routine = $3,
+          pm_routine = $4,
+          updated_at = NOW()
+      WHERE id = $5
+      RETURNING *;
+    `;
+
+    const updatedCycleRes = await pool.query(updateCycleQuery, [
+      newScoreVal,
+      nextStatus,
+      JSON.stringify(adaptationResult.amRoutine),
+      JSON.stringify(adaptationResult.pmRoutine),
+      cycleId
+    ]);
+
+    const updatedCycle = updatedCycleRes.rows[0];
+    await this._cacheActiveCycle(parsedUserId, updatedCycle);
+
+    return {
+      success: true,
+      cycleId,
+      dayNumber,
+      measurementId: measRes.rows[0].id,
+      metricKey,
+      baselineValue: baselineVal,
+      currentValue: newScoreVal,
+      targetValue: targetVal,
+      delta: deltaVal,
+      adherenceRate: `${adherencePercent}%`,
+      adaptationType: adaptationResult.adaptationType,
+      adaptationReason: adaptationResult.adaptationReason,
+      status: nextStatus,
+      amRoutine: adaptationResult.amRoutine,
+      pmRoutine: adaptationResult.pmRoutine
+    };
+  }
+
+  /**
+   * Gradúa y cierra formalmente un ciclo permitiendo iniciar el siguiente
+   */
+  async graduateCycle(cycleId, userId, { nextGoal = null, nextMetricKey = 'pores' } = {}) {
+    const parsedUserId = parseInt(userId, 10);
+    const res = await pool.query(
+      "UPDATE glow_cycles SET status = 'completed', updated_at = NOW() WHERE id = $1 AND user_id = $2 RETURNING *;",
+      [cycleId, parsedUserId]
+    );
+
+    if (res.rows.length === 0) throw new Error('Ciclo no encontrado.');
+
+    // Invalidar caché
+    if (redisClient && redisClient.isOpen) {
+      await redisClient.del(`glow:active_cycle:${parsedUserId}`);
+    }
+
+    return {
+      success: true,
+      graduatedCycleId: cycleId,
+      status: 'completed',
+      message: 'Ciclo graduado con éxito. Listo para comenzar el siguiente Glow Cycle.'
+    };
   }
 
   async _cacheActiveCycle(userId, cycle) {
