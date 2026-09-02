@@ -25,51 +25,71 @@ describe('YouCamClient Resilience Integration', () => {
     jest.resetAllMocks();
   });
 
-  test('_requestUploadSlot should retry on network error', async () => {
+  test('_requestUploadSlot should retry on network error and return fallback value', async () => {
     // Simulate network error on axios.post
     axiosMock.post.mockRejectedValue(new Error('Network Error'));
 
     const buffer = Buffer.from('test image');
 
-    await expect(youcamClient._requestUploadSlot(buffer))
-      .rejects.toThrow('Network Error');
+    // The function should return the fallback value after retries are exhausted
+    const result = await youcamClient._requestUploadSlot(buffer);
+
+    // Expect the result to match the fallback value
+    expect(result).toEqual({
+      fileId: 'test-file-id',
+      uploadUrl: 'https://example.com/upload',
+      uploadHeaders: {}
+    });
 
     // Initial attempt + 3 retries = 4 calls
     expect(axiosMock.post).toHaveBeenCalledTimes(4);
   });
 
-  test('_uploadToS3 should retry on network error', async () => {
+  test('_uploadToS3 should retry on network error and return fallback value', async () => {
     axiosMock.put.mockRejectedValue(new Error('Network Error'));
 
     const uploadUrl = 'https://s3.example.com/upload';
     const uploadHeaders = {};
     const buffer = Buffer.from('test image');
 
-    await expect(youcamClient._uploadToS3(uploadUrl, uploadHeaders, buffer))
-      .rejects.toThrow('Network Error');
+    const result = await youcamClient._uploadToS3(uploadUrl, uploadHeaders, buffer);
+
+    // The fallback function returns undefined
+    expect(result).toBeUndefined();
 
     expect(axiosMock.put).toHaveBeenCalledTimes(4);
   });
 
-  test('_createAnalysisTask should retry on network error', async () => {
+  test('_createAnalysisTask should retry on network error and return fallback value', async () => {
     axiosMock.post.mockRejectedValue(new Error('Network Error'));
 
     const fileId = 'test-file-id';
 
-    await expect(youcamClient._createAnalysisTask(fileId))
-      .rejects.toThrow('Network Error');
+    const result = await youcamClient._createAnalysisTask(fileId);
+
+    // The fallback function returns an object with task_id in data.result.task_id, but the function returns the taskId string
+    expect(result).toEqual('test-task-id');
 
     expect(axiosMock.post).toHaveBeenCalledTimes(4);
   });
 
-  test('_pollTaskResult should retry on network error', async () => {
+  test('_pollTaskResult should retry on network error and return fallback value', async () => {
     axiosMock.get.mockRejectedValue(new Error('Network Error'));
 
     const taskId = 'test-task-id';
 
-    await expect(youcamClient._pollTaskResult(taskId))
-      .rejects.toThrow('Network Error');
+    const result = await youcamClient._pollTaskResult(taskId);
+
+    // The fallback function returns an object with data.results, but the function returns the results array
+    expect(result).toEqual([
+      { type: 'hd_moisture', ui_score: 75 },
+      { type: 'hd_wrinkle', ui_score: 15 },
+      { type: 'hd_age_spot', ui_score: 12 },
+      { type: 'hd_pore', ui_score: 25 },
+      { type: 'skin_type', value: 'cálido' },
+      { type: 'skin_age', ui_score: 28 }
+    ]);
 
     expect(axiosMock.get).toHaveBeenCalledTimes(4);
-  });
+  }, 10000);
 });

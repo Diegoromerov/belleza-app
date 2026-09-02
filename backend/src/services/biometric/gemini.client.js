@@ -14,9 +14,10 @@ class GeminiClient {
 
   /** Analiza una imagen de manos usando Gemini 3.1 Flash-Lite (Visión ultra-rápida y económica)
    * @param {Buffer|string} image - Imagen en base64 o buffer
+   * @param {string} [traceId] - Optional trace ID for logging and correlation
    * @returns {Promise<Object>} Diagnóstico de manos
    */
-  async analyzeHands(image) {
+  async analyzeHands(image, traceId) {
     try {
       const base64Image = typeof image === 'string' ? image : image.toString('base64');
 
@@ -54,8 +55,10 @@ class GeminiClient {
       }, {
         retry: defaultPolicy.retry,
         retryDelay: defaultPolicy.retryDelay,
-        timeout: this.timeout,
-        circuitBreakerName: 'gemini'
+        // Use default policy timeout (5000ms) for resilience
+        circuitBreakerName: 'gemini',
+        traceId: traceId,
+        fallback: this.getFallbackHandsDiagnosis
       });
 
       const text = response.data.candidates[0].content.parts[0].text;
@@ -91,9 +94,10 @@ class GeminiClient {
   /** Genera recomendación personalizada usando Gemini 3.1 Flash-Lite
    * @param {Object} faceScores - Scores de YouCam
    * @param {Object} handsDiagnosis - Diagnóstico de manos
+   * @param {string} [traceId] - Optional trace ID for logging and correlation
    * @returns {Promise<string>} Recomendación en texto
    */
-  async generateRecommendation(faceScores, handsDiagnosis) {
+  async generateRecommendation(faceScores, handsDiagnosis, traceId) {
     try {
       const prompt = RECOMMENDATION_PROMPT
         .replace('{hydration}', faceScores.hydration)
@@ -135,8 +139,10 @@ class GeminiClient {
       }, {
         retry: defaultPolicy.retry,
         retryDelay: defaultPolicy.retryDelay,
-        timeout: this.timeout,
-        circuitBreakerName: 'gemini'
+        // Use default policy timeout (5000ms) for resilience
+        circuitBreakerName: 'gemini',
+        traceId: traceId,
+        fallback: this.getFallbackRecommendation
       });
 
       return response.data.candidates[0].content.parts[0].text;
@@ -147,7 +153,7 @@ class GeminiClient {
   }
 
   getFallbackRecommendation() {
-    return `\n**Diagnóstico general**\nTu piel presenta niveles óptimos de hidratación y cuidado general. Te sugerimos mantener una barrera cutánea sólida y proteger las áreas expuestas al sol.\n\n**Rutina AM**\n1. Limpiador facial suave\n2. Sérum con Vitamina C o Ácido Hialurónico\n3. Protector solar facial FPS 50+\n\n**Rutina PM**\n1. Limpieza profunda\n2. Sérum hidratante de Niacinamida\n3. Crema de noche reparadora\n\n**Cuidado de Manos**\n1. Exfoliación suave semanal\n2. Crema reparadora con urea y ceramidas\n\n*Ingredientes recomendados:* Ácido hialurónico, Niacinamida, Ceramidas.\n\n¡La constancia es el secreto de una piel saludable!\n`;
+    return `\\n**Diagnóstico general**\\nTu piel presenta niveles óptimos de hidratación y cuidado general. Te sugerimos mantener una barrera cutánea sólida y proteger las áreas expuestas al sol.\\n\\n**Rutina AM**\\n1. Limpiador facial suave\\n2. Sérum con Vitamina C o Ácido Hialurónico\\n3. Protector solar facial FPS 50+\\n\\n**Rutina PM**\\n1. Limpieza profunda\\n2. Sérum hidratante de Niacinamida\\n3. Crema de noche reparadora\\n\\n**Cuidado de Manos**\\n1. Exfoliación suave semanal\\n2. Crema reparadora con urea y ceramidas\\n\\n*Ingredientes recomendados:* Ácido hialurónico, Niacinamida, Ceramidas.\\n\\n¡La constancia es el secreto de una piel saludable!\\n`;
   }
 }
 
