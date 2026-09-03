@@ -2333,7 +2333,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
           // Capa: Ajustes de Mapa (Speed Dial Expandible)
           Positioned(
             right: 20,
-            bottom: MediaQuery.of(context).padding.bottom + 104,
+            bottom: MediaQuery.of(context).padding.bottom + (_selectedProvider != null ? 224 : 104),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.end,

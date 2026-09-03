@@ -192,11 +192,17 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFFAF8F5),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 800),
-          child: CustomScrollView(
-        slivers: [
+      body: Align(
+        alignment: Alignment.topCenter,
+        child: SizedBox(
+          width: double.infinity,
+          height: double.infinity,
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 800),
+              child: CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
           // Cabecera de Alto Impacto con Parallax y Desvanecimiento al Desplazar
           SliverAppBar(
             expandedHeight: 280,
@@ -1173,6 +1179,8 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
         ),
       ),
     ),
+  ),
+),
       bottomNavigationBar: Container(
         padding: EdgeInsets.only(
           left: 20,
