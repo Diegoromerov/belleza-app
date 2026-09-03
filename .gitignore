@@ -15,3 +15,28 @@ scratch/
 
 # Dependencies
 node_modules/
+
+# Local asset archive folders
+archive_orphan_images/
+archive_unused_fonts/
+
+# Test / temporary sample files
+sample_*.png
+new_concierge_bg.png
+
+# Windows DOS device artifacts
+nul
+**/nul
+
+# Temporary logs, reports, and diagnostic scripts
+*borrar.txt
+audit_report.txt
+obsolete_audit_report.txt
+blocker.txt
+diagnostic_env.js
+fabrica_chunks.js
+backend/temp_*.js
+backend/test_*.js
+backend/test_*.sh
+backend/validate_*.js
+backend/verify_*.js
