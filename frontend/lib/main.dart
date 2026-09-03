@@ -1762,20 +1762,39 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
       ),
       child: Row(
         children: [
-          Container(
-            width: 54,
-            height: 54,
-            padding: const EdgeInsets.all(2),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xFFD4AF37), width: 2),
-            ),
-            child: ClipOval(
-              child: p.avatarUrl.isNotEmpty
-                  ? Image.network(
-                      p.avatarUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ProviderDetailScreen(providerId: p.id),
+                ),
+              );
+            },
+            child: Container(
+              width: 54,
+              height: 54,
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: const Color(0xFFD4AF37), width: 2),
+              ),
+              child: ClipOval(
+                child: p.avatarUrl.isNotEmpty
+                    ? Image.network(
+                        p.avatarUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          color: isMen ? const Color(0xFF2A231C) : const Color(0xFFE8DED1),
+                          child: Center(
+                            child: Text(
+                              p.fullName.isNotEmpty ? p.fullName[0].toUpperCase() : '?',
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFFD4AF37)),
+                            ),
+                          ),
+                        ),
+                      )
+                    : Container(
                         color: isMen ? const Color(0xFF2A231C) : const Color(0xFFE8DED1),
                         child: Center(
                           child: Text(
@@ -1784,16 +1803,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                           ),
                         ),
                       ),
-                    )
-                  : Container(
-                      color: isMen ? const Color(0xFF2A231C) : const Color(0xFFE8DED1),
-                      child: Center(
-                        child: Text(
-                          p.fullName.isNotEmpty ? p.fullName[0].toUpperCase() : '?',
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFFD4AF37)),
-                        ),
-                      ),
-                    ),
+              ),
             ),
           ),
           const SizedBox(width: 12),
@@ -1802,59 +1812,82 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        p.fullName.isNotEmpty ? p.fullName : p.businessName,
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ProviderDetailScreen(providerId: p.id),
+                      ),
+                    );
+                  },
+                  behavior: HitTestBehavior.opaque,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              p.fullName.isNotEmpty ? p.fullName : p.businessName,
+                              style: TextStyle(
+                                fontFamily: 'CormorantGaramond',
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: isMen ? const Color(0xFFFAF8F5) : const Color(0xFF1E1A16),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.star_rounded, size: 14, color: Color(0xFFD4AF37)),
+                              const SizedBox(width: 2),
+                              Text(
+                                p.rating > 0 ? p.rating.toStringAsFixed(1) : '4.9',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: isMen ? const Color(0xFFE5C158) : const Color(0xFF3D2E1E),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        p.businessName.isNotEmpty ? p.businessName : 'Estilista Profesional GlowApp',
                         style: TextStyle(
-                          fontFamily: 'CormorantGaramond',
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: isMen ? const Color(0xFFFAF8F5) : const Color(0xFF1E1A16),
+                          fontSize: 11.5,
+                          color: isMen ? Colors.white60 : const Color(0xFF6B5E55),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.star_rounded, size: 14, color: Color(0xFFD4AF37)),
-                        const SizedBox(width: 2),
-                        Text(
-                          p.rating > 0 ? p.rating.toStringAsFixed(1) : '4.9',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: isMen ? const Color(0xFFE5C158) : const Color(0xFF3D2E1E),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  p.businessName.isNotEmpty ? p.businessName : 'Estilista Profesional GlowApp',
-                  style: TextStyle(
-                    fontSize: 11.5,
-                    color: isMen ? Colors.white60 : const Color(0xFF6B5E55),
+                    ],
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    // Botón 1: Ver Perfil
+                    // Botón 1: Ver Perfil (Directo al Perfil Completo sin pestañas intermedias)
                     Expanded(
                       flex: 1,
                       child: SizedBox(
                         height: 34,
                         child: OutlinedButton(
-                          onPressed: () => _showQuickViewSheet(p),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ProviderDetailScreen(providerId: p.id),
+                              ),
+                            );
+                          },
                           style: OutlinedButton.styleFrom(
                             side: const BorderSide(color: Color(0xFFC5A052), width: 1.2),
                             foregroundColor: isMen ? const Color(0xFFE5C158) : const Color(0xFF8C6F65),
@@ -2806,37 +2839,6 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
             Text(price, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.primary)),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildMockDayTile(String day, String dayName, bool isSelected) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: isSelected ? AppTheme.primary : Colors.grey[100],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: isSelected ? AppTheme.primary : Colors.grey[300]!),
-      ),
-      child: Column(
-        children: [
-          Text(day, style: TextStyle(fontWeight: FontWeight.bold, color: isSelected ? Colors.white : Colors.black87)),
-          Text(dayName, style: TextStyle(fontSize: 10, color: isSelected ? Colors.white70 : Colors.grey)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMockHourTile(String hour, bool isSelected) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        color: isSelected ? AppTheme.primary : Colors.grey[100],
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        hour,
-        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: isSelected ? Colors.white : Colors.black54),
       ),
     );
   }
