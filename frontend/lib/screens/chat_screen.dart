@@ -318,9 +318,56 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  bool _containsContactLeakage(String text) {
+    final lower = text.toLowerCase();
+    // Excluir etiquetas del sistema
+    if (lower.startsWith('[consulta pre-reserva]')) return false;
+
+    final phoneRegex = RegExp(
+        r'(?:\+?57\s*)?(?:3\d{2}[\s.-]?\d{3}[\s.-]?\d{4}|\b3\d{9}\b|\b[0-9]{7,10}\b)');
+    if (phoneRegex.hasMatch(text)) return true;
+    final keywords = [
+      'whatsapp',
+      'wasap',
+      'wpp',
+      'whap',
+      'wha',
+      'celular',
+      'mi cel',
+      'mi numero',
+      'mi número',
+      'instagram',
+      'ig:',
+      'llamame',
+      'llámame',
+      'por fuera',
+      'en efectivo',
+      'pago directo',
+      'transferencia directa'
+    ];
+    for (final kw in keywords) {
+      if (lower.contains(kw)) return true;
+    }
+    return false;
+  }
+
   Future<void> _sendMessage() async {
     final text = _messageController.text.trim();
     if (text.isEmpty || _isSending) return;
+
+    if (_containsContactLeakage(text)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+                '⚠️ Por seguridad y cobertura de garantía Wompi, no se permite compartir números ni acordar pagos externos.'),
+            backgroundColor: Colors.deepOrange,
+            duration: Duration(seconds: 4),
+          ),
+        );
+      }
+      return;
+    }
 
     setState(() => _isSending = true);
     _messageController.clear();
@@ -437,6 +484,34 @@ class _ChatScreenState extends State<ChatScreen> {
           constraints: const BoxConstraints(maxWidth: 720),
           child: Column(
         children: [
+          // Banner de Garantía y Seguridad Wompi
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+            decoration: const BoxDecoration(
+              color: Color(0xFFFBF5EE),
+              border: Border(
+                bottom: BorderSide(color: Color(0xFFEADBCE), width: 1),
+              ),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.shield_outlined,
+                    size: 14, color: Color(0xFFC5A052)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Protección GlowApp: Pago seguro con garantía Wompi. Prohibido compartir teléfonos o pagos externos.',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.brown[900],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
           Expanded(
             child: _isLoading
                 ? const Center(
