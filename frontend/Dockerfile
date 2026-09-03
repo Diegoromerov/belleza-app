@@ -1,4 +1,4 @@
-﻿# Etapa 1: Construccion de la aplicacion Flutter
+# Etapa 1: Construccion de la aplicacion Flutter
 FROM ghcr.io/cirruslabs/flutter:stable AS builder
 
 WORKDIR /app
@@ -16,7 +16,7 @@ COPY --from=builder /app/build/web /usr/share/nginx/html
 # Copiar configuracion personalizada de Nginx para soporte SPA
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Ajustar puerto a 8080 (non-root no puede enlazar puertos < 1024)
-EXPOSE 8080
+# Exponer puertos compatibles con Railway (8080 por defecto, o dinamico segun $PORT)
+EXPOSE 8080 3000 80
 
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["/bin/sh", "-c", "sed -i 's/listen 8080;/listen '${PORT:-8080}';/g' /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
