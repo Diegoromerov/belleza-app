@@ -1,0 +1,68 @@
+# D004.4-PGVECTOR-RESOLUTION.report
+
+## 1. Estado inicial
+- La extensión `pgvector` no estaba instalada en el servidor PostgreSQL.
+- El contenedor `beauty-postgres` utilizaba la imagen `postgres:16-alpine`, que no incluye pgvector por defecto.
+- El error al intentar crear la extensión era: `ERROR: extension "vector" is not available`.
+
+## 2. Diagnóstico
+- Se verificó que el contenedor PostgreSQL estaba ejecutándose en el puerto 5435 (mapeado a 5432 interno).
+- Se confirmó la versión de PostgreSQL: 16.15.
+- Se comprobó que la extensión `vector` no estaba disponible en `pg_available_extensions`.
+
+## 3. Infraestructura encontrada
+- Imagen Docker: `postgres:16-alpine` (según docker-compose.override.yml)
+- Contenedor: `beauty-postgres`
+- Volumen: `postgres_data` (montado en `/var/lib/postgresql/data`)
+- La configuración de Docker Compose utilizaba un override que cambiaba la imagen a `postgres:16-alpine` (en lugar de la imagen personalizada `Dockerfile.postgres` que sí incluía pgvector).
+
+## 4. Método de resolución
+Se decidiu utilizar la imagen que ya incluye pgvector (como estaba definida en el `Dockerfile.postgres` del proyecto) en lugar de la imagen genérica `postgres:16-alpine`.
+
+Pasos realizados:
+1. Detener el contenedor PostgreSQL existente.
+2. Modificar el `docker-compose.override.yml` para volver a utilizar la construcción desde el `Dockerfile.postgres` (eliminando el override que forzaba `postgres:16-alpine`).
+3. Iniciar el contenedor con la imagen construida a partir de `Dockerfile.postgres` (que incluye `pgvector/pgvector:pg16`).
+4. Esperar a que el contenedor estuviera listo y verificar la instalación de la extensión.
+
+## 5. Backup realizado
+- Se creó un backup lógico de la base de datos `beauty_db` antes de detener el contenedor.
+- Ubicación: `/c/beauty-app/backend/backup_beauty_db.sql`
+- Tamaño: 247 K
+- Timestamp: 2026-09-01 23:44 (UTC)
+- Método: `docker exec beauty-postgres pg_dump -U admin -d beauty_db > backup_beauty_db.sql`
+
+## 6. Cambios realizados
+- Se restauró el `docker-compose.override.yml` a su estado original (sin override de imagen), lo que permite que el servicio `postgres` utilice la construcción definida en `docker-compose.yml` (es decir, `Dockerfile.postgres`).
+- El `docker-compose.override.yml` ahora solo contiene las variables de entorno y los puertos/volúmenes, sin especificar una imagen.
+
+## 7. Validación post-instalación
+- Se verificó que la extensión `vector` aparece en `pg_available_extensions` con `default_version = 0.8.6`.
+- Se ejecutó `CREATE EXTENSION IF NOT EXISTS vector;` y se confirmó su creación.
+- Se verificó que la extensión está instalada en `pg_extension` con `extversion = 0.8.6`.
+- Se comprobó que el tipo `vector(768)` es aceptado por PostgreSQL (aunque no se creó ninguna tabla todavía).
+
+## 8. Integridad de datos
+- Se verificó que el contenedor se inició correctamente y que la base de datos `beauty_db` es accesible.
+- Se confirmó que las tablas existentes (como `tenants`, `usuarios`, etc.) siguen presentes y sin cambios.
+- No hubo pérdida de datos.
+
+## 9. Impacto en D-001 y D-002
+- D-001 (multi-tenancy): permanece intacto, ya que solo se cambió la imagen de PostgreSQL y se añadió una extensión.
+- D-002 (workforce): permanece intacto, por la misma razón.
+
+## 10. Estado de D-004
+- El bloqueo de infraestructura ha sido resuelto.
+- La extensión `pgvector` está ahora disponible y lista para usar.
+- El siguiente paso es continuar con la implementación de D-004 conforme a la autorización F7.004-D004.3 (especificación de implementación) y F7.004-D004.4 (esta resolución).
+
+## 11. Pasos pendientes
+- Ejecutar la migración 031 evolucionada (que ya incluye las columnas `tenant_id`, `deleted_at`, `expires_at` y los índices necesarios).
+- Crear las tablas de gobernanza: `retention_policies`, `legal_holds`, `retention_audit_log`.
+- Implementar RLS para la tabla `beauty_knowledge_embeddings`.
+- Modificar el servicio `ragService.js` para soportar el modelo híbrido y la retención.
+- Implementar el trabajador de retención periódica.
+- Ejecutar las pruebas de validación.
+
+---
+*Fecha de finalización: $(date)*
