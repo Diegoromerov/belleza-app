@@ -1,0 +1,36 @@
+{
+  "authority": "Photography",
+  "level": "L1",
+  "owner": "Photography Governor",
+  "sourceOfTruth": "docs/design/GLOWAPP_PHOTOGRAPHY_SYSTEM.md + glowapp_photography_system.json",
+  "inputs": [
+    "Soul",
+    "muse approvals",
+    "lighting guides"
+  ],
+  "outputs": [
+    "Official muses",
+    "lighting specs",
+    "composition system",
+    "retouching policy",
+    "domain-specific guidelines"
+  ],
+  "consumers": [
+    "Asset registry",
+    "screens",
+    "components"
+  ],
+  "allowedChanges": [
+    "Adding new assets within muse guidelines",
+    "updating lighting specs"
+  ],
+  "forbiddenChanges": [
+    "Changing approved muses",
+    "using prohibited imagery (cyberpunk, neon, etc.)",
+    "violating retouching policy"
+  ],
+  "validationGate": "Photography spec review + asset validation",
+  "legacySystems": [],
+  "promotionPath": "Register Female Muse, shoot Male Muse, systematize assets",
+  "exceptionMechanism": "Director approval for exceptions"
+}

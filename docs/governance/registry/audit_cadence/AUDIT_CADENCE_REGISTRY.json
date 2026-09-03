@@ -1,0 +1,119 @@
+{
+  "registry_name": "Audit Cadence Registry",
+  "version": "1.0.0.0",
+  "last_updated": "2026-08-21",
+  "cadence_types": [
+    {
+      "cadence": "PRE_IMPLEMENTATION",
+      "name": "Pre-implementation Audit",
+      "trigger": [
+        "Before any work begins on a change",
+        "During scope definition and planning phase",
+        "When change classification is determined"
+      ],
+      "required_audit": "Scope vs SOUL alignment check, Authority validation, Change classification verification",
+      "owner": [
+        "Design Director (scope and SOUL alignment)",
+        "Lead Engineer (technical feasibility)",
+        "Relevant Authority Governor (specification compliance)"
+      ],
+      "evidence": [
+        "Scope document with SOUL alignment verification",
+        "Change classification determination",
+        "Authority compliance checklist",
+        "Resource and timeline estimates"
+      ],
+      "retention": "Permanent - part of decision log and project records"
+    },
+    {
+      "cadence": "POST_IMPLEMENTATION",
+      "name": "Post-implementation Audit",
+      "trigger": [
+        "After implementation completion",
+        "Before PR submission for review",
+        "When G2 gate is ready for validation"
+      ],
+      "required_audit": "Implementation compliance check, Token usage verification, Component usage validation",
+      "owner": [
+        "Lead Engineer (code quality and implementation)",
+        "Component Governor (component usage)",
+        "Design Director (UI/UX fidelity)"
+      ],
+      "evidence": [
+        "Code review completion",
+        "Token usage verification report",
+        "Component usage validation",
+        "Implementation specifications compliance"
+      ],
+      "retention": "Permanent - part of implementation records and code review history"
+    },
+    {
+      "cadence": "PERIODIC",
+      "name": "Periodic Audit",
+      "trigger": [
+        "Quarterly governance review",
+        "Authority-specific review schedules",
+        "Exception registry review dates",
+        "Legacy system migration milestone reviews"
+      ],
+      "required_audit": [
+        "Authority compliance verification",
+        "Exception validity review",
+        "Legacy migration progress check",
+        "Governance registry accuracy check",
+        "Drift detection from specifications"
+      ],
+      "owner": [
+        "Each Authority Governor (for their domain)",
+        "Design Director (overall governance health)",
+        "Governance Auditor (if role exists)"
+      ],
+      "evidence": [
+        "Authority compliance reports",
+        "Exception review documentation",
+        "Legacy migration status reports",
+        "Governance registry validation",
+        "Specification compliance verification"
+      ],
+      "retention": "2 years - maintains governance history"
+    },
+    {
+      "cadence": "RELEASE",
+      "name": "Release Audit",
+      "trigger": [
+        "Before any production release",
+        "When G5 gate is ready for approval",
+        "Pre-release validation phase"
+      ],
+      "required_audit": [
+        "Complete G0-G6 gate validation",
+        "Visual QA confirmation (Women/Men/AURA parity)",
+        "Accessibility compliance verification",
+        "Performance benchmark validation",
+        "Security and privacy compliance check"
+      ],
+      "owner": [
+        "Quality Governor (overall validation)",
+        "Design Director (visual and expression parity)",
+        "Accessibility Governor (WCAG compliance)",
+        "Performance Governor (budget adherence)",
+        "Security Governor (compliance verification)"
+      ],
+      "evidence": [
+        "Gate completion records (G0-G6)",
+        "Visual QA approval documentation",
+        "Accessibility audit report",
+        "Performance benchmark results",
+        "Security and privacy compliance verification"
+      ],
+      "retention": "Permanent - part of release history and compliance records"
+    }
+  ],
+  "universal_principles": [
+    "Every audit must produce documented evidence",
+    "Audit results must be accessible to governance stakeholders",
+    "Failed audits block progression to next gate",
+    "Audit evidence must be retained according to schedule",
+    "Audit triggers must be clearly defined and measurable"
+  ]
+}

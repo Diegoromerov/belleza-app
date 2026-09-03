@@ -1,5 +1,6 @@
 // frontend/lib/screens/store_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../shared/theme.dart';
 import '../services/api_service.dart';
 import '../services/analytics_service.dart';
@@ -456,12 +457,14 @@ class _StoreScreenState extends State<StoreScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  ListView.separated(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: _cart.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 10),
-                    itemBuilder: (c, index) {
+                  ConstrainedBox(
+                    constraints: BoxConstraints(maxHeight: isMobile ? 160 : 220),
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: _cart.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 10),
+                      itemBuilder: (c, index) {
                       final item = _cart.values.elementAt(index);
                       final prod = item['product'] as Map<String, dynamic>;
                       final qty = item['quantity'] as int;
@@ -526,7 +529,8 @@ class _StoreScreenState extends State<StoreScreen> {
                       );
                     },
                   ),
-                  const SizedBox(height: 20),
+                ),
+                const SizedBox(height: 20),
                   const Divider(),
                   const SizedBox(height: 10),
                   _buildSummaryRow('Subtotal', _formatCOP(subtotal)),
@@ -566,9 +570,11 @@ class _StoreScreenState extends State<StoreScreen> {
               backgroundColor: Colors.white,
               child: Container(
                 constraints: BoxConstraints(
-                  maxWidth: isMobile ? 400 : 800,
+                  maxWidth: isMobile ? 420 : 800,
+                  maxHeight: MediaQuery.of(context).size.height * 0.88,
                 ),
                 child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
                   child: isMobile
                       ? Column(
                           mainAxisSize: MainAxisSize.min,
@@ -686,12 +692,12 @@ class _StoreScreenState extends State<StoreScreen> {
 
         final bgColor = isMen
             ? MensTheme.obsidianBg
-            : (isDark ? const Color(0xFF18171C) : Colors.grey.shade50);
+            : const Color(0xFFFAF8F5);
         final cardBgColor = isMen
             ? MensTheme.obsidianCard
-            : (isDark ? const Color(0xFF24232B) : Colors.white);
-        final textColor = isMen ? MensTheme.textPrimary : (isDark ? Colors.white : AppTheme.text);
-        final accentColor = isMen ? MensTheme.champagneGold : AppTheme.primary;
+            : Colors.white;
+        final textColor = isMen ? MensTheme.textPrimary : const Color(0xFF1F1A15);
+        final accentColor = isMen ? MensTheme.champagneGold : const Color(0xFFC5A052);
 
         return Scaffold(
           backgroundColor: bgColor,
@@ -700,10 +706,12 @@ class _StoreScreenState extends State<StoreScreen> {
             elevation: 0.5,
             iconTheme: IconThemeData(color: textColor),
             title: Text(
-              'GlowApp Store',
+              'GlowStore Concierge',
               style: TextStyle(
+                fontFamily: 'CormorantGaramond',
+                fontSize: 22,
                 color: textColor,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.bold,
               ),
             ),
             centerTitle: false,
@@ -1072,38 +1080,56 @@ class _StoreScreenState extends State<StoreScreen> {
                                   ),
                                 ),
                                 const SizedBox(height: 8),
-                                // Modificador de cantidad
+                                // Modificador de cantidad ergonómico
                                 Row(
                                   children: [
-                                    GestureDetector(
-                                      onTap: () => _updateCartQuantity(id, qty - 1),
+                                    InkWell(
+                                      onTap: () {
+                                        HapticFeedback.lightImpact();
+                                        _updateCartQuantity(id, qty - 1);
+                                      },
+                                      borderRadius: BorderRadius.circular(8),
                                       child: Container(
-                                        padding: const EdgeInsets.all(4),
+                                        width: 32,
+                                        height: 32,
+                                        alignment: Alignment.center,
                                         decoration: BoxDecoration(
+                                          color: Colors.grey.shade100,
                                           border: Border.all(color: Colors.grey.shade300),
-                                          borderRadius: BorderRadius.circular(4),
+                                          borderRadius: BorderRadius.circular(8),
                                         ),
-                                        child: const Icon(Icons.remove, size: 12),
+                                        child: const Icon(Icons.remove, size: 16, color: AppTheme.text),
                                       ),
                                     ),
                                     Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                                      padding: const EdgeInsets.symmetric(horizontal: 12),
                                       child: Text(
                                         '$qty',
-                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                                       ),
                                     ),
-                                    GestureDetector(
+                                    InkWell(
                                       onTap: qty < stock 
-                                          ? () => _updateCartQuantity(id, qty + 1)
+                                          ? () {
+                                              HapticFeedback.lightImpact();
+                                              _updateCartQuantity(id, qty + 1);
+                                            }
                                           : null,
+                                      borderRadius: BorderRadius.circular(8),
                                       child: Container(
-                                        padding: const EdgeInsets.all(4),
+                                        width: 32,
+                                        height: 32,
+                                        alignment: Alignment.center,
                                         decoration: BoxDecoration(
-                                          border: Border.all(color: Colors.grey.shade300),
-                                          borderRadius: BorderRadius.circular(4),
+                                          color: qty < stock ? Colors.grey.shade100 : Colors.grey.shade50,
+                                          border: Border.all(color: qty < stock ? Colors.grey.shade300 : Colors.grey.shade200),
+                                          borderRadius: BorderRadius.circular(8),
                                         ),
-                                        child: const Icon(Icons.add, size: 12),
+                                        child: Icon(
+                                          Icons.add,
+                                          size: 16,
+                                          color: qty < stock ? AppTheme.text : Colors.grey.shade400,
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -1138,7 +1164,12 @@ class _StoreScreenState extends State<StoreScreen> {
           // Subtotal + Checkout
           if (_cart.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.all(20.0),
+              padding: EdgeInsets.only(
+                left: 20.0,
+                right: 20.0,
+                top: 16.0,
+                bottom: 20.0 + MediaQuery.of(context).padding.bottom,
+              ),
               child: Column(
                 children: [
                   Row(
@@ -1163,19 +1194,44 @@ class _StoreScreenState extends State<StoreScreen> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: _showCheckoutDialog,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primary,
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(double.infinity, 50),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                  Container(
+                    width: double.infinity,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFF3D59B), Color(0xFFC5A052)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                       ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFC5A052).withValues(alpha: 0.35),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
-                    child: const Text(
-                      'Proceder al Pago',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                    child: ElevatedButton(
+                      onPressed: _showCheckoutDialog,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        foregroundColor: const Color(0xFF1F1A15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Text(
+                        'Proceder al Pago',
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                          color: Color(0xFF1F1A15),
+                        ),
+                      ),
                     ),
                   ),
                 ],

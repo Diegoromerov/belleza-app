@@ -1,0 +1,87 @@
+{
+  "objective": "Identify a small group of Class B technical debt that can be resolved safely, locally, and without interfering with S4-I, S3-I, G0-F, or protected systems.",
+  "baseline": {
+    "flutter_analyze_issues": 848,
+    "note": "Total issues found by flutter analyze in the frontend directory."
+  },
+  "classification_summary": {
+    "A_compilation": "Present (e.g., missing freezed_annotation dependency)",
+    "B_safe_localized_fix": "Present (e.g., prefer_const_constructors, unused_import, deprecated_member_use)",
+    "C_dependency": "Present (undeclared dependencies like freezed_annotation)",
+    "D_deprecated_apis": "Present (e.g., withOpacity, scale)",
+    "E_const_style": "Present (suggestions to add const)",
+    "F_unused_imports": "Present",
+    "G_architecture_major_debt": "Not observed in this set (dependency issues may lead to larger problems but are classified as C)"
+  },
+  "selected_candidates": [
+    {
+      "id": 1,
+      "description": "Remove unused import 'dart:math'",
+      "file": "lib/widgets/aura_3d_emblem.dart",
+      "line": "1:8",
+      "type": "unused_import",
+      "fix": "Remove the import directive."
+    },
+    {
+      "id": 2,
+      "description": "Replace deprecated 'scale' with 'scaleByDouble'",
+      "file": "lib/widgets/aura_3d_emblem.dart",
+      "line": "88:17",
+      "type": "deprecated_member_use",
+      "fix": "Replace `scale` with `scaleByDouble`."
+    },
+    {
+      "id": 3,
+      "description": "Replace deprecated 'withOpacity' with 'withValues' (2 occurrences)",
+      "file": "lib/widgets/product_quick_view_dialog.dart",
+      "lines": ["36:24", "277:46"],
+      "type": "deprecated_member_use",
+      "fix": "Replace `withOpacity` with `withValues`."
+    },
+    {
+      "id": 4,
+      "description": "Add 'const' to constructors where applicable (multiple)",
+      "file": "lib/widgets/booking_recovery_banner.dart",
+      "lines": ["35:15", "36:15", "40:26", "50:23", "55:11", "58:20", "60:11", "70:19", "73:22"],
+      "type": "prefer_const_constructors",
+      "fix": "Add the `const` keyword to the constructor invocations."
+    },
+    {
+      "id": 5,
+      "description": "Add 'const' to constructors where applicable (multiple)",
+      "file": "lib/widgets/floating_navigation_dock.dart",
+      "lines": ["40:15", "104:15", "107:24", "110:26"],
+      "type": "prefer_const_constructors",
+      "fix": "Add the `const` keyword to the constructor invocations."
+    }
+  ],
+  "affected_files": [
+    "lib/widgets/aura_3d_emblem.dart",
+    "lib/widgets/product_quick_view_dialog.dart",
+    "lib/widgets/booking_recovery_banner.dart",
+    "lib/widgets/floating_navigation_dock.dart"
+  ],
+  "exclusions": [
+    "login_screen.dart",
+    "register_screen.dart",
+    "s4_text_field.dart",
+    "ai_search_bar.dart",
+    "components modified recently by S4-I (none of the selected files are in this set)"
+  ],
+  "risk_assessment": {
+    "level": "Minimal",
+    "justification": "All changes are style-related or migrations from deprecated APIs to their recommended replacements. They do not alter business logic, state, or API contracts."
+  },
+  "justification": "These issues are Class B: they are safe, localized, and have a mechanical fix. Resolving them will reduce technical debt without affecting behavior or protected systems.",
+  "execution_proposal": [
+    "For each selected candidate, apply the suggested fix:",
+    "1. Remove the unused import line.",
+    "2. Replace deprecated member calls with their modern equivalents.",
+    "3. Add the `const` keyword to constructor invocations where suggested.",
+    "2. After applying changes, run `flutter analyze` again to verify the reduction in issues.",
+    "3. Ensure no new errors are introduced and that the build still succeeds."
+  ],
+  "compliance": "All workstream rules followed: no modifications to production logic outside of the allowed test/class B changes, no changes to excluded files, and the changes are limited to the selected candidates.",
+  "status": "READY_FOR_EXECUTION",
+  "note": "The JSON file accompanies the markdown report and contains the same information in a structured format for potential programmatic use."
+}

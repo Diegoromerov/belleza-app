@@ -1,0 +1,245 @@
+{
+  "version": "1.0.0",
+  "status": "LOCKED",
+  "phase": "FINAL_LOCK",
+  "lock_date": "2026-08-20",
+  "inventory": {
+    "core": 16,
+    "proprietary": 6,
+    "beauty": 8,
+    "men": 5,
+    "concierge": 4,
+    "aura": 6,
+    "system": 6,
+    "total": 51
+  },
+  "architecture_lock": {
+    "pattern": "Registry pattern",
+    "naming": "Semantic naming",
+    "implementation": "SVG-first",
+    "theming": "Theme-aware colors",
+    "accessibility": "Semantics wrapper",
+    "adapter": "Migration layer",
+    "no_substitution_without_major_version": true
+  },
+  "svg_spec_lock": {
+    "viewport": "24x24",
+    "stroke_base": 1.75,
+    "stroke_variants": [1.5, 2.0],
+    "linecap": "round",
+    "linejoin": "round",
+    "fill": "none",
+    "forbidden": ["gradients", "shadows", "glow_effects", "neon", "raster", "svg_internal_effects"]
+  },
+  "visual_language_lock": [
+    "MONOLINE",
+    "REFINED",
+    "WARM",
+    "MINIMAL",
+    "PREMIUM"
+  ],
+  "women_lock": {
+    "primary": "#D4AF7A",
+    "secondary": "#5A3A2A",
+    "accent": "#D9A27F",
+    "aura": "#164C46",
+    "no_new_variants_without_formal_change": true
+  },
+  "men_lock": {
+    "primary": "#C8B08A",
+    "secondary": "#F2EFEA",
+    "accent": "#B8734A",
+    "aura": "#164C46",
+    "direction": "QUIET_MASCULINE_LUXURY",
+    "forbidden": ["cyberpunk", "neon", "barbershop_cliche", "aggression", "sports_aesthetic", "black_gold_cliche"]
+  },
+  "aura_lock": {
+    "color": "#164C46",
+    "identity": "QUIET_INTELLIGENCE",
+    "forbidden_language": ["robots", "chips", "brains", "circuits", "cyberpunk", "neon", "HUD", "ai_cliche"],
+    "hierarchy": {
+      "identity": "aura",
+      "capabilities": ["scan", "analyze", "learn", "predict", "evolve", "sync"]
+    }
+  },
+  "proprietary_lock": {
+    "icons": ["glow", "aura", "concierge", "beauty_ritual", "glow_recommendation", "male_grooming"],
+    "purpose": "brand_identity_reinforcement",
+    "not_for": "indiscriminate_functional_use"
+  },
+  "semantic_lock": {
+    "search": "user_searches",
+    "scan": "aura_perceives",
+    "calendar": "temporal_structure",
+    "booking": "service_reservation",
+    "heart": "favorite",
+    "wishlist": "personal_collection",
+    "hair": "hair",
+    "scalp": "scalp",
+    "fragrance": "general_fragrance",
+    "mens_fragrance": "glow_men_fragrance",
+    "body": "general_body_care",
+    "mens_body": "glow_men_body_care",
+    "concierge": "personalized_service",
+    "support": "assistance",
+    "chat": "conversation",
+    "evolve": "transformation",
+    "sync": "alignment",
+    "filter": "selection",
+    "sort": "ordering",
+    "qr": "access_medium"
+  },
+  "api_lock": {
+    "main_class": "GlowIcon",
+    "frozen": true,
+    "no_aliases": true,
+    "no_parallel_apis": ["MenIcon", "AuraIcon", "BeautyIcon", "SystemIcon"]
+  },
+  "accessibility_lock": {
+    "semantic_label": true,
+    "semantics_wrapper": true,
+    "decorative_null": true,
+    "touch_targets": "delegated_to_consumer"
+  },
+  "demo_lock": {
+    "class": "GlowIconDemoScreen",
+    "purpose": "VALIDATION_TOOL",
+    "not_production": true,
+    "must_represent": "51/51"
+  },
+  "adapter_lock": {
+    "class": "GlowIconAdapter",
+    "purpose": "temporary_migration_compatibility",
+    "new_ui_preferred": "GlowIcon.*",
+    "existing_migration": "may_use_adapter"
+  },
+  "migration_status": {
+    "global_migration": "NOT_STARTED",
+    "screens_modified": false,
+    "material_icons_replaced": false
+  },
+  "change_control": {
+    "patch": "Documentation corrections without design changes",
+    "minor": "Compatible additions without breaking system",
+    "major": "Changes to geometry, naming, semantics, stroke, architecture, color, structure - requires formal review"
+  },
+  "icon_addition_policy": {
+    "prerequisites": [
+      "Real semantic need",
+      "No existing equivalent",
+      "Reusable need",
+      "System coherence",
+      "Inventory impact",
+      "API impact",
+      "Documentation impact"
+    ],
+    "process": [
+      "DESIGN_PROPOSAL",
+      "SEMANTIC_REVIEW",
+      "VISUAL_REVIEW",
+      "IMPLEMENTATION",
+      "VALIDATION",
+      "VERSION_UPDATE"
+    ]
+  },
+  "usage_policy": {
+    "preferred": "GlowIcon.*",
+    "not_preferred": "Icons.*",
+    "exception": "Material icon only when no equivalent, temporary, documented, replacement intended"
+  },
+  "asset_inventory": {
+    "total_files": 51,
+    "total_bytes": 21762,
+    "checksums": {
+      "home.svg": {"size": 274, "md5": "1120af4903e12686", "sha256": "e1d1751153c7f383"},
+      "search.svg": {"size": 234, "md5": "16818774f3b253c4", "sha256": "02a77f0b3d319362"},
+      "menu.svg": {"size": 206, "md5": "da905b5f57cda478", "sha256": "4bce0dcc59baa1b7"},
+      "close.svg": {"size": 203, "md5": "a39dfb55fda20a1a", "sha256": "b08cb0a5a7a05cc7"},
+      "back.svg": {"size": 206, "md5": "d4415c091d4f5230", "sha256": "9834a290cc40e56e"},
+      "forward.svg": {"size": 204, "md5": "dafdbb22d7fb260a", "sha256": "c7434639f4bc4d58"},
+      "more.svg": {"size": 269, "md5": "c39b7244b56cb569", "sha256": "12fd66ed31a55d62"},
+      "profile.svg": {"size": 257, "md5": "881aaaaa4b60d44e", "sha256": "4f24eb4afd01be8d"},
+      "heart.svg": {"size": 319, "md5": "1ede7db51626f554", "sha256": "01b078e1702bc635"},
+      "bag.svg": {"size": 309, "md5": "fb4fd9aab48ee20d", "sha256": "039b293ebfdf6f1b"},
+      "cart.svg": {"size": 313, "md5": "bf397c2182e9a4b0", "sha256": "e17feb04fe7ba334"},
+      "calendar.svg": {"size": 263, "md5": "ecab66f744fd20db", "sha256": "1e6ad0f1e9709460"},
+      "clock.svg": {"size": 229, "md5": "d3ce733a136f9d5b", "sha256": "d782bcaf8cbbe59b"},
+      "location.svg": {"size": 263, "md5": "bee04a644c07526e", "sha256": "a9ca8af3f6bac202"},
+      "settings.svg": {"size": 951, "md5": "9162e88e35619640", "sha256": "ec525590016d116d"},
+      "notification.svg": {"size": 267, "md5": "454aa50f0f993238", "sha256": "f9335a1fc37d976f"},
+      "glow.svg": {"size": 397, "md5": "392f7c322cfd05d1", "sha256": "c249357cca4afddd"},
+      "aura.svg": {"size": 345, "md5": "a64f59a00db3ad03", "sha256": "23af8a2bca4048c8"},
+      "concierge.svg": {"size": 427, "md5": "cbbbbf73725ee3c0", "sha256": "ec7add7128fd736c"},
+      "beauty_ritual.svg": {"size": 339, "md5": "93d60df29e1b25a7", "sha256": "297f5809bc0e4fea"},
+      "glow_recommendation.svg": {"size": 320, "md5": "c4c6da43191dade7", "sha256": "52d34dc1eae12b25"},
+      "male_grooming.svg": {"size": 369, "md5": "f3932f78064ea9a4", "sha256": "b6f9cc9409b812b3"},
+      "skincare.svg": {"size": 713, "md5": "c73c7d2346e663c5", "sha256": "aa2a78e5406db506"},
+      "hair.svg": {"size": 478, "md5": "e0866242bc1149ba", "sha256": "b95eb483db2ee9ae"},
+      "nails.svg": {"size": 568, "md5": "5a00853b7aa7b283", "sha256": "d00d1340f4a74a48"},
+      "makeup.svg": {"size": 508, "md5": "314b9bfde3ca482d", "sha256": "ea540234d87a45a6"},
+      "fragrance.svg": {"size": 582, "md5": "8c4af707a29ffab2", "sha256": "31fb97c6e6fbea79"},
+      "body.svg": {"size": 570, "md5": "3303e93d50e2c90d", "sha256": "a84f4bd491fa75f6"},
+      "wellness.svg": {"size": 778, "md5": "9568c6432532d47a", "sha256": "807919e7cf74c0dc"},
+      "spa.svg": {"size": 728, "md5": "daa8563576c6fd4e", "sha256": "858f2dcc19e473ad"},
+      "beard.svg": {"size": 775, "md5": "b920193a1f9eaef4", "sha256": "7e9258b547cf30bf"},
+      "shave.svg": {"size": 593, "md5": "5fa600633594dc35", "sha256": "68b9eb6cc47f69b4"},
+      "scalp.svg": {"size": 662, "md5": "e7664e304c5c9c24", "sha256": "fd56013c20404f89"},
+      "mens_fragrance.svg": {"size": 773, "md5": "0c0f2a8ab3fa5647", "sha256": "2a0659a04f5d2697"},
+      "mens_body.svg": {"size": 683, "md5": "7495af8a6ffa9bd1", "sha256": "eb9ee0780ff4588e"},
+      "booking.svg": {"size": 380, "md5": "caf62d8dec79edd7", "sha256": "1117586be1e7136e"},
+      "chat.svg": {"size": 381, "md5": "e2234a6426c5aeff", "sha256": "506234fac332dd63"},
+      "wishlist.svg": {"size": 394, "md5": "2d86244e39728d64", "sha256": "102db01f1733dac0"},
+      "support.svg": {"size": 415, "md5": "6d09a2fabadf0a33", "sha256": "345fdde6e4a5d6ca"},
+      "scan.svg": {"size": 403, "md5": "ac1c4a268ec921e0", "sha256": "cffb95a01c3d4fda"},
+      "analyze.svg": {"size": 473, "md5": "105c0f5f9b1d7628", "sha256": "085bef9920eab5e7"},
+      "learn.svg": {"size": 431, "md5": "3abc617e6d541c41", "sha256": "ca757476839e6375"},
+      "predict.svg": {"size": 414, "md5": "9b938cced86adf20", "sha256": "90bf95de568edf13"},
+      "evolve.svg": {"size": 418, "md5": "debf7087d8616bc2", "sha256": "e50e745e78ea37cd"},
+      "sync.svg": {"size": 386, "md5": "296ddc1cf8db8d16", "sha256": "795f060b0b07fa98"},
+      "share.svg": {"size": 380, "md5": "bdb7f9a4c82b2ae1", "sha256": "d3b8518968bef65f"},
+      "download.svg": {"size": 333, "md5": "d3e17cf3cfa5d317", "sha256": "17fd2dd0065fbf59"},
+      "upload.svg": {"size": 328, "md5": "fdc3c435d31316b3", "sha256": "a8db905f5afa471b"},
+      "filter.svg": {"size": 331, "md5": "bb86240a03ac6dad", "sha256": "9efe32a689ddbfdb"},
+      "sort.svg": {"size": 370, "md5": "353833553f8f75fb", "sha256": "8c0d7590bd3745b3"},
+      "qr.svg": {"size": 550, "md5": "c952a983ba9c6b62", "sha256": "1023ece08d5c510c"}
+    }
+  },
+  "validation": {
+    "flutter_test": "7/7 PASSED",
+    "flutter_analyze": {
+      "baseline_errors": "200+ (pre-existing: freezed/generated/riverpod/deprecated)",
+      "icon_system_errors": 0,
+      "icon_system_warnings": 0,
+      "icon_system_info": 8
+    },
+    "flutter_build_web_release": "SUCCESS",
+    "json_validation": {
+      "docs/design/glow_icon_system.json": "VALID",
+      "docs/audit/glowapp_icon_system_v1_lock.json": "VALID"
+    }
+  },
+  "git_status": {
+    "icon_system_files": "untracked (new)",
+    "preexisting_modifications": "unrelated to icon system"
+  },
+  "production_safety": {
+    "screens_intact": true,
+    "navigation_intact": true,
+    "providers_intact": true,
+    "services_intact": true,
+    "backend_intact": true,
+    "database_intact": true,
+    "booking_intact": true,
+    "store_intact": true,
+    "aura_productive_intact": true,
+    "global_migration": "NOT_STARTED"
+  },
+  "lock_artifacts": [
+    "docs/design/GLOW_ICON_SYSTEM.md",
+    "docs/design/glow_icon_system.json",
+    "docs/audit/GLOWAPP_ICON_SYSTEM_V1_LOCK.md",
+    "docs/audit/glowapp_icon_system_v1_lock.json"
+  ],
+  "final_decision": "LOCKED",
+  "next_phase": "GLOW ICON MIGRATION MAP (do not execute)"
+}

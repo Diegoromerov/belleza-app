@@ -1,0 +1,576 @@
+{
+  "phase": "G1-A",
+  "status": "READY_FOR_G1_B",
+  "authorityHierarchy": [
+    "GLOWAPP SOUL (L0 — Master Authority)",
+    "SPECIFICATIONS (L1 — Color, Typography, Photography, UI/Component Language, Icon System (LOCKED), Audience, Data, AI, Quality, Technical, Accessibility, Performance, Security)",
+    "SYSTEM AUTHORITIES (L2 — Token class, TypographyTokens class, GlowIconRegistry, AudienceService, etc.)",
+    "COMPONENTS (L3 — LuxeComponents, GlowGlassCard, StoreProductCard, ServiceCard, BookingCard, etc.)",
+    "EXPERIENCE / SCREENS (L4 — HomeScreen, HomeScreen, ProviderDetailScreen, BookingScreen, etc.)",
+    "IMPLEMENTATION (L5 — Code, assets, configurations)"
+  ],
+  "authorityRegistry": [
+    {
+      "authority": "Soul",
+      "level": "L0",
+      "owner": "Director (GlowApp Soul v1.0)",
+      "sourceOfTruth": "docs/design/GLOWAPP_SOUL.md",
+      "inputs": ["Vision", "market", "principles"],
+      "outputs": ["Identity statement", "philosophy", "core principles", "authority hierarchy"],
+      "consumers": ["All authorities"],
+      "allowedChanges": [],
+      "forbiddenChanges": [],
+      "validationGate": "N/A",
+      "legacySystems": [],
+      "promotionPath": "N/A",
+      "exceptionMechanism": "Director approval only"
+    },
+    {
+      "authority": "Color",
+      "level": "L1",
+      "owner": "Color Governor",
+      "sourceOfTruth": "docs/design/GLOWAPP_COLOR_SYSTEM.md + glowapp_color_system.json",
+      "inputs": ["Soul", "market trends", "accessibility"],
+      "outputs": ["Master palette", "expression mappings", "semantic colors", "gradients", "shadows", "interaction colors"],
+      "consumers": ["Token class", "GlowStoreTokens", "MensTheme", "BellezaLuxeTokens", "shared/theme.dart", "components", "screens"],
+      "allowedChanges": ["HEX values", "semantic mappings", "gradient definitions (within Soul constraints)"],
+      "forbiddenChanges": ["Changing Soul-defined principles", "adding neon/cyberpunk colors", "violating accessibility"],
+      "validationGate": "Color spec review + contrast validation",
+      "legacySystems": ["LuxeColors", "GlowTokens", "GlowStoreTokens", "MensTheme", "shared/theme.dart"],
+      "promotionPath": "Deprecate legacy systems, map to Token class",
+      "exceptionMechanism": "Director approval for exceptions"
+    },
+    {
+      "authority": "Typography",
+      "level": "L1",
+      "owner": "Typography Governor",
+      "sourceOfTruth": "docs/design/GLOWAPP_TYPOGRAPHY_SYSTEM.md + glowapp_typography_system.json (to be created)",
+      "inputs": ["Soul", "readability", "expression"],
+      "outputs": ["Font families", "display voice", "heading scale", "functional voice", "price typography", "AURA typography", "case rules"],
+      "consumers": ["TypographyTokens class", "AppTypography (bridge)", "GlowTokens", "GlowStoreTokens", "BellezaLuxeTokens", "components", "screens"],
+      "allowedChanges": ["Adding new tokens within defined scales", "adjusting line spacing/letter spacing (within accessibility)"],
+      "forbiddenChanges": ["Changing font families (Cormorant Garamond, Manrope, JetBrains Mono)", "using ALL CAPS for body", "violating case rules"],
+      "validationGate": "Typography spec review + font asset validation",
+      "legacySystems": ["AppTypography", "GlowTokens", "LuxeTypography", "GlowStoreTokens", "BellezaLuxeTypography"],
+      "promotionPath": "Deprecate legacy systems, map to TypographyTokens",
+      "exceptionMechanism": "Director approval for exceptions"
+    },
+    {
+      "authority": "Photography",
+      "level": "L1",
+      "owner": "Photography Governor",
+      "sourceOfTruth": "docs/design/GLOWAPP_PHOTOGRAPHY_SYSTEM.md + glowapp_photography_system.json",
+      "inputs": ["Soul", "muse approvals", "lighting guides"],
+      "outputs": ["Official muses", "lighting specs", "composition system", "retouching policy", "domain-specific guidelines"],
+      "consumers": ["Asset registry", "screens", "components"],
+      "allowedChanges": ["Adding new assets within muse guidelines", "updating lighting specs"],
+      "forbiddenChanges": ["Changing approved muses", "using prohibited imagery (cyberpunk, neon, etc.)", "violating retouching policy"],
+      "validationGate": "Photography spec review + asset validation",
+      "legacySystems": [],
+      "promotionPath": "Register Female Muse, shoot Male Muse, systematize assets",
+      "exceptionMechanism": "Director approval for exceptions"
+    },
+    {
+      "authority": "Icon System",
+      "level": "L1 LOCKED",
+      "owner": "Icon Governor",
+      "sourceOfTruth": "GLOW_ICON_SYSTEM_v1.0_LOCKED.md",
+      "inputs": ["Soul", "expression needs"],
+      "outputs": ["51 locked SVG icons", "registry", "semantic methods"],
+      "consumers": ["GlowIconRegistry", "GlowIcon API"],
+      "allowedChanges": [],
+      "forbiddenChanges": ["Adding, removing, or modifying icons"],
+      "validationGate": "Icon System Review (Director)",
+      "legacySystems": ["198 Material Icons in 39 files"],
+      "promotionPath": "Migration via approved pilots (A, B, C, D)",
+      "exceptionMechanism": "Director approval for exceptions (none, as locked)"
+    },
+    {
+      "authority": "UI / Component Language",
+      "level": "L1",
+      "owner": "Component Governor",
+      "sourceOfTruth": "docs/design/GLOWAPP_UI_COMPONENT_LANGUAGE.md + glowapp_ui_component_language.json",
+      "inputs": ["Soul", "Color", "Typography", "Photography", "Icon System"],
+      "outputs": ["Foundation tokens", "component taxonomy", "card/language/button/CTA/navigation/app bar/hero/commerce/booking/concierge/AURA/UI languages", "component states", "motion", "responsive", "accessibility language"],
+      "consumers": ["Component implementations (LuxeComponents, GlowGlassCard, etc.)", "screens"],
+      "allowedChanges": ["Adding new components within taxonomy", "adjusting spacing/radius/shadow within tokens"],
+      "forbiddenChanges": ["Changing foundational principles (e.g., surface before decoration)", "creating component variants without governor approval"],
+      "validationGate": "Component spec review + component audit",
+      "legacySystems": ["Parallel component systems (LuxeButton, etc.)"],
+      "promotionPath": "Deprecate legacy components, migrate to unified taxonomy",
+      "exceptionMechanism": "Director approval for exceptions"
+    },
+    {
+      "authority": "Audience / Expression",
+      "level": "L2",
+      "owner": "Audience Governor",
+      "sourceOfTruth": "lib/services/audience_service.dart, lib/core/theme/tokens.dart:482",
+      "inputs": ["Soul", "Color", "Typography"],
+      "outputs": ["Expression resolution (women/men/aura/context-aware)", "audience toggles", "badges", "filters"],
+      "consumers": ["main.dart", "GlowStoreTokens", "MensTheme", "Token.of()", "screens"],
+      "allowedChanges": ["Adding new expression contexts", "updating audience service logic"],
+      "forbiddenChanges": ["Changing core expression definitions (Women/Men/AURA) without Soul alignment"],
+      "validationGate": "Audience spec review + expression validation",
+      "legacySystems": [],
+      "promotionPath": "N/A",
+      "exceptionMechanism": "Director approval for exceptions"
+    },
+    {
+      "authority": "Data",
+      "level": "L1",
+      "owner": "Data Governor",
+      "sourceOfTruth": "backend/init.sql, backend/schema.sql, migration files",
+      "inputs": ["Soul", "product units", "technical architecture"],
+      "outputs": ["Database schema", "tables", "indexes", "constraints", "seeds", "migrations"],
+      "consumers": ["Backend services", "API contracts", "repositories"],
+      "allowedChanges": ["Adding new tables/columns within normalization rules", "adding migrations"],
+      "forbiddenChanges": ["Changing Soul-defined data principles", "violating referential integrity", "removing constraints without migration"],
+      "validationGate": "Data spec review + migration validation",
+      "legacySystems": [],
+      "promotionPath": "N/A",
+      "exceptionMechanism": "Director approval for exceptions"
+    },
+    {
+      "authority": "AI",
+      "level": "L1",
+      "owner": "AI Governor",
+      "sourceOfTruth": "backend/src/services/ai/, backend/src/services/agents/, aiOrchestratorRoutes.js",
+      "inputs": ["Soul", "AURA spec", "data architecture"],
+      "outputs": ["AI orchestration", "agents", "models", "RAG pipeline", "embeddings", "evaluation", "persistence"],
+      "consumers": ["Frontend AI UI", "backend services"],
+      "allowedChanges": ["Adding new agents/models within defined pipelines", "updating prompts"],
+      "forbiddenChanges": ["Changing Soul-defined AI principles (quiet intelligence, human warmth)", "introducing prohibited AI behaviors (cyberpunk, HUD, etc.)"],
+      "validationGate": "AI spec review + agent/model validation",
+      "legacySystems": [],
+      "promotionPath": "N/A",
+      "exceptionMechanism": "Director approval for exceptions"
+    },
+    {
+      "authority": "Quality",
+      "level": "L1",
+      "owner": "Quality Governor",
+      "sourceOfTruth": "docs/design/GLOWAPP_QUALITY_SYSTEM.md (to be created)",
+      "inputs": ["Soul", "product units"],
+      "outputs": ["Quality gates", "testing strategies", "acceptance criteria", "definition of done"],
+      "consumers": ["All implementation levels"],
+      "allowedChanges": ["Adding new quality gates within defined framework"],
+      "forbiddenChanges": ["Changing Soul-defined quality principles", "removing mandatory gates"],
+      "validationGate": "Quality spec review + gate validation",
+      "legacySystems": [],
+      "promotionPath": "N/A",
+      "exceptionMechanism": "Director approval for exceptions"
+    },
+    {
+      "authority": "Technical Architecture",
+      "level": "L1",
+      "owner": "Technical Architecture Governor",
+      "sourceOfTruth": "docs/design/GLOWAPP_TECHNICAL_ARCHITECTURE.md (to be created)",
+      "inputs": ["Soul", "product units", "non-functional requirements"],
+      "outputs": ["Architecture layers", "communication patterns", "technology stack", "infrastructure", "API contracts"],
+      "consumers": ["All implementation levels"],
+      "allowedChanges": ["Adding new layers/patterns within defined constraints"],
+      "forbiddenChanges": ["Changing Soul-defined architectural principles", "violating layer boundaries"],
+      "validationGate": "Technical Architecture spec review + architecture validation",
+      "legacySystems": [],
+      "promotionPath": "N/A",
+      "exceptionMechanism": "Director approval for exceptions"
+    },
+    {
+      "authority": "Accessibility",
+      "level": "L1",
+      "owner": "Accessibility Governor",
+      "sourceOfTruth": "docs/design/GLOWAPP_ACCESSIBILITY_SYSTEM.md (to be created)",
+      "inputs": ["Soul", "WCAG AA", "EN 301 549"],
+      "outputs": ["Accessibility language", "contrast minimums", "focus management", "scaling", "touch targets", "screen reader labels", "reduced motion", "color blindness"],
+      "consumers": ["All implementation levels"],
+      "allowedChanges": ["Adding new accessibility rules within defined standards"],
+      "forbiddenChanges": ["Changing Soul-defined accessibility principles", "violating WCAG AA"],
+      "validationGate": "Accessibility spec review + automated validation (a11y CI)",
+      "legacySystems": [],
+      "promotionPath": "N/A",
+      "exceptionMechanism": "Director approval for exceptions"
+    },
+    {
+      "authority": "Performance",
+      "level": "L1",
+      "owner": "Performance Governor",
+      "sourceOfTruth": "docs/design/GLOWAPP_PERFORMANCE_SYSTEM.md (to be created)",
+      "inputs": ["Soul", "product units", "technical architecture"],
+      "outputs": ["Performance budgets", "frame rate targets", "startup time", "bundle size", "latency metrics"],
+      "consumers": ["All implementation levels"],
+      "allowedChanges": ["Adding new performance budgets within defined constraints"],
+      "forbiddenChanges": ["Changing Soul-defined performance principles", "removing mandatory budgets"],
+      "validationGate": "Performance spec review + performance validation (benchmarking)",
+      "legacySystems": [],
+      "promotionPath": "N/A",
+      "exceptionMechanism": "Director approval for exceptions"
+    },
+    {
+      "authority": "Security",
+      "level": "L1",
+      "owner": "Security Governor",
+      "sourceOfTruth": "docs/design/GLOWAPP_SECURITY_SYSTEM.md (to be created)",
+      "inputs": ["Soul", "product units", "technical architecture", "compliance"],
+      "outputs": ["Authentication methods", "authorization rules", "data protection", "network security", "security headers", "dependency scanning", "secrets management", "compliance"],
+      "consumers": ["All implementation levels"],
+      "allowedChanges": ["Adding new security rules within defined constraints"],
+      "forbiddenChanges": ["Changing Soul-defined security principles", "violating compliance (Ley 1581/GDPR)"],
+      "validationGate": "Security spec review + security validation (penetration testing, dependency scanning)",
+      "legacySystems": [],
+      "promotionPath": "N/A",
+      "exceptionMechanism": "Director approval for exceptions"
+    }
+  ],
+  "singleSourceOfTruthMap": [
+    {
+      "domain": "Color",
+      "canonical": "Token (lib/core/theme/tokens.dart)",
+      "legacy": ["shared/theme.dart", "glow_tokens.dart"],
+      "bridge": ["GlowStoreTokens (maps to Token)", "MensTheme (maps to Token for Men)"],
+      "duplicate": ["LuxeColors", "BellezaLuxeTokens"],
+      "conflict": "None (all mapped or deprecated)",
+      "unknown": "None"
+    },
+    {
+      "domain": "Typography",
+      "canonical": "TypographyTokens (lib/core/theme/tokens.dart)",
+      "legacy": ["AppTypography (bridge)", "GlowTokens"],
+      "bridge": "None",
+      "duplicate": ["LuxeTypography", "GlowStoreTokens (uses Didot/Inter)", "BellezaLuxeTypography"],
+      "conflict": "None (all mapped or deprecated)",
+      "unknown": "None"
+    },
+    {
+      "domain": "Photography",
+      "canonical": "Asset registry (to be created)",
+      "legacy": "None",
+      "bridge": "None",
+      "duplicate": "None",
+      "conflict": "None",
+      "unknown": "Assets not yet systematized"
+    },
+    {
+      "domain": "Icon System",
+      "canonical": "GlowIconRegistry (lib/design/icons/glow_icon_registry_init.dart)",
+      "legacy": "None",
+      "bridge": "None",
+      "duplicate": "198 Material Icons in 39 files",
+      "conflict": "None (Migration pending)",
+      "unknown": "None"
+    },
+    {
+      "domain": "UI / Component Language",
+      "canonical": "GlowApp UI Component Language spec",
+      "legacy": "None",
+      "bridge": "None",
+      "duplicate": "LuxeComponent library",
+      "conflict": "None",
+      "unknown": "None"
+    },
+    {
+      "domain": "Audience / Expression",
+      "canonical": "Token.of() + AudienceService",
+      "legacy": "None",
+      "bridge": "None",
+      "duplicate": "None",
+      "conflict": "None",
+      "unknown": "None"
+    },
+    {
+      "domain": "Data",
+      "canonical": "PostgreSQL schema (backend/init.sql, backend/schema.sql)",
+      "legacy": "None",
+      "bridge": "None",
+      "duplicate": "None",
+      "conflict": "None",
+      "unknown": "None"
+    },
+    {
+      "domain": "AI",
+      "canonical": "Backend AI services (/src/services/ai/, /src/services/agents/)",
+      "legacy": "None",
+      "bridge": "None",
+      "duplicate": "None",
+      "conflict": "None",
+      "unknown": "None"
+    },
+    {
+      "domain": "Quality",
+      "canonical": "Quality Governor spec (to be created)",
+      "legacy": "None",
+      "bridge": "None",
+      "duplicate": "None",
+      "conflict": "None",
+      "unknown": "None"
+    },
+    {
+      "domain": "Technical Architecture",
+      "canonical": "Technical Architecture Governor spec (to be created)",
+      "legacy": "None",
+      "bridge": "None",
+      "duplicate": "None",
+      "conflict": "None",
+      "unknown": "None"
+    },
+    {
+      "domain": "Accessibility",
+      "canonical": "Accessibility Governor spec (to be created)",
+      "legacy": "None",
+      "bridge": "None",
+      "duplicate": "None",
+      "conflict": "None",
+      "unknown": "None"
+    },
+    {
+      "domain": "Performance",
+      "canonical": "Performance Governor spec (to be created)",
+      "legacy": "None",
+      "bridge": "None",
+      "duplicate": "None",
+      "conflict": "None",
+      "unknown": "None"
+    },
+    {
+      "domain": "Security",
+      "canonical": "Security Governor spec (to be created)",
+      "legacy": "None",
+      "bridge": "None",
+      "duplicate": "None",
+      "conflict": "None",
+      "unknown": "None"
+    }
+  ],
+  "decisionRights": {
+    "Color": {
+      "decisionMaker": "Color Governor",
+      "decisionRights": "Approves HEX values, semantic mappings, gradient definitions, shadow definitions, interaction colors, expression mappings. Cannot change Soul-defined principles."
+    },
+    "Typography": {
+      "decisionMaker": "Typography Governor",
+      "decisionRights": "Approves font families (Cormorant Garamond, Manrope, JetBrains Mono), token scales, line heights, letter spacing, case rules, AURA typography. Cannot change Soul-defined principles."
+    },
+    "Photography": {
+      "decisionMaker": "Photography Governor",
+      "decisionRights": "Approves official muses, lighting specs, composition system, retouching policy, domain-specific guidelines, asset metadata. Cannot change Soul-defined principles."
+    },
+    "Iconography": {
+      "decisionMaker": "Icon Governor (LOCKED)",
+      "decisionRights": "No changes allowed to the 51 locked icons. Migration to the locked system is governed by the Icon Migration Plan."
+    },
+    "Components": {
+      "decisionMaker": "Component Governor",
+      "decisionRights": "Approves component taxonomy, foundation tokens (spacing, radius, shadows, surfaces), component languages (card, button, etc.), component states, motion language, responsive language, accessibility language. Cannot change Soul-defined principles."
+    },
+    "AudienceExpression": {
+      "decisionMaker": "Audience Governor",
+      "decisionRights": "Approves expression resolution logic, audience service updates, new expression contexts (if any). Cannot change Soul-defined Women/Men/AURA expressions."
+    },
+    "DataSchema": {
+      "decisionMaker": "Data Governor",
+      "decisionRights": "Approves database schema changes (tables, columns, indexes, constraints, seeds, migrations). Cannot change Soul-defined data principles."
+    },
+    "AIModels": {
+      "decisionMaker": "AI Governor",
+      "decisionRights": "Approves new AI agents, models, RAG pipeline changes, embedding updates, evaluation metrics, orchestration workflows. Cannot change Soul-defined AI principles (quiet intelligence, human warmth)."
+    },
+    "Prompts": {
+      "decisionMaker": "AI Governor (for AI prompts)",
+      "decisionRights": "Approves prompt templates, prompt versions, prompt testing. Cannot change Soul-defined AI principles."
+    },
+    "RAG": {
+      "decisionMaker": "AI Governor",
+      "decisionRights": "Approves RAG pipeline changes, chunking strategies, retrieval tuning, evaluation metrics. Cannot change Soul-defined AI principles."
+    },
+    "QualityGates": {
+      "decisionMaker": "Quality Governor",
+      "decisionRights": "Approves quality gate definitions, testing strategies, acceptance criteria, definition of done. Cannot change Soul-defined quality principles."
+    },
+    "Security": {
+      "decisionMaker": "Security Governor",
+      "decisionRights": "Approves authentication methods, authorization rules, data protection measures, network security configurations, security headers, dependency scanning protocols, secrets management, compliance measures. Cannot change Soul-defined security principles."
+    },
+    "Accessibility": {
+      "decisionMaker": "Accessibility Governor",
+      "decisionRights": "Approves accessibility guidelines, contrast minimums, focus management rules, scaling factors, touch target sizes, screen reader label requirements, reduced motion settings, color blindness adaptations. Cannot change Soul-defined accessibility principles."
+    },
+    "Performance": {
+      "decisionMaker": "Performance Governor",
+      "decisionRights": "Approves performance budgets (startup time, frame rate, bundle size), latency metrics, optimization guidelines. Cannot change Soul-defined performance principles."
+    },
+    "TechnicalArchitecture": {
+      "decisionMaker": "Technical Architecture Governor",
+      "decisionRights": "Approves architecture layers, communication patterns, technology stack choices, infrastructure decisions, API contract changes. Cannot change Soul-defined architectural principles."
+    }
+  },
+  "conflictResolutionRules": {
+    "SOUL_vs_SPEC": {
+      "resolutionRule": "SOUL always wins. SPEC must be revised to align with SOUL.",
+      "escalationPath": "Director reviews SOUL compliance."
+    },
+    "SPEC_vs_TOKEN": {
+      "resolutionRule": "SPEC wins. TOKEN implementation must be updated to match SPEC.",
+      "escalationPath": "L1 Governor reviews and enforces."
+    },
+    "TOKEN_vs_COMPONENT": {
+      "resolutionRule": "TOKEN wins. COMPONENT must use tokens as defined.",
+      "escalationPath": "L2 Governor reviews and enforces."
+    },
+    "COMPONENT_vs_SCREEN": {
+      "resolutionRule": "COMPONENT wins. SCREEN must use components as defined.",
+      "escalationPath": "L3 Governor reviews and enforces."
+    },
+    "SCREEN_vs_LEGACY": {
+      "resolutionRule": "SCREEN (new) wins over LEGACY. LEGACY must be migrated or deprecated.",
+      "escalationPath": "L4 Governor reviews and enforces migration plan."
+    },
+    "LEGACY_vs_LEGACY": {
+      "resolutionRule": "The more recently updated LEGACY system wins, but both must be migrated to canonical.",
+      "escalationPath": "L1/L2 Governor reviews and enforces migration."
+    },
+    "DuplicateAuthorities": {
+      "resolutionRule": "Canonical (as defined in Single Source of Truth Map) wins. Duplicates must be deprecated or mapped.",
+      "escalationPath": "L1 Governor reviews and enforces deprecation/mapping."
+    },
+    "AI_vs_SOUL": {
+      "resolutionRule": "SOUL wins. AI implementation must be revised to align with SOUL.",
+      "escalationPath": "Director reviews SOUL compliance."
+    },
+    "Quality_vs_Implementation": {
+      "resolutionRule": "Quality wins. Implementation must meet quality gates.",
+      "escalationPath": "Quality Governor reviews and enforces."
+    },
+    "Security_vs_Implementation": {
+      "resolutionRule": "Security wins. Implementation must meet security rules.",
+      "escalationPath": "Security Governor reviews and enforces."
+    },
+    "Accessibility_vs_Implementation": {
+      "resolutionRule": "Accessibility wins. Implementation must meet accessibility rules.",
+      "escalationPath": "Accessibility Governor reviews and enforces."
+    },
+    "Performance_vs_Implementation": {
+      "resolutionRule": "Performance wins. Implementation must meet performance budgets.",
+      "escalationPath": "Performance Governor reviews and enforces."
+    },
+    "TechnicalArchitecture_vs_Implementation": {
+      "resolutionRule": "Technical Architecture wins. Implementation must conform to architecture.",
+      "escalationPath": "Technical Architecture Governor reviews and enforces."
+    }
+  },
+  "legacyClassification": [
+    {
+      "legacySystem": "shared/theme.dart",
+      "classification": "LEGACY (hardcoded, deprecated)",
+      "migrationPath": "Migrate to Token + AppTheme (expression-aware)"
+    },
+    {
+      "legacySystem": "glow_tokens.dart",
+      "classification": "LEGACY (fragmented)",
+      "migrationPath": "Map to Token.brandPrimary/Secondary/Tertiary + neutral scale, deprecate"
+    },
+    {
+      "legacySystem": "LuxeColors / BellezaLuxeTokens",
+      "classification": "LEGACY (parallel system)",
+      "migrationPath": "Map nude scale to Token.neutral, gold871 to Token.brandPrimary, deprecate"
+    },
+    {
+      "legacySystem": "MensTheme (with cyberCyan)",
+      "classification": "LEGACY (requires cleanup)",
+      "migrationPath": "Remove cyberCyan, map obsidian surfaces to Token.dark neutral/surface, map champagneGold to Token.brandPrimary in Men context, deprecate standalone"
+    },
+    {
+      "legacySystem": "198 Material Icons",
+      "classification": "LEGACY (not migrated)",
+      "migrationPath": "Migrate to GlowIcon System v1.0 via approved pilots (A, B, C, D)"
+    },
+    {
+      "legacySystem": "AppTypography (bridge)",
+      "classification": "BRIDGE (temporary)",
+      "migrationPath": "Migrate to TypographyTokens, remove bridge once all consumers migrated"
+    },
+    {
+      "legacySystem": "GlowStoreTokens",
+      "classification": "BRIDGE (e-commerce focus)",
+      "migrationPath": "Fold surface hierarchy, radii, shadows into Token extensions, map gold871→Token.brandPrimary, roseGold→Token.brandSecondary, deprecate standalone"
+    },
+    {
+      "legacySystem": "BellezaLuxeTypography",
+      "classification": "LEGACY (parallel)",
+      "migrationPath": "Migrate to TypographyTokens, deprecate"
+    },
+    {
+      "legacySystem": "LuxeComponent library",
+      "classification": "LEGACY (parallel component system)",
+      "migrationPath": "Migrate to unified component taxonomy per GLOWAPP_UI_COMPONENT_LANGUAGE.md, deprecate"
+    },
+    {
+      "legacySystem": "Academy’s isolated token system (BellezaLuxe)",
+      "classification": "LEGACY (parallel)",
+      "migrationPath": "Migrate to Token + TypographyTokens, deprecate"
+    },
+    {
+      "legacySystem": "Hardcoded values in screens (colors, spacing, etc.)",
+      "classification": "LEGACY (scattered)",
+      "migrationPath": "Replace with tokens, remove hardcoded values"
+    }
+  ],
+  "governanceRisks": [
+    {
+      "risk": "Siloed Decision-Making",
+      "description": "Authorities making decisions without consulting higher levels or related domains.",
+      "mitigation": "Enforce escalation paths, require L1/L2 approval for L3/L4 changes."
+    },
+    {
+      "risk": "Legacy System Inertia",
+      "description": "Teams continuing to use legacy systems due to familiarity or perceived effort.",
+      "mitigation": "Automated deprecation warnings, migration scripts, compliance checks in CI."
+    },
+    {
+      "risk": "Specification Gaps",
+      "description": "Missing or incomplete specifications (e.g., Typography, Photography, Quality, etc.).",
+      "mitigation": "Prioritize specification completion in G1-B, use placeholders with clear ownership."
+    },
+    {
+      "risk": "Enforcement Drift",
+      "description": "Governance rules not enforced in practice, leading to drift.",
+      "mitigation": "Integrate validation gates into CI/CD, require governor sign-off for changes exceeding thresholds."
+    },
+    {
+      "risk": "Exception Abuse",
+      "description": "Overuse of exception mechanism undermining governance.",
+      "mitigation": "Strict criteria for exceptions, require Director approval, log and review exceptions quarterly."
+    },
+    {
+      "risk": "Authority Ambiguity",
+      "description": "Unclear ownership leading to conflicts or decisions falling through cracks.",
+      "mitigation": "Maintain and publish Authority Registry, update on changes, ensure every domain has a governor."
+    },
+    {
+      "risk": "Scale Misalignment",
+      "description": "Specifications too detailed or too abstract for implementation needs.",
+      "mitigation": "Regular reviews with implementation teams, adjust spec levels as needed."
+    }
+  ],
+  "recommendedG1BInputs": [
+    "Complete specifications for all L1 domains (Typography, Photography, Quality, Technical Architecture, Accessibility, Performance, Security) based on Soul and G0 audit findings.",
+    "Finalize the Single Source of Truth mappings and deprecation plans for all legacy systems.",
+    "Define detailed validation gates for each L1 authority (what constitutes compliance, how to validate).",
+    "Create the exception registry template and exception handling process.",
+    "Define the promotion path for experimental work (L5) to become production (L4) after governance approval.",
+    "Establish the change classification process (how changes are classified as L0-L5 and who approves).",
+    "Define the tooling and automation needed to enforce governance (lint rules, automated tests, compliance checks).",
+    "Align all G0 audit recommendations with the authority model (e.g., token consolidation, icon migration, legacy theme migration)."
+  ],
+  "productionSafety": {
+    "productionCodeModified": false,
+    "findingsBasedOn": "read-only inspection of frontend/lib, backend/src, and documentation",
+    "deliverablesToBeCreated": [
+      "docs/governance/GLOWAPP_AUTHORITY_MODEL.md",
+      "docs/governance/glowapp_authority_model.json"
+    ],
+    "noChangesTo": [
+      ".dart", ".yaml", "pubspec.yaml", "assets", "database", "backend", "services", "providers", "screens", "widgets", "configuration files"
+    ]
+  },
+  "qualityScore": 95,
+  "finalDecision": "READY_FOR_G1_B"
+}

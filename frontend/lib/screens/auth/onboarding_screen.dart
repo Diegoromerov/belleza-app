@@ -4,7 +4,6 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../services/auth_service.dart';
-import '../../services/api_service.dart';
 import '../../shared/theme.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -173,61 +172,76 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFAF8F5),
       appBar: AppBar(
         title: const Text(
-          'Configura tu Cuenta',
-          style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5),
+          'Bienvenido a GlowApp',
+          style: TextStyle(
+            fontFamily: 'CormorantGaramond',
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF1F1A15),
+          ),
         ),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
+        backgroundColor: const Color(0xFFFAF8F5),
         elevation: 0,
         centerTitle: true,
         automaticallyImplyLeading: false,
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                '¿Cómo deseas usar Belleza App?',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                _selectedRole == 'PRESTADOR'
-                    ? '¡Completa tu registro y empieza a ganar dinero esta misma semana!'
-                    : 'Selecciona tu perfil de acceso para comenzar',
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 14, color: Colors.grey),
-              ),
-              const SizedBox(height: 28),
-              _buildRoleSelectionCards(),
-              if (_selectedRole == 'PRESTADOR') ...[
-                const SizedBox(height: 20),
-                _buildProgressStepper(),
-              ],
-              const SizedBox(height: 24),
-              if (_selectedRole == 'PRESTADOR') _buildTestimonialCard(),
-              if (_selectedRole == 'CLIENTE') _buildClientView(),
-              if (_selectedRole == 'PRESTADOR') _buildProviderForm(),
-              if (_error != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 16),
-                  child: Text(
-                    _error!,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 680),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    '¿Cómo deseas comenzar tu experiencia?',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'CormorantGaramond',
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1F1A15),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _selectedRole == 'PRESTADOR'
+                        ? '¡Completa tu registro y empieza a ganar dinero esta misma semana!'
+                        : 'Selecciona tu perfil de acceso para comenzar',
                     textAlign: TextAlign.center,
                     style: const TextStyle(
-                        color: Colors.redAccent, fontWeight: FontWeight.w500),
+                      fontFamily: 'Inter',
+                      fontSize: 14,
+                      color: Color(0xFF8C7E74),
+                    ),
                   ),
-                ),
-            ],
+                  const SizedBox(height: 28),
+                  _buildRoleSelectionCards(),
+                  if (_selectedRole == 'PRESTADOR') ...[
+                    const SizedBox(height: 20),
+                    _buildProgressStepper(),
+                  ],
+                  const SizedBox(height: 24),
+                  if (_selectedRole == 'PRESTADOR') _buildTestimonialCard(),
+                  if (_selectedRole == 'CLIENTE') _buildClientView(),
+                  if (_selectedRole == 'PRESTADOR') _buildProviderForm(),
+                  if (_error != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16),
+                      child: Text(
+                        _error!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                            color: Colors.redAccent, fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -285,7 +299,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   shape: BoxShape.circle,
                   border: Border.all(color: const Color(0xFFD4AF37), width: 3.0),
                   image: const DecorationImage(
-                    image: AssetImage('assets/images/avatar_aura.png'),
+                    image: AssetImage('images/avatar_aura.webp'),
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -876,38 +890,64 @@ class _RoleCard extends StatelessWidget {
         duration: const Duration(milliseconds: 250),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFF5EBE6) : Colors.white,
+          color: isSelected ? const Color(0xFFFAF6EE) : Colors.white,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color:
-                isSelected ? AppTheme.primary : const Color(0xFFF3EAE8),
-            width: isSelected ? 2 : 1,
+            color: isSelected ? const Color(0xFFC5A052) : const Color(0xFFEFE8DE),
+            width: isSelected ? 1.5 : 1,
           ),
-          boxShadow: isSelected ? AppTheme.cardShadow : AppTheme.softShadow,
+          boxShadow: [
+            BoxShadow(
+              color: isSelected
+                  ? const Color(0xFFC5A052).withValues(alpha: 0.2)
+                  : Colors.black.withValues(alpha: 0.04),
+              blurRadius: isSelected ? 16 : 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           children: [
-            Icon(
-              icon,
-              size: 40,
-              color: isSelected ? AppTheme.primary : Colors.grey,
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: isSelected ? Colors.white : const Color(0xFFFAF6EE),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isSelected
+                      ? const Color(0xFFC5A052)
+                      : const Color(0xFFEFE8DE),
+                  width: 1,
+                ),
+              ),
+              alignment: Alignment.center,
+              child: Icon(
+                icon,
+                size: 28,
+                color: isSelected ? const Color(0xFFC5A052) : const Color(0xFF8C7E74),
+              ),
             ),
             const SizedBox(height: 16),
             Text(
               title,
               style: TextStyle(
-                fontSize: 16,
+                fontFamily: 'CormorantGaramond',
+                fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: isSelected ? Colors.black87 : Colors.grey[700],
+                color: isSelected ? const Color(0xFF1F1A15) : const Color(0xFF4A3E39),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
               subtitle,
               textAlign: TextAlign.center,
               style: TextStyle(
-                  fontSize: 11,
-                  color: isSelected ? Colors.black54 : Colors.grey),
+                fontFamily: 'Inter',
+                fontSize: 12,
+                color: isSelected ? const Color(0xFF1F1A15) : const Color(0xFF8C7E74),
+                height: 1.3,
+              ),
             ),
           ],
         ),

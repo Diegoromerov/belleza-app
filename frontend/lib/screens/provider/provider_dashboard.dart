@@ -74,9 +74,12 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
         ],
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(LuxeSpacing.xl),
-          child: Column(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 720),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(LuxeSpacing.xl),
+              child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // 1. DASHBOARD DE MÉTRICAS (GRID 2X2 CON BORDE DORADO 4PX)
@@ -212,6 +215,8 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
           ),
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 }

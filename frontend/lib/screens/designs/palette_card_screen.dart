@@ -94,16 +94,27 @@ class PaletteCardScreen extends StatelessWidget {
     final bool isPremium = fullPalette != null;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFCF9F7),
+      backgroundColor: const Color(0xFFFAF8F5),
       appBar: AppBar(
-        title: const Text('Mi Paleta Cromática', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        title: const Text(
+          'Mi Paleta Cromática',
+          style: TextStyle(
+            fontFamily: 'CormorantGaramond',
+            fontWeight: FontWeight.bold,
+            fontSize: 22,
+            color: Color(0xFF1F1A15),
+          ),
+        ),
         elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: const Color(0xFFFAF8F5),
+        foregroundColor: const Color(0xFF1F1A15),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 680),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Resumen de Subtono
@@ -262,29 +273,57 @@ class PaletteCardScreen extends StatelessWidget {
             const SizedBox(height: 28),
 
             // BOTÓN COMPARTIR
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-              ),
-              onPressed: () async {
-                final shareText = '¡Mira mi diagnóstico de Colorimetría de GlowApp! Mi subtono es: $undertone. Colores clave: ${recommendedColors.join(", ")}.';
-                await Clipboard.setData(ClipboardData(text: shareText));
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('📋 Resumen de paleta cromática copiado al portapapeles.'),
-                    backgroundColor: Colors.green,
+            Container(
+              height: 52,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFF3D59B), Color(0xFFC5A052)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFC5A052).withValues(alpha: 0.35),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
                   ),
-                );
-              },
-              icon: const Icon(Icons.share_rounded, size: 18),
-              label: const Text('Compartir mi Paleta', style: TextStyle(fontWeight: FontWeight.bold)),
+                ],
+              ),
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  foregroundColor: const Color(0xFF1F1A15),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  elevation: 0,
+                ),
+                onPressed: () async {
+                  final shareText = '¡Mira mi diagnóstico de Colorimetría de GlowApp! Mi subtono es: $undertone. Colores clave: ${recommendedColors.join(", ")}.';
+                  await Clipboard.setData(ClipboardData(text: shareText));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('📋 Resumen de paleta cromática copiado al portapapeles.'),
+                      backgroundColor: Color(0xFF1F1A15),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.share_rounded, size: 18, color: Color(0xFF1F1A15)),
+                label: const Text(
+                  'Compartir mi Paleta',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1F1A15),
+                  ),
+                ),
+              ),
             ),
           ],
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 }

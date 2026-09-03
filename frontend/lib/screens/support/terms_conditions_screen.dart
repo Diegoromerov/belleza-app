@@ -7,25 +7,38 @@ class TermsConditionsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFFAF8F5),
       appBar: AppBar(
-        title: const Text('Términos y Condiciones'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        title: const Text(
+          'Términos & Condiciones',
+          style: TextStyle(
+            fontFamily: 'CormorantGaramond',
+            fontWeight: FontWeight.bold,
+            fontSize: 22,
+            color: Color(0xFF1F1A15),
+          ),
+        ),
+        backgroundColor: const Color(0xFFFAF8F5),
+        foregroundColor: const Color(0xFF1F1A15),
         elevation: 0,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-                          'Términos y Condiciones de Uso de GlowApp',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.primary,
-                          ),
-                        ),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 680),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Términos y Condiciones de Uso de GlowApp',
+                  style: TextStyle(
+                    fontFamily: 'CormorantGaramond',
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1F1A15),
+                  ),
+                ),
             const SizedBox(height: 8),
             Text(
               'Última actualización: Julio 2026',
@@ -60,24 +73,52 @@ class TermsConditionsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 32),
             Center(
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(30),
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFF3D59B), Color(0xFFC5A052)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFC5A052).withValues(alpha: 0.35),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    foregroundColor: const Color(0xFF1F1A15),
+                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    'Entendido y Aceptar',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1F1A15),
+                    ),
                   ),
                 ),
-                child: const Text('Entendido y Aceptar'),
               ),
             ),
             const SizedBox(height: 20),
           ],
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 
   Widget _buildSectionTitle(String title) {

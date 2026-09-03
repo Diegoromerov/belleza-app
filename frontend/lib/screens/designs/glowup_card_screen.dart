@@ -182,19 +182,28 @@ class _GlowUpCardScreenState extends State<GlowUpCardScreen> {
     final imageUrl = card['favorite_image_url'] ?? '';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFCF9F7),
+      backgroundColor: const Color(0xFFFAF8F5),
       appBar: AppBar(
         title: const Text(
           'Mi Tarjeta Glow Up',
-          style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5, fontSize: 18),
+          style: TextStyle(
+            fontFamily: 'CormorantGaramond',
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.5,
+            fontSize: 22,
+            color: Color(0xFF1F1A15),
+          ),
         ),
         elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: const Color(0xFFFAF8F5),
+        foregroundColor: const Color(0xFF1F1A15),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 680),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Text(
@@ -328,30 +337,57 @@ class _GlowUpCardScreenState extends State<GlowUpCardScreen> {
             // BOTÓN COMPARTIR
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                ),
-                onPressed: () async {
-                  final shareText = '¡Mira mi tarjeta Glow Up de GlowApp! Diseño favorito con un progreso de $progress en mi $metricName.';
-                  await Clipboard.setData(ClipboardData(text: shareText));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('📋 Tarjeta Glow Up copiada al portapapeles.'),
-                      backgroundColor: Colors.green,
+              child: Container(
+                height: 52,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFF3D59B), Color(0xFFC5A052)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFC5A052).withValues(alpha: 0.35),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
                     ),
-                  );
-                },
-                icon: const Icon(Icons.share, size: 20),
-                label: const Text('Compartir tarjeta Glow Up', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ],
+                ),
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    foregroundColor: const Color(0xFF1F1A15),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  onPressed: () async {
+                    final shareText = '¡Mira mi tarjeta Glow Up de GlowApp! Diseño favorito con un progreso de $progress en mi $metricName.';
+                    await Clipboard.setData(ClipboardData(text: shareText));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('📋 Tarjeta Glow Up copiada al portapapeles.'),
+                        backgroundColor: Color(0xFF1F1A15),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.share, size: 20, color: Color(0xFF1F1A15)),
+                  label: const Text(
+                    'Compartir tarjeta Glow Up',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1F1A15),
+                    ),
+                  ),
+                ),
               ),
             ),
           ],
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 }

@@ -153,19 +153,45 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen>
     final String distanceText = '${distanceInKm.toStringAsFixed(1)} km';
 
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: const Color(0xFFFAF8F5),
       appBar: AppBar(
         title: const Text(
-          'Seguimiento en Vivo',
+          'Concierge en Camino',
           style: TextStyle(
-              fontWeight: FontWeight.bold, letterSpacing: -0.5, fontSize: 18),
+            fontFamily: 'CormorantGaramond',
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.5,
+            fontSize: 22,
+            color: Color(0xFF1F1A15),
+          ),
         ),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: const Color(0xFFFAF8F5),
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 12.0),
+          child: Center(
+            child: InkWell(
+              onTap: () => Navigator.pop(context),
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFFE8DFD8), width: 1),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const Icon(Icons.arrow_back_ios_new_rounded, size: 15, color: Color(0xFF1F1A15)),
+              ),
+            ),
+          ),
         ),
       ),
       body: Stack(
@@ -338,8 +364,11 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen>
             left: 16,
             right: 16,
             bottom: 24,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(28),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 620),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(28),
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
                 child: Container(
@@ -542,8 +571,10 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen>
               ),
             ),
           ),
-        ],
+        ),
       ),
-    );
+    ],
+  ),
+);
   }
 }

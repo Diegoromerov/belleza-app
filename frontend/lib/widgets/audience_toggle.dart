@@ -81,10 +81,7 @@ class AudienceToggleWidget extends StatelessWidget {
     required bool isSelected,
     required bool isMenMode,
   }) {
-    Color selectedBg = isMenMode
-        ? MensTheme.champagneGold
-        : AppTheme.primary;
-    Color selectedText = isMenMode ? Colors.black : Colors.white;
+    Color selectedText = isMenMode ? const Color(0xFF2C1E18) : Colors.white;
     Color unselectedText = isMenMode ? MensTheme.textPrimary : const Color(0xFF4A4442);
 
     return GestureDetector(
@@ -98,13 +95,36 @@ class AudienceToggleWidget extends StatelessWidget {
           vertical: compact ? 6 : 8,
         ),
         decoration: BoxDecoration(
-          color: isSelected ? selectedBg : Colors.transparent,
+          gradient: isSelected
+              ? LinearGradient(
+                  colors: isMenMode
+                      ? [
+                          const Color(0xFFF3D59B), // Champán oro suave luminoso
+                          const Color(0xFFD4AF37), // Oro 871 canon
+                        ]
+                      : [
+                          const Color(0xFFB07D62),
+                          const Color(0xFF8C6F65),
+                        ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+              : null,
+          color: isSelected ? null : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
+          border: isSelected
+              ? Border.all(
+                  color: isMenMode
+                      ? const Color(0xFFFFF9E6).withValues(alpha: 0.8)
+                      : const Color(0xFFD4AF37).withValues(alpha: 0.4),
+                  width: 1.0,
+                )
+              : null,
           boxShadow: isSelected
               ? [
                   BoxShadow(
                     color: isMenMode
-                        ? MensTheme.champagneGold.withValues(alpha: 0.4)
+                        ? const Color(0xFFD4AF37).withValues(alpha: 0.35)
                         : AppTheme.primary.withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 2),

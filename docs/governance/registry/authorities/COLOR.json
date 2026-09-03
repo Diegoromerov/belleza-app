@@ -1,0 +1,48 @@
+{
+  "authority": "Color",
+  "level": "L1",
+  "owner": "Color Governor",
+  "sourceOfTruth": "docs/design/GLOWAPP_COLOR_SYSTEM.md + glowapp_color_system.json",
+  "inputs": [
+    "Soul",
+    "market trends",
+    "accessibility"
+  ],
+  "outputs": [
+    "Master palette",
+    "expression mappings",
+    "semantic colors",
+    "gradients",
+    "shadows",
+    "interaction colors"
+  ],
+  "consumers": [
+    "Token class",
+    "GlowStoreTokens",
+    "MensTheme",
+    "BellezaLuxeTokens",
+    "shared/theme.dart",
+    "components",
+    "screens"
+  ],
+  "allowedChanges": [
+    "HEX values",
+    "semantic mappings",
+    "gradient definitions (within Soul constraints)"
+  ],
+  "forbiddenChanges": [
+    "Changing Soul-defined principles",
+    "adding neon/cyberpunk colors",
+    "violating accessibility"
+  ],
+  "validationGate": "Color spec review + contrast validation",
+  "legacySystems": [
+    "LuxeColors",
+    "GlowTokens",
+    "GlowStoreTokens",
+    "MensTheme",
+    "shared/theme.dart"
+  ],
+  "promotionPath": "Deprecate legacy systems, map to Token class",
+  "exceptionMechanism": "Director approval for exceptions"
+}

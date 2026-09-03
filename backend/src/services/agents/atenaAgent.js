@@ -50,7 +50,11 @@ class AtenaAgent {
     // 3. Poblar el caché de Redis
     try {
       if (redisClient && redisClient.isOpen) {
-        await redisClient.set(cacheKey, JSON.stringify(diagnosis), { EX: 2592000 }); // 30 días TTL
+        if (typeof redisClient.setEx === 'function') {
+          await redisClient.setEx(cacheKey, 2592000, JSON.stringify(diagnosis)); // 30 días TTL
+        } else if (typeof redisClient.set === 'function') {
+          await redisClient.set(cacheKey, JSON.stringify(diagnosis), { EX: 2592000 });
+        }
       }
     } catch (cacheSetErr) {
       console.warn('⚠️ [ATENA Agent] Error guardando en Redis:', cacheSetErr.message);

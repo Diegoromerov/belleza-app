@@ -1,0 +1,29 @@
+{
+  "authority": "Icon System",
+  "level": "L1 LOCKED",
+  "owner": "Icon Governor",
+  "sourceOfTruth": "GLOW_ICON_SYSTEM_v1.0_LOCKED.md",
+  "inputs": [
+    "Soul",
+    "expression needs"
+  ],
+  "outputs": [
+    "51 locked SVG icons",
+    "registry",
+    "semantic methods"
+  ],
+  "consumers": [
+    "GlowIconRegistry",
+    "GlowIcon API"
+  ],
+  "allowedChanges": [],
+  "forbiddenChanges": [
+    "Adding, removing, or modifying icons"
+  ],
+  "validationGate": "Icon System Review (Director)",
+  "legacySystems": [
+    "198 Material Icons in 39 files"
+  ],
+  "promotionPath": "Migration via approved pilots (A, B, C, D)",
+  "exceptionMechanism": "Director approval for exceptions (none, as locked)"
+}

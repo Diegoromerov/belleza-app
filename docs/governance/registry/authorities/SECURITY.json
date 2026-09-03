@@ -1,0 +1,36 @@
+{
+  "authority": "Security",
+  "level": "L1",
+  "owner": "Security Governor",
+  "sourceOfTruth": "docs/design/GLOWAPP_SECURITY_SYSTEM.md (to be created)",
+  "inputs": [
+    "Soul",
+    "product units",
+    "technical architecture",
+    "compliance"
+  ],
+  "outputs": [
+    "Authentication methods",
+    "authorization rules",
+    "data protection",
+    "network security",
+    "security headers",
+    "dependency scanning",
+    "secrets management",
+    "compliance"
+  ],
+  "consumers": [
+    "All implementation levels"
+  ],
+  "allowedChanges": [
+    "Adding new security rules within defined constraints"
+  ],
+  "forbiddenChanges": [
+    "Changing Soul-defined security principles",
+    "violating compliance (Ley 1581/GDPR)"
+  ],
+  "validationGate": "Security spec review + security validation (penetration testing, dependency scanning)",
+  "legacySystems": [],
+  "promotionPath": "N/A",
+  "exceptionMechanism": "Director approval for exceptions"
+}

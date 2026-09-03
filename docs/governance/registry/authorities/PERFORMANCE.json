@@ -1,0 +1,32 @@
+{
+  "authority": "Performance",
+  "level": "L1",
+  "owner": "Performance Governor",
+  "sourceOfTruth": "docs/design/GLOWAPP_PERFORMANCE_SYSTEM.md (to be created)",
+  "inputs": [
+    "Soul",
+    "product units",
+    "technical architecture"
+  ],
+  "outputs": [
+    "Performance budgets",
+    "frame rate targets",
+    "startup time",
+    "bundle size",
+    "latency metrics"
+  ],
+  "consumers": [
+    "All implementation levels"
+  ],
+  "allowedChanges": [
+    "Adding new performance budgets within defined constraints"
+  ],
+  "forbiddenChanges": [
+    "Changing Soul-defined performance principles",
+    "removing mandatory budgets"
+  ],
+  "validationGate": "Performance spec review + performance validation (benchmarking)",
+  "legacySystems": [],
+  "promotionPath": "N/A",
+  "exceptionMechanism": "Director approval for exceptions"
+}

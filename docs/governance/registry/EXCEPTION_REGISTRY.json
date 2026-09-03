@@ -1,0 +1,42 @@
+{
+  "registry_name": "Exception Registry",
+  "version": "1.0.0",
+  "last_updated": "2026-08-21",
+  "exceptions": [
+    {
+      "id": "EXC-001",
+      "authority": "COLOR",
+      "violation": "Aura Teal #164C46 on Obsidian #0A0C10 fails WCAG AA (1.8:1)",
+      "reason": "Brand identity requires Aura Teal as accent; dark mode required for Men expression",
+      "scope": [
+        "AURA screens in Men expression",
+        "AURA components on dark surfaces"
+      ],
+      "owner": "Color Governor",
+      "approved_by": "DIRECTOR_APPROVAL_2026-08-15",
+      "created_at": "2026-08-15",
+      "review_date": "2027-02-15",
+      "expiration": "2027-02-15",
+      "mitigation": "Use Aura Teal 100 (lighter) for dark mode text. Never use base Aura Teal on dark.",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "EXC-002",
+      "authority": "AI",
+      "violation": "Embeddings depend on NVIDIA NV-Embed-QA-E5-v5 (external API)",
+      "reason": "No immediate alternative with equivalent quality for beauty domain",
+      "scope": [
+        "RAG pipeline",
+        "Embedding generation",
+        "AURA intelligence"
+      ],
+      "owner": "AI Governor",
+      "approved_by": "DIRECTOR_APPROVAL_2026-07-01",
+      "created_at": "2026-07-01",
+      "review_date": "2026-11-01",
+      "expiration": "2026-11-01",
+      "mitigation": "Circuit breaker (3 failures/30s cooldown). FTS fallback. Local model evaluation in progress.",
+      "status": "ACTIVE"
+    }
+  ]
+}

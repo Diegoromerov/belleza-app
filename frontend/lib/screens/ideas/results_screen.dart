@@ -18,12 +18,12 @@ import '../../services/social_share_service.dart';
 // Tokens de marca para esta pantalla estilo Pasaporte Editorial
 // ---------------------------------------------------------------------------
 class _PassportColors {
-  static const primary = AppTheme.passportPrimary; // #D85A30
-  static const primaryLight = Color(0xFFF0997B);
-  static const background = AppTheme.passportBackground; // #FBF6F1
-  static const surface = AppTheme.passportSurface; // #FFFFFF
-  static const textAccent = AppTheme.passportAccentText; // #4A1B0C
-  static const textEyebrow = Color(0xFF993C1D);
+  static const primary = Color(0xFFC5A052); // Haute Joaillerie Gold 871
+  static const primaryLight = Color(0xFFF3D59B);
+  static const background = Color(0xFFFAF8F5);
+  static const surface = Colors.white;
+  static const textAccent = Color(0xFF1F1A15);
+  static const textEyebrow = Color(0xFF8E7D7A);
 }
 
 enum _PassportFilter { rostro, manos }
@@ -125,9 +125,12 @@ class _ResultsScreenState extends State<ResultsScreen> {
     return Scaffold(
       backgroundColor: _PassportColors.background,
       body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 720),
+            child: Column(
+              children: [
+                _buildHeader(),
             Expanded(
               child: SingleChildScrollView(
                 controller: _scrollController,
@@ -310,7 +313,9 @@ class _ResultsScreenState extends State<ResultsScreen> {
           ],
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 
   // ---------------------------------------------------------------------

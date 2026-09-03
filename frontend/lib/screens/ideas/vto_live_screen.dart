@@ -82,7 +82,12 @@ class _VtoLiveScreenState extends State<VtoLiveScreen> {
         elevation: 0,
         title: Text(
           'VTO Maquillaje • Subtono ${subtono.toUpperCase()}',
-          style: const TextStyle(fontSize: 16, color: Colors.white),
+          style: const TextStyle(
+            fontFamily: 'CormorantGaramond',
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+            color: Colors.white,
+          ),
         ),
       ),
       body: Stack(
@@ -140,172 +145,220 @@ class _VtoLiveScreenState extends State<VtoLiveScreen> {
             left: 0,
             right: 0,
             bottom: 0,
-            child: Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.85),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                border: Border.all(color: AppTheme.primary.withOpacity(0.3)),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 600),
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.85),
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                    border: Border.all(color: const Color(0xFFC5A052).withOpacity(0.3)),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            _selectedName,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            'Acabado $_selectedFinish • Recomendado por DeepSeek IA',
-                            style: const TextStyle(
-                              color: AppTheme.primary,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: _selectedColor,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Barra de Opacidad de Cobertura
-                  Row(
-                    children: [
-                      const Text('Intensidad:', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                      Expanded(
-                        child: Slider(
-                          value: _opacity,
-                          min: 0.2,
-                          max: 1.0,
-                          activeColor: AppTheme.primary,
-                          onChanged: (val) => setState(() => _opacity = val),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  // Carrusel de tonos recomendados por subtono
-                  SizedBox(
-                    height: 70,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: _recommendedLipsticks.length,
-                      itemBuilder: (context, index) {
-                        final item = _recommendedLipsticks[index];
-                        final color = _hexToColor(item['hex'] ?? '#E05A47');
-                        final isSelected = item['name'] == _selectedName;
-
-                        return GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _selectedName = item['name'] ?? 'Tono';
-                              _selectedColor = color;
-                              _selectedFinish = item['finish'] ?? 'Mate';
-                            });
-                          },
-                          child: Container(
-                            margin: const EdgeInsets.only(right: 12),
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: isSelected ? Colors.white12 : Colors.transparent,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: isSelected ? AppTheme.primary : Colors.white24,
-                                width: isSelected ? 2 : 1,
-                              ),
-                            ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Container(
-                                  width: 24,
-                                  height: 24,
-                                  decoration: BoxDecoration(
-                                    color: color,
-                                    shape: BoxShape.circle,
-                                  ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _selectedName,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  item['name'] ?? 'Tono',
-                                  style: TextStyle(
-                                    color: isSelected ? Colors.white : Colors.white70,
-                                    fontSize: 10,
-                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                  ),
+                              ),
+                              Text(
+                                'Acabado $_selectedFinish • Recomendado por DeepSeek IA',
+                                style: const TextStyle(
+                                  color: Color(0xFFC5A052),
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: _selectedColor,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 2),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: _selectedColor.withOpacity(0.5),
+                                  blurRadius: 8,
+                                  spreadRadius: 2,
                                 ),
                               ],
                             ),
                           ),
-                        );
-                      },
-                    ),
-                  ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
 
-                  const SizedBox(height: 16),
+                      // Selector de Opacidad/Intensidad
+                      Row(
+                        children: [
+                          const Text('Intensidad:', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                          Expanded(
+                            child: SliderTheme(
+                              data: SliderTheme.of(context).copyWith(
+                                activeTrackColor: const Color(0xFFC5A052),
+                                thumbColor: const Color(0xFFF3D59B),
+                                inactiveTrackColor: Colors.white24,
+                              ),
+                              child: Slider(
+                                value: _opacity,
+                                min: 0.1,
+                                max: 1.0,
+                                onChanged: (v) => setState(() => _opacity = v),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
 
-                  // Botonera de Acción Directa E-Commerce & Citas GPS
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('🛍️ Tono "$_selectedName" agregado al carrito'),
+                      // Lista horizontal de tonos sugeridos
+                      SizedBox(
+                        height: 70,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: _recommendedLipsticks.length,
+                          separatorBuilder: (_, __) => const SizedBox(width: 12),
+                          itemBuilder: (context, index) {
+                            final item = _recommendedLipsticks[index];
+                            final color = _hexToColor(item['hex'] ?? '#E05A47');
+                            final isSelected = _selectedName == item['name'];
+
+                            return GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _selectedName = item['name'] ?? 'Tono';
+                                  _selectedColor = color;
+                                  _selectedFinish = item['finish'] ?? 'Mate';
+                                });
+                              },
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: isSelected ? Colors.white.withOpacity(0.15) : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: isSelected ? const Color(0xFFC5A052) : Colors.transparent,
+                                    width: 1.5,
+                                  ),
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Container(
+                                      width: 28,
+                                      height: 28,
+                                      decoration: BoxDecoration(
+                                        color: color,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      item['name'] ?? 'Tono',
+                                      style: TextStyle(
+                                        color: isSelected ? Colors.white : Colors.white70,
+                                        fontSize: 10,
+                                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             );
                           },
-                          icon: const Icon(Icons.shopping_bag_outlined, color: Colors.white),
-                          label: const Text('Comprar Tono', style: TextStyle(color: Colors.white)),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.primary,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                          ),
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('📍 Buscando salones con este servicio cerca de ti...'),
+
+                      const SizedBox(height: 16),
+
+                      // Botonera de Acción Directa E-Commerce & Citas GPS
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              height: 46,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(14),
+                                gradient: const LinearGradient(
+                                  colors: [Color(0xFFF3D59B), Color(0xFFC5A052)],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
                               ),
-                            );
-                          },
-                          icon: const Icon(Icons.location_on_outlined, color: Colors.white),
-                          label: const Text('Reservar Cita', style: TextStyle(color: Colors.white)),
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Colors.white38),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('🛍️ Tono "$_selectedName" agregado al carrito'),
+                                    ),
+                                  );
+                                },
+                                icon: const Icon(Icons.shopping_bag_outlined, color: Color(0xFF1F1A15), size: 18),
+                                label: const Text(
+                                  'Comprar Tono',
+                                  style: TextStyle(
+                                    fontFamily: 'Inter',
+                                    color: Color(0xFF1F1A15),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.transparent,
+                                  shadowColor: Colors.transparent,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                ),
+                              ),
+                            ),
                           ),
-                        ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: SizedBox(
+                              height: 46,
+                              child: OutlinedButton.icon(
+                                onPressed: () {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('📍 Buscando salones con este servicio cerca de ti...'),
+                                    ),
+                                  );
+                                },
+                                icon: const Icon(Icons.location_on_outlined, color: Color(0xFFC5A052), size: 18),
+                                label: const Text(
+                                  'Reservar Cita',
+                                  style: TextStyle(
+                                    fontFamily: 'Inter',
+                                    color: Color(0xFFC5A052),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(color: Color(0xFFC5A052), width: 1.2),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
+                ),
               ),
             ),
           ),

@@ -130,141 +130,203 @@ class _OtpConfirmScreenState extends State<OtpConfirmScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: const Color(0xFFFAF8F5),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const SizedBox(height: 20),
-              Row(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back_ios, color: AppTheme.text),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 32),
-
-              // ─── Ícono animado (Oro Rosa Glow) ────────────────────────
-              Container(
-                width: 90,
-                height: 90,
-                decoration: BoxDecoration(
-                  gradient: AppTheme.roseGoldSatinGradient,
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: AppTheme.glassShadow,
-                ),
-                child: const Icon(Icons.verified_rounded,
-                    color: Colors.white, size: 48),
-              ),
-              const SizedBox(height: 32),
-
-              const Text(
-                'Confirmar servicio',
-                style: AppTheme.h1,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'Ingresa el código de 6 dígitos que\nrecibirás en esta app',
-                style: AppTheme.body,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                '${widget.servicioNombre} · ${widget.prestadorNombre}',
-                style: const TextStyle(
-                    color: AppTheme.primary, fontWeight: FontWeight.w600),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 40),
-
-              // ─── Campos OTP ───────────────────────────────────────────
-              AnimatedBuilder(
-                animation: _shakeAnimation,
-                builder: (context, child) => Transform.translate(
-                  offset: Offset(
-                    _shakeAnimation.value *
-                        (_shakeController.value < 0.5 ? 1 : -1),
-                    0,
-                  ),
-                  child: child,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(
-                      6,
-                      (i) => _OtpField(
-                            controller: _controllers[i],
-                            focusNode: _focusNodes[i],
-                            hasError: _error != null,
-                            onChanged: (v) => _onDigitChanged(i, v),
-                          )),
-                ),
-              ),
-
-              // ─── Error (Terracota desaturado, no rojo punitivo) ─────────
-              if (_error != null) ...[
-                const SizedBox(height: 16),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: AppTheme.accent.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AppTheme.accent.withValues(alpha: 0.3)),
-                  ),
-                  child: Row(
+                  const SizedBox(height: 12),
+                  Row(
                     children: [
-                      const Icon(Icons.error_outline,
-                          color: AppTheme.text, size: 18),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          _intentosRestantes != null
-                              ? 'Código incorrecto. $_intentosRestantes intento(s) restante(s).'
-                              : _error!,
-                          style:
-                              const TextStyle(color: AppTheme.text, fontSize: 13),
+                      InkWell(
+                        onTap: () => Navigator.pop(context),
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: const Color(0xFFE8DFD8), width: 1),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.04),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(Icons.arrow_back_ios_new_rounded, size: 15, color: Color(0xFF1F1A15)),
                         ),
                       ),
                     ],
                   ),
-                ),
-              ],
-              const SizedBox(height: 32),
+                  const SizedBox(height: 24),
 
-              // ─── Botón confirmar ──────────────────────────────────────
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _codigoLleno && !_loading ? _confirmar : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primary,
-                    disabledBackgroundColor: Colors.black12,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14)),
-                  ),
-                  child: _loading
-                      ? const SizedBox(
-                          height: 22,
-                          width: 22,
-                          child: CircularProgressIndicator(
-                              color: Colors.white, strokeWidth: 2),
-                        )
-                      : const Text(
-                          'Confirmar y liberar pago',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16),
+                  // ─── Ícono animado (Oro Champán Satinado) ────────────────────────
+                  Container(
+                    width: 84,
+                    height: 84,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFF3D59B), Color(0xFFC5A052)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFC5A052).withValues(alpha: 0.35),
+                          blurRadius: 18,
+                          offset: const Offset(0, 6),
                         ),
-                ),
-              ),
+                      ],
+                    ),
+                    child: const Icon(Icons.verified_rounded,
+                        color: Color(0xFF1F1A15), size: 44),
+                  ),
+                  const SizedBox(height: 28),
+
+                  const Text(
+                    'Confirmar Servicio Concierge',
+                    style: TextStyle(
+                      fontFamily: 'CormorantGaramond',
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1F1A15),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Ingresa el código de 6 dígitos que\nrecibirás en esta app al completarse el ritual',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 13.5,
+                      color: Color(0xFF8C7E74),
+                      height: 1.4,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${widget.servicioNombre} · ${widget.prestadorNombre}',
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      color: Color(0xFFC5A052),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 36),
+
+                  // ─── Campos OTP ───────────────────────────────────────────
+                  AnimatedBuilder(
+                    animation: _shakeAnimation,
+                    builder: (context, child) => Transform.translate(
+                      offset: Offset(
+                        _shakeAnimation.value *
+                            (_shakeController.value < 0.5 ? 1 : -1),
+                        0,
+                      ),
+                      child: child,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(
+                          6,
+                          (i) => _OtpField(
+                                controller: _controllers[i],
+                                focusNode: _focusNodes[i],
+                                hasError: _error != null,
+                                onChanged: (v) => _onDigitChanged(i, v),
+                              )),
+                    ),
+                  ),
+
+                  // ─── Error ─────────
+                  if (_error != null) ...[
+                    const SizedBox(height: 16),
+                    Container(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFDF2F0),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFF5D6D0)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.error_outline,
+                              color: Color(0xFF9E4B3D), size: 18),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _intentosRestantes != null
+                                  ? 'Código incorrecto. $_intentosRestantes intento(s) restante(s).'
+                                  : _error!,
+                              style:
+                                  const TextStyle(color: Color(0xFF9E4B3D), fontSize: 13),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 32),
+
+                  // ─── Botón confirmar (Gold Gradient) ──────────────────────
+                  Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFF3D59B), Color(0xFFC5A052)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFC5A052).withValues(alpha: 0.35),
+                          blurRadius: 14,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: ElevatedButton(
+                      onPressed: _codigoLleno && !_loading ? _confirmar : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        foregroundColor: const Color(0xFF1F1A15),
+                        disabledBackgroundColor: Colors.black12,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16)),
+                      ),
+                      child: _loading
+                          ? const SizedBox(
+                              height: 22,
+                              width: 22,
+                              child: CircularProgressIndicator(
+                                  color: Color(0xFF1F1A15), strokeWidth: 2),
+                            )
+                          : const Text(
+                              'Confirmar y Liberar Pago',
+                              style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  color: Color(0xFF1F1A15),
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15),
+                            ),
+                    ),
+                  ),
               const SizedBox(height: 16),
 
               // ─── Nota sobre disputas ──────────────────────────────────
@@ -302,14 +364,16 @@ class _OtpConfirmScreenState extends State<OtpConfirmScreen>
                 },
                 child: const Text(
                   '¿Problemas con el servicio? Abrir disputa',
-                  style: TextStyle(color: AppTheme.text, fontSize: 13, decoration: TextDecoration.underline),
+                  style: TextStyle(color: Color(0xFFC5A052), fontSize: 13, decoration: TextDecoration.underline),
                 ),
               ),
             ],
           ),
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 }
 

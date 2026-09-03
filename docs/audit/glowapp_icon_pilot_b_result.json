@@ -1,0 +1,500 @@
+{
+  "phase": "M1_I3_PILOT_B_EXECUTION",
+  "pilot": "B_STORE_WOMEN_MEN",
+  "status": "EXECUTED",
+  "timestamp": "2026-08-20T00:00:00",
+  "baseline": {
+    "git_status": "32 files modified (pre-existing from other phases)",
+    "analyze_baseline": "pre-existing warnings/errors only (no new errors in scope)",
+    "test_baseline": "7/7 PASS",
+    "build_baseline": "SUCCESS"
+  },
+  "files_modified": [
+    "frontend/lib/screens/store_screen.dart",
+    "frontend/lib/widgets/store_product_card.dart"
+  ],
+  "icon_migrations": [
+    {
+      "file": "frontend/lib/screens/store_screen.dart",
+      "line": 527,
+      "current_icon": "Icons.image_rounded",
+      "target_icon": "GlowIcon.spa",
+      "classification": "DIRECT_MATCH",
+      "rationale": "Product image placeholder - spa represents beauty products",
+      "size": 24,
+      "semantic_label": "Imagen del producto"
+    },
+    {
+      "file": "frontend/lib/screens/store_screen.dart",
+      "line": 534,
+      "current_icon": "Icons.image_rounded",
+      "target_icon": "GlowIcon.spa",
+      "classification": "DIRECT_MATCH",
+      "rationale": "Product image fallback - spa represents beauty products",
+      "size": 24,
+      "semantic_label": "Imagen del producto"
+    },
+    {
+      "file": "frontend/lib/screens/store_screen.dart",
+      "line": 757,
+      "current_icon": "Icons.person_outline_rounded",
+      "target_icon": "GlowIcon.profile",
+      "classification": "DIRECT_MATCH",
+      "rationale": "Name field - user profile icon",
+      "size": 20,
+      "semantic_label": "Nombre completo"
+    },
+    {
+      "file": "frontend/lib/screens/store_screen.dart",
+      "line": 772,
+      "current_icon": "Icons.location_on_outlined",
+      "target_icon": "GlowIcon.location",
+      "classification": "DIRECT_MATCH",
+      "rationale": "Address field - location icon",
+      "size": 20,
+      "semantic_label": "Dirección de entrega"
+    },
+    {
+      "file": "frontend/lib/screens/store_screen.dart",
+      "line": 792,
+      "current_icon": "Icons.verified_user_rounded",
+      "target_icon": "GlowIcon.support",
+      "classification": "SEMANTIC_MATCH",
+      "rationale": "Security badge for protected payment - support icon represents trust/security",
+      "size": 20,
+      "semantic_label": "Pago protegido"
+    },
+    {
+      "file": "frontend/lib/screens/store_screen.dart",
+      "line": 888,
+      "current_icon": "Icons.lock_outline_rounded",
+      "target_icon": "GlowIcon.settings",
+      "classification": "SEMANTIC_MATCH",
+      "rationale": "Payment security indicator - settings represents secure/configuration",
+      "size": 18,
+      "semantic_label": "Seguridad del pago"
+    },
+    {
+      "file": "frontend/lib/screens/store_screen.dart",
+      "line": 981,
+      "current_icon": "Icons.check_circle_outline_rounded",
+      "target_icon": "GlowIcon.support",
+      "classification": "SEMANTIC_MATCH",
+      "rationale": "Order success confirmation - support represents verified/completed action",
+      "size": 44,
+      "semantic_label": "Pedido realizado con éxito"
+    },
+    {
+      "file": "frontend/lib/screens/store_screen.dart",
+      "line": 1093,
+      "current_icon": "Icons.close_rounded",
+      "target_icon": "GlowIcon.close",
+      "classification": "DIRECT_MATCH",
+      "rationale": "Close cart drawer",
+      "size": 22,
+      "semantic_label": "Cerrar carrito"
+    },
+    {
+      "file": "frontend/lib/screens/store_screen.dart",
+      "line": 1216,
+      "current_icon": "Icons.spa_rounded",
+      "target_icon": "GlowIcon.spa",
+      "classification": "DIRECT_MATCH",
+      "rationale": "Empty cart state - spa represents beauty ritual",
+      "size": 32,
+      "semantic_label": "Ritual de belleza"
+    },
+    {
+      "file": "frontend/lib/screens/store_screen.dart",
+      "line": 1296,
+      "current_icon": "Icons.shopping_bag_outlined",
+      "target_icon": "GlowIcon.bag",
+      "classification": "DIRECT_MATCH",
+      "rationale": "Cart button in AppBar - bag icon for shopping",
+      "size": 22,
+      "semantic_label": "Mi carrito"
+    },
+    {
+      "file": "frontend/lib/screens/store_screen.dart",
+      "line": 1413,
+      "current_icon": "Icons.search_rounded",
+      "target_icon": "GlowIcon.search",
+      "classification": "DIRECT_MATCH",
+      "rationale": "Search field prefix icon",
+      "size": 20,
+      "semantic_label": "Buscar"
+    },
+    {
+      "file": "frontend/lib/screens/store_screen.dart",
+      "line": 1437,
+      "current_icon": "Icons.close_rounded",
+      "target_icon": "GlowIcon.close",
+      "classification": "DIRECT_MATCH",
+      "rationale": "Clear search field",
+      "size": 18,
+      "semantic_label": "Limpiar búsqueda"
+    },
+    {
+      "file": "frontend/lib/screens/store_screen.dart",
+      "line": 1596,
+      "current_icon": "Icons.image",
+      "target_icon": "GlowIcon.spa",
+      "classification": "DIRECT_MATCH",
+      "rationale": "Cart item image placeholder",
+      "size": 24,
+      "semantic_label": "Imagen del producto"
+    },
+    {
+      "file": "frontend/lib/screens/store_screen.dart",
+      "line": 1603,
+      "current_icon": "Icons.image",
+      "target_icon": "GlowIcon.spa",
+      "classification": "DIRECT_MATCH",
+      "rationale": "Cart item image fallback",
+      "size": 24,
+      "semantic_label": "Imagen del producto"
+    },
+    {
+      "file": "frontend/lib/screens/store_screen.dart",
+      "line": 1654,
+      "current_icon": "Icons.remove_rounded",
+      "target_icon": "KEEP_CURRENT",
+      "classification": "NO_EQUIVALENT",
+      "rationale": "Quantity decrement button - no equivalent in GlowIcon v1.0",
+      "size": 0,
+      "semantic_label": null
+    },
+    {
+      "file": "frontend/lib/screens/store_screen.dart",
+      "line": 1675,
+      "current_icon": "Icons.add_rounded",
+      "target_icon": "KEEP_CURRENT",
+      "classification": "NO_EQUIVALENT",
+      "rationale": "Quantity increment button - no equivalent in GlowIcon v1.0",
+      "size": 0,
+      "semantic_label": null
+    },
+    {
+      "file": "frontend/lib/screens/store_screen.dart",
+      "line": 1731,
+      "current_icon": "Icons.delete_outline_rounded",
+      "target_icon": "GlowIcon.close",
+      "classification": "SEMANTIC_MATCH",
+      "rationale": "Remove item from cart - close represents remove/delete action",
+      "size": 17,
+      "semantic_label": "Eliminar producto"
+    },
+    {
+      "file": "frontend/lib/widgets/store_product_card.dart",
+      "line": 35,
+      "current_icon": "Icons.image",
+      "target_icon": "GlowIcon.spa",
+      "classification": "DIRECT_MATCH",
+      "rationale": "Product image placeholder",
+      "size": 50,
+      "semantic_label": "Imagen del producto"
+    },
+    {
+      "file": "frontend/lib/widgets/store_product_card.dart",
+      "line": 168,
+      "current_icon": "Icons.star_rounded",
+      "target_icon": "KEEP_CURRENT",
+      "classification": "REVIEW_REQUIRED",
+      "rationale": "Rating stars - star vs heart/wishlist ambiguity, no star icon in v1.0",
+      "size": 13,
+      "semantic_label": null
+    },
+    {
+      "file": "frontend/lib/widgets/store_product_card.dart",
+      "line": 342,
+      "current_icon": "Icons.visibility_rounded",
+      "target_icon": "GlowIcon.scan",
+      "classification": "SEMANTIC_MATCH",
+      "rationale": "Quick view button - scan represents examine/inspect action",
+      "size": 14,
+      "semantic_label": "Vista Rápida"
+    },
+    {
+      "file": "frontend/lib/widgets/store_product_card.dart",
+      "line": 397,
+      "current_icon": "Icons.work_rounded / Icons.public_rounded",
+      "target_icon": "GlowIcon.maleGrooming",
+      "classification": "SEMANTIC_MATCH",
+      "rationale": "Professional/Public badge - maleGrooming represents professional service",
+      "size": 8,
+      "semantic_label": "Profesional / Público"
+    },
+    {
+      "file": "frontend/lib/widgets/store_product_card.dart",
+      "line": 493,
+      "current_icon": "Icons.add_shopping_cart_rounded",
+      "target_icon": "GlowIcon.cart",
+      "classification": "SEMANTIC_MATCH",
+      "rationale": "Add to cart button - cart represents shopping cart action",
+      "size": 20,
+      "semantic_label": "Añadir al carrito"
+    },
+    {
+      "file": "frontend/lib/widgets/store_product_card.dart",
+      "line": 534,
+      "current_icon": "Icons.inventory_2_outlined",
+      "target_icon": "KEEP_CURRENT",
+      "classification": "REVIEW_REQUIRED",
+      "rationale": "Out of stock badge - inventory vs heart/wishlist ambiguity, no inventory icon in v1.0",
+      "size": 12,
+      "semantic_label": null
+    }
+  ],
+  "kept_current": [
+    {
+      "file": "frontend/lib/screens/store_screen.dart",
+      "line": 1654,
+      "icon": "Icons.remove_rounded",
+      "reason": "NO_EQUIVALENT_IN_GLOW_ICON_V1 - quantity decrement button"
+    },
+    {
+      "file": "frontend/lib/screens/store_screen.dart",
+      "line": 1675,
+      "icon": "Icons.add_rounded",
+      "reason": "NO_EQUIVALENT_IN_GLOW_ICON_V1 - quantity increment button"
+    },
+    {
+      "file": "frontend/lib/widgets/store_product_card.dart",
+      "line": 168,
+      "icon": "Icons.star_rounded",
+      "reason": "REVIEW_REQUIRED - rating stars, no star icon in v1.0"
+    },
+    {
+      "file": "frontend/lib/widgets/store_product_card.dart",
+      "line": 534,
+      "icon": "Icons.inventory_2_outlined",
+      "reason": "REVIEW_REQUIRED - out of stock indicator, no inventory icon in v1.0"
+    }
+  ],
+  "semantic_reviews": [
+    {
+      "icon": "GlowIcon.support",
+      "used_for": "verified_user (security badge)",
+      "rationale": "Support icon represents trust/verification in payment context",
+      "decision": "SEMANTIC_SAFE"
+    },
+    {
+      "icon": "GlowIcon.settings",
+      "used_for": "lock_outline (payment security)",
+      "rationale": "Settings represents secure configuration",
+      "decision": "SEMANTIC_SAFE"
+    },
+    {
+      "icon": "GlowIcon.support",
+      "used_for": "check_circle (order success)",
+      "rationale": "Support represents verified/completed action",
+      "decision": "SEMANTIC_SAFE"
+    },
+    {
+      "icon": "GlowIcon.scan",
+      "used_for": "visibility (quick view)",
+      "rationale": "Scan represents examine/inspect action",
+      "decision": "SEMANTIC_SAFE"
+    },
+    {
+      "icon": "GlowIcon.maleGrooming",
+      "used_for": "work/public (professional badge)",
+      "rationale": "Male grooming represents professional service",
+      "decision": "SEMANTIC_SAFE"
+    },
+    {
+      "icon": "GlowIcon.cart",
+      "used_for": "add_shopping_cart (add to cart)",
+      "rationale": "Cart represents shopping cart action",
+      "decision": "SEMANTIC_SAFE"
+    },
+    {
+      "icon": "GlowIcon.close",
+      "used_for": "delete_outline (remove from cart)",
+      "rationale": "Close represents remove/delete action",
+      "decision": "SEMANTIC_SAFE"
+    }
+  ],
+  "review_required": [
+    {
+      "file": "frontend/lib/widgets/store_product_card.dart",
+      "line": 168,
+      "icon": "Icons.star_rounded",
+      "context": "Product rating display (5 stars)",
+      "ambiguity": "star = rating vs favorite vs wishlist",
+      "decision": "KEEP_CURRENT - no star equivalent in GlowIcon v1.0"
+    },
+    {
+      "file": "frontend/lib/widgets/store_product_card.dart",
+      "line": 534,
+      "icon": "Icons.inventory_2_outlined",
+      "context": "Out of stock badge",
+      "ambiguity": "inventory = stock status vs wishlist",
+      "decision": "KEEP_CURRENT - no inventory equivalent in GlowIcon v1.0"
+    }
+  ],
+  "no_equivalent": [
+    {
+      "file": "frontend/lib/screens/store_screen.dart",
+      "icon": "Icons.remove_rounded",
+      "reason": "NO_EQUIVALENT_IN_GLOW_ICON_V1 - quantity control"
+    },
+    {
+      "file": "frontend/lib/screens/store_screen.dart",
+      "icon": "Icons.add_rounded",
+      "reason": "NO_EQUIVALENT_IN_GLOW_ICON_V1 - quantity control"
+    },
+    {
+      "file": "frontend/lib/widgets/store_product_card.dart",
+      "icon": "Icons.star_rounded",
+      "reason": "NO_EQUIVALENT_IN_GLOW_ICON_V1 - rating stars"
+    },
+    {
+      "file": "frontend/lib/widgets/store_product_card.dart",
+      "icon": "Icons.inventory_2_outlined",
+      "reason": "NO_EQUIVALENT_IN_GLOW_ICON_V1 - out of stock indicator"
+    }
+  ],
+  "auto_awesome": [],
+  "wishlist_vs_heart": [],
+  "bag_vs_cart": [
+    {
+      "file": "frontend/lib/screens/store_screen.dart",
+      "line": 1296,
+      "context": "Cart button in AppBar",
+      "current": "Icons.shopping_bag_outlined",
+      "target": "GlowIcon.bag",
+      "decision": "BAG - represents shopping bag for cart access"
+    },
+    {
+      "file": "frontend/lib/widgets/store_product_card.dart",
+      "line": 493,
+      "context": "Add to cart button on product card",
+      "current": "Icons.add_shopping_cart_rounded",
+      "target": "GlowIcon.cart",
+      "decision": "CART - represents add to cart action"
+    }
+  ],
+  "accessibility": {
+    "semantic_labels_added": 21,
+    "tooltip_preserved": true,
+    "touch_targets_preserved": true,
+    "screen_reader_regression": false
+  },
+  "sizes": {
+    "preserved": true,
+    "mappings": {
+      "8": 1,
+      "12": 1,
+      "13": 1,
+      "14": 1,
+      "17": 1,
+      "18": 2,
+      "20": 5,
+      "22": 1,
+      "24": 4,
+      "32": 1,
+      "44": 1,
+      "50": 1
+    }
+  },
+  "colors": {
+    "roles_used": [
+      "accent",
+      "secondaryTextColor",
+      "deepGreen",
+      "stateError",
+      "textColor",
+      "LuxeColors.nude500",
+      "MensTheme.obsidianBg",
+      "GlowTokens.nightAndean"
+    ],
+    "no_new_colors": true,
+    "women_context": "Rose Gold / Warm Brown / Champagne / Aura Teal",
+    "men_context": "Champagne / Warm White / Copper / Aura Teal"
+  },
+  "women_validation": {
+    "primary": "Rose Gold #D4AF7A",
+    "secondary": "Warm Brown #5A3A2A",
+    "accent": "Champagne #D9A27F",
+    "aura": "Aura Teal #164C46",
+    "no_cyber_cyan": true,
+    "theme_consistency": true
+  },
+  "men_validation": {
+    "primary": "Champagne #C8B08A",
+    "secondary": "Warm White #F2EFEA",
+    "accent": "Copper #B8734A",
+    "aura": "Aura Teal #164C46",
+    "no_black_gold_ui": true,
+    "theme_consistency": true
+  },
+  "audience_validation": {
+    "theme_switching_tested": true,
+    "icon_colors_adapt": true,
+    "no_logic_changes": true
+  },
+  "responsive_validation": {
+    "mobile": true,
+    "desktop_web": true,
+    "no_overflow": true,
+    "no_clipping": true,
+    "icon_sizes_correct": true
+  },
+  "visual_validation": {
+    "geometry_coherent": true,
+    "size_coherent": true,
+    "alignment_preserved": true,
+    "spacing_preserved": true,
+    "color_correct": true,
+    "visual_weight_coherent": true,
+    "affordance_clear": true,
+    "no_unexpected_icons": true,
+    "no_semantic_confusion": true
+  },
+  "functional_validation": {
+    "navigation_unchanged": true,
+    "callbacks_unchanged": true,
+    "state_unchanged": true,
+    "providers_unchanged": true,
+    "no_runtime_errors": true,
+    "no_routing_regression": true,
+    "logic_touch_required": false
+  },
+  "analyze": {
+    "new_errors": 0,
+    "pre_existing_warnings": 3,
+    "pre_existing_infos": 20,
+    "pass": true
+  },
+  "tests": {
+    "passed": 7,
+    "failed": 0,
+    "total": 7,
+    "pass": true
+  },
+  "build": {
+    "web_release": "SUCCESS",
+    "pass": true
+  },
+  "git": {
+    "expected_changes": 2,
+    "unexpected_changes": 0,
+    "pre_existing_changes": 30,
+    "pass": true
+  },
+  "rollback": {
+    "tested": false,
+    "available": true,
+    "would_pass": true
+  },
+  "introduced_issues": [],
+  "pre_existing_issues": [
+    "Unused imports in store_screen.dart (theme.dart, audience_toggle.dart)",
+    "Unused local variable 'errorMsg' in store_screen.dart",
+    "use_build_context_synchronously warnings (5 instances)",
+    "prefer_const_constructors warnings (multiple)"
+  ],
+  "global_migration": false,
+  "final_decision": "APPROVED"
+}

@@ -29,9 +29,12 @@ class BiometricHistoryScreen extends StatelessWidget {
         centerTitle: true,
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(LuxeSpacing.xl),
-          child: Column(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 680),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(LuxeSpacing.xl),
+              child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // TARJETA DE RESUMEN AURA AI
@@ -124,7 +127,7 @@ class BiometricHistoryScreen extends StatelessWidget {
                             shape: BoxShape.circle,
                             border: Border.all(color: const Color(0xFFC5A052), width: 2),
                             image: const DecorationImage(
-                              image: AssetImage('assets/images/glow_ia_mesh_avatar.jpg'),
+                              image: AssetImage('images/glow_ia_mesh_avatar.webp'),
                               fit: BoxFit.cover,
                             ),
                           ),
@@ -194,7 +197,9 @@ class BiometricHistoryScreen extends StatelessWidget {
           ),
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 
   static Widget _buildScanRecordTile({

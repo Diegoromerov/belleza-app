@@ -28,7 +28,7 @@ jobs:
       - name: Install Backend Dependencies
         run: |
           cd backend
-          npm ci
+          npm ci --legacy-peer-deps
 
       - name: Run Backend Integration & Unit Tests
         run: |

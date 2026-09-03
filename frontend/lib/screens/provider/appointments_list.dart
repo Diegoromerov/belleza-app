@@ -50,7 +50,10 @@ class _AppointmentsListScreenState extends State<AppointmentsListScreen> {
         centerTitle: true,
       ),
       body: SafeArea(
-        child: Column(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 720),
+            child: Column(
           children: [
             // FILTRO DE ESTADOS
             Padding(
@@ -134,6 +137,8 @@ class _AppointmentsListScreenState extends State<AppointmentsListScreen> {
           ],
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 }

@@ -4,6 +4,8 @@ class ProviderModel {
   final int ratingCount, distanceMeters;
   final bool isVerified;
 
+  double get rating => ratingAvg;
+
   ProviderModel({
     required this.id,
     required this.fullName,

@@ -1,0 +1,1132 @@
+{
+  "phase": "G0_D_DATA_DISCOVERY",
+  "status": "DISCOVERY_COMPLETE_READY_FOR_G1",
+  "timestamp": "2026-08-21",
+  "data_domains": [
+    {
+      "name": "Users / Auth",
+      "purpose": "Unified authentication + onboarding",
+      "business_owner": "Product",
+      "technical_owner": "Backend (AuthController)",
+      "user": "Client + Provider",
+      "status": "IMPLEMENTED",
+      "maturity": "LEVEL 4"
+    },
+    {
+      "name": "Profiles (Client)",
+      "purpose": "Personal info, preferences, biometrics",
+      "business_owner": "Product",
+      "technical_owner": "Backend (UserController)",
+      "user": "Client",
+      "status": "IMPLEMENTED",
+      "maturity": "LEVEL 4"
+    },
+    {
+      "name": "Profiles (Provider)",
+      "purpose": "Business profile, verification, payout",
+      "business_owner": "Product",
+      "technical_owner": "Backend (ProviderController)",
+      "user": "Provider",
+      "status": "IMPLEMENTED",
+      "maturity": "LEVEL 4"
+    },
+    {
+      "name": "Services",
+      "purpose": "Service catalog, pricing, availability",
+      "business_owner": "Provider",
+      "technical_owner": "Backend (ServiceController)",
+      "user": "Provider -> Client",
+      "status": "IMPLEMENTED",
+      "maturity": "LEVEL 4"
+    },
+    {
+      "name": "Bookings / Appointments",
+      "purpose": "Reservation lifecycle, monetary split",
+      "business_owner": "Operations",
+      "technical_owner": "Backend (BookingController)",
+      "user": "Client + Provider",
+      "status": "IMPLEMENTED",
+      "maturity": "LEVEL 5"
+    },
+    {
+      "name": "Payments / Wallet",
+      "purpose": "Payment processing, splits, transactions",
+      "business_owner": "Finance",
+      "technical_owner": "Backend (PaymentController) + Wompi",
+      "user": "Client + Provider",
+      "status": "IMPLEMENTED",
+      "maturity": "LEVEL 4"
+    },
+    {
+      "name": "Products / Store",
+      "purpose": "E-commerce catalog, inventory",
+      "business_owner": "Commerce",
+      "technical_owner": "Backend (ProductController)",
+      "user": "Client",
+      "status": "IMPLEMENTED",
+      "maturity": "LEVEL 4"
+    },
+    {
+      "name": "Orders",
+      "purpose": "Store order tracking",
+      "business_owner": "Commerce",
+      "technical_owner": "Backend (OrderController)",
+      "user": "Client",
+      "status": "PARTIAL",
+      "maturity": "LEVEL 2"
+    },
+    {
+      "name": "Portfolio",
+      "purpose": "Provider portfolio images",
+      "business_owner": "Provider",
+      "technical_owner": "Backend (PortfolioController)",
+      "user": "Provider",
+      "status": "IMPLEMENTED",
+      "maturity": "LEVEL 3"
+    },
+    {
+      "name": "Reviews",
+      "purpose": "Booking reviews, ratings",
+      "business_owner": "Quality",
+      "technical_owner": "Backend (ReviewController)",
+      "user": "Client",
+      "status": "IMPLEMENTED",
+      "maturity": "LEVEL 3"
+    },
+    {
+      "name": "Chat / Messages",
+      "purpose": "Client <-> Provider communication",
+      "business_owner": "Support",
+      "technical_owner": "Backend (MessageController) + WebSocket",
+      "user": "Client + Provider",
+      "status": "IMPLEMENTED",
+      "maturity": "LEVEL 3"
+    },
+    {
+      "name": "Support / Disputes",
+      "purpose": "Ticketing, dispute resolution",
+      "business_owner": "Support",
+      "technical_owner": "Backend (SupportController)",
+      "user": "Client + Provider",
+      "status": "IMPLEMENTED",
+      "maturity": "LEVEL 3"
+    },
+    {
+      "name": "Notifications",
+      "purpose": "Push, in-app, email notifications",
+      "business_owner": "Engagement",
+      "technical_owner": "Backend (NotificationController)",
+      "user": "Client + Provider",
+      "status": "PARTIAL",
+      "maturity": "LEVEL 2"
+    },
+    {
+      "name": "Academy",
+      "purpose": "Courses, lessons, certifications",
+      "business_owner": "Education",
+      "technical_owner": "Backend (AcademyController)",
+      "user": "Client + Provider",
+      "status": "PARTIAL",
+      "maturity": "LEVEL 2"
+    },
+    {
+      "name": "Rewards / XP",
+      "purpose": "Loyalty program, points, tiers",
+      "business_owner": "Retention",
+      "technical_owner": "Backend (RewardsController)",
+      "user": "Client",
+      "status": "PARTIAL",
+      "maturity": "LEVEL 2"
+    },
+    {
+      "name": "Evolution",
+      "purpose": "Biometric progress tracking",
+      "business_owner": "Product",
+      "technical_owner": "Backend (BiometricController)",
+      "user": "Client",
+      "status": "EXPERIMENTAL",
+      "maturity": "LEVEL 2"
+    },
+    {
+      "name": "Wardrobe / VTO",
+      "purpose": "Virtual try-on (outfits, nails)",
+      "business_owner": "Innovation",
+      "technical_owner": "Backend (VTOController)",
+      "user": "Client",
+      "status": "EXPERIMENTAL",
+      "maturity": "LEVEL 1"
+    },
+    {
+      "name": "Biometric",
+      "purpose": "Face/hands analysis, color DNA",
+      "business_owner": "AURA",
+      "technical_owner": "Backend (BiometricService)",
+      "user": "Client",
+      "status": "IMPLEMENTED",
+      "maturity": "LEVEL 3"
+    },
+    {
+      "name": "AURA / AI Results",
+      "purpose": "AI recommendations, search, agents",
+      "business_owner": "Intelligence",
+      "technical_owner": "Backend (RAG Pipeline)",
+      "user": "Client",
+      "status": "IMPLEMENTED",
+      "maturity": "LEVEL 4"
+    },
+    {
+      "name": "Embeddings / Knowledge",
+      "purpose": "Vector search, beauty corpus",
+      "business_owner": "Intelligence",
+      "technical_owner": "Backend (EmbeddingService)",
+      "user": "Internal (AI)",
+      "status": "IMPLEMENTED",
+      "maturity": "LEVEL 4"
+    },
+    {
+      "name": "Analytics / Audit",
+      "purpose": "Event tracking, query logs",
+      "business_owner": "Data",
+      "technical_owner": "Backend (AnalyticsController)",
+      "user": "Internal",
+      "status": "PARTIAL",
+      "maturity": "LEVEL 2"
+    },
+    {
+      "name": "Location",
+      "purpose": "PostGIS provider search, routing",
+      "business_owner": "Operations",
+      "technical_owner": "Backend (LocationController)",
+      "user": "Client + Provider",
+      "status": "IMPLEMENTED",
+      "maturity": "LEVEL 4"
+    }
+  ],
+  "entities": [
+    {
+      "name": "User",
+      "type": "Table",
+      "source_of_truth": "PostgreSQL (usuarios)",
+      "primary_key": "id SERIAL",
+      "classification": "AUTHORITATIVE",
+      "status": "IMPLEMENTED"
+    },
+    {
+      "name": "Provider Profile",
+      "type": "Table",
+      "source_of_truth": "PostgreSQL (perfiles_prestador)",
+      "primary_key": "id INTEGER (FK -> usuarios)",
+      "classification": "AUTHORITATIVE",
+      "status": "IMPLEMENTED"
+    },
+    {
+      "name": "Service",
+      "type": "Table",
+      "source_of_truth": "PostgreSQL (services)",
+      "primary_key": "id UUID",
+      "classification": "AUTHORITATIVE",
+      "status": "IMPLEMENTED"
+    },
+    {
+      "name": "Booking",
+      "type": "Table",
+      "source_of_truth": "PostgreSQL (bookings)",
+      "primary_key": "id UUID",
+      "classification": "AUTHORITATIVE",
+      "status": "IMPLEMENTED"
+    },
+    {
+      "name": "Transaction",
+      "type": "Table",
+      "source_of_truth": "PostgreSQL (transactions)",
+      "primary_key": "id UUID",
+      "classification": "AUTHORITATIVE",
+      "status": "IMPLEMENTED"
+    },
+    {
+      "name": "Review",
+      "type": "Table",
+      "source_of_truth": "PostgreSQL (reviews)",
+      "primary_key": "id UUID",
+      "classification": "AUTHORITATIVE",
+      "status": "IMPLEMENTED"
+    },
+    {
+      "name": "Portfolio Item",
+      "type": "Table",
+      "source_of_truth": "PostgreSQL (portfolio_items)",
+      "primary_key": "id UUID",
+      "classification": "AUTHORITATIVE",
+      "status": "IMPLEMENTED"
+    },
+    {
+      "name": "Message",
+      "type": "Table",
+      "source_of_truth": "PostgreSQL (messages)",
+      "primary_key": "id UUID",
+      "classification": "AUTHORITATIVE",
+      "status": "IMPLEMENTED"
+    },
+    {
+      "name": "Product",
+      "type": "Table",
+      "source_of_truth": "PostgreSQL (productos)",
+      "primary_key": "id SERIAL",
+      "classification": "AUTHORITATIVE",
+      "status": "IMPLEMENTED"
+    },
+    {
+      "name": "Biometric Consent",
+      "type": "Table",
+      "source_of_truth": "PostgreSQL (biometric_consents)",
+      "primary_key": "id UUID",
+      "classification": "AUTHORITATIVE",
+      "status": "IMPLEMENTED"
+    },
+    {
+      "name": "Beauty Profile",
+      "type": "Table",
+      "source_of_truth": "PostgreSQL (beauty_profiles)",
+      "primary_key": "id UUID",
+      "classification": "AUTHORITATIVE",
+      "status": "IMPLEMENTED"
+    },
+    {
+      "name": "User Biometrics (legacy)",
+      "type": "Table",
+      "source_of_truth": "PostgreSQL (user_biometrics)",
+      "primary_key": "id SERIAL",
+      "classification": "LEGACY",
+      "status": "LEGACY"
+    },
+    {
+      "name": "Nail Try-on Job",
+      "type": "Table",
+      "source_of_truth": "PostgreSQL (nail_tryon_jobs)",
+      "primary_key": "id UUID",
+      "classification": "AUTHORITATIVE",
+      "status": "IMPLEMENTED"
+    },
+    {
+      "name": "Knowledge Embedding",
+      "type": "Table",
+      "source_of_truth": "PostgreSQL (beauty_knowledge_embeddings)",
+      "primary_key": "id SERIAL",
+      "classification": "AUTHORITATIVE",
+      "status": "IMPLEMENTED"
+    },
+    {
+      "name": "RAG Query Log",
+      "type": "Table",
+      "source_of_truth": "PostgreSQL (rag_query_logs)",
+      "primary_key": "id BIGSERIAL",
+      "classification": "AUTHORITATIVE",
+      "status": "IMPLEMENTED"
+    },
+    {
+      "name": "ProviderModel",
+      "type": "Frontend DTO",
+      "source_of_truth": "lib/models/provider_model.dart",
+      "backend_mapping": "perfiles_prestador + usuarios",
+      "classification": "DERIVED",
+      "status": "IMPLEMENTED"
+    },
+    {
+      "name": "ServiceModel",
+      "type": "Frontend DTO",
+      "source_of_truth": "lib/models/service_model.dart",
+      "backend_mapping": "services",
+      "classification": "DERIVED",
+      "status": "IMPLEMENTED"
+    },
+    {
+      "name": "Booking (freezed)",
+      "type": "Frontend DTO",
+      "source_of_truth": "lib/core/models/booking_model.dart",
+      "backend_mapping": "bookings",
+      "classification": "DERIVED",
+      "status": "IMPLEMENTED"
+    },
+    {
+      "name": "ProviderProfile (freezed)",
+      "type": "Frontend DTO",
+      "source_of_truth": "lib/core/models/provider_profile_model.dart",
+      "backend_mapping": "perfiles_prestador",
+      "classification": "DERIVED",
+      "status": "IMPLEMENTED"
+    },
+    {
+      "name": "ServiceModel (freezed)",
+      "type": "Frontend DTO",
+      "source_of_truth": "lib/core/models/service_model.dart",
+      "backend_mapping": "services",
+      "classification": "DERIVED",
+      "status": "IMPLEMENTED"
+    },
+    {
+      "name": "BiometricResult",
+      "type": "Frontend DTO",
+      "source_of_truth": "lib/models/biometric_result.dart",
+      "backend_mapping": "beauty_profiles + analysis",
+      "classification": "DERIVED",
+      "status": "IMPLEMENTED"
+    }
+  ],
+  "source_of_truth": [
+    {
+      "data_element": "User Identity",
+      "source": "usuarios table",
+      "classification": "AUTHORITATIVE",
+      "conflicts": "None"
+    },
+    {
+      "data_element": "Provider Identity",
+      "source": "perfiles_prestador table (1:1 with usuarios)",
+      "classification": "AUTHORITATIVE",
+      "conflicts": "Legacy portafolio_servicios JSONB deprecated in perfiles_prestador"
+    },
+    {
+      "data_element": "Service Catalog",
+      "source": "services table",
+      "classification": "AUTHORITATIVE",
+      "conflicts": "None"
+    },
+    {
+      "data_element": "Booking Record",
+      "source": "bookings table",
+      "classification": "AUTHORITATIVE",
+      "conflicts": "Monetary split enforced by DB trigger calc_booking_split()"
+    },
+    {
+      "data_element": "Payment Record",
+      "source": "transactions table",
+      "classification": "AUTHORITATIVE",
+      "conflicts": "1:1 with booking via UNIQUE FK"
+    },
+    {
+      "data_element": "Product Catalog",
+      "source": "productos table",
+      "classification": "AUTHORITATIVE",
+      "conflicts": "None"
+    },
+    {
+      "data_element": "Portfolio",
+      "source": "portfolio_items table",
+      "classification": "AUTHORITATIVE",
+      "conflicts": "Legacy portafolio_servicios in perfiles_prestador deprecated"
+    },
+    {
+      "data_element": "Chat History",
+      "source": "messages table",
+      "classification": "AUTHORITATIVE",
+      "conflicts": "None"
+    },
+    {
+      "data_element": "Biometric Consent",
+      "source": "biometric_consents table",
+      "classification": "AUTHORITATIVE",
+      "conflicts": "Partial unique index ensures single active consent"
+    },
+    {
+      "data_element": "Biometric Profile",
+      "source": "beauty_profiles table",
+      "classification": "AUTHORITATIVE",
+      "conflicts": "Legacy user_biometrics table exists but deprecated"
+    },
+    {
+      "data_element": "AI Knowledge",
+      "source": "beauty_knowledge_embeddings table",
+      "classification": "AUTHORITATIVE",
+      "conflicts": "Traceability columns added (migration 046): document_id, chunk_id, content_hash, fuente, seccion"
+    },
+    {
+      "data_element": "RAG Query Logs",
+      "source": "rag_query_logs table",
+      "classification": "AUTHORITATIVE",
+      "conflicts": "Full traceability per query"
+    },
+    {
+      "data_element": "Frontend State",
+      "source": "ValueNotifier, SharedPreferences, FlutterSecureStorage",
+      "classification": "CACHED / DERIVED",
+      "conflicts": "Token cached in secure storage; audience mode in SharedPreferences"
+    }
+  ],
+  "data_flows": [
+    {
+      "name": "Standard CRUD Flow",
+      "path": "UI -> State -> Service -> HTTP -> Backend Controller -> Validation -> Database -> Trigger -> Response -> Service -> State -> UI",
+      "transformations": [
+        "ApiService.normalizeUrl() rewrites relative asset URLs",
+        "ApiService._normalizeDynamicUrls() normalizes avatar_url, image_url, cover_url, foto_url",
+        "Backend maps snake_case to camelCase",
+        "Frontend fromJson handles both cases defensively",
+        "Booking monetary split via calc_booking_split() trigger (12%/8%/80%)"
+      ]
+    },
+    {
+      "name": "AI / AURA Data Flow",
+      "path": "User Input -> Frontend Service -> Backend WebSocket/REST -> Embedding Generation (NVIDIA) -> Vector Search (HNSW) -> Fallback FTS -> Context Assembly -> LLM -> Result Persistence -> Frontend Consumption -> UI",
+      "transformations": [
+        "Embedding generation via NVIDIA NV-Embed-QA 1024d",
+        "pgvector HNSW search on beauty_knowledge_embeddings",
+        "FTS fallback (tsvector/tsquery) on embedding failure",
+        "Results persisted to nail_tryon_jobs, beauty_profiles, messages"
+      ]
+    },
+    {
+      "name": "Biometric Analysis Flow",
+      "path": "CaptureScreen (Camera+MLKit) -> BiometricService -> ApiService.uploadBiometricData -> Backend Processing -> beauty_profiles table -> BiometricResult.fromJson -> Results Screens",
+      "transformations": [
+        "Multipart/form-data upload",
+        "External ML processing",
+        "JSONB storage in beauty_profiles"
+      ]
+    }
+  ],
+  "crud_authority": [
+    {
+      "entity": "User",
+      "create": "Backend (AuthController)",
+      "read": "Frontend (ApiService), Backend",
+      "update": "Frontend (updateUserProfile), Backend",
+      "delete": "Backend (admin)",
+      "writers": ["Backend", "Frontend"]
+    },
+    {
+      "entity": "Provider Profile",
+      "create": "Backend (onboarding)",
+      "read": "Frontend, Backend",
+      "update": "Frontend (updateProviderProfile), Backend",
+      "delete": "Backend",
+      "writers": ["Backend", "Frontend"]
+    },
+    {
+      "entity": "Service",
+      "create": "Frontend (ApiService.createService)",
+      "read": "Frontend, Backend",
+      "update": "Frontend (updateService), Backend",
+      "delete": "Frontend (deleteService), Backend",
+      "writers": ["Frontend", "Backend"]
+    },
+    {
+      "entity": "Booking",
+      "create": "Frontend (ApiService.createBooking)",
+      "read": "Frontend, Backend",
+      "update": "Backend (status), Frontend (cancel)",
+      "delete": "Backend (cascade)",
+      "writers": ["Frontend", "Backend", "DB Trigger"]
+    },
+    {
+      "entity": "Transaction",
+      "create": "Backend (trigger on booking pay)",
+      "read": "Frontend, Backend",
+      "update": "Backend (status)",
+      "delete": "Backend",
+      "writers": ["Backend", "DB Trigger"]
+    },
+    {
+      "entity": "Review",
+      "create": "Frontend (ApiService.submitReview)",
+      "read": "Frontend, Backend",
+      "update": "-",
+      "delete": "-",
+      "writers": ["Frontend"]
+    },
+    {
+      "entity": "Portfolio Item",
+      "create": "Frontend (ApiService.addPortfolioItem)",
+      "read": "Frontend, Backend",
+      "update": "Frontend, Backend",
+      "delete": "Frontend, Backend",
+      "writers": ["Frontend", "Backend"]
+    },
+    {
+      "entity": "Message",
+      "create": "Frontend (ChatScreen), Backend (WebSocket)",
+      "read": "Frontend, Backend",
+      "update": "-",
+      "delete": "-",
+      "writers": ["Frontend", "Backend", "WebSocket"]
+    },
+    {
+      "entity": "Biometric Consent",
+      "create": "Frontend (ConsentBiometricScreen)",
+      "read": "Backend",
+      "update": "Backend (revoke)",
+      "delete": "-",
+      "writers": ["Frontend", "Backend"]
+    },
+    {
+      "entity": "Beauty Profile",
+      "create": "Backend (biometric processing)",
+      "read": "Frontend, Backend",
+      "update": "Backend (re-analysis)",
+      "delete": "-",
+      "writers": ["Backend"]
+    },
+    {
+      "entity": "Nail Try-on Job",
+      "create": "Frontend (NailVTOScreen)",
+      "read": "Frontend, Backend",
+      "update": "Backend (status)",
+      "delete": "Backend (expiry)",
+      "writers": ["Frontend", "Backend"]
+    },
+    {
+      "entity": "Knowledge Embedding",
+      "create": "Backend (ingestion scripts)",
+      "read": "Backend (RAG search)",
+      "update": "Backend (re-ingest)",
+      "delete": "Backend",
+      "writers": ["Backend"]
+    },
+    {
+      "entity": "RAG Query Log",
+      "create": "Backend (ragService)",
+      "read": "Backend (evaluation)",
+      "update": "-",
+      "delete": "-",
+      "writers": ["Backend"]
+    }
+  ],
+  "integrity": {
+    "booking_payment": "OK",
+    "user_provider": "OK",
+    "ai_embedding": "PARTIAL",
+    "biometric": "PARTIAL",
+    "details": {
+      "primary_keys": "All tables have PK (SERIAL or UUID)",
+      "foreign_keys": "Complete with CASCADE/RESTRICT as appropriate",
+      "unique_constraints": "Email, auth_provider+provider_id, booking_id in transactions, chunk_id planned",
+      "not_null": "Critical fields enforced",
+      "enums": "tipo_auth_provider, tipo_rol, estado_verificacion, tipo_metodo_retiro, estado_cita, payment_status, tag_especialidad",
+      "check_constraints": "Price >= 0, duration > 0, valor_bruto >= 0, rating 0-5, amount >= 0, stock >= 0",
+      "triggers": "calc_booking_split() enforces monetary integrity (12% platform, 8% tax, 80% provider)",
+      "indexes": "GIST on ubicacion, HNSW on embeddings, partial unique on biometric_consents",
+      "transactions": "Auth in single txn; booking+transaction atomicity via trigger",
+      "concurrency": "Row-level locks via FK RESTRICT",
+      "idempotency": "OAuth unique constraint, content_hash for embeddings, external_id for Wompi",
+      "money_integrity": "DB trigger enforced",
+      "booking_integrity": "FK RESTRICT + trigger",
+      "payment_integrity": "1:1 booking FK + status enum",
+      "user_integrity": "CASCADE on provider/profile/biometric"
+    }
+  },
+  "consistency": [
+    {
+      "issue": "Provider Portfolio Dual Storage",
+      "location": "perfiles_prestador.portafolio_servicios vs portfolio_items",
+      "classification": "DUPLICATE DATA",
+      "evidence": "SQL comment marks deprecated; not dropped"
+    },
+    {
+      "issue": "Biometric Dual Storage",
+      "location": "user_biometrics (legacy) vs beauty_profiles (current)",
+      "classification": "DUPLICATE DATA",
+      "evidence": "Legacy table not dropped; different schemas"
+    },
+    {
+      "issue": "Frontend Booking Models",
+      "location": "Booking (freezed) vs Booking (manual in lib/models/)",
+      "classification": "DUPLICATE MODELS",
+      "evidence": "Two Dart classes for same entity"
+    },
+    {
+      "issue": "Frontend Service Models",
+      "location": "ServiceModel (manual) vs ServiceModel (freezed)",
+      "classification": "DUPLICATE MODELS",
+      "evidence": "Two Dart classes"
+    },
+    {
+      "issue": "Naming Convention Drift",
+      "location": "DB (snake_case) <-> API (snake_case) <-> Frontend (camelCase)",
+      "classification": "TYPE CONFLICT",
+      "evidence": "ApiService._normalizeDynamicUrls handles; fromJson defensive"
+    },
+    {
+      "issue": "Enum Drift",
+      "location": "estado_cita (DB) vs BookingStatusExt (Frontend)",
+      "classification": "ENUM CONFLICT",
+      "evidence": "Frontend extension maps multiple string variants"
+    },
+    {
+      "issue": "Legacy Fields",
+      "location": "portafolio_servicios JSONB, user_biometrics table",
+      "classification": "STALE FIELDS",
+      "evidence": "Marked deprecated in SQL comments"
+    },
+    {
+      "issue": "Unused Fields",
+      "location": "perfiles_prestador.documento_id_url, rut_url, certificacion_url",
+      "classification": "UNUSED FIELDS",
+      "evidence": "Legal compliance fields, not used in frontend"
+    },
+    {
+      "issue": "Derived Data Without Trigger",
+      "location": "provider.rating_avg, rating_count computed from reviews",
+      "classification": "DERIVED DATA WITHOUT AUTHORITY",
+      "evidence": "Could drift if reviews modified without trigger"
+    },
+    {
+      "issue": "Frontend/Backend Mismatch",
+      "location": "ServiceModel.bookingsCount fallback uses ID hash",
+      "classification": "FRONTEND MISMATCH",
+      "evidence": "Workaround for missing backend field"
+    },
+    {
+      "issue": "VTO-Biometric Missing Link",
+      "location": "nail_tryon_jobs has image_hash but no FK to beauty_profiles",
+      "classification": "MISSING RELATIONSHIP",
+      "evidence": "VTO results not linked to biometric profile"
+    }
+  ],
+  "lifecycles": {
+    "booking": [
+      {"state": "CREATION", "trigger": "Client creates booking", "db_enum": "PENDIENTE_PAGO", "frontend": "isPending", "actions": "Payment required"},
+      {"state": "PAID", "trigger": "Wompi callback / payBooking", "db_enum": "CONFIRMADA", "frontend": "isConfirmed", "actions": "Slot reserved"},
+      {"state": "IN_PROGRESS", "trigger": "Provider starts service", "db_enum": "EN_PROGRESO", "frontend": "isInProgress", "actions": "Service delivery"},
+      {"state": "PROVIDER_COMPLETE", "trigger": "Provider finishes", "db_enum": "FINALIZADA_PRESTADOR", "frontend": "isWaitingOtp", "actions": "OTP verification"},
+      {"state": "COMPLETED", "trigger": "Client verifies OTP", "db_enum": "COMPLETADA", "frontend": "isCompleted", "actions": "Review enabled, payout triggered"},
+      {"state": "CANCELLED", "trigger": "Client/Provider cancels", "db_enum": "CANCELADA", "frontend": "isCancelled", "actions": "Refund if paid"},
+      {"state": "DISPUTED", "trigger": "Dispute opened", "db_enum": "EN_DISPUTA", "frontend": "isDisputed", "actions": "Support intervention"}
+    ],
+    "biometric_consent": [
+      {"state": "ACTIVE", "trigger": "User accepts consent", "table": "biometric_consents"},
+      {"state": "REVOKED", "trigger": "User revokes", "table": "biometric_consents (revoked_at, active=FALSE)"},
+      {"state": "EXPIRED", "trigger": "Version change", "table": "biometric_consents (new consent required)"}
+    ],
+    "nail_tryon_job": [
+      {"state": "PENDING", "trigger": "Job created"},
+      {"state": "PROCESSING", "trigger": "ML processing started"},
+      {"state": "COMPLETED", "trigger": "Preview URL generated"},
+      {"state": "FAILED", "trigger": "Error recorded"},
+      {"state": "EXPIRED", "trigger": "expires_at passed (cleanup index)"}
+    ],
+    "knowledge_embedding": [
+      {"stage": "INGESTION", "process": "Corpus -> chunking (500-800 tokens) -> embedding (NVIDIA) -> INSERT with traceability"},
+      {"stage": "ACTIVE", "process": "Served via HNSW search"},
+      {"stage": "VERSIONED", "process": "document_version tracks updates; historical preserved"},
+      {"stage": "DEDUPE", "process": "content_hash (SHA-256) prevents re-ingestion"}
+    ]
+  },
+  "privacy": [
+    {
+      "data_type": "Auth Token",
+      "storage": "FlutterSecureStorage (AES)",
+      "transmission": "HTTPS + Bearer header",
+      "access_control": "User-scoped",
+      "encryption": "Encrypted at rest",
+      "classification": "IMPLEMENTED"
+    },
+    {
+      "data_type": "Password Hash",
+      "storage": "PostgreSQL (bcrypt)",
+      "transmission": "HTTPS (login only)",
+      "access_control": "Backend only",
+      "encryption": "Hashed",
+      "classification": "IMPLEMENTED"
+    },
+    {
+      "data_type": "Personal Info",
+      "storage": "usuarios table",
+      "transmission": "HTTPS",
+      "access_control": "Role-based (own profile)",
+      "encryption": "TLS",
+      "classification": "IMPLEMENTED"
+    },
+    {
+      "data_type": "Payment Data",
+      "storage": "transactions + Wompi",
+      "transmission": "HTTPS -> Wompi",
+      "access_control": "Finance role",
+      "encryption": "TLS + Wompi PCI",
+      "classification": "IMPLEMENTED"
+    },
+    {
+      "data_type": "Location",
+      "storage": "perfiles_prestador.ubicacion (PostGIS)",
+      "transmission": "HTTPS",
+      "access_control": "Provider (own), Client (nearby)",
+      "encryption": "TLS",
+      "classification": "IMPLEMENTED"
+    },
+    {
+      "data_type": "Biometric Images",
+      "storage": "Temp upload -> processed -> discarded",
+      "transmission": "HTTPS multipart",
+      "access_control": "User-scoped",
+      "encryption": "TLS",
+      "classification": "PARTIAL",
+      "gap": "No retention policy documented"
+    },
+    {
+      "data_type": "Biometric Results",
+      "storage": "beauty_profiles (JSONB)",
+      "transmission": "HTTPS",
+      "access_control": "User-scoped",
+      "encryption": "TLS",
+      "classification": "IMPLEMENTED"
+    },
+    {
+      "data_type": "Chat Messages",
+      "storage": "messages table",
+      "transmission": "HTTPS + WebSocket",
+      "access_control": "Participant-scoped",
+      "encryption": "TLS",
+      "classification": "IMPLEMENTED"
+    },
+    {
+      "data_type": "AI Query Logs",
+      "storage": "rag_query_logs",
+      "transmission": "Internal",
+      "access_control": "Admin/Data team",
+      "encryption": "TLS",
+      "classification": "IMPLEMENTED"
+    },
+    {
+      "data_type": "Embeddings",
+      "storage": "beauty_knowledge_embeddings",
+      "transmission": "Internal (RAG)",
+      "access_control": "Service account",
+      "encryption": "TLS",
+      "classification": "IMPLEMENTED"
+    }
+  ],
+  "ai_data": [
+    {
+      "category": "Operational Data",
+      "source": "User actions, bookings, services",
+      "storage": "PostgreSQL",
+      "lifecycle": "Standard CRUD",
+      "authority": "Backend",
+      "validation": "DB constraints",
+      "traceability": "Standard logs"
+    },
+    {
+      "category": "AI Input (RAG Query)",
+      "source": "User chat/search",
+      "storage": "rag_query_logs",
+      "lifecycle": "Retained for evaluation",
+      "authority": "Backend (ragService)",
+      "validation": "Threshold, filters",
+      "traceability": "Full (traceId, params, scores)"
+    },
+    {
+      "category": "AI Output (RAG Result)",
+      "source": "Retrieved chunks",
+      "storage": "Response only (not persisted)",
+      "lifecycle": "Ephemeral",
+      "authority": "ragService",
+      "validation": "Similarity threshold",
+      "traceability": "Logged in query_logs"
+    },
+    {
+      "category": "Embedding Vectors",
+      "source": "NVIDIA NV-Embed-QA",
+      "storage": "beauty_knowledge_embeddings (vector 1024)",
+      "lifecycle": "Versioned, deduped",
+      "authority": "Backend (ingestion)",
+      "validation": "Dimension check (1024), non-zero",
+      "traceability": "document_id, chunk_id, content_hash"
+    },
+    {
+      "category": "Knowledge Corpus",
+      "source": "MD files + SQL seeds",
+      "storage": "Source files + beauty_knowledge_embeddings",
+      "lifecycle": "Versioned ingestion",
+      "authority": "Backend (scripts)",
+      "validation": "Chunk size 500-800 tokens",
+      "traceability": "fuente, seccion, document_version"
+    },
+    {
+      "category": "Biometric Analysis",
+      "source": "Camera + MLKit -> Backend ML",
+      "storage": "beauty_profiles (JSONB)",
+      "lifecycle": "Per-scan profile",
+      "authority": "BiometricService",
+      "validation": "Score ranges",
+      "traceability": "profileId in result"
+    },
+    {
+      "category": "Color DNA",
+      "source": "Biometric -> Algorithm",
+      "storage": "beauty_profiles.recommendation + products",
+      "lifecycle": "Per-user",
+      "authority": "Backend",
+      "validation": "-",
+      "traceability": "Linked to profile"
+    },
+    {
+      "category": "Nail VTO",
+      "source": "Hand photo + params",
+      "storage": "nail_tryon_jobs",
+      "lifecycle": "Expires (TTL index)",
+      "authority": "Backend",
+      "validation": "Status enum",
+      "traceability": "image_hash for dedup"
+    },
+    {
+      "category": "Recommendations",
+      "source": "AURA agents (Hestia, Atena, etc.)",
+      "storage": "Runtime (WebSocket)",
+      "lifecycle": "Ephemeral",
+      "authority": "Aura Orchestrator",
+      "validation": "Agent-specific",
+      "traceability": "WebSocket message log"
+    },
+    {
+      "category": "Evaluation Data",
+      "source": "30-query dataset",
+      "storage": "backend/src/data/eval/",
+      "lifecycle": "Versioned",
+      "authority": "Data team",
+      "validation": "RAGAS metrics",
+      "traceability": "Evaluation runs logged"
+    }
+  ],
+  "authorities": [
+    {
+      "data_element": "User Identity",
+      "authority": "usuarios table / AuthController",
+      "classification": "AUTHORITY"
+    },
+    {
+      "data_element": "Provider Identity",
+      "authority": "perfiles_prestador / ProviderController",
+      "classification": "AUTHORITY"
+    },
+    {
+      "data_element": "Service Catalog",
+      "authority": "services table / ServiceController",
+      "classification": "AUTHORITY"
+    },
+    {
+      "data_element": "Booking",
+      "authority": "bookings table / BookingController + DB Trigger",
+      "classification": "AUTHORITY"
+    },
+    {
+      "data_element": "Payment",
+      "authority": "transactions table / PaymentController",
+      "classification": "AUTHORITY"
+    },
+    {
+      "data_element": "Product",
+      "authority": "productos table / ProductController",
+      "classification": "AUTHORITY"
+    },
+    {
+      "data_element": "Portfolio",
+      "authority": "portfolio_items table / PortfolioController",
+      "classification": "AUTHORITY"
+    },
+    {
+      "data_element": "Chat",
+      "authority": "messages table / WebSocket",
+      "classification": "AUTHORITY"
+    },
+    {
+      "data_element": "Biometric Consent",
+      "authority": "biometric_consents / ConsentBiometricScreen",
+      "classification": "AUTHORITY"
+    },
+    {
+      "data_element": "Biometric Profile",
+      "authority": "beauty_profiles / BiometricService",
+      "classification": "AUTHORITY"
+    },
+    {
+      "data_element": "AI Knowledge",
+      "authority": "beauty_knowledge_embeddings / Ingestion Scripts",
+      "classification": "AUTHORITY"
+    },
+    {
+      "data_element": "AI Embeddings",
+      "authority": "NVIDIA API / embeddingService",
+      "classification": "DERIVED"
+    },
+    {
+      "data_element": "AI Agent Decisions",
+      "authority": "Aura Orchestrator (runtime)",
+      "classification": "DERIVED"
+    }
+  ],
+  "dependencies": {
+    "critical_path": [
+      "USERS -> PROVIDER_PROFILE -> SERVICES -> BOOKINGS -> TRANSACTIONS (revenue path)",
+      "BIOMETRIC_CONSENT -> BEAUTY_PROFILES -> AURA_RECOMMENDATIONS",
+      "KNOWLEDGE_EMBEDDINGS -> RAG_SEARCH -> AURA_PRODUCT_EXPERIENCE"
+    ],
+    "high": [
+      "PORTFOLIO, REVIEWS, MESSAGES (supporting features)"
+    ],
+    "medium": [
+      "EVOLUTION, WARDROBE, VTO (experimental)"
+    ]
+  },
+  "gaps": [
+    {
+      "gap": "No Order Table",
+      "domain": "Store/Orders",
+      "severity": "HIGH",
+      "description": "productos exists but no orders/order_items tables; orders tracked via bookings/transactions repurposed"
+    },
+    {
+      "gap": "Academy Persistence Missing",
+      "domain": "Academy",
+      "severity": "HIGH",
+      "description": "Migrations 008/023/025/026/033/034 create tables but no frontend models/services"
+    },
+    {
+      "gap": "Rewards/XP Persistence Missing",
+      "domain": "Rewards",
+      "severity": "HIGH",
+      "description": "RewardsXPScreen exists but no DB tables found"
+    },
+    {
+      "gap": "Biometric Image Retention Policy",
+      "domain": "Biometric",
+      "severity": "MEDIUM",
+      "description": "Images uploaded for analysis; no documented purge/retention"
+    },
+    {
+      "gap": "GDPR/Habeas Data Automation",
+      "domain": "Privacy",
+      "severity": "MEDIUM",
+      "description": "Migrations 003/020/037 exist but no automated export/delete flow"
+    },
+    {
+      "gap": "Audit Trail (General)",
+      "domain": "All",
+      "severity": "MEDIUM",
+      "description": "Only rag_query_logs has systematic traceability"
+    },
+    {
+      "gap": "Provider Availability/Schedule",
+      "domain": "Provider",
+      "severity": "MEDIUM",
+      "description": "weeklySchedule JSONB in profile but no time-slot table"
+    },
+    {
+      "gap": "Service-Product Cross-sell",
+      "domain": "Booking/Store",
+      "severity": "LOW",
+      "description": "productos_adicionales in booking payload but no persistent link"
+    },
+    {
+      "gap": "VTO-Biometric Link",
+      "domain": "AI/VTO",
+      "severity": "LOW",
+      "description": "nail_tryon_jobs has image_hash but no FK to beauty_profiles"
+    },
+    {
+      "gap": "Notification Preferences",
+      "domain": "Notifications",
+      "severity": "LOW",
+      "description": "No preference table; all-or-nothing"
+    }
+  ],
+  "maturity": [
+    {"area": "User/Auth Domain", "level": 5, "level_name": "GOVERNED"},
+    {"area": "Provider Domain", "level": 4, "level_name": "VALIDATED"},
+    {"area": "Booking/Payment Domain", "level": 5, "level_name": "GOVERNED"},
+    {"area": "Store/Product Domain", "level": 4, "level_name": "VALIDATED"},
+    {"area": "Communication Domain", "level": 3, "level_name": "IMPLEMENTED"},
+    {"area": "Biometric/AI Domain", "level": 4, "level_name": "VALIDATED"},
+    {"area": "Knowledge/Embeddings", "level": 4, "level_name": "VALIDATED"},
+    {"area": "Academy Domain", "level": 2, "level_name": "DEFINED"},
+    {"area": "Rewards Domain", "level": 2, "level_name": "DEFINED"},
+    {"area": "Analytics/Audit", "level": 3, "level_name": "IMPLEMENTED"},
+    {"area": "Data Integrity (General)", "level": 4, "level_name": "VALIDATED"},
+    {"area": "Data Consistency", "level": 2, "level_name": "DEFINED"},
+    {"area": "Privacy/Security", "level": 3, "level_name": "IMPLEMENTED"},
+    {"area": "AI Data Governance", "level": 4, "level_name": "VALIDATED"}
+  ],
+  "technical_debt": [
+    {
+      "item": "Provider Portfolio Dual Storage",
+      "classification": "DUPLICATE AUTHORITY",
+      "domain": "Provider",
+      "impact": "HIGH",
+      "effort": "Medium"
+    },
+    {
+      "item": "Biometric Dual Storage",
+      "classification": "DUPLICATE AUTHORITY",
+      "domain": "Biometric",
+      "impact": "HIGH",
+      "effort": "Medium"
+    },
+    {
+      "item": "Frontend Duplicate Models (Booking, Service)",
+      "classification": "DUPLICATE AUTHORITY",
+      "domain": "Frontend/Backend",
+      "impact": "HIGH",
+      "effort": "Low"
+    },
+    {
+      "item": "No Orders Table",
+      "classification": "MISSING CAPABILITY",
+      "domain": "Store",
+      "impact": "HIGH",
+      "effort": "Medium"
+    },
+    {
+      "item": "Academy/Rewards Persistence Gap",
+      "classification": "MISSING CAPABILITY",
+      "domain": "Academy/Rewards",
+      "impact": "HIGH",
+      "effort": "High"
+    },
+    {
+      "item": "No General Audit Trail",
+      "classification": "OBSERVABILITY GAP",
+      "domain": "All",
+      "impact": "MEDIUM",
+      "effort": "Medium"
+    },
+    {
+      "item": "Biometric Image Retention Undefined",
+      "classification": "PRIVACY GAP",
+      "domain": "Biometric",
+      "impact": "MEDIUM",
+      "effort": "Low"
+    },
+    {
+      "item": "GDPR Automation Missing",
+      "classification": "PRIVACY GAP",
+      "domain": "Privacy",
+      "impact": "MEDIUM",
+      "effort": "Medium"
+    },
+    {
+      "item": "Enum Drift (Booking Status)",
+      "classification": "DATA MODEL DRIFT",
+      "domain": "Booking",
+      "impact": "MEDIUM",
+      "effort": "Low"
+    },
+    {
+      "item": "Derived Rating Without Trigger",
+      "classification": "INTEGRITY GAP",
+      "domain": "Provider",
+      "impact": "LOW",
+      "effort": "Low"
+    },
+    {
+      "item": "VTO-Biometric Missing FK",
+      "classification": "DATA MODEL DRIFT",
+      "domain": "AI/VTO",
+      "impact": "LOW",
+      "effort": "Low"
+    },
+    {
+      "item": "Legacy Fields Not Dropped",
+      "classification": "LEGACY",
+      "domain": "Provider/Biometric",
+      "impact": "LOW",
+      "effort": "Low"
+    }
+  ]
+}

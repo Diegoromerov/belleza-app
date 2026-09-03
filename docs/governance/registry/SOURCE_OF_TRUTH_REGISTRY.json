@@ -1,0 +1,379 @@
+{
+  "registry_name": "Source of Truth Registry",
+  "version": "1.0.0",
+  "last_updated": "2026-08-21",
+  "classifications": [
+    {
+      "domain": "Color",
+      "classification": "CANONICAL",
+      "canonical": "Token (lib/core/theme/tokens.dart)",
+      "legacy": [
+        "shared/theme.dart",
+        "glow_tokens.dart"
+      ],
+      "bridge": [
+        "GlowStoreTokens (maps to Token)",
+        "MensTheme (maps to Token for Men)"
+      ],
+      "duplicate": [
+        "LuxeColors",
+        "BellezaLuxeTokens"
+      ],
+      "conflict": "None (all mapped or deprecated)",
+      "unknown": null,
+      "notes": "Based on GLOWAPP_AUTHORITY_MODEL.json singleSourceOfTruthMap"
+    },
+    {
+      "domain": "Typography",
+      "classification": "CANONICAL",
+      "canonical": "TypographyTokens (lib/core/theme/tokens.dart)",
+      "legacy": [
+        "AppTypography (bridge)",
+        "GlowTokens"
+      ],
+      "bridge": [
+        "N",
+        "o",
+        "n",
+        "e"
+      ],
+      "duplicate": [
+        "LuxeTypography",
+        "GlowStoreTokens (uses Didot/Inter)",
+        "BellezaLuxeTypography"
+      ],
+      "conflict": "None (all mapped or deprecated)",
+      "unknown": null,
+      "notes": "Based on GLOWAPP_AUTHORITY_MODEL.json singleSourceOfTruthMap"
+    },
+    {
+      "domain": "Photography",
+      "classification": "CANONICAL",
+      "canonical": "Asset registry (to be created)",
+      "legacy": [
+        "N",
+        "o",
+        "n",
+        "e"
+      ],
+      "bridge": [
+        "N",
+        "o",
+        "n",
+        "e"
+      ],
+      "duplicate": [
+        "N",
+        "o",
+        "n",
+        "e"
+      ],
+      "conflict": null,
+      "unknown": "Assets not yet systematized",
+      "notes": "Based on GLOWAPP_AUTHORITY_MODEL.json singleSourceOfTruthMap"
+    },
+    {
+      "domain": "Icon System",
+      "classification": "CANONICAL",
+      "canonical": "GlowIconRegistry (lib/design/icons/glow_icon_registry_init.dart)",
+      "legacy": [
+        "N",
+        "o",
+        "n",
+        "e"
+      ],
+      "bridge": [
+        "N",
+        "o",
+        "n",
+        "e"
+      ],
+      "duplicate": [
+        "1",
+        "9",
+        "8",
+        " ",
+        "M",
+        "a",
+        "t",
+        "e",
+        "r",
+        "i",
+        "a",
+        "l",
+        " ",
+        "I",
+        "c",
+        "o",
+        "n",
+        "s",
+        " ",
+        "i",
+        "n",
+        " ",
+        "3",
+        "9",
+        " ",
+        "f",
+        "i",
+        "l",
+        "e",
+        "s"
+      ],
+      "conflict": "None (Migration pending)",
+      "unknown": null,
+      "notes": "Based on GLOWAPP_AUTHORITY_MODEL.json singleSourceOfTruthMap"
+    },
+    {
+      "domain": "UI / Component Language",
+      "classification": "CANONICAL",
+      "canonical": "GlowApp UI Component Language spec",
+      "legacy": [
+        "N",
+        "o",
+        "n",
+        "e"
+      ],
+      "bridge": [
+        "N",
+        "o",
+        "n",
+        "e"
+      ],
+      "duplicate": [
+        "L",
+        "u",
+        "x",
+        "e",
+        "C",
+        "o",
+        "m",
+        "p",
+        "o",
+        "n",
+        "e",
+        "n",
+        "t",
+        " ",
+        "l",
+        "i",
+        "b",
+        "r",
+        "a",
+        "r",
+        "y"
+      ],
+      "conflict": null,
+      "unknown": null,
+      "notes": "Based on GLOWAPP_AUTHORITY_MODEL.json singleSourceOfTruthMap"
+    },
+    {
+      "domain": "Audience / Expression",
+      "classification": "CANONICAL",
+      "canonical": "Token.of() + AudienceService",
+      "legacy": [
+        "N",
+        "o",
+        "n",
+        "e"
+      ],
+      "bridge": [
+        "N",
+        "o",
+        "n",
+        "e"
+      ],
+      "duplicate": [
+        "N",
+        "o",
+        "n",
+        "e"
+      ],
+      "conflict": null,
+      "unknown": null,
+      "notes": "Based on GLOWAPP_AUTHORITY_MODEL.json singleSourceOfTruthMap"
+    },
+    {
+      "domain": "Data",
+      "classification": "CANONICAL",
+      "canonical": "PostgreSQL schema (backend/init.sql, backend/schema.sql)",
+      "legacy": [
+        "N",
+        "o",
+        "n",
+        "e"
+      ],
+      "bridge": [
+        "N",
+        "o",
+        "n",
+        "e"
+      ],
+      "duplicate": [
+        "N",
+        "o",
+        "n",
+        "e"
+      ],
+      "conflict": null,
+      "unknown": null,
+      "notes": "Based on GLOWAPP_AUTHORITY_MODEL.json singleSourceOfTruthMap"
+    },
+    {
+      "domain": "AI",
+      "classification": "CANONICAL",
+      "canonical": "Backend AI services (/src/services/ai/, /src/services/agents/)",
+      "legacy": [
+        "N",
+        "o",
+        "n",
+        "e"
+      ],
+      "bridge": [
+        "N",
+        "o",
+        "n",
+        "e"
+      ],
+      "duplicate": [
+        "N",
+        "o",
+        "n",
+        "e"
+      ],
+      "conflict": null,
+      "unknown": null,
+      "notes": "Based on GLOWAPP_AUTHORITY_MODEL.json singleSourceOfTruthMap"
+    },
+    {
+      "domain": "Quality",
+      "classification": "CANONICAL",
+      "canonical": "Quality Governor spec (to be created)",
+      "legacy": [
+        "N",
+        "o",
+        "n",
+        "e"
+      ],
+      "bridge": [
+        "N",
+        "o",
+        "n",
+        "e"
+      ],
+      "duplicate": [
+        "N",
+        "o",
+        "n",
+        "e"
+      ],
+      "conflict": null,
+      "unknown": null,
+      "notes": "Based on GLOWAPP_AUTHORITY_MODEL.json singleSourceOfTruthMap"
+    },
+    {
+      "domain": "Technical Architecture",
+      "classification": "CANONICAL",
+      "canonical": "Technical Architecture Governor spec (to be created)",
+      "legacy": [
+        "N",
+        "o",
+        "n",
+        "e"
+      ],
+      "bridge": [
+        "N",
+        "o",
+        "n",
+        "e"
+      ],
+      "duplicate": [
+        "N",
+        "o",
+        "n",
+        "e"
+      ],
+      "conflict": null,
+      "unknown": null,
+      "notes": "Based on GLOWAPP_AUTHORITY_MODEL.json singleSourceOfTruthMap"
+    },
+    {
+      "domain": "Accessibility",
+      "classification": "CANONICAL",
+      "canonical": "Accessibility Governor spec (to be created)",
+      "legacy": [
+        "N",
+        "o",
+        "n",
+        "e"
+      ],
+      "bridge": [
+        "N",
+        "o",
+        "n",
+        "e"
+      ],
+      "duplicate": [
+        "N",
+        "o",
+        "n",
+        "e"
+      ],
+      "conflict": null,
+      "unknown": null,
+      "notes": "Based on GLOWAPP_AUTHORITY_MODEL.json singleSourceOfTruthMap"
+    },
+    {
+      "domain": "Performance",
+      "classification": "CANONICAL",
+      "canonical": "Performance Governor spec (to be created)",
+      "legacy": [
+        "N",
+        "o",
+        "n",
+        "e"
+      ],
+      "bridge": [
+        "N",
+        "o",
+        "n",
+        "e"
+      ],
+      "duplicate": [
+        "N",
+        "o",
+        "n",
+        "e"
+      ],
+      "conflict": null,
+      "unknown": null,
+      "notes": "Based on GLOWAPP_AUTHORITY_MODEL.json singleSourceOfTruthMap"
+    },
+    {
+      "domain": "Security",
+      "classification": "CANONICAL",
+      "canonical": "Security Governor spec (to be created)",
+      "legacy": [
+        "N",
+        "o",
+        "n",
+        "e"
+      ],
+      "bridge": [
+        "N",
+        "o",
+        "n",
+        "e"
+      ],
+      "duplicate": [
+        "N",
+        "o",
+        "n",
+        "e"
+      ],
+      "conflict": null,
+      "unknown": null,
+      "notes": "Based on GLOWAPP_AUTHORITY_MODEL.json singleSourceOfTruthMap"
+    }
+  ]
+}

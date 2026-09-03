@@ -27,6 +27,7 @@ const disputeRoutes = require('./src/routes/disputeRoutes');
 const academyRoutes = require('./src/routes/academyRoutes');
 const academyAdminRoutes = require('./src/routes/academyAdminRoutes');
 const { authMiddleware } = require('./src/middleware/auth');
+const traceIdMiddleware = require('./src/middleware/traceId');
 const glowProRoutes = require('./src/routes/glowProRoutes');
 const analyticsRoutes = require('./src/routes/analyticsRoutes');
 const metricsRoutes = require('./src/routes/metricsRoutes');
@@ -145,6 +146,8 @@ const rateLimit = require('express-rate-limit');
 
 // Configuración robusta de CORS y orígenes permitidos
 const defaultOrigins = [
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
   'http://localhost:8080',
   'http://localhost:8081',
   'http://localhost:7357',
@@ -168,7 +171,7 @@ app.use(compression()); // GZIP — debe ir antes de las rutas y estáticos
 // ⚠️ CORS DEBE IR PRIMERO para garantizar encabezados Access-Control-Allow-Origin en todas las respuestas (incluyendo errores 429/500)
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.up.railway.app')) {
+    if (!origin || allowedOrigins.includes(origin) || false) {
       return callback(null, true);
     }
     return callback(new Error('CORS bloqueado por política de seguridad'));
@@ -178,6 +181,7 @@ app.use(cors({
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+app.use(traceIdMiddleware); // Trace ID middleware for consistent tracking
 const sanitizer = require('./src/middleware/sanitizer');
 app.use(sanitizer);
 
@@ -186,7 +190,32 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       imgSrc: ["'self'", "data:", "https://world.openbeautyfacts.org", "*"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://www.gstatic.com", "https://*.gstatic.com"],
+      scriptSrc: [
+        "'self'",
+        "'unsafe-inline'",
+        "'unsafe-eval'",
+        "https://www.gstatic.com",
+        "https://*.gstatic.com",
+        "https://www.googletagmanager.com",
+        "https://connect.facebook.net",
+        "https://accounts.google.com",
+        "https://apis.google.com"
+      ],
+      scriptSrcElem: [
+        "'self'",
+        "'unsafe-inline'",
+        "https://www.gstatic.com",
+        "https://*.gstatic.com",
+        "https://www.googletagmanager.com",
+        "https://connect.facebook.net",
+        "https://accounts.google.com",
+        "https://apis.google.com"
+      ],
+      frameSrc: [
+        "'self'",
+        "https://accounts.google.com",
+        "https://*.wompi.co"
+      ],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://*.googleapis.com"],
       fontSrc: ["'self'", "data:", "https://fonts.gstatic.com", "https://*.gstatic.com"],
       connectSrc: ["'self'", "*"],
@@ -232,20 +261,16 @@ const debugRouteMiddleware = (req, res, next) => {
   return next();
 };
 
-// Rate limiter custom temporalmente deshabilitado por incompatibilidad de exportación
-// const rateLimiter = require('./src/middleware/rateLimiter');
+const { rateLimitByIP } = require('./src/middleware/rateLimiter');
 
-// Limitador estricto para endpoints de autenticación y webhooks de pagos (max 30 peticiones por minuto)
-// const authAndWebhookLimiter = rateLimiter({
-//   windowMs: 60 * 1000,
-//   max: 30,
-//   message: 'Límite de solicitudes de autenticación/pagos superado. Por favor espera un minuto antes de reintentar.'
-// });
+// Limitador estricto para endpoints de webhooks de pagos (max 30 peticiones por minuto)
+const webhookLimiter = rateLimitByIP({
+  windowMs: 60 * 1000,
+  limit: 30,
+});
 
-// Aplicar limitadores específicos (deshabilitados temporalmente)
-// app.use('/api/auth/login', authAndWebhookLimiter);
-// app.use('/api/auth/register', authAndWebhookLimiter);
-// app.use('/api/payments/wompi-webhook', authAndWebhookLimiter);
+// Nota: authLimiter ya se aplica dentro de authRoutes.js
+app.use('/api/payments/wompi-webhook', webhookLimiter);
 
 // ==========================================
 // SISTEMA DE PAGOS
@@ -262,6 +287,10 @@ app.use('/api/consent', biometricConsentRoutes);
 const consentRoutes = require('./src/routes/consentRoutes');
 app.use('/api/consent', consentRoutes);
 app.use('/api/biometric', biometricRoutes);
+app.use('/api/glow-cycle', require('./src/routes/glowCycleRoutes'));
+app.use('/api/v1/beauty', require('./src/routes/v1/beautyRoutes'));
+app.use('/api/v1/beauty-scan', require('./src/routes/v1/beautyScanRoutes'));
+app.use('/api/v1/workforce', require('./src/routes/v1/workforceRoutes'));
 app.use('/api/vto', vtoRoutes);
 app.use('/api/color', colorRoutes);
 app.use('/api/academy', academyRoutes);
@@ -1651,32 +1680,9 @@ try {
     await testConnection();
     await initDatabase();
     // Iniciar jobs de pagos (maduración, retiros automáticos, conciliación)
-        inicializarJobs();
-        // Iniciar worker de VTO de uñas
-        try {
-          const nailTryonWorker = require('./src/workers/nailTryonWorker');
-          nailTryonWorker.start();
-          console.log('✅ NailTryonWorker iniciado');
-        } catch (err) {
-          console.warn('⚠️ No se pudo iniciar NailTryonWorker:', err.message);
-        }
-        // Iniciar worker de revisión PQRSF (riesgo legal/clínico + candidatos a corpus)
-        try {
-          const pqrsfReviewWorker = require('./src/workers/pqrsfReviewWorker');
-          pqrsfReviewWorker.start();
-          console.log('✅ PqrsfReviewWorker iniciado');
-        } catch (err) {
-          console.warn('⚠️ No se pudo iniciar PqrsfReviewWorker:', err.message);
-        }
-        // Iniciar worker de atribución VTO (backfill y atribución manual)
-        try {
-          const vtoAttributionWorker = require('./src/workers/vtoAttributionWorker');
-          vtoAttributionWorker.start();
-          console.log('✅ VtoAttributionWorker iniciado');
-        } catch (err) {
-          console.warn('⚠️ No se pudo iniciar VtoAttributionWorker:', err.message);
-        }
-        // Inicializar servidor WebSocket compartiendo puerto HTTP
+    inicializarJobs();
+    // (WORKERS DESHABILITADOS)
+    // Inicializar servidor WebSocket compartiendo puerto HTTP
     initWebSocketServer(server);
   });
 
@@ -1703,3 +1709,37 @@ process.on('uncaughtException', (error) => {
 // Nodemon trigger reload to reconnect to beauty-postgres database - updated weekly schedule logic
 
 module.exports = app;
+
+// ==========================================
+// GRACEFUL SHUTDOWN
+// ==========================================
+const shutdown = async (signal) => {
+  console.log(`\n${signal} recibido. Apagando servidor graciosamente...`);
+  try {
+    if (server) {
+      server.close(() => {
+        console.log('Servidor HTTP cerrado.');
+      });
+    }
+    const { pool } = require('./src/config/db');
+    if (pool) {
+      await pool.end();
+      console.log('Pool de conexiones de BD cerrado.');
+    }
+    const { redisClient } = require('./src/config/redis');
+    if (redisClient) {
+      await redisClient.quit();
+      console.log('Conexi�n a Redis cerrada.');
+    }
+    console.log('Apagado completado exitosamente.');
+    process.exit(0);
+  } catch (err) {
+    console.error('Error durante el apagado:', err);
+    process.exit(1);
+  }
+};
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
+
+

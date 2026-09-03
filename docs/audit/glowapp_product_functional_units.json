@@ -1,0 +1,1172 @@
+{
+  "phase": "G0-A",
+  "status": "READY_FOR_G1_CONSOLIDATION",
+  "product_units": [
+    {
+      "name": "Authentication & Authorization",
+      "purpose": "Secure access control and identity verification.",
+      "business_capability": "Identity & Access Management",
+      "primary_user": "All users (client, provider, admin)",
+      "secondary_users": ["System administrators"],
+      "user_problem": "Need to securely authenticate and authorize access to app features",
+      "inputs": ["Credentials (email/password)", "OAuth tokens", "Biometric consent", "Role"],
+      "outputs": ["Authenticated session", "User role", "Tokens"],
+      "state": ["Login status", "Token validity", "Session timeout"],
+      "lifecycle": ["Registration", "Login", "Token refresh", "Logout/Session expiry"],
+      "entry_points": ["Login screen", "OAuth callbacks", "Biometric consent screen"],
+      "screens": ["LoginScreen", "RegisterScreen", "OnboardingScreen", "VerificationPendingScreen", "ForgotPasswordScreen", "ResetPasswordScreen"],
+      "components": ["Form fields", "Buttons", "Toggles", "Loading indicators"],
+      "providers": ["AuthProvider (via AuthService)", "SecureStorageProvider"],
+      "services": ["AuthService", "BiometricService (consent)", "SecureStorageService", "APIService"],
+      "repositories": ["User repository (backend)", "Token cache"],
+      "apis": ["POST /api/auth/register", "POST /api/auth/login", "POST /api/auth/oauth", "PATCH /api/auth/onboarding", "POST /api/auth/forgot-password", "POST /api/auth/reset-password", "POST /api/auth/logout"],
+      "database": {
+        "tables": ["usuarios"],
+        "fields": ["id", "email", "password_hash", "full_name", "role", "token", "documento_id_url", "rut_url", "certificacion_url", "aceptar_habeas_data", "aceptar_terminos"]
+      },
+      "external_integrations": ["OAuth providers (Google, Facebook)", "Biometric authentication (WebAuthn)", "Wompi (payment tokenization)"],
+      "ai": "None directly, but uses backend fraud detection models",
+      "rag": "None",
+      "notifications": ["Triggers auth success/failure emails and in-app alerts"],
+      "dependencies": ["SecureStorageService", "APIService", "BiometricService"],
+      "upstream": [],
+      "downstream": ["All protected routes and services"],
+      "authority": {
+        "business": "Product Owner",
+        "technical": "Backend Team",
+        "data": "Data Governance",
+        "ai": "N/A",
+        "design": "Design System (S1–S5)"
+      },
+      "validation": ["Unit tests", "Integration tests", "Security audits"],
+      "current_status": "Implemented, with known security patches applied (GLOW-SEC-02)",
+      "technical_debt": ["Legacy token handling in shared preferences; migration to encrypted storage completed"],
+      "known_gaps": ["Missing multi-factor authentication", "Session revocation on password change not fully propagated"]
+    },
+    {
+      "name": "User Profile & Settings",
+      "purpose": "Centralize user identity, preferences, and consent management.",
+      "business_capability": "Customer Relationship Management",
+      "primary_user": ["Clients", "Providers"],
+      "secondary_users": ["Support agents"],
+      "user_problem": "Need to view, edit, and control personal data and app behavior",
+      "inputs": ["Profile updates", "Preference changes", "Consent flags"],
+      "outputs": ["Updated profile", "Consent records"],
+      "state": ["Profile data", "Preference settings", "Consent status"],
+      "lifecycle": ["Profile creation", "Updates", "Consent renewal", "Account deletion"],
+      "entry_points": ["Profile screen", "Settings accessible from drawer/menu"],
+      "screens": ["UserProfileScreen", "SettingsScreen", "BiometricHistoryScreen", "FAQScreen", "HabeasDataScreen"],
+      "components": ["ProfileHeader", "LustListTile", "Form inputs", "Switches"],
+      "providers": ["UserProfileProvider", "SettingsProvider"],
+      "services": ["SupportService (for FAQ)", "AuthService (role updates)", "SecureStorageService"],
+      "repositories": ["User preferences", "Biometric history logs"],
+      "apis": ["PATCH /api/users/profile", "GET /api/users/biometric-history", "POST /api/users/habeas-data"],
+      "database": {
+        "tables": ["usuarios (extended profile fields)", "biometric_historial", "habeas_data", "user_preferencias"],
+        "fields": []
+      },
+      "external_integrations": [],
+      "ai": "None",
+      "rag": "Retrieves FAQ articles based on user queries",
+      "notifications": ["Triggers when profile updated or consent required"],
+      "dependencies": ["AuthService", "SecureStorageService"],
+      "upstream": ["Authentication"],
+      "downstream": ["Personalization (AURA)", "Booking preferences", "Store recommendations"],
+      "authority": {
+        "business": "Product Owner",
+        "technical": "Frontend/Backend",
+        "data": "Data Governance",
+        "ai": "N/A",
+        "design": "Design System"
+      },
+      "validation": ["UI tests", "Accessibility checks"],
+      "current_status": "Partially implemented; some settings fragmented across legacy theme",
+      "technical_debt": ["Duplicated settings logic in shared/theme.dart and provider-specific screens"],
+      "known_gaps": ["No unified avatar component", "Consent expiration not automated"]
+    },
+    {
+      "name": "Provider Management",
+      "purpose": "Enable providers to manage their presence, services, bookings, and earnings.",
+      "business_capability": "Supplier Relationship Management",
+      "primary_user": "Service providers (beauty professionals)",
+      "secondary_users": ["Clients (who book providers)"],
+      "user_problem": "Need a dashboard to showcase services, manage appointments, and track income",
+      "inputs": ["Provider registration details", "Service catalog", "Availability", "Portfolio media"],
+      "outputs": ["Appointment requests", "Earnings payouts", "Client reviews"],
+      "state": ["Provider status (active/inactive)", "Service list", "Booking calendar", "Earnings balance"],
+      "lifecycle": ["Onboarding", "Service setup", "Booking management", "Earnings withdrawal"],
+      "entry_points": ["Provider onboarding flow", "Provider dashboard from auth"],
+      "screens": ["ProviderDashboardScreen", "ProviderDetailScreen", "ProviderPortfolioScreen", "ProviderProfileScreen", "ProviderServicesScreen", "AppointmentsList", "EarningsView", "ProviderRouteScreen"],
+      "components": ["ProviderLuxeComponents", "ServiceCard", "BookingCard", "ProviderListTile", "Charts"],
+      "providers": ["ProviderProvider (via AppProviders)"],
+      "services": ["ProviderService", "BookingService", "WalletService", "NotificationService", "LocationService"],
+      "repositories": ["Provider profile", "Services", "Portfolio", "Appointments", "Earnings"],
+      "apis": ["GET /api/provider/dashboard", "POST /api/provider/services", "GET /api/provider/appointments", "POST /api/provider/earnings", "GET /api/provider/route"],
+      "database": {
+        "tables": ["proveedores", "servicios_proveedor", "portafolio", "citas", "ganancias", "ubicaciones"],
+        "fields": []
+      },
+      "external_integrations": ["Google Maps (routing)", "Wompi (payouts)", "Social media (portfolio sharing)"],
+      "ai": "Recommends providers to clients based on location, rating, service match",
+      "rag": "Uses provider corpus to answer client queries about services",
+      "notifications": ["New booking", "Cancellation", "Review", "Payout"],
+      "dependencies": ["AuthService", "LocationService", "WalletService"],
+      "upstream": ["Authentication"],
+      "downstream": ["Booking", "Payments", "Store (if providers sell products)"],
+      "authority": {
+        "business": "Provider Operations Lead",
+        "technical": "BackEnd/API",
+        "data": "Provider Data Owner",
+        "ai": "N/A",
+        "design": "Design System (Men/Women expression)"
+      },
+      "validation": ["Provider onboarding flow tests", "Dashboard load tests"],
+      "current_status": "Implemented; dashboard screen complex, needs performance optimization",
+      "technical_debt": ["Large provider dashboard screen (>100k lines), monolithic state"],
+      "known_gaps": ["No bulk service upload", "Calendar sync with external calendars (Google/Apple) missing"]
+    },
+    {
+      "name": "Booking & Appointments",
+      "purpose": "Facilitate service discovery, scheduling, and confirmation between clients and providers.",
+      "business_capability": "Service Delivery Orchestration",
+      "primary_user": "Clients seeking beauty services",
+      "secondary_users": ["Providers delivering services"],
+      "user_problem": "Need to find, book, and manage beauty appointments seamlessly",
+      "inputs": ["Service selection", "Provider choice", "Date/time", "Location", "Special requests"],
+      "outputs": ["Confirmed booking", "QR code", "Reminder"],
+      "state": ["Booking status (pending, confirmed, completed, cancelled)", "Payment status"],
+      "lifecycle": ["Search", "Select provider", "Choose service", "Pick date/time", "Confirm", "Payment", "Reminder", "Service delivery", "Feedback"],
+      "entry_points": ["Home screen (provider list)", "Search results", "Provider profile"],
+      "screens": ["BookingScreen", "ProviderDetailScreen (book button)", "ClientBookingsScreen", "BookingTrackingScreen"],
+      "components": ["ServiceSelectionCard", "ProviderSelectionChip", "DatePicker", "TimePicker", "LocationPicker", "ConfirmationDialog"],
+      "providers": ["BookingProvider"],
+      "services": ["BookingService", "NotificationService", "LocationService", "AuthService", "WalletService"],
+      "repositories": ["Bookings", "booking_services", "client_providers"],
+      "apis": ["POST /api/bookings", "GET /api/bookings/:id", "PATCH /api/bookings/:id/cancel", "PATCH /api/bookings/:id/reschedule"],
+      "database": {
+        "tables": ["citas", "cita_servicios", "clientes_proveedores"],
+        "fields": []
+      },
+      "external_integrations": ["Calendar (iCal/Google) export", "SMS gateway for reminders"],
+      "ai": "Suggests optimal time slots, predicts no-show likelihood",
+      "rag": "Uses booking history to recommend recurring services",
+      "notifications": ["Booking confirmation", "Reminder 24h/1h before", "Status change"],
+      "dependencies": ["AuthService", "Provider Management", "Location Service"],
+      "upstream": ["Authentication", "Provider Management"],
+      "downstream": ["Payments", "Notifications", "Wallet"],
+      "authority": {
+        "business": "Customer Experience Lead",
+        "technical": "Fullstack",
+        "data": "Booking Data Owner",
+        "ai": "N/A",
+        "design": "Design System (Booking Language S4)"
+      },
+      "validation": ["End-to-end booking flow tests", "Performance under load"],
+      "current_status": "Core flow implemented; recovery and rescheduling features need refinement",
+      "technical_debt": ["Booking state scattered across multiple providers", "Duplicate validation logic"],
+      "known_gaps": ["No group booking", "No waitlist for fully booked slots", "Deposit system not implemented"]
+    },
+    {
+      "name": "Payments & Wallet",
+      "purpose": "Process payments securely and manage user funds and rewards.",
+      "business_capability": "Financial Transactions & Loyalty",
+      "primary_user": "All users making purchases or receiving payouts",
+      "secondary_users": ["Finance team", "Providers (for earnings)"],
+      "user_problem": "Need to pay for services/products securely and earn rewards for loyalty",
+      "inputs": ["Payment card details", "Promo codes", "Wallet top-up", "Service/product selection"],
+      "outputs": ["Payment confirmation", "Transaction receipt", "Wallet balance update", "Rewards/XP awarded"],
+      "state": ["Wallet balance", "Pending transactions", "Transaction history", "Rewards tier"],
+      "lifecycle": ["Top-up", "Purchase", "Payment settlement", "Rewards accrual", "Redemption"],
+      "entry_points": ["Checkout flow", "Wallet top-up screen", "Provider earnings withdrawal"],
+      "screens": ["WalletScreen", "GlowstoreOrdersScreen", "RewardsXPScreen", "Payment sheet (Wompi)"],
+      "components": ["PaymentInput", "WalletButton", "RewardBadge", "TransactionListTile"],
+      "providers": ["WalletProvider"],
+      "services": ["WalletService", "PaymentService (Wompi wrapper)", "NotificationService", "AuthService"],
+      "repositories": ["Transactions", "wallet_balance", "rewards_xp", "glowstore_orders"],
+      "apis": ["POST /api/payments/wompi", "POST /api/wallet/topup", "GET /api/wallet/history", "POST /api/rewards/accrue", "POST /api/rewards/redeem"],
+      "database": {
+        "tables": ["transacciones", "billetera", "recompensas", "pedidos_glowstore"],
+        "fields": []
+      },
+      "external_integrations": ["Wompi (payment gateway)", "Banking APIs (payouts)", "Third-party promo services"],
+      "ai": "Fraud detection, dynamic pricing suggestions",
+      "rag": "Recommends payment methods based on user history",
+      "notifications": ["Payment success/failure", "Wallet low balance", "Rewards expiring"],
+      "dependencies": ["AuthService", "SecureStorageService (for tokens)"],
+      "upstream": ["Booking", "Store", "Provider Services (if paid)"],
+      "downstream": ["Accounting", "Compliance reporting"],
+      "authority": {
+        "business": "Finance Lead",
+        "technical": "Payments Team",
+        "data": "Financial Data Owner",
+        "ai": "N/A",
+        "design": "Design System (Checkout steps S4)"
+      },
+      "validation": ["PCI-DSS compliance testing", "Edge case simulations (failed payments, refunds)"],
+      "current_status": "Wompi integration implemented; wallet feature present but not fully utilized across all payment contexts",
+      "technical_debt": ["Duplicate payment handling in booking and store flows", "Lack of unified payment service abstraction"],
+      "known_gaps": ["No installment payments", "No invoicing for B2B", "Limited payout methods for providers (only bank transfer)"]
+    },
+    {
+      "name": "Store & E-commerce",
+      "purpose": "Sell beauty products directly to consumers.",
+      "business_capability": "Online Retail",
+      "primary_user": "Clients purchasing products",
+      "secondary_users": ["Providers (who can sell products via consignment)", "Inventory managers"],
+      "user_problem": "Need to discover, evaluate, and purchase beauty products with confidence",
+      "inputs": ["Product search", "Filters", "Cart additions", "Shipping address"],
+      "outputs": ["Order confirmation", "Shipment tracking", "Delivery notification"],
+      "state": ["Product inventory", "Cart contents", "Order status"],
+      "lifecycle": ["Browse", "Search", "Product detail", "Add to cart", "Checkout", "Payment", "Fulfillment", "Delivery", "Review"],
+      "entry_points": ["Home screen (featured products)", "Search results", "Provider portfolio (if consignment)"],
+      "screens": ["StoreScreen", "ProductList", "ProductDetail", "Checkout steps (implicit in wallet/payment)"],
+      "components": ["StoreProductCard", "PriceDisplay", "DiscountBadge", "WishlistButton", "CartSummary"],
+      "providers": ["StoreProvider"],
+      "services": ["StoreService", "ProductService", "InventoryService", "WalletService", "NotificationService"],
+      "repositories": ["Product catalog", "Inventory levels", "Orders", "Shipments"],
+      "apis": ["GET /api/products", "GET /api/products/:id", "POST /api/cart/add", "POST /api/orders/create", "GET /api/orders/:id/tracking"],
+      "database": {
+        "tables": ["productos", "inventario", "pedidos", "envios"],
+        "fields": []
+      },
+      "external_integrations": ["Shipping carriers (Servientrega, Coopercarga)", "Tax calculation services (Avalara)", "Barcode scanners"],
+      "ai": "Product recommendation engine, visual search (via AURA), demand forecasting",
+      "rag": "Uses product corpus to answer ingredient/questions",
+      "notifications": ["Order confirmed", "Shipped", "Out for delivery", "Delivered", "Review request"],
+      "dependencies": ["AuthService", "WalletService", "Location Service (for shipping estimates)"],
+      "upstream": ["Authentication", "Product Catalog"],
+      "downstream": ["Payments", "Notifications", "Wallet"],
+      "authority": {
+        "business": "E-commerce Lead",
+        "technical": "Store Team",
+        "data": "Product Data Owner",
+        "ai": "N/A",
+        "design": "Design System (Commerce Language S4)"
+      },
+      "validation": ["A/B testing on checkout flow", "Inventory accuracy audits"],
+      "current_status": "Store screen implemented; product detail missing AR/VU try-on (reliant on AURA VTO)",
+      "technical_debt": ["Product data denormalization", "Missing unified image service (multiple image providers)"],
+      "known_gaps": ["No subscription model", "No bulk ordering for salons", "Limited product attributes (no ingredient search)"]
+    },
+    {
+      "name": "AURA Intelligence",
+      "purpose": "Provide AI-driven beauty analysis, personalized recommendations, and virtual try-on.",
+      "business_capability": "Artificial Intelligence Services",
+      "primary_user": "Clients seeking personalized beauty insights",
+      "secondary_users": ["Providers (to understand client needs)", "Product team (for feedback)"],
+      "user_problem": "Need objective analysis of skin/hair condition and tailored product/service recommendations",
+      "inputs": ["User selfie/upload", "Service/product preferences", "Location", "Historical data"],
+      "outputs": ["Analysis report", "VTO simulation", "Recommended services/products", "Confidence scores"],
+      "state": ["Analysis in progress", "Results cached", "VTO model loaded"],
+      "lifecycle": ["Capture", "Processing", "Analysis", "Recommendation", "VTO", "Feedback"],
+      "entry_points": ["Ideas tab", "AURA welcome screen", "Capture button in provider detail"],
+      "screens": ["AuraWelcomeScreen", "CaptureScreen", "ProcessingScreen", "ResultsScreen", "ColorDNAResultsScreen", "VTOLiveScreen", "NailVTOScreen", "ProcessingAlchemyScreen"],
+      "components": ["Aura3DEmblem", "FaceOverlayPainter", "HandOverlayPainter", "NailVTOPainter", "QualityIndicator", "RecommendationCard", "ScoreCard"],
+      "providers": ["AuraProvider (via AI services)"],
+      "services": ["BiometricService (capture)", "NotificationService", "WalletService (for paid analyses)", "APIService (to backend AI orchestrator)"],
+      "repositories": ["Analysis results", "VTO model metadata", "User beauty profile"],
+      "apis": ["POST /api/biometric/capture", "POST /api/ai/orchestrate/analyze", "GET /api/ai/results/:id", "POST /api/ai/vto"],
+      "database": {
+        "tables": ["resultados_biometricos", "analisis_ia", "modelos_vto", "historial_recomendaciones"],
+        "fields": []
+      },
+      "external_integrations": ["Gemini API (or other LLM)", "Computer vision models (OpenCV, TensorFlow.js)", "AR libraries (ARCore/ARKit via plugins)"],
+      "ai": "Core unit; uses multimodal models for skin analysis, hair simulation, color matching",
+      "rag": "Retrieves from beauty knowledge corpus to explain analysis results",
+      "notifications": ["Analysis complete", "New recommendations based on updated data", "VTO session expired"],
+      "dependencies": ["BiometricService", "APIService", "SecureStorageService (for model caching)"],
+      "upstream": ["Authentication", "User Profile (for history)"],
+      "downstream": ["Store (product recommendations)", "Booking (service suggestions)", "Wallet (paid analyses)"],
+      "authority": {
+        "business": "AI Product Lead",
+        "technical": "AI/ML Team",
+        "data": "AI Data Governance",
+        "ai": "AI/ML Team (model)",
+        "design": "Design System (AURA Language S4)"
+      },
+      "validation": ["Model accuracy testing", "Bias audits", "A/B test on recommendation conversion"],
+      "current_status": "MVP implemented; analysis latency high, VTO limited to nails and face overlay",
+      "technical_debt": ["Heavy use of image processing on UI thread", "Models not quantized for web"],
+      "known_gaps": ["No real-time skin analysis", "Limited to predefined analysis types", "No provider-facing AURA dashboard"]
+    },
+    {
+      "name": "Academy",
+      "purpose": "Deliver educational content and certifications in beauty and wellness.",
+      "business_capability": "Education & Training",
+      "primary_user": ["Clients", "Providers seeking skill improvement"],
+      "secondary_users": ["Content creators", "Admins"],
+      "user_problem": "Need accessible, structured learning to stay updated on beauty trends and techniques",
+      "inputs": ["Course enrollment", "Lesson progress", "Quiz answers"],
+      "outputs": ["Completed lessons", "Certificates", "XP points"],
+      "state": ["Enrolled courses", "Lesson completion status", "Quiz scores"],
+      "lifecycle": ["Browse", "Enroll", "Study", "Quiz", "Complete", "Earn certificate/XP"],
+      "entry_points": ["Academy tab", "Provider dashboard (for provider-specific courses)"],
+      "screens": ["AcademyScreen", "CourseList", "CourseDetailScreen", "LessonView", "QuizScreen", "GlowBeautyScreen", "GlowColorScreen", "GlowNBackScreen"],
+      "components": ["GlowGlassCard", "GlowProgressBar", "LuxeListTile", "Quiz inputs"],
+      "providers": ["AcademyProvider"],
+      "services": ["AcademyService", "NotificationService", "WalletService (for paid courses)", "APIService"],
+      "repositories": ["Course catalog", "User progress", "Quiz attempts", "Certificates issued"],
+      "apis": ["GET /api/academy/courses", "GET /api/academy/courses/:id/lessons", "POST /api/academy/quiz/submit", "POST /api/academy/certificate/claim"],
+      "database": {
+        "tables": ["cursos", "lecciones", "progreso_usuarios", "certificados"],
+        "fields": []
+      },
+      "external_integrations": ["Video hosting (Vimeo, YouTube)", "SCORM/LMS platforms (optional)"],
+      "ai": "Recommends courses based on user role, interests, completion history",
+      "rag": "Answers learner questions using course content",
+      "notifications": ["New course available", "Lesson reminder", "Quiz deadline", "Certificate expiring"],
+      "dependencies": ["AuthService", "WalletService"],
+      "upstream": ["Authentication", "User Profile (role-based course access)"],
+      "downstream": ["Provider Management (skills tracking)", "Store (recommend related products)"],
+      "authority": {
+        "business": "Education Lead",
+        "technical": "Content Team",
+        "data": "Educational Data Owner",
+        "ai": "N/A",
+        "design": "Design System (Academy Components S4)"
+      },
+      "validation": ["SCORM compliance (if applicable)", "Accessibility WCAG AA"],
+      "current_status": "Course listing and viewing implemented; quiz engine basic, no timed exams",
+      "technical_debt": ["Video player not abstracted", "Duplicated UI components across course types"],
+      "known_gaps": ["No live streaming", "No peer discussion forums", "No offline download"]
+    },
+    {
+      "name": "Support & Ticketing",
+      "purpose": "Assist users with issues, questions, and feedback.",
+      "business_capability": "Customer Service",
+      "primary_user": "All users needing help",
+      "secondary_users": ["Support agents", "Admins"],
+      "user_problem": "Need timely resolution of technical, billing, or service-related problems",
+      "inputs": ["Ticket subject", "Description", "Attachments", "Category"],
+      "outputs": ["Ticket number", "Agent response", "Resolution status", "Satisfaction survey"],
+      "state": ["Ticket status (open, pending, resolved, closed)", "SLA timers"],
+      "lifecycle": ["Submit", "Assign", "Investigate", "Respond", "Resolve", "Close", "Feedback"],
+      "entry_points": ["Support center accessible from menu/profile", "In-app prompts after errors"],
+      "screens": ["SupportCenterScreen", "CreateTicketScreen", "TicketChatScreen", "TermsConditionsScreen"],
+      "components": ["TicketForm", "ChatBubble", "AttachmentUpload", "LoadingIndicator"],
+      "providers": ["SupportProvider"],
+      "services": ["SupportService", "NotificationService", "APIService", "AuthService"],
+      "repositories": ["Tickets", "Ticket messages", "Attachments", "FAQ entries"],
+      "apis": ["POST /api/tickets/create", "GET /api/tickets/:id/messages", "PATCH /api/tickets/:id/close", "GET /api/faq/search"],
+      "database": {
+        "tables": ["tickets", "mensajes_tickets", "adjuntos", "faq"],
+        "fields": []
+      },
+      "external_integrations": ["Email support (SMTP)", "Chat widgets (Zendesk, Intercom)", "Phone IVR"],
+      "ai": "Suggests knowledge base articles, routes tickets to appropriate agent",
+      "rag": "Powers FAQ search and automated responses",
+      "notifications": ["Ticket assigned", "Agent reply", "Resolution", "Satisfaction request"],
+      "dependencies": ["AuthService", "NotificationService"],
+      "upstream": ["Any user-facing feature (errors, questions)"],
+      "downstream": [],
+      "authority": {
+        "business": "Support Lead",
+        "technical": "Support Team",
+        "data": "Ticket Data Owner",
+        "ai": "N/A",
+        "design": "Design System (Support Components S4)"
+      },
+      "validation": ["SLA monitoring", "Customer satisfaction (CSAT) surveys"],
+      "current_status": "Ticket creation and chat implemented; no SLA automation, limited agent tools",
+      "technical_debt": ["Ticket chat lacks typing indicators, read receipts", "Attachment size limits not enforced client-side"],
+      "known_gaps": ["No phone callback option", "No in-app screen sharing for troubleshooting", "No multilingual support beyond Spanish"]
+    },
+    {
+      "name": "Dispute Resolution",
+      "purpose": "Mediate conflicts between users and providers regarding services or products.",
+      "business_capability": "Risk Management & Trust Safety",
+      "primary_user": "Clients who experienced issues with services/products",
+      "secondary_users": ["Providers (to respond)", "Support agents (as mediators)"],
+      "user_problem": "Need a fair process to report problems and seek refunds or corrections",
+      "inputs": ["Booking/order ID", "Issue description", "Evidence (photos, videos)", "Desired outcome"],
+      "outputs": ["Dispute status", "Mediator decision", "Refund/credit issued", "Closure"],
+      "state": ["Dispute status (open, under review, resolved, rejected)", "Evidence collected"],
+      "lifecycle": ["Report", "Evidence submission", "Provider response", "Mediator review", "Decision", "Execution", "Feedback"],
+      "entry_points": ["From booking confirmation screen", "Order details", "Wallet transaction"],
+      "screens": ["DisputesListScreen", "OpenDisputeScreen"],
+      "components": ["DisputeForm", "EvidenceUploader", "StatusBadge", "TimelineView"],
+      "providers": ["DisputeProvider"],
+      "services": ["DisputeService", "NotificationService", "WalletService (for refunds)", "AuthService"],
+      "repositories": ["Disputes", "Dispute evidence", "Dispute resolutions"],
+      "apis": ["POST /api/disputes/create", "GET /api/disputes/:id/evidence", "PATCH /api/disputes/:id/respond", "PATCH /api/disputes/:id/resolve"],
+      "database": {
+        "tables": ["disputados", "evidencia_disputas", "resoluciones"],
+        "fields": []
+      },
+      "external_integrations": ["Payment gateway for refunds (Wompi)", "Identity verification services (for fraud)"],
+      "ai": "Flags potentially fraudulent disputes, predicts resolution outcome",
+      "rag": "Retrieves similar past disputes to inform mediation",
+      "notifications": ["Dispute filed", "Provider responded", "Decision made", "Refund processed"],
+      "dependencies": ["AuthService", "WalletService"],
+      "upstream": ["Booking", "Store", "Wallet (transaction source)"],
+      "downstream": ["Accounting (refunds)", "Provider Management (rating impact)"],
+      "authority": {
+        "business": "Trust & Safety Lead",
+        "technical": "Dispute Team",
+        "data": "Dispute Data Owner",
+        "ai": "N/A",
+        "design": "Design System (Dispute Components S4)"
+      },
+      "validation": ["Legal compliance review", "Audit trails"],
+      "current_status": "Basic dispute filing implemented; no evidence validation, no automated escalation",
+      "technical_debt": ["Dispute logic duplicated in frontend and backend", "No unified evidence viewer"],
+      "known_gaps": ["No mediation timeline guarantees", "No provider appeal process", "No public dispute transparency report"]
+    },
+    {
+      "name": "Design & Personalization",
+      "purpose": "Enable users to visualize and plan beauty routines, track progress, and customize looks.",
+      "business_capability": "Personal Beauty Management",
+      "primary_user": "Clients interested in self-care routines and experimentation",
+      "secondary_users": ["Providers (to suggest routines)", "Content team"],
+      "user_problem": "Need tools to plan outfits, track skin/hair changes, and virtually try products",
+      "inputs": ["Wardrobe items", "Selfies", "Product scans", "Health data"],
+      "outputs": ["Outfit suggestions", "Evolution charts", "Validation results", "Personalized looks"],
+      "state": ["Wardrobe inventory", "Evolution timeline", "Validation scans", "Active looks"],
+      "lifecycle": ["Capture", "Analyze", "Suggest", "Try-on", "Confirm", "Save to routine"],
+      "entry_points": ["Design tab", "Provider recommendations", "AURA analysis results"],
+      "screens": ["EvolutionDashboardScreen", "WardrobeDashboardScreen", "OutfitResultScreen", "MedicalValidationScreen", "GlowUpCardScreen", "PaletteCardScreen", "ColorimetriaHistorialScreen"],
+      "components": ["EvolutionChart", "WardrobeGrid", "OutfitModel", "ValidationScanner", "GlowUpCard", "PaletteCard", "ColorimetriaChart"],
+      "providers": ["DesignProvider"],
+      "services": ["DesignService", "BiometricService (for scans)", "NotificationService", "APIService"],
+      "repositories": ["Wardrobe items", "Evolution scans", "Medical validations", "Glowup sessions"],
+      "apis": ["GET /api/design/wardrobe", "POST /api/design/evolution/scan", "POST /api/design/medical/validate", "GET /api/design/glowup/:id"],
+      "database": {
+        "tables": ["guardarropa", "evoluciones", "validaciones_medicas", "sesiones_glowup"],
+        "fields": []
+      },
+      "external_integrations": ["Smart scales (via Bluetooth)", "Health APIs (Apple Health, Google Fit)", "Dermatology APIs"],
+      "ai": "Generates outfit combinations, predicts evolution trends, validates medical suitability",
+      "rag": "Uses personal care corpus to recommend routines",
+      "notifications": ["Evolution milestone reached", "Validation expiring", "New outfit suggestion"],
+      "dependencies": ["AuthService", "BiometricService", "NotificationService"],
+      "upstream": ["Authentication", "AURA (for analysis input)", "Wallet (if paid features)"],
+      "downstream": ["Store (product purchase for routine)", "Booking (service booking for maintenance)"],
+      "authority": {
+        "business": "Personalization Lead",
+        "technical": "Design Team",
+        "data": "Design Data Owner",
+        "ai": "N/A",
+        "design": "Design System (Personalization Components S4)"
+      },
+      "validation": ["Usability testing", "Accuracy of measurements vs manual"],
+      "current_status": "Screens implemented; data synchronization intermittent, no cloud backup for wardrobe",
+      "technical_debt": ["Heavy use of custom painters", "Not optimized for low-end devices"],
+      "known_gaps": ["No social sharing of outfits", "No integration with smart mirrors", "Limited to female-centric wardrobe (male not differentiated)"]
+    },
+    {
+      "name": "Chat & Messaging",
+      "purpose": "Enable real-time communication between users, providers, concierge, and support.",
+      "business_capability": "Conversational Engagement",
+      "primary_user": "All users seeking immediate interaction",
+      "secondary_users": ["Agents (concierge, support)"],
+      "user_problem": "Need to ask questions, get updates, and resolve issues without delays",
+      "inputs": ["Message text", "Attachments", "Emojis", "Quick replies"],
+      "outputs": ["Sent message", "Delivery receipt", "Read receipt", "Typing indicator"],
+      "state": ["Conversation history", "Online status", "Unread count"],
+      "lifecycle": ["Send", "Deliver", "Read", "Respond", "Archive"],
+      "entry_points": ["From provider detail (chat icon)", "Support ticket", "Concierge invitation"],
+      "screens": ["ChatListScreen", "ChatScreen"],
+      "components": ["ChatBubble", "MessageInput", "AttachmentPicker", "EmojiPicker"],
+      "providers": ["ChatProvider"],
+      "services": ["ChatService", "NotificationService", "AuthService", "APIService"],
+      "repositories": ["Chat rooms", "Messages", "Attachments", "Read receipts"],
+      "apis": ["GET /api/chats", "POST /api/chats/:id/messages", "GET /api/chats/:id/messages/since", "POST /api/chats/:id/read"],
+      "database": {
+        "tables": ["chats", "mensajes_chats", "adjuntos_chats", "lecturas"],
+        "fields": []
+      },
+      "external_integrations": ["Push notifications (Firebase)", "Web sockets (Socket.IO)", "File storage (AWS S3)"],
+      "ai": "Suggests quick replies, translates messages, detects sentiment",
+      "rag": "Retrieves from support knowledge to answer common queries",
+      "notifications": ["New message", "Call request", "Message failed to send"],
+      "dependencies": ["AuthService", "NotificationService"],
+      "upstream": ["Any feature requiring contact (provider, support)"],
+      "downstream": [],
+      "authority": {
+        "business": "Engagement Lead",
+        "technical": "Chat Team",
+        "data": "Chat Data Owner",
+        "ai": "N/A",
+        "design": "Design System (Chat Components S4)"
+      },
+      "validation": ["Load testing (1k concurrent connections)", "Message ordering tests"],
+      "current_status": "Basic chat implemented; no end-to-end encryption, message search limited",
+      "technical_debt": ["Message persistence relies on backend polling", "No efficient diff sync"],
+      "known_gaps": ["No voice/video calls", "No message reactions", "No scheduled messages"]
+    },
+    {
+      "name": "Location & Mapping",
+      "purpose": "Provide geolocation, proximity search, and route calculation.",
+      "business_capability": "Location Intelligence",
+      "primary_user": "Users seeking nearby providers or navigating to appointments",
+      "secondary_users": ["Providers (to appear in searches)", "Logistics (for home services)"],
+      "user_problem": "Need to find beauty services close to me and get directions",
+      "inputs": ["Current location", "Search radius", "Service filters"],
+      "outputs": ["Nearby providers", "Distance", "Estimated time of arrival", "Route steps"],
+      "state": ["Last known location", "Permission status", "Map view state"],
+      "lifecycle": ["Request location", "Show map", "Filter providers", "Select provider", "Navigate"],
+      "entry_points": ["Home screen (map)", "Provider list filter", "Appointment confirmation (navigate to provider)"],
+      "screens": ["MapScreen", "ProviderDetailScreen (location button)", "BookingScreen (location picker)"],
+      "components": ["MapMarker", "ProviderListItem", "DistanceBadge", "DirectionsStep"],
+      "providers": ["LocationProvider"],
+      "services": ["LocationService", "NotificationService", "APIService", "AuthService"],
+      "repositories": ["User locations", "Provider geofences", "Search history"],
+      "apis": ["GET /api/locations/nearby", "POST /api/locations/geocode", "GET /api/locations/route"],
+      "database": {
+        "tables": ["ubicaciones_proveedor", "historial_busquedas"],
+        "fields": []
+      },
+      "external_integrations": ["Google Maps API", "OpenStreetMap (fallback)", "GPS hardware"],
+      "ai": "Predicts busy times, suggests optimal travel time",
+      "rag": "Answers location-based queries (\"Is there a salon open now near me?\")",
+      "notifications": ["Location permission denied", "Provider moved far", "ETA changed"],
+      "dependencies": ["AuthService (for provider-specific searches)"],
+      "upstream": ["Authentication", "Provider Management"],
+      "downstream": ["Booking (location selection)", "Store (delivery routing)"],
+      "authority": {
+        "business": "Ops Lead",
+        "technical": "Maps Team",
+        "data": "Location Data Owner",
+        "ai": "N/A",
+        "design": "Design System (Mapping Components S4)"
+      },
+      "validation": ["Accuracy vs ground truth", "Battery consumption tests"],
+      "current_status": "Map screen implemented; provider clustering missing, offline maps not supported",
+      "technical_debt": ["Geocoding calls not cached", "Map state resets on tab switch"],
+      "known_gaps": ["No indoor mapping", "No AR navigation", "Limited to point-to-point routing (no multi-stop)"]
+    },
+    {
+      "name": "Notifications",
+      "purpose": "Inform users of important events, updates, and opportunities.",
+      "business_capability": "Engagement & Retention",
+      "primary_user": "All users",
+      "secondary_users": ["Marketing team (for campaigns)"],
+      "user_problem": "Need to stay informed about bookings, promotions, and app changes without opening the app constantly",
+      "inputs": ["Event triggers (booking confirmed, promo launched)", "User preferences", "Time schedules"],
+      "outputs": ["Push notification", "In-app badge", "Email", "SMS"],
+      "state": ["Notification token", "Subscription preferences", "Queue status"],
+      "lifecycle": ["Trigger", "Target selection", "Template rendering", "Delivery channel", "User action"],
+      "entry_points": ["Background services (Firebase)", "In-app actions (booking confirmation)"],
+      "screens": [],
+      "components": ["Toast", "Snackbar", "Badge", "BellIcon"],
+      "providers": ["NotificationProvider"],
+      "services": ["NotificationService", "APIService", "AuthService", "SecureStorageService"],
+      "repositories": ["Device tokens", "Notification templates", "Delivery logs", "User preferences"],
+      "apis": ["POST /api/notifications/register-token", "GET /api/notifications/preferences", "POST /api/notifications/send"],
+      "database": {
+        "tables": ["tokens_dispositivos", "plantillas_notificaciones", "logs_envio", "preferencias_notif"],
+        "fields": []
+      },
+      "external_integrations": ["Firebase Cloud Messaging", "SMTP (email)", "Twilio (SMS)", "Web push"],
+      "ai": "Optimizes send time, personalizes content, predicts churn",
+      "rag": "Retrieves user history to tailor notification copy",
+      "notifications": [],
+      "dependencies": ["AuthService", "SecureStorageService"],
+      "upstream": ["Any feature generating an event (booking, payment, AURA analysis)"],
+      "downstream": ["User engagement metrics"],
+      "authority": {
+        "business": "Growth Lead",
+        "technical": "Notifications Team",
+        "data": "Notification Data Owner",
+        "ai": "N/A",
+        "design": "Design System (Notification Components S4)"
+      },
+      "validation": ["Delivery rate testing", "Spam compliance (CAN-SPAM, GDPR)"],
+      "current_status": "Basic push notifications implemented; no in-app notification center, limited rich media",
+      "technical_debt": ["Notification preferences not synced across devices", "Duplicate Firebase initialization"],
+      "known_gaps": ["No notification snoozing", "No granular categorization (promo vs transactional)", "No SMS fallback for undelivered push"]
+    },
+    {
+      "name": "Analytics & Metrics",
+      "purpose": "Measure user behavior, business performance, and experiment outcomes.",
+      "business_capability": "Data-Driven Decision Making",
+      "primary_user": ["Product managers", "Executives", "Marketing"],
+      "secondary_users": ["Engineers (for diagnostics)"],
+      "user_problem": "Need to understand what users do and why to improve the app",
+      "inputs": ["User actions", "System events", "Performance timings", "Conversion funnels"],
+      "outputs": ["Dashboards", "Reports", "Alerts", "Experiment results"],
+      "state": ["Event buffers", "Session IDs", "Experiment flags"],
+      "lifecycle": ["Collect", "Process", "Store", "Analyze", "Visualize", "Act"],
+      "entry_points": ["Instrumented throughout app (screen views, button clicks, API calls)"],
+      "screens": [],
+      "components": [],
+      "providers": ["AnalyticsProvider"],
+      "services": ["AnalyticsService", "APIService", "MetricsService"],
+      "repositories": ["Raw events", "Aggregated metrics", "Experiment configs"],
+      "apis": ["POST /api/events/batch", "GET /api/metrics/dashboard", "POST /api/experiments/log"],
+      "database": {
+        "tables": ["eventos", "metricas_agregadas", "experimentos"],
+        "fields": []
+      },
+      "external_integrations": ["Google Analytics", "Mixpanel", "Amplitude (optional)", "Data warehouses (Snowflake)"],
+      "ai": "Detects anomalies, forecasts trends, suggests optimizations",
+      "rag": "Not applicable",
+      "notifications": ["Alert on metric threshold crossed (e.g., crash rate spike)"],
+      "dependencies": ["APIService"],
+      "upstream": ["Every user interaction"],
+      "downstream": ["Business strategy", "Product roadmap"],
+      "authority": {
+        "business": "Analytics Lead",
+        "technical": "Data Team",
+        "data": "Analytics Data Owner",
+        "ai": "N/A",
+        "design": "Design System (Analytics Components – minimal UI)"
+      },
+      "validation": ["Data accuracy audits", "Pipeline lag monitoring"],
+      "current_status": "Analytics service implemented; event tracking incomplete (missing many UI interactions), no real-time dashboard",
+      "technical_debt": ["Inconsistent event naming", "Client-side buffering unreliable on poor networks"],
+      "known_gaps": ["No funnel analysis", "No cohort retention", "No A/B test framework integrated"]
+    },
+    {
+      "name": "Social Share",
+      "purpose": "Allow users to share their beauty achievements, VTO, and content.",
+      "business_capability": "Viral Growth & Advocacy",
+      "primary_user": "Users proud of their results or seeking feedback",
+      "secondary_users": ["Friends/followers", "Influencers"],
+      "user_problem": "Need to showcase beauty transformations and get social validation",
+      "inputs": ["Image/video to share", "Caption", "Platform selection", "Hashtags"],
+      "outputs": ["Shared post", "Engagement metrics", "Referral credit if applicable"],
+      "state": ["Share readiness", "Platform connectivity status"],
+      "lifecycle": ["Create content", "Prepare share", "Select platform", "Publish", "Track engagement"],
+      "entry_points": ["AURA results screen", "Evolution dashboard", "Reward claim screen"],
+      "screens": [],
+      "components": ["ShareButton", "PlatformIcon"],
+      "providers": ["SocialShareProvider"],
+      "services": ["SocialShareService", "APIService", "AuthService"],
+      "repositories": ["Share history", "Referral codes"],
+      "apis": ["POST /api/social/share", "GET /api/social/referral/:code"],
+      "database": {
+        "tables": ["compartidos", "referidos"],
+        "fields": []
+      },
+      "external_integrations": ["Facebook Share API", "Twitter/X", "Instagram (basic)", "WhatsApp", "TikTok"],
+      "ai": "Suggests hashtags, detects NSFW content, recommends best time to post",
+      "rag": "Retrieves trending beauty topics for share prompts",
+      "notifications": ["Share failed", "Post went viral", "Referral earned"],
+      "dependencies": ["AuthService"],
+      "upstream": ["AURA", "Evolution", "Wallet (reward claims)"],
+      "downstream": ["User acquisition", "Brand awareness"],
+      "authority": {
+        "business": "Social Lead",
+        "technical": "Sharing Team",
+        "data": "Social Data Owner",
+        "ai": "N/A",
+        "design": "Design System (Share Components – minimal UI)"
+      },
+      "validation": ["Link preview accuracy", "Platform compliance checks"],
+      "current_status": "Basic sharing implemented; no deep linking, limited to image share (no video)",
+      "technical_debt": ["Share intents not handled gracefully on web", "No persistent share history"],
+      "known_gaps": ["No in-app community feed", "No creator monetization", "No UGC moderation"]
+    }
+  ],
+  "shared_capabilities": [
+    {
+      "name": "Authentication & Authorization",
+      "type": "Shared Technical Service",
+      "description": "Auth tokens, role checks used by all protected units"
+    },
+    {
+      "name": "User Profile & Settings",
+      "type": "Shared Product Capability",
+      "description": "Preferences, consent used across units for personalization"
+    },
+    {
+      "name": "Notifications",
+      "type": "Shared Technical Service",
+      "description": "Alerting service used by all units for user engagement"
+    },
+    {
+      "name": "Payments & Wallet",
+      "type": "Shared Product Capability",
+      "description": "Funds, rewards used by Booking, Store, AURA (paid analyses)"
+    },
+    {
+      "name": "Location",
+      "type": "Shared Technical Service",
+      "description": "Geolocation, mapping used by Provider Management, Booking, Store"
+    },
+    {
+      "name": "Search",
+      "type": "Shared Technical Service",
+      "description": "Provider, product, course search used across discovery flows"
+    },
+    {
+      "name": "AI",
+      "type": "Shared Technical Service",
+      "description": "Model inference, orchestration used by AURA, Design, Store recommendations"
+    },
+    {
+      "name": "AURA",
+      "type": "Shared Product Capability",
+      "description": "Intelligence layer used by Store (VTO), Design (analysis input), Booking (service matching)"
+    },
+    {
+      "name": "Media",
+      "type": "Shared Technical Service",
+      "description": "Image/video capture, processing used by AURA, Design, Profile"
+    },
+    {
+      "name": "Storage",
+      "type": "Shared Technical Service",
+      "description": "Cloud persistence used by all units for assets, user data"
+    },
+    {
+      "name": "Analytics",
+      "type": "Shared Technical Service",
+      "description": "Event tracking used by all units for insights"
+    },
+    {
+      "name": "Social Share",
+      "type": "Shared Product Capability",
+      "description": "Used by AURA, Evolution, Wallet for growth and advocacy"
+    }
+  ],
+  "functional_dependencies": {
+    "strong_dependencies": [
+      "Auth → All units",
+      "Wallet → Booking, Store",
+      "Notifications → All units"
+    ],
+    "weak_dependencies": [
+      "Academy → Wallet (only for paid courses)",
+      "Social Share → AURA, Evolution, Wallet",
+      "Design → Store, Booking"
+    ],
+    "circular_dependencies": [],
+    "shared_services": [
+      "AuthService",
+      "NotificationService", 
+      "WalletService",
+      "LocationService",
+      "APIService"
+    ]
+  },
+  "product_boundaries": [
+    {
+      "unit": "Authentication & Authorization",
+      "start": "User submits credentials or initiates OAuth/biometric flow",
+      "end": "Session token issued and stored securely; user redirected to home",
+      "not_responsible_for": ["User profile edits (handled by Profile unit)", "Passwordless login alternatives (out of scope)"]
+    },
+    {
+      "unit": "User Profile & Settings",
+      "start": "User navigates to profile or settings screen",
+      "end": "Changes saved to backend and local preferences; confirmation shown",
+      "not_responsible_for": ["Authentication validation (handled by Auth)", "Biometric capture (handled by BiometricService/AURA)"]
+    },
+    {
+      "unit": "Provider Management",
+      "start": "Provider completes onboarding and logs in",
+      "end": "Provider can manage services, view appointments, and withdraw earnings",
+      "not_responsible_for": ["Client-side booking experience (handled by Booking)", "Payment processing (handled by Wallet/Payments)"]
+    },
+    {
+      "unit": "Booking & Appointments",
+      "start": "User selects a service and provider",
+      "end": "Booking confirmed, payment initiated, user receives confirmation",
+      "not_responsible_for": ["Payment execution (handled by Wallet)", "Service delivery (offline)", "Reviews (handled by Profile/Provider)"]
+    },
+    {
+      "unit": "Payments & Wallet",
+      "start": "User confirms payment or initiates wallet top-up",
+      "end": "Transaction processed, balance updated, receipt issued",
+      "not_responsible_for": ["Payment method security (handled by Wompi/backend)", "Fraud investigation (handled by AI/Disputes)"]
+    },
+    {
+      "unit": "Store & E-commerce",
+      "start": "User views product list or detail",
+      "end": "Order placed, payment initiated, user sees order confirmation",
+      "not_responsible_for": ["Payment processing (handled by Wallet)", "Product sourcing/logistics (backend/supply chain)"]
+    },
+    {
+      "unit": "AURA Intelligence",
+      "start": "User captures image or uploads media for analysis",
+      "end": "Analysis results displayed, recommendations shown, VTO available if applicable",
+      "not_responsible_for": ["Image capture hardware quality (user device)", "Medical diagnosis (disclaimer: not a medical device)"]
+    },
+    {
+      "unit": "Academy",
+      "start": "User browses or enrolls in a course",
+      "end": "User accesses lesson content, completes quiz, earns certificate/XP",
+      "not_responsible_for": ["Content creation (handled by content team)", "Accreditation (external bodies)"]
+    },
+    {
+      "unit": "Support & Ticketing",
+      "start": "User submits a ticket or opens chat",
+      "end": "Agent responds, issue resolved or escalated, satisfaction survey sent",
+      "not_responsible_for": ["Live phone support (outsourced)", "Community forums (separate unit)"]
+    },
+    {
+      "unit": "Dispute Resolution",
+      "start": "User opens a dispute from a transaction or booking",
+      "end": "Dispute resolved, decision communicated, any refund processed",
+      "not_responsible_for": ["Legal enforcement (courts)", "Fraud prevention (handled by AI upstream)"]
+    },
+    {
+      "unit": "Design & Personalization",
+      "start": "User accesses a design tool (wardrobe, evolution, etc.)",
+      "end": "User receives suggestion, saves look, or tracks progress",
+      "not_responsible_for": ["Physical product manufacturing", "Wardrobe cleaning services"]
+    },
+    {
+      "unit": "Chat & Messaging",
+      "start": "User opens a conversation or sends a message",
+      "end": "Message delivered, read receipt received, typing indicator shown",
+      "not_responsible_for": ["Voice/video calls", "Message persistence beyond 30 days (archival policy)"]
+    },
+    {
+      "unit": "Location & Mapping",
+      "start": "User requests location or views map",
+      "end": "Nearby providers shown, route calculated, permissions handled",
+      "not_responsible_for": ["GPS accuracy (device/hardware)", "Offline map storage (beyond caching)"]
+    },
+    {
+      "unit": "Notifications",
+      "start": "An event triggers a notification (booking confirmed, promo)",
+      "end": "Notification delivered to user device, interaction logged",
+      "not_responsible_for": ["Event generation (handled by originating unit)", "User opt-out legal compliance (handled by backend/legal)"]
+    },
+    {
+      "unit": "Analytics & Metrics",
+      "start": "User interaction occurs (screen view, button click)",
+      "end": "Event logged, aggregated, made available for reporting",
+      "not_responsible_for": ["Data interpretation (handled by product/analytics teams)", "Data storage infrastructure (backend)"]
+    },
+    {
+      "unit": "Social Share",
+      "start": "User initiates share from content screen",
+      "end": "Content shared to selected platform, share log recorded",
+      "not_responsible_for": ["Platform API changes", "Content moderation beyond basic NSFW check"]
+    }
+  ],
+  "authorities": [
+    {
+      "unit": "Authentication & Authorization",
+      "business": "Product Owner",
+      "technical": "Backend Team",
+      "data": "Data Governance",
+      "ai": "N/A",
+      "design": "Design System (S1–S5)"
+    },
+    {
+      "unit": "User Profile & Settings",
+      "business": "Product Owner",
+      "technical": "Fullstack",
+      "data": "Data Governance",
+      "ai": "N/A",
+      "design": "Design System"
+    },
+    {
+      "unit": "Provider Management",
+      "business": "Provider Operations Lead",
+      "technical": "BackEnd/API",
+      "data": "Provider Data Owner",
+      "ai": "N/A",
+      "design": "Design System (Men/Women expression)"
+    },
+    {
+      "unit": "Booking & Appointments",
+      "business": "Customer Experience Lead",
+      "technical": "Fullstack",
+      "data": "Booking Data Owner",
+      "ai": "N/A",
+      "design": "Design System (Booking Language S4)"
+    },
+    {
+      "unit": "Payments & Wallet",
+      "business": "Finance Lead",
+      "technical": "Payments Team",
+      "data": "Financial Data Owner",
+      "ai": "N/A",
+      "design": "Design System (Checkout steps S4)"
+    },
+    {
+      "unit": "Store & E-commerce",
+      "business": "E-commerce Lead",
+      "technical": "Store Team",
+      "data": "Product Data Owner",
+      "ai": "N/A",
+      "design": "Design System (Commerce Language S4)"
+    },
+    {
+      "unit": "AURA Intelligence",
+      "business": "AI Product Lead",
+      "technical": "AI/ML Team",
+      "data": "AI Data Governance",
+      "ai": "AI/ML Team (model)",
+      "design": "Design System (AURA Language S4)"
+    },
+    {
+      "unit": "Academy",
+      "business": "Education Lead",
+      "technical": "Content Team",
+      "data": "Educational Data Owner",
+      "ai": "N/A",
+      "design": "Design System (Academy Components S4)"
+    },
+    {
+      "unit": "Support & Ticketing",
+      "business": "Support Lead",
+      "technical": "Support Team",
+      "data": "Ticket Data Owner",
+      "ai": "N/A",
+      "design": "Design System (Support Components S4)"
+    },
+    {
+      "unit": "Dispute Resolution",
+      "business": "Trust & Safety Lead",
+      "technical": "Dispute Team",
+      "data": "Dispute Data Owner",
+      "ai": "N/A",
+      "design": "Design System (Dispute Components S4)"
+    },
+    {
+      "unit": "Design & Personalization",
+      "business": "Personalization Lead",
+      "technical": "Design Team",
+      "data": "Design Data Owner",
+      "ai": "N/A",
+      "design": "Design System (Personalization Components S4)"
+    },
+    {
+      "unit": "Chat & Messaging",
+      "business": "Engagement Lead",
+      "technical": "Chat Team",
+      "data": "Chat Data Owner",
+      "ai": "N/A",
+      "design": "Design System (Chat Components S4)"
+    },
+    {
+      "unit": "Location & Mapping",
+      "business": "Ops Lead",
+      "technical": "Maps Team",
+      "data": "Location Data Owner",
+      "ai": "N/A",
+      "design": "Design System (Mapping Components S4)"
+    },
+    {
+      "unit": "Notifications",
+      "business": "Growth Lead",
+      "technical": "Notifications Team",
+      "data": "Notification Data Owner",
+      "ai": "N/A",
+      "design": "Design System (Notification Components S4)"
+    },
+    {
+      "unit": "Analytics & Metrics",
+      "business": "Analytics Lead",
+      "technical": "Data Team",
+      "data": "Analytics Data Owner",
+      "ai": "N/A",
+      "design": "Design System (Analytics Components – minimal UI)"
+    },
+    {
+      "unit": "Social Share",
+      "business": "Social Lead",
+      "technical": "Sharing Team",
+      "data": "Social Data Owner",
+      "ai": "N/A",
+      "design": "Design System (Share Components – minimal UI)"
+    }
+  ],
+  "maturity": [
+    {
+      "unit": "Authentication & Authorization",
+      "level": 4,
+      "justification": "Implemented, security patches applied, auth flows tested, token storage migrated to encrypted storage."
+    },
+    {
+      "unit": "User Profile & Settings",
+      "level": 3,
+      "justification": "Core profile screens exist, but settings fragmented; validation pending for all fields."
+    },
+    {
+      "unit": "Provider Management",
+      "level": 3,
+      "justification": "Dashboard and provider screens functional; performance and completeness gaps."
+    },
+    {
+      "unit": "Booking & Appointments",
+      "level": 3,
+      "justification": "Core flow works; recovery/rescheduling need refinement; validation incomplete."
+    },
+    {
+      "unit": "Payments & Wallet",
+      "level": 3,
+      "justification": "Wompi integration done, wallet feature present; not fully utilized across all contexts."
+    },
+    {
+      "unit": "Store & E-commerce",
+      "level": 3,
+      "justification": "Store screen and product listing work; detail missing AR/VU try-on; inventory sync gaps."
+    },
+    {
+      "unit": "AURA Intelligence",
+      "level": 2,
+      "justification": "MVP implemented; analysis latency high, VTO limited; model validation and accuracy testing pending."
+    },
+    {
+      "unit": "Academy",
+      "level": 3,
+      "justification": "Course listing and viewing functional; quiz engine basic, no timed exams or certificates automation."
+    },
+    {
+      "unit": "Support & Ticketing",
+      "level": 3,
+      "justification": "Ticket creation and chat work; SLA automation missing, agent tools limited."
+    },
+    {
+      "unit": "Dispute Resolution",
+      "level": 2,
+      "justification": "Basic filing works; evidence validation, mediation timing, appeals missing."
+    },
+    {
+      "unit": "Design & Personalization",
+      "level": 3,
+      "justification": "Screens render; custom painters heavy, no cloud backup, limited male wardrobe."
+    },
+    {
+      "unit": "Chat & Messaging",
+      "level": 3,
+      "justification": "Basic messaging works; no E2EE, message search limited, no voice/video."
+    },
+    {
+      "unit": "Location & Mapping",
+      "level": 3,
+      "justification": "Map and nearby search work; clustering, offline maps, indoor nav missing."
+    },
+    {
+      "unit": "Notifications",
+      "level": 3,
+      "justification": "Push notifications functional; no in-app center, limited rich media, preferences not synced."
+    },
+    {
+      "unit": "Analytics & Metrics",
+      "level": 2,
+      "justification": "Event tracking implemented but incomplete; no real-time dashboard, funnel analysis missing."
+    },
+    {
+      "unit": "Social Share",
+      "level": 3,
+      "justification": "Share dialog works; limited to images, no video, no deep linking or UGC feed."
+    }
+  ],
+  "risks": [
+    "Duplicated logic: Payment handling duplicated in booking and store flows; validation rules scattered.",
+    "Tight coupling: Provider Management screen mixes UI, state, and networking; large file size risk.",
+    "Mixed responsibilities: AuthService handles token storage and API calls; should be separated.",
+    "Services without clear owner: NotificationService used by many units but lacks dedicated team ownership.",
+    "Data without owner: User preferences scattered across shared/theme.dart, SecureStorage, and backend; no single source of truth.",
+    "Incomplete features: Dispute resolution lacks evidence validation; AURA VTO limited to nails/face; Academy lacks certification automation.",
+    "Legacy code: Shared/theme.dart used in 40+ screens, duplicating tokens and colors.",
+    "Technical debt: Heavy custom painters, unoptimized image processing on UI thread, lack of model quantization.",
+    "Critical paths: Auth token expiration not handled gracefully in all screens; payment failure recovery inconsistent."
+  ],
+  "technical_debt": [
+    "Large provider dashboard screen (>100k lines) needs refactoring into components.",
+    "Duplicate UI kits (LuxeCard vs CardTheme, LuxeButton vs ElevatedButtonTheme).",
+    "Hardcoded values in shared/theme.dart causing inconsistency with tokens.dart.",
+    "Image processing on main thread in AURA capture and analysis screens.",
+    "Lack of abstracted video player in Academy.",
+    "Notification service not using singleton pattern; multiple initializations observed.",
+    "Analytics event naming inconsistent; client-side buffering unreliable on poor networks.",
+    "Wallet service duplicated logic for booking and store payments.",
+    "Dispute evidence handling lacks standardized viewer and validation.",
+    "Provider management lacks pagination/infinite scroll for large service lists.",
+    "Academy course progress not synchronized across devices reliably."
+  ],
+  "priorities": [
+    {
+      "unit": "Auth",
+      "priority": "P0 – Critical",
+      "rationale": "Foundation for security and access; any breach impacts all users and trust."
+    },
+    {
+      "unit": "Payments & Wallet",
+      "priority": "P0 – Critical",
+      "rationale": "Directly tied to revenue and compliance; failures cause financial loss and legal risk."
+    },
+    {
+      "unit": "Booking",
+      "priority": "P0 – Critical",
+      "rationale": "Core service delivery; impacts provider utilization and client satisfaction."
+    },
+    {
+      "unit": "Store",
+      "priority": "P0 – Critical",
+      "rationale": "Revenue stream; affects inventory management and customer retention."
+    },
+    {
+      "unit": "AURA",
+      "priority": "P0 – Critical",
+      "rationale": "Differentiator; enables premium personalization and drives engagement/store sales."
+    },
+    {
+      "unit": "Provider Management",
+      "priority": "P1 – High",
+      "rationale": "Enables supply side; poor experience reduces provider retention and service quality."
+    },
+    {
+      "unit": "Profile",
+      "priority": "P1 – High",
+      "rationale": "Central to personalization and consent; gaps affect compliance and UX."
+    },
+    {
+      "unit": "Support",
+      "priority": "P1 – High",
+      "rationale": "Affects churn and brand perception; critical for issue resolution."
+    },
+    {
+      "unit": "Disputes",
+      "priority": "P1 – High",
+      "rationale": "Financial and legal risk; poor handling leads to chargebacks and reputational damage."
+    },
+    {
+      "unit": "Design",
+      "priority": "P1 – High",
+      "rationale": "Drives engagement and product sales; incomplete features limit personalization value."
+    },
+    {
+      "unit": "Chat",
+      "priority": "P2 – Medium",
+      "rationale": "Enhances service but not core to primary flows; valued for convenience."
+    },
+    {
+      "unit": "Location",
+      "priority": "P2 – Medium",
+      "rationale": "Improves discovery but alternatives exist (manual address entry)."
+    },
+    {
+      "unit": "Notifications",
+      "priority": "P2 – Medium",
+      "rationale": "Important for engagement but can be degraded gracefully."
+    },
+    {
+      "unit": "Academy",
+      "priority": "P2 – Medium",
+      "rationale": "Nice-to-have; contributes to brand authority but not core revenue."
+    },
+    {
+      "unit": "Analytics",
+      "priority": "P2 – Medium",
+      "rationale": "Enables optimization but not blocking for core functionality."
+    },
+    {
+      "unit": "Social Share",
+      "priority": "P3 – Low",
+      "rationale": "Growth lever but low immediate impact; can be deferred."
+    }
+  ],
+  "recommended_next_steps": [
+    "Consolidate duplicate UI components (LuxeCard/LuxeButton) into the modern token-based system.",
+    "Migrate legacy theme usage (shared/theme.dart) to tokens.dart/AppTheme across all screens.",
+    "Standardize payment flow via a unified WalletService abstraction used by Booking and Store.",
+    "Extract authentication concerns (token storage, refresh) into a dedicated AuthRepository.",
+    "Create unified avatar component for use in Profile, Chat, Provider screens.",
+    "Define clear service boundaries in documentation for each unit (as started in this audit).",
+    "Establish data ownership matrix and appoint data stewards for each domain.",
+    "Plan for observability: Add structured logging and tracing to cross-unit flows.",
+    "Review and update threat model for Auth and Payments units.",
+    "Validate accessibility (WCAG AA) on all core screens using automated tools."
+  ]
+}

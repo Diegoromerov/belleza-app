@@ -232,22 +232,27 @@ class _QuizScreenState extends State<QuizScreen> {
     }
 
     return Scaffold(
+      backgroundColor: const Color(0xFFFAF8F5),
       appBar: AppBar(
-        title: const Text('Examen de Certificación', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [themeColor, const Color(0xFFE2C4BC)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+        title: const Text(
+          'Examen de Certificación',
+          style: TextStyle(
+            fontFamily: 'CormorantGaramond',
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.5,
+            fontSize: 22,
+            color: Color(0xFF1F1A15),
           ),
         ),
-        elevation: 2,
-        iconTheme: const IconThemeData(color: Colors.white),
+        backgroundColor: const Color(0xFFFAF8F5),
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Color(0xFF1F1A15)),
       ),
-      body: _isSubmitting
-                ? Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation(AppTheme.primary)))
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 720),
+          child: _isSubmitting
+              ? const Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation(Color(0xFFC5A052))))
                 : Column(
               children: [
                 Expanded(
@@ -313,24 +318,50 @@ class _QuizScreenState extends State<QuizScreen> {
                     },
                   ),
                 ),
-                Container(
+                Padding(
                   padding: const EdgeInsets.all(16.0),
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _submitQuiz,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: themeColor,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                  child: Container(
+                    height: 52,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFF3D59B), Color(0xFFC5A052)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFC5A052).withValues(alpha: 0.35),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
-                    child: const Text(
-                      'Enviar Respuestas',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                    child: ElevatedButton(
+                      onPressed: _submitQuiz,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        foregroundColor: const Color(0xFF1F1A15),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      ),
+                      child: const Text(
+                        'Enviar Respuestas',
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          color: Color(0xFF1F1A15),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
                     ),
                   ),
                 ),
               ],
             ),
+          ),
+        ),
     );
   }
 }

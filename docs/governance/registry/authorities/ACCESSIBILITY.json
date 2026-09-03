@@ -1,0 +1,35 @@
+{
+  "authority": "Accessibility",
+  "level": "L1",
+  "owner": "Accessibility Governor",
+  "sourceOfTruth": "docs/design/GLOWAPP_ACCESSIBILITY_SYSTEM.md (to be created)",
+  "inputs": [
+    "Soul",
+    "WCAG AA",
+    "EN 301 549"
+  ],
+  "outputs": [
+    "Accessibility language",
+    "contrast minimums",
+    "focus management",
+    "scaling",
+    "touch targets",
+    "screen reader labels",
+    "reduced motion",
+    "color blindness"
+  ],
+  "consumers": [
+    "All implementation levels"
+  ],
+  "allowedChanges": [
+    "Adding new accessibility rules within defined standards"
+  ],
+  "forbiddenChanges": [
+    "Changing Soul-defined accessibility principles",
+    "violating WCAG AA"
+  ],
+  "validationGate": "Accessibility spec review + automated validation (a11y CI)",
+  "legacySystems": [],
+  "promotionPath": "N/A",
+  "exceptionMechanism": "Director approval for exceptions"
+}

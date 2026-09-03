@@ -45,48 +45,53 @@ class GlowStoreOrdersScreen extends StatelessWidget {
             ],
           ),
         ),
-        body: TabBarView(
-          children: [
-            // PESTAÑA EN CAMINO
-            ListView(
-              padding: const EdgeInsets.all(LuxeSpacing.xl),
+        body: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 680),
+            child: TabBarView(
               children: [
-                _buildOrderCard(
-                  orderId: '#GLOW-98214',
-                  date: '30 de Julio, 2026',
-                  status: 'En Camino',
-                  statusColor: const Color(0xFFC5A052),
-                  items: 'Elixir Facial Biométrico Aura (50ml) + Suero Reparador',
-                  total: '\$145.000 COP',
-                  trackingNumber: 'GLW-TRACK-99120',
+                // PESTAÑA EN CAMINO
+                ListView(
+                  padding: const EdgeInsets.all(LuxeSpacing.xl),
+                  children: [
+                    _buildOrderCard(
+                      orderId: '#GLOW-98214',
+                      date: '30 de Julio, 2026',
+                      status: 'En Camino',
+                      statusColor: const Color(0xFFC5A052),
+                      items: 'Elixir Facial Biométrico Aura (50ml) + Suero Reparador',
+                      total: '\$145.000 COP',
+                      trackingNumber: 'GLW-TRACK-99120',
+                    ),
+                  ],
+                ),
+                // PESTAÑA COMPLETADOS
+                ListView(
+                  padding: const EdgeInsets.all(LuxeSpacing.xl),
+                  children: [
+                    _buildOrderCard(
+                      orderId: '#GLOW-87102',
+                      date: '12 de Julio, 2026',
+                      status: 'Entregado',
+                      statusColor: const Color(0xFF4A5D4E),
+                      items: 'Set Completo de Mascarillas de Seda & Miel',
+                      total: '\$89.000 COP',
+                      trackingNumber: 'GLW-TRACK-88291',
+                    ),
+                    _buildOrderCard(
+                      orderId: '#GLOW-76193',
+                      date: '25 de Junio, 2026',
+                      status: 'Entregado',
+                      statusColor: const Color(0xFF4A5D4E),
+                      items: 'Crema Contorno de Ojos de Oro Rosa 24k',
+                      total: '\$120.000 COP',
+                      trackingNumber: 'GLW-TRACK-77312',
+                    ),
+                  ],
                 ),
               ],
             ),
-            // PESTAÑA COMPLETADOS
-            ListView(
-              padding: const EdgeInsets.all(LuxeSpacing.xl),
-              children: [
-                _buildOrderCard(
-                  orderId: '#GLOW-87102',
-                  date: '12 de Julio, 2026',
-                  status: 'Entregado',
-                  statusColor: const Color(0xFF4A5D4E),
-                  items: 'Set Completo de Mascarillas de Seda & Miel',
-                  total: '\$89.000 COP',
-                  trackingNumber: 'GLW-TRACK-88291',
-                ),
-                _buildOrderCard(
-                  orderId: '#GLOW-76193',
-                  date: '25 de Junio, 2026',
-                  status: 'Entregado',
-                  statusColor: const Color(0xFF4A5D4E),
-                  items: 'Crema Contorno de Ojos de Oro Rosa 24k',
-                  total: '\$120.000 COP',
-                  trackingNumber: 'GLW-TRACK-77312',
-                ),
-              ],
-            ),
-          ],
+          ),
         ),
       ),
     );

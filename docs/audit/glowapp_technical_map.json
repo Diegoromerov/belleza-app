@@ -1,0 +1,736 @@
+{
+  "phase": "G0-E",
+  "status": "READY_FOR_G1_CONSOLIDATION",
+  "stack": {
+    "frontend": {
+      "framework": "Flutter 3.0.0+",
+      "language": "Dart",
+      "state_management": "Riverpod",
+      "navigation": "Named Routes",
+      "ui_framework": "Material 3 with custom design system"
+    },
+    "backend": {
+      "framework": "Node.js + Express",
+      "language": "JavaScript",
+      "architecture_pattern": "MVC-like with Services and Agents",
+      "database": "PostgreSQL + PostGIS",
+      "real_time": "WebSocket (socket.io)",
+      "background_jobs": "Cron jobs"
+    },
+    "database": {
+      "primary": "PostgreSQL 14+",
+      "extension": "PostGIS for geolocation",
+      "additional": "Redis for caching (mentioned)"
+    },
+    "infrastructure": {
+      "hosting": "Railway",
+      "containerization": "Docker"
+    },
+    "ai_services": {
+      "primary_provider": "Google Gemini",
+      "orchestration": "AI Orchestrator routes",
+      "agents": "Custom agent services",
+      "rag": "Retrieval Augmented Generation",
+      "embeddings": "Observed in embeddingService.js",
+      "knowledge_base": "Custom beauty corpus"
+    }
+  },
+  "architecture": {
+    "frontend_layers": [
+      "Presentation (Screens, Widgets)",
+      "State (Riverpod Providers)",
+      "Domain (Models, Services)",
+      "Design System (tokens.dart, theme.dart, GlowStoreTokens, GlowIcon System)"
+    ],
+    "backend_layers": [
+      "API Routes (routes/)",
+      "Controllers (controllers/)",
+      "Services (services/)",
+      "Middleware (middleware/)",
+      "Models (models/)",
+      "Agents (services/agents/)",
+      "Workers (crons/, jobs/)",
+      "Persistence (direct SQL queries)",
+      "Configuration (config/)",
+      "Sockets (sockets/)",
+      "Tests (tests/)"
+    ],
+    "communication_patterns": [
+      "Frontend -> Backend: HTTP REST (via http package, APIService)",
+      "Backend -> Frontend: JSON over HTTP",
+      "Real-time: WebSocket (socket.io) for notifications",
+      "Frontend Local State: Riverpod, SharedPreferences, flutter_secure_storage",
+      "Backend Internal: Direct function calls",
+      "Database: Raw SQL queries via pg",
+      "Cache: Redis (implied)",
+      "AI: Internal service calls, external API calls to Gemini",
+      "RAG: Internal vector search, embedding generation",
+      "Payments: Wompi API",
+      "Location: Geolocator, Geocoding plugins, Google Maps API",
+      "Notifications: Firebase Cloud Messaging (implied)",
+      "Authentication: Google Sign-In, JWT tokens"
+    ]
+  },
+  "technical_units": [
+    {
+      "name": "Authentication Service",
+      "purpose": "Handle user authentication, token management, OAuth, biometric consent",
+      "layer": "Frontend Service",
+      "responsibility": "Login, logout, registration, token storage, role management",
+      "entry_points": ["LoginScreen", "RegisterScreen", "OnboardingScreen", "AuthService methods"],
+      "inputs": ["Credentials", "OAuth tokens", "Biometric consent data"],
+      "outputs": ["Auth token", "User role", "Session state"],
+      "dependencies": ["SecureStorageService", "APIService", "BiometricService (for consent)", "SharedPreferences"],
+      "consumers": ["All protected screens and services requiring auth"],
+      "external_dependencies": ["Google Sign-In API", "Backend auth endpoints"],
+      "state": ["Login status", "Token validity", "User role"],
+      "persistence": "Encrypted storage (flutter_secure_storage), SharedPreferences (non-sensitive)",
+      "api": "Calls to /api/auth/* endpoints",
+      "ai": "None directly",
+      "tests": "Not observed in frontend/test for this service",
+      "owner": "Frontend Team",
+      "authority": "Technical: Frontend/Auth Team",
+      "status": "Implemented",
+      "maturity": 3,
+      "technical_debt": [
+        "Token storage duplicated in SharedPreferences and encrypted storage (legacy)",
+        "Token expiration not handled uniformly across all screens"
+      ]
+    },
+    {
+      "name": "Provider Management Service",
+      "purpose": "Manage provider data, services, bookings, earnings",
+      "layer": "Backend Service",
+      "responsibility": "Provider CRUD, service management, booking tracking, earnings calculation",
+      "entry_points": ["ProviderController", "ProviderService", "ProviderDashboardScreen"],
+      "inputs": ["Provider registration data", "Service catalog", "Booking data"],
+      "outputs": ["Provider profile", "Service list", "Earnings data"],
+      "dependencies": ["Database (PostgreSQL)", "LocationService", "WalletService (for payouts)", "AuthMiddleware"],
+      "consumers": ["ProviderDashboardScreen, ProviderProfileScreen, BookingService"],
+      "external_dependencies": ["Google Maps API (for routing)", "Wompi (for payouts)"],
+      "state": ["Provider status", "Service list", "Booking calendar", "Earnings balance"],
+      "persistence": "PostgreSQL tables: proveedores, servicios_proveedor, portafolio, citas, ganancias, ubicaciones",
+      "api": "Endpoints: GET /api/provider/dashboard, POST /api/provider/services, etc.",
+      "ai": "Recommends providers to clients based on location, rating, service match",
+      "tests": "Not observed in backend/src/tests for this service",
+      "owner": "Backend Team",
+      "authority": "Technical: Backend/Provider Team",
+      "status": "Implemented",
+      "maturity": 3,
+      "technical_debt": [
+        "Large monolithic controller and service files (>10k lines)",
+        "Business logic mixed with data access",
+        "No pagination for large service lists"
+      ]
+    }
+  ],
+  "dependencies": {
+    "strong": [
+      "AuthService → All protected frontend services",
+      "WalletService → BookingService, StoreService",
+      "NotificationService → All frontend services",
+      "LocationService → ProviderManagementService, BookingService, StoreService",
+      "APIService → All frontend services"
+    ],
+    "weak": [
+      "AcademyService → WalletService (only for paid courses)",
+      "SocialShareService → AURA, Evolution, Wallet",
+      "DesignService → StoreService, BookingService"
+    ],
+    "shared_services": [
+      "AuthService",
+      "NotificationService",
+      "WalletService",
+      "LocationService",
+      "APIService",
+      "BiometricService",
+      "SecureStorageService",
+      "AudienceService",
+      "SocialShareService",
+      "AnalyticsService"
+    ]
+  },
+  "frontend": {
+    "architecture": "Custom layered architecture with Riverpod for state management",
+    "screens": "Organized by feature in lib/screens/",
+    "widgets": "Reusable components in lib/widgets/ and lib/design/components/",
+    "state_management": "Riverpod (Providers, Notifiers, Controllers)",
+    "theme_system": "tokens.dart (Token class), app_theme.dart (ThemeData), legacy shared/theme.dart, GlowStoreTokens, GlowIcon System",
+    "navigation": "Named routes defined in main.dart routes table",
+    "forms": "Using Flutter Form widget with TextFormField",
+    "validation": "Form validation via validator functions",
+    "internationalization": "Not observed (app appears Spanish-only)",
+    "accessibility": "Basic implementation, missing focus trails, scaling, etc.",
+    "responsiveness": "LayoutBuilder and MediaQuery used for adaptive layouts",
+    "performance": "Heavy use of custom painters, image processing on UI thread observed",
+    "testing": "Unit tests in frontend/test/, widget tests",
+    "assets_management": "assets/ folder with images, fonts, icons, audio",
+    "platform_specific": "Web, Android, iOS, Windows, Linux, MacOS folders observed",
+    "build_flavors": "Not observed"
+  },
+  "backend": {
+    "architecture": "MVC-like with Services, Agents, and Cron jobs",
+    "routing": "Express routes in /src/routes/",
+    "controllers": "Handle HTTP requests, delegate to services",
+    "services": "Business logic and data access layer",
+    "middleware": "Authentication middleware (authMiddleware), possibly others",
+    "models": "Data transfer objects and query builders?",
+    "agents": "Custom AI agents in /src/services/agents/",
+    "workers": "Cron jobs in /src/crons/, background jobs in /src/jobs/",
+    "sockets": "WebSocket (socket.io) implementation in /src/sockets/",
+    "startup": "Application initialization in /src/startup/",
+    "utils": "Utility functions in /src/utils/",
+    "database_access": "Raw SQL queries using pg parameterized queries",
+    "orm": "None observed",
+    "caching": "Redis implied but not observed in code snippets",
+    "logging": "console.log and console.error",
+    "error_handling": "Try-catch blocks in routes and services",
+    "validation": "Joi schemas observed in routes? (joi dependency in package.json)",
+    "testing": "Jest tests in /src/tests/",
+    "environment": "dotenv for configuration",
+    "security_observations": [
+      "JWT tokens stored in frontend encrypted storage",
+      "Passwords hashed in backend (observed in authController?)",
+      "HTTPS not enforced in development",
+      "CORS configured in index.js",
+      "Rate limiting mentioned as disabled in authRoutes.js"
+    ]
+  },
+  "database": {
+    "postgresql": {
+      "version": "Observed as PostgreSQL in README",
+      "postgis": "Extension for geolocation",
+      "schema": "Observed in backend/init.sql and backend/schema.sql (tables: usuarios, proveedores, servicios, citas, pedidos, etc.)",
+      "indexes": "Observed in init.sql (indexes on foreign keys, email, etc.)",
+      "constraints": "Foreign keys, unique constraints, not null constraints observed",
+      "triggers": "Not observed in init.sql",
+      "seeds": "seed.sql and custom seed scripts (e.g., seed_beauty_knowledge_v3.js)",
+      "migrations": "Custom SQL files implied by audit filenames (e.g., 046_add_rag_chunk_traceability.sql)",
+      "connection_pooling": "pg.createObserved in backend/src/config/db.js",
+      "transactions": "Observed in some controller functions",
+      "backup_restore": "Not observed in repository"
+    },
+    "redis": {
+      "purpose": "Caching (mentioned in README)",
+      "usage": "Not observed in code snippets",
+      "configuration": "Not observed in config/",
+      "client": "ioredis or node-redis? Not observed in dependencies"
+    }
+  },
+  "api": {
+    "style": "RESTful JSON over HTTP",
+    "versioning": "Not observed (no /v1/ in paths)",
+    "authentication": "Bearer token in Authorization header (observed in auth_service.dart)",
+    "content_type": "application/json",
+    "error_handling": "HTTP status codes, error messages in JSON body",
+    "rate_limiting": "Mentioned as disabled in authRoutes.js",
+    "documentation": "Not observed (no Swagger/OpenAPI files)",
+    "endpoints_observed": [
+      "POST /api/auth/register",
+      "POST /api/auth/login",
+      "POST /api/auth/oauth",
+      "PATCH /api/auth/onboarding",
+      "POST /api/auth/forgot-password",
+      "POST /api/auth/reset-password",
+      "POST /api/auth/logout",
+      "GET /api/provider/dashboard",
+      "POST /api/provider/services",
+      "GET /api/provider/appointments",
+      "POST /api/provider/earnings",
+      "GET /api/provider/route",
+      "POST /api/bookings",
+      "GET /api/bookings/:id",
+      "PATCH /api/bookings/:id/cancel",
+      "PATCH /api/bookings/:id/reschedule",
+      "GET /api/products",
+      "GET /api/products/:id",
+      "POST /api/cart/add",
+      "POST /api/orders/create",
+      "GET /api/orders/:id/tracking",
+      "POST /api/payments/wompi",
+      "POST /api/wallet/topup",
+      "GET /api/wallet/history",
+      "POST /api/rewards/accrue",
+      "POST /api/rewards/redeem",
+      "POST /api/biometric/capture",
+      "POST /api/ai/orchestrate/analyze",
+      "GET /api/ai/results/:id",
+      "POST /api/ai/vto",
+      "POST /api/tickets/create",
+      "GET /api/tickets/:id/messages",
+      "PATCH /api/tickets/:id/close",
+      "GET /api/faq/search",
+      "POST /api/social/share",
+      "GET /api/social/referral/:code"
+    ],
+    "frontend_consumption": "Via APIService singleton",
+    "backend_implementation": "Express route handlers calling services",
+    "data_transfer_objects": "Observed in route handlers and service returns",
+    "versioning_strategy": "None observed"
+  },
+  "security": {
+    "authentication": [
+      "JWT tokens",
+      "Google Sign-In (OAuth)",
+      "Biometric consent (WebAuthn implied)",
+      "Email/password login"
+    ],
+    "authorization": [
+      "Role-based (user, provider, admin)",
+      "Middleware protecting routes (authMiddleware)",
+      "Provider-specific routes protected"
+    ],
+    "data_protection": [
+      "Encrypted storage for tokens (flutter_secure_storage)",
+      "Passwords hashed (observed in authController via bcrypt? not directly seen)",
+      "Personal data encrypted? Not observed",
+      "Habeas Data consent stored (habeas_data_accepted_at, habeas_data_ip)"
+    ],
+    "network_security": [
+      "HTTPS not enforced in local development",
+      "CORS configured in index.js",
+      "Helmet.js? Not observed",
+      "Input validation: Joi schemas observed in package.json, used in routes?",
+      "Output encoding: Not observed (risk of XSS if returning HTML? but API returns JSON)"
+    ],
+    "security_headers": "Not observed",
+    "dependency_scanning": "Not observed in repository",
+    "secrets_management": [
+      "Environment variables via dotenv",
+      ".env.example provided",
+      "Secrets not committed (observed .gitignore)",
+      "No secret scanning observed"
+    ],
+    "security_testing": "Not observed (no OWASP ZAP, etc. in scripts)",
+    "compliance": [
+      "Ley 1581 / GDPR mentioned in README",
+      "Habeas Data consent flows observed",
+      "Data anonymization mentioned for logs",
+      "PCI-DSS? Not observed (Wompi handles payment compliance)"
+    ]
+  },
+  "external_services": [
+    {
+      "name": "Wompi",
+      "purpose": "Payment processing",
+      "integration_point": "PaymentService (backend), Wompi payment sheet (frontend)",
+      "credential_mechanism": "API keys in environment variables (WOMPI_WEBHOOK_SECRET, etc.)",
+      "failure_mode": "Payment gateway errors, network failures",
+      "fallback": "None observed (errors propagated to user)",
+      "owner": "Backend Team",
+      "criticality": "High (revenue critical)"
+    },
+    {
+      "name": "Google Sign-In",
+      "purpose": "Authentication",
+      "integration_point": "google_sign_in package, oauthController in backend",
+      "credential_mechanism": "Google Client ID and Secret in environment variables",
+      "failure_mode": "Authentication failure, network errors",
+      "fallback": "Email/password login",
+      "owner": "Frontend and Backend Teams",
+      "criticality": "Medium"
+    },
+    {
+      "name": "Google Maps API",
+      "purpose": "Geolocation, mapping, routing",
+      "integration_point": "geolocator and geocoding plugins (frontend), LocationService (backend)",
+      "credential_mechanism": "API key in environment variables (OPENWEATHER_API_KEY? actually for weather, but maps key might be elsewhere)",
+      "failure_mode": "Service unavailable, quota exceeded",
+      "fallback": "Manual address entry, cached data",
+      "owner": "Backend Team (for server-side), Frontend Team (for client-side)",
+      "criticality": "Medium (core to discovery)"
+    },
+    {
+      "name": "Gemini API",
+      "purpose": "AI analysis and orchestration",
+      "integration_point": "geminiService.js (backend)",
+      "credential_mechanism": "API key in environment variables (GEMINI_API_KEY)",
+      "failure_mode": "API errors, rate limiting, network issues",
+      "fallback": "None observed (errors propagated)",
+      "owner": "AI Team",
+      "criticality": "High (core to AURA)"
+    },
+    {
+      "name": "Firebase Cloud Messaging",
+      "purpose": "Push notifications",
+      "integration_point": "NotificationService (frontend)",
+      "credential_mechanism": "Firebase project configuration (not observed in code, but implied by firebase_core? not in pubspec)",
+      "failure_mode": "Message delivery failure",
+      "fallback": "In-app notifications only",
+      "owner": "Backend Team (for triggering), Frontend Team (for display)",
+      "criticality": "Medium"
+    }
+  ],
+  "ai_architecture": {
+    "components": [
+      "AI UI: Flutter widgets for capture, results, VTO",
+      "AI Orchestration: Backend routes and services in /src/services/ai/ and /src/services/agents/",
+      "Agents: Custom agent services (e.g., for analysis, recommendation)",
+      "Models: Gemini model (external), local face detection model (google_mlkit_face_detection)",
+      "RAG: Retrieval Augmented Generation pipeline (embedding service, vector store, reranking)",
+      "Embeddings: Observed in embeddingService.js (using sentence-transformers? or custom)",
+      "Knowledge Base: Custom beauty corpus in /src/data/beauty_corpus and /src/data/corpus_canonico",
+      "Evaluation: Observed in ragEvaluator.js (metrics, benchmarks)",
+      "Persistence: PostgreSQL for storing results, embeddings, models metadata",
+      "Orchestration: AI orchestrator routes (aiOrchestratorRoutes.js) manage workflow"
+    ],
+    "data_flow": [
+      "User captures image → Frontend sends to /api/biometric/capture",
+      "BiometricService stores image, returns ID",
+      "Frontend triggers /api/ai/orchestrate/analyze with image ID and preferences",
+      "AI Orchestrator routes to appropriate agents",
+      "Agents process: face detection, skin analysis, hair analysis, etc.",
+      "RAG service retrieves relevant knowledge from corpus",
+      "Embedding service generates vectors for search",
+      "Results stored in database, returned to frontend",
+      "Frontend displays analysis, recommendations, VTO options",
+      "User can trigger VTO via /api/ai/vto",
+      "VTO service returns manipulated image or instructions for frontend rendering"
+    ],
+    "model_sources": [
+      "Gemini API (external LLM)",
+      "Google ML Kit Face Detection (on-device model)",
+      "Custom trained models? Not observed",
+      "Embedding models: sentence-transformers or similar (observed in embeddingService.js)"
+    ],
+    "inference_location": [
+      "Gemini: Cloud (Google)",
+      "Face detection: On-device (frontend)",
+      "Embedding generation: Backend (Node.js)",
+      "RAG retrieval: Backend (PostgreSQL with pgvector? observed in migration files for pgvector)",
+      "VTO: Possibly frontend (using image and transformation matrices) or backend"
+    ],
+    "training_pipeline": "Not observed (models are pre-trained or external)",
+    "monitoring": "Not observed (no metrics logging for model drift, latency, etc.)",
+    "testing": "Unit tests for embedding service observed, but not for full AI pipelines",
+    "safety": [
+      "NSFW detection? Not observed",
+      "Bias mitigation? Not observed",
+      "Explainability? Observed in RAG for providing sources",
+      "Human oversight? Not observed (fully automated analysis)"
+    ]
+  },
+  "authorities": [
+    {
+      "domain": "Routing",
+      "authority": "Technical: Backend Team (routes/)",
+      "type": "Technical",
+      "legacy": "No",
+      "duplicate": "No",
+      "unknown": "No"
+    },
+    {
+      "domain": "State Management",
+      "authority": "Technical: Frontend Team (Riverpod providers)",
+      "type": "Technical",
+      "legacy": "No",
+      "duplicate": "No",
+      "unknown": "No"
+    },
+    {
+      "domain": "Theme/Tokens",
+      "authority": "Technical: Frontend Design System Team (tokens.dart, app_theme.dart)",
+      "type": "Technical",
+      "legacy": "Yes",
+      "duplicate": "Yes",
+      "unknown": "No"
+    },
+    {
+      "domain": "Components",
+      "authority": "Technical: Frontend Team (lib/widgets/, lib/design/components/)",
+      "type": "Technical",
+      "legacy": "Yes",
+      "duplicate": "Yes",
+      "unknown": "No"
+    },
+    {
+      "domain": "API",
+      "authority": "Technical: Backend Team (routes/, controllers/)",
+      "type": "Technical",
+      "legacy": "No",
+      "duplicate": "No",
+      "unknown": "No"
+    },
+    {
+      "domain": "Authentication",
+      "authority": "Technical: Backend Team (authController, authService), Frontend Team (auth_service.dart)",
+      "type": "Technical",
+      "legacy": "No",
+      "duplicate": "Yes",
+      "unknown": "No"
+    },
+    {
+      "domain": "Booking",
+      "authority": "Technical: Backend Team (bookingController, bookingService), Frontend Team (BookingScreen, etc.)",
+      "type": "Technical",
+      "legacy": "No",
+      "duplicate": "No",
+      "unknown": "No"
+    },
+    {
+      "domain": "Payments",
+      "authority": "Technical: Backend Team (paymentController, paymentService), Frontend Team (WalletService, Wompi sheet)",
+      "type": "Technical",
+      "legacy": "No",
+      "duplicate": "No",
+      "unknown": "No"
+    },
+    {
+      "domain": "Database",
+      "authority": "Technical: Backend Team (config/db.js, direct SQL queries)",
+      "type": "Technical",
+      "legacy": "No",
+      "duplicate": "No",
+      "unknown": "No"
+    },
+    {
+      "domain": "AI",
+      "authority": "Technical: AI Team (services/ai/, services/agents/)",
+      "type": "Technical",
+      "legacy": "No",
+      "duplicate": "No",
+      "unknown": "No"
+    },
+    {
+      "domain": "Infrastructure",
+      "authority": "Technical: DevOps Team (inferred from Dockerfile, railway.yml)",
+      "type": "Technical",
+      "legacy": "No",
+      "duplicate": "No",
+      "unknown": "No"
+    },
+    {
+      "domain": "Configuration",
+      "authority": "Technical: Backend Team (config/, .env.example)",
+      "type": "Technical",
+      "legacy": "No",
+      "duplicate": "No",
+      "unknown": "No"
+    }
+  ],
+  "conflicts": [
+    "Duplicate token systems: Token (tokens.dart), GlowStoreTokens (glow_store_tokens.dart), LuxeColors (shared/theme.dart), MensTheme (mens_theme.dart) leading to inconsistency",
+    "Duplicate widget libraries: LuxeComponent library vs modern Material/Custom widgets",
+    "Duplicate models: lib/models/ and lib/core/models/ (possible duplication)",
+    "God modules: Provider dashboard screen and service (>10k lines) violating single responsibility",
+    "Hardcoded values in shared/theme.dart causing inconsistency with tokens.dart",
+    "Image processing on UI thread in AURA capture and analysis screens",
+    "Notification service not using singleton pattern; multiple initializations observed",
+    "Analytics event naming inconsistent; client-side buffering unreliable on poor networks",
+    "Wallet service duplicated logic for booking and store payments",
+    "Dispute evidence handling lacks standardized viewer and validation",
+    "Provider management lacks pagination/infinite scroll for large service lists",
+    "Academy course progress not synchronized across devices reliably"
+  ],
+  "gaps": [
+    "Missing abstracted video player in Academy",
+    "Missing unified avatar component for Profile, Chat, Provider screens",
+    "Missing observability: structured logging, distributed tracing, metrics collection",
+    "Missing error boundaries in frontend (try/catch not observed in UI)",
+    "Missing configuration management: no feature flags, no environment-specific configs beyond dotenv",
+    "Missing deployment controls: no blue/green, no canary, no rollback automation",
+    "Missing AI infrastructure: model versioning, A/B testing for models, model monitoring",
+    "Missing RAG infrastructure: document versioning, chunking strategy evaluation, retrieval tuning",
+    "Missing contract testing: no automated API contract verification between frontend and backend",
+    "Missing security scanning: no dependency scanning, no SAST/DAST in CI",
+    "Missing test coverage: low unit and widget test coverage observed",
+    "Missing documentation: no API documentation (Swagger/OpenAPI), no architecture decision records",
+    "Missing accessibility compliance: WCAG AA not validated",
+    "Missing internationalization: app appears Spanish-only, no i18n support",
+    "Missing offline support: no local caching for UI state, no offline mode",
+    "Missing performance budgeting: no bundle analysis, no frame rate monitoring",
+    "Missing feature toggles: no way to disable features per user or environment",
+    "Missing data lineage: no tracking of data transformations for compliance",
+    "Missing backup strategy: no automated database backup observed",
+    "Missing disaster recovery: no runbooks for service restoration",
+    "Missing chaos engineering: no resilience testing",
+    "Missing observability in AI: no model performance tracking, no drift detection",
+    "Missing API versioning: no versioning in endpoints, breaking changes risky",
+    "Missing web accessibility: no audit for web version of the app",
+    "Missing PWA support: no service worker, no manifest for installable web app",
+    "Missing dark mode: not observed in theme system",
+    "Missing dynamic theming: no runtime theme switching",
+    "Missing accessibility overlays: no screen reader labels on all controls",
+    "Missing keyboard navigation: not fully observable",
+    "Missing focus management: not observed",
+    "Missing reduced motion support: not observed",
+    "Missing color blindness support: not observed",
+    "Missing text scaling: not observed beyond basic",
+    "Missing touch target size: not uniformly 48dp",
+    "Missing platform-specific adaptations: not observed for web, desktop beyond basic",
+    "Missing accessibility testing: no automated a11y tests in CI",
+    "Missing performance budgets: no startup time, no frame budget",
+    "Missing security headers: no HSTS, CSP, etc.",
+    "Missing CVE monitoring: no dependency vulnerability scanning",
+    "Missing secrets detection: no pre-commit hooks for secrets",
+    "Missing logging structure: no structured logging (JSON logs)",
+    "Missing log retention: no log rotation observed",
+    "Missing alerting: no alerting on metrics thresholds",
+    "Missing dashboards: no operational dashboards for latency, error rates",
+    "Missing SLA tracking: no SLA monitoring for external services",
+    "Missing chaos engineering: no failure injection testing",
+    "Missing feature flags: no way to toggle features without deploy",
+    "Missing canary releases: no gradual rollout observed",
+    "Missing blue/green deployments: not observed",
+    "Missing rollback automation: no automated rollback on failed deploy",
+    "Missing database migrations: observed but no automated migration tool (like Flyway)",
+    "Missing seed management: no structured seed data management",
+    "Missing environment parity: no way to test production-like locally",
+    "Missing contract-first development: no API spec first approach",
+    "Missing domain-driven design: not observed",
+    "Missing hexagonal architecture: not observed",
+    "Missing clean architecture layers: not observed",
+    "Missing SOLID principles: not evaluated",
+    "Missing DRY violations: observed in duplicated code",
+    "Missing KISS violations: observed in complex functions",
+    "Missing YAGNI violations: not evaluated"
+  ],
+  "maturity": {
+    "frontend": {
+      "architecture": 3,
+      "state_management": 3,
+      "theme_system": 2,
+      "widgets": 2,
+      "navigation": 3,
+      "forms": 3,
+      "validation": 3,
+      "internationalization": 0,
+      "accessibility": 2,
+      "responsiveness": 3,
+      "performance": 2,
+      "testing": 2,
+      "assets_management": 3,
+      "platform_specific": 3,
+      "build_flavors": 0
+    },
+    "backend": {
+      "architecture": 3,
+      "routing": 3,
+      "controllers": 3,
+      "services": 3,
+      "middleware": 3,
+      "models": 2,
+      "agents": 2,
+      "workers": 3,
+      "sockets": 3,
+      "startup": 3,
+      "utils": 3,
+      "database_access": 3,
+      "orm": 0,
+      "caching": 2,
+      "logging": 2,
+      "error_handling": 3,
+      "validation": 3,
+      "testing": 2,
+      "environment": 3,
+      "security_observations": 3
+    },
+    "database": {
+      "postgresql": {
+        "architecture": 3,
+        "schema": 3,
+        "indexes": 3,
+        "constraints": 3,
+        "triggers": 0,
+        "seeds": 3,
+        "migrations": 3,
+        "connection_pooling": 3,
+        "transactions": 3,
+        "backup_restore": 0
+      },
+      "redis": {
+        "architecture": 0,
+        "usage": 0,
+        "configuration": 0,
+        "client": 0
+      }
+    },
+    "api": {
+      "style": 3,
+      "versioning": 0,
+      "authentication": 3,
+      "content_type": 3,
+      "error_handling": 3,
+      "rate_limiting": 0,
+      "documentation": 0,
+      "endpoints_observed": 3,
+      "frontend_consumption": 3,
+      "backend_implementation": 3,
+      "data_transfer_objects": 3,
+      "versioning_strategy": 0
+    },
+    "security": {
+      "authentication": 3,
+      "authorization": 3,
+      "data_protection": 3,
+      "network_security": 3,
+      "security_headers": 0,
+      "dependency_scanning": 0,
+      "secrets_management": 3,
+      "security_testing": 0,
+      "compliance": 3
+    },
+    "ai_architecture": {
+      "components": 3,
+      "data_flow": 3,
+      "model_sources": 3,
+      "inference_location": 3,
+      "training_pipeline": 0,
+      "monitoring": 0,
+      "testing": 2,
+      "safety": 2
+    }
+  },
+  "technical_debt": [
+    {
+      "type": "ARCHITECTURAL_GAP",
+      "description": "Missing clear layering boundaries (e.g., frontend services calling backend services directly? not observed but potential)",
+      "severity": "MEDIUM"
+    },
+    {
+      "type": "LEGACY",
+      "description": "Shared/theme.dart used in 40+ screens, duplicating tokens and colors",
+      "severity": "HIGH"
+    },
+    {
+      "type": "DUPLICATE_AUTHORITY",
+      "description": "Multiple token systems (Token, GlowStoreTokens, LuxeColors, MensTheme) without single source of truth",
+      "severity": "HIGH"
+    },
+    {
+      "type": "COUPLING",
+      "description": "Provider management screen mixes UI, state, and networking; large file size risk",
+      "severity": "HIGH"
+    },
+    {
+      "type": "CONTRACT_DRIFT",
+      "description": "Potential drift between frontend APIService expectations and backend route implementations (not observed but risk without contract tests)",
+      "severity": "MEDIUM"
+    },
+    {
+      "type": "MISSING_CAPABILITY",
+      "description": "No unified avatar component",
+      "severity": "MEDIUM"
+    },
+    {
+      "type": "SECURITY_GAP",
+      "description": "No dependency scanning or SAST/DAST in CI",
+      "severity": "HIGH"
+    },
+    {
+      "type": "OBSERVABILITY_GAP",
+      "description": "No structured logging, distributed tracing, or metrics collection",
+      "severity": "HIGH"
+    },
+    {
+      "type": "AI_ARCHITECTURE_GAP",
+      "description": "No model versioning, monitoring, or A/B testing for AI models",
+      "severity": "HIGH"
+    },
+    {
+      "type": "TESTING_GAP",
+      "description": "Low unit and widget test coverage observed",
+      "severity": "MEDIUM"
+    }
+  ]
+}

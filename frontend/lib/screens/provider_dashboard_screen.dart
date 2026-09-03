@@ -17,6 +17,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import 'dart:convert';
 import '../services/audio_player.dart';
 import '../shared/theme.dart';
+import '../design/icons/glow_icon.dart';
 
 class ProviderDashboardScreen extends StatefulWidget {
   const ProviderDashboardScreen({super.key});
@@ -1717,33 +1718,56 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         children: [
           _buildOfflineBanner(),
-          // Hero section with gradient background
+          // Hero section with luxury gradient
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFFFDF4F2), Color(0xFFF5EBE6)],
+                colors: [Color(0xFFFFFDF8), Color(0xFFFAF2E6)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(28),
+              borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                  color: const Color(0xFFE8D7D3).withValues(alpha: 0.5), width: 1.5),
+                color: const Color(0xFFEFE8DE),
+                width: 1.2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFC5A052).withValues(alpha: 0.06),
+                  blurRadius: 18,
+                  offset: const Offset(0, 6),
+                ),
+              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Tu Resumen en Fontibón',
-                  style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: -0.5),
+                Row(
+                  children: [
+                    const Icon(Icons.stars_rounded,
+                        size: 20, color: Color(0xFFC5A052)),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Tu Resumen GlowPro',
+                      style: TextStyle(
+                        fontFamily: 'CormorantGaramond',
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1F1A15),
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 4),
                 const Text(
-                  'Gestiona tus citas y chatea con tus clientes en tiempo real, vecino.',
-                  style: TextStyle(fontSize: 13.5, color: Colors.grey),
+                  'Gestiona tus citas y servicios concierge en tiempo real.',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 13,
+                    color: Color(0xFF8C7E74),
+                  ),
                 ),
                 const SizedBox(height: 20),
                 Row(
@@ -2144,111 +2168,129 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
   }
 
   Widget _buildNavItem({
-    required int index,
-    required IconData icon,
-    required String label,
-  }) {
-    final isSelected = _currentIndex == index;
-    final color = isSelected ? AppTheme.primary : Colors.grey[500]!;
-    return Expanded(
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            setState(() {
-              _currentIndex = index;
-            });
-          },
-          borderRadius: BorderRadius.circular(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: color, size: 20),
-              const SizedBox(height: 3),
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 9.5,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                  color: color,
-                ),
+        required int index,
+        required String semanticName,
+        required GlowIconColorRole selectedRole,
+        required GlowIconColorRole unselectedRole,
+        required String label,
+      }) {
+        final isSelected = _currentIndex == index;
+        return Expanded(
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () {
+                setState(() {
+                  _currentIndex = index;
+                });
+              },
+              onHover: (hovering) {
+                if (hovering && !isSelected) {
+                  // Hover feedback handled by InkWell ripple
+                }
+              },
+              focusColor: Colors.transparent,
+              hoverColor: Colors.transparent,
+              borderRadius: BorderRadius.circular(16),
+              child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                GlowIcon.resolve(
+                                  semanticName,
+                                  size: 20,
+                                  colorRole: isSelected ? selectedRole : unselectedRole,
+                                  semanticLabel: label,
+                                ),
+                  const SizedBox(height: 3),
+                  Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                      fontFamily: 'CormorantGaramond',
+                      color: context.glowIconColor(isSelected ? selectedRole : unselectedRole),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
-    );
-  }
+        );
+      }
 
   Widget _buildProminentCenterNavItem({
-    required int index,
-    required IconData icon,
-    required String label,
-  }) {
-    final isSelected = _currentIndex == index;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        child: Transform.translate(
-          offset: const Offset(0, -14),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFFE8D7D3), // Golden soft rose
-                      AppTheme.primary, // Warm primary pink
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.primary.withOpacity(0.4),
-                      blurRadius: 10,
-                      spreadRadius: 2,
-                      offset: const Offset(0, 4),
+        required int index,
+        required String semanticName,
+        required String label,
+      }) {
+        final isSelected = _currentIndex == index;
+        return Expanded(
+          child: GestureDetector(
+            onTap: () {
+              setState(() {
+                _currentIndex = index;
+              });
+            },
+            child: Transform.translate(
+              offset: const Offset(0, -14),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: const LinearGradient(
+                        colors: [
+                          Color(0xFFE8D7D3), // Golden soft rose
+                          AppTheme.primary, // Warm primary pink
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.primary.withOpacity(0.4),
+                          blurRadius: 10,
+                          spreadRadius: 2,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                      border: Border.all(
+                        color: Colors.white,
+                        width: 2.5,
+                      ),
                     ),
-                  ],
-                  border: Border.all(
-                    color: Colors.white,
-                    width: 2.5,
+                    child: GlowIcon.resolve(
+                                          semanticName,
+                                          size: 26,
+                                          color: Colors.white,
+                                          semanticLabel: label,
+                                        ),
                   ),
-                ),
-                child: Icon(
-                  icon,
-                  color: Colors.white,
-                  size: 26,
-                ),
+                  const SizedBox(height: 2),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      fontFamily: 'CormorantGaramond',
+                      color: isSelected
+                          ? context.glowIconColor(GlowIconColorRole.primary)
+                          : context.glowIconColor(GlowIconColorRole.neutral),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 2),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w800,
-                  color: isSelected ? AppTheme.primary : const Color(0xFFB07D62),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
-      ),
-    );
-  }
+        );
+      }
 
   @override
   Widget build(BuildContext context) {
@@ -2377,20 +2419,35 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFAF8F5),
       appBar: _currentIndex >= 2
           ? null
           : AppBar(
-              title: Text(
-                _currentIndex == 0 ? 'Belleza Pro' : 'Mi Agenda',
-                style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: -0.5,
-                    fontSize: 18),
+              title: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    _currentIndex == 0 ? Icons.workspace_premium_rounded : Icons.calendar_month_rounded,
+                    size: 20,
+                    color: const Color(0xFFC5A052),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    _currentIndex == 0 ? 'GlowPro Concierge' : 'Mi Agenda Pro',
+                    style: const TextStyle(
+                      fontFamily: 'CormorantGaramond',
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1F1A15),
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
               ),
-              backgroundColor: Colors.white,
-              foregroundColor: Colors.black,
+              backgroundColor: const Color(0xFFFAF8F5),
+              foregroundColor: const Color(0xFF1F1A15),
               elevation: 0,
+              scrolledUnderElevation: 0,
               centerTitle: false,
               actions: [
                 if (_currentIndex == 0) ...[
@@ -2399,92 +2456,133 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                     isToggling: _isTogglingStatus,
                     onChanged: _toggleStatus,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 10),
                 ],
-                IconButton(
-                  icon: const Icon(Icons.refresh),
-                  onPressed: () {
-                    _fetchBookings();
-                    _fetchProfile();
-                  },
+                Padding(
+                  padding: const EdgeInsets.only(right: 16),
+                  child: Center(
+                    child: InkWell(
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        _fetchBookings();
+                        _fetchProfile();
+                      },
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: const Color(0xFFE8DFD8), width: 1),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.04),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(Icons.refresh_rounded, size: 18, color: Color(0xFF1F1A15)),
+                      ),
+                    ),
+                  ),
                 ),
-                const SizedBox(width: 8),
               ],
             ),
       body: Stack(
         children: [
-          Padding(
-            padding: EdgeInsets.only(
-              bottom: _currentIndex == 3 ? 0 : 88.0, // GlowShop manages its own margins
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 720),
+              child: Padding(
+                padding: EdgeInsets.only(
+                  bottom: _currentIndex == 3 ? 0 : 88.0, // GlowShop manages its own margins
+                ),
+                child: bodyWidget,
+              ),
             ),
-            child: bodyWidget,
           ),
           
           // Custom Glassmorphic Navigation Dock matching client-side cover styles
           Positioned(
-            bottom: MediaQuery.of(context).padding.bottom + 16,
+            bottom: 16,
             left: 16,
             right: 16,
-            child: Container(
-              height: 72,
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.92),
-                borderRadius: BorderRadius.circular(36),
-                border: Border.all(
-                    color: const Color(0xFFE8D7D3).withOpacity(0.4),
-                    width: 1.5),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.06),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  _buildNavItem(
-                    index: 0,
-                    icon: _currentIndex == 0 ? Icons.home : Icons.home_outlined,
-                    label: 'Inicio',
-                  ),
-                  _buildNavItem(
-                    index: 1,
-                    icon: _currentIndex == 1 ? Icons.calendar_month : Icons.calendar_month_outlined,
-                    label: 'Agenda',
-                  ),
-                  _buildNavItem(
-                    index: 2,
-                    icon: _currentIndex == 2 ? Icons.account_balance_wallet : Icons.account_balance_wallet_outlined,
-                    label: 'Wallet',
-                  ),
-                  
-                  // Botón central prominente: GlowShop
-                  _buildProminentCenterNavItem(
-                    index: 3,
-                    icon: Icons.shopping_bag_outlined,
-                    label: 'GlowShop',
-                  ),
+            child: SafeArea(
+              top: false,
+              bottom: true,
+              child: Container(
+                height: 72,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                decoration: BoxDecoration(
+                  color: context.glowIconColor(GlowIconColorRole.neutral).withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(36),
+                  border: Border.all(
+                      color: context.glowIconColor(GlowIconColorRole.neutral).withOpacity(0.2),
+                      width: 1.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.06),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    _buildNavItem(
+                      index: 0,
+                      semanticName: 'home',
+                      selectedRole: GlowIconColorRole.primary,
+                      unselectedRole: GlowIconColorRole.neutral,
+                      label: 'Inicio',
+                    ),
+                    _buildNavItem(
+                      index: 1,
+                      semanticName: 'calendar',
+                      selectedRole: GlowIconColorRole.primary,
+                      unselectedRole: GlowIconColorRole.neutral,
+                      label: 'Agenda',
+                    ),
+                    _buildNavItem(
+                      index: 2,
+                      semanticName: 'wallet',
+                      selectedRole: GlowIconColorRole.secondary,
+                      unselectedRole: GlowIconColorRole.neutral,
+                      label: 'Wallet',
+                    ),
 
-                  // Botón central prominente: GlowAcademy
-                  _buildProminentCenterNavItem(
-                    index: 4,
-                    icon: Icons.auto_stories,
-                    label: 'GlowAcademy',
-                  ),
+                    // Botón central prominente: GlowShop
+                    _buildProminentCenterNavItem(
+                      index: 3,
+                      semanticName: 'bag',
+                      label: 'GlowShop',
+                    ),
 
-                  _buildNavItem(
-                    index: 5,
-                    icon: _currentIndex == 5 ? Icons.chat_bubble : Icons.chat_bubble_outline,
-                    label: 'Chat',
-                  ),
-                  _buildNavItem(
-                    index: 6,
-                    icon: _currentIndex == 6 ? Icons.person : Icons.person_outline,
-                    label: 'Perfil',
-                  ),
-                ],
+                    // Botón central prominente: GlowAcademy
+                    _buildProminentCenterNavItem(
+                      index: 4,
+                      semanticName: 'school',
+                      label: 'GlowAcademy',
+                    ),
+
+                    _buildNavItem(
+                      index: 5,
+                      semanticName: 'chat',
+                      selectedRole: GlowIconColorRole.secondary,
+                      unselectedRole: GlowIconColorRole.neutral,
+                      label: 'Chat',
+                    ),
+                    _buildNavItem(
+                      index: 6,
+                      semanticName: 'profile',
+                      selectedRole: GlowIconColorRole.secondary,
+                      unselectedRole: GlowIconColorRole.neutral,
+                      label: 'Perfil',
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -2515,32 +2613,55 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
   Widget _analyticsCard(String label, String value, IconData icon, Color color,
       {String? subtitle}) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: const [
+        border: Border.all(color: const Color(0xFFEFE8DE), width: 1),
+        boxShadow: [
           BoxShadow(
-              color: Color(0x05000000), blurRadius: 8, offset: Offset(0, 4)),
+            color: const Color(0xFFC5A052).withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: color, size: 22),
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFAF6EE),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: const Color(0xFFC5A052).withValues(alpha: 0.25),
+                width: 0.8,
+              ),
+            ),
+            child: Icon(icon, color: const Color(0xFFC5A052), size: 18),
+          ),
           const SizedBox(height: 10),
           Text(
             value,
-            style: TextStyle(
-                fontSize: 17, fontWeight: FontWeight.bold, color: color),
+            style: const TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1F1A15),
+            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 3),
           Text(
             label,
-            style: TextStyle(
-                fontSize: 11, color: Colors.grey[750], fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 11,
+              color: Color(0xFF8C7E74),
+              fontWeight: FontWeight.w600,
+            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -2548,10 +2669,11 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
             const SizedBox(height: 2),
             Text(
               subtitle,
-              style: TextStyle(
-                  fontSize: 9,
-                  color: Colors.grey[600],
-                  fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 9.5,
+                color: Color(0xFFA8998C),
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),

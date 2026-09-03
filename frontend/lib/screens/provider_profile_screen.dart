@@ -604,88 +604,149 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
     final avatarProvider = _getAvatarProvider();
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFAF8F5),
       appBar: widget.isEmbedded
           ? null
           : AppBar(
-              title: const Text(
-                'Mi Perfil Profesional',
-                style: TextStyle(
-                    fontWeight: FontWeight.bold, letterSpacing: -0.5, fontSize: 18),
-              ),
-              backgroundColor: Colors.white,
-              foregroundColor: Colors.black,
-              elevation: 0,
-            ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // completeness bar
-              _buildCompletenessBar(),
-
-              // verification status badge
-              Center(child: _buildVerificationBadge()),
-
-              // 1. Cabecera con Avatar Editable
-              Center(
-                child: Stack(
-                  children: [
-                    Container(
+              leading: Padding(
+                padding: const EdgeInsets.only(left: 14),
+                child: Center(
+                  child: InkWell(
+                    onTap: () => Navigator.maybePop(context),
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      width: 36,
+                      height: 36,
                       decoration: BoxDecoration(
+                        color: Colors.white,
                         shape: BoxShape.circle,
-                        border: Border.all(
-                            color: const Color(0xFFF5EBE6), width: 4),
-                        boxShadow: const [
+                        border: Border.all(color: const Color(0xFFE8DFD8), width: 1),
+                        boxShadow: [
                           BoxShadow(
-                              color: Color(0x0A000000),
-                              blurRadius: 12,
-                              offset: Offset(0, 4)),
+                            color: Colors.black.withValues(alpha: 0.04),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
                         ],
                       ),
-                      child: CircleAvatar(
-                        radius: 56,
-                        backgroundColor: const Color(0xFFF5EBE6),
-                        backgroundImage: avatarProvider,
-                        child: avatarProvider == null
-                            ? Text(
-                                _nameCtrl.text.isNotEmpty
-                                    ? _nameCtrl.text[0].toUpperCase()
-                                    : 'P',
-                                style: const TextStyle(
-                                    fontSize: 40,
-                                    color: AppTheme.primary,
-                                    fontWeight: FontWeight.bold),
-                              )
-                            : null,
-                      ),
+                      child: const Icon(Icons.arrow_back_ios_new_rounded, size: 15, color: Color(0xFF1F1A15)),
                     ),
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: GestureDetector(
-                        onTap: _isUploading ? null : _showPhotoSourceSheet,
-                        child: const CircleAvatar(
-                          radius: 18,
-                          backgroundColor: AppTheme.primary,
-                          child: Icon(Icons.camera_alt,
-                              color: Colors.white, size: 16),
-                        ),
-                      ),
-                    ),
-                    if (_isUploading)
-                      const Positioned.fill(
-                        child: CircleAvatar(
-                          backgroundColor: Colors.black26,
-                          child: CircularProgressIndicator(color: Colors.white),
-                        ),
-                      ),
-                  ],
+                  ),
                 ),
               ),
+              title: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.person_pin_rounded, size: 18, color: Color(0xFFC5A052)),
+                  SizedBox(width: 8),
+                  Text(
+                    'Perfil Profesional Pro',
+                    style: TextStyle(
+                      fontFamily: 'CormorantGaramond',
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1F1A15),
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: const Color(0xFFFAF8F5),
+              foregroundColor: const Color(0xFF1F1A15),
+              elevation: 0,
+              scrolledUnderElevation: 0,
+            ),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 680),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // completeness bar
+                  _buildCompletenessBar(),
+
+                  // verification status badge
+                  Center(child: _buildVerificationBadge()),
+
+                  const SizedBox(height: 8),
+
+                  // 1. Cabecera con Avatar Editable en Medallón de Alta Joyería
+                  Center(
+                    child: Stack(
+                      children: [
+                        Container(
+                          width: 116,
+                          height: 116,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFF3D59B), Color(0xFFC5A052), Color(0xFF96732B)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFC5A052).withValues(alpha: 0.35),
+                                blurRadius: 18,
+                                offset: const Offset(0, 6),
+                              ),
+                            ],
+                          ),
+                          padding: const EdgeInsets.all(3),
+                          child: Container(
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Color(0xFFFDFBF7),
+                            ),
+                            child: CircleAvatar(
+                              radius: 52,
+                              backgroundColor: const Color(0xFFFAF6EE),
+                              backgroundImage: avatarProvider,
+                              child: avatarProvider == null
+                                  ? const Icon(Icons.person_rounded, size: 52, color: Color(0xFFC5A052))
+                                  : null,
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          bottom: 2,
+                          right: 2,
+                          child: GestureDetector(
+                            onTap: _isUploading ? null : _showPhotoSourceSheet,
+                            child: Container(
+                              padding: const EdgeInsets.all(7),
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [Color(0xFFF3D59B), Color(0xFFC5A052)],
+                                ),
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white, width: 2),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Colors.black26,
+                                    blurRadius: 6,
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(Icons.camera_alt_rounded,
+                                  color: Color(0xFF1F1A15), size: 15),
+                            ),
+                          ),
+                        ),
+                        if (_isUploading)
+                          const Positioned.fill(
+                            child: CircleAvatar(
+                              backgroundColor: Colors.black26,
+                              child: CircularProgressIndicator(color: Colors.white),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
               const SizedBox(height: 32),
 
               // 2. Formularios de edición
@@ -779,81 +840,128 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                       color: Colors.green, fontWeight: FontWeight.w500),
                   textAlign: TextAlign.center,
                 ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 28),
 
               // Botón guardar cambios
-              ElevatedButton(
-                onPressed: _isSaving ? null : _saveProfileChanges,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primary,
-                  foregroundColor: Colors.white,
-                  disabledBackgroundColor: const Color(0xFFE5CECA),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30)),
-                  elevation: 0,
+              Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFF3D59B), Color(0xFFC5A052)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFC5A052).withValues(alpha: 0.35),
+                      blurRadius: 14,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-                child: _isSaving
-                    ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                            color: Colors.white, strokeWidth: 2),
-                      )
-                    : const Text('Guardar Cambios',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold)),
-              ),
-              const SizedBox(height: 24),
-
-              // 3. Accesos rápidos de Prestador
-              const Divider(color: Color(0xFFF3EAE8)),
-              const SizedBox(height: 12),
-              _buildSettingsTile(
-                icon: Icons.inventory_2_outlined,
-                title: 'Gestionar Mis Servicios',
-                onTap: () => Navigator.pushNamed(context, '/provider/services'),
-              ),
-              _buildSettingsTile(
-                icon: Icons.photo_library_outlined,
-                title: 'Mi Portafolio de Trabajo',
-                onTap: () =>
-                    Navigator.pushNamed(context, '/provider/portfolio'),
-              ),
-               _buildSettingsTile(
-                icon: Icons.gavel_outlined,
-                title: 'Habeas Data & Términos Legales',
-                onTap: _showHabeasDataDialog,
-              ),
-              _buildSettingsTile(
-                icon: Icons.headset_mic_outlined,
-                title: 'Centro de Soporte y PQRSF',
-                onTap: () => Navigator.pushNamed(context, '/support'),
-              ),
-              _buildSettingsTile(
-                icon: Icons.gavel_outlined,
-                title: 'Mis Disputas de Servicio',
-                onTap: () => Navigator.pushNamed(context, '/disputes'),
-              ),
-              _buildSettingsTile(
-                icon: Icons.school_outlined,
-                title: 'Academia Glow (Capacitación)',
-                onTap: () => Navigator.pushNamed(context, '/provider/academy'),
+                child: ElevatedButton(
+                  onPressed: _isSaving ? null : _saveProfileChanges,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  child: _isSaving
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(color: Color(0xFF1F1A15), strokeWidth: 2),
+                        )
+                      : const Text(
+                          'Guardar Perfil Profesional',
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1F1A15),
+                          ),
+                        ),
+                ),
               ),
               const SizedBox(height: 28),
 
-              // Botón cerrar sesión
+              // 3. Accesos rápidos de Prestador en Tarjeta Flotante
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFEFE8DE), width: 1.2),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x06000000),
+                      blurRadius: 12,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    _buildSettingsTile(
+                      icon: Icons.inventory_2_outlined,
+                      title: 'Gestionar Mis Servicios',
+                      onTap: () => Navigator.pushNamed(context, '/provider/services'),
+                    ),
+                    const Divider(color: Color(0xFFF3EFE9), height: 1, indent: 56, endIndent: 16),
+                    _buildSettingsTile(
+                      icon: Icons.photo_library_outlined,
+                      title: 'Mi Portafolio de Trabajo',
+                      onTap: () =>
+                          Navigator.pushNamed(context, '/provider/portfolio'),
+                    ),
+                    const Divider(color: Color(0xFFF3EFE9), height: 1, indent: 56, endIndent: 16),
+                    _buildSettingsTile(
+                      icon: Icons.gavel_outlined,
+                      title: 'Habeas Data & Términos Legales',
+                      onTap: _showHabeasDataDialog,
+                    ),
+                    const Divider(color: Color(0xFFF3EFE9), height: 1, indent: 56, endIndent: 16),
+                    _buildSettingsTile(
+                      icon: Icons.headset_mic_outlined,
+                      title: 'Centro de Soporte y PQRSF',
+                      onTap: () => Navigator.pushNamed(context, '/support'),
+                    ),
+                    const Divider(color: Color(0xFFF3EFE9), height: 1, indent: 56, endIndent: 16),
+                    _buildSettingsTile(
+                      icon: Icons.gavel_outlined,
+                      title: 'Mis Disputas de Servicio',
+                      onTap: () => Navigator.pushNamed(context, '/disputes'),
+                    ),
+                    const Divider(color: Color(0xFFF3EFE9), height: 1, indent: 56, endIndent: 16),
+                    _buildSettingsTile(
+                      icon: Icons.school_outlined,
+                      title: 'Academia Glow (Capacitación)',
+                      onTap: () => Navigator.pushNamed(context, '/provider/academy'),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 28),
+
+              // Botón cerrar sesión en cápsula terracota
               OutlinedButton.icon(
                 onPressed: _confirmLogout,
-                icon: const Icon(Icons.logout, color: Colors.redAccent),
-                label: const Text('Cerrar Sesión',
-                    style: TextStyle(
-                        color: Colors.redAccent, fontWeight: FontWeight.bold)),
+                icon: const Icon(Icons.logout_rounded, color: Color(0xFF9E4B3D), size: 18),
+                label: const Text(
+                  'Cerrar Sesión Profesional',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    color: Color(0xFF9E4B3D),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14.5,
+                  ),
+                ),
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Colors.redAccent),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30)),
+                  backgroundColor: const Color(0xFFFFF8F6),
+                  side: const BorderSide(color: Color(0xFFF5D6D0), width: 1.2),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
               ),
               const SizedBox(height: 40),
@@ -861,7 +969,9 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
           ),
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 
   Widget _buildSettingsTile({
@@ -870,13 +980,44 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
     required VoidCallback onTap,
   }) {
     return ListTile(
-      leading: Icon(icon, color: AppTheme.primary),
-      title: Text(title,
-          style: const TextStyle(
-              fontWeight: FontWeight.w500, color: Colors.black87)),
-      trailing:
-          const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 4.0),
+      leading: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: const Color(0xFFFAF6EE),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: const Color(0xFFC5A052).withValues(alpha: 0.25),
+            width: 0.8,
+          ),
+        ),
+        alignment: Alignment.center,
+        child: Icon(icon, color: const Color(0xFFC5A052), size: 18),
+      ),
+      title: Text(
+        title,
+        style: const TextStyle(
+          fontFamily: 'Inter',
+          fontWeight: FontWeight.w600,
+          fontSize: 14,
+          color: Color(0xFF1F1A15),
+        ),
+      ),
+      trailing: Container(
+        width: 24,
+        height: 24,
+        decoration: BoxDecoration(
+          color: const Color(0xFFFAF6EE),
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: const Color(0xFFC5A052).withValues(alpha: 0.2),
+            width: 0.8,
+          ),
+        ),
+        alignment: Alignment.center,
+        child: const Icon(Icons.arrow_forward_ios_rounded, size: 10, color: Color(0xFFC5A052)),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
       onTap: onTap,
     );
   }
@@ -887,14 +1028,11 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: const Text('Tratamiento de Datos Personales',
-            style: TextStyle(fontWeight: FontWeight.bold)),
+            style: TextStyle(fontFamily: 'CormorantGaramond', fontWeight: FontWeight.bold, fontSize: 20)),
         content: const SingleChildScrollView(
           child: Text(
-            'En cumplimiento de la Ley 1581 de 2012 (Habeas Data) de la República de Colombia, '
-            'Belleza App garantiza la confidencialidad, integridad y seguridad de los datos personales suministrados. '
-            'Tus datos serán procesados con la única finalidad de coordinar la logística de tus servicios a domicilio '
-            'en la localidad de Fontibón y gestionar los correspondientes comprobantes financieros de Wompi.',
-            style: TextStyle(height: 1.4, color: Colors.black87),
+            'En cumplimiento de la Ley 1581 de 2012 y el Decreto 1377 de 2013 de la República de Colombia, te informamos que los datos personales y biométricos suministrados serán tratados de manera confidencial y con la finalidad exclusiva de prestar los servicios contratados a través de la plataforma GlowApp.\n\nPuedes ejercer tus derechos de conocer, actualizar, rectificar y suprimir tus datos enviando una solicitud a través de nuestro canal de PQRSF.',
+            style: TextStyle(fontSize: 13, height: 1.4, color: Color(0xFF4A3E39)),
           ),
         ),
         actions: [
@@ -902,7 +1040,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
             onPressed: () => Navigator.pop(context),
             child: const Text('Entendido',
                 style: TextStyle(
-                    color: AppTheme.primary, fontWeight: FontWeight.bold)),
+                    color: Color(0xFFC5A052), fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -912,24 +1050,24 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
   InputDecoration _inputDecoration(String label, IconData icon) {
     return InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(color: Colors.grey, fontSize: 14),
-      prefixIcon: Icon(icon, color: AppTheme.primary),
+      labelStyle: const TextStyle(fontFamily: 'Inter', color: Color(0xFF8C7E74), fontSize: 13.5),
+      prefixIcon: Icon(icon, color: const Color(0xFFC5A052), size: 20),
       floatingLabelBehavior: FloatingLabelBehavior.auto,
       filled: true,
-      fillColor: const Color(0xFFF5EBE6),
+      fillColor: Colors.white,
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(30),
-        borderSide: BorderSide.none,
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: Color(0xFFEFE8DE), width: 1.2),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(30),
-        borderSide: BorderSide.none,
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: Color(0xFFEFE8DE), width: 1.2),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(30),
-        borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: Color(0xFFC5A052), width: 1.5),
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
     );
   }
 }

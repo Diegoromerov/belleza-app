@@ -1,6 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import '../../../shared/glow_tokens.dart';
+import '../shared/glow_tokens.dart';
 
 /// Card con efecto Glassmorphic (cristal esmerilado) usando [BackdropFilter],
 /// bordes sutiles y los tokens de color de GlowApp.

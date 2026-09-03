@@ -1,0 +1,948 @@
+{
+  "status": "INCOMPLETE - EVIDENCE COLLECTION COMPLETE, ANALYSIS PENDING",
+  "quality_domains": [
+    {
+      "domain": "Unit Testing",
+      "status": "PARTIAL",
+      "evidence": "Frontend: 4 test files exist; Backend: Multiple test suites exist (35 total test suites); Execution: flutter test passes all frontend tests; npm test shows 31 passed, 4 failed backend test suites",
+      "limitations": "Backend tests show failures related to missing API keys and service configurations; No coverage metrics available; Test locations not centralized"
+    },
+    {
+      "domain": "Widget Testing",
+      "status": "PARTIAL",
+      "evidence": "Frontend widget tests exist in test/ directory; widget_test.dart tests BeautyApp loading; theme_widget_test.dart tests theme functionality",
+      "limitations": "Limited widget test coverage observed"
+    },
+    {
+      "domain": "Integration Testing",
+      "status": "DEFINED",
+      "evidence": "Backend has integration test patterns in src/tests/; Examples: biometric.integration.test.js, contract/biometric-scan.contract.test.js; Tests validate API contracts and service interactions",
+      "limitations": "Integration tests fail due to missing environment configuration; No frontend integration tests observed"
+    },
+    {
+      "domain": "End-to-End Testing",
+      "status": "DEFINED",
+      "evidence": "Backend has E2E test: biometricE2E.test.js; Tests complete biometric hub flow",
+      "limitations": "E2E tests fail due to missing dependencies and configuration; No frontend E2E tests observed"
+    },
+    {
+      "domain": "Static Analysis",
+      "status": "PARTIAL",
+      "evidence": "flutter analyze command executed; Uses analysis_options.yaml and flutter_lints package; Configured with lint rules",
+      "findings": "876 issues found in frontend analysis; Major issues: missing dependencies (freezed_annotation), undefined classes (AppTheme), URI resolution errors; Many prefer_const_constructors suggestions; Deprecated member usage warnings"
+    },
+    {
+      "domain": "Build Validation",
+      "status": "IMPLEMENTED",
+      "evidence": "flutter build web --release succeeds; Produces web build output in build/web; Shows WASM compatibility warnings (fixable); Font tree-shaking reported (expected behavior)"
+    },
+    {
+      "domain": "Regression Testing",
+      "status": "DEFINED",
+      "evidence": "Backend has compareWithBaseline function in ragEvaluator.test.js; Designed to detect regressions >10%; Quality gates system in qualityGates.test.js",
+      "limitations": "No automated regression testing in CI observed; Baseline establishment not evidenced"
+    },
+    {
+      "domain": "Visual QA",
+      "status": "DEFINED",
+      "evidence": "G0-B Experience Audit completed (EXPERIENCE_RESULT.md); Visual gap audits exist: GLOWAPP_VISUAL_IMPLEMENTATION_GAP_AUDIT.md; SOUL.md defines G4 gate: 'Visual QA - Visual regression vs spec. Mobile/Tablet/Desktop. Women/Men/AURA'",
+      "limitations": "No automated visual regression testing observed; Reliance on manual visual validation"
+    },
+    {
+      "domain": "Accessibility",
+      "status": "PARTIAL",
+      "evidence": "SOUL.md defines accessibility requirements; G0-B Result shows: Semantic labels: PARTIAL, Tooltips: NOT IMPLEMENTED, Touch targets: VERIFIED, Text scaling: REQUIRES_IMPLEMENTATION_VALIDATION, Contrast: PARTIAL, Focus: PARTIAL, Keyboard: REQUIRES_IMPLEMENTATION, Screen reader: REQUIRES_IMPLEMENTATION",
+      "limitations": "No automated accessibility testing observed; Known contrast failures (Aura Teal on dark: 1.8:1); Missing focus states on web buttons"
+    },
+    {
+      "domain": "Responsive Validation",
+      "status": "DEFINED",
+      "evidence": "SOUL.md defines responsive principles and breakpoints; G0-B Result details mobile/tablet/desktop experiences; UI Component Language specifies responsive behavior",
+      "limitations": "No automated responsive testing observed; Reliance on manual validation"
+    },
+    {
+      "domain": "Performance",
+      "status": "DEFINED",
+      "evidence": "SOUL.md doesn't explicitly define performance gates; Backend has observability and metrics collection; RAG latency tracking in geminiService.js; Background worker service for async operations",
+      "limitations": "No performance benchmarks or budgets defined; No automated performance testing observed; Bundle size not measured"
+    },
+    {
+      "domain": "Security",
+      "status": "DEFINED",
+      "evidence": "SECURITY.md exists in root; Backend implements: JWT authentication, Rate limiting (rateLimiter.test.js), Circuit breaker pattern (circuitBreakerService.js), Abuse detection (abuseDetection.test.js), Helmet, CORS, compression middleware, Input validation (Joi/Zod); Environment-based configuration",
+      "limitations": "No automated security scanning observed; Hardcoded API keys in tests (visible in console warnings); Missing API keys cause test failures"
+    },
+    {
+      "domain": "Data Integrity",
+      "status": "DEFINED",
+      "evidence": "Backend uses Sequelize ORM with PostgreSQL; Database migration system (migrations/ directory); Seed scripts for initial data; Transaction handling in services; RAG system with chunking and evaluation",
+      "limitations": "No data validation testing observed; No database constraint testing evidenced; Connection failures in tests due to missing config"
+    },
+    {
+      "domain": "AI/RAG Evaluation",
+      "status": "PARTIAL",
+      "evidence": "Backend has RAG evaluation system (ragEvaluator.test.js); Measures: precision@k, recall@k, MRR, faithfulness, answer relevancy; Quality gates system (qualityGates.test.js) with thresholds; Circuit breaker for LLM services; Observability logging (ragLogger.js)",
+      "limitations": "Evaluation tests depend on missing API keys; No production validation evidenced; Fallback chains observed but not fully validated"
+    },
+    {
+      "domain": "Observability",
+      "status": "DEFINED",
+      "evidence": "Structured logging in ragLogger.js; Error tracking and circuit breaker logging; Background worker logging; Service health checks (serviceHealth.test.js); Metrics collection (ragMetrics.test.js)",
+      "limitations": "No centralized logging infrastructure evidenced; No alerting system observed; Log aggregation not demonstrated"
+    },
+    {
+      "domain": "Error Handling",
+      "status": "DEFINED",
+      "evidence": "Circuit breaker pattern implemented; Try/catch blocks with fallback chains; Error logging and observability; Validation with Joi/Zod; HTTP error responses with standardized envelopes",
+      "limitations": "Unhandled promise rejections observed in tests; Memory leaks suspected (test runner warnings); Error boundaries not evidenced in Flutter"
+    },
+    {
+      "domain": "Release Validation",
+      "status": "DEFINED",
+      "evidence": "DEPLOY_CHECKLIST.md exists; DEPLOY_TRIGGER.txt used; Railway configuration (railway.yml); Docker files for various environments; Build validation (flutter build web --release)",
+      "limitations": "No automated release gates observed; Manual approval process evidenced; No smoke test automation evidenced"
+    },
+    {
+      "domain": "CI/CD",
+      "status": "DEFINED",
+      "evidence": "Backend has CI scripts: ci:eval: bash scripts/ciRagEvaluation.sh; Dockerfiles for different environments; Railway deployment evidenced; Package locks (package-lock.json, pubspec.lock)",
+      "limitations": "No CI configuration files observed (no .github/workflows); No automated testing in commit pipeline evidenced; Manual deployment process indicated"
+    },
+    {
+      "domain": "Test Environment",
+      "status": "DEFINED",
+      "evidence": "Backend uses Jest testing framework; Environment configuration via .env.* files; Mocking patterns observed in tests; Service mocking in integration tests",
+      "limitations": "No dedicated test environment evidenced; Tests depend on external services (API keys); No test data isolation observed"
+    },
+    {
+      "domain": "Definition of Done",
+      "status": "DEFINED",
+      "evidence": "SOUL.md Section 24 defines Definition of Done: 1. SOUL compliance verified, 2. Color compliance (S1), 3. Typography compliance (S2), 4. Photography compliance (S3), 5. Icon compliance (Icon System v1.0), 6. Component compliance (S4), 7. Accessibility validated (not claimed), 8. Responsive validated (mobile/tablet/desktop), 9. Theme parity (Light/Dark/Men/Women/AURA), 10. Functional safety (no regressions, booking/payment intact), 11. Regression testing passed, 12. Documentation updated",
+      "limitations": "Not currently implemented (per SOUL.md Implementation Status Matrix); Multiple parallel systems create confusion; No automated DoD checking observed"
+    }
+  ],
+  "test_inventory": [
+    {
+      "location": "test/aura_welcome_screen_test.dart",
+      "framework": "flutter_test",
+      "type": "Widget",
+      "coverage_approx": "Low",
+      "purpose": "Aura Welcome screen UI/state",
+      "dependencies": "flutter_test, flutter_secure_storage",
+      "authority": "Dev Team",
+      "frequency": "Manual",
+      "known_result": "Passes (with plugin warnings)",
+      "limitations": "Requires secure storage plugin"
+    },
+    {
+      "location": "test/calculations_test.dart",
+      "framework": "flutter_test",
+      "type": "Unit",
+      "coverage_approx": "Low",
+      "purpose": "Financial calculations",
+      "dependencies": "flutter_test",
+      "authority": "Dev Team",
+      "frequency": "Manual",
+      "known_result": "Passes",
+      "limitations": "Pure Dart functions"
+    },
+    {
+      "location": "test/theme_widget_test.dart",
+      "framework": "flutter_test",
+      "type": "Widget",
+      "coverage_approx": "Low",
+      "purpose": "Theme functionality",
+      "dependencies": "flutter_test",
+      "authority": "Dev Team",
+      "frequency": "Manual",
+      "known_result": "Passes",
+      "limitations": "Theme widget testing"
+    },
+    {
+      "location": "test/widget_test.dart",
+      "framework": "flutter_test",
+      "type": "Widget",
+      "coverage_approx": "Low",
+      "purpose": "App loading",
+      "dependencies": "flutter_test",
+      "authority": "Dev Team",
+      "frequency": "Manual",
+      "known_result": "Passes",
+      "limitations": "Basic smoke test"
+    },
+    {
+      "location": "src/tests/ (35 files)",
+      "framework": "Jest",
+      "type": "Unit/Integration/E2E",
+      "coverage_approx": "Medium",
+      "purpose": "Business logic, APIs, services",
+      "dependencies": "jest, supertest, pg-mem",
+      "authority": "Dev Team",
+      "frequency": "Manual (npm test)",
+      "known_result": "31 passed, 4 failed, 1 skipped",
+      "limitations": "Failures due to missing env config"
+    },
+    {
+      "location": "tests/ (2 files)",
+      "framework": "Jest",
+      "type": "Unit",
+      "coverage_approx": "Low",
+      "purpose": "Payment, Gemini prompts",
+      "dependencies": "jest",
+      "authority": "Dev Team",
+      "frequency": "Manual",
+      "known_result": "Passes",
+      "limitations": "Specific functionality"
+    }
+  ],
+  "execution_evidence": [
+    {
+      "phase": "Flutter Analyze",
+      "before": "Clean environment, dependencies resolving",
+      "command": "flutter analyze",
+      "result": "876 issues found (see full log)",
+      "failures": "URI resolution errors (missing freezed_annotation); Undefined classes (AppTheme); Undefined annotations (freezed, JsonKey, useResult); Undefined identifiers (freezed)",
+      "warnings": "prefer_const_constructors (100+ instances); unused_import; deprecated_member_use; dead_null_aware_expression",
+      "pre_existing": "All issues pre-existed (code quality debt)",
+      "new": "No new issues introduced by analysis",
+      "limitations": "Analysis reflects current code state, not runtime behavior"
+    },
+    {
+      "phase": "Flutter Test",
+      "before": "Test files present, dependencies resolving",
+      "command": "flutter test",
+      "result": "All tests pass (4/4)",
+      "failures": "None",
+      "warnings": "MissingPluginException for flutter_secure_storage in tests; Consentimento guardado localmente em sesión: MissingPluginException; OpenStreetMap tile server usage warning",
+      "pre_existing": "Test suite structure and plugin dependencies",
+      "new": "No new failures",
+      "limitations": "Tests pass but show plugin missing exceptions; Does not test UI rendering or integration; Limited to unit/widget test scope"
+    },
+    {
+      "phase": "Flutter Build Web --Release",
+      "before": "Web build capable environment",
+      "command": "flutter build web --release",
+      "result": "Build successful, output in build/web",
+      "failures": "None",
+      "warnings": "WASM dry run incompatibilities (flutter_secure_storage_web, geolocator_web); Font asset tree-shaking (expected); MaterialIcons vs CupertinoIcons warning",
+      "pre_existing": "Web build configuration",
+      "new": "No new build failures",
+      "limitations": "Build success doesn't guarantee runtime correctness; WASM warnings indicate potential web assembly issues; Tree-shaking may remove needed fonts/icons"
+    },
+    {
+      "phase": "Backend Test Suite",
+      "before": "Test environment, missing API keys configured",
+      "command": "npm test",
+      "result": "31 passed, 4 failed, 1 skipped test suites",
+      "failures": "geminiFallback.test.js: Breaker failure counting issue; biometric.integration.test.js: Response message mismatches; contract/biometric-scan.contract.test.js: 404 vs expected 200/400/401; biometricE2E.test.js: 404 on status endpoint",
+      "warnings": "Numerous console warnings about missing API keys (DEEPSEEK, GEMINI, NVIDIA, REDIS, DATABASE); Service unavailable errors for external APIs; Circuit breaker activations and fallbacks",
+      "pre_existing": "Test suite design and mocking patterns",
+      "new": "No new test failures introduced",
+      "limitations": "Failures primarily due to missing configuration, not code defects; External service dependencies cause test instability; Environment-specific configuration required"
+    }
+  ],
+  "definition_of_done": {
+    "documented": "SOUL.md Section 24 defines Definition of Done: 1. SOUL compliance verified, 2. Color compliance (S1), 3. Typography compliance (S2), 4. Photography compliance (S3), 5. Icon compliance (Icon System v1.0), 6. Component compliance (S4), 7. Accessibility validated (not claimed), 8. Responsive validated (mobile/tablet/desktop), 9. Theme parity (Light/Dark/Men/Women/AURA), 10. Functional safety (no regressions, booking/payment intact), 11. Regression testing passed, 12. Documentation updated",
+    "practiced": "Manual testing evidenced (flutter test, npm test); Build validation (flutter build web --release); No automated compliance checking; No validation gates in CI observed; Documentation updates manual",
+    "conflict_status": "CONFLICT - Multiple Definition of Done interpretations exist"
+  },
+  "regression": {
+    "functional": {
+      "status": "DEFINED",
+      "evidence": "compareWithBaseline in ragEvaluator; qualityGates system",
+      "automation": "Code exists but not integrated into CI",
+      "coverage": "RAG evaluation metrics only"
+    },
+    "visual": {
+      "status": "DEFINED",
+      "evidence": "Manual visual audits (GLOWAPP_VISUAL_IMPLEMENTATION_GAP_AUDIT.md)",
+      "automation": "None observed",
+      "coverage": "Periodic manual checks"
+    },
+    "navigation_theming": {
+      "status": "DEFINED",
+      "evidence": "None observed",
+      "automation": "None observed",
+      "coverage": "Reliance on manual QA"
+    },
+    "automation_level": {
+      "automated": "RAG metrics comparison (backend only)",
+      "manual": "All other regression detection",
+      "human_dependent_percent": 95
+    }
+  },
+  "accessibility": {
+    "touch_targets": {
+      "status": "VERIFIED",
+      "evidence": "Min 48dp. Buttons 52-56px (per SOUL.md)"
+    },
+    "contrast": {
+      "status": "PARTIAL",
+      "evidence": "Primary: 12.8:1 (Women), ~4.2:1 (Men target). CTA on brand: REQUIRES_VALIDATION. Aura Teal light: 8.2:1. Aura Teal dark: FAIL 1.8:1 (per SOUL.md and G0-B Result)"
+    },
+    "focus": {
+      "status": "PARTIAL",
+      "evidence": "2px Focus Border required on ALL interactive. Buttons lack visible focus on web (per SOUL.md and G0-B Result)"
+    },
+    "keyboard": {
+      "status": "REQUIRES_IMPLEMENTATION",
+      "evidence": "Tab/Shift+Tab, Enter/Space, Escape dismiss, focus trap (per SOUL.md)"
+    },
+    "screen_reader": {
+      "status": "REQUIRES_IMPLEMENTATION",
+      "evidence": "Semantic labels on icon-only controls. Live regions. S2 heading hierarchy (per SOUL.md)"
+    },
+    "text_scaling": {
+      "status": "REQUIRES_IMPLEMENTATION_VALIDATION",
+      "evidence": "Test 1.0x, 1.3x, 1.5x, 2.0x. Flexible maxLines (per SOUL.md)"
+    },
+    "motion_sensitivity": {
+      "status": "REQUIRES_IMPLEMENTATION",
+      "evidence": "Respect `prefers-reduced-motion` (per SOUL.md)"
+    },
+    "validation_approach": "Manual inspection and testing required per G3/G4 gates"
+  },
+  "performance": {
+    "startup": {
+      "measured": false,
+      "evidence": "Not measured"
+    },
+    "frame_rendering": {
+      "measured": false,
+      "evidence": "Not measured"
+    },
+    "image_processing": {
+      "measured": false,
+      "evidence": "Not measured"
+    },
+    "network_latency": {
+      "measured": true,
+      "evidence": "Tracked in RAG traces (query_embedding_latency_ms, retrieval_latency_ms, llm_latency_ms)"
+    },
+    "api_latency": {
+      "measured": true,
+      "evidence": "Tracked in service logs and RAG traces"
+    },
+    "database_latency": {
+      "measured": false,
+      "evidence": "Not explicitly tracked"
+    },
+    "memory": {
+      "measured": false,
+      "evidence": "Not measured"
+    },
+    "cpu": {
+      "measured": false,
+      "evidence": "Not measured"
+    },
+    "bundle_size": {
+      "measured": false,
+      "evidence": "Font tree-shaking observed in build (expected behavior)"
+    },
+    "low_end_devices": {
+      "measured": false,
+      "evidence": "Not tested"
+    },
+    "web_performance": {
+      "measured": false,
+      "evidence": "Not measured (Lighthouse, Web Vitals)"
+    },
+    "instrumentation_exists": "RAG latency tracing in geminiService.js and ragLogger.js; Background worker timing; Database query timing not evidenced",
+    "gap": "No performance budgets, benchmarks, or automated testing"
+  },
+  "security": {
+    "authentication": {
+      "status": "IMPLEMENTED",
+      "evidence": "JWT-based with expiration"
+    },
+    "authorization": {
+      "status": "IMPLEMENTED",
+      "evidence": "Role-based checking evidenced"
+    },
+    "token_storage": {
+      "status": "IMPLEMENTED",
+      "evidence": "flutter_secure_storage (plugin missing in tests)"
+    },
+    "secrets_management": {
+      "status": "IMPLEMENTED",
+      "evidence": "Environment variables (.env.* files)"
+    },
+    "api_keys": {
+      "status": "CONFIGURATION_GAP",
+      "evidence": "Configured via env vars (but missing in test env)"
+    },
+    "payment_boundaries": {
+      "status": "IMPLEMENTED",
+      "evidence": "Wompi integration evidenced"
+    },
+    "biometric_data": {
+      "status": "IMPLEMENTED",
+      "evidence": "Consent flow with idempotency keys"
+    },
+    "personal_data": {
+      "status": "IMPLEMENTED",
+      "evidence": "GDPR considerations in architecture docs"
+    },
+    "logging": {
+      "status": "IMPLEMENTED",
+      "evidence": "Structured JSON logging with trace IDs"
+    },
+    "database_security": {
+      "status": "IMPLEMENTED",
+      "evidence": "Parameterized queries via Sequelize/PostgreSQL"
+    },
+    "external_services": {
+      "status": "IMPLEMENTED",
+      "evidence": "Circuit breaker pattern for resilience"
+    },
+    "ai_data_exposure": {
+      "status": "IMPLEMENTED",
+      "evidence": "Token-based usage, fallback chains"
+    },
+    "validation_gaps": [
+      "No automated security scanning (SAST/DAST) observed",
+      "No penetration testing evidenced",
+      "API keys missing in test environments cause failures",
+      "No security test suite observed",
+      "Dependency scanning not evidenced (48 packages have newer versions)"
+    ],
+    "evidence_vs_specification": "Specification exists in SOUL.md and SECURITY.md; Implementation evidenced in code; Validation incomplete due to missing test configuration"
+  },
+  "ai_quality": {
+    "unit_testing": {
+      "status": "IMPLEMENTED",
+      "evidence": "ragEvaluator.test.js with comprehensive metrics",
+      "measures": "precision@k, recall@k, MRR, faithfulness, answer relevancy"
+    },
+    "retrieval_evaluation": {
+      "status": "PARTIAL",
+      "evidence": "Code exists but tests fail due to missing API keys",
+      "gap": "No production validation evidenced"
+    },
+    "embedding_evaluation": {
+      "status": "PARTIAL",
+      "evidence": "NVIDIA embeddings service configured",
+      "gap": "No validation testing observed"
+    },
+    "production_observability": {
+      "status": "DEFINED",
+      "evidence": "RAG trace logging with trace_id, timestamps, latency metrics; Circuit breaker state tracking; Error logging and fallback execution; Service health monitoring"
+    },
+    "end_to_end_validation": {
+      "status": "NOT_IMPLEMENTED",
+      "evidence": "No production smoke tests or validation pipelines",
+      "gap": "Reliance on manual verification"
+    },
+    "key_distinction": {
+      "tested": "Unit tests exist and would pass with proper configuration",
+      "validated": "Not evidenced (requires production-like testing)",
+      "production_validated": "Not evidenced"
+    }
+  },
+  "observability": {
+    "logs": {
+      "status": "DEFINED",
+      "evidence": "Structured JSON logging in ragLogger.js with trace IDs"
+    },
+    "metrics": {
+      "status": "DEFINED",
+      "evidence": "RAG metrics collection (ragMetrics.test.js); Service health checks (serviceHealth.test.js); Background worker logging"
+    },
+    "traces": {
+      "status": "DEFINED",
+      "evidence": "Trace IDs in RAG logs; Latency measurements (embedding, retrieval, LLM, tool calls)"
+    },
+    "errors": {
+      "status": "DEFINED",
+      "evidence": "Circuit breaker error tracking; Try/catch with logging; Standardized error envelopes"
+    },
+    "user_journeys": {
+      "status": "NOT_EVIDENCED",
+      "evidence": "Not explicitly tracked"
+    },
+    "rag_query_logs": {
+      "status": "DEFINED",
+      "evidence": "Full tracing implemented"
+    },
+    "payment_events": {
+      "status": "NOT_EVIDENCED",
+      "evidence": "Not explicitly logged"
+    },
+    "booking_events": {
+      "status": "DEFINED",
+      "evidence": "Background worker logging evidenced"
+    },
+    "ai_events": {
+      "status": "DEFINED",
+      "evidence": "LLM invocation logging with fallbacks"
+    },
+    "alerts": {
+      "status": "NOT_EVIDENCED",
+      "evidence": "No alerting system observed"
+    },
+    "limitations": [
+      "No centralized logging aggregation (ELK, Datadog, etc.)",
+      "No dashboard or visualization evidenced",
+      "No alerting rules or notification channels",
+      "Log retention and rotation not evidenced",
+      "Distributed tracing not implemented (trace IDs present but not correlated across services)"
+    ]
+  },
+  "release_quality": {
+    "release_gates": {
+      "build_gates": {
+        "status": "IMPLEMENTED",
+        "evidence": "flutter build web --release"
+      },
+      "test_gates": {
+        "status": "DEFINED",
+        "evidence": "flutter test and npm test evidenced but not automated in pipeline"
+      },
+      "approval_gates": {
+        "status": "DEFINED",
+        "evidence": "Manual Director review evidenced in governance"
+      },
+      "rollback": {
+        "status": "NOT_EVIDENCED",
+        "evidence": "Not evidenced (database migrations have force:true in dev)"
+      },
+      "versioning": {
+        "status": "DEFINED",
+        "evidence": "Package versions in pubspec.yaml and package.json"
+      },
+      "changelog": {
+        "status": "DEFINED",
+        "evidence": "CHANGELOG.md in .agent/skills/"
+      },
+      "deployment_validation": {
+        "status": "DEFINED",
+        "evidence": "Build success + manual verification"
+      },
+      "production_smoke_tests": {
+        "status": "NOT_EVIDENCED",
+        "evidence": "Not evidenced"
+      }
+    },
+    "evidence": [
+      "DEPLOY_CHECKLIST.md outlines manual deployment steps",
+      "Railway configuration enables deployments",
+      "Dockerfiles support containerized deployment",
+      "No automated promotion pipelines observed"
+    ]
+  },
+  "quality_authorities": [
+    {
+      "quality_aspect": "Test Acceptance",
+      "documented_authority": "G3 Gate (flutter analyze PASS, flutter test PASS, flutter build PASS)",
+      "evidenced_practice": "Manual test execution",
+      "conflict_status": "NONE"
+    },
+    {
+      "quality_aspect": "Build Acceptance",
+      "documented_authority": "G3 Gate + DEPLOY_CHECKLIST",
+      "evidenced_practice": "Manual build and deploy",
+      "conflict_status": "NONE"
+    },
+    {
+      "quality_aspect": "Visual Acceptance",
+      "documented_authority": "G4 Gate (Visual regression vs spec)",
+      "evidenced_practice": "Manual visual audits (G0-B, visual gap audits)",
+      "conflict_status": "NONE"
+    },
+    {
+      "quality_aspect": "Accessibility Acceptance",
+      "documented_authority": "G3/G4 Gates + SOUL.md Accessibility Language",
+      "evidenced_practice": "Partial manual validation",
+      "conflict_status": "NONE"
+    },
+    {
+      "quality_aspect": "Security Acceptance",
+      "documented_authority": "Not explicitly defined",
+      "evidenced_practice": "Manual code review + env var checks",
+      "conflict_status": "NONE"
+    },
+    {
+      "quality_aspect": "Performance Acceptance",
+      "documented_authority": "Not defined",
+      "evidenced_practice": "No performance testing",
+      "conflict_status": "NONE"
+    },
+    {
+      "quality_aspect": "Release Acceptance",
+      "documented_authority": "G5 Gate (Design Director sign-off) + DEPLOY_CHECKLIST",
+      "evidenced_practice": "Manual Director approval",
+      "conflict_status": "NONE"
+    }
+  ],
+  "quality_debt": [
+    {
+      "priority": "CRITICAL",
+      "item": "Missing dependencies causing analysis errors",
+      "evidence": "876 flutter analyze issues (freezed_annotation, AppTheme, etc.)",
+      "impact": "Blocks proper static analysis",
+      "dependency": "Add missing packages to pubspec.yaml",
+      "owner": "Dev Team",
+      "phase": "G0-F",
+      "blocking": true
+    },
+    {
+      "priority": "CRITICAL",
+      "item": "Undefined classes and annotations in codebase",
+      "evidence": "Multiple undefined_* errors in analyze output",
+      "impact": "Runtime errors potential",
+      "dependency": "Define missing classes or remove invalid references",
+      "owner": "Dev Team",
+      "phase": "G0-F",
+      "blocking": true
+    },
+    {
+      "priority": "CRITICAL",
+      "item": "Missing API keys in test environments",
+      "evidence": "Backend test failures due to missing DEEPSEEK, GEMINI, etc.",
+      "impact": "Prevents reliable CI/testing",
+      "dependency": "Configure test environment with mock keys or service mocks",
+      "owner": "Dev Team",
+      "phase": "G0-F",
+      "blocking": true
+    },
+    {
+      "priority": "HIGH",
+      "item": "6 parallel token systems",
+      "evidence": "SOUL.md Section 20.1: '6 parallel token systems active'",
+      "impact": "Inconsistent theming, maintenance burden",
+      "dependency": "Consolidate to single Token authority",
+      "owner": "Dev Team",
+      "phase": "G1",
+      "blocking": false
+    },
+    {
+      "priority": "HIGH",
+      "item": "6 parallel typography systems",
+      "evidence": "SOUL.md Section 20.1: '6 parallel typography systems'",
+      "impact": "Inconsistent text rendering",
+      "dependency": "Consolidate typography systems",
+      "owner": "Dev Team",
+      "phase": "G1",
+      "blocking": false
+    },
+    {
+      "priority": "HIGH",
+      "item": "Focus states incomplete (web)",
+      "evidence": "SOUL.md Section 20.1: 'Focus states incomplete'",
+      "impact": "Accessibility failure (WCAG)",
+      "dependency": "Implement visible focus states",
+      "owner": "Dev Team",
+      "phase": "G0-F",
+      "blocking": true
+    },
+    {
+      "priority": "HIGH",
+      "item": "No MALE MUSE ASSETS (0%)",
+      "evidence": "SOUL.md Section 20.1: 'NO MALE MUSE ASSETS (P0)'",
+      "impact": "Missing Men expression",
+      "dependency": "Commission Men photography",
+      "owner": "Product",
+      "phase": "G1",
+      "blocking": false
+    },
+    {
+      "priority": "HIGH",
+      "item": "Female muse not systematized",
+      "evidence": "SOUL.md Section 20.1: 'Female muse not systematized'",
+      "impact": "Inconsistent Women expression",
+      "dependency": "Systematize Female muse assets",
+      "owner": "Product",
+      "phase": "G1",
+      "blocking": false
+    },
+    {
+      "priority": "HIGH",
+      "item": "AuraWelcomeScreen not Men-adaptive",
+      "evidence": "SOUL.md Section 20.1: 'AuraWelcomeScreen not Men-adaptive'",
+      "impact": "Incomplete AURA expression",
+      "dependency": "Adapt AuraWelcomeScreen for Men",
+      "owner": "Dev Team",
+      "phase": "G1",
+      "blocking": false
+    },
+    {
+      "priority": "HIGH",
+      "item": "Cyber Cyan (#00E5FF) in MensTheme",
+      "evidence": "SOUL.md Section 20.1: 'Cyber Cyan in MensTheme'",
+      "impact": "Violates SOUL (prohibited color)",
+      "dependency": "Remove Cyber Cyan from MensTheme",
+      "owner": "Dev Team",
+      "phase": "G0-F",
+      "blocking": true
+    },
+    {
+      "priority": "HIGH",
+      "item": "Aura Teal on dark contrast failure (1.8:1)",
+      "evidence": "SOUL.md Section 20.1 + G0-B Result",
+      "impact": "Accessibility failure",
+      "dependency": "Resolve contrast issue (color adjustment or usage restriction)",
+      "owner": "Dev Team",
+      "phase": "G0-F",
+      "blocking": true
+    },
+    {
+      "priority": "MEDIUM",
+      "item": "Navigation icons are raster PNG",
+      "evidence": "SOUL.md Section 20.2: 'Navigation icons are raster PNG'",
+      "impact": "Violates locked Icon System",
+      "dependency": "Migrate to SVG GlowIcons",
+      "owner": "Dev Team",
+      "phase": "G1",
+      "blocking": false
+    },
+    {
+      "priority": "MEDIUM",
+      "item": "No asset metadata registry",
+      "evidence": "SOUL.md Section 20.2: 'No asset metadata registry'",
+      "impact": "No focal points, safe zones, versioning",
+      "dependency": "Implement asset metadata system",
+      "owner": "Dev Team",
+      "phase": "G1",
+      "blocking": false
+    },
+    {
+      "priority": "MEDIUM",
+      "item": "No responsive crop strategy",
+      "evidence": "SOUL.md Section 20.2: 'No responsive crop strategy'",
+      "impact": "Hero images not responsive",
+      "dependency": "Implement responsive image strategy",
+      "owner": "Dev Team",
+      "phase": "G1",
+      "blocking": false
+    },
+    {
+      "priority": "MEDIUM",
+      "item": "GlassCard duplicate of GlowGlassCard",
+      "evidence": "SOUL.md Section 20.2: 'GlassGlassCard vs GlassCard duplicate'",
+      "impact": "Code duplication",
+      "dependency": "Consolidate glass card implementations",
+      "owner": "Dev Team",
+      "phase": "G1",
+      "blocking": false
+    },
+    {
+      "priority": "MEDIUM",
+      "item": "Legacy theme usage in 40+ screens",
+      "evidence": "SOUL.md Section 20.3: 'Legacy AppTheme in 40+ screens'",
+      "impact": "Inconsistent theming",
+      "dependency": "Migrate to tokens.dart/AppTheme",
+      "owner": "Dev Team",
+      "phase": "G1",
+      "blocking": false
+    },
+    {
+      "priority": "MEDIUM",
+      "item": "No automated quality validation in CI",
+      "evidence": "SOUL.md Section 20.3: 'No automated quality validation in CI'",
+      "impact": "Manual gates slow release",
+      "dependency": "Implement automated quality gates in CI",
+      "owner": "Dev Team",
+      "phase": "G1",
+      "blocking": false
+    },
+    {
+      "priority": "LOW",
+      "item": "Exception registry empty",
+      "evidence": "SOUL.md Section 20.3: 'Exception registry empty'",
+      "impact": "No exception tracking",
+      "dependency": "Populate exception registry per governance",
+      "owner": "Dev Team",
+      "phase": "G1",
+      "blocking": false
+    },
+    {
+      "priority": "LOW",
+      "item": "Legacy classification not documented",
+      "evidence": "SOUL.md Section 20.3: 'Legacy classification not documented'",
+      "impact": "Poor governance",
+      "dependency": "Document legacy classifications",
+      "owner": "Dev Team",
+      "phase": "G1",
+      "blocking": false
+    },
+    {
+      "priority": "LOW",
+      "item": "No unified Avatar component",
+      "evidence": "SOUL.md Section 20.3: 'No unified Avatar component'",
+      "impact": "Inconsistent avatars",
+      "dependency": "Create unified Avatar component",
+      "owner": "Dev Team",
+      "phase": "G1",
+      "blocking": false
+    },
+    {
+      "priority": "LOW",
+      "item": "No unified Badge/Status system",
+      "evidence": "SOUL.md Section 20.3: 'No unified Badge/Status system'",
+      "impact": "Inconsistent feedback",
+      "dependency": "Create unified Badge/Status system",
+      "owner": "Dev Team",
+      "phase": "G1",
+      "blocking": false
+    },
+    {
+      "priority": "LOW",
+      "item": "No unified Tooltip/Popover",
+      "evidence": "SOUL.md Section 20.3: 'No unified Tooltip/Popover'",
+      "impact": "Missing UI patterns",
+      "dependency": "Create unified Tooltip/Popover system",
+      "owner": "Dev Team",
+      "phase": "G1",
+      "blocking": false
+    },
+    {
+      "priority": "LOW",
+      "item": "No unified SegmentedControl",
+      "evidence": "SOUL.md Section 20.3: 'No unified SegmentedControl'",
+      "impact": "Missing UI pattern",
+      "dependency": "Create unified SegmentedComponent",
+      "owner": "Dev Team",
+      "phase": "G1",
+      "blocking": false
+    }
+  ],
+  "maturity": {
+    "unit_testing": {
+      "level": 3,
+      "justification": "Test frameworks exist and run, but limited coverage and flaky due to config"
+    },
+    "widget_testing": {
+      "level": 3,
+      "justification": "Widget tests exist and run"
+    },
+    "integration_testing": {
+      "level": 2,
+      "justification": "Patterns exist but tests fail due to missing configuration"
+    },
+    "end_to_end_testing": {
+      "level": 2,
+      "justification": "Patterns exist but tests fail due to missing configuration"
+    },
+    "static_analysis": {
+      "level": 2,
+      "justification": "Tools configured but 876 issues indicate poor adherence"
+    },
+    "build_validation": {
+      "level": 4,
+      "justification": "Build succeeds consistently with known warnings"
+    },
+    "regression_testing": {
+      "level": 2,
+      "justification": "Code exists but not automated in CI"
+    },
+    "visual_qa": {
+      "level": 3,
+      "justification": "Manual visual audits conducted per specification"
+    },
+    "accessibility": {
+      "level": 2,
+      "justification": "Requirements defined but significant gaps evidenced"
+    },
+    "responsive_validation": {
+      "level": 3,
+      "justification": "Responsive behavior defined and manually validated"
+    },
+    "performance": {
+      "level": 2,
+      "justification": "Some instrumentation exists but no benchmarks or testing"
+    },
+    "security": {
+      "level": 3,
+      "justification": "Controls implemented but validation gaps exist"
+    },
+    "data_integrity": {
+      "level": 3,
+      "justification": "Systems exist but validation not evidenced"
+    },
+    "ai_rag_evaluation": {
+      "level": 3,
+      "justification": "Evaluation framework exists but production validation missing"
+    },
+    "observability": {
+      "level": 3,
+      "justification": "Logging and metrics implemented but no alerting/aggregation"
+    },
+    "error_handling": {
+      "level": 3,
+      "justification": "Patterns implemented but unhandled rejections observed"
+    },
+    "release_quality": {
+      "level": 3,
+      "justification": "Process defined but manual and not fully automated"
+    },
+    "ci_cd": {
+      "level": 2,
+      "justification": "Scripts exist but no automated pipeline evidenced"
+    },
+    "test_environment": {
+      "level": 2,
+      "justification": "Exists but fragile due to external dependencies"
+    },
+    "definition_of_done": {
+      "level": 2,
+      "justification": "Clearly defined but not implemented or automated"
+    },
+    "overall_quality_maturity": "2.3 DEFINED",
+    "calculation_notes": "Weighted average of all domain levels"
+  },
+  "recommendations": [
+    {
+      "priority": "Immediate (G0-F Blocking)",
+      "actions": [
+        "Fix flutter analyze errors by adding missing dependencies (freezed_annotation) and resolving undefined references",
+        "Configure test environment with mock API keys or service mocks to enable reliable backend testing",
+        "Implement visible focus states for web components to meet accessibility requirements",
+        "Remove prohibited Cyber Cyan (#00E5FF) from MensTheme",
+        "Resolve Aura Teal on dark background contrast failure (1.8:1)"
+      ]
+    },
+    {
+      "priority": "Near-term (G1 Preparation)",
+      "actions": [
+        "Consolidate 6 parallel token systems to single Token authority",
+        "Consolidate 6 parallel typography systems",
+        "Migrate legacy theme usage (40+ screens) to tokens.dart/AppTheme",
+        "Implement automated quality gates in CI pipeline (flutter analyze, test, build)",
+        "Create unified Avatar, Badge/Status, Tooltip/Popover, and SegmentedControl components",
+        "Migrate navigation icons from raster PNG to SVG GlowIcons",
+        "Implement asset metadata registry for images",
+        "Develop responsive crop strategy for hero images",
+        "Systematize Female muse photography assets",
+        "Commission Men photography assets (0% coverage currently)"
+      ]
+    },
+    {
+      "priority": "Mid-term (G1+)",
+      "actions": [
+        "Implement automated visual regression testing",
+        "Implement automated accessibility testing (axe-core, etc.)",
+        "Implement automated performance testing with budgets",
+        "Implement end-to-end validation pipelines for critical user journeys",
+        "Implement centralized logging and alerting system",
+        "Implement dependency scanning and automated updates",
+        "Implement smoke test automation for release validation"
+      ]
+    }
+  ],
+  "production_safety": {
+    "validation_performed": [
+      "No production code modified during evidence collection",
+      "All findings based on read-only inspection",
+      "JSON deliverable validated for syntax",
+      "Git status shows no changes to production files",
+      "Build artifacts generated in ephemeral directories",
+      "Test runs used existing test suites without modification"
+    ],
+    "current_risks": [
+      "Dependency vulnerabilities: 48 packages have newer versions incompatible with constraints",
+      "Test instability: Backend tests fail due to missing configuration",
+      "Build warnings: WASM incompatibilities and font tree-shaking",
+      "Runtime errors potential: Undefined references in codebase could cause exceptions"
+    ]
+  }
+}

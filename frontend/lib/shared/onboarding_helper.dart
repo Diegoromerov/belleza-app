@@ -1,6 +1,7 @@
 // frontend/lib/shared/onboarding_helper.dart
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'theme.dart';
 
 class OnboardingWalkthroughHelper {
   static const String _clientPrefsKey = 'hide_walkthrough_client';
@@ -49,12 +50,12 @@ class _WalkthroughDialogState extends State<_WalkthroughDialog> {
     if (widget.role == 'client') {
       return [
         WalkthroughStep(
-          title: '¡Te damos la bienvenida, Cliente!',
-          description: 'Aquí tienes una guía interactiva sobre cómo usar tu aplicación de belleza a domicilio.',
-          icon: Icons.face_retouching_natural,
-          imageUrl: 'assets/walkthrough_welcome.png', // Fallback gracefully if not loaded
-          simulationText: 'Visualiza prestadores y estilistas profesionales de confianza en el mapa de Fontibón en tiempo real.',
-        ),
+                  title: '¡Te damos la bienvenida, Cliente!',
+                  description: 'Aquí tienes una guía interactiva sobre cómo usar tu aplicación de belleza a domicilio.',
+                  icon: Icons.face_retouching_natural,
+                  imageUrl: 'images/onboarding/onboarding_01.webp', // Fallback gracefully if not loaded
+                  simulationText: 'Visualiza prestadores y estilistas profesionales de confianza en el mapa de Fontibón en tiempo real.',
+                ),
         WalkthroughStep(
           title: 'Paso 1: Agenda tu Cita',
           description: 'Selecciona un prestador, escoge el servicio y reserva tu horario ideal.',

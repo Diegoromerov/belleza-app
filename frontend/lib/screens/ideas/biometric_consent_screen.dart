@@ -16,33 +16,57 @@ class _BiometricConsentScreenState extends State<BiometricConsentScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFFAF8F5),
       appBar: AppBar(
-        title: const Text('Consentimiento Biométrico'),
+        title: const Text(
+          'Consentimiento Biométrico Aura',
+          style: TextStyle(
+            fontFamily: 'CormorantGaramond',
+            fontWeight: FontWeight.bold,
+            fontSize: 22,
+            color: Color(0xFF1F1A15),
+          ),
+        ),
+        backgroundColor: const Color(0xFFFAF8F5),
         centerTitle: true,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.close_rounded),
+          icon: const Icon(Icons.close_rounded, color: Color(0xFF1F1A15)),
           onPressed: () => Navigator.pop(context),
         ),
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.purple.shade50,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.shield_outlined,
-                  size: 40,
-                  color: Colors.purple,
-                ),
-              ),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 520),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFF3D59B), Color(0xFFC5A052)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFC5A052).withValues(alpha: 0.3),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.shield_outlined,
+                      size: 36,
+                      color: Color(0xFF1F1A15),
+                    ),
+                  ),
               const SizedBox(height: 24),
               const Text(
                 'Tu privacidad es importante para nosotros',
@@ -84,7 +108,7 @@ class _BiometricConsentScreenState extends State<BiometricConsentScreen> {
                       _accepted = value ?? false;
                     });
                   },
-                  activeColor: Colors.purple,
+                  activeColor: const Color(0xFFC5A052),
                   controlAffinity: ListTileControlAffinity.leading,
                   contentPadding: EdgeInsets.zero,
                 ),
@@ -110,58 +134,86 @@ class _BiometricConsentScreenState extends State<BiometricConsentScreen> {
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: ElevatedButton(
-                      onPressed: _accepted && !_isLoading
-                          ? () async {
-                              setState(() => _isLoading = true);
-                              try {
-                                await BiometricService.saveConsent();
-                                if (mounted) {
-                                  Navigator.pushReplacement(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => const BiometricWelcomeScreen(),
-                                    ),
-                                  );
-                                }
-                              } catch (e) {
-                                if (mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('Error al guardar consentimiento: ${e.toString()}'),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
-                                }
-                              } finally {
-                                if (mounted) {
-                                  setState(() => _isLoading = false);
+                    child: Container(
+                      height: 52,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        gradient: _accepted && !_isLoading
+                            ? const LinearGradient(
+                                colors: [Color(0xFFF3D59B), Color(0xFFC5A052)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              )
+                            : null,
+                        color: _accepted && !_isLoading ? null : Colors.grey.shade300,
+                        boxShadow: _accepted && !_isLoading
+                            ? [
+                                BoxShadow(
+                                  color: const Color(0xFFC5A052).withValues(alpha: 0.35),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ]
+                            : null,
+                      ),
+                      child: ElevatedButton(
+                        onPressed: _accepted && !_isLoading
+                            ? () async {
+                                setState(() => _isLoading = true);
+                                try {
+                                  await BiometricService.saveConsent();
+                                  if (mounted) {
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => const BiometricWelcomeScreen(),
+                                      ),
+                                    );
+                                  }
+                                } catch (e) {
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Error al guardar consentimiento: ${e.toString()}'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                } finally {
+                                  if (mounted) {
+                                    setState(() => _isLoading = false);
+                                  }
                                 }
                               }
-                            }
-                          : null,
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        backgroundColor: Colors.purple,
-                        foregroundColor: Colors.white,
-                        disabledBackgroundColor: Colors.grey.shade300,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                            : null,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
+                          foregroundColor: const Color(0xFF1F1A15),
+                          disabledBackgroundColor: Colors.transparent,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
                         ),
-                      ),
-                      child: _isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.5,
-                                color: Colors.white,
+                        child: _isLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  color: Color(0xFF1F1A15),
+                                ),
+                              )
+                            : Text(
+                                'ACEPTAR',
+                                style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontWeight: FontWeight.bold,
+                                  color: _accepted && !_isLoading ? const Color(0xFF1F1A15) : Colors.grey.shade600,
+                                ),
                               ),
-                            )
-                          : const Text(
-                              'ACEPTAR',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
+                      ),
                     ),
                   ),
                 ],
@@ -170,6 +222,8 @@ class _BiometricConsentScreenState extends State<BiometricConsentScreen> {
           ),
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 }
