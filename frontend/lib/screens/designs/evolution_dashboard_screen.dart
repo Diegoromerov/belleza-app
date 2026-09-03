@@ -130,15 +130,21 @@ class _EvolutionDashboardScreenState extends State<EvolutionDashboardScreen> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFCF9F7),
+      backgroundColor: const Color(0xFFFAF8F5),
       appBar: AppBar(
         title: Text(
           titleText,
-          style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5, fontSize: 18),
+          style: const TextStyle(
+            fontFamily: 'CormorantGaramond',
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.5,
+            fontSize: 22,
+            color: Color(0xFF1F1A15),
+          ),
         ),
         elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: const Color(0xFFFAF8F5),
+        foregroundColor: const Color(0xFF1F1A15),
         actions: [
           if (_plan == 'free')
             Padding(
@@ -160,7 +166,10 @@ class _EvolutionDashboardScreenState extends State<EvolutionDashboardScreen> {
             )
         ],
       ),
-      body: _error != null
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 680),
+          child: _error != null
           ? Center(
               child: Padding(
                 padding: const EdgeInsets.all(24.0),
@@ -396,6 +405,8 @@ class _EvolutionDashboardScreenState extends State<EvolutionDashboardScreen> {
                 ],
               ),
             ),
+          ),
+        ),
     );
   }
 

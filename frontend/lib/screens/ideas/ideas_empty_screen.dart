@@ -37,9 +37,10 @@ class _IdeasEmptyScreenState extends State<IdeasEmptyScreen> {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
+      backgroundColor: Color(0xFFFAF8F5),
       body: Center(
         child: CircularProgressIndicator(
-          color: Colors.purple,
+          color: Color(0xFFC5A052),
         ),
       ),
     );

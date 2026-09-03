@@ -47,37 +47,88 @@ class LuxeProfileTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        ListTile(
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: LuxeSpacing.xl,
-            vertical: LuxeSpacing.sm,
-          ),
-          onTap: onTap,
-          leading: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: LuxeColors.nude100,
-              shape: BoxShape.circle,
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(16),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFAF6EE),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: const Color(0xFFC5A052).withValues(alpha: 0.25),
+                        width: 1,
+                      ),
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(icon, color: const Color(0xFFC5A052), size: 20),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: const TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF1F1A15),
+                            letterSpacing: -0.1,
+                          ),
+                        ),
+                        if (subtitle != null) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            subtitle!,
+                            style: const TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 12,
+                              color: Color(0xFF8C7E74),
+                              height: 1.3,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  trailing ??
+                      Container(
+                        width: 26,
+                        height: 26,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFAF6EE),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: const Color(0xFFC5A052).withValues(alpha: 0.2),
+                            width: 0.8,
+                          ),
+                        ),
+                        alignment: Alignment.center,
+                        child: const Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: 11,
+                          color: Color(0xFFC5A052),
+                        ),
+                      ),
+                ],
+              ),
             ),
-            child: Icon(icon, color: LuxeColors.gold871, size: 20),
           ),
-          title: Text(
-            title,
-            style: LuxeTypography.bodyMd.copyWith(fontWeight: FontWeight.w600),
-          ),
-          subtitle: subtitle != null
-              ? Text(
-                  subtitle!,
-                  style: LuxeTypography.bodySm,
-                )
-              : null,
-          trailing: trailing ??
-              const Icon(Icons.arrow_forward_ios, size: 14, color: LuxeColors.nude500),
         ),
         if (showDivider)
           const Padding(
-            padding: EdgeInsets.only(left: 64.0, right: LuxeSpacing.xl),
-            child: Divider(color: LuxeColors.nude200, height: 1, thickness: 0.5),
+            padding: EdgeInsets.only(left: 68.0, right: 16.0),
+            child: Divider(color: Color(0xFFF3EFE9), height: 1, thickness: 0.8),
           ),
       ],
     );

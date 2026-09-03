@@ -140,29 +140,41 @@ class _TicketChatScreenState extends State<TicketChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFAF8F5),
       appBar: AppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               widget.ticketSubject,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+              style: const TextStyle(
+                fontFamily: 'CormorantGaramond',
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+                color: Color(0xFF1F1A15),
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 2),
             Text(
               'Estado: ${widget.ticketStatus}',
-              style: const TextStyle(color: Colors.grey, fontSize: 10),
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                color: Color(0xFF8C7E74),
+                fontSize: 11,
+              ),
             ),
           ],
         ),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: const Color(0xFFFAF8F5),
+        foregroundColor: const Color(0xFF1F1A15),
         elevation: 0.5,
       ),
-      body: Column(
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 720),
+          child: Column(
         children: [
           Expanded(
             child: _isLoading
@@ -197,7 +209,9 @@ class _TicketChatScreenState extends State<TicketChatScreen> {
           _buildInputBar(),
         ],
       ),
-    );
+    ),
+  ),
+);
   }
 
   Widget _buildChatIntro() {

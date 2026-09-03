@@ -81,7 +81,12 @@ class _NailVtoScreenState extends State<NailVtoScreen> {
         elevation: 0,
         title: const Text(
           'VTO Manicura & Uñas • DeepSeek IA',
-          style: TextStyle(fontSize: 16, color: Colors.white),
+          style: TextStyle(
+            fontFamily: 'CormorantGaramond',
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+            color: Colors.white,
+          ),
         ),
       ),
       body: Stack(
@@ -118,7 +123,10 @@ class _NailVtoScreenState extends State<NailVtoScreen> {
             left: 0,
             right: 0,
             bottom: 0,
-            child: Container(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 620),
+                child: Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: Colors.black.withOpacity(0.85),
@@ -257,37 +265,68 @@ class _NailVtoScreenState extends State<NailVtoScreen> {
                   Row(
                     children: [
                       Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('💅 Esmalte "$_selectedName" agregado al carrito'),
+                        child: Container(
+                          height: 46,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(14),
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFF3D59B), Color(0xFFC5A052)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                          ),
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('💅 Esmalte "$_selectedName" agregado al carrito'),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.shopping_bag_outlined, color: Color(0xFF1F1A15), size: 18),
+                            label: const Text(
+                              'Comprar Esmalte',
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                color: Color(0xFF1F1A15),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
                               ),
-                            );
-                          },
-                          icon: const Icon(Icons.shopping_bag_outlined, color: Colors.white),
-                          label: const Text('Comprar Esmalte', style: TextStyle(color: Colors.white)),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.primary,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              shadowColor: Colors.transparent,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            ),
                           ),
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('📍 Agendando Manicura Spa cerca de tu ubicación...'),
+                        child: SizedBox(
+                          height: 46,
+                          child: OutlinedButton.icon(
+                            onPressed: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('📍 Agendando Manicura Spa cerca de tu ubicación...'),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.calendar_today_outlined, color: Color(0xFFC5A052), size: 18),
+                            label: const Text(
+                              'Reservar Cita GPS',
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                color: Color(0xFFC5A052),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
                               ),
-                            );
-                          },
-                          icon: const Icon(Icons.calendar_today_outlined, color: Colors.white),
-                          label: const Text('Reservar Cita GPS', style: TextStyle(color: Colors.white)),
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Colors.white38),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Color(0xFFC5A052), width: 1.2),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            ),
                           ),
                         ),
                       ),
@@ -297,9 +336,11 @@ class _NailVtoScreenState extends State<NailVtoScreen> {
               ),
             ),
           ),
-        ],
+        ),
       ),
-    );
+    ],
+  ),
+);
   }
 }
 

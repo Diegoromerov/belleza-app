@@ -167,44 +167,52 @@ class StoreProductCard extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Builder(
-                      builder: (context) {
-                        if (bookingId != null && product.containsKey('precio_con_reserva')) {
-                          final originalPrice = double.tryParse(product['precio']?.toString() ?? '0') ?? 0.0;
-                          final discountPrice = double.tryParse(product['precio_con_reserva']?.toString() ?? '0') ?? 0.0;
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _formatCOP(originalPrice),
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.grey,
-                                  decoration: TextDecoration.lineThrough,
-                                ),
+                    Expanded(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Builder(
+                          builder: (context) {
+                            if (bookingId != null && product.containsKey('precio_con_reserva')) {
+                              final originalPrice = double.tryParse(product['precio']?.toString() ?? '0') ?? 0.0;
+                              final discountPrice = double.tryParse(product['precio_con_reserva']?.toString() ?? '0') ?? 0.0;
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    _formatCOP(originalPrice),
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      color: Colors.grey,
+                                      decoration: TextDecoration.lineThrough,
+                                    ),
+                                  ),
+                                  Text(
+                                    _formatCOP(discountPrice),
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppTheme.primary,
+                                    ),
+                                  ),
+                                ],
+                              );
+                            }
+                            final priceWithIva = price * 1.19;
+                            return Text(
+                              _formatCOP(priceWithIva),
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.primary,
                               ),
-                              Text(
-                                _formatCOP(discountPrice),
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppTheme.primary,
-                                ),
-                              ),
-                            ],
-                          );
-                        }
-                        final priceWithIva = price * 1.19;
-                        return Text(
-                          _formatCOP(priceWithIva),
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.primary,
-                          ),
-                        );
-                      }
+                            );
+                          },
+                        ),
+                      ),
                     ),
+                    const SizedBox(width: 6),
                     if (stock > 0)
                       Semantics(
                         button: true,
@@ -215,12 +223,16 @@ class StoreProductCard extends StatelessWidget {
                             HapticFeedback.lightImpact();
                             onAddToCart(product);
                           },
-                          borderRadius: BorderRadius.circular(24),
+                          borderRadius: BorderRadius.circular(19),
                           child: Container(
-                            width: 48,
-                            height: 48,
+                            width: 38,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              color: AppTheme.primary.withValues(alpha: 0.10),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
                             alignment: Alignment.center,
-                            child: const Icon(Icons.add_shopping_cart, color: AppTheme.primary, size: 22),
+                            child: const Icon(Icons.add_shopping_cart, color: AppTheme.primary, size: 20),
                           ),
                         ),
                       )

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <base href="$FLUTTER_BASE_HREF">
+  <base href="/">
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="Beauty App - Servicios de belleza a domicilio">
@@ -18,7 +18,7 @@
     "@context": "https://schema.org",
     "@type": "BeautySalon",
     "name": "GlowApp",
-    "image": "https://glowapp-frontend-production.up.railway.app/assets/assets/images/logo_maestro_v5.png",
+    "image": "https://glowapp-frontend-production.up.railway.app/assets/images/logo_maestro_v5.png",
     "description": "Servicios de belleza, peluquería, barbería y cosmetología a domicilio con reserva instantánea.",
     "url": "https://glowapp-frontend-production.up.railway.app/",
     "priceRange": "$$",
@@ -53,7 +53,7 @@
   <!-- OpenGraph / Social Share Meta Tags -->
   <meta property="og:title" content="GlowApp - Servicios de Belleza & Estética a Domicilio">
   <meta property="og:description" content="Reserva estilistas, cosmetólogas y profesionales de la belleza a domicilio en segundos con geolocalización en tiempo real.">
-  <meta property="og:image" content="https://glowapp-frontend-production.up.railway.app/assets/assets/images/logo_maestro_v5.png">
+  <meta property="og:image" content="https://glowapp-frontend-production.up.railway.app/assets/images/logo_maestro_v5.png">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://glowapp-frontend-production.up.railway.app/">
 
@@ -61,7 +61,7 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="GlowApp - Tu Red de Belleza y Estética">
   <meta name="twitter:description" content="Reserva servicios de belleza profesionales a domicilio con confirmación instantánea.">
-  <meta name="twitter:image" content="https://glowapp-frontend-production.up.railway.app/assets/assets/images/logo_maestro_v5.png">
+  <meta name="twitter:image" content="https://glowapp-frontend-production.up.railway.app/assets/images/logo_maestro_v5.png">
 
   <!-- Google Tag Manager (GTM) Container -->
   <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
@@ -80,8 +80,10 @@
   t.src=v;s=b.getElementsByTagName(e)[0];
   s.parentNode.insertBefore(t,s)}(window, document,'script',
   'https://connect.facebook.net/en_US/fbevents.js');
-  fbq('init', 'GLOWAPP_PIXEL_ID');
-  fbq('track', 'PageView');
+  if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    fbq('init', 'GLOWAPP_PIXEL_ID');
+    fbq('track', 'PageView');
+  }
   </script>
 
   <script>

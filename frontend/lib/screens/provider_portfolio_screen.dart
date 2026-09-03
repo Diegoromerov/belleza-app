@@ -755,7 +755,7 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                     );
                   },
                 ),
-        ),
+              ),
       ],
     );
   }
@@ -763,63 +763,154 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFAF8F5),
       appBar: AppBar(
-        title: const Text('Mi Portafolio',
-            style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5)),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 14),
+          child: Center(
+            child: InkWell(
+              onTap: () => Navigator.maybePop(context),
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFFE8DFD8), width: 1),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const Icon(Icons.arrow_back_ios_new_rounded, size: 15, color: Color(0xFF1F1A15)),
+              ),
+            ),
+          ),
+        ),
+        title: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.photo_library_outlined, size: 18, color: Color(0xFFC5A052)),
+            SizedBox(width: 8),
+            Text(
+              'Mi Portafolio Pro',
+              style: TextStyle(
+                fontFamily: 'CormorantGaramond',
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1F1A15),
+                letterSpacing: 0.5,
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: const Color(0xFFFAF8F5),
+        foregroundColor: const Color(0xFF1F1A15),
         elevation: 0,
+        scrolledUnderElevation: 0,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadPortfolio,
-            tooltip: 'Actualizar',
+          Padding(
+            padding: const EdgeInsets.only(right: 14),
+            child: Center(
+              child: InkWell(
+                onTap: _loadPortfolio,
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: const Color(0xFFE8DFD8), width: 1),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(Icons.refresh_rounded, size: 18, color: Color(0xFF1F1A15)),
+                ),
+              ),
+            ),
           ),
         ],
       ),
-      body: Stack(
-        children: [
-          if (_portfolioItems.isEmpty && !_isLoading && _error == null)
-            _buildEmptyState()
-          else if (_error != null && _portfolioItems.isEmpty)
-            Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline,
-                      color: Colors.redAccent, size: 48),
-                  const SizedBox(height: 16),
-                  Text('Error: $_error', textAlign: TextAlign.center),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: _loadPortfolio,
-                    child: const Text('Reintentar'),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 720),
+          child: Stack(
+            children: [
+              if (_portfolioItems.isEmpty && !_isLoading && _error == null)
+                _buildEmptyState()
+              else if (_error != null && _portfolioItems.isEmpty)
+                Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.error_outline,
+                          color: Colors.redAccent, size: 48),
+                      const SizedBox(height: 16),
+                      Text('Error: $_error', textAlign: TextAlign.center),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: _loadPortfolio,
+                        child: const Text('Reintentar'),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                _buildPortfolioGrid(),
+              if (_isLoading)
+                Container(
+                  color: const Color(0x1E000000),
+                  child: const Center(
+                    child: CircularProgressIndicator(color: Color(0xFFC5A052)),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+      floatingActionButton: _portfolioItems.isNotEmpty
+          ? Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(28),
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFF3D59B), Color(0xFFC5A052)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFC5A052).withValues(alpha: 0.35),
+                    blurRadius: 14,
+                    offset: const Offset(0, 4),
                   ),
                 ],
               ),
-            )
-          else
-            _buildPortfolioGrid(),
-          if (_isLoading)
-            Container(
-              color: const Color(0x1E000000),
-              child: const Center(
-                child: CircularProgressIndicator(color: AppTheme.primary),
+              child: FloatingActionButton.extended(
+                onPressed: _pickAndUploadImage,
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                highlightElevation: 0,
+                icon: const Icon(Icons.add_photo_alternate_rounded, color: Color(0xFF1F1A15), size: 20),
+                label: const Text(
+                  'Añadir Trabajo',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: Color(0xFF1F1A15),
+                  ),
+                ),
               ),
-            ),
-        ],
-      ),
-      floatingActionButton: _portfolioItems.isNotEmpty
-          ? FloatingActionButton(
-              onPressed: _pickAndUploadImage,
-              backgroundColor: AppTheme.primary,
-              foregroundColor: Colors.white,
-              tooltip: 'Agregar Imagen',
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20)),
-              elevation: 4,
-              child: const Icon(Icons.add_a_photo_outlined),
             )
           : null,
     );

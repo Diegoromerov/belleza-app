@@ -884,139 +884,184 @@ class _CaptureScreenState extends State<CaptureScreen>
             bottom: 120,
             left: 24,
             right: 24,
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
-              decoration: BoxDecoration(
-                color: AppTheme.text.withValues(alpha: 0.85),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: AppTheme.primary.withValues(alpha: 0.6),
-                  width: 1.2,
-                ),
-              ),
-              child: Column(
-                children: [
-                  if (isFaceStep || isHandsStep) QualityIndicator(quality: _qualityScore),
-                  const SizedBox(height: 8),
-                  Text(
-                    _instruction,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 520),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1F1A15).withValues(alpha: 0.85),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: const Color(0xFFC5A052).withValues(alpha: 0.6),
+                      width: 1.2,
                     ),
-                    textAlign: TextAlign.center,
                   ),
-                  if (_errorMessage != null) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      _errorMessage!,
-                      style: const TextStyle(color: AppTheme.errorBg, fontSize: 13),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ],
+                  child: Column(
+                    children: [
+                      if (isFaceStep || isHandsStep) QualityIndicator(quality: _qualityScore),
+                      const SizedBox(height: 8),
+                      Text(
+                        _instruction,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      if (_errorMessage != null) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          _errorMessage!,
+                          style: const TextStyle(color: AppTheme.errorBg, fontSize: 13),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
 
-          // BOTONES INFERIORES DE ACCIÓN DE TOMA MANUAL CON PALETA GLOWAPP (TERRACOTA / ORO ROSA)
+          // BOTONES INFERIORES DE ACCIÓN DE TOMA MANUAL CON PALETA HAUTE JOAILLERIE
           Positioned(
             bottom: 36,
             left: 24,
             right: 24,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // CASO 1: Toma de foto manual (Cámara activa para Rostro o Manos)
-                if (isFaceStep || isHandsStep)
-                  FloatingActionButton.large(
-                    onPressed: isFaceStep ? _captureFace : _captureHands,
-                    backgroundColor: AppTheme.primary,
-                    elevation: 6,
-                    child: const Icon(
-                      Icons.camera,
-                      size: 36,
-                      color: Colors.white,
-                    ),
-                  ),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 520),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // CASO 1: Toma de foto manual (Cámara activa para Rostro o Manos)
+                    if (isFaceStep || isHandsStep)
+                      Container(
+                        width: 72,
+                        height: 72,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(
+                            colors: [Color(0xFFF3D59B), Color(0xFFC5A052)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Color(0x66C5A052),
+                              blurRadius: 12,
+                              offset: Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: IconButton(
+                          onPressed: isFaceStep ? _captureFace : _captureHands,
+                          icon: const Icon(
+                            Icons.camera_alt_rounded,
+                            size: 34,
+                            color: Color(0xFF1F1A15),
+                          ),
+                        ),
+                      ),
 
-                // CASO 2: Confirmación de Foto 1 (Rostro)
-                if (isFaceConfirm) ...[
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: _retakeFace,
-                      icon: const Icon(Icons.refresh, color: Colors.white),
-                      label: const Text('Repetir', style: TextStyle(color: Colors.white)),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Colors.white54),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    flex: 2,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: AppTheme.terracottaMatteGradient,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: ElevatedButton.icon(
-                        onPressed: _proceedToHandsStep,
-                        icon: const Icon(Icons.arrow_forward, color: Colors.white),
-                        label: const Text(
-                          'Siguiente: Manos ➔',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          shadowColor: Colors.transparent,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
+                    // CASO 2: Confirmación de Foto 1 (Rostro)
+                    if (isFaceConfirm) ...[
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _retakeFace,
+                          icon: const Icon(Icons.refresh, color: Colors.white),
+                          label: const Text('Repetir', style: TextStyle(color: Colors.white)),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Colors.white54),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                ],
+                      const SizedBox(width: 16),
+                      Expanded(
+                        flex: 2,
+                        child: Container(
+                          height: 50,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFF3D59B), Color(0xFFC5A052)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: ElevatedButton.icon(
+                            onPressed: _proceedToHandsStep,
+                            icon: const Icon(Icons.arrow_forward, color: Color(0xFF1F1A15)),
+                            label: const Text(
+                              'Siguiente: Manos ➔',
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                color: Color(0xFF1F1A15),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              shadowColor: Colors.transparent,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
 
-                // CASO 3: Confirmación de Foto 2 (Manos)
-                if (isHandsConfirm) ...[
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: _retakeHands,
-                      icon: const Icon(Icons.refresh, color: Colors.white),
-                      label: const Text('Repetir', style: TextStyle(color: Colors.white)),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Colors.white54),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    flex: 2,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: AppTheme.roseGoldSatinGradient,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: ElevatedButton.icon(
-                        onPressed: _finishAndStartProcessing,
-                        icon: const Icon(Icons.rocket_launch, color: Colors.white),
-                        label: const Text(
-                          'Finalizar e Iniciar ➔',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          shadowColor: Colors.transparent,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
+                    // CASO 3: Confirmación de Foto 2 (Manos)
+                    if (isHandsConfirm) ...[
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _retakeHands,
+                          icon: const Icon(Icons.refresh, color: Colors.white),
+                          label: const Text('Repetir', style: TextStyle(color: Colors.white)),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Colors.white54),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                ],
-              ],
+                      const SizedBox(width: 16),
+                      Expanded(
+                        flex: 2,
+                        child: Container(
+                          height: 50,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFF3D59B), Color(0xFFC5A052)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: ElevatedButton.icon(
+                            onPressed: _finishAndStartProcessing,
+                            icon: const Icon(Icons.auto_awesome, color: Color(0xFF1F1A15)),
+                            label: const Text(
+                              'Finalizar e Iniciar ➔',
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                color: Color(0xFF1F1A15),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              shadowColor: Colors.transparent,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
             ),
           ),
         ],

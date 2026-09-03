@@ -362,10 +362,10 @@ class _ChatScreenState extends State<ChatScreen> {
     final isProvider = widget.partnerRole == 'provider';
 
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: const Color(0xFFFAF8F5),
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: const Color(0xFFFAF8F5),
+        foregroundColor: const Color(0xFF1F1A15),
         elevation: 0.5,
         titleSpacing: 0,
         title: Row(
@@ -373,16 +373,16 @@ class _ChatScreenState extends State<ChatScreen> {
             Container(
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: widget.partnerAvatar != null && widget.partnerAvatar!.contains('avatar_aura.png')
+                border: widget.partnerAvatar != null && widget.partnerAvatar!.contains('avatar_aura')
                     ? Border.all(color: const Color(0xFFD4AF37), width: 2.0)
                     : null,
               ),
               child: CircleAvatar(
-                radius: widget.partnerAvatar != null && widget.partnerAvatar!.contains('avatar_aura.png') ? 21 : 18,
-                backgroundColor: isProvider ? Colors.pink[100] : Colors.purple[100],
+                radius: widget.partnerAvatar != null && widget.partnerAvatar!.contains('avatar_aura') ? 21 : 18,
+                backgroundColor: isProvider ? const Color(0xFFF3D59B) : const Color(0xFFF5EBE6),
                 backgroundImage: widget.partnerAvatar != null &&
                         widget.partnerAvatar!.isNotEmpty
-                    ? (widget.partnerAvatar!.startsWith('assets/')
+                    ? (widget.partnerAvatar!.startsWith('images/')
                         ? AssetImage(widget.partnerAvatar!) as ImageProvider
                         : NetworkImage(widget.partnerAvatar!) as ImageProvider)
                     : null,
@@ -395,7 +395,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color:
-                              isProvider ? Colors.pink[800] : Colors.purple[800],
+                              isProvider ? const Color(0xFFC5A052) : const Color(0xFF1F1A15),
                           fontSize: 14,
                         ),
                       )
@@ -410,13 +410,18 @@ class _ChatScreenState extends State<ChatScreen> {
                   Text(
                     widget.partnerName,
                     style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold),
+                      fontFamily: 'CormorantGaramond',
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1F1A15),
+                    ),
                   ),
                   Text(
                     isProvider ? 'PRESTADOR DE SERVICIOS' : 'CLIENTE',
-                    style: TextStyle(
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
                       fontSize: 10,
-                      color: isProvider ? Colors.pink[700] : Colors.purple[700],
+                      color: Color(0xFFC5A052),
                       fontWeight: FontWeight.bold,
                       letterSpacing: 0.5,
                     ),
@@ -427,7 +432,10 @@ class _ChatScreenState extends State<ChatScreen> {
           ],
         ),
       ),
-      body: Column(
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 720),
+          child: Column(
         children: [
           Expanded(
             child: _isLoading
@@ -535,7 +543,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                           shape: BoxShape.circle,
                                           border: Border.all(color: const Color(0xFFD4AF37), width: 1.5),
                                           image: const DecorationImage(
-                                            image: AssetImage('assets/images/avatar_aura.png'),
+                                            image: AssetImage('images/avatar_aura.webp'),
                                             fit: BoxFit.cover,
                                           ),
                                         ),
@@ -569,13 +577,19 @@ class _ChatScreenState extends State<ChatScreen> {
                                                 if (isRec) ...[
                                                   ClipRRect(
                                                     borderRadius:
-                                                        BorderRadius.circular(
-                                                            12),
+                                                        BorderRadius.circular(12),
                                                     child: Image.network(
                                                       'https://images.unsplash.com/photo-1562322140-8baeececf3df?w=500',
                                                       height: 110,
                                                       width: double.infinity,
                                                       fit: BoxFit.cover,
+                                                      errorBuilder: (context, error, stackTrace) => Container(
+                                                        height: 110,
+                                                        color: const Color(0xFFF5EBE6),
+                                                        child: const Center(
+                                                          child: Icon(Icons.spa_outlined, color: Color(0xFFE91E63), size: 36),
+                                                        ),
+                                                      ),
                                                     ),
                                                   ),
                                                   const SizedBox(height: 8),
@@ -904,6 +918,8 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ],
       ),
-    );
+    ),
+  ),
+);
   }
 }

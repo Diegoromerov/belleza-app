@@ -134,19 +134,45 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen>
     final bool isInProgress = status == 'EN_PROGRESO';
 
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: const Color(0xFFFAF8F5),
       appBar: AppBar(
         title: const Text(
           'Trayecto a Domicilio',
           style: TextStyle(
-              fontWeight: FontWeight.bold, letterSpacing: -0.5, fontSize: 18),
+            fontFamily: 'CormorantGaramond',
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.5,
+            fontSize: 22,
+            color: Color(0xFF1F1A15),
+          ),
         ),
-        backgroundColor: AppTheme.surface,
-        foregroundColor: Colors.black,
+        backgroundColor: const Color(0xFFFAF8F5),
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context, false),
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 12.0),
+          child: Center(
+            child: InkWell(
+              onTap: () => Navigator.pop(context, false),
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFFE8DFD8), width: 1),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const Icon(Icons.arrow_back_ios_new_rounded, size: 15, color: Color(0xFF1F1A15)),
+              ),
+            ),
+          ),
         ),
       ),
       body: Stack(
@@ -365,8 +391,11 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen>
             left: 16,
             right: 16,
             bottom: 24,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(28),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 620),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(28),
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                 child: Container(
@@ -506,23 +535,43 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen>
                                       ? const Center(
                                           child: CircularProgressIndicator(
                                               color: AppTheme.primary))
-                                      : ElevatedButton(
-                                          onPressed: _handleStartService,
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: AppTheme.primary,
-                                            foregroundColor: Colors.white,
-                                            padding: const EdgeInsets.symmetric(
-                                                vertical: 14),
-                                            shape: RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(30)),
-                                            elevation: 0,
+                                      : Container(
+                                          height: 48,
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(16),
+                                            gradient: const LinearGradient(
+                                              colors: [Color(0xFFF3D59B), Color(0xFFC5A052)],
+                                              begin: Alignment.topLeft,
+                                              end: Alignment.bottomRight,
+                                            ),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: const Color(0xFFC5A052).withValues(alpha: 0.35),
+                                                blurRadius: 10,
+                                                offset: const Offset(0, 4),
+                                              ),
+                                            ],
                                           ),
-                                          child: const Text(
-                                            'Iniciar Servicio',
-                                            style: TextStyle(
+                                          child: ElevatedButton(
+                                            onPressed: _handleStartService,
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: Colors.transparent,
+                                              shadowColor: Colors.transparent,
+                                              foregroundColor: const Color(0xFF1F1A15),
+                                              elevation: 0,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(16),
+                                              ),
+                                            ),
+                                            child: const Text(
+                                              'Iniciar Servicio',
+                                              style: TextStyle(
+                                                fontFamily: 'Inter',
                                                 fontWeight: FontWeight.bold,
-                                                fontSize: 14),
+                                                fontSize: 14,
+                                                color: Color(0xFF1F1A15),
+                                              ),
+                                            ),
                                           ),
                                         ),
                             ),
@@ -535,8 +584,10 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen>
               ),
             ),
           ),
-        ],
+        ),
       ),
-    );
+    ],
+  ),
+);
   }
 }

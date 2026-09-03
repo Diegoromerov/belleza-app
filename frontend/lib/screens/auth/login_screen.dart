@@ -1,11 +1,11 @@
 // frontend/lib/screens/auth/login_screen.dart
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
 import 'package:flutter/foundation.dart';
 import '../../services/api_service.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import '../../shared/theme.dart';
+import '../../design/components/s4_text_field.dart';
+import '../../core/theme/tokens.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -22,10 +22,15 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
   String? _error;
 
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
-    scopes: ['email'],
-    serverClientId: '466897054371-qaec2ipcc0pea91obs0ejcb9tene7kma.apps.googleusercontent.com',
-  );
+  final GoogleSignIn _googleSignIn = kIsWeb
+        ? GoogleSignIn(
+            scopes: ['email'],
+            clientId: '466897054371-qaec2ipcc0pea91obs0ejcb9tene7kma.apps.googleusercontent.com',
+          )
+        : GoogleSignIn(
+            scopes: ['email'],
+            serverClientId: '466897054371-qaec2ipcc0pea91obs0ejcb9tene7kma.apps.googleusercontent.com',
+          );
 
   @override
   void dispose() {
@@ -69,52 +74,50 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleGoogleSignIn() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
-    try {
-      String idToken = 'test_google_token_usuario_pruebas';
-      
-      // En producción / móviles reales, ejecutamos el flujo interactivo de Google
-      if (!kIsWeb) {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+      try {
+        // Ejecutamos el flujo interactivo de Google en todas las plataformas
         final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
         if (googleUser != null) {
           final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
           if (googleAuth.idToken != null) {
-            idToken = googleAuth.idToken!;
+            final String idToken = googleAuth.idToken!;
+            final result = await AuthService.loginWithGoogle(idToken);
+
+            if (result != null && mounted) {
+              final bool onboardingCompleto =
+                  result['user']['onboarding_completo'] ?? false;
+              final String? role = result['user']['role'];
+              if (onboardingCompleto) {
+                if (role == 'provider') {
+                  Navigator.pushReplacementNamed(context, '/provider');
+                } else {
+                  Navigator.pushReplacementNamed(context, '/home');
+                }
+              } else {
+                Navigator.pushReplacementNamed(context, '/onboarding');
+              }
+            } else {
+              setState(() => _error = 'Error al autenticar con Google');
+            }
+          } else {
+            // Caso donde el idToken es nulo (no debería ocurrir normalmente)
+            setState(() => _error = 'Error al obtener token de Google');
           }
         } else {
           // El usuario canceló la autenticación
           setState(() => _isLoading = false);
           return;
         }
+      } catch (e) {
+        setState(() => _error = 'Error de conexión: $e');
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
       }
-
-      final result = await AuthService.loginWithGoogle(idToken);
-
-      if (result != null && mounted) {
-        final bool onboardingCompleto =
-            result['user']['onboarding_completo'] ?? false;
-        final String? role = result['user']['role'];
-        if (onboardingCompleto) {
-          if (role == 'provider') {
-            Navigator.pushReplacementNamed(context, '/provider');
-          } else {
-            Navigator.pushReplacementNamed(context, '/home');
-          }
-        } else {
-          Navigator.pushReplacementNamed(context, '/onboarding');
-        }
-      } else {
-        setState(() => _error = 'Error al autenticar con Google');
-      }
-    } catch (e) {
-      setState(() => _error = 'Error de conexión: $e');
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
     }
-  }
 
   Future<void> _handleOAuth(String provider) async {
     if (provider == 'GOOGLE') {
@@ -166,272 +169,8 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFFAF8F5), // LuxeColors.nude50
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Hero(
-                  tag: 'logo',
-                  child: Image.asset(
-                    'assets/images/logo_maestro_v5.png',
-                    width: 240,
-                    fit: BoxFit.contain,
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // Tarjeta Luxe
-                Container(
-                  padding: const EdgeInsets.all(28.0),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF4EFEA), // LuxeColors.nude100
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: const Color(0xFFE8E0D5), // LuxeColors.nude200
-                      width: 1.0,
-                    ),
-                  ),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const Text(
-                          'INICIAR SESIÓN',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontFamily: 'Didot',
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF1F1A15), // LuxeColors.nude900
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-
-                        // Email Input
-                        TextFormField(
-                          controller: _emailCtrl,
-                          keyboardType: TextInputType.emailAddress,
-                          decoration: InputDecoration(
-                            hintText: 'Correo electrónico',
-                            prefixIcon: const Icon(Icons.email_outlined, color: Color(0xFFC5A052)),
-                            filled: true,
-                            fillColor: const Color(0xFFFAF8F5),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10.5),
-                              borderSide: const BorderSide(color: Color(0xFFE8E0D5)),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10.5),
-                              borderSide: const BorderSide(color: Color(0xFFE8E0D5)),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10.5),
-                              borderSide: const BorderSide(color: Color(0xFFC5A052), width: 1.5),
-                            ),
-                          ),
-                          validator: (v) => v!.isEmpty ? 'Ingresa tu correo' : null,
-                          style: const TextStyle(fontSize: 15, fontFamily: 'CormorantGaramond'),
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Password Input
-                        TextFormField(
-                          controller: _passCtrl,
-                          obscureText: _obscurePassword,
-                          decoration: InputDecoration(
-                            hintText: 'Contraseña',
-                            prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFFC5A052)),
-                            filled: true,
-                            fillColor: const Color(0xFFFAF8F5),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10.5),
-                              borderSide: const BorderSide(color: Color(0xFFE8E0D5)),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10.5),
-                              borderSide: const BorderSide(color: Color(0xFFE8E0D5)),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10.5),
-                              borderSide: const BorderSide(color: Color(0xFFC5A052), width: 1.5),
-                            ),
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                _obscurePassword
-                                    ? Icons.visibility_outlined
-                                    : Icons.visibility_off_outlined,
-                                color: const Color(0xFFC5A052),
-                                size: 20,
-                              ),
-                              onPressed: () => setState(() =>
-                                  _obscurePassword = !_obscurePassword),
-                            ),
-                          ),
-                          validator: (v) => v!.length < 6
-                              ? 'Mínimo 6 caracteres'
-                              : null,
-                          style: const TextStyle(fontSize: 15, fontFamily: 'CormorantGaramond'),
-                        ),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton(
-                            onPressed: () => Navigator.pushNamed(context, '/forgot-password'),
-                            style: TextButton.styleFrom(
-                              padding: EdgeInsets.zero,
-                              minimumSize: const Size(50, 30),
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            ),
-                            child: const Text(
-                              '¿Olvidaste tu contraseña?',
-                              style: TextStyle(
-                                color: Color(0xFFC5A052),
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                fontFamily: 'CormorantGaramond',
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-
-                        if (_error != null)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 16),
-                            child: Text(
-                              _error!,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                  color: Color(0xFFB00020),
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 13),
-                            ),
-                          ),
-
-                        // Submit Button (Luxe Gold871)
-                        ElevatedButton(
-                          onPressed: _isLoading ? null : _handleLogin,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFC5A052),
-                            foregroundColor: const Color(0xFF1F1A15),
-                            disabledBackgroundColor: const Color(0xFFE8E0D5),
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10.5)),
-                            elevation: 0,
-                          ),
-                          child: _isLoading
-                              ? const SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: CircularProgressIndicator(
-                                      color: Color(0xFF1F1A15),
-                                      strokeWidth: 2.5),
-                                )
-                              : const Text(
-                                  'ENTRAR AL RITUAL',
-                                  style: TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 0.8),
-                                ),
-                        ),
-
-                        const SizedBox(height: 24),
-
-                        // Separador para Social Logins
-                        const Row(
-                          children: [
-                            Expanded(child: Divider(color: Color(0xFFE8E0D5))),
-                            Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 16),
-                              child: Text(
-                                'o accede con',
-                                style: TextStyle(
-                                    color: Color(0xFF9E8C78),
-                                    fontSize: 12,
-                                    fontFamily: 'CormorantGaramond'),
-                              ),
-                            ),
-                            Expanded(child: Divider(color: Color(0xFFE8E0D5))),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-
-                        // Social Buttons (Google, Outlook, Apple)
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            _buildSocialButton(
-                              icon: const Icon(Icons.g_mobiledata,
-                                  color: Color(0xFFC5A052), size: 32),
-                              onTap: _isLoading
-                                  ? null
-                                  : () => _handleOAuth('GOOGLE'),
-                              label: 'Google',
-                            ),
-                            _buildSocialButton(
-                              icon: const Icon(Icons.mail_outline,
-                                  color: Color(0xFFC5A052), size: 22),
-                              onTap: _isLoading
-                                  ? null
-                                  : () => _handleOAuth('OUTLOOK'),
-                              label: 'Outlook',
-                            ),
-                            _buildSocialButton(
-                              icon: const Icon(Icons.apple,
-                                  color: Color(0xFF1F1A15), size: 24),
-                              onTap: _isLoading
-                                  ? null
-                                  : () => _handleOAuth('APPLE'),
-                              label: 'Apple',
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 28),
-
-                // Link de Registro
-                TextButton(
-                  onPressed: () => Navigator.pushNamed(context, '/register'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xFFC5A052),
-                  ),
-                  child: RichText(
-                    text: const TextSpan(
-                      text: '¿No tienes cuenta? ',
-                      style: TextStyle(color: Color(0xFF6B5A48), fontSize: 14, fontFamily: 'CormorantGaramond'),
-                      children: [
-                        TextSpan(
-                          text: 'Regístrate aquí',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFFC5A052)),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildSocialButton({
+    required Token t,
     required Widget icon,
     required VoidCallback? onTap,
     required String label,
@@ -440,14 +179,14 @@ class _LoginScreenState extends State<LoginScreen> {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(50),
+        borderRadius: BorderRadius.circular(Radii.pill),
         child: Container(
           width: 52,
           height: 52,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: const Color(0xFFFAF8F5),
-            border: Border.all(color: const Color(0xFFE8E0D5), width: 1.0),
+            color: t.surfaceLevel1,
+            border: Border.all(color: t.borderDefault, width: 1.0),
           ),
           child: Center(
             child: icon,
@@ -456,4 +195,274 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Token.of(context);
+    return Scaffold(
+      backgroundColor: const Color(0xFFFAF8F5),
+      body: Stack(
+        children: [
+          // Background Image
+          Positioned.fill(
+            child: Image.asset(
+              'images/auth/auth_login_hero.webp',
+              fit: BoxFit.cover,
+            ),
+          ),
+          // Foreground content
+          SafeArea(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 460),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const SizedBox(height: 60),
+
+                      // Tarjeta Luxe
+                      Container(
+                        padding: const EdgeInsets.all(28.0),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(
+                            color: const Color(0xFFEFE8DE),
+                            width: 1.2,
+                          ),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x08000000),
+                              blurRadius: 20,
+                              offset: Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const Text(
+                              'INICIAR SESIÓN',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontFamily: 'Didot',
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF1F1A15), // LuxeColors.nude900
+                                letterSpacing: 1.2,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+
+                            // Email Input
+                            S4TextField(
+                              controller: _emailCtrl,
+                              keyboardType: TextInputType.emailAddress,
+                              label: 'Correo electrónico',
+                              hint: 'Correo electrónico',
+                              prefixIcon: Icon(Icons.email_outlined, color: t.brandPrimary, size: 20),
+                              validator: (v) => v!.isEmpty ? 'Ingresa tu correo' : null,
+                              style: AppTypography.bodyMedium(t).copyWith(fontFamily: 'CormorantGaramond'),
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Password Input
+                            S4TextField(
+                              controller: _passCtrl,
+                              obscureText: _obscurePassword,
+                              label: 'Contraseña',
+                              hint: 'Contraseña',
+                              prefixIcon: Icon(Icons.lock_outlined, color: t.brandPrimary, size: 20),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _obscurePassword
+                                      ? Icons.visibility_outlined
+                                      : Icons.visibility_off_outlined,
+                                  color: t.brandPrimary,
+                                  size: 20,
+                                ),
+                                onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                              ),
+                              validator: (v) => v!.length < 6 ? 'Mínimo 6 caracteres' : null,
+                              style: AppTypography.bodyMedium(t).copyWith(fontFamily: 'CormorantGaramond'),
+                            ),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton(
+                                onPressed: () => Navigator.pushNamed(context, '/forgot-password'),
+                                style: TextButton.styleFrom(
+                                  padding: EdgeInsets.zero,
+                                  minimumSize: const Size(50, 30),
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                child: Text(
+                                  '¿Olvidaste tu contraseña?',
+                                  style: TextStyle(
+                                    color: t.brandPrimary,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    fontFamily: 'CormorantGaramond',
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+
+                            if (_error != null)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 16),
+                                child: Text(
+                                  _error!,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: t.error,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13),
+                                ),
+                              ),
+
+                            // Submit Button (Haute Joaillerie Gold Gradient)
+                            Container(
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(16),
+                                gradient: const LinearGradient(
+                                  colors: [Color(0xFFF3D59B), Color(0xFFC5A052)],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFFC5A052).withValues(alpha: 0.35),
+                                    blurRadius: 14,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: ElevatedButton(
+                                onPressed: _isLoading ? null : _handleLogin,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.transparent,
+                                  shadowColor: Colors.transparent,
+                                  foregroundColor: const Color(0xFF1F1A15),
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16)),
+                                  elevation: 0,
+                                ),
+                                child: _isLoading
+                                    ? const SizedBox(
+                                        width: 22,
+                                        height: 22,
+                                        child: CircularProgressIndicator(
+                                            color: Color(0xFF1F1A15),
+                                            strokeWidth: 2.5),
+                                      )
+                                    : const Text(
+                                        'ENTRAR AL RITUAL',
+                                        style: TextStyle(
+                                            fontFamily: 'Inter',
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.bold,
+                                            color: Color(0xFF1F1A15),
+                                            letterSpacing: 0.8),
+                                      ),
+                              ),
+                            ),
+
+                            const SizedBox(height: 24),
+
+                            // Separador para Social Logins
+                            Row(
+                              children: [
+                                Expanded(child: Divider(color: t.borderDefault)),
+                                Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 16),
+                                  child: Text(
+                                    'o accede con',
+                                    style: TextStyle(
+                                        color: t.n400,
+                                        fontSize: 12,
+                                        fontFamily: 'CormorantGaramond'),
+                                  ),
+                                ),
+                                Expanded(child: Divider(color: t.borderDefault)),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+
+                            // Social Buttons (Google, Outlook, Apple)
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                _buildSocialButton(
+                                  icon: const Icon(Icons.g_mobiledata,
+                                      color: Color(0xFFC5A052), size: 32),
+                                  onTap: _isLoading
+                                      ? null
+                                      : () => _handleOAuth('GOOGLE'),
+                                  label: 'Google',
+                                  t: t,
+                                ),
+                                _buildSocialButton(
+                                  icon: const Icon(Icons.mail_outline,
+                                      color: Color(0xFFC5A052), size: 22),
+                                  onTap: _isLoading
+                                      ? null
+                                      : () => _handleOAuth('OUTLOOK'),
+                                  label: 'Outlook',
+                                  t: t,
+                                ),
+                                _buildSocialButton(
+                                  icon: const Icon(Icons.apple,
+                                      color: Color(0xFF1F1A15), size: 24),
+                                  onTap: _isLoading
+                                      ? null
+                                      : () => _handleOAuth('APPLE'),
+                                  label: 'Apple',
+                                  t: t,
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+
+                    // Link de Registro
+                    TextButton(
+                      onPressed: () => Navigator.pushNamed(context, '/register'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: t.brandPrimary,
+                      ),
+                      child: RichText(
+                        text: TextSpan(
+                          text: '¿No tienes cuenta? ',
+                          style: TextStyle(color: t.n500, fontSize: 14, fontFamily: 'CormorantGaramond'),
+                          children: [
+                            TextSpan(
+                              text: 'Regístrate aquí',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: t.brandPrimary),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
 }

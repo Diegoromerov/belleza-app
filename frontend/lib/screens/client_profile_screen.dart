@@ -183,14 +183,18 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
         final avatarProvider = _getAvatarProvider();
 
         return Scaffold(
-          backgroundColor: bgColor,
+          backgroundColor: const Color(0xFFFAF8F5),
           appBar: AppBar(
-            title: Text(
+            title: const Text(
               'Mi Perfil',
               style: TextStyle(
-                  fontWeight: FontWeight.bold, letterSpacing: -0.5, fontSize: 18, color: textColor),
+                fontFamily: 'CormorantGaramond',
+                fontWeight: FontWeight.bold,
+                fontSize: 22,
+                color: Color(0xFF1F1A15),
+              ),
             ),
-        backgroundColor: cardBgColor,
+        backgroundColor: const Color(0xFFFAF8F5),
         foregroundColor: textColor,
         elevation: 0,
         leading: IconButton(
@@ -209,9 +213,12 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
-        child: Form(
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 680),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+            child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -426,7 +433,9 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
           ),
         ),
       ),
-    );
+    ),
+  ),
+);
       },
     );
   }

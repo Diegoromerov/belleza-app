@@ -1200,18 +1200,20 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
       valueListenable: AudienceService.currentAudience,
       builder: (context, audienceMode, child) {
         final isMen = audienceMode == AudienceMode.men;
-        final bgColor = isMen ? MensTheme.obsidianBg : AppTheme.background;
+        final bgColor = isMen ? MensTheme.obsidianBg : const Color(0xFFFAF8F5);
         final surfaceColor = isMen ? MensTheme.obsidianCard : Colors.white;
-        final textColor = isMen ? MensTheme.textPrimary : Colors.black;
-        final primaryColor = isMen ? MensTheme.champagneGold : AppTheme.primary;
+        final textColor = isMen ? MensTheme.textPrimary : const Color(0xFF1F1A15);
+        final primaryColor = isMen ? MensTheme.champagneGold : const Color(0xFFC5A052);
 
         return Scaffold(
           backgroundColor: bgColor,
           appBar: AppBar(
-            title: Text('Mis Citas',
+            title: Text('Mis Rituales y Citas',
                 style: TextStyle(
+                    fontFamily: 'CormorantGaramond',
+                    fontSize: 22,
                     fontWeight: FontWeight.bold,
-                    letterSpacing: -0.5,
+                    letterSpacing: 0.5,
                     color: textColor)),
             backgroundColor: surfaceColor,
             foregroundColor: textColor,
@@ -1226,7 +1228,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
             bottom: TabBar(
               controller: _tabController,
               labelColor: primaryColor,
-              unselectedLabelColor: isMen ? MensTheme.textMuted : Colors.grey,
+              unselectedLabelColor: isMen ? MensTheme.textMuted : const Color(0xFF8C7E74),
               indicatorColor: primaryColor,
               indicatorSize: TabBarIndicatorSize.tab,
               tabs: const [
@@ -1237,39 +1239,44 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
           ),
       body: Stack(
         children: [
-          TabBarView(
-            controller: _tabController,
-            children: [
-              // Pestaña: Próximas
-              RefreshIndicator(
-                color: AppTheme.primary,
-                onRefresh: _loadBookings,
-                child: upcoming.isEmpty
-                    ? _buildEmptyState(
-                        'No tienes citas programadas próximamente.')
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
-                        itemCount: upcoming.length,
-                        itemBuilder: (context, index) =>
-                            _buildBookingCard(upcoming[index], true),
-                      ),
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 680),
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  // Pestaña: Próximas
+                  RefreshIndicator(
+                    color: const Color(0xFFC5A052),
+                    onRefresh: _loadBookings,
+                    child: upcoming.isEmpty
+                        ? _buildEmptyState(
+                            'No tienes citas programadas próximamente.')
+                        : ListView.builder(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
+                            itemCount: upcoming.length,
+                            itemBuilder: (context, index) =>
+                                _buildBookingCard(upcoming[index], true),
+                          ),
+                  ),
+                  // Pestaña: Historial
+                  RefreshIndicator(
+                    color: const Color(0xFFC5A052),
+                    onRefresh: _loadBookings,
+                    child: history.isEmpty
+                        ? _buildEmptyState('Tu historial de citas está vacío.')
+                        : ListView.builder(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
+                            itemCount: history.length,
+                            itemBuilder: (context, index) =>
+                                _buildBookingCard(history[index], false),
+                          ),
+                  ),
+                ],
               ),
-              // Pestaña: Historial
-              RefreshIndicator(
-                color: AppTheme.primary,
-                onRefresh: _loadBookings,
-                child: history.isEmpty
-                    ? _buildEmptyState('Tu historial de citas está vacío.')
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
-                        itemCount: history.length,
-                        itemBuilder: (context, index) =>
-                            _buildBookingCard(history[index], false),
-                      ),
-              ),
-            ],
+            ),
           ),
           if (_isLoading)
             Container(

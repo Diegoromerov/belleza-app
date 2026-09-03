@@ -317,129 +317,233 @@ class _WalletScreenState extends State<WalletScreen>
 
     return RefreshIndicator(
       onRefresh: _cargarWallet,
-      color: AppTheme.primary,
-      child: CustomScrollView(
-        slivers: [
-          // ─── Header con saldo principal ──────────────────────────────
-          SliverToBoxAdapter(
-            child: Container(
-              color: AppTheme.background,
-              padding: EdgeInsets.fromLTRB(
-                24,
-                MediaQuery.of(context).padding.top + 16,
-                24,
-                24,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      if (!widget.isEmbedded)
-                        IconButton(
-                          icon: const Icon(Icons.arrow_back_ios,
-                              color: AppTheme.text),
-                          onPressed: () => Navigator.pop(context),
-                        ),
-                      const Spacer(),
-                      const Text(
-                        'Mi Wallet',
-                        style: TextStyle(
-                          color: AppTheme.text,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const Spacer(),
-                      IconButton(
-                        icon: const Icon(Icons.settings_outlined,
-                            color: AppTheme.text),
-                        onPressed: () => _mostrarConfigRetiro(),
-                      ),
-                    ],
+      color: const Color(0xFFC5A052),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 680),
+          child: CustomScrollView(
+            slivers: [
+              // ─── Header con saldo principal ──────────────────────────────
+              SliverToBoxAdapter(
+                child: Container(
+                  color: const Color(0xFFFAF8F5),
+                  padding: EdgeInsets.fromLTRB(
+                    20,
+                    MediaQuery.of(context).padding.top + 16,
+                    20,
+                    20,
                   ),
-                  const SizedBox(height: 24),
-
-                  // Tarjeta de Balance Disponible (Oro Rosa Satinado con Marca de Agua)
-                  Stack(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(24),
-                        decoration: BoxDecoration(
-                          gradient: AppTheme.roseGoldSatinGradient,
-                          borderRadius: BorderRadius.circular(24),
-                          boxShadow: AppTheme.cardShadow,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Saldo disponible',
-                              style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500, letterSpacing: 0.5),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              _formatCOP.format(disponible),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 36,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: -0.5,
+                      Row(
+                        children: [
+                          if (!widget.isEmbedded)
+                            InkWell(
+                              onTap: () => Navigator.pop(context),
+                              borderRadius: BorderRadius.circular(20),
+                              child: Container(
+                                width: 36,
+                                height: 36,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: const Color(0xFFE8DFD8), width: 1),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.04),
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: const Icon(Icons.arrow_back_ios_new_rounded, size: 15, color: Color(0xFF1F1A15)),
                               ),
                             ),
-                            const SizedBox(height: 28),
-                            // Botón de retiro premium
-                            SizedBox(
-                              width: double.infinity,
-                              child: AnimatedOpacity(
-                                opacity: puedeRetirar ? 1.0 : 0.7,
-                                duration: const Duration(milliseconds: 300),
-                                child: ElevatedButton.icon(
-                                  onPressed: puedeRetirar ? _solicitarRetiro : null,
-                                  icon: const Icon(Icons.account_balance_wallet_outlined, size: 18),
-                                  label: Text(
-                                    puedeRetirar
-                                        ? 'RETIRAR AHORA'
-                                        : razonBloqueo ?? 'NO DISPONIBLE',
-                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, letterSpacing: 0.8),
+                          const Spacer(),
+                          const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.account_balance_wallet_outlined, size: 18, color: Color(0xFFC5A052)),
+                              SizedBox(width: 8),
+                              Text(
+                                'Mi Billetera Concierge',
+                                style: TextStyle(
+                                  fontFamily: 'CormorantGaramond',
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF1F1A15),
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const Spacer(),
+                          InkWell(
+                            onTap: () => _mostrarConfigRetiro(),
+                            borderRadius: BorderRadius.circular(20),
+                            child: Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: const Color(0xFFE8DFD8), width: 1),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.04),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 2),
                                   ),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.white,
-                                    foregroundColor: AppTheme.text,
-                                    elevation: 2,
-                                    padding: const EdgeInsets.symmetric(vertical: 14),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16),
+                                ],
+                              ),
+                              child: const Icon(Icons.settings_outlined, size: 18, color: Color(0xFF1F1A15)),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Tarjeta de Balance VIP Haute Joaillerie
+                      Stack(
+                        children: [
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(24),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF261E17), Color(0xFF15100C)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(24),
+                              border: Border.all(
+                                color: const Color(0xFFD4AF37).withValues(alpha: 0.5),
+                                width: 1.2,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFFC5A052).withValues(alpha: 0.18),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 8),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        gradient: const LinearGradient(
+                                          colors: [Color(0xFFF3D59B), Color(0xFFC5A052)],
+                                        ),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: const Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(Icons.diamond_outlined, size: 12, color: Color(0xFF1F1A15)),
+                                          SizedBox(width: 4),
+                                          Text(
+                                            'GLOW BLACK VIP',
+                                            style: TextStyle(
+                                              fontFamily: 'Inter',
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                              letterSpacing: 0.8,
+                                              color: Color(0xFF1F1A15),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const Icon(Icons.contactless_outlined, color: Color(0xFFC5A052), size: 22),
+                                  ],
+                                ),
+                                const SizedBox(height: 18),
+                                const Text(
+                                  'Saldo disponible',
+                                  style: TextStyle(
+                                    fontFamily: 'Inter',
+                                    color: Color(0xFFC5B8A8),
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  _formatCOP.format(disponible),
+                                  style: const TextStyle(
+                                    fontFamily: 'Inter',
+                                    color: Color(0xFFFFFDF8),
+                                    fontSize: 34,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: -0.5,
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+                                // Botón de retiro premium
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: AnimatedOpacity(
+                                    opacity: puedeRetirar ? 1.0 : 0.7,
+                                    duration: const Duration(milliseconds: 300),
+                                    child: ElevatedButton.icon(
+                                      onPressed: puedeRetirar ? _solicitarRetiro : null,
+                                      icon: const Icon(Icons.payments_outlined, size: 18, color: Color(0xFF1F1A15)),
+                                      label: Text(
+                                        puedeRetirar
+                                            ? 'TRANSFERIR A MI CUENTA NEQUI'
+                                            : razonBloqueo ?? 'RETIRO NO DISPONIBLE',
+                                        style: const TextStyle(
+                                          fontFamily: 'Inter',
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12.5,
+                                          letterSpacing: 0.6,
+                                          color: Color(0xFF1F1A15),
+                                        ),
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0xFFFAF6EE),
+                                        side: const BorderSide(color: Color(0xFFC5A052), width: 1.2),
+                                        elevation: 2,
+                                        padding: const EdgeInsets.symmetric(vertical: 14),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(16),
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Marca de agua de GlowApp
-                      const Positioned(
-                        right: -10,
-                        bottom: -15,
-                        child: Opacity(
-                          opacity: 0.08,
-                          child: Text(
-                            'Glow',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 64,
-                              fontWeight: FontWeight.w900,
-                              fontStyle: FontStyle.italic,
-                              letterSpacing: -2,
+                              ],
                             ),
                           ),
-                        ),
+                          // Marca de agua de GlowApp
+                          const Positioned(
+                            right: -10,
+                            bottom: -15,
+                            child: Opacity(
+                              opacity: 0.05,
+                              child: Text(
+                                'Glow',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 72,
+                                  fontWeight: FontWeight.w900,
+                                  fontStyle: FontStyle.italic,
+                                  letterSpacing: -2,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
+                      const SizedBox(height: 16),
 
                   // Tarjetas de saldos secundarios (Matte Terracotta para retenciones)
                   Row(
@@ -556,7 +660,9 @@ class _WalletScreenState extends State<WalletScreen>
           ),
         ],
       ),
-    );
+    ),
+  ),
+);
   }
 
   Widget _buildMovimientos() {

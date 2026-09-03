@@ -116,74 +116,120 @@ class _ProcessingScreenState extends State<ProcessingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: const Color(0xFFFAF8F5),
       body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const SizedBox(height: 40),
-              Text(
-                _status,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              // Barra de progreso
-              Container(
-                width: MediaQuery.of(context).size.width * 0.7,
-                height: 6,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(3),
-                ),
-                child: FractionallySizedBox(
-                  alignment: Alignment.centerLeft,
-                  widthFactor: _progress / 100,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Colors.purple, Colors.pink],
-                      ),
-                      borderRadius: BorderRadius.circular(3),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 480),
+          child: Padding(
+            padding: const EdgeInsets.all(32.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: const Color(0xFFF3D59B).withValues(alpha: 0.25),
+                    border: Border.all(color: const Color(0xFFC5A052), width: 1.5),
+                  ),
+                  child: const Center(
+                    child: CircularProgressIndicator(
+                      color: Color(0xFFC5A052),
+                      strokeWidth: 2.5,
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                '${_progress.toInt()}%',
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 14,
-                ),
-              ),
-              if (_showRetry) ...[
                 const SizedBox(height: 32),
-                ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      _isComplete = false;
-                      _showRetry = false;
-                      _progress = 0.0;
-                    });
-                    _startProcessing();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.purple,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 32, vertical: 16),
+                Text(
+                  _status,
+                  style: const TextStyle(
+                    fontFamily: 'CormorantGaramond',
+                    color: Color(0xFF1F1A15),
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
                   ),
-                  child: const Text('Reintentar',
-                      style: TextStyle(color: Colors.white)),
+                  textAlign: TextAlign.center,
                 ),
+                const SizedBox(height: 24),
+                // Barra de progreso
+                Container(
+                  width: 280,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE8DFD8),
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                  child: FractionallySizedBox(
+                    alignment: Alignment.centerLeft,
+                    widthFactor: (_progress / 100).clamp(0.0, 1.0),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFF3D59B), Color(0xFFC5A052)],
+                        ),
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  '${_progress.toInt()}%',
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    color: Color(0xFF8E7D7A),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                if (_showRetry) ...[
+                  const SizedBox(height: 32),
+                  Container(
+                    height: 52,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFF3D59B), Color(0xFFC5A052)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFC5A052).withValues(alpha: 0.35),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          _isComplete = false;
+                          _showRetry = false;
+                          _progress = 0.0;
+                        });
+                        _startProcessing();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        padding: const EdgeInsets.symmetric(horizontal: 32),
+                      ),
+                      child: const Text(
+                        'Reintentar',
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1F1A15),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),

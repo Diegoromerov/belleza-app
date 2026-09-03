@@ -191,8 +191,11 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
     }).toList();
 
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: CustomScrollView(
+      backgroundColor: const Color(0xFFFAF8F5),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 800),
+          child: CustomScrollView(
         slivers: [
           // Cabecera de Alto Impacto con Parallax y Desvanecimiento al Desplazar
           SliverAppBar(
@@ -1041,9 +1044,11 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                   ),
                 ),
               ]),
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
+    ),
       bottomNavigationBar: Container(
         padding: EdgeInsets.only(
           left: 20,
@@ -1052,7 +1057,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
           top: 12,
         ),
         decoration: const BoxDecoration(
-          color: Colors.white,
+          color: Color(0xFFFAF8F5),
           boxShadow: [
             BoxShadow(
               color: Color(0x0A000000),
@@ -1061,51 +1066,77 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
             ),
           ],
         ),
-        child: ElevatedButton(
-          onPressed: () async {
-            final token = await AuthService.getToken();
-            if (token == null) {
-              if (context.mounted) {
-                Navigator.pushNamed(context, '/login');
-              }
-              return;
-            }
-            if (context.mounted) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => BookingScreen(
-                    providerId: widget.providerId,
-                    providerName:
-                        p['business_name'] ?? p['full_name'] ?? 'Prestador',
-                    services: services,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 800),
+            child: Container(
+              height: 52,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFF3D59B), Color(0xFFC5A052)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFC5A052).withValues(alpha: 0.35),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: ElevatedButton(
+                onPressed: () async {
+                  final token = await AuthService.getToken();
+                  if (token == null) {
+                    if (context.mounted) {
+                      Navigator.pushNamed(context, '/login');
+                    }
+                    return;
+                  }
+                  if (context.mounted) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => BookingScreen(
+                          providerId: widget.providerId,
+                          providerName:
+                              p['business_name'] ?? p['full_name'] ?? 'Prestador',
+                          services: services,
+                        ),
+                      ),
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  foregroundColor: const Color(0xFF1F1A15),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
                   ),
                 ),
-              );
-            }
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppTheme.primary,
-            foregroundColor: Colors.white,
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30),
-            ),
-            padding: const EdgeInsets.symmetric(vertical: 16),
-          ),
-          child: const Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.calendar_today_outlined, size: 18),
-              SizedBox(width: 8),
-              Text(
-                'RESERVAR CITA (WOMPI)',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.calendar_today_outlined, size: 18, color: Color(0xFF1F1A15)),
+                    SizedBox(width: 8),
+                    Text(
+                      'RESERVAR CITA (WOMPI)',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1F1A15),
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
+            ),
           ),
         ),
       ),

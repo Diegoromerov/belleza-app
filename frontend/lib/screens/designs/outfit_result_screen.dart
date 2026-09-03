@@ -61,13 +61,13 @@ class _OutfitResultScreenState extends State<OutfitResultScreen> {
 
   ImageProvider _getImageProvider(String? url) {
     if (url == null || url.isEmpty) {
-      return const AssetImage('assets/images/logo_maestro_v5.png');
+      return const AssetImage('images/logo_maestro_v5.webp');
     }
     if (url.startsWith('data:image')) {
       final base64String = url.split(',').last;
       return MemoryImage(base64Decode(base64String));
     }
-    if (url.startsWith('assets/')) {
+    if (url.startsWith('images/')) {
       return AssetImage(url);
     }
     return NetworkImage(url);
@@ -88,20 +88,31 @@ class _OutfitResultScreenState extends State<OutfitResultScreen> {
     final String estilo = args['estilo'] ?? 'casual';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFCF9F7),
+      backgroundColor: const Color(0xFFFAF8F5),
       appBar: AppBar(
-        title: const Text('Mi Outfit Sugerido', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        title: const Text(
+          'Mi Outfit Sugerido',
+          style: TextStyle(
+            fontFamily: 'CormorantGaramond',
+            fontWeight: FontWeight.bold,
+            fontSize: 22,
+            color: Color(0xFF1F1A15),
+          ),
+        ),
         elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: const Color(0xFFFAF8F5),
+        foregroundColor: const Color(0xFF1F1A15),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppTheme.primary))
-          : _error != null
-              ? Center(child: Text('Error al procesar outfit: $_error'))
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 680),
+          child: _isLoading
+              ? const Center(child: CircularProgressIndicator(color: Color(0xFFC5A052)))
+              : _error != null
+                  ? Center(child: Text('Error al procesar outfit: $_error'))
+                  : SingleChildScrollView(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       // Encabezado del Look
@@ -251,29 +262,57 @@ class _OutfitResultScreenState extends State<OutfitResultScreen> {
                       ],
 
                       // Botones de acción
-                      ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                        ),
-                        onPressed: () async {
-                          final text = '¡Mira el outfit que me recomendó la IA de GlowStyle! Look: $name. Explicación: $suggestion';
-                          await Clipboard.setData(ClipboardData(text: text));
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('📋 Combinación de outfit copiado al portapapeles.'),
-                              backgroundColor: Colors.green,
+                      Container(
+                        height: 52,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFF3D59B), Color(0xFFC5A052)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFC5A052).withValues(alpha: 0.35),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
                             ),
-                          );
-                        },
-                        icon: const Icon(Icons.share_rounded),
-                        label: const Text('Compartir Outfit con Amigos', style: TextStyle(fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            foregroundColor: const Color(0xFF1F1A15),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            elevation: 0,
+                          ),
+                          onPressed: () async {
+                            final text = '¡Mira el outfit que me recomendó la IA de GlowStyle! Look: $name. Explicación: $suggestion';
+                            await Clipboard.setData(ClipboardData(text: text));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('📋 Combinación de outfit copiado al portapapeles.'),
+                                backgroundColor: Color(0xFF1F1A15),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.share_rounded, color: Color(0xFF1F1A15)),
+                          label: const Text(
+                            'Compartir Outfit con Amigos',
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1F1A15),
+                            ),
+                          ),
+                        ),
                       ),
                     ],
                   ),
                 ),
+          ),
+        ),
     );
   }
 }

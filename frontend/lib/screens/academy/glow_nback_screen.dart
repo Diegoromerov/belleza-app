@@ -135,15 +135,19 @@ class _GlowNBackScreenState extends State<GlowNBackScreen>
         _stimuliColors[currentStimulus] ?? AppTheme.primary;
 
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: const Color(0xFFFAF8F5),
       appBar: AppBar(
-        title: const Text('Juego N‑Back',
-            style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: AppTheme.text,
-                fontSize: 17)),
-        backgroundColor: AppTheme.background,
-        foregroundColor: AppTheme.text,
+        title: const Text(
+          'Entrenamiento N-Back',
+          style: TextStyle(
+            fontFamily: 'CormorantGaramond',
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF1F1A15),
+            fontSize: 22,
+          ),
+        ),
+        backgroundColor: const Color(0xFFFAF8F5),
+        foregroundColor: const Color(0xFF1F1A15),
         elevation: 0,
         actions: [
           // Selector de nivel
@@ -176,9 +180,12 @@ class _GlowNBackScreenState extends State<GlowNBackScreen>
           const SizedBox(width: 8),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-        child: Column(
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 680),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+            child: Column(
           children: [
             // ── Barra de progreso ──────────────────────────────────────────
             if (_sequence.isNotEmpty) ...[
@@ -346,10 +353,12 @@ class _GlowNBackScreenState extends State<GlowNBackScreen>
               ),
             ],
           ],
+          ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _statChip(
       IconData icon, String value, Color color, String label) {

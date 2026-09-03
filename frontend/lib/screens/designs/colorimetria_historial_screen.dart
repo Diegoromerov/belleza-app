@@ -44,15 +44,26 @@ class _ColorimetriaHistorialScreenState extends State<ColorimetriaHistorialScree
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFCF9F7),
+      backgroundColor: const Color(0xFFFAF8F5),
       appBar: AppBar(
-        title: const Text('Historial de Colorimetría', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        title: const Text(
+          'Historial de Colorimetría Aura',
+          style: TextStyle(
+            fontFamily: 'CormorantGaramond',
+            fontWeight: FontWeight.bold,
+            fontSize: 22,
+            color: Color(0xFF1F1A15),
+          ),
+        ),
         elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: const Color(0xFFFAF8F5),
+        foregroundColor: const Color(0xFF1F1A15),
       ),
-      body: _isLoading
-          ? Center(child: CircularProgressIndicator(color: AppTheme.primary))
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 680),
+          child: _isLoading
+              ? const Center(child: CircularProgressIndicator(color: Color(0xFFC5A052)))
           : _error != null
               ? Center(
                   child: Padding(
@@ -174,6 +185,8 @@ class _ColorimetriaHistorialScreenState extends State<ColorimetriaHistorialScree
                         );
                       },
                     ),
+          ),
+        ),
     );
   }
 }
