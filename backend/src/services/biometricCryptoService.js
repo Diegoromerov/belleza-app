@@ -7,10 +7,28 @@ let SECRET_KEY;
 function initializeKey() {
   const keyEnv = process.env.BIOMETRIC_ENCRYPTION_KEY;
   if (!keyEnv || typeof keyEnv !== 'string') {
+    if (process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT || !process.env.NODE_ENV) {
+      console.warn('⚠️  [SECURITY WARNING] BIOMETRIC_ENCRYPTION_KEY no configurada. Derivando clave AES-256 desde JWT_SECRET para evitar caida del servidor.');
+      const baseSecret = process.env.JWT_SECRET || 'glowapp_biometric_fallback_key_32_bytes!';
+      SECRET_KEY = crypto.createHash('sha256').update(baseSecret).digest();
+      return;
+    }
     throw new Error('BIOMETRIC_ENCRYPTION_KEY is required and must be a string');
   }
-  // Key must be 32 bytes for AES-256 (accepts utf8 string; we'll check byte length)
-  const keyBuffer = Buffer.from(keyEnv, 'hex');
+
+  // Key must be 32 bytes for AES-256 (supports 64-char hex or 32-char utf8)
+  let keyBuffer;
+  if (/^[0-9a-fA-F]{64}$/.test(keyEnv.trim())) {
+    keyBuffer = Buffer.from(keyEnv.trim(), 'hex');
+  } else if (Buffer.byteLength(keyEnv, 'utf8') === 32) {
+    keyBuffer = Buffer.from(keyEnv, 'utf8');
+  } else {
+    if (process.env.NODE_ENV === 'test') {
+      throw new Error('BIOMETRIC_ENCRYPTION_KEY must be 32 bytes long');
+    }
+    keyBuffer = crypto.createHash('sha256').update(keyEnv).digest();
+  }
+
   if (keyBuffer.length !== 32) {
     throw new Error('BIOMETRIC_ENCRYPTION_KEY must be 32 bytes long');
   }

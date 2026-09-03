@@ -4,7 +4,7 @@
 
 import 'package:flutter/material.dart';
 import 'tokens.dart';
-import '../design/icons/glow_icon.dart';
+import '../../design/icons/glow_icon.dart';
 
 class AppTheme {
   AppTheme._();
