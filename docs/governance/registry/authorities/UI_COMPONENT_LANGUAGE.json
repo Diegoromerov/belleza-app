@@ -1,0 +1,40 @@
+{
+  "authority": "UI / Component Language",
+  "level": "L1",
+  "owner": "Component Governor",
+  "sourceOfTruth": "docs/design/GLOWAPP_UI_COMPONENT_LANGUAGE.md + glowapp_ui_component_language.json",
+  "inputs": [
+    "Soul",
+    "Color",
+    "Typography",
+    "Photography",
+    "Icon System"
+  ],
+  "outputs": [
+    "Foundation tokens",
+    "component taxonomy",
+    "card/language/button/CTA/navigation/app bar/hero/commerce/booking/concierge/AURA/UI languages",
+    "component states",
+    "motion",
+    "responsive",
+    "accessibility language"
+  ],
+  "consumers": [
+    "Component implementations (LuxeComponents, GlowGlassCard, etc.)",
+    "screens"
+  ],
+  "allowedChanges": [
+    "Adding new components within taxonomy",
+    "adjusting spacing/radius/shadow within tokens"
+  ],
+  "forbiddenChanges": [
+    "Changing foundational principles (e.g., surface before decoration)",
+    "creating component variants without governor approval"
+  ],
+  "validationGate": "Component spec review + component audit",
+  "legacySystems": [
+    "Parallel component systems (LuxeButton, etc.)"
+  ],
+  "promotionPath": "Deprecate legacy components, migrate to unified taxonomy",
+  "exceptionMechanism": "Director approval for exceptions"
+}

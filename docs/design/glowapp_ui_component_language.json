@@ -1,0 +1,531 @@
+{
+  "phase": "S4_UI_COMPONENT_LANGUAGE",
+  "status": "SPECIFICATION",
+  "philosophy": {
+    "principles": [
+      "RESTRAINT: Less is more. Every element must earn its place",
+      "HIERARCHY: Visual weight guides attention. Primary > Secondary > Tertiary > Background",
+      "WHITESPACE: Generous breathing room. Not empty — active composition",
+      "VISUAL_RHYTHM: Consistent spacing scale (4px base). Predictable, calm",
+      "CALM_INTERACTION: No jarring transitions. Deliberate, smooth, quiet",
+      "INTENTIONAL_MOTION: Motion serves attention, not decoration. Entrance/exit/transition only",
+      "TACTILE_QUALITY: Surfaces feel warm, not sterile. Subtle texture, warm shadows",
+      "EDITORIAL_COMPOSITION: Asymmetry, negative space, typography as design",
+      "HUMAN_CENTERED_INTERACTION: Interfaces anticipate, don't just react"
+    ],
+    "avoid": [
+      "Visual overload — too many competing elements",
+      "Excessive cards — not everything is a card",
+      "Excessive borders — lines don't create structure, space does",
+      "Excessive shadows — depth via surface hierarchy, not drop shadows",
+      "Excessive pills — rounded rectangles everywhere",
+      "Excessive gradients — flat surfaces with purpose",
+      "Excessive badges — noise over signal",
+      "Random spacing — magic numbers instead of scale",
+      "Arbitrary colors — every color has semantic meaning",
+      "Arbitrary radii — radius maps to component type, not preference"
+    ]
+  },
+  "existing_ui_audit": {
+    "token_systems": [
+      { "name": "Token (tokens.dart)", "status": "MATURE", "coverage": "Color, Spacing, Radii, Shadows, Typography, Breakpoints, Animation, Elevation. Light/Dark parity", "source_of_truth": true },
+      { "name": "GlowStoreTokens", "status": "FUNCTIONAL", "coverage": "E-commerce surfaces (L0-L3), radius (5 semantic), shadows (3), typography (6), audience mapping (Women/Men)", "source_of_truth": false },
+      { "name": "BellezaLuxeTokens (belleza_luxe_theme.dart)", "status": "PARTIAL", "coverage": "Parallel system: Didot/Cormorant/Inter typography, LuxeColors, LuxeSpacing. Duplicates Token", "source_of_truth": false },
+      { "name": "GlowTokens", "status": "INCIPIENT", "coverage": "5 colors + 5 font families. References AppTheme.primary. Fragmented", "source_of_truth": false },
+      { "name": "LuxeColors", "status": "LEGACY", "coverage": "Used by LuxeComponents. Nude scale + gold871. No dark mode", "source_of_truth": false },
+      { "name": "MensTheme", "status": "FUNCTIONAL", "coverage": "Dark-only theme for Men audience. Colors + 2 gradients + 2 shadows. No typography/spacing/radius", "source_of_truth": false },
+      { "name": "AppTheme (shared/theme.dart)", "status": "DEPRECATED", "coverage": "Hardcoded colors, used in 40+ screens. Must migrate", "source_of_truth": false }
+    ],
+    "components": [
+      { "name": "LuxeCard", "file": "design/components/luxe_components.dart", "category": "CONTENT", "usage": "HomeScreen, Academy", "variants": "none", "current_style": "LuxeColors, LuxeSpacing.md (10.5px) radius, 1px nude200 border", "current_tokens": "LuxeColors, LuxeSpacing", "current_theme": "BellezaLuxe", "current_risk": "Doesn't use Token or Radii. Parallel spacing system", "recommended_status": "CONSOLIDATE" },
+      { "name": "LuxeButton", "file": "design/components/luxe_components.dart", "category": "ACTION", "usage": "HomeScreen, Academy, Store", "variants": "goldShimmer, tonal, outline", "current_style": "Gold871/nude900, hardcoded padding 16/12, LuxeSpacing.md radius", "current_tokens": "LuxeColors, LuxeSpacing", "current_theme": "BellezaLuxe", "current_risk": "3 variants hardcoded. No Token integration. No Aura variant", "recommended_status": "CONSOLIDATE" },
+      { "name": "LuxeBadge", "file": "design/components/luxe_components.dart", "category": "CONTENT", "usage": "HomeScreen only", "variants": "none", "current_style": "Uppercase, LuxeSpacing.sm radius, nude100 bg", "current_tokens": "LuxeColors, LuxeSpacing", "current_theme": "BellezaLuxe", "current_risk": "Incipient. No semantic variants", "recommended_status": "REFINE" },
+      { "name": "LuxeProgressBar", "file": "design/components/academy_luxe_components.dart", "category": "FEEDBACK", "usage": "Academy only", "variants": "none", "current_style": "nude200 track, gold871 fill, LuxeSpacing.sm radius", "current_tokens": "LuxeColors, LuxeSpacing", "current_theme": "BellezaLuxe", "current_risk": "Academy-only. No semantic status colors", "recommended_status": "REFINE" },
+      { "name": "LuxeListTile", "file": "design/components/academy_luxe_components.dart", "category": "NAVIGATION", "usage": "Academy only", "variants": "completed, locked", "current_style": "CormorantGaramond title, monoSm subtitle, gold871 accent", "current_tokens": "LuxeColors, LuxeSpacing, LuxeTypography", "current_theme": "BellezaLuxe", "current_risk": "Academy-only. Uses Cormorant at 16px (legibility concern)", "recommended_status": "REFINE" },
+      { "name": "GlowGlassCard", "file": "widgets/glow_glass_card.dart", "category": "CONTENT", "usage": "AuraWelcome, Results, Biometric", "variants": "configurable radius/blur/padding", "current_style": "BackdropFilter blur 10, creamSilk 60%, roseGold 30% border, nightAndean 5% shadow", "current_tokens": "GlowTokens", "current_theme": "GlowTokens", "current_risk": "Uses GlowTokens not Token. Fixed glass aesthetic", "recommended_status": "KEEP (with Token integration)" },
+      { "name": "GlowAppLogo", "file": "widgets/branding/glow_app_logo.dart", "category": "BRAND", "usage": "Multiple screens", "variants": "animated CustomPainter", "current_style": "Asset-based, ratio 3:1, animated", "current_tokens": "Explicit asset path", "current_theme": "N/A", "current_risk": "No Men variant. No dark mode adaptation", "recommended_status": "REFINE" },
+      { "name": "GlassCard", "file": "widgets/glass_card.dart", "category": "CONTENT", "usage": "Various", "variants": "configurable", "current_style": "BackdropFilter blur 5, custom colors", "current_tokens": "Hardcoded colors", "current_theme": "None", "current_risk": "Duplicate of GlowGlassCard. Hardcoded", "recommended_status": "DEPRECATE" },
+      { "name": "StoreProductCard", "file": "widgets/store_product_card.dart", "category": "COMMERCE", "usage": "StoreScreen", "variants": "none", "current_style": "GlowStoreTokens radiusCard (16), surfaceLevel1, shadowAmbient, Didot/Inter/JetBrainsMono", "current_tokens": "GlowStoreTokens", "current_theme": "GlowStoreTokens", "current_risk": "Uses Didot (should be Cormorant), Inter (should be Manrope)", "recommended_status": "REFINE" },
+      { "name": "ProductQuickViewDialog", "file": "widgets/product_quick_view_dialog.dart", "category": "OVERLAY", "usage": "StoreScreen", "variants": "none", "current_style": "Bottom sheet, GlowStoreTokens", "current_tokens": "GlowStoreTokens", "current_theme": "GlowStoreTokens", "current_risk": "Dialog pattern inconsistent with Modal/Sheet language", "recommended_status": "REFINE" },
+      { "name": "ServiceCard", "file": "widgets/provider/service_card.dart", "category": "BOOKING", "usage": "ProviderDetailScreen", "variants": "none", "current_style": "Radius 16, subtle border, soft shadow", "current_tokens": "Inline/hardcoded", "current_theme": "shared/theme.dart (legacy)", "current_risk": "Legacy theme. Hardcoded radius", "recommended_status": "CONSOLIDATE" },
+      { "name": "BookingCard", "file": "widgets/provider/booking_card.dart", "category": "BOOKING", "usage": "Provider dashboard", "variants": "none", "current_style": "Inline styles", "current_tokens": "None", "current_theme": "None", "current_risk": "No token integration", "recommended_status": "FUTURE" },
+      { "name": "ProgressCard", "file": "widgets/academy/progress_card.dart", "category": "CONTENT", "usage": "Academy", "variants": "none", "current_style": "LuxeTypography, Didot", "current_tokens": "LuxeTypography", "current_theme": "BellezaLuxe", "current_risk": "Academy-only. Didot usage", "recommended_status": "REFINE" }
+    ],
+    "screens": [
+      { "screen": "ProviderDetailScreen", "theme": "shared/theme.dart (legacy)", "visual_state": "PARTIAL", "primary_gap": "SliverAppBar black gradient, specialty colors hardcoded, avatar radius 45px" },
+      { "screen": "BookingScreen", "theme": "shared/theme.dart (legacy)", "visual_state": "PARTIAL", "primary_gap": "3-step stepper, sticky bottom, but inputs/AppBar legacy" },
+      { "screen": "HomeScreen", "theme": "LuxeColors + LuxeComponents", "visual_state": "FUNCTIONAL", "primary_gap": "BottomNav uses LuxeColors, cards consistent" },
+      { "screen": "StoreScreen", "theme": "GlowStoreTokens", "visual_state": "CONSISTENT", "primary_gap": "Checkout redesigned with monetary integrity" },
+      { "screen": "AuraWelcomeScreen", "theme": "GlowTokens + GlowGlassCard", "visual_state": "FUNCTIONAL", "primary_gap": "Photography-first, glass controls. Not Men-adaptive" },
+      { "screen": "Login/Register", "theme": "shared/theme + inline", "visual_state": "PARTIAL", "primary_gap": "Photography + scrim gradients, inputs inline styles" },
+      { "screen": "ResultsScreen", "theme": "_PassportColors (local)", "visual_state": "ISOLATED", "primary_gap": "Own color system (Passport), not connected to global tokens" }
+    ]
+  },
+  "component_inventory": {
+    "FOUNDATION": ["Spacing", "Surface", "Container", "Border", "Radius", "Shadow", "Elevation", "Density", "Alignment"],
+    "NAVIGATION": ["BottomNavigation", "TopNavigation", "AppBar", "Tabs", "Back", "Menu", "NavigationDrawer", "FloatingNavigationDock"],
+    "CONTENT": ["Card", "Container", "Section", "ListItem", "EditorialBlock", "GlassCard", "Image", "Typography", "Divider"],
+    "ACTION": ["PrimaryButton", "SecondaryButton", "TertiaryButton", "GhostButton", "IconButton", "DestructiveButton", "TextAction", "CTA"],
+    "FORM": ["TextField", "SearchField", "Dropdown", "DatePicker", "TimePicker", "OTP", "Textarea", "Checkbox", "Radio", "Switch", "Slider", "SegmentedControl"],
+    "FEEDBACK": ["Toast", "Snackbar", "Banner", "Progress", "Spinner", "Skeleton", "EmptyState", "ErrorState", "SuccessState"],
+    "OVERLAY": ["Dialog", "BottomSheet", "FullScreenSheet", "ConfirmationDialog", "ActionSheet", "Popover", "Tooltip"],
+    "COMMERCE": ["ProductCard", "PriceDisplay", "DiscountBadge", "Cart", "Checkout", "Payment", "OrderSummary", "Wishlist"],
+    "BOOKING": ["ServiceSelection", "ProviderSelection", "DatePicker", "TimePicker", "LocationPicker", "Confirmation", "Recovery", "PaymentStep"],
+    "CONCIERGE": ["ConciergeCard", "ChatBubble", "SupportTile", "BookingAssist", "RecommendationCard", "PersonalAssistance"],
+    "AURA": ["AuraSurface", "AuraCard", "AuraInsight", "AuraRecommendation", "AuraAction", "AuraStatus", "AuraLoading", "AuraConversation"],
+    "AUDIENCE": ["AudienceToggle", "AudienceBadge", "AudienceFilter"]
+  },
+  "foundation_language": {
+    "source_of_truth": "Token (tokens.dart) — EXTENDED",
+    "duplicates": [
+      "LuxeSpacing vs Spacing (4px base vs 6.5/10.5/14/17/24)",
+      "LuxeColors vs Token neutrals/brand",
+      "GlowStoreTokens radius vs Radii (5 semantic vs 10)",
+      "GlowStoreTokens shadows vs AppShadows (3 vs 4)",
+      "BellezaLuxeTypography vs AppTypography (parallel)",
+      "GlowTokens fonts vs Token fonts (5 families vs generic)"
+    ],
+    "conflicts": [
+      "Card radius: Radii.xxl (24px) in CardTheme vs LuxeSpacing.md (10.5px) in LuxeCard vs GlowStoreTokens.radiusCard (16px)",
+      "Button radius: Radii.lg (16px) vs LuxeSpacing.md (10.5px) vs GlowStoreTokens.radiusCTA (12px)",
+      "Input radius: Radii.lg (16px) vs GlowStoreTokens.radiusControl (8px)",
+      "Shadow color: Token.shadow = black 4% (not warm) vs GlowStoreTokens.shadowGoldGlow = gold871 18%",
+      "Surface hierarchy: Token has surface/surfaceVariant/surfaceContainer vs GlowStoreTokens L0-L3"
+    ],
+    "migration_required": [
+      "Extend Token with: semantic surface hierarchy (L0-L3), audience-adaptive tokens, Aura surface tokens",
+      "Deprecate LuxeColors, LuxeSpacing, LuxeTypography → migrate to Token",
+      "Merge GlowStoreTokens radius/shadow/surface into Token as semantic aliases",
+      "Deprecate BellezaLuxeTokens → migrate display tokens to Token, body to Manrope",
+      "Extend GlowTokens → only font family constants as aliases to Token families",
+      "Deprecate AppTheme (legacy) → migrate screens to Token.of(context)"
+    ]
+  },
+  "spacing": {
+    "scale": { "base_unit": 4, "tokens": { "xs": 4, "sm": 8, "md": 12, "lg": 16, "xl": 20, "xxl": 24, "xxxl": 32, "huge": 48, "massive": 64, "giant": 80 } },
+    "categories": {
+      "micro": "xs, sm (4, 8) — inline element gaps, icon-text, avatar-badge",
+      "component": "md, lg (12, 16) — internal padding, button padding, card padding",
+      "content": "xl, xxl (20, 24) — between components in a section, form field groups",
+      "section": "xxxl, huge (32, 48) — between sections, hero to content",
+      "page": "massive, giant (64, 80) — page margins, major structural breaks"
+    },
+    "hardcoded_detected": "store_screen.dart uses 16 distinct values: 4,8,10,12,14,16,18,20,24,28,32,36,40,48,52,56,64",
+    "recommendation": "Eliminate LuxeSpacing. All spacing via Token Spacing scale. Add 40, 64, 80 to Spacing class"
+  },
+  "surface_language": {
+    "hierarchy": {
+      "L0": { "name": "Page Background", "women": "Cream (#FAF8F5)", "men": "Obsidian (#0F1114)", "aura": "Cream/White", "usage": "Full page scaffold background" },
+      "L1": { "name": "Content Surface", "women": "White", "men": "Graphite (#1C1F23)", "aura": "Cream/White", "usage": "Cards, sheets, content containers" },
+      "L2": { "name": "Elevated / Glass", "women": "Cream 85% + blur", "men": "Graphite 85% + blur", "aura": "Warm White 85% + blur", "usage": "Overlays, modals, sticky headers, glass cards" },
+      "L3": { "name": "CTA / Selection", "women": "Rose Gold (#D4AF7A)", "men": "Champagne (#C8B08A)", "aura": "Aura Teal (#164C46)", "usage": "Primary buttons, selected chips, active states" }
+    },
+    "types": {
+      "solid": "Default. L0, L1, L3",
+      "image": "Hero backgrounds, editorial sections. Requires scrim overlay for text",
+      "glass": "L2 only. Contextual — over photography, not default",
+      "dark": "Men L0/L1 only. Not brand default",
+      "light": "Women L0/L1, AURA base"
+    },
+    "rules": [
+      "Glass never default style — only over photography or for contextual depth",
+      "Dark surfaces contextual, not brand identity (per S1)",
+      "Surface elevation = visual hierarchy, not decoration",
+      "Each surface level has defined border/shadow/typography color"
+    ]
+  },
+  "card_language": {
+    "when_to_use": {
+      "CARD": "Interactive content unit with metadata + action (service, product, provider)",
+      "CONTAINER": "Passive content grouping — no interaction, no metadata",
+      "SECTION": "Structural page division — full width, semantic grouping",
+      "LIST_ITEM": "High-density repeating rows — minimal chrome",
+      "EDITORIAL_BLOCK": "Storytelling — photography + typography + negative space"
+    },
+    "rule": "NOT EVERYTHING IS A CARD. Default to Container/Section unless interaction + metadata + action exist",
+    "properties": {
+      "radius": "16px (GlowStoreTokens.radiusCard / Radii.card) — consistent",
+      "padding": "Token.lg (16) default, Token.xl (20) for editorial",
+      "image": "Full bleed to radius. Aspect 4:5 (service), 1:1 (product), 16:9 (banner)",
+      "metadata": "Typography per S2: Cormorant for names, Manrope for details, JetBrains Mono for prices",
+      "border": "Subtle (S1 Subtle Border) or none. Not default",
+      "shadow": "S1 Soft Shadow (ambient). Glow shadow only for L3/CTA cards",
+      "interaction": "Tap → ripple on L1. Pressed → scale 0.98. No card elevation on hover",
+      "hierarchy": "Image > Name > Category/Metadata > Price/CTA"
+    }
+  },
+  "button_language": {
+    "PRIMARY": { "purpose": "Primary CTA — one per screen max", "hierarchy": 1, "height": 52, "padding": "horizontal 24, vertical 14", "radius": 12, "typography": "Manrope 16w600 (S2 Button Primary)", "icon": "Leading only, 18px, 8px gap", "color": "Women: Rose Gold on Cream. Men: Champagne on Obsidian. AURA: Aura Teal on Warm White", "states": "Hover: +4% opacity. Pressed: -4% brightness. Focus: 2px outline (Focus Border). Disabled: 38% opacity" },
+    "SECONDARY": { "purpose": "Secondary action — alternative path", "hierarchy": 2, "height": 48, "padding": "horizontal 20, vertical 12", "radius": 12, "typography": "Manrope 14w600 (S2 Button Secondary)", "icon": "Leading or trailing", "color": "Women: Outline Rose Gold on Cream. Men: Outline Champagne on Graphite. AURA: Outline Aura Teal", "states": "Hover: surface fill 8%. Pressed: surface fill 12%. Focus: 2px outline. Disabled: 38% opacity" },
+    "TERTIARY": { "purpose": "Tertiary action — low emphasis", "hierarchy": 3, "height": 44, "padding": "horizontal 16, vertical 10", "radius": 12, "typography": "Manrope 14w500", "icon": "Optional", "color": "Text color (Primary Text). No background", "states": "Hover: L2 surface. Pressed: L2 surface +10%. Focus: 2px outline. Disabled: 38% opacity" },
+    "GHOST": { "purpose": "Minimal action — navigation, dismiss", "hierarchy": 4, "height": 40, "padding": "horizontal 12, vertical 8", "radius": 8, "typography": "Manrope 13w500", "icon": "Often icon-only", "color": "Secondary Text", "states": "Hover: L2 surface. Pressed: L2 surface. Focus: 2px outline. Disabled: 38% opacity" },
+    "ICON_BUTTON": { "purpose": "Icon-only action", "hierarchy": "contextual", "size": "48x48 touch target (24px icon)", "radius": "full (circular) or 12", "color": "Icon consumes S1 Icon Color Roles", "states": "Hover: L2 surface. Pressed: scale 0.9. Focus: 2px outline" },
+    "DESTRUCTIVE": { "purpose": "Irreversible action", "hierarchy": "contextual", "height": 48, "radius": 12, "typography": "Manrope 14w600", "color": "S1 Error Red (#DC2626) on Error BG. Outline variant for secondary", "states": "Hover: +10% opacity. Pressed: -10% brightness. Focus: 2px outline" },
+    "TEXT_ACTION": { "purpose": "Inline action in text", "hierarchy": "lowest", "typography": "Manrope 14w500, underline on hover", "color": "Accent Text (Rose Gold/Champagne/Aura Teal)", "states": "Hover: underline. Pressed: color 80%. Focus: 2px outline" }
+  },
+  "cta_language": {
+    "PRIMARY_CTA": { "rule": "One per screen. Clear, elegant, scarce, intentional", "placement": "Sticky bottom on mobile. Inline on desktop. Never floating without purpose", "visual_weight": "Highest. L3 surface. S2 Button Primary typography. S1 Primary CTA colors", "spacing": "Token.xl (20) from content above. Token.huge (48) from page bottom" },
+    "SECONDARY_CTA": { "rule": "Supporting action. Never competes with primary", "placement": "Above primary (stacked) or trailing (inline)", "visual_weight": "Medium. Outline or Ghost variant", "spacing": "Token.md (12) from primary" },
+    "SUPPORTING_ACTION": { "rule": "Text action or Ghost button. Contextual", "visual_weight": "Low. Typography only or Ghost", "placement": "Inline with content or card footer" },
+    "prohibited": ["CTA everywhere — max 1 primary, 2 secondary per viewport", "Primary CTA in card grids — use card tap instead", "Multiple primary CTAs on same screen"]
+  },
+  "navigation": {
+    "bottom_navigation": { "hierarchy": "Primary app navigation (3-5 items)", "icon": "GlowIcon md (24px). Semantic color roles", "label": "S2 Navigation (Manrope 13w500)", "active": "Primary color role. Icon filled weight. Label 600", "inactive": "Neutral color role. Icon outline weight. Label 500", "spacing": "Token.xs (4) icon-label. Token.lg (16) horizontal between items", "surface": "L1 surface + top border (Subtle Border). Shadow: Shadow Ambient", "audience": "Women: Rose Gold active. Men: Champagne active. AURA: Aura Teal active" },
+    "top_navigation": { "hierarchy": "Screen-level actions + context", "icon": "GlowIcon md (24px)", "surface": "L1 or Transparent (hero)", "back": "GlowIcon.back, leading, 48x48 touch target" },
+    "tabs": { "hierarchy": "Content filtering within screen", "label": "S2 Tab (Manrope 13w600)", "active": "Primary color. Bottom indicator 3px", "inactive": "Muted Text", "surface": "Transparent or L1" },
+    "navigation_drawer": { "hierarchy": "Secondary navigation, settings, account", "width": "320px max (mobile: 85% viewport)", "surface": "L1", "radius": "Drawer radius (24px leading)", "shadow": "Shadow Drawer" },
+    "floating_navigation_dock": { "status": "EXISTS (floating_navigation_dock.dart)", "assessment": "Non-standard pattern. Evaluate if replaces bottom nav or supplements" }
+  },
+  "app_bar": {
+    "variants": {
+      "DEFAULT": { "purpose": "Standard screen header", "context": "Most screens", "surface": "L1", "typography": "S2 H3 (Cormorant 18w600)", "iconography": "GlowIcon.back leading, GlowIcon.actions trailing", "actions": "Max 2 icon buttons" },
+      "TRANSPARENT": { "purpose": "Hero/editorial screens with photography", "context": "ProviderDetail, AURA Welcome, Onboarding", "surface": "Transparent → L1 on scroll", "typography": "S2 H2 or Display S (Cormorant)", "iconography": "GlowIcon.back (Inverse Text), actions Inverse", "actions": "Icon buttons with Inverse Text" },
+      "EDITORIAL": { "purpose": "Brand/storytelling screens", "context": "Home, Campaigns", "surface": "Transparent", "typography": "S2 Display M/L (Cormorant)", "iconography": "Minimal — logo only", "actions": "None or Ghost" },
+      "STORE": { "purpose": "Store screen with search + audience toggle", "context": "StoreScreen", "surface": "L1 + shadow", "typography": "S2 H3 + AudienceToggle", "iconography": "Search, Cart, AudienceToggle", "actions": "Search field (expanded), Cart icon, AudienceToggle" },
+      "DETAIL": { "purpose": "Content detail with parallax", "context": "ProviderDetail", "surface": "Transparent → L1", "typography": "Hidden in expanded, S2 H3 collapsed", "iconography": "Back, Share, Favorite", "actions": "Icon buttons" },
+      "AURA": { "purpose": "AURA intelligence screens", "context": "Color DNA, Recommendations", "surface": "L2 (glass) or Transparent", "typography": "S2 H3 (Cormorant) + Aura Teal accent", "iconography": "GlowIcon.aura, back, close", "actions": "Contextual" },
+      "WOMEN": { "purpose": "Women-expression screens", "context": "Women-mode screens", "surface": "Per variant", "typography": "S2 Women emphasis (Cormorant)", "color": "Rose Gold/Champagne/Warm Brown" },
+      "MEN": { "purpose": "Men-expression screens", "context": "Men-mode screens", "surface": "Per variant (dark)", "typography": "S2 Men voice (Cormorant tighter)", "color": "Champagne/Warm White/Copper" },
+      "CONCIERGE": { "purpose": "Concierge touchpoints", "context": "Chat, Support, Booking assist", "surface": "L1 or L2", "typography": "S2 Concierge Display (Cormorant 24w400)", "color": "Warm neutrals + Rose Gold/Champagne" }
+    }
+  },
+  "hero_system": {
+    "types": {
+      "HERO": { "purpose": "Screen entry — brand, campaign, onboarding", "image": "S3 Hero (9:16 mobile, 16:9 desktop)", "crop": "Responsive via focal point", "text": "S2 Display XL/L + Body Large", "cta": "Primary CTA (sticky bottom mobile)", "negative_space": "35% minimum", "height": "Mobile: 60-70vh. Desktop: 50-60vh", "overlay": "S1 scrimBottom (40% gradient)", "alignment": "Bottom-left or center (editorial)" },
+      "EDITORIAL_HERO": { "purpose": "Storytelling, brand moment", "image": "S3 Editorial composition", "crop": "Art-directed", "text": "S2 Display L/M + Concierge Body", "cta": "Ghost or Secondary", "negative_space": "50%+", "height": "Variable — content-driven", "overlay": "Minimal or none", "alignment": "Asymmetric, rule of thirds" },
+      "IMAGE_HERO": { "purpose": "Photography-led experience", "image": "Full bleed photography", "crop": "Responsive", "text": "Minimal — only if essential", "cta": "Ghost over image", "negative_space": "Designed into photo", "height": "Full viewport or 80vh", "overlay": "Scrim only where text sits", "alignment": "Per composition" },
+      "SERVICE_HERO": { "purpose": "Service detail entry", "image": "S3 Service photography (4:5)", "crop": "Consistent 4:5", "text": "S2 H2 + Body + Metadata", "cta": "Primary CTA (Book)", "negative_space": "Below image, before CTA", "height": "Image 40% + content", "overlay": "None", "alignment": "Centered content below image" },
+      "PRODUCT_HERO": { "purpose": "Product detail entry", "image": "S3 Product isolation (1:1) + lifestyle (4:5)", "crop": "1:1 primary", "text": "S2 H2 + Price (JetBrains Mono) + Body", "cta": "Primary CTA (Add to bag)", "negative_space": "Around product", "height": "Image 50% + content", "overlay": "None", "alignment": "Centered" },
+      "AURA_HERO": { "purpose": "AURA intelligence entry", "image": "S3 AURA (abstract + human context)", "crop": "9:16 mobile", "text": "S2 AURA Display + AURA Body", "cta": "AURA CTA (Aura Teal)", "negative_space": "40% for light geometry", "height": "60-70vh", "overlay": "Subtle geometry, not scrim", "alignment": "Centered with orbital elements" }
+    }
+  },
+  "editorial_language": {
+    "principles": [
+      "Large typography (S2 Display/Heading) — Cormorant Garamond",
+      "Generous negative space — 40-50% frame",
+      "Asymmetric layouts — rule of thirds, not centered grids",
+      "Photography as lead — S3 photography principles",
+      "Short copy — headlines + one supporting line max",
+      "Storytelling rhythm — hero → detail → action"
+    ],
+    "avoid": [
+      "Magazine clone — GlowApp is interactive, not static",
+      "Text walls — max 2 lines at Display size",
+      "Forced asymmetry — only when composition demands",
+      "Decorative elements without purpose"
+    ],
+    "components": ["EditorialHero", "EditorialBlock", "PullQuote", "ImageCaption", "ChapterDivider", "Byline"]
+  },
+  "form_language": {
+    "TextField": { "surface": "L1", "border": "Default Border (S1)", "typography": "S2 Input (Manrope 16w400)", "icon": "Leading GlowIcon sm (20px)", "focus": "Focus Border (S1) + Shadow Soft", "error": "Error Border + Error Text (S1)", "success": "Success Border", "disabled": "Disabled Surface + Disabled Text" },
+    "SearchField": { "surface": "L2 (glass) on hero, L1 elsewhere", "border": "Subtle Border or none", "typography": "S2 Input Hint", "icon": "GlowIcon.search leading", "focus": "Focus Border + expand", "clear": "GlowIcon.close trailing" },
+    "Dropdown": { "surface": "L1", "border": "Default Border", "typography": "S2 Input", "icon": "GlowIcon.chevron_down trailing", "menu": "L1 surface, Shadow Medium, Radius 12" },
+    "DatePicker": { "surface": "L1 modal", "typography": "S2 Manrope for UI, JetBrains Mono for numbers", "navigation": "GlowIcon.chevron_left/right", "today": "Primary color highlight" },
+    "TimePicker": { "surface": "L1 modal", "typography": "JetBrains Mono for time display", "format": "24h default, 12h optional" },
+    "OTP": { "surface": "L1", "fields": "6 x 48x48, JetBrains Mono 24w700, gap Token.sm (8)", "focus": "Focus Border per field", "auto_fill": "Supported" },
+    "Textarea": { "surface": "L1", "border": "Default Border", "typography": "S2 Body", "resize": "Vertical only", "min_height": 100 },
+    "Checkbox": { "size": "24x24", "radius": 4, "border": "Default Border", "checked": "L3 surface + GlowIcon.check (16px)", "indeterminate": "L3 surface + line" },
+    "Radio": { "size": "24x24", "border": "Default Border (2px)", "selected": "L3 surface + inner dot (8px)", "gap": "Token.sm (8) to label" },
+    "Switch": { "track": "36x20, radius full", "thumb": "20x20", "on": "L3 surface", "off": "Subtle Border", "animation": "200ms ease-out" }
+  },
+  "search_language": {
+    "distinction": {
+      "SEARCH": "User intent — explicit query. GlowIcon.search. Results = user's terms",
+      "AI_SEARCH": "Assisted discovery — suggestions, completions. GlowIcon.glow_recommendation",
+      "AURA_INTELLIGENCE": "Proactive insight — analysis, recommendations. GlowIcon.aura. Not search"
+    },
+    "rule": "SEARCH = USER INTENT. AURA = INTELLIGENCE. No auto_awesome as universal AI representation",
+    "icon_taxonomy": "Respects Glow Icon System v1.0: search, glow_recommendation, aura are distinct semantic icons"
+  },
+  "lists_grids": {
+    "LIST": { "spacing": "Token.md (12) between items", "density": "Comfortable — 72px min height", "image_ratio": "None or 1:1 thumbnail (48px)", "metadata": "S2 Body + Label Small", "cta": "Trailing IconButton or TextAction" },
+    "GRID": { "spacing": "Token.md (12) gap", "density": "2 cols mobile, 3-4 tablet, 4-6 desktop", "image_ratio": "4:5 (service), 1:1 (product)", "metadata": "Name (Cormorant) + Category (Manrope) + Price (JetBrains)", "cta": "Card tap = navigate. No separate CTA" },
+    "PRODUCT_GRID": { "aspect": "1:1 isolation", "spacing": "Token.md (12)", "metadata": "Name + Price (prominent)", "wishlist": "GlowIcon.heart (Ghost)", "cart": "On tap → quick view dialog" },
+    "SERVICE_GRID": { "aspect": "4:5", "spacing": "Token.md (12)", "metadata": "Name + Provider + Duration + Price", "cta": "Card tap → detail" },
+    "PROVIDER_GRID": { "aspect": "4:5", "spacing": "Token.md (12)", "metadata": "Name + Specialty + Rating + Distance", "cta": "Card tap → detail" },
+    "EDITORIAL_GRID": { "aspect": "Variable — art directed", "spacing": "Token.xl (20) +", "metadata": "Minimal — headline only", "cta": "Explore link" }
+  },
+  "commerce_language": {
+    "principles": ["Premium commerce feel — not generic ecommerce template", "Differentiation: heart (wishlist) ≠ bag (save for later) ≠ cart (checkout)"],
+    "ProductCard": { "aspect": "1:1 isolation / 4:5 contextual", "surface": "L1", "radius": 16, "image": "Full bleed", "name": "Cormorant 15w700", "price": "JetBrains Mono 16w700 (S2 Price Medium)", "wishlist": "GlowIcon.heart Ghost top-trailing", "badge": "Discount (Manrope 10w700 uppercase)" },
+    "PriceDisplay": { "primary": "JetBrains Mono, S2 Price tokens", "previous": "Strikethrough, Muted Text", "discount": "Badge, uppercase", "currency": "COP format: $ 1.234.567 (spaces)" },
+    "Cart": { "surface": "L1 drawer/sheet", "item": "Product thumbnail 1:1 (64px) + details", "actions": "Qty stepper (IconButton -/+), Remove (Ghost)", "summary": "Subtotal, Shipping, Tax, Total (S2 Checkout Final)" },
+    "Checkout": { "steps": "1. Cuándo y Dónde → 2. Productos → 3. Confirmación/Pago", "progress": "S2 Stepper (Manrope Label Small uppercase)", "sticky_summary": "Always visible on desktop. Collapsible mobile", "payment": "Wompi integration — monetary integrity (S1)" },
+    "Wishlist": { "icon": "GlowIcon.heart (filled = saved)", "empty": "Editorial empty state", "shared": "Distinct from Cart — different icon, different flow" }
+  },
+  "booking_language": {
+    "principle": "Feels like CONCIERGE, not form wizard",
+    "steps": {
+      "ServiceSelection": "Editorial service cards (4:5). Tap to select. No radio buttons",
+      "ProviderSelection": "Provider cards with avatar, specialty, rating. Horizontal scroll or grid",
+      "Date": "Calendar picker (Month view). S2 Manrope. Highlighted = L3 surface",
+      "Time": "Time chips (GlowStoreTokens radiusChip). Available = L1. Selected = L3",
+      "Location": "Map + address autocomplete. GlowIcon.location",
+      "Confirmation": "Editorial summary. Cormorant headline. Details in Manrope. Price prominent",
+      "Recovery": "If interrupted — save draft. Resume from step",
+      "Payment": "Integrated Wompi. Monetary integrity (single finalCheckoutAmount)"
+    },
+    "visual": "Progress indicator (S2 Label Small uppercase). Sticky summary. Generous spacing"
+  },
+  "concierge_language": {
+    "principle": "PERSONAL, HUMAN, ATTENTIVE. Not call center",
+    "ConciergeCard": { "surface": "L2 (glass) or L1", "radius": 16, "avatar": "Concierge photo or GlowIcon.concierge (32px)", "typography": "S2 Concierge Body (Manrope 15w400, 1.7 line height)", "actions": "Quick replies (Chips), Primary action (Button)" },
+    "Chat": { "bubble": "L1 surface, radius 20 (not full pill)", "user": "L3 surface, Inverse Text", "concierge": "L1 surface, Primary Text", "timestamp": "S2 Body Small, Muted Text", "attachments": "Product/Service cards inline" },
+    "Support": { "ticket": "Card with status badge", "priority": "S1 Semantic colors (no red saturation)" },
+    "BookingAssist": { "flow": "Conversational → structured. Manrope throughout" },
+    "RecommendationCard": { "layout": "Image (4:5) + Editorial text (Cormorant headline)", "reasoning": "AURA insight badge (Aura Teal)", "action": "Primary CTA" },
+    "PersonalAssistance": { "tone": "Anticipatory. 'Noticed you prefer...' not 'Select...'" }
+  },
+  "aura_language": {
+    "principle": "QUIET INTELLIGENCE. No cyberpunk, neon, robot, HUD, circuits, generic AI robotics",
+    "color": "Aura Teal (#164C46) — accent only",
+    "components": {
+      "AuraSurface": "L0 Warm White/Cream + subtle geometry. Not dark mode default",
+      "AuraCard": "L1 + Aura Teal accent border (Subtle) + fine geometry background",
+      "AuraInsight": "Editorial block: Cormorant headline + Manrope body + geometry accent",
+      "AuraRecommendation": "Product/Service card + 'Why this matches' (Aura Teal label)",
+      "AuraAction": "Primary CTA in Aura Teal. Ghost Secondary",
+      "AuraStatus": "Pulse animation (organic, 2s). Concentric circles. Not spinner",
+      "AuraLoading": "Subtle organic — expanding rings, light particles. Not cyber",
+      "AuraConversation": "Chat with GlowIcon.aura avatar. Manrope. Aura Teal accents"
+    },
+    "prohibited": ["Cyberpunk cyan (#00E5FF)", "Neon glows", "Circuit patterns", "Robot/avatar illustrations", "HUD overlays", "Matrix rain", "Generic 'AI brain' imagery"]
+  },
+  "women_language": {
+    "differentiation": ["Color: Rose Gold, Champagne, Warm Brown", "Photography: Women muse, beauty/ritual", "Composition: Softer, more negative space, dewy", "Editorial Emphasis: Cormorant in brand moments", "Content: Beauty, skincare, hair, nails, fragrance, spa, wellness"],
+    "shared": "All foundation tokens, component structure, interaction patterns, Icon System geometry"
+  },
+  "men_language": {
+    "expression": "QUIET MASCULINE LUXURY",
+    "differentiation": ["Color: Champagne, Warm White, Copper, Warm Stone, Taupe", "Photography: Men muse, grooming/tailored", "Composition: Stronger structure, defined shadows, matte", "Spacing: Same scale, more generous in cards", "Content: Beard, shave, hair, scalp, fragrance, body, grooming, wellness"],
+    "prohibited": ["Black UI as default", "Gold-only accents", "Separate Men component framework", "Aggressive/macho visual language"],
+    "shared": "All foundation tokens, component structure, interaction patterns, Icon System geometry"
+  },
+  "states": {
+    "DEFAULT": "Base appearance per component spec",
+    "HOVER": "Desktop only. +4% opacity or L2 surface fill. 150ms ease",
+    "PRESSED": "Scale 0.98 (cards/buttons) or -4% brightness. 50ms",
+    "FOCUSED": "2px Focus Border (S1) + 4px offset. Always visible",
+    "SELECTED": "L3 surface background + Primary Border. Icon filled weight",
+    "DISABLED": "38% opacity. No interaction. Disabled Text color",
+    "LOADING": "Skeleton (L1→L2 shimmer) or Spinner (S1 Primary). No layout shift",
+    "SUCCESS": "Success color (S1) + GlowIcon.check. Toast or inline",
+    "ERROR": "Error color (S1) + GlowIcon.alert. Inline or Card/Full screen",
+    "WARNING": "Warning color (S1) + GlowIcon.warning. Banner or Toast"
+  },
+  "loading": {
+    "Skeleton": "L1 → L2 shimmer wave. 1.5s ease-in-out. Matches component layout",
+    "Spinner": "24px, 2px stroke, Primary color. Centered. 1s linear",
+    "Progress": "Linear (S2 LuxeProgressBar refined) or Circular. Semantic color",
+    "AURA_Loading": "Subtle organic — expanding concentric rings (Aura Teal 20%), light particles. 2s ease-out. No rotation"
+  },
+  "empty_states": {
+    "EMPTY": "Illustration (GlowIcon proprietary) + Cormorant headline + Manrope body + Primary CTA",
+    "FIRST_USE": "Onboarding-style — photography + guidance + CTA to start",
+    "NO_RESULTS": "GlowIcon.search (neutral) + 'No matches' + suggestions + 'Clear filters'",
+    "NO_BOOKINGS": "GlowIcon.calendar + 'No upcoming appointments' + 'Book your first'",
+    "NO_FAVORITES": "GlowIcon.heart (outline) + 'Nothing saved yet' + 'Explore services'",
+    "NO_PRODUCTS": "GlowIcon.bag + 'Cart is empty' + 'Discover products'",
+    "rule": "Never 'No data' alone. Always: context + human guidance + next action"
+  },
+  "error_states": {
+    "INLINE": "Field level. Error Border + Error Text (Manrope 12w400) below field",
+    "CARD": "Service/Product card. Error banner top (S1 Error BG + On). Dismissible",
+    "FULL_SCREEN": "Centered. GlowIcon.error (48px) + Cormorant headline + Manrope body + Primary CTA (Retry)",
+    "NETWORK": "Offline banner (top) + Full screen if critical. GlowIcon.wifi_off",
+    "PAYMENT": "Wompi error codes mapped to human messages. No raw codes",
+    "BOOKING": "Conflict/availability errors. Inline in step + Toast",
+    "VALIDATION": "Real-time on blur. Inline. Not on submit only",
+    "color_rule": "No saturated red flood. S1 Error Red (#DC2626) only for text/icon. BG = Error BG (subtle)"
+  },
+  "modals_sheets": {
+    "Dialog": { "surface": "L1", "radius": 20, "padding": "Token.xl (24)", "overlay": "Backdrop 40% (S1 Backdrop)", "cta_hierarchy": "Primary (right) + Secondary (left). Stacked mobile", "max_width": "400px" },
+    "BottomSheet": { "surface": "L1", "radius": "Drawer (24px top only)", "padding": "Token.xl (24)", "handle": "Centered 36x4, Muted color", "cta_hierarchy": "Sticky bottom: Primary full-width", "drag": "Draggable. Snap points: 50%, 90%, full" },
+    "FullScreenSheet": { "surface": "L0", "radius": 0, "padding": "Token.xl (24)", "close": "GlowIcon.close top-leading", "cta_hierarchy": "Sticky bottom" },
+    "Confirmation": { "type": "Dialog variant", "icon": "GlowIcon.warning (32px, Warning color)", "headline": "Cormorant H3", "body": "Manrope Body", "actions": "Destructive (Primary) + Cancel (Secondary)" },
+    "ActionSheet": { "type": "BottomSheet variant", "items": "ListTile (Manrope Label Large)", "destructive": "Error color, bottom separated", "cancel": "Ghost, bottom" }
+  },
+  "glass_blur": {
+    "audit": {
+      "GlowGlassCard": { "usage": "AuraWelcome, Results, Biometric", "classification": "ALLOWED — contextual over photography", "blur": 10, "surface": "creamSilk 60%" },
+      "GlassCard": { "usage": "Various", "classification": "DEPRECATE — duplicate, hardcoded", "blur": 5, "surface": "custom" },
+      "inline_BackdropFilter": { "usage": "Multiple screens (login, register, onboarding)", "classification": "CONTEXTUAL — hero overlays only", "blur": "varies (5-20)", "surface": "varies" }
+    },
+    "rules": [
+      "Glass NEVER default GlowApp style",
+      "Only over photography (S3) or for contextual depth (modals, sticky headers)",
+      "Blur: 10-20px max. Surface opacity: 60-85%",
+      "Border: Subtle (S1) in Primary/Accent color at 20-30% opacity",
+      "Text on glass: Inverse Text or Primary Text with scrim"
+    ]
+  },
+  "shadow_system": {
+    "audit": {
+      "Token": { "soft": "black 4%, blur 8, offset 0,2", "card": "black 4%, blur 24, offset 0,8, spread -4", "elevated": "black 4%, blur 32, offset 0,16", "glow": "brandPrimary 35%" },
+      "GlowStoreTokens": { "ambient": "black 4%, blur 12, offset 0,4", "goldGlow": "gold871 18%, blur 16, offset 0,6", "drawer": "black 8%, blur 24, offset -6,0" },
+      "MensTheme": { "goldGlow": "champagneGold 30%, blur 16, offset 0,4", "cyanScannerGlow": "cyberCyan 40%, blur 20, spread 2 — PROHIBITED" },
+      "BellezaLuxeTheme": { "shadow": "nightAndean 10%, blur 20, offset 0,10" }
+    },
+    "conceptual": {
+      "SOFT": { "blur": 8, "offset": "0,2", "color": "Warm neutral (nude900 8%)", "use": "Cards, ListItems, low elevation" },
+      "MEDIUM": { "blur": 16, "offset": "0,6", "color": "Warm neutral (nude900 12%)", "use": "Modals, Sheets, elevated containers" },
+      "STRONG": { "blur": 24, "offset": "0,12", "color": "Warm neutral (nude900 16%)", "use": "Drawers, Full-screen sheets, major overlays" },
+      "AURA_GLOW": { "blur": 20, "offset": "0,8", "color": "Aura Teal 25%", "use": "AURA cards, insights, loading" },
+      "BRAND_GLOW": { "blur": 16, "offset": "0,6", "color": "Primary (Rose Gold/Champagne) 20%", "use": "L3 surfaces, Primary CTAs, selected chips" }
+    },
+    "rule": "Shadow color = warm neutral (nude900), not black. Per S1: shadows have color temperature"
+  },
+  "radius_system": {
+    "audit": {
+      "Radii (Token)": [4, 8, 12, 16, 20, 24, 28, 30, 100, 9999],
+      "GlowStoreTokens": { "radiusControl": 8, "radiusCTA": 12, "radiusCard": 16, "radiusChip": 20, "radiusDrawer": 24 },
+      "LuxeComponents": { "LuxeSpacing.md": 10.5 },
+      "CardTheme (main.dart)": 24,
+      "InputDecorationTheme": 16,
+      "hardcoded": "Avatar 45px (ProviderDetail), Chip 12px (specialty tag), Button 30px (pill)"
+    },
+    "conceptual_mapping": {
+      "xs (4)": "Badges, small chips, avatars small",
+      "sm (8)": "Controls, inputs, icon buttons, small chips",
+      "md (12)": "CTA buttons, secondary buttons, search fields",
+      "lg (16)": "Cards, containers, modals, dropdowns",
+      "xl (20)": "Chips (pill), larger cards, bottom sheet top",
+      "xxl (24)": "Drawer, full-screen sheet top, feature cards",
+      "full (9999)": "Pills, circular avatars, icon buttons circular"
+    },
+    "inconsistencies": [
+      "Card radius: 3 values (10.5, 16, 24) — standardize to 16 (lg)",
+      "Button radius: 3 values (10.5, 12, 16) — standardize to 12 (md) for primary/secondary",
+      "Input radius: 2 values (8, 16) — standardize to 8 (sm) for controls",
+      "Chip radius: 20 (xl) — correct for pill",
+      "Avatar: 45px hardcoded → add radiusAvatar (48) to Radii"
+    ]
+  },
+  "icon_relation": {
+    "status": "GLOW ICON SYSTEM v1.0 LOCKED",
+    "spacing": { "label_small": 8, "label_medium": 10, "label_large": 12 },
+    "baseline": "Icon vertical center = text baseline + 1px optical correction",
+    "alignment": "Leading: icon → 8/10/12px gap → text. Trailing: text → 8/10/12px gap → icon",
+    "size_relationship": "Icon size = text cap-height (16px text → 16px icon, 14px text → 14px icon)",
+    "button_placement": "Leading icon only for Primary/Secondary. 18px icon, 8px gap",
+    "list_placement": "Leading: 24px icon, 16px gap. Trailing: 16px gap, 20px icon",
+    "navigation_placement": "24px icon, 4px gap to label (S2 Navigation)",
+    "color": "Icons consume S1 Icon Color Roles (primary, secondary, accent, aura, neutral, disabled, error, success, warning)"
+  },
+  "motion": {
+    "duration": { "micro": 100, "short": 200, "standard": 300, "long": 500, "hero": 800 },
+    "easing": { "standard": "cubic-bezier(0.4, 0, 0.2, 1)", "entrance": "cubic-bezier(0, 0, 0.2, 1)", "exit": "cubic-bezier(0.4, 0, 1, 1)", "spring": "cubic-bezier(0.34, 1.56, 0.64, 1)" },
+    "entrance": { "fade": "300ms standard", "slide_up": "300ms entrance (bottom sheets)", "scale": "200ms spring (cards, buttons)", "stagger": "50ms per item (lists/grids)" },
+    "exit": { "fade": "200ms exit", "slide_down": "200ms exit (bottom sheets)", "scale": "150ms standard (dialogs)" },
+    "transition": { "page": "300ms fade + 50px slide", "tab": "200ms fade", "modal": "300ms fade + scale" },
+    "parallax": { "hero": "2-3% offset, slow. Not TikTok-style", "cards": "None" },
+    "microinteraction": { "button_press": "Scale 0.98, 50ms", "checkbox": "Scale 0.9 + check draw, 200ms", "switch": "Slide 200ms ease-out", "heart": "Scale 1.2 → 1.0, 300ms spring", "icon_tap": "Ripple (Material) or scale 0.9, 100ms" },
+    "avoid": ["Bouncy (spring overshoot >1.2)", "Gamer (fast, flashy)", "Excessive (motion on everything)", "Fast (<150ms for content transitions)"]
+  },
+  "responsive": {
+    "breakpoints": { "mobile": 0, "tablet": 600, "desktop": 1024, "wide": 1440 },
+    "approach": "FLUID + ADAPTIVE. Not duplicate components",
+    "fluid": "Spacing, typography (clamp), container widths, grid columns",
+    "adaptive": { "navigation": "Bottom nav (mobile) → Rail (tablet) → Sidebar (desktop)", "hero": "9:16 (mobile) → 4:3 (tablet) → 16:9 (desktop)", "cards": "Stack (mobile) → Grid 2 (tablet) → Grid 3-4 (desktop)", "forms": "Stacked (mobile) → Side-by-side (tablet/desktop)", "sheets": "Full-screen (mobile) → Bottom sheet (tablet) → Dialog (desktop)" },
+    "component_duplication": "AVOID. Single component with responsive props"
+  },
+  "accessibility": {
+    "touch_targets": { "minimum": 48, "current": "Mostly compliant (52-56px buttons). LuxeButton 48px — VERIFIED", "status": "VERIFIED" },
+    "contrast": { "primary_text_on_surface": "VERIFIED (12.8:1 Women, ~4.2:1 Men target)", "secondary_text_on_surface": "VERIFIED (4.2:1)", "cta_text_on_brand": "REQUIRES_IMPLEMENTATION_VALIDATION (depends on final Rose Gold/Champagne)", "aura_teal_on_light": "VERIFIED (8.2:1)", "aura_teal_on_dark": "FAIL (1.8:1) — documented in S1", "focus_border": "PARTIAL — InputDecorationTheme only. Buttons lack visible focus on web" },
+    "focus": { "order": "Logical DOM order", "visible": "2px Focus Border (S1) required on all interactive", "skip_links": "REQUIRES_IMPLEMENTATION" },
+    "keyboard": { "navigation": "Tab/Shift+Tab. Enter/Space activate. Escape dismiss", "trapping": "Modals/Sheets trap focus" },
+    "screen_reader": { "semantic_labels": "All icon-only controls require semanticLabel", "live_regions": "Loading, errors, toasts", "headings": "S2 Heading hierarchy (H1-H4) as semantic headings" },
+    "text_scaling": { "status": "REQUIRES_IMPLEMENTATION_VALIDATION — test 1.0x, 1.3x, 1.5x, 2.0x", "max_lines": "Flexible. No hard maxLines on body text" },
+    "motion_sensitivity": { "respect_prefers_reduced_motion": "REQUIRES_IMPLEMENTATION — disable parallax, stagger, non-essential animation" }
+  },
+  "anti_patterns": [
+    { "pattern": "Excessive cards", "description": "Using Card for passive content grouping. Use Container/Section", "evidence": "5+ card implementations, many non-interactive" },
+    { "pattern": "Excessive pills", "description": "Full-radius containers everywhere. Radius maps to component type", "evidence": "Radius 30px (pill) hardcoded in buttons, chips, avatars" },
+    { "pattern": "Excessive borders", "description": "Borders as primary structure. Space creates structure", "evidence": "1px borders on most cards, containers, inputs" },
+    { "pattern": "Excessive shadows", "description": "Drop shadows for depth. Surface hierarchy creates depth", "evidence": "3 shadow systems, many with black 4% (not warm)" },
+    { "pattern": "Excessive gradients", "description": "Gradients as decoration. Solid surfaces with purpose", "evidence": "4+ gradient definitions, many decorative" },
+    { "pattern": "Excessive badges", "description": "Badges on everything. Noise over signal", "evidence": "LuxeBadge incipient, no semantic variants" },
+    { "pattern": "Arbitrary colors", "description": "Colors without semantic meaning. 6+ gold/champagne variants", "evidence": "S1 audit: 8+ gold variants, 17+ nude variants" },
+    { "pattern": "Random spacing", "description": "Magic numbers instead of scale. 16 values in store_screen", "evidence": "S1 audit: LuxeSpacing (5 vals) vs Spacing (8 vals) vs hardcoded" },
+    { "pattern": "Random radii", "description": "Radius per preference. 5+ values for same component type", "evidence": "Card: 10.5/16/24. Button: 10.5/12/16/30" },
+    { "pattern": "Inconsistent typography", "description": "3+ font families, generic 'serif'/'sans' in tokens", "evidence": "S2 audit: Didot/Inter/Cormorant/Playfair/JetBrains + generics" },
+    { "pattern": "Inconsistent iconography", "description": "Material Icons + Cupertino + CustomPainter + Raster", "evidence": "Icon audit: 200+ Icons.*, 0 custom SVG, 3 raster nav icons" },
+    { "pattern": "Cyber UI", "description": "Neon, circuits, HUD, robotic. Prohibited per S1/S3", "evidence": "MensTheme.cyberCyan, cyanScannerGlow" },
+    { "pattern": "Generic ecommerce UI", "description": "Template feel. No brand differentiation", "evidence": "Store uses standard patterns, minimal editorial" },
+    { "pattern": "Generic dashboard UI", "description": "Data-dense, cold, utilitarian", "evidence": "Provider dashboard, client profile" },
+    { "pattern": "Generic AI UI", "description": "auto_awesome, sparkles everywhere, cyber aesthetics", "evidence": "AURA uses deepGreen not Aura Teal. Cyberpunk in Men" }
+  ],
+  "component_governance": {
+    "new_component_allowed_when": "No existing variant solves the case correctly",
+    "new_variant_justification": ["purpose: unique user need not met by existing", "use_case: specific screen/flow documented", "design_rationale: why not existing variant", "scope: where it applies (global/feature)", "reusability: 3+ use cases or strategic need"],
+    "new_token_allowed_when": "Semantic gap in Token taxonomy. Not for one-off values",
+    "new_pattern_allowed_when": "Cross-screen behavior not covered. Documented in Screen Relation",
+    "approval": "Design Director review required for all new components/variants/tokens/patterns"
+  },
+  "component_gaps": [
+    { "component": "Unified Card", "gap": "5+ implementations (LuxeCard, AcademyLuxeCard, GlowGlassCard, StoreProductCard, ServiceCard, inline). Consolidate to 1 with variants", "severity": "P0" },
+    { "component": "Unified Button", "gap": "4+ systems (LuxeButton, AcademyLuxeButton, ElevatedButtonTheme, inline). Consolidate to 1 with 5 variants + Aura", "severity": "P0" },
+    { "component": "Unified Input", "gap": "3+ systems (AppTheme.inputDecoration, Store inline, LuxeTextField). Single GlowInputDecoration", "severity": "P0" },
+    { "component": "Unified Modal/Sheet", "gap": "Dialog, BottomSheet, FullScreenSheet, ProductQuickViewDialog — inconsistent radius/surface/cta", "severity": "P1" },
+    { "component": "Unified Navigation", "gap": "3 BottomNav implementations. 3 AppBar patterns. Single system", "severity": "P0" },
+    { "component": "AURA Components", "gap": "No dedicated AURA component library. Ad-hoc in screens", "severity": "P1" },
+    { "component": "Concierge Components", "gap": "Chat, Support, Recommendation — inline in screens", "severity": "P1" },
+    { "component": "Booking Components", "gap": "Stepper, Date/Time pickers, Provider/Service cards — fragmented", "severity": "P0" },
+    { "component": "Empty States", "gap": "No unified empty state component. Each screen inline", "severity": "P1" },
+    { "component": "Error States", "gap": "Inline/Card/FullScreen — no unified ErrorDisplay component", "severity": "P1" },
+    { "component": "Loading States", "gap": "Skeleton/Spinner/Progress/AURA Loading — no unified system", "severity": "P1" },
+    { "component": "Tooltip/Popover", "gap": "No unified tooltip. Inline only", "severity": "P2" },
+    { "component": "SegmentedControl", "gap": "No unified segmented control. ChoiceChip used", "severity": "P2" },
+    { "component": "Avatar", "gap": "No unified Avatar component. Hardcoded 45px radius", "severity": "P1" },
+    { "component": "Badge/Status", "gap": "LuxeBadge only. No semantic status badge system", "severity": "P1" }
+  ],
+  "screen_relation": {
+    "Home": ["Hero (EditorialHero)", "ServiceGrid (ServiceGrid)", "ProviderCarousel", "ConciergeCard", "BottomNavigation"],
+    "Store": ["StoreAppBar (STORE)", "SearchField", "ProductGrid (ProductGrid)", "CategoryChips", "CartDrawer", "Checkout (Booking flow)"],
+    "Booking": ["BookingAppBar (DETAIL)", "ServiceSelection (ServiceGrid)", "ProviderSelection (ProviderGrid)", "DatePicker", "TimeChips", "LocationPicker", "Confirmation (EditorialBlock)", "Payment"],
+    "ProviderDetail": ["DetailAppBar (DETAIL + parallax)", "Hero (ServiceHero)", "ServiceCards (Card)", "BookingCTA (PrimaryCTA)", "Reviews (List)"],
+    "Profile": ["ProfileAppBar (DEFAULT)", "Avatar (Unified)", "SettingsList (List)", "BookingHistory (List)", "ConciergeAccess"],
+    "AURA": ["AuraAppBar (AURA)", "AuraHero (AURA_HERO)", "AuraInsight (AuraInsight)", "AuraRecommendation (AuraRecommendation)", "AuraConversation (AuraConversation)"],
+    "Women": ["Same components as Home/Store/Booking — Women expression via S1/S3"],
+    "Men": ["Same components as Home/Store/Booking — Men expression via S1/S3"],
+    "Concierge": ["ConciergeAppBar (CONCIERGE)", "Chat (Chat)", "Support (List)", "BookingAssist (Booking flow)", "Recommendations (RecommendationCard)"]
+  },
+  "design_authority": {
+    "hierarchy": [
+      "GLOWAPP SOUL (Master)",
+      "COLOR (S1) + TYPOGRAPHY (S2) + PHOTOGRAPHY (S3) + ICONOGRAPHY (Locked)",
+      "UI / COMPONENT LANGUAGE (S4)",
+      "SCREEN COMPOSITION",
+      "IMPLEMENTATION"
+    ],
+    "rule": "NO parallel design systems. Single authority chain"
+  },
+  "token_taxonomy": {
+    "glow.ui.spacing": ["xs", "sm", "md", "lg", "xl", "xxl", "xxxl", "huge", "massive", "giant"],
+    "glow.ui.radius": ["xs", "sm", "md", "lg", "xl", "xxl", "full"],
+    "glow.ui.surface": ["L0", "L1", "L2", "L3", "L0_MEN", "L1_MEN", "L2_MEN", "L3_MEN", "L0_AURA", "L1_AURA", "L2_AURA", "L3_AURA"],
+    "glow.ui.border": ["Default", "Subtle", "Strong", "Focus", "Selected", "Error", "Success", "Warning"],
+    "glow.ui.shadow": ["Soft", "Medium", "Strong", "AuraGlow", "BrandGlow"],
+    "glow.ui.component": ["Card", "Button", "Input", "Modal", "Sheet", "Navigation", "AppBar", "Hero", "List", "Grid", "Form", "Feedback", "Overlay", "Commerce", "Booking", "Concierge", "AURA"],
+    "glow.ui.motion": ["duration", "easing", "entrance", "exit", "transition", "parallax", "microinteraction"],
+    "glow.ui.state": ["Default", "Hover", "Pressed", "Focused", "Selected", "Disabled", "Loading", "Success", "Error", "Warning"]
+  },
+  "implementation_gaps": [
+    { "area": "Color Tokens", "current_state": "6 parallel systems. Target HEX not implemented", "target_state": "Single Token with S1 target palette. Audience-adaptive", "gap": "Token colors ≠ S1 target. GlowStoreTokens/MensTheme divergent", "severity": "P0", "implementation_required": "Update Token.light/dark with S1 HEX. Extend for audience. Deprecate others", "dependency": "S1 Color System", "priority": "P0" },
+    { "area": "Typography Tokens", "current_state": "Generic 'serif'/'sans' in Token. Cormorant/Manrope not loaded. 3+ systems", "target_state": "Token.fontFamily maps to Cormorant/Manrope/JetBrainsMono. Single source", "gap": "AppTypography uses generics. Cormorant declared unused. Manrope missing", "severity": "P0", "implementation_required": "Add fonts to pubspec. Update Token with real families. Deprecate Didot/Inter/Playfair", "dependency": "S2 Typography System", "priority": "P0" },
+    { "area": "Spacing Tokens", "current_state": "Spacing (8 vals) + LuxeSpacing (5 vals) + hardcoded (16+ vals)", "target_state": "Single Spacing scale (11 vals: 4-80). No parallel systems", "gap": "Missing 40, 64, 80. LuxeSpacing values non-standard", "severity": "P0", "implementation_required": "Extend Spacing class. Eliminate LuxeSpacing", "dependency": "S4 Foundation", "priority": "P0" },
+    { "area": "Surface Hierarchy", "current_state": "Token (3 surfaces) + GlowStoreTokens (L0-L3) + MensTheme (2) + BellezaLuxe (none)", "target_state": "Single L0-L3 hierarchy in Token. Audience-adaptive getters", "gap": "GlowStoreTokens L0-L3 good but separate. MensTheme incomplete", "severity": "P0", "implementation_required": "Merge GlowStoreTokens surface logic into Token. Extend for Men/AURA", "dependency": "S1 + S4", "priority": "P0" },
+    { "area": "Radius System", "current_state": "Radii (10) + GlowStoreTokens (5) + LuxeSpacing.md (10.5) + CardTheme (24) + hardcoded", "target_state": "Single Radii (7 semantic) + component mapping. No hardcoded", "gap": "Card: 3 values. Button: 4 values. Input: 2 values", "severity": "P0", "implementation_required": "Standardize Radii to 7 semantic. Map components. Eliminate LuxeSpacing.md radius", "dependency": "S4 Foundation", "priority": "P0" },
+    { "area": "Shadow System", "current_state": "4 systems. Token uses black (not warm). GlowStoreTokens warm but separate", "target_state": "Single Shadow system (5 conceptual). Warm neutral color", "gap": "Token.shadow = black. GlowStoreTokens warm but not in Token", "severity": "P0", "implementation_required": "Update Token shadows to warm neutral. Add AuraGlow/BrandGlow. Merge GlowStoreTokens", "dependency": "S1 + S4", "priority": "P0" },
+    { "area": "Card Component", "current_state": "5+ implementations. Inconsistent radius/padding/shadow/border", "target_state": "Single Card component with variants: Content, Interactive, Editorial, Glass, Commerce", "gap": "LuxeCard, AcademyLuxeCard, GlowGlassCard, StoreProductCard, ServiceCard, inline", "severity": "P0", "implementation_required": "Create unified Card in design/components. Migrate all screens", "dependency": "S4 Foundation + Card Language", "priority": "P0" },
+    { "area": "Button Component", "current_state": "4+ systems. 3 variants in LuxeButton. No Aura. No Token integration", "target_state": "Single Button with 6 variants (Primary, Secondary, Tertiary, Ghost, Icon, Destructive) + Aura", "gap": "LuxeButton, AcademyLuxeButton, ElevatedButtonTheme, inline. No Aura variant", "severity": "P0", "implementation_required": "Create unified Button. Integrate with Token colors/radius/typography", "dependency": "S1 + S2 + S4 Button Language", "priority": "P0" },
+    { "area": "Input Component", "current_state": "3+ systems. AppTheme.inputDecoration legacy. Store inline. No unified", "target_state": "Single GlowInputDecoration with semantic states", "gap": "AppTheme legacy. Store custom. No Men-adaptive", "severity": "P0", "implementation_required": "Create unified Input in GlowStoreTokens/Token. Men/Women adaptive", "dependency": "S1 + S2 + S4 Form Language", "priority": "P0" },
+    { "area": "Navigation", "current_state": "3 BottomNav. 3 AppBar patterns. FloatingNavDock non-standard", "target_state": "Single BottomNavigation. Single AppBar with variants. Standard patterns", "gap": "main.dart, home_screen.dart, store_screen.dart different. AppBar per screen", "severity": "P0", "implementation_required": "Unify BottomNavigation in main.dart. Create AppBar variants factory", "dependency": "S4 Navigation + AppBar", "priority": "P0" },
+    { "area": "AURA Components", "current_state": "Ad-hoc in screens. No component library. Cyberpunk in Men", "target_state": "AURA component library (Surface, Card, Insight, Recommendation, Action, Status, Loading, Conversation)", "gap": "No AuraSurface, AuraCard, AuraInsight components. Men uses cyberpunk", "severity": "P1", "implementation_required": "Create AURA components per S4 AURA Language. Replace cyberpunk", "dependency": "S1 + S3 + S4 AURA Language", "priority": "P1" },
+    { "area": "Concierge Components", "current_state": "Inline in chat screens. No component library", "target_state": "ConciergeCard, ChatBubble, SupportTile, BookingAssist, RecommendationCard", "gap": "Chat/ListView inline. No reusable components", "severity": "P1", "implementation_required": "Extract Concierge components from chat_screen.dart", "dependency": "S4 Concierge Language", "priority": "P1" },
+    { "area": "Photography Integration", "current_state": "Hardcoded asset paths. No responsive crop. No focal points. No metadata", "target_state": "Photography-aware Image wrapper. Focal point metadata. Responsive crop. S3 compliance", "gap": "Hero images single asset. No text-safe zones. No Men assets", "severity": "P0", "implementation_required": "Create GlowImage widget. Add asset metadata registry. Commission Men photography", "dependency": "S3 Photography System", "priority": "P0" },
+    { "area": "Icon Migration", "current_state": "Material Icons (200+). 3 raster nav icons. GlowIcon system locked but not migrated", "target_state": "GlowIcon system (22 core+proprietary) fully migrated. SVG assets", "gap": "M1-I3 in progress. Pilot A approved. Pilot B executing", "severity": "P1", "implementation_required": "Complete M1-I3 migration. Replace all Icons.* with GlowIcon", "dependency": "Glow Icon System v1.0 + M1-I3", "priority": "P1" },
+    { "area": "Accessibility", "current_state": "Partial. Touch targets OK. Focus visible only on inputs. Aura Teal on dark fails", "target_state": "Full WCAG AA. Focus visible everywhere. Text scaling. Reduced motion", "gap": "Focus on buttons/web. Text scaling untested. Motion sensitivity ignored", "severity": "P0", "implementation_required": "Add focus styles to Button/Card/Navigation. Test scaling. Add reduced motion", "dependency": "S4 Accessibility Language", "priority": "P0" }
+  ],
+  "implementation_status": "NOT_IMPLEMENTED"
+}

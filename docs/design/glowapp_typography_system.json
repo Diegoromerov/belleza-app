@@ -1,0 +1,306 @@
+{
+  "phase": "S2_TYPOGRAPHY_SYSTEM",
+  "status": "SPECIFICATION",
+  "font_families": {
+    "editorial_display": {
+      "name": "Cormorant Garamond",
+      "role": "VOICE 1 — EDITORIAL",
+      "purpose": "Hero, editorial headlines, brand storytelling, beauty moments, campaigns, premium experiences",
+      "weights": ["300", "400", "500", "600", "700"],
+      "styles": ["normal", "italic"],
+      "status": "DECLARED_NOT_USED",
+      "source": "GlowTokens.fontCormorant = 'CormorantGaramond'",
+      "pubspec_declared": false,
+      "files_referencing": ["lib/shared/glow_tokens.dart"],
+      "replaces": "Didot (currently used as editorial in Store, Login, Register)",
+      "do": "Use for Display XL/L/M, H1/H2, editorial sections, brand phrases, storytelling",
+      "dont": "Use for buttons, forms, navigation, tables, functional prices, dense information"
+    },
+    "functional_ui": {
+      "name": "Manrope",
+      "role": "VOICE 2 — FUNCTIONAL",
+      "purpose": "Navigation, buttons, labels, forms, cards, body text, filters, states, prices, operational info, Concierge, AURA UI",
+      "weights": ["400", "500", "600", "700"],
+      "styles": ["normal"],
+      "status": "TARGET_NOT_DECLARED",
+      "source": "Target specification from visual audit",
+      "pubspec_declared": false,
+      "files_referencing": [],
+      "replaces": "Inter (currently used as functional UI in AppTypography, GlowStoreTokens, Store)",
+      "do": "Use for all UI text: navigation, buttons, inputs, chips, badges, tooltips, dialogs, bottom sheets, body, labels, prices",
+      "dont": "Use for editorial hero moments, brand storytelling"
+    },
+    "data_mono": {
+      "name": "JetBrains Mono",
+      "role": "DATA / METADATA",
+      "purpose": "Prices, SKUs, technical metadata, badges, codes, monetary values, checkout totals",
+      "weights": ["500", "600", "700"],
+      "styles": ["normal"],
+      "status": "DECLARED_AND_USED",
+      "source": "GlowTokens.fontJetBrainsMono = 'JetBrainsMono'",
+      "pubspec_declared": false,
+      "files_referencing": ["lib/shared/glow_tokens.dart", "lib/shared/glow_store_tokens.dart", "lib/core/theme/belleza_luxe_theme.dart"],
+      "do": "Use for price displays, metadata, technical codes, verification numbers",
+      "dont": "Use for body text, buttons, navigation, editorial content"
+    },
+    "legacy_editorial": {
+      "name": "Didot",
+      "role": "LEGACY EDITORIAL (TRANSITIONAL)",
+      "purpose": "Currently used as editorial in Store, Login, Register, Aura screens",
+      "weights": ["400", "700"],
+      "styles": ["normal", "italic"],
+      "status": "DECLARED_AND_USED",
+      "source": "GlowTokens.fontDidot = 'Didot'",
+      "pubspec_declared": false,
+      "files_referencing": ["lib/shared/glow_tokens.dart", "lib/shared/glow_store_tokens.dart", "lib/widgets/provider/provider_luxe_components.dart", "lib/widgets/home/hero_section.dart", "lib/widgets/home/recent_scan_card.dart", "lib/widgets/academy/progress_card.dart"],
+      "migration": "Phase out in favor of Cormorant Garamond for editorial. Retain only where Cormorant not yet available.",
+      "do": "Use only during transition for existing screens not yet migrated",
+      "dont": "Use in new components or migrated screens"
+    },
+    "legacy_functional": {
+      "name": "Inter",
+      "role": "LEGACY FUNCTIONAL (TRANSITIONAL)",
+      "purpose": "Currently used as functional UI in AppTypography, GlowStoreTokens, Store",
+      "weights": ["400", "500", "600", "700"],
+      "styles": ["normal", "italic"],
+      "status": "DECLARED_AND_USED",
+      "source": "GlowTokens.fontInter = 'Inter'",
+      "pubspec_declared": false,
+      "files_referencing": ["lib/shared/glow_tokens.dart", "lib/shared/glow_store_tokens.dart", "lib/core/theme/tokens.dart", "lib/widgets/product_recipe_card.dart", "lib/screens/ideas/consent_biometric_screen.dart", "lib/screens/ideas/capture_guided_screen.dart", "lib/screens/ideas/glowstore_recipe_screen.dart", "lib/screens/ideas/color_dna_results_screen.dart"],
+      "migration": "Phase out in favor of Manrope for functional UI. Retain only where Manrope not yet available.",
+      "do": "Use only during transition for existing screens not yet migrated",
+      "dont": "Use in new components or migrated screens"
+    },
+    "legacy_serif": {
+      "name": "Playfair Display",
+      "role": "LEGACY SERIF (UNUSED)",
+      "purpose": "Declared in GlowTokens but never actually used in code",
+      "weights": ["400", "500", "600", "700", "800", "900"],
+      "styles": ["normal", "italic"],
+      "status": "DECLARED_UNUSED",
+      "source": "GlowTokens.fontPlayfairDisplay = 'PlayfairDisplay'",
+      "pubspec_declared": false,
+      "files_referencing": ["lib/shared/glow_tokens.dart", "lib/screens/ideas/processing_alchemy_screen.dart", "lib/screens/ideas/glowstore_recipe_screen.dart", "lib/screens/ideas/color_dna_results_screen.dart"],
+      "migration": "Remove declaration. No migration needed — never used.",
+      "do": "Remove from GlowTokens",
+      "dont": "Add to pubspec or use in new code"
+    }
+  },
+  "display_system": {
+    "display_xl": { "name": "Display XL", "family": "Cormorant Garamond", "size": 48, "weight": 300, "line_height": 1.1, "letter_spacing": -1.0, "case": "sentence", "purpose": "Hero headlines, splash screens, major brand moments — desktop only" },
+    "display_l": { "name": "Display L", "family": "Cormorant Garamond", "size": 40, "weight": 300, "line_height": 1.15, "letter_spacing": -0.8, "case": "sentence", "purpose": "Page heroes, campaign headers, onboarding headlines" },
+    "display_m": { "name": "Display M", "family": "Cormorant Garamond", "size": 32, "weight": 400, "line_height": 1.2, "letter_spacing": -0.5, "case": "sentence", "purpose": "Section heroes, modal titles, major feature headlines" },
+    "display_s": { "name": "Display S", "family": "Cormorant Garamond", "size": 26, "weight": 500, "line_height": 1.25, "letter_spacing": -0.3, "case": "sentence", "purpose": "Card headlines, editorial callouts, beauty moment captions" }
+  },
+  "heading_system": {
+    "h1": { "name": "H1", "family": "Cormorant Garamond", "size": 28, "weight": 600, "line_height": 1.25, "letter_spacing": -0.5, "case": "sentence", "purpose": "Screen titles, primary page headers" },
+    "h2": { "name": "H2", "family": "Cormorant Garamond", "size": 22, "weight": 600, "line_height": 1.3, "letter_spacing": -0.3, "case": "sentence", "purpose": "Section headers, card group titles, modal section headers" },
+    "h3": { "name": "H3", "family": "Cormorant Garamond", "size": 18, "weight": 600, "line_height": 1.35, "letter_spacing": -0.2, "case": "sentence", "purpose": "Subsection headers, card titles, list section headers" },
+    "h4": { "name": "H4", "family": "Cormorant Garamond", "size": 16, "weight": 600, "line_height": 1.4, "letter_spacing": 0, "case": "sentence", "purpose": "Minor headers, inline section breaks, form group labels" }
+  },
+  "body_system": {
+    "body_large": { "name": "Body Large", "family": "Manrope", "size": 16, "weight": 400, "line_height": 1.6, "letter_spacing": 0, "case": "sentence", "purpose": "Primary reading text: service descriptions, AURA recommendations, Concierge messages, articles" },
+    "body": { "name": "Body", "family": "Manrope", "size": 14, "weight": 400, "line_height": 1.55, "letter_spacing": 0.1, "case": "sentence", "purpose": "Standard UI text: descriptions, helper text, card content, dialog body" },
+    "body_small": { "name": "Body Small", "family": "Manrope", "size": 12, "weight": 400, "line_height": 1.5, "letter_spacing": 0.2, "case": "sentence", "purpose": "Secondary text: metadata, timestamps, captions, footnotes, form hints" }
+  },
+  "ui_system": {
+    "label_large": { "name": "Label Large", "family": "Manrope", "size": 14, "weight": 600, "line_height": 1.4, "letter_spacing": 0.1, "case": "sentence", "purpose": "Primary button labels, important actions, tab labels" },
+    "label_medium": { "name": "Label Medium", "family": "Manrope", "size": 12, "weight": 600, "line_height": 1.4, "letter_spacing": 0.5, "case": "sentence", "purpose": "Secondary button labels, chip labels, badge text, selector labels" },
+    "label_small": { "name": "Label Small", "family": "Manrope", "size": 10, "weight": 600, "line_height": 1.3, "letter_spacing": 0.8, "case": "uppercase", "purpose": "Overlines, category tags, status badges, navigation labels" },
+    "button_primary": { "name": "Button Primary", "family": "Manrope", "size": 16, "weight": 600, "line_height": 1.3, "letter_spacing": 0.2, "case": "sentence", "purpose": "Primary CTA buttons" },
+    "button_secondary": { "name": "Button Secondary", "family": "Manrope", "size": 14, "weight": 600, "line_height": 1.3, "letter_spacing": 0.2, "case": "sentence", "purpose": "Secondary/outlined/ghost buttons" },
+    "navigation": { "name": "Navigation", "family": "Manrope", "size": 13, "weight": 500, "line_height": 1.4, "letter_spacing": 0.3, "case": "sentence", "purpose": "Bottom nav labels, drawer items, tab bar labels" },
+    "tab": { "name": "Tab", "family": "Manrope", "size": 13, "weight": 600, "line_height": 1.3, "letter_spacing": 0.3, "case": "sentence", "purpose": "Tab bar labels, segment controls" },
+    "input": { "name": "Input", "family": "Manrope", "size": 16, "weight": 400, "line_height": 1.5, "letter_spacing": 0, "case": "sentence", "purpose": "Text field input text" },
+    "input_hint": { "name": "Input Hint", "family": "Manrope", "size": 16, "weight": 400, "line_height": 1.5, "letter_spacing": 0, "case": "sentence", "purpose": "Text field placeholder/hint text" },
+    "input_label": { "name": "Input Label", "family": "Manrope", "size": 13, "weight": 500, "line_height": 1.4, "letter_spacing": 0.1, "case": "sentence", "purpose": "Floating/input labels" },
+    "chip": { "name": "Chip", "family": "Manrope", "size": 12, "weight": 500, "line_height": 1.4, "letter_spacing": 0.3, "case": "sentence", "purpose": "Filter chips, choice chips, action chips" },
+    "badge": { "name": "Badge", "family": "Manrope", "size": 10, "weight": 600, "line_height": 1.3, "letter_spacing": 0.5, "case": "uppercase", "purpose": "Notification badges, status indicators, count badges" },
+    "tooltip": { "name": "Tooltip", "family": "Manrope", "size": 12, "weight": 400, "line_height": 1.4, "letter_spacing": 0.2, "case": "sentence", "purpose": "Tooltip content" },
+    "dialog_title": { "name": "Dialog Title", "family": "Cormorant Garamond", "size": 20, "weight": 600, "line_height": 1.3, "letter_spacing": -0.3, "case": "sentence", "purpose": "Dialog/modal titles" },
+    "dialog_body": { "name": "Dialog Body", "family": "Manrope", "size": 14, "weight": 400, "line_height": 1.55, "letter_spacing": 0.1, "case": "sentence", "purpose": "Dialog/modal body text" },
+    "bottom_sheet_title": { "name": "Bottom Sheet Title", "family": "Cormorant Garamond", "size": 18, "weight": 600, "line_height": 1.3, "letter_spacing": -0.2, "case": "sentence", "purpose": "Bottom sheet headers" },
+    "bottom_sheet_body": { "name": "Bottom Sheet Body", "family": "Manrope", "size": 14, "weight": 400, "line_height": 1.55, "letter_spacing": 0.1, "case": "sentence", "purpose": "Bottom sheet content" }
+  },
+  "price_system": {
+    "price_display": { "name": "Price Display", "family": "JetBrains Mono", "size": 24, "weight": 700, "line_height": 1.2, "letter_spacing": 0.3, "case": "normal", "purpose": "Primary price display (product cards, checkout totals)" },
+    "price_large": { "name": "Price Large", "family": "JetBrains Mono", "size": 20, "weight": 700, "line_height": 1.2, "letter_spacing": 0.2, "case": "normal", "purpose": "Prominent prices (hero products, cart summary)" },
+    "price_medium": { "name": "Price Medium", "family": "JetBrains Mono", "size": 16, "weight": 600, "line_height": 1.2, "letter_spacing": 0.2, "case": "normal", "purpose": "Standard prices (product lists, service cards)" },
+    "price_small": { "name": "Price Small", "family": "JetBrains Mono", "size": 13, "weight": 600, "line_height": 1.2, "letter_spacing": 0.3, "case": "normal", "purpose": "Secondary prices (previous price, unit price, per-session)" },
+    "price_micro": { "name": "Price Micro", "family": "JetBrains Mono", "size": 11, "weight": 500, "line_height": 1.2, "letter_spacing": 0.4, "case": "normal", "purpose": "Micro prices (fee breakdowns, tax lines, tip suggestions)" },
+    "currency_symbol": { "name": "Currency Symbol", "family": "JetBrains Mono", "size": "inherits parent", "weight": "inherits parent", "line_height": "inherits parent", "letter_spacing": 0, "case": "normal", "purpose": "Currency symbol ($, COP, etc.) — always same style as price" },
+    "previous_price": { "name": "Previous Price", "family": "JetBrains Mono", "size": "matches context", "weight": 400, "line_height": "matches context", "letter_spacing": "matches context", "case": "normal", "purpose": "Strikethrough original price before discount", "decoration": "line-through", "color": "muted_text" },
+    "discount_badge": { "name": "Discount Badge", "family": "Manrope", "size": 11, "weight": 700, "line_height": 1.2, "letter_spacing": 0.5, "case": "uppercase", "purpose": "Percentage discount badges (e.g., -20%)" },
+    "subtotal": { "name": "Subtotal", "family": "JetBrains Mono", "size": 14, "weight": 500, "line_height": 1.3, "letter_spacing": 0.2, "case": "sentence", "purpose": "Checkout subtotal lines" },
+    "total": { "name": "Total", "family": "JetBrains Mono", "size": 20, "weight": 700, "line_height": 1.2, "letter_spacing": 0.3, "case": "sentence", "purpose": "Checkout final total — most prominent monetary value" },
+    "tip": { "name": "Tip", "family": "JetBrains Mono", "size": 14, "weight": 500, "line_height": 1.3, "letter_spacing": 0.2, "case": "sentence", "purpose": "Tip suggestion amounts" },
+    "checkout_final": { "name": "Checkout Final Amount", "family": "JetBrains Mono", "size": 22, "weight": 700, "line_height": 1.15, "letter_spacing": 0.2, "case": "sentence", "purpose": "Monetary integrity: single finalCheckoutAmount from Checkout→Wompi→API" }
+  },
+  "aura_system": {
+    "principle": "AURA uses the SAME typographic architecture as GlowApp. No third font family. AURA expresses through: Manrope (functional) + Aura Teal color + distinctive spacing/hierarchy. Cormorant only when editorial context exists (storytelling, results explanation).",
+    "aura_display": { "name": "AURA Display", "family": "Cormorant Garamond", "size": 28, "weight": 400, "line_height": 1.2, "letter_spacing": -0.5, "case": "sentence", "purpose": "AURA hero moments: welcome screen, results revelation, color DNA reveal", "color": "aura_teal or primary_text" },
+    "aura_headline": { "name": "AURA Headline", "family": "Cormorant Garamond", "size": 20, "weight": 600, "line_height": 1.3, "letter_spacing": -0.3, "case": "sentence", "purpose": "AURA section headers: 'Tu análisis de color', 'Productos recomendados'", "color": "aura_teal or primary_text" },
+    "aura_body": { "name": "AURA Body", "family": "Manrope", "size": 14, "weight": 400, "line_height": 1.6, "letter_spacing": 0.1, "case": "sentence", "purpose": "AURA explanations, recommendations, insights, conversational UI", "color": "primary_text or secondary_text" },
+    "aura_label": { "name": "AURA Label", "family": "Manrope", "size": 12, "weight": 600, "line_height": 1.4, "letter_spacing": 0.5, "case": "uppercase", "purpose": "AURA chip labels, mode indicators, confidence tags", "color": "aura_teal or accent_text" },
+    "aura_price": { "name": "AURA Price", "family": "JetBrains Mono", "size": 16, "weight": 700, "line_height": 1.2, "letter_spacing": 0.2, "case": "normal", "purpose": "AURA-recommended product prices", "color": "accent_text" },
+    "aura_cta": { "name": "AURA CTA", "family": "Manrope", "size": 16, "weight": 600, "line_height": 1.3, "letter_spacing": 0.2, "case": "sentence", "purpose": "AURA-specific primary actions", "color": "on_aura_primary" },
+    "aura_metadata": { "name": "AURA Metadata", "family": "JetBrains Mono", "size": 10, "weight": 600, "line_height": 1.2, "letter_spacing": 1.0, "case": "uppercase", "purpose": "AURA confidence scores, analysis IDs, technical metadata", "color": "muted_text" },
+    "concierge_message": { "name": "Concierge Message", "family": "Manrope", "size": 14, "weight": 400, "line_height": 1.65, "letter_spacing": 0.1, "case": "sentence", "purpose": "Conversational AI messages — slightly more generous line height for readability" }
+  },
+  "women_system": {
+    "principle": "Women expression emphasizes EDITORIAL VOICE (Cormorant Garamond) in brand moments. Functional UI remains Manrope. No separate 'WomenFont'.",
+    "editorial_emphasis": {
+      "where": ["Hero sections", "Onboarding storytelling", "Beauty ritual screens", "Campaign banners", "Provider detail hero", "AURA results revelation", "Concierge welcome"],
+      "voice": "Cormorant Garamond",
+      "rationale": "Editorial warmth aligns with Women beauty editorial aesthetic"
+    },
+    "functional_parity": {
+      "where": ["Navigation", "Forms", "Booking flow", "Store UI", "Checkout", "Settings", "Profile"],
+      "voice": "Manrope",
+      "rationale": "Consistent functional usability across expressions"
+    }
+  },
+  "men_system": {
+    "principle": "Men expression uses SAME two-voice architecture. Differentiation through color, photography, composition, spacing, iconography — NOT font family changes.",
+    "editorial_voice": {
+      "family": "Cormorant Garamond",
+      "where": ["Hero sections", "Grooming ritual screens", "Campaign moments", "Provider detail hero", "AURA results"],
+      "styling": "Slightly tighter tracking, darker color (warm white on obsidian), same scale"
+    },
+    "functional_voice": {
+      "family": "Manrope",
+      "where": "All functional UI",
+      "styling": "Identical scale, weight, line height as Women. Color: warm white on dark surfaces."
+    },
+    "quiet_masculine_luxury": "Achieved through: obsidian surfaces, warm white text, champagne/copper accents, generous spacing, restrained editorial moments — not through font changes."
+  },
+  "concierge_system": {
+    "principle": "PERSONAL, PREMIUM, HUMAN — not call center, not corporate software.",
+    "concierge_display": { "name": "Concierge Display", "family": "Cormorant Garamond", "size": 24, "weight": 400, "line_height": 1.25, "letter_spacing": -0.3, "case": "sentence", "purpose": "Concierge welcome, personal greetings, ritual introductions" },
+    "concierge_body": { "name": "Concierge Body", "family": "Manrope", "size": 15, "weight": 400, "line_height": 1.7, "letter_spacing": 0.1, "case": "sentence", "purpose": "Conversational messages, advice, recommendations — slightly larger, more generous line height for personal feel" },
+    "concierge_label": { "name": "Concierge Label", "family": "Manrope", "size": 12, "weight": 500, "line_height": 1.4, "letter_spacing": 0.3, "case": "sentence", "purpose": "Action labels, quick replies, category tags" },
+    "concierge_action": { "name": "Concierge Action", "family": "Manrope", "size": 16, "weight": 600, "line_height": 1.3, "letter_spacing": 0.2, "case": "sentence", "purpose": "Primary CTAs in concierge flow: 'Agendar', 'Ver productos', 'Hablar con experto'" }
+  },
+  "case_rules": {
+    "sentence_case": { "rule": "Default for all body, headings, buttons, labels, UI text", "examples": ["Reservar cita", "Tu ritual de belleza", "Continuar", "Dirección del servicio"] },
+    "title_case": { "rule": "Brand proper nouns, screen titles in navigation, proper names", "examples": ["GlowApp", "Aura", "Colorimetría", "Mi Perfil"] },
+    "uppercase": { "rule": "Only for: overline/category labels, badge text, metadata codes, chip labels when space-constrained", "examples": ["NUEVO", "EXCLUSIVO", "SKU-1234", "CABELLO", "UÑAS"], "letter_spacing_requirement": "≥0.5px for readability" },
+    "prohibited": { "rule": "No ALL CAPS for: body text, button labels (use sentence case), headings, paragraphs, form labels, error messages", "rationale": "Reduces readability, feels aggressive, contradicts QUIET/HUMAN/WARM brand" }
+  },
+  "letter_spacing": {
+    "display": { "xl": -1.0, "l": -0.8, "m": -0.5, "s": -0.3, "h1": -0.5, "h2": -0.3, "h3": -0.2, "h4": 0 },
+    "body": { "large": 0, "regular": 0.1, "small": 0.2 },
+    "ui": { "label_large": 0.1, "label_medium": 0.5, "label_small": 0.8, "button": 0.2, "navigation": 0.3, "chip": 0.3, "badge": 0.5, "input": 0 },
+    "mono": { "price": 0.3, "metadata": 1.0 },
+    "principle": "Negative for display/headings (optical correction). Positive for small UI labels (legibility). Zero for body. Mono gets positive for tabular alignment."
+  },
+  "line_height": {
+    "display": { "xl": 1.1, "l": 1.15, "m": 1.2, "s": 1.25, "h1": 1.25, "h2": 1.3, "h3": 1.35, "h4": 1.4 },
+    "body": { "large": 1.6, "regular": 1.55, "small": 1.5 },
+    "ui": { "label": 1.4, "button": 1.3, "navigation": 1.4, "chip": 1.4, "input": 1.5 },
+    "concierge": { "body": 1.65, "message": 1.7 },
+    "principle": "Display: tight (1.1–1.25) for editorial impact. Body: generous (1.55–1.6) for reading comfort. Concierge: extra generous (1.65–1.7) for conversational warmth. UI: compact (1.3–1.4) for density."
+  },
+  "responsive_rules": {
+    "status": "IMPLEMENTATION_DECISION_REQUIRED",
+    "principle": "Fluid hierarchy with controlled scaling. Consistent relationships across breakpoints. No separate systems per breakpoint.",
+    "proposed_approach": {
+      "mobile_base": "All sizes defined above are MOBILE base (375px breakpoint)",
+      "tablet_scale": "Display +1 to +2 steps, Headings +1 step, Body unchanged, UI unchanged",
+      "desktop_scale": "Display +2 to +3 steps, Headings +1 to +2 steps, Body +1 step (16→17), UI +1 step",
+      "fluid_formula": "clamp(mobile_size, mobile_size + (vw - 375) * scale_factor, desktop_size)",
+      "breakpoints": { "mobile": 0, "tablet": 600, "desktop": 1024, "wide": 1440 },
+      "note": "Exact scaling factors require implementation validation with real content. Documented as REQUIRES IMPLEMENTATION VALIDATION."
+    }
+  },
+  "accessibility": {
+    "minimum_size": { "body": 14, "ui": 12, "button": 14, "caption": 11, "status": "VERIFIED - meets Material 3 minimums" },
+    "contrast": { "primary_text_on_surface": "VERIFIED - 12.8:1 (warm brown on cream)", "secondary_text_on_surface": "VERIFIED - 4.2:1 (meets AA)", "disabled_text": "PARTIAL - 2.8:1 (meets AA for disabled)", "cta_text_on_brand": "REQUIRES_IMPLEMENTATION_VALIDATION - depends on final Rose Gold/Champagne values", "aura_teal_on_light": "VERIFIED - 8.2:1", "aura_teal_on_dark": "FAIL - 1.8:1 (documented in S1)" },
+    "line_height": { "body": "VERIFIED - 1.55 meets WCAG 1.5", "display": "VERIFIED - adequate for large text" },
+    "font_scaling": { "status": "REQUIRES_IMPLEMENTATION_VALIDATION - must test with system font scaling 1.0x, 1.3x, 1.5x, 2.0x" },
+    "text_overflow": { "status": "REQUIRES_IMPLEMENTATION_VALIDATION - ellipsis, maxLines, flexible layouts needed" },
+    "localization_impact": { "spanish_expansion": "~15-20% longer than English. Body line height 1.55 accommodates. Button labels may need flexible width.", "numbers_currency": "JetBrains Mono tabular figures ensure alignment. COP format: $ 1.234.567 (spaces as thousand separators)." }
+  },
+  "localization": {
+    "primary_language": "Spanish (es-CO)",
+    "considerations": {
+      "accents": "Cormorant Garamond and Manrope both support full Latin Extended (á, é, í, ó, ú, ñ, ü)",
+      "expansion": "Spanish strings ~15-20% longer. Layouts must be flexible. Avoid fixed-width containers for text.",
+      "numbers": "COP currency: $ 1.234.567 (space + dots). JetBrains Mono tabular figures recommended.",
+      "direction": "LTR only. No RTL considerations currently.",
+      "font_fallback": "System UI font stack as fallback if custom fonts fail to load"
+    }
+  },
+  "prohibited_patterns": [
+    { "pattern": "Third font family for AURA", "reason": "AURA is intelligence layer, not separate brand. Cyberpunk/tech fonts contradict QUIET/HUMAN/WARM.", "evidence": "MensTheme.cyberCyan with cyberpunk aesthetic rejected in S1" },
+    { "pattern": "Separate Men typography", "reason": "Men differentiates through color/photography/composition, not font family. Creating 'masculine font' fragments brand.", "evidence": "Audit shows Men uses same Didot/Inter as Women currently" },
+    { "pattern": "Serif (Cormorant/Didot) in dense UI", "reason": "Serifs reduce legibility at small sizes in dense information (tables, forms, lists, navigation).", "evidence": "LuxeTypography.bodyMd uses Cormorant at 15px — hard to read in lists" },
+    { "pattern": "Excessive bold weights", "reason": "Bold everywhere destroys hierarchy. Reserve 600-700 for labels, buttons, headings. Body stays 400.", "evidence": "Multiple screens use FontWeight.bold for body text" },
+    { "pattern": "Excessive uppercase", "reason": "All caps reduces readability, feels aggressive. Only for labels/badges/metadata with ≥0.5px letter-spacing.", "evidence": "Settings screen, some provider screens use uppercase for section headers" },
+    { "pattern": "Arbitrary font sizes", "reason": "Every TextStyle must derive from defined scale. No one-off sizes.", "evidence": "16+ distinct spacing values in store_screen.dart, similar for font sizes" },
+    { "pattern": "Hardcoded TextStyles in screens", "reason": "Creates inconsistency, prevents theming, blocks dark mode, blocks audience adaptation.", "evidence": "40+ screens use inline TextStyle with hardcoded fontFamily, size, weight" },
+    { "pattern": "Playfair Display usage", "reason": "Declared but unused. Didot currently serves editorial role. Two serif display families unnecessary.", "evidence": "GlowTokens.fontPlayfairDisplay declared, never used in production code" },
+    { "pattern": "Generic 'serif'/'sans'/'monospace' in tokens", "reason": "AppTypography uses generic families — actual mapping happens inline, defeating token purpose.", "evidence": "tokens.dart lines 356-360: display='serif', body='sans', mono='monospace'" }
+  ],
+  "existing_typography_systems": [
+    { "name": "AppTypography (tokens.dart)", "file": "lib/core/theme/tokens.dart", "type": "Semantic token system", "families": ["'serif' generic", "'sans' generic", "'monospace' generic", "'sans' button"], "scale": "displayLarge/Small, headlineLarge/Small, titleLarge/Small, bodyLarge/Small, labelLarge/Small, monoLarge/Small", "status": "ACTIVE — used by modern AppTheme", "issues": ["Generic family names — real mapping inline", "Two serif roles (display+heading) both map to same generic", "No Manrope, no Cormorant mapping", "Dark overrides only change color, not family"] },
+    { "name": "GlowTokens", "file": "lib/shared/glow_tokens.dart", "type": "Font family constants", "families": ["PlayfairDisplay", "Inter", "JetBrainsMono", "Didot", "CormorantGaramond"], "scale": "None — only family constants", "status": "PARTIAL — constants declared, Cormorant never used, Playfair unused", "issues": ["Cormorant declared but unused", "Playfair declared but unused", "Didot used as editorial (should be Cormorant)", "Inter used as functional (target is Manrope)", "No pubspec declaration for any font"] },
+    { "name": "GlowStoreTokens", "file": "lib/shared/glow_store_tokens.dart", "type": "E-commerce typography", "families": ["Didot (editorial)", "JetBrainsMono (price/metadata)", "Inter (functional UI)"], "scale": "fontEditorialDisplay, fontEditorialSection, fontProductName, fontPriceDisplay, fontMetadata, fontFunctionalUI", "status": "ACTIVE — used in Store, Checkout, Product cards", "issues": ["Uses Didot not Cormorant for editorial", "Uses Inter not Manrope for functional", "fontFunctionalUI has many optional params — inconsistent usage", "No dark mode variants"] },
+    { "name": "LuxeTypography", "file": "lib/core/theme/belleza_luxe_theme.dart", "type": "Academy/Home premium typography", "families": ["Didot (display)", "JetBrainsMono (mono)", "CormorantGaramond (body)", "Inter (bodySmall)"], "scale": "displaySm, displayMd, monoMd, monoSm, bodyMd, bodySm", "status": "ACTIVE — used in HomeScreen, Academy, LuxeComponents", "issues": ["Cormorant used for body (15px) — legibility concern", "Parallel system to AppTypography + GlowStoreTokens", "Uses Didot for display (should be Cormorant)", "Golden ratio line height (1.618) for body — unique but inconsistent"] },
+    { "name": "AppTheme (legacy shared/theme.dart)", "file": "lib/shared/theme.dart", "type": "Legacy hardcoded styles", "families": ["'serif' generic"], "scale": "h1, subtitle, body, buttonLabel", "status": "DEPRECATED — used in 40+ legacy screens", "issues": ["Hardcoded sizes/weights", "Generic serif — no real font guarantee", "No dark mode", "Used in ProviderDetail, Booking, Login, Register"] },
+    { "name": "MensTheme", "file": "lib/shared/mens_theme.dart", "type": "Men audience theme", "families": "None defined — inherits from AppTheme/GlowStoreTokens", "scale": "None", "status": "INCOMPLETE — only colors/gradients/shadows", "issues": ["No typography tokens for Men", "AuraWelcomeScreen doesn't adapt to Men (uses GlowTokens)"] }
+  ],
+  "proposed_authority": {
+    "primary_authority": "AppTypography (lib/core/theme/tokens.dart) — EXTENDED",
+    "rationale": "Already used by modern AppTheme (Material 3). Single source for TextTheme. Extensible with real fontFamily mapping.",
+    "required_changes": [
+      "Replace generic 'serif'/'sans'/'monospace' with actual fontFamily strings",
+      "Add Manrope as functional family",
+      "Map Cormorant Garamond as display/heading family",
+      "Keep JetBrains Mono as mono family",
+      "Deprecate Didot, Inter, PlayfairDisplay as transitional aliases",
+      "Add dark mode variants that only change color (not family)",
+      "Add responsive size variants (mobile/tablet/desktop) when validated"
+    ],
+    "mapping": {
+      "AppTypography": "EXTEND — become single source with real font families",
+      "GlowTokens": "REDUCE — keep only fontFamily constants as aliases to AppTypography families. Remove colors.",
+      "GlowStoreTokens": "MIGRATE — replace fontEditorialDisplay/Section/ProductName with AppTypography display/heading tokens. Replace fontFunctionalUI with AppTypography body/label tokens. Replace fontPriceDisplay/Metadata with AppTypography price/mono tokens.",
+      "LuxeTypography": "DEPRECATE — merge display tokens into AppTypography. Migrate bodyMd (Cormorant 15px) → AppTypography.bodyLarge (Manrope 16px) for readability. Keep monoMd/monoSm → AppTypography mono tokens.",
+      "AppTheme (legacy)": "ELIMINATE — migrate all screens to AppTheme.of(context) / Token.of(context)"
+    }
+  },
+  "token_taxonomy": {
+    "glow.type.family": ["editorial_display", "functional_ui", "data_mono", "legacy_editorial", "legacy_functional"],
+    "glow.type.display": ["xl", "l", "m", "s"],
+    "glow.type.heading": ["h1", "h2", "h3", "h4"],
+    "glow.type.body": ["large", "regular", "small"],
+    "glow.type.label": ["large", "medium", "small"],
+    "glow.type.button": ["primary", "secondary"],
+    "glow.type.navigation": ["nav", "tab"],
+    "glow.type.input": ["input", "hint", "label"],
+    "glow.type.chip": ["chip"],
+    "glow.type.badge": ["badge"],
+    "glow.type.tooltip": ["tooltip"],
+    "glow.type.dialog": ["title", "body"],
+    "glow.type.bottom_sheet": ["title", "body"],
+    "glow.type.price": ["display", "large", "medium", "small", "micro", "currency", "previous", "discount", "subtotal", "total", "tip", "checkout_final"],
+    "glow.type.aura": ["display", "headline", "body", "label", "price", "cta", "metadata", "concierge_message"],
+    "glow.type.women": ["editorial_emphasis", "functional_parity"],
+    "glow.type.men": ["editorial_voice", "functional_voice"],
+    "glow.type.concierge": ["display", "body", "label", "action"]
+  },
+  "governance": {
+    "new_font_requires_approval": true,
+    "new_family_requires_justification": true,
+    "new_weight_requires_justification": true,
+    "no_arbitrary_downloads": true,
+    "no_system_fonts_as_permanent_substitute": true,
+    "no_per_screen_variants": true,
+    "approval_process": "Design Director review → Technical feasibility (licensing, file size, variable font support) → Prototype in isolation → Integration to AppTypography → Migration plan → Rollout",
+    "variable_fonts_preferred": true,
+    "font_loading_strategy": "preload critical (Manrope, Cormorant Garamond), lazy-load others (JetBrains Mono)",
+    "fallback_chain": "Manrope → system-ui → sans-serif | Cormorant Garamond → Georgia → serif | JetBrains Mono → SF Mono → monospace"
+  },
+  "implementation_status": "NOT_IMPLEMENTED"
+}

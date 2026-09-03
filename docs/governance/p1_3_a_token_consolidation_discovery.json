@@ -1,0 +1,332 @@
+{
+  "phase": "P1.3-A",
+  "status": "DISCOVERY_COMPLETE",
+  "systems": [
+    {
+      "name": "Token",
+      "source": "lib/core/theme/tokens.dart",
+      "type": "FOUNDATION",
+      "consumers_count": 195,
+      "consumers_files": 50,
+      "status": "CANONICAL",
+      "domain": "COLOR_EXPRESSION_SURFACE_TEXT_BORDER_INTERACTION_SHADOW_GRADIENT",
+      "notes": "Single source of truth for S1 colors, expression-aware resolution"
+    },
+    {
+      "name": "TypographyTokens",
+      "source": "lib/core/theme/tokens.dart",
+      "type": "FOUNDATION",
+      "consumers_count": 78,
+      "consumers_files": 30,
+      "status": "CANONICAL",
+      "domain": "TYPOGRAPHY",
+      "notes": "Implements S2: Cormorant Garamond (editorial), Manrope (functional), JetBrains Mono (data)"
+    },
+    {
+      "name": "Spacing",
+      "source": "lib/core/theme/tokens.dart",
+      "type": "FOUNDATION",
+      "consumers_count": 32,
+      "consumers_files": 20,
+      "status": "CANONICAL",
+      "domain": "SPACING",
+      "notes": "4px base unit: xs=4, sm=8, md=12, lg=16, xl=20, xxl=24, xxxl=32, huge=48, massive=64, giant=80"
+    },
+    {
+      "name": "Radii",
+      "source": "lib/core/theme/tokens.dart",
+      "type": "FOUNDATION",
+      "consumers_count": 28,
+      "consumers_files": 18,
+      "status": "CANONICAL",
+      "domain": "RADIUS",
+      "notes": "xs=4, sm=8, md=12, lg=16, xl=20, xxl=24, xxxl=28, round=30, pill=100, circle=9999"
+    },
+    {
+      "name": "AppShadow",
+      "source": "lib/core/theme/tokens.dart",
+      "type": "FOUNDATION",
+      "consumers_count": 18,
+      "consumers_files": 12,
+      "status": "CANONICAL",
+      "domain": "SHADOW",
+      "notes": "Provides soft, card, elevated, glow, aura, drawer shadows using Token shadow colors"
+    },
+    {
+      "name": "OpacityTokens",
+      "source": "lib/core/theme/tokens.dart",
+      "type": "FOUNDATION",
+      "consumers_count": 10,
+      "consumers_files": 8,
+      "status": "CANONICAL",
+      "domain": "OPACITY",
+      "notes": "Semantic opacity values for scrim, glass, disabled, hover, selected, shadows"
+    },
+    {
+      "name": "GlowTokens",
+      "source": "lib/shared/glow_tokens.dart",
+      "type": "LEGACY_BRIDGE",
+      "consumers_count": 43,
+      "consumers_files": 15,
+      "status": "BRIDGE",
+      "domain": "COLOR_TYPOGRAPHY",
+      "notes": "@Deprecated legacy brand tokens, partially superseded by Token, maps to Token values"
+    },
+    {
+      "name": "GlowStoreTokens",
+      "source": "lib/shared/glow_store_tokens.dart",
+      "type": "SPECIALIZED",
+      "consumers_count": 21,
+      "consumers_files": 10,
+      "status": "SPECIALIZED",
+      "domain": "COLOR_SURFACE_RADIUS_SHADOW_TYPOGRAPHY_INTERACTION",
+      "notes": "Premium e-commerce token system, S1-compliant palette, uses Token for expression, retains specialized helpers"
+    },
+    {
+      "name": "MensTheme",
+      "source": "lib/shared/mens_theme.dart",
+      "type": "LEGACY_BRIDGE",
+      "consumers_count": 8,
+      "consumers_files": 5,
+      "status": "BRIDGE",
+      "domain": "COLOR_EXPRESSION",
+      "notes": "Men expression tokens, maps to Token.dark/Token.lightMen for colors, no typography"
+    },
+    {
+      "name": "AppTheme (legacy)",
+      "source": "lib/shared/theme.dart",
+      "type": "LEGACY",
+      "consumers_count": 12,
+      "consumers_files": 8,
+      "status": "LEGACY",
+      "domain": "COLOR_TYPOGRAPHY_SHADOW",
+      "notes": "Legacy theme compatibility getters, hardcoded LuxeColors values, some sizes/weights deviate from S1/S2"
+    },
+    {
+      "name": "BellezaLuxeTokens / LuxeColors",
+      "source": "lib/core/theme/belleza_luxe_theme.dart",
+      "type": "ACTIVE_LAYER",
+      "consumers_count": 15,
+      "consumers_files": 10,
+      "status": "ACTIVE_LAYER",
+      "domain": "COLOR",
+      "notes": "Foundation for luxe components, values match Token where applicable"
+    },
+    {
+      "name": "Academy token system",
+      "source": "lib/design/components/academy_luxe_components.dart",
+      "type": "SPECIALIZED",
+      "consumers_count": 9,
+      "consumers_files": 6,
+      "status": "SPECIALIZED",
+      "domain": "COLOR_TYPOGRAPHY",
+      "notes": "Academic feature colors and typography, uses CormorantGaramond and Manrope, some custom sizes/weights"
+    }
+  ],
+  "authorities": [
+    {
+      "name": "Token",
+      "type": "FOUNDATION_EXPRESSION",
+      "scope": "COLOR_EXPRESSION_SURFACE_TEXT_BORDER_INTERACTION_SHADOW_GRADIENT",
+      "expression_aware": true,
+      "resolution_methods": ["Token.of(context)", "Token.women", "Token.men", "Token.aura", "Token.lightMen", "Token.darkWomen"]
+    },
+    {
+      "name": "TypographyTokens",
+      "type": "FOUNDATION_TYPOGRAPHY",
+      "scope": "TYPOGRAPHY_HIERARCHY_SIZES_WEIGHTS_FAMILIES_SPACING_LETTER_SPACING",
+      "expression_aware": false,
+      "consumes_from": "Token",
+      "api": ["TypographyTokens.X(Token t)", "TypographyTokensContextAPI extension"]
+    }
+  ],
+  "consumers": [
+    {
+      "system": "Token",
+      "count": 195,
+      "files": [
+        "lib/screens/home/home_screen.dart",
+        "lib/screens/provider/provider_dashboard.dart",
+        "lib/screens/academy/lesson_view.dart",
+        "lib/widgets/home/hero_section.dart",
+        "lib/widgets/provider/service_card.dart",
+        "lib/screens/academy/course_list.dart",
+        "lib/screens/profile/rewards_xp_screen.dart",
+        "lib/screens/profile/glowstore_orders_screen.dart",
+        "lib/screens/profile/habeas_data_screen.dart",
+        "lib/screens/profile/settings_screen.dart",
+        "lib/screens/profile/user_profile.dart",
+        "lib/widgets/academy/progress_card.dart",
+        "lib/widgets/home/recent_scan_card.dart",
+        "lib/screens/auth/login_screen.dart",
+        "lib/screens/auth/register_screen.dart"
+      ]
+    },
+    {
+      "system": "TypographyTokens",
+      "count": 78,
+      "files": [
+        "lib/screens/home/home_screen.dart",
+        "lib/screens/provider/provider_dashboard.dart",
+        "lib/screens/academy/lesson_view.dart",
+        "lib/widgets/home/hero_section.dart",
+        "lib/widgets/provider/service_card.dart",
+        "lib/screens/academy/course_list.dart",
+        "lib/screens/profile/rewards_xp_screen.dart",
+        "lib/screens/profile/glowstore_orders_screen.dart",
+        "lib/screens/profile/habeas_data_screen.dart",
+        "lib/screens/profile/settings_screen.dart"
+      ]
+    }
+  ],
+  "duplicates": [],
+  "conflicts": [],
+  "bridges": [
+    {
+      "name": "GlowTokens",
+      "current": "lib/shared/glow_tokens.dart",
+      "bridge_type": "DEPRECATED_BRIDGE",
+      "canonical": "Token",
+      "notes": "@Deprecated getters map to Token equivalents, some deprecated aliases"
+    },
+    {
+      "name": "AppTheme (legacy)",
+      "current": "lib/shared/theme.dart",
+      "bridge_type": "LEGACY_GETTERS",
+      "canonical": "Token/TypographyTokens",
+      "notes": "Hardcoded values to be migrated to Token/TypographyTokens equivalents"
+    },
+    {
+      "name": "Hardcoded values",
+      "current": "Various files",
+      "bridge_type": "INLINE_VALUES",
+      "canonical": "Token/TypographyTokens/Spacing/Radii/AppShadow/OpacityTokens",
+      "notes": "Hardcoded fontFamily, Color, EdgeInsets, BorderRadius, BoxShadow to be replaced"
+    }
+  ],
+  "legacy": [
+    {
+      "name": "GlowTokens deprecated aliases",
+      "type": "DEPRECATED_ALIAS",
+      "examples": ["Didot", "Inter", "Playfair", "terracota", "emerald", "amber", "deepGreen", "cyberCyan"],
+      "status": "TO_BE_REMOVED",
+      "notes": "@Deprecated, zero consumers after migration"
+    },
+    {
+      "name": "AppTheme (shared/theme.dart)",
+      "type": "LEGACY_THEME",
+      "examples": ["primary", "accent", "text", "background", "surface", "h1", "subtitle", "body", "buttonLabel"],
+      "status": "TO_BE_MIGRATED",
+      "notes": "Migrate getters to Token/TypographyTokens equivalents"
+    },
+    {
+      "name": "Hardcoded fontFamily",
+      "type": "HARDCODED_VALUE",
+      "examples": ["fontFamily: 'Didot'", "fontFamily: 'Inter'", "fontFamily: 'Playfair'"],
+      "status": "TO_BE_MIGRATED",
+      "notes": "Replace with TypographyFamilies constants"
+    },
+    {
+      "name": "Hardcoded Color values",
+      "type": "HARDCODED_VALUE",
+      "examples": ["Color(0xFFD4AF7A)", "Color(0xFF5A3A2A)", "Color(0xFFD9A27F)"],
+      "status": "TO_BE_MIGRATED",
+      "notes": "Replace with Token color getters or constants"
+    },
+    {
+      "name": "Hardcoded EdgeInsets",
+      "type": "HARDCODED_VALUE",
+      "examples": ["EdgeInsets.all(16.0)", "EdgeInsets.symmetric(horizontal: 20, vertical: 18)"],
+      "status": "TO_BE_MIGRATED",
+      "notes": "Replace with Spacing constants"
+    },
+    {
+      "name": "Hardcoded BorderRadius",
+      "type": "HARDCODED_VALUE",
+      "examples": ["BorderRadius.circular(12.0)", "BorderRadius.all(Radius.circular(8))"],
+      "status": "TO_BE_MIGRATED",
+      "notes": "Replace with Radii constants"
+    },
+    {
+      "name": "Hardcoded BoxShadow",
+      "type": "HARDCODED_VALUE",
+      "examples": ["BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4))"],
+      "status": "TO_BE_MIGRATED",
+      "notes": "Replace with AppShadow methods"
+    }
+  ],
+  "migration_order": [
+    "1. Remove @Deprecated GlowTokens aliases (Didot, Inter, Playfair, terracota, emerald, amber, deepGreen, cyberCyan, etc.)",
+    "2. Migrate AppTheme (shared/theme.dart) getters to Token/TypographyTokens equivalents",
+    "3. Replace hardcoded fontFamily, Color, EdgeInsets, BorderRadius, BoxShadow with Token/TypographyTokens/Spacing/Radii/AppShadow/OpacityTokens equivalents",
+    "4. Deprecate GlowTokens class further (or remove after verification)",
+    "5. Evaluate specialized systems (GlowStoreTokens, MensTheme, BellezaLuxeTokens, Academy token system) for potential integration or retention",
+    "6. Remove legacy systems only after zero consumers, tests pass, build passes, registry updated"
+  ],
+  "risk_matrix": [
+    {
+      "system": "GlowTokens",
+      "risk_level": "LOW",
+      "criteria": ["Deprecated bridge", "@Deprecated", "low consumer count", "simple mapping to Token"]
+    },
+    {
+      "system": "AppTheme (legacy)",
+      "risk_level": "MEDIUM",
+      "criteria": ["Used in some places", "hardcoded values diverge from S1/S2", "moderate consumer count"]
+    },
+    {
+      "system": "Hardcoded fontFamily/Color/EdgeInsets/BorderRadius/BoxShadow",
+      "risk_level": "MEDIUM",
+      "criteria": ["Scattered across codebase", "requires careful replacement"]
+    },
+    {
+      "system": "GlowStoreTokens",
+      "risk_level": "LOW",
+      "criteria": ["Specialized e-commerce", "maps cleanly to Token", "low consumer count", "clear bridge"]
+    },
+    {
+      "system": "MensTheme",
+      "risk_level": "LOW",
+      "criteria": ["Men expression only", "maps to Token.dark/Token.lightMen", "low consumer count"]
+    },
+    {
+      "system": "BellezaLuxeTokens/LuxeColors",
+      "risk_level": "LOW",
+      "criteria": ["Active luxe layer", "values match Token where applicable", "low consumer count"]
+    },
+    {
+      "system": "Academy token system",
+      "risk_level": "LOW",
+      "criteria": ["Academic feature specialization", "values match Token/TypographyTokens where applicable", "low consumer count"]
+    }
+  ],
+  "removal_conditions": [
+    "Zero consumers (no references in codebase)",
+    "Zero imports (no import statements)",
+    "All tests pass (flutter test)",
+    "Build passes (flutter build web --release)",
+    "Governance registry updated (legacy registry entry removed or marked removed)",
+    "Rollback available (git tag or backup)"
+  ],
+  "registry_drift": [
+    {
+      "registry": "LEGACY_REGISTRY.json",
+      "drift": "Does not list some deprecated GlowTokens aliases (Didot, Inter, Playfair, terracota, emerald, amber, deepGreen, cyberCyan, etc.) as legacy; they should be added.",
+      "action": "Update registry to include these aliases as legacy"
+    },
+    {
+      "registry": "SOURCE_OF_TRUTH_REGISTRY.json",
+      "drift": "Lists Token as source for color but does not list TypographyTokens as source for typography; should be updated.",
+      "action": "Update registry to include TypographyTokens as source for typography"
+    }
+  ],
+  "recommendations": [
+    "Proceed to P1.3-B — TOKEN CONSOLIDATION IMPLEMENTATION after authorization",
+    "Follow the migration order specified in Section 17",
+    "Implement bridge strategy for legacy systems during transition",
+    "Validate all changes with flutter test, flutter analyze (zero new errors), flutter build web --release",
+    "Update governance registries as part of migration",
+    "Retain specialized systems (GlowStoreTokens, MensTheme, BellezaLuxeTokens, Academy token system) as adapters unless full consolidation is deemed necessary",
+    "Ensure no changes to business logic, navigation, state management, backend, API, database, RAG, or GlowIcon System v1.0"
+  ]
+}

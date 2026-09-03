@@ -1,0 +1,32 @@
+{
+  "authority": "Technical Architecture",
+  "level": "L1",
+  "owner": "Technical Architecture Governor",
+  "sourceOfTruth": "docs/design/GLOWAPP_TECHNICAL_ARCHITECTURE.md (to be created)",
+  "inputs": [
+    "Soul",
+    "product units",
+    "non-functional requirements"
+  ],
+  "outputs": [
+    "Architecture layers",
+    "communication patterns",
+    "technology stack",
+    "infrastructure",
+    "API contracts"
+  ],
+  "consumers": [
+    "All implementation levels"
+  ],
+  "allowedChanges": [
+    "Adding new layers/patterns within defined constraints"
+  ],
+  "forbiddenChanges": [
+    "Changing Soul-defined architectural principles",
+    "violating layer boundaries"
+  ],
+  "validationGate": "Technical Architecture spec review + architecture validation",
+  "legacySystems": [],
+  "promotionPath": "N/A",
+  "exceptionMechanism": "Director approval for exceptions"
+}

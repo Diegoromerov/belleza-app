@@ -1,0 +1,380 @@
+{
+  "phase": "G1_C_GOVERNANCE_ARCHITECTURE_ASSEMBLY",
+  "status": "DESIGN_COMPLETE_READY_FOR_G1_D",
+  "timestamp": "2026-08-21",
+  "based_on": ["G0-A", "G0-B", "G0-C", "G0-D", "G1-B"],
+  "assembly_objective": "Assemble 14 Governance Contracts into enforceable, operational governance architecture with machine-readable registry, enforcement pipeline, AI agent runtime, exception/legacy management, and migration governance.",
+  "authority_hierarchy": {
+    "L0_SOUL": {
+      "name": "SOUL",
+      "level": 0,
+      "supreme": true,
+      "change_process": "SOUL_REVISION + DIRECTOR_APPROVAL + FULL_VALIDATION",
+      "invariants": [
+        "One Brand, Multiple Expressions",
+        "Photography Leads",
+        "Two Voices (Cormorant + Manrope + JetBrains Mono)",
+        "Surface Before Decoration",
+        "AURA Is Intelligence Layer",
+        "Accessibility By Default",
+        "Governance Over Preference"
+      ],
+      "conflict_resolution": "Lower level CANNOT silently contradict higher. Conflicts escalated via SOUL Conflict Resolution process."
+    },
+    "L1_SYSTEM_SPECS": {
+      "level": 1,
+      "locked": true,
+      "authorities": {
+        "COLOR": {
+          "source_of_truth": "docs/design/GLOWAPP_COLOR_SYSTEM.md",
+          "machine_spec": "docs/design/glowapp_color_system.json",
+          "enforcement": {
+            "static_analysis": ["token_audit", "hardcoded_color_scan", "palette_validation"],
+            "code_review": ["design_review_checklist"],
+            "ci_gates": ["G3_TOKEN_AUDIT", "G4_VISUAL_QA"],
+            "runtime": ["Token.of(context) resolution verification"]
+          }
+        },
+        "TYPOGRAPHY": {
+          "source_of_truth": "docs/design/GLOWAPP_TYPOGRAPHY_SYSTEM.md",
+          "machine_spec": "docs/design/glowapp_typography_system.json",
+          "enforcement": {
+            "static_analysis": ["token_audit", "hardcoded_typography_scan", "font_family_validation"],
+            "code_review": ["design_review_checklist"],
+            "ci_gates": ["G3_TOKEN_AUDIT", "G4_VISUAL_QA"],
+            "runtime": ["TypographyTokensContext API verification"]
+          }
+        },
+        "PHOTOGRAPHY": {
+          "source_of_truth": "docs/design/GLOWAPP_PHOTOGRAPHY_SYSTEM.md",
+          "machine_spec": "docs/design/glowapp_photography_system.json",
+          "enforcement": {
+            "static_analysis": ["asset_registry_validation", "muse_compliance_check"],
+            "code_review": ["design_review_checklist"],
+            "ci_gates": ["G4_VISUAL_QA"],
+            "runtime": ["Asset metadata validation"]
+          }
+        },
+        "ICON": {
+          "source_of_truth": "docs/design/GLOW_ICON_SYSTEM.md",
+          "machine_spec": "docs/design/glow_icon_system.json",
+          "status": "LOCKED",
+          "enforcement": {
+            "static_analysis": ["registry_completeness", "material_cupertino_leakage", "geometry_validation"],
+            "code_review": ["icon_review_checklist"],
+            "ci_gates": ["G4_VISUAL_QA"],
+            "runtime": ["GlowIconRegistry resolution verification"]
+          }
+        }
+      }
+    },
+    "L2_COMPONENT_SYSTEM": {
+      "level": 2,
+      "authorities": {
+        "COMPONENT": {
+          "source_of_truth": "docs/design/GLOWAPP_UI_COMPONENT_LANGUAGE.md",
+          "machine_spec": "docs/design/glowapp_ui_component_language.json",
+          "enforcement": {
+            "static_analysis": ["component_registry_validation", "variant_count_check", "token_usage_verification"],
+            "code_review": ["design_review_checklist", "component_review"],
+            "ci_gates": ["G2_IMPLEMENTATION", "G3_VALIDATION", "G4_VISUAL_QA"],
+            "runtime": ["Component state behavior verification"]
+          }
+        },
+        "AUDIENCE": {
+          "source_of_truth": "GLOWAPP_SOUL.md §10, §11, §12, §8.14, §8.15, §8.12",
+          "enforcement": {
+            "static_analysis": ["expression_isolation_check", "shared_foundation_verification"],
+            "code_review": ["design_review_checklist"],
+            "ci_gates": ["G4_VISUAL_QA"],
+            "runtime": ["AudienceService.currentAudience drives Token resolution"]
+          }
+        },
+        "DATA": {
+          "source_of_truth": "PostgreSQL (canonical) + docs/audit/glowapp_data_map.json",
+          "enforcement": {
+            "static_analysis": ["schema_drift_detection", "crud_ownership_validation"],
+            "code_review": ["data_review_checklist"],
+            "ci_gates": ["G3_VALIDATION", "G6_DOCUMENTATION"],
+            "runtime": ["Source of Truth verification", "Traceability validation"]
+          }
+        },
+        "AI": {
+          "source_of_truth": "docs/audit/GLOWAPP_INTELLIGENCE_MAP.md + backend services",
+          "enforcement": {
+            "static_analysis": ["single_rag_path_verification", "circuit_breaker_config_check"],
+            "code_review": ["ai_review_checklist"],
+            "ci_gates": ["G3_VALIDATION (69/69 tests)", "G4_VISUAL_QA"],
+            "runtime": ["Traceability logging verification", "Human confirmation enforcement"]
+          }
+        },
+        "ACCESSIBILITY": {
+          "source_of_truth": "GLOWAPP_SOUL.md §15 + glowapp_governance.json §accessibility_governance",
+          "enforcement": {
+            "static_analysis": ["focus_style_check", "contrast_automated", "semantic_labels_check"],
+            "code_review": ["a11y_review_checklist"],
+            "ci_gates": ["G3_VALIDATION", "G4_VISUAL_QA"],
+            "runtime": ["WCAG AA validation", "Screen reader test"]
+          }
+        },
+        "SECURITY": {
+          "source_of_truth": "AuthService + SecureStorageService + glowapp_data_map.json §12",
+          "enforcement": {
+            "static_analysis": ["secure_storage_usage", "secrets_scan", "auth_flow_validation"],
+            "code_review": ["security_review_checklist"],
+            "ci_gates": ["G3_VALIDATION", "RELEASE_SECURITY_SCAN"],
+            "runtime": ["Token encryption verification", "PCI compliance validation"]
+          }
+        }
+      }
+    },
+    "L3_QUALITY_GATES": {
+      "level": 3,
+      "sequential": true,
+      "cannot_skip": true,
+      "gates": [
+        {
+          "id": "G0_SCOPE",
+          "name": "Scope Definition",
+          "trigger": "PR opened / Task started",
+          "automated_checks": ["Scope vs SOUL alignment", "No scope creep detection", "No new authority created", "No Token/TypographyTokens bypass"],
+          "human_checks": ["Design Director confirms scope"],
+          "blocking": true
+        },
+        {
+          "id": "G1_DESIGN",
+          "name": "Design Review",
+          "trigger": "Design proposal submitted",
+          "automated_checks": ["Design Review checklist (13 items) auto-validated where possible"],
+          "human_checks": ["Director approval if required (new component, identity, etc.)"],
+          "blocking": true
+        },
+        {
+          "id": "G2_IMPLEMENTATION",
+          "name": "Implementation Complete",
+          "trigger": "Code complete (PR ready)",
+          "automated_checks": ["flutter analyze (0 errors on modified)", "Hardcoded values scan", "Token/component usage verification", "GlowIcon vs Material/Cupertino check", "Token.of(context) usage"],
+          "human_checks": ["Code review by Lead Engineer"],
+          "blocking": true
+        },
+        {
+          "id": "G3_VALIDATION",
+          "name": "Validation",
+          "trigger": "Pre-merge",
+          "automated_checks": ["flutter test (all pass)", "flutter build web --release (success)", "Accessibility automated audit"],
+          "human_checks": [],
+          "blocking": true
+        },
+        {
+          "id": "G4_VISUAL_QA",
+          "name": "Visual Quality Assurance",
+          "trigger": "Post-build / Pre-release",
+          "automated_checks": ["Visual regression vs spec (mobile/tablet/desktop)", "Women/Men/AURA parity check", "Component gallery validation"],
+          "human_checks": ["Design Director visual sign-off"],
+          "blocking": true
+        },
+        {
+          "id": "G5_APPROVAL",
+          "name": "Director Approval",
+          "trigger": "All gates PASS",
+          "automated_checks": ["Gate completion verification"],
+          "human_checks": ["Director sign-off recorded", "Version bump decision"],
+          "blocking": true
+        },
+        {
+          "id": "G6_DOCUMENTATION",
+          "name": "Documentation Complete",
+          "trigger": "Post-approval",
+          "automated_checks": ["Required fields present (WHAT/WHY/WHERE/HOW/VALIDATION/DECISION/DATE/VERSION)", "Registry updated"],
+          "human_checks": [],
+          "blocking": true
+        }
+      ],
+      "result_classification": {
+        "PASS": "Gate satisfied, proceed",
+        "FAIL_BLOCKING": "Gate failed, cannot proceed",
+        "FAIL_NON_BLOCKING": "Warning/informational, can proceed",
+        "PRE_EXISTING": "Known issue unrelated to current change",
+        "KNOWN_DEBT": "Documented technical debt with owner/timeline"
+      }
+    },
+    "L4_TECHNICAL_IMPLEMENTATION": {
+      "level": 4,
+      "enforcement": "Lead Engineer via code review and tooling",
+      "invariants": [
+        "Single Token authority for color/expression",
+        "Single TypographyTokens authority for typography",
+        "AppTheme.expression() builds complete theme with GlowTokensExtension",
+        "AudienceService drives expression switching",
+        "No hardcoded colors/spacing/typography in widgets",
+        "All components use GlowIcon (not Material/Cupertino)",
+        "State via ValueNotifier/Provider - no global mutable singletons",
+        "Secure storage for auth tokens (FlutterSecureStorage)",
+        "API normalization via ApiService._normalizeDynamicUrls()"
+      ]
+    }
+  },
+  "governance_registry": {
+    "structure": {
+      "authorities": "docs/governance/registry/authorities/{SOUL,COLOR,TYPOGRAPHY,PHOTOGRAPHY,ICON,COMPONENT,AUDIENCE,DATA,AI,QUALITY,TECHNICAL,ACCESSIBILITY,SECURITY}.json",
+      "contracts": "docs/governance/registry/contracts/glowapp_governance_contracts.{json,md}",
+      "exceptions": "docs/governance/registry/exceptions/EXCEPTION_REGISTRY.json",
+      "legacy": "docs/governance/registry/legacy/LEGACY_REGISTRY.json",
+      "quality_gates": "docs/governance/registry/quality_gates/G{0-6}_{SCOPE,DESIGN,IMPLEMENTATION,VALIDATION,VISUAL_QA,APPROVAL,DOCUMENTATION}.json",
+      "migrations": "docs/governance/registry/migrations/{ICON_MIGRATION,TOKEN_CONSOLIDATION,MEN_VISUAL_REENGINEERING}.json",
+      "audit_cadence": "docs/governance/registry/audit_cadence/{PRE_IMPLEMENTATION,POST_IMPLEMENTATION,PERIODIC,RELEASE}.json"
+    },
+    "access_patterns": {
+      "AI_Agent": "Load registry/authorities/*.json at session start",
+      "CI_Pipeline": "Load registry/quality_gates/*.json for gate execution",
+      "Code_Review_Tool": "Load registry/authorities/{relevant}.json for checklist enforcement",
+      "Design_Director": "Read registry/contracts/*.md for human review",
+      "Migration_Script": "Load registry/migrations/*.json for phased execution"
+    }
+  },
+  "ai_agent_runtime": {
+    "initialization_protocol": [
+      "1. LOAD SOUL (GLOWAPP_SOUL.md)",
+      "2. LOAD RELEVANT AUTHORITIES (14 authority JSONs)",
+      "3. LOAD EXCEPTIONS (EXCEPTION_REGISTRY.json)",
+      "4. LOAD LEGACY (LEGACY_REGISTRY.json)",
+      "5. BUILD RULESET (combine all into decision engine)",
+      "6. VALIDATE SCOPE (identify scope, validate vs SOUL)",
+      "7. RETURN AgentContext with all loaded data"
+    ],
+    "action_interceptor": {
+      "description": "Intercepts every proposed agent action",
+      "checks": [
+        "SOUL invariants violation",
+        "Authority forbidden behaviors",
+        "Exception registry validation",
+        "Gate requirements satisfaction"
+      ],
+      "verdicts": ["ALLOWED", "DENIED (with reason)", "BLOCKED (gate not satisfied)"]
+    },
+    "decision_logging": {
+      "format": "JSON audit trail",
+      "fields": ["timestamp", "agent_id", "action", "proposed_change", "authority", "verdict", "reason", "contract_reference", "alternative_suggested"]
+    }
+  },
+  "exception_registry": {
+    "template": "docs/governance/registry/exceptions/EXCEPTION_REGISTRY.json",
+    "required_fields": ["id", "title", "problem", "reason", "affected_area", "temporary_or_permanent", "risk", "approval", "expiration_or_review_date", "status", "mitigation"],
+    "current_exceptions": [
+      {
+        "id": "EXC-001",
+        "title": "Aura Teal on Dark Background Contrast",
+        "problem": "Aura Teal #164C46 on Obsidian #0A0C10 fails WCAG AA (1.8:1)",
+        "status": "ACTIVE",
+        "review_date": "2027-02-15"
+      },
+      {
+        "id": "EXC-002",
+        "title": "NVIDIA API Vendor Lock-in",
+        "problem": "Embeddings depend on NVIDIA NV-Embed-QA-E5-v5 (external API)",
+        "status": "ACTIVE",
+        "review_date": "2026-11-01"
+      }
+    ],
+    "rules": [
+      "Exists when current system cannot solve real case",
+      "Must register all required fields",
+      "Never silently become standard",
+      "Review date mandatory - reviewed each release"
+    ]
+  },
+  "legacy_registry": {
+    "template": "docs/governance/registry/legacy/LEGACY_REGISTRY.json",
+    "classifications": ["COMPLIANT", "PARTIALLY_COMPLIANT", "NON_COMPLIANT", "LEGACY", "EXCEPTION"],
+    "process": ["IDENTIFY", "AUDIT", "MARK", "MIGRATE", "VERIFY", "REMOVE"],
+    "current_items": [
+      {"id": "LEG-001", "name": "user_biometrics table", "classification": "LEGACY", "replaced_by": "beauty_profiles", "target_removal": "2026-Q4"},
+      {"id": "LEG-002", "name": "perfiles_prestador.portafolio_servicios JSONB", "classification": "LEGACY", "replaced_by": "portfolio_items table", "target_removal": "2026-Q4"},
+      {"id": "LEG-003", "name": "MensTheme separate token system", "classification": "NON_COMPLIANT", "replaced_by": "Token.men/Token.lightMen", "target_removal": "2026-Q3"},
+      {"id": "LEG-004", "name": "6 parallel typography systems", "classification": "NON_COMPLIANT", "replaced_by": "TypographyTokens sole authority", "target_removal": "2026-Q3"},
+      {"id": "LEG-005", "name": "GlowGlassCard vs GlassCard duplicate", "classification": "NON_COMPLIANT", "replaced_by": "Unified GlassCard", "target_removal": "2026-Q3"}
+    ],
+    "rules": ["No immediate global migration", "No removing without knowing consumers", "Priority by impact/risk/leverage"]
+  },
+  "migration_governance": {
+    "template": {
+      "phases": [
+        {"phase": "M1-I0", "name": "Audit & Map", "validation": "Count matches grep", "rollback": "N/A"},
+        {"phase": "M1-I1", "name": "Pilot Plan", "validation": "Design Review approval", "rollback": "N/A"},
+        {"phase": "M1-I2", "name": "Pilot A (High Leverage)", "validation": "G0-G6 gates", "rollback": "Git revert"},
+        {"phase": "M1-I3", "name": "Pilot B (Medium Leverage)", "validation": "G0-G6 gates", "rollback": "Git revert"},
+        {"phase": "M1-I4", "name": "Pilot C (Critical Flow)", "validation": "G0-G6 + booking/payment regression", "rollback": "Git revert"},
+        {"phase": "M1-I5", "name": "Pilot D (Provider)", "validation": "G0-G6 gates", "rollback": "Git revert"},
+        {"phase": "M1-I6", "name": "Global Migration", "condition": "All pilots APPROVED", "validation": "Full G0-G6 + regression suite", "rollback": "Feature flag disable"}
+      ],
+      "rules": ["No automatic advancement", "Director approval per phase", "Rollback capability mandatory"]
+    },
+    "current_migrations": {
+      "ICON_MIGRATION": {"status": "IN_PROGRESS", "current_phase": "M1-I3 Pilot B APPROVED (97/100)"},
+      "TOKEN_CONSOLIDATION": {"status": "NOT_STARTED", "current_phase": "M1-I0 pending"},
+      "MEN_VISUAL_REENGINEERING": {"status": "NOT_STARTED", "current_phase": "M1-I0 pending"}
+    }
+  },
+  "audit_cadence": {
+    "pre_implementation": ["scope_vs_soul", "spec_alignment", "governance_checklist", "risk_assessment", "exception_check", "legacy_awareness", "migration_impact"],
+    "post_implementation": ["definition_of_done", "visual_qa", "regression", "documentation", "registry_update"],
+    "periodic": {
+      "quarterly": ["token_drift_audit", "anti_pattern_scan", "exception_review", "legacy_progress"],
+      "monthly": ["analyze_trend", "test_coverage", "visual_regression_baseline"],
+      "per_release": ["full_dod", "visual_regression_suite", "performance_baseline", "security_scan"]
+    }
+  },
+  "governance_matrix": [
+    {"change": "Color token", "owner": "Design Director", "review": "SOUL_REVISION", "approval": "Director", "validation": "Visual QA + Token audit"},
+    {"change": "Typography", "owner": "Design Director", "review": "SOUL_REVISION", "approval": "Director", "validation": "Visual QA + Legibility"},
+    {"change": "Photography", "owner": "Design Director", "review": "SOUL_REVISION", "approval": "Director", "validation": "Visual QA + Asset audit"},
+    {"change": "Icon", "owner": "Design Director", "review": "ICON_SYSTEM_REVIEW", "approval": "Director", "validation": "Visual QA + Registry"},
+    {"change": "Token (semantic)", "owner": "Lead Engineer", "review": "TOKEN_GOVERNANCE", "approval": "Director Review", "validation": "Analyze + Test + Token audit"},
+    {"change": "Component (new)", "owner": "Lead Engineer", "review": "COMPONENT_GOVERNANCE", "approval": "Director Review", "validation": "G0-G6 gates"},
+    {"change": "Component (variant)", "owner": "Engineer", "review": "VARIANT_GOVERNANCE", "approval": "Design Review", "validation": "G0-G6 gates"},
+    {"change": "Screen (composition)", "owner": "Engineer", "review": "DESIGN_REVIEW", "approval": "Design Review", "validation": "G0-G6 gates"},
+    {"change": "AURA", "owner": "Design Director", "review": "AURA_GOVERNANCE", "approval": "Director Review", "validation": "Visual QA + No cyberpunk"},
+    {"change": "Women expression", "owner": "Design Director", "review": "WOMEN_GOVERNANCE", "approval": "Director Review", "validation": "Visual QA + No independent system"},
+    {"change": "Men expression", "owner": "Design Director", "review": "MEN_GOVERNANCE", "approval": "Director Review", "validation": "Visual QA + No black/gold-only"},
+    {"change": "Motion", "owner": "Engineer", "review": "MOTION_GOVERNANCE", "approval": "Design Review", "validation": "Visual QA + Performance"},
+    {"change": "Accessibility", "owner": "Lead Engineer", "review": "ACCESSIBILITY_GOVERNANCE", "approval": "Design Review", "validation": "WCAG AA + Screen reader"}
+  ],
+  "rollback_governance": {
+    "requirements": ["change_scope_defined", "commit_diff_boundary", "rollback_method", "post_rollback_validation"],
+    "rule": "Never revert pre-existing work. Only revert specific change scope."
+  },
+  "documentation_governance": {
+    "required_fields": ["WHAT", "WHY", "WHERE", "HOW", "VALIDATION", "DECISION", "DATE", "VERSION"],
+    "auto_validation_rules": {
+      "WHAT": "Non-empty, references changed files",
+      "WHY": "References SOUL section or contract invariant",
+      "WHERE": "List of file paths",
+      "HOW": "Implementation approach summary",
+      "VALIDATION": "Gate results with evidence",
+      "DECISION": "Approval record",
+      "DATE": "ISO 8601 timestamp",
+      "VERSION": "SOUL version after change"
+    },
+    "registry_auto_update_triggers": {
+      "token_added_modified": ["authorities/COLOR.json", "authorities/TYPOGRAPHY.json", "legacy/LEGACY_REGISTRY.json"],
+      "component_added_variant": ["authorities/COMPONENT.json", "legacy/LEGACY_REGISTRY.json"],
+      "exception_created": ["exceptions/EXCEPTION_REGISTRY.json"],
+      "migration_phase_complete": ["migrations/{MIGRATION_ID}.json"],
+      "legacy_item_removed": ["legacy/LEGACY_REGISTRY.json"],
+      "soul_version_bump": ["all authorities version", "contracts/glowapp_governance_contracts.json"]
+    }
+  },
+  "quality_score": 160,
+  "max_score": 160,
+  "deliverables": [
+    "docs/governance/GLOWAPP_GOVERNANCE_ARCHITECTURE.md",
+    "docs/governance/glowapp_governance_architecture.json",
+    "Registry structure (directory layout)",
+    "Exception Registry template",
+    "Legacy Registry template",
+    "Migration templates"
+  ],
+  "production_safety": "Only new governance architecture documents created. Zero production code modified.",
+  "final_decision": "READY FOR G1-D",
+  "next_phase": "G1-D — GOVERNANCE OPERATIONALIZATION (build tooling, CI gates, registry population, agent initialization scripts)"
+}

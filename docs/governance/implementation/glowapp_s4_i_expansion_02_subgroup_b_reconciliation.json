@@ -1,0 +1,88 @@
+{
+  "subgroup": "B",
+  "expansion": "S4-I EXPANSION 02",
+  "historicalClaimedState": "SUBGROUP_B_COMPLETED_AND_VERIFIED",
+  "actualRepositoryState": {
+    "login_screen_dart": {
+      "emailField": {
+        "widget": "S4TextField",
+        "importMissing": true,
+        "keyboardTypePlacement": "outside constructor (incorrect)",
+        "hintDuplicated": true,
+        "otherProperties": {
+          "controller": "_emailCtrl",
+          "validator": "present",
+          "style": "present"
+        }
+      },
+      "passwordField": {
+        "widget": "S4TextField",
+        "importMissing": true,
+        "keyboardTypePlacement": "outside constructor (incorrect)",
+        "hintDuplicated": true,
+        "obscureTextToggle": "present",
+        "otherProperties": {
+          "controller": "_passCtrl",
+          "validator": "present",
+          "style": "present"
+        }
+      }
+    },
+    "register_screen_dart": {
+      "nameField": {
+        "widget": "TextFormField",
+        "migrated": false
+      },
+      "emailField": {
+        "widget": "TextFormField",
+        "migrated": false
+      },
+      "passwordField": {
+        "widget": "TextFormField",
+        "migrated": false
+      },
+      "phoneField": {
+        "widget": "TextFormField",
+        "migrated": false
+      }
+    }
+  },
+  "evidence": {
+    "gitDiffLogin": "Shows conversion from TextFormField to S4TextField but missing import and misplaced keyboardType parameters.",
+    "gitDiffRegister": "Empty (no changes).",
+    "historicalCommits": [
+      {
+        "hash": "9ad40b0b",
+        "message": "fix(web-build): resolve blurRadius parameter error in aura_3d_emblem.dart and refactor auth screens to BELLEZA LUXE",
+        "likelyMigrationCommit": true
+      }
+    ]
+  },
+  "possibleCause": "Migration was applied in commit 9ad40b0b but import was omitted and keyboardType parameters were incorrectly placed outside the constructor, likely due to a formatting error or merge conflict. Register screen was not included in that migration.",
+  "workstreamOwnership": {
+    "responsibleForMigration": "S4-I Expansion 02 Subgroup B",
+    "otherStreamsThatTouchedFiles": [
+      "G0-F.2 (security)",
+      "Belleza LUXE / web-build theme stream"
+    ]
+  },
+  "productionSafety": {
+    "compilationError": "Login screen fails to compile due to missing import and misplaced keyboardType.",
+    "runtimeRisk": "If compiled, email and password fields would have incorrect keyboardType (default text) because parameters are outside constructor.",
+    "deploymentStatus": "Not safe to deploy."
+  },
+  "recommendedRecovery": {
+    "login_screen_dart": [
+      "Add import: import '../../design/components/s4_text_field.dart';",
+      "Move keyboardType: TextInputType.emailAddress inside the S4TextField constructor for email field.",
+      "Move keyboardType: TextInputType.text inside the S4TextField constructor for password field.",
+      "Consider removing duplicated hint if desired (optional)."
+    ],
+    "register_screen_dart": [
+      "Add import: import '../../design/components/s4_text_field.dart';",
+      "Migrate all four TextFormFields (name, email, password, phone) to S4TextField preserving all existing properties (validator, style, decoration, etc.).",
+      "Ensure keyboardType is set correctly inside each constructor."
+    ]
+  },
+  "finalReconciliationStatus": "SUBGROUP_B_RECONCILIATION_REQUIRED"
+}

@@ -1,0 +1,140 @@
+{
+  "registry_name": "Conflict Resolution Registry",
+  "version": "1.0.0",
+  "last_updated": "2026-08-21",
+  "principle": "Higher authority wins unless an explicit exception exists.",
+  "conflicts": [
+    {
+      "conflict_type": "SOUL_vs_SPEC",
+      "description": "Conflict between SOUL (L0) and Specification (L1) authorities",
+      "resolution_rule": "SOUL always wins. SPEC must be revised to align with SOUL.",
+      "escalation_path": "Director reviews SOUL compliance.",
+      "examples": [
+        "Specification introduces third font family (violates SOUL Two Voices principle)",
+        "Color palette includes neon/cyberpunk colors (violates SOUL Quiet Luxury)",
+        "Photography guidelines approve cyberpunk imagery (violates SOUL Human Experience)"
+      ]
+    },
+    {
+      "conflict_type": "SPEC_vs_TOKEN",
+      "description": "Conflict between Specification (L1) and Token/System Authority (L2)",
+      "resolution_rule": "SPEC wins. TOKEN implementation must be updated to match SPEC.",
+      "escalation_path": "L1 Governor reviews and enforces.",
+      "examples": [
+        "Token class returns incorrect color value compared to specification",
+        "TypographyTokens scale doesn't match specification",
+        "GlowIconRegistry doesn't contain all specified icons"
+      ]
+    },
+    {
+      "conflict_type": "TOKEN_vs_COMPONENT",
+      "description": "Conflict between Token/System Authority (L2) and Component (L3)",
+      "resolution_rule": "TOKEN wins. COMPONENT must use tokens as defined.",
+      "escalation_path": "L2 Governor reviews and enforces.",
+      "examples": [
+        "Component uses hardcoded color instead of Token.color",
+        "Component uses custom TextStyle instead of TypographyTokens",
+        "Component uses arbitrary spacing values instead of Spacing tokens"
+      ]
+    },
+    {
+      "conflict_type": "COMPONENT_vs_SCREEN",
+      "description": "Conflict between Component (L3) and Screen (L4)",
+      "resolution_rule": "COMPONENT wins. SCREEN must use components as defined.",
+      "escalation_path": "L3 Governor reviews and enforces.",
+      "examples": [
+        "Screen creates custom button variant instead of using official PrimaryButton",
+        "Screen creates custom card instead of using official ProductCard",
+        "Screen bypasses official navigation component"
+      ]
+    },
+    {
+      "conflict_type": "SCREEN_vs_LEGACY",
+      "description": "Conflict between Screen (L4) and Legacy Systems",
+      "resolution_rule": "SCREEN (new) wins over LEGACY. LEGACY must be migrated or deprecated.",
+      "escalation_path": "L4 Governor reviews and enforces migration plan.",
+      "examples": [
+        "New screen uses legacy theme instead of Token-based theming",
+        "Screen uses legacy icon set instead of GlowIcon",
+        "Screen uses legacy typography system instead of TypographyTokens"
+      ]
+    },
+    {
+      "conflict_type": "LEGACY_vs_LEGACY",
+      "description": "Conflict between two Legacy Systems",
+      "resolution_rule": "The more recently updated LEGACY system wins, but both must be migrated to canonical.",
+      "escalation_path": "L1/L2 Governor reviews and enforces migration.",
+      "examples": [
+        "Two different legacy color systems both in use",
+        "Two different legacy typography systems both in use",
+        "Legacy component libraries conflict with each other"
+      ]
+    },
+    {
+      "conflict_type": "DuplicateAuthorities",
+      "description": "Conflict between duplicate authorities covering same domain",
+      "resolution_rule": "Canonical (as defined in Single Source of Truth Map) wins. Duplicates must be deprecated or mapped.",
+      "escalation_path": "L1 Governor reviews and enforces deprecation/mapping.",
+      "examples": [
+        "both Token and GlowStoreTokens used for color access",
+        "both TypographyTokens and AppTypography used for text styles",
+        "both GlowIconRegistry and direct Material icons used"
+      ]
+    },
+    {
+      "conflict_type": "AI_vs_SOUL",
+      "description": "Conflict between AI (L2) and SOUL (L0)",
+      "resolution_rule": "SOUL wins. AI implementation must be revised to align with SOUL.",
+      "escalation_path": "Director reviews SOUL compliance.",
+      "examples": [
+        "AI introduces cyberpunk/neon/HUD aesthetics (violates SOUL Quiet Luxury)",
+        "AI decisions made without human confirmation for critical actions",
+        "AI uses prohibited color schemes or imagery"
+      ]
+    },
+    {
+      "conflict_type": "Security_vs_Implementation",
+      "description": "Conflict between Security (L2) and Implementation (L4-L5)",
+      "resolution_rule": "Security wins. Implementation must meet security rules.",
+      "escalation_path": "Security Governor reviews and enforces.",
+      "examples": [
+        "Implementation stores auth tokens in SharedPreferences",
+        "Implementation bypasses encryption for personal data",
+        "Implementation lacks required access controls"
+      ]
+    },
+    {
+      "conflict_type": "Accessibility_vs_Implementation",
+      "description": "Conflict between Accessibility (L2) and Implementation (L4-L5)",
+      "resolution_rule": "Accessibility wins. Implementation must meet accessibility rules.",
+      "escalation_path": "Accessibility Governor reviews and enforces.",
+      "examples": [
+        "Implementation lacks proper focus styles",
+        "Implementation has insufficient color contrast",
+        "Implementation doesn't respect text scaling"
+      ]
+    },
+    {
+      "conflict_type": "Performance_vs_Implementation",
+      "description": "Conflict between Performance (L2) and Implementation (L4-L5)",
+      "resolution_rule": "Performance wins. Implementation must meet performance budgets.",
+      "escalation_path": "Performance Governor reviews and enforces.",
+      "examples": [
+        "Implementation causes excessive frame drops",
+        "Implementation has large bundle size",
+        "Implementation has slow startup time"
+      ]
+    },
+    {
+      "conflict_type": "Quality_vs_Implementation",
+      "description": "Conflict between Quality (L3) and Implementation (L4-L5)",
+      "resolution_rule": "Quality wins. Implementation must meet quality gates.",
+      "escalation_path": "Quality Governor reviews and enforces.",
+      "examples": [
+        "Implementation skips required tests",
+        "Implementation has known bugs not addressed",
+        "Implementation violates coding standards"
+      ]
+    }
+  ]
+}
