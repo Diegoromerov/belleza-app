@@ -71,7 +71,7 @@ class ServiceCard extends StatelessWidget {
 
           // PRECIO EN MONO DORADO (GOLD871)
           Column(
-            crossAxisAlignment: CrossAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
                 '\$${price.toStringAsFixed(0)}',
