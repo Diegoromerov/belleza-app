@@ -192,17 +192,9 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFFAF8F5),
-      body: Align(
-        alignment: Alignment.topCenter,
-        child: SizedBox(
-          width: double.infinity,
-          height: double.infinity,
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 800),
-              child: CustomScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                slivers: [
+      body: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
           // Cabecera de Alto Impacto con Parallax y Desvanecimiento al Desplazar
           SliverAppBar(
             expandedHeight: 280,
@@ -1177,32 +1169,22 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
             ),
           ],
         ),
-      ),
-    ),
-  ),
-),
-      bottomNavigationBar: Container(
-        padding: EdgeInsets.only(
-          left: 20,
-          right: 20,
-          bottom: MediaQuery.of(context).padding.bottom + 12,
-          top: 12,
-        ),
-        decoration: const BoxDecoration(
-          color: Color(0xFFFAF8F5),
-          boxShadow: [
-            BoxShadow(
-              color: Color(0x0A000000),
-              blurRadius: 16,
-              offset: Offset(0, -4),
-            ),
-          ],
-        ),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 800),
-            child: Row(
-              children: [
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          decoration: const BoxDecoration(
+            color: Color(0xFFFAF8F5),
+            boxShadow: [
+              BoxShadow(
+                color: Color(0x0A000000),
+                blurRadius: 16,
+                offset: Offset(0, -4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
                 // Botón Secundario: Chat Directo
                 Expanded(
                   flex: 2,
@@ -1312,7 +1294,6 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
             ),
           ),
         ),
-      ),
     );
   }
 
