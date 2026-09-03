@@ -202,14 +202,27 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
             expandedHeight: 280,
             pinned: true,
             elevation: 0,
-            backgroundColor: AppTheme.surface,
+            backgroundColor: const Color(0xFF1F1A15),
             foregroundColor: Colors.white,
+            title: const Text(
+              'Perfil del Profesional',
+              style: TextStyle(
+                fontFamily: 'CormorantGaramond',
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+                color: Colors.white,
+                shadows: [
+                  Shadow(color: Colors.black87, blurRadius: 6),
+                ],
+              ),
+            ),
+            centerTitle: true,
             leading: Padding(
               padding: const EdgeInsets.all(8.0),
               child: CircleAvatar(
-                backgroundColor: AppTheme.surface.withValues(alpha: 0.9),
+                backgroundColor: Colors.black.withValues(alpha: 0.4),
                 child: IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.black),
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
                   onPressed: () => Navigator.pop(context),
                 ),
               ),
@@ -422,63 +435,125 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Botones rápidos
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => ChatScreen(
-                                      partnerId: widget.providerId,
-                                      partnerName: p['business_name'] ??
-                                          p['full_name'] ??
-                                          'Prestador',
-                                      partnerRole: 'provider',
-                                      partnerAvatar: p['avatar_url'],
-                                    ),
-                                  ),
-                                );
-                              },
-                              icon: const Icon(
-                                  Icons.chat_bubble_outline_rounded,
-                                  size: 18),
-                              label: const Text('Chatear'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppTheme.primary,
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(30),
-                                ),
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 12),
-                              ),
-                            ),
+                      // Tarjeta de Horarios y Cobertura Profesional
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: const Color(0xFFE8DFD8),
+                            width: 1,
                           ),
-                        ],
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x06000000),
+                              blurRadius: 12,
+                              offset: Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFAF6F0),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Icon(Icons.schedule_outlined,
+                                      size: 18, color: Color(0xFFC5A052)),
+                                ),
+                                const SizedBox(width: 12),
+                                const Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Horario de Atención',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                          color: Color(0xFF1F1A15),
+                                        ),
+                                      ),
+                                      SizedBox(height: 2),
+                                      Text(
+                                        'Lunes a Sábado: 8:00 AM – 7:00 PM',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Color(0xFF6B5E55),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const Divider(height: 20, color: Color(0xFFF0EAE3)),
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFAF6F0),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Icon(Icons.shield_outlined,
+                                      size: 18, color: Color(0xFFC5A052)),
+                                ),
+                                const SizedBox(width: 12),
+                                const Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Garantía y Protocolo GlowApp',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                          color: Color(0xFF1F1A15),
+                                        ),
+                                      ),
+                                      SizedBox(height: 2),
+                                      Text(
+                                        'Bioseguridad certificada · Pago seguro en custodia',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Color(0xFF6B5E55),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 28),
+                      const SizedBox(height: 24),
 
                       // Sobre nosotros
                       if (p['description'] != null &&
                           p['description'].toString().trim().isNotEmpty) ...[
                         const Text(
-                          'Sobre nosotros',
+                          'Sobre el Profesional',
                           style: TextStyle(
-                              fontSize: 18,
+                              fontFamily: 'CormorantGaramond',
+                              fontSize: 20,
                               fontWeight: FontWeight.bold,
-                              letterSpacing: -0.5),
+                              color: Color(0xFF1F1A15),
+                              letterSpacing: -0.3),
                         ),
                         const SizedBox(height: 8),
                         Text(
                           p['description'],
                           style: const TextStyle(
-                              fontSize: 14, height: 1.6, color: Colors.black87),
+                              fontSize: 14, height: 1.6, color: Color(0xFF4A4036)),
                         ),
-                        const SizedBox(height: 28),
+                        const SizedBox(height: 24),
                       ],
 
                       // Servicios
@@ -1069,98 +1144,117 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 800),
-            child: Container(
-              height: 52,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFF3D59B), Color(0xFFC5A052)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFFC5A052).withValues(alpha: 0.35),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: ElevatedButton(
-                onPressed: () async {
-                  final token = await AuthService.getToken();
-                  if (token == null) {
-                    if (context.mounted) {
-                      Navigator.pushNamed(context, '/login');
-                    }
-                    return;
-                  }
-                  if (context.mounted) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => BookingScreen(
-                          providerId: widget.providerId,
-                          providerName:
-                              p['business_name'] ?? p['full_name'] ?? 'Prestador',
-                          services: services,
+            child: Row(
+              children: [
+                // Botón Secundario: Chat Directo
+                Expanded(
+                  flex: 2,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ChatScreen(
+                            partnerId: widget.providerId,
+                            partnerName: p['business_name'] ??
+                                p['full_name'] ??
+                                'Prestador',
+                            partnerRole: 'provider',
+                            partnerAvatar: p['avatar_url'],
+                          ),
                         ),
-                      ),
-                    );
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.transparent,
-                  shadowColor: Colors.transparent,
-                  foregroundColor: const Color(0xFF1F1A15),
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.calendar_today_outlined, size: 18, color: Color(0xFF1F1A15)),
-                    SizedBox(width: 8),
-                    Text(
-                      'RESERVAR CITA (WOMPI)',
+                      );
+                    },
+                    icon: const Icon(Icons.chat_bubble_outline_rounded,
+                        size: 18, color: Color(0xFFC5A052)),
+                    label: const Text(
+                      'Chat Directo',
                       style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 13,
+                        fontFamily: 'CormorantGaramond',
+                        fontSize: 15,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF1F1A15),
-                        letterSpacing: 0.8,
+                        color: Color(0xFFC5A052),
                       ),
                     ),
-                  ],
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFFC5A052), width: 1.5),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(width: 12),
+                // Botón Primario: Agendar Cita
+                Expanded(
+                  flex: 3,
+                  child: Container(
+                    height: 52,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFF3D59B), Color(0xFFC5A052)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFC5A052).withValues(alpha: 0.35),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        final token = await AuthService.getToken();
+                        if (token == null) {
+                          if (context.mounted) {
+                            Navigator.pushNamed(context, '/login');
+                          }
+                          return;
+                        }
+                        if (context.mounted) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => BookingScreen(
+                                providerId: widget.providerId,
+                                providerName:
+                                    p['business_name'] ?? p['full_name'] ?? 'Prestador',
+                                services: services,
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                      icon: const Icon(Icons.calendar_today_outlined, size: 18, color: Color(0xFF1F1A15)),
+                      label: const Text(
+                        'Agendar Cita',
+                        style: TextStyle(
+                          fontFamily: 'CormorantGaramond',
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1F1A15),
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: 'express_booking_4clicks_fab',
-        onPressed: () {
-          final services = (details?['services'] as List?)?.cast<Map<String, dynamic>>() ?? [];
-          final providerName = (details?['business_name'] ?? details?['full_name'] ?? 'Prestador').toString();
-          final firstServiceId = services.isNotEmpty ? services.first['id']?.toString() : null;
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => BookingScreen(
-                providerId: widget.providerId,
-                providerName: providerName,
-                services: services,
-                initialServiceId: firstServiceId,
-              ),
-            ),
-          );
-        },
-        backgroundColor: const Color(0xFFC5A052),
-        icon: const Icon(Icons.bolt, color: Colors.white),
-        label: const Text('Reserva Exprés (4 Clics)', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 12)),
       ),
     );
   }
