@@ -3,8 +3,6 @@ import '../../services/audience_service.dart';
 import '../../services/biometric_service.dart';
 import '../../shared/mens_theme.dart';
 import '../../shared/glow_tokens.dart';
-import '../../widgets/aura_3d_emblem.dart';
-import '../../widgets/glow_glass_card.dart';
 import 'capture_screen.dart';
 
 class BiometricWelcomeScreen extends StatefulWidget {
@@ -166,164 +164,165 @@ class _BiometricWelcomeScreenState extends State<BiometricWelcomeScreen> {
         final isMen = currentMode == AudienceMode.men;
 
         return Scaffold(
-          body: SizedBox.expand(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: isMen
-                      ? [
-                          MensTheme.obsidianBg,
-                          MensTheme.obsidianCard,
-                          MensTheme.obsidianBg,
-                        ]
-                      : [
-                          GlowTokens.creamSilk,
-                          GlowTokens.amber.withValues(alpha: 0.25),
-                          GlowTokens.terracota.withValues(alpha: 0.4),
-                          GlowTokens.nightAndean,
-                        ],
-                  stops: isMen ? const [0.0, 0.5, 1.0] : const [0.0, 0.35, 0.7, 1.0],
-                ),
-              ),
-              child: SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      return SingleChildScrollView(
-                        physics: const BouncingScrollPhysics(),
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                          child: IntrinsicHeight(
-                            child: Column(
-                              children: [
-                                const SizedBox(height: 12),
-                                const Aura3DEmblemWidget(
-                                  size: 210.0,
-                                ),
-                                const SizedBox(height: 24),
-                                GlowGlassCard(
-                                  child: Column(
-                                    children: [
-                                      Text(
-                                        isMen ? 'Aura Men Visagismo' : 'Hola, soy Aura',
-                                        style: TextStyle(
-                                          fontSize: 26,
-                                          fontWeight: FontWeight.bold,
-                                          color: isMen ? MensTheme.champagneGold : GlowTokens.nightAndean,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                      const SizedBox(height: 12),
-                                      Text(
-                                        isMen
-                                            ? 'Tu asesora IA de Visagismo. Analizaré la estructura facial y barometría de tu mandíbula para recomendar tu corte de cabello y barba ideal.'
-                                            : 'Tu asesora de belleza y bienestar con Inteligencia Artificial. Diagnosticaré tu tipo de piel, rostro e higiene capilar para sugerirte el ritual perfecto.',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: isMen ? MensTheme.textSecondary : GlowTokens.nightAndean,
-                                          height: 1.4,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const Spacer(),
-
-                    
-                    // 🛡️ BOTÓN DISCRETO & CASILLA DE HABEAS DATA / TRAZABLE AUDITABLE
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: isMen ? Colors.black26 : Colors.white.withOpacity(0.3),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          Checkbox(
-                            value: _consentAccepted,
-                            activeColor: isMen ? MensTheme.champagneGold : GlowTokens.terracota,
-                            onChanged: (val) {
-                              setState(() {
-                                _consentAccepted = val ?? false;
-                              });
-                            },
+          backgroundColor: isMen ? MensTheme.obsidianBg : const Color(0xFFB17A48),
+          body: Stack(
+            children: [
+              // 1. Imagen de Fondo de Alta Definición Haute Joaillerie
+              Positioned.fill(
+                child: isMen
+                    ? Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              MensTheme.obsidianBg,
+                              MensTheme.obsidianCard,
+                              MensTheme.obsidianBg,
+                            ],
                           ),
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: () => _showPrivacyPolicyModal(context, isMen),
-                              child: RichText(
-                                text: TextSpan(
-                                  text: 'Autorizo el uso de mi imagen biométrica según la ',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: isMen ? MensTheme.textSecondary : GlowTokens.nightAndean,
-                                  ),
-                                  children: [
-                                    TextSpan(
-                                      text: 'Política de Tratamiento de Datos (Ley 1581)',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                        decoration: TextDecoration.underline,
-                                        color: isMen ? MensTheme.champagneGold : GlowTokens.terracota,
+                        ),
+                      )
+                    : Image.asset(
+                        'images/aura_welcome_poster.webp',
+                        fit: BoxFit.cover,
+                        alignment: Alignment.topCenter,
+                      ),
+              ),
+
+              // 2. Capa de Controles Interactivos (Contrato y Botón de Inicio)
+              SafeArea(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 560),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+                      child: Column(
+                        children: [
+                          // Botón sutil de retroceso si existe historial de navegación
+                          Align(
+                            alignment: Alignment.topLeft,
+                            child: Navigator.canPop(context)
+                                ? Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withValues(alpha: 0.35),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: IconButton(
+                                      icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 18),
+                                      onPressed: () => Navigator.maybePop(context),
+                                    ),
+                                  )
+                                : const SizedBox(height: 24),
+                          ),
+
+                          const Spacer(),
+
+                          // 🛡️ Contenedor Frosted Glass del Contrato & Habeas Data (Ley 1581)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1F1A15).withValues(alpha: 0.76),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: const Color(0xFFD4AF37).withValues(alpha: 0.5),
+                                width: 1.0,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.3),
+                                  blurRadius: 14,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                Checkbox(
+                                  value: _consentAccepted,
+                                  activeColor: const Color(0xFFD4AF37),
+                                  checkColor: Colors.black,
+                                  side: const BorderSide(color: Color(0xFFD4AF37), width: 1.5),
+                                  onChanged: (val) {
+                                    setState(() {
+                                      _consentAccepted = val ?? false;
+                                    });
+                                  },
+                                ),
+                                Expanded(
+                                  child: GestureDetector(
+                                    onTap: () => _showPrivacyPolicyModal(context, isMen),
+                                    child: RichText(
+                                      text: const TextSpan(
+                                        text: 'Autorizo el uso de mi imagen biométrica según la ',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.white,
+                                          height: 1.3,
+                                        ),
+                                        children: [
+                                          TextSpan(
+                                            text: 'Política de Tratamiento de Datos (Ley 1581)',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                              decoration: TextDecoration.underline,
+                                              color: Color(0xFFE5C158),
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                  ],
+                                  ),
                                 ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _isRegisteringConsent ? null : () => _handleStartScan(context),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _consentAccepted
-                              ? (isMen ? MensTheme.champagneGold : GlowTokens.terracota)
-                              : Colors.grey,
-                          foregroundColor: isMen ? Colors.black : Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 18),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          elevation: _consentAccepted ? 6 : 1,
-                        ),
-                        child: _isRegisteringConsent
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                              )
-                            : Text(
-                                isMen ? 'Iniciar Escaneo de Visagismo' : 'Iniciar Ritual de Belleza Aura',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                      ),
-                    ),
-                        const SizedBox(height: 16),
                               ],
                             ),
                           ),
-                        ),
-                      );
-                    },
+                          const SizedBox(height: 14),
+
+                          // Botón Principal de Inicio del Ritual
+                          SizedBox(
+                            width: double.infinity,
+                            height: 56,
+                            child: ElevatedButton(
+                              onPressed: _isRegisteringConsent ? null : () => _handleStartScan(context),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: _consentAccepted
+                                    ? const Color(0xFFC5A052)
+                                    : const Color(0xFF7A6B5A).withValues(alpha: 0.55),
+                                foregroundColor: _consentAccepted
+                                    ? const Color(0xFF14100C)
+                                    : Colors.white70,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(28),
+                                ),
+                                elevation: _consentAccepted ? 6 : 0,
+                              ),
+                              child: _isRegisteringConsent
+                                  ? const SizedBox(
+                                      height: 22,
+                                      width: 22,
+                                      child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2.5),
+                                    )
+                                  : Text(
+                                      isMen ? 'Iniciar Escaneo de Visagismo' : 'Iniciar Ritual de Belleza Aura',
+                                      style: const TextStyle(
+                                        fontFamily: 'CormorantGaramond',
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
+            ],
           ),
         );
       },
