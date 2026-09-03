@@ -7,6 +7,18 @@ const orderController = require('../controllers/orderController');
 const openBeautyFacts = require('../services/openBeautyFacts');
 const profileService = require('../services/biometric/profile.service');
 
+// Helper function to validate userId
+const validateUserId = (userId) => {
+  if (userId === undefined || userId === null) return false;
+  // Convert to string if it's a number
+  const str = String(userId);
+  // Check if it's a valid integer (no decimals, no leading zeros except for "0" itself)
+  if (!/^\d+$/.test(str)) return false;
+  // Check for reasonable range (assuming user IDs are positive and not excessively large)
+  const num = parseInt(str, 10);
+  return num > 0 && num <= 999999; // Reasonable upper bound for user IDs
+};
+
 // Obtener catálogo de productos (soporta filtros por tag de especialidad)
 router.get('/products', productController.getProducts);
 
@@ -37,6 +49,20 @@ router.post('/biometric/check', authMiddleware, async (req, res) => {
     });
   }
 
+  // Validate userId format
+  if (!validateUserId(userId)) {
+    return res.status(400).json({
+      error: 'userId debe ser un número entero positivo válido'
+    });
+  }
+
+  const userIdNum = parseInt(userId, 10);
+
+  // Ownership check: user can only check compatibility for their own profile
+  if (req.user?.id !== userIdNum && req.user?.role !== 'admin') {
+    return res.status(403).json({ error: 'FORBIDDEN', message: 'No tienes permisos para acceder a este perfil.' });
+  }
+
   try {
     const product = await openBeautyFacts.searchByBarcode(barcode);
     if (!product) {
@@ -45,7 +71,7 @@ router.post('/biometric/check', authMiddleware, async (req, res) => {
       });
     }
 
-    const profile = await profileService.getProfile(userId);
+    const profile = await profileService.getProfile(userIdNum);
     let compatible = false;
     let reason = '';
 
@@ -90,8 +116,20 @@ router.post('/biometric/check', authMiddleware, async (req, res) => {
 router.get('/biometric/recommended/:userId', authMiddleware, async (req, res) => {
   const { userId } = req.params;
 
+  // Validate userId format
+  if (!validateUserId(userId)) {
+    return res.status(400).json({ error: 'userId debe ser un número entero positivo válido' });
+  }
+
+  const userIdNum = parseInt(userId, 10);
+
+  // Ownership check: user can only get recommendations for their own profile
+  if (req.user?.id !== userIdNum && req.user?.role !== 'admin') {
+    return res.status(403).json({ error: 'FORBIDDEN', message: 'No tienes permisos para acceder a este perfil.' });
+  }
+
   try {
-    const profile = await profileService.getProfile(userId);
+    const profile = await profileService.getProfile(userIdNum);
     if (!profile) {
       return res.status(404).json({ error: 'Perfil biométrico no encontrado' });
     }

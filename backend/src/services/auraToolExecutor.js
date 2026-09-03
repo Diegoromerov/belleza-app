@@ -143,10 +143,22 @@ async function executeAuraTool(toolName, args, userId) {
   console.log(`🛠️ [AURA Orchestration] Ejecutando herramienta: ${toolName}, Args:`, args);
 
   // Verificar consentimiento para herramientas que acceden a datos biométricos
-  const BIOMETRIC_TOOLS = ['query_user_biometric_profile'];
-  if (BIOMETRIC_TOOLS.includes(toolName)) {
-    const targetUserId = args.userId || userId;
-    const consent = await checkConsent(targetUserId, 'all_biometric');
+    const BIOMETRIC_TOOLS = ['query_user_biometric_profile'];
+    // Herramientas que acceden indirectamente a datos biométricos (a través de getBiometricDiagnosis)
+    const BIOMETRIC_SENSITIVE_TOOLS = ['query_user_biometric_profile', 'recommend_glowstore_products'];
+    if (BIOMETRIC_SENSITIVE_TOOLS.includes(toolName)) {
+      const targetUserId = args.userId || userId;
+      // Propiedad de ownership: el usuario solo puede acceder a sus propios datos biométricos
+      if (targetUserId !== userId) {
+        return { 
+          error: 'ownership_required', 
+          message: 'No tienes permisos para acceder a los datos biométricos de otro usuario.' 
+        };
+      }
+    }
+    if (BIOMETRIC_TOOLS.includes(toolName)) {
+      const targetUserId = args.userId || userId;
+      const consent = await checkConsent(targetUserId, 'all_biometric');
     
     if (!consent.granted) {
       // Log intento sin consentimiento

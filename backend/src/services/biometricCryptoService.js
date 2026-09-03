@@ -1,25 +1,32 @@
-// backend/src/services/biometricCryptoService.js
-/**
- * Servicio de Cifrado Transparente para Datos Biométricos Sensibles (ADR-001 / GDPR Art. 9)
- * Implementa cifrado simétrico AES-256-GCM para proteger PII y métricas faciales 3D en reposo.
- */
 const crypto = require('crypto');
 
 const ALGORITHM = 'aes-256-gcm';
-const SECRET_KEY = process.env.BIOMETRIC_ENCRYPTION_KEY || '12345678901234567890123456789012'; // 32 bytes key
+
+let SECRET_KEY;
+
+function initializeKey() {
+  const keyEnv = process.env.BIOMETRIC_ENCRYPTION_KEY;
+  if (!keyEnv || typeof keyEnv !== 'string') {
+    throw new Error('BIOMETRIC_ENCRYPTION_KEY is required and must be a string');
+  }
+  // Key must be 32 bytes for AES-256 (accepts utf8 string; we'll check byte length)
+  const keyBuffer = Buffer.from(keyEnv, 'hex');
+  if (keyBuffer.length !== 32) {
+    throw new Error('BIOMETRIC_ENCRYPTION_KEY must be 32 bytes long');
+  }
+  SECRET_KEY = keyBuffer;
+}
+
+// Initialize on module load
+initializeKey();
 
 class BiometricCryptoService {
-  /**
-   * Cifra un objeto o string biométrico sensible
-   * @param {Object|string} data 
-   * @returns {string} Payload cifrado en formato iv:authTag:encryptedData
-   */
   encrypt(data) {
     if (!data) return null;
     const text = typeof data === 'object' ? JSON.stringify(data) : String(data);
 
     const iv = crypto.randomBytes(12);
-    const cipher = crypto.createCipheriv(ALGORITHM, Buffer.from(SECRET_KEY), iv);
+    const cipher = crypto.createCipheriv(ALGORITHM, SECRET_KEY, iv);
 
     let encrypted = cipher.update(text, 'utf8', 'hex');
     encrypted += cipher.final('hex');
@@ -29,27 +36,27 @@ class BiometricCryptoService {
     return `${iv.toString('hex')}:${authTag}:${encrypted}`;
   }
 
-  /**
-   * Descifra un payload biométrico cifrado
-   * @param {string} encryptedString 
-   * @returns {Object|string}
-   */
   decrypt(encryptedString) {
-    if (!encryptedString || typeof encryptedString !== 'string') return null;
-
+    if (!encryptedString || typeof encryptedString !== 'string') {
+      return null;
+    }
     const parts = encryptedString.split(':');
-    if (parts.length !== 3) return encryptedString; // Si no está cifrado, retornar como está
-
+    if (parts.length !== 3) {
+      throw new Error('Invalid ciphertext format');
+    }
     const [ivHex, authTagHex, encryptedText] = parts;
-
     const iv = Buffer.from(ivHex, 'hex');
     const authTag = Buffer.from(authTagHex, 'hex');
-    const decipher = crypto.createDecipheriv(ALGORITHM, Buffer.from(SECRET_KEY), iv);
-
+    const decipher = crypto.createDecipheriv(ALGORITHM, SECRET_KEY, iv);
     decipher.setAuthTag(authTag);
 
-    let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
-    decrypted += decipher.final('utf8');
+    let decrypted;
+    try {
+      decrypted = decipher.update(encryptedText, 'hex', 'utf8');
+      decrypted += decipher.final('utf8');
+    } catch (err) {
+      throw new Error('Decryption failed');
+    }
 
     try {
       return JSON.parse(decrypted);

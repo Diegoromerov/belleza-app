@@ -7,6 +7,12 @@ const { CircuitBreaker, breakers } = require('./circuitBreakerService');
 const { defaultPolicy } = require('./resiliencePolicy');
 const logger = require('../config/logger');
 
+// Apply policy values to the circuit breakers (failure threshold and timeout)
+Object.values(breakers).forEach(breaker => {
+  breaker.failureThreshold = defaultPolicy.circuitBreakerFailureThreshold;
+  breaker.cooldownPeriod = defaultPolicy.circuitBreakerTimeout;
+});
+
 /**
  * Executes an async function with resilience patterns.
  * @param {Function} asyncFunction - Function that returns a promise.
@@ -73,34 +79,28 @@ async function executeWithResilience(asyncFunction, options = {}) {
         asyncFunction(),
         timeoutPromise
       ]);
-      // Success: notify circuit breaker
+      // Success: notify circuit breaker and log
       if (breaker) {
         breaker.onSuccess();
-        logger.debug('Operation succeeded', { 
-          circuitBreakerName, 
-          attempt, 
-          traceId 
-        });
       }
+      logger.debug('Operation succeeded', { 
+        circuitBreakerName, 
+        attempt, 
+        traceId 
+      });
       return result;
     } catch (error) {
       lastError = error;
       // Notify circuit breaker of failure
       if (breaker) {
         breaker.onFailure(error);
-        logger.warn('Operation failed', { 
-          circuitBreakerName, 
-          attempt, 
-          error: error.message,
-          traceId 
-        });
-      } else {
-        logger.warn('Operation failed (no circuit breaker)', { 
-          attempt, 
-          error: error.message,
-          traceId 
-        });
       }
+      logger.warn('Operation failed', { 
+        circuitBreakerName, 
+        attempt, 
+        error: error.message,
+        traceId 
+      });
       // If we have retries left, wait and try again
       if (attempt < retry) {
         // Exponential backoff: retryDelay * 2^attempt

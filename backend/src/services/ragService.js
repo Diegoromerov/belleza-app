@@ -91,10 +91,26 @@ async function searchBeautyKnowledge(query, options = {}) {
     const queryEmbedding = await generateEmbedding(query);
     const embeddingStr = `[${queryEmbedding.join(',')}]`;
 
-    // FIX BUG #5: startIndex=2 porque $1 es el vector de búsqueda
+    // Construir filtros de metadata
     const { whereClause, params: filterParams } = buildMetadataFilters(filters, 2);
 
-    // FIX BUG #3: usar filterParams.length (no params)
+    // Construir condiciones adicionales: tenant, retention, soft delete
+    const additionalConditions = [];
+    if (whereClause.trim() !== '') {
+      additionalConditions.push(`(${whereClause})`);
+    }
+    // Condición de tenant: GLOBAL (tenant_id IS NULL) o TENANT-SCOPED del tenant actual
+    additionalConditions.push(`(tenant_id IS NULL OR (current_setting('app.tenant_id') <> '' AND tenant_id = current_setting('app.tenant_id')::int))`);
+    // Soft delete: excluir eliminados lógicamente
+    additionalConditions.push(`deleted_at IS NULL`);
+    // Retención: excluir expirados
+    additionalConditions.push(`(expires_at IS NULL OR expires_at > NOW())`);
+
+    const finalWhere = additionalConditions.length > 0 ? `WHERE ${additionalConditions.join(' AND ')}` : '';
+
+    // FIX BUG #5: startIndex=2 porque $1 es el vector de búsqueda
+    // Ahora, los parámetros de filtros empiezan en $2, pero ya hemos ajustado en buildMetadataFilters(startIndex=2)
+    // La similitud y el límite usan los índices siguientes a los de filtros
     const sql = `
       SELECT
         id,
@@ -103,8 +119,8 @@ async function searchBeautyKnowledge(query, options = {}) {
         category,
         1 - (embedding <=> $1::vector) AS similarity
       FROM beauty_knowledge_embeddings
-      ${whereClause}
-      ${whereClause ? 'AND' : 'WHERE'} 1 - (embedding <=> $1::vector) >= $${filterParams.length + 2}
+      ${finalWhere}
+      ${finalWhere ? 'AND' : 'WHERE'} 1 - (embedding <=> $1::vector) >= $${filterParams.length + 2}
       ORDER BY embedding <=> $1::vector
       LIMIT $${filterParams.length + 3};
     `;
@@ -126,9 +142,16 @@ async function searchBeautyKnowledge(query, options = {}) {
       const { whereClause, params: filterParams } = buildMetadataFilters(filters, 2);
       const textCondition = `(to_tsvector('spanish', title || ' ' || content) @@ plainto_tsquery('spanish', $1) OR title ILIKE $2 OR content ILIKE $2)`;
 
-      const combinedWhere = whereClause
-        ? `${whereClause} AND ${textCondition}`
-        : `WHERE ${textCondition}`;
+      // Construir condiciones adicionales para el fallback
+      const additionalConditions = [];
+      if (whereClause.trim() !== '') {
+        additionalConditions.push(`(${whereClause})`);
+      }
+      additionalConditions.push(`(tenant_id IS NULL OR (current_setting('app.tenant_id') <> '' AND tenant_id = current_setting('app.tenant_id')::int))`);
+      additionalConditions.push(`deleted_at IS NULL`);
+      additionalConditions.push(`(expires_at IS NULL OR expires_at > NOW())`);
+
+      const finalWhere = additionalConditions.length > 0 ? `WHERE ${additionalConditions.join(' AND ')}` : '';
 
       const fallbackSql = `
         SELECT
@@ -138,7 +161,8 @@ async function searchBeautyKnowledge(query, options = {}) {
           category,
           0.5 AS similarity
         FROM beauty_knowledge_embeddings
-        ${combinedWhere}
+        ${finalWhere}
+        ${finalWhere ? 'AND' : 'WHERE'} ${textCondition}
         LIMIT $${filterParams.length + 3};
       `;
 
@@ -163,8 +187,7 @@ function formatKnowledgeContext(chunks) {
     const sourceText = source
       ? `\n   📚 Fuente: ${typeof source === 'string' ? source : JSON.stringify(source)}`
       : '';
-    return `[${idx + 1}] ${chunk.title} (similitud: ${chunk.similarity?.toFixed(2) || 'N/A'})
-${chunk.content}${sourceText}`;
+    return `[${idx + 1}] ${chunk.title} (similitud: ${chunk.similarity?.toFixed(2) || 'N/A'})\n${chunk.content}${sourceText}`;
   }).join('\n\n');
 }
 
