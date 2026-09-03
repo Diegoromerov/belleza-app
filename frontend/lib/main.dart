@@ -18,6 +18,7 @@ import 'services/secure_storage_service.dart';
 import 'services/audience_service.dart';
 import 'design/icons/glow_icon_registry_init.dart';
 import 'design/icons/glow_icon.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'widgets/audience_toggle.dart';
 import 'shared/mens_theme.dart';
 import 'shared/theme.dart';
@@ -74,6 +75,28 @@ void main() async {
       eventType: 'APP_CRASH_FLUTTER',
       screenName: 'global',
       metadata: {'error': details.exceptionAsString(), 'stack': details.stack.toString()},
+    );
+  };
+
+  ErrorWidget.builder = (FlutterErrorDetails details) {
+    return Material(
+      color: Colors.transparent,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.warning_amber_rounded, color: Color(0xFFE91E63), size: 36),
+              const SizedBox(height: 8),
+              const Text(
+                'Elemento no disponible temporalmente',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   };
 
@@ -230,6 +253,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
   late final MapController _mapController;
   List<ProviderModel> _allProviders = [];
   List<ProviderModel> _filteredProviders = [];
+  ProviderModel? _selectedProvider;
   String _selectedCategory = 'all';
   bool _isLoading = true;
   String? _errorMessage;
@@ -1464,6 +1488,356 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
     );
   }
 
+  static const String _svgCalendarLuxury = '''
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+  <line x1="7" y1="2" x2="7" y2="5" />
+  <line x1="10.3" y1="2" x2="10.3" y2="5" />
+  <line x1="13.7" y1="2" x2="13.7" y2="5" />
+  <line x1="17" y1="2" x2="17" y2="5" />
+  <rect x="3.5" y="4" width="17" height="17" rx="3.5" />
+  <line x1="3.5" y1="8.5" x2="20.5" y2="8.5" />
+  <path d="M12 10.5 C12 12.8 10.6 14.2 8.5 14.5 C10.6 14.8 12 16.2 12 18.5 C12 16.2 13.4 14.8 15.5 14.5 C13.4 14.2 12 12.8 12 10.5 Z" />
+</svg>
+''';
+
+  static const String _svgBagLuxury = '''
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M8.5 7.5 V5 C8.5 3.3 10 2 12 2 C14 2 15.5 3.3 15.5 5 V7.5" />
+  <path d="M5.5 7.5 H18.5 L19.5 20.5 C19.5 21.3 18.8 22 18 22 H6 C5.2 22 4.5 21.3 4.5 20.5 L5.5 7.5 Z" />
+  <path d="M9.8 13.2 C9.2 12.6 8.5 12.5 7.8 13 C7.1 13.5 7 14.8 7.8 15.6 C8.5 16.3 9.7 16.3 10 15.3 H8.8" />
+  <path d="M12.2 16.5 L14 12.2 L15.8 16.5 M12.8 15.2 H15.2" />
+  <path d="M16 10.5 L16.4 11.5 L17.5 11.8 L16.4 12.1 L16 13.1 L15.6 12.1 L14.5 11.8 L15.6 11.5 Z" stroke-width="0.9" />
+</svg>
+''';
+
+  static const String _svgAuraLuxury = '''
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M12 3 C12 7.8 8.2 11.8 3.5 12 C8.2 12.2 12 16.2 12 21 C12 16.2 15.8 12.2 20.5 12 C15.8 11.8 12 7.8 12 3 Z" fill="#D4AF37" fill-opacity="0.18" />
+  <circle cx="6.5" cy="6.5" r="0.9" fill="#D4AF37" />
+  <circle cx="17.5" cy="6.5" r="0.9" fill="#D4AF37" />
+  <circle cx="6.5" cy="17.5" r="0.9" fill="#D4AF37" />
+  <circle cx="17.5" cy="17.5" r="0.9" fill="#D4AF37" />
+</svg>
+''';
+
+  static const String _svgProfileLuxury = '''
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M11 4.5 C9.8 5 9.2 6.2 9.2 7.5 C9.2 8.5 8.7 9.2 8 10 L8.8 10.8 C8.2 11.4 8.5 12 8 12.5 C8.8 13.5 9 14.5 8.5 15.5 C9.5 17 10.5 18 11 20" />
+  <path d="M11 4.5 C14.5 4.5 16.5 6.5 16.5 10 C17.8 9.2 19.5 10 19.5 12 C19.5 14 17.5 15 16 14 C15.5 16 14 17.5 12.5 18" />
+  <path d="M13.5 11.5 C14.2 11.5 14.5 12.2 14.2 13 C13.8 13.5 13.2 13.5 13 13" />
+  <path d="M13.8 15 L14.2 15.8 L15 16 L14.2 16.2 L13.8 17 L13.4 16.2 L12.6 16 L13.4 15.8 Z" stroke-width="0.8" fill="#D4AF37" />
+  <path d="M10.5 10 L10.8 10.8 L11.6 11 L10.8 11.2 L10.5 12 L10.2 11.2 L9.4 11 L10.2 10.8 Z" stroke-width="0.8" fill="#D4AF37" />
+</svg>
+''';
+
+  Widget _buildFlatNavItem({
+    required Widget iconWidget,
+    required String label,
+    required VoidCallback onTap,
+    bool isMen = false,
+  }) {
+    return Expanded(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            HapticFeedback.selectionClick();
+            onTap();
+          },
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SizedBox(
+                  height: 26,
+                  child: Center(child: iconWidget),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.4,
+                    color: isMen ? const Color(0xFFE5C158) : const Color(0xFF8C6F65),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLuxuryCenterMedallion({
+    required Widget iconWidget,
+    required String label,
+    required VoidCallback onTap,
+    bool isMen = false,
+  }) {
+    bool isPressed = false;
+    return Expanded(
+      child: StatefulBuilder(
+        builder: (ctx, setLocalState) {
+          return GestureDetector(
+            onTapDown: (_) => setLocalState(() => isPressed = true),
+            onTapUp: (_) => setLocalState(() => isPressed = false),
+            onTapCancel: () => setLocalState(() => isPressed = false),
+            onTap: () {
+              HapticFeedback.lightImpact();
+              onTap();
+            },
+            child: AnimatedScale(
+              scale: isPressed ? 0.93 : 1.0,
+              duration: const Duration(milliseconds: 120),
+              curve: Curves.easeOutCubic,
+              child: Transform.translate(
+                offset: const Offset(0, -18),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 62,
+                      height: 62,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          center: const Alignment(0.0, -0.25),
+                          radius: 0.85,
+                          colors: isMen
+                              ? const [
+                                  Color(0xFF3D3228),
+                                  Color(0xFF2A211A),
+                                  Color(0xFF1E1712),
+                                  Color(0xFF14100C),
+                                ]
+                              : const [
+                                  Color(0xFFFFFFFF),
+                                  Color(0xFFFDFBF7),
+                                  Color(0xFFF5EBE1),
+                                  Color(0xFFEADCCF),
+                                ],
+                          stops: const [0.0, 0.35, 0.75, 1.0],
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFD4AF37).withValues(alpha: isMen ? 0.45 : 0.35),
+                            blurRadius: 16,
+                            spreadRadius: 2,
+                            offset: const Offset(0, 6),
+                          ),
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.08),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                        border: Border.all(
+                          color: const Color(0xFFD4AF37),
+                          width: 2.2,
+                        ),
+                      ),
+                      child: Center(
+                        child: Container(
+                          width: 52,
+                          height: 52,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: const Color(0xFFD4AF37).withValues(alpha: 0.35),
+                              width: 1.0,
+                            ),
+                          ),
+                          child: Center(
+                            child: iconWidget,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.6,
+                        color: isMen ? const Color(0xFFE5C158) : const Color(0xFFB8860B),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildSneakPeekCard(ProviderModel p, bool isMen) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isMen
+            ? const Color(0xFF141210).withValues(alpha: 0.94)
+            : const Color(0xFFFAF8F5).withValues(alpha: 0.95),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: const Color(0xFFD4AF37).withValues(alpha: isMen ? 0.6 : 0.45),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isMen ? 0.45 : 0.15),
+            blurRadius: 20,
+            offset: const Offset(0, 6),
+          ),
+          BoxShadow(
+            color: const Color(0xFFD4AF37).withValues(alpha: isMen ? 0.2 : 0.1),
+            blurRadius: 12,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 54,
+            height: 54,
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: const Color(0xFFD4AF37), width: 2),
+            ),
+            child: ClipOval(
+              child: p.avatarUrl.isNotEmpty
+                  ? Image.network(
+                      p.avatarUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        color: isMen ? const Color(0xFF2A231C) : const Color(0xFFE8DED1),
+                        child: Center(
+                          child: Text(
+                            p.fullName.isNotEmpty ? p.fullName[0].toUpperCase() : '?',
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFFD4AF37)),
+                          ),
+                        ),
+                      ),
+                    )
+                  : Container(
+                      color: isMen ? const Color(0xFF2A231C) : const Color(0xFFE8DED1),
+                      child: Center(
+                        child: Text(
+                          p.fullName.isNotEmpty ? p.fullName[0].toUpperCase() : '?',
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFFD4AF37)),
+                        ),
+                      ),
+                    ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        p.fullName.isNotEmpty ? p.fullName : p.businessName,
+                        style: TextStyle(
+                          fontFamily: 'CormorantGaramond',
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: isMen ? const Color(0xFFFAF8F5) : const Color(0xFF1E1A16),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.star_rounded, size: 14, color: Color(0xFFD4AF37)),
+                        const SizedBox(width: 2),
+                        Text(
+                          p.rating > 0 ? p.rating.toStringAsFixed(1) : '4.9',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: isMen ? const Color(0xFFE5C158) : const Color(0xFF3D2E1E),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  p.businessName.isNotEmpty ? p.businessName : 'Estilista Profesional GlowApp',
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    color: isMen ? Colors.white60 : const Color(0xFF6B5E55),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: 34,
+                        child: ElevatedButton(
+                          onPressed: () => _showQuickViewSheet(p),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFC5A052),
+                            foregroundColor: const Color(0xFF14100C),
+                            padding: const EdgeInsets.symmetric(horizontal: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                            elevation: 2,
+                          ),
+                          child: Text(
+                            isMen ? 'Agendar Cita' : 'Ver Perfil',
+                            style: const TextStyle(
+                              fontFamily: 'CormorantGaramond',
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    InkWell(
+                      onTap: () {
+                        setState(() {
+                          _selectedProvider = null;
+                        });
+                      },
+                      borderRadius: BorderRadius.circular(18),
+                      child: Padding(
+                        padding: const EdgeInsets.all(4.0),
+                        child: Icon(Icons.close_rounded, size: 18, color: isMen ? Colors.white54 : Colors.black45),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<AudienceMode>(
@@ -1473,10 +1847,10 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
         final useDarkMap = isMen || MapSettings.isDark;
 
         return Scaffold(
-          backgroundColor: isMen ? MensTheme.obsidianBg : Colors.white,
+          backgroundColor: isMen ? MensTheme.obsidianBg : const Color(0xFFFAF8F5),
           body: Stack(
             children: [
-              // Capa 0: Mapa a pantalla completa centrado en Bogotá
+              // Capa 0: Mapa a pantalla completa centrado en Bogotá (CartoDB Voyager / Dark Matter)
               FlutterMap(
                 mapController: _mapController,
                 options: MapOptions(
@@ -1485,12 +1859,32 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                 ),
                 children: [
                   TileLayer(
-                    urlTemplate: useDarkMap
-                        ? 'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
-                        : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                     userAgentPackageName: 'com.beautyapp.map',
+                    tileBuilder: (context, tileWidget, tile) {
+                      if (useDarkMap) {
+                        return ColorFiltered(
+                          colorFilter: const ColorFilter.matrix(<double>[
+                            0.574, -1.43, -0.144, 0, 255,
+                            -0.426, -0.43, -0.144, 0, 255,
+                            -0.426, -1.43, 0.856, 0, 255,
+                            0, 0, 0, 1, 0,
+                          ]),
+                          child: tileWidget,
+                        );
+                      }
+                      return ColorFiltered(
+                        colorFilter: const ColorFilter.matrix(<double>[
+                          0.65, 0.25, 0.10, 0, 15,
+                          0.20, 0.65, 0.15, 0, 10,
+                          0.15, 0.20, 0.50, 0, 0,
+                          0,    0,    0,    1, 0,
+                        ]),
+                        child: tileWidget,
+                      );
+                    },
                   ),
-              // Marcadores de prestadores en el mapa + marcador de ubicación del usuario
+              // Marcadores Joya de prestadores en el mapa + marcador de ubicación del usuario
               MarkerLayer(
                 markers: [
                   if (_userLocation != null)
@@ -1501,67 +1895,99 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                       child: Container(
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: AppTheme.primary.withOpacity(0.2),
+                          color: const Color(0xFFD4AF37).withValues(alpha: 0.2),
                           border: Border.all(
-                              color: AppTheme.primary, width: 2),
+                              color: const Color(0xFFD4AF37), width: 2),
                         ),
-                        child: Center(
+                        child: const Center(
                           child: Icon(Icons.my_location,
-                              color: AppTheme.primary, size: 24),
+                              color: Color(0xFFD4AF37), size: 24),
                         ),
                       ),
                     ),
                   ..._filteredProviders.map((p) {
+                    final isSelected = _selectedProvider?.id == p.id;
                     return Marker(
-                      width: 60,
-                      height: 60,
+                      width: 70,
+                      height: 78,
                       point: LatLng(p.latitude, p.longitude),
                       child: GestureDetector(
-                        onTap: () => _showQuickViewSheet(p),
-                        child: Stack(
-                          alignment: Alignment.center,
+                        onTap: () {
+                          setState(() {
+                            _selectedProvider = p;
+                          });
+                        },
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             Container(
-                              width: 45,
-                              height: 45,
+                              padding: const EdgeInsets.all(2.5),
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: AppTheme.primary.withOpacity(0.25),
-                              ),
-                            ),
-                            Container(
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
+                                color: isMen ? const Color(0xFF1E1A16) : const Color(0xFFFAF8F5),
                                 border: Border.all(
-                                    color: AppTheme.primary, width: 2),
-                                boxShadow: const [
+                                  color: isSelected
+                                      ? (isMen ? const Color(0xFFE5C158) : const Color(0xFFD4AF37))
+                                      : const Color(0xFFC5A052),
+                                  width: isSelected ? 3.0 : 2.0,
+                                ),
+                                boxShadow: [
                                   BoxShadow(
-                                    color: Color(0x128C6F65),
-                                    blurRadius: 8,
-                                    offset: Offset(0, 4),
+                                    color: const Color(0xFFD4AF37).withValues(alpha: isSelected ? 0.6 : 0.35),
+                                    blurRadius: isSelected ? 14 : 8,
+                                    spreadRadius: isSelected ? 2 : 0,
+                                    offset: const Offset(0, 3),
                                   ),
                                 ],
                               ),
-                              child: Hero(
-                                tag: 'provider_avatar_${p.id}',
-                                child: CircleAvatar(
-                                  radius: 18,
-                                  backgroundColor: const Color(0xFFF5EBE6),
-                                  backgroundImage: p.avatarUrl.isNotEmpty
-                                      ? NetworkImage(p.avatarUrl)
-                                      : null,
-                                  child: p.avatarUrl.isEmpty
-                                      ? Text(
-                                          p.fullName.isNotEmpty
-                                              ? p.fullName[0].toUpperCase()
-                                              : '?',
-                                          style: TextStyle(
-                                              fontSize: 14,
-                                              color: AppTheme.primary,
-                                              fontWeight: FontWeight.bold),
-                                        )
-                                      : null,
+                              child: CircleAvatar(
+                                radius: 19,
+                                backgroundColor: isMen ? const Color(0xFF2A231C) : const Color(0xFFF5EBE6),
+                                backgroundImage: p.avatarUrl.isNotEmpty ? NetworkImage(p.avatarUrl) : null,
+                                child: p.avatarUrl.isEmpty
+                                    ? Text(
+                                        p.fullName.isNotEmpty ? p.fullName[0].toUpperCase() : '?',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: isMen ? const Color(0xFFD4AF37) : AppTheme.primary,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      )
+                                    : null,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                              decoration: BoxDecoration(
+                                color: isMen ? const Color(0xFF141210) : const Color(0xFFFDFBF7),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: const Color(0xFFD4AF37).withValues(alpha: 0.6),
+                                  width: 0.8,
                                 ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.2),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 1),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.star_rounded, size: 10, color: Color(0xFFD4AF37)),
+                                  const SizedBox(width: 1.5),
+                                  Text(
+                                    p.rating > 0 ? p.rating.toStringAsFixed(1) : '4.9',
+                                    style: TextStyle(
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.bold,
+                                      color: isMen ? const Color(0xFFE5C158) : const Color(0xFF3D2E1E),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
@@ -1592,11 +2018,21 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                   height: 54,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
-                    color: AppTheme.surface.withOpacity(0.95),
+                    color: isMen
+                        ? const Color(0xFF141210).withValues(alpha: 0.94)
+                        : const Color(0xFFFAF8F5).withValues(alpha: 0.95),
                     borderRadius: BorderRadius.circular(30),
-                    border:
-                        Border.all(color: AppTheme.accent.withOpacity(0.4), width: 1.5),
-                    boxShadow: AppTheme.softShadow,
+                    border: Border.all(
+                      color: const Color(0xFFD4AF37).withValues(alpha: isMen ? 0.6 : 0.45),
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: isMen ? 0.4 : 0.08),
+                        blurRadius: 16,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
                   child: Row(
                     children: [
@@ -1607,9 +2043,9 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                           }
                         },
                         borderRadius: BorderRadius.circular(20),
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Icon(Icons.search, color: AppTheme.primary),
+                        child: const Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Icon(Icons.search, color: Color(0xFFD4AF37)),
                         ),
                       ),
                       const SizedBox(width: 2),
@@ -1617,13 +2053,22 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                         child: TextField(
                           controller: _searchController,
                           textCapitalization: TextCapitalization.sentences,
+                          style: TextStyle(
+                            color: isMen ? Colors.white : const Color(0xFF1E1A16),
+                            fontSize: 13,
+                          ),
                           decoration: InputDecoration(
-                            hintText:
-                                '¿Qué servicio o estilista buscas? O pregunta a Aura...',
+                            hintText: isMen
+                                ? 'Buscar estilista o servicio... ✨'
+                                : '¿Qué ritual deseas hoy? Pregunta a Aura ✨',
                             hintStyle: TextStyle(
-                                fontSize: 13.5,
-                                color: AppTheme.text,
-                                overflow: TextOverflow.ellipsis),
+                              fontSize: 12.0,
+                              color: isMen
+                                  ? const Color(0xFFD4AF37).withValues(alpha: 0.75)
+                                  : const Color(0xFF6B5E55).withValues(alpha: 0.8),
+                              letterSpacing: 0.1,
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(vertical: 10),
                             border: InputBorder.none,
                           ),
                           onSubmitted: (val) {
@@ -1638,104 +2083,108 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                           Navigator.pushNamed(context, '/my-glow');
                         },
                         borderRadius: BorderRadius.circular(20),
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Icon(Icons.auto_awesome, color: AppTheme.primary),
+                        child: const Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Icon(Icons.auto_awesome, color: Color(0xFFD4AF37)),
                         ),
                       ),
                     ],
                   ),
                 ),
-                // El selector de categorías se ha ocultado conforme a los requerimientos UX
-                // SizedBox(height: 12),
-                // _buildCategorySelector(),
               ],
             ),
           ),
 
-          // Capa 3: Glassmorphic Floating Navigation Dock (Consolidated 4-item layout)
+          // Capa 2: Floating Sneak-Peek Card (Selected Stylist Preview)
+          if (_selectedProvider != null)
+            Positioned(
+              bottom: MediaQuery.of(context).padding.bottom + 98,
+              left: 16,
+              right: 16,
+              child: _buildSneakPeekCard(_selectedProvider!, isMen),
+            ),
+
+          // Capa 3: Luxury Navigation Dock (Haute Horlogerie & Quiet Luxury)
           Positioned(
             bottom: MediaQuery.of(context).padding.bottom + 16,
             left: 16,
             right: 16,
             child: Container(
               height: 72,
-              padding: const EdgeInsets.symmetric(horizontal: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.95),
-                borderRadius: BorderRadius.circular(28),
+                color: isMen
+                    ? const Color(0xFF141210).withValues(alpha: 0.95)
+                    : const Color(0xFFFDFBF7),
+                borderRadius: BorderRadius.circular(36),
                 border: Border.all(
-                    color: AppTheme.primary.withValues(alpha: 0.15),
-                    width: 1.0),
+                    color: const Color(0xFFD4AF37).withValues(alpha: isMen ? 0.6 : 0.5),
+                    width: 1.5),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.06),
-                    blurRadius: 16,
-                    offset: const Offset(0, 4),
+                    color: Colors.black.withValues(alpha: isMen ? 0.45 : 0.08),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                  BoxShadow(
+                    color: const Color(0xFFD4AF37).withValues(alpha: isMen ? 0.25 : 0.15),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
                   ),
                 ],
               ),
               child: Row(
                 children: [
-                  // Botón 1: Citas (nav_citas_icon.png)
-                  _buildProminentCenterNavItem(
-                    iconWidget: GlowIcon.resolve(
-                      'calendar',
-                      size: 26,
-                      colorRole: GlowIconColorRole.neutral,
-                      semanticLabel: 'Citas',
-                      ),
-                    gradientColors: const [Color(0xFFF3D5C8), Color(0xFFD4AF37)],
-                    shadowColor: const Color(0xFFD4AF37),
-                    
+                  // Botón 1: Citas
+                  _buildFlatNavItem(
+                    iconWidget: Image.asset(
+                      'assets/icons/glow/nav_citas.webp',
+                      width: 28,
+                      height: 28,
+                      fit: BoxFit.contain,
+                    ),
                     label: 'Citas',
                     onTap: () => _checkAuthAndNavigate('/client-bookings'),
+                    isMen: isMen,
                   ),
 
-                  // Botón 2: GlowShop (nav_glowshop_icon.png)
-                  _buildProminentCenterNavItem(
-                    iconWidget: GlowIcon.resolve(
-                      'bag',
-                      size: 26,
-                      colorRole: GlowIconColorRole.accent,
-                      semanticLabel: 'GlowShop',
-                      ),
-                    gradientColors: const [Color(0xFFF3D5C8), Color(0xFFD4AF37)],
-                    shadowColor: const Color(0xFFD4AF37),
+                  // Botón 2: GlowShop
+                  _buildFlatNavItem(
+                    iconWidget: Image.asset(
+                      'assets/icons/glow/nav_glowshop.webp',
+                      width: 28,
+                      height: 28,
+                      fit: BoxFit.contain,
+                    ),
                     label: 'GlowShop',
                     onTap: () => _checkAuthAndNavigate('/store'),
+                    isMen: isMen,
                   ),
 
-                  // Botón 3: Glow IA+ (glow_ia_mesh_avatar.jpg)
-                  _buildProminentCenterNavItem(
-                    iconWidget: GlowIcon.resolve(
-                      'aura',
-                      size: 26,
-                      colorRole: GlowIconColorRole.aura,
-                      semanticLabel: 'Glow IA+',
-                      ),
-                    gradientColors: const [
-                      Color(0xFFF3D5C8),
-                      Color(0xFFD4AF37),
-                    ],
-                    shadowColor: const Color(0xFFD4AF37),
+                  // Botón 3: Glow IA+ (Medallón Central Elevado)
+                  _buildLuxuryCenterMedallion(
+                    iconWidget: Image.asset(
+                      'assets/icons/glow/nav_glow_ia.webp',
+                      width: 32,
+                      height: 32,
+                      fit: BoxFit.contain,
+                    ),
                     label: 'Glow IA+',
                     onTap: () => _checkAuthAndNavigate('/ideas'),
+                    isMen: isMen,
                   ),
 
-                  // Botón 4: Perfil (nav_perfil_icon.png)
-                  _buildProminentCenterNavItem(
-                    iconWidget: GlowIcon.resolve(
-                      'profile',
-                      size: 26,
-                      colorRole: GlowIconColorRole.secondary,
-                      semanticLabel: 'Perfil',
-                      ),
-                    gradientColors: const [Color(0xFFF3D5C8), Color(0xFFD4AF37)],
-                    shadowColor: const Color(0xFFD4AF37),
-                    
+                  // Botón 4: Perfil
+                  _buildFlatNavItem(
+                    iconWidget: Image.asset(
+                      'assets/icons/glow/nav_perfil.webp',
+                      width: 28,
+                      height: 28,
+                      fit: BoxFit.contain,
+                    ),
                     label: 'Perfil',
                     onTap: () => _checkAuthAndNavigate('/profile'),
+                    isMen: isMen,
                   ),
                 ],
               ),
@@ -1746,20 +2195,51 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
           Positioned(
             left: 20,
             bottom: MediaQuery.of(context).padding.bottom + 104,
-            child: FloatingActionButton.small(
-              heroTag: 'whatsapp_concierge_direct_fab',
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Conectando con Concierge GlowApp via WhatsApp (+573009128899)...'),
-                    backgroundColor: Color(0xFF25D366),
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: const Color(0xFFFDFBF7), // Marfil satinado lujo
+                border: Border.all(
+                  color: const Color(0xFFD4AF37).withValues(alpha: 0.6), // Bisel Oro 871
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.12),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
                   ),
-                );
-              },
-              backgroundColor: const Color(0xFF25D366),
-              foregroundColor: Colors.white,
-              elevation: 4,
-              child: const Icon(Icons.chat_bubble_outline_rounded, size: 20),
+                  BoxShadow(
+                    color: const Color(0xFFD4AF37).withValues(alpha: 0.20),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(22),
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Conectando con Concierge GlowApp via WhatsApp (+573009128899)...'),
+                        backgroundColor: Color(0xFF8C6F65),
+                      ),
+                    );
+                  },
+                  child: const Center(
+                    child: Icon(
+                      Icons.chat_bubble_outline_rounded,
+                      size: 20,
+                      color: Color(0xFF25D366), // Acento esmeralda elegante
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
 
@@ -1896,7 +2376,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
           shape: BoxShape.circle,
           border: Border.all(color: const Color(0xFFD4AF37), width: 3.5),
           image: const DecorationImage(
-            image: AssetImage('images/avatar_aura.png'),
+            image: AssetImage('images/avatar_aura.webp'),
             fit: BoxFit.cover,
           ),
         ),
@@ -1945,7 +2425,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                 height: 90,
                 decoration: BoxDecoration(
                   image: DecorationImage(
-                    image: AssetImage('images/logo_maestro_v5.png'),
+                    image: AssetImage('images/logo_maestro_v5.webp'),
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -1960,7 +2440,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         image: DecorationImage(
-                          image: AssetImage('images/logo_maestro_v3.jpg'),
+                          image: AssetImage('images/logo_maestro_v3.webp'),
                           fit: BoxFit.cover,
                         ),
                       ),
@@ -2099,7 +2579,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                               shape: BoxShape.circle,
                               border: Border.all(color: const Color(0xFFD4AF37), width: 2.0),
                               image: const DecorationImage(
-                                image: AssetImage('images/avatar_aura.png'),
+                                image: AssetImage('images/avatar_aura.webp'),
                                 fit: BoxFit.cover,
                               ),
                             ),
