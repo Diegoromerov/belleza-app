@@ -648,6 +648,10 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: const Color(0xFFE8DFD8).withOpacity(0.6),
+                                  width: 1,
+                                ),
                                 boxShadow: const [
                                   BoxShadow(
                                     color: Color(0x0A000000),
@@ -656,79 +660,124 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                   ),
                                 ],
                               ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            s['name'] ?? '',
-                                            style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 16),
-                                          ),
+                              child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(20),
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => BookingScreen(
+                                          providerId: widget.providerId,
+                                          providerName: p['business_name'] ?? p['full_name'] ?? 'Prestador',
+                                          services: services,
+                                          initialServiceId: s['id']?.toString(),
                                         ),
-                                        Text(
-                                          '\$${_num(s['price']).toStringAsFixed(0)}',
-                                          style: const TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold,
-                                              color: AppTheme.primary),
-                                        ),
-                                      ],
-                                    ),
-                                    if (s['description'] != null &&
-                                        s['description']
-                                            .toString()
-                                            .trim()
-                                            .isNotEmpty) ...[
-                                      const SizedBox(height: 6),
-                                      Text(
-                                        s['description'],
-                                        style: TextStyle(
-                                            color: Colors.grey[600],
-                                            fontSize: 13,
-                                            height: 1.4),
                                       ),
-                                    ],
-                                    const SizedBox(height: 12),
-                                    Row(
+                                    );
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        const Icon(Icons.access_time,
-                                            size: 16, color: Colors.grey),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          '${s['duration_minutes']} min',
-                                          style: TextStyle(
-                                              color: Colors.grey[600],
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w500),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                s['name'] ?? '',
+                                                style: const TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 16,
+                                                    color: Color(0xFF1F1A15)),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              '\$${_num(s['price']).toStringAsFixed(0)}',
+                                              style: const TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Color(0xFFC5A052)),
+                                            ),
+                                          ],
                                         ),
-                                        if (s['category'] != null &&
-                                            s['category']
+                                        if (s['description'] != null &&
+                                            s['description']
                                                 .toString()
                                                 .trim()
                                                 .isNotEmpty) ...[
-                                          const SizedBox(width: 12),
-                                          const Icon(Icons.style_outlined,
-                                              size: 16, color: Colors.grey),
-                                          const SizedBox(width: 4),
+                                          const SizedBox(height: 6),
                                           Text(
-                                            s['category'],
+                                            s['description'],
                                             style: TextStyle(
                                                 color: Colors.grey[600],
                                                 fontSize: 13,
-                                                fontWeight: FontWeight.w500),
+                                                height: 1.4),
                                           ),
                                         ],
+                                        const SizedBox(height: 12),
+                                        Row(
+                                          children: [
+                                            const Icon(Icons.access_time,
+                                                size: 15, color: Colors.grey),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              '${s['duration_minutes']} min',
+                                              style: TextStyle(
+                                                  color: Colors.grey[600],
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w500),
+                                            ),
+                                            if (s['category'] != null &&
+                                                s['category']
+                                                    .toString()
+                                                    .trim()
+                                                    .isNotEmpty) ...[
+                                              const SizedBox(width: 12),
+                                              const Icon(Icons.style_outlined,
+                                                  size: 15, color: Colors.grey),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                s['category'],
+                                                style: TextStyle(
+                                                    color: Colors.grey[600],
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.w500),
+                                              ),
+                                            ],
+                                            const Spacer(),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFFC5A052).withOpacity(0.12),
+                                                borderRadius: BorderRadius.circular(12),
+                                              ),
+                                              child: const Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Text(
+                                                    'Agendar',
+                                                    style: TextStyle(
+                                                      fontSize: 11.5,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: Color(0xFF9E7C33),
+                                                    ),
+                                                  ),
+                                                  SizedBox(width: 2),
+                                                  Icon(Icons.arrow_forward_ios_rounded, size: 10, color: Color(0xFF9E7C33)),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ],
                                     ),
-                                  ],
+                                  ),
                                 ),
                               ),
                             )),

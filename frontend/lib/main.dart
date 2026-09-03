@@ -41,6 +41,7 @@ import 'screens/profile/user_profile.dart';
 import 'screens/profile/my_glow_dashboard_screen.dart';
 import 'screens/provider_profile_screen.dart';
 import 'screens/booking_tracking_screen.dart';
+import 'screens/booking_screen.dart';
 import 'screens/provider_route_screen.dart';
 import 'screens/ideas/ideas_empty_screen.dart';
 import 'screens/ideas/biometric_consent_screen.dart';
@@ -932,6 +933,40 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
   }
   */
 
+  Future<void> _openBookingDirectly(BuildContext context, ProviderModel provider, [String? initialServiceId]) async {
+    try {
+      final details = await ApiService.fetchProviderDetails(provider.id);
+      final services = (details['services'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+      if (context.mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => BookingScreen(
+              providerId: provider.id,
+              providerName: provider.businessName.isNotEmpty ? provider.businessName : provider.fullName,
+              services: services,
+              initialServiceId: initialServiceId,
+            ),
+          ),
+        );
+      }
+    } catch (_) {
+      if (context.mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => BookingScreen(
+              providerId: provider.id,
+              providerName: provider.businessName.isNotEmpty ? provider.businessName : provider.fullName,
+              services: const [],
+              initialServiceId: initialServiceId,
+            ),
+          ),
+        );
+      }
+    }
+  }
+
   void _showQuickViewSheet(ProviderModel provider) {
     showModalBottomSheet(
       context: context,
@@ -1171,17 +1206,19 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                             return Expanded(
                               child: Container(
                                 margin: EdgeInsets.only(right: idx == 0 ? 8 : 0),
-                                child: ClipRRect(
+                                decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(16),
-                                  child: Image.network(
-                                    imgUrl,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) => Container(
-                                      color: const Color(0xFFF4EFEA),
-                                      child: const Icon(Icons.broken_image,
-                                          color: Color(0xFFC5A052)),
-                                    ),
+                                  border: Border.all(
+                                    color: const Color(0xFFC5A052).withOpacity(0.3),
+                                    width: 1,
                                   ),
+                                  image: imgUrl.isNotEmpty
+                                      ? DecorationImage(
+                                          image: NetworkImage(imgUrl),
+                                          fit: BoxFit.cover,
+                                        )
+                                      : null,
+                                  color: const Color(0xFFF4EFEA),
                                 ),
                               ),
                             );
@@ -1193,77 +1230,97 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                   const SizedBox(height: 24),
                   Row(
                     children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            side: const BorderSide(
-                                color: Color(0xFFC5A052), width: 1.5),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20)),
-                          ),
-                          onPressed: () async {
-                            final token = await AuthService.getToken();
-                            if (token == null) {
-                              if (context.mounted) {
-                                Navigator.pushNamed(context, '/login');
-                              }
-                              return;
-                            }
-                            if (context.mounted) {
-                              Navigator.pop(context);
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => ChatScreen(
-                                    partnerId: provider.id,
-                                    partnerName: provider.businessName.isNotEmpty
-                                        ? provider.businessName
-                                        : provider.fullName,
-                                    partnerRole: 'provider',
-                                    partnerAvatar: provider.avatarUrl,
-                                  ),
+                      // Chat Directo
+                      IconButton(
+                        onPressed: () async {
+                          final token = await AuthService.getToken();
+                          if (token == null) {
+                            Navigator.pop(context);
+                            Navigator.pushNamed(context, '/login');
+                            return;
+                          }
+                          if (context.mounted) {
+                            Navigator.pop(context);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ChatScreen(
+                                  partnerId: provider.id,
+                                  partnerName: provider.businessName.isNotEmpty
+                                      ? provider.businessName
+                                      : provider.fullName,
+                                  partnerRole: 'provider',
+                                  partnerAvatar: provider.avatarUrl,
                                 ),
-                              );
-                            }
-                          },
-                          icon: const Icon(Icons.chat_bubble_outline_rounded,
-                              color: Color(0xFFC5A052), size: 18),
-                          label: const Text(
-                            'Chat Directo',
-                            style: TextStyle(
-                                color: Color(0xFFC5A052),
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14),
+                              ),
+                            );
+                          }
+                        },
+                        style: IconButton.styleFrom(
+                          backgroundColor: const Color(0xFFF4EFEA),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            side: const BorderSide(color: Color(0xFFE8E0D5)),
                           ),
+                          padding: const EdgeInsets.all(12),
                         ),
+                        icon: const Icon(Icons.chat_bubble_outline_rounded, color: Color(0xFFC5A052), size: 20),
+                        tooltip: 'Chat Directo',
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 8),
+                      // Ver Perfil Completo
                       Expanded(
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFC5A052),
-                            foregroundColor: Colors.white,
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Color(0xFFC5A052), width: 1.2),
+                            foregroundColor: const Color(0xFF8C6F65),
                             padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20)),
-                            elevation: 2,
-                            shadowColor: const Color(0xFFC5A052).withOpacity(0.4),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
                           ),
                           onPressed: () {
                             Navigator.pop(context);
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) =>
-                                    ProviderDetailScreen(providerId: provider.id),
+                                builder: (_) => ProviderDetailScreen(providerId: provider.id),
                               ),
                             );
                           },
                           child: const Text(
-                            'Ver Perfil Completo',
+                            'Ver Perfil',
                             style: TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 14),
+                              fontFamily: 'CormorantGaramond',
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1F1A15),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Reservar Cita Directa
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFC5A052),
+                            foregroundColor: const Color(0xFF14100C),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                            elevation: 2,
+                          ),
+                          onPressed: () {
+                            Navigator.pop(context);
+                            _openBookingDirectly(context, provider);
+                          },
+                          icon: const Icon(Icons.calendar_today_outlined, size: 15, color: Color(0xFF14100C)),
+                          label: const Text(
+                            'Reservar Cita',
+                            style: TextStyle(
+                              fontFamily: 'CormorantGaramond',
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF14100C),
+                            ),
                           ),
                         ),
                       ),
@@ -1791,31 +1848,61 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                 const SizedBox(height: 8),
                 Row(
                   children: [
+                    // Botón 1: Ver Perfil
                     Expanded(
+                      flex: 1,
                       child: SizedBox(
                         height: 34,
-                        child: ElevatedButton(
+                        child: OutlinedButton(
                           onPressed: () => _showQuickViewSheet(p),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFC5A052),
-                            foregroundColor: const Color(0xFF14100C),
-                            padding: const EdgeInsets.symmetric(horizontal: 14),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Color(0xFFC5A052), width: 1.2),
+                            foregroundColor: isMen ? const Color(0xFFE5C158) : const Color(0xFF8C6F65),
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-                            elevation: 2,
                           ),
-                          child: Text(
-                            isMen ? 'Agendar Cita' : 'Ver Perfil',
-                            style: const TextStyle(
+                          child: const Text(
+                            'Ver Perfil',
+                            style: TextStyle(
                               fontFamily: 'CormorantGaramond',
-                              fontSize: 14,
+                              fontSize: 13,
                               fontWeight: FontWeight.bold,
-                              letterSpacing: 0.3,
+                              letterSpacing: 0.2,
                             ),
                           ),
                         ),
                       ),
                     ),
                     const SizedBox(width: 8),
+                    // Botón 2: Reservar Ya (Acción directa en 2 toques)
+                    Expanded(
+                      flex: 1,
+                      child: SizedBox(
+                        height: 34,
+                        child: ElevatedButton.icon(
+                          onPressed: () => _openBookingDirectly(context, p),
+                          icon: const Icon(Icons.bolt_rounded, size: 15, color: Color(0xFF14100C)),
+                          label: const Text(
+                            'Reservar Ya',
+                            style: TextStyle(
+                              fontFamily: 'CormorantGaramond',
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF14100C),
+                              letterSpacing: 0.2,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFC5A052),
+                            foregroundColor: const Color(0xFF14100C),
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                            elevation: 2,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
                     InkWell(
                       onTap: () {
                         setState(() {
