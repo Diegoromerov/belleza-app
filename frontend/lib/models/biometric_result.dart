@@ -7,6 +7,8 @@ class BiometricResult {
   final String? recommendation;
   final Map<String, dynamic>? vtoTones;
   final List<Product>? products;
+  final int? glowScore;
+  final Map<String, dynamic>? dermoFamilies;
 
   BiometricResult({
     this.profileId,
@@ -15,6 +17,8 @@ class BiometricResult {
     this.recommendation,
     this.vtoTones,
     this.products,
+    this.glowScore,
+    this.dermoFamilies,
   });
 
   factory BiometricResult.fromJson(Map<String, dynamic> json) {
@@ -22,15 +26,41 @@ class BiometricResult {
         ? json['results'] as Map<String, dynamic>
         : json;
 
+    final rawGlowScore = json['glowScore'] ?? data['glowScore'];
+    int? parsedGlowScore = (rawGlowScore is num)
+        ? rawGlowScore.toInt()
+        : int.tryParse(rawGlowScore?.toString() ?? '');
+
+    final faceScores = data['face'] is Map<String, dynamic>
+        ? FaceScores.fromJson(data['face'])
+        : (data['faceScores'] is Map<String, dynamic>
+            ? FaceScores.fromJson(data['faceScores'])
+            : null);
+
+    // Fallback formula Evimetra-style si no viene del backend
+    if (parsedGlowScore == null && faceScores != null) {
+      final h = faceScores.hydration;
+      final c = 100 - faceScores.spots;
+      final t = 100 - faceScores.pores;
+      final f = 100 - faceScores.wrinkles;
+      parsedGlowScore = ((h * 0.35) + (c * 0.25) + (t * 0.25) + (f * 0.15)).round().clamp(0, 100);
+    }
+
     return BiometricResult(
       profileId: json['profileId']?.toString() ?? data['profileId']?.toString(),
-      face: data['face'] is Map<String, dynamic> ? FaceScores.fromJson(data['face']) : null,
+      face: faceScores,
       hands: data['hands'] is Map<String, dynamic> ? HandsDiagnosis.fromJson(data['hands']) : null,
       recommendation: (data['recommendation'] ?? json['recommendation'])?.toString(),
       vtoTones: data['vtoTones'] is Map<String, dynamic> ? data['vtoTones'] as Map<String, dynamic> : null,
       products: data['products'] is List
           ? (data['products'] as List).whereType<Map<String, dynamic>>().map((p) => Product.fromJson(p)).toList()
           : null,
+      glowScore: parsedGlowScore,
+      dermoFamilies: (json['dermoFamilies'] is Map<String, dynamic>)
+          ? json['dermoFamilies'] as Map<String, dynamic>
+          : (data['dermoFamilies'] is Map<String, dynamic>
+              ? data['dermoFamilies'] as Map<String, dynamic>
+              : null),
     );
   }
 }

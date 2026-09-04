@@ -59,6 +59,7 @@ import 'screens/designs/palette_card_screen.dart';
 import 'screens/designs/colorimetria_historial_screen.dart';
 import 'screens/designs/wardrobe_dashboard_screen.dart';
 import 'screens/designs/outfit_result_screen.dart';
+import 'screens/ideas/makeup_lookbook_screen.dart';
 import 'models/provider_model.dart';
 import 'shared/theme.dart';
 
@@ -234,6 +235,7 @@ class BeautyApp extends StatelessWidget {
                 '/colorimetria-historial': (_) => const ColorimetriaHistorialScreen(),
                 '/wardrobe': (_) => const WardrobeDashboardScreen(),
                 '/outfit-result': (_) => const OutfitResultScreen(),
+                '/makeup-lookbook': (_) => const MakeupLookbookScreen(),
               },
             );
           },

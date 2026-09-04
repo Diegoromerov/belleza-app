@@ -72,6 +72,8 @@ router.post('/analyze', authMiddleware, biometricConsentGuard, idempotencyMiddle
       profileId: result.profileId,
       results: {
         face: result.face,
+        glowScore: result.glowScore,
+        dermoFamilies: result.dermoFamilies,
         hands: result.hands,
         recommendation: result.recommendation,
         keyIngredients: result.keyIngredients,
