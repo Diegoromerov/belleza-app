@@ -2311,59 +2311,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
             ),
           ),
 
-          // Capa: Boton Permanente de Asistencia WhatsApp Concierge (Sprint 3 P2)
-          Positioned(
-            left: 20,
-            bottom: MediaQuery.of(context).padding.bottom + 104,
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: const Color(0xFFFDFBF7), // Marfil satinado lujo
-                border: Border.all(
-                  color: const Color(0xFFD4AF37).withValues(alpha: 0.6), // Bisel Oro 871
-                  width: 1.5,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.12),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                  BoxShadow(
-                    color: const Color(0xFFD4AF37).withValues(alpha: 0.20),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(22),
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Conectando con Concierge GlowApp via WhatsApp (+573009128899)...'),
-                        backgroundColor: Color(0xFF8C6F65),
-                      ),
-                    );
-                  },
-                  child: const Center(
-                    child: Icon(
-                      Icons.chat_bubble_outline_rounded,
-                      size: 20,
-                      color: Color(0xFF25D366), // Acento esmeralda elegante
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-
-          // Capa: Ajustes de Mapa (Speed Dial Expandible)
+          // Capa: Ajustes de Mapa (Speed Dial Expandible con Capas y Chat)
           Positioned(
             right: 20,
             bottom: MediaQuery.of(context).padding.bottom + (_selectedProvider != null ? 224 : 104),
@@ -2372,9 +2320,126 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 if (_isMapMenuOpen) ...[
-                  // Botón Tema de Mapa
+                  // Botón 1: Chat y Asistencia
+                  FloatingActionButton.small(
+                    heroTag: 'home_chat_integrated_fab',
+                    tooltip: 'Mensajes y Asistencia',
+                    onPressed: () {
+                      HapticFeedback.selectionClick();
+                      showModalBottomSheet(
+                        context: context,
+                        backgroundColor: Colors.transparent,
+                        builder: (ctx) => Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFFAF8F5),
+                            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Color(0x1A000000),
+                                blurRadius: 16,
+                                offset: Offset(0, -4),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 40,
+                                height: 4,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[300],
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              const Text(
+                                'Canales de Chat y Asistencia',
+                                style: TextStyle(
+                                  fontFamily: 'CormorantGaramond',
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF1F1A15),
+                                ),
+                              ),
+                              const SizedBox(height: 14),
+                              ListTile(
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                tileColor: Colors.white,
+                                leading: Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF3D59B).withValues(alpha: 0.3),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Icon(Icons.chat_bubble_outline_rounded, color: Color(0xFFC5A052)),
+                                ),
+                                title: const Text(
+                                  'Bandeja de Mensajes GlowApp',
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                ),
+                                subtitle: const Text(
+                                  'Chats activos con tus estilistas y reservas',
+                                  style: TextStyle(fontSize: 12, color: Color(0xFF6B5E55)),
+                                ),
+                                trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Color(0xFFC5A052)),
+                                onTap: () {
+                                  Navigator.pop(ctx);
+                                  _checkAuthAndNavigate('/chat');
+                                },
+                              ),
+                              const SizedBox(height: 10),
+                              ListTile(
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                tileColor: Colors.white,
+                                leading: Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF25D366).withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Icon(Icons.support_agent_rounded, color: Color(0xFF25D366)),
+                                ),
+                                title: const Text(
+                                  'Concierge WhatsApp VIP',
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                ),
+                                subtitle: const Text(
+                                  'Atención personalizada (+57 300 912 8899)',
+                                  style: TextStyle(fontSize: 12, color: Color(0xFF6B5E55)),
+                                ),
+                                trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Color(0xFF25D366)),
+                                onTap: () {
+                                  Navigator.pop(ctx);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Conectando con Concierge GlowApp via WhatsApp (+573009128899)...'),
+                                      backgroundColor: Color(0xFF8C6F65),
+                                    ),
+                                  );
+                                },
+                              ),
+                              const SizedBox(height: 8),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                    backgroundColor: AppTheme.surface,
+                    foregroundColor: const Color(0xFF25D366),
+                    elevation: 3,
+                    shape: const CircleBorder(),
+                    child: const Icon(
+                      Icons.chat_bubble_outline_rounded,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  // Botón 2: Tema de Mapa
                   FloatingActionButton.small(
                     heroTag: 'map_theme_main_fab',
+                    tooltip: 'Modo Claro / Oscuro',
                     onPressed: () {
                       setState(() {
                         MapSettings.isDark = !MapSettings.isDark;
@@ -2392,9 +2457,10 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                     ),
                   ),
                   const SizedBox(height: 10),
-                  // Botón Mi Ubicación
+                  // Botón 3: Mi Ubicación
                   FloatingActionButton.small(
                     heroTag: 'my_location_fab',
+                    tooltip: 'Centrar Mi Ubicación',
                     onPressed: _determineUserLocation,
                     backgroundColor: AppTheme.surface,
                     foregroundColor: AppTheme.primary,
@@ -2404,9 +2470,10 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                   ),
                   const SizedBox(height: 10),
                 ],
-                // Botón principal de menú expandible
+                // Botón principal de menú expandible (Capas)
                 FloatingActionButton(
                   heroTag: 'map_settings_toggle_fab',
+                  tooltip: 'Capas y Opciones',
                   onPressed: () {
                     setState(() {
                       _isMapMenuOpen = !_isMapMenuOpen;
