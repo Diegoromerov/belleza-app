@@ -265,7 +265,7 @@ class _MakeupLookbookScreenState extends State<MakeupLookbookScreen> {
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1F1A15)),
             ),
             Text(
-              'Media.io x GlowApp Engine',
+              'Glow IA Vision Engine',
               style: TextStyle(fontSize: 11, color: Color(0xFFC5A052), fontWeight: FontWeight.w600),
             ),
           ],
@@ -329,7 +329,7 @@ class _MakeupLookbookScreenState extends State<MakeupLookbookScreen> {
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: const Text(
-                          'MEDIA.IO SPEC',
+                          'NEURAL SPEC',
                           style: TextStyle(fontSize: 9, color: Color(0xFFF3D59B), fontWeight: FontWeight.bold),
                         ),
                       ),

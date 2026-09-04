@@ -80,7 +80,7 @@ class _NailVtoScreenState extends State<NailVtoScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: const Text(
-          'VTO Manicura & Uñas • DeepSeek IA',
+          'VTO Manicura Haute Beauté',
           style: TextStyle(
             fontFamily: 'CormorantGaramond',
             fontWeight: FontWeight.bold,
@@ -295,7 +295,7 @@ class _NailVtoScreenState extends State<NailVtoScreen> {
                             onPressed: () {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('💅 Esmalte "$_selectedName" agregado al carrito'),
+                                  content: Text('Esmalte "$_selectedName" añadido al carrito'),
                                 ),
                               );
                             },
@@ -325,7 +325,7 @@ class _NailVtoScreenState extends State<NailVtoScreen> {
                             onPressed: () {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text('📍 Agendando Manicura Spa cerca de tu ubicación...'),
+                                  content: Text('Localizando Atelier de Manicura Spa cercano...'),
                                 ),
                               );
                             },

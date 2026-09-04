@@ -19,28 +19,29 @@ class ProductCard extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: 60,
-            height: 60,
+            width: 56,
+            height: 56,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              color: Colors.grey[200],
+              borderRadius: BorderRadius.circular(10),
+              color: const Color(0xFFFAF5ED),
+              border: Border.all(color: const Color(0xFFEADBCE), width: 0.8),
             ),
             child: product.imageUrl.isNotEmpty
                 ? CachedNetworkImage(
                     imageUrl: product.imageUrl,
-                    width: 60,
-                    height: 60,
+                    width: 56,
+                    height: 56,
                     fit: BoxFit.cover,
                     placeholder: (context, url) => const Center(
                       child: SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 1.5, color: Color(0xFFC5A052)),
                       ),
                     ),
-                    errorWidget: (context, url, error) => const Icon(Icons.photo),
+                    errorWidget: (context, url, error) => const Icon(Icons.spa_outlined, color: Color(0xFFC5A052), size: 22),
                   )
-                : const Icon(Icons.photo, color: Colors.grey),
+                : const Icon(Icons.spa_outlined, color: Color(0xFFC5A052), size: 22),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -49,28 +50,29 @@ class ProductCard extends StatelessWidget {
               children: [
                 Text(
                   product.name,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Color(0xFF1F1A15)),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
                   product.brand,
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  style: TextStyle(fontSize: 11, color: Colors.grey[600]),
                 ),
                 const SizedBox(height: 4),
                 if (product.compatible)
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: Colors.green.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(12),
+                      color: const Color(0xFFFAF5ED),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: const Color(0xFFF3D59B), width: 0.8),
                     ),
                     child: const Text(
-                      '✓ Compatible con tu perfil',
+                      'Fórmula compatible',
                       style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.green,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 10,
+                        color: Color(0xFF8B6B23),
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   )

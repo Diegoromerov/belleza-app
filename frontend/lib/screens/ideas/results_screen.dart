@@ -159,171 +159,10 @@ class _ResultsScreenState extends State<ResultsScreen> {
                       ColorPaletteWidget(
                         hexColor: _getHexColorFromSubtono(face.subtono),
                       ),
-                      const SizedBox(height: 12),
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => VtoLiveScreen(biometricResult: widget.result),
-                            ),
-                          );
-                        },
-                        icon: const Icon(Icons.auto_awesome, color: Colors.white),
-                        label: const Text(
-                          '💄 Probar Maquillaje en VTO Live (DeepSeek IA)',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _PassportColors.primary,
-                          minimumSize: const Size(double.infinity, 48),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      OutlinedButton.icon(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => NailVtoScreen(biometricResult: widget.result),
-                            ),
-                          );
-                        },
-                        icon: const Icon(Icons.back_hand, color: _PassportColors.primary),
-                        label: const Text(
-                          '💅 Probar Manicura & Uñas en VTO Live',
-                          style: TextStyle(color: _PassportColors.textAccent, fontWeight: FontWeight.bold),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: const Size(double.infinity, 48),
-                          side: const BorderSide(color: _PassportColors.primary),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      OutlinedButton.icon(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => MakeupLookbookScreen(biometricResult: widget.result),
-                            ),
-                          );
-                        },
-                        icon: const Icon(Icons.palette_outlined, color: _PassportColors.primary),
-                        label: const Text(
-                          '🎨 Lookbook IA & Filtros Virtuales (Media.io)',
-                          style: TextStyle(color: _PassportColors.textAccent, fontWeight: FontWeight.bold),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: const Size(double.infinity, 48),
-                          side: const BorderSide(color: _PassportColors.primary),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      OutlinedButton.icon(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const GlowstoreRecipeScreen(),
-                            ),
-                          );
-                        },
-                        icon: const Icon(Icons.shopping_bag_outlined, color: _PassportColors.primary),
-                        label: const Text(
-                          '🛍️ Ver Receta Personalizada en GlowStore',
-                          style: TextStyle(color: _PassportColors.textAccent, fontWeight: FontWeight.bold),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: const Size(double.infinity, 48),
-                          side: const BorderSide(color: _PassportColors.primary),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      // ─── Exportación Social (TikTok / Instagram) ───
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: () async {
-                                final consent = await SocialShareService.showConsentModal(
-                                  context,
-                                  platformName: 'TikTok',
-                                  contentTypeLabel: 'Colorimetría IA',
-                                );
-                                if (consent && context.mounted) {
-                                  final res = await SocialShareService.logShare(
-                                    platform: 'TIKTOK',
-                                    contentType: 'AI_COLORIMETRY',
-                                  );
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(res['message'] ?? '¡Palette DNA compartida en TikTok! +50 XP'),
-                                        backgroundColor: const Color(0xFF25F4EE),
-                                      ),
-                                    );
-                                  }
-                                }
-                              },
-                              icon: const Icon(Icons.video_library_rounded, size: 18),
-                              label: const Text('TikTok', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.black,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 12),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: () async {
-                                final consent = await SocialShareService.showConsentModal(
-                                  context,
-                                  platformName: 'Instagram Stories',
-                                  contentTypeLabel: 'Colorimetría IA',
-                                );
-                                if (consent && context.mounted) {
-                                  final res = await SocialShareService.logShare(
-                                    platform: 'INSTAGRAM',
-                                    contentType: 'AI_COLORIMETRY',
-                                  );
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(res['message'] ?? '¡Look publicado en Instagram Stories! +50 XP'),
-                                        backgroundColor: const Color(0xFFE1306C),
-                                      ),
-                                    );
-                                  }
-                                }
-                              },
-                              icon: const Icon(Icons.camera_alt_outlined, size: 18),
-                              label: const Text('Instagram', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFE1306C),
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 12),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                      const SizedBox(height: 16),
+                      _buildServicesHub(),
+                      const SizedBox(height: 14),
+                      _buildSocialShareSection(),
                       const SizedBox(height: 20),
                     ],
                     _buildProductsSection(),
@@ -378,75 +217,91 @@ class _ResultsScreenState extends State<ResultsScreen> {
   }
 
   // ---------------------------------------------------------------------
-  // Hero: anillo de score con la edad biométrica como hallazgo principal
+  // Hero: Pasaporte Biométrico sin doble anillo de score redundante
   // ---------------------------------------------------------------------
   Widget _buildHero(FaceScores face) {
-    final hydrationFraction = (face.hydration.clamp(0, 100)) / 100;
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        SizedBox(
-          width: 64,
-          height: 64,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              SizedBox(
-                width: 64,
-                height: 64,
-                child: CircularProgressIndicator(
-                  value: hydrationFraction,
-                  strokeWidth: 6,
-                  backgroundColor: _PassportColors.primaryLight.withValues(alpha: 0.3),
-                  color: _PassportColors.primary,
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFEADBCA), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFC5A052).withValues(alpha: 0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: const Color(0xFFFAF5ED),
+              border: Border.all(color: _PassportColors.primaryLight, width: 1),
+            ),
+            child: const Icon(
+              Icons.auto_awesome,
+              color: _PassportColors.primary,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Text(
+                      'PASAPORTE BIOMÉTRICO',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.5,
+                        color: _PassportColors.primary,
+                      ),
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFAF5ED),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: _PassportColors.primaryLight.withValues(alpha: 0.5)),
+                      ),
+                      child: Text(
+                        'EDAD BIO: ${face.bioAge} AÑOS',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.8,
+                          color: _PassportColors.textAccent,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              Container(
-                width: 48,
-                height: 48,
-                decoration: const BoxDecoration(
-                  color: _PassportColors.background,
-                  shape: BoxShape.circle,
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  '${face.bioAge}',
+                const SizedBox(height: 4),
+                Text(
+                  'Subtono ${face.subtono} · Armonía Visagista',
                   style: const TextStyle(
-                    fontSize: 16,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: _PassportColors.textAccent,
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        const SizedBox(width: 14),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Piel hidratada, tono ${face.subtono}',
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: _PassportColors.textAccent,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                'Edad biológica estimada: ${face.bioAge} años',
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: _PassportColors.textEyebrow,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -611,6 +466,301 @@ class _ResultsScreenState extends State<ResultsScreen> {
     );
   }
 
+  // ---------------------------------------------------------------------
+  // Hub de Servicios y Experiencias Virtuales (2 columnas Haute Beauté)
+  // ---------------------------------------------------------------------
+  Widget _buildServicesHub() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 3,
+              height: 14,
+              decoration: BoxDecoration(
+                color: _PassportColors.primary,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Text(
+              'SERVICIOS & SIMULADORES',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.3,
+                color: _PassportColors.textEyebrow,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        GridView.count(
+          crossAxisCount: 2,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: 12,
+          crossAxisSpacing: 12,
+          childAspectRatio: 1.15,
+          children: [
+            _buildServiceCard(
+              title: 'VTO Maquillaje',
+              subtitle: 'Simulación de tonos y texturas en vivo',
+              icon: Icons.face_retouching_natural,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => VtoLiveScreen(biometricResult: widget.result),
+                  ),
+                );
+              },
+            ),
+            _buildServiceCard(
+              title: 'VTO Manicura',
+              subtitle: 'Esmaltado virtual y diseño de uñas',
+              icon: Icons.back_hand_outlined,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => NailVtoScreen(biometricResult: widget.result),
+                  ),
+                );
+              },
+            ),
+            _buildServiceCard(
+              title: 'Lookbook Editorial',
+              subtitle: 'Estilismos y armonía cromática',
+              icon: Icons.auto_awesome_outlined,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => MakeupLookbookScreen(biometricResult: widget.result),
+                  ),
+                );
+              },
+            ),
+            _buildServiceCard(
+              title: 'Receta GlowStore',
+              subtitle: 'Fórmulas y rutina a medida',
+              icon: Icons.shopping_bag_outlined,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const GlowstoreRecipeScreen(),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildServiceCard({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFFEADBCA), width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFAF5ED),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: _PassportColors.primaryLight.withValues(alpha: 0.4)),
+                    ),
+                    child: Icon(icon, color: _PassportColors.primary, size: 18),
+                  ),
+                  const Icon(
+                    Icons.arrow_forward_ios,
+                    size: 11,
+                    color: _PassportColors.primary,
+                  ),
+                ],
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: _PassportColors.textAccent,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      height: 1.2,
+                      color: _PassportColors.textEyebrow,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------
+  // Compartir Pasaporte (TikTok / Instagram) en estilo editorial sobrio
+  // ---------------------------------------------------------------------
+  Widget _buildSocialShareSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 3,
+              height: 14,
+              decoration: BoxDecoration(
+                color: _PassportColors.primary,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Text(
+              'COMPARTIR PASAPORTE',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.3,
+                color: _PassportColors.textEyebrow,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () async {
+                  final consent = await SocialShareService.showConsentModal(
+                    context,
+                    platformName: 'TikTok',
+                    contentTypeLabel: 'Colorimetría IA',
+                  );
+                  if (consent && mounted) {
+                    final res = await SocialShareService.logShare(
+                      platform: 'TIKTOK',
+                      contentType: 'AI_COLORIMETRY',
+                    );
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(res['message'] ?? 'Pasaporte compartido en TikTok'),
+                          backgroundColor: _PassportColors.textAccent,
+                        ),
+                      );
+                    }
+                  }
+                },
+                icon: const Icon(Icons.share_outlined, size: 16, color: _PassportColors.textAccent),
+                label: const Text(
+                  'TikTok Stories',
+                  style: TextStyle(
+                    color: _PassportColors.textAccent,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  side: const BorderSide(color: Color(0xFFEADBCA)),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () async {
+                  final consent = await SocialShareService.showConsentModal(
+                    context,
+                    platformName: 'Instagram Stories',
+                    contentTypeLabel: 'Colorimetría IA',
+                  );
+                  if (consent && mounted) {
+                    final res = await SocialShareService.logShare(
+                      platform: 'INSTAGRAM',
+                      contentType: 'AI_COLORIMETRY',
+                    );
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(res['message'] ?? 'Pasaporte compartido en Instagram Stories'),
+                          backgroundColor: _PassportColors.textAccent,
+                        ),
+                      );
+                    }
+                  }
+                },
+                icon: const Icon(Icons.camera_alt_outlined, size: 16, color: _PassportColors.textAccent),
+                label: const Text(
+                  'Instagram Stories',
+                  style: TextStyle(
+                    color: _PassportColors.textAccent,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  side: const BorderSide(color: Color(0xFFEADBCA)),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
   Widget _buildProductsSection() {
     if (_isLoadingProducts) {
       return const Padding(
@@ -645,15 +795,29 @@ class _ResultsScreenState extends State<ResultsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Productos recomendados',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: _PassportColors.textAccent,
-          ),
+        Row(
+          children: [
+            Container(
+              width: 3,
+              height: 14,
+              decoration: BoxDecoration(
+                color: _PassportColors.primary,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Text(
+              'PRODUCTOS RECOMENDADOS',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.3,
+                color: _PassportColors.textEyebrow,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 12),
         ..._recommendedProducts.map((p) => ProductCard(product: p)),
       ],
     );
@@ -683,7 +847,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 14),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(12),
             ),
             elevation: 0,
           ),
@@ -694,8 +858,12 @@ class _ResultsScreenState extends State<ResultsScreen> {
             );
           },
           child: const Text(
-            'Ver rutina recomendada',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            'EXPLORAR RUTINA RECOMENDADA',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 1.0,
+            ),
           ),
         ),
       ),

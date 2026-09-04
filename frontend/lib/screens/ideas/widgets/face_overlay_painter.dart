@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 
@@ -19,77 +18,57 @@ class FaceOverlayPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2 - 40);
-    final ovalWidth = size.width * 0.68;
-    final ovalHeight = size.height * 0.52;
+    final center = Offset(size.width / 2, size.height / 2 - 35);
+    final ovalWidth = size.width * 0.65;
+    final ovalHeight = size.height * 0.48;
     final ovalRect = Rect.fromCenter(center: center, width: ovalWidth, height: ovalHeight);
 
-    // 1. Mascara de recorte para fondo translúcido fuera del óvalo
+    // 1. Máscara de recorte translúcida suave (Haute Beauté)
     final bgPath = Path()
       ..addRect(Rect.fromLTWH(0, 0, size.width, size.height))
       ..addOval(ovalRect);
-    
+
     final bgPaint = Paint()
-      ..color = Colors.black.withOpacity(0.45)
+      ..color = Colors.black.withValues(alpha: 0.28)
       ..style = PaintingStyle.fill;
     canvas.drawPath(bgPath, bgPaint);
 
-    // 2. Colores del estado neón: Terracota (Buscando) -> Dorado (Alineando) -> Esmeralda (Perfecto)
-    final mainColor = isValid
-        ? const Color(0xFF00E676) // Verde Neón Esmeralda
-        : (detectedFace != null ? const Color(0xFFD4AF37) : const Color(0xFFE05A47)); // Dorado / Terracota
+    // 2. Tono oro champán sutil (Alta Costura)
+    const goldColor = Color(0xFFC5A052);
+    const goldSoft = Color(0xFFF3D59B);
 
-    // 3. Anillo Neón Exterior con Glow Blur
-    final outerGlowPaint = Paint()
+    // 3. Guía oval principal ultrafina
+    final ovalPaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 5.0
-      ..color = mainColor.withOpacity(0.85)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
-    canvas.drawOval(ovalRect, outerGlowPaint);
+      ..strokeWidth = 1.3
+      ..color = isValid ? goldColor : goldSoft.withValues(alpha: 0.7);
+    canvas.drawOval(ovalRect, ovalPaint);
 
-    // 4. Anillo Interior Fino Blanco / Neón
-    final innerPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0
-      ..color = isValid ? Colors.white : mainColor.withOpacity(0.9);
-    canvas.drawOval(ovalRect, innerPaint);
-
-    // 5. Corchetes Angulares de Enfoque Cyber-Champán en las 4 Esquinas
+    // 4. Corchetes angulares de visagismo milimétricos (Haute Joaillerie)
     final bracketPaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.5
-      ..strokeCap = StrokeCap.round
-      ..color = mainColor;
+      ..strokeWidth = 1.4
+      ..strokeCap = StrokeCap.square
+      ..color = goldColor.withValues(alpha: 0.85);
 
-    const bracketSize = 24.0;
-    // Esquina Superior Izquierda
-    canvas.drawLine(Offset(ovalRect.left - 8, ovalRect.top + bracketSize), Offset(ovalRect.left - 8, ovalRect.top - 8), bracketPaint);
-    canvas.drawLine(Offset(ovalRect.left - 8, ovalRect.top - 8), Offset(ovalRect.left + bracketSize, ovalRect.top - 8), bracketPaint);
+    const bSize = 18.0;
+    const bOffset = 6.0;
 
-    // Esquina Superior Derecha
-    canvas.drawLine(Offset(ovalRect.right + 8, ovalRect.top + bracketSize), Offset(ovalRect.right + 8, ovalRect.top - 8), bracketPaint);
-    canvas.drawLine(Offset(ovalRect.right + 8, ovalRect.top - 8), Offset(ovalRect.right - bracketSize, ovalRect.top - 8), bracketPaint);
+    // Superior Izquierda
+    canvas.drawLine(Offset(ovalRect.left - bOffset, ovalRect.top + bSize), Offset(ovalRect.left - bOffset, ovalRect.top - bOffset), bracketPaint);
+    canvas.drawLine(Offset(ovalRect.left - bOffset, ovalRect.top - bOffset), Offset(ovalRect.left + bSize, ovalRect.top - bOffset), bracketPaint);
 
-    // Esquina Inferior Izquierda
-    canvas.drawLine(Offset(ovalRect.left - 8, ovalRect.bottom - bracketSize), Offset(ovalRect.left - 8, ovalRect.bottom + 8), bracketPaint);
-    canvas.drawLine(Offset(ovalRect.left - 8, ovalRect.bottom + 8), Offset(ovalRect.left + bracketSize, ovalRect.bottom + 8), bracketPaint);
+    // Superior Derecha
+    canvas.drawLine(Offset(ovalRect.right + bOffset, ovalRect.top + bSize), Offset(ovalRect.right + bOffset, ovalRect.top - bOffset), bracketPaint);
+    canvas.drawLine(Offset(ovalRect.right + bOffset, ovalRect.top - bOffset), Offset(ovalRect.right - bSize, ovalRect.top - bOffset), bracketPaint);
 
-    // Esquina Inferior Derecha
-    canvas.drawLine(Offset(ovalRect.right + 8, ovalRect.bottom - bracketSize), Offset(ovalRect.right + 8, ovalRect.bottom + 8), bracketPaint);
-    canvas.drawLine(Offset(ovalRect.right + 8, ovalRect.bottom + 8), Offset(ovalRect.right - bracketSize, ovalRect.bottom + 8), bracketPaint);
+    // Inferior Izquierda
+    canvas.drawLine(Offset(ovalRect.left - bOffset, ovalRect.bottom - bSize), Offset(ovalRect.left - bOffset, ovalRect.bottom + bOffset), bracketPaint);
+    canvas.drawLine(Offset(ovalRect.left - bOffset, ovalRect.bottom + bOffset), Offset(ovalRect.left + bSize, ovalRect.bottom + bOffset), bracketPaint);
 
-    // 6. Micro-partículas doradas orbitando a 30 FPS
-    final particlePaint = Paint()
-      ..style = PaintingStyle.fill
-      ..color = mainColor.withOpacity(0.9);
-
-    const particleCount = 8;
-    for (int i = 0; i < particleCount; i++) {
-      final angle = (i * (2 * pi / particleCount)) + (animationValue * 2 * pi);
-      final px = center.dx + (ovalWidth / 2) * cos(angle);
-      final py = center.dy + (ovalHeight / 2) * sin(angle);
-      canvas.drawCircle(Offset(px, py), 3.0, particlePaint);
-    }
+    // Inferior Derecha
+    canvas.drawLine(Offset(ovalRect.right + bOffset, ovalRect.bottom - bSize), Offset(ovalRect.right + bOffset, ovalRect.bottom + bOffset), bracketPaint);
+    canvas.drawLine(Offset(ovalRect.right + bOffset, ovalRect.bottom + bOffset), Offset(ovalRect.right - bSize, ovalRect.bottom + bOffset), bracketPaint);
   }
 
   @override

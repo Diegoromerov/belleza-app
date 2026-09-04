@@ -81,7 +81,7 @@ class _BiometricConsentScreenState extends State<BiometricConsentScreen> {
                 child: SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
                   child: const Text(
-                    'Para ofrecerte recomendaciones personalizadas y diagnósticos en tiempo real de tu piel y uñas, necesitamos procesar imágenes de tu rostro y manos mediante APIs externas de Inteligencia Artificial (YouCam y Gemini).\n\n'
+                    'Para ofrecerte recomendaciones personalizadas y diagnósticos en tiempo real de tu piel y uñas, procesamos las imágenes de tu rostro y manos mediante algoritmos avanzados de Visión Computacional e Inteligencia Artificial.\n\n'
                     '• **Privacidad:** No almacenamos tus fotos de manera permanente en nuestros servidores. Solo se procesan en memoria durante la ejecución de los análisis.\n'
                     '• **Auditoría:** Tu aceptación se registrará de forma auditable (IP, fecha y versión de la política) bajo los lineamientos de la Ley 1581 de 2012 (Habeas Data de Colombia).\n'
                     '• **Control:** Puedes revocar este consentimiento en cualquier momento directamente desde los ajustes de tu perfil.\n\n'

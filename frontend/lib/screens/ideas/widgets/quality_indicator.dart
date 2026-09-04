@@ -8,20 +8,21 @@ class QualityIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = _getQualityColor(quality);
-    final text = quality > 80
-        ? '✅ Excelente'
-        : quality > 50
-            ? '⚠️ Aceptable'
-            : '❌ Mejora la posición';
+    final text = quality > 75
+        ? 'LUZ AMBIENTAL: ÓPTIMA'
+        : quality > 45
+            ? 'ENCUADRE EN CURSO'
+            : 'AJUSTA LA ILUMINACIÓN';
+
+    const color = Color(0xFFC5A052);
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Container(
-          width: 8,
-          height: 8,
-          decoration: BoxDecoration(
+          width: 6,
+          height: 6,
+          decoration: const BoxDecoration(
             color: color,
             shape: BoxShape.circle,
           ),
@@ -30,18 +31,13 @@ class QualityIndicator extends StatelessWidget {
         Text(
           text,
           style: const TextStyle(
-            color: Colors.white,
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
+            color: Color(0xFFF3D59B),
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 1.2,
           ),
         ),
       ],
     );
-  }
-
-  Color _getQualityColor(double quality) {
-    if (quality > 80) return Colors.green;
-    if (quality > 50) return Colors.orange;
-    return Colors.red;
   }
 }
