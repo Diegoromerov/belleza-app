@@ -718,6 +718,24 @@ class _CaptureScreenState extends State<CaptureScreen>
                 style: const TextStyle(color: AppTheme.text),
                 textAlign: TextAlign.center,
               ),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: () {
+                  _faceImage = Uint8List(10);
+                  _handsImage = Uint8List(10);
+                  _finishAndStartProcessing();
+                },
+                icon: const Icon(Icons.auto_fix_high, color: Colors.black, size: 18),
+                label: const Text(
+                  '🎭 Continuar con Simulación Demo',
+                  style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFC5A052),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+              ),
             ],
           ),
         ),
@@ -782,7 +800,7 @@ class _CaptureScreenState extends State<CaptureScreen>
             ),
           ),
           Container(
-            margin: const EdgeInsets.only(right: 12),
+            margin: const EdgeInsets.only(right: 6),
             decoration: BoxDecoration(
               color: AppTheme.text.withValues(alpha: 0.5),
               shape: BoxShape.circle,
@@ -791,6 +809,23 @@ class _CaptureScreenState extends State<CaptureScreen>
               tooltip: 'Cargar de Galería',
               icon: const Icon(Icons.photo_library_outlined, color: Colors.white),
               onPressed: _pickFromGallery,
+            ),
+          ),
+          Container(
+            margin: const EdgeInsets.only(right: 12),
+            child: TextButton.icon(
+              onPressed: () {
+                _faceImage = Uint8List(10);
+                _handsImage = Uint8List(10);
+                _finishAndStartProcessing();
+              },
+              icon: const Icon(Icons.auto_fix_high, size: 13, color: Color(0xFFF3D59B)),
+              label: const Text('Demo', style: TextStyle(color: Color(0xFFF3D59B), fontWeight: FontWeight.bold, fontSize: 11)),
+              style: TextButton.styleFrom(
+                backgroundColor: Colors.black.withValues(alpha: 0.65),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              ),
             ),
           ),
         ],

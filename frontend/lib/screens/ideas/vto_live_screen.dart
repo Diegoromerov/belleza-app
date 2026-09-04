@@ -3,7 +3,6 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import '../../models/biometric_result.dart';
-import '../../shared/theme.dart';
 import 'widgets/vto_painter.dart';
 
 class VtoLiveScreen extends StatefulWidget {
@@ -102,10 +101,15 @@ class _VtoLiveScreenState extends State<VtoLiveScreen> {
                 : Stack(
                     children: [
                       Positioned.fill(
-                        child: Container(
-                          color: Colors.grey[900],
-                          child: const Center(
-                            child: Icon(Icons.face_retouching_natural, size: 100, color: Colors.white30),
+                        child: Image.asset(
+                          'images/aura_welcome_poster.webp',
+                          fit: BoxFit.cover,
+                          alignment: Alignment.topCenter,
+                          errorBuilder: (_, __, ___) => Container(
+                            color: Colors.grey[900],
+                            child: const Center(
+                              child: Icon(Icons.face_retouching_natural, size: 100, color: Colors.white30),
+                            ),
                           ),
                         ),
                       ),

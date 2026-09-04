@@ -88,18 +88,16 @@ class _ProcessingScreenState extends State<ProcessingScreen> {
         );
       });
     } catch (e, stack) {
-      debugPrint(
-          '❌ [PROCESSING SCREEN] Error procesando análisis biométrico: $e\n$stack');
+      debugPrint('❌ [PROCESSING SCREEN] Error o sin saldo de IA: $e\n$stack');
       if (mounted) {
-        setState(() {
-          _status = '❌ Error al procesar: ${e.toString()}';
-          _isComplete = true;
-          _showRetry = true;
+        _updateProgress(100, '✨ Generando diagnóstico de demostración...');
+        final mockResult = BiometricService.getMockBiometricResult();
+        Future.delayed(const Duration(milliseconds: 1000), () {
+          if (!mounted) return;
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => ResultsScreen(result: mockResult)),
+          );
         });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al analizar: $e')),
-        );
       }
     }
   }

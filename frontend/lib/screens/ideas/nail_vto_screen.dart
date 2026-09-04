@@ -99,9 +99,25 @@ class _NailVtoScreenState extends State<NailVtoScreen> {
                     fit: BoxFit.cover,
                   )
                 : Container(
-                    color: Colors.grey[900],
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Color(0xFF2C221D), Color(0xFF151210)],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                    ),
                     child: const Center(
-                      child: Icon(Icons.back_hand, size: 120, color: Colors.white24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.back_hand, size: 90, color: Color(0xFFC5A052)),
+                          SizedBox(height: 12),
+                          Text(
+                            'Simulador VTO Nails de Precisión',
+                            style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
           ),

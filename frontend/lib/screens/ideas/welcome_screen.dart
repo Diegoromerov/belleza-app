@@ -4,6 +4,7 @@ import '../../services/biometric_service.dart';
 import '../../shared/mens_theme.dart';
 import '../../shared/glow_tokens.dart';
 import 'capture_screen.dart';
+import 'results_screen.dart';
 
 class BiometricWelcomeScreen extends StatefulWidget {
   const BiometricWelcomeScreen({super.key});
@@ -313,6 +314,39 @@ class _BiometricWelcomeScreenState extends State<BiometricWelcomeScreen> {
                                         letterSpacing: 0.5,
                                       ),
                                     ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+
+                          // 🎭 Botón Modo Demostración (Mock Flujo Completo sin saldo)
+                          SizedBox(
+                            width: double.infinity,
+                            height: 48,
+                            child: OutlinedButton.icon(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => ResultsScreen(
+                                      result: BiometricService.getMockBiometricResult(),
+                                    ),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.auto_fix_high, color: Color(0xFFE5C158), size: 18),
+                              label: const Text(
+                                '🎭 Modo Demostración (Ver Flujo Sin Saldo)',
+                                style: TextStyle(
+                                  color: Color(0xFFE5C158),
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                ),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(color: Color(0xFFD4AF37), width: 1.2),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                                backgroundColor: const Color(0xFF1F1A15).withValues(alpha: 0.65),
+                              ),
                             ),
                           ),
                           const SizedBox(height: 16),
