@@ -10,7 +10,7 @@ class BusinessDiagnosticService {
    * Run initial diagnosis for a provider business.
    * Supports Door 1 (NEW_BUSINESS) and Door 2 (EXISTING_BUSINESS).
    */
-  async runDiagnostic({ provider_id, name, onboarding_mode, vertical_code, city, answers }) {
+  async runDiagnostic({ provider_id, tenant_id, name, onboarding_mode, vertical_code, city, answers }) {
     const vertical = await businessRepository.getVerticalByCode(vertical_code || 'BEAUTY_SALON');
     
     // Create or fetch profile
@@ -93,8 +93,10 @@ class BusinessDiagnosticService {
     };
   }
 
-  async getProfileSummary(provider_id) {
+  async getProfileSummary(provider_id, tenant_id) {
     const profile = await businessRepository.getProfileByProviderId(provider_id);
+    if (!profile) return null;
+
     const tasks = await businessRepository.getTasksByProfileId(profile.id);
     const findings = await businessRepository.getFindingsByProfileId(profile.id);
 
