@@ -28,6 +28,7 @@ const userRoutes = require('../routes/userRoutes');
 const beauty360Routes = require('../routes/beauty360Routes');
 const shortcutRoutes = require('../routes/shortcutRoutes');
 const b2bCoPilotRoutes = require('../routes/b2bCoPilotRoutes');
+const businessRoutes = require('../routes/businessRoutes');
 
 // Middlewares
 const { authMiddleware } = require('../middleware/auth');
@@ -195,6 +196,7 @@ app.use('/api/v1/beauty360', beauty360Routes);
 app.use('/api/trends', tiktokTrendsModule.router);
 app.use('/api', shortcutRoutes);
 app.use('/api', b2bCoPilotRoutes);
+app.use('/api/v1/business', businessRoutes);
 
 // Beauty Scan Proxy API Route
 const AI_WORKER_URL = process.env.AI_WORKER_URL || 'http://ai-worker:8000';

@@ -26,3 +26,5 @@
 | GOAL 12 | Final Integration | `RELEASE-GATE.md` | Final Release Verdict & Gate Approval | ACTIVE |
 | GOAL 12 | Final Integration | `PHASE-3-HANDOFF.md` | Phase 3 Handoff Specification | ACTIVE |
 | GOAL 12 | Final Integration | `REPORT-GOAL-12.md` | 80-Field Completion Report | ACTIVE |
+| GOAL BUSINESS | Business Engine | `BUSINESS-ENGINE-ARCHITECTURE.md` | Architectural Blueprint for GlowApp Business Engine | ACTIVE |
+| GOAL BUSINESS | Business Engine | `REPORT-GOAL-BUSINESS.md` | Completion Report for GlowApp Business Engine 0-100 Implementation | ACTIVE |
