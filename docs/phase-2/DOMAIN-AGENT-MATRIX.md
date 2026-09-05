@@ -9,3 +9,5 @@
 | **PROVIDERS**| Agent C | `/(dashboard)/prestador/*` | `provider_dashboard.dart` | `/api/v1/providers` | YES |
 | **BOOKINGS** | Agent D | `/(dashboard)/cliente/citas` | `booking_screen.dart` | `/api/v1/bookings` | YES |
 | **ACADEMY** | Agent F | `/(dashboard)/admin/academia` | `academy_screen.dart` | `/api/v1/courses` | YES |
+
+ADMIN | Agent Admin | /(dashboard)/admin/* | page.tsx | /api/v1/admin/* | COMPLETED
