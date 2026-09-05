@@ -1,18 +1,18 @@
 # GLOWAPP PHASE 2 — JOURNEY CONTRACT SPECIFICATION
 
-## 1. Journey Contract Schema
+## 1. Physical Journey Contract Schema
 
-### Journey 01: Client Appointment Booking
+### Journey 01: Client Booking Flow
 - **Actor:** Client
-- **Entry Point:** Service Detail Page / Provider Profile (`/client/explore`)
-- **Preconditions:** Authenticated Client session (or inline Auth prompt during checkout).
-- **Steps:**
-  1. *Step 1 (Cuándo/Dónde):* Select date, time slot, and location preference (salon / home service).
-  2. *Step 2 (Productos & Add-ons):* Optional cross-sell product selection.
-  3. *Step 3 (Pago & Confirmación):* Review sticky summary, apply promo code, execute payment.
-- **System Response:** Instant booking receipt, FCM push notification to Provider, status set to `CONFIRMED`.
-- **Success:** Redirect to `/client/bookings/:id` with real-time tracker.
-- **Error:** Payment failure banner with retry CTA; preserves selected date/time slot draft.
-- **Exit:** Booking status view or Client Home.
-- **Dependencies:** Auth (Goal 01), API Contracts (Goal 04), Design System (Goal 05).
-- **Owner:** Bookings & Client Domain.
+- **Entry Point:** `provider_detail_screen.dart` / `/(dashboard)/cliente/nueva-cita`
+- **Preconditions:** Authenticated Client session.
+- **Current Steps (Physical Code):**
+  1. Select service & provider in `booking_screen.dart`.
+  2. Choose date & time slot.
+  3. Submit booking request.
+- **Target Steps:** 3-step wizard (1. Cuándo/Dónde → 2. Productos → 3. Pago).
+- **System Response:** FCM push notification via `fcmNotificationService.js`, DB insertion in `bookings` table.
+- **Success:** Redirect to `booking_tracking_screen.dart`.
+- **Error:** Error toast display; preserves selected service & date draft.
+- **Dependencies:** `backend/src/routes/bookingRoutes.js`, `frontend/lib/screens/booking_screen.dart`.
+- **Owner:** Bookings Domain.

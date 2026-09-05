@@ -1,44 +1,29 @@
-# GLOWAPP PHASE 2 — INFORMATION ARCHITECTURE
+# GLOWAPP PHASE 2 — INFORMATION ARCHITECTURE (REAL vs TARGET)
 
-## 1. Master Portal Hierarchy
+## 1. Current Physical Information Architecture
 
 ```
-GLOWAPP PRODUCT IA
-├── 1. PUBLIC PORTAL (Landing, Marketing, Service Discovery)
-│   ├── / (Home / Hero)
-│   ├── /services (Public Service Catalog)
-│   ├── /providers (Public Provider Directory)
-│   └── /legal (Terms, Privacy, Safety)
+PHYSICAL GLOWAPP CODEBASE IA
+├── 1. PUBLIC & MARKETING (Flutter & Next.js Root)
+│   └── Next.js: / (page.tsx)
 │
 ├── 2. AUTHENTICATION PORTAL (Goal 01 Contracts)
-│   ├── /auth/login
-│   ├── /auth/register
-│   ├── /auth/forgot-password
-│   └── /auth/verify-phone
+│   ├── Next.js: /(auth)/login, /(auth)/register
+│   └── Flutter: auth/login_screen.dart, auth/register_screen.dart, auth/onboarding_screen.dart
 │
-├── 3. CLIENT PORTAL (Consumer Journey)
-│   ├── /client/home (Discovery & Recommendations)
-│   ├── /client/explore (Search & Category Filters)
-│   ├── /client/providers/:id (Provider Detail & Portfolio)
-│   ├── /client/booking (3-step Wizard: Cuándo/Dónde -> Productos -> Pago)
-│   ├── /client/bookings (Active & Historical Bookings)
-│   ├── /client/messages (Provider Communication)
-│   └── /client/profile (Preferences, Saved Payment Methods)
+├── 3. CLIENT PORTAL
+│   ├── Next.js: /(dashboard)/cliente (page.tsx), /(dashboard)/cliente/citas, /(dashboard)/cliente/nueva-cita
+│   └── Flutter: home/home_screen.dart, provider_detail_screen.dart, booking_screen.dart, client_bookings_screen.dart
 │
-├── 4. PROVIDER PORTAL (Beauty Professional / Salon)
-│   ├── /provider/dashboard (Daily Overview & Cash Report)
-│   ├── /provider/schedule (Calendar & Time Off)
-│   ├── /provider/bookings (Appointment Lifecycle Management)
-│   ├── /provider/services (Service Catalog Management)
-│   ├── /provider/inventory (Product Stock & POS Checkout)
-│   ├── /provider/earnings (Payout Requests & Bank Account)
-│   └── /provider/kyc (Verification & Documents)
+├── 4. PROVIDER PORTAL
+│   ├── Next.js: /(dashboard)/prestador (page.tsx), /(dashboard)/prestador/citas
+│   └── Flutter: provider/provider_dashboard.dart, provider/daily_cash_report_screen.dart, provider_services_screen.dart
 │
-└── 5. ADMIN PORTAL (Platform Operations)
-    ├── /admin/overview (System Metrics & KPIs)
-    ├── /admin/users (Client & Provider Governance)
-    ├── /admin/bookings (Global Booking Audit)
-    ├── /admin/payments (Financial Audit & Payout Approvals)
-    ├── /admin/kyc (Verification Queues)
-    └── /admin/safety (Incident Escalation & Support)
+└── 5. ADMIN & ACADEMY PORTAL
+    ├── Next.js: /(dashboard)/admin/academia (page.tsx, [id]/page.tsx, nuevo/page.tsx, vto/page.tsx)
+    └── Flutter: academy/academy_screen.dart, course_detail_screen.dart
 ```
+
+## 2. Documentation / Implementation Drift
+- **Drift Item 1:** Prior docs specified `/admin/kyc`, `/admin/payments`, and `/admin/safety`. Physical Audit shows these functions are integrated via backend APIs and support forms (`support/support_center_screen.dart`, `disputes/open_dispute_screen.dart`). Marked as `TARGET / CREATE`.
+- **Drift Item 2:** Client discovery is physically implemented across `home/home_screen.dart` (Flutter) and `/(dashboard)/cliente/nueva-cita` (Next.js).

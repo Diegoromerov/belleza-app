@@ -1,6 +1,6 @@
 # GLOWAPP PHASE 2 — DOMAIN DEPENDENCY GRAPH
 
-## 1. Core Dependency Order
+## 1. Physical Dependency Architecture
 
 ```
        [ GOAL 00 — Governance ]
@@ -17,7 +17,7 @@
                    │
      [ GOAL 05 — Design System & UI/UX ]
                    │
-     [ GOAL 06 — Navigation & Information Arch ]
+     [ GOAL 06 — Real Navigation Architecture ]
                    │
  ┌─────────────────┼─────────────────┐
  ▼                 ▼                 ▼

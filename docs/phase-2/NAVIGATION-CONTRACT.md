@@ -1,8 +1,11 @@
 # GLOWAPP PHASE 2 — NAVIGATION CONTRACT
 
-## 1. Architectural Navigation Rules
-1. **Role-Aware Routing:** Navigation menus, headers, sidebars, and bottom bars must dynamically render based on verified RBAC roles (`CLIENT`, `PROVIDER`, `ADMIN`).
-2. **UI Visibility != Authorization:** Visual menu item suppression is purely a UX optimization. Backend middleware and API routes continue to enforce strict authorization.
-3. **Preservation of Context:** When navigating back from detail pages or modals, user context (filters, active tab, scroll position, search query) must be preserved.
-4. **Deep Linking Contract:** All primary resources (`service/:id`, `provider/:id`, `booking/:id`, `payment/:id`) must support direct deep-linking with appropriate auth guard fallbacks.
-5. **Back Button Behavior:** Browser back, app top bar back, and modal dismiss buttons must resolve consistently without infinite loops or unexpected logouts.
+## 1. Physical Codebase Navigation Audit & Rules
+1. **Source of Truth:** Architecture derived directly from `admin-dashboard/src/app` (Next.js 15) and `frontend/lib/screens` (Flutter).
+2. **Role-Aware Navigation:**
+   - **CLIENT:** Mobile Bottom Nav (`home`, `store`, `client_bookings`, `client_profile`).
+   - **PROVIDER:** Mobile Navigation & Next.js dashboard (`(dashboard)/prestador`, `provider_dashboard_screen.dart`, `daily_cash_report_screen.dart`).
+   - **ADMIN:** Next.js Admin Portal (`(dashboard)/admin/academia`, `vto`).
+3. **UI Visibility vs Authorization:** Menu filtering is UX disclosure. Route protection is strictly governed by `(auth)` guards and backend JWT middleware.
+4. **Preservation of Context:** Back navigation from detail views (`provider_detail_screen.dart`, `/admin/academia/[id]`) preserves parent search filters and active tab state.
+5. **Deep Linking Contract:** Deep links to services, bookings, and provider profiles must fall back gracefully to the login guard if unauthenticated.

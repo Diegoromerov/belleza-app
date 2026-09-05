@@ -2,8 +2,8 @@
 
 ## 1. Backlog Items
 
-| ID | ACTOR | JOURNEY | FRICTION | IMPACT | SEVERITY | EFFORT | DEPENDENCY | RECOMMENDATION |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **FRICTION-101** | Client | Booking | Re-entering address every booking | High | P0 | Medium | Goal 01 Auth | Save default client address in profile |
-| **FRICTION-102** | Provider | POS | 4 clicks to open cash report | Medium | P1 | Low | Provider POS | Add quick action shortcut on dashboard |
-| **FRICTION-103** | Admin | KYC | No direct link from user list to KYC docs | Medium | P1 | Low | Admin Users | Add "View KYC" button in user table |
+| ID | ACTOR | SOURCE JOURNEY | FRICTION POINT | SEVERITY | EFFORT | RECOMMENDATION | STATUS |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **FRICTION-101** | Client | Booking Flow | Re-selecting address on every booking | P0 | Medium | Save client default address | AUDITED |
+| **FRICTION-102** | Provider | Cash Report | 3 steps to access daily POS summary | P1 | Low | Add quick action button on dashboard | AUDITED |
+| **FRICTION-103** | Admin | Academy Manage | Course edit requires full page refresh | P2 | Low | Implement inline drawer editing | AUDITED |

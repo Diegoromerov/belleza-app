@@ -2,10 +2,10 @@
 
 ## 1. Canonical Vocabulary Standard
 
-| CANONICAL TERM | DEPRECATED / SYNONYMS | CONTEXT | DEFINITION |
+| CANONICAL TERM | PHYSICAL VARIANTS IN CODE | DOMAIN | DEFINITION |
 | :--- | :--- | :--- | :--- |
-| **Reserva** | Cita, Appointment, Booking | Booking Domain | Official customer reservation for a beauty service. |
-| **Prestador** | Proveedor, Salon, Professional | Provider Domain | Verified beauty professional or salon offering services. |
-| **Cliente** | Usuario, Consumer, Customer | Client Domain | End-user booking and paying for beauty services. |
-| **Caja Diaria** | Daily Cash, Earnings Report | Provider Domain | Daily cash flow and POS register reconciliation report. |
-| **Servicio** | Tratamiento, Offer, Service Item | Service Domain | Beauty service with defined duration, price, and category. |
+| **Reserva** | Cita, Appointment, Booking | Bookings | Official customer reservation for a service. |
+| **Prestador** | Proveedor, Professional, Salon | Providers | Verified beauty service provider or salon. |
+| **Cliente** | Usuario, Customer, Client | Clients | End user purchasing beauty services. |
+| **Caja Diaria** | Cash Report, Daily Cash, POS | Providers | Daily POS register reconciliation. |
+| **Academia** | Academy, Courses, Luxe | Academy | Educational course and training portal. |
