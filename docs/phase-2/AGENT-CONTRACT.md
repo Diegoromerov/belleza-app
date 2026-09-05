@@ -27,3 +27,10 @@
 2. **Domain Ownership Boundaries:** Each agent must work strictly within its assigned domain folder (`@/features/[domain]/`) and route paths. Modifying files owned by another domain requires explicit contract revision.
 3. **Conflict Zone Protection:** Shared components (`@/components/ui/`), global layouts, and design tokens must not be mutated by domain agents without coordination.
 4. **Preservation of 3-Step Booking Journey:** Any modification to booking flows must preserve the 3-step sequence (Cuándo/Dónde -> Productos -> Pago).
+
+
+## Post-Phase 2 Agent Rules
+1. Production code before documentation.
+2. Empirical evidence required for all feature claims.
+3. Zero architecture drift.
+4. Zero breaking contract regressions.
