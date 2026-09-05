@@ -1,14 +1,18 @@
-# 🗄️ Data Map — Modelo de Datos y PostgreSQL Schema
+# 🗄️ Data Map — Modelo de Datos, Concurrencia y Fuentes de Verdad
 
-## Tablas y Modelos Principales (Sequelize)
-1. `Users` — Usuarios del sistema (email, password_hash, rol, nombre, teléfono).
-2. `Services` — Catálogo de servicios ofrecidos por prestadores.
-3. `Bookings` — Citas agendadas (client_id, provider_id, service_id, date, status).
-4. `Transactions` — Registro de pagos y transacciones de caja.
-5. `LearningPaths` & `PathCourses` — Cursos y rutas de aprendizaje de la Academia.
-6. `UserBadges` & `XpLogs` — Gamificación, insignia y puntos de experiencia.
-7. `AnalyticsEvents` — Eventos de telemetría y uso de la plataforma.
+## Fuente de Verdad Persistente
+PostgreSQL es la **única fuente persistente de verdad** de GlowApp Platform. El frontend, `localStorage`, cookies o memoria temporal NUNCA constituirán fuentes de verdad para estados de cuenta, reservas o cobros.
 
-## Constraints & Concurrencia
-- **Foreign Keys:** `Bookings` mantiene relación estricta con `Users` (`client_id`, `provider_id`) y `Services` (`service_id`).
-- **Riesgo Identificado:** Operaciones de actualización de stock en inventario requieren transacciones atómicas (`ACID`) para evitar race conditions en horas pico.
+## Tablas y Modelos Principales (Domain Ownership)
+1. `usuarios` (`AUTH` / `USERS`) — Cuentas, credenciales y roles.
+2. `perfiles_prestador` (`PROVIDERS` / `KYC`) — Información de prestadores y documentos.
+3. `servicios` (`SERVICES`) — Catálogo de servicios de belleza.
+4. `reservas` / `Bookings` (`BOOKINGS`) — Citas agendadas y estados.
+5. `transacciones` (`PAYMENTS`) — Registro de pagos y facturación.
+6. `inventario_consignacion_prestador` (`INVENTORY`) — Stock POS en consignación (Transacciones ACID atómicas).
+7. `productos` (`INVENTORY`) — Catálogo general de insumos.
+8. `auditoria_consentimiento_biometrico` (`KYC` / `SAFETY`) — Registro legal Habeas Data Ley 1581.
+
+## Reglas de Integridad y Concurrencia
+- **Cero Consultas en Controladores:** Invocaciones SQL aisladas deben migrarse a capas de repositorio por dominio.
+- **Parametrización Estricta:** Todas las consultas raw SQL deben utilizar marcadores parametrizados (`$1`, `$2`) previniendo inyecciones.
