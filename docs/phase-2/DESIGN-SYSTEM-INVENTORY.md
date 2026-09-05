@@ -1,40 +1,21 @@
 # GLOWAPP PHASE 2 — DESIGN SYSTEM INVENTORY
 
 ## 1. Executive Summary
-This document provides a comprehensive inventory of all UI components, tokens, typography rules, layout patterns, and interaction states across the GlowApp platform (`admin-dashboard`, `frontend` Flutter app, and `landing`).
+Comprehensive inventory of all UI components, tokens, typography rules, layout patterns, and interaction states across `admin-dashboard`, `frontend` Flutter app, and `landing`.
 
 ---
 
-## 2. Component Categorization Matrix
+## 2. Component Inventory Matrix
 
-| Category | Component Name | Existing Location(s) | Status | Standardized Target Primitive |
-| :--- | :--- | :--- | :--- | :--- |
-| **Atoms** | Button / Primary | `admin-dashboard/src/components/ui/button.tsx`, Flutter `ElevatedButton` | Standardized | `src/components/ui/button.tsx` |
-| **Atoms** | Button / Outline | `admin-dashboard/src/components/ui/button.tsx`, Flutter `OutlinedButton` | Standardized | `src/components/ui/button.tsx` (variant: outline) |
-| **Atoms** | Input Text | `admin-dashboard/src/components/ui/input.tsx`, Flutter `TextField` | Standardized | `src/components/ui/input.tsx` |
-| **Atoms** | Badge / Chip | `admin-dashboard/src/components/ui/badge.tsx`, Flutter custom `Container` | Standardized | `src/components/ui/badge.tsx` |
-| **Atoms** | Avatar | `admin-dashboard/src/components/ui/avatar.tsx`, Flutter `CircleAvatar` | Standardized | `src/components/ui/avatar.tsx` |
-| **Atoms** | Icon Wrapper | Lucide Icons (React), Flutter Icons | Standardized | Lucide React / Icon |
-| **Molecules** | Stat Card | `admin-dashboard/src/app/(dashboard)/page.tsx` | Refactor needed | `src/components/ui/stat-card.tsx` |
-| **Molecules** | Search Bar | `admin-dashboard/src/components/ui/search-bar.tsx` | Standardized | `src/components/ui/search-bar.tsx` |
-| **Molecules** | Modal / Dialog | `admin-dashboard/src/components/ui/dialog.tsx`, Flutter `AlertDialog` | Standardized | `src/components/ui/dialog.tsx` |
-| **Molecules** | Dropdown / Select | `admin-dashboard/src/components/ui/select.tsx` | Standardized | `src/components/ui/select.tsx` |
-| **Molecules** | Toast Notification | `sonner` / `react-hot-toast`, Flutter `SnackBar` | Standardized | `src/components/ui/toast.tsx` |
-| **Molecules** | Skeleton Loading | Inline pulsing divs, Flutter `Shimmer` | Refactor needed | `src/components/ui/skeleton.tsx` |
-| **Organisms** | Header / Navbar | Dashboard header, Mobile AppBar | Standardized | `src/components/layout/header.tsx` |
-| **Organisms** | Sidebar Navigation | Dashboard sidebar | Standardized | `src/components/layout/sidebar.tsx` |
-| **Organisms** | Data Table | Dashboard tables | Refactor needed | `src/components/ui/data-table.tsx` |
-| **Organisms** | Booking Flow Card | Mobile `booking_screen.dart` | Refactor needed | `src/features/booking/components/` |
-
----
-
-## 3. Visual & Token Audit
-- **Primary Accent:** `#F43F5E` (Rose 500)
-- **Secondary Neutral Dark:** `#0F172A` (Slate 900)
-- **Secondary Neutral Light:** `#F8FAFC` (Slate 50)
-- **Success State:** `#10B981` (Emerald 500)
-- **Warning State:** `#F59E0B` (Amber 500)
-- **Error State:** `#EF4444` (Red 500)
-- **Border Radius Standard:** `8px` (`rounded-md`), `12px` (`rounded-lg`), `16px` (`rounded-xl`)
-- **Spacing Grid Base:** 4px (8px, 12px, 16px, 24px, 32px, 48px)
-- **Typography Base:** System Sans-Serif / Inter / Geist
+| NAME | PATH | PURPOSE | DOMAIN | VARIANTS | CONSUMERS | DUPLICATES | CURRENT_STATUS | RECOMMENDATION |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `Button` | `admin-dashboard/src/components/ui/button.tsx` | Primary visual action CTA | Shared UI | default, outline, ghost, destructive, icon | Admin pages, Auth forms | Ad-hoc HTML `<button>` | CONSOLIDATE | EVOLVE to primary design system atom |
+| `Input` | `admin-dashboard/src/components/ui/input.tsx` | Text & form data entry | Shared UI | text, password, email, search, number | Forms, Login, Search | Custom input fields | CONSOLIDATE | KEEP & enforce focus ring tokens |
+| `Dialog` | `admin-dashboard/src/components/ui/dialog.tsx` | Modal popups & confirmations | Shared UI | alert, form-dialog, confirmation | Delete action, Forms | Native `alert()` calls | CONSOLIDATE | REPLACE ad-hoc modals with Dialog primitive |
+| `Badge` | `admin-dashboard/src/components/ui/badge.tsx` | Status & tag indicator | Shared UI | success, warning, error, info, neutral | Tables, Cards, Header | Custom `<span>` elements | KEEP | EVOLVE with unified status tokens |
+| `Avatar` | `admin-dashboard/src/components/ui/avatar.tsx` | User & provider profile image | Shared UI | sm, md, lg, xl, fallback | Header, Profile, Reviews | Raw `<img>` elements | KEEP | CONSOLIDATE to handle missing image fallbacks |
+| `Skeleton` | `admin-dashboard/src/components/ui/skeleton.tsx` | Content loading placeholder | Shared UI | card-skeleton, text-skeleton, avatar-skeleton | Dashboard, Booking | Full-page spinners | EVOLVE | REPLACE blocking spinners with content skeletons |
+| `Toast` | `admin-dashboard/src/components/ui/toast.tsx` | Asynchronous user notifications | Shared UI | success, error, warning, info | Global layout | Alert popups | CONSOLIDATE | KEEP as single toast provider |
+| `Card` | `admin-dashboard/src/components/ui/card.tsx` | Container for grouped content | Shared UI | default, hoverable, bordered, elevated | Overview, Analytics | Ad-hoc border `<div>` | KEEP | EVOLVE to standardize padding & radius |
+| `DataTable` | `admin-dashboard/src/components/ui/data-table.tsx` | Tabular data display | Shared UI | default, paginated, searchable | Users, Bookings, Services | Standard `<table>` | EVOLVE | CONSOLIDATE pagination & mobile stack view |
+| `StatCard` | `admin-dashboard/src/components/ui/stat-card.tsx` | KPI metrics display | Admin Domain | default, trend-positive, trend-negative | Dashboard overview | Custom metric divs | CONSOLIDATE | KEEP & expose as shared admin component |
