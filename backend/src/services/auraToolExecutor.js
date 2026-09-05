@@ -6,6 +6,10 @@ const hestiaAgent = require('./agents/hestiaAgent');
 const valkyrieAgent = require('./agents/valkyrieAgent');
 const { searchBeautyKnowledge } = require('./ragService');
 const { checkConsent, logAccess } = require('./consentService');
+const businessDiagnosticService = require('./businessDiagnosticService');
+const businessWorkflowService = require('./businessWorkflowService');
+const businessRequirementService = require('./businessRequirementService');
+const businessRepository = require('../repositories/businessRepository');
 
 /**
  * Definicón de JSON Schemas de las herramientas (Tool Definitions) para DeepSeek / Gemini Function Calling
@@ -133,35 +137,76 @@ const AURA_TOOLS_DEFINITIONS = [
         required: ['moduleKey']
       }
     }
+  },
+  // ── BUSINESS READ-ONLY TOOLS (GOAL 05 — PHASE E) ──
+  {
+    type: 'function',
+    function: {
+      name: 'get_business_profile_summary',
+      description: 'Consulta de solo lectura del resumen de expediente, puntaje de cumplimiento normativo y tareas para el prestador autenticado.',
+      parameters: {
+        type: 'object',
+        properties: {
+          providerId: { type: 'string', description: 'ID del prestador autenticado (extraído de JWT)' }
+        }
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'get_business_tasks',
+      description: 'Consulta de solo lectura del listado de tareas de formalización, bioseguridad y SST para el negocio del prestador.',
+      parameters: {
+        type: 'object',
+        properties: {
+          providerId: { type: 'string', description: 'ID del prestador' }
+        }
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'search_regulatory_knowledge_rag',
+      description: 'Busca regulaciones sanitarias, laborales, bioseguridad (RH1) y decretos aplicables a establecimientos de belleza en Colombia.',
+      parameters: {
+        type: 'object',
+        properties: {
+          queryText: { type: 'string', description: 'Consulta sobre normatividad (ej. concepto sanitario, manual bioseguridad)' },
+          jurisdiction: { type: 'string', description: 'Jurisdicción opcional (NATIONAL, MUNICIPAL)' }
+        },
+        required: ['queryText']
+      }
+    }
   }
 ];
 
 /**
- * Orquesta y ejecuta las herramientas delegando en los Agentes Especializados (ATENA, HERMES, CHRONOS, HESTIA, VALKYRIE, RAG)
+ * Orquesta y ejecuta las herramientas delegando en Agentes y Servicios de GlowApp
  */
-async function executeAuraTool(toolName, args, userId) {
+async function executeAuraTool(toolName, args, userId, userRole = 'provider', tenantId = null) {
   console.log(`🛠️ [AURA Orchestration] Ejecutando herramienta: ${toolName}, Args:`, args);
 
-  // Verificar consentimiento para herramientas que acceden a datos biométricos
-    const BIOMETRIC_TOOLS = ['query_user_biometric_profile'];
-    // Herramientas que acceden indirectamente a datos biométricos (a través de getBiometricDiagnosis)
-    const BIOMETRIC_SENSITIVE_TOOLS = ['query_user_biometric_profile', 'recommend_glowstore_products'];
-    if (BIOMETRIC_SENSITIVE_TOOLS.includes(toolName)) {
-      const targetUserId = args.userId || userId;
-      // Propiedad de ownership: el usuario solo puede acceder a sus propios datos biométricos
-      if (targetUserId !== userId) {
-        return { 
-          error: 'ownership_required', 
-          message: 'No tienes permisos para acceder a los datos biométricos de otro usuario.' 
-        };
-      }
+  // Verificación de consentimiento para herramientas biométricas
+  const BIOMETRIC_TOOLS = ['query_user_biometric_profile'];
+  const BIOMETRIC_SENSITIVE_TOOLS = ['query_user_biometric_profile', 'recommend_glowstore_products'];
+
+  if (BIOMETRIC_SENSITIVE_TOOLS.includes(toolName)) {
+    const targetUserId = args.userId || userId;
+    if (String(targetUserId) !== String(userId)) {
+      return { 
+        error: 'ownership_required', 
+        message: 'No tienes permisos para acceder a los datos biométricos de otro usuario.' 
+      };
     }
-    if (BIOMETRIC_TOOLS.includes(toolName)) {
-      const targetUserId = args.userId || userId;
-      const consent = await checkConsent(targetUserId, 'all_biometric');
+  }
+
+  if (BIOMETRIC_TOOLS.includes(toolName)) {
+    const targetUserId = args.userId || userId;
+    const consent = await checkConsent(targetUserId, 'all_biometric');
     
     if (!consent.granted) {
-      // Log intento sin consentimiento
       await logAccess({
         userId: targetUserId,
         accessedBy: 'ATENA',
@@ -176,7 +221,6 @@ async function executeAuraTool(toolName, args, userId) {
       };
     }
 
-    // Log acceso autorizado
     await logAccess({
       userId: targetUserId,
       accessedBy: 'ATENA',
@@ -230,7 +274,7 @@ async function executeAuraTool(toolName, args, userId) {
       }
 
       case 'search_beauty_knowledge_rag': {
-        const results = await searchBeautyKnowledge(args.queryText, args.category);
+        const results = await searchBeautyKnowledge(args.queryText, { category: args.category, tenantId });
         return { status: 'success', knowledge: results };
       }
 
@@ -241,8 +285,32 @@ async function executeAuraTool(toolName, args, userId) {
         };
       }
 
+      // ── BUSINESS READ-ONLY TOOLS EXECUTION ──
+      case 'get_business_profile_summary': {
+        const targetProviderId = String(userId);
+        const summary = await businessDiagnosticService.getProfileSummary(targetProviderId, tenantId);
+        if (!summary) {
+          return { status: 'not_found', message: 'No se encontró expediente de negocio para este usuario.' };
+        }
+        return { status: 'success', summary };
+      }
+
+      case 'get_business_tasks': {
+        const targetProviderId = String(userId);
+        const tasks = await businessWorkflowService.getTasksForProvider(targetProviderId, tenantId);
+        return { status: 'success', tasksCount: tasks.length, tasks };
+      }
+
+      case 'search_regulatory_knowledge_rag': {
+        const results = await searchBeautyKnowledge(args.queryText, {
+          filters: { domain: 'BUSINESS', jurisdiction: args.jurisdiction },
+          tenantId
+        });
+        return { status: 'success', domain: 'REGULATORY', knowledge: results };
+      }
+
       default:
-        return { error: `Herramienta desconocida: ${toolName}` };
+        return { error: `Herramienta desconocida o no autorizada: ${toolName}` };
     }
   } catch (error) {
     console.error(`❌ Error ejecutando herramienta AURA (${toolName}):`, error.message);
