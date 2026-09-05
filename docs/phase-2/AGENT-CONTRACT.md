@@ -18,3 +18,12 @@
 2. **Component Reuse:** Agents must consume existing primitives from `src/components/ui/` before creating custom components.
 3. **Booking Sequence Compliance:** Any modification to booking interactions must follow the 3-step logical progression: 1. Cuándo y Dónde -> 2. Productos -> 3. Pago.
 4. **Accessibility Standards:** All interactive UI elements must adhere to WCAG 2.1 AA (minimum $4.5:1$ contrast ratio, $\ge 44\times 44\text{px}$ tap targets, keyboard focus support).
+
+---
+
+## 9. NAVIGATION & DOMAIN AGENT PARALLELIZATION RULES
+
+1. **Navigation Contract Compliance:** Agents must obey the Navigation Contract (`docs/phase-2/NAVIGATION-CONTRACT.md`). Custom un-governed routers or redundant back-stacks are prohibited.
+2. **Domain Ownership Boundaries:** Each agent must work strictly within its assigned domain folder (`@/features/[domain]/`) and route paths. Modifying files owned by another domain requires explicit contract revision.
+3. **Conflict Zone Protection:** Shared components (`@/components/ui/`), global layouts, and design tokens must not be mutated by domain agents without coordination.
+4. **Preservation of 3-Step Booking Journey:** Any modification to booking flows must preserve the 3-step sequence (Cuándo/Dónde -> Productos -> Pago).
