@@ -22,9 +22,12 @@ router.get('/tasks', authMiddleware, businessController.getTasks);
 router.post('/tasks/:id/advance', authMiddleware, businessController.advanceTask);
 router.post('/tasks/:id/evidence', authMiddleware, businessController.submitEvidence);
 
-// Document Generator (Protected by authMiddleware)
+// Document Generator & Signatures (Protected by authMiddleware)
 router.get('/templates', authMiddleware, businessController.getTemplates);
 router.post('/documents/generate', authMiddleware, businessController.generateDocument);
+router.get('/documents/:id/download', authMiddleware, businessController.downloadDocument);
+router.post('/documents/:id/request-signature', authMiddleware, businessController.requestDocumentSignature);
+router.post('/documents/:id/sign', authMiddleware, businessController.signDocument);
 
 // 3. Admin Business Routes (Protected by authMiddleware & adminMiddleware)
 router.get('/admin/queue', authMiddleware, adminMiddleware, businessController.getAdminQueue);

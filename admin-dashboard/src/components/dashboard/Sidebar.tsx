@@ -33,6 +33,7 @@ export default function Sidebar() {
     
     if (user?.rol === 'ADMIN') {
       return [
+        { href: '/admin/business', label: 'Cumplimiento Business', icon: Scissors },
         { href: '/admin/academia', label: 'Academia Glow', icon: GraduationCap },
         { href: '/chat', label: 'Mensajes', icon: MessageSquare },
         { href: '/perfil', label: 'Mi Perfil', icon: UserIcon },

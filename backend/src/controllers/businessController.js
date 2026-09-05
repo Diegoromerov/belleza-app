@@ -169,10 +169,82 @@ class BusinessController {
 
       const doc = await documentGeneratorService.generateDocument({
         templateCode: req.body.template_code,
-        variables: req.body.variables
+        variables: req.body.variables,
+        providerId: req.user.id,
+        tenantId: req.user.tenant_id,
+        businessProfileId: req.body.business_profile_id
       });
 
       return res.status(200).json({ success: true, data: doc });
+    } catch (err) {
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  }
+
+  // GET /api/v1/business/documents/:id/download (Private Provider/Admin)
+  async downloadDocument(req, res) {
+    try {
+      if (!req.user || !req.user.id) {
+        return res.status(401).json({ success: false, error: 'UNAUTHORIZED: Autenticación requerida' });
+      }
+
+      const result = await documentGeneratorService.getDocumentForDownload(
+        req.params.id,
+        req.user.id,
+        req.user.tenant_id,
+        req.user.role
+      );
+
+      if (result.status !== 200) {
+        return res.status(result.status).json({ success: false, error: result.error });
+      }
+
+      if (req.query.format === 'html') {
+        res.setHeader('Content-Type', 'text/html');
+        return res.send(result.htmlContent);
+      }
+
+      return res.status(200).json({ success: true, data: result.doc, downloadUrl: result.downloadUrl });
+    } catch (err) {
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  }
+
+  // POST /api/v1/business/documents/:id/request-signature (Private Provider)
+  async requestDocumentSignature(req, res) {
+    try {
+      if (!req.user || !req.user.id) {
+        return res.status(401).json({ success: false, error: 'UNAUTHORIZED: Autenticación requerida' });
+      }
+
+      const result = await documentGeneratorService.requestSignature(
+        req.params.id,
+        req.user.id,
+        req.user.tenant_id
+      );
+
+      return res.status(200).json({ success: true, data: result });
+    } catch (err) {
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  }
+
+  // POST /api/v1/business/documents/:id/sign (Private Provider/Admin)
+  async signDocument(req, res) {
+    try {
+      if (!req.user || !req.user.id) {
+        return res.status(401).json({ success: false, error: 'UNAUTHORIZED: Autenticación requerida' });
+      }
+
+      const result = await documentGeneratorService.signDocument({
+        documentId: req.params.id,
+        providerId: req.user.id,
+        tenantId: req.user.tenant_id,
+        signerName: req.body.signer_name || req.user.name,
+        signatureHash: req.body.signature_hash
+      });
+
+      return res.status(200).json({ success: true, data: result });
     } catch (err) {
       return res.status(500).json({ success: false, error: err.message });
     }

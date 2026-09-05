@@ -494,6 +494,93 @@ class BusinessRepository {
     }
     return documentTemplates.find(t => t.code === code) || documentTemplates[0];
   }
+
+  // Generated Documents & Signatures (GOAL 06 — PHASE F)
+  async saveDocument(doc) {
+    const memoryDocs = this.memoryDocs || (this.memoryDocs = new Map());
+    const docId = doc.id || `doc-${Date.now()}`;
+    const version = doc.version || 1;
+    const status = doc.status || 'DRAFT';
+
+    try {
+      const res = await pool.query(
+        `INSERT INTO business_documents 
+          (id, template_code, business_profile_id, provider_id, tenant_id, title, category, rendered_body, watermark, disclaimer, version, status, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+         ON CONFLICT (id) DO UPDATE SET
+           rendered_body = EXCLUDED.rendered_body,
+           status = EXCLUDED.status,
+           version = EXCLUDED.version,
+           updated_at = CURRENT_TIMESTAMP
+         RETURNING *`,
+        [docId, doc.template_code, doc.business_profile_id || null, doc.provider_id, doc.tenant_id || 'default', doc.title, doc.category, doc.rendered_body, doc.watermark, doc.disclaimer, version, status]
+      );
+      if (res.rows.length > 0) return res.rows[0];
+    } catch (err) {
+      console.warn('⚠️ [BusinessRepository] DB error in saveDocument, using memory fallback:', err.message);
+    }
+
+    const documentRecord = {
+      id: docId,
+      template_code: doc.template_code,
+      business_profile_id: doc.business_profile_id || null,
+      provider_id: doc.provider_id,
+      tenant_id: doc.tenant_id || 'default',
+      title: doc.title,
+      category: doc.category,
+      rendered_body: doc.rendered_body,
+      watermark: doc.watermark,
+      disclaimer: doc.disclaimer,
+      version,
+      status,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    memoryDocs.set(documentRecord.id, documentRecord);
+    return documentRecord;
+  }
+
+  async getDocumentById(docId) {
+    const memoryDocs = this.memoryDocs || (this.memoryDocs = new Map());
+    try {
+      const res = await pool.query('SELECT * FROM business_documents WHERE id = $1', [docId]);
+      if (res.rows.length > 0) return res.rows[0];
+    } catch (err) {
+      console.warn('⚠️ [BusinessRepository] DB error in getDocumentById, using memory fallback:', err.message);
+    }
+    return memoryDocs.get(docId) || null;
+  }
+
+  async updateDocumentSignature(docId, status, signedBy, signatureHash) {
+    const memoryDocs = this.memoryDocs || (this.memoryDocs = new Map());
+    try {
+      const res = await pool.query(
+        `UPDATE business_documents
+         SET status = $2,
+             signed_by = $3,
+             signature_hash = $4,
+             signed_at = CURRENT_TIMESTAMP,
+             updated_at = CURRENT_TIMESTAMP
+         WHERE id = $1
+         RETURNING *`,
+        [docId, status, signedBy, signatureHash]
+      );
+      if (res.rows.length > 0) return res.rows[0];
+    } catch (err) {
+      console.warn('⚠️ [BusinessRepository] DB error in updateDocumentSignature, using memory fallback:', err.message);
+    }
+
+    const doc = memoryDocs.get(docId);
+    if (doc) {
+      doc.status = status;
+      doc.signed_by = signedBy;
+      doc.signature_hash = signatureHash;
+      doc.signed_at = new Date().toISOString();
+      doc.updated_at = new Date().toISOString();
+      memoryDocs.set(docId, doc);
+    }
+    return doc;
+  }
 }
 
 module.exports = new BusinessRepository();
