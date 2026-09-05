@@ -12,3 +12,4 @@
 
 ADMIN | Agent Admin | /(dashboard)/admin/* | page.tsx | /api/v1/admin/* | COMPLETED
 TRUST_SAFETY_PAYMENTS | Agent Trust | /api/v1/trust/* | kyc_state_machine.js | /api/v1/payments | COMPLETED
+PRODUCT_INTELLIGENCE | Agent Intelligence | /api/v1/analytics/* | product_events.js | /api/v1/growth | COMPLETED
