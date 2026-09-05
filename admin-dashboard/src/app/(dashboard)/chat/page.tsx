@@ -1,7 +1,7 @@
-﻿'use client';
+'use client';
 
 import React, { useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { MessageSquare, Send, User, Sparkles, CheckCheck } from 'lucide-react';
 
 export default function ChatPage() {

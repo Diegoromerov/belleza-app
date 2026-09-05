@@ -1,8 +1,8 @@
-﻿'use client';
+'use client';
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { useBookings } from '../../../../hooks/useBookings';
+import { useBookings } from '@/hooks/useBookings';
 import { Calendar, Clock, MapPin, Search, UserCheck } from 'lucide-react';
 
 export default function ClienteCitasPage() {

@@ -1,7 +1,7 @@
-﻿'use client';
+'use client';
 
 import React, { useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { User, Mail, Shield, Phone, Key, Award, CheckCircle2 } from 'lucide-react';
 
 export default function PerfilPage() {
