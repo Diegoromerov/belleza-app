@@ -11,3 +11,4 @@
 | **ACADEMY** | Agent F | `/(dashboard)/admin/academia` | `academy_screen.dart` | `/api/v1/courses` | YES |
 
 ADMIN | Agent Admin | /(dashboard)/admin/* | page.tsx | /api/v1/admin/* | COMPLETED
+TRUST_SAFETY_PAYMENTS | Agent Trust | /api/v1/trust/* | kyc_state_machine.js | /api/v1/payments | COMPLETED
