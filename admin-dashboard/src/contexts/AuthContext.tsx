@@ -14,7 +14,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' && window.location.hostname.includes('railway.app') ? 'https://beauty-app-production-bfd4.up.railway.app' : 'http://localhost:3000');
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -73,7 +73,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const register = async (data: { email: string; nombre: string; phone?: string; rol: 'CLIENTE' | 'PRESTADOR'; password: string }) => {
     setLoading(true);
     try {
-      const response = await axios.post(`${API_URL}/api/auth/register`, data);
+      const payload = {
+        full_name: data.nombre,
+        nombre: data.nombre,
+        email: data.email,
+        password: data.password,
+        phone: data.phone || null,
+        role: data.rol,
+        rol: data.rol
+      };
+      const response = await axios.post(`${API_URL}/api/auth/register`, payload);
       const token = response.data.token;
       const apiUser = response.data.user || response.data.usuario;
       if (token && apiUser) {
