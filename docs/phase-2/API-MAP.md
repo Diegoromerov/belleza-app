@@ -1,25 +1,13 @@
-# 🔌 API Map — Catálogo de Endpoints REST & Realtime
+# 🔌 API Map — Catálogo Oficial y Contrato de Comunicación API
 
-## Backend Production API
-Base URL: `https://beauty-app-production-bfd4.up.railway.app/api`
+## Base URL Oficial de Producción
+`https://beauty-app-production-bfd4.up.railway.app/api`
 
-### 1. Autenticación & Usuarios (`/auth`, `/users`)
-- `POST /api/auth/login` — Autenticación con credenciales y emisión de JWT.
-- `POST /api/auth/register` — Registro de nuevos usuarios y asignación de rol.
-- `GET /api/auth/me` — Obtención de información del usuario autenticado.
+## Formato Estándar de Respuesta DTO
+- **Éxito (HTTP 200/201):** `{ "success": true, "data": ..., "requestId": "req_..." }`
+- **Error (HTTP 4xx/5xx):** `{ "success": false, "error": { "code": "...", "message": "..." }, "requestId": "req_..." }`
 
-### 2. Reservas y Citas (`/bookings`)
-- `GET /api/bookings` — Lista de reservas por rol (cliente/prestador).
-- `POST /api/bookings` — Creación de nueva reserva de servicio.
-- `PATCH /api/bookings/:id/status` — Actualización del estado de la cita.
-
-### 3. Inventario y POS (`/inventory`)
-- `GET /api/inventory/products` — Consulta de stock de productos y alertas VTO.
-- `POST /api/inventory/pos/checkout` — Registro de ventas presenciales de caja.
-
-### 4. Academia y Cursos (`/academy`)
-- `GET /api/academy/courses` — Lista de cursos activos.
-- `POST /api/academy/courses` — Creación de nuevos cursos de capacitación.
-
-### 5. Chat y Asistente IA (`/chat`, `/ai`)
-- `POST /api/ai/chat` — Consulta en tiempo real al worker de Aura IA.
+## Gobernanza de Integraciones Externas
+1. **AI Worker (FastAPI):** `http://localhost:8000/api/ai` — Fallback Fail-Open.
+2. **Push Notifications:** Firebase FCM — Reintentos con Backoff Exponencial.
+3. **Webhooks de Pago:** Firma de verificación requerida + Clave de Idempotencia en Redis (`beauty:webhook:processed:<id>`).
