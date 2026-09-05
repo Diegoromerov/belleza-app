@@ -546,9 +546,9 @@ exports.forgotPassword = async (req, res) => {
       });
     }
 
-    // Generar código OTP de 6 dígitos aleatorio
+    // Generar código OTP de 6 dígitos aleatorio con PRNG criptográfico seguro
     const crypto = require('crypto');
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = crypto.randomInt(100000, 1000000).toString();
 
     // Guardar OTP en Redis con TTL de 10 minutos (600s)
     try {
@@ -557,7 +557,7 @@ exports.forgotPassword = async (req, res) => {
       console.warn('⚠️ Error guardando OTP en Redis:', redisErr.message);
     }
 
-    console.log(`🔑 [PASSWORD RESET] Código OTP generado para ${cleanEmail}: ${otp}`);
+    console.log(`🔑 [PASSWORD RESET] Solicitud OTP procesada exitosamente para ${cleanEmail}`);
 
     // Enviar correo transaccional con el código OTP
     try {
