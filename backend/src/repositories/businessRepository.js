@@ -581,6 +581,49 @@ class BusinessRepository {
     }
     return doc;
   }
+
+  // Document Audit Logs
+  async addDocumentAuditLog({ documentId, tenantId, providerId, actorId, action, metadata = {} }) {
+    const memoryAudit = this.memoryAudit || (this.memoryAudit = []);
+    const logEntry = {
+      id: `audit-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+      document_id: documentId,
+      tenant_id: tenantId || 'default',
+      provider_id: providerId || 'system',
+      actor_id: actorId || providerId || 'system',
+      action,
+      metadata: typeof metadata === 'string' ? metadata : JSON.stringify(metadata),
+      created_at: new Date().toISOString()
+    };
+
+    try {
+      await pool.query(
+        `INSERT INTO document_audit_logs 
+          (id, document_id, tenant_id, provider_id, actor_id, action, metadata, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)`,
+        [logEntry.id, logEntry.document_id, logEntry.tenant_id, logEntry.provider_id, logEntry.actor_id, logEntry.action, logEntry.metadata]
+      );
+    } catch (err) {
+      // Memory fallback if table does not exist yet
+    }
+
+    memoryAudit.push(logEntry);
+    return logEntry;
+  }
+
+  async getDocumentAuditLogs(documentId) {
+    const memoryAudit = this.memoryAudit || (this.memoryAudit = []);
+    try {
+      const res = await pool.query(
+        'SELECT * FROM document_audit_logs WHERE document_id = $1 ORDER BY created_at ASC',
+        [documentId]
+      );
+      if (res.rows.length > 0) return res.rows;
+    } catch (err) {
+      // Fallback to memory
+    }
+    return memoryAudit.filter(a => a.document_id === documentId);
+  }
 }
 
 module.exports = new BusinessRepository();

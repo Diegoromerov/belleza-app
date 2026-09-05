@@ -28,6 +28,8 @@ router.post('/documents/generate', authMiddleware, businessController.generateDo
 router.get('/documents/:id/download', authMiddleware, businessController.downloadDocument);
 router.post('/documents/:id/request-signature', authMiddleware, businessController.requestDocumentSignature);
 router.post('/documents/:id/sign', authMiddleware, businessController.signDocument);
+router.post('/documents/:id/version', authMiddleware, businessController.createDocumentVersion);
+router.get('/documents/:id/audit', authMiddleware, businessController.getDocumentAuditTrail);
 
 // 3. Admin Business Routes (Protected by authMiddleware & adminMiddleware)
 router.get('/admin/queue', authMiddleware, adminMiddleware, businessController.getAdminQueue);

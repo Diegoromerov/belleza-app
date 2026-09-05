@@ -40,6 +40,16 @@ class DocumentGeneratorService {
       status: 'DRAFT'
     });
 
+    // Audit Log: document_created
+    await businessRepository.addDocumentAuditLog({
+      documentId: docRecord.id,
+      tenantId: docRecord.tenant_id,
+      providerId: docRecord.provider_id,
+      actorId: providerId || 'system',
+      action: 'document_created',
+      metadata: { templateCode: template.code, version: 1 }
+    });
+
     return {
       documentId: docRecord.id,
       templateCode: template.code,
@@ -54,18 +64,89 @@ class DocumentGeneratorService {
     };
   }
 
+  async createDocumentVersion({ parentDocumentId, variables, providerId, tenantId, role = 'provider' }) {
+    const parentDoc = await businessRepository.getDocumentById(parentDocumentId);
+    if (!parentDoc) throw new Error('Documento padre no encontrado');
+
+    // Provider Isolation Check
+    if (role !== 'admin' && parentDoc.provider_id !== providerId) {
+      throw new Error('FORBIDDEN: No tienes autorizacion para versionar documentos de otro prestador');
+    }
+
+    const template = await businessRepository.getTemplateByCode(parentDoc.template_code);
+    let renderedBody = template.template_body;
+    const vars = variables || {};
+
+    Object.keys(vars).forEach(key => {
+      const regex = new RegExp(`{{${key}}}`, 'g');
+      renderedBody = renderedBody.replace(regex, vars[key]);
+    });
+    renderedBody = renderedBody.replace(/{{[a-zA-Z0-9_]+}}/g, '[________]');
+
+    const nextVersion = (parentDoc.version || 1) + 1;
+    const newDocId = `doc-${Date.now()}`;
+
+    const newDocRecord = await businessRepository.saveDocument({
+      id: newDocId,
+      template_code: parentDoc.template_code,
+      business_profile_id: parentDoc.business_profile_id,
+      provider_id: parentDoc.provider_id,
+      tenant_id: parentDoc.tenant_id,
+      title: `${parentDoc.title} (v${nextVersion})`,
+      category: parentDoc.category,
+      rendered_body: renderedBody,
+      watermark: `DOCUMENTO OFICIAL v${nextVersion}`,
+      disclaimer: parentDoc.disclaimer,
+      version: nextVersion,
+      status: 'DRAFT'
+    });
+
+    // Audit Log: version_created
+    await businessRepository.addDocumentAuditLog({
+      documentId: newDocRecord.id,
+      tenantId: newDocRecord.tenant_id,
+      providerId: newDocRecord.provider_id,
+      actorId: providerId,
+      action: 'version_created',
+      metadata: { parentDocumentId, previousVersion: parentDoc.version, newVersion: nextVersion }
+    });
+
+    return {
+      documentId: newDocRecord.id,
+      parentDocumentId,
+      version: newDocRecord.version,
+      title: newDocRecord.title,
+      status: newDocRecord.status,
+      renderedBody: newDocRecord.rendered_body,
+      createdAt: newDocRecord.created_at
+    };
+  }
+
   async getDocumentForDownload(documentId, providerId, tenantId, role = 'provider') {
     const doc = await businessRepository.getDocumentById(documentId);
     if (!doc) {
       return { status: 404, error: 'Documento no encontrado' };
     }
 
-    // Tenant & Ownership Authorization Check (BUS-SEC-002 Boundary)
+    // Provider-vs-Provider & Tenant Isolation Check (GAP 01 Fix)
     if (role !== 'admin') {
-      if (doc.provider_id !== providerId && doc.tenant_id !== tenantId) {
-        return { status: 403, error: 'FORBIDDEN: No tienes autorizacion para descargar documentos de otro tenant o prestador' };
+      if (doc.provider_id !== providerId) {
+        return { status: 403, error: 'FORBIDDEN: No tienes autorizacion para descargar documentos de otro prestador' };
+      }
+      if (tenantId && doc.tenant_id !== tenantId) {
+        return { status: 403, error: 'FORBIDDEN: No tienes autorizacion para descargar documentos de otro tenant' };
       }
     }
+
+    // Audit Log: document_downloaded
+    await businessRepository.addDocumentAuditLog({
+      documentId: doc.id,
+      tenantId: doc.tenant_id,
+      providerId: doc.provider_id,
+      actorId: providerId,
+      action: 'document_downloaded',
+      metadata: { role }
+    });
 
     // Format downloadable document payload
     const formattedHtml = `
@@ -106,15 +187,31 @@ class DocumentGeneratorService {
     };
   }
 
-  async requestSignature(documentId, providerId, tenantId) {
+  async requestSignature(documentId, providerId, tenantId, role = 'provider') {
     const doc = await businessRepository.getDocumentById(documentId);
     if (!doc) throw new Error('Documento no encontrado');
 
-    if (doc.provider_id !== providerId && doc.tenant_id !== tenantId) {
-      throw new Error('FORBIDDEN: No tienes permisos sobre este documento');
+    // Provider Isolation Check
+    if (role !== 'admin' && doc.provider_id !== providerId) {
+      throw new Error('FORBIDDEN: No tienes permisos sobre este documento de otro prestador');
+    }
+
+    if (doc.status === 'SIGNED') {
+      throw new Error('IMMUTABLE: El documento ya ha sido firmado y no admite solicitudes de firma adicionales');
     }
 
     const updated = await businessRepository.updateDocumentSignature(documentId, 'PENDING_SIGNATURE', null, null);
+
+    // Audit Log: signature_requested
+    await businessRepository.addDocumentAuditLog({
+      documentId: updated.id,
+      tenantId: updated.tenant_id,
+      providerId: updated.provider_id,
+      actorId: providerId,
+      action: 'signature_requested',
+      metadata: { previousStatus: doc.status, newStatus: 'PENDING_SIGNATURE' }
+    });
+
     return {
       documentId: updated.id,
       status: updated.status,
@@ -122,12 +219,18 @@ class DocumentGeneratorService {
     };
   }
 
-  async signDocument({ documentId, providerId, tenantId, signerName, signatureHash }) {
+  async signDocument({ documentId, providerId, tenantId, signerName, signatureHash, role = 'provider' }) {
     const doc = await businessRepository.getDocumentById(documentId);
     if (!doc) throw new Error('Documento no encontrado');
 
-    if (doc.provider_id !== providerId && doc.tenant_id !== tenantId) {
-      throw new Error('FORBIDDEN: No tienes permisos sobre este documento');
+    // Provider Isolation Check (GAP 01 Fix)
+    if (role !== 'admin' && doc.provider_id !== providerId) {
+      throw new Error('FORBIDDEN: No tienes permisos sobre este documento de otro prestador');
+    }
+
+    // Immutability Check (GAP 03 Fix)
+    if (doc.status === 'SIGNED') {
+      throw new Error('IMMUTABLE: El documento ya ha sido firmado y es inalterable');
     }
 
     const generatedHash = signatureHash || crypto.createHash('sha256').update(`${doc.id}-${signerName}-${Date.now()}`).digest('hex');
@@ -139,6 +242,16 @@ class DocumentGeneratorService {
       generatedHash
     );
 
+    // Audit Log: document_signed
+    await businessRepository.addDocumentAuditLog({
+      documentId: updated.id,
+      tenantId: updated.tenant_id,
+      providerId: updated.provider_id,
+      actorId: providerId,
+      action: 'document_signed',
+      metadata: { signerName: updated.signed_by, signatureHash: updated.signature_hash }
+    });
+
     return {
       documentId: updated.id,
       status: updated.status,
@@ -146,6 +259,24 @@ class DocumentGeneratorService {
       signatureHash: updated.signature_hash,
       signedAt: updated.signed_at,
       message: 'Documento firmado electrónicamente exitosamente.'
+    };
+  }
+
+  async getDocumentAuditTrail(documentId, providerId, tenantId, role = 'provider') {
+    const doc = await businessRepository.getDocumentById(documentId);
+    if (!doc) throw new Error('Documento no encontrado');
+
+    if (role !== 'admin' && doc.provider_id !== providerId) {
+      throw new Error('FORBIDDEN: No tienes permisos para ver la trazabilidad de este documento');
+    }
+
+    const auditLogs = await businessRepository.getDocumentAuditLogs(documentId);
+    return {
+      documentId: doc.id,
+      title: doc.title,
+      version: doc.version,
+      status: doc.status,
+      auditLogs
     };
   }
 }

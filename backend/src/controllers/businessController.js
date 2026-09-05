@@ -241,12 +241,57 @@ class BusinessController {
         providerId: req.user.id,
         tenantId: req.user.tenant_id,
         signerName: req.body.signer_name || req.user.name,
-        signatureHash: req.body.signature_hash
+        signatureHash: req.body.signature_hash,
+        role: req.user.role
       });
 
       return res.status(200).json({ success: true, data: result });
     } catch (err) {
-      return res.status(500).json({ success: false, error: err.message });
+      const statusCode = err.message.startsWith('IMMUTABLE') ? 400 : (err.message.startsWith('FORBIDDEN') ? 403 : 500);
+      return res.status(statusCode).json({ success: false, error: err.message });
+    }
+  }
+
+  // POST /api/v1/business/documents/:id/version (Private Provider/Admin)
+  async createDocumentVersion(req, res) {
+    try {
+      if (!req.user || !req.user.id) {
+        return res.status(401).json({ success: false, error: 'UNAUTHORIZED: Autenticación requerida' });
+      }
+
+      const result = await documentGeneratorService.createDocumentVersion({
+        parentDocumentId: req.params.id,
+        variables: req.body.variables,
+        providerId: req.user.id,
+        tenantId: req.user.tenant_id,
+        role: req.user.role
+      });
+
+      return res.status(201).json({ success: true, data: result });
+    } catch (err) {
+      const statusCode = err.message.startsWith('FORBIDDEN') ? 403 : 500;
+      return res.status(statusCode).json({ success: false, error: err.message });
+    }
+  }
+
+  // GET /api/v1/business/documents/:id/audit (Private Provider/Admin)
+  async getDocumentAuditTrail(req, res) {
+    try {
+      if (!req.user || !req.user.id) {
+        return res.status(401).json({ success: false, error: 'UNAUTHORIZED: Autenticación requerida' });
+      }
+
+      const result = await documentGeneratorService.getDocumentAuditTrail(
+        req.params.id,
+        req.user.id,
+        req.user.tenant_id,
+        req.user.role
+      );
+
+      return res.status(200).json({ success: true, data: result });
+    } catch (err) {
+      const statusCode = err.message.startsWith('FORBIDDEN') ? 403 : 500;
+      return res.status(statusCode).json({ success: false, error: err.message });
     }
   }
 
