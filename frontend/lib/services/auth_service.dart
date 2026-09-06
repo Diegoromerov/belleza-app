@@ -180,12 +180,15 @@ class AuthService {
     return json.decode(response.body);
   }
 
-  static Future<Map<String, dynamic>?> loginWithGoogle(String idToken) async {
+  static Future<Map<String, dynamic>?> loginWithGoogle(String idToken, {String? roleIntent}) async {
     final baseUrl = await getBaseUrl();
     final response = await http.post(
       Uri.parse('$baseUrl/api/auth/google'),
       headers: {'Content-Type': 'application/json'},
-      body: json.encode({'idToken': idToken}),
+      body: json.encode({
+        'idToken': idToken,
+        if (roleIntent != null) 'role_intent': roleIntent,
+      }),
     );
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
@@ -200,6 +203,103 @@ class AuthService {
         await prefs.setString('userRole', data['user']['role']);
       }
       return data;
+    }
+    return null;
+  }
+
+  static Future<bool> selectRole(String role) async {
+    final baseUrl = await getBaseUrl();
+    final token = await getToken();
+    if (token == null) return false;
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/auth/select-role'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: json.encode({'role': role}),
+    );
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      if (data['user'] != null && data['user']['role'] != null) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('userRole', data['user']['role']);
+      }
+      return true;
+    }
+    return false;
+  }
+
+  static Future<Map<String, dynamic>?> createSalon({
+    required String nombreSalon,
+    String? nit,
+    String? direccion,
+    String? telefono,
+    String? ciudad,
+  }) async {
+    final baseUrl = await getBaseUrl();
+    final token = await getToken();
+    if (token == null) return null;
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/salon/create'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: json.encode({
+        'nombre_salon': nombreSalon,
+        'nit': nit,
+        'direccion': direccion,
+        'telefono': telefono,
+        'ciudad': ciudad,
+      }),
+    );
+    if (response.statusCode == 201) {
+      return json.decode(response.body);
+    }
+    return null;
+  }
+
+  static Future<Map<String, dynamic>?> inviteTeamMember({
+    required int salonId,
+    required String email,
+    required String subRol,
+  }) async {
+    final baseUrl = await getBaseUrl();
+    final token = await getToken();
+    if (token == null) return null;
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/salon/invite'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: json.encode({
+        'salon_id': salonId,
+        'email': email,
+        'sub_rol': subRol,
+      }),
+    );
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    }
+    return null;
+  }
+
+  static Future<Map<String, dynamic>?> acceptSalonInvitation(String tokenParam) async {
+    final baseUrl = await getBaseUrl();
+    final token = await getToken();
+    if (token == null) return null;
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/salon/accept-invitation'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: json.encode({'token': tokenParam}),
+    );
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
     }
     return null;
   }

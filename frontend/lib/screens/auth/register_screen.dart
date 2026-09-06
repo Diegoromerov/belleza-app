@@ -243,7 +243,35 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                           color: _selectedRole == 'PRESTADOR'
                                               ? const Color(0xFF1F1A15)
                                               : const Color(0xFF9E8C78),
-                                          fontSize: 13,
+                                          fontSize: 12,
+                                          fontFamily: 'CormorantGaramond',
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () => setState(() => _selectedRole = 'SALON'),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 200),
+                                    padding: const EdgeInsets.symmetric(vertical: 10),
+                                    decoration: BoxDecoration(
+                                      color: _selectedRole == 'SALON'
+                                          ? const Color(0xFFFAF8F5)
+                                          : Colors.transparent,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        'Salón (SaaS)',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: _selectedRole == 'SALON'
+                                              ? const Color(0xFF1F1A15)
+                                              : const Color(0xFF9E8C78),
+                                          fontSize: 12,
                                           fontFamily: 'CormorantGaramond',
                                         ),
                                       ),
@@ -267,7 +295,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           child: Text(
                             _selectedRole == 'CLIENTE'
                                 ? '✨ Acceso a diagnósticos de IA Aura, GlowStore y reserva de servicios concierge.'
-                                : '💼 Ofrece tus servicios, gestiona tu agenda y recibe pagos con comisión preferencial.',
+                                : _selectedRole == 'PRESTADOR'
+                                    ? '💼 Ofrece tus servicios independientes, gestiona tu agenda y recibe pagos directos.'
+                                    : '🏢 Administra tu salón de belleza, tu equipo de trabajo y licencias SaaS integradas.',
                             style: const TextStyle(
                               fontSize: 12,
                               color: Color(0xFF6B5A48),

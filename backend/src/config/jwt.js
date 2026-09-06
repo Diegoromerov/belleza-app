@@ -15,6 +15,7 @@ const getJwtSecret = () => {
 const toApiRole = (dbRole) => {
   if (dbRole === 'PRESTADOR') return 'provider';
   if (dbRole === 'CLIENTE') return 'client';
+  if (dbRole === 'SALON') return 'salon';
   if (dbRole === 'ADMIN') return 'admin';
   return null;
 };

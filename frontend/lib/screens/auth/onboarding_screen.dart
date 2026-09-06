@@ -112,6 +112,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         } else {
           setState(() => _error = 'Error al guardar el perfil en el servidor');
         }
+      } else if (_selectedRole == 'SALON') {
+        final result = await AuthService.completeOnboarding(
+          role: 'SALON',
+          aceptarHabeasData: _habeasDataAccepted,
+          aceptarTerminos: _terminosAccepted,
+        );
+        if (result != null && mounted) {
+          Navigator.pushReplacementNamed(context, '/home');
+        } else {
+          setState(() => _error = 'Error al guardar el perfil de salón');
+        }
       } else {
         // CLIENTE
         final result = await AuthService.completeOnboarding(

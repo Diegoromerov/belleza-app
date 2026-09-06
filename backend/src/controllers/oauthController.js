@@ -9,7 +9,7 @@ const client = new OAuth2Client(CLIENT_ID);
 
 exports.googleSignIn = async (req, res) => {
   try {
-    const { idToken } = req.body;
+    const { idToken, role_intent } = req.body;
     if (!idToken) {
       return res.status(400).json({ error: 'Falta el idToken de Google' });
     }
@@ -42,12 +42,18 @@ exports.googleSignIn = async (req, res) => {
     let user;
 
     if (userQuery.rows.length === 0) {
-      // Registrar nuevo usuario cliente
+      // Determinar el rol según la intención enviada desde la UI
+      const validRoles = ['CLIENTE', 'PRESTADOR', 'SALON'];
+      const targetRole = (role_intent && validRoles.includes(role_intent.toUpperCase())) 
+        ? role_intent.toUpperCase() 
+        : null;
+      const onboardingCompleto = targetRole === 'CLIENTE';
+
       const insertQuery = await pool.query(
         `INSERT INTO usuarios (nombre, email, auth_provider, provider_id, rol, onboarding_completo) 
-         VALUES ($1, $2, 'GOOGLE', $3, 'CLIENTE', true) 
+         VALUES ($1, $2, 'GOOGLE', $3, $4, $5) 
          RETURNING id, nombre, email, rol, onboarding_completo`,
-        [name || 'Usuario Google', cleanEmail, googleId]
+        [name || 'Usuario Google', cleanEmail, googleId, targetRole, onboardingCompleto]
       );
       user = insertQuery.rows[0];
     } else {

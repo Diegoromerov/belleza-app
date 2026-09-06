@@ -10,6 +10,7 @@ const FormData = require('form-data');
 
 // Cargar rutas
 const authRoutes = require('../routes/authRoutes');
+const salonRoutes = require('../routes/salonRoutes');
 const paymentRoutes = require('../routes/paymentRoutes');
 const bookingRoutes = require('../routes/bookingRoutes');
 const serviceRoutes = require('../routes/serviceRoutes');
@@ -177,6 +178,7 @@ app.use('/api/payments/wompi-webhook', authAndWebhookLimiter);
 
 // Enlazar Rutas de API
 app.use('/api/auth', authRoutes);
+app.use('/api/salon', salonRoutes);
 app.use('/api', paymentRoutes);
 app.use('/api', bookingRoutes);
 app.use('/api', serviceRoutes);

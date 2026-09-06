@@ -2,6 +2,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
+import 'role_selection_modal.dart';
 import 'package:flutter/foundation.dart';
 import '../../services/api_service.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -94,17 +95,28 @@ class _LoginScreenState extends State<LoginScreen> {
       final result = await AuthService.loginWithGoogle(idToken);
 
       if (result != null && mounted) {
+        String? role = result['user']['role'];
+
+        if (role == null) {
+          // Si el usuario no tiene rol asignado, mostrar modal de selección de rol
+          role = await RoleSelectionModal.show(context);
+        }
+
         final bool onboardingCompleto =
             result['user']['onboarding_completo'] ?? false;
-        final String? role = result['user']['role'];
-        if (onboardingCompleto) {
-          if (role == 'provider') {
-            Navigator.pushReplacementNamed(context, '/provider');
+        
+        if (mounted) {
+          if (onboardingCompleto) {
+            if (role == 'provider') {
+              Navigator.pushReplacementNamed(context, '/provider');
+            } else if (role == 'salon') {
+              Navigator.pushReplacementNamed(context, '/salon');
+            } else {
+              Navigator.pushReplacementNamed(context, '/home');
+            }
           } else {
-            Navigator.pushReplacementNamed(context, '/home');
+            Navigator.pushReplacementNamed(context, '/onboarding');
           }
-        } else {
-          Navigator.pushReplacementNamed(context, '/onboarding');
         }
       } else {
         setState(() => _error = 'Error al autenticar con Google');

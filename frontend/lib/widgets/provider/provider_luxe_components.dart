@@ -110,7 +110,7 @@ class ProviderAppointmentTile extends StatelessWidget {
     }
 
     return Container(
-      minHeight: 80,
+      constraints: const BoxConstraints(minHeight: 80),
       margin: const EdgeInsets.only(bottom: 12.0),
       decoration: BoxDecoration(
         color: LuxeColors.nude100,

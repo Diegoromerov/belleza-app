@@ -68,6 +68,8 @@ class _MyGlowDashboardScreenState extends State<MyGlowDashboardScreen> {
         SnackBar(content: Text('Error al registrar check-in: $e')),
       );
     }
+  }
+
   Future<void> _handleRescanDialog(BuildContext context) async {
     if (_activeCycle == null) return;
     
@@ -95,7 +97,7 @@ class _MyGlowDashboardScreenState extends State<MyGlowDashboardScreen> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF2C2623),
-              shape: BorderRadius.circular(8),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
             onPressed: () async {
               Navigator.pop(ctx);
@@ -303,7 +305,7 @@ class _MyGlowDashboardScreenState extends State<MyGlowDashboardScreen> {
                   style: const TextStyle(
                     fontFamily: 'JetBrainsMono',
                     fontSize: 10,
-                    color: LuxeColors.nude400,
+                    color: LuxeColors.nude600,
                   ),
                 ),
               ],
@@ -352,7 +354,7 @@ class _MyGlowDashboardScreenState extends State<MyGlowDashboardScreen> {
             child: ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
                 backgroundColor: _isCheckinLogged ? const Color(0xFF059669) : const Color(0xFF2C2623),
-                shape: BorderRadius.circular(12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
               onPressed: _isCheckinLogged ? null : _handleCheckin,
               icon: Icon(_isCheckinLogged ? Icons.check_circle : Icons.task_alt, color: Colors.white, size: 20),
@@ -367,6 +369,7 @@ class _MyGlowDashboardScreenState extends State<MyGlowDashboardScreen> {
                 ),
               ),
             ),
+          ),
           const SizedBox(height: 12),
 
           // BOTÓN DE RE-ESCANEO / REEVALUACIÓN
@@ -376,7 +379,7 @@ class _MyGlowDashboardScreenState extends State<MyGlowDashboardScreen> {
             child: OutlinedButton.icon(
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: Color(0xFFC5A052), width: 1.5),
-                shape: BorderRadius.circular(12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
               onPressed: () => _handleRescanDialog(context),
               icon: const Icon(Icons.camera_enhance_outlined, color: Color(0xFFC5A052), size: 20),
@@ -503,7 +506,7 @@ class _MyGlowDashboardScreenState extends State<MyGlowDashboardScreen> {
             fontFamily: 'JetBrainsMono',
             fontSize: 9,
             fontWeight: FontWeight.bold,
-            color: isCompleted || isCurrent ? LuxeColors.nude900 : LuxeColors.nude400,
+            color: isCompleted || isCurrent ? LuxeColors.nude900 : LuxeColors.nude600,
           ),
         ),
       ],
@@ -677,7 +680,7 @@ class _MyGlowDashboardScreenState extends State<MyGlowDashboardScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF2C2623),
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: BorderRadius.circular(12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
               onPressed: () => Navigator.pop(context),
               child: const Text(

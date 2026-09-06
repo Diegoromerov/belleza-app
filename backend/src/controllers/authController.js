@@ -22,8 +22,9 @@ exports.register = async (req, res) => {
     const providerId = 'local_' + cleanEmail;
 
     // Determinar el rol y estado de onboarding
-    const userRole = (role && role.toUpperCase() === 'PRESTADOR') ? 'PRESTADOR' : 'CLIENTE';
-    const onboarding = (userRole === 'CLIENTE'); // true para cliente (completo), false para prestador (requiere docs)
+    const validRoles = ['CLIENTE', 'PRESTADOR', 'SALON'];
+    const userRole = (role && validRoles.includes(role.toUpperCase())) ? role.toUpperCase() : 'CLIENTE';
+    const onboarding = (userRole === 'CLIENTE'); // true para cliente, false para prestador/salón
 
     const result = await pool.query(
       `INSERT INTO usuarios (nombre, email, password_hash, phone, auth_provider, provider_id, rol, onboarding_completo) 
@@ -214,7 +215,7 @@ exports.onboarding = async (req, res) => {
     const userId = req.user.id;
     const { rol, documento_id_url, rut_url, certificacion_url, aceptar_habeas_data, aceptar_terminos } = req.body;
 
-    if (!rol || !['CLIENTE', 'PRESTADOR'].includes(rol.toUpperCase())) {
+    if (!rol || !['CLIENTE', 'PRESTADOR', 'SALON'].includes(rol.toUpperCase())) {
       return res.status(400).json({ error: 'Rol inválido o ausente' });
     }
 
@@ -226,10 +227,6 @@ exports.onboarding = async (req, res) => {
     const clientIp = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
     if (mappedRol === 'PRESTADOR') {
-      // 🛡️ PARCHE DE SEGURIDAD (GLOW-SEC-01): El usuario que realiza el onboarding de prestador
-      // NO obtiene el rol en la tabla usuarios de forma inmediata. Se almacena su solicitud
-      // y archivos en perfiles_prestador como PENDIENTE, pero su cuenta de autenticación
-      // sigue siendo CLIENTE hasta aprobación administrativa.
       await pool.query(
         `UPDATE usuarios 
          SET onboarding_completo = true,
@@ -239,7 +236,6 @@ exports.onboarding = async (req, res) => {
         [userId, clientIp]
       );
 
-      // Crear o actualizar perfil en perfiles_prestador (requiere revisión administrativa)
       await pool.query(
         `INSERT INTO perfiles_prestador (id, documento_id_url, rut_url, certificacion_url, estatus_verificacion, is_active)
          VALUES ($1, $2, $3, $4, 'PENDIENTE', true)
@@ -252,8 +248,17 @@ exports.onboarding = async (req, res) => {
       );
       
       console.log(`📋 Onboarding y aceptación legal completados para Proveedor ID ${userId}. Estatus: PENDIENTE.`);
+    } else if (mappedRol === 'SALON') {
+      await pool.query(
+        `UPDATE usuarios 
+         SET rol = 'SALON', onboarding_completo = true,
+             habeas_data_accepted_at = NOW(), habeas_data_ip = $2,
+             terminos_accepted_at = NOW(), terminos_ip = $2
+         WHERE id = $1`,
+        [userId, clientIp]
+      );
+      console.log(`📋 Onboarding y aceptación legal completados para Salón ID ${userId}.`);
     } else {
-      // Cliente se marca completo inmediatamente
       await pool.query(
         `UPDATE usuarios 
          SET rol = 'CLIENTE', onboarding_completo = true,
@@ -269,7 +274,7 @@ exports.onboarding = async (req, res) => {
       success: true,
       message: 'Onboarding completado exitosamente',
       user: {
-        role: mappedRol === 'PRESTADOR' ? 'client' : 'client', // Permanece como client hasta aprobación
+        role: toApiRole(mappedRol),
         onboarding_completo: true
       }
     });
@@ -627,12 +632,43 @@ exports.resetPassword = async (req, res) => {
     res.json({
       success: true,
       message: 'Contraseña actualizada exitosamente. Ya puedes iniciar sesión con tu nueva clave.'
+// ==========================================
+// 🔀 SELECCIONAR ROL DE USUARIO (Post-OAuth sin rol definido)
+// ==========================================
+exports.selectRole = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { role } = req.body;
+
+    if (!role || !['CLIENTE', 'PRESTADOR', 'SALON'].includes(role.toUpperCase())) {
+      return res.status(400).json({ error: 'Rol inválido o ausente. Debe ser CLIENTE, PRESTADOR o SALON.' });
+    }
+
+    const cleanRole = role.toUpperCase();
+    const onboarding = cleanRole === 'CLIENTE';
+
+    await pool.query(
+      `UPDATE usuarios SET rol = $1, onboarding_completo = $2 WHERE id = $3`,
+      [cleanRole, onboarding, userId]
+    );
+
+    console.log(`🔀 [ROLE SELECTION] Usuario ID ${userId} seleccionó el rol: ${cleanRole}`);
+
+    res.json({
+      success: true,
+      message: `Rol ${cleanRole} asignado exitosamente.`,
+      user: {
+        id: userId.toString(),
+        role: toApiRole(cleanRole),
+        onboarding_completo: onboarding
+      }
     });
   } catch (error) {
-    console.error('❌ ERROR RESET PASSWORD:', error.message);
-    res.status(500).json({ error: 'Error al restablecer la contraseña' });
+    console.error('❌ ERROR SELECT ROLE:', error.message);
+    res.status(500).json({ error: 'Error al seleccionar el rol' });
   }
 };
+
 
 
 
