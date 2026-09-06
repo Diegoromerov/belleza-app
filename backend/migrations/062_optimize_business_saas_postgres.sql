@@ -75,3 +75,44 @@ BEGIN
         END IF;
     END LOOP;
 END $$;
+
+-- 6. RATING & COMPLIANCE SCORE OPTIMIZATION (postgres-best-practices Priority 1 & 4)
+CREATE INDEX IF NOT EXISTS idx_business_tasks_profile_status_score
+ON business_tasks (business_profile_id, status)
+INCLUDE (id);
+
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'business_profiles') THEN
+    IF NOT EXISTS (
+      SELECT 1 FROM information_schema.constraint_column_usage 
+      WHERE table_name = 'business_profiles' AND constraint_name = 'check_compliance_score_range'
+    ) THEN
+      ALTER TABLE business_profiles 
+        ADD CONSTRAINT check_compliance_score_range 
+        CHECK (compliance_score >= 0.00 AND compliance_score <= 100.00);
+    END IF;
+  END IF;
+END $$;
+
+CREATE OR REPLACE FUNCTION calculate_glowapp_business_score(p_profile_id TEXT)
+RETURNS NUMERIC AS $$
+DECLARE
+    v_task_score NUMERIC := 0;
+    v_finding_penalty NUMERIC := 0;
+    v_final_score NUMERIC := 0;
+BEGIN
+    SELECT COALESCE(ROUND((COUNT(CASE WHEN status = 'VERIFIED' THEN 1 END)::numeric / GREATEST(COUNT(*), 1)) * 80, 2), 0)
+    INTO v_task_score
+    FROM business_tasks
+    WHERE business_profile_id = p_profile_id;
+
+    SELECT COALESCE(COUNT(CASE WHEN status = 'OPEN' AND risk_level = 'HIGH' THEN 1 END) * 5.0, 0)
+    INTO v_finding_penalty
+    FROM business_findings
+    WHERE business_profile_id = p_profile_id;
+
+    v_final_score := GREATEST(0.00, LEAST(100.00, (v_task_score + 20.00) - v_finding_penalty));
+    RETURN v_final_score;
+END;
+$$ LANGUAGE plpgsql STABLE PARALLEL SAFE;
