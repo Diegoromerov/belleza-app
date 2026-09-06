@@ -1,0 +1,3468 @@
+{
+  "phase": "M1_I0_ICON_MIGRATION_MAP",
+  "mode": "READ_ONLY",
+  "migration_started": false,
+  "timestamp": "2026-08-20T02:58:37.671516",
+  "inventory": {
+    "total_screens": 69,
+    "total_components": 12,
+    "total_material_icon_instances": 525,
+    "unique_material_icons": 233,
+    "glow_icon_system_total": 51,
+    "glow_icon_by_category": {
+      "core": 16,
+      "proprietary": 6,
+      "beauty": 8,
+      "men": 5,
+      "concierge": 4,
+      "aura": 6,
+      "system": 6
+    }
+  },
+  "material_icons": [
+    "access_time",
+    "access_time_filled",
+    "access_time_filled_rounded",
+    "access_time_outlined",
+    "access_time_rounded",
+    "account_balance",
+    "account_balance_wallet",
+    "account_balance_wallet_outlined",
+    "add",
+    "add_a_photo",
+    "add_a_photo_outlined",
+    "add_circle_outline",
+    "add_photo_alternate_outlined",
+    "add_rounded",
+    "add_shopping_cart_rounded",
+    "analytics",
+    "analytics_outlined",
+    "analytics_rounded",
+    "apple",
+    "arrow_back",
+    "arrow_back_ios",
+    "arrow_back_ios_new",
+    "arrow_back_rounded",
+    "arrow_downward",
+    "arrow_forward",
+    "arrow_forward_ios",
+    "arrow_forward_ios",
+    "arrow_forward_rounded",
+    "auto_awesome",
+    "auto_awesome_outlined",
+    "auto_awesome_rounded",
+    "auto_stories",
+    "back_hand",
+    "back_hand_outlined",
+    "block_outlined",
+    "bolt",
+    "brightness_6",
+    "broken_image",
+    "broken_image_outlined",
+    "calendar_month",
+    "calendar_month_outlined",
+    "calendar_today",
+    "calendar_today_outlined",
+    "calendar_today_rounded",
+    "camera",
+    "camera_alt",
+    "camera_alt_outlined",
+    "camera_alt_rounded",
+    "camera_front",
+    "camera_front_outlined",
+    "cameraswitch_outlined",
+    "card_giftcard",
+    "card_membership_outlined",
+    "category_outlined",
+    "center_focus_strong_outlined",
+    "center_focus_strong_rounded",
+    "chat_bubble",
+    "chat_bubble_outline",
+    "chat_bubble_outline_rounded",
+    "chat_bubble_rounded",
+    "check",
+    "check_circle",
+    "check_circle_outline",
+    "check_circle_outline_rounded",
+    "check_circle_rounded",
+    "check_rounded",
+    "checkroom_rounded",
+    "chevron_left",
+    "chevron_right",
+    "cloud_upload_outlined",
+    "compare_arrows_rounded",
+    "content_cut",
+    "content_cut_outlined",
+    "credit_card",
+    "credit_card_rounded",
+    "dark_mode_outlined",
+    "dashboard_outlined",
+    "delete_outline",
+    "delete_outline_rounded",
+    "design_services_outlined",
+    "emergency_outlined",
+    "emoji_events",
+    "error_outline",
+    "error_outline_rounded",
+    "event_available",
+    "event_available",
+    "exit_to_app_rounded",
+    "face",
+    "face_outlined",
+    "face_retouching_natural",
+    "face_retouching_natural_outlined",
+    "face_rounded",
+    "filter_list",
+    "fingerprint",
+    "flash_off",
+    "flash_on",
+    "g_mobiledata",
+    "gavel",
+    "gavel_outlined",
+    "gpp_bad_rounded",
+    "grid_view_rounded",
+    "help_outline",
+    "help_outline_rounded",
+    "history_edu_outlined",
+    "home",
+    "home_outlined",
+    "home_rounded",
+    "home_work",
+    "image",
+    "image_rounded",
+    "inventory_2_outlined",
+    "ios_share",
+    "light_mode_outlined",
+    "lightbulb_outline",
+    "local_offer",
+    "lock",
+    "lock_clock_outlined",
+    "lock_outline",
+    "lock_outline_rounded",
+    "lock_outlined",
+    "lock_reset_rounded",
+    "lock_rounded",
+    "logout",
+    "logout_rounded",
+    "mail_outline",
+    "man_outlined",
+    "man_rounded",
+    "map_outlined",
+    "mark_email_read_outlined",
+    "menu_rounded",
+    "military_tech",
+    "more_horiz_rounded",
+    "navigation_outlined",
+    "note_alt_outlined",
+    "notifications",
+    "notifications_active",
+    "notifications_none",
+    "notifications_none_outlined",
+    "notifications_rounded",
+    "opacity",
+    "palette",
+    "palette_outlined",
+    "palette_rounded",
+    "payment",
+    "payment_rounded",
+    "pending_actions_rounded",
+    "pending_actions_rounded",
+    "people_alt",
+    "person",
+    "person_outline",
+    "person_outline_rounded",
+    "person_rounded",
+    "phone",
+    "phone_android_rounded",
+    "phone_in_talk_rounded",
+    "phone_outlined",
+    "photo",
+    "photo_library",
+    "photo_library_outlined",
+    "photo_outlined",
+    "photo_size_select_actual_outlined",
+    "pin_outlined",
+    "play_arrow_outlined",
+    "play_circle_fill",
+    "play_circle_outline",
+    "psychology_outlined",
+    "public_rounded",
+    "qr_code",
+    "radio_button_checked",
+    "radio_button_off",
+    "rate_review_outlined",
+    "receipt_long_outlined",
+    "refresh",
+    "remove_rounded",
+    "rocket_launch",
+    "schedule",
+    "school",
+    "school_outlined",
+    "search",
+    "search_rounded",
+    "security",
+    "security_rounded",
+    "self_improvement",
+    "send",
+    "settings",
+    "settings_outlined",
+    "settings_rounded",
+    "shield",
+    "shield_outlined",
+    "shopping_bag_outlined",
+    "shopping_bag_rounded",
+    "shopping_cart_rounded",
+    "sort",
+    "spa",
+    "spa_outlined",
+    "spa_rounded",
+    "star",
+    "star",
+    "star_border",
+    "star_border_rounded",
+    "star_outline",
+    "star_outline_rounded",
+    "star_rounded",
+    "stars_rounded",
+    "stars_rounded",
+    "style",
+    "style_outlined",
+    "support_agent_outlined",
+    "swap_horiz",
+    "text_snippet_outlined",
+    "timer_outlined",
+    "title_outlined",
+    "today_rounded",
+    "trending_up",
+    "tune",
+    "verified",
+    "verified_rounded",
+    "verified_user_outlined",
+    "visibility",
+    "visibility_off",
+    "visibility_off_outlined",
+    "visibility_off_rounded",
+    "visibility_outlined",
+    "vpn_key_rounded",
+    "warning",
+    "warning_amber_rounded",
+    "wb_sunny_outlined",
+    "widgets_outlined",
+    "woman_rounded",
+    "work",
+    "work_outline",
+    "work_rounded",
+    "zoom_out_map_outlined"
+  ],
+  "svg_icons": [
+    "Only GlowIcon system SVGs found in lib/design/icons/glow_icon_registry.dart"
+  ],
+  "icon_data_usage": [
+    "Used in wompi_payment_sheet.dart, wallet_screen.dart, store_screen.dart, glow_icon_registry_init.dart"
+  ],
+  "custom_painter_icons": [
+    "CustomPainter used for charts/visualizations (TrendLineChartPainter, SkinDeteriorationPainter, VtoPainter, etc.), not for iconography"
+  ],
+  "image_icon_usage": [],
+  "external_icon_libraries": {
+    "cupertino_icons": "Declared in flutter: uses-material-design: true, but no explicit CupertinoIcons usage found",
+    "font_awesome_flutter": "Not in pubspec.yaml",
+    "iconsax": "Not in pubspec.yaml",
+    "lucide": "Not in pubspec.yaml",
+    "phosphor": "Not in pubspec.yaml",
+    "eva_icons": "Not in pubspec.yaml",
+    "material_symbols": "Not in pubspec.yaml"
+  },
+  "glow_icon_usage": {
+    "production_usage": 0,
+    "demo_usage": "lib/design/icons/glow_icon_demo.dart only",
+    "registry_usage": "lib/design/icons/glow_icon_registry_init.dart - initialization only",
+    "adapter_usage": 0
+  },
+  "adapter_usage": {
+    "production_usage": 0,
+    "demo_usage": "Referenced in glow_icon_demo.dart but not used in production"
+  },
+  "screens": [
+    "lib/screens/home/home_screen.dart",
+    "lib/screens/store_screen.dart",
+    "lib/screens/provider_detail_screen.dart",
+    "lib/screens/booking_screen.dart",
+    "lib/screens/map_screen.dart",
+    "lib/screens/chat_screen.dart",
+    "lib/screens/chat_list_screen.dart",
+    "lib/screens/profile/user_profile.dart",
+    "lib/screens/profile/settings_screen.dart",
+    "lib/screens/profile/biometric_history_screen.dart",
+    "lib/screens/profile/habeas_data_screen.dart",
+    "lib/screens/profile/rewards_xp_screen.dart",
+    "lib/screens/profile/glowstore_orders_screen.dart",
+    "lib/screens/profile/faq_screen.dart",
+    "lib/screens/profile/client_profile_screen.dart",
+    "lib/screens/profile/wallet_screen.dart",
+    "lib/screens/support/support_center_screen.dart",
+    "lib/screens/support/ticket_chat_screen.dart",
+    "lib/screens/support/create_ticket_screen.dart",
+    "lib/screens/support/terms_conditions_screen.dart",
+    "lib/screens/provider/provider_dashboard.dart",
+    "lib/screens/provider/provider_dashboard_screen.dart",
+    "lib/screens/provider/appointments_list.dart",
+    "lib/screens/provider/earnings_view.dart",
+    "lib/screens/provider/provider_profile_screen.dart",
+    "lib/screens/provider/provider_portfolio_screen.dart",
+    "lib/screens/provider/provider_route_screen.dart",
+    "lib/screens/provider/provider_services_screen.dart",
+    "lib/screens/client_bookings_screen.dart",
+    "lib/screens/client_profile_screen.dart",
+    "lib/screens/auth/login_screen.dart",
+    "lib/screens/auth/register_screen.dart",
+    "lib/screens/auth/onboarding_screen.dart",
+    "lib/screens/auth/forgot_password_screen.dart",
+    "lib/screens/auth/verification_pending_screen.dart",
+    "lib/screens/ideas/aura_welcome_screen.dart",
+    "lib/screens/ideas/capture_screen.dart",
+    "lib/screens/ideas/capture_guided_screen.dart",
+    "lib/screens/ideas/color_dna_results_screen.dart",
+    "lib/screens/ideas/fallback_transparency_screen.dart",
+    "lib/screens/ideas/glowstore_recipe_screen.dart",
+    "lib/screens/ideas/nail_vto_screen.dart",
+    "lib/screens/ideas/processing_alchemy_screen.dart",
+    "lib/screens/ideas/product_scanner_screen.dart",
+    "lib/screens/ideas/results_screen.dart",
+    "lib/screens/ideas/vto_live_screen.dart",
+    "lib/screens/ideas/widgets/color_palette.dart",
+    "lib/screens/ideas/widgets/product_card.dart",
+    "lib/screens/ideas/widgets/score_card.dart",
+    "lib/screens/designs/colorimetria_historial_screen.dart",
+    "lib/screens/designs/comparison_screen.dart",
+    "lib/screens/designs/evolution_dashboard_screen.dart",
+    "lib/screens/designs/glowup_card_screen.dart",
+    "lib/screens/designs/medical_validation_screen.dart",
+    "lib/screens/designs/outfit_result_screen.dart",
+    "lib/screens/designs/palette_card_screen.dart",
+    "lib/screens/designs/wardrobe_dashboard_screen.dart",
+    "lib/screens/designs/glow_beauty_screen.dart",
+    "lib/screens/academy/academy_screen.dart",
+    "lib/screens/academy/course_list.dart",
+    "lib/screens/academy/course_detail_screen.dart",
+    "lib/screens/academy/glow_consent_widget.dart",
+    "lib/screens/academy/quiz_screen.dart",
+    "lib/screens/academy/lesson_view.dart",
+    "lib/screens/academy/glow_nback_screen.dart",
+    "lib/screens/booking_tracking_screen.dart",
+    "lib/screens/disputes/disputes_list_screen.dart",
+    "lib/screens/disputes/open_dispute_screen.dart",
+    "lib/screens/otp_confirm_screen.dart"
+  ],
+  "components": [
+    "lib/widgets/floating_navigation_dock.dart",
+    "lib/widgets/wompi_payment_sheet.dart",
+    "lib/widgets/store_product_card.dart",
+    "lib/widgets/store/product_card.dart",
+    "lib/widgets/provider/booking_card.dart",
+    "lib/widgets/provider/provider_luxe_components.dart",
+    "lib/widgets/provider/service_card.dart",
+    "lib/design/components/academy_luxe_components.dart",
+    "lib/widgets/ai_search_bar.dart",
+    "lib/widgets/audience_toggle.dart",
+    "lib/widgets/aura_multi_agent_chat.dart",
+    "lib/widgets/booking_recovery_banner.dart"
+  ],
+  "migration_candidates": [
+    "lib/screens/home/home_screen.dart",
+    "lib/screens/store_screen.dart",
+    "lib/screens/provider_detail_screen.dart",
+    "lib/screens/booking_screen.dart",
+    "lib/screens/map_screen.dart",
+    "lib/screens/chat_screen.dart",
+    "lib/screens/chat_list_screen.dart",
+    "lib/screens/profile/user_profile.dart",
+    "lib/screens/profile/settings_screen.dart",
+    "lib/screens/profile/biometric_history_screen.dart",
+    "lib/screens/profile/habeas_data_screen.dart",
+    "lib/screens/profile/rewards_xp_screen.dart",
+    "lib/screens/profile/glowstore_orders_screen.dart",
+    "lib/screens/profile/faq_screen.dart",
+    "lib/screens/profile/client_profile_screen.dart",
+    "lib/screens/profile/wallet_screen.dart",
+    "lib/screens/support/support_center_screen.dart",
+    "lib/screens/support/ticket_chat_screen.dart",
+    "lib/screens/support/create_ticket_screen.dart",
+    "lib/screens/support/terms_conditions_screen.dart",
+    "lib/screens/provider/provider_dashboard.dart",
+    "lib/screens/provider/provider_dashboard_screen.dart",
+    "lib/screens/provider/appointments_list.dart",
+    "lib/screens/provider/earnings_view.dart",
+    "lib/screens/provider/provider_profile_screen.dart",
+    "lib/screens/provider/provider_portfolio_screen.dart",
+    "lib/screens/provider/provider_route_screen.dart",
+    "lib/screens/provider/provider_services_screen.dart",
+    "lib/screens/client_bookings_screen.dart",
+    "lib/screens/client_profile_screen.dart",
+    "lib/screens/auth/login_screen.dart",
+    "lib/screens/auth/register_screen.dart",
+    "lib/screens/auth/onboarding_screen.dart",
+    "lib/screens/auth/forgot_password_screen.dart",
+    "lib/screens/auth/verification_pending_screen.dart",
+    "lib/screens/ideas/aura_welcome_screen.dart",
+    "lib/screens/ideas/capture_screen.dart",
+    "lib/screens/ideas/capture_guided_screen.dart",
+    "lib/screens/ideas/color_dna_results_screen.dart",
+    "lib/screens/ideas/fallback_transparency_screen.dart",
+    "lib/screens/ideas/glowstore_recipe_screen.dart",
+    "lib/screens/ideas/nail_vto_screen.dart",
+    "lib/screens/ideas/processing_alchemy_screen.dart",
+    "lib/screens/ideas/product_scanner_screen.dart",
+    "lib/screens/ideas/results_screen.dart",
+    "lib/screens/ideas/vto_live_screen.dart",
+    "lib/screens/ideas/widgets/color_palette.dart",
+    "lib/screens/ideas/widgets/product_card.dart",
+    "lib/screens/ideas/widgets/score_card.dart",
+    "lib/screens/designs/colorimetria_historial_screen.dart",
+    "lib/screens/designs/comparison_screen.dart",
+    "lib/screens/designs/evolution_dashboard_screen.dart",
+    "lib/screens/designs/glowup_card_screen.dart",
+    "lib/screens/designs/medical_validation_screen.dart",
+    "lib/screens/designs/outfit_result_screen.dart",
+    "lib/screens/designs/palette_card_screen.dart",
+    "lib/screens/designs/wardrobe_dashboard_screen.dart",
+    "lib/screens/designs/glow_beauty_screen.dart",
+    "lib/screens/academy/academy_screen.dart",
+    "lib/screens/academy/course_list.dart",
+    "lib/screens/academy/course_detail_screen.dart",
+    "lib/screens/academy/glow_consent_widget.dart",
+    "lib/screens/academy/quiz_screen.dart",
+    "lib/screens/academy/lesson_view.dart",
+    "lib/screens/academy/glow_nback_screen.dart",
+    "lib/screens/booking_tracking_screen.dart",
+    "lib/screens/disputes/disputes_list_screen.dart",
+    "lib/screens/disputes/open_dispute_screen.dart",
+    "lib/screens/otp_confirm_screen.dart",
+    "lib/widgets/floating_navigation_dock.dart",
+    "lib/widgets/wompi_payment_sheet.dart",
+    "lib/widgets/store_product_card.dart",
+    "lib/widgets/store/product_card.dart",
+    "lib/widgets/provider/booking_card.dart",
+    "lib/widgets/provider/provider_luxe_components.dart",
+    "lib/widgets/provider/service_card.dart",
+    "lib/design/components/academy_luxe_components.dart",
+    "lib/widgets/ai_search_bar.dart",
+    "lib/widgets/audience_toggle.dart",
+    "lib/widgets/aura_multi_agent_chat.dart",
+    "lib/widgets/booking_recovery_banner.dart"
+  ],
+  "direct_matches": [
+    {
+      "material_icon": "shopping_bag_rounded",
+      "glow_equivalent": "GlowIcon.bag()",
+      "semantic_name": "bag",
+      "confidence": "HIGH"
+    },
+    {
+      "material_icon": "spa_rounded",
+      "glow_equivalent": "GlowIcon.spa()",
+      "semantic_name": "spa",
+      "confidence": "HIGH"
+    },
+    {
+      "material_icon": "search_rounded",
+      "glow_equivalent": "GlowIcon.search()",
+      "semantic_name": "search",
+      "confidence": "HIGH"
+    },
+    {
+      "material_icon": "menu_rounded",
+      "glow_equivalent": "GlowIcon.menu()",
+      "semantic_name": "menu",
+      "confidence": "HIGH"
+    },
+    {
+      "material_icon": "home",
+      "glow_equivalent": "GlowIcon.home()",
+      "semantic_name": "home",
+      "confidence": "HIGH"
+    },
+    {
+      "material_icon": "shopping_cart_rounded",
+      "glow_equivalent": "GlowIcon.cart()",
+      "semantic_name": "cart",
+      "confidence": "HIGH"
+    },
+    {
+      "material_icon": "arrow_back_rounded",
+      "glow_equivalent": "GlowIcon.back()",
+      "semantic_name": "back",
+      "confidence": "HIGH"
+    },
+    {
+      "material_icon": "arrow_back_ios_new",
+      "glow_equivalent": "GlowIcon.back()",
+      "semantic_name": "back",
+      "confidence": "HIGH"
+    },
+    {
+      "material_icon": "person",
+      "glow_equivalent": "GlowIcon.profile()",
+      "semantic_name": "profile",
+      "confidence": "HIGH"
+    },
+    {
+      "material_icon": "person_outline",
+      "glow_equivalent": "GlowIcon.profile()",
+      "semantic_name": "profile",
+      "confidence": "HIGH"
+    },
+    {
+      "material_icon": "chat_bubble",
+      "glow_equivalent": "GlowIcon.chat()",
+      "semantic_name": "chat",
+      "confidence": "HIGH"
+    },
+    {
+      "material_icon": "notifications_rounded",
+      "glow_equivalent": "GlowIcon.notification()",
+      "semantic_name": "notification",
+      "confidence": "HIGH"
+    },
+    {
+      "material_icon": "access_time",
+      "glow_equivalent": "GlowIcon.clock()",
+      "semantic_name": "clock",
+      "confidence": "HIGH"
+    },
+    {
+      "material_icon": "support_agent_outlined",
+      "glow_equivalent": "GlowIcon.support()",
+      "semantic_name": "support",
+      "confidence": "HIGH"
+    },
+    {
+      "material_icon": "arrow_forward",
+      "glow_equivalent": "GlowIcon.forward()",
+      "semantic_name": "forward",
+      "confidence": "HIGH"
+    },
+    {
+      "material_icon": "sort",
+      "glow_equivalent": "GlowIcon.sort()",
+      "semantic_name": "sort",
+      "confidence": "HIGH"
+    },
+    {
+      "material_icon": "home_outlined",
+      "glow_equivalent": "GlowIcon.home()",
+      "semantic_name": "home",
+      "confidence": "HIGH"
+    },
+    {
+      "material_icon": "calendar_today_rounded",
+      "glow_equivalent": "GlowIcon.calendar()",
+      "semantic_name": "calendar",
+      "confidence": "HIGH"
+    },
+    {
+      "material_icon": "spa_outlined",
+      "glow_equivalent": "GlowIcon.spa()",
+      "semantic_name": "spa",
+      "confidence": "HIGH"
+    },
+    {
+      "material_icon": "notifications",
+      "glow_equivalent": "GlowIcon.notification()",
+      "semantic_name": "notification",
+      "confidence": "HIGH"
+    },
+    {
+      "material_icon": "arrow_back",
+      "glow_equivalent": "GlowIcon.back()",
+      "semantic_name": "back",
+      "confidence": "HIGH"
+    },
+    {
+      "material_icon": "search",
+      "glow_equivalent": "GlowIcon.search()",
+      "semantic_name": "search",
+      "confidence": "HIGH"
+    },
+    {
+      "material_icon": "filter_list",
+      "glow_equivalent": "GlowIcon.filter()",
+      "semantic_name": "filter",
+      "confidence": "HIGH"
+    },
+    {
+      "material_icon": "arrow_forward_rounded",
+      "glow_equivalent": "GlowIcon.forward()",
+      "semantic_name": "forward",
+      "confidence": "HIGH"
+    },
+    {
+      "material_icon": "person_outline_rounded",
+      "glow_equivalent": "GlowIcon.profile()",
+      "semantic_name": "profile",
+      "confidence": "HIGH"
+    },
+    {
+      "material_icon": "arrow_back_ios",
+      "glow_equivalent": "GlowIcon.back()",
+      "semantic_name": "back",
+      "confidence": "HIGH"
+    },
+    {
+      "material_icon": "settings",
+      "glow_equivalent": "GlowIcon.settings()",
+      "semantic_name": "settings",
+      "confidence": "HIGH"
+    },
+    {
+      "material_icon": "access_time_rounded",
+      "glow_equivalent": "GlowIcon.clock()",
+      "semantic_name": "clock",
+      "confidence": "HIGH"
+    },
+    {
+      "material_icon": "settings_rounded",
+      "glow_equivalent": "GlowIcon.settings()",
+      "semantic_name": "settings",
+      "confidence": "HIGH"
+    },
+    {
+      "material_icon": "settings_outlined",
+      "glow_equivalent": "GlowIcon.settings()",
+      "semantic_name": "settings",
+      "confidence": "HIGH"
+    },
+    {
+      "material_icon": "calendar_today",
+      "glow_equivalent": "GlowIcon.calendar()",
+      "semantic_name": "calendar",
+      "confidence": "HIGH"
+    },
+    {
+      "material_icon": "chat_bubble_outline",
+      "glow_equivalent": "GlowIcon.chat()",
+      "semantic_name": "chat",
+      "confidence": "HIGH"
+    },
+    {
+      "material_icon": "chat_bubble_outline_rounded",
+      "glow_equivalent": "GlowIcon.chat()",
+      "semantic_name": "chat",
+      "confidence": "HIGH"
+    },
+    {
+      "material_icon": "home_rounded",
+      "glow_equivalent": "GlowIcon.home()",
+      "semantic_name": "home",
+      "confidence": "HIGH"
+    },
+    {
+      "material_icon": "more_horiz_rounded",
+      "glow_equivalent": "GlowIcon.more()",
+      "semantic_name": "more",
+      "confidence": "HIGH"
+    },
+    {
+      "material_icon": "person_rounded",
+      "glow_equivalent": "GlowIcon.profile()",
+      "semantic_name": "profile",
+      "confidence": "HIGH"
+    },
+    {
+      "material_icon": "spa",
+      "glow_equivalent": "GlowIcon.spa()",
+      "semantic_name": "spa",
+      "confidence": "HIGH"
+    }
+  ],
+  "semantic_matches": [
+    {
+      "material_icon": "auto_awesome_rounded",
+      "glow_equivalent": "GlowIcon.glow_recommendation()",
+      "semantic_name": "glow_recommendation",
+      "confidence": "MEDIUM",
+      "notes": "Semantic mapping: auto_awesome_rounded -> glow_recommendation"
+    },
+    {
+      "material_icon": "chat_bubble_rounded",
+      "glow_equivalent": "GlowIcon.chat()",
+      "semantic_name": "chat",
+      "confidence": "MEDIUM",
+      "notes": "Semantic mapping: chat_bubble_rounded -> chat"
+    },
+    {
+      "material_icon": "map_outlined",
+      "glow_equivalent": "GlowIcon.location()",
+      "semantic_name": "location",
+      "confidence": "MEDIUM",
+      "notes": "Semantic mapping: map_outlined -> location"
+    },
+    {
+      "material_icon": "arrow_forward_ios",
+      "glow_equivalent": "GlowIcon.forward()",
+      "semantic_name": "forward",
+      "confidence": "MEDIUM",
+      "notes": "Semantic mapping: arrow_forward_ios -> forward"
+    },
+    {
+      "material_icon": "face_retouching_natural",
+      "glow_equivalent": "GlowIcon.skincare()",
+      "semantic_name": "skincare",
+      "confidence": "MEDIUM",
+      "notes": "Semantic mapping: face_retouching_natural -> skincare"
+    },
+    {
+      "material_icon": "navigation_outlined",
+      "glow_equivalent": "GlowIcon.location()",
+      "semantic_name": "location",
+      "confidence": "MEDIUM",
+      "notes": "Semantic mapping: navigation_outlined -> location"
+    },
+    {
+      "material_icon": "chevron_right",
+      "glow_equivalent": "GlowIcon.forward()",
+      "semantic_name": "forward",
+      "confidence": "MEDIUM",
+      "notes": "Semantic mapping: chevron_right -> forward"
+    },
+    {
+      "material_icon": "face_retouching_natural_outlined",
+      "glow_equivalent": "GlowIcon.skincare()",
+      "semantic_name": "skincare",
+      "confidence": "MEDIUM",
+      "notes": "Semantic mapping: face_retouching_natural_outlined -> skincare"
+    },
+    {
+      "material_icon": "face_rounded",
+      "glow_equivalent": "GlowIcon.makeup()",
+      "semantic_name": "makeup",
+      "confidence": "MEDIUM",
+      "notes": "Semantic mapping: face_rounded -> makeup"
+    },
+    {
+      "material_icon": "auto_awesome_outlined",
+      "glow_equivalent": "GlowIcon.glow_recommendation()",
+      "semantic_name": "glow_recommendation",
+      "confidence": "MEDIUM",
+      "notes": "Semantic mapping: auto_awesome_outlined -> glow_recommendation"
+    },
+    {
+      "material_icon": "add_shopping_cart_rounded",
+      "glow_equivalent": "GlowIcon.cart()",
+      "semantic_name": "cart",
+      "confidence": "MEDIUM",
+      "notes": "Semantic mapping: add_shopping_cart_rounded -> cart"
+    },
+    {
+      "material_icon": "calendar_month_outlined",
+      "glow_equivalent": "GlowIcon.calendar()",
+      "semantic_name": "calendar",
+      "confidence": "MEDIUM",
+      "notes": "Semantic mapping: calendar_month_outlined -> calendar"
+    },
+    {
+      "material_icon": "notifications_none_outlined",
+      "glow_equivalent": "GlowIcon.notification()",
+      "semantic_name": "notification",
+      "confidence": "MEDIUM",
+      "notes": "Semantic mapping: notifications_none_outlined -> notification"
+    },
+    {
+      "material_icon": "calendar_month",
+      "glow_equivalent": "GlowIcon.calendar()",
+      "semantic_name": "calendar",
+      "confidence": "MEDIUM",
+      "notes": "Semantic mapping: calendar_month -> calendar"
+    },
+    {
+      "material_icon": "notifications_none",
+      "glow_equivalent": "GlowIcon.notification()",
+      "semantic_name": "notification",
+      "confidence": "MEDIUM",
+      "notes": "Semantic mapping: notifications_none -> notification"
+    },
+    {
+      "material_icon": "palette_rounded",
+      "glow_equivalent": "GlowIcon.makeup()",
+      "semantic_name": "makeup",
+      "confidence": "MEDIUM",
+      "notes": "Semantic mapping: palette_rounded -> makeup"
+    },
+    {
+      "material_icon": "ios_share",
+      "glow_equivalent": "GlowIcon.share()",
+      "semantic_name": "share",
+      "confidence": "MEDIUM",
+      "notes": "Semantic mapping: ios_share -> share"
+    },
+    {
+      "material_icon": "face_outlined",
+      "glow_equivalent": "GlowIcon.makeup()",
+      "semantic_name": "makeup",
+      "confidence": "MEDIUM",
+      "notes": "Semantic mapping: face_outlined -> makeup"
+    },
+    {
+      "material_icon": "calendar_today_outlined",
+      "glow_equivalent": "GlowIcon.calendar()",
+      "semantic_name": "calendar",
+      "confidence": "MEDIUM",
+      "notes": "Semantic mapping: calendar_today_outlined -> calendar"
+    },
+    {
+      "material_icon": "notifications_active",
+      "glow_equivalent": "GlowIcon.notification()",
+      "semantic_name": "notification",
+      "confidence": "MEDIUM",
+      "notes": "Semantic mapping: notifications_active -> notification"
+    },
+    {
+      "material_icon": "palette_outlined",
+      "glow_equivalent": "GlowIcon.makeup()",
+      "semantic_name": "makeup",
+      "confidence": "MEDIUM",
+      "notes": "Semantic mapping: palette_outlined -> makeup"
+    },
+    {
+      "material_icon": "content_cut_outlined",
+      "glow_equivalent": "GlowIcon.hair()",
+      "semantic_name": "hair",
+      "confidence": "MEDIUM",
+      "notes": "Semantic mapping: content_cut_outlined -> hair"
+    },
+    {
+      "material_icon": "access_time_filled_rounded",
+      "glow_equivalent": "GlowIcon.clock()",
+      "semantic_name": "clock",
+      "confidence": "MEDIUM",
+      "notes": "Semantic mapping: access_time_filled_rounded -> clock"
+    },
+    {
+      "material_icon": "grid_view_rounded",
+      "glow_equivalent": "GlowIcon.menu()",
+      "semantic_name": "menu",
+      "confidence": "MEDIUM",
+      "notes": "Semantic mapping: grid_view_rounded -> menu"
+    },
+    {
+      "material_icon": "chevron_left",
+      "glow_equivalent": "GlowIcon.back()",
+      "semantic_name": "back",
+      "confidence": "MEDIUM",
+      "notes": "Semantic mapping: chevron_left -> back"
+    },
+    {
+      "material_icon": "shopping_bag_outlined",
+      "glow_equivalent": "GlowIcon.bag()",
+      "semantic_name": "bag",
+      "confidence": "MEDIUM",
+      "notes": "Semantic mapping: shopping_bag_outlined -> bag"
+    },
+    {
+      "material_icon": "palette",
+      "glow_equivalent": "GlowIcon.makeup()",
+      "semantic_name": "makeup",
+      "confidence": "MEDIUM",
+      "notes": "Semantic mapping: palette -> makeup"
+    },
+    {
+      "material_icon": "access_time_filled",
+      "glow_equivalent": "GlowIcon.clock()",
+      "semantic_name": "clock",
+      "confidence": "MEDIUM",
+      "notes": "Semantic mapping: access_time_filled -> clock"
+    },
+    {
+      "material_icon": "content_cut",
+      "glow_equivalent": "GlowIcon.hair()",
+      "semantic_name": "hair",
+      "confidence": "MEDIUM",
+      "notes": "Semantic mapping: content_cut -> hair"
+    },
+    {
+      "material_icon": "access_time_outlined",
+      "glow_equivalent": "GlowIcon.clock()",
+      "semantic_name": "clock",
+      "confidence": "MEDIUM",
+      "notes": "Semantic mapping: access_time_outlined -> clock"
+    },
+    {
+      "material_icon": "qr_code",
+      "glow_equivalent": "GlowIcon.qr()",
+      "semantic_name": "qr",
+      "confidence": "MEDIUM",
+      "notes": "Semantic mapping: qr_code -> qr"
+    },
+    {
+      "material_icon": "auto_awesome",
+      "glow_equivalent": "GlowIcon.glow_recommendation()",
+      "semantic_name": "glow_recommendation",
+      "confidence": "MEDIUM",
+      "notes": "Semantic mapping: auto_awesome -> glow_recommendation"
+    }
+  ],
+  "review_required": [],
+  "no_equivalent": [
+    {
+      "material_icon": "self_improvement",
+      "semantic_purpose": "self_improvement",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "radio_button_checked",
+      "semantic_purpose": "radio_button_checked",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "opacity",
+      "semantic_purpose": "opacity",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "gavel_outlined",
+      "semantic_purpose": "gavel",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "photo_library",
+      "semantic_purpose": "photo_library",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "verified",
+      "semantic_purpose": "verified_user",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "security_rounded",
+      "semantic_purpose": "security",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "stars_rounded",
+      "semantic_purpose": "stars",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "pin_outlined",
+      "semantic_purpose": "pin",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "send",
+      "semantic_purpose": "send",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "man_rounded",
+      "semantic_purpose": "man",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "analytics_rounded",
+      "semantic_purpose": "analytics",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "lock_outline_rounded",
+      "semantic_purpose": "lock",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "compare_arrows_rounded",
+      "semantic_purpose": "compare_arrows",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "camera_front_outlined",
+      "semantic_purpose": "camera",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "mail_outline",
+      "semantic_purpose": "mail",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "camera_alt",
+      "semantic_purpose": "camera",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "lock_reset_rounded",
+      "semantic_purpose": "lock",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "phone",
+      "semantic_purpose": "phone",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "refresh",
+      "semantic_purpose": "refresh",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "photo_library_outlined",
+      "semantic_purpose": "photo_library",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "face",
+      "semantic_purpose": "UNKNOWN",
+      "reason": "No mapping defined",
+      "priority": "REVIEW_REQUIRED"
+    },
+    {
+      "material_icon": "light_mode_outlined",
+      "semantic_purpose": "light_mode",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "delete_outline_rounded",
+      "semantic_purpose": "delete",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "card_giftcard",
+      "semantic_purpose": "card_giftcard",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "star_outline",
+      "semantic_purpose": "UNKNOWN",
+      "reason": "No mapping defined",
+      "priority": "REVIEW_REQUIRED"
+    },
+    {
+      "material_icon": "lock_outline",
+      "semantic_purpose": "lock",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "warning",
+      "semantic_purpose": "warning",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "add_rounded",
+      "semantic_purpose": "add",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "emoji_events",
+      "semantic_purpose": "emoji_events",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "lock_rounded",
+      "semantic_purpose": "lock",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "security",
+      "semantic_purpose": "security",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "play_arrow_outlined",
+      "semantic_purpose": "play_arrow",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "back_hand_outlined",
+      "semantic_purpose": "back_hand",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "check_circle_rounded",
+      "semantic_purpose": "check_circle",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "emergency_outlined",
+      "semantic_purpose": "emergency",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "trending_up",
+      "semantic_purpose": "trending_up",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "inventory_2_outlined",
+      "semantic_purpose": "inventory_2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "lightbulb_outline",
+      "semantic_purpose": "lightbulb_outline",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "text_snippet_outlined",
+      "semantic_purpose": "text_snippet",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "event_available",
+      "semantic_purpose": "event_available",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "camera_front",
+      "semantic_purpose": "camera",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "remove_rounded",
+      "semantic_purpose": "remove",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "broken_image_outlined",
+      "semantic_purpose": "broken_image",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "today_rounded",
+      "semantic_purpose": "today",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "center_focus_strong_outlined",
+      "semantic_purpose": "center_focus_strong",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "people_alt",
+      "semantic_purpose": "people_alt",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "payment",
+      "semantic_purpose": "payment",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "work_rounded",
+      "semantic_purpose": "work",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "gpp_bad_rounded",
+      "semantic_purpose": "gpp_bad",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "check_rounded",
+      "semantic_purpose": "check",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "work_outline",
+      "semantic_purpose": "work",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "photo_size_select_actual_outlined",
+      "semantic_purpose": "photo",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "man_outlined",
+      "semantic_purpose": "man",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "add",
+      "semantic_purpose": "add",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "error_outline",
+      "semantic_purpose": "error",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "apple",
+      "semantic_purpose": "apple",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "star_border_rounded",
+      "semantic_purpose": "star_border",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "delete_outline",
+      "semantic_purpose": "delete",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "style",
+      "semantic_purpose": "style",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "check_circle",
+      "semantic_purpose": "check_circle",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "camera",
+      "semantic_purpose": "camera",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "lock_outlined",
+      "semantic_purpose": "lock",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "check",
+      "semantic_purpose": "check",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "broken_image",
+      "semantic_purpose": "UNKNOWN",
+      "reason": "No mapping defined",
+      "priority": "REVIEW_REQUIRED"
+    },
+    {
+      "material_icon": "fingerprint",
+      "semantic_purpose": "fingerprint",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "account_balance",
+      "semantic_purpose": "account_balance",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "camera_alt_rounded",
+      "semantic_purpose": "camera",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "cloud_upload_outlined",
+      "semantic_purpose": "cloud_upload",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "flash_on",
+      "semantic_purpose": "UNKNOWN",
+      "reason": "No mapping defined",
+      "priority": "REVIEW_REQUIRED"
+    },
+    {
+      "material_icon": "visibility_off",
+      "semantic_purpose": "visibility_off",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "mark_email_read_outlined",
+      "semantic_purpose": "email",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "star_rounded",
+      "semantic_purpose": "star",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "work",
+      "semantic_purpose": "UNKNOWN",
+      "reason": "No mapping defined",
+      "priority": "REVIEW_REQUIRED"
+    },
+    {
+      "material_icon": "category_outlined",
+      "semantic_purpose": "category",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "add_circle_outline",
+      "semantic_purpose": "add",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "play_circle_outline",
+      "semantic_purpose": "play_circle",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "phone_android_rounded",
+      "semantic_purpose": "phone",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "title_outlined",
+      "semantic_purpose": "title",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "arrow_downward",
+      "semantic_purpose": "arrow_downward",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "logout",
+      "semantic_purpose": "logout",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "rocket_launch",
+      "semantic_purpose": "rocket_launch",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "design_services_outlined",
+      "semantic_purpose": "design_services",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "image",
+      "semantic_purpose": "image",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "payment_rounded",
+      "semantic_purpose": "payment",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "swap_horiz",
+      "semantic_purpose": "swap_horiz",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "error_outline_rounded",
+      "semantic_purpose": "error",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "add_photo_alternate_outlined",
+      "semantic_purpose": "add_photo",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "vpn_key_rounded",
+      "semantic_purpose": "vpn_key",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "account_balance_wallet_outlined",
+      "semantic_purpose": "account_balance_wallet",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "timer_outlined",
+      "semantic_purpose": "timer",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "photo",
+      "semantic_purpose": "photo",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "military_tech",
+      "semantic_purpose": "military_tech",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "lock_clock_outlined",
+      "semantic_purpose": "lock_clock",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "gavel",
+      "semantic_purpose": "gavel",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "help_outline_rounded",
+      "semantic_purpose": "help",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "widgets_outlined",
+      "semantic_purpose": "widgets",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "shield_outlined",
+      "semantic_purpose": "shield",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "credit_card_rounded",
+      "semantic_purpose": "credit_card",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "school",
+      "semantic_purpose": "school",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "back_hand",
+      "semantic_purpose": "back_hand",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "analytics",
+      "semantic_purpose": "UNKNOWN",
+      "reason": "No mapping defined",
+      "priority": "REVIEW_REQUIRED"
+    },
+    {
+      "material_icon": "phone_outlined",
+      "semantic_purpose": "phone",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "style_outlined",
+      "semantic_purpose": "style",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "lock",
+      "semantic_purpose": "UNKNOWN",
+      "reason": "No mapping defined",
+      "priority": "REVIEW_REQUIRED"
+    },
+    {
+      "material_icon": "rate_review_outlined",
+      "semantic_purpose": "rate_review",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "warning_amber_rounded",
+      "semantic_purpose": "warning",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "flash_off",
+      "semantic_purpose": "UNKNOWN",
+      "reason": "No mapping defined",
+      "priority": "REVIEW_REQUIRED"
+    },
+    {
+      "material_icon": "image_rounded",
+      "semantic_purpose": "image",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "psychology_outlined",
+      "semantic_purpose": "psychology",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "radio_button_off",
+      "semantic_purpose": "radio_button_off",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "note_alt_outlined",
+      "semantic_purpose": "note_alt",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "pending_actions_rounded",
+      "semantic_purpose": "pending_actions",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "public_rounded",
+      "semantic_purpose": "public",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "brightness_6",
+      "semantic_purpose": "brightness_6",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "g_mobiledata",
+      "semantic_purpose": "g_mobiledata",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "cameraswitch_outlined",
+      "semantic_purpose": "cameraswitch",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "visibility_off_outlined",
+      "semantic_purpose": "visibility_off",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "verified_rounded",
+      "semantic_purpose": "verified_user",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "center_focus_strong_rounded",
+      "semantic_purpose": "center_focus_strong",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "analytics_outlined",
+      "semantic_purpose": "analytics",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "photo_outlined",
+      "semantic_purpose": "photo",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "help_outline",
+      "semantic_purpose": "help",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "camera_alt_outlined",
+      "semantic_purpose": "camera",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "tune",
+      "semantic_purpose": "tune",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "wb_sunny_outlined",
+      "semantic_purpose": "wb_sunny",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "play_circle_fill",
+      "semantic_purpose": "play_circle",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "add_a_photo_outlined",
+      "semantic_purpose": "add_photo",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "history_edu_outlined",
+      "semantic_purpose": "history_edu",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "woman_rounded",
+      "semantic_purpose": "woman",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "phone_in_talk_rounded",
+      "semantic_purpose": "phone_in_talk",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "verified_user_outlined",
+      "semantic_purpose": "verified_user",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "exit_to_app_rounded",
+      "semantic_purpose": "exit_to_app",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "add_a_photo",
+      "semantic_purpose": "add_photo",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "credit_card",
+      "semantic_purpose": "credit_card",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "home_work",
+      "semantic_purpose": "home_work",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "dark_mode_outlined",
+      "semantic_purpose": "dark_mode",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "logout_rounded",
+      "semantic_purpose": "logout",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "school_outlined",
+      "semantic_purpose": "school",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "star_outline_rounded",
+      "semantic_purpose": "UNKNOWN",
+      "reason": "No mapping defined",
+      "priority": "REVIEW_REQUIRED"
+    },
+    {
+      "material_icon": "receipt_long_outlined",
+      "semantic_purpose": "receipt",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "dashboard_outlined",
+      "semantic_purpose": "UNKNOWN",
+      "reason": "No mapping defined",
+      "priority": "REVIEW_REQUIRED"
+    },
+    {
+      "material_icon": "star_border",
+      "semantic_purpose": "star_border",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "shield",
+      "semantic_purpose": "shield",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "bolt",
+      "semantic_purpose": "bolt",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "block_outlined",
+      "semantic_purpose": "block",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "zoom_out_map_outlined",
+      "semantic_purpose": "UNKNOWN",
+      "reason": "No mapping defined",
+      "priority": "REVIEW_REQUIRED"
+    },
+    {
+      "material_icon": "local_offer",
+      "semantic_purpose": "local_offer",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "star",
+      "semantic_purpose": "star",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "visibility_outlined",
+      "semantic_purpose": "visibility",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "check_circle_outline",
+      "semantic_purpose": "check_circle_outline",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "card_membership_outlined",
+      "semantic_purpose": "card_membership",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "visibility_off_rounded",
+      "semantic_purpose": "visibility_off",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "account_balance_wallet",
+      "semantic_purpose": "account_balance_wallet",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "checkroom_rounded",
+      "semantic_purpose": "checkroom",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "visibility",
+      "semantic_purpose": "visibility",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "schedule",
+      "semantic_purpose": "schedule",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "auto_stories",
+      "semantic_purpose": "auto_stories",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    },
+    {
+      "material_icon": "check_circle_outline_rounded",
+      "semantic_purpose": "check_circle_outline",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "priority": "FUTURE_ICON_GAP"
+    }
+  ],
+  "do_not_migrate": [],
+  "duplicate_implementations": [
+    {
+      "icon_concept": "search",
+      "implementations": [
+        {
+          "file": "lib/widgets/ai_search_bar.dart",
+          "icon": "Icons.search"
+        },
+        {
+          "file": "lib/screens/store_screen.dart",
+          "icon": "Icons.search_rounded"
+        },
+        {
+          "file": "lib/design/icons/glow_icon_adapter.dart",
+          "icon": "Icons.search_rounded (mapped to GlowIconAdapter.search)"
+        }
+      ],
+      "notes": "Search icon used in 3+ locations with different implementations"
+    },
+    {
+      "icon_concept": "close",
+      "implementations": [
+        {
+          "file": "lib/widgets/wompi_payment_sheet.dart",
+          "icon": "Icons.close_rounded"
+        },
+        {
+          "file": "lib/widgets/booking_recovery_banner.dart",
+          "icon": "Icons.close"
+        },
+        {
+          "file": "lib/screens/ideas/capture_screen.dart",
+          "icon": "Icons.close"
+        },
+        {
+          "file": "lib/design/icons/glow_icon_adapter.dart",
+          "icon": "Icons.close_rounded"
+        }
+      ],
+      "notes": "Close icon used in 4+ locations"
+    },
+    {
+      "icon_concept": "shopping_bag",
+      "implementations": [
+        {
+          "file": "lib/screens/home/home_screen.dart",
+          "icon": "Icons.shopping_bag_outlined"
+        },
+        {
+          "file": "lib/screens/store_screen.dart",
+          "icon": "Icons.shopping_bag_outlined"
+        },
+        {
+          "file": "lib/widgets/store/product_card.dart",
+          "icon": "Icons.shopping_bag_outlined"
+        },
+        {
+          "file": "lib/widgets/store_product_card.dart",
+          "icon": "Icons.shopping_bag_rounded"
+        },
+        {
+          "file": "lib/design/icons/glow_icon_adapter.dart",
+          "icon": "Icons.shopping_bag_rounded"
+        }
+      ],
+      "notes": "Shopping bag used in 5+ locations with outlined/rounded variants"
+    },
+    {
+      "icon_concept": "auto_awesome (AI/Glow)",
+      "implementations": [
+        {
+          "file": "lib/widgets/ai_search_bar.dart",
+          "icon": "Icons.auto_awesome"
+        },
+        {
+          "file": "lib/widgets/aura_multi_agent_chat.dart",
+          "icon": "Icons.auto_awesome"
+        },
+        {
+          "file": "lib/screens/ideas/results_screen.dart",
+          "icon": "Icons.auto_awesome"
+        },
+        {
+          "file": "lib/screens/designs/glowup_card_screen.dart",
+          "icon": "Icons.auto_awesome"
+        },
+        {
+          "file": "lib/screens/designs/evolution_dashboard_screen.dart",
+          "icon": "Icons.auto_awesome_outlined"
+        },
+        {
+          "file": "lib/screens/ideas/processing_alchemy_screen.dart",
+          "icon": "Icons.auto_awesome_rounded"
+        },
+        {
+          "file": "lib/design/icons/glow_icon_adapter.dart",
+          "icon": "mapped to glow_recommendation"
+        },
+        {
+          "file": "lib/design/icons/glow_icon_demo.dart",
+          "icon": "section header for AURA/Proprietary"
+        }
+      ],
+      "notes": "AI/auto_awesome used as generic AI icon in 8+ locations - should map to glow, aura, or glow_recommendation based on context"
+    }
+  ],
+  "future_icon_gaps": [
+    {
+      "current_icon": "Icons.self_improvement",
+      "semantic_purpose": "self_improvement",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.radio_button_checked",
+      "semantic_purpose": "radio_button_checked",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.opacity",
+      "semantic_purpose": "opacity",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.gavel_outlined",
+      "semantic_purpose": "gavel",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.photo_library",
+      "semantic_purpose": "photo_library",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.verified",
+      "semantic_purpose": "verified_user",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.security_rounded",
+      "semantic_purpose": "security",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.stars_rounded",
+      "semantic_purpose": "stars",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.pin_outlined",
+      "semantic_purpose": "pin",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.send",
+      "semantic_purpose": "send",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.man_rounded",
+      "semantic_purpose": "man",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.analytics_rounded",
+      "semantic_purpose": "analytics",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.lock_outline_rounded",
+      "semantic_purpose": "lock",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.compare_arrows_rounded",
+      "semantic_purpose": "compare_arrows",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.camera_front_outlined",
+      "semantic_purpose": "camera",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.mail_outline",
+      "semantic_purpose": "mail",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.camera_alt",
+      "semantic_purpose": "camera",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.lock_reset_rounded",
+      "semantic_purpose": "lock",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.phone",
+      "semantic_purpose": "phone",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.refresh",
+      "semantic_purpose": "refresh",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.photo_library_outlined",
+      "semantic_purpose": "photo_library",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.light_mode_outlined",
+      "semantic_purpose": "light_mode",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.delete_outline_rounded",
+      "semantic_purpose": "delete",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.card_giftcard",
+      "semantic_purpose": "card_giftcard",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.lock_outline",
+      "semantic_purpose": "lock",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.warning",
+      "semantic_purpose": "warning",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.add_rounded",
+      "semantic_purpose": "add",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.emoji_events",
+      "semantic_purpose": "emoji_events",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.lock_rounded",
+      "semantic_purpose": "lock",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.security",
+      "semantic_purpose": "security",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.play_arrow_outlined",
+      "semantic_purpose": "play_arrow",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.back_hand_outlined",
+      "semantic_purpose": "back_hand",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.check_circle_rounded",
+      "semantic_purpose": "check_circle",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.emergency_outlined",
+      "semantic_purpose": "emergency",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.trending_up",
+      "semantic_purpose": "trending_up",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.inventory_2_outlined",
+      "semantic_purpose": "inventory_2",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.lightbulb_outline",
+      "semantic_purpose": "lightbulb_outline",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.text_snippet_outlined",
+      "semantic_purpose": "text_snippet",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.event_available",
+      "semantic_purpose": "event_available",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.camera_front",
+      "semantic_purpose": "camera",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.remove_rounded",
+      "semantic_purpose": "remove",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.broken_image_outlined",
+      "semantic_purpose": "broken_image",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.today_rounded",
+      "semantic_purpose": "today",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.center_focus_strong_outlined",
+      "semantic_purpose": "center_focus_strong",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.people_alt",
+      "semantic_purpose": "people_alt",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.payment",
+      "semantic_purpose": "payment",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.work_rounded",
+      "semantic_purpose": "work",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.gpp_bad_rounded",
+      "semantic_purpose": "gpp_bad",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.check_rounded",
+      "semantic_purpose": "check",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.work_outline",
+      "semantic_purpose": "work",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.photo_size_select_actual_outlined",
+      "semantic_purpose": "photo",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.man_outlined",
+      "semantic_purpose": "man",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.add",
+      "semantic_purpose": "add",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.error_outline",
+      "semantic_purpose": "error",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.apple",
+      "semantic_purpose": "apple",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.star_border_rounded",
+      "semantic_purpose": "star_border",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.delete_outline",
+      "semantic_purpose": "delete",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.style",
+      "semantic_purpose": "style",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.check_circle",
+      "semantic_purpose": "check_circle",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.camera",
+      "semantic_purpose": "camera",
+      "where_used": "Multiple screens",
+      "frequency": "HIGH",
+      "priority": "P1",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "SYSTEM"
+    },
+    {
+      "current_icon": "Icons.lock_outlined",
+      "semantic_purpose": "lock",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.check",
+      "semantic_purpose": "check",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.fingerprint",
+      "semantic_purpose": "fingerprint",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.account_balance",
+      "semantic_purpose": "account_balance",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.camera_alt_rounded",
+      "semantic_purpose": "camera",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.cloud_upload_outlined",
+      "semantic_purpose": "cloud_upload",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.visibility_off",
+      "semantic_purpose": "visibility_off",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.mark_email_read_outlined",
+      "semantic_purpose": "email",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.star_rounded",
+      "semantic_purpose": "star",
+      "where_used": "Multiple screens",
+      "frequency": "HIGH",
+      "priority": "P1",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.category_outlined",
+      "semantic_purpose": "category",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.add_circle_outline",
+      "semantic_purpose": "add",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.play_circle_outline",
+      "semantic_purpose": "play_circle",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.phone_android_rounded",
+      "semantic_purpose": "phone",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.title_outlined",
+      "semantic_purpose": "title",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.arrow_downward",
+      "semantic_purpose": "arrow_downward",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.logout",
+      "semantic_purpose": "logout",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.rocket_launch",
+      "semantic_purpose": "rocket_launch",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.design_services_outlined",
+      "semantic_purpose": "design_services",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.image",
+      "semantic_purpose": "image",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.payment_rounded",
+      "semantic_purpose": "payment",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.swap_horiz",
+      "semantic_purpose": "swap_horiz",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.error_outline_rounded",
+      "semantic_purpose": "error",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.add_photo_alternate_outlined",
+      "semantic_purpose": "add_photo",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.vpn_key_rounded",
+      "semantic_purpose": "vpn_key",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.account_balance_wallet_outlined",
+      "semantic_purpose": "account_balance_wallet",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.timer_outlined",
+      "semantic_purpose": "timer",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.photo",
+      "semantic_purpose": "photo",
+      "where_used": "Multiple screens",
+      "frequency": "HIGH",
+      "priority": "P1",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "SYSTEM"
+    },
+    {
+      "current_icon": "Icons.military_tech",
+      "semantic_purpose": "military_tech",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.lock_clock_outlined",
+      "semantic_purpose": "lock_clock",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.gavel",
+      "semantic_purpose": "gavel",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CONCIERGE"
+    },
+    {
+      "current_icon": "Icons.help_outline_rounded",
+      "semantic_purpose": "help",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.widgets_outlined",
+      "semantic_purpose": "widgets",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.shield_outlined",
+      "semantic_purpose": "shield",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.credit_card_rounded",
+      "semantic_purpose": "credit_card",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.school",
+      "semantic_purpose": "school",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.back_hand",
+      "semantic_purpose": "back_hand",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.phone_outlined",
+      "semantic_purpose": "phone",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.style_outlined",
+      "semantic_purpose": "style",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.rate_review_outlined",
+      "semantic_purpose": "rate_review",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.warning_amber_rounded",
+      "semantic_purpose": "warning",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.image_rounded",
+      "semantic_purpose": "image",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.psychology_outlined",
+      "semantic_purpose": "psychology",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.radio_button_off",
+      "semantic_purpose": "radio_button_off",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.note_alt_outlined",
+      "semantic_purpose": "note_alt",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.pending_actions_rounded",
+      "semantic_purpose": "pending_actions",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.public_rounded",
+      "semantic_purpose": "public",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.brightness_6",
+      "semantic_purpose": "brightness_6",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.g_mobiledata",
+      "semantic_purpose": "g_mobiledata",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.cameraswitch_outlined",
+      "semantic_purpose": "cameraswitch",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.visibility_off_outlined",
+      "semantic_purpose": "visibility_off",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.verified_rounded",
+      "semantic_purpose": "verified_user",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.center_focus_strong_rounded",
+      "semantic_purpose": "center_focus_strong",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.analytics_outlined",
+      "semantic_purpose": "analytics",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.photo_outlined",
+      "semantic_purpose": "photo",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.help_outline",
+      "semantic_purpose": "help",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.camera_alt_outlined",
+      "semantic_purpose": "camera",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.tune",
+      "semantic_purpose": "tune",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.wb_sunny_outlined",
+      "semantic_purpose": "wb_sunny",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.play_circle_fill",
+      "semantic_purpose": "play_circle",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.add_a_photo_outlined",
+      "semantic_purpose": "add_photo",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.history_edu_outlined",
+      "semantic_purpose": "history_edu",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.woman_rounded",
+      "semantic_purpose": "woman",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.phone_in_talk_rounded",
+      "semantic_purpose": "phone_in_talk",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.verified_user_outlined",
+      "semantic_purpose": "verified_user",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.exit_to_app_rounded",
+      "semantic_purpose": "exit_to_app",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.add_a_photo",
+      "semantic_purpose": "add_photo",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.credit_card",
+      "semantic_purpose": "credit_card",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.home_work",
+      "semantic_purpose": "home_work",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.dark_mode_outlined",
+      "semantic_purpose": "dark_mode",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.logout_rounded",
+      "semantic_purpose": "logout",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.school_outlined",
+      "semantic_purpose": "school",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.receipt_long_outlined",
+      "semantic_purpose": "receipt",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.star_border",
+      "semantic_purpose": "star_border",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.shield",
+      "semantic_purpose": "shield",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CONCIERGE"
+    },
+    {
+      "current_icon": "Icons.bolt",
+      "semantic_purpose": "bolt",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.block_outlined",
+      "semantic_purpose": "block",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.local_offer",
+      "semantic_purpose": "local_offer",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.star",
+      "semantic_purpose": "star",
+      "where_used": "Multiple screens",
+      "frequency": "HIGH",
+      "priority": "P1",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "BEAUTY"
+    },
+    {
+      "current_icon": "Icons.visibility_outlined",
+      "semantic_purpose": "visibility",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.check_circle_outline",
+      "semantic_purpose": "check_circle_outline",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.card_membership_outlined",
+      "semantic_purpose": "card_membership",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.visibility_off_rounded",
+      "semantic_purpose": "visibility_off",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.account_balance_wallet",
+      "semantic_purpose": "account_balance_wallet",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.checkroom_rounded",
+      "semantic_purpose": "checkroom",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.visibility",
+      "semantic_purpose": "visibility",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P1",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "SYSTEM"
+    },
+    {
+      "current_icon": "Icons.schedule",
+      "semantic_purpose": "schedule",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.auto_stories",
+      "semantic_purpose": "auto_stories",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    },
+    {
+      "current_icon": "Icons.check_circle_outline_rounded",
+      "semantic_purpose": "check_circle_outline",
+      "where_used": "Multiple screens",
+      "frequency": "MEDIUM",
+      "priority": "P2",
+      "reason": "No corresponding GlowIcon in v1.0",
+      "possible_future_category": "CORE"
+    }
+  ],
+  "pilot_candidates": [
+    {
+      "screen": "lib/screens/home/home_screen.dart",
+      "reason": "Core navigation screen, high visibility, 10 icons mostly DIRECT_MATCH (home, search, notifications, shopping_bag, camera, storefront, school)",
+      "icon_count": 10,
+      "direct_match_count": 7,
+      "semantic_match_count": 2,
+      "no_equivalent_count": 1,
+      "priority": "P0",
+      "leverage": "HIGH",
+      "audience": "GENERAL"
+    },
+    {
+      "screen": "lib/widgets/floating_navigation_dock.dart",
+      "reason": "Primary navigation component, reused across provider/app flows, 8 icons mostly DIRECT_MATCH",
+      "icon_count": 8,
+      "direct_match_count": 5,
+      "semantic_match_count": 2,
+      "no_equivalent_count": 1,
+      "priority": "P0",
+      "leverage": "HIGH",
+      "audience": "GENERAL"
+    },
+    {
+      "screen": "lib/screens/store_screen.dart",
+      "reason": "High-traffic screen, 19 icons, mix of DIRECT_MATCH and SEMANTIC_MATCH for beauty/store context",
+      "icon_count": 19,
+      "direct_match_count": 8,
+      "semantic_match_count": 8,
+      "no_equivalent_count": 3,
+      "priority": "P1",
+      "leverage": "HIGH",
+      "audience": "WOMEN/MEN"
+    },
+    {
+      "screen": "lib/screens/provider/provider_dashboard_screen.dart",
+      "reason": "Provider-facing dashboard, 35 icons, good GlowIcon coverage for provider actions",
+      "icon_count": 35,
+      "direct_match_count": 15,
+      "semantic_match_count": 15,
+      "no_equivalent_count": 5,
+      "priority": "P1",
+      "leverage": "HIGH",
+      "audience": "CONCIERGE/PROVIDER"
+    },
+    {
+      "screen": "lib/screens/booking_screen.dart",
+      "reason": "Critical booking flow, 23 icons, many DIRECT_MATCH (calendar, clock, location, chat, shopping_bag)",
+      "icon_count": 23,
+      "direct_match_count": 12,
+      "semantic_match_count": 8,
+      "no_equivalent_count": 3,
+      "priority": "P0",
+      "leverage": "HIGH",
+      "audience": "GENERAL"
+    }
+  ],
+  "migration_order": [
+    "1. Reusable components (floating_navigation_dock, wompi_payment_sheet, booking_card, store_product_card)",
+    "2. Primary navigation (home_screen, store_screen bottom nav)",
+    "3. High-traffic screens (booking_screen, provider_dashboard_screen, provider_detail_screen)",
+    "4. Auth/onboarding screens (login, register, onboarding)",
+    "5. Profile/settings screens (user_profile, settings_screen, client_profile)",
+    "6. Support/disputes screens",
+    "7. Ideas/experimental screens (results_screen, capture_screen, aura_welcome)",
+    "8. Design/AI screens (wardrobe, evolution, comparison, palette)",
+    "9. Academy screens",
+    "10. Exception/do-not-touch screens (otp_confirm, medical_validation, etc.)"
+  ],
+  "files_to_modify_later": [
+    "lib/screens/home/home_screen.dart",
+    "lib/screens/store_screen.dart",
+    "lib/screens/provider_detail_screen.dart",
+    "lib/screens/booking_screen.dart",
+    "lib/screens/map_screen.dart",
+    "lib/screens/chat_screen.dart",
+    "lib/screens/chat_list_screen.dart",
+    "lib/screens/profile/user_profile.dart",
+    "lib/screens/profile/settings_screen.dart",
+    "lib/screens/profile/biometric_history_screen.dart",
+    "lib/screens/profile/habeas_data_screen.dart",
+    "lib/screens/profile/rewards_xp_screen.dart",
+    "lib/screens/profile/glowstore_orders_screen.dart",
+    "lib/screens/profile/faq_screen.dart",
+    "lib/screens/profile/client_profile_screen.dart",
+    "lib/screens/profile/wallet_screen.dart",
+    "lib/screens/support/support_center_screen.dart",
+    "lib/screens/support/ticket_chat_screen.dart",
+    "lib/screens/support/create_ticket_screen.dart",
+    "lib/screens/support/terms_conditions_screen.dart",
+    "lib/screens/provider/provider_dashboard.dart",
+    "lib/screens/provider/provider_dashboard_screen.dart",
+    "lib/screens/provider/appointments_list.dart",
+    "lib/screens/provider/earnings_view.dart",
+    "lib/screens/provider/provider_profile_screen.dart",
+    "lib/screens/provider/provider_portfolio_screen.dart",
+    "lib/screens/provider/provider_route_screen.dart",
+    "lib/screens/provider/provider_services_screen.dart",
+    "lib/screens/client_bookings_screen.dart",
+    "lib/screens/client_profile_screen.dart",
+    "lib/screens/auth/login_screen.dart",
+    "lib/screens/auth/register_screen.dart",
+    "lib/screens/auth/onboarding_screen.dart",
+    "lib/screens/auth/forgot_password_screen.dart",
+    "lib/screens/auth/verification_pending_screen.dart",
+    "lib/screens/ideas/aura_welcome_screen.dart",
+    "lib/screens/ideas/capture_screen.dart",
+    "lib/screens/ideas/capture_guided_screen.dart",
+    "lib/screens/ideas/color_dna_results_screen.dart",
+    "lib/screens/ideas/fallback_transparency_screen.dart",
+    "lib/screens/ideas/glowstore_recipe_screen.dart",
+    "lib/screens/ideas/nail_vto_screen.dart",
+    "lib/screens/ideas/processing_alchemy_screen.dart",
+    "lib/screens/ideas/product_scanner_screen.dart",
+    "lib/screens/ideas/results_screen.dart",
+    "lib/screens/ideas/vto_live_screen.dart",
+    "lib/screens/ideas/widgets/color_palette.dart",
+    "lib/screens/ideas/widgets/product_card.dart",
+    "lib/screens/ideas/widgets/score_card.dart",
+    "lib/screens/designs/colorimetria_historial_screen.dart",
+    "lib/screens/designs/comparison_screen.dart",
+    "lib/screens/designs/evolution_dashboard_screen.dart",
+    "lib/screens/designs/glowup_card_screen.dart",
+    "lib/screens/designs/medical_validation_screen.dart",
+    "lib/screens/designs/outfit_result_screen.dart",
+    "lib/screens/designs/palette_card_screen.dart",
+    "lib/screens/designs/wardrobe_dashboard_screen.dart",
+    "lib/screens/designs/glow_beauty_screen.dart",
+    "lib/screens/academy/academy_screen.dart",
+    "lib/screens/academy/course_list.dart",
+    "lib/screens/academy/course_detail_screen.dart",
+    "lib/screens/academy/glow_consent_widget.dart",
+    "lib/screens/academy/quiz_screen.dart",
+    "lib/screens/academy/lesson_view.dart",
+    "lib/screens/academy/glow_nback_screen.dart",
+    "lib/screens/booking_tracking_screen.dart",
+    "lib/screens/disputes/disputes_list_screen.dart",
+    "lib/screens/disputes/open_dispute_screen.dart",
+    "lib/screens/otp_confirm_screen.dart",
+    "lib/widgets/floating_navigation_dock.dart",
+    "lib/widgets/wompi_payment_sheet.dart",
+    "lib/widgets/store_product_card.dart",
+    "lib/widgets/store/product_card.dart",
+    "lib/widgets/provider/booking_card.dart",
+    "lib/widgets/provider/provider_luxe_components.dart",
+    "lib/widgets/provider/service_card.dart",
+    "lib/design/components/academy_luxe_components.dart",
+    "lib/widgets/ai_search_bar.dart",
+    "lib/widgets/audience_toggle.dart",
+    "lib/widgets/aura_multi_agent_chat.dart",
+    "lib/widgets/booking_recovery_banner.dart"
+  ],
+  "files_do_not_touch": [
+    "lib/design/icons/glow_icon_demo.dart - Demo only",
+    "lib/design/icons/glow_icon_adapter.dart - Adapter layer",
+    "lib/design/icons/glow_icon_registry*.dart - Registry system",
+    "lib/screens/otp_confirm_screen.dart - Critical auth flow, complex custom icons",
+    "lib/screens/designs/medical_validation_screen.dart - Medical/compliance, needs review",
+    "lib/screens/ideas/nail_vto_screen.dart - AR/VTO custom implementation",
+    "lib/screens/ideas/vto_live_screen.dart - AR/VTO custom implementation",
+    "lib/screens/ideas/capture_screen.dart - Camera custom UI",
+    "lib/screens/auth/onboarding_screen.dart - Complex custom onboarding",
+    "*.g.dart, *.freezed.dart - Generated code"
+  ],
+  "production_modified": false,
+  "recommendation": ""
+}

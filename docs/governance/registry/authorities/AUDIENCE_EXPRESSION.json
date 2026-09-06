@@ -1,0 +1,35 @@
+{
+  "authority": "Audience / Expression",
+  "level": "L2",
+  "owner": "Audience Governor",
+  "sourceOfTruth": "lib/services/audience_service.dart, lib/core/theme/tokens.dart:482",
+  "inputs": [
+    "Soul",
+    "Color",
+    "Typography"
+  ],
+  "outputs": [
+    "Expression resolution (women/men/aura/context-aware)",
+    "audience toggles",
+    "badges",
+    "filters"
+  ],
+  "consumers": [
+    "main.dart",
+    "GlowStoreTokens",
+    "MensTheme",
+    "Token.of()",
+    "screens"
+  ],
+  "allowedChanges": [
+    "Adding new expression contexts",
+    "updating audience service logic"
+  ],
+  "forbiddenChanges": [
+    "Changing core expression definitions (Women/Men/AURA) without Soul alignment"
+  ],
+  "validationGate": "Audience spec review + expression validation",
+  "legacySystems": [],
+  "promotionPath": "N/A",
+  "exceptionMechanism": "Director approval for exceptions"
+}

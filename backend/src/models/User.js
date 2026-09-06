@@ -42,10 +42,15 @@ const User = sequelize.define('User', {
     field: 'provider_id'
   },
   rol: {
-    type: DataTypes.STRING(20),
-    allowNull: true
-  },
-  onboarding_completo: {
+        type: DataTypes.STRING(20),
+        allowNull: true
+      },
+      worker_type: {
+        type: DataTypes.ENUM('EMPLEADO', 'PRESTADOR_SERVICIO', 'ADMIN_SALON', 'OTRO'),
+        allowNull: true,
+        field: 'worker_type'
+      },
+      onboarding_completo: {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
     field: 'onboarding_completo'

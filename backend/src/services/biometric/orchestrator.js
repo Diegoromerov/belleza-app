@@ -82,7 +82,11 @@ class BiometricOrchestrator {
     // 6. Extraer ingredientes activos sugeridos
     const keyIngredients = this.extractIngredients(recommendation);
 
-    // 7. Guardar perfil final en base de datos
+    // 7. Calcular GlowScore (0-100) y Familias Clínicas (Evimetra + Bioderma)
+    const glowScore = this.calculateGlowScore(faceScores);
+    const dermoFamilies = this.getDermatologicalFamilies(faceScores);
+
+    // 8. Guardar perfil final en base de datos
     const profile = await profileService.saveProfile({
       userId: parsedUserId,
       faceScores,
@@ -98,11 +102,68 @@ class BiometricOrchestrator {
     return {
       profileId: profile.id,
       face: faceScores,
+      glowScore,
+      dermoFamilies,
       hands: handsDiagnosis,
       recommendation,
       keyIngredients,
       vtoTones,
       createdAt: profile.createdAt,
+    };
+  }
+
+  calculateGlowScore(faceScores) {
+    const hydration = faceScores.hydration || 60;
+    const wrinkles = faceScores.wrinkles || 30;
+    const spots = faceScores.spots || 20;
+    const pores = faceScores.pores || 35;
+
+    const hydrationWeight = 0.35;
+    const clarityWeight = 0.25;   // (100 - spots)
+    const textureWeight = 0.25;   // (100 - pores)
+    const firmnessWeight = 0.15;  // (100 - wrinkles)
+
+    const score = (
+      (hydration * hydrationWeight) +
+      ((100 - spots) * clarityWeight) +
+      ((100 - pores) * textureWeight) +
+      ((100 - wrinkles) * firmnessWeight)
+    );
+
+    return Math.round(Math.min(100, Math.max(0, score)));
+  }
+
+  getDermatologicalFamilies(faceScores) {
+    const pores = faceScores.pores || 35;
+    const spots = faceScores.spots || 20;
+    const wrinkles = faceScores.wrinkles || 30;
+    const hydration = faceScores.hydration || 60;
+
+    return {
+      sebumPores: {
+        score: Math.min(100, Math.round(pores * 1.2)),
+        level: pores > 50 ? 'Atención Requerida' : 'Equilibrado',
+        recommendedTreatment: 'Limpieza Facial Profunda con Ultrasonido',
+        activeTarget: 'Niacinamida + Ácido Salicílico',
+      },
+      pigmentationClarity: {
+        score: Math.min(100, Math.round(spots * 1.3)),
+        level: spots > 45 ? 'Hiperpigmentación Leve' : 'Tono Uniforme',
+        recommendedTreatment: 'Peeling Suave con Ácido Glicólico / Vitamina C',
+        activeTarget: 'Vitamina C pura + Ácido Azelaico',
+      },
+      firmnessLines: {
+        score: Math.min(100, Math.round(wrinkles * 1.2)),
+        level: wrinkles > 45 ? 'Pérdida de Elasticidad' : 'Firmeza Óptima',
+        recommendedTreatment: 'Radiofrecuencia Facial y Masaje Miofascial',
+        activeTarget: 'Péptidos de Cobre + Ácido Hialurónico',
+      },
+      barrierHydration: {
+        score: Math.min(100, Math.round(hydration)),
+        level: hydration < 55 ? 'Deshidratación Notoria' : 'Barrera Saludable',
+        recommendedTreatment: 'Protocolo Hidrafacial y Velo de Colágeno',
+        activeTarget: 'Ceramidas + Ácido Hialurónico Multimolecular',
+      },
     };
   }
 

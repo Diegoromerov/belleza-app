@@ -150,18 +150,26 @@ class _ChatListScreenState extends State<ChatListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFAF8F5),
       appBar: AppBar(
         title: const Text(
-          'Mensajes',
-          style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5),
+          'Mensajes & Concierge',
+          style: TextStyle(
+            fontFamily: 'CormorantGaramond',
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.5,
+            fontSize: 24,
+            color: Color(0xFF1F1A15),
+          ),
         ),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: const Color(0xFFFAF8F5),
         elevation: 0,
         centerTitle: false,
       ),
-      body: _isLoading
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 680),
+          child: _isLoading
           ? const Center(
               child: CircularProgressIndicator(color: AppTheme.primary))
           : _error != null
@@ -219,7 +227,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                 shape: BoxShape.circle,
                                 border: Border.all(color: const Color(0xFFD4AF37), width: 2.5),
                                 image: const DecorationImage(
-                                  image: AssetImage('assets/images/avatar_aura.png'),
+                                  image: AssetImage('images/avatar_aura.webp'),
                                   fit: BoxFit.cover,
                                 ),
                               ),
@@ -256,7 +264,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                     partnerName:
                                         'Aura - Asistente de IA',
                                     partnerRole: 'admin',
-                                    partnerAvatar: 'assets/images/avatar_aura.png',
+                                    partnerAvatar: 'images/avatar_aura.webp',
                                   ),
                                 ),
                               );
@@ -510,6 +518,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
                     ],
                   ),
                 ),
+          ),
+        ),
     );
   }
 }

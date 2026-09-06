@@ -158,21 +158,26 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     final bool hasCertificate = _courseData!['hasCertificate'] == true;
 
     return Scaffold(
+      backgroundColor: const Color(0xFFFAF8F5),
       appBar: AppBar(
-        title: Text(course['title'] ?? 'Detalle del Curso', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [themeColor, const Color(0xFFE2C4BC)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+        title: Text(
+          course['title'] ?? 'Detalle del Curso',
+          style: const TextStyle(
+            fontFamily: 'CormorantGaramond',
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.5,
+            fontSize: 22,
+            color: Color(0xFF1F1A15),
           ),
         ),
-        elevation: 2,
-        iconTheme: const IconThemeData(color: Colors.white),
+        backgroundColor: const Color(0xFFFAF8F5),
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Color(0xFF1F1A15)),
       ),
-      body: Column(
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 720),
+          child: Column(
         children: [
           // 📽️ Sección del reproductor de video adaptativo con soporte de accesibilidad
           if (_activeLesson != null)
@@ -386,6 +391,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           ),
         ],
       ),
-    );
+    ),
+  ),
+);
   }
 }

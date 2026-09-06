@@ -105,21 +105,29 @@ class _SupportCenterScreenState extends State<SupportCenterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFAF8F5),
       appBar: AppBar(
         title: const Text(
-          'Centro de Soporte y PQRSF',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          'Centro de Concierge & PQRSF',
+          style: TextStyle(
+            fontFamily: 'CormorantGaramond',
+            fontWeight: FontWeight.bold,
+            fontSize: 22,
+            color: Color(0xFF1F1A15),
+          ),
         ),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: const Color(0xFFFAF8F5),
+        foregroundColor: const Color(0xFF1F1A15),
         elevation: 0,
         centerTitle: false,
       ),
-      body: RefreshIndicator(
-        onRefresh: _loadTickets,
-        color: AppTheme.primary,
-        child: _isLoading
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 680),
+          child: RefreshIndicator(
+            onRefresh: _loadTickets,
+            color: const Color(0xFFC5A052),
+            child: _isLoading
             ? const Center(child: CircularProgressIndicator(color: AppTheme.primary))
             : _error != null
                 ? Center(
@@ -251,17 +259,44 @@ class _SupportCenterScreenState extends State<SupportCenterScreen> {
                           );
                         },
                       ),
+        ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: AppTheme.primary,
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const CreateTicketScreen()),
-          ).then((_) => _loadTickets());
-        },
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text('Crear PQRSF', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+    ),
+      floatingActionButton: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(30),
+          gradient: const LinearGradient(
+            colors: [Color(0xFFF3D59B), Color(0xFFC5A052)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFC5A052).withValues(alpha: 0.35),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: FloatingActionButton.extended(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const CreateTicketScreen()),
+            ).then((_) => _loadTickets());
+          },
+          icon: const Icon(Icons.add, color: Color(0xFF1F1A15)),
+          label: const Text(
+            'Crear PQRSF',
+            style: TextStyle(
+              color: Color(0xFF1F1A15),
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Inter',
+            ),
+          ),
+        ),
       ),
     );
   }

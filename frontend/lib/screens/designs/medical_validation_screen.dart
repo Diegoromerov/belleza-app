@@ -309,17 +309,26 @@ class _MedicalValidationScreenState extends State<MedicalValidationScreen> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFCF9F7),
+      backgroundColor: const Color(0xFFFAF8F5),
       appBar: AppBar(
         title: const Text(
           'Validación Médica',
-          style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5, fontSize: 18),
+          style: TextStyle(
+            fontFamily: 'CormorantGaramond',
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.5,
+            fontSize: 22,
+            color: Color(0xFF1F1A15),
+          ),
         ),
         elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: const Color(0xFFFAF8F5),
+        foregroundColor: const Color(0xFF1F1A15),
       ),
-      body: _error != null
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 720),
+          child: _error != null
           ? Center(
               child: Padding(
                 padding: const EdgeInsets.all(24.0),
@@ -575,6 +584,8 @@ class _MedicalValidationScreenState extends State<MedicalValidationScreen> {
                 ],
               ),
             ),
+          ),
+        ),
     );
   }
 }

@@ -51,9 +51,12 @@ class _CourseListScreenState extends State<CourseListScreen> {
         ),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 720),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // TARJETA DE PROGRESO DE USUARIO
@@ -198,6 +201,8 @@ class _CourseListScreenState extends State<CourseListScreen> {
           ),
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 }

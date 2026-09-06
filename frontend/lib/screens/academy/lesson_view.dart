@@ -68,7 +68,10 @@ class _LessonViewScreenState extends State<LessonViewScreen> {
           ),
         ),
       ),
-      body: SingleChildScrollView(
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 720),
+          child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -204,6 +207,8 @@ class _LessonViewScreenState extends State<LessonViewScreen> {
           ],
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 }

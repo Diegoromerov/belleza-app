@@ -1,0 +1,1309 @@
+{
+  "project": "GlowApp",
+  "phase": "G0_GENERAL_GOVERNANCE_DISCOVERY",
+  "status": "DISCOVERY_COMPLETE_READY_FOR_DESIGN",
+  "timestamp": "2026-08-21",
+  "identity_systems": [
+    {
+      "name": "SOUL",
+      "level": "L0",
+      "authority": "GLOWAPP_SOUL.md",
+      "location": "docs/design/GLOWAPP_SOUL.md",
+      "status": "APPROVED",
+      "consumers": ["ALL"],
+      "dependencies": []
+    },
+    {
+      "name": "Color System (S1)",
+      "level": "L1",
+      "authority": "Token class + glowapp_color_system.json",
+      "location": "lib/core/theme/tokens.dart",
+      "status": "APPROVED (S1-I)",
+      "consumers": ["Token", "GlowStoreTokens", "BellezaLuxeTokens", "GlowTokens", "MensTheme", "shared/theme"],
+      "dependencies": ["SOUL"]
+    },
+    {
+      "name": "Typography System (S2)",
+      "level": "L1",
+      "authority": "TypographyTokens class",
+      "location": "lib/core/theme/tokens.dart:1060",
+      "status": "APPROVED (S2-II)",
+      "consumers": ["TypographyTokens", "AppTypography", "GlowTokens", "LuxeTypography"],
+      "dependencies": ["SOUL", "Color"]
+    },
+    {
+      "name": "Photography System (S3)",
+      "level": "L1",
+      "authority": "GLOWAPP_PHOTOGRAPHY_SYSTEM.md + JSON",
+      "location": "docs/design/GLOWAPP_PHOTOGRAPHY_SYSTEM.md",
+      "status": "SPECIFIED",
+      "consumers": ["AuraWelcomeScreen", "Login", "Register", "Onboarding", "ProviderDetail", "assets"],
+      "dependencies": ["SOUL", "Color"]
+    },
+    {
+      "name": "UI Component Language (S4)",
+      "level": "L2",
+      "authority": "GLOWAPP_UI_COMPONENT_LANGUAGE.md + JSON",
+      "location": "docs/design/GLOWAPP_UI_COMPONENT_LANGUAGE.md",
+      "status": "SPECIFIED",
+      "consumers": ["LuxeComponents", "GlowGlassCard", "StoreProductCard", "ServiceCard", "BookingCard"],
+      "dependencies": ["SOUL", "Color", "Typography", "Photography"]
+    },
+    {
+      "name": "Icon System",
+      "level": "L1",
+      "authority": "GlowIconRegistry",
+      "location": "lib/design/icons/glow_icon_registry_init.dart",
+      "status": "LOCKED v1.0 (51 icons)",
+      "consumers": ["0 prod (198 Material Icons in 39 files)"],
+      "dependencies": ["SOUL"]
+    },
+    {
+      "name": "Themes",
+      "level": "L4",
+      "authority": "AppTheme + MensTheme",
+      "location": "lib/core/theme/app_theme.dart, lib/shared/mens_theme.dart",
+      "status": "IMPLEMENTED",
+      "consumers": ["main.dart", "40+ legacy screens"],
+      "dependencies": ["Token", "GlowTokensExtension"]
+    },
+    {
+      "name": "Audience Expressions",
+      "level": "L1/L4",
+      "authority": "Token.of + AudienceService",
+      "location": "lib/core/theme/tokens.dart:482, lib/services/audience_service.dart",
+      "status": "APPROVED (S2-II)",
+      "consumers": ["main.dart", "GlowStoreTokens", "MensTheme"],
+      "dependencies": ["Token", "S1 Color"]
+    }
+  ],
+  "experience_units": [
+    {
+      "name": "Auth & Onboarding",
+      "screens": ["LoginScreen", "RegisterScreen", "ForgotPasswordScreen", "VerificationPendingScreen", "OnboardingScreen"],
+      "components": ["AISearchBar", "GlowGlassCard", "inline inputs"],
+      "services": ["AuthService", "SecureStorageService"],
+      "providers": ["legacy_theme", "GlowTokens"],
+      "status": "PARTIAL"
+    },
+    {
+      "name": "Home / Discovery",
+      "screens": ["HomeScreen", "MapScreen", "ProviderDetailScreen"],
+      "components": ["HeroSection", "RecentScanCard", "LuxeCard", "ProviderLuxeComponents"],
+      "services": ["ApiService", "LocationService", "AnalyticsService"],
+      "providers": ["LuxeColors", "Token"],
+      "status": "FUNCTIONAL"
+    },
+    {
+      "name": "Booking Flow",
+      "screens": ["BookingScreen", "BookingTrackingScreen", "ProviderRouteScreen"],
+      "components": ["BookingCard", "WompiPaymentSheet"],
+      "services": ["ApiService", "BookingRecoveryService"],
+      "providers": ["shared/theme (legacy)"],
+      "status": "PARTIAL"
+    },
+    {
+      "name": "Store / E-commerce",
+      "screens": ["StoreScreen", "ProductDetail", "ProductList", "ProductQuickViewDialog"],
+      "components": ["StoreProductCard", "LuxeButton", "LuxeBadge"],
+      "services": ["ApiService"],
+      "providers": ["GlowStoreTokens"],
+      "status": "CONSISTENT"
+    },
+    {
+      "name": "Provider Dashboard",
+      "screens": ["ProviderDashboardScreen", "ProviderServicesScreen", "ProviderPortfolioScreen", "ProviderProfileScreen", "AppointmentsListScreen"],
+      "components": ["ServiceCard", "ProviderLuxeComponents"],
+      "services": ["ApiService", "AuthService"],
+      "providers": ["shared/theme", "MensTheme"],
+      "status": "PARTIAL"
+    },
+    {
+      "name": "Client Profile",
+      "screens": ["ClientBookingsScreen", "ClientProfileScreen", "UserProfileScreen"],
+      "components": ["LuxeListTile", "ProfileHeader"],
+      "services": ["ApiService", "AuthService"],
+      "providers": ["LuxeColors", "Token"],
+      "status": "FUNCTIONAL"
+    },
+    {
+      "name": "AURA / Intelligence",
+      "screens": ["AuraWelcomeScreen", "CaptureScreen", "ColorDNAResultsScreen", "NailVTOScreen", "ProcessingScreen", "ResultsScreen", "GlowstoreRecipeScreen"],
+      "components": ["GlowGlassCard", "Aura3DEmblem", "AuraMultiAgentChatWidget"],
+      "services": ["BiometricService", "ApiService", "WebSocket"],
+      "providers": ["GlowTokens", "GlowGlassCard"],
+      "status": "FUNCTIONAL (not Men-adaptive)"
+    },
+    {
+      "name": "Academy",
+      "screens": ["AcademyScreen", "CourseList", "CourseDetail", "LessonView", "NBackScreen", "QuizScreen"],
+      "components": ["LuxeListTile", "LuxeProgressBar"],
+      "services": [],
+      "providers": ["AcademyLuxeComponents (BellezaLuxe)"],
+      "status": "PARTIAL"
+    },
+    {
+      "name": "Chat & Support",
+      "screens": ["ChatScreen", "ChatListScreen", "SupportCenterScreen", "CreateTicketScreen", "TicketChatScreen"],
+      "components": [],
+      "services": ["NotificationService", "SupportService"],
+      "providers": ["Legacy"],
+      "status": "PARTIAL"
+    },
+    {
+      "name": "Wallet / Payments",
+      "screens": ["WalletScreen"],
+      "components": ["WompiPaymentSheet"],
+      "services": ["ApiService", "AuthService"],
+      "providers": ["shared/theme"],
+      "status": "PARTIAL"
+    },
+    {
+      "name": "Designs / VTO",
+      "screens": ["EvolutionDashboardScreen", "WardrobeDashboardScreen", "OutfitResultScreen", "PaletteCardScreen", "ColorimetriaHistorialScreen", "MedicalValidationScreen", "GlowUpCardScreen", "ComparisonScreen"],
+      "components": [],
+      "services": [],
+      "providers": ["Various"],
+      "status": "EXPERIMENTAL/ISOLATED"
+    }
+  ],
+  "product_units": [
+    {
+      "unit": "CLIENT",
+      "purpose": "End-user beauty service discovery, booking, and purchase",
+      "user": "Beauty clients (Women/Men)",
+      "business_capability": "Search → Book → Pay → Review → Repeat",
+      "inputs": ["Location", "preferences", "biometric profile", "payment method"],
+      "outputs": ["Confirmed bookings", "product orders", "reviews", "loyalty points"],
+      "screens": ["HomeScreen", "ProviderDetailScreen", "BookingScreen", "StoreScreen", "ClientBookingsScreen", "UserProfileScreen"],
+      "components": ["HeroSection", "RecentScanCard", "LuxeCard", "BookingCard", "StoreProductCard", "ProfileHeader"],
+      "services": ["ApiService", "LocationService", "BookingRecoveryService", "AuthService", "AnalyticsService"],
+      "providers": ["AudienceService", "NotificationService"],
+      "data": ["usuarios", "bookings", "services", "productos", "reviews", "transactions"],
+      "ai": ["AURA recommendations (Hestia)", "Chronos rebooking", "Atena biometric"],
+      "external_dependencies": ["Wompi (payments)", "Google Maps/OSM (location)", "Google Sign-In (auth)"],
+      "authority": "Token (color/expression), TypographyTokens (type), GlowStoreTokens (store)",
+      "validation": ["flutter test", "flutter analyze", "flutter build"],
+      "status": "FUNCTIONAL",
+      "technical_debt": "Legacy theme in ProviderDetail/Booking; hardcoded specialty colors"
+    },
+    {
+      "unit": "PROVIDER",
+      "purpose": "Provider business management (schedule, services, portfolio, earnings)",
+      "user": "Beauty providers (Women/Men)",
+      "business_capability": "Manage services → Accept bookings → Track earnings → Build portfolio",
+      "inputs": ["Service definitions", "availability", "portfolio images", "bank details"],
+      "outputs": ["Service listings", "confirmed appointments", "payouts", "ratings"],
+      "screens": ["ProviderDashboardScreen", "ProviderServicesScreen", "ProviderPortfolioScreen", "ProviderProfileScreen", "AppointmentsListScreen"],
+      "components": ["ServiceCard", "ProviderLuxeComponents", "LuxeListTile"],
+      "services": ["ApiService", "AuthService", "SecureStorageService"],
+      "providers": ["AudienceService (Men mode)"],
+      "data": ["perfiles_prestador", "services", "bookings", "portfolio_items", "transactions"],
+      "ai": [],
+      "external_dependencies": ["Nequi/Bancolombia (payouts)", "PostGIS (coverage)"],
+      "authority": "MensTheme (Men), shared/theme (legacy), Token",
+      "validation": ["Manual QA"],
+      "status": "PARTIAL",
+      "technical_debt": "shared/theme.dart hardcoded; no unified provider design system"
+    },
+    {
+      "unit": "BOOKING",
+      "purpose": "End-to-end reservation lifecycle with monetary integrity",
+      "user": "Client + Provider",
+      "business_capability": "Select date/service → Choose slot → Add products → Pay → Confirm → Track",
+      "inputs": ["Provider ID", "service(s)", "date/time", "location", "payment method", "product qty"],
+      "outputs": ["Booking record", "payment split (20% platform/8% tax/72% provider)", "calendar events"],
+      "screens": ["BookingScreen", "BookingTrackingScreen", "ProviderRouteScreen"],
+      "components": ["BookingCard", "WompiPaymentSheet", "DatePicker", "TimeSlotSelector"],
+      "services": ["ApiService", "BookingRecoveryService", "NotificationService"],
+      "providers": ["AudienceService"],
+      "data": ["bookings", "services", "transactions", "usuarios"],
+      "ai": ["Chronos agent (rebooking evaluation via WebSocket)"],
+      "external_dependencies": ["Wompi (payment)", "PostGIS (provider location)"],
+      "authority": "shared/theme (legacy), Token (new), GlowStoreTokens (products)",
+      "validation": ["Monetary integrity via DB trigger (calc_booking_split)"],
+      "status": "PARTIAL",
+      "technical_debt": "3-step stepper hardcoded; sticky bottom payment summary legacy"
+    },
+    {
+      "unit": "STORE",
+      "purpose": "E-commerce for beauty products (GlowStore)",
+      "user": "Clients (Women/Men)",
+      "business_capability": "Browse → Cart → Checkout → Order tracking",
+      "inputs": ["Product catalog", "cart", "shipping address", "payment"],
+      "outputs": ["Orders", "revenue", "inventory updates"],
+      "screens": ["StoreScreen", "ProductDetailScreen", "ProductListScreen", "GlowstoreOrdersScreen"],
+      "components": ["StoreProductCard", "ProductQuickViewDialog", "LuxeButton", "LuxeBadge"],
+      "services": ["ApiService", "AuthService"],
+      "providers": ["AudienceService (Women/Men product filtering)"],
+      "data": ["productos", "bookings (for orders)", "usuarios"],
+      "ai": ["Hestia agent (product recommendations via WebSocket)"],
+      "external_dependencies": ["Wompi (checkout)"],
+      "authority": "GlowStoreTokens (complete e-commerce token system with Women/Men mapping)",
+      "validation": ["flutter test", "build SUCCESS"],
+      "status": "CONSISTENT",
+      "technical_debt": "Uses Didot/Inter instead of Cormorant/Manrope; no dark mode variants"
+    },
+    {
+      "unit": "PAYMENT",
+      "purpose": "Transaction processing",
+      "user": "Client + Provider",
+      "business_capability": "Process payments → Confirm → Split revenue",
+      "inputs": ["Card/Wompi/Nequi details"],
+      "outputs": ["Payment confirmation", "splits"],
+      "screens": ["WompiPaymentSheet"],
+      "components": [],
+      "services": ["ApiService", "WompiPaymentSheet"],
+      "providers": ["shared/theme"],
+      "data": ["transactions"],
+      "ai": [],
+      "external_dependencies": ["Wompi (payment)"],
+      "authority": "Token",
+      "validation": [],
+      "status": "PARTIAL",
+      "technical_debt": ""
+    },
+    {
+      "unit": "CONCIERGE",
+      "purpose": "AI-assisted booking",
+      "user": "Client",
+      "business_capability": "Natural language → Service matches → Bookings",
+      "inputs": ["Natural language", "context"],
+      "outputs": ["Service matches", "bookings"],
+      "screens": ["AuraMultiAgentChat", "AISearchBar"],
+      "components": ["AISearchBar", "AuraMultiAgentChatWidget"],
+      "services": ["WebSocket", "ApiService"],
+      "providers": ["GlowTokens"],
+      "data": ["messages"],
+      "ai": ["AURA multi-agent (Atena, Hermes, Chronos, Hestia)"],
+      "external_dependencies": ["WebSocket backend"],
+      "authority": "Token",
+      "validation": [],
+      "status": "FUNCTIONAL",
+      "technical_debt": ""
+    },
+    {
+      "unit": "AURA",
+      "purpose": "Intelligence layer — biometric analysis, recommendations, conversational AI",
+      "user": "Clients (Women/Men)",
+      "business_capability": "Scan → Analyze → Recommend → Book/Buy → Evolve",
+      "inputs": ["Selfie/hand photos", "biometric responses", "chat messages"],
+      "outputs": ["Color DNA", "product recommendations", "VTO previews", "booking matches"],
+      "screens": ["AuraWelcomeScreen", "CaptureScreen", "CaptureGuidedScreen", "ColorDNAResultsScreen", "NailVTOScreen", "ProcessingScreen", "ResultsScreen", "GlowstoreRecipeScreen"],
+      "components": ["GlowGlassCard", "Aura3DEmblem", "AuraMultiAgentChatWidget", "VTO Painters"],
+      "services": ["BiometricService", "ApiService", "WebSocket"],
+      "providers": ["AudienceService (NOT USED — AuraWelcome not Men-adaptive)"],
+      "data": ["nail_tryon_jobs", "biometric_results", "messages"],
+      "ai": ["Multi-agent (Atena, Hermes, Chronos, Hestia) via WebSocket"],
+      "external_dependencies": ["WebSocket backend (ws://10.0.2.2:3000)", "Google MLKit"],
+      "authority": "GlowTokens (partial), GlowGlassCard, TypographyTokens (contextual)",
+      "validation": ["AuraWelcomeScreen tests pass"],
+      "status": "FUNCTIONAL",
+      "technical_debt": "Hardcoded feminine photography/tokens; no Men expression path"
+    },
+    {
+      "unit": "ACADEMY",
+      "purpose": "Education/content",
+      "user": "Client + Provider",
+      "business_capability": "Courses → Lessons → Quizzes → Certificates",
+      "inputs": ["Courses", "lessons", "quizzes"],
+      "outputs": ["Completion", "certificates"],
+      "screens": ["AcademyScreen", "CourseList", "LessonView", "QuizScreen"],
+      "components": ["LuxeListTile", "LuxeProgressBar"],
+      "services": [],
+      "providers": ["AcademyLuxeComponents (BellezaLuxeTokens)"],
+      "data": [],
+      "ai": [],
+      "external_dependencies": [],
+      "authority": "BellezaLuxeTokens",
+      "validation": [],
+      "status": "ISOLATED",
+      "technical_debt": "Isolated token system (BellezaLuxe) duplicates Token"
+    },
+    {
+      "unit": "PROFILE",
+      "purpose": "User identity",
+      "user": "Client + Provider",
+      "business_capability": "Manage profile → Settings → History",
+      "inputs": ["Personal info", "preferences", "history"],
+      "outputs": ["Profile data", "settings"],
+      "screens": ["UserProfileScreen", "ClientProfileScreen", "ProviderProfileScreen", "SettingsScreen"],
+      "components": ["ProfileHeader", "LuxeListTile"],
+      "services": ["AuthService", "SecureStorageService"],
+      "providers": ["LuxeColors", "Token"],
+      "data": ["usuarios", "perfiles_prestador"],
+      "ai": [],
+      "external_dependencies": [],
+      "authority": "Token",
+      "validation": [],
+      "status": "FUNCTIONAL",
+      "technical_debt": ""
+    },
+    {
+      "unit": "REWARDS",
+      "purpose": "Loyalty/XP",
+      "user": "Client",
+      "business_capability": "Earn points → Tiers → Rewards",
+      "inputs": ["Bookings", "purchases", "referrals"],
+      "outputs": ["Points", "tiers", "rewards"],
+      "screens": ["RewardsXPScreen"],
+      "components": [],
+      "services": [],
+      "providers": ["LuxeColors"],
+      "data": [],
+      "ai": [],
+      "external_dependencies": [],
+      "authority": "Token",
+      "validation": [],
+      "status": "PARTIAL",
+      "technical_debt": ""
+    },
+    {
+      "unit": "EVOLUTION",
+      "purpose": "Progress tracking",
+      "user": "Client",
+      "business_capability": "Track biometric evolution → Compare → Insights",
+      "inputs": ["Biometric history", "photos"],
+      "outputs": ["Trends", "comparisons"],
+      "screens": ["EvolutionDashboardScreen", "MedicalValidationScreen", "GlowUpCardScreen"],
+      "components": [],
+      "services": ["BiometricService"],
+      "providers": [],
+      "data": ["biometric_results"],
+      "ai": [],
+      "external_dependencies": [],
+      "authority": "Isolated",
+      "validation": [],
+      "status": "EXPERIMENTAL",
+      "technical_debt": ""
+    },
+    {
+      "unit": "WARDROBE",
+      "purpose": "Virtual try-on (outfits)",
+      "user": "Client",
+      "business_capability": "Try on outfits virtually → Results",
+      "inputs": ["Photos", "preferences"],
+      "outputs": ["Outfit results"],
+      "screens": ["WardrobeDashboardScreen", "OutfitResultScreen"],
+      "components": [],
+      "services": [],
+      "providers": [],
+      "data": [],
+      "ai": ["VTO pipeline"],
+      "external_dependencies": [],
+      "authority": "",
+      "validation": [],
+      "status": "EXPERIMENTAL",
+      "technical_debt": ""
+    },
+    {
+      "unit": "VTO",
+      "purpose": "Virtual try-on (nails)",
+      "user": "Client",
+      "business_capability": "Try nail colors/shapes → Preview",
+      "inputs": ["Hand photos", "color/shape"],
+      "outputs": ["Preview images"],
+      "screens": ["NailVTOScreen", "VTOLiveScreen"],
+      "components": ["VTO painters"],
+      "services": ["BiometricService"],
+      "providers": [],
+      "data": ["nail_tryon_jobs"],
+      "ai": ["Nail VTO AI"],
+      "external_dependencies": [],
+      "authority": "",
+      "validation": [],
+      "status": "EXPERIMENTAL",
+      "technical_debt": ""
+    }
+  ],
+  "intelligence_units": [
+    {
+      "name": "AURA Multi-Agent",
+      "type": "Agent Orchestration",
+      "purpose": "Conversational booking & recommendations",
+      "implementation": "WebSocket (aura_multi_agent_chat.dart)",
+      "data_source": "User biometrics, services, products, location",
+      "models": ["Atena (biometric)", "Hermes (geospatial)", "Chronos (rebooking)", "Hestia (products)"],
+      "status": "FUNCTIONAL (widget only)"
+    },
+    {
+      "name": "AISearchBar",
+      "type": "Search Interface",
+      "purpose": "Natural language beauty queries",
+      "implementation": "UI component only (ai_search_bar.dart)",
+      "data_source": [],
+      "models": ["Backend LLM"],
+      "status": "UI ONLY"
+    },
+    {
+      "name": "Biometric Analysis",
+      "type": "Computer Vision",
+      "purpose": "Skin analysis, color DNA",
+      "implementation": "capture_screen.dart + biometric_service.dart",
+      "data_source": "Camera images",
+      "models": ["Google MLKit Face Detection"],
+      "status": "FUNCTIONAL"
+    },
+    {
+      "name": "Nail VTO",
+      "type": "AR Try-on",
+      "purpose": "Virtual nail color/shape",
+      "implementation": "nail_vto_screen.dart + painters",
+      "data_source": "Hand photos",
+      "models": ["Custom ML (nail_tryon_jobs table)"],
+      "status": "FUNCTIONAL"
+    },
+    {
+      "name": "Color DNA",
+      "type": "Recommendation Engine",
+      "purpose": "Personal color palette",
+      "implementation": "color_dna_results_screen.dart",
+      "data_source": "Biometric results",
+      "models": ["Backend algorithm"],
+      "status": "FUNCTIONAL"
+    },
+    {
+      "name": "RAG / Embeddings",
+      "type": "Knowledge Retrieval",
+      "purpose": "Product/service knowledge",
+      "implementation": "Not found in frontend",
+      "data_source": [],
+      "models": [],
+      "status": "NOT IMPLEMENTED (backend only?)"
+    },
+    {
+      "name": "Evaluation/Orchestration",
+      "type": "AI Quality",
+      "purpose": "Model evaluation",
+      "implementation": "Not in frontend",
+      "data_source": [],
+      "models": [],
+      "status": "NOT IMPLEMENTED"
+    }
+  ],
+  "data_domains": [
+    {
+      "domain": "Users & Auth",
+      "source_of_truth": "PostgreSQL (usuarios)",
+      "tables": ["usuarios", "perfiles_prestador"],
+      "models": ["ProviderProfile", "UserProfile"],
+      "repositories": ["ApiService"],
+      "status": "IMPLEMENTED"
+    },
+    {
+      "domain": "Bookings",
+      "source_of_truth": "PostgreSQL (bookings)",
+      "tables": ["bookings", "transactions"],
+      "models": ["Booking", "BookingStatusExt"],
+      "repositories": ["ApiService"],
+      "status": "IMPLEMENTED"
+    },
+    {
+      "domain": "Services",
+      "source_of_truth": "PostgreSQL (services)",
+      "tables": ["services"],
+      "models": ["ServiceModel"],
+      "repositories": ["ApiService"],
+      "status": "IMPLEMENTED"
+    },
+    {
+      "domain": "Products/Store",
+      "source_of_truth": "PostgreSQL (productos)",
+      "tables": ["productos"],
+      "models": [],
+      "repositories": ["ApiService"],
+      "status": "IMPLEMENTED"
+    },
+    {
+      "domain": "Portfolio",
+      "source_of_truth": "PostgreSQL (portfolio_items)",
+      "tables": ["portfolio_items"],
+      "models": [],
+      "repositories": ["ApiService"],
+      "status": "IMPLEMENTED"
+    },
+    {
+      "domain": "Chat/Messages",
+      "source_of_truth": "PostgreSQL (messages)",
+      "tables": ["messages"],
+      "models": [],
+      "repositories": ["ApiService", "WebSocket"],
+      "status": "IMPLEMENTED"
+    },
+    {
+      "domain": "Reviews",
+      "source_of_truth": "PostgreSQL (reviews)",
+      "tables": ["reviews"],
+      "models": [],
+      "repositories": ["ApiService"],
+      "status": "IMPLEMENTED"
+    },
+    {
+      "domain": "Biometric/AI",
+      "source_of_truth": "PostgreSQL (nail_tryon_jobs)",
+      "tables": ["nail_tryon_jobs"],
+      "models": ["BiometricResult"],
+      "repositories": ["BiometricService"],
+      "status": "PARTIAL"
+    },
+    {
+      "domain": "Academy",
+      "source_of_truth": "Not found in DB",
+      "tables": [],
+      "models": [],
+      "repositories": [],
+      "status": "NOT IMPLEMENTED"
+    },
+    {
+      "domain": "Rewards/XP",
+      "source_of_truth": "Not found in DB",
+      "tables": [],
+      "models": [],
+      "repositories": [],
+      "status": "NOT IMPLEMENTED"
+    },
+    {
+      "domain": "Embeddings/RAG",
+      "source_of_truth": "Not found",
+      "tables": [],
+      "models": [],
+      "repositories": [],
+      "status": "NOT IMPLEMENTED"
+    }
+  ],
+  "technical_domains": [
+    {
+      "domain": "Frontend Framework",
+      "technologies": ["Flutter 3.x", "Dart 3.x"],
+      "key_files": ["pubspec.yaml", "main.dart"],
+      "dependencies": ["Material 3", "flutter_map", "latlong2"]
+    },
+    {
+      "domain": "State Management",
+      "technologies": ["ValueNotifier", "ChangeNotifier", "Provider"],
+      "key_files": ["audience_service.dart", "app_providers.dart"],
+      "dependencies": []
+    },
+    {
+      "domain": "Navigation",
+      "technologies": ["Named routes (MaterialApp.routes)"],
+      "key_files": ["main.dart:127-172"],
+      "dependencies": []
+    },
+    {
+      "domain": "Networking",
+      "technologies": ["http", "web_socket_channel"],
+      "key_files": ["api_service.dart", "aura_multi_agent_chat.dart"],
+      "dependencies": []
+    },
+    {
+      "domain": "Authentication",
+      "technologies": ["Google Sign-In", "Local", "SecureStorage"],
+      "key_files": ["auth_service.dart", "secure_storage_service.dart"],
+      "dependencies": []
+    },
+    {
+      "domain": "Payments",
+      "technologies": ["Wompi (Colombian PSP)"],
+      "key_files": ["wompi_payment_sheet.dart"],
+      "dependencies": []
+    },
+    {
+      "domain": "Location",
+      "technologies": ["geolocator", "geocoding", "flutter_map"],
+      "key_files": ["location_service.dart", "web_geolocation*.dart"],
+      "dependencies": []
+    },
+    {
+      "domain": "Camera/ML",
+      "technologies": ["camera", "google_mlkit_face_detection", "mobile_scanner"],
+      "key_files": ["biometric_service.dart", "capture_screen.dart"],
+      "dependencies": []
+    },
+    {
+      "domain": "Storage",
+      "technologies": ["shared_preferences", "flutter_secure_storage"],
+      "key_files": ["secure_storage_service.dart"],
+      "dependencies": []
+    },
+    {
+      "domain": "Notifications",
+      "technologies": ["Custom service"],
+      "key_files": ["notification_service.dart"],
+      "dependencies": []
+    },
+    {
+      "domain": "Backend",
+      "technologies": ["Node.js/Express (Railway)", "PostgreSQL", "PostGIS"],
+      "key_files": ["backend/init.sql", "migrations/"],
+      "dependencies": []
+    }
+  ],
+  "quality_systems": [
+    {
+      "system": "Unit Tests",
+      "implementation": "test/calculations_test.dart, test/theme_widget_test.dart",
+      "coverage": "7 tests passing",
+      "gaps": "Low coverage (models only)"
+    },
+    {
+      "system": "Widget Tests",
+      "implementation": "test/widget_test.dart, test/aura_welcome_screen_test.dart",
+      "coverage": "App load + AuraWelcome",
+      "gaps": "No integration tests"
+    },
+    {
+      "system": "Static Analysis",
+      "implementation": "flutter analyze",
+      "coverage": "297 issues (mostly pre-existing const/deprecated)",
+      "gaps": "0 errors in S2-II files"
+    },
+    {
+      "system": "Build",
+      "implementation": "flutter build web --release",
+      "coverage": "SUCCESS (101s)",
+      "gaps": "Wasm warnings for geolocator"
+    },
+    {
+      "system": "Visual QA",
+      "implementation": "Manual only",
+      "coverage": "Screenshots in audit docs",
+      "gaps": "No golden tests"
+    },
+    {
+      "system": "Accessibility",
+      "implementation": "Semantic tokens in TypographyTokens",
+      "coverage": "S2 spec defines minimums",
+      "gaps": "No automated a11y tests"
+    },
+    {
+      "system": "Performance",
+      "implementation": "Not measured",
+      "coverage": "-",
+      "gaps": "No benchmarks"
+    },
+    {
+      "system": "Security",
+      "implementation": "flutter_secure_storage, HTTPS",
+      "coverage": "Auth tokens, passwords",
+      "gaps": "No penetration testing"
+    },
+    {
+      "system": "Observability",
+      "implementation": "AnalyticsService (custom events)",
+      "coverage": "App crashes, screen views",
+      "gaps": "No distributed tracing"
+    },
+    {
+      "system": "Error Handling",
+      "implementation": "FlutterError.onError + runZonedGuarded",
+      "coverage": "main.dart:68-78",
+      "gaps": "No Sentry/Crashlytics"
+    }
+  ],
+  "authorities": [
+    {
+      "decision_domain": "Color Palette HEX",
+      "authority_level": "L1 (S1 Color System)",
+      "implementation": "Token class constants",
+      "consumers": ["Token", "GlowStoreTokens", "MensTheme", "BellezaLuxeTokens"],
+      "validation": "S1-I APPROVED"
+    },
+    {
+      "decision_domain": "Typography Scale/Families",
+      "authority_level": "L1 (S2 Typography)",
+      "implementation": "TypographyTokens class",
+      "consumers": ["TypographyTokens", "AppTypography (bridge)", "GlowTokens"],
+      "validation": "S2-II APPROVED"
+    },
+    {
+      "decision_domain": "Expression Resolution",
+      "authority_level": "L1 (S2 Expression)",
+      "implementation": "Token.of(), Token.women/men/aura",
+      "consumers": ["main.dart", "GlowStoreTokens", "MensTheme"],
+      "validation": "S2-II APPROVED"
+    },
+    {
+      "decision_domain": "Icon Geometry",
+      "authority_level": "L1 (Icon System LOCKED)",
+      "implementation": "GlowIconRegistry (51 SVGs)",
+      "consumers": ["0 prod (198 Material Icons remain)"],
+      "validation": "ICON_SYSTEM_REVIEW"
+    },
+    {
+      "decision_domain": "Component Taxonomy",
+      "authority_level": "L2 (S4 UI Language)",
+      "implementation": "LuxeComponents, GlowGlassCard, etc.",
+      "consumers": ["10+ screens"],
+      "validation": "COMPONENT_REVIEW"
+    },
+    {
+      "decision_domain": "Component States/Variants",
+      "authority_level": "L2",
+      "implementation": "ButtonTheme, CardTheme, InputDecorationTheme",
+      "consumers": ["AppTheme", "GlowStoreTokens"],
+      "validation": "DESIGN_REVIEW"
+    },
+    {
+      "decision_domain": "Screen Layout",
+      "authority_level": "L3",
+      "implementation": "Individual screen files",
+      "consumers": [],
+      "validation": "SCREEN_COMPOSITION"
+    },
+    {
+      "decision_domain": "Spacing/Radius/Shadows",
+      "authority_level": "L1 (Token) + L2 (Component)",
+      "implementation": "Token class, GlowStoreTokens duplicates",
+      "consumers": ["Mixed"],
+      "validation": "CONFLICT"
+    },
+    {
+      "decision_domain": "Audience Differentiation",
+      "authority_level": "L2 (S4 + S1/S3 rules)",
+      "implementation": "Token.men/women, MensTheme, GlowStoreTokens",
+      "consumers": ["main.dart", "provider screens"],
+      "validation": "DIRECTOR_REVIEW"
+    },
+    {
+      "decision_domain": "AURA Visual Language",
+      "authority_level": "L2 (S3 AURA + S4 AURA + S1 Aura Teal)",
+      "implementation": "GlowTokens, GlowGlassCard, AuraWelcome",
+      "consumers": ["Aura screens"],
+      "validation": "DIRECTOR_REVIEW"
+    },
+    {
+      "decision_domain": "Monetary Integrity",
+      "authority_level": "L1 (S1/S2 Price Typography)",
+      "implementation": "JetBrains Mono tokens, calc_booking_split() trigger",
+      "consumers": ["BookingScreen", "WompiPaymentSheet", "StoreScreen"],
+      "validation": "S2-II validated"
+    }
+  ],
+  "dependency_map": {
+    "description": "Conceptual dependency graph from SOUL to implementation",
+    "layers": {
+      "L0_SOUL": ["GLOWAPP_SOUL.md"],
+      "L1_SPECIFICATIONS": ["S1 Color", "S2 Typography", "S3 Photography", "S4 UI Components", "Icon System v1.0"],
+      "L2_COMPONENT_SYSTEM": ["Component taxonomy", "Variant rules", "Audience differentiation", "AURA rules"],
+      "L3_SCREEN_COMPOSITION": ["ProviderDetail layout", "Booking flow steps", "Store grid"],
+      "L4_IMPLEMENTATION": ["tokens.dart", "AppTheme", "Widget implementations", "Screen code"],
+      "L5_EXPERIMENTAL": ["Prototype branches", "Design spikes", "A/B test variants"]
+    },
+    "conflicts": [
+      "Token vs LuxeColors vs GlowTokens vs GlowStoreTokens vs shared/theme (5 color systems)",
+      "TypographyTokens vs AppTypography vs GlowTokens vs LuxeTypography vs GlowStoreTokens (6 typography systems)",
+      "Material Icons vs GlowIconRegistry (0 migration)"
+    ]
+  },
+  "duplicate_authorities": [
+    {
+      "domain": "Color Tokens",
+      "active_authority": "Token class",
+      "legacy_duplicates": ["LuxeColors", "GlowTokens", "GlowStoreTokens", "shared/theme"],
+      "classification": "DUPLICATE AUTHORITY",
+      "evidence": "5 parallel systems (audit: 31+ distinct color values)"
+    },
+    {
+      "domain": "Typography",
+      "active_authority": "TypographyTokens",
+      "legacy_duplicates": ["AppTypography", "GlowTokens", "LuxeTypography", "GlowStoreTokens"],
+      "classification": "DUPLICATE AUTHORITY",
+      "evidence": "6 parallel systems (audit)"
+    },
+    {
+      "domain": "Spacing",
+      "active_authority": "Token.Spacing",
+      "legacy_duplicates": ["LuxeSpacing"],
+      "classification": "DUPLICATE AUTHORITY",
+      "evidence": "Base-4 vs base-3.5 incompatible"
+    },
+    {
+      "domain": "Radius",
+      "active_authority": "Token.Radii",
+      "legacy_duplicates": ["GlowStoreTokens (5 values)", "LuxeCard (LuxeSpacing.md)"],
+      "classification": "DUPLICATE AUTHORITY",
+      "evidence": "16px vs 10.5px vs 24px"
+    },
+    {
+      "domain": "Shadows",
+      "active_authority": "Token.AppShadow",
+      "legacy_duplicates": ["GlowStoreTokens (3)", "MensTheme (2)"],
+      "classification": "DUPLICATE AUTHORITY",
+      "evidence": "Black-based vs warm"
+    },
+    {
+      "domain": "Buttons",
+      "active_authority": "AppTheme (ButtonTheme)",
+      "legacy_duplicates": ["LuxeButton (3 variants)", "inline"],
+      "classification": "DUPLICATE AUTHORITY",
+      "evidence": "4+ button systems"
+    },
+    {
+      "domain": "Cards",
+      "active_authority": "AppTheme (CardTheme)",
+      "legacy_duplicates": ["LuxeCard", "GlowGlassCard", "GlassCard", "inline"],
+      "classification": "DUPLICATE AUTHORITY",
+      "evidence": "3+ card systems"
+    },
+    {
+      "domain": "Navigation",
+      "active_authority": "None (no unified component)",
+      "legacy_duplicates": ["3 BottomNav implementations", "3 AppBar patterns"],
+      "classification": "DUPLICATE AUTHORITY",
+      "evidence": "No unified component"
+    },
+    {
+      "domain": "Icons",
+      "active_authority": "Material Icons (198 instances)",
+      "legacy_duplicates": ["GlowIconRegistry (LOCKED, 0 prod)"],
+      "classification": "ACTIVE_AUTHORITY_CONFLICT",
+      "evidence": "Migration NOT STARTED"
+    }
+  ],
+  "governance_gaps": [
+    {
+      "gap": "No Single Source of Truth for Color",
+      "description": "5 parallel token systems with conflicting values",
+      "severity": "CRITICAL",
+      "evidence": "Visual Gap Audit: 31+ distinct color values"
+    },
+    {
+      "gap": "No Single Source of Truth for Typography",
+      "description": "6 parallel systems, target fonts (Cormorant/Manrope) not used in production",
+      "severity": "CRITICAL",
+      "evidence": "Typography Audit: Cormorant declared never used, Manrope not declared"
+    },
+    {
+      "gap": "Icon System Not Migrated",
+      "description": "GlowIcon v1.0 LOCKED but 0 prod consumers; 198 Material Icons remain",
+      "severity": "HIGH",
+      "evidence": "Icon Migration Map: 130 unique Material icons"
+    },
+    {
+      "gap": "Photography Not Systematized",
+      "description": "0 Male Muse assets; Female Muse candidates not registered; AURA not Men-adaptive",
+      "severity": "HIGH",
+      "evidence": "Photography Audit: 4 expressions, 0 systematized"
+    },
+    {
+      "gap": "AURA Not Men-Adaptive",
+      "description": "AuraWelcomeScreen uses only feminine tokens/photography",
+      "severity": "HIGH",
+      "evidence": "AuraWelcomeScreen hardcoded to GlowTokens"
+    },
+    {
+      "gap": "No Font Assets in pubspec",
+      "description": "Cormorant/Manrope/JetBrains declared in tokens but missing from pubspec.yaml",
+      "severity": "CRITICAL",
+      "evidence": "Typography spec requires 3 families"
+    },
+    {
+      "gap": "Legacy Theme in 40+ Screens",
+      "description": "shared/theme.dart hardcoded, deprecated but widely used",
+      "severity": "HIGH",
+      "evidence": "Visual Gap Audit: ProviderDetail, Booking, Login/Register"
+    },
+    {
+      "gap": "No Component Governance Process",
+      "description": "Components created ad-hoc; no variant limits enforced",
+      "severity": "MEDIUM",
+      "evidence": "10+ components, some single-screen only"
+    },
+    {
+      "gap": "No RAG/AI Governance",
+      "description": "AI agents exist (AURA) but no evaluation, retrieval, or orchestration governance",
+      "severity": "MEDIUM",
+      "evidence": "aura_multi_agent_chat.dart has hardcoded agent names"
+    },
+    {
+      "gap": "No Data Governance",
+      "description": "No schema registry, migration governance, or source-of-truth enforcement beyond DB",
+      "severity": "MEDIUM",
+      "evidence": "Migrations exist but no governance doc"
+    },
+    {
+      "gap": "No Accessibility Validation Gate",
+      "description": "S1/S2 specify accessibility but no automated gate",
+      "severity": "MEDIUM",
+      "evidence": "Only manual validation"
+    },
+    {
+      "gap": "No Responsive Governance",
+      "description": "3 breakpoints in Token but screens don't consistently adapt",
+      "severity": "MEDIUM",
+      "evidence": "No responsive testing"
+    }
+  ],
+  "functional_units": [
+    {
+      "name": "CLIENT",
+      "purpose": "End-user beauty service discovery, booking, and purchase",
+      "user": "Beauty clients (Women/Men)",
+      "business_capability": "Search → Book → Pay → Review → Repeat",
+      "inputs": ["Location", "preferences", "biometric profile", "payment method"],
+      "outputs": ["Confirmed bookings", "product orders", "reviews", "loyalty points"],
+      "state": "Authenticated, audience mode (Women/Men), location, cart",
+      "screens": ["HomeScreen", "ProviderDetailScreen", "BookingScreen", "StoreScreen", "ClientBookingsScreen", "UserProfileScreen"],
+      "components": ["HeroSection", "RecentScanCard", "LuxeCard", "BookingCard", "StoreProductCard", "ProfileHeader"],
+      "services": ["ApiService", "LocationService", "BookingRecoveryService", "AuthService", "AnalyticsService"],
+      "providers": ["AudienceService", "NotificationService"],
+      "data": ["usuarios", "bookings", "services", "productos", "reviews", "transactions"],
+      "ai": ["AURA recommendations (Hestia)", "Chronos rebooking", "Atena biometric"],
+      "external_dependencies": ["Wompi (payments)", "Google Maps/OSM (location)", "Google Sign-In (auth)"],
+      "authority": "Token (color/expression), TypographyTokens (type), GlowStoreTokens (store)",
+      "validation": ["flutter test", "flutter analyze", "flutter build"],
+      "status": "FUNCTIONAL",
+      "technical_debt": "Legacy theme in ProviderDetail/Booking; hardcoded specialty colors"
+    },
+    {
+      "name": "PROVIDER",
+      "purpose": "Provider business management (schedule, services, portfolio, earnings)",
+      "user": "Beauty providers (Women/Men)",
+      "business_capability": "Manage services → Accept bookings → Track earnings → Build portfolio",
+      "inputs": ["Service definitions", "availability", "portfolio images", "bank details"],
+      "outputs": ["Service listings", "confirmed appointments", "payouts", "ratings"],
+      "state": "Online/offline, verification status, weekly schedule, coverage radius",
+      "screens": ["ProviderDashboardScreen", "ProviderServicesScreen", "ProviderPortfolioScreen", "ProviderProfileScreen", "AppointmentsListScreen"],
+      "components": ["ServiceCard", "ProviderLuxeComponents", "LuxeListTile"],
+      "services": ["ApiService", "AuthService", "SecureStorageService"],
+      "providers": ["AudienceService (Men mode)"],
+      "data": ["perfiles_prestador", "services", "bookings", "portfolio_items", "transactions"],
+      "ai": [],
+      "external_dependencies": ["Nequi/Bancolombia (payouts)", "PostGIS (coverage)"],
+      "authority": "MensTheme (Men), shared/theme (legacy), Token",
+      "validation": ["Manual QA"],
+      "status": "PARTIAL",
+      "technical_debt": "shared/theme.dart hardcoded; no unified provider design system"
+    },
+    {
+      "name": "BOOKING",
+      "purpose": "End-to-end reservation lifecycle with monetary integrity",
+      "user": "Client + Provider",
+      "business_capability": "Select date/service → Choose slot → Add products → Pay → Confirm → Track",
+      "inputs": ["Provider ID", "service(s)", "date/time", "location", "payment method", "product qty"],
+      "outputs": ["Booking record", "payment split (20% platform/8% tax/72% provider)", "calendar events"],
+      "state": "3-step flow (Date/Location → Products → Confirm/Payment)",
+      "screens": ["BookingScreen", "BookingTrackingScreen", "ProviderRouteScreen"],
+      "components": ["BookingCard", "WompiPaymentSheet", "DatePicker", "TimeSlotSelector"],
+      "services": ["ApiService", "BookingRecoveryService", "NotificationService"],
+      "providers": ["AudienceService"],
+      "data": ["bookings", "services", "transactions", "usuarios"],
+      "ai": ["Chronos agent (rebooking evaluation via WebSocket)"],
+      "external_dependencies": ["Wompi (payment)", "PostGIS (provider location)"],
+      "authority": "shared/theme (legacy), Token (new), GlowStoreTokens (products)",
+      "validation": ["Monetary integrity via DB trigger (calc_booking_split)"],
+      "status": "PARTIAL",
+      "technical_debt": "3-step stepper hardcoded; sticky bottom payment summary legacy"
+    },
+    {
+      "name": "STORE",
+      "purpose": "E-commerce for beauty products (GlowStore)",
+      "user": "Clients (Women/Men)",
+      "business_capability": "Browse → Cart → Checkout → Order tracking",
+      "inputs": ["Product catalog", "cart", "shipping address", "payment"],
+      "outputs": ["Orders", "revenue", "inventory updates"],
+      "state": "Cart, checkout flow, order history",
+      "screens": ["StoreScreen", "ProductDetailScreen", "ProductListScreen", "GlowstoreOrdersScreen"],
+      "components": ["StoreProductCard", "ProductQuickViewDialog", "LuxeButton", "LuxeBadge"],
+      "services": ["ApiService", "AuthService"],
+      "providers": ["AudienceService (Women/Men product filtering)"],
+      "data": ["productos", "bookings (for orders)", "usuarios"],
+      "ai": ["Hestia agent (product recommendations via WebSocket)"],
+      "external_dependencies": ["Wompi (checkout)"],
+      "authority": "GlowStoreTokens",
+      "validation": ["flutter test", "build SUCCESS"],
+      "status": "CONSISTENT",
+      "technical_debt": "Uses Didot/Inter instead of Cormorant/Manrope; no dark mode variants"
+    },
+    {
+      "name": "AURA",
+      "purpose": "Intelligence layer — biometric analysis, recommendations, conversational AI",
+      "user": "Clients (Women/Men)",
+      "business_capability": "Scan → Analyze → Recommend → Book/Buy → Evolve",
+      "inputs": ["Selfie/hand photos", "biometric responses", "chat messages"],
+      "outputs": ["Color DNA", "product recommendations", "VTO previews", "booking matches"],
+      "state": "Onboarding → Consent → Capture → Processing → Results → Ritual",
+      "screens": ["AuraWelcomeScreen", "CaptureScreen", "CaptureGuidedScreen", "ColorDNAResultsScreen", "NailVTOScreen", "ProcessingScreen", "ResultsScreen", "GlowstoreRecipeScreen"],
+      "components": ["GlowGlassCard", "Aura3DEmblem", "AuraMultiAgentChatWidget", "VTO Painters"],
+      "services": ["BiometricService", "ApiService", "WebSocket"],
+      "providers": ["AudienceService (NOT USED — AuraWelcome not Men-adaptive)"],
+      "data": ["nail_tryon_jobs", "biometric_results", "messages"],
+      "ai": ["Multi-agent (Atena, Hermes, Chronos, Hestia) via WebSocket"],
+      "external_dependencies": ["WebSocket backend (ws://10.0.2.2:3000)", "Google MLKit"],
+      "authority": "GlowTokens (partial), GlowGlassCard, TypographyTokens (contextual)",
+      "validation": ["AuraWelcomeScreen tests pass"],
+      "status": "FUNCTIONAL",
+      "technical_debt": "Hardcoded feminine photography/tokens; no Men expression path"
+    }
+  ],
+  "maturity_model": [
+    {
+      "system": "SOUL (Identity)",
+      "level": 6,
+      "level_name": "LOCKED",
+      "evidence": "GLOWAPP_SOUL.md v1.0 approved"
+    },
+    {
+      "system": "S1 Color System",
+      "level": 5,
+      "level_name": "GOVERNED",
+      "evidence": "Spec + JSON + S1-I APPROVED + Token implementation"
+    },
+    {
+      "system": "S2 Typography System",
+      "level": 5,
+      "level_name": "GOVERNED",
+      "evidence": "Spec + JSON + S2-II APPROVED + TypographyTokens implementation"
+    },
+    {
+      "system": "S3 Photography System",
+      "level": 2,
+      "level_name": "DEFINED",
+      "evidence": "Spec + JSON + approved muses, but 0 systematized assets"
+    },
+    {
+      "system": "S4 UI Component Language",
+      "level": 2,
+      "level_name": "DEFINED",
+      "evidence": "Spec + JSON, but 6 parallel token systems in implementation"
+    },
+    {
+      "system": "Icon System v1.0",
+      "level": 6,
+      "level_name": "LOCKED",
+      "evidence": "51 SVGs registered, but 0 prod migration"
+    },
+    {
+      "system": "Governance (S5)",
+      "level": 2,
+      "level_name": "DEFINED",
+      "evidence": "Spec + JSON, but not enforced in implementation"
+    },
+    {
+      "system": "Token Class",
+      "level": 4,
+      "level_name": "VALIDATED",
+      "evidence": "Complete color/spacing/radius/shadow/typography, Light/Dark, Expression-aware"
+    },
+    {
+      "system": "AppTheme",
+      "level": 4,
+      "level_name": "VALIDATED",
+      "evidence": "ThemeData M3 with GlowTokensExtension, expression() factory"
+    },
+    {
+      "system": "TypographyTokens",
+      "level": 4,
+      "level_name": "VALIDATED",
+      "evidence": "Complete S2 scale, 3 voices, contextual API"
+    },
+    {
+      "system": "GlowStoreTokens",
+      "level": 3,
+      "level_name": "IMPLEMENTED",
+      "evidence": "Functional e-commerce tokens, Women/Men mapping, but duplicates Token"
+    },
+    {
+      "system": "MensTheme",
+      "level": 3,
+      "level_name": "IMPLEMENTED",
+      "evidence": "Dark-only Men theme, well-isolated, no typography"
+    },
+    {
+      "system": "BellezaLuxeTokens",
+      "level": 2,
+      "level_name": "DEFINED",
+      "evidence": "Parallel system, duplicates Token, Cormorant at 15px body (legibility issue)"
+    },
+    {
+      "system": "GlowTokens",
+      "level": 2,
+      "level_name": "DEFINED",
+      "evidence": "Fragmented, references AppTheme.primary, 5 font families"
+    },
+    {
+      "system": "shared/theme.dart",
+      "level": 1,
+      "level_name": "LEGACY",
+      "evidence": "Hardcoded, 40+ screens, deprecated"
+    },
+    {
+      "system": "Client Unit",
+      "level": 3,
+      "level_name": "IMPLEMENTED",
+      "evidence": "Functional but mixed token systems"
+    },
+    {
+      "system": "Provider Unit",
+      "level": 2,
+      "level_name": "DEFINED",
+      "evidence": "Split between legacy and MensTheme"
+    },
+    {
+      "system": "Booking Unit",
+      "level": 3,
+      "level_name": "IMPLEMENTED",
+      "evidence": "Monetary integrity solid, UI legacy"
+    },
+    {
+      "system": "Store Unit",
+      "level": 4,
+      "level_name": "VALIDATED",
+      "evidence": "Consistent GlowStoreTokens adoption"
+    },
+    {
+      "system": "AURA Unit",
+      "level": 3,
+      "level_name": "IMPLEMENTED",
+      "evidence": "Functional but not Men-adaptive"
+    },
+    {
+      "system": "Academy Unit",
+      "level": 2,
+      "level_name": "DEFINED",
+      "evidence": "Isolated token system (BellezaLuxe)"
+    },
+    {
+      "system": "Backend/Database",
+      "level": 4,
+      "level_name": "VALIDATED",
+      "evidence": "PostGIS, triggers for monetary integrity, complete schema"
+    },
+    {
+      "system": "Icon Migration",
+      "level": 1,
+      "level_name": "LEGACY",
+      "evidence": "Infrastructure only, 198 Material icons remain"
+    }
+  ],
+  "technical_debt": [
+    {
+      "item": "5 parallel color token systems",
+      "classification": "DUPLICATE AUTHORITY",
+      "location": "tokens.dart, glow_store_tokens.dart, belleza_luxe_theme.dart, glow_tokens.dart, shared/theme.dart",
+      "impact": "HIGH",
+      "effort": "Medium"
+    },
+    {
+      "item": "6 parallel typography systems",
+      "classification": "DUPLICATE AUTHORITY",
+      "location": "Same + AppTypography, LuxeTypography",
+      "impact": "HIGH",
+      "effort": "Medium"
+    },
+    {
+      "item": "198 Material Icons not migrated",
+      "classification": "MIGRATION PENDING",
+      "location": "39 files",
+      "impact": "HIGH",
+      "effort": "High"
+    },
+    {
+      "item": "0 Male Muse photography assets",
+      "classification": "ARCHITECTURAL GAP",
+      "location": "assets/images/",
+      "impact": "HIGH",
+      "effort": "High"
+    },
+    {
+      "item": "Fonts not in pubspec.yaml",
+      "classification": "BLOCKER",
+      "location": "pubspec.yaml",
+      "impact": "CRITICAL",
+      "effort": "Low"
+    },
+    {
+      "item": "shared/theme.dart in 40+ screens",
+      "classification": "LEGACY",
+      "location": "ProviderDetail, Booking, Login, Register, etc.",
+      "impact": "HIGH",
+      "effort": "High"
+    },
+    {
+      "item": "AuraWelcomeScreen not Men-adaptive",
+      "classification": "ARCHITECTURAL GAP",
+      "location": "aura_welcome_screen.dart",
+      "impact": "HIGH",
+      "effort": "Medium"
+    },
+    {
+      "item": "Academy uses isolated token system",
+      "classification": "DUPLICATE AUTHORITY",
+      "location": "academy_luxe_components.dart, belleza_luxe_theme.dart",
+      "impact": "MEDIUM",
+      "effort": "Low"
+    },
+    {
+      "item": "No RAG/evaluation infrastructure",
+      "classification": "MISSING CAPABILITY",
+      "location": "Backend only?",
+      "impact": "MEDIUM",
+      "effort": "Unknown"
+    },
+    {
+      "item": "No golden/visual regression tests",
+      "classification": "QUALITY GAP",
+      "location": "test/",
+      "impact": "MEDIUM",
+      "effort": "Medium"
+    },
+    {
+      "item": "No accessibility automated gates",
+      "classification": "QUALITY GAP",
+      "location": "-",
+      "impact": "MEDIUM",
+      "effort": "Low"
+    }
+  ],
+  "recommended_next_phases": [
+    {
+      "phase": "G1 — Governance Architecture Design",
+      "focus": "Formalize authority contracts, change gates, exception registry, promotion paths",
+      "prerequisite": "G0 complete",
+      "scope": "L0–L5 enforcement rules"
+    },
+    {
+      "phase": "G2 — Token Consolidation",
+      "focus": "Merge 5 color + 6 typography systems into Token/TypographyTokens",
+      "prerequisite": "G1 authority",
+      "scope": "Medium effort, high impact"
+    },
+    {
+      "phase": "G3 — Icon Migration Execution",
+      "focus": "Phased migration (M1-I2 Pilot A approved → Pilots B/C/D)",
+      "prerequisite": "Icon System LOCKED",
+      "scope": "High effort, 4 pilots"
+    },
+    {
+      "phase": "G4 — Photography Systematization",
+      "focus": "Register Female Muse, shoot Male Muse, adapt AuraWelcome",
+      "prerequisite": "S3 Spec approved",
+      "scope": "High effort (external)"
+    },
+    {
+      "phase": "G5 — Legacy Theme Migration",
+      "focus": "Migrate 40+ screens from shared/theme to Token/AppTheme",
+      "prerequisite": "G2 complete",
+      "scope": "High effort, screen-by-screen"
+    },
+    {
+      "phase": "G6 — AURA Men Adaptation",
+      "focus": "Make AuraWelcomeScreen expression-aware",
+      "prerequisite": "G4 photography",
+      "scope": "Medium effort"
+    },
+    {
+      "phase": "G7 — AI Governance",
+      "focus": "RAG pipeline, evaluation, agent orchestration contracts",
+      "prerequisite": "Backend readiness",
+      "scope": "Unknown"
+    },
+    {
+      "phase": "G8 — Quality Gates Automation",
+      "focus": "Golden tests, a11y CI, performance budgets",
+      "prerequisite": "G1 governance",
+      "scope": "Medium effort"
+    }
+  ]
+}

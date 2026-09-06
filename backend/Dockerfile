@@ -1,16 +1,21 @@
+﻿# Etapa de construccin (Builder)
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production --legacy-peer-deps
+
+# Etapa de produccin
 FROM node:20-alpine
-
-# Configurar Zona Horaria de Colombia globalmente en el contenedor
 ENV TZ=America/Bogota
-
+ENV NODE_ENV=production
 WORKDIR /app
 
-COPY package*.json ./
+# Copiar de builder a prod (cuidado con los permisos)
+COPY --from=builder --chown=node:node /app/node_modules ./node_modules
+COPY --chown=node:node . .
 
-RUN npm install --only=production --legacy-peer-deps
-
-COPY . .
+# Usar el usuario sin privilegios que provee la imagen node
+USER node
 
 EXPOSE 8080
-
 CMD ["node", "index.js"]

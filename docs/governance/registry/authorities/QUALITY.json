@@ -1,0 +1,30 @@
+{
+  "authority": "Quality",
+  "level": "L1",
+  "owner": "Quality Governor",
+  "sourceOfTruth": "docs/design/GLOWAPP_QUALITY_SYSTEM.md (to be created)",
+  "inputs": [
+    "Soul",
+    "product units"
+  ],
+  "outputs": [
+    "Quality gates",
+    "testing strategies",
+    "acceptance criteria",
+    "definition of done"
+  ],
+  "consumers": [
+    "All implementation levels"
+  ],
+  "allowedChanges": [
+    "Adding new quality gates within defined framework"
+  ],
+  "forbiddenChanges": [
+    "Changing Soul-defined quality principles",
+    "removing mandatory gates"
+  ],
+  "validationGate": "Quality spec review + gate validation",
+  "legacySystems": [],
+  "promotionPath": "N/A",
+  "exceptionMechanism": "Director approval for exceptions"
+}

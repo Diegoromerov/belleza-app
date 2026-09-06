@@ -89,20 +89,28 @@ class _DisputesListScreenState extends State<DisputesListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFAF8F5),
       appBar: AppBar(
         title: const Text(
-          'Mis Disputas de Servicio',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          'Disputas & Mediación de Servicio',
+          style: TextStyle(
+            fontFamily: 'CormorantGaramond',
+            fontWeight: FontWeight.bold,
+            fontSize: 22,
+            color: Color(0xFF1F1A15),
+          ),
         ),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: const Color(0xFFFAF8F5),
+        foregroundColor: const Color(0xFF1F1A15),
         elevation: 0,
       ),
-      body: RefreshIndicator(
-        onRefresh: _loadDisputes,
-        color: AppTheme.primary,
-        child: _isLoading
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 680),
+          child: RefreshIndicator(
+            onRefresh: _loadDisputes,
+            color: const Color(0xFFC5A052),
+            child: _isLoading
             ? const Center(child: CircularProgressIndicator(color: AppTheme.primary))
             : _error != null
                 ? Center(
@@ -255,17 +263,44 @@ class _DisputesListScreenState extends State<DisputesListScreen> {
                           );
                         },
                       ),
+        ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: AppTheme.primary,
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const OpenDisputeScreen()),
-          ).then((_) => _loadDisputes());
-        },
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text('Iniciar Disputa', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+    ),
+      floatingActionButton: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(30),
+          gradient: const LinearGradient(
+            colors: [Color(0xFFF3D59B), Color(0xFFC5A052)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFC5A052).withValues(alpha: 0.35),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: FloatingActionButton.extended(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const OpenDisputeScreen()),
+            ).then((_) => _loadDisputes());
+          },
+          icon: const Icon(Icons.add, color: Color(0xFF1F1A15)),
+          label: const Text(
+            'Iniciar Disputa',
+            style: TextStyle(
+              color: Color(0xFF1F1A15),
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Inter',
+            ),
+          ),
+        ),
       ),
     );
   }

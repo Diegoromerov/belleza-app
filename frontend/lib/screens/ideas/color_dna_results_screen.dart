@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import '../../../shared/glow_tokens.dart';
-import '../state/biometric_model.dart';
-import '../widgets/glow_glass_card.dart';
+import '../../shared/glow_tokens.dart';
+import '../../models/biometric_result.dart';
+import '../../widgets/glow_glass_card.dart';
 
 /// Pantalla de Resultados del ADN Cromático de Belleza.
 /// Muestra un círculo cromático central animado con efecto de "florece" ([AnimatedContainer]),
 /// métricas de subtono (94%), estación ("Otoño Cálido") y paleta de 4 colores armónicos.
 class ColorDnaResultsScreen extends StatefulWidget {
-  final BiometricModel? results;
+  final BiometricResult? results;
   final VoidCallback? onContinue;
 
   const ColorDnaResultsScreen({
@@ -39,28 +39,51 @@ class _ColorDnaResultsScreenState extends State<ColorDnaResultsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: GlowTokens.creamSilk,
+      backgroundColor: const Color(0xFFFAF8F5),
       appBar: AppBar(
-        title: const Text('Tu ADN Cromático'),
+        title: const Text(
+          'Tu ADN Cromático',
+          style: TextStyle(
+            fontFamily: 'CormorantGaramond',
+            fontWeight: FontWeight.bold,
+            fontSize: 22,
+            color: Color(0xFF1F1A15),
+          ),
+        ),
+        backgroundColor: const Color(0xFFFAF8F5),
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Color(0xFF1F1A15)),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Diagnóstico Finalizado',
-                style: Theme.of(context).textTheme.headlineMedium,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Basado en tu escaneo biométrico y subtonos de piel.',
-                style: Theme.of(context).textTheme.bodyMedium,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 28),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 680),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    'Diagnóstico Finalizado',
+                    style: TextStyle(
+                      fontFamily: 'CormorantGaramond',
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1F1A15),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Basado en tu escaneo biométrico y subtonos de piel.',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 14,
+                      color: Color(0xFF6B5E59),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 28),
 
               // Círculo Cromático Central con Semantics para accesibilidad
               Center(
@@ -190,21 +213,53 @@ class _ColorDnaResultsScreenState extends State<ColorDnaResultsScreen> {
                 button: true,
                 label: 'Botón: Ver Productos Recomendados en GlowStore',
                 hint: 'Presiona para explorar la receta de cosméticos apta para tu paleta',
-                child: ElevatedButton(
-                  onPressed: widget.onContinue,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: GlowTokens.terracota,
-                    foregroundColor: GlowTokens.creamSilk,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Container(
+                  height: 52,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFF3D59B), Color(0xFFC5A052)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFC5A052).withValues(alpha: 0.35),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
-                  child: const Text('Ver Productos Recomendados'),
+                  child: ElevatedButton(
+                    onPressed: widget.onContinue,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      foregroundColor: const Color(0xFF1F1A15),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: const Text(
+                      'Ver Productos Recomendados',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        color: Color(0xFF1F1A15),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 
   Widget _buildStatItem(String label, String value) {
@@ -213,19 +268,19 @@ class _ColorDnaResultsScreenState extends State<ColorDnaResultsScreen> {
         Text(
           value,
           style: const TextStyle(
-            fontFamily: GlowTokens.fontPlayfairDisplay,
-            fontSize: 20,
+            fontFamily: 'CormorantGaramond',
+            fontSize: 22,
             fontWeight: FontWeight.bold,
-            color: GlowTokens.terracota,
+            color: Color(0xFFC5A052),
           ),
         ),
         const SizedBox(height: 4),
         Text(
           label,
           style: const TextStyle(
-            fontFamily: GlowTokens.fontInter,
+            fontFamily: 'Inter',
             fontSize: 12,
-            color: GlowTokens.nightAndean,
+            color: Color(0xFF6B5E59),
           ),
         ),
       ],
@@ -258,7 +313,7 @@ class _ColorSampleWidget extends StatelessWidget {
               color: color,
               shape: BoxShape.circle,
               border: Border.all(
-                color: GlowTokens.nightAndean.withValues(alpha: 0.2),
+                color: const Color(0xFFE8DFD8),
                 width: 1.5,
               ),
               boxShadow: [
@@ -274,10 +329,10 @@ class _ColorSampleWidget extends StatelessWidget {
           Text(
             colorName,
             style: const TextStyle(
-              fontFamily: GlowTokens.fontInter,
+              fontFamily: 'Inter',
               fontSize: 11,
               fontWeight: FontWeight.w600,
-              color: GlowTokens.nightAndean,
+              color: Color(0xFF1F1A15),
             ),
           ),
         ],

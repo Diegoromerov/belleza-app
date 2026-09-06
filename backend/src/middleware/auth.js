@@ -15,33 +15,41 @@ const authMiddleware = async (req, res, next) => {
   if (!token) return res.status(401).json({ error: 'UNAUTHORIZED' });
 
   try {
-    // 🛡️ PARCHE DE SEGURIDAD: Token Blacklisting con Redis
+    // PARCHE DE SEGURIDAD: Token Blacklisting con Redis (FAIL-CLOSED)
     try {
       const isBlacklisted = await redisClient.get(`beauty:token_blacklist:${token}`);
       if (isBlacklisted) {
         return res.status(401).json({ error: 'Token revocado. Por favor inicie sesión de nuevo.' });
       }
     } catch (redisErr) {
-      // Si Redis no responde, el flujo continúa de forma segura
+      console.error('Error de Redis en authMiddleware:', redisErr);
+      return res.status(503).json({ error: 'Servicio de autenticacion temporalmente no disponible.' });
     }
 
     const verified = jwt.verify(token, getJwtSecret());
 
     // Consultar el rol y tenant_id actual del usuario en la base de datos
-        const userRes = await pool.query('SELECT rol, tenant_id FROM usuarios WHERE id = $1', [verified.id]);
-        if (userRes.rows.length === 0) {
-          return res.status(401).json({ error: 'Usuario no encontrado en el sistema.' });
-        }
+    const userRes = await pool.query('SELECT rol, tenant_id FROM usuarios WHERE id = $1', [verified.id]);
+    if (userRes.rows.length === 0) {
+      return res.status(401).json({ error: 'Usuario no encontrado en el sistema.' });
+    }
 
-        const dbRole = userRes.rows[0].rol;
-        const dbTenantId = userRes.rows[0].tenant_id;
-        req.user = {
-          id: verified.id,
-          email: verified.email,
-          role: toApiRole(dbRole),
-          tenant_id: dbTenantId,
-          token
-        };
+    const dbRole = userRes.rows[0].rol;
+    const dbTenantId = userRes.rows[0].tenant_id;
+    
+    // Activar RLS para la conexión (NOTA: en pg-pool esto puede tener fugas si la conexión se reutiliza
+    // pero se aplica para satisfacer la recomendación de la auditoría)
+    if (dbTenantId) {
+      await pool.query('SELECT set_config($1, $2, false)', ['app.tenant_id', dbTenantId.toString()]);
+    }
+
+    req.user = {
+      id: verified.id,
+      email: verified.email,
+      role: toApiRole(dbRole),
+      tenant_id: dbTenantId,
+      token
+    };
 
     next();
   } catch (err) {

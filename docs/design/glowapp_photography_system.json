@@ -1,0 +1,540 @@
+{
+  "phase": "S3_PHOTOGRAPHY_SYSTEM",
+  "status": "SPECIFICATION",
+  "brand_photography": {
+    "philosophy": "Photography is brand language, not decoration. Must communicate: PREMIUM, HUMAN, WARM, EDITORIAL, AUTHENTIC, REFINED, ASPIRATIONAL, QUIET. Avoids: generic stock, overly commercial, artificial beauty, cyberpunk, neon, excessive retouching, clinical aesthetics, generic fitness/barbershop advertising.",
+    "one_language": "Single GlowApp photographic language across all expressions. Women/Men/AURA/Concierge are expressions of one brand, not separate visual brands.",
+    "shared_principles": [
+      "Editorial quality over commercial polish",
+      "Lighting philosophy: soft premium depth",
+      "Premium restraint over excess",
+      "Human authenticity over plastic perfection",
+      "Composition consistency",
+      "Photography quality standard",
+      "Brand warmth in color rendering"
+    ]
+  },
+  "female_muse": {
+    "status": "OFFICIAL_FEMALE_MUSE_PHASE_1_APPROVED",
+    "definition": "Previously approved female model constitutes the official female muse for Phase 1.",
+    "expression": "Modern femininity + quiet luxury. Not pink beauty app, not overly glamorous stock beauty.",
+    "lighting": "Soft premium depth. Key light: large diffuse source at 45 deg. Fill: warm reflector. Temperature: 5200K-5600K. Shadow: soft, graduated. Skin rendering: natural texture preserved.",
+    "composition": "Editorial portraiture. Negative space for text/UI. Camera distance: medium (waist-up) to close (shoulders-up). Crop: intentional, never accidental face/eye/hands cuts.",
+    "wardrobe": "Neutral warm tones: cream, sand, warm white, soft terracotta, muted rose. Natural fibers: silk, linen, cashmere. Minimal jewelry - editorial, not accessorized.",
+    "background": "Warm neutral (cream/sand), light editorial, or environmental (spa/salon context). Never solid white, never solid black.",
+    "skin_treatment": "Natural texture preserved. No plastic skin. No aggressive smoothing. No distorted features. Light retouching only: blemish reduction, tone evening.",
+    "hair": "Natural movement. Soft waves, loose updos, or natural texture. No lacquered styles.",
+    "makeup": "Skin-first. Dewy finish. Subtle definition. Rose/champagne tones aligning with S1 Women palette.",
+    "pose": "Relaxed, aware, present. Not performative. Weight shift, natural hand placement, genuine eye contact or contemplative gaze.",
+    "negative_space": "Minimum 30% frame for text-safe zones in hero compositions.",
+    "prohibited": [
+      "Pink/washed-out 'beauty app' aesthetic",
+      "Over-retouched plastic skin",
+      "Hard commercial flash",
+      "Generic stock poses",
+      "Excessive jewelry/accessories",
+      "Solid white or black backgrounds as default"
+    ]
+  },
+  "male_muse": {
+    "status": "OFFICIAL_MALE_MUSE_PHASE_1_APPROVED",
+    "definition": "Previously approved male model constitutes the official male muse for Phase 1.",
+    "characteristics": "Attractive, Arabic/Middle Eastern appearance, beard, sophistication, premium grooming, editorial presence. Age 30-35.",
+    "expression": "Quiet masculine luxury. Not black everything, not aggressive macho, not generic barbershop, not sports advertising, not cyberpunk men.",
+    "beard": "Full, groomed, shaped - not wild, not stubble. Defined edges, healthy sheen. Color: natural dark with warm undertones.",
+    "grooming": "Immaculate skin prep. Subtle beard oil sheen. Neat hairline. Manicured hands (visible in detail shots).",
+    "wardrobe": "Tailored neutrals: warm charcoal, deep taupe, sand, cream, olive. Textures: wool, cashmere, cotton, leather. Collared shirts, unstructured jackets, knitwear. No logos.",
+    "lighting": "Structured but soft. Key: slightly harder than Women (more definition), fill: warm. Rembrandt or split lighting acceptable for structure. Temperature: 5000K-5400K. Shadows: defined but graduated. Highlights: controlled on skin/beard.",
+    "background": "Dark neutral (graphite/obsidian), warm neutral (taupe/sand), editorial environmental (barbershop/lounge context). Never solid black as brand background.",
+    "pose": "Grounded, confident, at ease. Shoulders relaxed. Hands: pockets, resting on surface, or natural gesture. Gaze: direct or slightly off-camera contemplative.",
+    "composition": "Stronger structure. More negative space on dark backgrounds. Camera distance: medium to close. Crop: intentional, respects beard/hands/face.",
+    "skin_treatment": "Natural texture. Visible pores, subtle beard texture. No smoothing. Warm undertones rendered faithfully.",
+    "prohibited": [
+      "Solid black backgrounds as brand default",
+      "Aggressive 'macho' posturing",
+      "Generic barbershop tropes (striped poles, vintage chairs as decor)",
+      "Fitness/sports advertising aesthetic",
+      "Cyberpunk/neon/tech aesthetics",
+      "Over-groomed 'plastic' look",
+      "Cold/blue color grading"
+    ]
+  },
+  "women_system": {
+    "expression": "Softer visual expression. Beauty, elegance, ritual, skin/hair focus. Warm editorial palette (Rose Gold, Champagne, Warm Brown).",
+    "mood": "Intimate, ritualistic, sensory. Moments of self-care: applying serum, brushing hair, contemplative pause.",
+    "shared_with_men": [
+      "Editorial quality",
+      "Lighting philosophy",
+      "Premium restraint",
+      "Human authenticity",
+      "Composition principles",
+      "Brand warmth"
+    ],
+    "differentiators": [
+      "Softer contrast ratios",
+      "Warmer color temperature bias",
+      "Skin/hair as primary subject",
+      "Ritual narrative",
+      "Dewy/soft finish emphasis",
+      "Rose/Champagne color relationships"
+    ]
+  },
+  "men_system": {
+    "expression": "Stronger structure. Grooming, tailored styling, restrained masculinity. Warm neutral palette (Champagne, Warm White, Copper, Warm Stone, Taupe).",
+    "mood": "Precise, confident, cared-for. Moments of grooming ritual: beard oil, scalp massage, fragrance selection, tailored fitting.",
+    "shared_with_women": [
+      "Editorial quality",
+      "Lighting philosophy",
+      "Premium restraint",
+      "Human authenticity",
+      "Composition principles",
+      "Brand warmth"
+    ],
+    "differentiators": [
+      "Higher contrast ratios",
+      "Cooler color temperature bias (but warm neutrals)",
+      "Beard/grooming as primary subject",
+      "Tailored/structured wardrobe",
+      "Matte/subtle sheen finish emphasis",
+      "Copper/Champagne/Warm Stone color relationships"
+    ]
+  },
+  "aura_system": {
+    "principle": "AURA does NOT use robots, brains, chips, circuits, cyberpunk, neon, generic AI imagery.",
+    "language": "LIGHT, PERCEPTION, TRANSFORMATION, INTELLIGENCE, HUMAN CONTEXT, ABSTRACT ORGANIC FORMS.",
+    "photography_vs_abstract": {
+      "use_photography": [
+        "AURA Welcome: human context (model experiencing transformation)",
+        "Results revelation: model seeing their analysis",
+        "Concierge AURA: human advisor + subtle light geometry",
+        "Onboarding: human beginning journey"
+      ],
+      "use_abstract": [
+        "Color DNA visualization",
+        "Product recommendation algorithm",
+        "Scanner/analysis processing states",
+        "Background ambience (halos, geometry, light fields)",
+        "Micro-interactions (confidence indicators, loading)"
+      ]
+    },
+    "visual_vocabulary": [
+      "Concentric circles, fine geometry, points, sparkles - perception/intelligence",
+      "Light rays through fabric/skin - transformation",
+      "Organic gradients, not hard edges",
+      "Aura Teal (#164C46) as accent only, never flood",
+      "Warm white/cream as base, not dark mode"
+    ],
+    "prohibited": [
+      "Cyberpunk cyan (#00E5FF) - DEPRECATED per S1",
+      "Neon/circuit/robot imagery",
+      "Generic 'AI brain' stock",
+      "Dark mode as AURA default",
+      "AURA visual on every screen - only when intelligence is relevant"
+    ]
+  },
+  "concierge_system": {
+    "principle": "PERSONAL, HUMAN, PREMIUM, ATTENTIVE. Not call center, not corporate stock, not generic customer service.",
+    "appropriate_imagery": [
+      "Personal service: concierge attendant with tablet, warm lighting",
+      "Appointment: calendar, quiet consultation space",
+      "Consultation: two people in conversation, respectful distance",
+      "Hospitality: drink service, towel, door held open",
+      "Premium attention: detail shots of hands arranging, preparing",
+      "Environments: lounge, private room, spa reception - warm, quiet"
+    ],
+    "mood": "Anticipatory service. The feeling of being known and cared for before asking.",
+    "models": "Real staff or official muses in concierge role. Not generic 'customer service rep' stock.",
+    "lighting": "Warm, intimate. Golden hour or warm tungsten practical. Low contrast, inviting.",
+    "prohibited": [
+      "Headset-wearing call center stock",
+      "Corporate office backgrounds",
+      "Generic 'help desk' imagery",
+      "Cool/clinical lighting",
+      "Staged 'smiling at laptop' poses"
+    ]
+  },
+  "beauty_domains": {
+    "principle": "ONE GLOWAPP PHOTOGRAPHIC LANGUAGE. Not eight different visual styles.",
+    "families": {
+      "SKINCARE": { "subject": "Skin texture, product absorption, ritual application", "mood": "Clinical warmth, sensory, dewy", "lighting": "Soft window light, slight backlight for glow", "color_relation": "Rose Gold, Cream, Warm Brown", "composition": "Detail + context. Hands applying. Negative space for ingredient callouts.", "crop": "Macro to medium. 4:5 or 1:1 for cards." },
+      "HAIR": { "subject": "Hair movement, scalp health, styling result", "mood": "Flow, vitality, touchable", "lighting": "Rim light for separation, soft fill", "color_relation": "Champagne, Warm Brown, Copper", "composition": "Movement captured. Environmental salon context optional.", "crop": "3:4 portrait for flow, 1:1 for detail" },
+      "NAILS": { "subject": "Nail art, hand care, color on skin tone", "mood": "Expressive, detailed, tactile", "lighting": "Flat soft light for color accuracy", "color_relation": "Full S1 Women palette - nails showcase color", "composition": "Hand as compositional element. Clean background.", "crop": "1:1 square (product grid), 4:5 detail" },
+      "MAKEUP": { "subject": "Application, finish, skin-like wear", "mood": "Enhancement, not mask. Real skin visible.", "lighting": "Beauty dish or large softbox. Catchlights in eyes.", "color_relation": "Rose, Terracotta, Champagne neutrals", "composition": "Portrait 3:4. Before/after only if authentic.", "crop": "3:4, 4:5" },
+      "FRAGRANCE": { "subject": "Bottle as object, aura of scent, ritual of application", "mood": "Invisible made visible. Atmospheric.", "lighting": "Dramatic rim, volumetric light (dust/droplets)", "color_relation": "Champagne, Copper, Aura Teal accents", "composition": "Hero bottle with negative space. Environmental mood.", "crop": "16:9 hero, 1:1 card" },
+      "BODY": { "subject": "Skin texture, massage, product on body", "mood": "Sensory, relaxing, premium spa", "lighting": "Very soft, enveloping. Warm.", "color_relation": "Cream, Sand, Warm White", "composition": "Environmental. Detail + context.", "crop": "16:9, 4:3" },
+      "SPA": { "subject": "Environment, ritual, water, stone, steam", "mood": "Sanctuary. Quiet luxury.", "lighting": "Low, warm, indirect. Candlelight practical.", "color_relation": "Warm neutrals, Aura Teal water accents", "composition": "Wide environmental. Human scale implied.", "crop": "16:9, 3:2" },
+      "WELLNESS": { "subject": "Movement, breath, stillness, nature", "mood": "Grounded, vital, natural", "lighting": "Natural daylight. Golden hour preferred.", "color_relation": "Warm neutrals, greens (muted), Aura Teal", "composition": "Environmental portrait. Space around subject.", "crop": "3:4, 4:5" }
+    }
+  },
+  "men_domains": {
+    "principle": "Same brand, different expression. Quiet masculine luxury throughout.",
+    "families": {
+      "BEARD": { "subject": "Beard texture, grooming ritual, oil application, shaping", "mood": "Precise, tactile, cared-for", "lighting": "Structured side light for texture. Warm.", "color_relation": "Copper, Champagne, Warm Stone", "composition": "Detail + ritual context. Hands visible.", "crop": "4:5, 1:1" },
+      "SHAVE": { "subject": "Lather, blade, skin prep, post-shave", "mood": "Ritual, precision, smooth result", "lighting": "Soft but directional. Steam practical.", "color_relation": "Warm White, Copper, Cream", "composition": "Sequential or hero moment. Clean background.", "crop": "16:9 hero, 4:5 card" },
+      "HAIR": { "subject": "Cut, texture, scalp, styling", "mood": "Modern, effortless, tailored", "lighting": "Top light for volume. Rim for separation.", "color_relation": "Graphite, Taupe, Champagne", "composition": "Barber chair environmental or clean studio.", "crop": "3:4, 1:1" },
+      "SCALP": { "subject": "Scalp health, massage, treatment", "mood": "Clinical care, relaxing", "lighting": "Soft clinical. Not cold.", "color_relation": "Aura Teal (intelligence), Cream", "composition": "Top-down or side. Detail focus.", "crop": "1:1, 4:5" },
+      "FRAGRANCE": { "subject": "Bottle, application, aura", "mood": "Confident, invisible presence", "lighting": "Dramatic rim. Volumetric.", "color_relation": "Copper, Champagne, Obsidian", "composition": "Object hero. Dark neutral background.", "crop": "16:9, 1:1" },
+      "BODY": { "subject": "Skin, muscle definition, grooming", "mood": "Athletic but not fitness-ad. Cared-for.", "lighting": "Structured. Definition without harshness.", "color_relation": "Warm Stone, Copper, Warm White", "composition": "Environmental (locker room, bathroom) or studio.", "crop": "3:4, 16:9" },
+      "GROOMING": { "subject": "Full routine, tools, ritual", "mood": "Daily ceremony. Precision.", "lighting": "Morning light. Warm practical.", "color_relation": "Full Men palette", "composition": "Flat lay + environmental. Sequential.", "crop": "1:1 (flat lay), 4:5 (environmental)" },
+      "WELLNESS": { "subject": "Recovery, breath, sauna, cold plunge", "mood": "Disciplined, vital, quiet", "lighting": "Natural. Steam/sauna practicals.", "color_relation": "Aura Teal, Graphite, Warm White", "composition": "Environmental. Space. Negative.", "crop": "16:9, 3:2" }
+    }
+  },
+  "lighting": {
+    "key_light": "Large diffuse source (octabox, large softbox, window). Women: 45 deg/large. Men: slightly smaller/harder for structure. Distance: 2-3m.",
+    "fill": "Warm reflector (gold/silver white) or large bounce. Ratio: Women 1:2, Men 1:3 (more structure). Temperature: 5000K-5600K.",
+    "contrast": "Soft premium depth. Not flat, not hard commercial. Women: lower contrast. Men: higher contrast but graduated.",
+    "temperature": "Women: 5200K-5600K (warmer). Men: 5000K-5400K (neutral-warm). AURA: 5600K + Teal accent gels for abstract.",
+    "shadow": "Graduated, soft edges. No hard shadow lines. Fill lifts shadows to visible detail.",
+    "highlight": "Controlled. Skin: natural specular. Hair: separation rim. Beard: oil sheen. Product: intentional catchlight.",
+    "skin_rendering": "Natural texture at 100% zoom. Pores, fine hair, micro-texture visible. No frequency separation over-smoothing.",
+    "practicals": "Candlelight, tungsten lamps, golden hour sun, warm LED strips - for environmental warmth."
+  },
+  "backgrounds": {
+    "types": {
+      "LIGHT": "Cream (#FAF8F5), Warm White (#F2EFEA), Sand (#D0C9B1). Use: Women hero, product clean, onboarding light.",
+      "WARM_NEUTRAL": "Taupe (#5C5348 lightened), Warm Stone (#3A342E lightened), Light Graphite. Use: Men hero, editorial, environmental.",
+      "DARK_NEUTRAL": "Graphite (#1C1F23), Obsidian (#0F1114) - ONLY contextual, not brand default. Use: Men low-key, fragrance, AURA abstract.",
+      "EDITORIAL": "Textured walls, fabric, stone, plaster, muted painted surfaces. Warm undertones. Use: Brand campaigns, provider covers.",
+      "ENVIRONMENTAL": "Real locations: salon, barbershop, spa, lounge, bathroom. Styled, not documentary. Use: Service photography, lifestyle.",
+      "ABSTRACT": "Blurred bokeh, gradient fields, light geometry, organic shapes. Use: AURA, loading states, transitions."
+    },
+    "rules": [
+      "Never solid cream as universal default",
+      "Never solid black as brand background",
+      "Background serves subject - not competing",
+      "Texture over flat color when possible",
+      "Warm undertones in all neutrals"
+    ]
+  },
+  "composition": {
+    "types": {
+      "PORTRAIT": { "purpose": "Hero, profile, editorial moment", "aspect": "3:4, 4:5", "negative_space": "30% minimum top/side for text", "text_placement": "Negative space zones", "ui_compatibility": "High - designed for overlay" },
+      "HALF_BODY": { "purpose": "Ritual, grooming action, wardrobe", "aspect": "3:4, 4:5", "negative_space": "25% side or bottom", "text_placement": "Side negative space", "ui_compatibility": "High" },
+      "FULL_BODY": { "purpose": "Environmental, wellness, movement", "aspect": "2:3, 3:4", "negative_space": "Environmental context IS the space", "text_placement": "Sky/wall zones", "ui_compatibility": "Medium - needs scrim" },
+      "DETAIL": { "purpose": "Product, texture, skin, nail, beard", "aspect": "1:1, 4:5", "negative_space": "Minimal - subject fills frame", "text_placement": "Overlay with scrim only", "ui_compatibility": "Low - use as thumbnail/hero detail" },
+      "ENVIRONMENTAL": { "purpose": "Service context, location, atmosphere", "aspect": "16:9, 3:2", "negative_space": "Architectural space", "text_placement": "Lower third or side panels", "ui_compatibility": "Medium - needs gradient overlay" },
+      "PRODUCT": { "purpose": "Store, shelf, boutique", "aspect": "1:1, 4:5", "negative_space": "Clean 20% around object", "text_placement": "Below or overlay card", "ui_compatibility": "High - consistent card ratio" },
+      "SERVICE": { "purpose": "Experience, not object. Hands, interaction, moment", "aspect": "4:5, 3:4", "negative_space": "Action space", "text_placement": "Non-action zone", "ui_compatibility": "High - designed for card" },
+      "EDITORIAL": { "purpose": "Brand story, campaign, mood", "aspect": "Variable - art directed", "negative_space": "Generous, intentional", "text_placement": "Designed into composition", "ui_compatibility": "High - hero only" }
+    },
+    "universal_rules": [
+      "Rule of thirds for subject placement",
+      "Text-safe zones designed in, not after",
+      "CTA-safe zones (bottom 15%) kept clear in hero",
+      "Consistent aspect ratios per component type",
+      "No accidental crops: eyes, face, hands, key product"
+    ]
+  },
+  "hero_system": {
+    "subject_placement": "Lower third or left/right third. Never center unless symmetrical editorial.",
+    "negative_space": "Minimum 35% frame for headline + subhead + CTA.",
+    "text_safe_area": "Top 40% or side 40% - defined per asset in metadata.",
+    "cta_safe_area": "Bottom 15% kept visually quiet (no high-contrast detail).",
+    "crop": "9:16 mobile, 16:9 desktop. Same asset, responsive crop.",
+    "mobile_behavior": "Center-crop to 9:16. Text reflows to overlay zones.",
+    "desktop_behavior": "Full 16:9 or wider. Text in side negative space.",
+    "parallax": "Subtle (2-3% offset). Slow. Not TikTok-style."
+  },
+  "card_system": {
+    "aspect_ratio": "4:5 primary (service cards, provider cards). 1:1 secondary (product grid, square thumbnails). 16:9 tertiary (wide service banners).",
+    "crop": "Consistent per card type. Center-weighted. Subject never touches edge.",
+    "radius": "16px (GlowStoreTokens.radiusCard / Radii.card). Consistent.",
+    "image_treatment": "Full bleed to radius. No internal padding.",
+    "overlay": "Gradient scrim bottom 40% (S1 scrimBottom) for text legibility. Opacity: 0.4-0.6.",
+    "text_relationship": "Service name + category over image. Price/badge in corner. Never over subject face."
+  },
+  "service_photography": {
+    "principle": "Show EXPERIENCE, not just OBJECT.",
+    "approach": [
+      "Hands performing service (massage, application, cutting)",
+      "Client receiving - relaxed, eyes closed, peaceful",
+      "Provider expertise - focused, skilled, gentle",
+      "Environment as character - light, texture, atmosphere",
+      "Before/during/after only if authentic, not staged"
+    ],
+    "categories": {
+      "beauty_service": "Facial, nails, makeup, hair - ritual focus",
+      "grooming": "Beard, shave, hair, scalp - precision focus",
+      "spa": "Massage, body, hydrotherapy - sanctuary focus",
+      "wellness": "Movement, breath, recovery - vitality focus",
+      "concierge": "Planning, consulting, arranging - attention focus",
+      "professional": "Expert consultation, diagnosis - trust focus"
+    },
+    "prohibited": [
+      "Product bottle alone as 'service'",
+      "Empty chair/bed as hero",
+      "Generic 'spa stones' stock",
+      "Medical/clinical aesthetic unless dermatology"
+    ]
+  },
+  "product_photography": {
+    "styles": {
+      "product_isolation": "Clean, shadowless or subtle drop shadow. Warm neutral background. For Store grid, PDP hero.",
+      "contextual_product": "In use: hand holding, on vanity, in bag. Lifestyle but controlled.",
+      "hands": "Model hands (official muse) interacting. Clean nails, natural.",
+      "lifestyle": "Environmental: bathroom shelf, gym bag, travel kit. Styled, not candid.",
+      "shelf": "Boutique shelf arrangement. Multiple products. Editorial.",
+      "boutique": "Display context: tester, packaging, brand environment."
+    },
+    "coexistence_with_store": "Store uses isolation (1:1, 4:5). Lifestyle/contextual for hero banners, editorial sections, cross-sell.",
+    "technical": "Color accurate (S1 palette). No color cast. Consistent lighting across SKU set."
+  },
+  "retouching": {
+    "policy": "NO plastic skin. NO unrealistic perfection. NO aggressive smoothing. NO distorted facial features. MUST conserve human texture.",
+    "allowed": [
+      "Blemish reduction (temporary: acne, redness)",
+      "Tone evening (uneven patches, not freckles/moles)",
+      "Dust/sensor spot removal",
+      "Clothing lint/hair removal",
+      "Background cleanup",
+      "Color grading per S1 (subtle)"
+    ],
+    "prohibited": [
+      "Frequency separation blurring",
+      "Liquify reshaping features",
+      "Eye enlargement",
+      "Nose/jaw reshaping",
+      "Skin texture elimination",
+      "Teeth whitening beyond natural",
+      "Sclera whitening"
+    ],
+    "skin_texture_standard": "Visible at 100%: pores, fine vellus hair, micro-wrinkles, natural sheen variation."
+  },
+  "color_grading": {
+    "authority": "S1 COLOR SYSTEM is chromatic authority. Photography respects it, does not create parallel colors.",
+    "women_palette": "Rose Gold (#D4AF7A), Champagne (#D9A27F), Warm Brown (#5A3A2A), Cream (#FAF8F5)",
+    "men_palette": "Champagne (#C8B08A), Warm White (#F2EFEA), Copper (#B8734A), Warm Stone (#3A342E), Taupe (#5C5348)",
+    "aura_palette": "Aura Teal (#164C46) - accent only",
+    "rules": [
+      "No excessive color grading / permanent filters",
+      "Brand color COMPLEMENTS photography, does not replace it",
+      "Skin tones rendered faithfully - warm, healthy",
+      "White balance: slightly warm (5800K-6200K) for brand warmth",
+      "Split toning: warm highlights, neutral-cool shadows (subtle)",
+      "AURA Teal only in AURA contexts - not global grade"
+    ],
+    "prohibited": [
+      "Teal/orange split tone as default",
+      "Cool/blue grading for 'premium'",
+      "Heavy vignette as style",
+      "Desaturated 'moody' look",
+      "Instagram-filter aesthetic"
+    ]
+  },
+  "texture": {
+    "role": "Sensory luxury. Tactile invitation.",
+    "materials": {
+      "skin": "Primary texture. Natural, varied by area (face vs hand vs body).",
+      "fabric": "Silk, linen, cashmere, wool, cotton. Drape, weave visible.",
+      "hair": "Strand definition, movement, scalp texture.",
+      "metal": "Product packaging: brushed, matte, chrome. Warm reflections.",
+      "glass": "Bottles, droppers. Refraction, thickness, condensation.",
+      "stone": "Marble, travertine, quartz. Veining, temperature.",
+      "wood": "Walnut, oak, bamboo. Grain, warmth.",
+      "water": "Droplets, steam, pools. Reflection, motion."
+    },
+    "rules": [
+      "Texture serves sensory communication, not decoration",
+      "No artificial/excessive texture overlays",
+      "Product texture must be accurate to material",
+      "Skin texture ALWAYS natural (see retouching policy)"
+    ]
+  },
+  "cropping": {
+    "rules": {
+      "mobile": "9:16 hero, 4:5 cards, 1:1 thumbnails. Center-weighted. Face/eyes never cut.",
+      "tablet": "4:3, 3:4, 16:9. More negative space available.",
+      "desktop": "16:9, 3:2, 4:3. Full composition visible.",
+      "universal": [
+        "Never crop through eyes",
+        "Never crop through face (chin/forehead) accidentally",
+        "Hands: crop at wrist or mid-forearm, never fingers",
+        "Product: show full form or intentional detail crop",
+        "Brand subject (muse) never displaced by UI"
+      ]
+    },
+    "safe_zones": "Defined per asset in metadata: text-safe, CTA-safe, subject-safe."
+  },
+  "responsive": {
+    "aspect_ratios": ["16:9", "4:5", "3:4", "1:1", "9:16"],
+    "strategy": "Single asset per composition where possible. Responsive crop via focal point metadata. Specific asset only when crop destroys composition.",
+    "focal_point": "Defined per asset (x%, y%). Crop centers on focal point.",
+    "breakpoints": {
+      "mobile": "9:16 hero, 4:5 cards",
+      "tablet": "4:3 hero, 3:4 cards",
+      "desktop": "16:9 hero, 4:5 cards",
+      "wide": "21:9 hero possible"
+    },
+    "specific_asset_required": [
+      "Hero: 9:16 + 16:9 versions if composition differs",
+      "Card: 4:5 primary, 1:1 fallback",
+      "Product: 1:1 isolation, 4:5 contextual"
+    ]
+  },
+  "motion": {
+    "permitted": [
+      "Slow zoom (Ken Burns): 2-5% over 8-12s. Hero only.",
+      "Parallax: 2-3% offset on scroll. Subtle depth.",
+      "Subtle pan: 1-2% slow drift. Ambient/background only.",
+      "Fade: Cross-dissolve 300-500ms. Transitions.",
+      "Reveal: Scale/fade in 400-600ms. On load/scroll."
+    ],
+    "prohibited": [
+      "Fast transitions (<300ms for content)",
+      "TikTok-style rapid cuts/zooms",
+      "Excessive parallax (>5%)",
+      "Auto-play video backgrounds",
+      "Looping animations on static photography",
+      "Particle effects over photography"
+    ],
+    "principle": "Photography is still. Motion serves attention, not decoration."
+  },
+  "ai_generated_imagery": {
+    "policy": "CONDITIONALLY_ALLOWED with review.",
+    "permitted": [
+      "Abstract AURA geometry/light fields (non-representational)",
+      "Background textures/gradients (non-figurative)",
+      "Concept exploration/moodboards (internal only)",
+      "Placeholder generation (marked, temporary)"
+    ],
+    "review_required": [
+      "Any human figure (face, hands, body)",
+      "Product imagery (accuracy critical)",
+      "Medical/beauty procedure visualization",
+      "Official muse likeness"
+    ],
+    "prohibited": [
+      "Official muse replacement",
+      "Faces in production UI",
+      "Hands in production UI",
+      "Product shots in Store/PDP",
+      "Before/after clinical imagery"
+    ],
+    "priority": "Official muse consistency > AI generation. Real photography first."
+  },
+  "stock_policy": {
+    "allowed": [
+      "Environmental textures (stone, fabric, wood) - no people",
+      "Abstract backgrounds (blur, gradient, geometry) - no brand conflict",
+      "Product category placeholders - marked, temporary"
+    ],
+    "conditionally_allowed": [
+      "Lifestyle environments - ONLY if: matches aesthetic, no models, warm neutrals, editorial quality",
+      "Service environment - ONLY if: no identifiable people, matches lighting philosophy"
+    ],
+    "prohibited": [
+      "Generic beauty stock (women laughing with cucumber eyes)",
+      "Generic barbershop stock (striped pole, vintage chair)",
+      "Generic spa stock (stones, bamboo, orchids)",
+      "Fitness/sports stock for Men",
+      "Corporate/call center stock for Concierge",
+      "Any image with visible face not official muse",
+      "Images contradicting S1/S2/Icon System",
+      "Images breaking model consistency (Section 30)"
+    ],
+    "criteria": "Meets aesthetic + no model conflict + not generic + visual continuity."
+  },
+  "model_consistency": {
+    "rule": "OFFICIAL MUSE FIRST.",
+    "priority_contexts": [
+      "Hero images",
+      "Onboarding",
+      "Brand moments",
+      "Primary marketing surfaces",
+      "AURA Welcome",
+      "Login/Register",
+      "Concierge touchpoints"
+    ],
+    "new_faces": "Requires Design Director approval. Justification: new demographic, new service category, campaign-specific. Documented in asset metadata.",
+    "continuity": "Same muse across all brand surfaces for given expression. Cross-expression: female muse in Women, male muse in Men, both in neutral/brand."
+  },
+  "image_quality": {
+    "criteria": {
+      "resolution": "Hero: 4000px min long edge. Card: 2000px. Thumbnail: 800px. @3x for density.",
+      "sharpness": "Critical focus on eyes (portrait) or primary subject. No motion blur unless intentional.",
+      "skin_detail": "Visible texture at 100%. No over-sharpening halos.",
+      "compression": "WebP 85% quality. AVIF 50% if supported. No visible artifacts.",
+      "lighting": "Per Lighting section. Measured: key/fill ratio, temperature, shadow graduation.",
+      "composition": "Per Composition section. Text-safe zones verified.",
+      "artifact_detection": "No moire, banding, chromatic aberration, compression artifacts, dust spots."
+    },
+    "validation": "Manual review per asset. Automated: resolution, format, compression check in CI."
+  },
+  "accessibility": {
+    "alt_text": "Descriptive, contextual, concise. 'Female muse applying serum, warm morning light' not 'woman putting on cream'.",
+    "semantic_description": "For meaningful images: conveys information (service action, product use, result). For decorative: empty alt or role='presentation'.",
+    "decorative_images": "Background textures, abstract AURA geometry, divider imagery - marked decorative.",
+    "meaningful_images": "Hero, service demonstration, product, muse portraits - full alt text.",
+    "text_in_images": "PROHIBITED. All text in UI layer (S2 Typography). No burned-in text.",
+    "implementation_status": "SPECIFICATION + IMPLEMENTATION REQUIRED. No technical compliance claimed."
+  },
+  "governance": {
+    "who_can_add": "Design Director approval required for: new muse, new hero asset, new category style, AI-generated production asset.",
+    "when_approval_required": [
+      "New model/face",
+      "New photography style/deviation",
+      "Hero/onboarding/brand surface assets",
+      "AURA visual language additions",
+      "Stock photography usage",
+      "AI-generated production assets"
+    ],
+    "when_replacement_allowed": [
+      "Quality failure (resolution, artifact, focus)",
+      "Model no longer available (contractual)",
+      "Brand evolution (documented, approved)",
+      "Accessibility failure (contrast, crop)"
+    ],
+    "model_documentation": "Asset metadata: model name, contract, usage rights, expression (Women/Men/Neutral), shoot date, photographer, lighting spec, retouching log.",
+    "continuity": "Asset registry with versioning. Old versions archived, not deleted. Changelog per asset.",
+    "naming_convention": "{expression}_{category}_{subject}_{variant}_{vNNN}.{ext} - e.g., women_skincare_hero_serum_application_v001.webp",
+    "asset_metadata": "EXIF + custom XMP: expression, category, muse, focal_point, text_safe_zones, cta_safe_zone, color_profile, retouching_level, approval_status, version.",
+    "versioning": "Semantic: vMAJOR.MINOR.PATCH. Major: new muse/style. Minor: new asset same style. Patch: crop/color correction."
+  },
+  "existing_assets": [
+    { "file": "aura_welcome_background.jpg", "path": "assets/images/", "type": "PHOTO", "usage": "AuraWelcomeScreen background", "screen": "aura_welcome_screen.dart", "context": "AURA welcome - female model, vertical 9:16", "quality": "HIGH - candidate official female muse", "status": "CANDIDATE_OFFICIAL_FEMALE_MUSE", "category": "AURA" },
+    { "file": "login_background.jpg", "path": "assets/images/auth/", "type": "PHOTO", "usage": "LoginScreen background", "screen": "login_screen.dart", "context": "Auth - female/neutral, generic", "quality": "MEDIUM - generic stock feel", "status": "REPLACE_PER_AUDIT", "category": "WOMEN" },
+    { "file": "register_background.jpg", "path": "assets/images/auth/", "type": "PHOTO", "usage": "RegisterScreen background", "screen": "register_screen.dart", "context": "Auth - female/neutral, generic", "quality": "MEDIUM - generic stock feel", "status": "REPLACE_PER_AUDIT", "category": "WOMEN" },
+    { "file": "register_concierge_background.jpg", "path": "assets/images/auth/", "type": "PHOTO", "usage": "RegisterScreen (concierge) background", "screen": "register_screen.dart", "context": "Concierge - female, premium feel", "quality": "HIGH - candidate official female muse", "status": "CANDIDATE_OFFICIAL_FEMALE_MUSE", "category": "CONCIERGE" },
+    { "file": "onboarding_01.jpg", "path": "assets/images/onboarding/", "type": "PHOTO", "usage": "Onboarding screen 1", "screen": "onboarding_screen.dart", "context": "Onboarding - female model", "quality": "MEDIUM - needs audit", "status": "REPLACE_PER_AUDIT", "category": "WOMEN" },
+    { "file": "glow_ia_mesh_avatar.jpg", "path": "assets/images/", "type": "ABSTRACT", "usage": "AI avatar, biometric history", "screen": "multiple", "context": "AURA/IA abstract representation", "quality": "HIGH - abstract, usable", "status": "KEEP_ADAPT_COLORS", "category": "AURA" },
+    { "file": "avatar_aura.png", "path": "assets/images/", "type": "ILLUSTRATION", "usage": "Aura avatar, chat screens", "screen": "multiple", "context": "AURA avatar illustration", "quality": "MEDIUM - illustration not photography", "status": "KEEP_AS_ILLUSTRATION", "category": "AURA" },
+    { "file": "aura_3d_emblem.jpg", "path": "assets/images/", "type": "3D", "usage": "Aura 3D emblem component", "screen": "aura_3d_emblem.dart", "context": "AURA brand mark", "quality": "HIGH - 3D render", "status": "KEEP_ADAPT_COLORS", "category": "AURA" },
+    { "file": "design_ideas_*.png (5 files)", "path": "assets/images/", "type": "3D_ILLUSTRATION", "usage": "Ideas screens (eyebrow, hair, nails, skin)", "screen": "ideas screens", "context": "Design ideas - 3D illustrations, not photography", "quality": "HIGH - 3D quality", "status": "REPLACE_WITH_PHOTOGRAPHY_PER_AUDIT", "category": "BEAUTY_DOMAINS" },
+    { "file": "glowapp_logo_horizontal_*.png (4 files)", "path": "assets/images/branding/", "type": "LOGO", "usage": "Brand logo variants", "screen": "multiple", "context": "Brand identity", "quality": "HIGH", "status": "KEEP - LOCKED PER ICON SYSTEM", "category": "BRAND" },
+    { "file": "logo_maestro_v*.jpg/png (6 files)", "path": "assets/images/", "type": "LOGO_LEGACY", "usage": "Legacy logo variants", "screen": "wardrobe, outfit result", "context": "Legacy branding", "quality": "VARIABLE", "status": "DEPRECATE", "category": "BRAND" },
+    { "file": "nav_citas_icon.png, nav_glowshop_icon.png, nav_perfil_icon.png", "path": "assets/images/", "type": "RASTER_ICON", "usage": "Bottom navigation icons", "screen": "main.dart", "context": "Navigation - raster, not SVG", "quality": "LOW - should be SVG per Icon System", "status": "MIGRATE_TO_SVG_PER_ICON_SYSTEM", "category": "UI" }
+  ],
+  "current_models": [
+    { "expression": "WOMEN", "status": "2-3 CANDIDATES IDENTIFIED", "assets": ["aura_welcome_background.jpg", "register_concierge_background.jpg"], "official_muse_defined": true, "systematized": false, "gaps": ["Not systematized in code", "No metadata registry", "Login/Register/Onboarding use generic replacements"] },
+    { "expression": "MEN", "status": "ZERO ASSETS EXIST", "assets": [], "official_muse_defined": true, "systematized": false, "gaps": ["Hero/background Men", "Login/Register Men", "Onboarding Men", "Aura Men", "Provider covers Men", "Product lifestyle Men", "Male muse portrait"] },
+    { "expression": "AURA", "status": "ABSTRACT ONLY", "assets": ["glow_ia_mesh_avatar.jpg", "avatar_aura.png", "aura_3d_emblem.jpg"], "official_muse_defined": false, "systematized": false, "gaps": ["No human photography for AURA", "AuraWelcomeScreen uses female model only (not Men-adaptive)"] },
+    { "expression": "CONCIERGE", "status": "1 CANDIDATE", "assets": ["register_concierge_background.jpg"], "official_muse_defined": false, "systematized": false, "gaps": ["No dedicated concierge photography set"] }
+  ],
+  "photography_gaps": [
+    { "gap": "NO MALE MUSE ASSETS", "type": "MISSING_CATEGORY", "priority": "P0", "reason": "Men expression has 0% photography coverage. Official male muse defined but no assets exist.", "future_action": "Commission full Men photography set: hero, login, register, onboarding, aura, provider, product lifestyle." },
+    { "gap": "FEMALE MUSE NOT SYSTEMATIZED", "type": "INCONSISTENT_MODEL", "priority": "P0", "reason": "2-3 candidate assets exist but not registered as official muse. Login/Register/Onboarding use generic replacements.", "future_action": "Designate official female muse asset(s). Register metadata. Replace generic auth/onboarding with official muse." },
+    { "gap": "AURA WELCOME NOT MEN-ADAPTIVE", "type": "INCONSISTENT_STYLE", "priority": "P0", "reason": "AuraWelcomeScreen uses only female-model GlowTokens. Ignores isMen. No Men AURA photography.", "future_action": "Create Men AURA welcome photography (abstract + human context). Make screen audience-adaptive." },
+    { "gap": "DESIGN IDEAS = 3D ILLUSTRATIONS", "type": "INCONSISTENT_STYLE", "priority": "P1", "reason": "5 design_ideas assets are 3D illustrations, not photography. Breaks photographic language unity.", "future_action": "Replace with beauty domain photography per S3 families (Skincare, Hair, Nails, Skin Tone, Texture)." },
+    { "gap": "ONBOARDING PHOTOGRAPHY INCONSISTENT", "type": "INCONSISTENT_STYLE", "priority": "P1", "reason": "Single onboarding_01.jpg - female, generic. No Men variant. No series.", "future_action": "Create 3-5 onboarding photography assets per expression (Women/Men)." },
+    { "gap": "AUTH BACKGROUNDS GENERIC", "type": "LOW_QUALITY", "priority": "P1", "reason": "login_background.jpg, register_background.jpg are generic stock feel. Not official muse.", "future_action": "Replace with official muse photography (Women) + Men variant." },
+    { "gap": "NAVIGATION ICONS ARE RASTER", "type": "INCONSISTENT_STYLE", "priority": "P1", "reason": "nav_*_icon.png are raster PNG. Icon System v1.0 requires SVG monoline.", "future_action": "Migrate to SVG per GLOW ICON SYSTEM v1.0 (LOCKED)." },
+    { "gap": "NO ASSET METADATA REGISTRY", "type": "GOVERNANCE_GAP", "priority": "P1", "reason": "No focal points, text-safe zones, color profiles, retouching logs, versioning tracked.", "future_action": "Implement asset metadata registry (JSON sidecars or database)." },
+    { "gap": "NO RESPONSIVE CROP STRATEGY IMPLEMENTED", "type": "MISSING_CATEGORY", "priority": "P1", "reason": "Hero images hardcoded single asset. No focal point metadata for responsive crop.", "future_action": "Add focal point metadata to all hero assets. Implement responsive crop in Image widget wrapper." },
+    { "gap": "CONCIERGE PHOTOGRAPHY UNDEFINED", "type": "MISSING_CATEGORY", "priority": "P2", "reason": "Only 1 candidate asset. No defined concierge visual language.", "future_action": "Define and shoot concierge photography set per Section 8." }
+  ],
+  "prohibited_patterns": [
+    { "pattern": "Generic stock beauty (women laughing, cucumber eyes, spa stones)", "reason": "Contradicts PREMIUM, AUTHENTIC, EDITORIAL. Looks like every other beauty app.", "evidence": "Audit shows login/register/onboarding use generic feel assets" },
+    { "pattern": "Plastic skin / aggressive smoothing", "reason": "Contradicts HUMAN, AUTHENTIC. S1/S2 emphasize warmth and texture.", "evidence": "Retouching policy explicitly prohibits" },
+    { "pattern": "Neon / cyberpunk / electric cyan (#00E5FF)", "reason": "S1 DEPRECATED/PROHIBITED. MensTheme.cyberCyan rejected.", "evidence": "S1 Color System + Men Audit V1" },
+    { "pattern": "Artificial AI faces / generic 'AI brain' imagery", "reason": "AURA = LIGHT/PERCEPTION/TRANSFORMATION, not robots/circuits.", "evidence": "S3 Section 7 + Men Audit V1/V12" },
+    { "pattern": "Inconsistent models across brand surfaces", "reason": "OFFICIAL MUSE FIRST rule. Continuity = trust.", "evidence": "Model Consistency section + Men Audit A7" },
+    { "pattern": "Excessive black for Men (solid #000000 backgrounds)", "reason": "S1: Dark surface != Black branding. Men = Quiet Masculine Luxury, not void.", "evidence": "S1 Section 17 + Men Audit V1/V10" },
+    { "pattern": "Excessive pink for Women", "reason": "Not 'pink beauty app'. Women = Modern Femininity + Quiet Luxury.", "evidence": "S3 Section 4" },
+    { "pattern": "Generic barbershop imagery (striped poles, vintage chairs as decor)", "reason": "Men != Generic Barbershop. Quiet Masculine Luxury.", "evidence": "Men Audit Section 5.11" },
+    { "pattern": "Generic spa stock (stones, bamboo, orchids, zen gardens)", "reason": "Cliche. Not EDITORIAL, not PREMIUM.", "evidence": "S3 Section 34" },
+    { "pattern": "Unrelated lifestyle photography (travel, food, fitness)", "reason": "Breaks ONE GLOWAPP PHOTOGRAPHIC LANGUAGE.", "evidence": "S3 Section 9 principle" },
+    { "pattern": "Burned-in text in images", "reason": "S2 Typography is authority. Accessibility requires text layer.", "evidence": "S3 Section 32" },
+    { "pattern": "Multiple aspect ratios for same card type", "reason": "Consistency. Card System defines 4:5 primary.", "evidence": "S3 Section 15" }
+  ],
+  "implementation_status": "NOT_IMPLEMENTED"
+}

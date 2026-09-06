@@ -1,0 +1,37 @@
+{
+  "authority": "Data",
+  "level": "L1",
+  "owner": "Data Governor",
+  "sourceOfTruth": "backend/init.sql, backend/schema.sql, migration files",
+  "inputs": [
+    "Soul",
+    "product units",
+    "technical architecture"
+  ],
+  "outputs": [
+    "Database schema",
+    "tables",
+    "indexes",
+    "constraints",
+    "seeds",
+    "migrations"
+  ],
+  "consumers": [
+    "Backend services",
+    "API contracts",
+    "repositories"
+  ],
+  "allowedChanges": [
+    "Adding new tables/columns within normalization rules",
+    "adding migrations"
+  ],
+  "forbiddenChanges": [
+    "Changing Soul-defined data principles",
+    "violating referential integrity",
+    "removing constraints without migration"
+  ],
+  "validationGate": "Data spec review + migration validation",
+  "legacySystems": [],
+  "promotionPath": "N/A",
+  "exceptionMechanism": "Director approval for exceptions"
+}

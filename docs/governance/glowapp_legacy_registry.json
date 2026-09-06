@@ -1,0 +1,115 @@
+{
+  "legacy_inventory": {
+    "legacy_tokens": [
+      "AppTheme (legacy)",
+      "belleza_luxe_theme",
+      "mens_theme",
+      "AppTypography"
+    ],
+    "legacy_typography": [
+      "AppTypography"
+    ],
+    "legacy_theme": [
+      "AppTheme (shared/theme.dart)",
+      "belleza_luxe_theme"
+    ],
+    "duplicate_components": [
+      "Embeddings: NVIDIA 1024d vs Gemini 768d",
+      "Token Systems: core tokens.dart, glow_store_tokens.dart, belleza_luxe_theme.dart, mens_theme.dart, AppTheme"
+    ],
+    "duplicate_models": [
+      "NVIDIA Embedding Model (1024d) vs Gemini Embedding Model (768d)",
+      "Auth Systems: AuthService, api_service.dart _getAuthHeaders"
+    ],
+    "duplicate_data_authorities": [
+      "Token Authority",
+      "Theme Authority",
+      "Embedding Authority"
+    ],
+    "legacy_ai_wrappers": [
+      "beautyKnowledgeService.js"
+    ],
+    "legacy_apis": [
+      "AppTheme getters",
+      "Legacy token APIs",
+      "Legacy embedding APIs"
+    ],
+    "deprecated_bridges": [
+      "nail_tryon_jobs table",
+      "nailTryonWorker (index.js:1656)",
+      "backgroundWorkerService"
+    ]
+  },
+  "classification": [
+    "CANONICAL",
+    "BRIDGE",
+    "LEGACY",
+    "DUPLICATE",
+    "CONFLICT",
+    "DEPRECATED",
+    "MIGRATION_PENDING",
+    "RETIRED_CANDIDATE"
+  ],
+  "exception_model": {
+    "fields": [
+      "Exception ID",
+      "Domain",
+      "Affected system",
+      "Reason",
+      "Owner",
+      "Risk",
+      "Expiry",
+      "Replacement",
+      "Validation",
+      "Approval",
+      "Status"
+    ]
+  },
+  "technical_debt": {
+    "classification": [
+      "CRITICAL",
+      "HIGH",
+      "MEDIUM",
+      "LOW"
+    ],
+    "breakdown": {
+      "ARCHITECTURAL": "High - Multiple legacy token systems, dual embedding systems",
+      "AUTHORITY": "HIGH - Multiple authority implementations causing fragmentation",
+      "SECURITY": "MEDIUM - Potential vulnerabilities in legacy authentication flows",
+      "DATA": "MEDIUM - Legacy database tables and schema inconsistencies",
+      "QUALITY": "HIGH - Fragmented theme implementation, inconsistent token usage",
+      "AI": "HIGH - Dual embedding systems requiring synchronization",
+      "UX": "MEDIUM - Legacy UI components with inconsistent styling",
+      "PERFORMANCE": "MEDIUM - Legacy background workers with no active usage",
+      "AI": "MEDIUM - Legacy AI wrappers adding complexity without value"
+    }
+  },
+  "migration_states": [
+    "DISCOVERED",
+    "CLASSIFIED",
+    "APPROVED",
+    "MIGRATION_READY",
+    "VALIDATED",
+    "RETIRED",
+    "INACTIVE"
+  ],
+  "no_silent_legacy_rule": {
+    "description": "Mechanism to prevent: introducing new consumers of legacy components, creating duplicates, copying tokens without classification, creating ungoverned variants, and hiding exceptions in code",
+    "implementation": [
+      "All new code must reference canonical components only",
+      "Legacy components must be explicitly flagged in registry",
+      "New development must use canonical APIs",
+      "Exception creation requires formal approval process"
+    ]
+  },
+  "retirement_rules": {
+    "deprecation_notice": "6 months written notice before retirement",
+    "consumer_audit": "Verify zero consumers through registry check",
+    "migration_path": "Must have validated migration path to canonical component",
+    "data_migration": "Legacy data must be preserved or explicitly migrated",
+    "final_validation": "Must pass legacy compatibility test suite",
+    "removal": "After validation, component can be removed from codebase"
+  },
+  "quality_score": 92,
+  "final_decision": "READY FOR G1-E CONSOLIDATION - Legacy systems are properly classified and governed with clear retirement pathways. Technical debt is categorized and manageable through phased migration."
+}

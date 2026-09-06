@@ -54,7 +54,7 @@ jobs:
           cache-dependency-path: backend/package-lock.json
 
       - name: Install dependencies
-        run: cd backend && npm ci
+        run: cd backend && npm ci --legacy-peer-deps
 
       - name: Run ESLint
         run: cd backend && npm run lint 2>/dev/null || echo "No lint script configured"
@@ -80,7 +80,7 @@ jobs:
           cache-dependency-path: backend/package-lock.json
 
       - name: Install dependencies
-        run: cd backend && npm ci
+        run: cd backend && npm ci --legacy-peer-deps
 
       - name: Run core tests
         run: |
@@ -107,7 +107,7 @@ jobs:
           cache-dependency-path: backend/package-lock.json
 
       - name: Install dependencies
-        run: cd backend && npm ci
+        run: cd backend && npm ci --legacy-peer-deps
 
       - name: Wait for PostgreSQL
         run: |

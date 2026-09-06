@@ -1,0 +1,130 @@
+{
+  "registry_name": "Promotion Path Registry",
+  "version": "1.0.0",
+  "last_updated": "2026-08-21",
+  "stages": [
+    {
+      "stage": "EXPERIMENTAL",
+      "description": "Isolated, non-shipping exploration. L5 in authority hierarchy.",
+      "criteria": [
+        "Proof of concept or spike",
+        "Learning objective defined",
+        "No production impact",
+        "Isolated from main codebase (feature flags, separate branch)"
+      ],
+      "required_evidence": [
+        "Experiment hypothesis document",
+        "Learning objectives",
+        "Isolation verification (feature flags/branches)",
+        "No dependency on production systems"
+      ],
+      "promotion_to": "PROTOTYPE",
+      "promotion_criteria": [
+        "Learning objectives met",
+        "Technical feasibility demonstrated",
+        "Clear path to production identified"
+      ]
+    },
+    {
+      "stage": "PROTOTYPE",
+      "description": "Early validation with stakeholders. Still non-shipping.",
+      "criteria": [
+        "Stakeholder feedback incorporated",
+        "Basic usability testing completed",
+        "Core functionality demonstrated",
+        "Still isolated from production (feature flags)"
+      ],
+      "required_evidence": [
+        "Prototype specification document",
+        "Stakeholder feedback summary",
+        "Usability test results",
+        "Technical feasibility validation",
+        "Isolation still maintained"
+      ],
+      "promotion_to": "VALIDATED",
+      "promotion_criteria": [
+        "Stakeholder approval achieved",
+        "Core user flows validated",
+        "Technical approach confirmed",
+        "Resource requirements understood"
+      ]
+    },
+    {
+      "stage": "VALIDATED",
+      "description": "Ready for governance approval process. Has passed initial validation.",
+      "criteria": [
+        "Complete specification document",
+        "Technical design finalized",
+        "Risk assessment completed",
+        "Resource estimation done",
+        "Still using feature flags for isolation"
+      ],
+      "required_evidence": [
+        "Complete specification document",
+        "Technical design documentation",
+        "Risk assessment and mitigation plan",
+        "Resource estimation and timeline",
+        "Feature flag isolation verification",
+        "Governance readiness confirmation"
+      ],
+      "promotion_to": "APPROVED",
+      "promotion_criteria": [
+        "All governance gates (G0-G6) passed",
+        "Design Director approval obtained",
+        "Resource allocation confirmed",
+        "Integration plan approved"
+      ]
+    },
+    {
+      "stage": "APPROVED",
+      "description": "Governance approval obtained. Ready for production integration.",
+      "criteria": [
+        "All governance gates passed (G0-G6)",
+        "Design Director sign-off recorded",
+        "Integration planning completed",
+        "Still behind feature flags"
+      ],
+      "required_evidence": [
+        "Gate completion records (G0-G6)",
+        "Design Director approval document",
+        "Integration plan",
+        "Rollback plan",
+        "Feature flag still active"
+      ],
+      "promotion_to": "CANONICAL",
+      "promotion_criteria": [
+        "Feature flag removed",
+        "Code merged to main branch",
+        "Documentation updated",
+        "Migration completed (if replacing legacy)"
+      ]
+    },
+    {
+      "stage": "CANONICAL",
+      "description": "Fully integrated into production system. Part of the official source of truth.",
+      "criteria": [
+        "Feature flag removed",
+        "Code in main branch",
+        "Documentation complete and updated",
+        "All governance artifacts updated",
+        "Legacy systems migrated or deprecated"
+      ],
+      "required_evidence": [
+        "Production deployment verification",
+        "Feature flag removal confirmation",
+        "Main branch integration proof",
+        "Documentation update verification",
+        "Legacy system migration/deprecation proof"
+      ],
+      "promotion_to": null,
+      "promotion_criteria": []
+    }
+  ],
+  "universal_requirements": [
+    "Evidence must be documented and accessible",
+    "Each stage requires explicit approval to proceed",
+    "Regression to previous stage possible if criteria not met",
+    "Exceptions require formal exception registry entry",
+    "All promotions must follow change classification rules"
+  ]
+}

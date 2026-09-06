@@ -111,7 +111,7 @@ class _Aura3DEmblemWidgetState extends State<Aura3DEmblemWidget>
                     // Capa 1: Imagen del Emblema 3D "GA" Oro Rosa
                     Positioned.fill(
                       child: Image.asset(
-                        'assets/images/aura_3d_emblem.jpg',
+                        'images/aura_3d_emblem.webp',
                         fit: BoxFit.cover,
                       ),
                     ),

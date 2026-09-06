@@ -36,9 +36,12 @@ class _HabeasDataScreenState extends State<HabeasDataScreen> {
         centerTitle: true,
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(LuxeSpacing.xl),
-          child: Column(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 680),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(LuxeSpacing.xl),
+              child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // ENCABEZADO LEGAL LEY 1581
@@ -185,6 +188,8 @@ class _HabeasDataScreenState extends State<HabeasDataScreen> {
           ),
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 }

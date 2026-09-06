@@ -20,29 +20,44 @@ class _ProductScannerScreenState extends State<ProductScannerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFFAF8F5),
       appBar: AppBar(
-        title: const Text('Escanear Producto'),
-        backgroundColor: Colors.purple,
-        foregroundColor: Colors.white,
+        title: const Text(
+          'Escanear Producto',
+          style: TextStyle(
+            fontFamily: 'CormorantGaramond',
+            fontWeight: FontWeight.bold,
+            fontSize: 22,
+            color: Color(0xFF1F1A15),
+          ),
+        ),
+        backgroundColor: const Color(0xFFFAF8F5),
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Color(0xFF1F1A15)),
       ),
-      body: _isProcessing
-          ? const Center(child: CircularProgressIndicator())
-          : _scannedProduct != null
-              ? _buildResultView()
-              : MobileScanner(
-                  onDetect: (capture) async {
-                    if (_isScanning) {
-                      final barcode = capture.barcodes.first.rawValue;
-                      if (barcode != null) {
-                        setState(() {
-                          _isScanning = false;
-                          _isProcessing = true;
-                        });
-                        await _checkProduct(barcode);
-                      }
-                    }
-                  },
-                ),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 580),
+          child: _isProcessing
+              ? const Center(child: CircularProgressIndicator(color: Color(0xFFC5A052)))
+              : _scannedProduct != null
+                  ? _buildResultView()
+                  : MobileScanner(
+                      onDetect: (capture) async {
+                        if (_isScanning) {
+                          final barcode = capture.barcodes.first.rawValue;
+                          if (barcode != null) {
+                            setState(() {
+                              _isScanning = false;
+                              _isProcessing = true;
+                            });
+                            await _checkProduct(barcode);
+                          }
+                        }
+                      },
+                    ),
+        ),
+      ),
     );
   }
 
@@ -174,34 +189,55 @@ class _ProductScannerScreenState extends State<ProductScannerScreen> {
           Row(
             children: [
               Expanded(
-                child: ElevatedButton(
+                child: OutlinedButton(
                   onPressed: () {
                     setState(() {
                       _scannedProduct = null;
                       _isScanning = true;
                     });
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.grey[300],
-                    foregroundColor: Colors.black,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF1F1A15),
+                    side: const BorderSide(color: Color(0xFFE8DFD8)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(28),
+                      borderRadius: BorderRadius.circular(16),
                     ),
                   ),
-                  child: const Text('Escanear otro'),
+                  child: const Text('Escanear otro', style: TextStyle(fontFamily: 'Inter')),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.purple,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(28),
+                child: Container(
+                  height: 48,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFF3D59B), Color(0xFFC5A052)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFC5A052).withValues(alpha: 0.35),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
                   ),
-                  child: const Text('Listo'),
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      foregroundColor: const Color(0xFF1F1A15),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: const Text('Listo', style: TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.bold)),
+                  ),
                 ),
               ),
             ],

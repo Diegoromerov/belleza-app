@@ -1,0 +1,242 @@
+{
+  "phase": "S1_COLOR_SYSTEM",
+  "status": "SPECIFICATION",
+  "master_palette": {
+    "foundation": {
+      "creamSilk": { "hex": "#FCF8F6", "role": "primaryBackground", "purpose": "Main app background for Women/Unisex expression", "context": "Light theme scaffold background", "do": "Use as base canvas for Women and neutral experiences", "dont": "Use in Men expression (use obsidianBg)" },
+      "obsidianBg": { "hex": "#0A0C10", "role": "primaryBackgroundMen", "purpose": "Main app background for Men expression", "context": "Men theme scaffold background", "do": "Use as base canvas for Men experience", "dont": "Use in Women expression (use creamSilk)" },
+      "warmWhite": { "hex": "#F2EFEA", "role": "secondaryBackgroundMen", "purpose": "Secondary surface for Men", "context": "Cards, sheets in Men theme", "do": "Use for elevated surfaces in Men", "dont": "Use as primary background" },
+      "neutralScale": {
+        "50": "#FAF8F5", "100": "#F4EFEA", "200": "#E8E0D5", "300": "#D6C8B8",
+        "500": "#9E8C78", "600": "#857360", "700": "#6B5A48", "800": "#453A2E", "900": "#1F1A15"
+      }
+    },
+    "surface": {
+      "level0": { "women": "#FCF8F6", "men": "#0A0C10", "dark": "#18171C", "role": "scaffoldBackground" },
+      "level1": { "women": "#FFFFFF", "men": "#14171F", "dark": "#24232B", "role": "contentSurface" },
+      "level2": { "women": "#F4EFEA85", "men": "#14171F85", "dark": "#24232B85", "role": "glassFrosted" },
+      "level3": { "women": "#C5A052", "men": "#D4AF37", "role": "ctaSurface" },
+      "variant": { "women": "#F5EBE6", "dark": "#4A3E3D", "role": "inputFill" },
+      "container": { "women": "#F4EFEA", "dark": "#3D3330", "role": "cardContainer" }
+    },
+    "text": {
+      "primary": { "women": "#2B2420", "men": "#F5F6F8", "dark": "#FAF8F5", "role": "primaryText" },
+      "secondary": { "women": "#857360", "men": "#949AA8", "dark": "#AD8272", "role": "secondaryText" },
+      "muted": { "women": "#9E8C78", "men": "#5F6575", "dark": "#C5A090", "role": "metadataText" },
+      "disabled": { "women": "#A89F91", "men": "#5F6575", "dark": "#6B5E5A", "role": "disabledText" },
+      "inverse": { "women": "#FAF8F5", "men": "#0A0C10", "role": "onDarkSurface" },
+      "accent": { "women": "#C5A052", "men": "#D4AF37", "role": "accentText" },
+      "aura": { "all": "#164C46", "role": "auraText" }
+    },
+    "border": {
+      "default": { "women": "#E8E0D5", "men": "#C5A05935", "dark": "#33313D", "role": "defaultBorder" },
+      "subtle": { "women": "#F3EAE8", "men": "#C5A05920", "dark": "#2A2830", "role": "hairlineBorder" },
+      "strong": { "women": "#C5A052", "men": "#D4AF37", "dark": "#D4B878", "role": "focusBorder" },
+      "focus": { "women": "#C5A052", "men": "#D4AF37", "role": "focusRing" },
+      "selected": { "women": "#C5A052", "men": "#D4AF37", "role": "selectedBorder" }
+    },
+    "accent": {
+      "roseGold": { "hex": "#D4AF7A", "role": "womenPrimaryAccent", "purpose": "Premium accent for Women expression", "do": "Use for primary CTAs, highlights in Women", "dont": "Use in Men expression" },
+      "warmBrown": { "hex": "#5A3A2A", "role": "womenSecondary", "purpose": "Secondary brand color for Women", "do": "Use for secondary actions, typography accents", "dont": "Use as primary CTA" },
+      "champagne": { "hex": "#C8B08A", "role": "womenAccent", "purpose": "Tertiary accent for Women", "do": "Use for subtle highlights, divider accents", "dont": "Use for primary actions" },
+      "gold871": { "hex": "#C5A052", "role": "globalBrandPrimary", "purpose": "Unified brand primary across expressions", "do": "Use as primary brand color, CTAs in neutral contexts", "dont": "Override expression-specific primaries" },
+      "champagneMen": { "hex": "#D4AF37", "role": "menPrimaryAccent", "purpose": "Primary accent for Men expression", "do": "Use for primary CTAs, highlights in Men", "dont": "Use in Women expression" },
+      "warmWhiteMen": { "hex": "#F2EFEA", "role": "menSecondary", "purpose": "Secondary surface/background for Men", "do": "Use for cards, sheets in Men", "dont": "Use as primary background" },
+      "copper": { "hex": "#B8734A", "role": "menAccent", "purpose": "Tertiary accent for Men", "do": "Use for subtle highlights, hover states in Men", "dont": "Use as primary CTA" },
+      "bronzeAccent": { "hex": "#C5A059", "role": "menBorderAccent", "purpose": "Border/outline accent for Men", "do": "Use for focused borders, selected states in Men", "dont": "Use as fill color" }
+    },
+    "semantic": {
+      "success": { "light": "#16A34A", "dark": "#22C55E", "bgLight": "#DCFCE7", "bgDark": "#14532D", "onLight": "#15803D", "onDark": "#DCFCE7", "role": "successState" },
+      "warning": { "light": "#D97706", "dark": "#F59E0B", "bgLight": "#FEF3C7", "bgDark": "#78350F", "onLight": "#78350F", "onDark": "#FEF3C7", "role": "warningState" },
+      "error": { "light": "#DC2626", "dark": "#EF4444", "bgLight": "#FEE2E2", "bgDark": "#7F1D1D", "onLight": "#991B1B", "onDark": "#FEE2E2", "role": "errorState" },
+      "info": { "light": "#06B6D4", "dark": "#22D3EE", "bgLight": "#ECFEFF", "bgDark": "#164E63", "onLight": "#164E63", "onDark": "#ECFEFF", "role": "infoState" },
+      "inProgress": { "light": "#8B5CF6", "dark": "#A855F7", "bgLight": "#EDE9FE", "bgDark": "#5B21B6", "onLight": "#5B21B6", "onDark": "#EDE9FE", "role": "loadingState" }
+    },
+    "aura": {
+      "primary": { "hex": "#164C46", "role": "auraPrimary", "purpose": "Core AURA intelligence layer color", "do": "Use for AI-driven features, smart recommendations, aura mode", "dont": "Use as global accent, replace brand primaries" },
+      "surface": { "hex": "#164C4615", "role": "auraSurface", "purpose": "Subtle surface for AURA contexts", "do": "Use as background for AURA cards, panels", "dont": "Use as primary surface" },
+      "subtle": { "hex": "#164C460D", "role": "auraSubtle", "purpose": "Minimal AURA presence", "do": "Use for dividers, hairlines in AURA contexts", "dont": "Use for text" },
+      "active": { "hex": "#164C46", "role": "auraActive", "purpose": "Active AURA interaction state", "do": "Use for AURA CTA, selected states", "dont": "Use outside AURA features" },
+      "disabled": { "hex": "#164C4640", "role": "auraDisabled", "purpose": "Disabled AURA elements", "do": "Use for disabled AURA buttons", "dont": "Use for general disabled states" },
+      "contrast": { "hex": "#FFFFFF", "role": "auraOnPrimary", "purpose": "Text on AURA primary", "do": "Use for text on AURA primary backgrounds", "dont": "Use elsewhere" },
+      "interaction": { "hex": "#164C46CC", "role": "auraHover", "purpose": "Hover/pressed states for AURA", "do": "Use for AURA button interactions", "dont": "Use for non-AURA interactions" }
+    }
+  },
+  "women_palette": {
+    "primary": { "name": "Rose Gold", "hex": "#D4AF7A", "source": "GlowTokens.roseGold", "function": "Primary brand accent for Women expression", "hierarchy": "Primary CTA, key highlights, brand moments", "contrast": { "onWhite": "AAA", "onCreamSilk": "AAA", "onDark": "FAIL" }, "surfaces": ["level3", "accent"], "cta": "Primary button background", "states": { "hover": "#D4AF7ACC", "pressed": "#B89666", "disabled": "#D4AF7A40" } },
+    "secondary": { "name": "Warm Brown", "hex": "#5A3A2A", "source": "Derived from terracotta family", "function": "Secondary brand color for Women", "hierarchy": "Secondary buttons, typography accents, icon fills", "contrast": { "onWhite": "AAA", "onCreamSilk": "AA", "onDark": "AA" }, "surfaces": ["text", "border"], "cta": "Secondary button text/icon", "states": { "hover": "#6D4A3A", "pressed": "#4A2E22", "disabled": "#5A3A2A40" } },
+    "accent": { "name": "Champagne", "hex": "#D9A27F", "source": "Derived from gold family", "function": "Tertiary accent for Women", "hierarchy": "Subtle highlights, dividers, hover states", "contrast": { "onWhite": "FAIL", "onCreamSilk": "FAIL", "onDark": "AA" }, "surfaces": ["border", "hover"], "cta": "Ghost button border", "states": { "hover": "#D9A27FCC", "pressed": "#C8906A", "disabled": "#D9A27F40" } },
+    "aura": { "name": "Aura Teal", "hex": "#164C46", "source": "GlowTokens.deepGreen (repurposed)", "function": "AURA intelligence layer in Women context", "hierarchy": "AURA-specific features only", "contrast": { "onWhite": "AAA", "onCreamSilk": "AAA", "onDark": "FAIL" }, "surfaces": ["auraSurface", "auraSubtle"], "cta": "AURA-specific CTA", "states": { "hover": "#164C46CC", "pressed": "#103832", "disabled": "#164C4640" } },
+    "shared": {
+      "creamSilk": "#FCF8F6",
+      "gold871": "#C5A052",
+      "nightAndean": "#2B2420",
+      "deepGreen": "#1C2B26",
+      "nudeScale": { "50": "#FAF8F5", "100": "#F4EFEA", "200": "#E8E0D5", "500": "#9E8C78", "900": "#1F1A15" }
+    }
+  },
+  "men_palette": {
+    "primary": { "name": "Champagne Gold", "hex": "#C8B08A", "source": "MensTheme.champagneGold (#D4AF37) adjusted for warmth", "function": "Primary brand accent for Men expression", "hierarchy": "Primary CTA, key highlights, brand moments", "contrast": { "onObsidian": "AAA", "onObsidianCard": "AAA", "onWhite": "FAIL" }, "surfaces": ["level3", "accent"], "cta": "Primary button background", "states": { "hover": "#D4AF37CC", "pressed": "#B89C2F", "disabled": "#D4AF3740" } },
+    "secondary": { "name": "Warm White", "hex": "#F2EFEA", "source": "MensTheme.obsidianCardHover adjusted", "function": "Secondary surface for Men", "hierarchy": "Cards, sheets, elevated surfaces", "contrast": { "onObsidian": "AAA", "onObsidianCard": "AA", "onWhite": "N/A" }, "surfaces": ["level1", "level2"], "cta": "Surface background", "states": { "hover": "#F2EFEAEE", "pressed": "#E0DCE7", "disabled": "#F2EFEA80" } },
+    "accent": { "name": "Copper", "hex": "#B8734A", "source": "Derived from bronzeAccent (#C5A059)", "function": "Tertiary accent for Men", "hierarchy": "Hover states, subtle highlights, borders", "contrast": { "onObsidian": "AA", "onObsidianCard": "AA", "onWhite": "AA" }, "surfaces": ["border", "hover"], "cta": "Secondary button border", "states": { "hover": "#B8734ACC", "pressed": "#9A5F3D", "disabled": "#B8734A40" } },
+    "aura": { "name": "Aura Teal", "hex": "#164C46", "source": "Shared with Women", "function": "AURA intelligence layer in Men context", "hierarchy": "AURA-specific features only", "contrast": { "onObsidian": "FAIL", "onObsidianCard": "FAIL", "onWarmWhite": "AAA" }, "surfaces": ["auraSurface", "auraSubtle"], "cta": "AURA-specific CTA", "states": { "hover": "#164C46CC", "pressed": "#103832", "disabled": "#164C4640" } },
+    "foundations": {
+      "obsidianBg": "#0A0C10",
+      "obsidianCard": "#14171F",
+      "obsidianCardHover": "#1E232E",
+      "bronzeAccent": "#C5A059",
+      "textPrimary": "#F5F6F8",
+      "textSecondary": "#949AA8",
+      "textMuted": "#5F6575"
+    }
+  },
+  "aura_palette": {
+    "primary": { "name": "Aura Teal", "hex": "#164C46", "role": "Primary AURA identifier", "purpose": "Signals AI-driven intelligence features", "context": "Smart recommendations, biometric analysis, colorimetry" },
+    "surface": { "name": "Aura Surface", "hex": "#164C4615", "role": "AURA card background", "purpose": "Subtle container for AURA content" },
+    "subtle": { "name": "Aura Subtle", "hex": "#164C460D", "role": "AURA divider/hairline", "purpose": "Minimal visual connection to AURA" },
+    "active": { "name": "Aura Active", "hex": "#164C46", "role": "AURA CTA/selected", "purpose": "Active interaction in AURA flows" },
+    "disabled": { "name": "Aura Disabled", "hex": "#164C4640", "role": "AURA disabled state", "purpose": "Inactive AURA elements" },
+    "contrast": { "name": "Aura Contrast", "hex": "#FFFFFF", "role": "Text on AURA primary", "purpose": "Legible text on AURA backgrounds" },
+    "interaction": { "name": "Aura Interaction", "hex": "#164C46CC", "role": "AURA hover/press", "purpose": "Interactive feedback for AURA elements" },
+    "prohibited": [
+      { "value": "#00E5FF", "name": "Cyber Cyan", "reason": "Neon/cyberpunk aesthetic contradicts GlowApp's premium/warm/human/quiet identity", "whereFound": "MensTheme.cyberCyan, MensTheme.cyberCyanGlow, MensTheme.cyanScannerGlow", "replacementStrategy": "Replace with Aura Teal (#164C46) for AI/scanner features; use Champagne Gold for CTAs" }
+    ]
+  },
+  "surface_system": {
+    "L0": { "name": "Scaffold Background", "women": "#FCF8F6", "men": "#0A0C10", "dark": "#18171C", "purpose": "Full-screen canvas" },
+    "L1": { "name": "Content Surface", "women": "#FFFFFF", "men": "#14171F", "dark": "#24232B", "purpose": "Cards, sheets, primary content containers" },
+    "L2": { "name": "Glass/Frosted Surface", "women": "#F4EFEA85", "men": "#14171F85", "dark": "#24232B85", "purpose": "Overlays, drawers, frosted glass effects" },
+    "L3": { "name": "CTA/Selection Surface", "women": "#C5A052", "men": "#D4AF37", "purpose": "Primary buttons, selected states, brand moments" },
+    "variant": { "name": "Input Variant", "women": "#F5EBE6", "dark": "#4A3E3D", "purpose": "Text field fills, search bars" },
+    "container": { "name": "Card Container", "women": "#F4EFEA", "dark": "#3D3330", "purpose": "Card backgrounds in lists" },
+    "overlay": { "name": "Modal Overlay", "women": "#00000080", "men": "#000000BF", "purpose": "Modal/backdrop scrim" },
+    "glass": { "name": "Glass Morphism", "women": "#FFFFFF80", "men": "#14171FD9", "purpose": "Premium glass effects with blur" },
+    "input": { "name": "Input Surface", "women": "#FAF8F5", "dark": "#2D2523", "purpose": "Text field background" },
+    "selected": { "name": "Selected Surface", "women": "#C5A0521F", "men": "#D4AF371F", "purpose": "Selected list items, chips" }
+  },
+  "text_system": {
+    "primaryText": { "women": "#2B2420", "men": "#F5F6F8", "dark": "#FAF8F5", "warmth": "Warm black / warm white, not clinical" },
+    "secondaryText": { "women": "#857360", "men": "#949AA8", "dark": "#AD8272", "warmth": "Warm muted, not grey" },
+    "mutedText": { "women": "#9E8C78", "men": "#5F6575", "dark": "#C5A090", "warmth": "Metadata, captions, timestamps" },
+    "disabledText": { "women": "#A89F91", "men": "#5F6575", "dark": "#6B5E5A", "warmth": "Clearly inactive but not harsh" },
+    "inverseText": { "women": "#FAF8F5", "men": "#0A0C10", "warmth": "On dark/colored surfaces" },
+    "accentText": { "women": "#C5A052", "men": "#D4AF37", "warmth": "Brand-colored text for emphasis" },
+    "auraText": { "all": "#164C46", "warmth": "AURA intelligence layer text" }
+  },
+  "border_system": {
+    "defaultBorder": { "women": "#E8E0D5", "men": "#C5A05935", "dark": "#33313D", "width": 1 },
+    "subtleBorder": { "women": "#F3EAE8", "men": "#C5A05920", "dark": "#2A2830", "width": 0.5 },
+    "strongBorder": { "women": "#C5A052", "men": "#D4AF37", "dark": "#D4B878", "width": 1.5 },
+    "focusBorder": { "women": "#C5A052", "men": "#D4AF37", "width": 1.8 },
+    "selectedBorder": { "women": "#C5A052", "men": "#D4AF37", "width": 2 }
+  },
+  "interaction_system": {
+    "primaryCTA": { "women": { "bg": "#D4AF7A", "text": "#2B2420" }, "men": { "bg": "#D4AF37", "text": "#0A0C10" }, "states": { "hover": "alpha 0.9", "pressed": "alpha 1.1 darker", "disabled": "alpha 0.35" } },
+    "secondaryCTA": { "women": { "bg": "transparent", "border": "#D4AF7A", "text": "#D4AF7A" }, "men": { "bg": "transparent", "border": "#D4AF37", "text": "#D4AF37" }, "states": { "hover": "bg alpha 0.1", "pressed": "bg alpha 0.15", "disabled": "alpha 0.35" } },
+    "ghostCTA": { "women": { "bg": "transparent", "text": "#5A3A2A" }, "men": { "bg": "transparent", "text": "#F5F6F8" }, "states": { "hover": "bg alpha 0.05", "pressed": "bg alpha 0.1" } },
+    "iconButton": { "women": { "default": "#2B2420", "hover": "#C5A052" }, "men": { "default": "#F5F6F8", "hover": "#D4AF37" } },
+    "selected": { "women": { "bg": "#C5A0521F", "border": "#C5A052" }, "men": { "bg": "#D4AF371F", "border": "#D4AF37" } },
+    "pressed": { "women": { "overlay": "#2B24201A" }, "men": { "overlay": "#F5F6F81A" } },
+    "hover": { "women": { "overlay": "#2B24200D" }, "men": { "overlay": "#F5F6F80D" } },
+    "focus": { "women": { "ring": "#C5A052", "width": 2 }, "men": { "ring": "#D4AF37", "width": 2 } },
+    "disabled": { "women": { "bg": "#F0ECE6", "text": "#A89F91" }, "men": { "bg": "#1E232E", "text": "#5F6575" } }
+  },
+  "semantic_colors": {
+    "success": { "foreground": { "light": "#15803D", "dark": "#DCFCE7" }, "background": { "light": "#DCFCE7", "dark": "#14532D" }, "border": { "light": "#16A34A", "dark": "#22C55E" }, "icon": { "light": "#16A34A", "dark": "#22C55E" }, "text": { "light": "#15803D", "dark": "#DCFCE7" } },
+    "warning": { "foreground": { "light": "#78350F", "dark": "#FEF3C7" }, "background": { "light": "#FEF3C7", "dark": "#78350F" }, "border": { "light": "#D97706", "dark": "#F59E0B" }, "icon": { "light": "#D97706", "dark": "#F59E0B" }, "text": { "light": "#78350F", "dark": "#FEF3C7" } },
+    "error": { "foreground": { "light": "#991B1B", "dark": "#FEE2E2" }, "background": { "light": "#FEE2E2", "dark": "#7F1D1D" }, "border": { "light": "#DC2626", "dark": "#EF4444" }, "icon": { "light": "#DC2626", "dark": "#EF4444" }, "text": { "light": "#991B1B", "dark": "#FEE2E2" } },
+    "info": { "foreground": { "light": "#164E63", "dark": "#ECFEFF" }, "background": { "light": "#ECFEFF", "dark": "#164E63" }, "border": { "light": "#06B6D4", "dark": "#22D3EE" }, "icon": { "light": "#06B6D4", "dark": "#22D3EE" }, "text": { "light": "#164E63", "dark": "#ECFEFF" } }
+  },
+  "gradients": {
+    "allowed": true,
+    "policy": "Gradients serve depth, light, transition, or AURA behavior. Not constant decoration.",
+    "definitions": {
+      "premiumLight": { "colors": ["#CFBEB5", "#CFBEB5", "#FFF8F0"], "stops": [0.0, 0.45, 1.0], "direction": "topCenter to bottomCenter", "purpose": "Onboarding, hero sections, brand moments", "where": "Welcome screens, onboarding, splash" },
+      "premiumDark": { "colors": ["#4A3E3D", "#4A3E3D", "#2D2523"], "stops": [0.0, 0.45, 1.0], "direction": "topCenter to bottomCenter", "purpose": "Dark mode hero sections" },
+      "roseGoldSatin": { "colors": ["#E8B6AD", "#B57E74"], "direction": "topLeft to bottomRight", "purpose": "Women premium accents, banners", "where": "Women expression premium moments" },
+      "roseGoldSatinDark": { "colors": ["#F0C8BC", "#C89690"], "direction": "topLeft to bottomRight", "purpose": "Women premium accents (dark)" },
+      "terracottaMatte": { "colors": ["#B57E74", "#8C6F65"], "direction": "topLeft to bottomRight", "purpose": "Earthy warmth, secondary brand moments" },
+      "terracottaMatteDark": { "colors": ["#C89690", "#A08078"], "direction": "topLeft to bottomRight", "purpose": "Earthy warmth (dark)" },
+      "primaryGradientLight": { "colors": ["#C5A052", "#B89040"], "direction": "topLeft to bottomRight", "purpose": "Primary brand gradients, CTAs" },
+      "primaryGradientDark": { "colors": ["#D4B878", "#C8A858"], "direction": "topLeft to bottomRight", "purpose": "Primary brand gradients (dark)" },
+      "goldGradientMen": { "colors": ["#D4AF37", "#AA7C11"], "direction": "topLeft to bottomRight", "purpose": "Men primary gradients, CTAs", "where": "Men expression" },
+      "obsidianGlassGradient": { "colors": ["#CC14171F", "#E60A0C10"], "direction": "topCenter to bottomCenter", "purpose": "Men glass surfaces, drawer backgrounds" },
+      "auraGradient": { "colors": ["#164C46", "#0D3630"], "direction": "topLeft to bottomRight", "purpose": "AURA intelligence surfaces, scanner UI", "where": "AURA features only" },
+      "scrimBottom": { "colors": ["transparent", "transparent", "transparent", "#2B24201E", "#2B242059"], "stops": [0.0, 0.55, 0.68, 0.86, 1.0], "direction": "topCenter to bottomCenter", "purpose": "Bottom scrim for text legibility over photography" }
+    }
+  },
+  "opacity": {
+    "overlays": { "scrimLight": "0.5", "scrimDark": "0.75", "modalBackdropLight": "0.5", "modalBackdropDark": "0.75" },
+    "glass": { "light": "0.85", "dark": "0.85", "men": "0.85" },
+    "disabled": { "bg": "0.35", "text": "0.4", "border": "0.3" },
+    "hover": { "overlay": "0.05", "border": "0.8" },
+    "selected": { "bg": "0.12", "border": "1.0" },
+    "shadows": { "ambient": "0.04", "card": "0.08", "drawer": "0.08", "glow": "0.18", "strong": "0.2" },
+    "imageOverlays": { "gradientStart": "0.0", "gradientMid": "0.2", "gradientStrong": "0.6", "gradientEnd": "0.8" }
+  },
+  "shadow_relation": {
+    "shadowSoft": { "color": "#0000000A", "blur": 8, "offset": "0,2", "purpose": "Subtle elevation, chips, low cards" },
+    "shadowMedium": { "color": "#0000000A", "blur": 24, "offset": "0,8", "spread": -4, "purpose": "Standard cards, panels" },
+    "shadowStrong": { "color": "#0000001A", "blur": 32, "offset": "0,16", "purpose": "Modals, drawers, floating panels" },
+    "shadowGoldGlow": { "color": "#C5A0522E", "blur": 16, "offset": "0,6", "purpose": "Premium CTAs, brand moments (Women/neutral)" },
+    "shadowChampagneGlow": { "color": "#D4AF374D", "blur": 16, "offset": "0,4", "purpose": "Premium CTAs, brand moments (Men)" },
+    "shadowAura": { "color": "#164C4633", "blur": 20, "offset": "0,0", "spread": 2, "purpose": "AURA scanner, AI feature highlights" },
+    "shadowDrawer": { "color": "#00000014", "blur": 24, "offset": "-6,0", "purpose": "Side drawers, cart drawer" }
+  },
+  "prohibited_colors": [
+    { "value": "#00E5FF", "name": "Cyber Cyan", "reason": "Neon/cyberpunk aesthetic contradicts GlowApp's premium/warm/human/refined/quiet/intelligent identity. Creates 'gamer/tech' perception.", "whereFound": ["MensTheme.cyberCyan", "MensTheme.cyberCyanGlow", "MensTheme.cyanScannerGlow"], "replacementStrategy": "Replace with Aura Teal (#164C46) for AI/scanner features; use Champagne Gold (#D4AF37) for CTAs; use Bronze Accent (#C5A059) for borders" },
+    { "value": "#00E5FF59", "name": "Cyber Cyan Glow", "reason": "Neon glow effect incompatible with quiet luxury", "whereFound": ["MensTheme.cyberCyanGlow"], "replacementStrategy": "Replace with Aura Shadow (#164C4633)" },
+    { "value": "#000000", "name": "Pure Black", "reason": "Solid black as brand background prohibited. Only allowed as shadow base with low opacity.", "whereFound": "Shadow definitions using Colors.black.withOpacity", "replacementStrategy": "Use warm shadows from neutral scale (nude900 with opacity) or brand-colored shadows" },
+    { "value": "#FFFFFF", "name": "Clinical White", "reason": "Pure white as identity prohibited. Use Cream Silk (#FCF8F6) or warm whites.", "whereFound": "Surface level 1 in Women", "replacementStrategy": "Already using warm whites; ensure no pure #FFFFFF in brand contexts" }
+  ],
+  "existing_token_systems": [
+    { "name": "GlowTokens", "file": "lib/shared/glow_tokens.dart", "type": "Core brand tokens", "colors": ["creamSilk:#FCF8F6", "terracota:#C89D93", "roseGold:#D4AF7A", "nightAndean:#2B2420", "emerald:#50C878", "amber:#E8B4A0", "deepGreen:#1C2B26"], "status": "Legacy - partially superseded" },
+    { "name": "GlowStoreTokens", "file": "lib/shared/glow_store_tokens.dart", "type": "Premium e-commerce tokens", "colors": ["creamSilk", "roseGold", "gold871", "deepGreen", "nightAndean", "nude50-900", "nude500"], "status": "Active - Phase 1A implementation" },
+    { "name": "MensTheme", "file": "lib/shared/mens_theme.dart", "type": "Men expression theme", "colors": ["obsidianBg:#0A0C10", "obsidianCard:#14171F", "champagneGold:#D4AF37", "bronzeAccent:#C5A059", "cyberCyan:#00E5FF (PROHIBITED)", "textPrimary:#F5F6F8"], "status": "Active - requires cyber cyan removal" },
+    { "name": "LuxeColors", "file": "lib/core/theme/belleza_luxe_theme.dart", "type": "Nude scale + Gold 871", "colors": ["nude50-900", "gold871:#C5A052", "goldLight:#E8D49E", "goldDark:#96732B"], "status": "Active - foundation for Token system" },
+    { "name": "Token (light/dark)", "file": "lib/core/theme/tokens.dart", "type": "Unified semantic token system", "colors": ["brandPrimary:Gold871", "brandSecondary:RoseGold", "brandTertiary:Terracotta", "neutral50-900", "status colors", "gradients"], "status": "New - intended as single source of truth" },
+    { "name": "AppTheme (legacy)", "file": "lib/shared/theme.dart", "type": "Legacy theme compatibility", "colors": ["primary:#C5A052", "passportPrimary:#D85A30", "passportBackground:#FBF6F1"], "status": "Deprecated - compatibility getters only" },
+    { "name": "AppTheme (modern)", "file": "lib/core/theme/app_theme.dart", "type": "Material 3 ThemeData using Token", "colors": "Delegates to Token.light/Token.dark", "status": "Active - modern theme implementation" }
+  ],
+  "proposed_authority": {
+    "primaryAuthority": "Token (lib/core/theme/tokens.dart)",
+    "rationale": "Token class provides: 1) Light/dark parity with semantic naming, 2) Single source of truth for ColorScheme, 3) Extensible structure for expression-specific overrides, 4) Already used by modern AppTheme",
+    "mapping": {
+      "GlowTokens": "Map to Token.brandPrimary/Secondary/Tertiary + neutral scale. Deprecate direct usage.",
+      "MensTheme": "Migrate obsidianBg/Card to Token.dark neutral/surface. Replace cyberCyan with Aura Teal. Map champagneGold to brandPrimary in Men context.",
+      "GlowStoreTokens": "Fold surface hierarchy, radii, shadows into Token extensions. Map gold871 to brandPrimary. Map roseGold to brandSecondary.",
+      "LuxeColors": "Nude scale maps to Token.neutral. Gold871 maps to brandPrimary. Deprecate standalone class.",
+      "BellezaLuxeTokens": "Same as LuxeColors - consolidated.",
+      "AppTheme (legacy)": "Compatibility getters only. Redirect to Token."
+    },
+    "expressionOverrides": {
+      "women": { "brandPrimary": "roseGold (#D4AF7A)", "surfaceLevel0": "creamSilk (#FCF8F6)", "surfaceLevel3": "gold871 (#C5A052)" },
+      "men": { "brandPrimary": "champagneGold (#D4AF37)", "surfaceLevel0": "obsidianBg (#0A0C10)", "surfaceLevel3": "champagneGold (#D4AF37)" },
+      "aura": { "brandPrimary": "auraTeal (#164C46)", "surfaceLevel0": "contextAware", "surfaceLevel3": "auraTeal (#164C46)" }
+    }
+  },
+  "token_taxonomy": {
+    "glow.color.foundation": ["creamSilk", "obsidianBg", "warmWhite", "neutral50-900"],
+    "glow.color.surface": ["level0", "level1", "level2", "level3", "variant", "container", "overlay", "glass", "input", "selected"],
+    "glow.color.text": ["primary", "secondary", "muted", "disabled", "inverse", "accent", "aura"],
+    "glow.color.border": ["default", "subtle", "strong", "focus", "selected"],
+    "glow.color.accent": ["roseGold", "warmBrown", "champagne", "gold871", "champagneMen", "warmWhiteMen", "copper", "bronzeAccent"],
+    "glow.color.semantic": ["success", "warning", "error", "info", "inProgress"],
+    "glow.color.aura": ["primary", "surface", "subtle", "active", "disabled", "contrast", "interaction"],
+    "glow.color.women": ["primary", "secondary", "accent", "aura", "shared"],
+    "glow.color.men": ["primary", "secondary", "accent", "aura", "foundations"]
+  },
+  "principles": [
+    "Warmth before saturation — color temperature creates premium feeling, not intensity",
+    "Surface before decoration — hierarchy through elevation and texture, not color noise",
+    "Accent is scarce — brand colors appear at decision points, not everywhere",
+    "AURA is intentional — teal signals intelligence, not decoration; confined to AI features",
+    "Luxury is created by restraint — fewer colors, better relationships",
+    "Men is differentiated, not separated — shared foundations, expression-specific accents",
+    "Women is editorial, not sugary — rose gold as accent, not background",
+    "Technology remains quiet — no neon, no cyber, no electric; AI feels human",
+    "Photography leads — color system serves imagery, never competes",
+    "Accessibility is baseline — every combination validated, not assumed"
+  ],
+  "implementation_status": "NOT_IMPLEMENTED"
+}

@@ -1,7 +1,6 @@
 // frontend/lib/screens/provider_detail_screen.dart
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
 import '../services/analytics_service.dart';
@@ -191,22 +190,36 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
     }).toList();
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFAF8F5),
       body: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
           // Cabecera de Alto Impacto con Parallax y Desvanecimiento al Desplazar
           SliverAppBar(
             expandedHeight: 280,
             pinned: true,
             elevation: 0,
-            backgroundColor: AppTheme.surface,
+            backgroundColor: const Color(0xFF1F1A15),
             foregroundColor: Colors.white,
+            title: const Text(
+              'Perfil del Profesional',
+              style: TextStyle(
+                fontFamily: 'CormorantGaramond',
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+                color: Colors.white,
+                shadows: [
+                  Shadow(color: Colors.black87, blurRadius: 6),
+                ],
+              ),
+            ),
+            centerTitle: true,
             leading: Padding(
               padding: const EdgeInsets.all(8.0),
               child: CircleAvatar(
-                backgroundColor: AppTheme.surface.withValues(alpha: 0.9),
+                backgroundColor: Colors.black.withValues(alpha: 0.4),
                 child: IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.black),
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
                   onPressed: () => Navigator.pop(context),
                 ),
               ),
@@ -419,63 +432,125 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Botones rápidos
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => ChatScreen(
-                                      partnerId: widget.providerId,
-                                      partnerName: p['business_name'] ??
-                                          p['full_name'] ??
-                                          'Prestador',
-                                      partnerRole: 'provider',
-                                      partnerAvatar: p['avatar_url'],
-                                    ),
-                                  ),
-                                );
-                              },
-                              icon: const Icon(
-                                  Icons.chat_bubble_outline_rounded,
-                                  size: 18),
-                              label: const Text('Chatear'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppTheme.primary,
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(30),
-                                ),
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 12),
-                              ),
-                            ),
+                      // Tarjeta de Horarios y Cobertura Profesional
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: const Color(0xFFE8DFD8),
+                            width: 1,
                           ),
-                        ],
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x06000000),
+                              blurRadius: 12,
+                              offset: Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFAF6F0),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Icon(Icons.schedule_outlined,
+                                      size: 18, color: Color(0xFFC5A052)),
+                                ),
+                                const SizedBox(width: 12),
+                                const Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Horario de Atención',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                          color: Color(0xFF1F1A15),
+                                        ),
+                                      ),
+                                      SizedBox(height: 2),
+                                      Text(
+                                        'Lunes a Sábado: 8:00 AM – 7:00 PM',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Color(0xFF6B5E55),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const Divider(height: 20, color: Color(0xFFF0EAE3)),
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFAF6F0),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Icon(Icons.shield_outlined,
+                                      size: 18, color: Color(0xFFC5A052)),
+                                ),
+                                const SizedBox(width: 12),
+                                const Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Garantía y Protocolo GlowApp',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                          color: Color(0xFF1F1A15),
+                                        ),
+                                      ),
+                                      SizedBox(height: 2),
+                                      Text(
+                                        'Bioseguridad certificada · Pago seguro en custodia',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Color(0xFF6B5E55),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 28),
+                      const SizedBox(height: 24),
 
                       // Sobre nosotros
                       if (p['description'] != null &&
                           p['description'].toString().trim().isNotEmpty) ...[
                         const Text(
-                          'Sobre nosotros',
+                          'Sobre el Profesional',
                           style: TextStyle(
-                              fontSize: 18,
+                              fontFamily: 'CormorantGaramond',
+                              fontSize: 20,
                               fontWeight: FontWeight.bold,
-                              letterSpacing: -0.5),
+                              color: Color(0xFF1F1A15),
+                              letterSpacing: -0.3),
                         ),
                         const SizedBox(height: 8),
                         Text(
                           p['description'],
                           style: const TextStyle(
-                              fontSize: 14, height: 1.6, color: Colors.black87),
+                              fontSize: 14, height: 1.6, color: Color(0xFF4A4036)),
                         ),
-                        const SizedBox(height: 28),
+                        const SizedBox(height: 24),
                       ],
 
                       // Servicios
@@ -570,6 +645,10 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: const Color(0xFFE8DFD8).withOpacity(0.6),
+                                  width: 1,
+                                ),
                                 boxShadow: const [
                                   BoxShadow(
                                     color: Color(0x0A000000),
@@ -578,79 +657,124 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                   ),
                                 ],
                               ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            s['name'] ?? '',
-                                            style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 16),
-                                          ),
+                              child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(20),
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => BookingScreen(
+                                          providerId: widget.providerId,
+                                          providerName: p['business_name'] ?? p['full_name'] ?? 'Prestador',
+                                          services: services,
+                                          initialServiceId: s['id']?.toString(),
                                         ),
-                                        Text(
-                                          '\$${_num(s['price']).toStringAsFixed(0)}',
-                                          style: const TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold,
-                                              color: AppTheme.primary),
-                                        ),
-                                      ],
-                                    ),
-                                    if (s['description'] != null &&
-                                        s['description']
-                                            .toString()
-                                            .trim()
-                                            .isNotEmpty) ...[
-                                      const SizedBox(height: 6),
-                                      Text(
-                                        s['description'],
-                                        style: TextStyle(
-                                            color: Colors.grey[600],
-                                            fontSize: 13,
-                                            height: 1.4),
                                       ),
-                                    ],
-                                    const SizedBox(height: 12),
-                                    Row(
+                                    );
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        const Icon(Icons.access_time,
-                                            size: 16, color: Colors.grey),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          '${s['duration_minutes']} min',
-                                          style: TextStyle(
-                                              color: Colors.grey[600],
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w500),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                s['name'] ?? '',
+                                                style: const TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 16,
+                                                    color: Color(0xFF1F1A15)),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              '\$${_num(s['price']).toStringAsFixed(0)}',
+                                              style: const TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Color(0xFFC5A052)),
+                                            ),
+                                          ],
                                         ),
-                                        if (s['category'] != null &&
-                                            s['category']
+                                        if (s['description'] != null &&
+                                            s['description']
                                                 .toString()
                                                 .trim()
                                                 .isNotEmpty) ...[
-                                          const SizedBox(width: 12),
-                                          const Icon(Icons.style_outlined,
-                                              size: 16, color: Colors.grey),
-                                          const SizedBox(width: 4),
+                                          const SizedBox(height: 6),
                                           Text(
-                                            s['category'],
+                                            s['description'],
                                             style: TextStyle(
                                                 color: Colors.grey[600],
                                                 fontSize: 13,
-                                                fontWeight: FontWeight.w500),
+                                                height: 1.4),
                                           ),
                                         ],
+                                        const SizedBox(height: 12),
+                                        Row(
+                                          children: [
+                                            const Icon(Icons.access_time,
+                                                size: 15, color: Colors.grey),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              '${s['duration_minutes']} min',
+                                              style: TextStyle(
+                                                  color: Colors.grey[600],
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w500),
+                                            ),
+                                            if (s['category'] != null &&
+                                                s['category']
+                                                    .toString()
+                                                    .trim()
+                                                    .isNotEmpty) ...[
+                                              const SizedBox(width: 12),
+                                              const Icon(Icons.style_outlined,
+                                                  size: 15, color: Colors.grey),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                s['category'],
+                                                style: TextStyle(
+                                                    color: Colors.grey[600],
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.w500),
+                                              ),
+                                            ],
+                                            const Spacer(),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFFC5A052).withOpacity(0.12),
+                                                borderRadius: BorderRadius.circular(12),
+                                              ),
+                                              child: const Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Text(
+                                                    'Agendar',
+                                                    style: TextStyle(
+                                                      fontSize: 11.5,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: Color(0xFF9E7C33),
+                                                    ),
+                                                  ),
+                                                  SizedBox(width: 2),
+                                                  Icon(Icons.arrow_forward_ios_rounded, size: 10, color: Color(0xFF9E7C33)),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ],
                                     ),
-                                  ],
+                                  ),
                                 ),
                               ),
                             )),
@@ -1041,182 +1165,609 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                   ),
                 ),
               ]),
-          ),
-        ],
-      ),
-      bottomNavigationBar: Container(
-        padding: EdgeInsets.only(
-          left: 20,
-          right: 20,
-          bottom: MediaQuery.of(context).padding.bottom + 12,
-          top: 12,
-        ),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Color(0x0A000000),
-              blurRadius: 16,
-              offset: Offset(0, -4),
             ),
           ],
         ),
-        child: ElevatedButton(
-          onPressed: () async {
-            final token = await AuthService.getToken();
-            if (token == null) {
-              if (context.mounted) {
-                Navigator.pushNamed(context, '/login');
-              }
-              return;
-            }
-            if (context.mounted) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => BookingScreen(
-                    providerId: widget.providerId,
-                    providerName:
-                        p['business_name'] ?? p['full_name'] ?? 'Prestador',
-                    services: services,
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Container(
+          height: 76,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          decoration: const BoxDecoration(
+            color: Color(0xFFFAF8F5),
+            boxShadow: [
+              BoxShadow(
+                color: Color(0x0A000000),
+                blurRadius: 16,
+                offset: Offset(0, -4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              // Botón Secundario: Consulta Pre-Reserva Híbrida
+              Expanded(
+                flex: 3,
+                child: SizedBox(
+                  height: 52,
+                  child: OutlinedButton.icon(
+                    onPressed: () => _showQuickInquirySheet(context, p, services),
+                    icon: const Icon(Icons.help_outline_rounded,
+                        size: 18, color: Color(0xFFC5A052)),
+                    label: const Text(
+                      'Consulta',
+                      style: TextStyle(
+                        fontFamily: 'CormorantGaramond',
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFFC5A052),
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFFC5A052), width: 1.5),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                    ),
                   ),
                 ),
-              );
-            }
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppTheme.primary,
-            foregroundColor: Colors.white,
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30),
-            ),
-            padding: const EdgeInsets.symmetric(vertical: 16),
-          ),
-          child: const Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.calendar_today_outlined, size: 18),
-              SizedBox(width: 8),
-              Text(
-                'RESERVAR CITA (WOMPI)',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
+              ),
+              const SizedBox(width: 12),
+              // Botón Primario Dominante: Agendar Cita
+              Expanded(
+                flex: 7,
+                child: Container(
+                  height: 52,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFF3D59B), Color(0xFFC5A052)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFC5A052).withValues(alpha: 0.35),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: ElevatedButton.icon(
+                    onPressed: () async {
+                      final token = await AuthService.getToken();
+                      if (token == null) {
+                        if (context.mounted) {
+                          Navigator.pushNamed(context, '/login');
+                        }
+                        return;
+                      }
+                      if (context.mounted) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => BookingScreen(
+                              providerId: widget.providerId,
+                              providerName:
+                                  p['business_name'] ?? p['full_name'] ?? 'Prestador',
+                              services: services,
+                            ),
+                          ),
+                        );
+                      }
+                    },
+                    icon: const Icon(Icons.calendar_today_outlined, size: 18, color: Color(0xFF1F1A15)),
+                    label: const Text(
+                      'Agendar Cita',
+                      style: TextStyle(
+                        fontFamily: 'CormorantGaramond',
+                        fontSize: 16.5,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1F1A15),
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
         ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: 'express_booking_4clicks_fab',
-        onPressed: () {
-          final services = (details?['services'] as List?)?.cast<Map<String, dynamic>>() ?? [];
-          final providerName = (details?['business_name'] ?? details?['full_name'] ?? 'Prestador').toString();
-          final firstServiceId = services.isNotEmpty ? services.first['id']?.toString() : null;
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => BookingScreen(
-                providerId: widget.providerId,
-                providerName: providerName,
-                services: services,
-                initialServiceId: firstServiceId,
-              ),
-            ),
-          );
-        },
-        backgroundColor: const Color(0xFFC5A052),
-        icon: const Icon(Icons.bolt, color: Colors.white),
-        label: const Text('Reserva Exprés (4 Clics)', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 12)),
       ),
     );
   }
 
-  Widget _buildAIBanner(BuildContext context, String providerName) {
-    bool isUploading = false;
-    return StatefulBuilder(
-      builder: (context, setBannerState) {
-        return Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFFFFF8F0), Color(0xFFF5E4E0)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-                color: AppTheme.primary.withValues(alpha: 0.3), width: 1.5),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x05000000),
-                blurRadius: 8,
-                offset: Offset(0, 4),
+  void _showQuickInquirySheet(BuildContext context, Map<String, dynamic> p,
+      List<Map<String, dynamic>> services) {
+    final providerName =
+        p['business_name'] ?? p['full_name'] ?? 'Profesional';
+    final TextEditingController queryCtrl = TextEditingController();
+    bool hasLeakageWarning = false;
+
+    bool checkContactLeakage(String text) {
+      final lower = text.toLowerCase();
+      final phoneRegex = RegExp(
+          r'(?:\+?57\s*)?(?:3\d{2}[\s.-]?\d{3}[\s.-]?\d{4}|\b3\d{9}\b|\b[0-9]{7,10}\b)');
+      if (phoneRegex.hasMatch(text)) return true;
+      final keywords = [
+        'whatsapp',
+        'wasap',
+        'wpp',
+        'whap',
+        'wha',
+        'celular',
+        'cel',
+        'telefono',
+        'teléfono',
+        'mi numero',
+        'mi número',
+        'instagram',
+        'ig:',
+        '@',
+        'llamame',
+        'llámame',
+        'por fuera',
+        'en efectivo',
+        'pago directo',
+        'transferencia directa'
+      ];
+      for (final kw in keywords) {
+        if (lower.contains(kw)) return true;
+      }
+      return false;
+    }
+
+    final quickChips = [
+      '¿Tienes disponibilidad hoy o mañana?',
+      '¿El servicio es a domicilio o en sede física?',
+      '¿Qué marcas o productos de belleza utilizas?',
+      '¿Cuánto tiempo aproximado dura este servicio?',
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetCtx) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Container(
+              padding: EdgeInsets.only(
+                top: 16,
+                left: 20,
+                right: 20,
+                bottom: MediaQuery.of(sheetCtx).viewInsets.bottom + 20,
               ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.auto_awesome,
-                      color: AppTheme.primary, size: 20),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      '¿Te interesa el trabajo de $providerName?',
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14.5,
-                          color: Colors.black87),
-                    ),
+              decoration: const BoxDecoration(
+                color: Color(0xFFFAF8F5),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Color(0x20000000),
+                    blurRadius: 20,
+                    offset: Offset(0, -6),
                   ),
                 ],
               ),
-              const SizedBox(height: 6),
-              const Text(
-                'Pregúntale a nuestra IA si sus estilos van con tu rostro y facciones.',
-                style: TextStyle(
-                    fontSize: 12.5, color: Colors.black87, height: 1.35),
-              ),
-              const SizedBox(height: 14),
-              SizedBox(
-                width: double.infinity,
-                child: isUploading
-                    ? const Center(
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(vertical: 8.0),
-                          child: CircularProgressIndicator(
-                              color: AppTheme.primary),
-                        ),
-                      )
-                    : ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.of(context).pushNamed('/ideas');
-                        },
-                        icon: const Icon(Icons.lightbulb_outline, size: 16),
-                        label: const Text(
-                          'Ver Ideas y Visajismo IA',
-                          style: TextStyle(
-                              fontSize: 12.5, fontWeight: FontWeight.bold),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primary,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20)),
-                          padding: const EdgeInsets.symmetric(vertical: 10),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 44,
+                        height: 4.5,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFDCD4CB),
+                          borderRadius: BorderRadius.circular(2.5),
                         ),
                       ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF3D59B).withValues(alpha: 0.3),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.help_outline_rounded,
+                              size: 20, color: Color(0xFFC5A052)),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Consulta Pre-Reserva',
+                                style: TextStyle(
+                                  fontFamily: 'CormorantGaramond',
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF1F1A15),
+                                ),
+                              ),
+                              Text(
+                                'Pregunta sobre los servicios de $providerName',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF6B5E55),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Banner de Garantía y Prevención de Desintermediación
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF2ECE4),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                            color: const Color(0xFFE2D6C8), width: 1),
+                      ),
+                      child: const Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(Icons.shield_rounded,
+                              size: 18, color: Color(0xFF4A5D4E)),
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Tu pago está resguardado por Wompi Bancolombia. Para proteger tu garantía y evitar fraudes, los datos de contacto personal se habilitan al confirmar la reserva.',
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                height: 1.35,
+                                color: Color(0xFF2C3E30),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+
+                    const Text(
+                      'Preguntas Frecuentes (Toca para enviar):',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: Color(0xFF1F1A15),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: quickChips.map((chip) {
+                        return InkWell(
+                          onTap: () {
+                            Navigator.pop(sheetCtx);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ChatScreen(
+                                  partnerId: widget.providerId,
+                                  partnerName: providerName,
+                                  partnerRole: 'provider',
+                                  partnerAvatar: p['avatar_url'],
+                                  initialMessage: '[Consulta Pre-Reserva] $chip',
+                                ),
+                              ),
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                  color: const Color(0xFFC5A052), width: 1),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.flash_on_rounded,
+                                    size: 14, color: Color(0xFFC5A052)),
+                                const SizedBox(width: 6),
+                                Text(
+                                  chip,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF3D2E1E),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 18),
+
+                    const Text(
+                      'O escribe tu duda puntual:',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: Color(0xFF1F1A15),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+
+                    TextField(
+                      controller: queryCtrl,
+                      maxLines: 2,
+                      onChanged: (val) {
+                        final leak = checkContactLeakage(val);
+                        if (leak != hasLeakageWarning) {
+                          setSheetState(() {
+                            hasLeakageWarning = leak;
+                          });
+                        }
+                      },
+                      style: const TextStyle(fontSize: 13.5),
+                      decoration: InputDecoration(
+                        hintText: 'Ej: ¿Tienen parqueadero cerca? ¿Usan tinte sin amoníaco?',
+                        hintStyle: TextStyle(
+                            fontSize: 12, color: Colors.grey[500]),
+                        filled: true,
+                        fillColor: Colors.white,
+                        contentPadding: const EdgeInsets.all(12),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide(
+                            color: hasLeakageWarning
+                                ? Colors.red
+                                : const Color(0xFFE0D7CD),
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide(
+                            color: hasLeakageWarning
+                                ? Colors.red
+                                : const Color(0xFFE0D7CD),
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide(
+                            color: hasLeakageWarning
+                                ? Colors.red
+                                : const Color(0xFFC5A052),
+                            width: 1.5,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    if (hasLeakageWarning) ...[
+                      const SizedBox(height: 6),
+                      const Row(
+                        children: [
+                          Icon(Icons.warning_amber_rounded,
+                              size: 16, color: Colors.red),
+                          SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              'Para proteger tu depósito Wompi, no compartas teléfonos ni redes antes de reservar.',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.red,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: hasLeakageWarning
+                                ? null
+                                : () {
+                                    final text = queryCtrl.text.trim();
+                                    if (text.isEmpty) return;
+                                    Navigator.pop(sheetCtx);
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => ChatScreen(
+                                          partnerId: widget.providerId,
+                                          partnerName: providerName,
+                                          partnerRole: 'provider',
+                                          partnerAvatar: p['avatar_url'],
+                                          initialMessage:
+                                              '[Consulta Pre-Reserva] $text',
+                                        ),
+                                      ),
+                                    );
+                                  },
+                            style: OutlinedButton.styleFrom(
+                              side: BorderSide(
+                                color: hasLeakageWarning
+                                    ? Colors.grey
+                                    : const Color(0xFFC5A052),
+                                width: 1.5,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                            child: const Text(
+                              'Enviar Consulta',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                                color: Color(0xFF8C6F65),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 14),
+                    const Divider(color: Color(0xFFE8DFD8), height: 1),
+                    const SizedBox(height: 14),
+
+                    // Botón Destacado: Agendar Cita
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          Navigator.pop(sheetCtx);
+                          final token = await AuthService.getToken();
+                          if (token == null) {
+                            if (context.mounted) {
+                              Navigator.pushNamed(context, '/login');
+                            }
+                            return;
+                          }
+                          if (context.mounted) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => BookingScreen(
+                                  providerId: widget.providerId,
+                                  providerName: providerName,
+                                  services: services,
+                                ),
+                              ),
+                            );
+                          }
+                        },
+                        icon: const Icon(Icons.calendar_today_outlined,
+                            size: 16, color: Color(0xFF1F1A15)),
+                        label: const Text(
+                          'Prefiero Agendar Cita Ahora',
+                          style: TextStyle(
+                            fontFamily: 'CormorantGaramond',
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1F1A15),
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFF3D59B),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+
+  Widget _buildAIBanner(BuildContext context, String providerName) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFFFF8F0), Color(0xFFF5E4E0)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+            color: AppTheme.primary.withValues(alpha: 0.3), width: 1.5),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x05000000),
+            blurRadius: 8,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.auto_awesome,
+                  color: AppTheme.primary, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '¿Te interesa el trabajo de $providerName?',
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14.5,
+                      color: Colors.black87),
+                ),
               ),
             ],
           ),
-        );
-      },
+          const SizedBox(height: 6),
+          const Text(
+            'Pregúntale a nuestra IA si sus estilos van con tu rostro y facciones.',
+            style: TextStyle(
+                fontSize: 12.5, color: Colors.black87, height: 1.35),
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                Navigator.of(context).pushNamed('/ideas');
+              },
+              icon: const Icon(Icons.lightbulb_outline, size: 16),
+              label: const Text(
+                'Ver Ideas y Visajismo IA',
+                style: TextStyle(
+                    fontSize: 12.5, fontWeight: FontWeight.bold),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primary,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20)),
+                padding: const EdgeInsets.symmetric(vertical: 10),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -1,0 +1,230 @@
+{
+  "registry_name": "Quality Gates Registry",
+  "version": "1.0.0",
+  "last_updated": "2026-08-21",
+  "gates": [
+    {
+      "gate": "G0_SCOPE",
+      "name": "Scope Gate",
+      "trigger": "PR opened / Task started",
+      "input": "Task description, proposed changes, scope definition",
+      "owner": "Design Director (initial), Lead Engineer (technical)",
+      "automated_checks": [
+        "Scope vs SOUL alignment check",
+        "No scope creep detection",
+        "No new authority creation without proper process",
+        "No bypass of Token/TypographyTokens"
+      ],
+      "human_checks": [
+        "Design Director confirms scope alignment with SOUL",
+        "Lead Engineer confirms technical feasibility"
+      ],
+      "pass_criteria": [
+        "Scope is clearly defined and aligned with SOUL principles",
+        "No attempts to create new authorities without governance process",
+        "All changes use existing token/system authorities",
+        "Scope document approved by Design Director"
+      ],
+      "fail_criteria": [
+        "Scope contradicts SOUL principles",
+        "Attempt to bypass Token/TypographyTokens system",
+        "Scope creep detected without proper change classification",
+        "New authority created without following promotion path"
+      ],
+      "artifact": "Scope approval document with SOUL alignment verification",
+      "blocking_status": "YES"
+    },
+    {
+      "gate": "G1_DESIGN",
+      "name": "Design Gate",
+      "trigger": "Design proposal submitted",
+      "input": "Design specifications, mockups, component proposals",
+      "owner": "Design Director, Relevant L1 Governor",
+      "automated_checks": [
+        "Design Review checklist (13 items) auto-validation where possible",
+        "Token usage verification in designs",
+        "Component taxonomy compliance check",
+        "Accessibility preliminary check"
+      ],
+      "human_checks": [
+        "Design Director approval for L1/L2 changes (identity, specifications)",
+        "Relevant L1 Governor approval for specification changes",
+        "Component Governor approval for new components/variants"
+      ],
+      "pass_criteria": [
+        "Design Review checklist passes with >=80% auto-validated items",
+        "All designs use existing tokens and components where applicable",
+        "New components follow official taxonomy",
+        "Accessibility considerations documented"
+      ],
+      "fail_criteria": [
+        "Design Review checklist fails critical items",
+        "Designs introduce arbitrary tokens or hardcoded values",
+        "New components violate taxonomy without justification",
+        "Accessibility violations identified"
+      ],
+      "artifact": "Design approval document with checklist results and governor sign-offs",
+      "blocking_status": "YES"
+    },
+    {
+      "gate": "G2_IMPLEMENTATION",
+      "name": "Implementation Gate",
+      "trigger": "Code complete (PR ready)",
+      "input": "Completed code, implementation specifications",
+      "owner": "Lead Engineer, Component Governor",
+      "automated_checks": [
+        "flutter analyze (0 errors on modified files)",
+        "No hardcoded values scan (colors, spacing, typography)",
+        "Token/component usage verification",
+        "GlowIcon vs Material/Cupertino check",
+        "Token.of(context) usage verification"
+      ],
+      "human_checks": [
+        "Code review by Lead Engineer",
+        "Component Governor review for component usage",
+        "Design Director review for UI/UX fidelity"
+      ],
+      "pass_criteria": [
+        "flutter analyze shows 0 new errors on modified files",
+        "No hardcoded brand colors, spacing, or typography values",
+        "All components use tokens from appropriate authorities",
+        "All icons use GlowIcon system",
+        "Token.of(context) used for all color/typography access"
+      ],
+      "fail_criteria": [
+        "flutter analyze introduces new errors",
+        "Hardcoded values detected in modified files",
+        "Components bypass token system",
+        "Material/Cupertino icons used when GlowIcon equivalent exists",
+        "Direct Theme.of(context) usage for color/typography"
+      ],
+      "artifact": "Implementation approval document with analyze results and code review sign-offs",
+      "blocking_status": "YES"
+    },
+    {
+      "gate": "G3_VALIDATION",
+      "name": "Validation Gate",
+      "trigger": "Pre-merge",
+      "input": "Built application, test suite",
+      "owner": "Quality Governor, Lead Engineer",
+      "automated_checks": [
+        "flutter test (all pass)",
+        "flutter build web --release (success)",
+        "Accessibility automated audit (axe-core style)",
+        "Performance benchmark check",
+        "API contract validation"
+      ],
+      "human_checks": [
+        "Quality Governor validation of test results",
+        "Lead Engineer confirmation of build success"
+      ],
+      "pass_criteria": [
+        "All unit and widget tests pass",
+        "Release build succeeds without errors",
+        "Accessibility audit shows no WCAG AA violations",
+        "Performance benchmarks meet specified budgets",
+        "API contracts validated against specification"
+      ],
+      "fail_criteria": [
+        "Any unit or widget test fails",
+        "Release build fails or produces errors",
+        "Accessibility audit shows WCAG AA violations",
+        "Performance benchmarks exceed specified budgets",
+        "API contract violations detected"
+      ],
+      "artifact": "Validation approval document with test results, build logs, and accessibility report",
+      "blocking_status": "YES"
+    },
+    {
+      "gate": "G4_VISUAL_QA",
+      "name": "Visual QA Gate",
+      "trigger": "Post-build / Pre-release",
+      "input": "Built application for visual inspection",
+      "owner": "Design Director, Quality Governor",
+      "automated_checks": [
+        "Visual regression vs spec (mobile/tablet/desktop)",
+        "Women/Men/AURA parity check",
+        "Component gallery validation",
+        "Responsive layout verification"
+      ],
+      "human_checks": [
+        "Design Director visual sign-off (Women/Men/AURA parity)",
+        "Quality Governor confirmation of automated checks"
+      ],
+      "pass_criteria": [
+        "No visual regressions against approved specifications",
+        "Perfect parity between Women/Men/AURA expressions",
+        "All components display correctly in component gallery",
+        "Responsive layouts work at all breakpoints (0/600/1024/1440)"
+      ],
+      "fail_criteria": [
+        "Visual regressions detected against specifications",
+        "Expression parity violations (Women/Men/AURA differences)",
+        "Component display issues in gallery",
+        "Responsive layout failures at any breakpoint"
+      ],
+      "artifact": "Visual QA approval document with screenshots, parity reports, and responsive test results",
+      "blocking_status": "YES"
+    },
+    {
+      "gate": "G5_APPROVAL",
+      "name": "Approval Gate",
+      "trigger": "All gates PASS",
+      "input": "Gate completion records, validation artifacts",
+      "owner": "Design Director",
+      "automated_checks": [
+        "Gate completion verification (G0-G4 all PASS)",
+        "Version bump decision validation",
+        "Release notes completeness check"
+      ],
+      "human_checks": [
+        "Design Director sign-off (recorded)",
+        "Release approval confirmation"
+      ],
+      "pass_criteria": [
+        "All previous gates (G0-G4) show PASS status",
+        "Version bump decision follows semantic versioning rules",
+        "Release notes document all changes and validation results",
+        "Design Director provides recorded sign-off"
+      ],
+      "fail_criteria": [
+        "Any previous gate shows FAIL_BLOCKING status",
+        "Version bump decision violates semantic versioning",
+        "Release notes incomplete or missing validation results",
+        "Design Director sign-off missing or not recorded"
+      ],
+      "artifact": "Approval record with Design Director sign-off and version decision",
+      "blocking_status": "YES"
+    },
+    {
+      "gate": "G6_DOCUMENTATION",
+      "name": "Documentation Gate",
+      "trigger": "Post-approval",
+      "input": "Approval records, changed specifications, implementation details",
+      "owner": "Technical Writer, Design Director",
+      "automated_checks": [
+        "WHAT/WHY/WHERE/HOW/VALIDATION/DECISION/DATE/VERSION completeness check",
+        "Registry updated verification",
+        "Migration documentation completeness check (if applicable)"
+      ],
+      "human_checks": [
+        "Design Director confirmation of documentation adequacy",
+        "Technical Writer validation of technical accuracy"
+      ],
+      "pass_criteria": [
+        "All required documentation fields present and complete",
+        "Governance registries updated with changes",
+        "Migration documentation complete if legacy systems affected",
+        "Decision log entry created with all required fields"
+      ],
+      "fail_criteria": [
+        "Required documentation fields missing or incomplete",
+        "Governance registries not updated with changes",
+        "Migration documentation missing when legacy systems affected",
+        "Decision log entry missing required fields"
+      ],
+      "artifact": "Complete documentation package with decision log and registry updates",
+      "blocking_status": "YES"
+    }
+  ]
+}

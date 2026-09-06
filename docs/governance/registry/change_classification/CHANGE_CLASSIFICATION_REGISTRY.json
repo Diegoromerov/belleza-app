@@ -1,0 +1,249 @@
+{
+  "registry_name": "Change Classification System",
+  "version": "1.0.0",
+  "last_updated": "2026-08-21",
+  "classes": [
+    {
+      "class": "CLASS_A",
+      "level": "L0",
+      "authority": "SOUL (GLOWAPP SOUL - Master Authority)",
+      "description": "Changes to the fundamental identity, philosophy, and authority hierarchy of GlowApp",
+      "required_evidence": [
+        "SOUL revision proposal document",
+        "Identity impact assessment",
+        "Philosophy alignment verification",
+        "Authority hierarchy change justification",
+        "Market research supporting change",
+        "Director approval for SOUL_REVISION"
+      ],
+      "required_approvals": [
+        "Director (SOUL_REVISION)",
+        "Full governance review (L1-L5 authorities)"
+      ],
+      "validation_gates": [
+        "G0 SCOPE: SOUL alignment check",
+        "G1 DESIGN: Identity and philosophy review",
+        "G2 IMPLEMENTATION: Token and specification updates",
+        "G3 VALIDATION: Full regression test",
+        "G4 VISUAL QA: Identity expression verification",
+        "G5 APPROVAL: Director sign-off",
+        "G6 DOCUMENTATION: SOUL update documentation"
+      ],
+      "rollback_requirements": [
+        "Complete reversion of SOUL changes",
+        "Restoration of previous identity statement",
+        "Reversion of all dependent specification updates",
+        "Database schema revert if applicable"
+      ],
+      "documentation_requirements": [
+        "SOUL v2.0 specification document",
+        "Updated identity statement and philosophy",
+        "Revised authority hierarchy diagram",
+        "Migration guide for all dependent systems",
+        "Breaking change notification to all stakeholders"
+      ]
+    },
+    {
+      "class": "CLASS_B",
+      "level": "L1",
+      "authority": "Specifications (Color, Typography, Photography, UI/Component Language, Icon System, Audience, Data, AI, Quality, Technical, Accessibility, Performance, Security)",
+      "description": "Changes to system-level specifications that define tokens, palettes, fonts, muses, component language, etc.",
+      "required_evidence": [
+        "Specification change proposal",
+        "Backward compatibility analysis",
+        "Impact assessment on consumers",
+        "Accessibility compliance verification",
+        "Performance impact analysis",
+        "Governor approval for change"
+      ],
+      "required_approvals": [
+        "Relevant L1 Governor (Color, Typography, etc.)",
+        "Design Director (for major changes)",
+        "Lead Engineer (for technical specs)"
+      ],
+      "validation_gates": [
+        "G0 SCOPE: Specification alignment check",
+        "G1 DESIGN: Specification compliance review",
+        "G2 IMPLEMENTATION: Token/system updates verification",
+        "G3 VALIDATION: Consumer compatibility test",
+        "G4 VISUAL QA: Specification expression verification",
+        "G5 APPROVAL: Governor sign-off",
+        "G6 DOCUMENTATION: Specification update documentation"
+      ],
+      "rollback_requirements": [
+        "Revert specification to previous version",
+        "Update all token/system references",
+        "Validate consumer compatibility",
+        "Check for breaking changes in implementation"
+      ],
+      "documentation_requirements": [
+        "Updated specification document",
+        "Token/system migration guide",
+        "Breaking change notice if applicable",
+        "Backward compatibility matrix",
+        "Validation test results"
+      ]
+    },
+    {
+      "class": "CLASS_C",
+      "level": "L2",
+      "authority": "System Authorities (Token class, TypographyTokens class, GlowIconRegistry, AudienceService, etc.)",
+      "description": "Changes to system authority implementations that enforce specifications",
+      "required_evidence": [
+        "System authority change proposal",
+        "Specification compliance verification",
+        "API compatibility analysis",
+        "Performance impact assessment",
+        "Governor approval for change"
+      ],
+      "required_approvals": [
+        "Relevant L2 System Authority Governor",
+        "Lead Engineer (for technical changes)",
+        "Design Director (if affecting user experience)"
+      ],
+      "validation_gates": [
+        "G0 SCOPE: System authority alignment check",
+        "G1 DESIGN: API design review",
+        "G2 IMPLEMENTATION: Code quality and token usage",
+        "G3 VALIDATION: Unit and integration tests",
+        "G4 VISUAL QA: Implementation verification",
+        "G5 APPROVAL: Governor sign-off",
+        "G6 DOCUMENTATION: System authority update documentation"
+      ],
+      "rollback_requirements": [
+        "Revert system authority to previous version",
+        "Validate API compatibility",
+        "Check for breaking changes in dependent components",
+        "Run regression tests"
+      ],
+      "documentation_requirements": [
+        "Updated system authority documentation",
+        "API change notice if applicable",
+        "Migration guide for consumers",
+        "Validation test results",
+        "Performance benchmark results"
+      ]
+    },
+    {
+      "class": "CLASS_D",
+      "level": "L3",
+      "authority": "Components (LuxeComponents, GlowGlassCard, StoreProductCard, ServiceCard, BookingCard, etc.)",
+      "description": "Changes to individual component implementations or additions of new components",
+      "required_evidence": [
+        "Component change/proposal document",
+        "Component taxonomy compliance verification",
+        "Token usage validation",
+        "Accessibility compliance check",
+        "Performance impact assessment",
+        "Component governor approval"
+      ],
+      "required_approvals": [
+        "Component Governor",
+        "Design Director (for new components or major variants)",
+        "Lead Engineer (for technical implementation)"
+      ],
+      "validation_gates": [
+        "G0 SCOPE: Component taxonomy alignment",
+        "G1 DESIGN: Component design review (13-item checklist)",
+        "G2 IMPLEMENTATION: Code quality and token usage",
+        "G3 VALIDATION: Unit tests",
+        "G4 VISUAL QA: Component visual verification",
+        "G5 APPROVAL: Component governor sign-off",
+        "G6 DOCUMENTATION: Component documentation update"
+      ],
+      "rollback_requirements": [
+        "Revert component to previous version",
+        "Validate no breaking changes in screens",
+        "Check for token usage compliance",
+        "Run component-specific tests"
+      ],
+      "documentation_requirements": [
+        "Updated component documentation",
+        "Usage examples if new component",
+        "Migration guide if breaking changes",
+        "Visual QA test results",
+        "Accessibility compliance verification"
+      ]
+    },
+    {
+      "class": "CLASS_E",
+      "level": "L4",
+      "authority": "Experience / Screens (HomeScreen, ProviderDetailScreen, BookingScreen, etc.)",
+      "description": "Changes to screen implementations, user flows, or experience specifications",
+      "required_evidence": [
+        "Screen change/user flow proposal",
+        "Specification compliance verification",
+        "User experience impact assessment",
+        "Accessibility compliance check",
+        "Performance impact assessment",
+        "Screen governor approval"
+      ],
+      "required_approvals": [
+        "Screen Governor (if applicable) or Component Governor",
+        "Design Director (for UX changes)",
+        "Lead Engineer (for technical implementation)"
+      ],
+      "validation_gates": [
+        "G0 SCOPE: Screen alignment check",
+        "G1 DESIGN: Screen design review (13-item checklist)",
+        "G2 IMPLEMENTATION: Code quality and component usage",
+        "G3 VALIDATION: Widget tests",
+        "G4 VISUAL QA: Screen visual verification (mobile/tablet/desktop)",
+        "G5 APPROVAL: Screen/component governor sign-off",
+        "G6 DOCUMENTATION: Screen documentation update"
+      ],
+      "rollback_requirements": [
+        "Revert screen to previous version",
+        "Validate no breaking changes in navigation",
+        "Check for component usage compliance",
+        "Run screen-specific tests"
+      ],
+      "documentation_requirements": [
+        "Updated screen documentation",
+        "User flow diagrams if applicable",
+        "Migration guide if breaking changes",
+        "Visual QA test results (all breakpoints)",
+        "Accessibility compliance verification"
+      ]
+    },
+    {
+      "class": "CLASS_F",
+      "level": "L5",
+      "authority": "Implementation (Code, assets, configurations)",
+      "description": "Changes to implementation details that don't affect specifications, authorities, components, or screens",
+      "required_evidence": [
+        "Implementation change proposal",
+        "Code quality verification",
+        "Test coverage assessment",
+        "Performance impact assessment",
+        "Lead engineer approval"
+      ],
+      "required_approvals": [
+        "Lead Engineer",
+        "Component Governor (if affecting components)",
+        "Design Director (if affecting UI/UX)"
+      ],
+      "validation_gates": [
+        "G0 SCOPE: Implementation alignment check",
+        "G1 DESIGN: Design compliance check (if UI-related)",
+        "G2 IMPLEMENTATION: Code quality and best practices",
+        "G3 VALIDATION: Unit and widget tests",
+        "G4 VISUAL QA: Visual verification (if UI-related)",
+        "G5 APPROVAL: Lead engineer sign-off",
+        "G6 DOCUMENTATION: Implementation documentation update"
+      ],
+      "rollback_requirements": [
+        "Revert implementation to previous version",
+        "Validate no breaking changes",
+        "Run affected tests",
+        "Check for performance regressions"
+      ],
+      "documentation_requirements": [
+        "Updated implementation documentation",
+        "Code comments if applicable",
+        "Performance benchmark results",
+        "Test coverage report"
+      ]
+    }
+  ]
+}

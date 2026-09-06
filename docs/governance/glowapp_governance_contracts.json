@@ -1,0 +1,609 @@
+{
+  "phase": "G1_B_GOVERNANCE_CONTRACTS",
+  "status": "DESIGN_COMPLETE_READY_FOR_G1_C",
+  "timestamp": "2026-08-21",
+  "contract_model": {
+    "description": "A Governance Contract is a formal specification defining boundaries, authority, invariants, and validation rules for each system authority in GlowApp.",
+    "mandatory_fields": [
+      "Identity",
+      "Purpose",
+      "Authority",
+      "Source of Truth",
+      "Inputs",
+      "Outputs",
+      "Consumers",
+      "Invariants",
+      "Forbidden Behavior",
+      "Validation",
+      "Version",
+      "Compatibility Rules",
+      "Deprecation Rules",
+      "Exception Mechanism"
+    ]
+  },
+  "contracts": [
+    {
+      "name": "SOUL",
+      "level": "L0",
+      "identity": "SOUL — Master visual, UX, and governance authority",
+      "purpose": "Define the immutable identity, philosophy, and authority hierarchy of GlowApp. All lower authorities derive from SOUL.",
+      "authority": {
+        "level": "L0",
+        "change_requires": ["SOUL_REVISION", "DIRECTOR_APPROVAL", "FULL_VALIDATION"],
+        "examples": ["Identity conflicts", "Major version proposals", "Governance rule changes", "Authority hierarchy changes"]
+      },
+      "source_of_truth": ["docs/design/GLOWAPP_SOUL.md", "glowapp_soul.json"],
+      "inputs": ["Identity conflicts", "Major version proposals", "Governance rule changes", "Authority hierarchy changes"],
+      "outputs": ["Updated SOUL specification", "Version bump", "Cascading spec updates"],
+      "consumers": ["All L1-L5 authorities", "AI agents", "Design Director", "Lead Engineer"],
+      "invariants": [
+        "One Brand, Multiple Expressions (Women/Men/AURA/Concierge are expressions, not brands)",
+        "Photography Leads (Color, Typography, UI serve imagery)",
+        "Two Voices (Cormorant + Manrope + JetBrains Mono — no third font)",
+        "Surface Before Decoration (Hierarchy through elevation, not color noise)",
+        "AURA Is Intelligence Layer (Aura Teal accent only, not visual theme)",
+        "Accessibility By Default (Validated, not claimed)",
+        "Governance Over Preference (Process over impulse)"
+      ],
+      "forbidden_behavior": [
+        "Silent SOUL modification without formal revision",
+        "Lower level contradicting higher level",
+        "Adapting SOUL to match non-compliant code",
+        "Creating separate Women/Men/AURA design systems",
+        "Third font family"
+      ],
+      "validation": ["Director sign-off at SOUL_REVISION gate", "Quarterly identity audit"],
+      "version": "SOUL v1.0 (CONSOLIDATED)",
+      "versioning_format": "MAJOR.MINOR.PATCH",
+      "compatibility_rules": "MAJOR = structural identity change (full revalidation). MINOR = adjustments without identity change. PATCH = fixes.",
+      "deprecation_rules": "SOUL elements deprecated via IDENTIFY -> AUDIT -> MARK -> MIGRATE -> VERIFY -> REMOVE",
+      "exception_mechanism": "EXCEPTION_REGISTRY required (problem, reason, area, temp/perm, risk, approval, expiration). Never silent."
+    },
+    {
+      "name": "COLOR",
+      "level": "L1",
+      "identity": "COLOR — S1 Color System Authority",
+      "purpose": "Single source of truth for all color tokens, palettes, semantic mappings, and expression variants. Prevents arbitrary colors, dual authority, hardcoded colors, Token bypass.",
+      "authority": {
+        "level": "L1",
+        "change_requires": ["SOUL_REVISION (palette HEX)", "DIRECTOR_REVIEW (semantic tokens)"],
+        "examples": ["New semantic token requests", "Expression variant needs", "Accessibility contrast fixes"]
+      },
+      "source_of_truth": ["docs/design/GLOWAPP_COLOR_SYSTEM.md", "glowapp_color_system.json"],
+      "inputs": ["New semantic token requests", "Expression variant needs", "Accessibility contrast fixes"],
+      "outputs": ["Color tokens (HEX)", "Palette definitions", "Semantic state mappings", "Expression-specific assignments"],
+      "consumers": ["Token class (frontend)", "GlowStoreTokens", "AppTheme", "All UI components", "AI agents"],
+      "invariants": [
+        "Master Palette HEX values locked (Rose Gold #D4AF7A, Champagne #D4AF37, Aura Teal #164C46, Cream Silk #FCF8F6, Obsidian #0A0C10, etc.)",
+        "Neutral Scale: Warm nudes only (nude50-nude900)",
+        "Semantic States: Muted foreground only (Success #059669, Warning #D97706, Error #DC2626, Info #0284C7)",
+        "Gradients: Only purposeful 8 defined gradients",
+        "Shadows: Warm (nude900), never black",
+        "Expression Rules: Women=Rose Gold/Champagne/Warm Brown; Men=Champagne/Warm White/Copper; AURA=Aura Teal accent only",
+        "All color access via Token authority (no hardcoded colors)"
+      ],
+      "forbidden_behavior": [
+        "Arbitrary HEX colors introduced",
+        "Second color authority (no parallel palettes)",
+        "Hardcoded brand colors in components/screens",
+        "Bypassing Token to access colors",
+        "Silent S1 alterations",
+        "#000000 as brand background, #FFFFFF as brand identity",
+        "Cyber Cyan #00E5FF (deprecated)",
+        "Aura Teal on dark backgrounds (1.8:1 contrast fail - documented exception)"
+      ],
+      "validation": ["Token audit at G3 (analyze)", "Visual QA at G4 (Women/Men/AURA parity)", "Contrast audit at release"],
+      "version": "Locked after SOUL v1.0",
+      "compatibility_rules": "New tokens must be semantic, reusable (3+ cases), on 4px scale. No screen-specific tokens.",
+      "deprecation_rules": "Legacy tokens marked @Deprecated with migration path. Priority by impact/risk/leverage.",
+      "exception_mechanism": "Aura Teal dark contrast documented exception (review each release). EXCEPTION_REGISTRY entry required."
+    },
+    {
+      "name": "TYPOGRAPHY",
+      "level": "L1",
+      "identity": "TYPOGRAPHY — S2 Typography System Authority",
+      "purpose": "Single typography authority (TypographyTokens). Defines two voices + data font, semantic scale, expression mapping, contextual API. Prevents arbitrary fonts/sizes/weights, generic serif/sans, third font family.",
+      "authority": {
+        "level": "L1",
+        "change_requires": ["SOUL_REVISION (font family)", "DIRECTOR_REVIEW (scale/weight/voice)"],
+        "examples": ["New semantic token requests", "Contextual expression needs", "Accessibility scaling requirements"]
+      },
+      "source_of_truth": ["docs/design/GLOWAPP_TYPOGRAPHY_SYSTEM.md", "glowapp_typography_system.json"],
+      "inputs": ["New semantic token requests", "Contextual expression needs", "Accessibility scaling requirements"],
+      "outputs": ["TypographyTokens (sole authority)", "TypographyFamilies", "TypographyWeights", "TypographyTokensContext API", "AppTypography bridge (deprecated)"],
+      "consumers": ["All UI components", "Screens", "AppTheme.expression()", "Contextual API consumers"],
+      "invariants": [
+        "Font Families: Cormorant Garamond (Editorial), Manrope (Functional), JetBrains Mono (Data) - EXACTLY THREE",
+        "No third font for AURA/Men/Women",
+        "Display Voice (Cormorant): XL/L/M/S tokens defined",
+        "Heading Scale (Cormorant): H1-H4 defined",
+        "Functional Voice (Manrope): Body Large/Small, Label Large/Small, Button, Navigation, Input, Chip, Badge",
+        "Price Typography (JetBrains Mono): Display/Large/Medium/Small/Micro/Checkout Final",
+        "AURA uses SAME two voices (Cormorant storytelling, Manrope conversational)",
+        "Women/Men differentiation via color/photography/composition/spacing - NOT font family",
+        "Case Rules: Sentence case default, Title Case for brand nouns, Uppercase ONLY for overlines/badges",
+        "Line heights: 1.1-1.6 range per spec",
+        "All typography access via TypographyTokens or context.XContext API"
+      ],
+      "forbidden_behavior": [
+        "Arbitrary font family/size/weight",
+        "Generic 'serif'/'sans' in tokens",
+        "Playfair Display (declared unused)",
+        "Serif in dense UI",
+        "Excessive bold/uppercase",
+        "Third font family for any expression",
+        "Screen-specific typography tokens",
+        "Direct TextStyle construction bypassing tokens"
+      ],
+      "validation": ["Token audit at G3", "Visual QA at G4 (scale, hierarchy, contrast)", "Accessibility scaling test (1.0x-2.0x)"],
+      "version": "Locked after SOUL v1.0",
+      "compatibility_rules": "AppTypography bridge maintained for gradual migration. TypographyTokensContext API for contextual resolution.",
+      "deprecation_rules": "Legacy typography systems (6 parallel) marked for consolidation. Priority by usage frequency.",
+      "exception_mechanism": "None currently registered."
+    },
+    {
+      "name": "PHOTOGRAPHY",
+      "level": "L1",
+      "identity": "PHOTOGRAPHY — S3 Photography System Authority",
+      "purpose": "Single photographic language across all expressions. Defines muses, lighting, composition, domains, retouching policy. Prevents generic substitution, cyberpunk AURA, plastic skin.",
+      "authority": {
+        "level": "L1",
+        "change_requires": ["SOUL_REVISION (muse replacement)", "DIRECTOR_REVIEW (domain/style)"],
+        "examples": ["New domain requirements", "Asset commissioning", "Responsive crop needs", "AURA visual vocabulary"]
+      },
+      "source_of_truth": ["docs/design/GLOWAPP_PHOTOGRAPHY_SYSTEM.md", "glowapp_photography_system.json"],
+      "inputs": ["New domain requirements", "Asset commissioning", "Responsive crop needs", "AURA visual vocabulary"],
+      "outputs": ["Muse definitions", "Lighting specs", "Composition rules", "Aspect ratios", "Retouching policy", "Asset registry"],
+      "consumers": ["Hero sections", "Provider detail", "Booking flow", "AURA screens", "Onboarding", "Design ideas", "Marketing"],
+      "invariants": [
+        "Single photographic language (not 8 different styles)",
+        "Female Muse (Phase 1): Modern femininity + quiet luxury, natural texture, warm lighting",
+        "Male Muse (Phase 1): Arabic/Middle Eastern, bearded, groomed, editorial, age 30-35",
+        "Women Photography: Soft, beauty/ritual, dewy, large diffuse 45°, warm fill, cream/sand backgrounds",
+        "Men Photography: Stronger structure, grooming/tailored, matte, Rembrandt/split acceptable, graphite/obsidian contextual only",
+        "AURA Photography: Light/perception/transformation, concentric circles, fine geometry, Aura Teal accent only, warm base",
+        "Composition: Rule of thirds, 30% min negative space (hero), CTA-safe zones, consistent aspect ratios",
+        "Retouching: Allowed (blemish reduction temporary, tone evening, dust removal, subtle grading). Prohibited (frequency separation, liquify, eye enlargement, reshaping, texture elimination)",
+        "Asset metadata registry required (focal points, safe zones, versioning)"
+      ],
+      "forbidden_behavior": [
+        "Replacing official muse with generic stock",
+        "Pink/washed-out beauty aesthetic (Women)",
+        "Black UI / gold-only / aggressive macho (Men)",
+        "Cyberpunk/neon/HUD/robot AI imagery (AURA)",
+        "Plastic skin / aggressive retouching",
+        "Burned-in text in images",
+        "Single asset for responsive hero (no crop strategy)",
+        "Navigation icons as raster PNG (violates Icon System - requires SVG)"
+      ],
+      "validation": ["Asset audit at G4 (mobile/tablet/desktop, Women/Men/AURA)", "Muse compliance check", "Aspect ratio verification"],
+      "version": "Locked after SOUL v1.0",
+      "compatibility_rules": "Responsive crop strategy (FLUID + ADAPTIVE). Asset versioning in metadata registry.",
+      "deprecation_rules": "Legacy assets (6 logo variants, 3D illustrations in Design Ideas) marked for removal/replacement.",
+      "exception_mechanism": "None currently registered."
+    },
+    {
+      "name": "ICON",
+      "level": "L1",
+      "identity": "ICON — Glow Icon System v1.0 Authority",
+      "purpose": "Single geometry per semantic action. Color varies by audience via S1 Icon Color Roles. Registry is central authority.",
+      "authority": {
+        "level": "L1",
+        "status": "LOCKED",
+        "change_requires": ["ICON_SYSTEM_REVIEW (explicit authorization)"],
+        "examples": ["New semantic action needs", "Accessibility requirements", "Migration phases"]
+      },
+      "source_of_truth": ["docs/design/GLOW_ICON_SYSTEM.md", "glow_icon_system.json"],
+      "inputs": ["New semantic action needs", "Accessibility requirements", "Migration phases"],
+      "outputs": ["GlowIconRegistry (central)", "GlowIconData (SVG/CustomPainter/IconData)", "GlowIcon API", "GlowIconColorRole"],
+      "consumers": ["All UI components", "Navigation", "Buttons", "Cards", "AURA", "Concierge", "Men/Women expressions"],
+      "invariants": [
+        "Monoline, refined, warm, minimal, premium visual language",
+        "Viewport 24x24, stroke base 1.75px, round cap/join, outline style",
+        "Sizes: xs(16), sm(20), md(24-standard), lg(28), xl(32), xxl(40), huge(48)",
+        "Semantic Color Roles per expression (Women: Rose Gold; Men: Champagne; AURA: Aura Teal)",
+        "Inventory: 22 icons (16 Core + 6 Proprietary) - LOCKED",
+        "One geometry per semantic action",
+        "Migration phases: M1-I0->M1-I6 (global only after all pilots approved)"
+      ],
+      "forbidden_behavior": [
+        "Material/Cupertino icons when GlowIcon equivalent exists",
+        "Individual SVG without registry entry",
+        "Duplicate geometries",
+        "Semantically ambiguous icons",
+        "Using 'aura'/'glow'/'glowRecommendation' as universal AI synonyms",
+        "Modifying geometry/stroke/viewport/registry without ICON_SYSTEM_REVIEW"
+      ],
+      "validation": ["Pilot visual validation (A/B/C/D)", "Registry completeness", "No Material/Cupertino leakage"],
+      "version": "v1.0 LOCKED",
+      "compatibility_rules": "Migration by phases with rollback at each phase. Legacy icons classified COMPLIANT/PARTIALLY/NON/LEGACY/EXCEPTION.",
+      "deprecation_rules": "Legacy icons marked in registry with migration path.",
+      "exception_mechanism": "None for v1.0 geometry. New icons require full registry process."
+    },
+    {
+      "name": "COMPONENT",
+      "level": "L2",
+      "identity": "COMPONENT — S4 UI Component Language Authority",
+      "purpose": "Defines official component taxonomy, states, variants, patterns. Prevents duplication, single-screen components, bypassing Token system, separate expression frameworks.",
+      "authority": {
+        "level": "L2",
+        "change_requires": ["DIRECTOR_REVIEW (new component)", "DESIGN_REVIEW (variant)"],
+        "examples": ["New component proposals", "Variant requests", "State definitions", "Responsive patterns"]
+      },
+      "source_of_truth": ["docs/design/GLOWAPP_UI_COMPONENT_LANGUAGE.md", "glowapp_ui_component_language.json"],
+      "inputs": ["New component proposals", "Variant requests", "State definitions", "Responsive patterns"],
+      "outputs": ["Component registry", "State specifications", "Variant definitions", "Composition patterns"],
+      "consumers": ["All screens", "Feature teams", "AI agents", "Design Director"],
+      "invariants": [
+        "Taxonomy: Foundation -> Navigation -> Content -> Action -> Form -> Feedback -> Overlay -> Commerce -> Booking -> Concierge -> AURA -> Audience",
+        "Card vs Container vs Section vs List Item vs Editorial Block - distinct purposes",
+        "Card: Interactive + metadata + action. Radius 16px (lg), padding 16 default, full bleed image",
+        "Button Variants: Primary/Secondary/Tertiary/Ghost/Icon/Destructive (max 6). Heights 52/48/44/40/48/48. Radius 12/12/12/8/12/12",
+        "CTA: One primary per screen. Sticky bottom mobile. L3 surface. Prohibited: multiple primaries, CTA in card grids",
+        "Navigation: Bottom Nav (3-5 items, GlowIcon md), Top Nav, Tabs (3px indicator), Audience toggle",
+        "App Bar: Default/Transparent/Store/Detail/AURA/Women/Men/Concierge variants defined",
+        "Hero: Hero/Editorial/Service/Product/AURA types with aspect ratios, negative space, CTAs",
+        "Commerce: ProductCard (1:1/4:5), PriceDisplay (JetBrains Mono, COP format), Checkout steps defined",
+        "Booking: Concierge feel. Editorial cards, calendar, time chips, map, editorial summary, Wompi",
+        "Concierge: Personal/human. L2 glass, radius 16, avatar 32px, bubbles radius 20",
+        "AURA UI: Quiet Intelligence. Aura Teal accent only. AuraSurface/L2 glass. Organic geometry. No cyberpunk.",
+        "Women/Men UI: Differentiation via color/photo/composition/spacing - NOT separate frameworks",
+        "States: DEFAULT, HOVER, PRESSED, FOCUSED, SELECTED, DISABLED, LOADING, SUCCESS, ERROR, WARNING",
+        "Glass/Blur: Never default. Only over photography or contextual depth. Blur 10-20px, opacity 60-85%",
+        "Motion: micro:100, short:200, standard:300, long:500, hero:800. Standard easing. Avoid bouncy/gamer/excessive",
+        "Responsive: Mobile/Tablet/Desktop defined. FLUID + ADAPTIVE. Breakpoints: 0/600/1024/1440"
+      ],
+      "forbidden_behavior": [
+        "Single-screen components",
+        "Components duplicating existing behavior",
+        "Separate Women/Men/AURA component frameworks",
+        "Components bypassing Token system",
+        "Visual tweak variants without semantic difference",
+        "More than 6 variants per component",
+        "Non-semantic variant naming (Blue/Large/Left)",
+        "Arbitrary states",
+        "Default glass/blur style",
+        "Bouncy/gamer/excessive motion",
+        "Layouts exclusively for one resolution"
+      ],
+      "validation": ["G0-G6 gates", "Design Review checklist (13 items)", "Visual QA at G4 (mobile/tablet/desktop, Women/Men/AURA)"],
+      "version": "Component additions = MINOR. API breaking = MAJOR.",
+      "compatibility_rules": "New components must use existing tokens. Variants must have semantic justification.",
+      "deprecation_rules": "Legacy components (GlowGlassCard vs GlassCard, 40+ screens on legacy AppTheme) marked for consolidation.",
+      "exception_mechanism": "EXCEPTION_REGISTRY for third-party integration constraints."
+    },
+    {
+      "name": "AUDIENCE",
+      "level": "L2",
+      "identity": "AUDIENCE — Women/Men/Concierge Expression Authority",
+      "purpose": "Governs how Women, Men, Concierge expressions manifest within the master system. Shared foundation, differentiated expression.",
+      "authority": {
+        "level": "L2",
+        "change_requires": ["DIRECTOR_REVIEW"],
+        "examples": ["Expression differentiation needs", "New content domains", "Photography requirements"]
+      },
+      "source_of_truth": ["S1/S3/S4 expression rules (GLOWAPP_SOUL.md §10, §11, §12, §8.14, §8.15, §8.12)"],
+      "inputs": ["Expression differentiation needs", "New content domains", "Photography requirements"],
+      "outputs": ["Expression rules", "Color assignments", "Photography specs", "Composition rules", "Content domains"],
+      "consumers": ["Token.women/Token.men/Token.aura", "AudienceService", "AppTheme.expression()", "All screens"],
+      "invariants": [
+        "Women: Modern femininity + quiet luxury. Rose Gold/Warm Brown/Champagne. Female muse. Softer composition. Skincare/hair/nails/makeup/fragrance/body/spa/wellness.",
+        "Men: Quiet masculine luxury. Champagne/Warm White/Copper. Male muse. Stronger structure, matte. Beard/shave/hair/scalp/fragrance/body/grooming/wellness.",
+        "Concierge: Personal, human, attentive. Not call center. L2 glass, Cormorant display.",
+        "Shared (NOT differentiated): Foundation tokens, component structure, interaction patterns, Icon geometry, navigation architecture",
+        "Prohibited: Separate architecture, component library, token system, navigation. Black UI default (Men). Gold-only accents (Men). Aggressive/macho (Men). Pink beauty app (Women)."
+      ],
+      "forbidden_behavior": [
+        "Independent Women/Men/AURA design systems",
+        "Black UI as Men brand default",
+        "Gold-only accents for Men",
+        "Separate component framework for any expression",
+        "Expression differentiation via font family"
+      ],
+      "validation": ["Visual QA at G4 (Women/Men/AURA parity)", "Expression toggle testing", "No independent system leakage"],
+      "version": "Expression adjustments = MINOR. Architecture change = MAJOR.",
+      "compatibility_rules": "AudienceService.currentAudience drives Token.women/Token.men/Token.aura resolution.",
+      "deprecation_rules": "Legacy expression code (MensTheme, separate tokens) marked for migration.",
+      "exception_mechanism": "None currently registered."
+    },
+    {
+      "name": "DATA",
+      "level": "L2",
+      "identity": "DATA — Data Domain Authority",
+      "purpose": "Single source of truth per domain. Clear ownership, persistence, lifecycle, privacy, lineage. Prevents duplicate entities, derived data without authority, ownership gaps.",
+      "authority": {
+        "level": "L2",
+        "change_requires": ["DIRECTOR_REVIEW (schema)", "DESIGN_REVIEW (derived data)"],
+        "examples": ["Schema changes", "Migration proposals", "AI data needs", "Privacy requirements", "CRUD ownership changes"]
+      },
+      "source_of_truth": ["PostgreSQL database (canonical)", "docs/audit/glowapp_data_map.json (audit evidence)"],
+      "inputs": ["Schema changes", "Migration proposals", "AI data needs", "Privacy requirements", "CRUD ownership changes"],
+      "outputs": ["Table schemas", "Migration scripts", "CRUD authority matrix", "Privacy classifications", "Lineage docs"],
+      "consumers": ["Backend controllers", "Frontend services", "AI/RAG pipeline", "Analytics", "Compliance"],
+      "invariants": [
+        "PostgreSQL = single Source of Truth for persistent data",
+        "Each domain has ONE authoritative table",
+        "CRUD ownership explicit (no multiple writers without coordination)",
+        "Monetary integrity via DB trigger (calc_booking_split: 12%/8%/80%)",
+        "Biometric consent: partial unique index (single active)",
+        "Knowledge embeddings: traceability columns (document_id, chunk_id, content_hash, fuente, seccion)",
+        "RAG query logs: full traceability (traceId, params, scores)",
+        "Frontend state = CACHED/DERIVED only (SharedPreferences, FlutterSecureStorage)",
+        "Dual storage conflicts documented (Provider portfolio, Biometric, Frontend models)"
+      ],
+      "forbidden_behavior": [
+        "Creating duplicate tables for same domain",
+        "Derived data without documented authority",
+        "Multiple writers without coordination",
+        "Bypassing DB triggers for monetary calculations",
+        "Storing biometric images without retention policy",
+        "AI results without traceability",
+        "Silent schema changes without migration",
+        "Personal data without privacy classification"
+      ],
+      "validation": ["Schema audit at G1", "Migration validation at G2", "Integrity check at G3", "Privacy audit at release"],
+      "version": "Schema changes = MAJOR (migration required). Derived data additions = MINOR.",
+      "compatibility_rules": "Migrations: baseline -> inventory -> plan -> pilot -> validation -> rollback -> approval -> documentation.",
+      "deprecation_rules": "Legacy tables (user_biometrics, portafolio_servicios JSONB) marked DEPRECATED. Drop after migration verified.",
+      "exception_mechanism": "EXCEPTION_REGISTRY for third-party constraints (Wompi, NVIDIA API)."
+    },
+    {
+      "name": "AI",
+      "level": "L2",
+      "identity": "AI — AURA / RAG / Intelligence Authority",
+      "purpose": "Governs model, prompt, RAG, embedding, agent, evaluation authority. Human confirmation for critical actions. Traceability mandatory.",
+      "authority": {
+        "level": "L2",
+        "change_requires": ["DIRECTOR_REVIEW (model/prompt/RAG/embedding)", "AURA_GOVERNANCE (agent behavior)"],
+        "examples": ["User queries", "Biometric data", "Booking context", "Knowledge corpus", "Evaluation datasets"]
+      },
+      "source_of_truth": ["docs/audit/GLOWAPP_INTELLIGENCE_MAP.md", "glowapp_intelligence_map.json", "backend services"],
+      "inputs": ["User queries", "Biometric data", "Booking context", "Knowledge corpus", "Evaluation datasets"],
+      "outputs": ["Embeddings (1024d)", "Retrieved chunks", "Agent responses", "Recommendations", "VTO results", "Biometric profiles"],
+      "consumers": ["AURA screens", "Chat", "Search", "Recommendations", "Biometric analysis", "Nail VTO", "Booking assist"],
+      "invariants": [
+        "Model Authority: NVIDIA NV-Embed-QA-E5-v5 (1024d) - external vendor, circuit breaker (3 failures/30s)",
+        "Prompt Authority: Centralized in ragService.js / embeddingService.js - no hardcoded prompts",
+        "RAG Authority: Single canonical pipeline - HNSW vector search (pgvector) -> FTS fallback",
+        "Embedding Authority: embeddingService.js - dimension validation (1024), non-zero check",
+        "Agent Authority: Aura Orchestrator coordinates (Atena, Hermes, Chronos, Hestia). Each agent scoped.",
+        "Evaluation: 30-query dataset, RAGAS metrics (P@5, R@5, MRR, Faithfulness, Answer Relevancy)",
+        "Human Confirmation Required: Payment, Treatment selection, Booking finalization",
+        "Fallback: FTS (tsvector/tsquery) when embeddings fail. Logged with fallback_triggered=true",
+        "Traceability: Full in rag_query_logs (traceId, query, filters, scores, categories, chunks)",
+        "Knowledge Sources: beauty_corpus (MD), SQL seeds, manual additions - single corpus",
+        "Chunking: 500-800 tokens, 50% overlap, content_hash for idempotency"
+      ],
+      "forbidden_behavior": [
+        "Multiple RAG paths / embedding services in production",
+        "Duplicated knowledge sources",
+        "AI decisions without human confirmation for critical actions",
+        "Embedding storage without traceability",
+        "Agent scope creep beyond defined permissions",
+        "Cyberpunk/neon/HUD/robot AURA aesthetics",
+        "Undocumented prompts",
+        "Model swap without evaluation regression"
+      ],
+      "validation": ["69/69 tests PASS (embedding 16, ragLogger 10, ragMetrics 12, ragEvaluator 23, ciRagEvaluation 8)", "Evaluation dataset regression at release"],
+      "version": "Model/embedding change = MAJOR. Prompt/template = MINOR. Agent addition = DIRECTOR_REVIEW.",
+      "compatibility_rules": "Circuit breaker prevents cascade failure. FTS fallback maintains availability.",
+      "deprecation_rules": "Legacy beautyKnowledgeService.js converted to wrapper. Old evaluation datasets archived.",
+      "exception_mechanism": "NVIDIA API dependency (vendor lock-in) documented risk. No immediate alternative."
+    },
+    {
+      "name": "QUALITY",
+      "level": "L3",
+      "identity": "QUALITY — Quality Gates Authority",
+      "purpose": "Minimum gates for every change. Distinguishes blocking vs non-blocking vs pre-existing vs known debt.",
+      "authority": {
+        "level": "L3",
+        "enforced_by": ["CI/CD", "Design Director"],
+        "examples": ["Code changes", "Design proposals", "Migrations", "Experiments"]
+      },
+      "source_of_truth": ["glowapp_governance.json §quality_gates", "Definition of Done (SOUL §24)"],
+      "inputs": ["Code changes", "Design proposals", "Migrations", "Experiments"],
+      "outputs": ["Gate results (PASS/FAIL)", "Regression reports", "Visual QA reports", "Approval records"],
+      "consumers": ["All engineers", "Design Director", "Release process", "AI agents"],
+      "invariants": [
+        "G0 SCOPE: Defined, aligned to SOUL, no scope creep",
+        "G1 DESIGN: Design Review checklist (13 items) PASS, Director approval if required",
+        "G2 IMPLEMENTATION: Code complete, follows tokens/components, no hardcoded values",
+        "G3 VALIDATION: flutter analyze PASS, flutter test PASS, flutter build web --release PASS",
+        "G4 VISUAL QA: Visual regression vs spec. Mobile/Tablet/Desktop. Women/Men/AURA",
+        "G5 APPROVAL: Design Director sign-off",
+        "G6 DOCUMENTATION: WHAT/WHY/WHERE/HOW/VALIDATION/DECISION/DATE/VERSION recorded",
+        "Gates are sequential - cannot skip"
+      ],
+      "classification": {
+        "BLOCKING": "Gate failure -> cannot proceed",
+        "NON_BLOCKING": "Warning/informational (e.g., info/warning in analyze)",
+        "PRE_EXISTING": "Known issues unrelated to current change (e.g., 297 pre-existing analyze issues)",
+        "KNOWN_DEBT": "Documented technical debt with owner/timeline (e.g., legacy components)"
+      },
+      "forbidden_behavior": [
+        "Skipping gates",
+        "Shipping without G5 Director sign-off",
+        "Claiming 'compliant' without validation",
+        "Treating pre-existing issues as current change blockers",
+        "Auto-committing without gate verification"
+      ],
+      "validation": ["Automated (analyze/test/build)", "Manual (Visual QA, Accessibility, Director Review)"],
+      "version": "Gate definitions = SOUL_REVISION for structural, DIRECTOR_REVIEW for thresholds.",
+      "compatibility_rules": "New gates added via MINOR. Gate removal = MAJOR.",
+      "deprecation_rules": "Gates never deprecated, only evolved.",
+      "exception_mechanism": "EXCEPTION_REGISTRY for platform limitations (e.g., web focus styles). Review each release."
+    },
+    {
+      "name": "TECHNICAL",
+      "level": "L4",
+      "identity": "TECHNICAL — Implementation Authority",
+      "purpose": "Standards for Flutter code, tokens, themes, state, architecture. Ensures implementation complies with L0-L3.",
+      "authority": {
+        "level": "L4",
+        "enforced_by": ["Lead Engineer via code review and tooling"],
+        "examples": ["Design specs (L0-L3)", "Component requirements", "Performance needs", "Platform constraints"]
+      },
+      "source_of_truth": ["lib/core/theme/tokens.dart", "lib/core/theme/app_theme.dart", "lib/main.dart", "GlowStoreTokens", "AppTypography"],
+      "inputs": ["Design specs (L0-L3)", "Component requirements", "Performance needs", "Platform constraints"],
+      "outputs": ["Flutter widgets", "Themes", "Tokens", "Services", "Providers", "Screens"],
+      "consumers": ["Runtime app", "Tests", "Build pipeline", "Developers"],
+      "invariants": [
+        "Single Token authority for color/expression",
+        "Single TypographyTokens authority for typography",
+        "AppTheme.expression() builds complete theme with GlowTokensExtension",
+        "AudienceService drives expression switching",
+        "No hardcoded colors/spacing/typography in widgets",
+        "All components use GlowIcon (not Material/Cupertino)",
+        "State via ValueNotifier/Provider - no global mutable singletons",
+        "Secure storage for auth tokens (FlutterSecureStorage)",
+        "API normalization via ApiService._normalizeDynamicUrls()"
+      ],
+      "forbidden_behavior": [
+        "Hardcoded Color(...), TextStyle(...), BorderRadius(...)",
+        "Direct Theme.of(context) color access bypassing Token.of(context)",
+        "Material/Cupertino icons when GlowIcon exists",
+        "Screen-specific tokens",
+        "Duplicate component implementations",
+        "Business logic in UI layer (booking/payment/auth)"
+      ],
+      "validation": ["flutter analyze (0 errors on modified files)", "flutter test (all pass)", "flutter build web --release (success)"],
+      "version": "Implementation evolves with spec. Breaking API = MAJOR.",
+      "compatibility_rules": "Legacy AppTheme/GlowStoreTokens/glow_store_tokens bridges maintained during migration.",
+      "deprecation_rules": "Legacy theme/components marked @Deprecated with migration path.",
+      "exception_mechanism": "Platform-specific workarounds (web focus, secure_storage mock) documented."
+    },
+    {
+      "name": "ACCESSIBILITY",
+      "level": "L2",
+      "identity": "ACCESSIBILITY — Accessibility By Default Authority",
+      "purpose": "Validated (not claimed) accessibility for every component and screen.",
+      "authority": {
+        "level": "L2",
+        "change_requires": ["DESIGN_REVIEW (patterns)", "DIRECTOR_REVIEW (new patterns)"],
+        "examples": ["New components", "Screen compositions", "Motion patterns", "Color contrasts"]
+      },
+      "source_of_truth": ["GLOWAPP_SOUL.md §15", "glowapp_governance.json §accessibility_governance"],
+      "inputs": ["New components", "Screen compositions", "Motion patterns", "Color contrasts"],
+      "outputs": ["Accessibility annotations", "Semantic labels", "Focus styles", "Contrast validations"],
+      "consumers": ["All components", "Screens", "Design Director", "QA"],
+      "invariants": [
+        "Every new component considers: semantic labels, screen reader, keyboard, focus, contrast (WCAG AA), touch target (48dp), text scaling (1.0x-2.0x), motion sensitivity",
+        "Focus: 2px Focus Border (S1 Primary) + 4px offset on ALL interactive",
+        "Contrast: Primary 12.8:1 (Women), Aura Teal light 8.2:1. Aura Teal dark 1.8:1 = documented exception",
+        "No shipping without focus styles on interactive elements",
+        "Respect prefers-reduced-motion"
+      ],
+      "forbidden_behavior": [
+        "Claiming 'compliant' without validation",
+        "Shipping without focus styles",
+        "Aura Teal on dark backgrounds without exception"
+      ],
+      "validation": ["Required at G3 (analyze) and G4 (Visual QA)", "WCAG AA audit + screen reader test at release"],
+      "version": "Pattern additions = MINOR. Standard change = MAJOR.",
+      "compatibility_rules": "Web focus styles exception documented.",
+      "deprecation_rules": "Non-accessible patterns marked for remediation.",
+      "exception_mechanism": "Aura Teal on dark (1.8:1) - documented in S1. Review each release."
+    },
+    {
+      "name": "SECURITY",
+      "level": "L2",
+      "identity": "SECURITY — Data & Auth Security Authority",
+      "purpose": "Protects auth tokens, personal data, payment data, biometric data, AI inputs/outputs.",
+      "authority": {
+        "level": "L2",
+        "change_requires": ["DIRECTOR_REVIEW (auth/payment/biometric changes)"],
+        "examples": ["Auth flows", "Payment integration", "Biometric upload", "AI query logs", "Data export requests"]
+      },
+      "source_of_truth": ["AuthService", "SecureStorageService", "ApiService", "backend controllers", "glowapp_data_map.json §12"],
+      "inputs": ["Auth flows", "Payment integration", "Biometric upload", "AI query logs", "Data export requests"],
+      "outputs": ["Secure storage", "Encrypted transmission", "Access control", "Audit logs"],
+      "consumers": ["All services", "Backend", "Frontend", "Compliance"],
+      "invariants": [
+        "Auth tokens: FlutterSecureStorage (AES encrypted)",
+        "Passwords: bcrypt hash, never logged",
+        "Payment: Wompi PCI compliance, TLS, external_id for idempotency",
+        "Biometric images: HTTPS multipart, user-scoped, retention policy required",
+        "Biometric results: beauty_profiles JSONB, user-scoped, TLS",
+        "Chat: Participant-scoped, TLS + WebSocket",
+        "AI logs: rag_query_logs traceable, admin-scoped",
+        "GDPR/Habeas Data: migrations exist (003, 020, 037) - automation pending"
+      ],
+      "forbidden_behavior": [
+        "Auth tokens in SharedPreferences/plaintext",
+        "Biometric images retained without policy",
+        "Personal data without access control",
+        "Payment data logged",
+        "AI query logs without traceability"
+      ],
+      "validation": ["Security scan at release", "Penetration test annually", "GDPR automation audit quarterly"],
+      "version": "Security patches = PATCH. Architecture changes = MAJOR.",
+      "compatibility_rules": "Backward compatible auth flow. Token rotation supported.",
+      "deprecation_rules": "Legacy auth patterns (non-secure storage) migrated.",
+      "exception_mechanism": "Railway PostgreSQL encryption-at-rest depends on provider config."
+    }
+  ],
+  "versioning_rules": {
+    "PATCH": {
+      "trigger": "Backward-compatible fix, no visual/behavior change",
+      "examples": ["Token correction", "Bug fix", "Accessibility fix", "Perf optimization"],
+      "approval": "DESIGN_REVIEW",
+      "version_bump": "x.y.Z"
+    },
+    "MINOR": {
+      "trigger": "Backward-compatible addition within spec",
+      "examples": ["New variant", "Semantic token", "New icon", "Responsive behavior", "Motion micro"],
+      "approval": "COMPONENT/DIRECTOR_REVIEW",
+      "version_bump": "x.Y.z"
+    },
+    "MAJOR": {
+      "trigger": "Breaking change to spec/identity, requires migration",
+      "examples": ["Palette restructure", "Font family change", "Component API break", "Icon migration phase", "Audience restructure"],
+      "approval": "DIRECTOR_REVIEW + SOUL_REVISION",
+      "version_bump": "X.y.z"
+    },
+    "EXCEPTION": {
+      "trigger": "Temporary deviation for unsolvable case",
+      "examples": ["Legacy screen", "Third-party constraint", "Platform limitation"],
+      "approval": "DIRECTOR_REVIEW + EXCEPTION_REGISTRY",
+      "version_bump": "N/A (flagged)"
+    },
+    "EXPERIMENTAL": {
+      "trigger": "Isolated prototype, not in production",
+      "examples": ["New component prototype", "Motion test", "Alternative layout"],
+      "approval": "DESIGN_REVIEW (proto), DIRECTOR_REVIEW (promote)",
+      "version_bump": "N/A"
+    },
+    "exception_registry_requirements": ["problem", "reason", "affected_area", "temporary_or_permanent", "risk", "approval", "expiration_or_review_date"],
+    "exception_rule": "Never silently become standard. Review date mandatory."
+  },
+  "legacy_rules": {
+    "classifications": [
+      {"name": "COMPLIANT", "definition": "Meets current SOUL", "action": "Maintain"},
+      {"name": "PARTIALLY_COMPLIANT", "definition": "Some gaps, migration planned", "action": "Prioritize by impact/risk/leverage"},
+      {"name": "NON_COMPLIANT", "definition": "Significant gaps, migration required", "action": "Plan migration, no new dependencies"},
+      {"name": "LEGACY", "definition": "Deprecated, awaiting removal", "action": "Mark @Deprecated, document migration path, remove after verified"},
+      {"name": "EXCEPTION", "definition": "Documented deviation with review date", "action": "Track in EXCEPTION_REGISTRY, review at expiration"}
+    ],
+    "process": ["IDENTIFY", "AUDIT", "MARK", "MIGRATE", "VERIFY", "REMOVE"],
+    "rule": "No immediate global migration. No removing without knowing consumers."
+  },
+  "exception_rules": {
+    "exists_when": "Current system cannot solve a real case",
+    "must_register": ["problem", "reason", "affected_area", "temporary_or_permanent", "risk", "approval", "expiration_or_review_date"],
+    "never_silent": "Exceptions never silently become standard",
+    "review_date": "Mandatory - reviewed at each release",
+    "current_exceptions": [
+      "Aura Teal dark contrast (1.8:1)",
+      "NVIDIA vendor lock-in",
+      "Web focus styles",
+      "Railway encryption-at-rest"
+    ]
+  },
+  "quality_score": 170,
+  "final_decision": "READY FOR G1-C",
+  "deliverables": [
+    "docs/governance/GLOWAPP_GOVERNANCE_CONTRACTS.md",
+    "docs/governance/glowapp_governance_contracts.json"
+  ],
+  "next_phase": "G1-C — GOVERNANCE ARCHITECTURE ASSEMBLY (assemble contracts into enforceable architecture, not implementation)"
+}

@@ -1,0 +1,36 @@
+{
+  "objective": "Realizar una auditoría técnica forense, exhaustiva y exclusivamente de lectura sobre el proyecto para determinar la causa de la pantalla blanca en Flutter Web en localhost:8080.",
+  "summary": "La pantalla blanca se debe a una excepción no capturada durante la inicialización del plugin `google_sign_in_web` porque falta la configuración del ClientID para el inicio de sesión con Google. La excepción ocurre en `google_sign_in_web.dart` en la línea 144 y se reporta como un error asíncrono no manejado que detiene la ejecución de la aplicación antes de que se renderice el primer frame.",
+  "root_cause": {
+    "statement": "Falta de ClientID para google_sign_in_web causando Assertion failed no capturado.",
+    "location": "google_sign_in_web.dart:144:9",
+    "impact": "Detiene la ejecución de la aplicación Dart antes del primer frame, provocando pantalla blanca."
+  },
+  "hypothesis_matrix": [
+    {
+      "id": "I",
+      "description": "Trusted Types / CSP / políticas de seguridad del navegador.",
+      "state": "DESCARTADA",
+      "evidence": "No se encontró cabecera Content-Security-Policy en las respuestas HTTP. El error de CSP mencionado en la consola del navegador proviene de una extensión o herramienta externa (simulator.js, contentScript.js), no del servidor ni de la aplicación.",
+      "confidence": "Alta"
+    },
+    {
+      "id": "F",
+      "description": "Problema de compilación/arranque del código Dart.",
+      "state": "CONFIRMADA",
+      "evidence": "El código Dart se compila y se ejecuta, pero falla en tiempo de ejecución debido a una excepción no manejada en un plugin (google_sign_in_web).",
+      "confidence": "Alta"
+    }
+  ],
+  "verification_steps": [
+    "flutter test passed",
+    "flutter analyze no new errors",
+    "flutter build web --release succeeded after freeing disk space",
+    "HTTP GET / returns 200 with correct HTML",
+    "HTTP GET /flutter_bootstrap.js returns 200 (served by flutter dev server)",
+    "Browser console shows unhandled async error: Assertion failed in google_sign_in_web.dart",
+    "No CSP headers in HTTP responses",
+    "Service worker cleanup script present in index.html"
+  ],
+  "verdict": "AUDITORÍA FORENSE COMPLETADA — SIN MODIFICACIONES"
+}

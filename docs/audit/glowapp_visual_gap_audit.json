@@ -1,0 +1,599 @@
+{
+  "audit_version": "0.1",
+  "status": "AUDITED_NO_IMPLEMENTATION",
+  "timestamp": "2026-08-19T14:30:00Z",
+  "overall_coverage": 40,
+  "decision": "OPTION_B_CONSOLIDATION_REFACTOR",
+  "dimensions": [
+    {
+      "name": "Color",
+      "current": 2,
+      "target": 5,
+      "gap": 3,
+      "coverage_pct": 40,
+      "impact": "Critical",
+      "effort": "Medium",
+      "evidence": "31+ distinct color values across 5 parallel token systems (Token, LuxeColors, GlowTokens, GlowStoreTokens, shared/theme); 0 of 8 Target HEX implemented; Dark Mode violates brand rule 4.2"
+    },
+    {
+      "name": "Typography",
+      "current": 2,
+      "target": 5,
+      "gap": 3,
+      "coverage_pct": 35,
+      "impact": "Critical",
+      "effort": "Medium",
+      "evidence": "4 font families declared (Didot, CormorantGaramond, Inter, JetBrainsMono) but AppTypography uses generic 'serif'/'sans'; Target requires Cormorant Garamond (Display) + Manrope (Functional) - neither declared in pubspec.yaml"
+    },
+    {
+      "name": "Spacing",
+      "current": 3,
+      "target": 5,
+      "gap": 2,
+      "coverage_pct": 65,
+      "impact": "High",
+      "effort": "Low",
+      "evidence": "Spacing class (8 values, base-4) vs LuxeSpacing (5 values, base-3.5) - parallel incompatible systems; missing 40, 64, 80 from target scale"
+    },
+    {
+      "name": "Radius",
+      "current": 4,
+      "target": 5,
+      "gap": 1,
+      "coverage_pct": 80,
+      "impact": "Medium",
+      "effort": "Low",
+      "evidence": "Radii class (10 values) well-designed; GlowStoreTokens duplicates 5 values; LuxeCard uses LuxeSpacing.md (10.5) vs Radii.card (16)"
+    },
+    {
+      "name": "Elevation",
+      "current": 3,
+      "target": 5,
+      "gap": 2,
+      "coverage_pct": 60,
+      "impact": "High",
+      "effort": "Low",
+      "evidence": "AppShadow class well-structured (4 levels) but t.shadow uses black (0x0A000000) not warm; target requires 'Soft Warm Elevation' with warm tone"
+    },
+    {
+      "name": "Buttons",
+      "current": 2,
+      "target": 5,
+      "gap": 3,
+      "coverage_pct": 40,
+      "impact": "Critical",
+      "effort": "Medium",
+      "evidence": "4+ button systems (ElevatedButtonTheme, LuxeButton, OutlinedButtonTheme, TextButtonTheme, inline); Primary uses Gold871 not RoseGold; Aura variant missing; radius inconsistent (30px vs 10.5px vs 12px)"
+    },
+    {
+      "name": "Inputs",
+      "current": 3,
+      "target": 5,
+      "gap": 2,
+      "coverage_pct": 65,
+      "impact": "High",
+      "effort": "Low",
+      "evidence": "InputDecorationTheme uses Radii.lg (16px) correctly; but Login/Register use inline InputDecoration with hardcoded colors/borders; focus border uses brandPrimary (Gold871)"
+    },
+    {
+      "name": "Cards",
+      "current": 3,
+      "target": 5,
+      "gap": 2,
+      "coverage_pct": 60,
+      "impact": "High",
+      "effort": "Low",
+      "evidence": "3 systems: CardTheme (Radii.xxl=24px), LuxeCard (LuxeSpacing.md=10.5px), inline Containers; target ~16px (Radii.card)"
+    },
+    {
+      "name": "Navigation",
+      "current": 2,
+      "target": 5,
+      "gap": 3,
+      "coverage_pct": 45,
+      "impact": "Critical",
+      "effort": "Medium",
+      "evidence": "3 BottomNav implementations (main.dart, home_screen.dart, store_screen drawer); 3 AppBar patterns (Theme, SliverAppBar parallax, simple AppBar); no unified component"
+    },
+    {
+      "name": "Iconography",
+      "current": 2,
+      "target": 5,
+      "gap": 3,
+      "coverage_pct": 30,
+      "impact": "High",
+      "effort": "Medium",
+      "evidence": "200+ Material Icons usages; 0 custom SVG icons; 0 icon font; target requires monoline refined line iconography"
+    },
+    {
+      "name": "Logo",
+      "current": 5,
+      "target": 5,
+      "gap": 0,
+      "coverage_pct": 100,
+      "impact": "None",
+      "effort": "None",
+      "evidence": "GlowAppLogo component: single source, explicit asset, 3:1 ratio enforced, colorFilter support"
+    },
+    {
+      "name": "Photography",
+      "current": 3,
+      "target": 5,
+      "gap": 2,
+      "coverage_pct": 60,
+      "impact": "High",
+      "effort": "Low",
+      "evidence": "Photography-first in AuraWelcome, Login, Register; but 2-3 candidate 'official model' photos mixed with generic/3D illustrations; no asset management system"
+    },
+    {
+      "name": "Model",
+      "current": 2,
+      "target": 5,
+      "gap": 3,
+      "coverage_pct": 35,
+      "impact": "High",
+      "effort": "Medium",
+      "evidence": "No official model tracking in code; aura_welcome_background.jpg and register_concierge_background.jpg are candidates; design_ideas_* are 3D illustrations not photography"
+    },
+    {
+      "name": "Aura",
+      "current": 3,
+      "target": 5,
+      "gap": 2,
+      "coverage_pct": 55,
+      "impact": "Medium",
+      "effort": "Medium",
+      "evidence": "AuraWelcomeScreen (photography-first, GlowGlassCard), ResultsScreen (_PassportColors isolated), deepGreen #1C2B26 as Teal approx; missing: halos, geometry, glow components, unified tokens"
+    },
+    {
+      "name": "Decorative Language",
+      "current": 2,
+      "target": 5,
+      "gap": 3,
+      "coverage_pct": 35,
+      "impact": "Medium",
+      "effort": "Medium",
+      "evidence": "Gradients in belleza_luxe_gradients, luxe_components, inline; stars/sparkles in auth screens; no classification (Brand Core/Accent/Noise) applied"
+    },
+    {
+      "name": "Responsive",
+      "current": 3,
+      "target": 5,
+      "gap": 2,
+      "coverage_pct": 60,
+      "impact": "Medium",
+      "effort": "Medium",
+      "evidence": "Breakpoints class exists (mobile=0, tablet=600, desktop=1024, wide=1440) but unused in layouts; StoreScreen has mobile/desktop split in checkout; Home/ProviderDetail not verified"
+    },
+    {
+      "name": "Accessibility",
+      "current": 2,
+      "target": 5,
+      "gap": 3,
+      "coverage_pct": 40,
+      "impact": "Critical",
+      "effort": "Medium",
+      "evidence": "Gold871 on Cream 2.1:1 (fail WCAG AA 4.5:1); Gold871 on White 3.2:1 (fail); focus states only on Inputs; touch targets 48x48 in Theme but LuxeButton doesn't enforce"
+    },
+    {
+      "name": "Design Tokens",
+      "current": 4,
+      "target": 5,
+      "gap": 1,
+      "coverage_pct": 85,
+      "impact": "High",
+      "effort": "Low",
+      "evidence": "Token class comprehensive (colors, spacing, radii, shadows, typography, breakpoints, animation, elevation); but 4 parallel token systems fragment authority"
+    },
+    {
+      "name": "Component Architecture",
+      "current": 3,
+      "target": 5,
+      "gap": 2,
+      "coverage_pct": 60,
+      "impact": "High",
+      "effort": "Medium",
+      "evidence": "Good core (Token, AppTheme, GlowStoreTokens, GlowAppLogo, GlowGlassCard); but duplication: 2 Card systems, 4 Button systems, 3 Nav systems, 2 Spacing/Radius systems"
+    }
+  ],
+  "critical_gaps": [
+    "Target HEX palette (8 colors) not implemented in Token.light",
+    "Manrope + Cormorant Garamond fonts not declared in pubspec.yaml",
+    "Button variants: Primary=RoseGold, Secondary=Cream+RoseGold, Aura=Teal missing",
+    "Navigation: 3 BottomNav + 3 AppBar patterns fragmented",
+    "Shadows use black not warm tone (violates 'Soft Warm Elevation')",
+    "Legacy shared/theme.dart used in 40+ screens",
+    "Iconography: Material Icons only, no custom system",
+    "Accessibility: Gold871 contrast failures on Cream/White",
+    "Aura visual language: no reusable components (halo, glow, geometry)",
+    "Official model photography not systematized"
+  ],
+  "high_impact_levers": [
+    {
+      "rank": 1,
+      "action": "Update Token.light palette to 8 Target HEX values",
+      "files": ["lib/core/theme/tokens.dart"],
+      "impact": "Global - 100% of screens using Token.of(context)",
+      "effort": "Low"
+    },
+    {
+      "rank": 2,
+      "action": "Update AppTheme.light() ColorScheme + Component Themes",
+      "files": ["lib/core/theme/app_theme.dart"],
+      "impact": "Global - Material3 components automatic",
+      "effort": "Low"
+    },
+    {
+      "rank": 3,
+      "action": "Add Manrope + Cormorant to pubspec.yaml + map in AppTypography",
+      "files": ["pubspec.yaml", "lib/core/theme/tokens.dart"],
+      "impact": "Global typography",
+      "effort": "Low"
+    },
+    {
+      "rank": 4,
+      "action": "Migrate ProviderDetailScreen + BookingScreen to Token",
+      "files": ["lib/screens/provider_detail_screen.dart", "lib/screens/booking_screen.dart"],
+      "impact": "High - P0 user flows",
+      "effort": "High"
+    },
+    {
+      "rank": 5,
+      "action": "Consolidate LuxeComponents to Token + Radii + Spacing",
+      "files": ["lib/design/components/luxe_components.dart", "lib/screens/home_screen.dart"],
+      "impact": "Home, Academy, Store partial",
+      "effort": "Medium"
+    },
+    {
+      "rank": 6,
+      "action": "Create unified GlowBottomNav + GlowAppBar components",
+      "files": ["new: lib/widgets/navigation/glow_bottom_nav.dart", "new: lib/widgets/navigation/glow_app_bar.dart"],
+      "impact": "Global navigation",
+      "effort": "Medium"
+    },
+    {
+      "rank": 7,
+      "action": "Adjust shadows to warm (nude900 base)",
+      "files": ["lib/core/theme/tokens.dart"],
+      "impact": "Global elevation",
+      "effort": "Very Low"
+    },
+    {
+      "rank": 8,
+      "action": "Create AuraTokens + AuraComponents (Halo, Glow, Card)",
+      "files": ["new: lib/core/theme/aura_tokens.dart", "new: lib/design/components/aura_components.dart"],
+      "impact": "Aura surfaces",
+      "effort": "Medium"
+    },
+    {
+      "rank": 9,
+      "action": "Eliminate belleza_luxe_theme.dart + shared/theme.dart",
+      "files": ["lib/core/theme/belleza_luxe_theme.dart", "lib/shared/theme.dart"],
+      "impact": "Architecture cleanup",
+      "effort": "Low"
+    },
+    {
+      "rank": 10,
+      "action": "Define monoline icon set + GlowIcon widget",
+      "files": ["new: assets/icons/*.svg", "new: lib/widgets/glow_icon.dart"],
+      "impact": "Future consistency baseline",
+      "effort": "Medium"
+    }
+  ],
+  "preserve": [
+    "lib/core/theme/tokens.dart - Token class structure",
+    "lib/core/theme/app_theme.dart - AppTheme.light()/dark() ThemeData M3",
+    "lib/shared/glow_store_tokens.dart - Audience-aware e-commerce tokens",
+    "lib/widgets/branding/glow_app_logo.dart - Single source logo component",
+    "lib/widgets/glow_glass_card.dart - Parametrized glassmorphism",
+    "lib/shared/mens_theme.dart - Isolated Men audience theme",
+    "lib/screens/ideas/aura_welcome_screen.dart - Photography-first architecture",
+    "lib/screens/store_screen.dart - Checkout monetary integrity",
+    "lib/core/theme/tokens.dart - Radii, Spacing, AppShadow, AnimationTokens, Elevation, Breakpoints classes"
+  ],
+  "refactor": [
+    {
+      "component": "LuxeCard",
+      "file": "lib/design/components/luxe_components.dart",
+      "strategy": "S2 - Migrate to Token + Radii.card (16px) + Spacing"
+    },
+    {
+      "component": "LuxeButton",
+      "file": "lib/design/components/luxe_components.dart",
+      "strategy": "S2 - Add Primary/Secondary/Tertiary/Aura variants using Token colors"
+    },
+    {
+      "component": "LuxeBadge",
+      "file": "lib/design/components/luxe_components.dart",
+      "strategy": "S1 - Adjust tokens"
+    },
+    {
+      "component": "GlowGlassCard",
+      "file": "lib/widgets/glow_glass_card.dart",
+      "strategy": "S1 - borderRadius=Radii.xl (20px), colors=Token"
+    },
+    {
+      "component": "LuxeProgressBar",
+      "file": "lib/design/components/academy_luxe_components.dart",
+      "strategy": "S1 - Move to luxe_components, use tokens"
+    },
+    {
+      "component": "LuxeListTile",
+      "file": "lib/design/components/academy_luxe_components.dart",
+      "strategy": "S1 - Move to luxe_components, use tokens"
+    },
+    {
+      "screen": "ProviderDetailScreen",
+      "file": "lib/screens/provider_detail_screen.dart",
+      "strategy": "S2 - Replace black gradient, specialty colors to token, avatar radius, buttons to theme"
+    },
+    {
+      "screen": "BookingScreen",
+      "file": "lib/screens/booking_screen.dart",
+      "strategy": "S2 - AppBar to theme, stepper progress to RoseGold, CalendarCard border, inputs/buttons to theme"
+    },
+    {
+      "screen": "LoginScreen",
+      "file": "lib/screens/auth/login_screen.dart",
+      "strategy": "S2 - InputDecoration inline to theme, scrim to Token colors, button to theme"
+    },
+    {
+      "screen": "RegisterScreen",
+      "file": "lib/screens/auth/register_screen.dart",
+      "strategy": "S1 - Complete Token migration (already partial)"
+    },
+    {
+      "screen": "ResultsScreen",
+      "file": "lib/screens/ideas/results_screen.dart",
+      "strategy": "S2 - Migrate _PassportColors to Token + GlowStoreTokens.deepGreen"
+    },
+    {
+      "system": "GlowTokens",
+      "file": "lib/shared/glow_tokens.dart",
+      "strategy": "S2 - Reduce to fontFamilies + Token aliases, remove duplicate colors"
+    },
+    {
+      "system": "LuxeColors",
+      "file": "lib/core/theme/belleza_luxe_theme.dart",
+      "strategy": "S4 - Eliminate, migrate consumers to Token"
+    },
+    {
+      "system": "LuxeSpacing",
+      "file": "lib/core/theme/belleza_luxe_theme.dart",
+      "strategy": "S4 - Eliminate, use Spacing exclusively"
+    },
+    {
+      "system": "GlowStoreTokens.radius*",
+      "file": "lib/shared/glow_store_tokens.dart",
+      "strategy": "S1 - Replace with Radii references"
+    }
+  ],
+  "rebuild": [
+    {
+      "area": "Iconography System",
+      "strategy": "S3 - Define SVG monoline set + GlowIcon widget",
+      "reason": "No system exists; 200+ Material Icons usages"
+    },
+    {
+      "area": "BottomNav Unified",
+      "strategy": "S3 - Create GlowBottomNav component",
+      "reason": "3 divergent implementations"
+    },
+    {
+      "area": "AppBar/SliverAppBar System",
+      "strategy": "S3 - Create GlowAppBar + GlowSliverAppBar",
+      "reason": "3 divergent patterns"
+    },
+    {
+      "area": "Official Model Asset Pipeline",
+      "strategy": "S3 - Create ModelAsset enum + ModelImage widget",
+      "reason": "No tracking system; assets mixed"
+    },
+    {
+      "area": "Aura Visual Language",
+      "strategy": "S3 - Create AuraTokens + AuraHalo/Glow/Geometry components",
+      "reason": "Dispersed components, no unified language"
+    },
+    {
+      "area": "Typography System Realized",
+      "strategy": "S1+S3 - Add fonts to pubspec + map AppTypography to real families",
+      "reason": "Fonts declared but not in pubspec; generic 'serif'/'sans' in tokens"
+    },
+    {
+      "area": "Responsive Breakpoints Integration",
+      "strategy": "S1 - Use Breakpoints in key layouts",
+      "reason": "Breakpoints class exists but unused"
+    },
+    {
+      "area": "Focus/Accessibility System",
+      "strategy": "S3 - FocusTheme global, warm focus rings, semantic audit",
+      "reason": "Focus only on Inputs; contrast failures"
+    }
+  ],
+  "assets_missing": [
+    "Manrope font (Variable w400-w700) - Functional UI target",
+    "Cormorant Garamond font (w300-w700) - Brand/Display target",
+    "JetBrains Mono font - Data/Metadata (declared but not in pubspec)",
+    "Inter font - Current Functional (declared but not in pubspec)",
+    "Didot/PlayfairDisplay fonts - Legacy Display (declared but not in pubspec)",
+    "Monoline refined icon set (SVG/Font) - 100+ icons",
+    "Official model photography set (8-12 photos: hero, login, register, aura, onboarding)",
+    "Aura halo/glow/geometry assets (SVG/PNG)",
+    "Rose Gold gradient assets (or CSS gradients via tokens)"
+  ],
+  "architecture_findings": [
+    {
+      "id": "A-01",
+      "title": "3+ Parallel Token Systems",
+      "category": "Architectural",
+      "description": "Token, LuxeColors, GlowTokens, GlowStoreTokens, shared/theme.dart all define colors; 3 spacing systems, 2 radius systems",
+      "evidence": "5 files define colors, 31+ distinct beige/gold values"
+    },
+    {
+      "id": "A-02",
+      "title": "Legacy Theme in 40+ Screens",
+      "category": "Architectural",
+      "description": "shared/theme.dart (hardcoded colors) imported alongside modern Token in main.dart and used across provider_detail, booking, login, register, provider_dashboard, etc.",
+      "evidence": "main.dart imports both; 40+ screens reference AppTheme.* or LuxeColors.*"
+    },
+    {
+      "id": "A-03",
+      "title": "Component Duplication",
+      "category": "Systemic",
+      "description": "2 Card systems (CardTheme, LuxeCard), 4 Button systems (Elevated/Outlined/TextButtonTheme, LuxeButton, inline), 3 Nav systems",
+      "evidence": "LuxeCard vs CardTheme radii differ (10.5 vs 24); LuxeButton 3 variants vs Theme 3 types"
+    },
+    {
+      "id": "A-04",
+      "title": "Hardcoded Values in Components",
+      "category": "Systemic",
+      "description": "LuxeSpacing (6.5/10.5/14/17/24) vs Spacing (4/8/12/16/20/24/32/48); LuxeButton padding/radius hardcoded",
+      "evidence": "LuxeButton uses 16/12 padding, 10.5px radius; Theme uses Spacing.xl/Spacing.md, Radii.round (30px)"
+    },
+    {
+      "id": "A-05",
+      "title": "Typography Not Resolved in Tokens",
+      "category": "Architectural",
+      "description": "AppTypography uses 'serif'/'sans' generic; real mapping happens inline via fontFamily in TextStyle",
+      "evidence": "LuxeTypography.bodyMd uses CormorantGaramond size 15; AppTypography.bodyMedium uses 'sans' size 14"
+    },
+    {
+      "id": "A-06",
+      "title": "Dark Mode Implemented (Brand Violation)",
+      "category": "Brand/Architectural",
+      "description": "Token.dark and MensTheme implement dark mode with black backgrounds; Rule 4.2: 'Negro NO forma parte de la identidad cromática de GlowApp'",
+      "evidence": "Token.dark surface=#2D2523, MensTheme.obsidianBg=#0A0C10"
+    },
+    {
+      "id": "A-07",
+      "title": "Iconography: Material Icons Only",
+      "category": "Architectural",
+      "description": "200+ Icons.* usages; 0 custom SVG; 0 icon font; target requires monoline refined",
+      "evidence": "grep shows Icons.* across all screens"
+    },
+    {
+      "id": "A-08",
+      "title": "Navigation Fragmented",
+      "category": "Architectural",
+      "description": "3 BottomNav implementations, 3 AppBar patterns, no unified component",
+      "evidence": "main.dart BottomNavigationBar, home_screen.dart BottomNavigationBar, store_screen drawer"
+    }
+  ],
+  "implementation_strategy": [
+    {
+      "area": "Color Tokens Core",
+      "classification": "S1",
+      "action": "Update Token.light to Target HEX v0.1"
+    },
+    {
+      "area": "Dark Mode / Token.dark",
+      "classification": "S4",
+      "action": "Eliminate as brand; keep technical compat only"
+    },
+    {
+      "area": "AppTheme (ColorScheme, Components)",
+      "classification": "S1",
+      "action": "Reconfigure primary/secondary/tertiary, buttons, inputs"
+    },
+    {
+      "area": "Typography (Fonts + Mapping)",
+      "classification": "S1+S3",
+      "action": "Add fonts to pubspec; map AppTypography to real families"
+    },
+    {
+      "area": "Spacing System",
+      "classification": "S1",
+      "action": "Eliminate LuxeSpacing; use Spacing exclusively"
+    },
+    {
+      "area": "Radius System",
+      "classification": "S1",
+      "action": "Eliminate GlowStoreTokens.radius*; use Radii exclusively"
+    },
+    {
+      "area": "Shadows",
+      "classification": "S1",
+      "action": "Change shadow/shadowStrong to warm (nude900 base)"
+    },
+    {
+      "area": "Buttons",
+      "classification": "S2",
+      "action": "Refactor Elevated/Outlined/TextButtonTheme + create AuraButtonTheme; deprec LuxeButton"
+    },
+    {
+      "area": "Cards",
+      "classification": "S2",
+      "action": "Refactor LuxeCard to Token + Radii.card (16px); deprec duplicates"
+    },
+    {
+      "area": "Inputs",
+      "classification": "S1",
+      "action": "Verify colors/border/focus use Token; migrate inline InputDecorations"
+    },
+    {
+      "area": "Navigation (BottomNav, AppBar)",
+      "classification": "S3",
+      "action": "Create GlowBottomNav, GlowSliverAppBar, GlowAppBar unified components"
+    },
+    {
+      "area": "Iconography",
+      "classification": "S3",
+      "action": "Define SVG/Font set + GlowIcon widget"
+    },
+    {
+      "area": "Logo/Brand",
+      "classification": "S0",
+      "action": "Maintain GlowAppLogo"
+    },
+    {
+      "area": "Photography/Model",
+      "classification": "S3",
+      "action": "Create ModelAsset system + audit/replace non-official assets"
+    },
+    {
+      "area": "Aura Visual Language",
+      "classification": "S3",
+      "action": "Create AuraTokens + AuraHalo, AuraGlow, AuraCard components"
+    },
+    {
+      "area": "Decorative Language",
+      "classification": "S2",
+      "action": "Audit gradients; keep only Brand Core"
+    },
+    {
+      "area": "Responsive",
+      "classification": "S1",
+      "action": "Use Breakpoints in key layouts; verify mobile/tablet/desktop"
+    },
+    {
+      "area": "Accessibility",
+      "classification": "S3",
+      "action": "Focus system, contrast fixes, touch targets, semantics"
+    },
+    {
+      "area": "Legacy Theme Migration",
+      "classification": "S2/S4",
+      "action": "Screen-by-screen: ProviderDetail(S2), Booking(S2), Login(S2), Register(S1), others(S1)"
+    },
+    {
+      "area": "GlowStoreTokens Alignment",
+      "classification": "S1",
+      "action": "Align refs to new Token names; deprec LuxeColors imports"
+    },
+    {
+      "area": "belleza_luxe_theme.dart",
+      "classification": "S4",
+      "action": "Eliminate file; migrate home_screen, luxe_components"
+    },
+    {
+      "area": "shared/theme.dart",
+      "classification": "S4",
+      "action": "Eliminate file after full migration"
+    },
+    {
+      "area": "_PassportColors",
+      "classification": "S2",
+      "action": "Migrate results_screen to Token + GlowStoreTokens"
+    }
+  ]
+}

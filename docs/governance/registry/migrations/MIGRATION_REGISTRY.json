@@ -1,0 +1,426 @@
+{
+  "registry_name": "Migration Registry",
+  "version": "1.0.0",
+  "last_updated": "2026-08-21",
+  "migrations": [
+    {
+      "migration_id": "TOKEN_CONSOLIDATION",
+      "current_state": "Multiple parallel token systems (LuxeColors, GlowTokens, GlowStoreTokens, MensTheme, BellezaLuxeTokens, shared/theme.dart)",
+      "target_state": "Single Token authority (lib/core/theme/tokens.dart)",
+      "authority": "TOKEN (Color and Typography)",
+      "dependencies": [
+        "Fonts in pubspec.yaml (Cormorant Garamond, Manrope, JetBrains Mono)",
+        "TypographyTokensContext API complete"
+      ],
+      "phases": [
+        {
+          "phase": "M1-I0",
+          "name": "Audit & Map",
+          "deliverable": "Complete inventory of all token consumers",
+          "validation": "Count matches grep results",
+          "rollback": "N/A (read-only)"
+        },
+        {
+          "phase": "M1-I1",
+          "name": "Pilot Plan",
+          "deliverable": "Pilot screens selected, risk assessed",
+          "validation": "Design Review approval",
+          "rollback": "N/A (planning)"
+        },
+        {
+          "phase": "M1-I2",
+          "name": "Pilot A (High Leverage)",
+          "deliverable": "Migrated screens + validation report",
+          "validation": "G0-G6 gates",
+          "rollback": "Git revert pilot commits"
+        },
+        {
+          "phase": "M1-I3",
+          "name": "Pilot B (Medium Leverage)",
+          "deliverable": "Migrated screens + validation report",
+          "validation": "G0-G6 gates",
+          "rollback": "Git revert pilot commits"
+        },
+        {
+          "phase": "M1-I4",
+          "name": "Pilot C (Critical Flow)",
+          "deliverable": "Migrated screens + validation report",
+          "validation": "G0-G6 gates + booking/payment regression",
+          "rollback": "Git revert pilot commits"
+        },
+        {
+          "phase": "M1-I5",
+          "name": "Pilot D (Provider)",
+          "deliverable": "Migrated screens + validation report",
+          "validation": "G0-G6 gates",
+          "rollback": "Git revert pilot commits"
+        },
+        {
+          "phase": "M1-I6",
+          "name": "Global Migration",
+          "deliverable": "All screens migrated + validation report",
+          "validation": "G0-G6 gates + full regression test",
+          "rollback": "Git revert all migration commits (if needed)"
+        }
+      ],
+      "blocking": [
+        "Fonts not in pubspec.yaml",
+        "TypographyTokensContext API incomplete",
+        "Legacy token consumers not mapped"
+      ],
+      "acceptance_criteria": [
+        "All token consumers migrated to Token.authority",
+        "Zero hardcoded color/typography values in migrated code",
+        "All G0-G6 gates pass for migrated code",
+        "No regression in booking/payment flows"
+      ],
+      "owner": "Token Governor (Color and Typography)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "migration_id": "ICON_MIGRATION",
+      "current_state": "198 Material Icons in 39 files",
+      "target_state": "GlowIcon System v1.0 (51 locked SVG icons)",
+      "authority": "ICON SYSTEM (L1 LOCKED)",
+      "dependencies": [
+        "GlowIconRegistry complete",
+        "GlowIcon API updated"
+      ],
+      "phases": [
+        {
+          "phase": "M1-I0",
+          "name": "Audit & Map",
+          "deliverable": "Complete inventory of all Material Icon consumers",
+          "validation": "Count matches grep results",
+          "rollback": "N/A (read-only)"
+        },
+        {
+          "phase": "M1-I1",
+          "name": "Pilot Plan",
+          "deliverable": "Pilot screens selected, risk assessed",
+          "validation": "Design Review approval",
+          "rollback": "N/A (planning)"
+        },
+        {
+          "phase": "M1-I2",
+          "name": "Pilot A (High Leverage)",
+          "deliverable": "Migrated screens + validation report",
+          "validation": "G0-G6 gates",
+          "rollback": "Git revert pilot commits"
+        },
+        {
+          "phase": "M1-I3",
+          "name": "Pilot B (Medium Leverage)",
+          "deliverable": "Migrated screens + validation report",
+          "validation": "G0-G6 gates",
+          "rollback": "Git revert pilot commits"
+        },
+        {
+          "phase": "M1-I4",
+          "name": "Pilot C (Critical Flow)",
+          "deliverable": "Migrated screens + validation report",
+          "validation": "G0-G6 gates + booking/payment regression",
+          "rollback": "Git revert pilot commits"
+        },
+        {
+          "phase": "M1-I5",
+          "name": "Pilot D (Provider)",
+          "deliverable": "Migrated screens + validation report",
+          "validation": "G0-G6 gates",
+          "rollback": "Git revert pilot commits"
+        },
+        {
+          "phase": "M1-I6",
+          "name": "Global Migration",
+          "deliverable": "All screens migrated + validation report",
+          "validation": "G0-G6 gates + full regression test",
+          "rollback": "Git revert all migration commits (if needed)"
+        }
+      ],
+      "blocking": [
+        "Pilots A, B, C, D not approved",
+        "Material Icon consumers not mapped",
+        "Fallback strategy not defined"
+      ],
+      "acceptance_criteria": [
+        "All Material Icon consumers migrated to GlowIcon",
+        "Zero Material/Cupertino icons when GlowIcon equivalent exists",
+        "All G0-G6 gates pass for migrated code",
+        "Icon System Review approval for global migration"
+      ],
+      "owner": "Icon Governor",
+      "status": "NOT_STARTED"
+    },
+    {
+      "migration_id": "MEN_VISUAL_REENGINEERING",
+      "current_state": "MensTheme with cyberCyan, separate Men token system",
+      "target_state": "Token.men / Token.lightMen via Token authority",
+      "authority": "TOKEN (Color) + AUDIENCE",
+      "dependencies": [
+        "Remove cyberCyan from MensTheme",
+        "Token.men and Token.lightMen accessible",
+        "Expression resolution working for Men"
+      ],
+      "phases": [
+        {
+          "phase": "M1-I0",
+          "name": "Audit & Map",
+          "deliverable": "Complete inventory of all MensTheme consumers",
+          "validation": "Count matches grep results",
+          "rollback": "N/A (read-only)"
+        },
+        {
+          "phase": "M1-I1",
+          "name": "Pilot Plan",
+          "deliverable": "Pilot screens selected, risk assessed",
+          "validation": "Design Review approval",
+          "rollback": "N/A (planning)"
+        },
+        {
+          "phase": "M1-I2",
+          "name": "Pilot A (High Leverage)",
+          "deliverable": "Migrated screens + validation report",
+          "validation": "G0-G6 gates",
+          "rollback": "Git revert pilot commits"
+        },
+        {
+          "phase": "M1-I3",
+          "name": "Pilot B (Medium Leverage)",
+          "deliverable": "Migrated screens + validation report",
+          "validation": "G0-G6 gates",
+          "rollback": "Git revert pilot commits"
+        },
+        {
+          "phase": "M1-I4",
+          "name": "Pilot C (Critical Flow)",
+          "deliverable": "Migrated screens + validation report",
+          "validation": "G0-G6 gates + booking/payment regression",
+          "rollback": "Git revert pilot commits"
+        },
+        {
+          "phase": "M1-I5",
+          "name": "Pilot D (Provider)",
+          "deliverable": "Migrated screens + validation report",
+          "validation": "G0-G6 gates",
+          "rollback": "Git revert pilot commits"
+        }
+      ],
+      "blocking": [
+        "cyberCyan not removed from MensTheme",
+        "Token.men / Token.lightMen not properly mapped",
+        "Expression resolution not working for Men context"
+      ],
+      "acceptance_criteria": [
+        "All MensTheme consumers migrated to Token.men/lightMen",
+        "Zero cyberCyan usage in codebase",
+        "Men expression properly resolved via Token.men",
+        "All G0-G6 gates pass for migrated code"
+      ],
+      "owner": "Color Governor + Audience Governor",
+      "status": "PARTIAL (S2-II fixed Token access)"
+    },
+    {
+      "migration_id": "LEGACY_THEME_MIGRATION",
+      "current_state": "shared/theme.dart, glow_tokens.dart, LuxeColors, BellezaLuxeTokens",
+      "target_state": "Token + AppTheme (expression-aware)",
+      "authority": "TOKEN (Color and Typography)",
+      "dependencies": [
+        "Token system complete",
+        "AppTheme.expression() working",
+        "GlowTokensExtension complete"
+      ],
+      "phases": [
+        {
+          "phase": "M1-I0",
+          "name": "Audit & Map",
+          "deliverable": "Complete inventory of all legacy theme consumers",
+          "validation": "Count matches grep results",
+          "rollback": "N/A (read-only)"
+        },
+        {
+          "phase": "M1-I1",
+          "name": "Pilot Plan",
+          "deliverable": "Pilot screens selected, risk assessed",
+          "validation": "Design Review approval",
+          "rollback": "N/A (planning)"
+        },
+        {
+          "phase": "M1-I2",
+          "name": "Pilot A (High Leverage)",
+          "deliverable": "Migrated screens + validation report",
+          "validation": "G0-G6 gates",
+          "rollback": "Git revert pilot commits"
+        },
+        {
+          "phase": "M1-I3",
+          "name": "Pilot B (Medium Leverage)",
+          "deliverable": "Migrated screens + validation report",
+          "validation": "G0-G6 gates",
+          "rollback": "Git revert pilot commits"
+        },
+        {
+          "phase": "M1-I4",
+          "name": "Pilot C (Critical Flow)",
+          "deliverable": "Migrated screens + validation report",
+          "validation": "G0-G6 gates + booking/payment regression",
+          "rollback": "Git revert pilot commits"
+        },
+        {
+          "phase": "M1-I5",
+          "name": "Pilot D (Provider)",
+          "deliverable": "Migrated screens + validation report",
+          "validation": "G0-G6 gates",
+          "rollback": "Git revert pilot commits"
+        }
+      ],
+      "blocking": [
+        "Legacy theme consumers not mapped",
+        "AppTheme.expression() not complete",
+        "GlowTokensExtension missing properties"
+      ],
+      "acceptance_criteria": [
+        "All legacy theme consumers migrated to Token + AppTheme",
+        "Zero usage of shared/theme.dart, glow_tokens.dart, LuxeColors, BellezaLuxeTokens",
+        "AppTheme.expression() returns complete theme for all expressions",
+        "All G0-G6 gates pass for migrated code"
+      ],
+      "owner": "Token Governor (Color and Typography)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "migration_id": "TYPOGRAPHY_LEGACY_MIGRATION",
+      "current_state": "6 parallel typography systems (AppTypography, GlowTokens, LuxeTypography, GlowStoreTokens, BellezaLuxeTypography, AppTypography.X(Token.light))",
+      "target_state": "TypographyTokens (sole authority)",
+      "authority": "TYPOGRAPHY",
+      "dependencies": [
+        "Fonts in pubspec.yaml (Cormorant Garamond, Manrope, JetBrains Mono)",
+        "TypographyTokensContext API complete"
+      ],
+      "phases": [
+        {
+          "phase": "M1-I0",
+          "name": "Audit & Map",
+          "deliverable": "Complete inventory of all typography system consumers",
+          "validation": "Count matches grep results",
+          "rollback": "N/A (read-only)"
+        },
+        {
+          "phase": "M1-I1",
+          "name": "Pilot Plan",
+          "deliverable": "Pilot screens selected, risk assessed",
+          "validation": "Design Review approval",
+          "rollback": "N/A (planning)"
+        },
+        {
+          "phase": "M1-I2",
+          "name": "Pilot A (High Leverage)",
+          "deliverable": "Migrated screens + validation report",
+          "validation": "G0-G6 gates",
+          "rollback": "Git revert pilot commits"
+        },
+        {
+          "phase": "M1-I3",
+          "name": "Pilot B (Medium Leverage)",
+          "deliverable": "Migrated screens + validation report",
+          "validation": "G0-G6 gates",
+          "rollback": "Git revert pilot commits"
+        },
+        {
+          "phase": "M1-I4",
+          "name": "Pilot C (Critical Flow)",
+          "deliverable": "Migrated screens + validation report",
+          "validation": "G0-G6 gates + booking/payment regression",
+          "rollback": "Git revert pilot commits"
+        },
+        {
+          "phase": "M1-I5",
+          "name": "Pilot D (Provider)",
+          "deliverable": "Migrated screens + validation report",
+          "validation": "G0-G6 gates",
+          "rollback": "Git revert pilot commits"
+        }
+      ],
+      "blocking": [
+        "Fonts not in pubspec.yaml",
+        "TypographyTokensContext API incomplete",
+        "Legacy typography consumers not mapped"
+      ],
+      "acceptance_criteria": [
+        "All typography consumers migrated to TypographyTokens",
+        "Zero hardcoded font/size/weight values in migrated code",
+        "All G0-G6 gates pass for migrated code",
+        "No usage of legacy typography systems"
+      ],
+      "owner": "Typography Governor",
+      "status": "NOT_STARTED"
+    },
+    {
+      "migration_id": "AURA_MEN_ADAPTATION",
+      "current_state": "AURA Welcome Screen uses only female-model tokens",
+      "target_state": "AURA system adapts to Men expression context",
+      "authority": "AURA (AI) + AUDIENCE",
+      "dependencies": [
+        "Male Muse assets available",
+        "AURA photography adapted for Men context",
+        "AURA UI respects Men expression color palette"
+      ],
+      "phases": [
+        {
+          "phase": "M1-I0",
+          "name": "Audit & Map",
+          "deliverable": "Complete inventory of all AURA consumers needing Men adaptation",
+          "validation": "Count matches grep results",
+          "rollback": "N/A (read-only)"
+        },
+        {
+          "phase": "M1-I1",
+          "name": "Pilot Plan",
+          "deliverable": "Pilot screens selected, risk assessed",
+          "validation": "Design Review approval",
+          "rollback": "N/A (planning)"
+        },
+        {
+          "phase": "M1-I2",
+          "name": "Pilot A (High Leverage)",
+          "deliverable": "Migrated screens + validation report",
+          "validation": "G0-G6 gates",
+          "rollback": "Git revert pilot commits"
+        },
+        {
+          "phase": "M1-I3",
+          "name": "Pilot B (Medium Leverage)",
+          "deliverable": "Migrated screens + validation report",
+          "validation": "G0-G6 gates",
+          "rollback": "Git revert pilot commits"
+        },
+        {
+          "phase": "M1-I4",
+          "name": "Pilot C (Critical Flow)",
+          "deliverable": "Migrated screens + validation report",
+          "validation": "G0-G6 gates + booking/payment regression",
+          "rollback": "Git revert pilot commits"
+        },
+        {
+          "phase": "M1-I5",
+          "name": "Pilot D (Provider)",
+          "deliverable": "Migrated screens + validation report",
+          "validation": "G0-G6 gates",
+          "rollback": "Git revert pilot commits"
+        }
+      ],
+      "blocking": [
+        "Male Muse assets not available",
+        "AURA photography not adapted for Men context",
+        "AURA UI not respecting Men expression color palette"
+      ],
+      "acceptance_criteria": [
+        "AURA Welcome Screen adapted for Men expression",
+        "All AURA consumers respect expression context",
+        "Male Muse assets used where appropriate",
+        "All G0-G6 gates pass for migrated code"
+      ],
+      "owner": "AI Governor + Audience Governor + Photography Governor",
+      "status": "NOT_STARTED"
+    }
+  ]
+}

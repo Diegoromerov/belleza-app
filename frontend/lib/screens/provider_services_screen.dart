@@ -552,7 +552,8 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFEFE8DE), width: 1.2),
         boxShadow: const [
           BoxShadow(
             color: Color(0x0A000000),
@@ -782,90 +783,206 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
     final inactive = _services.where((s) => !s.isActive).toList();
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFAF8F5),
       appBar: AppBar(
-        title: const Text('Mis Servicios',
-            style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5)),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Actualizar',
-            onPressed: _loadServices,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 14),
+          child: Center(
+            child: InkWell(
+              onTap: () => Navigator.maybePop(context),
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFFE8DFD8), width: 1),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const Icon(Icons.arrow_back_ios_new_rounded, size: 15, color: Color(0xFF1F1A15)),
+              ),
+            ),
           ),
-        ],
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: AppTheme.primary,
-          unselectedLabelColor: Colors.grey,
-          indicatorColor: AppTheme.primary,
-          tabs: [
-            Tab(text: 'Activos (${active.length})'),
-            Tab(text: 'Inactivos (${inactive.length})'),
+        ),
+        title: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.spa_rounded, size: 18, color: Color(0xFFC5A052)),
+            SizedBox(width: 8),
+            Text(
+              'Catálogo de Servicios',
+              style: TextStyle(
+                fontFamily: 'CormorantGaramond',
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1F1A15),
+                letterSpacing: 0.5,
+              ),
+            ),
           ],
         ),
+        backgroundColor: const Color(0xFFFAF8F5),
+        foregroundColor: const Color(0xFF1F1A15),
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 14),
+            child: Center(
+              child: InkWell(
+                onTap: _loadServices,
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: const Color(0xFFE8DFD8), width: 1),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(Icons.refresh_rounded, size: 18, color: Color(0xFF1F1A15)),
+                ),
+              ),
+            ),
+          ),
+        ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(48),
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: const Color(0xFFEFE8DE), width: 1),
+            ),
+            child: TabBar(
+              controller: _tabController,
+              indicator: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFFFF7E6), Color(0xFFF6E7C8)],
+                ),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: const Color(0xFFD4AF37).withValues(alpha: 0.5), width: 1),
+              ),
+              indicatorSize: TabBarIndicatorSize.tab,
+              labelColor: const Color(0xFF1F1A15),
+              unselectedLabelColor: const Color(0xFF8C7E74),
+              labelStyle: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.bold, fontSize: 13),
+              unselectedLabelStyle: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w500, fontSize: 13),
+              dividerColor: Colors.transparent,
+              tabs: [
+                Tab(text: 'Activos (${active.length})'),
+                Tab(text: 'Inactivos (${inactive.length})'),
+              ],
+            ),
+          ),
+        ),
       ),
-      body: Stack(
-        children: [
-          TabBarView(
-            controller: _tabController,
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 680),
+          child: Stack(
             children: [
-              RefreshIndicator(
-                color: AppTheme.primary,
-                onRefresh: _loadServices,
-                child: active.isEmpty
-                    ? _buildEmptyState(
-                        'No tienes servicios activos.\nToca el botón + para agregar uno.')
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: active.length,
-                        itemBuilder: (context, index) =>
-                            _buildServiceCard(active[index]),
-                      ),
-              ),
-              RefreshIndicator(
-                color: AppTheme.primary,
-                onRefresh: _loadServices,
-                child: inactive.isEmpty
-                    ? const Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(24.0),
-                          child: Text(
-                            'No tienes servicios inactivos.',
-                            style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.grey,
-                                fontWeight: FontWeight.w500),
-                            textAlign: TextAlign.center,
+              TabBarView(
+                controller: _tabController,
+                children: [
+                  RefreshIndicator(
+                    color: const Color(0xFFC5A052),
+                    onRefresh: _loadServices,
+                    child: active.isEmpty
+                        ? _buildEmptyState(
+                            'No tienes servicios activos.\nToca el botón + para agregar uno.')
+                        : ListView.builder(
+                            padding: const EdgeInsets.all(16),
+                            itemCount: active.length,
+                            itemBuilder: (context, index) =>
+                                _buildServiceCard(active[index]),
                           ),
-                        ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: inactive.length,
-                        itemBuilder: (context, index) =>
-                            _buildServiceCard(inactive[index]),
-                      ),
+                  ),
+                  RefreshIndicator(
+                    color: const Color(0xFFC5A052),
+                    onRefresh: _loadServices,
+                    child: inactive.isEmpty
+                        ? const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(24.0),
+                              child: Text(
+                                'No tienes servicios inactivos.',
+                                style: TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontSize: 15,
+                                    color: Color(0xFF8C7E74),
+                                    fontWeight: FontWeight.w500),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          )
+                        : ListView.builder(
+                            padding: const EdgeInsets.all(16),
+                            itemCount: inactive.length,
+                            itemBuilder: (context, index) =>
+                                _buildServiceCard(inactive[index]),
+                          ),
+                  ),
+                ],
               ),
+              if (_isLoading)
+                Container(
+                  color: const Color(0x1E000000),
+                  child: const Center(
+                      child: CircularProgressIndicator(color: Color(0xFFC5A052))),
+                ),
             ],
           ),
-          if (_isLoading)
-            Container(
-              color: const Color(0x1E000000),
-              child: const Center(
-                  child: CircularProgressIndicator(color: AppTheme.primary)),
-            ),
-        ],
+        ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showServiceForm(),
-        backgroundColor: AppTheme.primary,
-        foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        elevation: 4,
-        child: const Icon(Icons.add),
+      floatingActionButton: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(28),
+          gradient: const LinearGradient(
+            colors: [Color(0xFFF3D59B), Color(0xFFC5A052)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFC5A052).withValues(alpha: 0.35),
+              blurRadius: 14,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: FloatingActionButton.extended(
+          onPressed: () => _showServiceForm(),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          highlightElevation: 0,
+          icon: const Icon(Icons.add_rounded, color: Color(0xFF1F1A15), size: 20),
+          label: const Text(
+            'Crear Servicio',
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+              color: Color(0xFF1F1A15),
+            ),
+          ),
+        ),
       ),
     );
   }

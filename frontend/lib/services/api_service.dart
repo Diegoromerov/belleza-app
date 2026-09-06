@@ -10,7 +10,7 @@ import '../models/service_model.dart';
 
 class ApiService {
   // --- CONFIGURACIÓN DE ENTORNO DE DESARROLLO / PRODUCCIÓN ---
-  static const bool useStaging = true;
+  static const bool useStaging = false;
   static const String stagingUrl =
       'https://belleza-app-production.up.railway.app';
 
@@ -24,7 +24,9 @@ class ApiService {
   static String get _host => kIsWeb ? 'localhost' : '10.0.2.2';
 
   static String get baseUrl {
-    if (useStaging) return stagingUrl;
+    const envUrl = String.fromEnvironment('API_URL');
+    if (envUrl.isNotEmpty) return envUrl;
+    if (useStaging || !kIsWeb || kReleaseMode) return stagingUrl;
     return 'http://$_host:8080';
   }
 
@@ -32,7 +34,7 @@ class ApiService {
   static String get _apiPath => '/api';
 
   static Future<void> ensureBaseUrl() async {
-    if (useStaging) {
+    if (useStaging || !kIsWeb || kReleaseMode) {
       _cachedBaseUrl = stagingUrl;
       return;
     }

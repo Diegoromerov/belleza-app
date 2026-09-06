@@ -1,0 +1,48 @@
+{
+  "authority": "Typography",
+  "level": "L1",
+  "owner": "Typography Governor",
+  "sourceOfTruth": "docs/design/GLOWAPP_TYPOGRAPHY_SYSTEM.md + glowapp_typography_system.json (to be created)",
+  "inputs": [
+    "Soul",
+    "readability",
+    "expression"
+  ],
+  "outputs": [
+    "Font families",
+    "display voice",
+    "heading scale",
+    "functional voice",
+    "price typography",
+    "AURA typography",
+    "case rules"
+  ],
+  "consumers": [
+    "TypographyTokens class",
+    "AppTypography (bridge)",
+    "GlowTokens",
+    "GlowStoreTokens",
+    "BellezaLuxeTokens",
+    "components",
+    "screens"
+  ],
+  "allowedChanges": [
+    "Adding new tokens within defined scales",
+    "adjusting line spacing/letter spacing (within accessibility)"
+  ],
+  "forbiddenChanges": [
+    "Changing font families (Cormorant Garamond, Manrope, JetBrains Mono)",
+    "using ALL CAPS for body",
+    "violating case rules"
+  ],
+  "validationGate": "Typography spec review + font asset validation",
+  "legacySystems": [
+    "AppTypography",
+    "GlowTokens",
+    "LuxeTypography",
+    "GlowStoreTokens",
+    "BellezaLuxeTypography"
+  ],
+  "promotionPath": "Deprecate legacy systems, map to TypographyTokens",
+  "exceptionMechanism": "Director approval for exceptions"
+}

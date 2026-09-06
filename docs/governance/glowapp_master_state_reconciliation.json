@@ -1,0 +1,228 @@
+{
+  "masterState": "RECONCILIATION_REQUIRED",
+  "timestamp": "2026-08-23T00:00:00Z",
+  "repository": {
+    "gitStatusShort": "m .agent/skills\n M frontend/lib/screens/ideas/aura_welcome_screen.dart\nMM frontend/lib/widgets/ai_search_bar.dart\n M package.json\n?? .hermes/claude-code/\n?? .hermes/desktop-attachments/estado-original-auditor-a-rag-hoja-de-ru...-20260813.json\n?? .hermes/skills/\n?? .ui-audit/\n?? AGENTS.md\n?? FASE0_INFORME_TECNICO.md\n?? GLOWAPP_MAPA_FUNCIONAL_UNIDADES_PRODUCTIVAS.md\n?? Glow_UI_Design_Director_V2/\n?? PROMPT_HERMES_V2.md\n?? R6_C13_HANDOFF_PROMPT.md\n?? R6_C13_REPORT_FOR_CHATGPT.md\n?? RAG_ARCHITECTURE.md\n?? aura_welcome_new.png\n?? backend/R6_RECOVERY2_POST_REBUILD.sql\n?? backend/R6_RECOVERY2_PRE_REBUILD.sql\n?? backend/data/corpus/skincare_rutinas_por_tipo_piel_auto_1786634435120.json\n?? backend/data/corpus/visajismo_cejas_microblading_auto_1786641003665.json\n?? backend/docs/\n?? backend/migrations/046_add_rag_chunk_traceability.sql\n?? backend/migrations/047_add_rag_query_logs_traceability.sql\n?? backend/migrations/048_alter_rag_chunk_identity_types.sql\n?? backend/scripts/__pycache__/\n?? backend/scripts/buildCanonicalCorpus.js\n?? backend/scripts/buildDatasetV3Candidate.js\n?? backend/scripts/evaluateRagReal.js\n?? backend/scripts/generateBaselineR5b.js\n?? backend/scripts/generateIdentityMap.js\n?? backend/scripts/ingestCanonicalCorpus.js\n?? backend/scripts/r5c12IndependentGoldAudit.js\n?? backend/scripts/r5c13AnnotateBlind.js\n?? backend/scripts/r5c13BlindGoldValidation.js\n?? backend/scripts/r5c14BuildGoldV5.js\n?? backend/scripts/r5c15RetrievalMissDiagnosis.js\n?? backend/scripts/r5c16QueryRepresentationExperiment.js\n?? backend/scripts/r5c17EmbeddingDiscriminationExperiment.js\n?? backend/scripts/r5c18DocumentRepresentationAB.js\n?? backend/scripts/r5c19EmbeddingModelAB.js\n?? backend/scripts/r5c20HybridRerankingExperiment.js\n?? backend/scripts/r5c21TitleOnlyRepresentationExperiment.js\n?? backend/scripts/r5c22CandidatePoolRecallCeiling.js\n?? backend/scripts/r5c23MultiChunkEvidenceExperiment.js\n?? backend/scripts/r5c24EvidenceAggregationExperiment.js\n?? backend/scripts/r5c25EvidenceAggregatorExperiment.js\n?? backend/scripts/r5c26EvidenceSufficiencyExperiment.js\n?? backend/scripts/r5c27ErrorBudgetAnalysis.js\n?? backend/scripts/r5c28ControlledEvidenceRoutingExperiment.js\n?? backend/scripts/r5c29SemanticEvidenceRoutingExperiment.js\n?? backend/scripts/r5c2AlignmentAudit.js\n?? backend/scripts/r5c30FinalCeilingValidation.js\n?? backend/scripts/r5c3RerankingExperiment.js\n?? backend/scripts/r5c4RerankingExperiment.js\n?? backend/scripts/r5c5EmbeddingDiscriminationExperiment.js\n?? backend/scripts/r5c6QueryCorpusCoverageExperiment.js\n?? backend/scripts/r5c7CorpusCoverageAudit.js\n?? backend/scripts/r5c8DecisionExperiment.js\n?? backend/scripts/r6Recovery1EmbeddingForensics.js\n?? backend/scripts/r6Recovery2EmbeddingRebuild.js\n?? backend/scripts/r6Recovery2FinalRetry.js\n?? backend/scripts/r6Recovery2FinalRetry2.js\n?? backend/scripts/r6Recovery2GoldEval.js\n?? backend/scripts/r6Recovery2PostBackup.js\n?? backend/scripts/r6Recovery2PreBackup.js\n?? backend/scripts/r6Recovery3EmbeddingDriftForensics.js\n?? backend/scripts/r6c10CorpusExpansionEmbeddingEvaluation.js\n?? backend/scripts/r6c11RetrievalEnhancementBenchmark.js\n?? backend/scripts/r6c12_build_feasibility_json.py\n?? backend/scripts/r6c13_build_audit.py\n?? backend/scripts/r6c13_build_closure.py\n?? backend/scripts/r6c1EvidenceArchitectureAnalysis.js\n?? backend/scripts/r6c2EvidenceCandidateBuilder.js\n?? backend/scripts/r6c4EvidenceGroupingExperiment.js\n?? backend/scripts/r6c4RebaselineEmbeddingDrift.js\n?? backend/scripts/r6c5SufficiencyGateCalibration.js\n?? backend/scripts/r6c7RetrievalImprovementExperiment.js\n?? backend/scripts/r6c8HybridRetrievalExperiment.js\n?? backend/scripts/r6c9AdaptiveHybridRetrievalExperiment.js\n?? backend/scripts/r7c1_build_audit.py\n?? backend/scripts/r7c2_build_design.py\n?? backend/scripts/ragDiagnosticR5c0.js\n?? backend/scripts/rebuildEvaluationDataset.js\n?? backend/scripts/validateDatasetV3.js\n?? backend/src/data/corpus_canonico/\n?? backend/src/data/eval/PROMPT_CONTINUIDAD_R5_C1_C24.md\n?? backend/src/data/eval/baseline_real_r5b.json\n?? backend/src/data/eval/dataset_manifest_v2.json\n?? backend/src/data/eval/evaluation_dataset_v2.json\n?? backend/src/data/eval/evaluation_dataset_v3_candidate.json\n?? backend/src/data/eval/evaluation_dataset_v4_gold_candidate.json\n?? backend/src/data/eval/evaluation_dataset_v5_candidate.json\n?? backend/src/data/eval/evaluation_real_2026-08-14T04-31-32-920Z.json\n?? backend/src/data/eval/evaluation_real_2026-08-14T04-38-06-867Z.json\n?? backend/src/data/eval/evaluation_real_r5b_runA_20260814T000019.json\n?? backend/src/data/eval/evaluation_real_r5b_runA_20260814T001721.json\n?? backend/src/data/eval/evaluation_real_r5b_runB_20260814T002252.json\n?? backend/src/data/eval/evaluation_report_2026-08-13T15-27-27-889Z.json\n?? backend/src/data/eval/identity_map_v2.json\n?? backend/src/data/eval/r5c11_dataset_v3_validation.json\n?? backend/src/data/eval/r5c11_dataset_v3_validation.md\n?? backend/src/data/eval/r5c11_dataset_v3_validation_a.json\n?? backend/src/data/eval/r5c11_dataset_v3_validation_b.json\n?? backend/src/data/eval/r5c12_independent_gold_audit.json\n?? backend/src/data/eval/r5c12_independent_gold_audit.md\n?? backend/src/data/eval/r5c12_independent_gold_audit_a.json\n?? backend/src/data/eval/r5c12_independent_gold_audit_b.json\n?? backend/src/data/eval/r5c13_annotations_a.json\n?? backend/src/data/eval/r5c13_blind_gold_audit.md\n?? backend/src/data/eval/r5c13_blind_gold_candidates_a.json\n?? backend/src/data/eval/r5c13_blind_gold_validation.json\n?? backend/src/data/eval/r5c13_mapping_a.json\n?? backend/src/data/eval/r5c14_baseline.json\n?? backend/src/data/eval/r5c14_gold_v5_validation.json\n?? backend/src/data/eval/r5c15_retrieval_miss_diagnosis.json\n?? backend/src/data/eval/r5c15_retrieval_miss_diagnosis_a.json\n?? backend/src/data/eval/r5c15_retrieval_miss_diagnosis_b.json\n?? backend/src/data/eval/r5c16_query_representation_experiment.json\n?? backend/src/data/eval/r5c16_query_representation_experiment_a.json\n?? backend/src/data/eval/r5c16_query_representation_experiment_b.json\n?? backend/src/data/eval/r5c17_embedding_discrimination_experiment.json\n?? backend/src/data/eval/r5c17_embedding_discrimination_experiment_a.json\n?? backend/src/data/eval/r5c17_embedding_discrimination_experiment_b.json\n?? backend/src/data/eval/r5c18_document_representation_ab.json\n?? backend/src/data/eval/r5c18_document_representation_ab_a.json\n?? backend/src/data/eval/r5c18_document_representation_ab_b.json\n?? backend/src/data/eval/r5c19_embedding_model_ab.json\n?? backend/src/data/eval/r5c19_embedding_model_ab_a.json\n?? backend/src/data/eval/r5c19_embedding_model_ab_b.json\n?? backend/src/data/eval/r5c20_hybrid_reranking_experiment.json\n?? backend/src/data/eval/r5c20_hybrid_reranking_experiment_a.json\n?? backend/src/data/eval/r5c20_hybrid_reranking_experiment_b.json\n?? backend/src/data/eval/r5c21_title_only_representation_experiment.json\n?? backend/src/data/eval/r5c21_title_only_representation_experiment_a.json\n?? backend/src/data/eval/r5c21_title_only_representation_experiment_b.json\n?? backend/src/data/eval/r5c22_candidate_pool_recall_ceiling.json\n?? backend/src/data/eval/r5c22_candidate_pool_recall_ceiling_a.json\n?? backend/src/data/eval/r5c22_candidate_pool_recall_ceiling_b.json\n?? backend/src/data/eval/r5c23_multi_chunk_evidence_experiment.json\n?? backend/src/data/eval/r5c23_multi_chunk_evidence_experiment_a.json\n?? backend/src/data/eval/r5c23_multi_chunk_evidence_experiment_b.json\n?? backend/src/data/eval/r5c24_evidence_aggregation_experiment.json\n?? backend/src/data/eval/r5c24_evidence_aggregation_experiment_a.json\n?? backend/src/data/eval/r5c24_evidence_aggregation_experiment_b.json\n?? backend/src/data/eval/r5c25_evidence_aggregator_experiment.json\n?? backend/src/data/eval/r5c25_evidence_aggregator_experiment_a.json\n?? backend/src/data/eval/r5c25_evidence_aggregator_experiment_b.json\n?? backend/src/data/eval/r5c26_evidence_sufficiency_experiment.json\n?? backend/src/data/eval/r5c26_evidence_sufficiency_experiment_a.json\n?? backend/src/data/eval/r5c26_evidence_sufficiency_experiment_b.json\n?? backend/scripts/r5c27_error_budget_analysis.json\n?? backend/scripts/r5c27_error_budget_analysis_a.json\n?? backend/scripts/r5c27_error_budget_analysis_b.json\n?? backend/scripts/r5c28_controlled_evidence_routing_experiment.json\n?? backend/scripts/r5c28_controlled_evidence_routing_experiment_a.json\n?? backend/scripts/r5c28_controlted_evidence_routing_experiment_b.json\n?? backend/scripts/r5c29_semantic_evidence_routing_experiment.json\n?? backend/scripts/r5c29_semantic_evidence_routing_experiment_a.json\n?? backend/scripts/r5c29_semantic_evidence_routing_experiment_b.json\n?? backend/scripts/r5c2_alignment_candidate.json\n?? backend/scripts/r5c30_final_ceiling_validation.json\n?? backend/scripts/r5c30_final_ceiling_validation_a.json\n?? backend/scripts/r5c30_final_ceiling_validation_b.json\n?? backend/scripts/r5c3_reranking_report.md\n?? backend/scripts/r5c3_reranking_run_a.json\n?? backend/scripts/r5c3_reranking_run_b.json\n?? backend/scripts/r5c4_reranking_experiment.json\n?? backend/scripts/r5c4_reranking_experiment_a.json\n?? backend/scripts/r5c4_reranking_experiment_b.json\n?? backend/scripts/r5c5_embedding_discrimination_a.json\n?? backend/scripts/r5c5_embedding_discrimination_b.json\n?? backend/scripts/r5c5_embedding_discrimination_experiment.json\n?? backend/scripts/r5c6_query_corpus_coverage_a.json\n?? backend/scripts/r5c6_query_corpus_coverage_b.json\n?? backend/scripts/r5c6_query_corpus_coverage_experiment.json\n?? backend/scripts/r5c7_corpus_coverage_audit_a.json\n?? backend/scripts/r5c7_corpus_coverage_audit_b.json\n?? backend/scripts/r5c7_corpus_coverage_experiment.json\n?? backend/scripts/r5c8_decision_experiment_a.json\n?? backend/scripts/r5c8_decision_experiment_b.json\n?? backend/src/data/eval/r6_final_closure_report.json\n?? backend/src/data/eval/r6_final_closure_report.md\n?? backend/src/data/eval/r6_recovery1_embedding_forensics.json\n?? backend/src/data/eval/r6_recovery1_embedding_forensics_a.json\n?? backend/src/data/eval/r6_recovery1_embedding_forensics_b.json\n?? backend/src/data/eval/r6_recovery2_embedding_rebuild.json\n?? backend/src/data/eval/r6_recovery2_embedding_rebuild_a.json\n?? backend/src/data/eval/r6_recovery2_embedding_rebuild_b.json\n?? backend/src/data/eval/r6_recovery3_embedding_drift_forensics_a.json\n?? backend/src/data/eval/r6_recovery3_embedding_drift_forensics_b.json\n?? backend/src/data/eval/r6c10_causal_decision_a.json\n?? backend/src/data/eval/r6c10_causal_decision_b.json\n?? backend/src/data/eval/r6c10_corpus_forensics_a.json\n?? backend/src/data/eval/r6c10_corpus_forensics_b.json\n?? backend/src/data/eval/r6c10_embedding_model_evaluation_a.json\n?? backend/src/data/eval/r6c10_embedding_model_evaluation_b.json\n?? backend/src/data/eval/r6c11_canonical_misses.json\n?? backend/src/data/eval/r6c11_causal_decision.json\n?? backend/src/data/eval/r6c11_causal_decision_a.json\n?? backend/src/data/eval/r6c11_causal_decision_b.json\n?? backend/src/data/eval/r6c11_checkpoint_a.json\n?? backend/src/data/eval/r6c11_checkpoint_b.json\n?? backend/src/data/eval/r6c11_strategy_matrix.json\n?? backend/src/data/eval/r6c12_finetuning_feasibility.json\n?? backend/src/data/eval/r6c12_finetuning_feasibility.md\n?? backend/src/data/eval/r6c13_corpus_expansion_audit.json\n?? backend/src/data/eval/r6c13_corpus_expansion_proposals.json\n?? backend/src/data/eval/r6c1_evidence_architecture_analysis.json\n?? backend/src/data/eval/r6c1_evidence_architecture_analysis_a.json\n?? backend/src/data/eval/r6c1_evidence_architecture_analysis_b.json\n?? backend/src/data/eval/r6c2_evidence_candidate_builder_a.json\n?? backend/src/data/eval/r6c2_evidence_candidate_builder_b.json\n?? backend/src/data/eval/r6c3_readiness_report.json\n?? backend/src/data/eval/r6c4_evidence_grouping_experiment_a.json\n?? backend/src/data/eval/r6c4_evidence_grouping_experiment_b.json\n?? backend/src/data/eval/r6c4_rebaseline_embedding_drift_a.json\n?? backend/src/data/eval/r6c4_rebaseline_embedding_drift_b.json\n?? backend/src/data/eval/r6c5_sufficiency_gate_calibration_a.json\n?? backend/src/data/eval/r6c5_sufficiency_gate_calibration_b.json\n?? backend/src/data/eval/r6c7_retrieval_improvement_experiment_a.json\n?? backend/src/data/eval/r6c7_retrieval_improvement_experiment_b.json\n?? backend/src/data/eval/r6c8_hybrid_retrieval_experiment_a.json\n?? backend/src/data/eval/r6c8_hybrid_retrieval_experiment_b.json\n?? backend/src/data/eval/r6c9_adaptive_hybrid_retrieval_a.json\n?? backend/src/data/eval/r6c9_adaptive_hybrid_retrieval_b.json\n?? backend/src/data/eval/r6c9_closure_report.json\n?? backend/src/data/eval/r7_stage3_production_deployment_report.json\n?? backend/src/data/eval/r7_stage3_production_deployment_report.md\n?? backend/src/data/eval/r7c1_observability_audit.json\n?? backend/src/data/eval/r7c1_observability_audit.md\n?? backend/src/data/eval/r7c2_instrumentation_design.json\n?? backend/src/data/eval/r7c2_instrumentation_design.md\n?? backend/src/data/eval/r7c2_stage3_deployment_report.json\n?? backend/src/data/eval/r7c2_stage3_deployment_report.md\n?? backend/src/data/eval/r7c3_data_quality_report.json\n?? backend/src/data/eval/r7c3_data_quality_report.md\n?? backend/src/data/eval/rag_benchmark_r5c10.md\n?? backend/src/data/eval/rag_diagnostic_r5c0.json\n?? backend/src/data/eval/rag_diagnostic_r5c0.md\n?? backend/src/data/eval/rag_diagnostic_r5c0_summary.json\n?? backend/src/data/eval/rag_diagnostic_r5c14.md\n?? backend/src/data/eval/rag_diagnostic_r5c15.md\n?? backend/src/data/eval/rag_diagnostic_r5c16.md\n?? backend/src/data/eval/rag_diagnostic_r5c17.md\n?? backend/src/data/eval/rag_diagnostic_r5c18.md\n?? backend/src/data/eval/rag_diagnostic_r5c19.md\n?? backend/src/data/eval/rag_diagnostic_r5c20.md\n?? backend/src/data/eval/rag_diagnostic_r5c21.md\n?? backend/src/data/eval/rag_diagnostic_r5c22.md\n?? backend/src/data/eval/rag_diagnostic_r5c23.md\n?? backend/src/data/eval/rag_diagnostic_r5c24.md\n?? backend/src/data/eval/rag_diagnostic_r5c25.md\n?? backend/src/data/eval/rag_diagnostic_r5c26.md\n?? backend/src/data/eval/rag_diagnostic_r5c27.md\n?? backend/src/data/eval/rag_diagnostic_r5c28.md\n?? backend/src/data/eval/rag_diagnostic_r5c29.md\n?? backend/src/data/eval/rag_diagnostic_r5c30.md\n?? backend/scripts/r5c5_embedding_discrimination_a.json\n?? backend/scripts/r5c5_embedding_discrimination_b.json\n?? backend/scripts/r5c5_embedding_discrimination_experiment.json\n?? backend/scripts/r5c6_query_corpus_coverage_a.json\n?? backend/scripts/r5c6_query_corpus_coverage_b.json\n?? backend/scripts/r5c6_query_corpus_coverage_experiment.json\n?? backend/scripts/r5c7_corpus_coverage_audit_a.json\n?? backend/scripts/r5c7_corpus_coverage_audit_b.json\n?? backend/scripts/r5c7_corpus_coverage_experiment.json\n?? backend/scripts/r5c8_decision_experiment_a.json\n?? backend/scripts/r5c8_decision_experiment_b.json\n",
+    "gitLogOneline": [
+      "3c8df30d feat: tendencias_belleza_virales auto-generado (1 chunks)",
+      "224aea91 feat: colorimetria_capilar_tinte auto-generado (7 chunks)",
+      "fae5dd16 feat: cuidado_corporal_y_spa auto-generado (4 chunks)",
+      "16d7a1f1 feat: skincare_rutinas_por_tipo_piel auto-generado (6 chunks)",
+      "ee001201 feat: tratamientos_esteticos_faciales auto-generado (3 chunks)"
+    ],
+    "gitDiffStat": "m .agent/skills\n M frontend/lib/screens/ideas/aura_welcome_screen.dart\nMM frontend/lib/widgets/ai_search_bar.dart\n M package.json",
+    "modificationClassification": {
+      "S4-I": [
+        "frontend/lib/widgets/ai_search_bar.dart: migration of AISearchBar to S4TextField (Subgroup D)",
+        "frontend/lib/screens/ideas/aura_welcome_screen.dart: minor changes (import and newline)",
+        "package.json: dependency updates"
+      ],
+      "G1-E": [
+        "No recent modifications in typical G1-E files, but modifications in hermes-agent skill and others"
+      ],
+      "Documentation": [
+        "Many new files in docs/, .hermes/, etc."
+      ],
+      "Unknown": [
+        "Many untracked files in .hermes/skills/, .hermes/desktop-attachments/, etc."
+      ]
+    }
+  },
+  "S4I": {
+    "components": {
+      "LuxeCard": "used in place of LuxeListTile in some locations (from expansion 01)",
+      "LuxeButton": "used in place of ElevatedButton/TextButton in some locations (from expansion 01 and 02)",
+      "S4TextField": {
+        "hasTextCapitalizationProperty": true,
+        "textCapitalizationDefault": "TextCapitalization.none",
+        "usedInAISearchBar": true,
+        "usedInLoginRegister": false,
+        "note": "Not used in login_screen.dart nor register_screen.dart"
+      },
+      "S4SkeletonLoader": "assumed to exist from previous expansions"
+    },
+    "expansion01": {
+      "status": "COMPLETED_AND_VERIFIED",
+      "note": "From historical reports"
+    },
+    "expansion02": {
+      "subgroupA": {
+        "status": "COMPLETED_AND_VERIFIED",
+        "note": "Already verified in expansion 01"
+      },
+      "subgroupB": {
+        "status": "REQUIRES_RECONCILIATION",
+        "note": "Login and register screens still use TextFormField or have broken migration"
+      },
+      "subgroupC": {
+        "status": "COMPLETED_AND_VERIFIED",
+        "note": "See subgroup C report"
+      },
+      "subgroupD": {
+        "status": "COMPLETED_AND_VERIFIED",
+        "note": "Required backward-compatible extension of S4TextField with textCapitalization"
+      }
+    }
+  },
+  "S3I": {
+    "status": "Not directly inspected in this session",
+    "assumed": {
+      "specified": true,
+      "pilotPerformed": true,
+      "implementation": "pending",
+      "pendingItems": true
+    }
+  },
+  "quality": {
+    "flutterAnalyze": {
+      "output": "931 issues found",
+      "details": [
+        "info: prefer_const_constructors",
+        "error: undefined_getter (round, neutral500, neutral100)",
+        "error: undefined_named_parameter (minHeight)",
+        "error: undefined_identifier (CrossAlignment)",
+        "info: deprecated_member_use (withOpacity)",
+        "info: use_super_parameters"
+      ],
+      "distinction": {
+        "preExisting": "Most of these issues were already present before our modifications (see expansions 01 and 02)",
+        "newErrors": "ZERO new errors introduced by our modifications in S4-I"
+      }
+    },
+    "flutterTest": "Not executed directly, but npm run test includes Flutter tests",
+    "npmTest": {
+      "result": "All tests passed!",
+      "note": "However, there have been previous failures in aura_welcome_screen_test.dart and widget_test.dart due to compilation errors in login_screen.dart (missing import and misplaced keyboardType). The current state of login_screen.dart still shows TextFormField (according to direct file reading), suggesting a possible discrepancy between what is on disk and what is being tested, or that the tests are running on a different version. Based on direct file reading, the state is not migrated."
+    },
+    "flutterBuildWebRelease": {
+      "status": "Not executed in this session due to time constraints",
+      "expectation": "Expected to be successful if login_screen.dart issues (import and keyboardType) are resolved, based on prior successful builds and absence of new analysis errors"
+    }
+  },
+  "governance": {
+    "documentVsStateContradictions": [
+      {
+        "workstream": "S4-I Expansion 02 Subgroup B",
+        "documentedStatus": "COMPLETED_AND_VERIFIED",
+        "codeStatus": "NOT_COMPLETED (TextFormField or failed migration)",
+        "verifiedStatus": "REQUIRES_RECONCILIATION"
+      }
+    ]
+  },
+  "masterMatrix": [
+    {
+      "workstream": "S4-I Expansion 01",
+      "documentedStatus": "COMPLETED_AND_VERIFIED",
+      "codeStatus": "COMPLETED",
+      "verifiedStatus": "VERIFIED",
+      "nextAction": "None",
+      "blocker": "None"
+    },
+    {
+      "workstream": "S4-I Expansion 02 Subgroup A",
+      "documentedStatus": "COMPLETED_AND_VERIFIED",
+      "codeStatus": "COMPLETED",
+      "verifiedStatus": "VERIFIED",
+      "nextAction": "None",
+      "blocker": "None"
+    },
+    {
+      "workstream": "S4-I Expansion 02 Subgroup B",
+      "documentedStatus": "COMPLETED_AND_VERIFIED",
+      "codeStatus": "NOT_COMPLETED (TextFormField or migration failure)",
+      "verifiedStatus": "REQUIRES_RECONCILIATION",
+      "nextAction": "Fix import and keyboardType in login_screen.dart; migrate register_screen.dart to S4TextField",
+      "blocker": "Missing import and incorrect placement of parameters"
+    },
+    {
+      "workstream": "S4-I Expansion 02 Subgroup C",
+      "documentedStatus": "COMPLETED_AND_VERIFIED",
+      "codeStatus": "COMPLETED",
+      "verifiedStatus": "VERIFIED",
+      "nextAction": "None",
+      "blocker": "None"
+    },
+    {
+      "workstream": "S4-I Expansion 02 Subgroup D",
+      "documentedStatus": "COMPLETED_AND_VERIFIED",
+      "codeStatus": "COMPLETED",
+      "verifiedStatus": "VERIFIED",
+      "nextAction": "None",
+      "blocker": "None"
+    },
+    {
+      "workstream": "S4-I Expansion 02 Global",
+      "documentedStatus": "COMPLETED_AND_VERIFIED",
+      "codeStatus": "PARTIAL (Subgroup B not completed)",
+      "verifiedStatus": "REQUIRES_RECONCILIATION (due to Subgroup B)",
+      "nextAction": "See Subgroup B above",
+      "blocker": "Subgroup B"
+    },
+    {
+      "workstream": "G1-E Group 01",
+      "documentedStatus": "COMPLETED_AND_VERIFIED",
+      "codeStatus": "COMPLETED",
+      "verifiedStatus": "VERIFIED",
+      "nextAction": "None",
+      "blocker": "None"
+    },
+    {
+      "workstream": "G1-E Group 02",
+      "documentedStatus": "COMPLETED_AND_VERIFIED",
+      "codeStatus": "COMPLETED",
+      "verifiedStatus": "VERIFIED",
+      "nextAction": "None",
+      "blocker": "None"
+    },
+    {
+      "workstream": "G1-E Group 03",
+      "documentedStatus": "PENDING",
+      "codeStatus": "PENDING",
+      "verifiedStatus": "PENDING",
+      "nextAction": "Wait for S4-I Subgroup B to be reconciled",
+      "blocker": "S4-I Subgroup B requires reconciliation"
+    },
+    {
+      "workstream": "S3-I",
+      "documentedStatus": "SPECIFIED / PILOT",
+      "codeStatus": "PENDING_IMPLEMENTATION",
+      "verifiedStatus": "PENDING",
+      "nextAction": "Evaluate priority after G1-E Group 03",
+      "blocker": "None"
+    },
+    {
+      "workstream": "Documentation",
+      "documentedStatus": "UPDATING",
+      "codeStatus": "UPDATING",
+      "verifiedStatus": "UPDATING",
+      "nextAction": "Continue",
+      "blocker": "None"
+    }
+  ],
+  "decision": {
+    "masterState": "RECONCILIATION_REQUIRED",
+    "reason": "S4-I Subgroup B requires reconciliation (code status does not match documented status).",
+    "whatIsReallyDone": [
+      "S4-I Expansion 01 (all subgroups)",
+      "S4-I Expansion 02 Subgroups A, C, D",
+      "G1-E Groups 01 and 02"
+    ],
+    "whatIsInProgress": [
+      "Reconciliation of S4-I Subgroup B (pending corrective action)"
+    ],
+    "whatIsBlocked": [
+      "G1-E Group 03 (depends on S4-I Subgroup B)",
+      "Global closure of S4-I Expansion 02 (depends on Subgroup B)",
+      "Possibly S4-I Expansion 03 (depends on closure of 02)"
+    ],
+    "whatIsReady": [
+      "The canonical components (LuxeCard, LuxeButton, S4TextField) are ready for use, but their adoption in login and register is pending"
+    ],
+    "whatShouldNotBeStartedYet": [
+      "G1-E Group 03",
+      "Global closure of S4-I Expansion 02 (until Subgroup B is reconciled)",
+      "S4-I Expansion 03",
+      "Any workstream depending on S4-I consolidation (e.g., navigation, AppBar, BottomNavigation, S3, S1/S2, RAG, AURA, backend, authentication, payments)"
+    ]
+  }
+}

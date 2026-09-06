@@ -115,20 +115,28 @@ class _ComparisonScreenState extends State<ComparisonScreen> with SingleTickerPr
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF6F5),
+      backgroundColor: const Color(0xFFFAF8F5),
       appBar: AppBar(
         title: const Text(
           'Comparador de Evolución',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          style: TextStyle(
+            fontFamily: 'CormorantGaramond',
+            fontWeight: FontWeight.bold,
+            fontSize: 22,
+            color: Color(0xFF1F1A15),
+          ),
         ),
-        backgroundColor: Colors.white,
-        foregroundColor: AppTheme.text,
+        backgroundColor: const Color(0xFFFAF8F5),
+        foregroundColor: const Color(0xFF1F1A15),
         elevation: 0,
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 680),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Header card
@@ -208,24 +216,49 @@ class _ComparisonScreenState extends State<ComparisonScreen> with SingleTickerPr
 
             // Action button
             if (!_isAnalyzing && _comparisonResult == null)
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                  elevation: 2,
+              Container(
+                height: 52,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFF3D59B), Color(0xFFC5A052)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFC5A052).withValues(alpha: 0.35),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-                onPressed: _runComparison,
-                icon: const Icon(Icons.rocket_launch),
-                label: const Text('Iniciar Comparación con IA', style: TextStyle(fontWeight: FontWeight.bold)),
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    foregroundColor: const Color(0xFF1F1A15),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    elevation: 0,
+                  ),
+                  onPressed: _runComparison,
+                  icon: const Icon(Icons.auto_awesome, color: Color(0xFF1F1A15), size: 18),
+                  label: const Text(
+                    'Iniciar Comparación con IA',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1F1A15),
+                    ),
+                  ),
+                ),
               ),
 
             if (_isAnalyzing)
               const Center(
                 child: Column(
                   children: [
-                    CircularProgressIndicator(color: AppTheme.primary),
+                    CircularProgressIndicator(color: Color(0xFFC5A052)),
                     SizedBox(height: 12),
                     Text('Analizando diferencias de poros y humectación...', style: TextStyle(color: Colors.grey, fontSize: 12)),
                   ],
@@ -239,7 +272,9 @@ class _ComparisonScreenState extends State<ComparisonScreen> with SingleTickerPr
           ],
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 
   Widget _buildImageSlot({required String title, required Uint8List? bytes, required VoidCallback onTap}) {

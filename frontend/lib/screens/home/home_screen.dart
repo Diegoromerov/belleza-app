@@ -7,6 +7,7 @@ import '../../design/components/luxe_components.dart';
 import '../../widgets/home/hero_section.dart';
 import '../../widgets/home/recent_scan_card.dart';
 import '../../widgets/store/product_card.dart';
+import '../../design/icons/glow_icon.dart';
 
 class HomeScreen extends StatefulWidget {
   final String userName;
@@ -83,9 +84,12 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: LuxeSpacing.xl, vertical: 12.0),
-          child: Column(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 720),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: LuxeSpacing.xl, vertical: 12.0),
+              child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // 1. HERO SECTION DASHBOARD
@@ -257,54 +261,97 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
+    ),
+  ),
 
-      // 6. NAVBAR INFERIOR EDITORIAL LUXE
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: LuxeColors.nude50,
-          border: Border(top: BorderSide(color: LuxeColors.nude200, width: 0.5)),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _currentNavIndex,
-          onTap: (index) {
-            setState(() {
-              _currentNavIndex = index;
-            });
-            if (index == 1) widget.onOpenBiometricScanner?.call();
-            if (index == 2) widget.onOpenStore?.call();
-            if (index == 3) widget.onOpenAcademy?.call();
-          },
-          backgroundColor: LuxeColors.nude50,
-          elevation: 0,
-          type: BottomNavigationBarType.fixed,
-          selectedItemColor: LuxeColors.gold871,
-          unselectedItemColor: LuxeColors.nude500,
-          selectedLabelStyle: const TextStyle(fontFamily: 'CormorantGaramond', fontWeight: FontWeight.bold, fontSize: 12),
-          unselectedLabelStyle: const TextStyle(fontFamily: 'CormorantGaramond', fontSize: 11),
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              activeIcon: Icon(Icons.home, color: LuxeColors.gold871),
-              label: 'Inicio',
+      // 6. NAVBAR INFERIOR EDITORIAL LUXE — NavigationBar (Material 3) para colores semánticos reactivos
+            bottomNavigationBar: Container(
+              decoration: const BoxDecoration(
+                color: LuxeColors.nude50,
+                border: Border(top: BorderSide(color: LuxeColors.nude200, width: 0.5)),
+              ),
+              child: SafeArea(
+                top: false,
+                child: NavigationBar(
+                  selectedIndex: _currentNavIndex,
+                  onDestinationSelected: (index) {
+                    setState(() {
+                      _currentNavIndex = index;
+                    });
+                    if (index == 1) widget.onOpenBiometricScanner?.call();
+                    if (index == 2) widget.onOpenStore?.call();
+                    if (index == 3) widget.onOpenAcademy?.call();
+                  },
+                  backgroundColor: LuxeColors.nude50,
+                  elevation: 0,
+                  height: 72,
+                  indicatorColor: Colors.transparent,
+                  labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+                  destinations: [
+                    NavigationDestination(
+                      icon: GlowIcon.resolve(
+                                              'home',
+                                              size: 24,
+                                              colorRole: GlowIconColorRole.neutral,
+                                              semanticLabel: 'Inicio',
+                                            ),
+                      selectedIcon: GlowIcon.resolve(
+                                              'home',
+                                              size: 24,
+                                              colorRole: GlowIconColorRole.primary,
+                                              semanticLabel: 'Inicio',
+                                            ),
+                      label: 'Inicio',
+                    ),
+                    NavigationDestination(
+                      icon: GlowIcon.resolve(
+                                              'scan',
+                                              size: 24,
+                                              colorRole: GlowIconColorRole.neutral,
+                                              semanticLabel: 'Biometría',
+                                            ),
+                      selectedIcon: GlowIcon.resolve(
+                                              'scan',
+                                              size: 24,
+                                              colorRole: GlowIconColorRole.aura,
+                                              semanticLabel: 'Biometría',
+                                            ),
+                      label: 'Biometría',
+                    ),
+                    NavigationDestination(
+                      icon: GlowIcon.resolve(
+                                              'bag',
+                                              size: 24,
+                                              colorRole: GlowIconColorRole.neutral,
+                                              semanticLabel: 'GlowStore',
+                                            ),
+                      selectedIcon: GlowIcon.resolve(
+                                              'bag',
+                                              size: 24,
+                                              colorRole: GlowIconColorRole.accent,
+                                              semanticLabel: 'GlowStore',
+                                            ),
+                      label: 'GlowStore',
+                    ),
+                    NavigationDestination(
+                      icon: GlowIcon.resolve(
+                                              'learn',
+                                              size: 24,
+                                              colorRole: GlowIconColorRole.neutral,
+                                              semanticLabel: 'Academia',
+                                            ),
+                      selectedIcon: GlowIcon.resolve(
+                                              'learn',
+                                              size: 24,
+                                              colorRole: GlowIconColorRole.secondary,
+                                              semanticLabel: 'Academia',
+                                            ),
+                      label: 'Academia',
+                    ),
+                  ],
+                ),
+              ),
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.camera_front_outlined),
-              activeIcon: Icon(Icons.camera_front, color: LuxeColors.gold871),
-              label: 'Biometría',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.storefront_outlined),
-              activeIcon: Icon(Icons.storefront, color: LuxeColors.gold871),
-              label: 'GlowStore',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.school_outlined),
-              activeIcon: Icon(Icons.school, color: LuxeColors.gold871),
-              label: 'Academia',
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

@@ -1,0 +1,90 @@
+{
+  "registry_name": "Decision Log Format",
+  "version": "1.0.0",
+  "last_updated": "2026-08-21",
+  "format": {
+    "decision_id": "Unique identifier (DEC-YYYY-####)",
+    "date": "ISO 8601 timestamp (YYYY-MM-DDTHH:MM:SSZ)",
+    "authority": "Authority making the decision (SOUL, COLOR, TYPOGRAPHY, etc.)",
+    "question": "Clear statement of the decision question",
+    "evidence": [
+      "List of evidence considered",
+      "Specifications referenced",
+      "Test results",
+      "User feedback",
+      "Market research",
+      "Risk assessments"
+    ],
+    "decision": "Clear decision statement (APPROVED, REJECTED, DEFERRED, etc.)",
+    "rationale": "Detailed reasoning behind the decision",
+    "affected_systems": [
+      "List of systems, components, or authorities affected"
+    ],
+    "consequences": [
+      "Intended consequences",
+      "Potential side effects",
+      "Migration requirements",
+      "Resource impacts"
+    ],
+    "owner": "Person or role responsible for implementation",
+    "review_date": "Date for decision review (if applicable)",
+    "status": "ACTIVE, SUPERSEDED, or DEPRECATED",
+    "tags": [
+      "Keywords for categorization and search"
+    ]
+  },
+  "example": {
+    "decision_id": "DEC-2026-0001",
+    "date": "2026-08-21T14:30:00Z",
+    "authority": "COLOR",
+    "question": "Should we approve the use of Aura Teal 100 for dark mode text to address contrast issues?",
+    "evidence": [
+      "WCAG AA contrast ratio test results (1.8:1 for base Aura Teal on Obsidian)",
+      "Brand identity requirement for Aura Teal as accent color",
+      "Men expression dark mode requirement",
+      "Accessibility governor assessment",
+      "Visual design mockups showing Aura Teal 100 usability"
+    ],
+    "decision": "APPROVED with mitigation",
+    "rationale": "Base Aura Teal fails WCAG AA on dark backgrounds but brand identity requires Aura Teal as accent. Aura Teal 100 provides sufficient contrast (4.5:1) while maintaining brand expression.",
+    "affected_systems": [
+      "AURA screens in Men expression",
+      "AURA components on dark surfaces",
+      "Token.color system",
+      "Men expression theme"
+    ],
+    "consequences": [
+      "Improved accessibility compliance for AURA in dark mode",
+      "Need to update documentation to specify Aura Teal 100 for dark mode text",
+      "No impact on light mode usage",
+      "Developer education required on proper usage"
+    ],
+    "owner": "Color Governor",
+    "review_date": "2027-02-15",
+    "status": "ACTIVE",
+    "tags": [
+      "accessibility",
+      "color",
+      "contrast",
+      "AURA",
+      "Men expression"
+    ]
+  },
+  "required_fields": [
+    "decision_id",
+    "date",
+    "authority",
+    "question",
+    "evidence",
+    "decision",
+    "rationale",
+    "affected_systems",
+    "consequences",
+    "owner",
+    "review_date"
+  ],
+  "optional_fields": [
+    "status",
+    "tags"
+  ]
+}

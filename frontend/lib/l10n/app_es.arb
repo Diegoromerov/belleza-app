@@ -1,0 +1,20 @@
+{
+  "@@locale": "es",
+  "registerConciergeTitle": "REGISTRO CONCIERGE",
+  "registerConciergeSubtitle": "Únete a la comunidad de alta belleza y salud",
+  "registerUserType": "TIPO DE USUARIO",
+  "registerClientInfo": "✨ Acceso a diagnósticos de IA Aura, GlowStore y reserva de servicios concierge.",
+  "registerProviderInfo": "💼 Ofrece tus servicios, gestiona tu agenda y recibe pagos con comisión preferencial.",
+  "registerFullNameLabel": "Nombre completo",
+  "registerFullNameHint": "Nombre completo",
+  "registerFullNameError": "Ingresa tu nombre completo",
+  "registerEmailLabel": "Correo electrónico",
+  "registerEmailHint": "Correo electrónico",
+  "registerEmailError": "Ingresa tu correo",
+  "registerPasswordLabel": "Contraseña",
+  "registerPasswordHint": "Contraseña",
+  "registerPasswordError": "Mínimo 6 caracteres",
+  "registerPhoneLabel": "Teléfono (opcional)",
+  "registerPhoneHint": "Teléfono (opcional)",
+  "registerCreateAccount": "CREAR MI CUENTA"
+}

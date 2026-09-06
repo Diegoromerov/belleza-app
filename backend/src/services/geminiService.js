@@ -108,7 +108,12 @@ const RAG_TRIGGER_KEYWORDS = [
   'acne', 'espinilla', 'poro', 'mancha', 'melasma', 'rosacea', 'dermatitis', 'eczema',
   'arrugas', 'envejecimiento', 'flacidez',
   // Consultas de conocimiento
-  'que es', 'como funciona', 'para que sirve', 'es seguro', 'puedo usar', 'recomiendas'
+  'que es', 'como funciona', 'para que sirve', 'es seguro', 'puedo usar', 'recomiendas',
+  // GlowApp Business Engine (Regulación, Bioseguridad, Formalización)
+  'concepto sanitario', 'bioseguridad', 'rh1', 'residuos hospitalarios', 'ley 9',
+  'resolucion 2827', 'decreto 1072', 'sg-sst', 'contrato laboral', 'autoclave',
+  'glutaraldehido', 'registro sanitario', 'cumplimiento', 'tramite', 'formalizacion',
+  'apertura', 'auditoria', 'hallazgo', 'expediente', 'requisito'
 ];
 
 /**

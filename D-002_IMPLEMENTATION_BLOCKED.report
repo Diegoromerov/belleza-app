@@ -1,0 +1,47 @@
+# D-002_IMPLEMENTATION_BLOCKED.report
+
+## Blocked Implementation of D-002
+
+**Status**: 🔴 BLOCKED
+
+**Reason**: Unable to connect to the database to run migrations and validate changes.
+
+### Changes Prepared
+- Created migration files:
+  - `/c/beauty-app/backend/migrations/059_create_tipo_trabajador_enum.sql`
+  - `/c/beauty-app/backend/migrations/060_add_worker_type_to_usuarios.sql`
+- Updated `/c/beauty-app/backend/runMigrations.js` to include the new migrations in the execution list.
+
+### State Before Attempt
+- Database connection details are present in `.env` (credentials redacted).
+- The database service is not reachable (connection refused on port 5435).
+- Existing migrations 055-058 have been applied (as per earlier audits).
+- The `usuarios` table exists and has a `tenant_id` column (from D-001).
+- No `worker_type` column or `tipo_trabajador` enum exists.
+
+### Attempted Validation
+- Ran `node backend/check_tenant.js` → ConnectionRefusedError.
+- Ran `node backend/runMigrations.js` → ConnectionRefusedError.
+- Attempted to test database connection via Node.js Sequelize → undefined DATABASE_URL (possibly due to `.env` loading issues in the script context).
+
+### Errors
+- `ConnectionRefusedError [SequelizeConnectionRefusedError]: connect ECONNREFUSED 127.0.0.1:5435`
+- `TypeError [ERR_INVALID_ARG_TYPE]: The "url" argument must be of type string. Received undefined` (when trying to construct Sequelize instance with `process.env.DATABASE_URL`)
+
+### Risks Residual
+- None noted beyond the blockage.
+
+### Elements Not Implemented
+- Database migrations have not been executed due to inability to connect.
+- Consequently, no backend model updates, API changes, or UI changes have been made (as they depend on the database schema being updated first).
+- No validation of tenant isolation, RLS, or API endpoints has been performed.
+
+### Next Steps
+- Ensure the database service is running and accessible.
+- Verify the `DATABASE_URL` in `.env` is correct and accessible from the current network.
+- Once the database is available, run the migrations using `node backend/runMigrations.js`.
+- After migrations, proceed with backend, API, and frontend updates as per the specifications.
+- Then run validation and tests.
+
+---
+*Blocked at $(date)*

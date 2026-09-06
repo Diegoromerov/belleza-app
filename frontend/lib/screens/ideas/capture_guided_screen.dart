@@ -2,8 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
-import '../../../shared/glow_tokens.dart';
-import '../widgets/holographic_overlay.dart';
+import '../../shared/glow_tokens.dart';
+import '../../widgets/holographic_overlay.dart';
 
 /// Pantalla de Captura Guiada con Cámara y Detección Facial.
 /// Muestra la vista previa de la cámara en vivo con el [HolographicOverlay]
@@ -237,47 +237,52 @@ class _CaptureGuidedScreenState extends State<CaptureGuidedScreen> {
             bottom: 40,
             left: 20,
             right: 20,
-            child: Semantics(
-              label: _isFaceAligned
-                  ? 'Estado: Rostro centrado correctamente.'
-                  : 'Estado: Centra tu rostro dentro del óvalo holográfico.',
-              liveRegion: true,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                decoration: BoxDecoration(
-                  color: GlowTokens.nightAndean.withValues(alpha: 0.9),
-                  borderRadius: BorderRadius.circular(30),
-                  border: Border.all(
-                    color: _isFaceAligned ? GlowTokens.emerald : GlowTokens.roseGold,
-                    width: 2.0,
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      _isFaceAligned
-                          ? Icons.check_circle_rounded
-                          : Icons.center_focus_strong_rounded,
-                      color: _isFaceAligned ? GlowTokens.emerald : GlowTokens.roseGold,
-                      size: 22,
-                    ),
-                    const SizedBox(width: 10),
-                    Flexible(
-                      child: Text(
-                        _isFaceAligned
-                            ? '¡Perfecto! Rostro centrado (Alineado)'
-                            : 'Centra tu rostro dentro del óvalo',
-                        style: TextStyle(
-                          fontFamily: GlowTokens.fontInter,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: _isFaceAligned ? GlowTokens.emerald : GlowTokens.creamSilk,
-                        ),
-                        textAlign: TextAlign.center,
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 480),
+                child: Semantics(
+                  label: _isFaceAligned
+                      ? 'Estado: Rostro centrado correctamente.'
+                      : 'Estado: Centra tu rostro dentro del óvalo holográfico.',
+                  liveRegion: true,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1F1A15).withValues(alpha: 0.9),
+                      borderRadius: BorderRadius.circular(30),
+                      border: Border.all(
+                        color: _isFaceAligned ? const Color(0xFF2E7D32) : const Color(0xFFC5A052),
+                        width: 2.0,
                       ),
                     ),
-                  ],
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          _isFaceAligned
+                              ? Icons.check_circle_rounded
+                              : Icons.center_focus_strong_rounded,
+                          color: _isFaceAligned ? const Color(0xFF2E7D32) : const Color(0xFFC5A052),
+                          size: 22,
+                        ),
+                        const SizedBox(width: 10),
+                        Flexible(
+                          child: Text(
+                            _isFaceAligned
+                                ? '¡Perfecto! Rostro centrado (Alineado)'
+                                : 'Centra tu rostro dentro del óvalo',
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: _isFaceAligned ? const Color(0xFF81C784) : Colors.white,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),

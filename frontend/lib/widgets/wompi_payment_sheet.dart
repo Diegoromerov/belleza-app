@@ -156,9 +156,13 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final maxSheetHeight = MediaQuery.of(context).size.height * 0.88;
+
     return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding: EdgeInsets.only(bottom: bottomInset),
       child: Container(
+        constraints: BoxConstraints(maxHeight: maxSheetHeight),
         decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.only(
@@ -166,68 +170,72 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
             topRight: Radius.circular(28),
           ),
         ),
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 24,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF5C288D),
-                        borderRadius: BorderRadius.circular(4),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF5C288D),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'wompi',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w900,
-                        color: Color(0xFF5C288D),
-                        letterSpacing: -1.0,
+                      const SizedBox(width: 8),
+                      const Text(
+                        'wompi',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF5C288D),
+                          letterSpacing: -1.0,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 4),
-                    Container(
-                      width: 6,
-                      height: 6,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFF12A7B),
-                        shape: BoxShape.circle,
+                      const SizedBox(width: 4),
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFF12A7B),
+                          shape: BoxShape.circle,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close, color: Colors.grey),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            if (_successData != null)
-              _buildSuccessView()
-            else
-              _buildPaymentForm(),
-          ],
+                    ],
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, color: Colors.grey),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              if (_successData != null)
+                _buildSuccessView()
+              else
+                _buildPaymentForm(),
+            ],
+          ),
         ),
       ),
     );
@@ -466,12 +474,15 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
                             : null,
                       ),
                       alignment: Alignment.center,
-                      child: Text(
-                        'Nequi',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                          color: _selectedTab == 0 ? const Color(0xFF5C288D) : Colors.grey[600],
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          'Nequi',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            color: _selectedTab == 0 ? const Color(0xFF5C288D) : Colors.grey[600],
+                          ),
                         ),
                       ),
                     ),
@@ -482,19 +493,22 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
                     onTap: _isProcessing ? null : () => setState(() => _selectedTab = 1),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: _selectedTab == 1 ? Colors.white : Colors.transparent,
+                         color: _selectedTab == 1 ? Colors.white : Colors.transparent,
                         borderRadius: BorderRadius.circular(21),
                         boxShadow: _selectedTab == 1
                             ? const [BoxShadow(color: Color(0x1F000000), blurRadius: 4, offset: Offset(0, 2))]
                             : null,
                       ),
                       alignment: Alignment.center,
-                      child: Text(
-                        'Tarjeta de Crédito',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                          color: _selectedTab == 1 ? const Color(0xFF5C288D) : Colors.grey[600],
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          'Tarjeta de Crédito',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            color: _selectedTab == 1 ? const Color(0xFF5C288D) : Colors.grey[600],
+                          ),
                         ),
                       ),
                     ),

@@ -1,0 +1,676 @@
+{
+  "phase": "M1_I1_ICON_PILOT_MIGRATION_PLAN",
+  "mode": "READ_ONLY",
+  "migration_started": false,
+  "timestamp": "2026-08-20T00:00:00",
+  "baseline": {
+    "total_instances": 198,
+    "unique_material_icons": 130,
+    "files_with_icons": 39,
+    "screens_audited": 55,
+    "components_audited": 12,
+    "direct_matches": 37,
+    "semantic_matches": 32,
+    "review_required": 9,
+    "no_equivalent_gaps": 148,
+    "glowicon_production_usage": 0,
+    "adapter_production_usage": 0
+  },
+  "pilots": {
+    "A_general": {
+      "name": "Pilot A — General (Home + Navigation)",
+      "files": [
+        "lib/screens/home/home_screen.dart",
+        "lib/widgets/floating_navigation_dock.dart"
+      ],
+      "description": "Core navigation and home screen - highest visibility, lowest risk",
+      "icon_count": 18,
+      "direct_matches": 12,
+      "semantic_matches": 4,
+      "review_required": 1,
+      "no_equivalent": 1,
+      "already_glow": 0,
+      "audience": "GENERAL",
+      "leverage": "HIGH",
+      "risk": "LOW",
+      "affected_screens": ["home_screen", "all provider screens (via floating_navigation_dock)"],
+      "affected_components": ["floating_navigation_dock"]
+    },
+    "B_store": {
+      "name": "Pilot B — Store / Women / Men",
+      "files": [
+        "lib/screens/store_screen.dart",
+        "lib/widgets/store_product_card.dart"
+      ],
+      "description": "Store with audience-aware theming (Women/Men) - tests color roles",
+      "icon_count": 25,
+      "direct_matches": 8,
+      "semantic_matches": 12,
+      "review_required": 3,
+      "no_equivalent": 2,
+      "already_glow": 0,
+      "audience": "WOMEN/MEN",
+      "leverage": "HIGH",
+      "risk": "MEDIUM",
+      "affected_screens": ["store_screen"],
+      "affected_components": ["store_product_card", "store/product_card"]
+    },
+    "C_concierge": {
+      "name": "Pilot C — Concierge / Booking (Critical Flow)",
+      "files": [
+        "lib/screens/booking_screen.dart",
+        "lib/widgets/provider/booking_card.dart",
+        "lib/widgets/wompi_payment_sheet.dart"
+      ],
+      "description": "Critical booking flow with payment - highest functional risk",
+      "icon_count": 44,
+      "direct_matches": 15,
+      "semantic_matches": 18,
+      "review_required": 6,
+      "no_equivalent": 5,
+      "already_glow": 0,
+      "audience": "GENERAL",
+      "leverage": "HIGH",
+      "risk": "HIGH",
+      "affected_screens": ["booking_screen", "store_screen (checkout)"],
+      "affected_components": ["booking_card", "wompi_payment_sheet"]
+    },
+    "D_provider": {
+      "name": "Pilot D — Provider Dashboard",
+      "files": [
+        "lib/screens/provider_dashboard_screen.dart",
+        "lib/widgets/provider/provider_luxe_components.dart"
+      ],
+      "description": "Provider dashboard - high density, complex state, provider-specific",
+      "icon_count": 38,
+      "direct_matches": 12,
+      "semantic_matches": 18,
+      "review_required": 5,
+      "no_equivalent": 3,
+      "already_glow": 0,
+      "audience": "CONCIERGE/PROVIDER",
+      "leverage": "MEDIUM",
+      "risk": "MEDIUM",
+      "affected_screens": ["provider_dashboard_screen", "provider_profile_screen", "provider_route_screen"],
+      "affected_components": ["provider_luxe_components", "booking_card (reused)"]
+    }
+  },
+  "auto_awesome_audit": [
+    {
+      "file": "lib/widgets/home/hero_section.dart",
+      "line": 118,
+      "screen": "HomeScreen",
+      "widget": "HeroSection",
+      "current_meaning": "AURA Skin Score indicator - represents AI-powered biometric analysis",
+      "proposed_glow_icon": "GlowIcon.aura()",
+      "classification": "SEMANTIC_MATCH",
+      "confidence": "HIGH",
+      "rationale": "Directly represents AURA AI system, skin score is AURA's output. GlowIcon.aura() is the identity icon for AURA."
+    },
+    {
+      "file": "lib/widgets/floating_navigation_dock.dart",
+      "line": 133,
+      "screen": "ProviderDashboard (global nav)",
+      "widget": "FloatingNavigationDock - AI Assistant button",
+      "current_meaning": "Asistente IA - opens AI chat (AURA)",
+      "proposed_glow_icon": "GlowIcon.aura()",
+      "classification": "SEMANTIC_MATCH",
+      "confidence": "HIGH",
+      "rationale": "Label explicitly says 'Asistente IA', this is the AURA multi-agent chat entry point. GlowIcon.aura() represents AURA identity."
+    },
+    {
+      "file": "lib/main.dart",
+      "line": 1252,
+      "screen": "Main App (category selector)",
+      "widget": "_buildCategorySelector - 'Todos' category",
+      "current_meaning": "Category 'Todos' (All) - shows all providers",
+      "proposed_glow_icon": "GlowIcon.glow()",
+      "classification": "SEMANTIC_MATCH",
+      "confidence": "MEDIUM",
+      "rationale": "Represents 'All categories' / GlowApp brand discovery. GlowIcon.glow() is the brand mark. But this is a category filter, not brand."
+    },
+    {
+      "file": "lib/main.dart",
+      "line": 1432,
+      "screen": "Main App (bottom nav center - Ideas)",
+      "widget": "_buildProminentCenterNavItem - Ideas button",
+      "current_meaning": "Ideas module entry point - AI-powered beauty tools",
+      "proposed_glow_icon": "GlowIcon.glowRecommendation()",
+      "classification": "SEMANTIC_MATCH",
+      "confidence": "HIGH",
+      "rationale": "Central prominent button for 'Ideas' module which contains AI tools (VTO, skin analysis, color analysis). GlowIcon.glowRecommendation() represents AI-powered recommendations."
+    },
+    {
+      "file": "lib/main.dart",
+      "line": 1630,
+      "screen": "Main App (search bar - AI chat trigger)",
+      "widget": "Search bar InkWell - navigate to AI chat",
+      "current_meaning": "Trigger AI chat (AURA) from search",
+      "proposed_glow_icon": "GlowIcon.aura()",
+      "classification": "SEMANTIC_MATCH",
+      "confidence": "HIGH",
+      "rationale": "Direct navigation to AURA chat. Same semantic as floating_navigation_dock."
+    },
+    {
+      "file": "lib/widgets/ai_search_bar.dart",
+      "line": 55,
+      "screen": "AI Search Bar (global)",
+      "widget": "AISearchBar - auto_awesome button",
+      "current_meaning": "AI-powered search assistant button",
+      "proposed_glow_icon": "GlowIcon.glowRecommendation()",
+      "classification": "SEMANTIC_MATCH",
+      "confidence": "HIGH",
+      "rationale": "Part of AI search bar, triggers AI search/assistance. Represents AI recommendation engine. GlowIcon.glowRecommendation() fits."
+    },
+    {
+      "file": "lib/widgets/aura_multi_agent_chat.dart",
+      "line": 243,
+      "screen": "AURA Multi-Agent Chat",
+      "widget": "Redirection button - 'Abrir módulo Ideas'",
+      "current_meaning": "Open Ideas module from AURA chat",
+      "proposed_glow_icon": "GlowIcon.glowRecommendation()",
+      "classification": "SEMANTIC_MATCH",
+      "confidence": "HIGH",
+      "rationale": "Button inside AURA chat that redirects to Ideas module. Represents AI-powered tool recommendation."
+    },
+    {
+      "file": "lib/screens/provider_detail_screen.dart",
+      "line": 1165,
+      "screen": "ProviderDetailScreen",
+      "widget": "AI Interest Card - 'Pregúntale a nuestra IA'",
+      "current_meaning": "Ask AI if provider styles match your face",
+      "proposed_glow_icon": "GlowIcon.glowRecommendation()",
+      "classification": "SEMANTIC_MATCH",
+      "confidence": "HIGH",
+      "rationale": "Explicitly 'Pregúntale a nuestra IA' - AI recommendation for provider matching. GlowIcon.glowRecommendation() is correct."
+    },
+    {
+      "file": "lib/screens/auth/register_screen.dart",
+      "line": 338,
+      "screen": "RegisterScreen",
+      "widget": "Role selection card - Cliente benefits",
+      "current_meaning": "AI Aura diagnostics benefit for clients",
+      "proposed_glow_icon": "GlowIcon.aura()",
+      "classification": "SEMANTIC_MATCH",
+      "confidence": "HIGH",
+      "rationale": "Text says 'Diagnóstico Facial Aura Ilimitado' and 'Escaneos biométricos 3D'. Directly references AURA. GlowIcon.aura() is correct."
+    },
+    {
+      "file": "lib/screens/designs/glowup_card_screen.dart",
+      "line": 243,
+      "screen": "GlowUpCardScreen",
+      "widget": "Treatment card - AI diagnosed glow up",
+      "current_meaning": "Glow Up Diagnosticado - AI-powered treatment recommendation",
+      "proposed_glow_icon": "GlowIcon.glowRecommendation()",
+      "classification": "SEMANTIC_MATCH",
+      "confidence": "HIGH",
+      "rationale": "Shows AI-diagnosed treatment recommendations. 'Glow Up Diagnosticado' = AI recommendation."
+    },
+    {
+      "file": "lib/screens/chat_screen.dart",
+      "line": 614,
+      "screen": "ChatScreen",
+      "widget": "AURA recommendation button - 'Abrir herramienta en Ideas IA'",
+      "current_meaning": "Open AI tool in Ideas module from chat recommendation",
+      "proposed_glow_icon": "GlowIcon.glowRecommendation()",
+      "classification": "SEMANTIC_MATCH",
+      "confidence": "HIGH",
+      "rationale": "AURA chat recommends an AI tool, button opens Ideas module. Represents AI tool recommendation."
+    },
+    {
+      "file": "lib/screens/designs/evolution_dashboard_screen.dart",
+      "line": 330,
+      "screen": "EvolutionDashboardScreen",
+      "widget": "Treatment attribution note - AI-generated",
+      "current_meaning": "AI-generated treatment note/attribution",
+      "proposed_glow_icon": "GlowIcon.glowRecommendation()",
+      "classification": "SEMANTIC_MATCH",
+      "confidence": "MEDIUM",
+      "rationale": "Shows AI-attributed treatment note. Could be glowRecommendation or analyze. Context suggests AI analysis."
+    },
+    {
+      "file": "lib/screens/profile/rewards_xp_screen.dart",
+      "line": 154,
+      "screen": "RewardsXPScreen",
+      "widget": "Benefit tile - 'Diagnóstico Facial Aura Ilimitado'",
+      "current_meaning": "Unlimited AURA facial diagnostics benefit",
+      "proposed_glow_icon": "GlowIcon.aura()",
+      "classification": "SEMANTIC_MATCH",
+      "confidence": "HIGH",
+      "rationale": "Explicitly 'Diagnóstico Facial Aura' and 'Escaneos biométricos 3D'. Direct AURA reference."
+    },
+    {
+      "file": "lib/screens/ideas/processing_alchemy_screen.dart",
+      "line": 112,
+      "screen": "ProcessingAlchemyScreen",
+      "widget": "Central processing animation - AI analysis",
+      "current_meaning": "AI processing/analysis animation (central visual)",
+      "proposed_glow_icon": "GlowIcon.analyze()",
+      "classification": "SEMANTIC_MATCH",
+      "confidence": "HIGH",
+      "rationale": "This IS the analysis phase - 'AURA está analizando'. GlowIcon.analyze() represents active analysis/perception."
+    },
+    {
+      "file": "lib/screens/ideas/results_screen.dart",
+      "line": 170,
+      "screen": "ResultsScreen",
+      "widget": "VTO Live button - 'Probar Maquillaje en VTO Live'",
+      "current_meaning": "Try makeup in VTO Live (DeepSeek IA)",
+      "proposed_glow_icon": "GlowIcon.glowRecommendation()",
+      "classification": "SEMANTIC_MATCH",
+      "confidence": "MEDIUM",
+      "rationale": "VTO Live is an AI-powered virtual try-on. Could be glowRecommendation (AI tool) or scan (perception). But it's a 'try on' action."
+    },
+    {
+      "file": "lib/screens/ideas/results_screen.dart",
+      "line": 487,
+      "screen": "ResultsScreen",
+      "widget": "ScoreCard - 'Arrugas' (wrinkles score)",
+      "current_meaning": "Skin analysis metric - wrinkles (AI analysis)",
+      "proposed_glow_icon": "GlowIcon.analyze()",
+      "classification": "SEMANTIC_MATCH",
+      "confidence": "HIGH",
+      "rationale": "ScoreCard shows AI analysis results for wrinkles. This is analysis output. GlowIcon.analyze() represents analysis capability."
+    }
+  ],
+  "direct_matches": [
+    "home -> GlowIcon.home()",
+    "search -> GlowIcon.search()",
+    "menu -> GlowIcon.menu()",
+    "close -> GlowIcon.close()",
+    "arrow_back -> GlowIcon.back()",
+    "arrow_forward -> GlowIcon.forward()",
+    "more_horiz -> GlowIcon.more()",
+    "person/profile -> GlowIcon.profile()",
+    "notifications -> GlowIcon.notification()",
+    "settings -> GlowIcon.settings()",
+    "shopping_bag -> GlowIcon.bag()",
+    "shopping_cart -> GlowIcon.cart()",
+    "calendar_today -> GlowIcon.calendar()",
+    "access_time -> GlowIcon.clock()",
+    "location_on -> GlowIcon.location()",
+    "spa -> GlowIcon.spa()",
+    "chat_bubble -> GlowIcon.chat()",
+    "support_agent -> GlowIcon.support()",
+    "share -> GlowIcon.share()",
+    "filter_list -> GlowIcon.filter()",
+    "sort -> GlowIcon.sort()",
+    "download -> GlowIcon.download()",
+    "qr_code -> GlowIcon.qr()"
+  ],
+  "semantic_matches": [
+    {"material": "grid_view", "glow": "menu", "note": "Grid view as menu alternative"},
+    {"material": "chevron_left/right", "glow": "back/forward", "note": "Stepper navigation"},
+    {"material": "shopping_bag_outlined", "glow": "bag", "note": "Outlined variant of bag"},
+    {"material": "add_shopping_cart", "glow": "cart", "note": "Add to cart action"},
+    {"material": "calendar_month", "glow": "calendar", "note": "Month view vs day view"},
+    {"material": "access_time_filled", "glow": "clock", "note": "Filled clock variant"},
+    {"material": "location_on_outlined", "glow": "location", "note": "Outlined location"},
+    {"material": "map_outlined", "glow": "location", "note": "Map as location"},
+    {"material": "content_cut", "glow": "hair/shave", "note": "Haircut/barber service"},
+    {"material": "brush", "glow": "nails/makeup", "note": "Nails/makeup service"},
+    {"material": "face", "glow": "makeup/skincare", "note": "Beauty service"},
+    {"material": "auto_awesome", "glow": "glowRecommendation/aura/analyze", "note": "Context-dependent - see auto_awesome_audit"},
+    {"material": "water_drop", "glow": "body", "note": "Hydration/body care"},
+    {"material": "headset_mic", "glow": "support", "note": "Support/help"},
+    {"material": "arrow_forward_ios", "glow": "forward", "note": "iOS forward"},
+    {"material": "send", "glow": "chat", "note": "Send message"},
+    {"material": "payment", "glow": "bag/cart", "note": "Payment leads to cart/bag"},
+    {"material": "account_balance_wallet", "glow": "bag", "note": "Wallet as bag"},
+    {"material": "verified_user", "glow": "NO_EQUIVALENT", "note": "Verification badge - no v1.0 equivalent"},
+    {"material": "star", "glow": "heart/wishlist", "note": "Context-dependent: rating vs favorite"},
+    {"material": "check_circle", "glow": "heart/support", "note": "Context-dependent"},
+    {"material": "stars_rounded", "glow": "NO_EQUIVALENT", "note": "Rating stars - no v1.0 equivalent"},
+    {"material": "photo/camera", "glow": "NO_EQUIVALENT", "note": "Camera/photo - no v1.0 equivalent"},
+    {"material": "lock/visibility", "glow": "NO_EQUIVALENT", "note": "Auth/security state icons"},
+    {"material": "gavel", "glow": "NO_EQUIVALENT", "note": "Legal/disputes"},
+    {"material": "shield", "glow": "NO_EQUIVALENT", "note": "Security/verified"},
+    {"material": "refresh", "glow": "sync", "note": "Refresh as sync"},
+    {"material": "play_circle", "glow": "NO_EQUIVALENT", "note": "Media play"},
+    {"material": "radio_button", "glow": "NO_EQUIVALENT", "note": "Form controls"}
+  ],
+  "review_required": [
+    "auto_awesome (16 instances) - context-dependent mapping to glow/aura/glowRecommendation/analyze",
+    "star/stars_rounded (6) - rating vs wishlist vs heart ambiguity",
+    "photo/camera (8+) - AR/VTO, profile, scanner - no v1.0 camera icon",
+    "verified_user/verified (3) - verification badge - no v1.0 equivalent",
+    "lock/visibility (6+) - auth/security state - no v1.0 equivalent",
+    "gavel (3) - disputes/legal - no v1.0 equivalent",
+    "shield (2) - security/verified - no v1.0 equivalent",
+    "refresh (3) - pull-to-refresh vs sync - semantic overlap",
+    "check_circle (5) - success/confirmation - context-dependent"
+  ],
+  "no_equivalent": {
+    "auth_security": ["lock", "visibility", "visibility_off", "fingerprint", "pin", "g_mobiledata", "apple"],
+    "media_ar": ["photo", "camera", "camera_alt", "cameraswitch", "photo_library", "add_a_photo", "image"],
+    "rating_quality": ["star", "stars_rounded", "star_border", "emoji_events", "military_tech"],
+    "verification": ["verified_user", "verified", "verified_rounded"],
+    "ui_states": ["error_outline", "warning", "warning_amber", "info_outline", "check_circle", "check"],
+    "navigation": ["chevron_left", "chevron_right", "arrow_forward_ios", "arrow_downward", "arrow_upward", "refresh"],
+    "payments_finance": ["payment", "credit_card", "account_balance", "account_balance_wallet", "attach_money", "receipt_long"],
+    "legal_disputes": ["gavel", "shield", "gavel_outlined", "receipt_long_outlined"],
+    "beauty_ai": ["wb_sunny", "back_hand", "face_retouching_natural", "face", "palette"],
+    "wardrobe_style": ["style", "checkroom", "psychology", "analytics", "auto_stories", "center_focus_strong", "blur_on"],
+    "experimental": ["opacity", "lock_clock", "compare_arrows", "rocket_launch", "bolt"],
+    "platform": ["apple", "g_mobiledata", "ios_share"]
+  },
+  "component_leverage": [
+    {"component": "floating_navigation_dock.dart", "leverage": "HIGH", "usage_count": 1, "affected_screens": "All provider screens", "icons": 8, "risk": "LOW"},
+    {"component": "wompi_payment_sheet.dart", "leverage": "HIGH", "usage_count": 2, "affected_screens": "booking_screen, store_screen", "icons": 11, "risk": "MEDIUM"},
+    {"component": "booking_card.dart", "leverage": "HIGH", "usage_count": 3, "affected_screens": "provider_dashboard, client_bookings, booking_tracking", "icons": 10, "risk": "LOW"},
+    {"component": "store_product_card.dart", "leverage": "HIGH", "usage_count": 1, "affected_screens": "store_screen (grid)", "icons": 6, "risk": "LOW"},
+    {"component": "store/product_card.dart", "leverage": "MEDIUM", "usage_count": 1, "affected_screens": "store_screen (alt)", "icons": 4, "risk": "LOW"},
+    {"component": "ai_search_bar.dart", "leverage": "HIGH", "usage_count": 1, "affected_screens": "main.dart (home)", "icons": 2, "risk": "LOW"},
+    {"component": "audience_toggle.dart", "leverage": "MEDIUM", "usage_count": 2, "affected_screens": "store_screen, settings", "icons": 3, "risk": "LOW"},
+    {"component": "provider_luxe_components.dart", "leverage": "MEDIUM", "usage_count": 2, "affected_screens": "provider_dashboard, provider_detail", "icons": 3, "risk": "LOW"},
+    {"component": "service_card.dart", "leverage": "MEDIUM", "usage_count": 1, "affected_screens": "provider_services", "icons": 2, "risk": "LOW"},
+    {"component": "booking_recovery_banner.dart", "leverage": "LOW", "usage_count": 1, "affected_screens": "booking_screen", "icons": 3, "risk": "LOW"},
+    {"component": "aura_multi_agent_chat.dart", "leverage": "LOW", "usage_count": 1, "affected_screens": "chat_screen", "icons": 2, "risk": "LOW"},
+    {"component": "academy_luxe_components.dart", "leverage": "LOW", "usage_count": 1, "affected_screens": "academy screens", "icons": 3, "risk": "LOW"}
+  ],
+  "file_change_plan": {
+    "A_general": {
+      "files_to_modify": [
+        "lib/screens/home/home_screen.dart",
+        "lib/widgets/floating_navigation_dock.dart"
+      ],
+      "files_to_review": [
+        "lib/widgets/home/hero_section.dart",
+        "lib/widgets/store/product_card.dart"
+      ],
+      "files_not_to_touch": [
+        "lib/design/icons/glow_icon_demo.dart",
+        "lib/design/icons/glow_icon_adapter.dart",
+        "lib/design/icons/glow_icon_registry*.dart"
+      ]
+    },
+    "B_store": {
+      "files_to_modify": [
+        "lib/screens/store_screen.dart",
+        "lib/widgets/store_product_card.dart"
+      ],
+      "files_to_review": [
+        "lib/widgets/store/product_card.dart",
+        "lib/widgets/wompi_payment_sheet.dart"
+      ],
+      "files_not_to_touch": [
+        "lib/design/icons/glow_icon_demo.dart",
+        "lib/design/icons/glow_icon_adapter.dart"
+      ]
+    },
+    "C_concierge": {
+      "files_to_modify": [
+        "lib/screens/booking_screen.dart",
+        "lib/widgets/provider/booking_card.dart",
+        "lib/widgets/wompi_payment_sheet.dart"
+      ],
+      "files_to_review": [
+        "lib/screens/store_screen.dart"
+      ],
+      "files_not_to_touch": [
+        "lib/screens/otp_confirm_screen.dart",
+        "lib/design/icons/glow_icon_demo.dart"
+      ]
+    },
+    "D_provider": {
+      "files_to_modify": [
+        "lib/screens/provider_dashboard_screen.dart",
+        "lib/widgets/provider/provider_luxe_components.dart"
+      ],
+      "files_to_review": [
+        "lib/widgets/provider/booking_card.dart"
+      ],
+      "files_not_to_touch": [
+        "lib/design/icons/glow_icon_demo.dart"
+      ]
+    }
+  },
+  "theme_matrix": {
+    "A_general": {
+      "WOMEN": {"primary": "LuxeColors.gold871", "secondary": "LuxeColors.nude900", "accent": "LuxeColors.gold871", "surface": "LuxeColors.nude50"},
+      "MEN": {"primary": "MensTheme.champagne", "secondary": "MensTheme.warmWhite", "accent": "MensTheme.copper", "surface": "MensTheme.obsidianBg"},
+      "AURA": {"primary": "GlowTokens.auraTeal", "secondary": "GlowTokens.obsidianBg", "accent": "GlowTokens.auraTeal", "surface": "GlowTokens.creamSilk"},
+      "GENERAL": {"primary": "LuxeColors.gold871", "secondary": "LuxeColors.nude900"}
+    },
+    "B_store": {
+      "WOMEN": {"primary": "GlowStoreTokens.accentColor(isMen:false)", "secondary": "GlowStoreTokens.secondaryTextColor(isMen:false)"},
+      "MEN": {"primary": "GlowStoreTokens.accentColor(isMen:true)", "secondary": "GlowStoreTokens.secondaryTextColor(isMen:true)"},
+      "AURA": {"primary": "GlowTokens.auraTeal"},
+      "GENERAL": {"primary": "LuxeColors.gold871"}
+    },
+    "C_concierge": {
+      "WOMEN": {"primary": "LuxeColors.gold871", "success": "GlowTokens.deepGreen", "error": "Colors.redAccent", "warning": "Colors.orange"},
+      "MEN": {"primary": "MensTheme.copper", "success": "MensTheme.deepGreen", "error": "Colors.redAccent", "warning": "Colors.orange"},
+      "AURA": {"primary": "GlowTokens.auraTeal", "success": "GlowTokens.deepGreen"},
+      "GENERAL": {"primary": "LuxeColors.gold871"}
+    },
+    "D_provider": {
+      "WOMEN": {"primary": "LuxeColors.gold871", "secondary": "LuxeColors.nude900"},
+      "MEN": {"primary": "MensTheme.champagne", "secondary": "MensTheme.warmWhite"},
+      "AURA": {"primary": "GlowTokens.auraTeal"},
+      "GENERAL": {"primary": "AppTheme.primary"}
+    }
+  },
+  "accessibility_plan": {
+    "requirements": [
+      "Preserve all existing semanticLabel attributes",
+      "Preserve all existing tooltip attributes",
+      "Add semanticLabel where missing on interactive icons",
+      "Ensure touch targets >= 48dp",
+      "Do not degrade screen reader experience"
+    ],
+    "current_state": {
+      "with_semanticLabel": "~15%",
+      "with_tooltip": "~20%",
+      "with_semantics_wrapper": "0%",
+      "touch_target_48dp": "Not guaranteed - varies by wrapper"
+    },
+    "target_state": {
+      "all_interactive_icons_have_semanticLabel": true,
+      "all_iconbuttons_have_tooltip": true,
+      "decorative_icons_silenced": true
+    }
+  },
+  "size_plan": {
+    "token_mapping": {
+      "xs": 16,
+      "sm": 20,
+      "md": 24,
+      "lg": 28,
+      "xl": 32,
+      "xxl": 40,
+      "huge": 48
+    },
+    "observed_sizes": {
+      "12-16px": "10% - use xs (16)",
+      "18-20px": "25% - use sm (20)",
+      "22-24px": "35% - use md (24)",
+      "28-32px": "20% - use lg (28) / xl (32)",
+      "36-56px": "10% - use xxl (40) / huge (48)"
+    },
+    "compatibility": "GlowIcon size tokens cover full observed range"
+  },
+  "color_plan": {
+    "mappings": [
+      {"current": "LuxeColors.gold871", "target_role": "accent", "context": "Women primary brand"},
+      {"current": "LuxeColors.nude900/nude500", "target_role": "secondary/neutral", "context": "Text/secondary"},
+      {"current": "AppTheme.primary", "target_role": "primary", "context": "Global primary"},
+      {"current": "GlowStoreTokens.accentColor(isMen:)", "target_role": "accent", "context": "Store context-aware"},
+      {"current": "Colors.redAccent/deepGreen/orange", "target_role": "error/success/warning", "context": "Hardcoded status"},
+      {"current": "Colors.white/white24/white30", "target_role": "inverse/neutral", "context": "Overlay/AR"},
+      {"current": "Color(0xFF10B981)", "target_role": "success", "context": "Verified/Success"},
+      {"current": "Color(0xFFB00020)", "target_role": "error", "context": "Delete/Error"},
+      {"current": "Colors.pinkAccent", "target_role": "accent/aura", "context": "AURA Chat"},
+      {"current": "t.neutral500", "target_role": "neutral", "context": "Booking card"},
+      {"current": "t.warning", "target_role": "warning", "context": "Booking card"}
+    ]
+  },
+  "visual_regression_plan": {
+    "validation_checklist": [
+      "Geometry: stroke weight, cap/join, proportions",
+      "Size: matches token or nearest token",
+      "Alignment: centered in container",
+      "Spacing: padding/margins preserved",
+      "Color: correct theme color role",
+      "Visual weight: monoline 1.75px stroke perceived correctly",
+      "Affordance: interactive vs decorative clear",
+      "Accessibility: semantic labels, tooltips, touch targets",
+      "Responsive: scales correctly at different breakpoints",
+      "Theme context: Women/Men/AURA colors correct"
+    ],
+    "method": "Side-by-side screenshot comparison (before/after) on device/emulator",
+    "tools": "flutter_test with golden files, manual QA on device"
+  },
+  "logic_safety": {
+    "logic_touch_required": false,
+    "statement": "Icon substitution is purely visual - no onPressed, callbacks, navigation, state, providers, business logic, API calls, booking, payments, or authentication changes",
+    "high_risk_components": [
+      "wompi_payment_sheet.dart - payment flow, but icon changes only",
+      "booking_card.dart - status actions, but icons only on buttons"
+    ],
+    "mitigation": "Visual-only replacement; all InkWell/IconButton/onPressed preserved exactly"
+  },
+  "risk_matrix": {
+    "A_general": {
+      "VISUAL_RISK": "LOW",
+      "SEMANTIC_RISK": "LOW",
+      "FUNCTIONAL_RISK": "LOW",
+      "ACCESSIBILITY_RISK": "LOW",
+      "THEME_RISK": "LOW",
+      "SCOPE_RISK": "LOW",
+      "overall": "LOW"
+    },
+    "B_store": {
+      "VISUAL_RISK": "LOW",
+      "SEMANTIC_RISK": "MEDIUM",
+      "FUNCTIONAL_RISK": "LOW",
+      "ACCESSIBILITY_RISK": "LOW",
+      "THEME_RISK": "MEDIUM",
+      "SCOPE_RISK": "LOW",
+      "overall": "MEDIUM"
+    },
+    "C_concierge": {
+      "VISUAL_RISK": "MEDIUM",
+      "SEMANTIC_RISK": "HIGH",
+      "FUNCTIONAL_RISK": "HIGH",
+      "ACCESSIBILITY_RISK": "MEDIUM",
+      "THEME_RISK": "LOW",
+      "SCOPE_RISK": "MEDIUM",
+      "overall": "HIGH"
+    },
+    "D_provider": {
+      "VISUAL_RISK": "MEDIUM",
+      "SEMANTIC_RISK": "MEDIUM",
+      "FUNCTIONAL_RISK": "MEDIUM",
+      "ACCESSIBILITY_RISK": "LOW",
+      "THEME_RISK": "LOW",
+      "SCOPE_RISK": "MEDIUM",
+      "overall": "MEDIUM"
+    }
+  },
+  "pilot_scores": {
+    "A_general": {
+      "VISUAL_VALUE": 22,
+      "MIGRATION_LEVERAGE": 18,
+      "SEMANTIC_SAFETY": 18,
+      "FUNCTIONAL_SAFETY": 15,
+      "ACCESSIBILITY": 9,
+      "THEME_COVERAGE": 8,
+      "TOTAL": 90
+    },
+    "B_store": {
+      "VISUAL_VALUE": 20,
+      "MIGRATION_LEVERAGE": 16,
+      "SEMANTIC_SAFETY": 14,
+      "FUNCTIONAL_SAFETY": 13,
+      "ACCESSIBILITY": 8,
+      "THEME_COVERAGE": 9,
+      "TOTAL": 80
+    },
+    "C_concierge": {
+      "VISUAL_VALUE": 24,
+      "MIGRATION_LEVERAGE": 19,
+      "SEMANTIC_SAFETY": 10,
+      "FUNCTIONAL_SAFETY": 8,
+      "ACCESSIBILITY": 7,
+      "THEME_COVERAGE": 8,
+      "TOTAL": 76
+    },
+    "D_provider": {
+      "VISUAL_VALUE": 18,
+      "MIGRATION_LEVERAGE": 14,
+      "SEMANTIC_SAFETY": 14,
+      "FUNCTIONAL_SAFETY": 12,
+      "ACCESSIBILITY": 8,
+      "THEME_COVERAGE": 7,
+      "TOTAL": 73
+    }
+  },
+  "pilot_order": [
+    {
+      "order": 1,
+      "pilot": "A_general",
+      "justification": "Highest score (90), lowest risk (LOW), maximum learning value with minimum functional risk. Tests core navigation + home screen. Reusable component (floating_navigation_dock) provides cross-cutting validation. No critical flow dependencies."
+    },
+    {
+      "order": 2,
+      "pilot": "B_store",
+      "justification": "Good score (80), medium risk, tests audience-aware theming (Women/Men) and color roles. High leverage via store_product_card. Validates theme matrix. Depends on Pilot A for navigation icons."
+    },
+    {
+      "order": 3,
+      "pilot": "D_provider",
+      "justification": "Medium score (73), medium risk, tests provider-specific context and dashboard density. Reuses booking_card (validated in Pilot C context). Lower functional risk than Pilot C."
+    },
+    {
+      "order": 4,
+      "pilot": "C_concierge",
+      "justification": "Lowest score (76), HIGH risk due to critical booking/payment flow. Multiple REVIEW_REQUIRED and NO_EQUIVALENT icons (verified_user, lock, check_circle, gavel, shield). Should only proceed after A, B, D validate framework. Payment icons (credit_card, account_balance_wallet) have NO_EQUIVALENT in v1.0."
+    }
+  ],
+  "success_metrics": [
+    {"metric": "direct_matches_migrated_pct", "target": "100%", "measurement": "Count of DIRECT_MATCH instances replaced / total DIRECT_MATCH in pilot"},
+    {"metric": "semantic_review_completed_pct", "target": "100%", "measurement": "Count of SEMANTIC_MATCH reviewed and decided / total SEMANTIC_MATCH in pilot"},
+    {"metric": "accessibility_preservation", "target": "No regression", "measurement": "Semantic labels preserved, touch targets >= 48dp, screen reader test pass"},
+    {"metric": "visual_regressions", "target": "0", "measurement": "Golden test diffs + manual QA sign-off"},
+    {"metric": "logic_regressions", "target": "0", "measurement": "All existing tests pass, manual flow test (booking, checkout, nav)"},
+    {"metric": "theme_consistency", "target": "100%", "measurement": "Women/Men/AURA color roles correct per theme_matrix"},
+    {"metric": "icon_sizes", "target": "100% token match", "measurement": "Each icon uses defined size token (xs/sm/md/lg/xl/xxl/huge)"},
+    {"metric": "build_test_status", "target": "PASS", "measurement": "flutter analyze (0 errors), flutter test (all pass), flutter build web --release (success)"}
+  ],
+  "stop_conditions": [
+    "Unexpected visual regression (stroke weight, alignment, proportion)",
+    "Semantic ambiguity unresolved (e.g., auto_awesome mapping unclear)",
+    "Business logic change detected (onPressed, navigation, state altered)",
+    "Accessibility degradation (missing labels, smaller touch targets)",
+    "Missing theme token (color role not defined for audience)",
+    "Unexpected asset missing (SVG not found in registry)",
+    "Registry failure (GlowIconRegistry returns null)",
+    "Build failure (analyze errors, test failures, compile errors)",
+    "Payment flow icon gap (credit_card, wallet, payment - NO_EQUIVALENT)"
+  ],
+  "future_icon_requests": [
+    {"semantic_need": "Camera/Photo for AR/VTO, profile, scanner", "screen": "Multiple (capture_screen, home, store, profile)", "frequency": "HIGH", "priority": "P1", "reason": "Core AR/VTO functionality, no v1.0 equivalent", "proposed_category": "SYSTEM"},
+    {"semantic_need": "Verified badge for trust/profile", "screen": "profile, wallet, store, provider", "frequency": "HIGH", "priority": "P1", "reason": "Trust signal, provider verification", "proposed_category": "CONCIERGE"},
+    {"semantic_need": "Lock/Visibility for auth/security states", "screen": "Auth, settings, payment", "frequency": "HIGH", "priority": "P1", "reason": "Auth UX patterns", "proposed_category": "SYSTEM"},
+    {"semantic_need": "Star/Rating for quality/favorites", "screen": "Store, results, rewards", "frequency": "HIGH", "priority": "P1", "reason": "Rating display, distinct from heart/wishlist", "proposed_category": "SYSTEM"},
+    {"semantic_need": "Credit Card/Payment for checkout", "screen": "wompi_payment_sheet, store checkout", "frequency": "HIGH", "priority": "P1", "reason": "Payment method icons", "proposed_category": "CONCIERGE"},
+    {"semantic_need": "Gavel/Shield for disputes/security", "screen": "Disputes, provider dashboard", "frequency": "MEDIUM", "priority": "P2", "reason": "Legal/security indicators", "proposed_category": "CONCIERGE"},
+    {"semantic_need": "Sun/UV, Back Hand, Face Retouching for AI skin analysis", "screen": "Results, evolution dashboard", "frequency": "MEDIUM", "priority": "P2", "reason": "AI skin analysis metrics", "proposed_category": "AURA"},
+    {"semantic_need": "Style/Checkroom/Psychology for wardrobe/AI design", "screen": "Wardrobe, evolution, comparison", "frequency": "MEDIUM", "priority": "P2", "reason": "AI fashion/design tools", "proposed_category": "BEAUTY"}
+  ],
+  "i3_candidates": [
+    "camera", "photo", "image", "visibility", "lock", "verified_user", "star", "credit_card", "payment", "account_balance_wallet", "gavel", "shield", "refresh", "check_circle", "star_border", "emoji_events", "wb_sunny", "back_hand", "face_retouching_natural", "palette", "style", "checkroom", "psychology", "analytics", "auto_stories", "center_focus_strong", "blur_on", "opacity", "lock_clock", "compare_arrows", "rocket_launch", "bolt", "apple", "g_mobiledata", "ios_share"
+  ],
+  "rollback_plan": {
+    "strategy": "Git-based per-pilot rollback",
+    "pilot_A": "git checkout lib/screens/home/home_screen.dart lib/widgets/floating_navigation_dock.dart",
+    "pilot_B": "git checkout lib/screens/store_screen.dart lib/widgets/store_product_card.dart",
+    "pilot_C": "git checkout lib/screens/booking_screen.dart lib/widgets/provider/booking_card.dart lib/widgets/wompi_payment_sheet.dart",
+    "pilot_D": "git checkout lib/screens/provider_dashboard_screen.dart lib/widgets/provider/provider_luxe_components.dart",
+    "full_rollback": "git checkout lib/",
+    "validation": "flutter test && flutter analyze && flutter build web --release"
+  },
+  "production_modified": false,
+  "recommendation": "Execute Pilot A first (General). It has the highest score (90/100), lowest risk, and maximum learning value. It validates the core migration framework (registry, theme extension, adapter, size tokens, color roles, accessibility) without touching critical flows. Pilot A's reusable component (floating_navigation_dock) provides cross-cutting validation across all provider screens. Once Pilot A passes all approval gates, proceed to Pilot B (Store) for audience-aware theming validation."
+}

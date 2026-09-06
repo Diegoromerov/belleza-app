@@ -1,0 +1,358 @@
+{
+  "phase": "R7_S_OBSERVABILITY_SPECIFICATION",
+  "status": "SPECIFICATION_COMPLETE_READY_FOR_R7_I",
+  "timestamp": "2026-08-21",
+  "baseline": {
+    "rag_status": "RAG-TESTED-BUT-NOT-VALIDATED",
+    "mrr": 0.7222,
+    "r5": 0.6156,
+    "r10": 0.6545,
+    "r20": 0.7156,
+    "r50": 0.8011,
+    "vector_miss": 13,
+    "model": "nvidia/nv-embedqa-e5-v5 (1024d, NIM managed API)",
+    "chunks": 5663,
+    "dense_sparse_mrr_gain": 0.033,
+    "sufficiency_gate": "NOT_CALIBRATED",
+    "evidence_layer": "POSTPONED",
+    "production_readiness": "BASELINE_RAG_PRODUCTION_READY"
+  },
+  "observability_model": {
+    "telemetry_domains": 14,
+    "domains": [
+      {
+        "name": "Query",
+        "purpose": "Input characterization",
+        "key_signals": ["trace_id", "timestamp", "category", "normalized_query", "filters", "retrieval_mode", "top_k", "threshold", "result_count", "latency"]
+      },
+      {
+        "name": "Embedding",
+        "purpose": "Vector generation health",
+        "key_signals": ["latency_ms", "dimension", "zero_vector_check", "circuit_breaker_state", "model_version", "api_status"]
+      },
+      {
+        "name": "Retrieval",
+        "purpose": "Search quality",
+        "key_signals": ["top_1_score", "score_distribution", "score_separation", "result_count", "mode"]
+      },
+      {
+        "name": "HNSW",
+        "purpose": "Vector index behavior",
+        "key_signals": ["ef_search", "candidate_pool_size", "recall_at_k", "latency_p50_p95", "index_health"]
+      },
+      {
+        "name": "FTS_Fallback",
+        "purpose": "Fallback activation",
+        "key_signals": ["trigger_reason", "query", "result_count", "latency", "score_distribution"]
+      },
+      {
+        "name": "Hybrid_Retrieval",
+        "purpose": "Fusion effectiveness",
+        "key_signals": ["rrf_weights", "vector_contribution", "fts_contribution", "rank_changes", "mrr_delta"]
+      },
+      {
+        "name": "Evidence",
+        "purpose": "Retrieved chunk quality",
+        "key_signals": ["chunk_ids", "provenance", "similarity_scores", "category_diversity"]
+      },
+      {
+        "name": "Sufficiency",
+        "purpose": "Evidence adequacy gate",
+        "key_signals": ["gate_input_signals", "gate_output", "threshold_used", "calibration_version"]
+      },
+      {
+        "name": "Response",
+        "purpose": "Generation quality",
+        "key_signals": ["llm_used", "latency_ms", "token_count", "citations_included", "hallucination_flags", "user_feedback"]
+      },
+      {
+        "name": "Errors",
+        "purpose": "Failure taxonomy",
+        "key_signals": ["error_type", "stage", "recoverable", "circuit_breaker_triggered", "fallback_activated", "user_visible"]
+      },
+      {
+        "name": "Latency",
+        "purpose": "End-to-end performance",
+        "key_signals": ["total_p50_p95_p99", "embedding_p50_p95", "retrieval_p50_p95", "llm_p50_p95", "breakdown_by_stage"]
+      },
+      {
+        "name": "Circuit_Breaker",
+        "purpose": "Resilience monitoring",
+        "key_signals": ["state", "failure_count", "success_count", "next_attempt", "recovery_latency"]
+      },
+      {
+        "name": "Confidence",
+        "purpose": "Calibrated scoring",
+        "key_signals": ["retrieval_confidence", "evidence_confidence", "answer_confidence", "composite_confidence", "band"]
+      },
+      {
+        "name": "User_Outcome",
+        "purpose": "Product impact",
+        "key_signals": ["action_taken", "satisfaction_signal", "task_completion"]
+      }
+    ],
+    "trace_context_propagation": {
+      "trace_id": "UUID v4",
+      "generated_at": "entry_point (auraToolExecutor / ragService)",
+      "passed_through": ["embeddingService", "ragService", "LLM_call", "ragLogger"],
+      "stored_in": "rag_query_logs",
+      "enables": ["end_to_end_correlation", "log_metric_dashboard_linking", "error_propagation_tracing"]
+    }
+  },
+  "retrieval_telemetry": {
+    "query_level": {
+      "fields": ["trace_id", "timestamp", "original_sanitized", "normalized", "category", "filters_applied", "retrieval_mode", "top_k", "threshold"]
+    },
+    "embedding_level": {
+      "fields": ["latency_ms", "dimension", "zero_vector", "model", "input_type", "circuit_breaker_state", "api_status"]
+    },
+    "retrieval_level": {
+      "fields": ["mode", "latency_ms", "candidate_pool_size", "result_count", "top_1_score", "score_distribution", "score_separation", "vector_miss", "instability"]
+    },
+    "hnsw_specific": {
+      "fields": ["ef_search", "index_size", "dimensions", "recall_at_5", "recall_at_10", "avg_candidates_examined", "latency_p50_ms", "latency_p95_ms"]
+    },
+    "fts_fallback": {
+      "fields": ["triggered", "trigger_reason", "latency_ms", "result_count", "score_distribution", "query_overlap_with_vector"]
+    },
+    "hybrid_retrieval": {
+      "fields": ["enabled", "fusion_method", "rrf_k", "vector_weight", "fts_weight", "vector_results", "fts_results", "fused_results", "rank_changes", "mrr_delta_vs_vector_only", "new_chunks_from_fts"]
+    },
+    "evidence_level": {
+      "fields": ["chunks_with_provenance", "category_diversity", "unique_documents", "content_coverage_ratio"]
+    },
+    "retrieval_instability": {
+      "fields": ["detected", "type", "score_variance_last_10", "rank_variance_last_10", "result_set_jaccard_last_10", "affects_vector_miss_queries", "mitigation"]
+    }
+  },
+  "confidence_model": {
+    "design_principle": "Retrieval score ≠ Answer confidence. Confidence is a calibrated composite of multiple signals.",
+    "architecture": {
+      "levels": 3,
+      "level_1": {
+        "name": "Retrieval_Confidence",
+        "signals": [
+          {"name": "top_1_score", "range": [0, 1], "weight": 0.30, "description": "Primary similarity score"},
+          {"name": "score_margin", "range": [0, 1], "weight": 0.25, "description": "top1 - top2 separation from ambiguity"},
+          {"name": "top5_mean", "range": [0, 1], "weight": 0.15, "description": "Average of top-5 depth of evidence"},
+          {"name": "retrieval_mode", "range": {"hnsw": 1.0, "hybrid": 0.95, "fts": 0.7}, "weight": 0.10, "description": "Method reliability"},
+          {"name": "instability_penalty", "range": [0, -0.3], "weight": 0.10, "description": "Negative weight for detected instability"},
+          {"name": "fallback_penalty", "range": [0, -0.2], "weight": 0.10, "description": "FTS fallback activated"}
+        ],
+        "formula": "retrieval_confidence = clamp(Σ(w_i × signal_i), 0, 1)"
+      },
+      "level_2": {
+        "name": "Evidence_Confidence",
+        "signals": [
+          {"name": "chunk_count", "range": [0, 1], "weight": 0.25, "description": "Normalized 1→0.2, 3→0.6, 5→1.0"},
+          {"name": "category_diversity", "range": [0, 1], "weight": 0.20, "description": "Unique categories / max_categories"},
+          {"name": "provenance_completeness", "range": [0, 1], "weight": 0.25, "description": "% chunks with full traceability"},
+          {"name": "content_coverage", "range": [0, 1], "weight": 0.15, "description": "Unique document coverage ratio"},
+          {"name": "uniqueness", "range": [0, 1], "weight": 0.15, "description": "1 - duplicate_ratio"}
+        ]
+      },
+      "level_3": {
+        "name": "Generation_Quality",
+        "signals": [
+          {"name": "citations_present", "range": [0, 1], "weight": 0.30, "description": "At least one citation per claim"},
+          {"name": "citation_coverage", "range": [0, 1], "weight": 0.25, "description": "Claims with citations / total claims"},
+          {"name": "hallucination_check", "range": [0, 1], "weight": 0.25, "description": "No unsupported claims via self-consistency"},
+          {"name": "coherence_score", "range": [0, 1], "weight": 0.20, "description": "Semantic coherence of response"}
+        ]
+      }
+    },
+    "composite_confidence": {
+      "formula": "composite = 0.4 * retrieval_c + 0.35 * evidence_c + 0.25 * generation_c",
+      "calibration": "Isotonic regression / Platt scaling on production data (R7-I)"
+    },
+    "confidence_bands": {
+      "HIGH": [0.80, 1.00],
+      "MEDIUM": [0.60, 0.80],
+      "LOW": [0.40, 0.60],
+      "ABSTAIN": [0.00, 0.40]
+    },
+    "band_behavior": {
+      "HIGH": {"action": "Generate with citations", "user_message": "Normal response"},
+      "MEDIUM": {"action": "Generate with hedge prefix", "user_message": "\"Based on available information...\""},
+      "LOW": {"action": "Request clarification / suggest alternatives", "user_message": "\"Could you clarify...?\""},
+      "ABSTAIN": {"action": "Safe fallback", "user_message": "\"I don't have enough reliable information...\""}
+    },
+    "calibration_process": [
+      "Collect 1000+ production queries with confidence scores",
+      "Label human-evaluated subset (SUPPORTED/UNSUPPORTED)",
+      "Calibrate isotonic regression / Platt scaling per band",
+      "Validate precision@band > 0.85 for HIGH, recall for ABSTAIN",
+      "Deploy calibrated thresholds with feature flag",
+      "Monitor weekly recalibration"
+    ]
+  },
+  "production_distribution": {
+    "query_distribution": {
+      "by_category": {"skincare": 0.35, "cabello": 0.25, "cejas": 0.15, "general": 0.20, "unknown": 0.05},
+      "by_intent": {"recommendation": 0.40, "information": 0.30, "troubleshooting": 0.15, "booking_assist": 0.10, "other": 0.05},
+      "by_complexity": {"simple": 0.50, "moderate": 0.35, "complex": 0.10, "ultra_specialized": 0.05}
+    },
+    "vector_miss_distribution": {
+      "total_rate": 0.12,
+      "by_category": {"cejas": 0.35, "skincare": 0.25, "cabello": 0.20, "general": 0.20},
+      "by_type": {"semantic_representation_gap": 0.62, "retrieval_instability": 0.38},
+      "top_miss_concepts": ["simetria_muscular_dinamica", "efecto_tyndall", "sers_raman", "electrolisis_cross_domain", "arquitectura_muscular_facial"]
+    },
+    "retrieval_failure_taxonomy": [
+      {"type": "EMBEDDING_FAILURE", "definition": "NVIDIA API error/timeout", "detection": "Circuit breaker open", "rate_target": "< 0.5%"},
+      {"type": "ZERO_VECTOR", "definition": "All-zero embedding returned", "detection": "Dimension check", "rate_target": "< 0.1%"},
+      {"type": "VECTOR_MISS", "definition": "No chunk > threshold", "detection": "top_1_score < threshold", "rate_target": "~12% (known)"},
+      {"type": "FTS_FALLBACK", "definition": "FTS activated", "detection": "fallback_triggered=true", "rate_target": "< 5%"},
+      {"type": "HYBRID_DEGRADED", "definition": "Hybrid worse than vector", "detection": "mrr_delta < 0", "rate_target": "< 1%"},
+      {"type": "NO_RESULTS", "definition": "Zero chunks returned", "detection": "result_count = 0", "rate_target": "< 0.5%"}
+    ],
+    "ood_detection": {
+      "method": "top_1_score_threshold + category_confidence",
+      "threshold": 0.35,
+      "signals": ["top_1_score < 0.35", "category = unknown", "query_embedding_norm < 0.5", "max_category_score < 0.2"],
+      "action": "ABSTAIN + suggest reformulation"
+    },
+    "ambiguity_detection": {
+      "signals": ["score_margin < 0.05", "top5_entropy > 2.0", "category_distribution_flat"],
+      "action": "LOW confidence band → clarification request"
+    }
+  },
+  "privacy": {
+    "allowed_telemetry": [
+      "trace_id", "user_id_hash", "query_sanitized", "query_category", "filters_applied",
+      "retrieval_mode", "top_k", "threshold", "latency_ms", "scores", "chunk_metadata",
+      "error_type", "circuit_breaker_state", "confidence_band", "user_action"
+    ],
+    "prohibited_telemetry": [
+      "raw_user_query", "raw_user_id", "chunk_content", "llm_response_full_text",
+      "ip_address", "device_fingerprint", "session_replay_data"
+    ],
+    "anonymization_pipeline": "piiSanitizer → truncate 500 chars → proper noun replacement → hash remaining identifiers",
+    "retention": {
+      "rag_traces_log_file": "30 days",
+      "rag_query_logs_postgres": "90 days",
+      "aggregated_metrics": "365 days",
+      "calibration_datasets": "indefinite (version-controlled)"
+    },
+    "access_control": {
+      "Data_Engineer": "Full read",
+      "ML_Engineer": "Read + calibration write",
+      "Director": "Read + approval",
+      "Support": "Aggregated metrics only",
+      "External": "None"
+    },
+    "auditability": ["All writes to telemetry_audit_log", "Schema changes require migration + Director approval", "GDPR deletion within 72h", "Quarterly privacy review"]
+  },
+  "decision_rules": {
+    "evidence_thresholds": {
+      "threshold_change": {"required": "A/B shadow 2 weeks + MRR delta > 0.01 + no regression on VECTOR_MISS", "standard": "p < 0.05, 1000+ queries"},
+      "corpus_expansion": {"required": "VECTOR_MISS analysis showing corpus gaps (A>0) + cost/benefit > 2x", "standard": "R6-C13 disproved; requires new gap evidence"},
+      "reranking": {"required": "Cross-encoder improves MRR > 0.02 on VECTOR_MISS subset + latency < 500ms", "standard": "Must not regress general queries"},
+      "retrieval_change": {"required": "A/B shows MRR gain > 0.015 + p95 latency < 2s", "standard": "Reversible within 1 hour"},
+      "sufficiency_calibration": {"required": "Precision@HIGH > 0.85 + ABSTAIN recall > 0.70 on 500+ labeled", "standard": "Human-labeled production data"},
+      "embedding_investigation": {"required": "Production distribution shift > 20% from GOLD-V5 + confidence failure rate > 30%", "standard": "Quantified shift, not anecdotal"},
+      "embedding_replacement": {"required": "Alternative beats NVIDIA on VECTOR_MISS recovery + MRR > 0.75 + no regression", "standard": "Full R6-style evaluation suite"}
+    },
+    "hard_constraints_never_justified_by": [
+      "Anecdotal queries alone",
+      "Single user complaints",
+      "Subjective 'feels better' assessment",
+      "Competitor feature parity",
+      "Vendor marketing claims"
+    ],
+    "decision_authority": {
+      "threshold_tuning": {"authority": "Lead Engineer", "process": "DESIGN_REVIEW + A/B shadow"},
+      "corpus_changes": {"authority": "Director", "process": "DIRECTOR_REVIEW + evidence"},
+      "retrieval_architecture": {"authority": "Director + ML Engineer", "process": "SOUL_REVISION if representation"},
+      "sufficiency_gate": {"authority": "Director", "process": "DIRECTOR_REVIEW + calibration data"},
+      "embedding_model": {"authority": "Director + Architecture", "process": "SOUL_REVISION + full evaluation"},
+      "confidence_bands": {"authority": "Lead Engineer", "process": "DESIGN_REVIEW + calibration validation"}
+    },
+    "change_classification": {
+      "PATCH": "Threshold 0.45 → 0.47 → DESIGN_REVIEW",
+      "MINOR": "Add FTS weight parameter → COMPONENT/DIRECTOR_REVIEW",
+      "MAJOR": "New retrieval strategy → DIRECTOR_REVIEW + SOUL_REVISION",
+      "EXCEPTION": "Temporary threshold for campaign → EXCEPTION_REGISTRY",
+      "EXPERIMENTAL": "Projection Head prototype → DESIGN_REVIEW (proto)"
+    }
+  },
+  "acceptance_gates": {
+    "telemetry_completeness": [
+      {"requirement": "Query telemetry coverage", "metric": "% requests with full query telemetry", "threshold": "100%"},
+      {"requirement": "Embedding telemetry coverage", "metric": "% requests with embedding metrics", "threshold": "100%"},
+      {"requirement": "Retrieval telemetry coverage", "metric": "% requests with retrieval metrics", "threshold": "100%"},
+      {"requirement": "Evidence telemetry coverage", "metric": "% requests with chunk provenance", "threshold": "100%"},
+      {"requirement": "Confidence telemetry coverage", "metric": "% requests with confidence band", "threshold": "100%"},
+      {"requirement": "Error telemetry coverage", "metric": "% errors with full context", "threshold": "100%"},
+      {"requirement": "Latency breakdown coverage", "metric": "% requests with stage breakdown", "threshold": "95%"}
+    ],
+    "retrieval_observability": [
+      {"requirement": "VECTOR_MISS detection", "metric": "Real-time flagging of top_1_score < threshold", "threshold": "100%"},
+      {"requirement": "Instability detection", "metric": "Weekly scan for score/rank variance", "threshold": "100% detection"},
+      {"requirement": "FTS fallback tracking", "metric": "% fallbacks with trigger reason", "threshold": "100%"},
+      {"requirement": "Hybrid effectiveness", "metric": "MRR delta tracked per query", "threshold": "100%"},
+      {"requirement": "Score distribution logging", "metric": "Top-10 scores per query", "threshold": "100%"}
+    ],
+    "confidence": [
+      {"requirement": "Retrieval confidence computed", "metric": "% queries with retrieval_c", "threshold": "100%"},
+      {"requirement": "Evidence confidence computed", "metric": "% queries with evidence_c", "threshold": "100%"},
+      {"requirement": "Composite confidence computed", "metric": "% queries with composite_c", "threshold": "100%"},
+      {"requirement": "Band assignment", "metric": "% queries with HIGH/MEDIUM/LOW/ABSTAIN", "threshold": "100%"},
+      {"requirement": "Calibration validation", "metric": "Precision@HIGH on labeled data", "threshold": "> 0.85"},
+      {"requirement": "Abstention safety", "metric": "False ABSTAIN rate", "threshold": "< 5%"},
+      {"requirement": "Coverage", "metric": "EVIDENCE_INSUFFICIENT rate", "threshold": "< 15%"}
+    ],
+    "production_distribution": [
+      {"requirement": "Category distribution tracked", "metric": "Daily category breakdown", "threshold": "100%"},
+      {"requirement": "VECTOR_MISS distribution tracked", "metric": "Daily by category/type", "threshold": "100%"},
+      {"requirement": "OOD detection rate", "metric": "% queries flagged OOD", "threshold": "< 10%"},
+      {"requirement": "Ambiguity detection rate", "metric": "% queries flagged ambiguous", "threshold": "< 20%"},
+      {"requirement": "Fallback frequency", "metric": "FTS fallback rate", "threshold": "< 5%"},
+      {"requirement": "Latency SLA", "metric": "p95 end-to-end", "threshold": "< 2000ms"}
+    ],
+    "privacy": [
+      {"requirement": "PII sanitization", "metric": "% traces with raw PII", "threshold": "0%"},
+      {"requirement": "Prohibited fields", "metric": "Presence of prohibited fields", "threshold": "0"},
+      {"requirement": "Retention compliance", "metric": "% data past retention", "threshold": "0%"},
+      {"requirement": "Access audit", "metric": "Unauthorized access attempts", "threshold": "0"},
+      {"requirement": "Deletion SLA", "metric": "GDPR deletion request fulfillment", "threshold": "< 72h"}
+    ],
+    "performance": [
+      {"requirement": "Embedding latency", "metric": "p95", "threshold": "< 2000ms"},
+      {"requirement": "Retrieval latency", "metric": "p95", "threshold": "< 500ms"},
+      {"requirement": "Total RAG latency", "metric": "p95", "threshold": "< 2000ms"},
+      {"requirement": "Circuit breaker recovery", "metric": "Mean time to close", "threshold": "< 60s"},
+      {"requirement": "Error rate", "metric": "Total RAG errors / queries", "threshold": "< 1%"}
+    ],
+    "regression": [
+      {"requirement": "MRR stability", "metric": "Weekly MRR vs baseline", "threshold": "> 0.70 (no drop > 0.02)"},
+      {"requirement": "R@5 stability", "metric": "Weekly R@5 vs baseline", "threshold": "> 0.58"},
+      {"requirement": "VECTOR_MISS rate stability", "metric": "Weekly rate vs baseline", "threshold": "< 15%"},
+      {"requirement": "Calibration drift", "metric": "Band precision weekly delta", "threshold": "< 0.03"}
+    ],
+    "evidence_sufficiency": [
+      {"requirement": "Provenance completeness", "metric": "% chunks with full provenance", "threshold": "100%"},
+      {"requirement": "Citation coverage", "metric": "% generated answers with citations", "threshold": "100%"},
+      {"requirement": "Hallucination rate", "metric": "Human-evaluated unsupported claims", "threshold": "0%"},
+      {"requirement": "Evidence packet completeness", "metric": "% packets with all required fields", "threshold": "100%"}
+    ]
+  },
+  "deliverables": [
+    "docs/r7/GLOWAPP_R7_OBSERVABILITY_SPEC.md",
+    "docs/r7/glowapp_r7_observability_spec.json",
+    "Telemetry schema definitions (JSON Schema per domain)",
+    "Confidence calibration procedure (R7-I implementation guide)",
+    "Privacy compliance checklist (for implementation review)"
+  ],
+  "production_safety": "Only new files in docs/r7/. Zero backend/, frontend/, database/ modifications.",
+  "remaining_gaps": [
+    {"gap": "Real confidence calibration", "priority": "HIGH", "description": "Requires 1000+ production queries with human labels"},
+    {"gap": "Distribution shift quantification", "priority": "HIGH", "description": "Compare production query distribution vs GOLD-V5"},
+    {"gap": "Sufficiency gate validation", "priority": "MEDIUM", "description": "Calibrate with production false positive/negative rates"},
+    {"gap": "Evidence packet schema", "priority": "MEDIUM", "description": "Define and implement structured evidence packets"},
+    {"gap": "Dashboard implementation", "priority": "LOW", "description": "Grafana/Loki dashboards for RAG observability"},
+    {"gap": "Alerting rules", "priority": "LOW", "description": "PagerDuty/Slack alerts for anomaly thresholds"}
+  ],
+  "next_phase": "R7-I — IMPLEMENTATION",
+  "final_decision": "SPECIFICATION COMPLETE — READY FOR R7-I IMPLEMENTATION"
+}

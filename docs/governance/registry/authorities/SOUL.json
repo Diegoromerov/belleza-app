@@ -1,0 +1,26 @@
+{
+  "authority": "Soul",
+  "level": "L0",
+  "owner": "Director (GlowApp Soul v1.0)",
+  "sourceOfTruth": "docs/design/GLOWAPP_SOUL.md",
+  "inputs": [
+    "Vision",
+    "market",
+    "principles"
+  ],
+  "outputs": [
+    "Identity statement",
+    "philosophy",
+    "core principles",
+    "authority hierarchy"
+  ],
+  "consumers": [
+    "All authorities"
+  ],
+  "allowedChanges": [],
+  "forbiddenChanges": [],
+  "validationGate": "N/A",
+  "legacySystems": [],
+  "promotionPath": "N/A",
+  "exceptionMechanism": "Director approval only"
+}

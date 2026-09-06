@@ -1,30 +1,48 @@
 // backend/src/tests/auraToolExecutor.test.js
-const { pool } = require('../config/db');
-const { executeAuraTool, AURA_TOOLS_DEFINITIONS } = require('../services/auraToolExecutor');
-const { checkConsent, logAccess } = require('../services/consentService');
+jest.mock('../services/agents/atenaAgent');
+jest.mock('../services/agents/hestiaAgent');
+jest.mock('../services/agents/hermesAgent');
+jest.mock('../services/agents/chronosAgent');
+jest.mock('../services/agents/valkyrieAgent');
+jest.mock('../services/ragService');
+jest.mock('../config/db');
+jest.mock('../config/redis');
+jest.mock('../services/consentService');
 
-jest.mock('../config/db', () => ({
-  pool: {
-    query: jest.fn()
-  }
-}));
+let executeAuraTool;
+let AURA_TOOLS_DEFINITIONS;
+let atenaAgent;
+let hestiaAgent;
+let hermesAgent;
+let chronosAgent;
+let valkyrieAgent;
+let ragService;
+let dbPool;
+let redisMock;
+let consentService;
 
-jest.mock('../config/redis', () => ({
-  isOpen: false,
-  get: jest.fn(),
-  set: jest.fn()
-}));
+beforeEach(() => {
+  jest.clearAllMocks();
+  process.env.BIOMETRIC_ENCRYPTION_KEY = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
 
-jest.mock('../services/consentService', () => ({
-  checkConsent: jest.fn(),
-  logAccess: jest.fn().mockResolvedValue(undefined),
-}));
+  // Require the module after mocks are set
+  const auraToolExecutor = require('../services/auraToolExecutor');
+  executeAuraTool = auraToolExecutor.executeAuraTool;
+  AURA_TOOLS_DEFINITIONS = auraToolExecutor.AURA_TOOLS_DEFINITIONS;
+
+  // Get mocks
+  atenaAgent = require('../services/agents/atenaAgent');
+  hestiaAgent = require('../services/agents/hestiaAgent');
+  hermesAgent = require('../services/agents/hermesAgent');
+  chronosAgent = require('../services/agents/chronosAgent');
+  valkyrieAgent = require('../services/agents/valkyrieAgent');
+  ragService = require('../services/ragService');
+  dbPool = require('../config/db');
+  redisMock = require('../config/redis');
+  consentService = require('../services/consentService');
+});
 
 describe('Pruebas unitarias de AURA Tool Executor (auraToolExecutor.js)', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
   test('Debería tener definidas las 8 herramientas principales para el ecosistema de AURA', () => {
     expect(AURA_TOOLS_DEFINITIONS.length).toBe(8);
     const toolNames = AURA_TOOLS_DEFINITIONS.map(t => t.function.name);
@@ -46,39 +64,52 @@ describe('Pruebas unitarias de AURA Tool Executor (auraToolExecutor.js)', () => 
 
   test('Debería ejecutar query_user_biometric_profile delegando en ATENA', async () => {
     // Mock consent check
-    checkConsent.mockResolvedValue({ granted: true, grantedAt: new Date(), version: '1.0' });
-    logAccess.mockResolvedValue(undefined);
-    
-    pool.query.mockResolvedValueOnce({
-      rows: [
-        {
-          id: 'prof-123',
-          user_id: 1,
-          face_scores: { hydration: 80 },
-          recommendation: 'Usar hidratante facial'
-        }
-      ]
-    });
+    consentService.checkConsent.mockResolvedValue({ granted: true, grantedAt: new Date(), version: '1.0' });
+    consentService.logAccess.mockResolvedValue(undefined);
 
+    const mockProfile = {
+      id: 'prof-123',
+      user_id: 1,
+      face_scores: { hydration: 80 },
+      recommendation: 'Usar hidratante facial'
+    };
+    atenaAgent.getBiometricDiagnosis.mockResolvedValue(mockProfile);
+
+    // Note: The implementation does NOT use pool.query for this tool; it calls the agent directly.
     const result = await executeAuraTool('query_user_biometric_profile', { userId: 1 }, 1);
-    expect(pool.query).toHaveBeenCalled();
+    expect(atenaAgent.getBiometricDiagnosis).toHaveBeenCalledWith(1);
     expect(result.status).toBe('success');
     expect(result.recommendationText).toBe('Usar hidratante facial');
   });
 
   test('Debería ejecutar query_user_biometric_profile y retornar error si no hay consentimiento', async () => {
     // Mock consent check - no consent
-    checkConsent.mockResolvedValue({ granted: false });
-    logAccess.mockResolvedValue(undefined);
-    
+    consentService.checkConsent.mockResolvedValue({ granted: false });
+    consentService.logAccess.mockResolvedValue(undefined);
+
     const result = await executeAuraTool('query_user_biometric_profile', { userId: 1 }, 1);
     expect(result.error).toBe('consent_required');
     expect(result.message).toContain('consentimiento biométrico');
   });
 
+  // NEW: Ownership test for query_user_biometric_profile - should fail when userId in args does not match context userId
+  test('Debería denegar query_user_biometric_profile cuando el userId solicitado no coincide con el contexto de autenticación', async () => {
+    // Context userId is 1 (third argument), but args.userId is 2
+    const result = await executeAuraTool('query_user_biometric_profile', { userId: 2 }, 1);
+    expect(result.error).toBe('ownership_required');
+    expect(result.message).toBe('No tienes permisos para acceder a los datos biométricos de otro usuario.');
+    // Ensure no further processing (consent check, agent call, DB query)
+    expect(consentService.checkConsent).not.toHaveBeenCalled();
+    expect(atenaAgent.getBiometricDiagnosis).not.toHaveBeenCalled();
+    expect(dbPool.query).not.toHaveBeenCalled();
+  });
+
   test('Debería ejecutar search_nearby_services delegando en HERMES con PostGIS', async () => {
-    pool.query.mockResolvedValueOnce({
-      rows: [
+    // Mock the agent
+    hermesAgent.findNearbyServices.mockResolvedValue({
+      status: 'success',
+      foundCount: 1,
+      services: [
         {
           service_id: 'serv-1',
           name: 'Manicura Semipermanente',
@@ -90,9 +121,67 @@ describe('Pruebas unitarias de AURA Tool Executor (auraToolExecutor.js)', () => 
     });
 
     const result = await executeAuraTool('search_nearby_services', { latitude: 4.6097, longitude: -74.0817, category: 'Uñas' }, 1);
-    expect(pool.query).toHaveBeenCalled();
+    expect(hermesAgent.findNearbyServices).toHaveBeenCalledWith({
+      latitude: 4.6097,
+      longitude: -74.0817,
+      category: 'Uñas',
+      maxDistanceKm: undefined // default
+    });
     expect(result.status).toBe('success');
     expect(result.foundCount).toBe(1);
     expect(result.services[0].business_name).toBe('Sonia Spa');
   });
+
+  // NEW: Test for recommend_glowstore_products (positive case - own user)
+  test('Debería ejecutar recommend_glowstore_products delegando en HESTIA (usuario propio)', async () => {
+    // Mock consent check for the biometric profile query (internal call) - actually, recommend_glowstore_products does NOT check consent, only ownership.
+    // We'll still mock it to avoid any accidental calls, but we expect it not to be called.
+    consentService.checkConsent.mockResolvedValue({ granted: true, grantedAt: new Date(), version: '1.0' });
+    consentService.logAccess.mockResolvedValue(undefined);
+
+    // Mock the agent: atenaAgent.getBiometricDiagnosis (called internally by hestiaAgent)
+    atenaAgent.getBiometricDiagnosis.mockResolvedValue({
+      faceScores: { hydration: 70, spots: 20, wrinkles: 10 },
+      recommendation: 'Usar hidratante facial'
+    });
+
+    // Mock the agent: hestiaAgent.recommendProducts
+    const recommendedProducts = [
+      { id: 1, name: 'Product A', brand: 'BrandX' },
+      { id: 2, name: 'Product B', brand: 'BrandY' }
+    ];
+    hestiaAgent.recommendProducts.mockResolvedValue(recommendedProducts);
+
+    // Execute the tool: context userId = 1, args.userId = 1 (own user)
+    const result = await executeAuraTool('recommend_glowstore_products', { userId: 1, /* other args */ }, 1);
+
+    // Expect success: the result is the array of products (as returned by hestiaAgent)
+    expect(result).toEqual(recommendedProducts);
+
+    // Verify internal calls: 
+    // 1. Ownership check passed, so we proceeded to call atenaAgent.getBiometricDiagnosis with the userId (1)
+    expect(atenaAgent.getBiometricDiagnosis).toHaveBeenCalledWith(1);
+    // 2. Then hestiaAgent.recommendProducts was called with the result from atenaAgent (which includes userId? 
+    //    Actually, in auraToolExecutor.js we do:
+    //      const biometricProfile = await atenaAgent.getBiometricDiagnosis(userId);
+    //      return hestiaAgent.recommendProducts({ userId, ...biometricProfile });
+    //    So we expect hestiaAgent.recommendProducts to be called with an object that has userId: 1 and the faceScores, etc.
+    expect(hestiaAgent.recommendProducts).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: 1 })
+    );
+  });
+
+  // NEW: Ownership test for recommend_glowstore_products - should fail when userId in args does not match context userId
+  test('Debería denegar recommend_glowstore_products cuando el userId solicitado no coincide con el contexto de autenticación', async () => {
+    // Context userId is 1 (third argument), but args.userId is 2
+    const result = await executeAuraTool('recommend_glowstore_products', { userId: 2 }, 1);
+    expect(result.error).toBe('ownership_required');
+    expect(result.message).toBe('No tienes permisos para acceder a los datos biométricos de otro usuario.');
+    // Ensure no further processing
+    expect(consentService.checkConsent).not.toHaveBeenCalled();
+    expect(atenaAgent.getBiometricDiagnosis).not.toHaveBeenCalled();
+    expect(hestiaAgent.recommendProducts).not.toHaveBeenCalled();
+  });
+
+  // Additional tests for other tools can be added if needed, but the focus is on ownership.
 });

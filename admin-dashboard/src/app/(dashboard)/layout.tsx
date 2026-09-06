@@ -1,6 +1,6 @@
-import Sidebar from '../../components/dashboard/Sidebar';
-import Header from '../../components/dashboard/Header';
-import ProtectedRoute from '../../components/auth/ProtectedRoute';
+import Sidebar from '@/components/dashboard/Sidebar';
+import Header from '@/components/dashboard/Header';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (

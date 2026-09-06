@@ -140,7 +140,7 @@ class _BookingScreenState extends State<BookingScreen> {
                 'nombre': 'Kit Balayage Pro',
                 'precio': 45000.00,
                 'stock': 20,
-                'imagen_url': 'https://images.unsplash.com/photo-1535585209827-a15fcdbc4c2d?q=80&w=200',
+                'imagen_url': '',
                 'tag_especialidad': 'Cabello'
               };
             } else if (targetId == '2') {
@@ -149,7 +149,7 @@ class _BookingScreenState extends State<BookingScreen> {
                 'nombre': 'Aceite de Cutículas Frutales',
                 'precio': 15000.00,
                 'stock': 50,
-                'imagen_url': 'https://images.unsplash.com/photo-1607602132700-068258431c6c?q=80&w=200',
+                'imagen_url': '',
                 'tag_especialidad': 'Uñas'
               };
             } else if (targetId == '4') {
@@ -158,7 +158,7 @@ class _BookingScreenState extends State<BookingScreen> {
                 'nombre': 'Sérum Facial Ácido Hialurónico',
                 'precio': 55000.00,
                 'stock': 30,
-                'imagen_url': 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?q=80&w=200',
+                'imagen_url': '',
                 'tag_especialidad': 'Estética'
               };
             } else if (targetId == '6') {
@@ -167,7 +167,7 @@ class _BookingScreenState extends State<BookingScreen> {
                 'nombre': 'Gel Moldeador de Cejas Orgánico',
                 'precio': 18000.00,
                 'stock': 40,
-                'imagen_url': 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?q=80&w=200',
+                'imagen_url': '',
                 'tag_especialidad': 'Maquillaje'
               };
             }
@@ -376,42 +376,83 @@ class _BookingScreenState extends State<BookingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFAF8F5),
       appBar: AppBar(
-        title: Text(
-          'Reservar con ${widget.providerName}',
-          style: const TextStyle(
-              fontWeight: FontWeight.bold, letterSpacing: -0.5, fontSize: 16),
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 14),
+          child: Center(
+            child: InkWell(
+              onTap: _currentStep > 0 ? _prevStep : () => Navigator.pop(context),
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFFE8DFD8), width: 1),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const Icon(Icons.arrow_back_ios_new_rounded, size: 15, color: Color(0xFF1F1A15)),
+              ),
+            ),
+          ),
         ),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.calendar_month_outlined, size: 18, color: Color(0xFFC5A052)),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                'Reservar Cita Concierge',
+                style: const TextStyle(
+                  fontFamily: 'CormorantGaramond',
+                  fontSize: 21,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1F1A15),
+                  letterSpacing: 0.5,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: const Color(0xFFFAF8F5),
+        foregroundColor: const Color(0xFF1F1A15),
         elevation: 0,
+        scrolledUnderElevation: 0,
         centerTitle: false,
-        leading: _currentStep > 0
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.black87),
-                onPressed: _prevStep,
-              )
-            : const BackButton(color: Colors.black87),
       ),
       body: isLoading
-                ? Center(child: CircularProgressIndicator(color: AppTheme.primary))
-                : Column(
-              children: [
-                _buildProgressBar(),
-                Expanded(
-                  child: PageView(
-                    controller: _pageController,
-                    physics: const NeverScrollableScrollPhysics(),
-                    children: [
-                      _buildStepLogistics(),
-                      _buildStep2CrossSelling(),
-                      _buildStep3SummaryAndPay(),
-                    ],
-                  ),
+          ? const Center(child: CircularProgressIndicator(color: Color(0xFFC5A052)))
+          : Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 680),
+                child: Column(
+                  children: [
+                    _buildProgressBar(),
+                    Expanded(
+                      child: PageView(
+                        controller: _pageController,
+                        physics: const NeverScrollableScrollPhysics(),
+                        children: [
+                          _buildStepLogistics(),
+                          _buildStep2CrossSelling(),
+                          _buildStep3SummaryAndPay(),
+                        ],
+                      ),
+                    ),
+                    _buildStickyBottomButtons(),
+                  ],
                 ),
-                _buildStickyBottomButtons(),
-              ],
+              ),
             ),
     );
   }

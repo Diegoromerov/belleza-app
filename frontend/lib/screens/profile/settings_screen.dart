@@ -609,9 +609,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: SafeArea(
         child: _isLoadingPreferences
             ? const Center(child: CircularProgressIndicator())
-            : SingleChildScrollView(
-                padding: const EdgeInsets.all(LuxeSpacing.xl),
-                child: Column(
+            : Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 680),
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(LuxeSpacing.xl),
+                    child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (_errorMessage != null) ...[
@@ -781,7 +784,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ],
                 ),
               ),
+            ),
+          ),
       ),
     );
   }
-  }
+}

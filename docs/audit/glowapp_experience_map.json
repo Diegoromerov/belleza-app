@@ -1,0 +1,839 @@
+{
+  "phase": "G0-B",
+  "status": "READY_FOR_G1_CONSOLIDATION",
+  "experience_domains": [
+    "Onboarding",
+    "Authentication",
+    "Home",
+    "Discovery",
+    "Search",
+    "Results",
+    "Provider Discovery",
+    "Service Discovery",
+    "Booking",
+    "Payment",
+    "Store",
+    "Profile",
+    "Provider",
+    "AURA",
+    "Concierge",
+    "Academy",
+    "Evolution",
+    "Wardrobe",
+    "VTO",
+    "Notifications",
+    "Support",
+    "Recovery"
+  ],
+  "experience_units": [
+    {
+      "name": "Onboarding Flow",
+      "purpose": "Introduce new users to GlowApp's value proposition and core features",
+      "user": "New visitors",
+      "context": "First app launch after installation",
+      "entry": "OnboardingScreen",
+      "primary_action": "Complete onboarding steps",
+      "secondary_actions": "Skip, learn more about AURA",
+      "information": "App benefits, AURA intelligence, subscription options",
+      "decision": "Whether to enable notifications, biometric consent",
+      "state": ["Loading", "Empty", "Success", "Error"],
+      "feedback": "Progress indicators, success toast",
+      "exit": "Home screen or AURA welcome",
+      "failure": "Network error, validation error",
+      "recovery": "Retry button, offline cached content",
+      "screens": ["OnboardingScreen"],
+      "components": ["Button", "TextField", "Icon", "Illustration"],
+      "product_unit": "Authentication & Authorization",
+      "data": "Onboarding completion flags",
+      "ai": "None",
+      "dependencies": ["AuthService", "SecureStorageService"]
+    },
+    {
+      "name": "Authentication Flow",
+      "purpose": "Verify user identity and establish secure session",
+      "user": "All users",
+      "context": "Accessing protected features",
+      "entry": "LoginScreen or RegisterScreen",
+      "primary_action": "Submit credentials",
+      "secondary_actions": "Forgot password, social login",
+      "information": "Email, password, OAuth options",
+      "decision": "Choose login method, accept terms",
+      "state": ["Loading", "Empty", "Success", "Error", "Permission denied"],
+      "feedback": "Inline validation, loading spinner, error toast",
+      "exit": "Home screen or previous destination",
+      "failure": "Invalid credentials, network failure",
+      "recovery": "Retry, password reset",
+      "screens": ["LoginScreen", "RegisterScreen", "ForgotPasswordScreen", "VerificationPendingScreen"],
+      "components": ["Form fields", "Buttons", "Toggles", "Loading indicators"],
+      "product_unit": "Authentication & Authorization",
+      "data": "Auth tokens, user role",
+      "ai": "Fraud detection backend",
+      "dependencies": ["AuthService", "SecureStorageService", "APIService", "BiometricService"]
+    },
+    {
+      "name": "Home Exploration",
+      "purpose": "Discover featured providers, services, and content",
+      "user": "Clients",
+      "context": "App entry point after auth",
+      "entry": "ProvidersScreen (home)",
+      "primary_action": "Browse provider list",
+      "secondary_actions": "Search, filter by category, toggle audience",
+      "information": "Provider avatars, names, ratings, distance",
+      "decision": "Select a provider, apply filters, change audience (Women/Men/AURA)",
+      "state": ["Loading", "Empty", "Success", "Error"],
+      "feedback": "Skeleton loaders, pull-to-refresh, error banner",
+      "exit": "Provider detail screen, search results",
+      "failure": "API failure, location permission denied",
+      "recovery": "Retry, manual location entry",
+      "screens": ["ProvidersScreen"],
+      "components": ["List", "Card", "Button", "Toggle", "SearchField"],
+      "product_unit": "Provider Management",
+      "data": "Provider list, user location, audience preference",
+      "ai": "Provider recommendation based on location and preferences",
+      "dependencies": ["AuthService", "LocationService", "ApiService", "AudienceService"]
+    },
+    {
+      "name": "Search & Discovery",
+      "purpose": "Find specific services, providers, or products",
+      "user": "Clients",
+      "context": "When user has a specific intent",
+      "entry": "Search bar in AppBar or Home screen",
+      "primary_action": "Enter query and submit",
+      "secondary_actions": "Apply filters, use voice search",
+      "information": "Query suggestions, recent searches, filters",
+      "decision": "Choose search type (services, providers, products), refine with filters",
+      "state": ["Loading", "Empty", "Success", "Error"],
+      "feedback": "Loading spinner, empty state with suggestions, error message",
+      "exit": "Results screen (provider list, service list, product list)",
+      "failure": "No results, network error",
+      "recovery": "Adjust query, clear filters",
+      "screens": ["ProvidersScreen", "StoreScreen"],
+      "components": ["SearchField", "Chip", "Button", "List"],
+      "product_unit": "Provider Management, Store & E-commerce",
+      "data": "Search query, filters, location",
+      "ai": "Search ranking, autocomplete suggestions",
+      "dependencies": ["AuthService", "LocationService", "ApiService"]
+    },
+    {
+      "name": "Provider Selection",
+      "purpose": "Choose a service provider for booking",
+      "user": "Clients seeking beauty services",
+      "context": "After searching or browsing providers",
+      "entry": "Provider card in list or grid",
+      "primary_action": "Tap provider card",
+      "secondary_actions": "View portfolio, see reviews, favorite provider",
+      "information": "Provider photo, specialty, rating, distance, availability",
+      "decision": "Book now, view details, add to favorites",
+      "state": ["Loading", "Empty", "Success", "Error"],
+      "feedback": "Loading skeleton, error toast, success snackbar",
+      "exit": "Provider detail screen or booking flow",
+      "failure": "Provider unavailable, network error",
+      "recovery": "Retry, choose alternative provider",
+      "screens": ["ProviderDetailScreen", "BookingScreen"],
+      "components": ["Card", "Image", "Button", "Badge", "Rating"],
+      "product_unit": "Booking & Appointments, Provider Management",
+      "data": "Provider ID, user preferences, location",
+      "ai": "Provider matching based on service need, rating, proximity",
+      "dependencies": ["AuthService", "BookingService", "ProviderService"]
+    },
+    {
+      "name": "Service Selection",
+      "purpose": "Choose specific service(s) from provider's offerings",
+      "user": "Clients",
+      "context": "In provider detail screen",
+      "entry": "Service grid or list in ProviderDetailScreen",
+      "primary_action": "Tap service card",
+      "secondary_actions": "Add multiple services, view service details",
+      "information": "Service name, description, price, duration",
+      "decision": "Select service(s), add to booking",
+      "state": ["Loading", "Empty", "Success", "Error"],
+      "feedback": "Loading skeleton, selected state highlight, error inline",
+      "exit": "Date/time picker or location picker",
+      "failure": "Service unavailable, network error",
+      "recovery": "Retry, select alternative service",
+      "screens": ["ProviderDetailScreen", "BookingScreen"],
+      "components": ["ServiceCard", "Button", "Checkbox", "PriceDisplay"],
+      "product_unit": "Booking & Appointments",
+      "data": "Service IDs, quantities",
+      "ai": "Service bundling suggestions, dynamic pricing",
+      "dependencies": ["BookingService"]
+    },
+    {
+      "name": "Booking Flow",
+      "purpose": "Schedule appointment with selected provider and services",
+      "user": "Clients",
+      "context": "After service selection",
+      "entry": "BookingScreen",
+      "primary_action": "Pick date and time",
+      "secondary_actions": "Select location, add notes, apply promo",
+      "information": "Available dates, time slots, location map",
+      "decision": "Choose date, time, location, confirm booking",
+      "state": ["Loading", "Empty", "Success", "Error", "Pending", "Processing"],
+      "feedback": "Calendar highlights, time chip selection, loading spinner, confirmation toast",
+      "exit": "Payment step or confirmation screen",
+      "failure": "Slot taken, network error, validation error",
+      "recovery": "Pick alternative slot, fix validation errors",
+      "screens": ["BookingScreen", "ClientBookingsScreen"],
+      "components": ["DatePicker", "TimePicker", "LocationPicker", "Button", "TextField"],
+      "product_unit": "Booking & Appointments",
+      "data": "Booking details, provider ID, service list, datetime, location",
+      "ai": "Optimal time slot prediction, no-show likelihood",
+      "dependencies": ["AuthService", "BookingService", "NotificationService", "LocationService", "WalletService"]
+    },
+    {
+      "name": "Payment Process",
+      "purpose": "Complete transaction for booking or store purchase",
+      "user": "Clients",
+      "context": "After booking confirmation or checkout",
+      "entry": "Payment sheet (Wompi) or Checkout steps",
+      "primary_action": "Enter payment details and submit",
+      "secondary_actions": "Use wallet balance, apply promo code",
+      "information": "Amount breakdown, payment methods, wallet balance",
+      "decision": "Choose payment method, confirm payment",
+      "state": ["Loading", "Empty", "Success", "Error", "Processing"],
+      "feedback": "Loading spinner, inline validation, success toast, error banner",
+      "exit": "Confirmation screen or order tracking",
+      "failure": "Payment declined, insufficient funds, network error",
+      "recovery": "Retry with different card, top up wallet",
+      "screens": ["WalletScreen", "Checkout steps (implicit in wallet/payment)"],
+      "components": ["PaymentInput", "WalletButton", "RewardBadge", "TransactionListTile"],
+      "product_unit": "Payments & Wallet",
+      "data": "Transaction ID, payment method, wallet balance change",
+      "ai": "Fraud detection, dynamic pricing suggestions",
+      "dependencies": ["AuthService", "WalletService", "PaymentService", "NotificationService"]
+    },
+    {
+      "name": "Store Browsing",
+      "purpose": "Discover and evaluate beauty products",
+      "user": "Clients",
+      "context": "When interested in purchasing products",
+      "entry": "StoreScreen",
+      "primary_action": "Browse product grid",
+      "secondary_actions": "Search, filter by category, sort, view wishlist",
+      "information": "Product image, name, price, discount badge, rating",
+      "decision": "Add to cart, add to wishlist, view product details",
+      "state": ["Loading", "Empty", "Success", "Error"],
+      "feedback": "Skeleton loaders, empty state with suggestions, error toast",
+      "exit": "Product detail screen or cart",
+      "failure": "API failure, image load error",
+      "recovery": "Retry, clear filters",
+      "screens": ["StoreScreen", "ProductList", "ProductDetail"],
+      "components": ["ProductCard", "PriceDisplay", "DiscountBadge", "WishlistButton", "Button"],
+      "product_unit": "Store & E-commerce",
+      "data": "Product catalog, cart contents, wishlist",
+      "ai": "Product recommendations, visual search via AURA",
+      "dependencies": ["AuthService", "WalletService", "LocationService", "ApiService"]
+    },
+    {
+      "name": "Profile Management",
+      "purpose": "View and edit personal information, preferences, and consents",
+      "user": "All users",
+      "context": "Accessing account settings",
+      "entry": "UserProfileScreen or SettingsScreen",
+      "primary_action": "Edit profile fields",
+      "secondary_actions": "Change password, manage consents, delete account",
+      "information": "Personal details, preferences, consent history, biometric history",
+      "decision": "Update information, renew consents, link/unlink social accounts",
+      "state": ["Loading", "Empty", "Success", "Error"],
+      "feedback": "Loading spinner, inline validation, success toast, error snackbar",
+      "exit": "Previous screen or home",
+      "failure": "Validation error, network failure",
+      "recovery": "Fix validation errors, retry",
+      "screens": ["UserProfileScreen", "SettingsScreen", "BiometricHistoryScreen", "HabeasDataScreen"],
+      "components": ["ProfileHeader", "Form inputs", "Switches", "Buttons"],
+      "product_unit": "User Profile & Settings",
+      "data": "Profile data, preferences, consent flags",
+      "ai": "None",
+      "dependencies": ["AuthService", "SecureStorageService"]
+    },
+    {
+      "name": "AURA Intelligence Flow",
+      "purpose": "Provide AI-driven beauty analysis and recommendations",
+      "user": "Clients seeking personalized insights",
+      "context": "From Ideas tab or provider detail capture button",
+      "entry": "AuraWelcomeScreen or CaptureScreen",
+      "primary_action": "Capture selfie or upload image",
+      "secondary_actions": "View analysis results, try virtual try-on, get recommendations",
+      "information": "Capture guide, loading state, analysis report, VTO preview",
+      "decision": "Start analysis, share results, book recommended service, purchase recommended product",
+      "state": ["Loading", "Empty", "Success", "Error", "Processing", "Completed"],
+      "feedback": "Loading rings, progress bar, success toast, error message",
+      "exit": "Results screen, recommendation screen, booking flow, store flow",
+      "failure": "Capture failed, analysis timeout, network error",
+      "recovery": "Retry capture, check connection",
+      "screens": ["AuraWelcomeScreen", "CaptureScreen", "ProcessingScreen", "ResultsScreen", "ColorDNAResultsScreen", "VTOLiveScreen", "NailVTOScreen", "ProcessingAlchemyScreen"],
+      "components": ["Aura3DEmblem", "FaceOverlayPainter", "HandOverlayPainter", "NailVTOPainter", "QualityIndicator", "RecommendationCard", "ScoreCard"],
+      "product_unit": "AURA Intelligence",
+      "data": "Analysis results, VTO model metadata, user beauty profile",
+      "ai": "Core: multimodal models for skin/hair analysis, color matching, VTO simulation",
+      "rag": "Retrieves from beauty knowledge corpus",
+      "dependencies": ["BiometricService", "APIService", "SecureStorageService", "NotificationService", "WalletService"]
+    },
+    {
+      "name": "Concierge Chat",
+      "purpose": "Get personalized assistance from human concierge or AI",
+      "user": "All users needing help",
+      "context": "From support menu, booking flow, or provider detail",
+      "entry": "ChatScreen (concierge or support)",
+      "primary_action": "Send message",
+      "secondary_actions": "Attach files, use quick replies, view conversation history",
+      "information": "Conversation history, typing indicators, read receipts",
+      "decision": "Ask question, request booking assistance, provide feedback",
+      "state": ["Loading", "Empty", "Success", "Error", "Pending"],
+      "feedback": "Typing indicator, loading spinner for attachments, error inline",
+      "exit": "End conversation or continue",
+      "failure": "Network error, message send failed",
+      "recovery": "Retry sending, check connection",
+      "screens": ["ChatListScreen", "ChatScreen"],
+      "components": ["ChatBubble", "MessageInput", "AttachmentPicker", "EmojiPicker"],
+      "product_unit": "Chat & Messaging",
+      "data": "Chat history, attachments, read receipts",
+      "ai": "Quick reply suggestions, sentiment analysis, language translation",
+      "rag": "Retrieves from support knowledge base",
+      "dependencies": ["AuthService", "NotificationService", "ApiService"]
+    },
+    {
+      "name": "Academy Learning",
+      "purpose": "Access educational content and earn certifications",
+      "user": "Clients and providers seeking skill improvement",
+      "context": "From Academy tab or provider dashboard",
+      "entry": "AcademyScreen",
+      "primary_action": "Enroll in course",
+      "secondary_actions": "Watch lessons, take quiz, claim certificate",
+      "information": "Course catalog, lesson progress, quiz scores",
+      "decision": "Choose course, start lesson, submit quiz",
+      "state": ["Loading", "Empty", "Success", "Error"],
+      "feedback": "Loading skeleton, progress bar, error toast, success snackbar",
+      "exit": "Lesson view, quiz screen, certificate screen",
+      "failure": "Enrollment failed, network error, quiz submission error",
+      "recovery": "Retry enrollment, fix quiz answers",
+      "screens": ["AcademyScreen", "CourseList", "CourseDetailScreen", "LessonView", "QuizScreen", "GlowBeautyScreen", "GlowColorScreen", "GlowNBackScreen"],
+      "components": ["GlowGlassCard", "GlowProgressBar", "LuxeListTile", "Quiz inputs"],
+      "product_unit": "Academy",
+      "data": "Enrolled courses, lesson completion, quiz scores, certificates",
+      "ai": "Course recommendations based on role and interests",
+      "rag": "Answers learner questions using course content",
+      "dependencies": ["AuthService", "WalletService", "AcademyService", "NotificationService", "ApiService"]
+    }
+  ],
+  "journeys": [
+    {
+      "journey": "New User Onboarding to First Booking",
+      "purpose": "Guide a new user from app install to completing their first service booking",
+      "user": "First-time visitor",
+      "trigger": "App installation and first launch",
+      "entry_point": "OnboardingScreen",
+      "steps": [
+        "Onboarding: introduce app value and AURA",
+        "Authentication: sign up or log in",
+        "Home: browse featured providers",
+        "Search: optionally search for specific service",
+        "Provider Selection: choose a provider",
+        "Service Selection: select desired service(s)",
+        "Booking: pick date, time, location",
+        "Payment: enter payment details and confirm",
+        "Confirmation: view booking confirmation"
+      ],
+      "decision_points": [
+        "Enable notifications?",
+        "Choose login method (email/social)",
+        "Select audience (Women/Men/AURA)",
+        "Apply search filters",
+        "Choose provider from list",
+        "Select service(s)",
+        "Pick date and time slot",
+        "Choose payment method"
+      ],
+      "states": ["Loading", "Empty", "Success", "Error", "Pending", "Processing"],
+      "success": "Booking confirmation screen with QR code",
+      "failure": "Any step fails validation or network",
+      "recovery": "Retry specific step, use cached data, offline fallbacks",
+      "exit": "Home screen with active booking tab",
+      "dependencies": ["AuthService", "BookingService", "WalletService", "NotificationService", "LocationService", "ProviderService"],
+      "related_product_unit": "Booking & Appointments"
+    },
+    {
+      "journey": "Store Purchase Journey",
+      "purpose": "Discover, evaluate, and purchase a beauty product",
+      "user": "Client interested in shopping",
+      "trigger": "Browsing home or seeing product recommendation",
+      "entry_point": "StoreScreen",
+      "steps": [
+        "Store: browse product grid",
+        "Search: optionally search for product",
+        "Filter: apply category, price, rating filters",
+        "Product Detail: view product images, description, reviews",
+        "Add to Cart: select quantity",
+        "Cart Review: verify items and totals",
+        "Checkout: enter shipping and payment details",
+        "Payment: complete transaction via Wompi",
+        "Confirmation: view order confirmation"
+      ],
+      "decision_points": [
+        "Apply search query",
+        "Choose filters",
+        "Select product from results",
+        "Add to cart or wishlist",
+        "Proceed to checkout",
+        "Select payment method"
+      ],
+      "states": ["Loading", "Empty", "Success", "Error"],
+      "success": "Order confirmation screen with tracking",
+      "failure": "Network error, payment declined, validation error",
+      "recovery": "Retry payment, fix validation, clear cart and restart",
+      "exit": "Home screen or profile orders tab",
+      "dependencies": ["AuthService", "WalletService", "LocationService", "ApiService", "StoreService"],
+      "related_product_unit": "Store & E-commerce"
+    },
+    {
+      "journey": "AURA Analysis and Recommendation Application",
+      "purpose": "Get AI beauty analysis and apply recommendations to book service or buy product",
+      "user": "Client seeking personalized beauty insights",
+      "trigger": "From Ideas tab or provider detail capture button",
+      "entry_point": "AuraWelcomeScreen",
+      "steps": [
+        "AURA Welcome: learn about analysis",
+        "Capture: take selfie or upload image",
+        "Processing: show analysis in progress",
+        "Results: view analysis report and confidence scores",
+        "Recommendations: see suggested services and products",
+        "Apply: book recommended service or add product to cart",
+        "Booking/Payment: complete transaction as per respective journeys"
+      ],
+      "decision_points": [
+        "Start capture",
+        "Retake image if needed",
+        "Share results",
+        "Book recommended service",
+        "Add recommended product to cart",
+        "Proceed to booking or store flow"
+      ],
+      "states": ["Loading", "Empty", "Success", "Error", "Processing", "Completed"],
+      "success": "Analysis completed and recommendation acted upon",
+      "failure": "Capture failed, analysis error, network timeout",
+      "recovery": "Retry capture, check connection, use fallback analysis",
+      "exit": "Booking confirmation or order confirmation screen",
+      "dependencies": ["BiometricService", "APIService", "SecureStorageService", "WalletService", "NotificationService", "BookingService", "StoreService"],
+      "related_product_unit": "AURA Intelligence"
+    }
+  ],
+  "navigation": {
+    "global_navigation": {
+      "description": "Bottom navigation bar for primary app sections",
+      "controller": "UI Component Language (S4) + AudienceService for adaptive colors",
+      "items": [
+        "Home (Providers)",
+        "Store",
+        "Ideas (AURA)",
+        "Academy",
+        "Profile"
+      ],
+      "adaptive": {
+        "Women": "Rose Gold active icon color",
+        "Men": "Champagne Gold active icon color",
+        "AURA": "Aura Teal active icon color"
+      }
+    },
+    "contextual_navigation": {
+      "description": "App bar and drawer for screen-level actions",
+      "controller": "UI Component Language (S4) + individual screen logic",
+      "patterns": [
+        "App Bar with back button and actions",
+        "Navigation drawer for account settings",
+        "Tabs for content filtering (in Academy, Course detail)",
+        "Segmented control (via ChoiceChip in some screens)"
+      ]
+    },
+    "back_navigation": {
+      "description": "System back button and explicit back arrows in AppBar",
+      "controller": "Framework (Navigator) + UI Component Language for AppBar variants"
+    },
+    "deep_links": {
+      "description": "Routes defined in main.dart for direct screen access",
+      "examples": [
+        "/login, /register, /home, /provider, /client-bookings, /chat, /onboarding, /verification-pending, /store, /ideas, /capture, /booking-tracking, /provider-route, /support, /terms, /disputes, /dispute, /provider/academy, /evolution, /medical-validation, /glowup-card, /palette-card, /colorimetria-historial, /wardrobe, /outfit-result"
+      ],
+      "controller": "Routing in main.dart"
+    },
+    "redirects": {
+      "description": "Automatic navigation after auth or onboarding completion",
+      "examples": [
+        "After successful login: go to intended route or home",
+        "After onboarding completion: go to AURA welcome or home",
+        "After email verification: go to login"
+      ],
+      "controller": "AuthService + AudienceService + routing logic"
+    },
+    "modal_flows": {
+      "description": "Bottom sheets, dialogs, and full-screen sheets for transient tasks",
+      "controller": "UI Component Language (S4) Modal/Sheet specifications",
+      "examples": [
+        "Payment sheet (Wompi) - bottom sheet",
+        "Location picker - bottom sheet or full screen",
+        "Date picker - dialog or full screen",
+        "Time picker - bottom sheet",
+        "Confirmation dialog - dialog",
+        "Terms and conditions - full screen sheet"
+      ]
+    },
+    "bottom_sheets": {
+      "description": "Used for actions that require context from underlying screen",
+      "controller": "UI Component Language (S4) BottomSheet specification",
+      "examples": ["Payment sheet", "Time picker", "Location picker"]
+    },
+    "dialogs": {
+      "description": "Used for critical decisions or information display",
+      "controller": "UI Component Language (S4) Dialog specification",
+      "examples": ["Confirmation dialog", "Terms and conditions", "Error dialog"]
+    },
+    "tabs": {
+      "description": "Used for content filtering within a screen",
+      "controller": "UI Component Language (S4) Tabs specification",
+      "examples": ["Academy course categories", "Provider services tabs"]
+    },
+    "nested_navigation": {
+      "description": "Limited to specific flows like provider dashboard with tabs",
+      "controller": "Provider dashboard screens",
+      "examples": ["Provider dashboard with tabs for services, appointments, earnings"]
+    }
+  },
+  "states": {
+    "Loading": {
+      "description": "Content is being fetched or processed",
+      "handling": "Skeleton loaders or spinners matching component layout, no layout shift"
+    },
+    "Empty": {
+      "description": "No data to display",
+      "handling": "Proprietary illustration + headline + body + primary CTA, never \"No data\" alone"
+    },
+    "Success": {
+      "description": "Action completed successfully",
+      "handling": "Success color (S1) + GlowIcon.check, toast or inline message"
+    },
+    "Error": {
+      "description": "Operation failed",
+      "handling": "Error color (S1) + GlowIcon.alert, inline for field errors, banner for form/toast, full screen for critical"
+    },
+    "Unavailable": {
+      "description": "Feature or content not accessible",
+      "handling": "Disabled state or specific unavailable UI with guidance"
+    },
+    "Pending": {
+      "description": "Action initiated, awaiting completion",
+      "handling": "Processing state UI, often with spinner or progress indicator"
+    },
+    "Processing": {
+      "description": "Active operation in progress",
+      "handling": "AURA-specific loading (expanding rings) or standard spinner"
+    },
+    "Completed": {
+      "description": "Process finished",
+      "handling": "Success state with completion message"
+    },
+    "Cancelled": {
+      "description": "User-initiated cancellation",
+      "handling": "Return to previous state with cancellation confirmation"
+    },
+    "Expired": {
+      "description": "Time-sensitive data or session no longer valid",
+      "handling": "Redirect to renewal or login with expired notice"
+    },
+    "Offline": {
+      "description": "No network connectivity",
+      "handling": "Offline banner or full screen with retry option, cached data where available"
+    },
+    "Permission denied": {
+      "description": "Missing required permission (location, camera, etc.)",
+      "handling": "Explain permission need and provide system settings link"
+    },
+    "Authentication required": {
+      "description": "User must log in to access feature",
+      "handling": "Redirect to login screen with return URL"
+    }
+  },
+  "decision_points": {
+    "Search": {
+      "user_decides": "Query string, filters to apply, search type (providers/services/products)",
+      "system_decides": "Search ranking, autocomplete suggestions, result ordering",
+      "ai_decides": "Relevance scoring, personalized ranking based on history"
+    },
+    "Provider selection": {
+      "user_decides": "Which provider to choose from list",
+      "system_decides": "Provider ordering in list (distance, rating, popularity)",
+      "ai_decides": "Recommended providers based on service need and preferences"
+    },
+    "Service selection": {
+      "user_decides": "Which service(s) to book",
+      "system_decides": "Service grouping and display order",
+      "ai_decides": "Service bundling suggestions, dynamic pricing"
+    },
+    "Booking": {
+      "user_decides": "Date, time, location for appointment",
+      "system_decides": "Available slots based on provider calendar",
+      "ai_decides": "Optimal time slot prediction, no-show likelihood"
+    },
+    "Payment": {
+      "user_decides": "Payment method, use of wallet balance",
+      "system_decides": "Payment processing via Wompi, fraud checks",
+      "ai_decides": "Fraud detection, dynamic pricing suggestions"
+    },
+    "AI recommendations": {
+      "user_decides": "Whether to act on recommendation (book/service, buy/product)",
+      "system_decides": "Recommendation ranking and presentation",
+      "ai_decides": "Core recommendation engine (product/service matching, VTO simulation)"
+    },
+    "AURA": {
+      "user_decides": "Start capture, share results, act on analysis",
+      "system_decides": "Analysis processing steps, result formatting",
+      "ai_decides": "Skin/hair analysis, color matching, VTO generation"
+    },
+    "Store": {
+      "user_decides": "Add to cart, add to wishlist, proceed to checkout",
+      "system_decides": "Product sorting, cart totals, discount application",
+      "ai_decides": "Product recommendations, visual search via AURA"
+    },
+    "Profile": {
+      "user_decides": "Edit profile fields, update consents, link accounts",
+      "system_decides": "Validation of inputs, sync with backend",
+      "ai_decides": "None"
+    },
+    "Provider workflows": {
+      "user_decides": "Accept booking request, update availability, set pricing",
+      "system_decides": "Booking request routing, availability sync",
+      "ai_decides": "Provider recommendation to clients"
+    }
+  },
+  "ai_experience": {
+    "AI_functionality": [
+      "Provider recommendation based on location, rating, service match",
+      "Service bundling suggestions and dynamic pricing",
+      "Optimal time slot prediction and no-show likelihood for bookings",
+      "Fraud detection and dynamic pricing suggestions for payments",
+      "Product recommendation engine and visual search via AURA",
+      "Course recommendations based on user role and interests",
+      "Quick reply suggestions, sentiment analysis, language translation in chat",
+      "Knowledge base article suggestion for support tickets",
+      "Provider corpus retrieval for answering client service queries",
+      "Beauty knowledge corpus retrieval for explaining AURA analysis results",
+      "Core AURA AI: multimodal models for skin/hair analysis, color matching, VTO simulation"
+    ],
+    "AI_presentation": [
+      "AURA Welcome screen: human experiencing transformation (photography)",
+      "Results revelation: model seeing analysis (photography + AURA insight badge)",
+      "Concierge AURA: human advisor + light geometry (chat with GlowIcon.aura avatar)",
+      "Onboarding: human beginning journey (photography + guidance)",
+      "Background ambience (halos, geometry) for AURA loading states",
+      "AURA accent color (Aura Teal) used sparingly in UI for insights and actions",
+      "AuraRecommendation badge: \"Why this matches\" in Aura Teal",
+      "AuraAction CTA in Aura Teal",
+      "AuraStatus pulse animation (organic, 2s) with concentric circles",
+      "AuraLoading expanding rings (Aura Teal 20%) with light particles"
+    ]
+  },
+  "accessibility": {
+    "semantic_labels": "PARTIAL - icon-only controls need semantic labels (e.g., chat button, back button)",
+    "tooltips": "NOT IMPLEMENTED - no tooltip system found",
+    "touch_targets": "VERIFIED - minimum 48dp, most buttons 52-56px",
+    "text_scaling": "REQUIRES_IMPLEMENTATION_VALIDATION - needs testing at 1.0x, 1.3x, 1.5x, 2.0x",
+    "contrast": "PARTIAL - primary text verified (12.8:1 Women, ~4.2:1 Men target); CTA on brand requires validation; Aura Teal light 8.2:1; Aura Teal dark fails 1.8:1 (documented exception)",
+    "focus": "PARTIAL - 2px Focus Border (S1) required on ALL interactive; buttons lack visible focus on web",
+    "keyboard": "REQUIRES_IMPLEMENTATION - Tab/Shift+Tab, Enter/Space activate, Escape dismiss, focus trap for modals/sheets",
+    "screen_reader": "REQUIRES_IMPLEMENTATION - semantic labels on icon-only controls, live regions for loading/errors/toasts, S2 heading hierarchy"
+  },
+  "responsive": {
+    "mobile": {
+      "navigation": "Bottom Nav",
+      "hero": "9:16 aspect",
+      "cards": "Stack",
+      "forms": "Stacked",
+      "sheets": "Full-screen"
+    },
+    "tablet": {
+      "navigation": "Rail",
+      "hero": "4:3 aspect",
+      "cards": "Grid 2",
+      "forms": "Side-by-side",
+      "sheets": "Bottom sheet"
+    },
+    "desktop": {
+      "navigation": "Sidebar",
+      "hero": "16:9 aspect",
+      "cards": "Grid 3-4",
+      "forms": "Side-by-side",
+      "sheets": "Dialog"
+    }
+  },
+  "authorities": {
+    "Navigation": {
+      "authority": "UI Component Language (S4) + AudienceService for adaptive colors",
+      "legacy": "Legacy AppBar patterns in provider dashboard and some screens",
+      "duplicate": "Multiple AppBar implementations across screens",
+      "unknown": "FloatingNavigationDock (needs evaluation)"
+    },
+    "Theme": {
+      "authority": "GLOWAPP SOUL (L0) → Color System (S1) + Typography System (S2) + GlowIcon System (L1)",
+      "legacy": "Legacy theme.dart (AppTheme) used in 40+ screens",
+      "duplicate": "6 parallel token systems (Token, GlowStoreTokens, BellezaLuxeTokens, GlowTokens, LuxeColors, MensTheme)",
+      "unknown": "None"
+    },
+    "Typography": {
+      "authority": "Typography System (S2)",
+      "legacy": "Generic 'serif'/'sans' in Token, Didot/Inter/Playfair in legacy systems",
+      "duplicate": "6 parallel typography systems",
+      "unknown": "None"
+    },
+    "Components": {
+      "authority": "UI Component Language (S4)",
+      "legacy": "LuxeCard, LuxeButton, GlowGlassCard, GlassCard, StoreProductCard, ServiceCard, etc.",
+      "duplicate": "5+ Card implementations, 4+ Button systems, 3+ Input systems, 3 BottomNav + 3 AppBar patterns",
+      "unknown": "None"
+    },
+    "Audience": {
+      "authority": "AudienceService + S1/S3/S4 expression rules",
+      "legacy": "Hardcoded audience checks in some screens",
+      "duplicate": "None",
+      "unknown": "None"
+    },
+    "AURA": {
+      "authority": "DIRECTOR_REVIEW (via S1/S3/S4 + Icon System)",
+      "legacy": "Cyberpunk elements in MensTheme (cyanScannerGloy)",
+      "duplicate": "None",
+      "unknown": "None"
+    },
+    "Forms": {
+      "authority": "UI Component Language (S4) Form Language",
+      "legacy": "Inline input styles in login/register, Store custom inputs",
+      "duplicate": "Multiple form field implementations",
+      "unknown": "None"
+    },
+    "States": {
+      "authority": "UI Component Language (S4) Component States",
+      "legacy": "Ad-hoc state handling in some screens",
+      "duplicate": "Inconsistent state naming and handling",
+      "unknown": "None"
+    },
+    "Accessibility": {
+      "authority": "UI Component Language (S4) Accessibility Language + Governance",
+      "legacy": "Partial implementation (touch targets ok, focus lacking)",
+      "duplicate": "None",
+      "unknown": "None"
+    }
+  },
+  "duplicates": [
+    "Journeys: Onboarding appears in both auth and idea flows",
+    "Navigation: 3 BottomNav implementations (main.dart, home_screen.dart, store_screen.dart)",
+    "Navigation: 3 AppBar patterns (DEFAULT, TRANSPARENT, STORE) with screen-specific variations",
+    "Components: LuxeCard vs AcademyLuxeCard vs GlowGlassCard vs StoreProductCard vs ServiceCard vs inline cards",
+    "Components: LuxeButton vs AcademyLuxeButton vs ElevatedButtonTheme vs inline buttons",
+    "Components: AppTheme.inputDecoration vs Store inline inputs vs LuxeTextField",
+    "Tokens: 6 parallel token systems (Token, GlowStoreTokens, BellezaLuxeTokens, GlowTokens, LuxeColors, MensTheme)",
+    "Typography: Generic 'serif'/'sans' in Token plus Didot/Inter/Cormorant/Playfair/JetBrains + generics",
+    "Icons: 200+ Material/Cupertino icons + 3 raster nav icons vs locked GlowIcon system (22 icons)",
+    "States: Inconsistent loading/spinner usage across screens",
+    "Errors: Inline error vs Card error vs FullScreen error implementations"
+  ],
+  "gaps": [
+    "Missing unified Avatar component (referenced in Profile, Chat, Provider screens)",
+    "Missing unified Badge/Status system (only LuxeBadge incipient)",
+    "Missing unified Tooltip/Popover system",
+    "Missing unified SegmentedControl (using ChoiceChip ad-hoc)",
+    "Missing unified Avatar component with adaptive sizing",
+    "No Men photography assets (0% coverage per S3 audit)",
+    "Aura Teal on dark backgrounds fails contrast (1.8:1) - documented exception in S1",
+    "Focus states incomplete: buttons lack visible focus on web",
+    "No automated governance checks in CI for token drift or SOUL compliance",
+    "Exception registry empty - no formal exception tracking mechanism",
+    "Legacy classification not documented - no inventory of COMPLIANT/PARTIALLY_COMPLIANT/NON_COMPLIANT/LEGACY/EXCEPTION screens",
+    "No asset metadata registry for images (focal points, safe zones, versioning)",
+    "No responsive crop strategy for hero images (hardcoded single asset)",
+    "Onboarding photography inconsistent - single generic asset, no Men variant",
+    "Auth backgrounds generic - stock feel, not official muse",
+    "Design Ideas = 3D illustrations (5 assets) break photographic unity",
+    "Concierge photography undefined",
+    "No unified error display component",
+    "No unified empty state component",
+    "No unified loading system (skeleton/spinner/progress/AURA loading ad-hoc)",
+    "No unified badge/status system beyond LuxeBadge",
+    "No unified avatar component"
+  ],
+  "maturity": {
+    "Authentication": 4,
+    "User Profile & Settings": 3,
+    "Provider Management": 3,
+    "Booking & Appointments": 3,
+    "Payments & Wallet": 3,
+    "Store & E-commerce": 3,
+    "AURA Intelligence": 2,
+    "Academy": 3,
+    "Support & Ticketing": 3,
+    "Dispute Resolution": 2,
+    "Design & Personalization": 3,
+    "Chat & Messaging": 3,
+    "Location & Mapping": 3,
+    "Notifications": 3,
+    "Analytics & Metrics": 2,
+    "Social Share": 1,
+    "Onboarding": 3,
+    "Home": 3,
+    "Discovery": 3,
+    "Search": 3,
+    "Results": 3,
+    "Provider Discovery": 3,
+    "Service Discovery": 3,
+    "Payment": 3,
+    "Store": 3,
+    "Profile": 3,
+    "Provider": 3,
+    "AURA": 2,
+    "Concierge": 3,
+    "Academy": 3,
+    "Evolution": 3,
+    "Wardrobe": 3,
+    "VTO": 2,
+    "Notifications": 3,
+    "Support": 3,
+    "Recovery": 3
+  },
+  "technical_debt": [
+    "Large provider dashboard screen (>100k lines), monolithic state",
+    "Duplicated settings logic in shared/theme.dart and provider-specific screens",
+    "Booking state scattered across multiple providers",
+    "Duplicate validation logic in booking flow",
+    "Duplicate payment handling in booking and store flows",
+    "Lack of unified payment service abstraction",
+    "Product data denormalization",
+    "Missing unified image service (multiple image providers)",
+    "Heavy use of image processing on UI thread in AURA",
+    "Models not quantized for web in AURA",
+    "Video player not abstracted in Academy",
+    "Duplicated UI components across course types in Academy",
+    "Ticket chat lacks typing indicators, read receipts",
+    "Attachment size limits not enforced client-side in Support",
+    "Dispute logic duplicated in frontend and backend",
+    "No unified evidence viewer in Disputes",
+    "Heavy use of custom painters in Design & Personalization",
+    "Not optimized for low-end devices in Design & Personalization",
+    "Message persistence relies on backend polling in Chat",
+    "No efficient diff sync in Chat",
+    "Legacy theme usage (shared/theme.dart) in 40+ screens",
+    "6 parallel token systems causing inconsistency",
+    "Generic 'serif'/'sans' typography defeating token purpose",
+    "Cormorant Garamond declared but never used",
+    "Manrope not declared in codebase",
+    "6 parallel typography systems",
+    "No MALE MUSE ASSETS (0% Men photography)",
+    "Female muse not systematized",
+    "AuraWelcomeScreen not Men-adaptive",
+    "Cyber Cyan (#00E5FF) in MensTheme (PROHIBITED)",
+    "Aura Teal on dark surfaces fails contrast (1.8:1)",
+    "6 parallel token systems active",
+    "Unified components not consolidated (Card, Button, Input, Nav, Modal)",
+    "Focus states incomplete (buttons lack visible focus on web)",
+    "Navigation icons are raster PNG (violates locked Icon System)",
+    "No asset metadata registry (no focal points, safe zones, versioning)",
+    "No responsive crop strategy (hero images hardcoded single asset)",
+    "GlassCard duplicate of GlowGlassCard",
+    "LuxeTypography uses Cormorant at 15px body (legibility concern)",
+    "FloatingNavigationDock non-standard (evaluate vs BottomNavigation)"
+  ]
+}

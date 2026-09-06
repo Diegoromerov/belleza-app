@@ -72,7 +72,10 @@ class FaqScreen extends StatelessWidget {
         centerTitle: true,
       ),
       body: SafeArea(
-        child: ListView.builder(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 680),
+            child: ListView.builder(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           itemCount: faqs.length,
           itemBuilder: (context, index) {
@@ -114,6 +117,8 @@ class FaqScreen extends StatelessWidget {
           },
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 }

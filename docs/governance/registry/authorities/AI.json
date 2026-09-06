@@ -1,0 +1,36 @@
+{
+  "authority": "AI",
+  "level": "L1",
+  "owner": "AI Governor",
+  "sourceOfTruth": "backend/src/services/ai/, backend/src/services/agents/, aiOrchestratorRoutes.js",
+  "inputs": [
+    "Soul",
+    "AURA spec",
+    "data architecture"
+  ],
+  "outputs": [
+    "AI orchestration",
+    "agents",
+    "models",
+    "RAG pipeline",
+    "embeddings",
+    "evaluation",
+    "persistence"
+  ],
+  "consumers": [
+    "Frontend AI UI",
+    "backend services"
+  ],
+  "allowedChanges": [
+    "Adding new agents/models within defined pipelines",
+    "updating prompts"
+  ],
+  "forbiddenChanges": [
+    "Changing Soul-defined AI principles (quiet intelligence, human warmth)",
+    "introducing prohibited AI behaviors (cyberpunk, HUD, etc.)"
+  ],
+  "validationGate": "AI spec review + agent/model validation",
+  "legacySystems": [],
+  "promotionPath": "N/A",
+  "exceptionMechanism": "Director approval for exceptions"
+}

@@ -29,9 +29,12 @@ class RewardsXpScreen extends StatelessWidget {
         centerTitle: true,
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(LuxeSpacing.xl),
-          child: Column(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 680),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(LuxeSpacing.xl),
+              child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // TARJETA DORADA DE MEMBRESÍA VIP
@@ -159,7 +162,9 @@ class RewardsXpScreen extends StatelessWidget {
           ),
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 
   static Widget _buildBenefitTile({

@@ -2,12 +2,11 @@
 import 'package:flutter/material.dart';
 import '../../models/biometric_result.dart';
 import '../../services/biometric_service.dart';
-import '../../shared/theme.dart';
-import '../../widgets/glow_glass_card.dart';
 import 'glowstore_recipe_screen.dart';
 import 'product_scanner_screen.dart';
 import 'vto_live_screen.dart';
 import 'nail_vto_screen.dart';
+import 'makeup_lookbook_screen.dart';
 import 'widgets/score_card.dart';
 import 'widgets/recommendation_card.dart';
 import 'widgets/product_card.dart';
@@ -18,12 +17,12 @@ import '../../services/social_share_service.dart';
 // Tokens de marca para esta pantalla estilo Pasaporte Editorial
 // ---------------------------------------------------------------------------
 class _PassportColors {
-  static const primary = AppTheme.passportPrimary; // #D85A30
-  static const primaryLight = Color(0xFFF0997B);
-  static const background = AppTheme.passportBackground; // #FBF6F1
-  static const surface = AppTheme.passportSurface; // #FFFFFF
-  static const textAccent = AppTheme.passportAccentText; // #4A1B0C
-  static const textEyebrow = Color(0xFF993C1D);
+  static const primary = Color(0xFFC5A052); // Haute Joaillerie Gold 871
+  static const primaryLight = Color(0xFFF3D59B);
+  static const background = Color(0xFFFAF8F5);
+  static const surface = Colors.white;
+  static const textAccent = Color(0xFF1F1A15);
+  static const textEyebrow = Color(0xFF8E7D7A);
 }
 
 enum _PassportFilter { rostro, manos }
@@ -125,9 +124,12 @@ class _ResultsScreenState extends State<ResultsScreen> {
     return Scaffold(
       backgroundColor: _PassportColors.background,
       body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 720),
+            child: Column(
+              children: [
+                _buildHeader(),
             Expanded(
               child: SingleChildScrollView(
                 controller: _scrollController,
@@ -193,6 +195,29 @@ class _ResultsScreenState extends State<ResultsScreen> {
                         icon: const Icon(Icons.back_hand, color: _PassportColors.primary),
                         label: const Text(
                           '💅 Probar Manicura & Uñas en VTO Live',
+                          style: TextStyle(color: _PassportColors.textAccent, fontWeight: FontWeight.bold),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size(double.infinity, 48),
+                          side: const BorderSide(color: _PassportColors.primary),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => MakeupLookbookScreen(biometricResult: widget.result),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.palette_outlined, color: _PassportColors.primary),
+                        label: const Text(
+                          '🎨 Lookbook IA & Filtros Virtuales (Media.io)',
                           style: TextStyle(color: _PassportColors.textAccent, fontWeight: FontWeight.bold),
                         ),
                         style: OutlinedButton.styleFrom(
@@ -310,7 +335,9 @@ class _ResultsScreenState extends State<ResultsScreen> {
           ],
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 
   // ---------------------------------------------------------------------
@@ -462,42 +489,61 @@ class _ResultsScreenState extends State<ResultsScreen> {
   }
 
   // ---------------------------------------------------------------------
-  // Scores: GridView 2x2 con score cards e inversión de salud en síntoma
+  // Scores: Evimetra Gauge + GridView 2x2 + Bioderma Clinical Families
   // ---------------------------------------------------------------------
   Widget _buildFaceScores(FaceScores face) {
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 10,
-      crossAxisSpacing: 10,
-      childAspectRatio: 2.6,
+    final computedGlowScore = widget.result.glowScore ??
+        ((face.hydration * 0.35) + ((100 - face.spots) * 0.25) + ((100 - face.pores) * 0.25) + ((100 - face.wrinkles) * 0.15)).round().clamp(0, 100);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ScoreCard(
-          label: 'Hidratación',
-          value: face.hydration,
-          color: _PassportColors.primary,
-          icon: Icons.water_drop_outlined,
+        GlowScoreGaugeWidget(
+          glowScore: computedGlowScore,
+          onCompareTap: () {
+            Navigator.pushNamed(context, '/evolution');
+          },
         ),
-        ScoreCard(
-          label: 'Arrugas',
-          // Menor es mejor: se invierte para que la barra comunique "salud".
-          value: 100 - face.wrinkles,
-          color: _PassportColors.primary,
-          icon: Icons.auto_awesome_outlined,
+        const SizedBox(height: 12),
+        GridView.count(
+          crossAxisCount: 2,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: 10,
+          crossAxisSpacing: 10,
+          childAspectRatio: 2.6,
+          children: [
+            ScoreCard(
+              label: 'Hidratación',
+              value: face.hydration,
+              color: _PassportColors.primary,
+              icon: Icons.water_drop_outlined,
+            ),
+            ScoreCard(
+              label: 'Arrugas',
+              // Menor es mejor: se invierte para que la barra comunique "salud".
+              value: 100 - face.wrinkles,
+              color: _PassportColors.primary,
+              icon: Icons.auto_awesome_outlined,
+            ),
+            ScoreCard(
+              label: 'Manchas',
+              value: 100 - face.spots,
+              color: _PassportColors.primary,
+              icon: Icons.blur_on,
+            ),
+            ScoreCard(
+              label: 'Poros',
+              value: 100 - face.pores,
+              color: _PassportColors.primary,
+              icon: Icons.center_focus_strong_outlined,
+            ),
+          ],
         ),
-        ScoreCard(
-          label: 'Manchas',
-          value: 100 - face.spots,
-          color: _PassportColors.primary,
-          icon: Icons.blur_on,
-        ),
-        ScoreCard(
-          label: 'Poros',
-          value: 100 - face.pores,
-          color: _PassportColors.primary,
-          icon: Icons.center_focus_strong_outlined,
-        ),
+        if (widget.result.dermoFamilies != null) ...[
+          const SizedBox(height: 14),
+          DermoFamiliesWidget(dermoFamilies: widget.result.dermoFamilies!),
+        ],
       ],
     );
   }

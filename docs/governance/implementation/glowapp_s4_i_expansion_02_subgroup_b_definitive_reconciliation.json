@@ -1,0 +1,110 @@
+{
+  "objective": "Resolver definitivamente la discrepancia entre los reportes históricos de S4-I Expansion 02 Subgroup B y el código REAL actualmente presente en el repositorio.",
+  "rule_absoluta": "EL CÓDIGO ACTUAL ES LA FUENTE DE VERDAD. NO confiar en reportes históricos como evidencia de implementación.",
+  "fase1_reconciliacion_readonly": {
+    "matriz": [
+      {
+        "campo": "Login email",
+        "widget_real": "S4TextField",
+        "reporte_historico": "S4TextField",
+        "estado": "✅ COINCIDE"
+      },
+      {
+        "campo": "Login password",
+        "widget_real": "S4TextField",
+        "reporte_historico": "S4TextField",
+        "estado": "✅ COINCIDE"
+      },
+      {
+        "campo": "Register name",
+        "widget_real": "TextFormField",
+        "reporte_historico": "S4TextField",
+        "estado": "❌ DIFERENTE"
+      },
+      {
+        "campo": "Register email",
+        "widget_real": "TextFormField",
+        "reporte_historico": "S4TextField",
+        "estado": "❌ DIFERENTE"
+      },
+      {
+        "campo": "Register password",
+        "widget_real": "TextFormField",
+        "reporte_historico": "S4TextField",
+        "estado": "❌ DIFERENTE"
+      },
+      {
+        "campo": "Register phone",
+        "widget_real": "TextFormField",
+        "reporte_historico": "S4TextField",
+        "estado": "❌ DIFERENTE"
+      }
+    ]
+  },
+  "fase2_historial": {
+    "git_status_short": " M frontend/lib/screens/auth/login_screen.dart\n M frontend/lib/screens/ideas/aura_welcome_screen.dart\nMM frontend/lib/widgets/ai_search_bar.dart\n M package.json",
+    "git_diff": {
+      "login_screen.dart": {
+        "changes": [
+          {
+            "from": "TextFormField",
+            "to": "S4TextField",
+            "location": "Email Input (line 220)"
+          },
+          {
+            "from": "TextFormField",
+            "to": "S4TextField",
+            "location": "Password Input (line 247)"
+          }
+        ]
+      },
+      "register_screen.dart": {
+        "changes": [],
+        "note": "No changes detected; file is not modified."
+      },
+      "s4_text_field.dart": {
+        "changes": [],
+        "note": "No local changes."
+      }
+    },
+    "git_log_login_screen": [
+      "6617971e WIP on r7-stage3-shadow: 3c8df30d feat: tendencias_belleza_virales auto-generado (1 chunks)",
+      "9ad40b0b fix(web-build): resolve blurRadius parameter error in aura_3d_emblem.dart and refactor auth screens to BELLEZA LUXE",
+      "afa0de72 feat(auth): implementar Fase 1 de seguridad, token blacklisting y recuperacion de contrasena",
+      "... (truncated for brevity)"
+    ],
+    "git_log_register_screen": [
+      "6617971e WIP on r7-stage3-shadow: 3c8df30d feat: tendencias_belleza_virales auto-generado (1 chunks)",
+      "9ad40b0b fix(web-build): resolve blurRadius parameter error in aura_3d_emblem.dart and refactor auth screens to BELLEZA LUXE",
+      "c30b2519 feat: integracion de tienda en prestador y reparaciones de seguridad",
+      "... (truncated for brevity)"
+    ]
+  },
+  "fase3_decision": {
+    "rule": "Si alguno utiliza TextFormField: SUBGROUP_B = MIGRATION_REQUIRED",
+    "evidence": "Los campos de registro (nombre, email, contraseña, teléfono) utilizan TextFormField.",
+    "decision": "SUBGROUP_B = MIGRATION_REQUIRED"
+  },
+  "fase4_reporte": {
+    "documentation": [
+      "docs/governance/implementation/GLOWAPP_S4_I_EXPANSION_02_SUBGROUP_B_DEFINITIVE_RECONCILIATION.md",
+      "docs/governance/implementation/glowapp_s4_i_expansion_02_subgroup_b_definitive_reconciliation.json"
+    ],
+    "contents": {
+      "estado_real_de_los_seis_campos": "Ver matriz arriba.",
+      "evidencia_directa_del_codigo": "Login screen uses S4TextField for email and password; Register screen uses TextFormField for all fields.",
+      "estado_de_git": "login_screen.dart tiene cambios locales (migración a S4TextField) no commiteados; register_screen.dart y s4_text_field.dart sin cambios locales.",
+      "historial_relevante": "El commit 9ad40b0b menciona el refactor de auth screens a BELLEZA LUXE, lo que probablemente introdujo S4TextField en login pero no completó el cambio en register.",
+      "comparacion_contra_reportes_anteriores": "Los reportes históricos indicaban que todos los campos habían sido migrados a S4TextField, pero el código actual muestra solo los de login.",
+      "explicacion_de_la_discrepancia": "Posibles causas: migración incompleta, reporte basado en una rama no fusionada, o cambios locales solo en login.",
+      "decision": "SUBGROUP_B = MIGRATION_REQUIRED",
+      "accion_siguiente_permitida": "No modificar código durante esta fase. Reportar y detenerse. En un futuro workstream de ejecución, aplicar la migración restante si se autoriza."
+    }
+  },
+  "fase5_stop": {
+    "instruction": "NO ejecutar tests. NO ejecutar analyze. NO ejecutar build. NO modificar código.",
+    "purpose": "Determinar CUÁL ES EL ESTADO REAL."
+  },
+  "resultado_final_permitido": "SUBGROUP_B_MIGRATION_REQUIRED",
+  "note": "La imagen comunica. Flutter solo interactúa."
+}

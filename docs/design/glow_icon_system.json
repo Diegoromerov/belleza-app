@@ -1,0 +1,638 @@
+{
+  "version": "1.0.0",
+  "phase": "FINAL_LOCK",
+  "status": "LOCKED",
+  "lock_date": "2026-08-20",
+  "style": {
+    "family": "Glow Icon System",
+    "principle": "monoline refined warm premium",
+    "stroke": {
+      "base": 1.75,
+      "small": 1.5,
+      "emphasis": 2.0
+    },
+    "viewport": "24x24",
+    "linecap": "round",
+    "linejoin": "round",
+    "fill": "none"
+  },
+  "sizes": [
+    16,
+    20,
+    24,
+    28,
+    32,
+    40,
+    48
+  ],
+  "core_icons": [
+    {
+      "semantic_name": "home",
+      "label_es": "Inicio",
+      "svg_asset": "assets/icons/glow/home.svg",
+      "default_stroke_width": 1.75
+    },
+    {
+      "semantic_name": "search",
+      "label_es": "Buscar",
+      "svg_asset": "assets/icons/glow/search.svg",
+      "default_stroke_width": 1.75
+    },
+    {
+      "semantic_name": "menu",
+      "label_es": "Menú",
+      "svg_asset": "assets/icons/glow/menu.svg",
+      "default_stroke_width": 1.75
+    },
+    {
+      "semantic_name": "close",
+      "label_es": "Cerrar",
+      "svg_asset": "assets/icons/glow/close.svg",
+      "default_stroke_width": 1.75
+    },
+    {
+      "semantic_name": "back",
+      "label_es": "Atrás",
+      "svg_asset": "assets/icons/glow/back.svg",
+      "default_stroke_width": 1.75
+    },
+    {
+      "semantic_name": "forward",
+      "label_es": "Adelante",
+      "svg_asset": "assets/icons/glow/forward.svg",
+      "default_stroke_width": 1.75
+    },
+    {
+      "semantic_name": "more",
+      "label_es": "Más opciones",
+      "svg_asset": "assets/icons/glow/more.svg",
+      "default_stroke_width": 1.75
+    },
+    {
+      "semantic_name": "profile",
+      "label_es": "Perfil",
+      "svg_asset": "assets/icons/glow/profile.svg",
+      "default_stroke_width": 1.75
+    },
+    {
+      "semantic_name": "heart",
+      "label_es": "Favorito",
+      "svg_asset": "assets/icons/glow/heart.svg",
+      "default_stroke_width": 1.75
+    },
+    {
+      "semantic_name": "bag",
+      "label_es": "Bolsa",
+      "svg_asset": "assets/icons/glow/bag.svg",
+      "default_stroke_width": 1.75
+    },
+    {
+      "semantic_name": "cart",
+      "label_es": "Carrito",
+      "svg_asset": "assets/icons/glow/cart.svg",
+      "default_stroke_width": 1.75
+    },
+    {
+      "semantic_name": "calendar",
+      "label_es": "Calendario",
+      "svg_asset": "assets/icons/glow/calendar.svg",
+      "default_stroke_width": 1.75
+    },
+    {
+      "semantic_name": "clock",
+      "label_es": "Reloj",
+      "svg_asset": "assets/icons/glow/clock.svg",
+      "default_stroke_width": 1.75
+    },
+    {
+      "semantic_name": "location",
+      "label_es": "Ubicación",
+      "svg_asset": "assets/icons/glow/location.svg",
+      "default_stroke_width": 1.75
+    },
+    {
+      "semantic_name": "settings",
+      "label_es": "Ajustes",
+      "svg_asset": "assets/icons/glow/settings.svg",
+      "default_stroke_width": 1.75
+    },
+    {
+      "semantic_name": "notification",
+      "label_es": "Notificaciones",
+      "svg_asset": "assets/icons/glow/notification.svg",
+      "default_stroke_width": 1.75
+    }
+  ],
+  "proprietary_icons": [
+    {
+      "semantic_name": "glow",
+      "concept": "Núcleo + radiación mínima (brillo/belleza/energía/sofisticación)",
+      "label_es": "Glow",
+      "svg_asset": "assets/icons/glow/glow.svg",
+      "default_stroke_width": 1.75,
+      "color_role_default": "primary"
+    },
+    {
+      "semantic_name": "aura",
+      "concept": "Núcleo + halo/órbita (inteligencia/percepción/personalización/conocimiento)",
+      "label_es": "Aura",
+      "svg_asset": "assets/icons/glow/aura.svg",
+      "default_stroke_width": 1.75,
+      "color_role_default": "aura"
+    },
+    {
+      "semantic_name": "concierge",
+      "concept": "Silueta humana + servicio (atención/acompañamiento/servicio personalizado/relación humana)",
+      "label_es": "Concierge",
+      "svg_asset": "assets/icons/glow/concierge.svg",
+      "default_stroke_width": 1.75,
+      "color_role_default": "primary"
+    },
+    {
+      "semantic_name": "beauty_ritual",
+      "concept": "Contenedor ritual + punto central (ritual/cuidado/belleza/experiencia unisex)",
+      "label_es": "Ritual de belleza",
+      "svg_asset": "assets/icons/glow/beauty_ritual.svg",
+      "default_stroke_width": 1.75,
+      "color_role_default": "primary"
+    },
+    {
+      "semantic_name": "glow_recommendation",
+      "concept": "Compás + reloj + spark (recomendación/personalización/descubrimiento)",
+      "label_es": "Recomendación Glow",
+      "svg_asset": "assets/icons/glow/glow_recommendation.svg",
+      "default_stroke_width": 1.75,
+      "color_role_default": "primary"
+    },
+    {
+      "semantic_name": "male_grooming",
+      "concept": "Perfil masculino + navaja estilizada (grooming/cuidado masculino/sofisticación)",
+      "label_es": "Grooming masculino",
+      "svg_asset": "assets/icons/glow/male_grooming.svg",
+      "default_stroke_width": 1.75,
+      "color_role_default": "primary"
+    }
+  ],
+  "beauty_icons": [
+    {
+      "semantic_name": "skincare",
+      "concept": "Rostro simplificado + gota de cuidado (piel/tratamiento/ritual)",
+      "label_es": "Cuidado de la piel",
+      "svg_asset": "assets/icons/glow/skincare.svg",
+      "default_stroke_width": 1.75,
+      "color_role_default": "primary"
+    },
+    {
+      "semantic_name": "hair",
+      "concept": "Mechón fluido orgánico (cabello/styling/cuidado capilar)",
+      "label_es": "Cabello",
+      "svg_asset": "assets/icons/glow/hair.svg",
+      "default_stroke_width": 1.75,
+      "color_role_default": "primary"
+    },
+    {
+      "semantic_name": "nails",
+      "concept": "Silueta uña minimalista en yema del dedo (manicure/cuidado)",
+      "label_es": "Manicure",
+      "svg_asset": "assets/icons/glow/nails.svg",
+      "default_stroke_width": 1.75,
+      "color_role_default": "primary"
+    },
+    {
+      "semantic_name": "makeup",
+      "concept": "Trazo de brocha formando marca de belleza (maquillaje/aplicación)",
+      "label_es": "Maquillaje",
+      "svg_asset": "assets/icons/glow/makeup.svg",
+      "default_stroke_width": 1.75,
+      "color_role_default": "primary"
+    },
+    {
+      "semantic_name": "fragrance",
+      "concept": "Frasco editorial simplificado + vapor sutil (perfume/aroma/lujo/ritual)",
+      "label_es": "Fragancia",
+      "svg_asset": "assets/icons/glow/fragrance.svg",
+      "default_stroke_width": 1.75,
+      "color_role_default": "primary"
+    },
+    {
+      "semantic_name": "body",
+      "concept": "Silueta corporal abstracta + gesto de cuidado (body care/bienestar físico/ritual)",
+      "label_es": "Cuidado corporal",
+      "svg_asset": "assets/icons/glow/body.svg",
+      "default_stroke_width": 1.75,
+      "color_role_default": "primary"
+    },
+    {
+      "semantic_name": "wellness",
+      "concept": "Formas equilibradas simétricas (equilibrio/bienestar/autocuidado/tranquilidad)",
+      "label_es": "Bienestar",
+      "svg_asset": "assets/icons/glow/wellness.svg",
+      "default_stroke_width": 1.75,
+      "color_role_default": "primary"
+    },
+    {
+      "semantic_name": "spa",
+      "concept": "Piedra orgánica + vapor ritual (relajación/tratamiento/experiencia spa)",
+      "label_es": "Spa",
+      "svg_asset": "assets/icons/glow/spa.svg",
+      "default_stroke_width": 1.75,
+      "color_role_default": "primary"
+    }
+  ],
+  "men_icons": [
+    {
+      "semantic_name": "beard",
+      "concept": "Contorno mandibular elegante + sugerencia de barba cuidada (barba/grooming/sofisticación)",
+      "label_es": "Barba",
+      "svg_asset": "assets/icons/glow/beard.svg",
+      "default_stroke_width": 1.75,
+      "color_role_default": "primary"
+    },
+    {
+      "semantic_name": "shave",
+      "concept": "Navaja de precisión + contorno facial mínimo (afeitado/ritual/cuidado)",
+      "label_es": "Afeitado",
+      "svg_asset": "assets/icons/glow/shave.svg",
+      "default_stroke_width": 1.75,
+      "color_role_default": "primary"
+    },
+    {
+      "semantic_name": "scalp",
+      "concept": "Silueta craneal + indicador de raíz (cuero cabelludo/cuidado capilar desde la raíz)",
+      "label_es": "Cuero cabelludo",
+      "svg_asset": "assets/icons/glow/scalp.svg",
+      "default_stroke_width": 1.75,
+      "color_role_default": "primary"
+    },
+    {
+      "semantic_name": "mens_fragrance",
+      "concept": "Frasco arquitectónico + atomizador geométrico (fragancia masculina/sofisticación/discreción)",
+      "label_es": "Fragancia masculina",
+      "svg_asset": "assets/icons/glow/mens_fragrance.svg",
+      "default_stroke_width": 1.75,
+      "color_role_default": "primary"
+    },
+    {
+      "semantic_name": "mens_body",
+      "concept": "Línea de hombros fuerte + gesto de cuidado (body care masculino/grooming/bienestar)",
+      "label_es": "Cuidado corporal masculino",
+      "svg_asset": "assets/icons/glow/mens_body.svg",
+      "default_stroke_width": 1.75,
+      "color_role_default": "primary"
+    }
+  ],
+  "concierge_icons": [
+    {
+      "semantic_name": "booking",
+      "concept": "Calendario minimal + check sutil (reservar/acción/experiencia de reserva)",
+      "label_es": "Reserva",
+      "svg_asset": "assets/icons/glow/booking.svg",
+      "default_stroke_width": 1.75,
+      "color_role_default": "primary"
+    },
+    {
+      "semantic_name": "chat",
+      "concept": "Dos burbujas conversacionales (diálogo/comunicación/interacción humana)",
+      "label_es": "Chat",
+      "svg_asset": "assets/icons/glow/chat.svg",
+      "default_stroke_width": 1.75,
+      "color_role_default": "primary"
+    },
+    {
+      "semantic_name": "wishlist",
+      "concept": "Marcador de colección + heart minimal (lista de deseos/colección personal)",
+      "label_es": "Lista de deseos",
+      "svg_asset": "assets/icons/glow/wishlist.svg",
+      "default_stroke_width": 1.75,
+      "color_role_default": "primary"
+    },
+    {
+      "semantic_name": "support",
+      "concept": "Escudo suave + gesto de acompañamiento (asistencia/apoyo/humano/premium)",
+      "label_es": "Soporte",
+      "svg_asset": "assets/icons/glow/support.svg",
+      "default_stroke_width": 1.75,
+      "color_role_default": "primary"
+    }
+  ],
+  "aura_icons": [
+    {
+      "semantic_name": "scan",
+      "concept": "Campo de percepción + núcleo observando (AURA percibe/lee información)",
+      "label_es": "Escanear",
+      "svg_asset": "assets/icons/glow/scan.svg",
+      "default_stroke_width": 1.75,
+      "color_role_default": "aura"
+    },
+    {
+      "semantic_name": "analyze",
+      "concept": "Núcleo con relaciones en capas (AURA interpreta/comprende)",
+      "label_es": "Analizar",
+      "svg_asset": "assets/icons/glow/analyze.svg",
+      "default_stroke_width": 1.75,
+      "color_role_default": "aura"
+    },
+    {
+      "semantic_name": "learn",
+      "concept": "Núcleo + órbitas expandiéndose (AURA incorpora conocimiento)",
+      "label_es": "Aprender",
+      "svg_asset": "assets/icons/glow/learn.svg",
+      "default_stroke_width": 1.75,
+      "color_role_default": "aura"
+    },
+    {
+      "semantic_name": "predict",
+      "concept": "Trayectoria convergiendo a punto futuro (AURA anticipa)",
+      "label_es": "Predecir",
+      "svg_asset": "assets/icons/glow/predict.svg",
+      "default_stroke_width": 1.75,
+      "color_role_default": "aura"
+    },
+    {
+      "semantic_name": "evolve",
+      "concept": "Forma transformándose progresivamente (AURA evoluciona con el usuario)",
+      "label_es": "Evolucionar",
+      "svg_asset": "assets/icons/glow/evolve.svg",
+      "default_stroke_width": 1.75,
+      "color_role_default": "aura"
+    },
+    {
+      "semantic_name": "sync",
+      "concept": "Dos órbitas alineándose (AURA sincroniza/coordinación)",
+      "label_es": "Sincronizar",
+      "svg_asset": "assets/icons/glow/sync.svg",
+      "default_stroke_width": 1.75,
+      "color_role_default": "aura"
+    }
+  ],
+  "system_icons": [
+    {
+      "semantic_name": "share",
+      "concept": "Tres nodos conectados (compartir/distribuir/neutral)",
+      "label_es": "Compartir",
+      "svg_asset": "assets/icons/glow/share.svg",
+      "default_stroke_width": 1.75,
+      "color_role_default": "primary"
+    },
+    {
+      "semantic_name": "download",
+      "concept": "Flecha en contenedor - contenido entrando al dispositivo",
+      "label_es": "Descargar",
+      "svg_asset": "assets/icons/glow/download.svg",
+      "default_stroke_width": 1.75,
+      "color_role_default": "primary"
+    },
+    {
+      "semantic_name": "upload",
+      "concept": "Flecha desde contenedor - contenido saliendo del dispositivo",
+      "label_es": "Subir",
+      "svg_asset": "assets/icons/glow/upload.svg",
+      "default_stroke_width": 1.75,
+      "color_role_default": "primary"
+    },
+    {
+      "semantic_name": "filter",
+      "concept": "Líneas progresivas convergiendo - seleccionar qué mostrar",
+      "label_es": "Filtrar",
+      "svg_asset": "assets/icons/glow/filter.svg",
+      "default_stroke_width": 1.75,
+      "color_role_default": "primary"
+    },
+    {
+      "semantic_name": "sort",
+      "concept": "Líneas de diferentes longitudes con orden - organizar secuencia",
+      "label_es": "Ordenar",
+      "svg_asset": "assets/icons/glow/sort.svg",
+      "default_stroke_width": 1.75,
+      "color_role_default": "primary"
+    },
+    {
+      "semantic_name": "qr",
+      "concept": "Símbolo QR minimal - tecnología/medio de acceso (no scanner)",
+      "label_es": "Código QR",
+      "svg_asset": "assets/icons/glow/qr.svg",
+      "default_stroke_width": 1.75,
+      "color_role_default": "primary"
+    }
+  ],
+  "registry": {
+    "class": "GlowIconRegistry",
+    "methods": [
+      "register(semanticName, GlowIconData)",
+      "registerAll(Map<String, GlowIconData>)",
+      "resolve(semanticName) -> GlowIconData?",
+      "has(semanticName) -> bool",
+      "registeredNames -> Set<String>",
+      "clear()",
+      "coreIcons -> List<String> (16)",
+      "proprietaryIcons -> List<String> (6)",
+      "beautyIcons -> List<String> (8)",
+      "menIcons -> List<String> (5)",
+      "conciergeIcons -> List<String> (4)",
+      "auraIcons -> List<String> (6)",
+      "systemIcons -> List<String> (6)",
+      "allKnownNames -> List<String> (51)"
+    ],
+    "priority": "SVG asset > CustomPainter > IconData fallback",
+    "initialization": "GlowIconRegistryInit.initialize() in main.dart before runApp()"
+  },
+  "theme": {
+    "extension": "GlowIconThemeExtension on BuildContext",
+    "method": "glowIconColor(GlowIconColorRole) -> Color",
+    "roles": [
+      "primary",
+      "secondary",
+      "accent",
+      "aura",
+      "error",
+      "success",
+      "warning",
+      "neutral",
+      "disabled"
+    ],
+    "color_mapping": {
+      "women": {
+        "primary": "Rose Gold #D4AF7A",
+        "secondary": "Warm Brown #5A3A2A",
+        "accent": "Champagne #D9A27F",
+        "aura": "Aura Teal #164C46"
+      },
+      "men": {
+        "primary": "Champagne #C8B08A",
+        "secondary": "Warm White #F2EFEA",
+        "accent": "Copper #B8734A",
+        "aura": "Aura Teal #164C46"
+      },
+      "shared": {
+        "error": "#DC2626",
+        "success": "#059669",
+        "warning": "#D97706",
+        "neutral": "on-surface",
+        "disabled": "grey 400/600"
+      }
+    },
+    "fallback_chain": [
+      "GlowStoreTokens",
+      "Token / BellezaLuxeTokens",
+      "Hardcoded fallback"
+    ]
+  },
+  "accessibility": {
+    "semantic_label_required": true,
+    "decorative_icons": "semanticLabel: null silences",
+    "semantics_wrapper": "_SvgIcon and _CustomPaintIcon wrap with Semantics",
+    "touch_targets": "Delegated to existing components"
+  },
+  "api": {
+    "main_class": "GlowIcon",
+    "core_methods": [
+      "home",
+      "search",
+      "menu",
+      "close",
+      "back",
+      "forward",
+      "more",
+      "profile",
+      "heart",
+      "bag",
+      "cart",
+      "calendar",
+      "clock",
+      "location",
+      "settings",
+      "notification"
+    ],
+    "proprietary_methods": [
+      "glow",
+      "aura",
+      "concierge",
+      "beautyRitual",
+      "glowRecommendation",
+      "maleGrooming"
+    ],
+    "beauty_methods": [
+      "skincare",
+      "hair",
+      "nails",
+      "makeup",
+      "fragrance",
+      "body",
+      "wellness",
+      "spa"
+    ],
+    "men_methods": [
+      "beard",
+      "shave",
+      "scalp",
+      "mensFragrance",
+      "mensBody"
+    ],
+    "concierge_methods": [
+      "booking",
+      "chat",
+      "wishlist",
+      "support"
+    ],
+    "aura_methods": [
+      "scan",
+      "analyze",
+      "learn",
+      "predict",
+      "evolve",
+      "sync"
+    ],
+    "system_methods": [
+      "share",
+      "download",
+      "upload",
+      "filter",
+      "sort",
+      "qr"
+    ],
+    "generic_resolve": "GlowIcon.resolve(semanticName, size, color, colorRole, semanticLabel, strokeWidth, weight)",
+    "size_enum": "GlowIconSize (xs, sm, md, lg, xl, xxl, huge)",
+    "weight_enum": "GlowIconWeight (light=1.5, regular=1.75, bold=2.0)",
+    "color_role_enum": "GlowIconColorRole (primary, secondary, accent, aura, error, success, warning, neutral, disabled)"
+  },
+  "adapter": {
+    "class": "GlowIconAdapter",
+    "purpose": "Drop-in migration layer from Icons.* to GlowIcon",
+    "core_mappings": 16,
+    "proprietary_mappings": 6,
+    "beauty_mappings": 8,
+    "men_mappings": 5,
+    "concierge_mappings": 4,
+    "aura_mappings": 6,
+    "system_mappings": 6,
+    "fallback": "GlowIconAdapter.resolveOrFallback(IconData)",
+    "migration_status": "NOT_STARTED",
+    "global_migration": "NOT_STARTED"
+  },
+  "demo": {
+    "class": "GlowIconDemoScreen",
+    "purpose": "Internal visual validation only - not for production",
+    "features": [
+      "Core icons grid (16)",
+      "Proprietary icons grid (6)",
+      "Beauty icons grid (8 I2-A)",
+      "Men icons grid (5 I2-B)",
+      "Concierge icons grid (4 I2-C)",
+      "AURA icons grid (6 I2-D)",
+      "System icons grid (6 I2-E)",
+      "Size selector (16-40px)",
+      "Color role selector (9 roles)",
+      "Women/Men context toggle",
+      "Size comparison row",
+      "Color role comparison grid",
+      "Registry status panel"
+    ]
+  },
+  "assets": {
+    "directory": "assets/icons/glow/",
+    "format": "SVG",
+    "count": 51,
+    "declaration": "pubspec.yaml: assets/icons/glow/"
+  },
+  "implementation_files": [
+    "lib/design/icons.dart",
+    "lib/design/icons/glow_icon.dart",
+    "lib/design/icons/glow_icon_registry.dart",
+    "lib/design/icons/glow_icon_registry_init.dart",
+    "lib/design/icons/glow_icon_adapter.dart",
+    "lib/design/icons/glow_icon_demo.dart"
+  ],
+  "migration": {
+    "status": "NOT_STARTED",
+    "strategy": "Adapter -> Native API -> Theme-aware"
+  },
+  "change_control": {
+    "patch": "Correcciones documentales que no alteran diseño",
+    "minor": "Adiciones compatibles que no rompen el sistema",
+    "major": "Cambios que alteren geometría, naming, semántica, stroke, arquitectura, color o estructura. Requieren nueva revisión formal."
+  },
+  "icon_addition_policy": {
+    "prerequisites": [
+      "Necesidad semántica real",
+      "Inexistencia de equivalente",
+      "Necesidad reutilizable",
+      "Coherencia con el sistema",
+      "Impacto sobre inventario",
+      "Impacto sobre API",
+      "Impacto sobre documentación"
+    ],
+    "process": [
+      "DESIGN PROPOSAL",
+      "SEMANTIC REVIEW",
+      "VISUAL REVIEW",
+      "IMPLEMENTATION",
+      "VALIDATION",
+      "VERSION UPDATE"
+    ]
+  },
+  "usage_policy": {
+    "preferred": "GlowIcon.*",
+    "not_preferred": "Icons.*",
+    "exception": "Material icon solo cuando no exista equivalente, sea temporal, esté documentado y exista intención de reemplazo"
+  }
+}

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { useBookings } from '../../../hooks/useBookings';
+import { useBookings } from '@/hooks/useBookings';
 import { Calendar, Clock, MapPin, DollarSign, Tag, UserCheck, XCircle } from 'lucide-react';
 
 export default function ClienteDashboard() {

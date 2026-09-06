@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const glowCycleService = require('../services/glowCycleService');
-const { verifyToken } = require('../middleware/auth');
+const { authMiddleware, verifyToken } = require('../middleware/auth');
 const logger = require('../config/logger');
 
 /**

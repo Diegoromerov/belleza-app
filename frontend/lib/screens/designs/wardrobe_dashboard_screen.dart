@@ -215,13 +215,13 @@ class _WardrobeDashboardScreenState extends State<WardrobeDashboardScreen> with 
 
   ImageProvider _getImageProvider(String? url) {
     if (url == null || url.isEmpty) {
-      return const AssetImage('assets/images/logo_maestro_v5.png');
+      return const AssetImage('images/logo_maestro_v5.webp');
     }
     if (url.startsWith('data:image')) {
       final base64String = url.split(',').last;
       return MemoryImage(base64Decode(base64String));
     }
-    if (url.startsWith('assets/')) {
+    if (url.startsWith('images/')) {
       return AssetImage(url);
     }
     return NetworkImage(url);
@@ -236,24 +236,35 @@ class _WardrobeDashboardScreenState extends State<WardrobeDashboardScreen> with 
     final plan = _userProfile?['glowai_plan'] ?? 'free';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFCF9F7),
+      backgroundColor: const Color(0xFFFAF8F5),
       appBar: AppBar(
-        title: const Text('GlowStyle — Tu Clóset IA', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        title: const Text(
+          'GlowStyle — Tu Clóset IA',
+          style: TextStyle(
+            fontFamily: 'CormorantGaramond',
+            fontWeight: FontWeight.bold,
+            fontSize: 22,
+            color: Color(0xFF1F1A15),
+          ),
+        ),
         elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: const Color(0xFFFAF8F5),
+        foregroundColor: const Color(0xFF1F1A15),
         bottom: TabBar(
           controller: _tabController,
-          labelColor: AppTheme.primary,
-          unselectedLabelColor: Colors.grey,
-          indicatorColor: AppTheme.primary,
+          labelColor: const Color(0xFFC5A052),
+          unselectedLabelColor: const Color(0xFF8E7D7A),
+          indicatorColor: const Color(0xFFC5A052),
           tabs: const [
             Tab(icon: Icon(Icons.style), text: 'Mi Clóset'),
             Tab(icon: Icon(Icons.brush_rounded), text: 'Outfits IA'),
           ],
         ),
       ),
-      body: _isClassifying
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 720),
+          child: _isClassifying
           ? Center(
               child: Padding(
                 padding: const EdgeInsets.all(24.0),
@@ -569,10 +580,12 @@ class _WardrobeDashboardScreenState extends State<WardrobeDashboardScreen> with 
                 ),
               ],
             ),
+          ),
+        ),
       floatingActionButton: _tabController.index == 0 && !_isClassifying
           ? FloatingActionButton(
-              backgroundColor: AppTheme.primary,
-              foregroundColor: Colors.white,
+              backgroundColor: const Color(0xFFC5A052),
+              foregroundColor: const Color(0xFF1F1A15),
               onPressed: _addGarment,
               child: const Icon(Icons.add_a_photo),
             )
