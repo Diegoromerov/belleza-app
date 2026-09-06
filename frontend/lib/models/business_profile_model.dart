@@ -1,6 +1,70 @@
-/// GLOWAPP BUSINESS ENGINE MODELS
-/// Dart models for Business Profile, Task, Requirement, Evidence, Finding, Document Template.
+import 'package:flutter/material.dart';
 
+/// GLOWAPP BUSINESS ENGINE MODELS (Dart 3.x Refactored)
+/// Strong typed Enums, immutability, and JSON serialization.
+
+enum TaskStage {
+  entender('ENTENDER', 'Entender el Requisito', Icons.help_outline),
+  explicar('EXPLICAR', 'Explicar por qué Importa', Icons.info_outline),
+  recomendar('RECOMENDAR', 'Recomendación Aura AI', Icons.auto_awesome),
+  ejecutar('EJECUTAR', 'Ejecutar Acción', Icons.play_circle_outline),
+  verificar('VERIFICAR', 'Cargar Evidencia', Icons.verified_outlined);
+
+  final String code;
+  final String label;
+  final IconData icon;
+  const TaskStage(this.code, this.label, this.icon);
+
+  static TaskStage fromCode(String code) {
+    final clean = code.toUpperCase().trim();
+    return TaskStage.values.firstWhere(
+      (e) => e.code == clean,
+      orElse: () => TaskStage.entender,
+    );
+  }
+}
+
+enum TaskStatus {
+  pending('PENDIENTE', Colors.orange),
+  inProgress('EN PROCESO', Color(0xFF3B82F6)),
+  submitted('EN REVISIÓN', Color(0xFF8B5CF6)),
+  verified('VERIFICADO', Color(0xFF10B981)),
+  expired('VENCIDO', Color(0xFFF43F5E));
+
+  final String label;
+  final Color color;
+  const TaskStatus(this.label, this.color);
+
+  static TaskStatus fromCode(String code) {
+    final clean = code.toUpperCase().trim();
+    return TaskStatus.values.firstWhere(
+      (e) => e.label == clean || e.name.toUpperCase() == clean,
+      orElse: () => TaskStatus.pending,
+    );
+  }
+}
+
+enum FindingRiskLevel {
+  low('LOW', 'Bajo', Color(0xFF10B981)),
+  medium('MEDIUM', 'Medio', Color(0xFFF59E0B)),
+  high('HIGH', 'Alto', Color(0xFFEF4444)),
+  critical('CRITICAL', 'Crítico', Color(0xFF991B1B));
+
+  final String code;
+  final String label;
+  final Color color;
+  const FindingRiskLevel(this.code, this.label, this.color);
+
+  static FindingRiskLevel fromCode(String code) {
+    final clean = code.toUpperCase().trim();
+    return FindingRiskLevel.values.firstWhere(
+      (e) => e.code == clean,
+      orElse: () => FindingRiskLevel.medium,
+    );
+  }
+}
+
+@immutable
 class BusinessProfileModel {
   final String id;
   final String providerId;
@@ -12,7 +76,7 @@ class BusinessProfileModel {
   final String city;
   final String country;
 
-  BusinessProfileModel({
+  const BusinessProfileModel({
     required this.id,
     required this.providerId,
     required this.verticalId,
@@ -26,30 +90,43 @@ class BusinessProfileModel {
 
   factory BusinessProfileModel.fromJson(Map<String, dynamic> json) {
     return BusinessProfileModel(
-      id: json['id'] ?? '',
-      providerId: json['provider_id'] ?? '',
-      verticalId: json['vertical_id'] ?? '',
-      name: json['name'] ?? 'Mi Negocio de Belleza',
-      onboardingMode: json['onboarding_mode'] ?? 'NEW_BUSINESS',
-      lifecycleStage: json['lifecycle_stage'] ?? 'IDEA',
-      complianceScore: (json['compliance_score'] ?? 0.0).toDouble(),
-      city: json['city'] ?? 'Bogotá',
-      country: json['country'] ?? 'Colombia',
+      id: json['id'] as String? ?? '',
+      providerId: json['provider_id'] as String? ?? '',
+      verticalId: json['vertical_id'] as String? ?? '',
+      name: json['name'] as String? ?? 'Mi Negocio de Belleza',
+      onboardingMode: json['onboarding_mode'] as String? ?? 'NEW_BUSINESS',
+      lifecycleStage: json['lifecycle_stage'] as String? ?? 'IDEA',
+      complianceScore: ((json['compliance_score'] ?? 0) as num).toDouble(),
+      city: json['city'] as String? ?? 'Bogotá',
+      country: json['country'] as String? ?? 'Colombia',
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'provider_id': providerId,
+        'vertical_id': verticalId,
+        'name': name,
+        'onboarding_mode': onboardingMode,
+        'lifecycle_stage': lifecycleStage,
+        'compliance_score': complianceScore,
+        'city': city,
+        'country': country,
+      };
 }
 
+@immutable
 class BusinessTaskModel {
   final String id;
   final String businessProfileId;
   final String requirementId;
   final String title;
   final String description;
-  final String stage; // ENTENDER, EXPLICAR, RECOMENDAR, EJECUTAR, VERIFICAR
-  final String status; // PENDING, IN_PROGRESS, SUBMITTED, VERIFIED, EXPIRED
+  final TaskStage stage;
+  final TaskStatus status;
   final String dueDate;
 
-  BusinessTaskModel({
+  const BusinessTaskModel({
     required this.id,
     required this.businessProfileId,
     required this.requirementId,
@@ -62,28 +139,29 @@ class BusinessTaskModel {
 
   factory BusinessTaskModel.fromJson(Map<String, dynamic> json) {
     return BusinessTaskModel(
-      id: json['id'] ?? '',
-      businessProfileId: json['business_profile_id'] ?? '',
-      requirementId: json['requirement_id'] ?? '',
-      title: json['title'] ?? '',
-      description: json['description'] ?? '',
-      stage: json['stage'] ?? 'ENTENDER',
-      status: json['status'] ?? 'PENDING',
-      dueDate: json['due_date'] ?? '',
+      id: json['id'] as String? ?? '',
+      businessProfileId: json['business_profile_id'] as String? ?? '',
+      requirementId: json['requirement_id'] as String? ?? '',
+      title: json['title'] as String? ?? '',
+      description: json['description'] as String? ?? '',
+      stage: TaskStage.fromCode(json['stage'] as String? ?? 'ENTENDER'),
+      status: TaskStatus.fromCode(json['status'] as String? ?? 'PENDING'),
+      dueDate: json['due_date'] as String? ?? '',
     );
   }
 }
 
+@immutable
 class BusinessFindingModel {
   final String id;
   final String businessProfileId;
   final String title;
   final String description;
-  final String riskLevel; // LOW, MEDIUM, HIGH, CRITICAL
-  final String status; // OPEN, MITIGATED, CLOSED
+  final FindingRiskLevel riskLevel;
+  final String status;
   final String mitigationPlan;
 
-  BusinessFindingModel({
+  const BusinessFindingModel({
     required this.id,
     required this.businessProfileId,
     required this.title,
@@ -95,13 +173,13 @@ class BusinessFindingModel {
 
   factory BusinessFindingModel.fromJson(Map<String, dynamic> json) {
     return BusinessFindingModel(
-      id: json['id'] ?? '',
-      businessProfileId: json['business_profile_id'] ?? '',
-      title: json['title'] ?? '',
-      description: json['description'] ?? '',
-      riskLevel: json['risk_level'] ?? 'MEDIUM',
-      status: json['status'] ?? 'OPEN',
-      mitigationPlan: json['mitigation_plan'] ?? '',
+      id: json['id'] as String? ?? '',
+      businessProfileId: json['business_profile_id'] as String? ?? '',
+      title: json['title'] as String? ?? '',
+      description: json['description'] as String? ?? '',
+      riskLevel: FindingRiskLevel.fromCode(json['risk_level'] as String? ?? 'MEDIUM'),
+      status: json['status'] as String? ?? 'OPEN',
+      mitigationPlan: json['mitigation_plan'] as String? ?? '',
     );
   }
 }

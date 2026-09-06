@@ -12,6 +12,13 @@ const businessDiagnosticService = require('../services/businessDiagnosticService
 const businessRequirementService = require('../services/businessRequirementService');
 const businessWorkflowService = require('../services/businessWorkflowService');
 const documentGeneratorService = require('../services/documentGeneratorService');
+const {
+  diagnosticSchema,
+  generateDocSchema,
+  signDocSchema,
+  advanceTaskSchema,
+  submitEvidenceSchema,
+} = require('../validators/businessValidator');
 
 class BusinessController {
   // GET /api/v1/business/verticals (Public Catalog)
@@ -31,6 +38,9 @@ class BusinessController {
         return res.status(401).json({ success: false, error: 'UNAUTHORIZED: Autenticación requerida' });
       }
 
+      // Input Validation using Zod
+      const validatedBody = diagnosticSchema.parse(req.body || {});
+
       // Enforce identity from JWT req.user only
       const providerId = req.user.id;
       const tenantId = req.user.tenant_id;
@@ -38,15 +48,18 @@ class BusinessController {
       const result = await businessDiagnosticService.runDiagnostic({
         provider_id: providerId,
         tenant_id: tenantId,
-        name: req.body.name,
-        onboarding_mode: req.body.onboarding_mode,
-        vertical_code: req.body.vertical_code,
-        city: req.body.city,
+        name: validatedBody.name,
+        onboarding_mode: validatedBody.onboarding_mode,
+        vertical_code: validatedBody.vertical_code,
+        city: validatedBody.city,
         answers: req.body.answers
       });
 
       return res.status(200).json({ success: true, data: result });
     } catch (err) {
+      if (err.name === 'ZodError') {
+        return res.status(400).json({ success: false, error: 'BAD_REQUEST: Datos de entrada inválidos', details: err.errors });
+      }
       return res.status(500).json({ success: false, error: err.message });
     }
   }
@@ -96,6 +109,7 @@ class BusinessController {
         return res.status(401).json({ success: false, error: 'UNAUTHORIZED: Autenticación requerida' });
       }
 
+      const validatedBody = advanceTaskSchema.parse(req.body || {});
       const providerId = req.user.id;
       const tenantId = req.user.tenant_id;
 
@@ -103,8 +117,8 @@ class BusinessController {
         taskId: req.params.id,
         providerId,
         tenantId,
-        action: req.body.action,
-        notes: req.body.notes
+        action: validatedBody.action || req.body.action,
+        notes: validatedBody.notes || req.body.notes
       });
 
       if (!result) {
@@ -113,6 +127,9 @@ class BusinessController {
 
       return res.status(200).json({ success: true, data: result });
     } catch (err) {
+      if (err.name === 'ZodError') {
+        return res.status(400).json({ success: false, error: 'BAD_REQUEST: Datos de entrada inválidos', details: err.errors });
+      }
       return res.status(500).json({ success: false, error: err.message });
     }
   }
@@ -124,6 +141,7 @@ class BusinessController {
         return res.status(401).json({ success: false, error: 'UNAUTHORIZED: Autenticación requerida' });
       }
 
+      const validatedBody = submitEvidenceSchema.parse(req.body || {});
       const providerId = req.user.id;
       const tenantId = req.user.tenant_id;
 
@@ -131,9 +149,9 @@ class BusinessController {
         taskId: req.params.id,
         providerId,
         tenantId,
-        filePath: req.body.file_path,
-        evidenceType: req.body.evidence_type,
-        notes: req.body.notes
+        filePath: validatedBody.file_path || req.body.file_path,
+        evidenceType: validatedBody.evidence_type || req.body.evidence_type,
+        notes: validatedBody.notes || req.body.notes
       });
 
       if (!result) {
@@ -142,6 +160,9 @@ class BusinessController {
 
       return res.status(200).json({ success: true, data: result });
     } catch (err) {
+      if (err.name === 'ZodError') {
+        return res.status(400).json({ success: false, error: 'BAD_REQUEST: Datos de entrada inválidos', details: err.errors });
+      }
       return res.status(500).json({ success: false, error: err.message });
     }
   }
@@ -167,16 +188,21 @@ class BusinessController {
         return res.status(401).json({ success: false, error: 'UNAUTHORIZED: Autenticación requerida' });
       }
 
+      const validatedBody = generateDocSchema.parse(req.body || {});
+
       const doc = await documentGeneratorService.generateDocument({
-        templateCode: req.body.template_code,
-        variables: req.body.variables,
+        templateCode: validatedBody.template_code || req.body.template_code,
+        variables: validatedBody.variables || req.body.variables,
         providerId: req.user.id,
         tenantId: req.user.tenant_id,
-        businessProfileId: req.body.business_profile_id
+        businessProfileId: validatedBody.business_profile_id || req.body.business_profile_id
       });
 
       return res.status(200).json({ success: true, data: doc });
     } catch (err) {
+      if (err.name === 'ZodError') {
+        return res.status(400).json({ success: false, error: 'BAD_REQUEST: Datos de entrada inválidos', details: err.errors });
+      }
       return res.status(500).json({ success: false, error: err.message });
     }
   }
@@ -236,17 +262,22 @@ class BusinessController {
         return res.status(401).json({ success: false, error: 'UNAUTHORIZED: Autenticación requerida' });
       }
 
+      const validatedBody = signDocSchema.parse(req.body || {});
+
       const result = await documentGeneratorService.signDocument({
         documentId: req.params.id,
         providerId: req.user.id,
         tenantId: req.user.tenant_id,
-        signerName: req.body.signer_name || req.user.name,
-        signatureHash: req.body.signature_hash,
+        signerName: validatedBody.signer_name || req.user.name,
+        signatureHash: validatedBody.signature_hash || req.body.signature_hash,
         role: req.user.role
       });
 
       return res.status(200).json({ success: true, data: result });
     } catch (err) {
+      if (err.name === 'ZodError') {
+        return res.status(400).json({ success: false, error: 'BAD_REQUEST: Datos de entrada inválidos', details: err.errors });
+      }
       const statusCode = err.message.startsWith('IMMUTABLE') ? 400 : (err.message.startsWith('FORBIDDEN') ? 403 : 500);
       return res.status(statusCode).json({ success: false, error: err.message });
     }
