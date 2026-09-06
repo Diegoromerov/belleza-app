@@ -7,6 +7,8 @@ import '../../widgets/provider/service_card.dart';
 import 'appointments_list.dart';
 import 'earnings_view.dart';
 
+import 'business/business_dashboard_screen.dart';
+
 class ProviderDashboardScreen extends StatefulWidget {
   final String providerName;
 
@@ -61,6 +63,18 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.business_center_outlined, color: LuxeColors.gold871),
+            tooltip: 'Expediente de Negocio & Cumplimiento',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const BusinessDashboardScreen(),
+                ),
+              );
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.account_balance_wallet_outlined, color: LuxeColors.gold871),
             onPressed: () {
               Navigator.push(
@@ -82,6 +96,59 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
               child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // BANNER DESTACADO GLOWAPP BUSINESS (CUMPLIMIENTO Y LEGAL)
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const BusinessDashboardScreen(),
+                    ),
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(LuxeSpacing.lg),
+                  decoration: BoxDecoration(
+                    color: LuxeColors.nude900,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: LuxeColors.gold871, width: 1.5),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.verified_user_outlined, color: LuxeColors.gold871, size: 36),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: const [
+                            Text(
+                              'GLOWAPP BUSINESS & LEY',
+                              style: TextStyle(
+                                fontFamily: 'Didot',
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: LuxeColors.gold871,
+                                letterSpacing: 1.0,
+                              ),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Expediente de negocio, trámites sanitarios, RH1 y contratos.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: LuxeColors.nude100,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.arrow_forward_ios, color: LuxeColors.gold871, size: 16),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: LuxeSpacing.xl),
+
               // 1. DASHBOARD DE MÉTRICAS (GRID 2X2 CON BORDE DORADO 4PX)
               const Text(
                 'RESUMEN OPERATIVO HOY',
