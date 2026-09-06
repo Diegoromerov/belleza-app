@@ -11,7 +11,12 @@ class BusinessWorkflowService {
   async getTasksForProvider(providerId, tenantId) {
     const profile = await businessRepository.getProfileByProviderId(providerId);
     if (!profile) return [];
-    return businessRepository.getTasksByProfileId(profile.id);
+    const tasks = await businessRepository.getTasksByProfileId(profile.id);
+    return tasks.map(t => ({
+      ...t,
+      provider_id: t.provider_id || profile.provider_id,
+      tenant_id: t.tenant_id || profile.tenant_id
+    }));
   }
 
   async advanceTaskStage({ taskId, providerId, tenantId, action, notes }) {

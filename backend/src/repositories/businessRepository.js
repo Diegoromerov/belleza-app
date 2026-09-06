@@ -12,6 +12,8 @@ const memoryProfiles = new Map();
 const memoryTasks = new Map();
 const memoryEvidences = new Map();
 const memoryFindings = new Map();
+const memoryDocs = new Map();
+const memoryAuditLogs = [];
 
 class BusinessRepository {
   // Verticals
@@ -41,7 +43,7 @@ class BusinessRepository {
   }
 
   // Business Profiles
-  async createProfile({ id, provider_id, vertical_id, name, onboarding_mode, lifecycle_stage, compliance_score, city, country }) {
+  async createProfile({ id, provider_id, tenant_id, vertical_id, name, onboarding_mode, lifecycle_stage, compliance_score, city, country }) {
     const profileId = id || `biz-${Date.now()}`;
     const vertId = vertical_id || verticals[0].id;
     const mode = onboarding_mode || 'NEW_BUSINESS';
@@ -49,6 +51,7 @@ class BusinessRepository {
     const score = compliance_score !== undefined ? compliance_score : (mode === 'EXISTING_BUSINESS' ? 45.0 : 10.0);
     const cityVal = city || 'Bogotá';
     const countryVal = country || 'Colombia';
+    const tenantVal = tenant_id || null;
 
     try {
       // Upsert profile in PostgreSQL
@@ -67,7 +70,9 @@ class BusinessRepository {
          RETURNING *`,
         [profileId, provider_id, vertId, name, mode, stage, score, cityVal, countryVal]
       );
-      if (res.rows.length > 0) return res.rows[0];
+      if (res.rows.length > 0) {
+        return { ...res.rows[0], tenant_id: tenantVal };
+      }
     } catch (err) {
       console.warn('⚠️ [BusinessRepository] DB error in createProfile, using memory fallback:', err.message);
     }
@@ -75,6 +80,7 @@ class BusinessRepository {
     const profile = {
       id: profileId,
       provider_id,
+      tenant_id: tenantVal,
       vertical_id: vertId,
       name,
       onboarding_mode: mode,
@@ -100,16 +106,18 @@ class BusinessRepository {
       console.warn('⚠️ [BusinessRepository] DB error in getProfileByProviderId, using memory fallback:', err.message);
     }
 
-    for (const profile of memoryProfiles.values()) {
-      if (profile.provider_id === providerId) {
-        return profile;
-      }
+    const matchingProfiles = Array.from(memoryProfiles.values())
+      .filter(p => p.provider_id === providerId)
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    if (matchingProfiles.length > 0) {
+      return matchingProfiles[0];
     }
 
     // Default fallback profile for testing/demo
     const demoProfile = {
       id: `biz-demo-${providerId}`,
       provider_id: providerId,
+      tenant_id: null,
       vertical_id: verticals[0].id,
       name: 'Salón de Belleza Demo',
       onboarding_mode: 'NEW_BUSINESS',
@@ -497,10 +505,27 @@ class BusinessRepository {
 
   // Generated Documents & Signatures (GOAL 06 — PHASE F)
   async saveDocument(doc) {
-    const memoryDocs = this.memoryDocs || (this.memoryDocs = new Map());
     const docId = doc.id || `doc-${Date.now()}`;
     const version = doc.version || 1;
     const status = doc.status || 'DRAFT';
+
+    const documentRecord = {
+      id: docId,
+      template_code: doc.template_code,
+      business_profile_id: doc.business_profile_id || null,
+      provider_id: doc.provider_id,
+      tenant_id: doc.tenant_id || 'default',
+      title: doc.title,
+      category: doc.category,
+      rendered_body: doc.rendered_body,
+      watermark: doc.watermark,
+      disclaimer: doc.disclaimer,
+      version,
+      status,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    memoryDocs.set(documentRecord.id, documentRecord);
 
     try {
       const res = await pool.query(
@@ -520,28 +545,10 @@ class BusinessRepository {
       console.warn('⚠️ [BusinessRepository] DB error in saveDocument, using memory fallback:', err.message);
     }
 
-    const documentRecord = {
-      id: docId,
-      template_code: doc.template_code,
-      business_profile_id: doc.business_profile_id || null,
-      provider_id: doc.provider_id,
-      tenant_id: doc.tenant_id || 'default',
-      title: doc.title,
-      category: doc.category,
-      rendered_body: doc.rendered_body,
-      watermark: doc.watermark,
-      disclaimer: doc.disclaimer,
-      version,
-      status,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-    memoryDocs.set(documentRecord.id, documentRecord);
     return documentRecord;
   }
 
   async getDocumentById(docId) {
-    const memoryDocs = this.memoryDocs || (this.memoryDocs = new Map());
     try {
       const res = await pool.query('SELECT * FROM business_documents WHERE id = $1', [docId]);
       if (res.rows.length > 0) return res.rows[0];
@@ -552,7 +559,16 @@ class BusinessRepository {
   }
 
   async updateDocumentSignature(docId, status, signedBy, signatureHash) {
-    const memoryDocs = this.memoryDocs || (this.memoryDocs = new Map());
+    const docInMemory = memoryDocs.get(docId);
+    if (docInMemory) {
+      docInMemory.status = status;
+      docInMemory.signed_by = signedBy;
+      docInMemory.signature_hash = signatureHash;
+      docInMemory.signed_at = new Date().toISOString();
+      docInMemory.updated_at = new Date().toISOString();
+      memoryDocs.set(docId, docInMemory);
+    }
+
     try {
       const res = await pool.query(
         `UPDATE business_documents
@@ -570,21 +586,11 @@ class BusinessRepository {
       console.warn('⚠️ [BusinessRepository] DB error in updateDocumentSignature, using memory fallback:', err.message);
     }
 
-    const doc = memoryDocs.get(docId);
-    if (doc) {
-      doc.status = status;
-      doc.signed_by = signedBy;
-      doc.signature_hash = signatureHash;
-      doc.signed_at = new Date().toISOString();
-      doc.updated_at = new Date().toISOString();
-      memoryDocs.set(docId, doc);
-    }
-    return doc;
+    return docInMemory || null;
   }
 
   // Document Audit Logs
   async addDocumentAuditLog({ documentId, tenantId, providerId, actorId, action, metadata = {} }) {
-    const memoryAudit = this.memoryAudit || (this.memoryAudit = []);
     const logEntry = {
       id: `audit-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
       document_id: documentId,
@@ -607,12 +613,11 @@ class BusinessRepository {
       // Memory fallback if table does not exist yet
     }
 
-    memoryAudit.push(logEntry);
+    memoryAuditLogs.push(logEntry);
     return logEntry;
   }
 
   async getDocumentAuditLogs(documentId) {
-    const memoryAudit = this.memoryAudit || (this.memoryAudit = []);
     try {
       const res = await pool.query(
         'SELECT * FROM document_audit_logs WHERE document_id = $1 ORDER BY created_at ASC',
@@ -622,7 +627,7 @@ class BusinessRepository {
     } catch (err) {
       // Fallback to memory
     }
-    return memoryAudit.filter(a => a.document_id === documentId);
+    return memoryAuditLogs.filter(a => a.document_id === documentId);
   }
 }
 

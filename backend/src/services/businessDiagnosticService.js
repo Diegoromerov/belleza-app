@@ -15,9 +15,10 @@ class BusinessDiagnosticService {
     
     // Create or fetch profile
     let profile = await businessRepository.getProfileByProviderId(provider_id);
-    if (!profile || profile.provider_id !== provider_id) {
+    if (!profile || profile.id.startsWith('biz-demo-')) {
       profile = await businessRepository.createProfile({
         provider_id,
+        tenant_id,
         vertical_id: vertical.id,
         name: name || 'Mi Negocio de Belleza',
         onboarding_mode: onboarding_mode || 'NEW_BUSINESS',
