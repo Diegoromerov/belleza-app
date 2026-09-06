@@ -103,7 +103,8 @@ class BusinessDiagnosticService {
 
     const completedTasks = tasks.filter(t => t.status === 'VERIFIED').length;
     const totalTasks = tasks.length || 1;
-    const updatedScore = Math.min(100, Math.round((completedTasks / totalTasks) * 100));
+    const rawScore = Math.round((completedTasks / totalTasks) * 100);
+    const updatedScore = Math.min(100, Math.max(0, Number.isNaN(rawScore) ? 0 : rawScore));
 
     await businessRepository.updateProfileStage(profile.id, profile.lifecycle_stage, updatedScore);
 
