@@ -28,6 +28,12 @@ class ApiService {
     if (envUrl.isNotEmpty) return envUrl;
     if (useStaging) return stagingUrl;
     if (_cachedBaseUrl != null) return _cachedBaseUrl!;
+    if (kIsWeb) {
+      final origin = Uri.base.origin;
+      if (origin.isNotEmpty && !origin.contains('localhost') && !origin.contains('127.0.0.1')) {
+        return origin;
+      }
+    }
     return 'http://$_host:8080';
   }
 
@@ -38,6 +44,13 @@ class ApiService {
     if (useStaging) {
       _cachedBaseUrl = stagingUrl;
       return;
+    }
+    if (kIsWeb) {
+      final origin = Uri.base.origin;
+      if (origin.isNotEmpty && !origin.contains('localhost') && !origin.contains('127.0.0.1')) {
+        _cachedBaseUrl = origin;
+        return;
+      }
     }
     if (_cachedBaseUrl != null) return;
     for (final port in _ports) {
