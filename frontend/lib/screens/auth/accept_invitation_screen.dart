@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
 
 class AcceptInvitationScreen extends StatefulWidget {
-  final String token;
-  const AcceptInvitationScreen({super.key, required this.token});
+  final String? token;
+  const AcceptInvitationScreen({super.key, this.token});
 
   @override
   State<AcceptInvitationScreen> createState() => _AcceptInvitationScreenState();
@@ -15,13 +15,18 @@ class _AcceptInvitationScreenState extends State<AcceptInvitationScreen> {
   String? _successMessage;
 
   Future<void> _handleAccept() async {
+    final effectiveToken = widget.token ?? '';
+    if (effectiveToken.isEmpty) {
+      setState(() => _error = 'Token de invitación no proporcionado.');
+      return;
+    }
     setState(() {
       _isLoading = true;
       _error = null;
     });
 
     try {
-      final res = await AuthService.acceptSalonInvitation(widget.token);
+      final res = await AuthService.acceptSalonInvitation(effectiveToken);
       if (res != null && res['success'] == true) {
         setState(() {
           _successMessage = res['message'] ?? 'Invitación aceptada exitosamente.';

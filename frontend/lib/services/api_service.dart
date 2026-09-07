@@ -26,7 +26,8 @@ class ApiService {
   static String get baseUrl {
     const envUrl = String.fromEnvironment('API_URL');
     if (envUrl.isNotEmpty) return envUrl;
-    if (useStaging || !kIsWeb || kReleaseMode) return stagingUrl;
+    if (useStaging) return stagingUrl;
+    if (_cachedBaseUrl != null) return _cachedBaseUrl!;
     return 'http://$_host:8080';
   }
 
@@ -34,7 +35,7 @@ class ApiService {
   static String get _apiPath => '/api';
 
   static Future<void> ensureBaseUrl() async {
-    if (useStaging || !kIsWeb || kReleaseMode) {
+    if (useStaging) {
       _cachedBaseUrl = stagingUrl;
       return;
     }
@@ -146,10 +147,14 @@ class ApiService {
 
   static Future<String?> _getToken() async {
     try {
-      // 🛡️ PARCHE DE SEGURIDAD (GLOW-SEC-02): Leer token de almacenamiento cifrado en llamadas API
-      return await const FlutterSecureStorage(
+      final token = await const FlutterSecureStorage(
         aOptions: AndroidOptions(encryptedSharedPreferences: true),
       ).read(key: 'token');
+      if (token != null && token.isNotEmpty) return token;
+    } catch (_) {}
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString('token');
     } catch (_) {
       return null;
     }

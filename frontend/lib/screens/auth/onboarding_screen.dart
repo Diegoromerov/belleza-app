@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/auth_service.dart';
 import '../../shared/theme.dart';
 
@@ -14,11 +15,100 @@ class OnboardingScreen extends StatefulWidget {
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
-  String? _selectedRole; // 'CLIENTE' or 'PRESTADOR'
+  String? _selectedRole; // 'CLIENTE', 'PRESTADOR', or 'SALON'
   bool _habeasDataAccepted = false;
   bool _terminosAccepted = false;
   bool _isLoading = false;
   String? _error;
+
+  // Controllers para registro de Salón (SaaS)
+  final _salonNameCtrl = TextEditingController();
+  final _salonNitCtrl = TextEditingController();
+  final _salonAddressCtrl = TextEditingController();
+  final _salonPhoneCtrl = TextEditingController();
+  final _salonCityCtrl = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserRoleIntent();
+  }
+
+  Future<void> _loadUserRoleIntent() async {
+    final prefs = await SharedPreferences.getInstance();
+    final role = prefs.getString('userRole')?.toUpperCase();
+    if (mounted && role != null) {
+      setState(() {
+        if (role == 'SALON' || role == 'SALÓN') {
+          _selectedRole = 'SALON';
+        } else if (role == 'PROVIDER' || role == 'PRESTADOR') {
+          _selectedRole = 'PRESTADOR';
+        } else if (role == 'CLIENT' || role == 'CLIENTE') {
+          _selectedRole = 'CLIENTE';
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _salonNameCtrl.dispose();
+    _salonNitCtrl.dispose();
+    _salonAddressCtrl.dispose();
+    _salonPhoneCtrl.dispose();
+    _salonCityCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submitSalonOnboarding() async {
+    if (!_habeasDataAccepted || !_terminosAccepted) {
+      setState(() {
+        _error = 'Debes aceptar la Política de Tratamiento de Datos (Habeas Data) y los Términos y Condiciones para continuar.';
+      });
+      return;
+    }
+    if (_salonNameCtrl.text.trim().isEmpty) {
+      setState(() {
+        _error = 'Por favor ingresa el nombre de tu salón de belleza.';
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final res = await AuthService.createSalon(
+        nombreSalon: _salonNameCtrl.text.trim(),
+        nit: _salonNitCtrl.text.trim(),
+        direccion: _salonAddressCtrl.text.trim(),
+        telefono: _salonPhoneCtrl.text.trim(),
+        ciudad: _salonCityCtrl.text.trim(),
+      );
+      if (res != null && res['success'] == true && mounted) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('userRole', 'salon');
+        Navigator.pushReplacementNamed(context, '/salon');
+      } else {
+        await AuthService.completeOnboarding(
+          role: 'SALON',
+          aceptarHabeasData: _habeasDataAccepted,
+          aceptarTerminos: _terminosAccepted,
+        );
+        if (mounted) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('userRole', 'salon');
+          Navigator.pushReplacementNamed(context, '/salon');
+        }
+      }
+    } catch (e) {
+      setState(() => _error = 'Error de conexión: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   // URLs de documentos subidos
   String? _documentoUrl;
@@ -112,16 +202,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           setState(() => _error = 'Error al guardar el perfil en el servidor');
         }
       } else if (_selectedRole == 'SALON') {
-        final result = await AuthService.completeOnboarding(
-          role: 'SALON',
-          aceptarHabeasData: _habeasDataAccepted,
-          aceptarTerminos: _terminosAccepted,
-        );
-        if (result != null && mounted) {
-          Navigator.pushReplacementNamed(context, '/home');
-        } else {
-          setState(() => _error = 'Error al guardar el perfil de salón');
-        }
+        await _submitSalonOnboarding();
+        return;
       } else {
         // CLIENTE
         final result = await AuthService.completeOnboarding(
@@ -183,200 +265,501 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF8F5),
-      appBar: AppBar(
-        title: const Text(
-          'Bienvenido a GlowApp',
-          style: TextStyle(
-            fontFamily: 'CormorantGaramond',
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF1F1A15),
+      backgroundColor: const Color(0xFF15100C),
+      body: Stack(
+        children: [
+          // Imagen de Fondo WebP
+          Positioned.fill(
+            child: Image.asset(
+              'images/auth/onboarding_bg.webp',
+              fit: BoxFit.cover,
+              alignment: Alignment.topCenter,
+            ),
           ),
-        ),
-        backgroundColor: const Color(0xFFFAF8F5),
-        elevation: 0,
-        centerTitle: true,
-        automaticallyImplyLeading: false,
-      ),
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 680),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Text(
-                    '¿Cómo deseas comenzar tu experiencia?',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontFamily: 'CormorantGaramond',
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1F1A15),
-                    ),
+          // Capa sutil de oscurecimiento para legibilidad
+          Positioned.fill(
+            child: Container(
+              color: Colors.black.withValues(alpha: 0.12),
+            ),
+          ),
+          SafeArea(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 680),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Espaciador superior ampliado para bajar los botones hacia el área inferior
+                      const SizedBox(height: 380),
+
+                      _buildRoleSelectionCards(),
+                      if (_selectedRole == 'CLIENTE') _buildClientView(),
+                      if (_selectedRole == 'PRESTADOR') _buildProviderForm(),
+                      if (_selectedRole == 'SALON') _buildSalonView(),
+                      if (_error != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 16),
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.redAccent.withValues(alpha: 0.5)),
+                            ),
+                            child: Text(
+                              _error!,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                  color: Colors.redAccent, fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _selectedRole == 'PRESTADOR'
-                        ? '¡Completa tu registro y empieza a ganar dinero esta misma semana!'
-                        : 'Selecciona tu perfil de acceso para comenzar',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 14,
-                      color: Color(0xFF8C7E74),
-                    ),
-                  ),
-                  const SizedBox(height: 28),
-                  _buildRoleSelectionCards(),
-                  if (_selectedRole == 'PRESTADOR') ...[
-                    const SizedBox(height: 20),
-                    _buildProgressStepper(),
-                  ],
-                  const SizedBox(height: 24),
-                  if (_selectedRole == 'PRESTADOR') _buildTestimonialCard(),
-                  if (_selectedRole == 'CLIENTE') _buildClientView(),
-                  if (_selectedRole == 'PRESTADOR') _buildProviderForm(),
-                  if (_error != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 16),
-                      child: Text(
-                        _error!,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                            color: Colors.redAccent, fontWeight: FontWeight.w500),
-                      ),
-                    ),
-                ],
+                ),
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
 
   Widget _buildRoleSelectionCards() {
-    return Row(
+    return Column(
       children: [
-        Expanded(
-          child: _RoleCard(
-            title: 'Cliente',
-            subtitle: 'Quiero agendar citas de belleza',
-            icon: Icons.person_outline,
-            isSelected: _selectedRole == 'CLIENTE',
-            onTap: () => setState(() {
-              _selectedRole = 'CLIENTE';
-              _error = null;
-            }),
-          ),
+        _RoleCard(
+          title: 'Cliente',
+          subtitle: 'Agendar citas de belleza',
+          icon: Icons.person_outline,
+          isSelected: _selectedRole == 'CLIENTE',
+          onTap: () => setState(() {
+            _selectedRole = 'CLIENTE';
+            _error = null;
+          }),
         ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: _RoleCard(
-            title: 'Prestador',
-            subtitle: 'Quiero ofrecer mis servicios',
-            icon: Icons.storefront_outlined,
-            isSelected: _selectedRole == 'PRESTADOR',
-            onTap: () => setState(() {
-              _selectedRole = 'PRESTADOR';
-              _error = null;
-            }),
-          ),
+        const SizedBox(height: 8),
+        _RoleCard(
+          title: 'Prestador',
+          subtitle: 'Ofrecer servicios independientes',
+          icon: Icons.storefront_outlined,
+          isSelected: _selectedRole == 'PRESTADOR',
+          onTap: () => setState(() {
+            _selectedRole = 'PRESTADOR';
+            _error = null;
+          }),
+        ),
+        const SizedBox(height: 8),
+        _RoleCard(
+          title: 'Salón (SaaS)',
+          subtitle: 'Registrar mi negocio y equipo',
+          icon: Icons.domain_outlined,
+          isSelected: _selectedRole == 'SALON',
+          onTap: () => setState(() {
+            _selectedRole = 'SALON';
+            _error = null;
+          }),
         ),
       ],
     );
   }
 
   Widget _buildClientView() {
-    return Column(
-      children: [
-        const SizedBox(height: 24),
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF5EBE6),
-            borderRadius: BorderRadius.circular(24),
+    return Container(
+      margin: const EdgeInsets.only(top: 16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFAF8F5).withValues(alpha: 0.96),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFC5A052), width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.25),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
-          child: Column(
-            children: [
-              Container(
-                width: 94,
-                height: 94,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFFD4AF37), width: 3.0),
-                  image: const DecorationImage(
-                    image: AssetImage('images/avatar_aura.webp'),
-                    fit: BoxFit.cover,
+        ],
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF5EBE6),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFFEFE8DE)),
+            ),
+            child: Column(
+              children: [
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: const Color(0xFFC5A052), width: 2.5),
+                    image: const DecorationImage(
+                      image: AssetImage('images/avatar_aura.webp'),
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
+                const SizedBox(height: 14),
+                const Text(
+                  '¡Hola! Soy Aura, tu guía personal',
+                  style: TextStyle(
+                    fontFamily: 'CormorantGaramond',
+                    fontSize: 19,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1F1A15),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Te guiaré para encontrar a tu estilista ideal a domicilio, agendar de manera segura y proteger tus pagos con depósito en garantía en segundos.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 13,
+                    color: Color(0xFF4A3E39),
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 18),
+          CheckboxListTile(
+            value: _habeasDataAccepted,
+            onChanged: (val) => setState(() => _habeasDataAccepted = val ?? false),
+            title: const Text(
+              'Acepto la Política de Tratamiento de Datos Personales (Habeas Data - Ley 1581 de 2012).',
+              style: TextStyle(fontSize: 12, color: Color(0xFF1F1A15), fontWeight: FontWeight.w500),
+            ),
+            activeColor: const Color(0xFFC5A052),
+            contentPadding: EdgeInsets.zero,
+            controlAffinity: ListTileControlAffinity.leading,
+          ),
+          CheckboxListTile(
+            value: _terminosAccepted,
+            onChanged: (val) => setState(() => _terminosAccepted = val ?? false),
+            title: const Text(
+              'Acepto los Términos y Condiciones de Uso de la plataforma GlowApp.',
+              style: TextStyle(fontSize: 12, color: Color(0xFF1F1A15), fontWeight: FontWeight.w500),
+            ),
+            activeColor: const Color(0xFFC5A052),
+            contentPadding: EdgeInsets.zero,
+            controlAffinity: ListTileControlAffinity.leading,
+          ),
+          const SizedBox(height: 16),
+          Container(
+            width: double.infinity,
+            height: 50,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              gradient: const LinearGradient(
+                colors: [Color(0xFFF3D59B), Color(0xFFC5A052)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-              const SizedBox(height: 16),
-              const Text(
-                '¡Hola! Soy Aura, tu guía personal',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFC5A052).withValues(alpha: 0.35),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: ElevatedButton(
+              onPressed: (_isLoading || !_habeasDataAccepted || !_terminosAccepted) ? null : _submitOnboarding,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                foregroundColor: const Color(0xFF1F1A15),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                elevation: 0,
               ),
-              const SizedBox(height: 10),
-              const Text(
-                'Te guiaré para encontrar a tu estilista ideal a domicilio, agendar de manera segura y proteger tus pagos con depósito en garantía en segundos.',
-                textAlign: TextAlign.center,
-                style:
-                    TextStyle(fontSize: 14, color: Colors.black54, height: 1.4),
+              child: _isLoading
+                  ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(color: Color(0xFF1F1A15), strokeWidth: 2.5),
+                    )
+                  : const Text(
+                      'COMENZAR EXPLORACIÓN',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1F1A15),
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSalonView() {
+    return Container(
+      margin: const EdgeInsets.only(top: 16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFAF8F5).withValues(alpha: 0.96),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFC5A052), width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.25),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFAF6EE),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFFEFE8DE)),
+                ),
+                child: const Icon(Icons.domain_rounded, color: Color(0xFFC5A052), size: 28),
+              ),
+              const SizedBox(width: 14),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Registro de Salón de Belleza (SaaS)',
+                      style: TextStyle(
+                        fontFamily: 'CormorantGaramond',
+                        fontSize: 19,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1F1A15),
+                      ),
+                    ),
+                    Text(
+                      'Configura tu establecimiento, licencias SaaS y equipo de trabajo.',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 12,
+                        color: Color(0xFF8C7E74),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
-        ),
-        const SizedBox(height: 24),
-        CheckboxListTile(
-          value: _habeasDataAccepted,
-          onChanged: (val) => setState(() => _habeasDataAccepted = val ?? false),
-          title: const Text(
-            'Acepto la Política de Tratamiento de Datos Personales (Habeas Data - Ley 1581 de 2012).',
-            style: TextStyle(fontSize: 12, color: Colors.black87),
+          const SizedBox(height: 20),
+          TextField(
+            controller: _salonNameCtrl,
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: Colors.white,
+              labelText: 'Nombre del Salón *',
+              labelStyle: const TextStyle(color: Color(0xFF4A3E39)),
+              hintText: 'Ej. Salón Luxe Suite',
+              prefixIcon: const Icon(Icons.store_outlined, color: Color(0xFFC5A052)),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFFEFE8DE)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFFEFE8DE)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFFC5A052), width: 1.5),
+              ),
+            ),
           ),
-          activeColor: AppTheme.primary,
-          contentPadding: EdgeInsets.zero,
-          controlAffinity: ListTileControlAffinity.leading,
-        ),
-        CheckboxListTile(
-          value: _terminosAccepted,
-          onChanged: (val) => setState(() => _terminosAccepted = val ?? false),
-          title: const Text(
-            'Acepto los Términos y Condiciones de Uso de la plataforma GlowApp.',
-            style: TextStyle(fontSize: 12, color: Colors.black87),
+          const SizedBox(height: 14),
+          TextField(
+            controller: _salonNitCtrl,
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: Colors.white,
+              labelText: 'NIT o Doc. Tributario',
+              labelStyle: const TextStyle(color: Color(0xFF4A3E39)),
+              hintText: 'Ej. 901.234.567-8',
+              prefixIcon: const Icon(Icons.badge_outlined, color: Color(0xFFC5A052)),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFFEFE8DE)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFFEFE8DE)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFFC5A052), width: 1.5),
+              ),
+            ),
           ),
-          activeColor: AppTheme.primary,
-          contentPadding: EdgeInsets.zero,
-          controlAffinity: ListTileControlAffinity.leading,
-        ),
-        const SizedBox(height: 16),
-        ElevatedButton(
-          onPressed: (_isLoading || !_habeasDataAccepted || !_terminosAccepted) ? null : _submitOnboarding,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppTheme.primary,
-            foregroundColor: Colors.white,
-            disabledBackgroundColor: const Color(0xFFE5CECA),
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-            elevation: 0,
-            minimumSize: const Size(double.infinity, 50),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _salonAddressCtrl,
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: Colors.white,
+                    labelText: 'Dirección del Local',
+                    labelStyle: const TextStyle(color: Color(0xFF4A3E39)),
+                    hintText: 'Ej. Calle 93 # 11-45',
+                    prefixIcon: const Icon(Icons.location_on_outlined, color: Color(0xFFC5A052)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFFEFE8DE)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFFEFE8DE)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFFC5A052), width: 1.5),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextField(
+                  controller: _salonCityCtrl,
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: Colors.white,
+                    labelText: 'Ciudad',
+                    labelStyle: const TextStyle(color: Color(0xFF4A3E39)),
+                    hintText: 'Ej. Bogotá',
+                    prefixIcon: const Icon(Icons.location_city_outlined, color: Color(0xFFC5A052)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFFEFE8DE)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFFEFE8DE)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFFC5A052), width: 1.5),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-          child: _isLoading
-              ? const SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
-                      color: Colors.white, strokeWidth: 2),
-                )
-              : const Text('Comenzar Exploración',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-        ),
-      ],
+          const SizedBox(height: 14),
+          TextField(
+            controller: _salonPhoneCtrl,
+            keyboardType: TextInputType.phone,
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: Colors.white,
+              labelText: 'Teléfono de Contacto',
+              labelStyle: const TextStyle(color: Color(0xFF4A3E39)),
+              hintText: 'Ej. +573009998877',
+              prefixIcon: const Icon(Icons.phone_outlined, color: Color(0xFFC5A052)),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFFEFE8DE)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFFEFE8DE)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFFC5A052), width: 1.5),
+              ),
+            ),
+          ),
+          const SizedBox(height: 18),
+          CheckboxListTile(
+            value: _habeasDataAccepted,
+            onChanged: (val) => setState(() => _habeasDataAccepted = val ?? false),
+            title: const Text(
+              'Acepto la Política de Tratamiento de Datos Personales (Habeas Data - Ley 1581 de 2012).',
+              style: TextStyle(fontSize: 12, color: Color(0xFF1F1A15), fontWeight: FontWeight.w500),
+            ),
+            activeColor: const Color(0xFFC5A052),
+            contentPadding: EdgeInsets.zero,
+            controlAffinity: ListTileControlAffinity.leading,
+          ),
+          CheckboxListTile(
+            value: _terminosAccepted,
+            onChanged: (val) => setState(() => _terminosAccepted = val ?? false),
+            title: const Text(
+              'Acepto los Términos y Condiciones de Licencia SaaS de la plataforma GlowApp.',
+              style: TextStyle(fontSize: 12, color: Color(0xFF1F1A15), fontWeight: FontWeight.w500),
+            ),
+            activeColor: const Color(0xFFC5A052),
+            contentPadding: EdgeInsets.zero,
+            controlAffinity: ListTileControlAffinity.leading,
+          ),
+          const SizedBox(height: 20),
+          Container(
+            width: double.infinity,
+            height: 52,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              gradient: const LinearGradient(
+                colors: [Color(0xFFF3D59B), Color(0xFFC5A052)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFC5A052).withValues(alpha: 0.35),
+                  blurRadius: 14,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: ElevatedButton(
+              onPressed: _isLoading ? null : _submitSalonOnboarding,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                foregroundColor: const Color(0xFF1F1A15),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                elevation: 0,
+              ),
+              child: _isLoading
+                  ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(color: Color(0xFF1F1A15), strokeWidth: 2.5),
+                    )
+                  : const Text(
+                      'CREAR MI SALÓN DE BELLEZA (SaaS)',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1F1A15),
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -385,235 +768,286 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         _documentoUrl != null || _rutUrl != null || _certificacionUrl != null;
     final bool isSubmitEnabled = _habeasDataAccepted && _terminosAccepted && atLeastOneDocUploaded;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const Divider(height: 32, color: Color(0xFFE8D7D3)),
-        const Text(
-          'Completa tu perfil profesional',
-          style: TextStyle(
-              fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
-        ),
-        const SizedBox(height: 8),
-        const Row(
-          children: [
-            Icon(Icons.access_time, color: AppTheme.primary),
-            SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'Tú decides tu horario: trabaja cuando quieras y donde quieras.',
-                style: TextStyle(fontSize: 13, color: Colors.black87),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        const Row(
-          children: [
-            Icon(Icons.account_balance_wallet, color: AppTheme.primary),
-            SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'Pago 100% seguro: depósito en garantía antes de iniciar cada servicio.',
-                style: TextStyle(fontSize: 13, color: Colors.black87),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        const Row(
-          children: [
-            Icon(Icons.trending_up, color: AppTheme.primary),
-            SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'Clientes sin esfuerzo: nosotros nos encargamos de la publicidad y tracción.',
-                style: TextStyle(fontSize: 13, color: Colors.black87),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        const Text(
-          'La ley colombiana nos pide verificar tu formación profesional — ¡es por tu seguridad y la de tus clientes!',
-          style: TextStyle(fontSize: 11, color: Colors.grey, height: 1.3),
-        ),
-        const SizedBox(height: 20),
-
-        // Carga de Cédula
-        _buildDocumentUploadTile(
-          title: 'Cédula de Ciudadanía / ID',
-          subtitle: 'Documento de identidad nacional',
-          isUploaded: _documentoUrl != null,
-          isUploading: _uploadingDoc,
-          onTap: () => _pickAndUploadDocument('doc'),
-        ),
-        const SizedBox(height: 12),
-
-        // Carga de RUT
-        _buildDocumentUploadTile(
-          title: 'Registro Único Tributario (RUT)',
-          subtitle: 'Opcional · Requerido para liquidaciones financieras',
-          isUploaded: _rutUrl != null,
-          isUploading: _uploadingRut,
-          onTap: () => _pickAndUploadDocument('rut'),
-        ),
-        const SizedBox(height: 12),
-
-        // Carga de Certificado de Bioseguridad
-        _buildDocumentUploadTile(
-          title: 'Certificado Profesional / Bioseguridad',
-          subtitle: 'Opcional · Cumplimiento Ley 711 de 2001',
-          isUploaded: _certificacionUrl != null,
-          isUploading: _uploadingCert,
-          onTap: () => _pickAndUploadDocument('cert'),
-        ),
-        const SizedBox(height: 24),
-
-        // Carta informativa de comisiones (Transparencia Financiera)
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: const Color(0xFFFFFDFB),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFF3EAE8)),
+    return Container(
+      margin: const EdgeInsets.only(top: 16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFAF8F5).withValues(alpha: 0.96),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFC5A052), width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.25),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
-          child: const Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildProgressStepper(),
+          const SizedBox(height: 18),
+          _buildTestimonialCard(),
+          const SizedBox(height: 18),
+          const Text(
+            'Completa tu perfil profesional',
+            style: TextStyle(
+              fontFamily: 'CormorantGaramond',
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1F1A15),
+            ),
+          ),
+          const SizedBox(height: 10),
+          const Row(
             children: [
-              Icon(Icons.info_outline, color: AppTheme.primary, size: 24),
-              SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Transparencia Financiera',
-                      style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      'GlowApp invierte en publicidad para traerte clientes, cubre el procesamiento seguro de pagos con Wompi, provee soporte 24/7 y gestiona el reporte de impuestos estatales. A cambio, retenemos una comisión fija del 20% sobre servicios exitosos. ¡Si tú no ganas, nosotros tampoco!',
-                      style: TextStyle(
-                          fontSize: 12, color: Colors.black54, height: 1.3),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 20),
-
-        // Checkbox Habeas Data
-        CheckboxListTile(
-          value: _habeasDataAccepted,
-          onChanged: (val) =>
-              setState(() => _habeasDataAccepted = val ?? false),
-          title: const Text(
-            'Acepto la política de protección de datos (Habeas Data - Ley 1581 de 2012) de la aplicación Belleza App.',
-            style: TextStyle(fontSize: 12, color: Colors.black87),
-          ),
-          activeColor: AppTheme.primary,
-          contentPadding: EdgeInsets.zero,
-          controlAffinity: ListTileControlAffinity.leading,
-        ),
-        CheckboxListTile(
-          value: _terminosAccepted,
-          onChanged: (val) =>
-              setState(() => _terminosAccepted = val ?? false),
-          title: const Text(
-            'Acepto los Términos y Condiciones y el Contrato de Prestación de Servicios de GlowApp.',
-            style: TextStyle(fontSize: 12, color: Colors.black87),
-          ),
-          activeColor: AppTheme.primary,
-          contentPadding: EdgeInsets.zero,
-          controlAffinity: ListTileControlAffinity.leading,
-        ),
-        const Padding(
-          padding: EdgeInsets.only(left: 16, top: 4),
-          child: Text(
-            'Sin contratos de permanencia. Puedes pausar o eliminar tu cuenta en cualquier momento.',
-            style: TextStyle(fontSize: 11, color: Colors.grey, height: 1.3),
-          ),
-        ),
-        const SizedBox(height: 28),
-
-        ElevatedButton(
-          onPressed:
-              (_isLoading || !isSubmitEnabled) ? null : _submitOnboarding,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppTheme.primary,
-            foregroundColor: Colors.white,
-            disabledBackgroundColor: const Color(0xFFE5CECA),
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-            elevation: 0,
-            minimumSize: const Size(double.infinity, 50),
-          ),
-          child: _isLoading
-              ? const SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
-                      color: Colors.white, strokeWidth: 2),
-                )
-              : const Text('Enviar para Verificación',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-        ),
-        const Padding(
-          padding: EdgeInsets.only(top: 6),
-          child: Text(
-            'Serás redirigido a tu panel de seguimiento',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 10, color: Colors.grey),
-          ),
-        ),
-        const Padding(
-          padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.schedule, size: 14, color: Colors.grey),
-              SizedBox(width: 6),
+              Icon(Icons.access_time, color: Color(0xFFC5A052), size: 20),
+              SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Nuestro equipo validará tus documentos en menos de 24 horas hábiles. Te notificaremos por la app apenas tu cuenta esté activa.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 11, color: Colors.grey, height: 1.3),
+                  'Tú decides tu horario: trabaja cuando quieras y donde quieras.',
+                  style: TextStyle(fontSize: 13, color: Color(0xFF1F1A15)),
                 ),
               ),
             ],
           ),
-        ),
-        const Padding(
-          padding: EdgeInsets.only(top: 4, left: 16, right: 16),
-          child: Text(
-            'Si necesitamos ajustes en tus documentos, te informaremos con instrucciones claras para resubir.',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 10, color: Colors.grey),
+          const SizedBox(height: 8),
+          const Row(
+            children: [
+              Icon(Icons.account_balance_wallet, color: Color(0xFFC5A052), size: 20),
+              SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Pago 100% seguro: depósito en garantía antes de iniciar cada servicio.',
+                  style: TextStyle(fontSize: 13, color: Color(0xFF1F1A15)),
+                ),
+              ),
+            ],
           ),
-        ),
-        const SizedBox(height: 12),
-        OutlinedButton(
-          onPressed: _isLoading ? null : _saveDraft,
-          style: OutlinedButton.styleFrom(
-            foregroundColor: AppTheme.primary,
-            side: const BorderSide(color: AppTheme.primary),
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-            elevation: 0,
-            minimumSize: const Size(double.infinity, 50),
+          const SizedBox(height: 8),
+          const Row(
+            children: [
+              Icon(Icons.trending_up, color: Color(0xFFC5A052), size: 20),
+              SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Clientes sin esfuerzo: nosotros nos encargamos de la publicidad y tracción.',
+                  style: TextStyle(fontSize: 13, color: Color(0xFF1F1A15)),
+                ),
+              ),
+            ],
           ),
-          child: const Text('Guardar borrador y completar más tarde',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-        ),
-      ],
+          const SizedBox(height: 14),
+          const Text(
+            'La ley colombiana nos pide verificar tu formación profesional — ¡es por tu seguridad y la de tus clientes!',
+            style: TextStyle(fontSize: 11, color: Color(0xFF5C4E48), height: 1.3),
+          ),
+          const SizedBox(height: 18),
+
+          // Carga de Cédula
+          _buildDocumentUploadTile(
+            title: 'Cédula de Ciudadanía / ID',
+            subtitle: 'Documento de identidad nacional',
+            isUploaded: _documentoUrl != null,
+            isUploading: _uploadingDoc,
+            onTap: () => _pickAndUploadDocument('doc'),
+          ),
+          const SizedBox(height: 12),
+
+          // Carga de RUT
+          _buildDocumentUploadTile(
+            title: 'Registro Único Tributario (RUT)',
+            subtitle: 'Opcional · Requerido para liquidaciones financieras',
+            isUploaded: _rutUrl != null,
+            isUploading: _uploadingRut,
+            onTap: () => _pickAndUploadDocument('rut'),
+          ),
+          const SizedBox(height: 12),
+
+          // Carga de Certificado de Bioseguridad
+          _buildDocumentUploadTile(
+            title: 'Certificado Profesional / Bioseguridad',
+            subtitle: 'Opcional · Cumplimiento Ley 711 de 2001',
+            isUploaded: _certificacionUrl != null,
+            isUploading: _uploadingCert,
+            onTap: () => _pickAndUploadDocument('cert'),
+          ),
+          const SizedBox(height: 20),
+
+          // Carta informativa de comisiones (Transparencia Financiera)
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFFDFB),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFEFE8DE)),
+            ),
+            child: const Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.info_outline, color: Color(0xFFC5A052), size: 24),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Transparencia Financiera',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1F1A15),
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'GlowApp invierte en publicidad para traerte clientes, cubre el procesamiento seguro de pagos con Wompi, provee soporte 24/7 y gestiona el reporte de impuestos estatales. A cambio, retenemos una comisión fija del 20% sobre servicios exitosos. ¡Si tú no ganas, nosotros tampoco!',
+                        style: TextStyle(
+                          fontSize: 12, color: Color(0xFF4A3E39), height: 1.3),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 18),
+
+          // Checkbox Habeas Data
+          CheckboxListTile(
+            value: _habeasDataAccepted,
+            onChanged: (val) => setState(() => _habeasDataAccepted = val ?? false),
+            title: const Text(
+              'Acepto la política de protección de datos (Habeas Data - Ley 1581 de 2012) de la aplicación Belleza App.',
+              style: TextStyle(fontSize: 12, color: Color(0xFF1F1A15), fontWeight: FontWeight.w500),
+            ),
+            activeColor: const Color(0xFFC5A052),
+            contentPadding: EdgeInsets.zero,
+            controlAffinity: ListTileControlAffinity.leading,
+          ),
+          CheckboxListTile(
+            value: _terminosAccepted,
+            onChanged: (val) => setState(() => _terminosAccepted = val ?? false),
+            title: const Text(
+              'Acepto los Términos y Condiciones y el Contrato de Prestación de Servicios de GlowApp.',
+              style: TextStyle(fontSize: 12, color: Color(0xFF1F1A15), fontWeight: FontWeight.w500),
+            ),
+            activeColor: const Color(0xFFC5A052),
+            contentPadding: EdgeInsets.zero,
+            controlAffinity: ListTileControlAffinity.leading,
+          ),
+          const Padding(
+            padding: EdgeInsets.only(left: 16, top: 4),
+            child: Text(
+              'Sin contratos de permanencia. Puedes pausar o eliminar tu cuenta en cualquier momento.',
+              style: TextStyle(fontSize: 11, color: Color(0xFF5C4E48), height: 1.3),
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          Container(
+            width: double.infinity,
+            height: 50,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              gradient: isSubmitEnabled
+                  ? const LinearGradient(
+                      colors: [Color(0xFFF3D59B), Color(0xFFC5A052)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    )
+                  : null,
+              color: isSubmitEnabled ? null : Colors.grey.shade300,
+              boxShadow: isSubmitEnabled
+                  ? [
+                      BoxShadow(
+                        color: const Color(0xFFC5A052).withValues(alpha: 0.35),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ]
+                  : null,
+            ),
+            child: ElevatedButton(
+              onPressed: (_isLoading || !isSubmitEnabled) ? null : _submitOnboarding,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                foregroundColor: const Color(0xFF1F1A15),
+                disabledBackgroundColor: Colors.transparent,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                elevation: 0,
+              ),
+              child: _isLoading
+                  ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(color: Color(0xFF1F1A15), strokeWidth: 2.5),
+                    )
+                  : const Text(
+                      'ENVIAR PARA VERIFICACIÓN',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1F1A15),
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+            ),
+          ),
+          const Padding(
+            padding: EdgeInsets.only(top: 6),
+            child: Text(
+              'Serás redirigido a tu panel de seguimiento',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 10, color: Color(0xFF5C4E48)),
+            ),
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.schedule, size: 14, color: Color(0xFF8C7E74)),
+                SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    'Nuestro equipo validará tus documentos en menos de 24 horas hábiles. Te notificaremos por la app apenas tu cuenta esté activa.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 11, color: Color(0xFF5C4E48), height: 1.3),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Padding(
+            padding: EdgeInsets.only(top: 4, left: 16, right: 16),
+            child: Text(
+              'Si necesitamos ajustes en tus documentos, te informaremos con instrucciones claras para resubir.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 10, color: Color(0xFF5C4E48)),
+            ),
+          ),
+          const SizedBox(height: 14),
+          OutlinedButton(
+            onPressed: _isLoading ? null : _saveDraft,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF8C5D00),
+              side: const BorderSide(color: Color(0xFFC5A052), width: 1.2),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              elevation: 0,
+              minimumSize: const Size(double.infinity, 48),
+            ),
+            child: const Text(
+              'Guardar borrador y completar más tarde',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -629,7 +1063,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           Expanded(
             child: Container(
               height: 2,
-              color: AppTheme.primary,
+              color: const Color(0xFFC5A052),
             ),
           ),
           _buildStepCircle('2', 'Documentos', currentStep >= 2),
@@ -637,8 +1071,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             child: Container(
               height: 2,
               color: currentStep >= 3
-                  ? AppTheme.primary
-                  : const Color(0xFFE8D7D3),
+                  ? const Color(0xFFC5A052)
+                  : const Color(0xFFEFE8DE),
             ),
           ),
           _buildStepCircle('3', '¡Listo!', currentStep >= 3),
@@ -655,11 +1089,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           height: 28,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: isCompleted ? AppTheme.primary : Colors.white,
+            color: isCompleted ? const Color(0xFFC5A052) : Colors.white,
             border: Border.all(
               color: isCompleted
-                  ? AppTheme.primary
-                  : const Color(0xFFE8D7D3),
+                  ? const Color(0xFFC5A052)
+                  : const Color(0xFFEFE8DE),
               width: 2,
             ),
           ),
@@ -669,7 +1103,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
-                color: isCompleted ? Colors.white : Colors.grey,
+                color: isCompleted ? Colors.white : const Color(0xFF8C7E74),
               ),
             ),
           ),
@@ -679,7 +1113,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           text,
           style: TextStyle(
             fontSize: 10,
-            color: isCompleted ? Colors.black87 : Colors.grey,
+            color: isCompleted ? const Color(0xFF1F1A15) : const Color(0xFF8C7E74),
+            fontWeight: isCompleted ? FontWeight.bold : FontWeight.normal,
           ),
         ),
       ],
@@ -694,8 +1129,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           decoration: BoxDecoration(
             color: const Color(0xFFFFFDFB),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFF3EAE8)),
-            boxShadow: AppTheme.softShadow,
+            border: Border.all(color: const Color(0xFFEFE8DE)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -703,7 +1144,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               Row(
                 children: [
                   const CircleAvatar(
-                    backgroundColor: AppTheme.primary,
+                    backgroundColor: Color(0xFFC5A052),
                     radius: 20,
                     child: Text(
                       'VP',
@@ -723,14 +1164,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black87,
+                            color: Color(0xFF1F1A15),
                           ),
                         ),
                         Text(
                           'Estilista en Bogotá',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.grey,
+                            color: Color(0xFF8C7E74),
                           ),
                         ),
                       ],
@@ -741,7 +1182,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       5,
                       (index) => const Icon(
                         Icons.star,
-                        color: Color(0xFFD4AF37),
+                        color: Color(0xFFC5A052),
                         size: 16,
                       ),
                     ),
@@ -754,7 +1195,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 style: TextStyle(
                   fontSize: 13,
                   fontStyle: FontStyle.italic,
-                  color: Colors.black87,
+                  color: Color(0xFF1F1A15),
                   height: 1.4,
                 ),
               ),
@@ -765,9 +1206,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         const Text(
           'Resultado basado en prestadoras activas durante la fase de prueba.',
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 10, color: Colors.grey),
+          style: TextStyle(fontSize: 10, color: Color(0xFF5C4E48)),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
         const Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
@@ -777,7 +1218,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 SizedBox(width: 4),
                 Text(
                   'Datos protegidos (Ley 1581)',
-                  style: TextStyle(fontSize: 11, color: Colors.black54),
+                  style: TextStyle(fontSize: 11, color: Color(0xFF4A3E39)),
                 ),
               ],
             ),
@@ -787,13 +1228,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 SizedBox(width: 4),
                 Text(
                   'Pagos seguros vía Wompi',
-                  style: TextStyle(fontSize: 11, color: Colors.black54),
+                  style: TextStyle(fontSize: 11, color: Color(0xFF4A3E39)),
                 ),
               ],
             ),
           ],
         ),
-        const SizedBox(height: 8),
       ],
     );
   }
@@ -814,11 +1254,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color:
-                isUploaded ? AppTheme.primary : const Color(0xFFEADCD6),
+            color: isUploaded ? const Color(0xFFC5A052) : const Color(0xFFEFE8DE),
             width: 1.5,
           ),
-          boxShadow: AppTheme.softShadow,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Row(
           children: [
@@ -826,7 +1271,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               isUploaded
                   ? Icons.check_circle_outline
                   : Icons.cloud_upload_outlined,
-              color: isUploaded ? Colors.green : AppTheme.primary,
+              color: isUploaded ? Colors.green : const Color(0xFFC5A052),
               size: 28,
             ),
             const SizedBox(width: 16),
@@ -839,12 +1284,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black87),
+                        color: Color(0xFF1F1A15)),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: const TextStyle(fontSize: 11, color: Colors.grey),
+                    style: const TextStyle(fontSize: 11, color: Color(0xFF5C4E48)),
                   ),
                 ],
               ),
@@ -854,7 +1299,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 width: 20,
                 height: 20,
                 child: CircularProgressIndicator(
-                    color: AppTheme.primary, strokeWidth: 2),
+                    color: Color(0xFFC5A052), strokeWidth: 2),
               )
             else if (isUploaded)
               const Row(
@@ -870,7 +1315,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ],
               )
             else
-              const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
+              const Icon(Icons.arrow_forward_ios, size: 14, color: Color(0xFF8C7E74)),
           ],
         ),
       ),
@@ -896,13 +1341,15 @@ class _RoleCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(30),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFFAF6EE) : Colors.white,
-          borderRadius: BorderRadius.circular(24),
+          color: isSelected
+              ? const Color(0xFFFAF6EE)
+              : Colors.white.withValues(alpha: 0.94),
+          borderRadius: BorderRadius.circular(30),
           border: Border.all(
             color: isSelected ? const Color(0xFFC5A052) : const Color(0xFFEFE8DE),
             width: isSelected ? 1.5 : 1,
@@ -910,18 +1357,18 @@ class _RoleCard extends StatelessWidget {
           boxShadow: [
             BoxShadow(
               color: isSelected
-                  ? const Color(0xFFC5A052).withValues(alpha: 0.2)
-                  : Colors.black.withValues(alpha: 0.04),
-              blurRadius: isSelected ? 16 : 8,
-              offset: const Offset(0, 4),
+                  ? const Color(0xFFC5A052).withValues(alpha: 0.22)
+                  : Colors.black.withValues(alpha: 0.05),
+              blurRadius: isSelected ? 12 : 6,
+              offset: const Offset(0, 3),
             ),
           ],
         ),
-        child: Column(
+        child: Row(
           children: [
             Container(
-              width: 56,
-              height: 56,
+              width: 32,
+              height: 32,
               decoration: BoxDecoration(
                 color: isSelected ? Colors.white : const Color(0xFFFAF6EE),
                 shape: BoxShape.circle,
@@ -935,30 +1382,43 @@ class _RoleCard extends StatelessWidget {
               alignment: Alignment.center,
               child: Icon(
                 icon,
-                size: 28,
+                size: 18,
                 color: isSelected ? const Color(0xFFC5A052) : const Color(0xFF8C7E74),
               ),
             ),
-            const SizedBox(height: 16),
-            Text(
-              title,
-              style: TextStyle(
-                fontFamily: 'CormorantGaramond',
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: isSelected ? const Color(0xFF1F1A15) : const Color(0xFF4A3E39),
+            const SizedBox(width: 12),
+            Expanded(
+              child: RichText(
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                      text: '$title ',
+                      style: TextStyle(
+                        fontFamily: 'CormorantGaramond',
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: isSelected ? const Color(0xFF1F1A15) : const Color(0xFF4A3E39),
+                      ),
+                    ),
+                    TextSpan(
+                      text: '•  $subtitle',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 12,
+                        color: isSelected ? const Color(0xFF1F1A15) : const Color(0xFF8C7E74),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-            const SizedBox(height: 6),
-            Text(
-              subtitle,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 12,
-                color: isSelected ? const Color(0xFF1F1A15) : const Color(0xFF8C7E74),
-                height: 1.3,
-              ),
+            const SizedBox(width: 6),
+            Icon(
+              isSelected ? Icons.check_circle_rounded : Icons.arrow_forward_ios_rounded,
+              size: isSelected ? 20 : 14,
+              color: isSelected ? const Color(0xFFC5A052) : const Color(0xFF8C7E74),
             ),
           ],
         ),

@@ -54,9 +54,11 @@ class _LoginScreenState extends State<LoginScreen> {
       if (result != null && mounted) {
         final bool onboardingCompleto =
             result['user']['onboarding_completo'] ?? false;
-        final String? role = result['user']['role'];
+        final String rLower = (result['user']['role'] ?? '').toString().toLowerCase();
         if (onboardingCompleto) {
-          if (role == 'provider') {
+          if (rLower == 'salon') {
+            Navigator.pushReplacementNamed(context, '/salon');
+          } else if (rLower == 'provider') {
             Navigator.pushReplacementNamed(context, '/provider');
           } else {
             Navigator.pushReplacementNamed(context, '/home');
@@ -106,11 +108,12 @@ class _LoginScreenState extends State<LoginScreen> {
               role = await RoleSelectionModal.show(context);
             }
             final bool onboardingCompleto = result['user']['onboarding_completo'] ?? false;
+            final String rLower = (role ?? '').toString().toLowerCase();
             if (mounted) {
               if (onboardingCompleto) {
-                if (role == 'provider') {
+                if (rLower == 'provider') {
                   Navigator.pushReplacementNamed(context, '/provider');
-                } else if (role == 'salon') {
+                } else if (rLower == 'salon') {
                   Navigator.pushReplacementNamed(context, '/salon');
                 } else {
                   Navigator.pushReplacementNamed(context, '/home');
@@ -202,11 +205,12 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (result != null && mounted) {
-        final bool onboardingCompleto =
-            result['user']['onboarding_completo'] ?? false;
-        final String? role = result['user']['role'];
+        final bool onboardingCompleto = result['user']['onboarding_completo'] ?? false;
+        final String rLower = (result['user']['role'] ?? '').toString().toLowerCase();
         if (onboardingCompleto) {
-          if (role == 'provider') {
+          if (rLower == 'salon') {
+            Navigator.pushReplacementNamed(context, '/salon');
+          } else if (rLower == 'provider') {
             Navigator.pushReplacementNamed(context, '/provider');
           } else {
             Navigator.pushReplacementNamed(context, '/home');

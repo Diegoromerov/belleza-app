@@ -187,9 +187,8 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen>
             ),
             children: [
               TileLayer(
-                urlTemplate: MapSettings.isDark
-                    ? 'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
-                    : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                urlTemplate: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+                subdomains: const ['a', 'b', 'c', 'd'],
                 userAgentPackageName: 'com.beautyapp.map',
               ),
               PolylineLayer(

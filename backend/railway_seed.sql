@@ -11,7 +11,8 @@ INSERT INTO usuarios (id, email, password_hash, nombre, phone, auth_provider, pr
 (103,'valeria.makeup@bellezaapp.com','$2b$12$V3bNmK8Wz1oPl9R2XqYeOu4AhGj6FkLmNpQrStUvWxYzAbCdEfGhK','Valeria Sofia Tobon','+573203456789','LOCAL','local_valeria','PRESTADOR',true),
 (104,'prov_nails_001@bellezaapp.com','$2b$12$B9nKj8Wz3oPl9R1NqYeOu2AhGj4FkLmNpQrStUvWxYzAbCdEfGhL','Ana Silva Torres','+573159876543','LOCAL','local_ana_silva','PRESTADOR',true),
 (105,'diana.facials@bellezaapp.com','$2b$12$Z1xCvB9NqWeRtYuIoPaSdFgHjKlZxCvBnMqWeRtYuIoPaSdFgHjK','Diana Marcela Gomez','+573186543210','LOCAL','local_diana','PRESTADOR',true),
-(1,'cliente.demo@bellezaapp.com','$2b$12$K7vXbM8Wz2oPl9R1NqYeOu1AhGj5FkLmNpQrStUvWxYzAbCdEfGhI','Cliente Demo','+573100000001','LOCAL','local_cliente_demo','CLIENTE',true)
+(1,'cliente.demo@bellezaapp.com','$2b$12$K7vXbM8Wz2oPl9R1NqYeOu1AhGj5FkLmNpQrStUvWxYzAbCdEfGhI','Cliente Demo','+573100000001','LOCAL','local_cliente_demo','CLIENTE',true),
+(200,'salon@beautyapp.com','$2b$12$K7vXbM8Wz2oPl9R1NqYeOu1AhGj5FkLmNpQrStUvWxYzAbCdEfGhI','Dueño Salón Luxe Suite','+573009998877','LOCAL','local_salon_demo','SALON',true)
 ON CONFLICT (id) DO UPDATE SET nombre=EXCLUDED.nombre, phone=EXCLUDED.phone;
 
 -- FOTOS DE PERFIL

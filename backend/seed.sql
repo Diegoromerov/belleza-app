@@ -6,11 +6,12 @@ INSERT INTO usuarios (id, email, password_hash, nombre, phone, auth_provider, pr
 (3, 'carlos@correo.com', '$2a$10$XG3dsKkJJFx9cldnFJHGt.FJqYVTNiSsoJAaSVwUQkYis22mXk/7O', 'Carlos Ruiz', '+573003334444', 'LOCAL', 'carlos-local', 'PRESTADOR', true),
 (4, 'ana@cliente.com', '$2a$10$XG3dsKkJJFx9cldnFJHGt.FJqYVTNiSsoJAaSVwUQkYis22mXk/7O', 'Ana Gómez', '+573005556666', 'LOCAL', 'ana-local', 'CLIENTE', true),
 (5, 'provider@beautyapp.com', '$2a$10$XG3dsKkJJFx9cldnFJHGt.FJqYVTNiSsoJAaSVwUQkYis22mXk/7O', 'Ana Silva Estilista', '+573159876543', 'LOCAL', 'local_provider@beautyapp.com', 'PRESTADOR', true),
-(6, 'miusuario@correo.com', '$2a$10$XG3dsKkJJFx9cldnFJHGt.FJqYVTNiSsoJAaSVwUQkYis22mXk/7O', 'Cliente de Prueba', '+573000000001', 'LOCAL', 'local_miusuario@correo.com', 'CLIENTE', true)
+(6, 'miusuario@correo.com', '$2a$10$XG3dsKkJJFx9cldnFJHGt.FJqYVTNiSsoJAaSVwUQkYis22mXk/7O', 'Cliente de Prueba', '+573000000001', 'LOCAL', 'local_miusuario@correo.com', 'CLIENTE', true),
+(7, 'salon@beautyapp.com', '$2a$10$XG3dsKkJJFx9cldnFJHGt.FJqYVTNiSsoJAaSVwUQkYis22mXk/7O', 'Dueño Salón Luxe', '+573009998877', 'LOCAL', 'local_salon@beautyapp.com', 'SALON', true)
 ON CONFLICT (id) DO NOTHING;
 
 -- Ajustar la secuencia del serial tras las inserciones manuales de ID
-SELECT setval('usuarios_id_seq', 6);
+SELECT setval('usuarios_id_seq', 7);
 
 -- 2. Perfiles de prestadores (con coordenadas geoespaciales en Fontibón, Bogotá y estado APROBADO)
 INSERT INTO perfiles_prestador (id, business_name, description, is_online, estatus_verificacion, ubicacion, metodo_retiro, numero_cuenta_nequi, documento_titular, rating_avg, rating_count, is_active) VALUES

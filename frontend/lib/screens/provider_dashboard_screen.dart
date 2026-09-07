@@ -2,6 +2,7 @@
 import 'dart:async';
 import '../services/web_geolocation.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/services.dart';
 import 'chat_screen.dart';
 import 'provider_route_screen.dart';
@@ -45,12 +46,24 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
 
   WebSocketChannel? _webSocketChannel;
 
+  String? _userRole;
+
   @override
   void initState() {
     super.initState();
+    _loadUserRole();
     _fetchBookings();
     _fetchProfile();
     _initWebSocket();
+  }
+
+  Future<void> _loadUserRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _userRole = prefs.getString('userRole');
+      });
+    }
   }
 
   @override
@@ -2305,7 +2318,11 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
 
     if (_error != null && _bookings.isEmpty) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Panel de Prestador')),
+        appBar: AppBar(
+          title: Text(
+            _userRole?.toLowerCase() == 'salon' ? 'Panel Salón SaaS' : 'Panel de Prestador',
+          ),
+        ),
         body: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -2433,7 +2450,9 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    _currentIndex == 0 ? 'GlowPro Concierge' : 'Mi Agenda Pro',
+                    _currentIndex == 0
+                        ? (_userRole?.toLowerCase() == 'salon' ? 'Panel Salón SaaS' : 'GlowPro Concierge')
+                        : 'Mi Agenda Pro',
                     style: const TextStyle(
                       fontFamily: 'CormorantGaramond',
                       fontSize: 22,

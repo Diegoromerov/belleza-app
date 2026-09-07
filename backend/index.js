@@ -10,6 +10,7 @@ require('dotenv').config();
 
 // ⚠️ IMPORTANTE: Imports al inicio para evitar ReferenceError
 const authRoutes = require('./src/routes/authRoutes');
+const salonRoutes = require('./src/routes/salonRoutes');
 const biometricConsentRoutes = require('./src/routes/biometricConsentRoutes');
 const userPreferencesRoutes = require('./src/routes/userPreferencesRoutes');
 const biometricRoutes = require('./src/routes/biometricRoutes');
@@ -241,6 +242,78 @@ const globalGeneralLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// ==========================================
+// 🗺️ PROXY & CACHE DE MAP TILES (OpenStreetMap & CartoDB SSL-Safe)
+// ==========================================
+const https = require('https');
+const httpsTileAgent = new https.Agent({ rejectUnauthorized: false });
+const tileCache = new Map();
+
+function fetchTileBuffer(url) {
+  return new Promise((resolve, reject) => {
+    const req = https.get(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      },
+      agent: httpsTileAgent
+    }, (res) => {
+      if (res.statusCode !== 200) {
+        return reject(new Error(`HTTP ${res.statusCode}`));
+      }
+      const chunks = [];
+      res.on('data', chunk => chunks.push(chunk));
+      res.on('end', () => resolve(Buffer.concat(chunks)));
+    });
+    req.on('error', reject);
+    req.setTimeout(8000, () => {
+      req.destroy();
+      reject(new Error('Timeout'));
+    });
+  });
+}
+
+app.get('/api/tiles/:z/:x/:y.png', async (req, res) => {
+  const { z, x, y } = req.params;
+  const cacheKey = `${z}/${x}/${y}`;
+
+  if (tileCache.has(cacheKey)) {
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    return res.send(tileCache.get(cacheKey));
+  }
+
+  const tileUrls = [
+    `https://tile.openstreetmap.org/${z}/${x}/${y}.png`,
+    `https://a.tile.openstreetmap.org/${z}/${x}/${y}.png`,
+    `https://basemaps.cartocdn.com/rastertiles/voyager/${z}/${x}/${y}.png`
+  ];
+
+  for (const tileUrl of tileUrls) {
+    try {
+      const buffer = await fetchTileBuffer(tileUrl);
+      if (buffer && buffer.length > 500) {
+        if (tileCache.size > 3000) {
+          const firstKey = tileCache.keys().next().value;
+          tileCache.delete(firstKey);
+        }
+        tileCache.set(cacheKey, buffer);
+
+        res.setHeader('Content-Type', 'image/png');
+        res.setHeader('Cache-Control', 'public, max-age=86400');
+        return res.send(buffer);
+      }
+    } catch (_) {}
+  }
+
+  const fallbackPng = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAQEAAAEAQAQAAAB8O7a7AAAAE0lEQVR42u3BAQEAAACCIP+vb4hAAAAA3gE4AAABN11dAAAAAElFTkSuQmCC',
+    'base64'
+  );
+  res.setHeader('Content-Type', 'image/png');
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  return res.status(200).send(fallbackPng);
+});
+
 app.use('/api/biometric/analyze', analyzeLimiter);
 app.use('/api', globalGeneralLimiter);
 
@@ -283,6 +356,7 @@ app.use('/api', productRoutes);
 app.use('/api', providerRoutes);
 app.use('/api', ticketRoutes);
 app.use('/api', disputeRoutes);
+app.use('/api/salon', salonRoutes);
 app.use('/api/consent', biometricConsentRoutes);
 const consentRoutes = require('./src/routes/consentRoutes');
 app.use('/api/consent', consentRoutes);
@@ -422,6 +496,7 @@ app.get('/api/debug-db', debugRouteMiddleware, async (req, res) => {
 const niaBeautyRoutes = require('./src/routes/niaBeautyRoutes');
 
 app.use('/api/auth', authRoutes);
+app.use('/api/salon', salonRoutes);
 app.use('/api/users', userPreferencesRoutes);
 app.use('/api/designs', designsRoutes);
 app.use('/api/nia-beauty', niaBeautyRoutes);
@@ -989,8 +1064,9 @@ app.get('/api/users/profile', authMiddleware, async (req, res) => {
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Usuario no encontrado' });
     }
-    let user = result.rows[0];
-    user.role = user.role === 'PRESTADOR' ? 'provider' : (user.role === 'CLIENTE' ? 'client' : null);
+    let user = { ...result.rows[0] };
+    const rawRole = user.role || user.rol || 'CLIENTE';
+    user.role = (rawRole === 'PRESTADOR' || rawRole === 'provider') ? 'provider' : ((rawRole === 'SALON' || rawRole === 'salon') ? 'salon' : 'client');
     if (user.role === 'provider') {
       const providerRes = await pool.query('SELECT is_active, business_name, description, rating_avg, rating_count, (estatus_verificacion = \'APROBADO\') as is_verified, estatus_verificacion, active_start_hour, active_end_hour, weekly_schedule FROM perfiles_prestador WHERE id = $1', [req.user.id]);
       if (providerRes.rows.length > 0) {
@@ -1729,7 +1805,7 @@ const shutdown = async (signal) => {
     const { redisClient } = require('./src/config/redis');
     if (redisClient) {
       await redisClient.quit();
-      console.log('Conexi�n a Redis cerrada.');
+      console.log('Conexi�n a Redis cerrada.');
     }
     console.log('Apagado completado exitosamente.');
     process.exit(0);

@@ -237,8 +237,9 @@ exports.createBooking = async (req, res) => {
 // 🔹 Panel de Prestador: Obtener citas
 exports.getProviderBookings = async (req, res) => {
   try {
-    if (req.user.role !== 'provider' && req.user.role !== 'PRESTADOR') {
-      return res.status(403).json({ error: 'Acceso denegado: solo para proveedores' });
+    const allowedRoles = ['provider', 'PRESTADOR', 'salon', 'SALON'];
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ error: 'Acceso denegado: solo para proveedores o salones' });
     }
 
     // Usamos pool para queries directas si son a tablas no mapeadas (o complejas), 

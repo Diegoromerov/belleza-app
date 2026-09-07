@@ -29,8 +29,10 @@ import 'screens/auth/register_screen.dart';
 import 'screens/auth/onboarding_screen.dart';
 import 'screens/auth/verification_pending_screen.dart';
 import 'screens/auth/forgot_password_screen.dart';
+import 'screens/auth/accept_invitation_screen.dart';
 import 'screens/provider_detail_screen.dart';
 import 'screens/provider_dashboard_screen.dart';
+import 'screens/salon_dashboard_screen.dart';
 import 'screens/client_bookings_screen.dart';
 import 'screens/provider_services_screen.dart';
 import 'screens/provider_portfolio_screen.dart';
@@ -189,46 +191,59 @@ class BeautyApp extends StatelessWidget {
                           ),
               initialRoute: '/home',
               routes: {
+                // 1. Autenticación, Registro & Onboarding
                 '/login': (_) => const LoginScreen(),
                 '/register': (_) => const RegisterScreen(),
                 '/forgot-password': (_) => const ForgotPasswordScreen(),
-                '/home': (_) => const ProvidersScreen(),
-                '/provider': (_) => const ProviderDashboardScreen(),
-                '/client-bookings': (_) => const ClientBookingsScreen(),
+                '/accept-invitation': (context) {
+                  final args = ModalRoute.of(context)?.settings.arguments;
+                  final token = args is String ? args : (args is Map ? (args['token']?.toString()) : null);
+                  return AcceptInvitationScreen(token: token);
+                },
+                '/onboarding': (_) => const OnboardingScreen(),
+                '/verification-pending': (_) => const VerificationPendingScreen(),
+
+                // 2. Destinos Principales por Segmentación de Rol
+                '/home': (_) => const ProvidersScreen(),             // Rol CLIENTE (Catálogo / Búsqueda)
+                '/my-glow': (_) => const MyGlowDashboardScreen(),   // Rol CLIENTE (Tablero VIP Ritual)
+                '/provider': (_) => const ProviderDashboardScreen(), // Rol PRESTADOR (Tablero Pro Independiente)
+                '/salon': (_) => const SalonDashboardScreen(),       // Rol SALON (Tablero SaaS Salón)
+
+                // 3. Sub-Módulos del Prestador / Salón
                 '/provider/services': (_) => const ProviderServicesScreen(),
                 '/provider/portfolio': (_) => const ProviderPortfolioScreen(),
                 '/provider/profile': (_) => const ProviderProfileScreen(),
-                '/chat': (_) => const ChatListScreen(),
-                '/onboarding': (_) => const OnboardingScreen(),
-                '/verification-pending': (_) => const VerificationPendingScreen(),
-                '/profile': (_) => const UserProfileScreen(),
-                '/ideas': (_) => const BiometricWelcomeScreen(),
-                '/biometric-consent': (_) => const BiometricConsentScreen(),
-                '/biometric-welcome': (_) => const BiometricWelcomeScreen(),
-                '/booking-tracking': (context) {
-                  final args = ModalRoute.of(context)!.settings.arguments
-                      as Map<String, dynamic>;
-                  return BookingTrackingScreen(booking: args);
-                },
+                '/provider/academy': (_) => const AcademyScreen(),
                 '/provider-route': (context) {
-                  final args = ModalRoute.of(context)!.settings.arguments
-                      as Map<String, dynamic>;
+                  final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
                   return ProviderRouteScreen(booking: args);
                 },
+
+                // 4. Citas, Chat & Perfil
+                '/client-bookings': (_) => const ClientBookingsScreen(),
+                '/booking-tracking': (context) {
+                  final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+                  return BookingTrackingScreen(booking: args);
+                },
+                '/chat': (_) => const ChatListScreen(),
+                '/profile': (_) => const UserProfileScreen(),
+
+                // 5. Soporte, Legal & Disputas
                 '/support': (_) => const SupportCenterScreen(),
                 '/terms': (_) => const TermsConditionsScreen(),
                 '/disputes': (_) => const DisputesListScreen(),
                 '/dispute': (context) {
-                  final args = ModalRoute.of(context)?.settings.arguments
-                      as Map<String, dynamic>?;
+                  final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
                   return OpenDisputeScreen(
                     preselectedBookingId: args?['booking_id'],
                   );
                 },
-                '/provider/academy': (_) => const AcademyScreen(),
+
+                // 6. Diagnósticos IA, GlowStore & Módulos Visuales
+                '/ideas': (_) => const BiometricWelcomeScreen(),
+                '/biometric-consent': (_) => const BiometricConsentScreen(),
                 '/store': (_) => const StoreScreen(),
                 '/evolution': (_) => const EvolutionDashboardScreen(),
-                '/my-glow': (_) => const MyGlowDashboardScreen(),
                 '/medical-validation': (_) => const MedicalValidationScreen(),
                 '/glowup-card': (_) => const GlowUpCardScreen(),
                 '/palette-card': (_) => const PaletteCardScreen(),
@@ -1981,7 +1996,8 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                 ),
                 children: [
                   TileLayer(
-                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    urlTemplate: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+                    subdomains: const ['a', 'b', 'c', 'd'],
                     userAgentPackageName: 'com.beautyapp.map',
                     tileBuilder: (context, tileWidget, tile) {
                       if (useDarkMap) {

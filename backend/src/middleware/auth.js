@@ -15,15 +15,16 @@ const authMiddleware = async (req, res, next) => {
   if (!token) return res.status(401).json({ error: 'UNAUTHORIZED' });
 
   try {
-    // PARCHE DE SEGURIDAD: Token Blacklisting con Redis (FAIL-CLOSED)
-    try {
-      const isBlacklisted = await redisClient.get(`beauty:token_blacklist:${token}`);
-      if (isBlacklisted) {
-        return res.status(401).json({ error: 'Token revocado. Por favor inicie sesión de nuevo.' });
+    // PARCHE DE SEGURIDAD: Token Blacklisting con Redis (FAIL-SAFE)
+    if (redisClient && redisClient.isReady) {
+      try {
+        const isBlacklisted = await redisClient.get(`beauty:token_blacklist:${token}`);
+        if (isBlacklisted) {
+          return res.status(401).json({ error: 'Token revocado. Por favor inicie sesión de nuevo.' });
+        }
+      } catch (redisErr) {
+        console.error('Error de Redis en authMiddleware:', redisErr.message);
       }
-    } catch (redisErr) {
-      console.error('Error de Redis en authMiddleware:', redisErr);
-      return res.status(503).json({ error: 'Servicio de autenticacion temporalmente no disponible.' });
     }
 
     const verified = jwt.verify(token, getJwtSecret());

@@ -128,7 +128,6 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use('/uploads', express.static(uploadsDir));
 app.use('/admin', express.static(path.join(__dirname, '../../public/admin')));
-app.use(express.static(path.join(__dirname, '../../public')));
 
 // Canal SSE en tiempo real
 const sseClients = [];
@@ -149,12 +148,71 @@ app.get('/api/health', async (req, res) => {
     const { rows } = await pool.query('SELECT 1 as alive');
     res.json({
       status: 'OK',
-      uptime: process.uptime(),
+      uptime: process.processUptime ? process.processUptime() : process.uptime(),
       db: rows.length > 0 ? 'CONNECTED' : 'DISCONNECTED',
       timestamp: new Date().toISOString()
     });
   } catch (err) {
     res.status(500).json({ status: 'ERROR', db: 'DISCONNECTED', error: err.message });
+  }
+});
+
+// 🗺️ PROXY DE TILES DE OPENSTREETMAP (Cumple directiva User-Agent de OSM)
+const https = require('https');
+const osmAgent = new https.Agent({ rejectUnauthorized: false });
+const osmTileCache = new Map();
+
+app.get('/api/tiles/:z/:x/:y.png', (req, res) => {
+  try {
+    const { z, x, y } = req.params;
+    const tileKey = `${z}_${x}_${y}`;
+
+    if (osmTileCache.has(tileKey)) {
+      res.setHeader('Content-Type', 'image/png');
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+      return res.send(osmTileCache.get(tileKey));
+    }
+
+    const options = {
+      hostname: 'tile.openstreetmap.org',
+      port: 443,
+      path: `/${z}/${x}/${y}.png`,
+      method: 'GET',
+      agent: osmAgent,
+      headers: {
+        'User-Agent': 'GlowApp/1.0 (contact@glowapp.com)'
+      }
+    };
+
+    const osmReq = https.request(options, (osmRes) => {
+      if (osmRes.statusCode !== 200) {
+        res.status(osmRes.statusCode).end();
+        return;
+      }
+      const chunks = [];
+      osmRes.on('data', chunk => chunks.push(chunk));
+      osmRes.on('end', () => {
+        const buffer = Buffer.concat(chunks);
+        if (osmTileCache.size > 3000) {
+          const firstKey = osmTileCache.keys().next().value;
+          osmTileCache.delete(firstKey);
+        }
+        osmTileCache.set(tileKey, buffer);
+
+        res.setHeader('Content-Type', 'image/png');
+        res.setHeader('Cache-Control', 'public, max-age=86400');
+        res.send(buffer);
+      });
+    });
+
+    osmReq.on('error', (e) => {
+      console.error('❌ Error proxy tile OSM:', e.message);
+      res.status(502).end();
+    });
+
+    osmReq.end();
+  } catch (err) {
+    res.status(500).end();
   }
 });
 
@@ -285,6 +343,9 @@ process.on('unhandledRejection', (reason, promise) => {
 process.on('uncaughtException', (error) => {
   console.error('🚨 [UNCAUGHT EXCEPTION]:', error.message);
 });
+
+// Servir frontend compilado estático
+app.use(express.static(path.join(__dirname, '../../public')));
 
 // 🛡️ MIDDLEWARE FINAL DE CAPTURA DE ERRORES EXPRESS (Garantiza respuestas JSON 500)
 app.use((err, req, res, next) => {

@@ -13,16 +13,24 @@ const Redis = require('redis');
  */
 let redisClient = null;
 let redisConnected = false;
+let connectAttempted = false;
 
 async function getRedisClient() {
   if (redisClient && redisConnected) return redisClient;
+  if (connectAttempted && !redisConnected) return null;
 
+  connectAttempted = true;
   try {
     const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-    redisClient = Redis.createClient({ url: redisUrl });
+    redisClient = Redis.createClient({
+      url: redisUrl,
+      socket: {
+        connectTimeout: 1000,
+        reconnectStrategy: false
+      }
+    });
 
-    redisClient.on('error', (err) => {
-      console.error('❌ Redis rate limiter error:', err.message);
+    redisClient.on('error', () => {
       redisConnected = false;
     });
 
@@ -34,7 +42,6 @@ async function getRedisClient() {
     await redisClient.connect();
     return redisClient;
   } catch (error) {
-    console.warn('⚠️ Redis no disponible para rate limiting:', error.message);
     redisConnected = false;
     return null;
   }

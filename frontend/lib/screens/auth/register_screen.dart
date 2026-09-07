@@ -71,7 +71,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             SnackBar(
               content: Text(
                 '✅ Registro exitoso como '
-                '${_selectedRole == 'PRESTADOR' ? 'Prestador' : 'Cliente'}.',
+                '${_selectedRole == 'SALON' ? 'Salón de Belleza' : _selectedRole == 'PRESTADOR' ? 'Prestador' : 'Cliente'}.',
               ),
               backgroundColor: const Color(0xFF10B981),
               behavior: SnackBarBehavior.floating,
@@ -82,7 +82,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
           );
 
           if (onboardingCompleto) {
-            if (role == 'provider') {
+            if (role == 'salon') {
+              navigator.pushNamedAndRemoveUntil(
+                '/salon',
+                (route) => false,
+              );
+            } else if (role == 'provider') {
               navigator.pushNamedAndRemoveUntil(
                 '/provider',
                 (route) => false,
@@ -262,13 +267,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 child: Center(
                   child: Text(
-                    'Salón',
+                    'Salón / SaaS',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: _selectedRole == 'SALON'
                           ? t.n800
                           : t.n400,
-                      fontSize: 12,
+                      fontSize: 11,
                       fontFamily: 'CormorantGaramond',
                     ),
                   ),
@@ -472,105 +477,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           color: Color(0xFF1F1A15),
                           strokeWidth: 2.5,
                         ),
-<<<<<<< HEAD
-                        const SizedBox(height: 12),
-
-                        // Selector de Rol Luxe
-                        Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFE8E0D5),
-                            borderRadius: BorderRadius.circular(10.5),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: GestureDetector(
-                                  onTap: () => setState(() => _selectedRole = 'CLIENTE'),
-                                  child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 200),
-                                    padding: const EdgeInsets.symmetric(vertical: 10),
-                                    decoration: BoxDecoration(
-                                      color: _selectedRole == 'CLIENTE'
-                                          ? const Color(0xFFFAF8F5)
-                                          : Colors.transparent,
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        'Cliente',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: _selectedRole == 'CLIENTE'
-                                              ? const Color(0xFF1F1A15)
-                                              : const Color(0xFF9E8C78),
-                                          fontSize: 13,
-                                          fontFamily: 'CormorantGaramond',
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                child: GestureDetector(
-                                  onTap: () => setState(() => _selectedRole = 'PRESTADOR'),
-                                  child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 200),
-                                    padding: const EdgeInsets.symmetric(vertical: 10),
-                                    decoration: BoxDecoration(
-                                      color: _selectedRole == 'PRESTADOR'
-                                          ? const Color(0xFFFAF8F5)
-                                          : Colors.transparent,
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        'Prestador / Pro',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: _selectedRole == 'PRESTADOR'
-                                              ? const Color(0xFF1F1A15)
-                                              : const Color(0xFF9E8C78),
-                                          fontSize: 12,
-                                          fontFamily: 'CormorantGaramond',
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                child: GestureDetector(
-                                  onTap: () => setState(() => _selectedRole = 'SALON'),
-                                  child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 200),
-                                    padding: const EdgeInsets.symmetric(vertical: 10),
-                                    decoration: BoxDecoration(
-                                      color: _selectedRole == 'SALON'
-                                          ? const Color(0xFFFAF8F5)
-                                          : Colors.transparent,
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        'Salón (SaaS)',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: _selectedRole == 'SALON'
-                                              ? const Color(0xFF1F1A15)
-                                              : const Color(0xFF9E8C78),
-                                          fontSize: 12,
-                                          fontFamily: 'CormorantGaramond',
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-=======
                       )
                     : Text(
                         l10n.registerCreateAccount,
@@ -580,36 +486,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF1F1A15),
                           letterSpacing: 0.8,
->>>>>>> origin/main
                         ),
                       ),
               ),
             ),
             const SizedBox(height: 18),
 
-<<<<<<< HEAD
-                        // Caja informativa de rol
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFAF8F5),
-                            borderRadius: BorderRadius.circular(10.5),
-                            border: Border.all(color: const Color(0xFFE8E0D5), width: 0.5),
-                          ),
-                          child: Text(
-                            _selectedRole == 'CLIENTE'
-                                ? '✨ Acceso a diagnósticos de IA Aura, GlowStore y reserva de servicios concierge.'
-                                : _selectedRole == 'PRESTADOR'
-                                    ? '💼 Ofrece tus servicios independientes, gestiona tu agenda y recibe pagos directos.'
-                                    : '🏢 Administra tu salón de belleza, tu equipo de trabajo y licencias SaaS integradas.',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Color(0xFF6B5A48),
-                              fontFamily: 'CormorantGaramond',
-                              height: 1.3,
-                            ),
-                          ),
-=======
             Center(
               child: TextButton(
                 onPressed: () => Navigator.pop(context),
@@ -623,7 +505,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         style: context.bodySmallContext.copyWith(
                           color: const Color(0xFFC5A052),
                           fontWeight: FontWeight.w700,
->>>>>>> origin/main
                         ),
                       ),
                     ],

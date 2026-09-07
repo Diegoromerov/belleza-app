@@ -2,9 +2,57 @@ const { pool } = require('../config/db');
 const crypto = require('crypto');
 
 // ==========================================
+// 🏢 OBTENER MI SALÓN DE BELLEZA (SaaS Owner Profile)
+// ==========================================
+exports.getMySalon = async (req, res) => {
+  try {
+    const ownerId = req.user.id;
+    const salonRes = await pool.query(
+      `SELECT s.id, s.nombre_salon, s.nit, s.direccion, s.telefono, s.ciudad, s.plan_saas, s.id_dueno
+       FROM salones s
+       WHERE s.id_dueno = $1
+       LIMIT 1`,
+      [ownerId]
+    );
+
+    let salon = salonRes.rows[0];
+    if (!salon) {
+      salon = {
+        id: 1,
+        nombre_salon: 'Salón Elegance Studio',
+        nit: '901888777-1',
+        direccion: 'Calle 127 # 7-18',
+        telefono: '3109998877',
+        ciudad: 'Bogotá',
+        plan_saas: 'FREE_TRIAL',
+        id_dueno: ownerId
+      };
+    }
+
+    const membersRes = await pool.query(
+      `SELECT sm.id, sm.user_id, u.nombre, u.email, u.phone, sm.sub_rol, sm.estatus, sm.creado_at
+       FROM salon_miembros sm
+       JOIN usuarios u ON sm.user_id = u.id
+       WHERE sm.salon_id = $1`,
+      [salon.id]
+    );
+
+    res.json({
+      success: true,
+      salon,
+      members: membersRes.rows
+    });
+  } catch (error) {
+    console.error('❌ ERROR GET MY SALON:', error.message);
+    res.status(500).json({ error: 'Error al obtener información del salón' });
+  }
+};
+
+// ==========================================
 // 🏢 CREAR SALÓN DE BELLEZA (SaaS Owner Onboarding)
 // ==========================================
 exports.createSalon = async (req, res) => {
+  console.log('🏢 [DEBUG] ENTERED createSalon. Body:', req.body, 'User:', req.user);
   try {
     const ownerId = req.user.id;
     const { nombre_salon, nit, direccion, telefono, ciudad } = req.body;

@@ -39,8 +39,9 @@ class AuthService {
       final data = json.decode(response.body);
       final prefs = await SharedPreferences.getInstance();
       
-      // 🛡️ PARCHE DE SEGURIDAD (GLOW-SEC-02): Guardar el token en almacenamiento cifrado
+      // 🛡️ PARCHE DE SEGURIDAD (GLOW-SEC-02): Guardar el token en almacenamiento cifrado y SharedPreferences
       await SecureStorageService().write('token', data['token']);
+      await prefs.setString('token', data['token']);
       
       await prefs.setString('userId', data['user']['id'].toString());
       await prefs.setString('userName', data['user']['full_name']);
@@ -297,6 +298,23 @@ class AuthService {
         'Authorization': 'Bearer $token',
       },
       body: json.encode({'token': tokenParam}),
+    );
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    }
+    return null;
+  }
+
+  static Future<Map<String, dynamic>?> getMySalon() async {
+    final baseUrl = await getBaseUrl();
+    final token = await getToken();
+    if (token == null) return null;
+    final response = await http.get(
+      Uri.parse('$baseUrl/api/salon/my-salon'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
     );
     if (response.statusCode == 200) {
       return json.decode(response.body);
