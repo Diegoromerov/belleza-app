@@ -404,6 +404,11 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                 onTap: () => Navigator.pushNamed(context, '/support'),
               ),
               _buildSettingsTile(
+                icon: Icons.storefront_outlined,
+                title: 'Tablero Salón de Belleza (SaaS)',
+                onTap: () => Navigator.pushNamed(context, '/salon'),
+              ),
+              _buildSettingsTile(
                 icon: Icons.gavel_outlined,
                 title: 'Mis Disputas de Servicio',
                 onTap: () => Navigator.pushNamed(context, '/disputes'),

@@ -2414,6 +2414,32 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                                 leading: Container(
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
+                                    color: const Color(0xFFC5A052).withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Icon(Icons.storefront_rounded, color: Color(0xFFC5A052)),
+                                ),
+                                title: const Text(
+                                  'Tablero Salón (SaaS)',
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                ),
+                                subtitle: const Text(
+                                  'Gestión de equipo, suscripciones y miembros',
+                                  style: TextStyle(fontSize: 12, color: Color(0xFF6B5E55)),
+                                ),
+                                trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Color(0xFFC5A052)),
+                                onTap: () {
+                                  Navigator.pop(ctx);
+                                  _checkAuthAndNavigate('/salon');
+                                },
+                              ),
+                              const SizedBox(height: 10),
+                              ListTile(
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                tileColor: Colors.white,
+                                leading: Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
                                     color: const Color(0xFF25D366).withValues(alpha: 0.15),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
@@ -2485,6 +2511,21 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                     elevation: 3,
                     shape: const CircleBorder(),
                     child: const Icon(Icons.my_location, size: 20),
+                  ),
+                  const SizedBox(height: 10),
+                  // Botón 4: Tablero Salón (SaaS)
+                  FloatingActionButton.small(
+                    heroTag: 'salon_dashboard_fab',
+                    tooltip: 'Tablero Salón (SaaS)',
+                    onPressed: () {
+                      HapticFeedback.selectionClick();
+                      Navigator.pushNamed(context, '/salon');
+                    },
+                    backgroundColor: const Color(0xFFC5A052),
+                    foregroundColor: const Color(0xFF1F1A15),
+                    elevation: 4,
+                    shape: const CircleBorder(),
+                    child: const Icon(Icons.storefront_rounded, size: 20),
                   ),
                   const SizedBox(height: 10),
                 ],
