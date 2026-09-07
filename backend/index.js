@@ -372,7 +372,7 @@ app.use('/api/admin/academy', academyAdminRoutes);
 app.use('/api/glow-pro', glowProRoutes);
 app.use('/api/glow-pro/events', eventRoutes);
 app.use('/api/glow-pro/event-registrations', eventRegistrationRoutes);
-app.use('/api', analyticsRoutes);
+app.use('/api/analytics', analyticsRoutes);
 app.use('/api/metrics', metricsRoutes);
 app.use('/api/portfolio', portfolioRoutes);
 app.use('/api/community', communityRoutes);
