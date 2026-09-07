@@ -135,8 +135,7 @@ class _MapScreenState extends State<MapScreen> {
             options: MapOptions(initialCenter: center, initialZoom: 14.0),
             children: [
               TileLayer(
-                urlTemplate: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-                subdomains: const ['a', 'b', 'c', 'd'],
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName: 'com.beautyapp.map',
               ),
               MarkerLayer(

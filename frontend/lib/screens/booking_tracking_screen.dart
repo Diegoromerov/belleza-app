@@ -205,11 +205,10 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen>
               initialZoom: 14.5,
             ),
             children: [
-              TileLayer(
-                urlTemplate: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-                subdomains: const ['a', 'b', 'c', 'd'],
-                userAgentPackageName: 'com.beautyapp.map',
-              ),
+                TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.beautyapp.map',
+                ),
               // Línea de Ruta (Polyline)
               PolylineLayer(
                 polylines: [
