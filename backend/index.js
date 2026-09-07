@@ -379,6 +379,10 @@ app.use('/api/community', communityRoutes);
 app.use('/api/mentorship', mentorshipRoutes);
 app.use('/api/xp-logs', xpLogRoutes);
 
+// 🔹 Handler 404 explícito para peticiones /api/* (garantiza respuesta JSON y evita enviar HTML)
+app.use('/api/*', (req, res) => {
+  res.status(404).json({ success: false, error: `Ruta API no encontrada: ${req.method} ${req.originalUrl}` });
+});
 
 // ==========================================
 // RUTAS PÚBLICAS
@@ -639,60 +643,6 @@ const optionalAuthMiddleware = async (req, res, next) => {
   }
   next();
 };
-
-// 🔹 NUEVO: Registrar Lote de Eventos de Telemetría (Analíticas)
-app.post('/api/analytics/events', optionalAuthMiddleware, async (req, res) => {
-  try {
-    const { events } = req.body;
-    if (!Array.isArray(events) || events.length === 0) {
-      return res.status(400).json({ error: 'Falta el lote de eventos o es inválido' });
-    }
-
-    const clientDb = await pool.connect();
-    try {
-      await clientDb.query('BEGIN');
-      
-      for (const event of events) {
-        const { session_id, event_type, screen_name, element_id, metadata, creado_en } = event;
-        const userId = req.user ? req.user.id : null;
-        
-        await clientDb.query(
-          `INSERT INTO user_activity_logs (user_id, session_id, event_type, screen_name, element_id, metadata, creado_en)
-           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-          [
-            userId,
-            session_id,
-            event_type || 'UNKNOWN',
-            screen_name || 'UNKNOWN',
-            element_id || null,
-            metadata ? JSON.stringify(metadata) : null,
-            creado_en || new Date()
-          ]
-        );
-      }
-      
-      await clientDb.query('COMMIT');
-      
-      console.log(`📊 [TELEMETRÍA] Registrados ${events.length} eventos de analíticas. Usuario: ${req.user ? req.user.email : 'Anónimo'}`);
-      
-      res.status(201).json({
-        success: true,
-        message: 'Eventos de telemetría registrados correctamente',
-        count: events.length
-      });
-      
-    } catch (dbError) {
-      await clientDb.query('ROLLBACK');
-      throw dbError;
-    } finally {
-      clientDb.release();
-    }
-    
-  } catch (error) {
-    console.error('❌ ERROR EN POST /api/analytics/events:', error);
-    res.status(500).json({ error: 'Error interno al guardar telemetría' });
-  }
-});
 
 // 🔹 NUEVO: Canal SSE en tiempo real para eventos de administración
 app.get('/api/admin/events/stream', authMiddleware, adminMiddleware, (req, res) => {

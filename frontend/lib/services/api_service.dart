@@ -217,6 +217,14 @@ class ApiService {
   // PROVEEDORES (Públicos - sin token requerido)
   // ─────────────────────────────────────────────────────────────
 
+  static dynamic safeJsonDecode(String rawBody) {
+    final trimmed = rawBody.trim();
+    if (trimmed.startsWith('<')) {
+      throw Exception('Respuesta no válida del servidor (HTML en lugar de JSON).');
+    }
+    return json.decode(rawBody);
+  }
+
   static Future<List<ProviderModel>> fetchProvidersSecured(
       {double? latitude, double? longitude}) async {
     await ensureBaseUrl();
@@ -227,7 +235,8 @@ class ApiService {
     final response =
         await http.get(Uri.parse(url)).timeout(const Duration(seconds: 30));
     if (response.statusCode == 200) {
-      final data = _normalizeDynamicUrls(json.decode(response.body));
+      final decoded = safeJsonDecode(response.body);
+      final data = _normalizeDynamicUrls(decoded);
       return (data['data'] as List<dynamic>)
           .whereType<Map<String, dynamic>>()
           .map((j) => ProviderModel.fromJson(j))
