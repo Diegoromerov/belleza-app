@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 
 class HandOverlayPainter extends CustomPainter {
@@ -16,71 +15,56 @@ class HandOverlayPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final handWidth = size.width * 0.55;
-    final handHeight = size.height * 0.50;
+    final center = Offset(size.width / 2, size.height / 2 - 10);
+    final handWidth = size.width * 0.58;
+    final handHeight = size.height * 0.48;
     final handRect = Rect.fromCenter(center: center, width: handWidth, height: handHeight);
 
-    final mainColor = isValid ? const Color(0xFF00E676) : const Color(0xFFD4AF37);
-
-    // 1. Fondo translúcido
+    // 1. Fondo translúcido sutil
     final bgPaint = Paint()
-      ..color = Colors.black.withOpacity(0.40)
+      ..color = Colors.black.withValues(alpha: 0.28)
       ..style = PaintingStyle.fill;
     canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), bgPaint);
 
-    // 2. Silueta anatómica continua de la palma de la mano
-    final palmPaint = Paint()
+    // 2. Colores refinados oro champán
+    const goldColor = Color(0xFFC5A052);
+    const goldSoft = Color(0xFFF3D59B);
+
+    final linePaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.5
-      ..color = mainColor
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+      ..strokeWidth = 1.3
+      ..color = isValid ? goldColor : goldSoft.withValues(alpha: 0.7);
 
-    final palmPath = Path();
-    final palmRRect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(handRect.left, handRect.top + handRect.height * 0.2, handRect.width, handRect.height * 0.8),
-      const Radius.circular(32),
-    );
-    palmPath.addRRect(palmRRect);
-    canvas.drawPath(palmPath, palmPaint);
-
-    // 3. Silueta anatómica de los 5 dedos con arcos de uña Neón
-    final fingerWidth = handRect.width * 0.14;
-    final fingerHeight = handRect.height * 0.35;
+    // 3. Guía continua y estilizada de mano & dedos
+    final fingerWidth = handWidth * 0.15;
+    final fingerHeight = handHeight * 0.38;
 
     for (int i = 0; i < 5; i++) {
-      final fx = handRect.left + (i + 0.5) * handRect.width / 5 - fingerWidth / 2;
-      final fy = handRect.top - (i == 2 ? 15 : (i == 1 || i == 3 ? 8 : 0));
+      final fx = handRect.left + (i + 0.5) * handWidth / 5 - fingerWidth / 2;
+      final fy = handRect.top - (i == 2 ? 16 : (i == 1 || i == 3 ? 9 : 0));
       final fingerRect = Rect.fromLTWH(fx, fy, fingerWidth, fingerHeight);
 
-      final fingerPaint = Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.5
-        ..color = mainColor.withOpacity(0.85);
-
+      // Trazo sutil de dedo
       canvas.drawRRect(
-        RRect.fromRectAndRadius(fingerRect, const Radius.circular(12)),
-        fingerPaint,
+        RRect.fromRectAndRadius(fingerRect, const Radius.circular(10)),
+        linePaint,
       );
 
-      // Arco Neón sobre la matriz de cada uña
-      final nailArcPaint = Paint()
+      // Línea fina del lecho ungueal / manicura
+      final nailRect = Rect.fromLTWH(fx + 2, fy + 3, fingerWidth - 4, fingerHeight * 0.30);
+      final nailPaint = Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 3.0
-        ..color = isValid ? const Color(0xFF00E676) : const Color(0xFFE05A47);
-
-      final nailRect = Rect.fromLTWH(fx + 2, fy + 4, fingerWidth - 4, fingerHeight * 0.35);
-      canvas.drawArc(nailRect, pi, pi, false, nailArcPaint);
+        ..strokeWidth = 1.0
+        ..color = goldColor.withValues(alpha: 0.9);
+      canvas.drawRRect(RRect.fromRectAndRadius(nailRect, const Radius.circular(6)), nailPaint);
     }
 
-    // 4. Indicador de escaneo orbital activo
-    final pulsePaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5
-      ..color = mainColor.withOpacity(0.5);
-
-    final radiusPulse = (handWidth / 2) + (sin(animationValue * 2 * pi) * 6);
-    canvas.drawCircle(center, radiusPulse, pulsePaint);
+    // Palma estilizada
+    final palmRect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(handRect.left, handRect.top + handHeight * 0.22, handWidth, handHeight * 0.72),
+      const Radius.circular(28),
+    );
+    canvas.drawRRect(palmRect, linePaint);
   }
 
   @override

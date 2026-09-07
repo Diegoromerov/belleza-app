@@ -34,7 +34,7 @@ class _CaptureScreenState extends State<CaptureScreen>
   Uint8List? _handsImage;
 
   // Estado de validación
-  String _instruction = 'Coloca tu rostro dentro del óvalo y presiona el botón para tomar la foto';
+  String _instruction = 'Alinea tu rostro dentro del encuadre para capturar';
   bool _isFaceValid = false;
   bool _isHandValid = false;
   double _qualityScore = 0.0;
@@ -494,12 +494,12 @@ class _CaptureScreenState extends State<CaptureScreen>
 
     final faceCenterX = face.boundingBox.center.dx;
     if (faceCenterX < imageWidth * 0.35) {
-      return '👈 Mueve tu rostro hacia el centro';
+      return 'Centra tu rostro hacia la derecha';
     }
     if (faceCenterX > imageWidth * 0.65) {
-      return '👉 Mueve tu rostro hacia el centro';
+      return 'Centra tu rostro hacia la izquierda';
     }
-    return '📸 Presiona el botón para capturar foto';
+    return 'Pulsa el obturador para capturar';
   }
 
   Future<void> _captureFace() async {
@@ -520,7 +520,7 @@ class _CaptureScreenState extends State<CaptureScreen>
       if (mounted) {
         setState(() {
           _step = CaptureStep.faceConfirm;
-          _instruction = '✨ Foto de rostro capturada. Presiona Siguiente para escanear manos.';
+          _instruction = 'Rostro capturado. Presiona siguiente para escanear manos.';
         });
       }
     } catch (e) {
@@ -538,7 +538,7 @@ class _CaptureScreenState extends State<CaptureScreen>
   void _proceedToHandsStep() async {
     setState(() {
       _step = CaptureStep.hands;
-      _instruction = '🖐️ Girando a cámara posterior... Coloca el dorso de tu mano y presiona el botón';
+      _instruction = 'Cambiando a cámara posterior... Coloca el dorso de tu mano';
       _isHandValid = false;
       _qualityScore = 0.0;
       _errorMessage = null;
@@ -553,7 +553,7 @@ class _CaptureScreenState extends State<CaptureScreen>
     setState(() {
       _faceImage = null;
       _step = CaptureStep.face;
-      _instruction = 'Coloca tu rostro dentro del óvalo y presiona el botón para tomar la foto';
+      _instruction = 'Alinea tu rostro dentro del encuadre para capturar';
       _isFaceValid = false;
       _qualityScore = 0.0;
       _validFramesCount = 0;
@@ -594,8 +594,8 @@ class _CaptureScreenState extends State<CaptureScreen>
         _isHandValid = hasEnoughLight;
         _qualityScore = hasEnoughLight ? 90.0 : 40.0;
         _instruction = _isHandValid
-            ? '📸 Toca el botón central para tomar la foto de la mano'
-            : '🖐️ Alinea tu mano con buena luz y presiona el botón';
+            ? 'Pulsa el obturador para capturar la mano'
+            : 'Alinea tu mano con buena iluminación';
       });
     }
   }
@@ -618,7 +618,7 @@ class _CaptureScreenState extends State<CaptureScreen>
       if (mounted) {
         setState(() {
           _step = CaptureStep.handsConfirm;
-          _instruction = '✨ Foto de mano capturada. Presiona Finalizar para iniciar el análisis.';
+          _instruction = 'Mano capturada. Presiona finalizar para ver tu pasaporte.';
         });
       }
     } catch (e) {
@@ -636,7 +636,7 @@ class _CaptureScreenState extends State<CaptureScreen>
     setState(() {
       _handsImage = null;
       _step = CaptureStep.hands;
-      _instruction = '🖐️ Coloca el dorso de tu mano sobre la silueta y presiona el botón';
+      _instruction = 'Coloca el dorso de tu mano sobre la silueta';
       _isHandValid = false;
       _qualityScore = 0.0;
     });
@@ -761,16 +761,22 @@ class _CaptureScreenState extends State<CaptureScreen>
           ),
         ),
         title: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
           decoration: BoxDecoration(
-            color: AppTheme.text.withValues(alpha: 0.65),
-            borderRadius: BorderRadius.circular(20),
+            color: const Color(0xFF14100C).withValues(alpha: 0.70),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFC5A052).withValues(alpha: 0.35), width: 0.8),
           ),
           child: Text(
             isFaceStep || isFaceConfirm
-                ? 'Paso 1/2: Escanear rostro'
-                : 'Paso 2/2: Escanear manos',
-            style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
+                ? 'PASO 1 · BIOMETRÍA FACIAL'
+                : 'PASO 2 · BIOMETRÍA DE MANOS',
+            style: const TextStyle(
+              color: Color(0xFFF3D59B),
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.0,
+            ),
           ),
         ),
         actions: [
@@ -800,7 +806,7 @@ class _CaptureScreenState extends State<CaptureScreen>
             ),
           ),
           Container(
-            margin: const EdgeInsets.only(right: 6),
+            margin: const EdgeInsets.only(right: 12),
             decoration: BoxDecoration(
               color: AppTheme.text.withValues(alpha: 0.5),
               shape: BoxShape.circle,
@@ -809,23 +815,6 @@ class _CaptureScreenState extends State<CaptureScreen>
               tooltip: 'Cargar de Galería',
               icon: const Icon(Icons.photo_library_outlined, color: Colors.white),
               onPressed: _pickFromGallery,
-            ),
-          ),
-          Container(
-            margin: const EdgeInsets.only(right: 12),
-            child: TextButton.icon(
-              onPressed: () {
-                _faceImage = Uint8List(10);
-                _handsImage = Uint8List(10);
-                _finishAndStartProcessing();
-              },
-              icon: const Icon(Icons.auto_fix_high, size: 13, color: Color(0xFFF3D59B)),
-              label: const Text('Demo', style: TextStyle(color: Color(0xFFF3D59B), fontWeight: FontWeight.bold, fontSize: 11)),
-              style: TextButton.styleFrom(
-                backgroundColor: Colors.black.withValues(alpha: 0.65),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              ),
             ),
           ),
         ],
@@ -916,32 +905,32 @@ class _CaptureScreenState extends State<CaptureScreen>
 
           // CARD INFORMATIVA DE INSTRUCCIONES CON ESTILO GLOWAPP
           Positioned(
-            bottom: 120,
+            bottom: 124,
             left: 24,
             right: 24,
             child: Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 520),
+                constraints: const BoxConstraints(maxWidth: 480),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 18),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1F1A15).withValues(alpha: 0.85),
+                    color: const Color(0xFF14100C).withValues(alpha: 0.75),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: const Color(0xFFC5A052).withValues(alpha: 0.6),
-                      width: 1.2,
+                      color: const Color(0xFFC5A052).withValues(alpha: 0.35),
+                      width: 1.0,
                     ),
                   ),
                   child: Column(
                     children: [
                       if (isFaceStep || isHandsStep) QualityIndicator(quality: _qualityScore),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
                       Text(
                         _instruction,
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -949,7 +938,7 @@ class _CaptureScreenState extends State<CaptureScreen>
                         const SizedBox(height: 4),
                         Text(
                           _errorMessage!,
-                          style: const TextStyle(color: AppTheme.errorBg, fontSize: 13),
+                          style: const TextStyle(color: Color(0xFFF3D59B), fontSize: 12),
                           textAlign: TextAlign.center,
                         ),
                       ],
@@ -960,9 +949,9 @@ class _CaptureScreenState extends State<CaptureScreen>
             ),
           ),
 
-          // BOTONES INFERIORES DE ACCIÓN DE TOMA MANUAL CON PALETA HAUTE JOAILLERIE
+          // BOTONES INFERIORES DE ACCIÓN: OBTURADOR PERLA & ORO
           Positioned(
-            bottom: 36,
+            bottom: 34,
             left: 24,
             right: 24,
             child: Center(
@@ -971,32 +960,33 @@ class _CaptureScreenState extends State<CaptureScreen>
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // CASO 1: Toma de foto manual (Cámara activa para Rostro o Manos)
+                    // Botón Joya Perla / Oro (Haute Beauté)
                     if (isFaceStep || isHandsStep)
-                      Container(
-                        width: 72,
-                        height: 72,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: LinearGradient(
-                            colors: [Color(0xFFF3D59B), Color(0xFFC5A052)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
+                      GestureDetector(
+                        onTap: isFaceStep ? _captureFace : _captureHands,
+                        child: Container(
+                          width: 76,
+                          height: 76,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: const Color(0xFFC5A052), width: 2.5),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFC5A052).withValues(alpha: 0.35),
+                                blurRadius: 16,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
                           ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Color(0x66C5A052),
-                              blurRadius: 12,
-                              offset: Offset(0, 4),
+                          padding: const EdgeInsets.all(4),
+                          child: Container(
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: RadialGradient(
+                                colors: [Color(0xFFFFFFFF), Color(0xFFF3EFE9), Color(0xFFDFD4C4)],
+                                stops: [0.1, 0.6, 1.0],
+                              ),
                             ),
-                          ],
-                        ),
-                        child: IconButton(
-                          onPressed: isFaceStep ? _captureFace : _captureHands,
-                          icon: const Icon(
-                            Icons.camera_alt_rounded,
-                            size: 34,
-                            color: Color(0xFF1F1A15),
                           ),
                         ),
                       ),

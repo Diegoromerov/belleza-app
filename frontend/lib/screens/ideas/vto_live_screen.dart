@@ -178,7 +178,7 @@ class _VtoLiveScreenState extends State<VtoLiveScreen> {
                                 ),
                               ),
                               Text(
-                                'Acabado $_selectedFinish • Recomendado por DeepSeek IA',
+                                'Acabado $_selectedFinish · Visagismo de Precisión',
                                 style: const TextStyle(
                                   color: Color(0xFFC5A052),
                                   fontSize: 12,
@@ -307,7 +307,7 @@ class _VtoLiveScreenState extends State<VtoLiveScreen> {
                                 onPressed: () {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text('🛍️ Tono "$_selectedName" agregado al carrito'),
+                                      content: Text('Tono "$_selectedName" añadido al carrito'),
                                     ),
                                   );
                                 },
@@ -337,7 +337,7 @@ class _VtoLiveScreenState extends State<VtoLiveScreen> {
                                 onPressed: () {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
-                                      content: Text('📍 Buscando salones con este servicio cerca de ti...'),
+                                      content: Text('Localizando Atelier de Belleza cercano...'),
                                     ),
                                   );
                                 },
