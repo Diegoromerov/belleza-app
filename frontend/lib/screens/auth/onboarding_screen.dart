@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import '../../services/auth_service.dart';
 import '../../shared/theme.dart';
+import '../../shared/widgets/background_video_player.dart';
 import '../../data/colombia_municipalities.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -385,18 +386,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       backgroundColor: const Color(0xFF15100C),
       body: Stack(
         children: [
-          // Imagen de Fondo WebP
-          Positioned.fill(
-            child: Image.asset(
-              'images/auth/onboarding_bg.webp',
-              fit: BoxFit.cover,
-              alignment: Alignment.topCenter,
-            ),
-          ),
-          // Capa sutil de oscurecimiento para legibilidad
-          Positioned.fill(
-            child: Container(
-              color: Colors.black.withValues(alpha: 0.12),
+          // Video de Fondo HD sin loop con fallback automático
+          const Positioned.fill(
+            child: BackgroundVideoPlayer(
+              assetPath: 'assets/videos/onboarding_intro.mp4',
+              fallbackImagePath: 'images/auth/onboarding_bg.webp',
+              overlayOpacity: 0.18,
+              loop: false,
             ),
           ),
           SafeArea(
