@@ -380,21 +380,30 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     }
   }
 
+  // Clave global para coordinar el desmuteo en el primer tap del usuario
+  final GlobalKey<BackgroundVideoPlayerState> _videoPlayerKey = GlobalKey<BackgroundVideoPlayerState>();
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF15100C),
-      body: Stack(
-        children: [
-          // Video de Fondo HD sin loop con fallback automático
-          const Positioned.fill(
-            child: BackgroundVideoPlayer(
-              assetPath: 'assets/videos/onboarding_intro.mp4',
-              fallbackImagePath: 'images/auth/onboarding_bg.webp',
-              overlayOpacity: 0.18,
-              loop: false,
+    return Listener(
+      behavior: HitTestBehavior.translucent,
+      onPointerDown: (_) => _videoPlayerKey.currentState?.unmuteOnUserGesture(),
+      child: Scaffold(
+        backgroundColor: const Color(0xFF15100C),
+        body: Stack(
+          children: [
+            // Video de Fondo HD sin loop con fallback automático
+            Positioned.fill(
+              child: BackgroundVideoPlayer(
+                key: _videoPlayerKey,
+                assetPath: 'assets/videos/onboarding_intro.mp4',
+                fallbackImagePath: 'images/auth/onboarding_bg.webp',
+                overlayOpacity: 0.18,
+                loop: false,
+                initialMuted: true,
+                unmuteOnFirstInteraction: true,
+              ),
             ),
-          ),
           SafeArea(
             child: Center(
               child: ConstrainedBox(
@@ -437,8 +446,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildRoleSelectionCards() {
     return Column(
