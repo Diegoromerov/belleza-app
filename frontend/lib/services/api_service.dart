@@ -31,7 +31,7 @@ class ApiService {
     if (kIsWeb) {
       final origin = Uri.base.origin;
       if (origin.isNotEmpty && !origin.contains('localhost') && !origin.contains('127.0.0.1')) {
-        return origin;
+        return origin.contains('belleza-app-production.up.railway.app') ? origin : stagingUrl;
       }
     }
     return 'http://$_host:8080';
@@ -48,7 +48,7 @@ class ApiService {
     if (kIsWeb) {
       final origin = Uri.base.origin;
       if (origin.isNotEmpty && !origin.contains('localhost') && !origin.contains('127.0.0.1')) {
-        _cachedBaseUrl = origin;
+        _cachedBaseUrl = origin.contains('belleza-app-production.up.railway.app') ? origin : stagingUrl;
         return;
       }
     }
