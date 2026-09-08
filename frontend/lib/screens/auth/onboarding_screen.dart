@@ -9,6 +9,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/auth_service.dart';
 import '../../shared/theme.dart';
+import '../../data/colombia_municipalities.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -38,23 +39,44 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   bool _salonLocationPublic = true;
   bool _isLocatingSalon = false;
 
-  static const List<String> _colombiaCities = [
-    'Bogotá',
-    'Medellín',
-    'Cali',
-    'Barranquilla',
-    'Cartagena',
-    'Bucaramanga',
-    'Pereira',
-    'Manizales',
-    'Santa Marta',
-    'Cúcuta',
-    'Ibagué',
-    'Villavicencio',
-    'Pasto',
-    'Armenia',
-    'Neiva',
+  // Módulo Constructor de Dirección Estructurada (Colombia)
+  bool _useManualAddress = false;
+  String _viaType = 'Calle';
+  final _viaNumCtrl = TextEditingController();
+  final _generatorNumCtrl = TextEditingController();
+  final _plateNumCtrl = TextEditingController();
+  final _complementCtrl = TextEditingController();
+
+  static const List<String> _viaTypes = [
+    'Calle',
+    'Carrera',
+    'Diagonal',
+    'Transversal',
+    'Avenida',
+    'Autopista',
+    'Circular',
   ];
+
+  void _syncComposedAddress() {
+    if (_useManualAddress) return;
+    final via = _viaType;
+    final numVia = _viaNumCtrl.text.trim();
+    final numGen = _generatorNumCtrl.text.trim();
+    final plate = _plateNumCtrl.text.trim();
+    final comp = _complementCtrl.text.trim();
+
+    if (numVia.isEmpty) {
+      _salonAddressCtrl.text = '';
+      return;
+    }
+
+    String address = '$via $numVia';
+    if (numGen.isNotEmpty) address += ' # $numGen';
+    if (plate.isNotEmpty) address += ' - $plate';
+    if (comp.isNotEmpty) address += ', $comp';
+
+    _salonAddressCtrl.text = address;
+  }
 
   @override
   void initState() {
@@ -85,6 +107,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     _salonAddressCtrl.dispose();
     _salonPhoneCtrl.dispose();
     _salonCityCtrl.dispose();
+    _viaNumCtrl.dispose();
+    _generatorNumCtrl.dispose();
+    _plateNumCtrl.dispose();
+    _complementCtrl.dispose();
     super.dispose();
   }
 
@@ -642,82 +668,273 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
           ),
           const SizedBox(height: 14),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                flex: 3,
-                child: TextField(
-                  controller: _salonAddressCtrl,
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.white,
-                    labelText: 'Dirección del Local',
-                    labelStyle: const TextStyle(color: Color(0xFF4A3E39)),
-                    hintText: 'Ej. Calle 93 # 11-45',
-                    prefixIcon: const Icon(Icons.location_on_outlined, color: Color(0xFFC5A052)),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFEFE8DE)),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFEFE8DE)),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFC5A052), width: 1.5),
-                    ),
+          // CAMPO INTELIGENTE: CIUDADES Y MUNICIPIOS DE COLOMBIA
+          Autocomplete<String>(
+            initialValue: TextEditingValue(text: _salonCityCtrl.text),
+            optionsBuilder: (TextEditingValue textEditingValue) {
+              if (textEditingValue.text.isEmpty) {
+                return colombiaMunicipalities.take(15);
+              }
+              final query = textEditingValue.text.toLowerCase();
+              return colombiaMunicipalities.where((municipality) =>
+                  municipality.toLowerCase().contains(query)).take(25);
+            },
+            onSelected: (String selection) {
+              _salonCityCtrl.text = selection;
+            },
+            fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+              controller.addListener(() {
+                _salonCityCtrl.text = controller.text;
+              });
+              return TextField(
+                controller: controller,
+                focusNode: focusNode,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Colors.white,
+                  labelText: 'Ciudad o Municipio de Colombia',
+                  labelStyle: const TextStyle(color: Color(0xFF4A3E39)),
+                  hintText: 'Ej. Chía (Cundinamarca) o Medellín (Antioquia)',
+                  prefixIcon: const Icon(Icons.location_city_outlined, color: Color(0xFFC5A052)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFFEFE8DE)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFFEFE8DE)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFFC5A052), width: 1.5),
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                flex: 2,
-                child: Autocomplete<String>(
-                  initialValue: TextEditingValue(text: _salonCityCtrl.text),
-                  optionsBuilder: (TextEditingValue textEditingValue) {
-                    if (textEditingValue.text.isEmpty) {
-                      return _colombiaCities;
-                    }
-                    return _colombiaCities.where((city) =>
-                        city.toLowerCase().contains(textEditingValue.text.toLowerCase()));
-                  },
-                  onSelected: (String selection) {
-                    _salonCityCtrl.text = selection;
-                  },
-                  fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
-                    controller.addListener(() {
-                      _salonCityCtrl.text = controller.text;
-                    });
-                    return TextField(
-                      controller: controller,
-                      focusNode: focusNode,
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: Colors.white,
-                        labelText: 'Ciudad',
-                        labelStyle: const TextStyle(color: Color(0xFF4A3E39)),
-                        hintText: 'Ej. Bogotá',
-                        prefixIcon: const Icon(Icons.location_city_outlined, color: Color(0xFFC5A052)),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFFEFE8DE)),
+              );
+            },
+          ),
+          const SizedBox(height: 14),
+
+          // MÓDULO CONSTRUCTOR DE DIRECCIÓN COLOMBIANA
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFEFE8DE)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(Icons.signpost_outlined, color: Color(0xFFC5A052), size: 18),
+                        SizedBox(width: 8),
+                        Text(
+                          'Dirección de la Sede',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1F1A15),
+                          ),
                         ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFFEFE8DE)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFFC5A052), width: 1.5),
+                      ],
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          _useManualAddress = !_useManualAddress;
+                          if (!_useManualAddress) {
+                            _syncComposedAddress();
+                          }
+                        });
+                      },
+                      child: Text(
+                        _useManualAddress ? 'Usar Asistente Guiado' : 'Escribir Manual',
+                        style: const TextStyle(fontSize: 11, color: Color(0xFFC5A052), fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                if (!_useManualAddress) ...[
+                  // FILA 1: Tipo de Vía + Número de Vía
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 4,
+                        child: DropdownButtonFormField<String>(
+                          initialValue: _viaType,
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: const Color(0xFFFAF6EE),
+                            labelText: 'Tipo de Vía',
+                            labelStyle: const TextStyle(fontSize: 12, color: Color(0xFF4A3E39)),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(color: Color(0xFFEFE8DE)),
+                            ),
+                          ),
+                          items: _viaTypes.map((t) => DropdownMenuItem(
+                            value: t,
+                            child: Text(t, style: const TextStyle(fontSize: 13, color: Color(0xFF1F1A15))),
+                          )).toList(),
+                          onChanged: (val) {
+                            if (val != null) {
+                              setState(() {
+                                _viaType = val;
+                                _syncComposedAddress();
+                              });
+                            }
+                          },
                         ),
                       ),
-                    );
-                  },
-                ),
-              ),
-            ],
+                      const SizedBox(width: 8),
+                      Expanded(
+                        flex: 5,
+                        child: TextField(
+                          controller: _viaNumCtrl,
+                          onChanged: (_) => _syncComposedAddress(),
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: const Color(0xFFFAF6EE),
+                            labelText: 'Número / Letra',
+                            hintText: 'Ej. 93, 15A',
+                            labelStyle: const TextStyle(fontSize: 12, color: Color(0xFF4A3E39)),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(color: Color(0xFFEFE8DE)),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  // FILA 2: Generador (#) + Placa (-)
+                  Row(
+                    children: [
+                      const Text('#', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFFC5A052))),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextField(
+                          controller: _generatorNumCtrl,
+                          onChanged: (_) => _syncComposedAddress(),
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: const Color(0xFFFAF6EE),
+                            labelText: 'Cruce (#)',
+                            hintText: 'Ej. 11',
+                            labelStyle: const TextStyle(fontSize: 12, color: Color(0xFF4A3E39)),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(color: Color(0xFFEFE8DE)),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Text('-', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFFC5A052))),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextField(
+                          controller: _plateNumCtrl,
+                          onChanged: (_) => _syncComposedAddress(),
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: const Color(0xFFFAF6EE),
+                            labelText: 'Placa (-)',
+                            hintText: 'Ej. 45',
+                            labelStyle: const TextStyle(fontSize: 12, color: Color(0xFF4A3E39)),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(color: Color(0xFFEFE8DE)),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  // FILA 3: Complemento
+                  TextField(
+                    controller: _complementCtrl,
+                    onChanged: (_) => _syncComposedAddress(),
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: const Color(0xFFFAF6EE),
+                      labelText: 'Complemento (Opcional)',
+                      hintText: 'Ej. Local 102, Piso 2, Centro Comercial Unicentro',
+                      labelStyle: const TextStyle(fontSize: 12, color: Color(0xFF4A3E39)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Color(0xFFEFE8DE)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  // PREVIEW DE DIRECCIÓN ARMADA
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFAF6EE),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFC5A052).withValues(alpha: 0.4)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.pin_drop_rounded, size: 16, color: Color(0xFFC5A052)),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _salonAddressCtrl.text.isNotEmpty
+                                ? _salonAddressCtrl.text
+                                : 'Completa los campos para componer la dirección',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: _salonAddressCtrl.text.isNotEmpty
+                                  ? const Color(0xFF1F1A15)
+                                  : const Color(0xFF8C7E74),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ] else ...[
+                  TextField(
+                    controller: _salonAddressCtrl,
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: const Color(0xFFFAF6EE),
+                      labelText: 'Dirección Completa (Texto Libre)',
+                      hintText: 'Ej. Km 5 Vía Cajicá - Chía Vereda Fonquetá',
+                      labelStyle: const TextStyle(fontSize: 12, color: Color(0xFF4A3E39)),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Color(0xFFEFE8DE)),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
           const SizedBox(height: 14),
 
