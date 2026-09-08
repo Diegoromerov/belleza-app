@@ -109,7 +109,7 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: Row(
-              children: const [
+              children: [
                 Icon(Icons.person_add_alt_1, color: Color(0xFFF3D59B)),
                 SizedBox(width: 10),
                 Text(
@@ -126,7 +126,7 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
                 children: [
                   Text(
                     'Agrega el correo del colaborador y define su rol dentro del salón.',
-                    style: _t.bodySmallContext.copyWith(color: _t.textSecondary),
+                    style: TypographyTokens.bodySmall(_t).copyWith(color: _t.textSecondary),
                   ),
                   const SizedBox(height: 16),
                   TextField(
@@ -147,7 +147,7 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Text('Rol en el Salón:',
+                  Text('Rol en el Salón:',
                       style: TextStyle(color: _t.textSecondary, fontSize: 13)),
                   const SizedBox(height: 8),
                   Container(
@@ -155,7 +155,7 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
                     decoration: BoxDecoration(
                       color: _t.surfaceLevel0,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: _t.glowBorderSubtle),
+                      border: Border.all(color: _t.borderSubtle),
                     ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
@@ -201,14 +201,14 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('✅ ¡Invitación Generada!',
+                          Text('✅ ¡Invitación Generada!',
                               style: TextStyle(
                                   color: _t.status['success']!,
                                   fontWeight: FontWeight.bold)),
                           const SizedBox(height: 6),
                           SelectableText(
                             _inviteResultLink!,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 color: _t.textPrimary, fontSize: 12),
                           ),
                           const SizedBox(height: 8),
@@ -244,7 +244,7 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: const Text('Cancelar',
+                child: Text('Cancelar',
                     style: TextStyle(color: _t.textSecondary)),
               ),
               ElevatedButton(
@@ -347,7 +347,7 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
                 children: [
                   Text(
                     salonName,
-                    style: _t.h3Context.copyWith(color: _t.textPrimary),
+                    style: TypographyTokens.h3(_t).copyWith(color: _t.textPrimary),
                     overflow: TextOverflow.ellipsis,
                   ),
                   Row(
@@ -460,7 +460,7 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
                         Text(
                           _error!,
                           textAlign: TextAlign.center,
-                          style: _t.bodyContext.copyWith(
+                          style: TypographyTokens.body(_t).copyWith(
                             color: _t.textSecondary,
                           ),
                         ),
@@ -516,8 +516,7 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
                 child: _buildKpiCard(
                   title: 'Citas Hoy',
                   value: '${_bookings.length}',
-                  icon: Icons.calendar_today,
-                  color: _t.status['info']!,
+                  icon: GlowIcon.calendar(color: _t.status['info']!, semanticLabel: 'Citas de hoy'),
                 ),
               ),
               const SizedBox(width: 12),
@@ -525,8 +524,7 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
                 child: _buildKpiCard(
                   title: 'Equipo Activo',
                   value: '${_members.length}',
-                  icon: Icons.badge,
-                  color: _t.status['success']!,
+                  icon: GlowIcon.peopleAlt(color: _t.status['success']!, semanticLabel: 'Equipo activo'),
                 ),
               ),
             ],
@@ -615,7 +613,7 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
             children: [
               Text(
                 'Agenda del salón',
-                style: _t.h3Context.copyWith(color: _t.textPrimary),
+                style: TypographyTokens.h3(_t).copyWith(color: _t.textPrimary),
               ),
               Text(
                 'Hoy',
@@ -639,7 +637,7 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
                   ),
                   child: Center(
                     child: Column(
-                      children: const [
+                      children: [
                         Icon(Icons.event_available,
                             size: 40, color: _t.textSecondary),
                         SizedBox(height: 12),
@@ -674,12 +672,12 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
                         ),
                         title: Text(
                           b['service_name'] ?? 'Servicio de Belleza',
-                          style: const TextStyle(
+                          style: TextStyle(
                               color: _t.textPrimary, fontWeight: FontWeight.bold),
                         ),
                         subtitle: Text(
                           'Cliente: ${b['client_name'] ?? 'Cliente Demo'}',
-                          style: _t.bodySmallContext.copyWith(color: _t.textSecondary),
+                          style: TypographyTokens.bodySmall(_t).copyWith(color: _t.textSecondary),
                         ),
                         trailing: Container(
                           padding: const EdgeInsets.symmetric(
@@ -690,7 +688,7 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
                           ),
                           child: Text(
                             (b['status'] ?? 'CONFIRMADA').toUpperCase(),
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: _t.status['success']!,
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
@@ -715,7 +713,7 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Personal y Colaboradores',
                 style: TextStyle(
                   fontSize: 18,
@@ -747,7 +745,7 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
                     color: _t.surfaceLevel1,
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: const Center(
+                  child: Center(
                     child: Text(
                       'Aún no has agregado colaboradores a tu equipo.',
                       style: TextStyle(color: _t.textSecondary),
@@ -778,12 +776,12 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
                         ),
                         title: Text(
                           m['nombre'] ?? 'Colaborador',
-                          style: const TextStyle(
+                          style: TextStyle(
                               color: _t.textPrimary, fontWeight: FontWeight.bold),
                         ),
                         subtitle: Text(
                           m['email'] ?? '',
-                          style: _t.bodySmallContext.copyWith(color: _t.textSecondary),
+                          style: TypographyTokens.bodySmall(_t).copyWith(color: _t.textSecondary),
                         ),
                         trailing: Container(
                           padding: const EdgeInsets.symmetric(
@@ -794,7 +792,7 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
                                 ),
                           child: Text(
                             subRol.replaceAll('_', ' '),
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: Color(0xFFF3D59B),
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
@@ -843,14 +841,14 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
             ),
             title: Text(
               s['name']!,
-              style: _t.bodyContext.copyWith(
+              style: TypographyTokens.body(_t).copyWith(
                 color: _t.textPrimary,
                 fontWeight: FontWeight.w600,
               ),
             ),
             subtitle: Text(
               'Duración estimada: ${s['duration']}',
-              style: _t.bodySmallContext.copyWith(color: _t.textSecondary),
+              style: TypographyTokens.bodySmall(_t).copyWith(color: _t.textSecondary),
             ),
             trailing: Text(
               s['price']!,
@@ -884,7 +882,7 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Información del Establecimiento',
                     style: TextStyle(
                       fontSize: 16,
@@ -892,7 +890,7 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
                       color: _t.textPrimary,
                     ),
                   ),
-                  const Divider(color: _t.glowBorderSubtle, height: 24),
+                  Divider(color: _t.borderSubtle, height: 24),
                   _buildSettingRow('badge', 'NIT / Registro', nit),
                   _buildSettingRow('location', 'Dirección', '$address, $city'),
                   _buildSettingRow('phone', 'Contacto', '+57 310 999 8877'),
@@ -913,12 +911,12 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
         children: [
           GlowIcon.resolve(icon, size: GlowIconSize.sm, color: _t.brandPrimary, semanticLabel: label),
           const SizedBox(width: 12),
-          Text('$label:', style: _t.bodySmallContext.copyWith(color: _t.textSecondary)),
+          Text('$label:', style: TypographyTokens.bodySmall(_t).copyWith(color: _t.textSecondary)),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               value,
-              style: _t.bodyContext.copyWith(
+              style: TypographyTokens.body(_t).copyWith(
                 color: _t.textPrimary,
                 fontWeight: FontWeight.w600,
               ),
@@ -955,7 +953,7 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
           const SizedBox(height: 4),
           Text(
             title,
-            style: _t.bodySmallContext.copyWith(
+            style: TypographyTokens.bodySmall(_t).copyWith(
               color: _t.textSecondary,
             ),
           ),
