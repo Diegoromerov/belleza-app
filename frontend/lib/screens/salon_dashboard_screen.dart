@@ -1,4 +1,7 @@
 // frontend/lib/screens/salon_dashboard_screen.dart
+// SOUL Design System — GlowApp v1.0
+// Governance: Token.of(context), GlowIcon, TypographyTokens, Spacing, Radii, AppShadow
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/auth_service.dart';
@@ -28,6 +31,9 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
   String _selectedSubRole = 'PRESTADOR_INDEPENDIENTE';
   bool _isInviting = false;
   String? _inviteResultLink;
+
+  // ── Governance: token resolved from context (light/dark/expression-aware)
+  Token get _t => Token.of(context);
 
   @override
   void initState() {
@@ -104,18 +110,23 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setModalState) {
+          final t = Token.of(context);
           return AlertDialog(
-            backgroundColor: _t.surfaceLevel1,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            backgroundColor: t.surfaceLevel1,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(Radii.xl)),
             title: Row(
               children: [
-                Icon(Icons.person_add_alt_1, color: Color(0xFFF3D59B)),
-                SizedBox(width: 10),
+                GlowIcon.resolve(
+                  'profile',
+                  size: GlowIconSize.lg,
+                  color: t.brandPrimary,
+                  semanticLabel: 'Invitar al equipo',
+                ),
+                const SizedBox(width: Spacing.md),
                 Text(
                   'Invitar al Equipo',
-                  style: TextStyle(
-                      color: _t.textPrimary, fontWeight: FontWeight.bold),
+                  style: TypographyTokens.h3(t),
                 ),
               ],
             ),
@@ -126,43 +137,63 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
                 children: [
                   Text(
                     'Agrega el correo del colaborador y define su rol dentro del salón.',
-                    style: TypographyTokens.bodySmall(_t).copyWith(color: _t.textSecondary),
+                    style: TypographyTokens.bodySmall(t)
+                        .copyWith(color: t.textSecondary),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: Spacing.lg),
                   TextField(
                     controller: _inviteEmailCtrl,
-                    style: TextStyle(color: _t.textPrimary),
+                    style: TextStyle(color: t.textPrimary),
                     decoration: InputDecoration(
                       labelText: 'Correo Electrónico',
-                      labelStyle: TextStyle(color: _t.textSecondary),
+                      labelStyle: TextStyle(color: t.textSecondary),
                       filled: true,
-                      fillColor: _t.surfaceLevel0,
+                      fillColor: t.surfaceInput,
                       border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12)),
+                        borderRadius: BorderRadius.circular(Radii.md),
+                        borderSide: BorderSide(color: t.borderDefault),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(Radii.md),
+                        borderSide: BorderSide(color: t.borderSubtle),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(Radii.md),
+                        borderSide:
+                            BorderSide(color: t.borderFocus, width: 2),
+                      ),
                       prefixIcon: GlowIcon.resolve(
                         'mail',
-                        color: _t.brandPrimary,
+                        color: t.brandPrimary,
                         semanticLabel: 'Correo electrónico',
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  Text('Rol en el Salón:',
-                      style: TextStyle(color: _t.textSecondary, fontSize: 13)),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: Spacing.lg),
+                  Text(
+                    'Rol en el Salón',
+                    style: TypographyTokens.bodySmall(t)
+                        .copyWith(color: t.textSecondary),
+                  ),
+                  const SizedBox(height: Spacing.sm),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: Spacing.md),
                     decoration: BoxDecoration(
-                      color: _t.surfaceLevel0,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: _t.borderSubtle),
+                      color: t.surfaceInput,
+                      borderRadius: BorderRadius.circular(Radii.md),
+                      border: Border.all(color: t.borderSubtle),
                     ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
                         value: _selectedSubRole,
-                        dropdownColor: _t.surfaceLevel0,
+                        dropdownColor: t.surfaceLevel1,
                         isExpanded: true,
-                        style: TextStyle(color: _t.textPrimary),
+                        style: TextStyle(
+                          color: t.textPrimary,
+                          fontFamily: TypographyFamilies.functional,
+                          fontSize: 14,
+                        ),
                         items: const [
                           DropdownMenuItem(
                             value: 'ADMINISTRADOR',
@@ -190,33 +221,38 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
                     ),
                   ),
                   if (_inviteResultLink != null) ...[
-                    const SizedBox(height: 16),
+                    const SizedBox(height: Spacing.lg),
                     Container(
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(Spacing.md),
                       decoration: BoxDecoration(
-                        color: _t.status['success_bg'],
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: _t.status['success']!),
+                        color: t.status['success_bg'],
+                        borderRadius: BorderRadius.circular(Radii.md),
+                        border:
+                            Border.all(color: t.status['success']!),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('✅ ¡Invitación Generada!',
-                              style: TextStyle(
-                                  color: _t.status['success']!,
-                                  fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 6),
+                          Text(
+                            '✅ ¡Invitación Generada!',
+                            style: TypographyTokens.body(t).copyWith(
+                              color: t.status['success']!,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: Spacing.xs),
                           SelectableText(
                             _inviteResultLink!,
-                            style: TextStyle(
-                                color: _t.textPrimary, fontSize: 12),
+                            style: TypographyTokens.bodySmall(t)
+                                .copyWith(color: t.textPrimary),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: Spacing.sm),
                           ElevatedButton.icon(
                             onPressed: () {
-                              Clipboard.setData(
-                                  ClipboardData(text: _inviteResultLink!));
-                              ScaffoldMessenger.of(context).showSnackBar(
+                              Clipboard.setData(ClipboardData(
+                                  text: _inviteResultLink!));
+                              ScaffoldMessenger.of(context)
+                                  .showSnackBar(
                                 const SnackBar(
                                     content: Text(
                                         'Enlace copiado al portapapeles')),
@@ -225,13 +261,18 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
                             icon: GlowIcon.resolve(
                               'copy',
                               size: GlowIconSize.sm,
-                              color: _t.surfaceLevel1,
+                              color: t.brandPrimaryOn,
                               semanticLabel: 'Copiar enlace',
                             ),
                             label: const Text('Copiar Enlace'),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: _t.brandPrimary,
-                              foregroundColor: _t.surfaceLevel1,
+                              backgroundColor: t.brandPrimary,
+                              foregroundColor: t.brandPrimaryOn,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius:
+                                    BorderRadius.circular(Radii.round),
+                              ),
                             ),
                           ),
                         ],
@@ -244,8 +285,10 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: Text('Cancelar',
-                    style: TextStyle(color: _t.textSecondary)),
+                child: Text(
+                  'Cancelar',
+                  style: TextStyle(color: t.textSecondary),
+                ),
               ),
               ElevatedButton(
                 onPressed: _isInviting
@@ -277,30 +320,40 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
                             _fetchSalonData();
                           } else {
                             setModalState(() => _isInviting = false);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                  content: Text(res?['error'] ??
-                                      'Error al generar invitación')),
-                            );
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                    content: Text(res?['error'] ??
+                                        'Error al generar invitación')),
+                              );
+                            }
                           }
                         } catch (e) {
                           setModalState(() => _isInviting = false);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Error: $e')),
-                          );
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Error: $e')),
+                            );
+                          }
                         }
                       },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _t.brandPrimary,
-                  foregroundColor: _t.surfaceLevel1,
+                  foregroundColor: _t.brandPrimaryOn,
+                  elevation: 0,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
+                    borderRadius: BorderRadius.circular(Radii.round),
+                  ),
                 ),
                 child: _isInviting
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 18,
                         height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2))
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: _t.brandPrimaryOn,
+                        ),
+                      )
                     : const Text('Generar Invitación'),
               ),
             ],
@@ -317,37 +370,36 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
     }
   }
 
-  Token get _t => Token.light;
-
   @override
   Widget build(BuildContext context) {
+    final t = _t;
     final salonName =
         _salonData?['nombre_salon'] ?? 'Salón Elegance Studio';
     final planSaas = _salonData?['plan_saas'] ?? 'FREE_TRIAL';
 
     return Scaffold(
-      backgroundColor: _t.surfaceLevel0,
+      backgroundColor: t.surfaceLevel0,
       appBar: AppBar(
-        backgroundColor: _t.surfaceLevel1,
+        backgroundColor: t.surfaceLevel1,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
-        titleSpacing: 16,
+        titleSpacing: Spacing.lg,
         title: Row(
           children: [
             GlowIcon.resolve(
               'storefront',
               size: GlowIconSize.lg,
-              color: _t.brandPrimary,
+              color: t.brandPrimary,
               semanticLabel: 'Salón',
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: Spacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     salonName,
-                    style: TypographyTokens.h3(_t).copyWith(color: _t.textPrimary),
+                    style: TypographyTokens.h3(t),
                     overflow: TextOverflow.ellipsis,
                   ),
                   Row(
@@ -359,17 +411,27 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 1.0,
-                          color: _t.textSecondary,
+                          color: t.textMuted,
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        planSaas.toString().replaceAll('_', ' '),
-                        style: TextStyle(
-                          fontFamily: TypographyFamilies.data,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          color: _t.textSecondary,
+                      const SizedBox(width: Spacing.sm),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: Spacing.xs, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: t.brandPrimary.withValues(alpha: 0.12),
+                          borderRadius:
+                              BorderRadius.circular(Radii.xs),
+                        ),
+                        child: Text(
+                          planSaas.toString().replaceAll('_', ' '),
+                          style: TextStyle(
+                            fontFamily: TypographyFamilies.data,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700,
+                            color: t.textAccent,
+                            letterSpacing: 0.5,
+                          ),
                         ),
                       ),
                     ],
@@ -383,7 +445,8 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
           IconButton(
             icon: GlowIcon.resolve(
               'refresh',
-              color: _t.textSecondary,
+              size: GlowIconSize.sm,
+              color: t.textSecondary,
               semanticLabel: 'Actualizar datos',
             ),
             onPressed: _fetchSalonData,
@@ -392,228 +455,188 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
           IconButton(
             icon: GlowIcon.resolve(
               'logout',
-              color: _t.textSecondary,
+              size: GlowIconSize.sm,
+              color: t.textSecondary,
               semanticLabel: 'Cerrar sesión',
             ),
             onPressed: _handleLogout,
             tooltip: 'Cerrar sesión',
           ),
         ],
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: _t.brandPrimary,
-          indicatorWeight: 3,
-          labelColor: _t.brandPrimary,
-          unselectedLabelColor: _t.textSecondary,
-          labelStyle: TextStyle(
-            fontFamily: TypographyFamilies.functional,
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(kToolbarHeight),
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(color: t.borderSubtle, width: 1),
+              ),
+            ),
+            child: TabBar(
+              controller: _tabController,
+              indicatorColor: t.brandPrimary,
+              indicatorWeight: 2,
+              indicatorSize: TabBarIndicatorSize.label,
+              labelColor: t.brandPrimary,
+              unselectedLabelColor: t.textSecondary,
+              dividerColor: Colors.transparent,
+              labelStyle: const TextStyle(
+                fontFamily: TypographyFamilies.functional,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.3,
+              ),
+              unselectedLabelStyle: const TextStyle(
+                fontFamily: TypographyFamilies.functional,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+              tabs: [
+                Tab(
+                  icon: GlowIcon.resolve('dashboard',
+                      size: GlowIconSize.sm, color: t.brandPrimary),
+                  text: 'Resumen',
+                ),
+                Tab(
+                  icon: GlowIcon.resolve('profile',
+                      size: GlowIconSize.sm, color: t.textSecondary),
+                  text: 'Equipo',
+                ),
+                Tab(
+                  icon: GlowIcon.resolve('hair',
+                      size: GlowIconSize.sm, color: t.textSecondary),
+                  text: 'Servicios',
+                ),
+                Tab(
+                  icon: GlowIcon.resolve('settings',
+                      size: GlowIconSize.sm, color: t.textSecondary),
+                  text: 'Ajustes',
+                ),
+              ],
+            ),
           ),
-          unselectedLabelStyle: TextStyle(
-            fontFamily: TypographyFamilies.functional,
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-          ),
-          tabs: [
-            Tab(
-              icon: GlowIcon.resolve('dashboard',
-                  size: GlowIconSize.sm, color: _t.brandPrimary),
-              text: 'Resumen',
-            ),
-            Tab(
-              icon: GlowIcon.resolve('profile',
-                  size: GlowIconSize.sm, color: _t.textSecondary),
-              text: 'Equipo',
-            ),
-            Tab(
-              icon: GlowIcon.resolve('hair',
-                  size: GlowIconSize.sm, color: _t.textSecondary),
-              text: 'Servicios',
-            ),
-            Tab(
-              icon: GlowIcon.resolve('settings',
-                  size: GlowIconSize.sm, color: _t.textSecondary),
-              text: 'Ajustes',
-            ),
-          ],
         ),
       ),
       body: _loading
           ? Center(
-              child: CircularProgressIndicator(color: _t.brandPrimary),
+              child: CircularProgressIndicator(color: t.brandPrimary),
             )
           : _error != null
-              ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        GlowIcon.resolve(
-                          'error',
-                          size: GlowIconSize.xl,
-                          color: _t.status['error']!,
-                          semanticLabel: 'Error',
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          _error!,
-                          textAlign: TextAlign.center,
-                          style: TypographyTokens.body(_t).copyWith(
-                            color: _t.textSecondary,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        SizedBox(
-                          height: 48,
-                          child: ElevatedButton(
-                            onPressed: _fetchSalonData,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: _t.brandPrimary,
-                              foregroundColor: _t.surfaceLevel1,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: Text(
-                              'Reintentar',
-                              style: TextStyle(
-                                fontFamily: TypographyFamilies.functional,
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                )
+              ? _buildErrorState(t)
               : TabBarView(
                   controller: _tabController,
                   children: [
-                    _buildOverviewTab(),
-                    _buildTeamTab(),
-                    _buildServicesTab(),
-                    _buildSettingsTab(),
+                    _buildOverviewTab(t),
+                    _buildTeamTab(t),
+                    _buildServicesTab(t),
+                    _buildSettingsTab(t),
                   ],
                 ),
     );
   }
 
-  Widget _buildOverviewTab() {
+  // ── Error state ───────────────────────────────────────────────────────────
+
+  Widget _buildErrorState(Token t) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(Spacing.xxl),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            GlowIcon.resolve(
+              'error',
+              size: GlowIconSize.xl,
+              color: t.error,
+              semanticLabel: 'Error',
+            ),
+            const SizedBox(height: Spacing.lg),
+            Text(
+              _error!,
+              textAlign: TextAlign.center,
+              style: TypographyTokens.body(t)
+                  .copyWith(color: t.textSecondary),
+            ),
+            const SizedBox(height: Spacing.lg),
+            SizedBox(
+              height: 48,
+              child: ElevatedButton(
+                onPressed: _fetchSalonData,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: t.brandPrimary,
+                  foregroundColor: t.brandPrimaryOn,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(Radii.round),
+                  ),
+                ),
+                child: const Text(
+                  'Reintentar',
+                  style: TextStyle(
+                    fontFamily: TypographyFamilies.functional,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Overview tab ──────────────────────────────────────────────────────────
+
+  Widget _buildOverviewTab(Token t) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(20.0),
+      padding: const EdgeInsets.all(Spacing.xl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Tarjetas KPI Rápidas
+          // KPI row
           Row(
             children: [
               Expanded(
                 child: _buildKpiCard(
+                  t: t,
                   title: 'Citas Hoy',
                   value: '${_bookings.length}',
-                  icon: GlowIcon.calendar(color: _t.status['info']!, semanticLabel: 'Citas de hoy'),
+                  icon: GlowIcon.calendar(
+                    color: t.info,
+                    semanticLabel: 'Citas de hoy',
+                  ),
+                  accentColor: t.info,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: Spacing.md),
               Expanded(
                 child: _buildKpiCard(
+                  t: t,
                   title: 'Equipo Activo',
                   value: '${_members.length}',
-                  icon: GlowIcon.peopleAlt(color: _t.status['success']!, semanticLabel: 'Equipo activo'),
+                  icon: GlowIcon.resolve(
+                    'profile',
+                    color: t.success,
+                    semanticLabel: 'Equipo activo',
+                  ),
+                  accentColor: t.success,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: Spacing.lg),
 
-          // Tarjeta: Ciclo de Vida y Salud del Negocio (Acceso al Business Engine)
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF262018), Color(0xFF1E293B)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFC5A052).withValues(alpha: 0.4)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.2),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFC5A052).withValues(alpha: 0.15),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.verified_user_outlined, color: Color(0xFFF3D59B), size: 26),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text(
-                        'Salud Legal & Normativa',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                      SizedBox(height: 3),
-                      Text(
-                        'Bioseguridad RH1, Concepto Sanitario y Contratos de Sillas.',
-                        style: TextStyle(color: Colors.white70, fontSize: 12),
-                      ),
-                    ],
-                  ),
-                ),
-                TextButton(
-                  onPressed: () {
-                    HapticFeedback.lightImpact();
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const BusinessDashboardScreen()),
-                    );
-                  },
-                  style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xFFF3D59B),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text('Ver Centro', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                      SizedBox(width: 4),
-                      Icon(Icons.arrow_forward_ios, size: 12),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
+          // Business health card — fully token-based, no hardcoded colors
+          _buildBusinessHealthCard(t),
+          const SizedBox(height: Spacing.xl),
 
-          // Título Agenda
+          // Agenda header
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 'Agenda del salón',
-                style: TypographyTokens.h3(_t).copyWith(color: _t.textPrimary),
+                style: TypographyTokens.h3(t),
               ),
               Text(
                 'Hoy',
@@ -621,33 +644,22 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
                   fontFamily: TypographyFamilies.functional,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: _t.brandPrimary,
+                  color: t.brandPrimary,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.md),
 
           _bookings.isEmpty
-              ? Container(
-                  padding: const EdgeInsets.all(32),
-                  decoration: BoxDecoration(
-                    color: _t.surfaceLevel1,
-                    borderRadius: BorderRadius.circular(16),
+              ? _buildEmptyState(
+                  t: t,
+                  icon: GlowIcon.calendar(
+                    size: GlowIconSize.xl,
+                    color: t.textMuted,
+                    semanticLabel: 'Sin citas',
                   ),
-                  child: Center(
-                    child: Column(
-                      children: [
-                        Icon(Icons.event_available,
-                            size: 40, color: _t.textSecondary),
-                        SizedBox(height: 12),
-                        Text(
-                          'No hay citas agendadas para hoy',
-                          style: TextStyle(color: _t.textSecondary),
-                        ),
-                      ],
-                    ),
-                  ),
+                  message: 'No hay citas agendadas para hoy',
                 )
               : ListView.builder(
                   shrinkWrap: true,
@@ -655,48 +667,7 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
                   itemCount: _bookings.length,
                   itemBuilder: (context, index) {
                     final b = _bookings[index];
-                    return Card(
-                      color: _t.surfaceLevel1,
-                      margin: const EdgeInsets.only(bottom: 10),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor:
-                              _t.brandPrimary.withValues(alpha: 0.2),
-                          child: GlowIcon.resolve(
-                            'hair',
-                            color: _t.brandPrimary,
-                            semanticLabel: 'Servicio',
-                          ),
-                        ),
-                        title: Text(
-                          b['service_name'] ?? 'Servicio de Belleza',
-                          style: TextStyle(
-                              color: _t.textPrimary, fontWeight: FontWeight.bold),
-                        ),
-                        subtitle: Text(
-                          'Cliente: ${b['client_name'] ?? 'Cliente Demo'}',
-                          style: TypographyTokens.bodySmall(_t).copyWith(color: _t.textSecondary),
-                        ),
-                        trailing: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: _t.status['success_bg'],
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            (b['status'] ?? 'CONFIRMADA').toUpperCase(),
-                            style: TextStyle(
-                              color: _t.status['success']!,
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
+                    return _buildBookingCard(t, b);
                   },
                 ),
         ],
@@ -704,9 +675,148 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
     );
   }
 
-  Widget _buildTeamTab() {
+  Widget _buildBusinessHealthCard(Token t) {
+    return Container(
+      padding: const EdgeInsets.all(Spacing.lg),
+      decoration: BoxDecoration(
+        gradient: t.premiumGradient,
+        borderRadius: BorderRadius.circular(Radii.lg),
+        border: Border.all(
+          color: t.borderStrong.withValues(alpha: 0.4),
+        ),
+        boxShadow: AppShadow.card(t),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(Spacing.md),
+            decoration: BoxDecoration(
+              color: t.brandPrimary.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: GlowIcon.resolve(
+              'badge',
+              size: GlowIconSize.lg,
+              color: t.textAccent,
+              semanticLabel: 'Salud legal',
+            ),
+          ),
+          const SizedBox(width: Spacing.lg),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Salud Legal & Normativa',
+                  style: TypographyTokens.body(t).copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: Spacing.xs),
+                Text(
+                  'Bioseguridad RH1, Concepto Sanitario y Contratos.',
+                  style: TypographyTokens.bodySmall(t)
+                      .copyWith(color: t.textSecondary),
+                ),
+              ],
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => const BusinessDashboardScreen()),
+              );
+            },
+            style: TextButton.styleFrom(
+              foregroundColor: t.textAccent,
+              padding: const EdgeInsets.symmetric(
+                  horizontal: Spacing.md, vertical: Spacing.sm),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Ver',
+                  style: TextStyle(
+                    fontFamily: TypographyFamilies.functional,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+                const SizedBox(width: Spacing.xs),
+                GlowIcon.forward(
+                  size: GlowIconSize.xs,
+                  color: t.textAccent,
+                  semanticLabel: 'Ir a centro de negocios',
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBookingCard(Token t, Map<String, dynamic> b) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: Spacing.md),
+      decoration: BoxDecoration(
+        color: t.surfaceLevel1,
+        borderRadius: BorderRadius.circular(Radii.md),
+        border: Border.all(color: t.borderSubtle),
+        boxShadow: AppShadow.soft(t),
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(
+            horizontal: Spacing.lg, vertical: Spacing.xs),
+        leading: CircleAvatar(
+          backgroundColor: t.brandPrimary.withValues(alpha: 0.12),
+          child: GlowIcon.resolve(
+            'hair',
+            color: t.brandPrimary,
+            semanticLabel: 'Servicio',
+          ),
+        ),
+        title: Text(
+          b['service_name'] ?? 'Servicio de Belleza',
+          style: TypographyTokens.body(t)
+              .copyWith(fontWeight: FontWeight.w600),
+        ),
+        subtitle: Text(
+          'Cliente: ${b['client_name'] ?? 'Cliente Demo'}',
+          style: TypographyTokens.bodySmall(t)
+              .copyWith(color: t.textSecondary),
+        ),
+        trailing: Container(
+          padding: const EdgeInsets.symmetric(
+              horizontal: Spacing.sm, vertical: Spacing.xs),
+          decoration: BoxDecoration(
+            color: t.successBg,
+            borderRadius: BorderRadius.circular(Radii.pill),
+          ),
+          child: Text(
+            (b['status'] ?? 'CONFIRMADA').toUpperCase(),
+            style: TextStyle(
+              fontFamily: TypographyFamilies.functional,
+              color: t.successOn,
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Team tab ──────────────────────────────────────────────────────────────
+
+  Widget _buildTeamTab(Token t) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(Spacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -715,42 +825,40 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
             children: [
               Text(
                 'Personal y Colaboradores',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: _t.textPrimary,
-                ),
+                style: TypographyTokens.h3(t),
               ),
               ElevatedButton.icon(
                 onPressed: _showInviteDialog,
                 icon: GlowIcon.resolve(
-                    'profile',
-                    size: GlowIconSize.sm,
-                    color: _t.surfaceLevel1,
-                    semanticLabel: 'Invitar',
-                  ),
+                  'profile',
+                  size: GlowIconSize.sm,
+                  color: t.brandPrimaryOn,
+                  semanticLabel: 'Invitar',
+                ),
                 label: const Text('Invitar'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _t.brandPrimary,
-                  foregroundColor: _t.surfaceLevel1,
+                  backgroundColor: t.brandPrimary,
+                  foregroundColor: t.brandPrimaryOn,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(Radii.round),
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.md),
           _members.isEmpty
-              ? Container(
-                  padding: const EdgeInsets.all(32),
-                  decoration: BoxDecoration(
-                    color: _t.surfaceLevel1,
-                    borderRadius: BorderRadius.circular(16),
+              ? _buildEmptyState(
+                  t: t,
+                  icon: GlowIcon.resolve(
+                    'profile',
+                    size: GlowIconSize.xl,
+                    color: t.textMuted,
+                    semanticLabel: 'Sin colaboradores',
                   ),
-                  child: Center(
-                    child: Text(
+                  message:
                       'Aún no has agregado colaboradores a tu equipo.',
-                      style: TextStyle(color: _t.textSecondary),
-                    ),
-                  ),
                 )
               : ListView.builder(
                   shrinkWrap: true,
@@ -758,49 +866,7 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
                   itemCount: _members.length,
                   itemBuilder: (context, index) {
                     final m = _members[index];
-                    final subRol = m['sub_rol'] ?? 'DUEÑO';
-                    return Card(
-                      color: _t.surfaceLevel1,
-                      margin: const EdgeInsets.only(bottom: 10),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor:
-                              _t.status['info']!.withValues(alpha: 0.2),
-                          child: GlowIcon.resolve(
-                            'profile',
-                            color: _t.status['info']!,
-                            semanticLabel: 'Colaborador',
-                          ),
-                        ),
-                        title: Text(
-                          m['nombre'] ?? 'Colaborador',
-                          style: TextStyle(
-                              color: _t.textPrimary, fontWeight: FontWeight.bold),
-                        ),
-                        subtitle: Text(
-                          m['email'] ?? '',
-                          style: TypographyTokens.bodySmall(_t).copyWith(color: _t.textSecondary),
-                        ),
-                        trailing: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: _t.brandPrimary.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(8),
-                                ),
-                          child: Text(
-                            subRol.replaceAll('_', ' '),
-                            style: TextStyle(
-                              color: Color(0xFFF3D59B),
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
+                    return _buildMemberCard(t, m);
                   },
                 ),
         ],
@@ -808,53 +874,133 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
     );
   }
 
-  Widget _buildServicesTab() {
+  Widget _buildMemberCard(Token t, Map<String, dynamic> m) {
+    final subRol = m['sub_rol'] ?? 'DUEÑO';
+    return Container(
+      margin: const EdgeInsets.only(bottom: Spacing.md),
+      decoration: BoxDecoration(
+        color: t.surfaceLevel1,
+        borderRadius: BorderRadius.circular(Radii.md),
+        border: Border.all(color: t.borderSubtle),
+        boxShadow: AppShadow.soft(t),
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(
+            horizontal: Spacing.lg, vertical: Spacing.xs),
+        leading: CircleAvatar(
+          backgroundColor: t.info.withValues(alpha: 0.12),
+          child: GlowIcon.resolve(
+            'profile',
+            color: t.info,
+            semanticLabel: 'Colaborador',
+          ),
+        ),
+        title: Text(
+          m['nombre'] ?? 'Colaborador',
+          style: TypographyTokens.body(t)
+              .copyWith(fontWeight: FontWeight.w600),
+        ),
+        subtitle: Text(
+          m['email'] ?? '',
+          style: TypographyTokens.bodySmall(t)
+              .copyWith(color: t.textSecondary),
+        ),
+        trailing: Container(
+          padding: const EdgeInsets.symmetric(
+              horizontal: Spacing.sm, vertical: Spacing.xs),
+          decoration: BoxDecoration(
+            color: t.brandPrimary.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(Radii.pill),
+          ),
+          child: Text(
+            subRol.replaceAll('_', ' '),
+            style: TextStyle(
+              fontFamily: TypographyFamilies.functional,
+              color: t.textAccent,
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Services tab ──────────────────────────────────────────────────────────
+
+  Widget _buildServicesTab(Token t) {
     final defaultServices = [
-      {'name': 'Corte + Cepillado Personalizado', 'price': '\$65.000 COP', 'duration': '45 min'},
-      {'name': 'Balayage & Colorimetría Avanzada', 'price': '\$280.000 COP', 'duration': '180 min'},
-      {'name': 'Manicura Semipermanente Profesional', 'price': '\$55.000 COP', 'duration': '60 min'},
-      {'name': 'Tratamiento Capilar Hidratante Plex', 'price': '\$95.000 COP', 'duration': '60 min'},
+      {
+        'name': 'Corte + Cepillado Personalizado',
+        'price': '\$65.000 COP',
+        'duration': '45 min',
+        'icon': 'hair',
+      },
+      {
+        'name': 'Balayage & Colorimetría Avanzada',
+        'price': '\$280.000 COP',
+        'duration': '180 min',
+        'icon': 'hair',
+      },
+      {
+        'name': 'Manicura Semipermanente Profesional',
+        'price': '\$55.000 COP',
+        'duration': '60 min',
+        'icon': 'nails',
+      },
+      {
+        'name': 'Tratamiento Capilar Hidratante Plex',
+        'price': '\$95.000 COP',
+        'duration': '60 min',
+        'icon': 'spa',
+      },
     ];
 
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(Spacing.lg),
       itemCount: defaultServices.length,
       itemBuilder: (context, index) {
         final s = defaultServices[index];
-        return Card(
-          color: _t.surfaceLevel1,
-          margin: const EdgeInsets.only(bottom: 12),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        return Container(
+          margin: const EdgeInsets.only(bottom: Spacing.md),
+          decoration: BoxDecoration(
+            color: t.surfaceLevel1,
+            borderRadius: BorderRadius.circular(Radii.md),
+            border: Border.all(color: t.borderSubtle),
+            boxShadow: AppShadow.soft(t),
+          ),
           child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(
+                horizontal: Spacing.lg, vertical: Spacing.sm),
             leading: Container(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(Spacing.md),
               decoration: BoxDecoration(
-                color: _t.status['success']!.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(10),
+                color: t.successBg,
+                borderRadius: BorderRadius.circular(Radii.sm),
               ),
               child: GlowIcon.resolve(
-                index == 2 ? 'nails' : 'beautyRitual',
-                color: _t.status['success']!,
+                s['icon']!,
+                size: GlowIconSize.sm,
+                color: t.success,
                 semanticLabel: 'Servicio',
               ),
             ),
             title: Text(
               s['name']!,
-              style: TypographyTokens.body(_t).copyWith(
-                color: _t.textPrimary,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TypographyTokens.body(t)
+                  .copyWith(fontWeight: FontWeight.w600),
             ),
             subtitle: Text(
               'Duración estimada: ${s['duration']}',
-              style: TypographyTokens.bodySmall(_t).copyWith(color: _t.textSecondary),
+              style: TypographyTokens.bodySmall(t)
+                  .copyWith(color: t.textSecondary),
             ),
             trailing: Text(
               s['price']!,
-              style: TypographyTokens.priceDisplay(_t).copyWith(
-                color: _t.brandPrimary,
-                fontSize: 15,
+              style: TypographyTokens.priceDisplay(t).copyWith(
+                color: t.brandPrimary,
+                fontSize: 14,
               ),
             ),
           ),
@@ -863,38 +1009,43 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
     );
   }
 
-  Widget _buildSettingsTab() {
+  // ── Settings tab ──────────────────────────────────────────────────────────
+
+  Widget _buildSettingsTab(Token t) {
     final address = _salonData?['direccion'] ?? 'Calle 127 # 7-18';
     final city = _salonData?['ciudad'] ?? 'Bogotá';
     final nit = _salonData?['nit'] ?? '901888777-1';
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(Spacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Card(
-            color: _t.surfaceLevel1,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          Container(
+            decoration: BoxDecoration(
+              color: t.surfaceLevel1,
+              borderRadius: BorderRadius.circular(Radii.lg),
+              border: Border.all(color: t.borderSubtle),
+              boxShadow: AppShadow.soft(t),
+            ),
             child: Padding(
-              padding: const EdgeInsets.all(20.0),
+              padding: const EdgeInsets.all(Spacing.xl),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'Información del Establecimiento',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: _t.textPrimary,
-                    ),
+                    style: TypographyTokens.h3(t),
                   ),
-                  Divider(color: _t.borderSubtle, height: 24),
-                  _buildSettingRow('badge', 'NIT / Registro', nit),
-                  _buildSettingRow('location', 'Dirección', '$address, $city'),
-                  _buildSettingRow('phone', 'Contacto', '+57 310 999 8877'),
-                  _buildSettingRow('star', 'Plan de suscripción', 'Free Trial (SaaS PRO)'),
+                  Divider(
+                      color: t.borderSubtle, height: Spacing.xxl),
+                  _buildSettingRow(t, 'badge', 'NIT / Registro', nit),
+                  _buildSettingRow(
+                      t, 'location', 'Dirección', '$address, $city'),
+                  _buildSettingRow(
+                      t, 'phone', 'Contacto', '+57 310 999 8877'),
+                  _buildSettingRow(
+                      t, 'star', 'Suscripción', 'Free Trial (SaaS PRO)'),
                 ],
               ),
             ),
@@ -904,20 +1055,29 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
     );
   }
 
-  Widget _buildSettingRow(String icon, String label, String value) {
+  Widget _buildSettingRow(
+      Token t, String icon, String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      padding: const EdgeInsets.symmetric(vertical: Spacing.sm),
       child: Row(
         children: [
-          GlowIcon.resolve(icon, size: GlowIconSize.sm, color: _t.brandPrimary, semanticLabel: label),
-          const SizedBox(width: 12),
-          Text('$label:', style: TypographyTokens.bodySmall(_t).copyWith(color: _t.textSecondary)),
-          const SizedBox(width: 8),
+          GlowIcon.resolve(
+            icon,
+            size: GlowIconSize.sm,
+            color: t.brandPrimary,
+            semanticLabel: label,
+          ),
+          const SizedBox(width: Spacing.md),
+          Text(
+            '$label:',
+            style: TypographyTokens.bodySmall(t)
+                .copyWith(color: t.textSecondary),
+          ),
+          const SizedBox(width: Spacing.sm),
           Expanded(
             child: Text(
               value,
-              style: TypographyTokens.body(_t).copyWith(
-                color: _t.textPrimary,
+              style: TypographyTokens.body(t).copyWith(
                 fontWeight: FontWeight.w600,
               ),
               overflow: TextOverflow.ellipsis,
@@ -928,38 +1088,77 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
     );
   }
 
+  // ── Shared components ─────────────────────────────────────────────────────
+
+  Widget _buildEmptyState({
+    required Token t,
+    required Widget icon,
+    required String message,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(Spacing.xxxl),
+      decoration: BoxDecoration(
+        color: t.surfaceLevel1,
+        borderRadius: BorderRadius.circular(Radii.lg),
+        border: Border.all(color: t.borderSubtle),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            icon,
+            const SizedBox(height: Spacing.md),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: TypographyTokens.bodySmall(t)
+                  .copyWith(color: t.textSecondary),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildKpiCard({
+    required Token t,
     required String title,
     required String value,
     required Widget icon,
+    Color? accentColor,
   }) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(Spacing.lg),
       decoration: BoxDecoration(
-        color: _t.surfaceLevel1,
-        borderRadius: BorderRadius.circular(16),
+        color: t.surfaceLevel1,
+        borderRadius: BorderRadius.circular(Radii.lg),
+        border: Border.all(color: t.borderSubtle),
+        boxShadow: AppShadow.soft(t),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          icon,
-          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(Spacing.sm),
+            decoration: BoxDecoration(
+              color: (accentColor ?? t.brandPrimary).withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(Radii.sm),
+            ),
+            child: icon,
+          ),
+          const SizedBox(height: Spacing.md),
           Text(
             value,
-            style: TypographyTokens.priceDisplay(_t).copyWith(
-              color: _t.textPrimary,
-            ),
+            style: TypographyTokens.priceDisplay(t),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: Spacing.xs),
           Text(
             title,
-            style: TypographyTokens.bodySmall(_t).copyWith(
-              color: _t.textSecondary,
-            ),
+            style: TypographyTokens.bodySmall(t)
+                .copyWith(color: t.textSecondary),
           ),
         ],
       ),
     );
   }
-
 }
