@@ -237,6 +237,9 @@ class AuthService {
     String? direccion,
     String? telefono,
     String? ciudad,
+    double? latitude,
+    double? longitude,
+    bool locationPublic = true,
   }) async {
     final baseUrl = await getBaseUrl();
     final token = await getToken();
@@ -253,6 +256,9 @@ class AuthService {
         'direccion': direccion,
         'telefono': telefono,
         'ciudad': ciudad,
+        if (latitude != null) 'latitude': latitude,
+        if (longitude != null) 'longitude': longitude,
+        'location_public': locationPublic,
       }),
     );
     if (response.statusCode == 201) {

@@ -2,7 +2,7 @@ class ProviderModel {
   final String id, fullName, avatarUrl, businessName, description;
   final double ratingAvg, latitude, longitude;
   final int ratingCount, distanceMeters;
-  final bool isVerified;
+  final bool isVerified, isSalon;
 
   double get rating => ratingAvg;
 
@@ -18,6 +18,7 @@ class ProviderModel {
     required this.distanceMeters,
     required this.latitude,
     required this.longitude,
+    this.isSalon = false,
   });
 
   factory ProviderModel.fromJson(Map<String, dynamic> json) => ProviderModel(
@@ -32,6 +33,7 @@ class ProviderModel {
         distanceMeters: _toSafeInt(json['distance_meters']),
         latitude: _toSafeDouble(json['latitude']),
         longitude: _toSafeDouble(json['longitude']),
+        isSalon: json['is_salon'] as bool? ?? false,
       );
 
   Map<String, dynamic> toJson() => {
@@ -46,6 +48,7 @@ class ProviderModel {
         'distance_meters': distanceMeters,
         'latitude': latitude,
         'longitude': longitude,
+        'is_salon': isSalon,
       };
 
   static double _toSafeDouble(v) => v == null

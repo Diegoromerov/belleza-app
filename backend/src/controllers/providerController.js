@@ -1,6 +1,7 @@
 const { pool } = require('../config/db');
+const { getPlansWithEntitlement, SAAS_CAPABILITIES } = require('../config/saasEntitlements');
 
-// GET /api/providers → LISTA DE PRESTADORES (Geolocalización con PostGIS)
+// GET /api/providers → LISTA DE PRESTADORES Y SALONES (Geolocalización con PostGIS y Entitlements)
 exports.getProviders = async (req, res) => {
   try {
     let lat = parseFloat(req.query.lat);
@@ -39,48 +40,85 @@ exports.getProviders = async (req, res) => {
       return res.status(400).json({ success: false, error: 'Coordenadas inválidas' });
     }
 
+    // Obtener dinámicamente los planes SaaS que tienen la capacidad MAP_VISIBILITY
+    const eligiblePlans = getPlansWithEntitlement(SAAS_CAPABILITIES.MAP_VISIBILITY);
+
     let result;
     try {
       const query = `
-        SELECT 
-          p.id, 
-          u.nombre as full_name, 
-          u.foto_url as avatar_url,
-          p.business_name, 
-          p.description,
-          p.rating_avg, 
-          p.rating_count, 
-          (p.estatus_verificacion = 'APROBADO') as is_verified,
-          ST_X(p.ubicacion::geometry) AS longitude,
-          ST_Y(p.ubicacion::geometry) AS latitude,
-          COALESCE(pl.tier, 'Creative Edge') as loyalty_tier,
-          ST_Distance(p.ubicacion, ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography) AS distance_meters
-        FROM perfiles_prestador p
-        INNER JOIN usuarios u ON p.id = u.id
-        LEFT JOIN provider_loyalty pl ON p.id = pl.provider_id
-        WHERE p.is_active = true AND p.estatus_verificacion = 'APROBADO'
-          AND ST_DWithin(
-            p.ubicacion, 
-            ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography,
-            CASE 
-              WHEN COALESCE(pl.tier, 'Creative Edge') = 'Visage Pro' THEN $3 * 1.15
-              ELSE $3
-            END
-          )
+        WITH all_entities AS (
+          -- 1. PRESTADORES INDIVIDUALES
+          SELECT 
+            p.id::text as id, 
+            u.nombre as full_name, 
+            u.foto_url as avatar_url,
+            p.business_name, 
+            p.description,
+            p.rating_avg, 
+            p.rating_count, 
+            (p.estatus_verificacion = 'APROBADO') as is_verified,
+            false as is_salon,
+            ST_X(p.ubicacion::geometry) AS longitude,
+            ST_Y(p.ubicacion::geometry) AS latitude,
+            COALESCE(pl.tier, 'Creative Edge') as loyalty_tier,
+            ST_Distance(p.ubicacion, ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography) AS distance_meters
+          FROM perfiles_prestador p
+          INNER JOIN usuarios u ON p.id = u.id
+          LEFT JOIN provider_loyalty pl ON p.id = pl.provider_id
+          WHERE p.is_active = true AND p.estatus_verificacion = 'APROBADO'
+            AND p.ubicacion IS NOT NULL
+            AND ST_DWithin(
+              p.ubicacion, 
+              ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography,
+              CASE 
+                WHEN COALESCE(pl.tier, 'Creative Edge') = 'Visage Pro' THEN $3 * 1.15
+                ELSE $3
+              END
+            )
+
+          UNION ALL
+
+          -- 2. SALONES SAAS CON MAP_VISIBILITY, LOCATION_ENABLED Y LOCATION_PUBLIC
+          SELECT
+            ('salon_' || s.id::text) as id,
+            s.nombre_salon as full_name,
+            '' as avatar_url,
+            s.nombre_salon as business_name,
+            COALESCE(s.direccion || CASE WHEN s.ciudad IS NOT NULL THEN ', ' || s.ciudad ELSE '' END, 'Salón de belleza profesional') as description,
+            5.0 as rating_avg,
+            5 as rating_count,
+            true as is_verified,
+            true as is_salon,
+            COALESCE(s.longitude, ST_X(s.ubicacion::geometry)) AS longitude,
+            COALESCE(s.latitude, ST_Y(s.ubicacion::geometry)) AS latitude,
+            'Creative Edge' as loyalty_tier,
+            ST_Distance(s.ubicacion, ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography) AS distance_meters
+          FROM salones s
+          WHERE s.ubicacion IS NOT NULL
+            AND s.location_enabled = true
+            AND s.location_public = true
+            AND UPPER(COALESCE(s.plan_saas, 'FREE_TRIAL')) = ANY($4)
+            AND ST_DWithin(
+              s.ubicacion,
+              ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography,
+              $3
+            )
+        )
+        SELECT * FROM all_entities
         ORDER BY 
           CASE 
-            WHEN COALESCE(pl.tier, 'Creative Edge') = 'Avant-Garde Elite' THEN 1
-            WHEN COALESCE(pl.tier, 'Creative Edge') = 'Visage Pro' THEN 2
+            WHEN loyalty_tier = 'Avant-Garde Elite' THEN 1
+            WHEN loyalty_tier = 'Visage Pro' THEN 2
             ELSE 3
           END ASC,
           distance_meters ASC;
       `;
-      result = await pool.query(query, [lon, lat, radius]);
+      result = await pool.query(query, [lon, lat, radius, eligiblePlans]);
     } catch (postgisErr) {
       console.warn('⚠️ Consulta de geolocalización PostGIS falló, ejecutando consulta de respaldo:', postgisErr.message);
       result = await pool.query(`
         SELECT 
-          p.id, 
+          p.id::text, 
           u.nombre as full_name, 
           u.foto_url as avatar_url,
           p.business_name, 
@@ -88,6 +126,7 @@ exports.getProviders = async (req, res) => {
           p.rating_avg, 
           p.rating_count, 
           (p.estatus_verificacion = 'APROBADO') as is_verified,
+          false as is_salon,
           4.6735 as latitude,
           -74.1422 as longitude,
           'Creative Edge' as loyalty_tier,
@@ -109,6 +148,7 @@ exports.getProviders = async (req, res) => {
       rating_avg: parseFloat(row.rating_avg) || 5.0,
       rating_count: parseInt(row.rating_count) || 1,
       is_verified: !!row.is_verified,
+      is_salon: !!row.is_salon,
       loyalty_tier: row.loyalty_tier || 'Creative Edge',
       distance_meters: Math.round(row.distance_meters || 0),
       latitude: parseFloat(row.latitude) || 4.6097,

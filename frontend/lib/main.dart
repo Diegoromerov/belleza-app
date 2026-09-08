@@ -2082,14 +2082,20 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                                 backgroundColor: isMen ? const Color(0xFF2A231C) : const Color(0xFFF5EBE6),
                                 backgroundImage: p.avatarUrl.isNotEmpty ? NetworkImage(p.avatarUrl) : null,
                                 child: p.avatarUrl.isEmpty
-                                    ? Text(
-                                        p.fullName.isNotEmpty ? p.fullName[0].toUpperCase() : '?',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: isMen ? const Color(0xFFD4AF37) : AppTheme.primary,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      )
+                                    ? (p.isSalon
+                                        ? const Icon(
+                                            Icons.storefront_rounded,
+                                            size: 20,
+                                            color: Color(0xFFD4AF37),
+                                          )
+                                        : Text(
+                                            p.fullName.isNotEmpty ? p.fullName[0].toUpperCase() : '?',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              color: isMen ? const Color(0xFFD4AF37) : AppTheme.primary,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ))
                                     : null,
                               ),
                             ),

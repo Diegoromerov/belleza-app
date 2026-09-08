@@ -1,5 +1,6 @@
 const { pool } = require('../config/db');
 const crypto = require('crypto');
+const { hasEntitlement, PLAN_ENTITLEMENTS, SAAS_CAPABILITIES } = require('../config/saasEntitlements');
 
 // ==========================================
 // 🏢 OBTENER MI SALÓN DE BELLEZA (SaaS Owner Profile)
@@ -8,7 +9,8 @@ exports.getMySalon = async (req, res) => {
   try {
     const ownerId = req.user.id;
     const salonRes = await pool.query(
-      `SELECT s.id, s.nombre_salon, s.nit, s.direccion, s.telefono, s.ciudad, s.plan_saas, s.id_dueno
+      `SELECT s.id, s.nombre_salon, s.nit, s.direccion, s.telefono, s.ciudad, s.plan_saas, s.id_dueno,
+              s.latitude, s.longitude, s.location_enabled, s.location_public
        FROM salones s
        WHERE s.id_dueno = $1
        LIMIT 1`,
@@ -25,9 +27,16 @@ exports.getMySalon = async (req, res) => {
         telefono: '3109998877',
         ciudad: 'Bogotá',
         plan_saas: 'FREE_TRIAL',
-        id_dueno: ownerId
+        id_dueno: ownerId,
+        latitude: 4.6735,
+        longitude: -74.1422,
+        location_enabled: true,
+        location_public: true,
       };
     }
+
+    const plan = salon.plan_saas || 'FREE_TRIAL';
+    const activeEntitlements = PLAN_ENTITLEMENTS[plan.toUpperCase()] || [];
 
     const membersRes = await pool.query(
       `SELECT sm.id, sm.user_id, u.nombre, u.email, u.phone, sm.sub_rol, sm.estatus, sm.creado_at
@@ -39,7 +48,11 @@ exports.getMySalon = async (req, res) => {
 
     res.json({
       success: true,
-      salon,
+      salon: {
+        ...salon,
+        entitlements: activeEntitlements,
+        can_show_on_map: salon.location_enabled && salon.location_public && hasEntitlement(plan, SAAS_CAPABILITIES.MAP_VISIBILITY)
+      },
       members: membersRes.rows
     });
   } catch (error) {
@@ -55,19 +68,46 @@ exports.createSalon = async (req, res) => {
   console.log('🏢 [DEBUG] ENTERED createSalon. Body:', req.body, 'User:', req.user);
   try {
     const ownerId = req.user.id;
-    const { nombre_salon, nit, direccion, telefono, ciudad } = req.body;
+    const { nombre_salon, nit, direccion, telefono, ciudad, latitude, longitude, location_public } = req.body;
 
     if (!nombre_salon) {
       return res.status(400).json({ error: 'El nombre del salón es obligatorio.' });
     }
 
-    // Insertar salón en la base de datos
-    const salonRes = await pool.query(
-      `INSERT INTO salones (nombre_salon, nit, direccion, telefono, ciudad, id_dueno, plan_saas)
-       VALUES ($1, $2, $3, $4, $5, $6, 'FREE_TRIAL')
-       RETURNING id, nombre_salon, nit, direccion, plan_saas`,
-      [nombre_salon, nit || null, direccion || null, telefono || null, ciudad || null, ownerId]
-    );
+    const lat = latitude !== undefined && latitude !== null ? parseFloat(latitude) : null;
+    const lon = longitude !== undefined && longitude !== null ? parseFloat(longitude) : null;
+    const hasValidCoords = lat !== null && !isNaN(lat) && lon !== null && !isNaN(lon);
+    const locationEnabled = hasValidCoords;
+    const isPublic = location_public !== undefined ? Boolean(location_public) : true;
+
+    // Insertar salón en la base de datos con PostGIS si hay coordenadas válidas
+    const query = `
+      INSERT INTO salones (
+        nombre_salon, nit, direccion, telefono, ciudad, id_dueno, plan_saas,
+        latitude, longitude, ubicacion, location_enabled, location_public
+      )
+      VALUES (
+        $1, $2, $3, $4, $5, $6, 'FREE_TRIAL',
+        $7, $8, 
+        CASE WHEN $7::numeric IS NOT NULL AND $8::numeric IS NOT NULL 
+             THEN ST_SetSRID(ST_MakePoint($8, $7), 4326)::geography 
+             ELSE NULL END,
+        $9, $10
+      )
+      RETURNING id, nombre_salon, nit, direccion, ciudad, telefono, plan_saas, latitude, longitude, location_enabled, location_public`;
+
+    const salonRes = await pool.query(query, [
+      nombre_salon,
+      nit || null,
+      direccion || null,
+      telefono || null,
+      ciudad || null,
+      ownerId,
+      hasValidCoords ? lat : null,
+      hasValidCoords ? lon : null,
+      locationEnabled,
+      isPublic
+    ]);
 
     const salon = salonRes.rows[0];
 
@@ -85,7 +125,7 @@ exports.createSalon = async (req, res) => {
       [ownerId]
     );
 
-    console.log(`🏢 Salón '${nombre_salon}' creado exitosamente para Dueño ID ${ownerId}`);
+    console.log(`🏢 Salón '${nombre_salon}' creado exitosamente para Dueño ID ${ownerId} (Ubicación: ${hasValidCoords ? `${lat}, ${lon}` : 'No especificada'})`);
 
     res.status(201).json({
       success: true,

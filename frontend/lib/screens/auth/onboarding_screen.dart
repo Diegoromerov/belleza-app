@@ -2,6 +2,9 @@
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/auth_service.dart';
@@ -27,6 +30,31 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final _salonAddressCtrl = TextEditingController();
   final _salonPhoneCtrl = TextEditingController();
   final _salonCityCtrl = TextEditingController();
+
+  // Ubicación física y publicación del Salón
+  final MapController _salonMapController = MapController();
+  LatLng _salonLocation = const LatLng(4.6735, -74.1422); // Bogotá por defecto
+  bool _salonLocationConfirmed = false;
+  bool _salonLocationPublic = true;
+  bool _isLocatingSalon = false;
+
+  static const List<String> _colombiaCities = [
+    'Bogotá',
+    'Medellín',
+    'Cali',
+    'Barranquilla',
+    'Cartagena',
+    'Bucaramanga',
+    'Pereira',
+    'Manizales',
+    'Santa Marta',
+    'Cúcuta',
+    'Ibagué',
+    'Villavicencio',
+    'Pasto',
+    'Armenia',
+    'Neiva',
+  ];
 
   @override
   void initState() {
@@ -86,20 +114,25 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         direccion: _salonAddressCtrl.text.trim(),
         telefono: _salonPhoneCtrl.text.trim(),
         ciudad: _salonCityCtrl.text.trim(),
+        latitude: _salonLocationConfirmed ? _salonLocation.latitude : null,
+        longitude: _salonLocationConfirmed ? _salonLocation.longitude : null,
+        locationPublic: _salonLocationPublic,
       );
-      if (res != null && res['success'] == true && mounted) {
+      if (res != null && res['success'] == true) {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('userRole', 'salon');
-        Navigator.pushReplacementNamed(context, '/salon');
+        if (mounted) {
+          Navigator.pushReplacementNamed(context, '/salon');
+        }
       } else {
         await AuthService.completeOnboarding(
           role: 'SALON',
           aceptarHabeasData: _habeasDataAccepted,
           aceptarTerminos: _terminosAccepted,
         );
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('userRole', 'salon');
         if (mounted) {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('userRole', 'salon');
           Navigator.pushReplacementNamed(context, '/salon');
         }
       }
@@ -610,8 +643,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
           const SizedBox(height: 14),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
+                flex: 3,
                 child: TextField(
                   controller: _salonAddressCtrl,
                   decoration: InputDecoration(
@@ -638,31 +673,246 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: TextField(
-                  controller: _salonCityCtrl,
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.white,
-                    labelText: 'Ciudad',
-                    labelStyle: const TextStyle(color: Color(0xFF4A3E39)),
-                    hintText: 'Ej. Bogotá',
-                    prefixIcon: const Icon(Icons.location_city_outlined, color: Color(0xFFC5A052)),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFEFE8DE)),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFEFE8DE)),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFC5A052), width: 1.5),
-                    ),
-                  ),
+                flex: 2,
+                child: Autocomplete<String>(
+                  initialValue: TextEditingValue(text: _salonCityCtrl.text),
+                  optionsBuilder: (TextEditingValue textEditingValue) {
+                    if (textEditingValue.text.isEmpty) {
+                      return _colombiaCities;
+                    }
+                    return _colombiaCities.where((city) =>
+                        city.toLowerCase().contains(textEditingValue.text.toLowerCase()));
+                  },
+                  onSelected: (String selection) {
+                    _salonCityCtrl.text = selection;
+                  },
+                  fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+                    controller.addListener(() {
+                      _salonCityCtrl.text = controller.text;
+                    });
+                    return TextField(
+                      controller: controller,
+                      focusNode: focusNode,
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: Colors.white,
+                        labelText: 'Ciudad',
+                        labelStyle: const TextStyle(color: Color(0xFF4A3E39)),
+                        hintText: 'Ej. Bogotá',
+                        prefixIcon: const Icon(Icons.location_city_outlined, color: Color(0xFFC5A052)),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Color(0xFFEFE8DE)),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Color(0xFFEFE8DE)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Color(0xFFC5A052), width: 1.5),
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 14),
+
+          // SECCIÓN DE MAPA INTERACTIVO Y CONFIRMACIÓN DE UBICACIÓN FÍSICA
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: _salonLocationConfirmed ? const Color(0xFFC5A052) : const Color(0xFFEFE8DE),
+                width: _salonLocationConfirmed ? 1.5 : 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.map_rounded,
+                          color: _salonLocationConfirmed ? const Color(0xFFC5A052) : const Color(0xFF4A3E39),
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Ubicación Física en Mapa',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1F1A15),
+                          ),
+                        ),
+                      ],
+                    ),
+                    TextButton.icon(
+                      onPressed: _isLocatingSalon
+                          ? null
+                          : () async {
+                              setState(() => _isLocatingSalon = true);
+                              try {
+                                LocationPermission permission = await Geolocator.checkPermission();
+                                if (permission == LocationPermission.denied) {
+                                  permission = await Geolocator.requestPermission();
+                                }
+                                if (permission == LocationPermission.whileInUse ||
+                                    permission == LocationPermission.always) {
+                                  final pos = await Geolocator.getCurrentPosition();
+                                  final newLoc = LatLng(pos.latitude, pos.longitude);
+                                  setState(() {
+                                    _salonLocation = newLoc;
+                                    _salonLocationConfirmed = true;
+                                  });
+                                  _salonMapController.move(newLoc, 15.5);
+                                }
+                              } catch (_) {}
+                              if (mounted) setState(() => _isLocatingSalon = false);
+                            },
+                      icon: _isLocatingSalon
+                          ? const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFC5A052)),
+                            )
+                          : const Icon(Icons.my_location, size: 16, color: Color(0xFFC5A052)),
+                      label: const Text(
+                        'Usar mi GPS',
+                        style: TextStyle(fontSize: 12, color: Color(0xFFC5A052), fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Toca o arrastra en el mapa para ubicar la sede de tu salón. Los clientes te encontrarán en Home con este punto.',
+                  style: TextStyle(fontSize: 12, color: Color(0xFF8C7E74)),
+                ),
+                const SizedBox(height: 10),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: SizedBox(
+                    height: 180,
+                    child: Stack(
+                      children: [
+                        FlutterMap(
+                          mapController: _salonMapController,
+                          options: MapOptions(
+                            initialCenter: _salonLocation,
+                            initialZoom: 14.5,
+                            onTap: (tapPosition, point) {
+                              setState(() {
+                                _salonLocation = point;
+                                _salonLocationConfirmed = true;
+                              });
+                            },
+                          ),
+                          children: [
+                            TileLayer(
+                              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                              userAgentPackageName: 'com.glowapp.beauty_app',
+                            ),
+                            MarkerLayer(
+                              markers: [
+                                Marker(
+                                  point: _salonLocation,
+                                  width: 46,
+                                  height: 46,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFC5A052),
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: Colors.white, width: 2.5),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withValues(alpha: 0.35),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 3),
+                                        ),
+                                      ],
+                                    ),
+                                    child: const Icon(
+                                      Icons.storefront_rounded,
+                                      color: Colors.white,
+                                      size: 24,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        Positioned(
+                          bottom: 8,
+                          left: 8,
+                          right: 8,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.75),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  _salonLocationConfirmed ? Icons.check_circle : Icons.touch_app,
+                                  color: _salonLocationConfirmed ? const Color(0xFFC5A052) : Colors.white,
+                                  size: 15,
+                                ),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    _salonLocationConfirmed
+                                        ? 'Ubicación confirmada: ${_salonLocation.latitude.toStringAsFixed(4)}, ${_salonLocation.longitude.toStringAsFixed(4)}'
+                                        : 'Toca el mapa para fijar el marcador exacto',
+                                    style: const TextStyle(color: Colors.white, fontSize: 11),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SwitchListTile.adaptive(
+                  value: _salonLocationPublic,
+                  onChanged: (val) {
+                    setState(() => _salonLocationPublic = val);
+                  },
+                  activeTrackColor: const Color(0xFFC5A052),
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text(
+                    'Publicar ubicación en el Mapa de GlowApp',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1F1A15)),
+                  ),
+                  subtitle: const Text(
+                    'Permite que nuevos clientes vean tu salón y reserven citas directas desde Home.',
+                    style: TextStyle(fontSize: 11, color: Color(0xFF8C7E74)),
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 14),
           TextField(
