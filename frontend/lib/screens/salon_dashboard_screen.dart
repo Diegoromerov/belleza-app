@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 import '../services/auth_service.dart';
 import '../services/api_service.dart';
 import 'provider/business/business_dashboard_screen.dart';
+import '../core/theme/tokens.dart';
+import '../design/icons/glow_icon.dart';
 
 class SalonDashboardScreen extends StatefulWidget {
   const SalonDashboardScreen({super.key});
@@ -22,7 +24,6 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
   List<Map<String, dynamic>> _members = [];
   List<Map<String, dynamic>> _bookings = [];
 
-  // Controllers para invitar miembros
   final _inviteEmailCtrl = TextEditingController();
   String _selectedSubRole = 'PRESTADOR_INDEPENDIENTE';
   bool _isInviting = false;
@@ -57,7 +58,6 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
         final membersList =
             rawMembers.map((m) => Map<String, dynamic>.from(m)).toList();
 
-        // Cargar citas de la API de proveedores
         List<Map<String, dynamic>> bookingsList = [];
         try {
           bookingsList = await ApiService.fetchProviderBookings();
@@ -71,21 +71,19 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
             _loading = false;
           });
         }
-      } else {
-        if (mounted) {
-          setState(() {
-            _salonData = {
-              'id': 1,
-              'nombre_salon': 'Salón Elegance Studio',
-              'nit': '901888777-1',
-              'direccion': 'Calle 127 # 7-18',
-              'telefono': '3109998877',
-              'ciudad': 'Bogotá',
-              'plan_saas': 'FREE_TRIAL',
-            };
-            _loading = false;
-          });
-        }
+      } else if (mounted) {
+        setState(() {
+          _salonData = {
+            'id': 1,
+            'nombre_salon': 'Salón Elegance Studio',
+            'nit': '901888777-1',
+            'direccion': 'Calle 127 # 7-18',
+            'telefono': '3109998877',
+            'ciudad': 'Bogotá',
+            'plan_saas': 'FREE_TRIAL',
+          };
+          _loading = false;
+        });
       }
     } catch (e) {
       if (mounted) {
@@ -107,7 +105,7 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
       builder: (ctx) => StatefulBuilder(
         builder: (context, setModalState) {
           return AlertDialog(
-            backgroundColor: const Color(0xFF1E293B),
+            backgroundColor: _t.surfaceLevel1,
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: Row(
@@ -117,7 +115,7 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
                 Text(
                   'Invitar al Equipo',
                   style: TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.bold),
+                      color: _t.textPrimary, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -126,42 +124,45 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Ingresa el correo del colaborador para generar el enlace de invitación:',
-                    style: TextStyle(color: Colors.white70, fontSize: 13),
+                  Text(
+                    'Agrega el correo del colaborador y define su rol dentro del salón.',
+                    style: _t.bodySmallContext.copyWith(color: _t.textSecondary),
                   ),
                   const SizedBox(height: 16),
                   TextField(
                     controller: _inviteEmailCtrl,
-                    style: const TextStyle(color: Colors.white),
+                    style: TextStyle(color: _t.textPrimary),
                     decoration: InputDecoration(
                       labelText: 'Correo Electrónico',
-                      labelStyle: const TextStyle(color: Colors.white60),
+                      labelStyle: TextStyle(color: _t.textSecondary),
                       filled: true,
-                      fillColor: const Color(0xFF0F172A),
+                      fillColor: _t.surfaceLevel0,
                       border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12)),
-                      prefixIcon:
-                          const Icon(Icons.email, color: Color(0xFFF3D59B)),
+                      prefixIcon: GlowIcon.resolve(
+                        'mail',
+                        color: _t.brandPrimary,
+                        semanticLabel: 'Correo electrónico',
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
                   const Text('Rol en el Salón:',
-                      style: TextStyle(color: Colors.white70, fontSize: 13)),
+                      style: TextStyle(color: _t.textSecondary, fontSize: 13)),
                   const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF0F172A),
+                      color: _t.surfaceLevel0,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.white24),
+                      border: Border.all(color: _t.glowBorderSubtle),
                     ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
                         value: _selectedSubRole,
-                        dropdownColor: const Color(0xFF0F172A),
+                        dropdownColor: _t.surfaceLevel0,
                         isExpanded: true,
-                        style: const TextStyle(color: Colors.white),
+                        style: TextStyle(color: _t.textPrimary),
                         items: const [
                           DropdownMenuItem(
                             value: 'ADMINISTRADOR',
@@ -193,22 +194,22 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.green.withValues(alpha: 0.2),
+                        color: _t.status['success_bg'],
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.greenAccent),
+                        border: Border.all(color: _t.status['success']!),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text('✅ ¡Invitación Generada!',
                               style: TextStyle(
-                                  color: Colors.greenAccent,
+                                  color: _t.status['success']!,
                                   fontWeight: FontWeight.bold)),
                           const SizedBox(height: 6),
                           SelectableText(
                             _inviteResultLink!,
                             style: const TextStyle(
-                                color: Colors.white, fontSize: 12),
+                                color: _t.textPrimary, fontSize: 12),
                           ),
                           const SizedBox(height: 8),
                           ElevatedButton.icon(
@@ -221,11 +222,16 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
                                         'Enlace copiado al portapapeles')),
                               );
                             },
-                            icon: const Icon(Icons.copy, size: 16),
+                            icon: GlowIcon.resolve(
+                              'copy',
+                              size: GlowIconSize.sm,
+                              color: _t.surfaceLevel1,
+                              semanticLabel: 'Copiar enlace',
+                            ),
                             label: const Text('Copiar Enlace'),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFC5A052),
-                              foregroundColor: const Color(0xFF1F1A15),
+                              backgroundColor: _t.brandPrimary,
+                              foregroundColor: _t.surfaceLevel1,
                             ),
                           ),
                         ],
@@ -239,7 +245,7 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
                 child: const Text('Cancelar',
-                    style: TextStyle(color: Colors.white60)),
+                    style: TextStyle(color: _t.textSecondary)),
               ),
               ElevatedButton(
                 onPressed: _isInviting
@@ -285,8 +291,8 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
                         }
                       },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFC5A052),
-                  foregroundColor: const Color(0xFF1F1A15),
+                  backgroundColor: _t.brandPrimary,
+                  foregroundColor: _t.surfaceLevel1,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
                 ),
@@ -311,6 +317,8 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
     }
   }
 
+  Token get _t => Token.light;
+
   @override
   Widget build(BuildContext context) {
     final salonName =
@@ -318,19 +326,19 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
     final planSaas = _salonData?['plan_saas'] ?? 'FREE_TRIAL';
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
+      backgroundColor: _t.surfaceLevel0,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1E293B),
+        backgroundColor: _t.surfaceLevel1,
         elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        titleSpacing: 16,
         title: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFC5A052).withValues(alpha: 0.2),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.storefront, color: Color(0xFFF3D59B)),
+            GlowIcon.resolve(
+              'storefront',
+              size: GlowIconSize.lg,
+              color: _t.brandPrimary,
+              semanticLabel: 'Salón',
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -339,36 +347,30 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
                 children: [
                   Text(
                     salonName,
-                    style: const TextStyle(
-                      fontFamily: 'CormorantGaramond',
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+                    style: _t.h3Context.copyWith(color: _t.textPrimary),
                     overflow: TextOverflow.ellipsis,
                   ),
                   Row(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFC5A052),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          planSaas.toUpperCase().replaceAll('_', ' '),
-                          style: const TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF1F1A15),
-                          ),
+                      Text(
+                        'SALÓN',
+                        style: TextStyle(
+                          fontFamily: TypographyFamilies.functional,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1.0,
+                          color: _t.textSecondary,
                         ),
                       ),
                       const SizedBox(width: 8),
-                      const Text(
-                        'Panel SaaS Salón',
-                        style: TextStyle(fontSize: 11, color: Colors.white60),
+                      Text(
+                        planSaas.toString().replaceAll('_', ' '),
+                        style: TextStyle(
+                          fontFamily: TypographyFamilies.data,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: _t.textSecondary,
+                        ),
                       ),
                     ],
                   ),
@@ -379,52 +381,114 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.white70),
+            icon: GlowIcon.resolve(
+              'refresh',
+              color: _t.textSecondary,
+              semanticLabel: 'Actualizar datos',
+            ),
             onPressed: _fetchSalonData,
             tooltip: 'Actualizar datos',
           ),
           IconButton(
-            icon: const Icon(Icons.logout, color: Color(0xFFF87171)),
+            icon: GlowIcon.resolve(
+              'logout',
+              color: _t.textSecondary,
+              semanticLabel: 'Cerrar sesión',
+            ),
             onPressed: _handleLogout,
-            tooltip: 'Cerrar Sesión',
+            tooltip: 'Cerrar sesión',
           ),
         ],
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: const Color(0xFFF3D59B),
-          labelColor: const Color(0xFFF3D59B),
-          unselectedLabelColor: Colors.white60,
-          tabs: const [
-            Tab(icon: Icon(Icons.dashboard_outlined), text: 'Resumen'),
-            Tab(icon: Icon(Icons.people_alt_outlined), text: 'Equipo'),
-            Tab(icon: Icon(Icons.cut_outlined), text: 'Servicios'),
-            Tab(icon: Icon(Icons.settings_outlined), text: 'Ajustes'),
+          indicatorColor: _t.brandPrimary,
+          indicatorWeight: 3,
+          labelColor: _t.brandPrimary,
+          unselectedLabelColor: _t.textSecondary,
+          labelStyle: TextStyle(
+            fontFamily: TypographyFamilies.functional,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
+          unselectedLabelStyle: TextStyle(
+            fontFamily: TypographyFamilies.functional,
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+          ),
+          tabs: [
+            Tab(
+              icon: GlowIcon.resolve('dashboard',
+                  size: GlowIconSize.sm, color: _t.brandPrimary),
+              text: 'Resumen',
+            ),
+            Tab(
+              icon: GlowIcon.resolve('profile',
+                  size: GlowIconSize.sm, color: _t.textSecondary),
+              text: 'Equipo',
+            ),
+            Tab(
+              icon: GlowIcon.resolve('hair',
+                  size: GlowIconSize.sm, color: _t.textSecondary),
+              text: 'Servicios',
+            ),
+            Tab(
+              icon: GlowIcon.resolve('settings',
+                  size: GlowIconSize.sm, color: _t.textSecondary),
+              text: 'Ajustes',
+            ),
           ],
         ),
       ),
       body: _loading
-          ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFFC5A052)))
+          ? Center(
+              child: CircularProgressIndicator(color: _t.brandPrimary),
+            )
           : _error != null
               ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.error_outline,
-                          size: 48, color: Colors.redAccent),
-                      const SizedBox(height: 16),
-                      Text(_error!,
-                          style: const TextStyle(color: Colors.white70)),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: _fetchSalonData,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFC5A052),
-                          foregroundColor: const Color(0xFF1F1A15),
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        GlowIcon.resolve(
+                          'error',
+                          size: GlowIconSize.xl,
+                          color: _t.status['error']!,
+                          semanticLabel: 'Error',
                         ),
-                        child: const Text('Reintentar'),
-                      ),
-                    ],
+                        const SizedBox(height: 16),
+                        Text(
+                          _error!,
+                          textAlign: TextAlign.center,
+                          style: _t.bodyContext.copyWith(
+                            color: _t.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          height: 48,
+                          child: ElevatedButton(
+                            onPressed: _fetchSalonData,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _t.brandPrimary,
+                              foregroundColor: _t.surfaceLevel1,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: Text(
+                              'Reintentar',
+                              style: TextStyle(
+                                fontFamily: TypographyFamilies.functional,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 )
               : TabBarView(
@@ -436,22 +500,12 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
                     _buildSettingsTab(),
                   ],
                 ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showInviteDialog,
-        backgroundColor: const Color(0xFFC5A052),
-        foregroundColor: const Color(0xFF1F1A15),
-        icon: const Icon(Icons.person_add),
-        label: const Text(
-          'Invitar Colaborador',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-      ),
     );
   }
 
   Widget _buildOverviewTab() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(20.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -463,7 +517,7 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
                   title: 'Citas Hoy',
                   value: '${_bookings.length}',
                   icon: Icons.calendar_today,
-                  color: const Color(0xFF38BDF8),
+                  color: _t.status['info']!,
                 ),
               ),
               const SizedBox(width: 12),
@@ -472,7 +526,7 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
                   title: 'Equipo Activo',
                   value: '${_members.length}',
                   icon: Icons.badge,
-                  color: const Color(0xFF34D399),
+                  color: _t.status['success']!,
                 ),
               ),
             ],
@@ -558,18 +612,19 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
           // Título Agenda
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: const [
+            children: [
               Text(
-                'Agenda del Salón',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+                'Agenda del salón',
+                style: _t.h3Context.copyWith(color: _t.textPrimary),
               ),
               Text(
                 'Hoy',
-                style: TextStyle(color: Color(0xFFF3D59B)),
+                style: TextStyle(
+                  fontFamily: TypographyFamilies.functional,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: _t.brandPrimary,
+                ),
               ),
             ],
           ),
@@ -579,18 +634,18 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
               ? Container(
                   padding: const EdgeInsets.all(32),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1E293B),
+                    color: _t.surfaceLevel1,
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Center(
                     child: Column(
                       children: const [
                         Icon(Icons.event_available,
-                            size: 40, color: Colors.white38),
+                            size: 40, color: _t.textSecondary),
                         SizedBox(height: 12),
                         Text(
                           'No hay citas agendadas para hoy',
-                          style: TextStyle(color: Colors.white60),
+                          style: TextStyle(color: _t.textSecondary),
                         ),
                       ],
                     ),
@@ -603,37 +658,40 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
                   itemBuilder: (context, index) {
                     final b = _bookings[index];
                     return Card(
-                      color: const Color(0xFF1E293B),
+                      color: _t.surfaceLevel1,
                       margin: const EdgeInsets.only(bottom: 10),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
                       child: ListTile(
                         leading: CircleAvatar(
                           backgroundColor:
-                              const Color(0xFFC5A052).withValues(alpha: 0.2),
-                          child: const Icon(Icons.content_cut,
-                              color: Color(0xFFF3D59B)),
+                              _t.brandPrimary.withValues(alpha: 0.2),
+                          child: GlowIcon.resolve(
+                            'hair',
+                            color: _t.brandPrimary,
+                            semanticLabel: 'Servicio',
+                          ),
                         ),
                         title: Text(
                           b['service_name'] ?? 'Servicio de Belleza',
                           style: const TextStyle(
-                              color: Colors.white, fontWeight: FontWeight.bold),
+                              color: _t.textPrimary, fontWeight: FontWeight.bold),
                         ),
                         subtitle: Text(
                           'Cliente: ${b['client_name'] ?? 'Cliente Demo'}',
-                          style: const TextStyle(color: Colors.white60),
+                          style: _t.bodySmallContext.copyWith(color: _t.textSecondary),
                         ),
                         trailing: Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: Colors.green.withValues(alpha: 0.2),
+                            color: _t.status['success_bg'],
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
                             (b['status'] ?? 'CONFIRMADA').toUpperCase(),
                             style: const TextStyle(
-                              color: Colors.greenAccent,
+                              color: _t.status['success']!,
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
                             ),
@@ -662,16 +720,21 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: _t.textPrimary,
                 ),
               ),
               ElevatedButton.icon(
                 onPressed: _showInviteDialog,
-                icon: const Icon(Icons.add, size: 18),
+                icon: GlowIcon.resolve(
+                    'profile',
+                    size: GlowIconSize.sm,
+                    color: _t.surfaceLevel1,
+                    semanticLabel: 'Invitar',
+                  ),
                 label: const Text('Invitar'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFC5A052),
-                  foregroundColor: const Color(0xFF1F1A15),
+                  backgroundColor: _t.brandPrimary,
+                  foregroundColor: _t.surfaceLevel1,
                 ),
               ),
             ],
@@ -681,13 +744,13 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
               ? Container(
                   padding: const EdgeInsets.all(32),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1E293B),
+                    color: _t.surfaceLevel1,
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: const Center(
                     child: Text(
                       'Aún no has agregado colaboradores a tu equipo.',
-                      style: TextStyle(color: Colors.white60),
+                      style: TextStyle(color: _t.textSecondary),
                     ),
                   ),
                 )
@@ -699,34 +762,36 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
                     final m = _members[index];
                     final subRol = m['sub_rol'] ?? 'DUEÑO';
                     return Card(
-                      color: const Color(0xFF1E293B),
+                      color: _t.surfaceLevel1,
                       margin: const EdgeInsets.only(bottom: 10),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
                       child: ListTile(
                         leading: CircleAvatar(
                           backgroundColor:
-                              const Color(0xFF38BDF8).withValues(alpha: 0.2),
-                          child: const Icon(Icons.person,
-                              color: Color(0xFF38BDF8)),
+                              _t.status['info']!.withValues(alpha: 0.2),
+                          child: GlowIcon.resolve(
+                            'profile',
+                            color: _t.status['info']!,
+                            semanticLabel: 'Colaborador',
+                          ),
                         ),
                         title: Text(
                           m['nombre'] ?? 'Colaborador',
                           style: const TextStyle(
-                              color: Colors.white, fontWeight: FontWeight.bold),
+                              color: _t.textPrimary, fontWeight: FontWeight.bold),
                         ),
                         subtitle: Text(
                           m['email'] ?? '',
-                          style: const TextStyle(color: Colors.white60),
+                          style: _t.bodySmallContext.copyWith(color: _t.textSecondary),
                         ),
                         trailing: Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFC5A052).withValues(alpha: 0.2),
+                            color: _t.brandPrimary.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: const Color(0xFFC5A052)),
-                          ),
+                                ),
                           child: Text(
                             subRol.replaceAll('_', ' '),
                             style: const TextStyle(
@@ -759,7 +824,7 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
       itemBuilder: (context, index) {
         final s = defaultServices[index];
         return Card(
-          color: const Color(0xFF1E293B),
+          color: _t.surfaceLevel1,
           margin: const EdgeInsets.only(bottom: 12),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -767,25 +832,30 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
             leading: Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: const Color(0xFF34D399).withValues(alpha: 0.2),
+                color: _t.status['success']!.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.style, color: Color(0xFF34D399)),
+              child: GlowIcon.resolve(
+                index == 2 ? 'nails' : 'beautyRitual',
+                color: _t.status['success']!,
+                semanticLabel: 'Servicio',
+              ),
             ),
             title: Text(
               s['name']!,
-              style: const TextStyle(
-                  color: Colors.white, fontWeight: FontWeight.bold),
+              style: _t.bodyContext.copyWith(
+                color: _t.textPrimary,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             subtitle: Text(
               'Duración estimada: ${s['duration']}',
-              style: const TextStyle(color: Colors.white60),
+              style: _t.bodySmallContext.copyWith(color: _t.textSecondary),
             ),
             trailing: Text(
               s['price']!,
-              style: const TextStyle(
-                color: Color(0xFFF3D59B),
-                fontWeight: FontWeight.bold,
+              style: TypographyTokens.priceDisplay(_t).copyWith(
+                color: _t.brandPrimary,
                 fontSize: 15,
               ),
             ),
@@ -806,7 +876,7 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Card(
-            color: const Color(0xFF1E293B),
+            color: _t.surfaceLevel1,
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Padding(
@@ -819,14 +889,14 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: _t.textPrimary,
                     ),
                   ),
-                  const Divider(color: Colors.white24, height: 24),
-                  _buildSettingRow(Icons.pin, 'NIT / Registro', nit),
-                  _buildSettingRow(Icons.location_on, 'Dirección', '$address, $city'),
-                  _buildSettingRow(Icons.phone, 'Contacto', '+57 310 999 8877'),
-                  _buildSettingRow(Icons.star, 'Plan de Suscripción', 'Free Trial (SaaS PRO)'),
+                  const Divider(color: _t.glowBorderSubtle, height: 24),
+                  _buildSettingRow('badge', 'NIT / Registro', nit),
+                  _buildSettingRow('location', 'Dirección', '$address, $city'),
+                  _buildSettingRow('phone', 'Contacto', '+57 310 999 8877'),
+                  _buildSettingRow('star', 'Plan de suscripción', 'Free Trial (SaaS PRO)'),
                 ],
               ),
             ),
@@ -836,20 +906,22 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
     );
   }
 
-  Widget _buildSettingRow(IconData icon, String label, String value) {
+  Widget _buildSettingRow(String icon, String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: const Color(0xFFF3D59B)),
+          GlowIcon.resolve(icon, size: GlowIconSize.sm, color: _t.brandPrimary, semanticLabel: label),
           const SizedBox(width: 12),
-          Text('$label:', style: const TextStyle(color: Colors.white60)),
+          Text('$label:', style: _t.bodySmallContext.copyWith(color: _t.textSecondary)),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(
-                  color: Colors.white, fontWeight: FontWeight.bold),
+              style: _t.bodyContext.copyWith(
+                color: _t.textPrimary,
+                fontWeight: FontWeight.w600,
+              ),
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -861,36 +933,35 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
   Widget _buildKpiCard({
     required String title,
     required String value,
-    required IconData icon,
-    required Color color,
+    required Widget icon,
   }) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
+        color: _t.surfaceLevel1,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: color, size: 24),
+          icon,
           const SizedBox(height: 12),
           Text(
             value,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+            style: TypographyTokens.priceDisplay(_t).copyWith(
+              color: _t.textPrimary,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             title,
-            style: const TextStyle(color: Colors.white60, fontSize: 12),
+            style: _t.bodySmallContext.copyWith(
+              color: _t.textSecondary,
+            ),
           ),
         ],
       ),
     );
   }
+
 }
