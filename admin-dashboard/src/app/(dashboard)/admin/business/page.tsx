@@ -39,7 +39,7 @@ interface TemplateItem {
 }
 
 export default function AdminBusinessPage() {
-  const { user, token } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
 
   const [activeTab, setActiveTab] = useState<'queue' | 'templates' | 'kpis'>('queue');
@@ -52,6 +52,8 @@ export default function AdminBusinessPage() {
   const [notes, setNotes] = useState<string>('');
   const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null);
 
+  const getToken = () => (typeof window !== 'undefined' ? localStorage.getItem('glow_token') || localStorage.getItem('adminToken') : null);
+
   // RBAC Direct URL Protection
   useEffect(() => {
     if (!loading && (!user || user.rol !== 'ADMIN')) {
@@ -63,6 +65,7 @@ export default function AdminBusinessPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
+      const token = getToken();
       const headers = {
         'Authorization': `Bearer ${token || 'admin-token'}`,
         'Content-Type': 'application/json'
@@ -90,12 +93,13 @@ export default function AdminBusinessPage() {
 
   useEffect(() => {
     fetchData();
-  }, [token]);
+  }, []);
 
   // Approve / Reject Evidence
   const handleReview = async (evidenceId: string, action: 'APPROVED' | 'REJECTED') => {
     setActionLoading(evidenceId);
     try {
+      const token = getToken();
       const res = await fetch(`/api/v1/business/admin/evidence/${evidenceId}`, {
         method: 'PUT',
         headers: {
@@ -127,6 +131,7 @@ export default function AdminBusinessPage() {
   const handleGenerateDocument = async () => {
     setLoading(true);
     try {
+      const token = getToken();
       const res = await fetch('/api/v1/business/documents/generate', {
         method: 'POST',
         headers: {
