@@ -379,11 +379,6 @@ app.use('/api/community', communityRoutes);
 app.use('/api/mentorship', mentorshipRoutes);
 app.use('/api/xp-logs', xpLogRoutes);
 
-// 🔹 Handler 404 explícito para peticiones /api/* (garantiza respuesta JSON y evita enviar HTML)
-app.use('/api/*', (req, res) => {
-  res.status(404).json({ success: false, error: `Ruta API no encontrada: ${req.method} ${req.originalUrl}` });
-});
-
 // ==========================================
 // RUTAS PÚBLICAS
 // ===// ==========================================
@@ -1320,7 +1315,10 @@ app.put('/api/portfolio/:id', authMiddleware, async (req, res) => {
 // 🔹 NUEVOS ENDPOINTS: Sistema de Chat y Mensajería
 // ==========================================
 
-// 🔹 RUTAS DE CHAT REFACTORIZADAS (Movidas a chatRoutes.js y chatController.js)
+// 🔹 Handler 404 explícito para peticiones /api/* (garantiza respuesta JSON y evita enviar HTML)
+app.use('/api/*', (req, res) => {
+  res.status(404).json({ success: false, error: `Ruta API no encontrada: ${req.method} ${req.originalUrl}` });
+});
 
 const initDatabase = async () => {
   const dbErrors = [];
