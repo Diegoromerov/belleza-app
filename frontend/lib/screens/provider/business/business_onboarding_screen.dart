@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/theme/tokens.dart';
+import '../../../../data/colombia_municipalities.dart';
 import '../../../../services/business_api_service.dart';
 
 /// GLOWAPP BUSINESS ONBOARDING SCREEN (Flutter Expert Refactored)
@@ -162,16 +163,37 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
             ),
             const SizedBox(height: 16),
 
-            const Text('Ciudad de Operación', style: TextStyle(fontWeight: FontWeight.bold, color: obsidianBg)),
+            const Text('Ciudad o Municipio de Operación', style: TextStyle(fontWeight: FontWeight.bold, color: obsidianBg)),
             const SizedBox(height: 8),
-            TextField(
-              controller: _cityController,
-              decoration: InputDecoration(
-                fillColor: Colors.white,
-                filled: true,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                prefixIcon: const Icon(Icons.location_city, color: obsidianBg),
-              ),
+            Autocomplete<String>(
+              initialValue: TextEditingValue(text: _cityController.text),
+              optionsBuilder: (TextEditingValue textEditingValue) {
+                if (textEditingValue.text.isEmpty) {
+                  return colombiaMunicipalities.take(15);
+                }
+                final query = textEditingValue.text.toLowerCase();
+                return colombiaMunicipalities.where((municipality) =>
+                    municipality.toLowerCase().contains(query)).take(25);
+              },
+              onSelected: (String selection) {
+                _cityController.text = selection;
+              },
+              fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+                controller.addListener(() {
+                  _cityController.text = controller.text;
+                });
+                return TextField(
+                  controller: controller,
+                  focusNode: focusNode,
+                  decoration: InputDecoration(
+                    fillColor: Colors.white,
+                    filled: true,
+                    hintText: 'Ej. Chía (Cundinamarca) o Medellín (Antioquia)',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    prefixIcon: const Icon(Icons.location_city, color: obsidianBg),
+                  ),
+                );
+              },
             ),
             const SizedBox(height: 32),
 
