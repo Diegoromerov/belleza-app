@@ -207,7 +207,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('userRole', 'salon');
         if (mounted) {
-          Navigator.pushReplacementNamed(context, '/salon');
+          Navigator.pushReplacementNamed(context, '/salon-hub');
         }
       } else {
         await AuthService.completeOnboarding(
@@ -218,7 +218,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('userRole', 'salon');
         if (mounted) {
-          Navigator.pushReplacementNamed(context, '/salon');
+          Navigator.pushReplacementNamed(context, '/salon-hub');
         }
       }
     } catch (e) {

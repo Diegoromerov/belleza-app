@@ -33,6 +33,7 @@ import 'screens/auth/accept_invitation_screen.dart';
 import 'screens/provider_detail_screen.dart';
 import 'screens/provider_dashboard_screen.dart';
 import 'screens/salon_dashboard_screen.dart';
+import 'screens/salon/salon_hub_screen.dart';
 import 'screens/client_bookings_screen.dart';
 import 'screens/provider_services_screen.dart';
 import 'screens/provider_portfolio_screen.dart';
@@ -208,6 +209,7 @@ class BeautyApp extends StatelessWidget {
                 '/my-glow': (_) => const MyGlowDashboardScreen(),   // Rol CLIENTE (Tablero VIP Ritual)
                 '/provider': (_) => const ProviderDashboardScreen(), // Rol PRESTADOR (Tablero Pro Independiente)
                 '/salon': (_) => const SalonDashboardScreen(),       // Rol SALON (Tablero SaaS Salón)
+                '/salon-hub': (_) => const SalonHubScreen(),         // Hub Selector de Momento Empresarial (Dueño)
 
                 // 3. Sub-Módulos del Prestador / Salón
                 '/provider/services': (_) => const ProviderServicesScreen(),

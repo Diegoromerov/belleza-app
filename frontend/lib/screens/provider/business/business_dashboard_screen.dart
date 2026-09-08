@@ -35,6 +35,14 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
         elevation: 0,
         actions: [
           IconButton(
+            icon: const Icon(Icons.dashboard_customize, color: gold871),
+            tooltip: 'Ir a mi Tablero SaaS',
+            onPressed: () {
+              HapticFeedback.mediumImpact();
+              Navigator.pushReplacementNamed(context, '/salon');
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.add_business),
             tooltip: 'Nuevo Diagnóstico',
             onPressed: () {
