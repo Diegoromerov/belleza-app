@@ -7,6 +7,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
 import '../../services/auth_service.dart';
 import '../../shared/theme.dart';
 import '../../data/colombia_municipalities.dart';
@@ -57,6 +58,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     'Circular',
   ];
 
+  bool _isGeocodingAddress = false;
+
   void _syncComposedAddress() {
     if (_useManualAddress) return;
     final via = _viaType;
@@ -76,6 +79,61 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     if (comp.isNotEmpty) address += ', $comp';
 
     _salonAddressCtrl.text = address;
+  }
+
+  /// Geocodifica la dirección y centra/fija el marcador en el mapa automáticamente
+  Future<void> _geocodeAddressAndFixOnMap() async {
+    final address = _salonAddressCtrl.text.trim();
+    final cityRaw = _salonCityCtrl.text.trim();
+
+    if (address.isEmpty && cityRaw.isEmpty) return;
+
+    setState(() => _isGeocodingAddress = true);
+
+    try {
+      // Extraer nombre limpio de ciudad sin departamento entre paréntesis
+      String cleanCity = cityRaw;
+      if (cleanCity.contains('(')) {
+        cleanCity = cleanCity.split('(').first.trim();
+      }
+
+      final queryParts = <String>[];
+      if (address.isNotEmpty) queryParts.add(address);
+      if (cleanCity.isNotEmpty) queryParts.add(cleanCity);
+      queryParts.add('Colombia');
+      final fullQuery = queryParts.join(', ');
+
+      final url = Uri.parse(
+        'https://nominatim.openstreetmap.org/search?format=json&q=${Uri.encodeComponent(fullQuery)}&limit=1&countrycodes=co',
+      );
+
+      final response = await http.get(url, headers: {
+        'User-Agent': 'GlowAppBeauty/1.0 (contacto@glowapp.com)',
+      }).timeout(const Duration(seconds: 4));
+
+      if (response.statusCode == 200) {
+        final List results = json.decode(response.body);
+        if (results.isNotEmpty) {
+          final lat = double.tryParse(results[0]['lat'].toString());
+          final lon = double.tryParse(results[0]['lon'].toString());
+          if (lat != null && lon != null) {
+            final targetLoc = LatLng(lat, lon);
+            if (mounted) {
+              setState(() {
+                _salonLocation = targetLoc;
+                _salonLocationConfirmed = true;
+              });
+              _salonMapController.move(targetLoc, 16.0);
+            }
+            return;
+          }
+        }
+      }
+    } catch (_) {
+      // Fallback silencioso sin bloquear al usuario
+    } finally {
+      if (mounted) setState(() => _isGeocodingAddress = false);
+    }
   }
 
   @override
@@ -917,9 +975,38 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _isGeocodingAddress || _salonAddressCtrl.text.trim().isEmpty
+                          ? null
+                          : _geocodeAddressAndFixOnMap,
+                      icon: _isGeocodingAddress
+                          ? const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF1F1A15)),
+                            )
+                          : const Icon(Icons.location_searching_rounded, size: 16),
+                      label: Text(
+                        _isGeocodingAddress ? 'Fijando en mapa...' : 'Fijar Dirección en el Mapa',
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFAF6EE),
+                        foregroundColor: const Color(0xFF1F1A15),
+                        elevation: 0,
+                        side: const BorderSide(color: Color(0xFFC5A052), width: 1.2),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                      ),
+                    ),
+                  ),
                 ] else ...[
                   TextField(
                     controller: _salonAddressCtrl,
+                    onChanged: (_) => setState(() {}),
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: const Color(0xFFFAF6EE),
@@ -929,6 +1016,34 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide: const BorderSide(color: Color(0xFFEFE8DE)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _isGeocodingAddress || _salonAddressCtrl.text.trim().isEmpty
+                          ? null
+                          : _geocodeAddressAndFixOnMap,
+                      icon: _isGeocodingAddress
+                          ? const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF1F1A15)),
+                            )
+                          : const Icon(Icons.location_searching_rounded, size: 16),
+                      label: Text(
+                        _isGeocodingAddress ? 'Fijando en mapa...' : 'Fijar Dirección en el Mapa',
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFAF6EE),
+                        foregroundColor: const Color(0xFF1F1A15),
+                        elevation: 0,
+                        side: const BorderSide(color: Color(0xFFC5A052), width: 1.2),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
                       ),
                     ),
                   ),
