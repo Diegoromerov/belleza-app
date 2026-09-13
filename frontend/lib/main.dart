@@ -59,6 +59,7 @@ import 'screens/designs/wardrobe_dashboard_screen.dart';
 import 'screens/designs/outfit_result_screen.dart';
 import 'models/provider_model.dart';
 import 'shared/theme.dart';
+import 'screens/saas/saas_navigation_orchestrator.dart';
 
 import 'dart:async';
 import 'package:flutter/foundation.dart';
@@ -210,6 +211,7 @@ class BeautyApp extends StatelessWidget {
                 '/colorimetria-historial': (_) => const ColorimetriaHistorialScreen(),
                 '/wardrobe': (_) => const WardrobeDashboardScreen(),
                 '/outfit-result': (_) => const OutfitResultScreen(),
+                '/saas/hub': (_) => const SaasNavigationOrchestrator(),
               },
             );
           },

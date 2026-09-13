@@ -209,3 +209,22 @@ CREATE TABLE IF NOT EXISTS productos (
   tag_especialidad VARCHAR(50) NOT NULL,
   creado_en TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- 16. Bootstrap Rol de Runtime No-Superusuario (SaaS Security Architecture)
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'beauty_app_user') THEN
+    CREATE ROLE beauty_app_user WITH LOGIN PASSWORD 'beauty_app_secure_runtime_2026'
+      NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS;
+  ELSE
+    ALTER ROLE beauty_app_user WITH 
+      NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS;
+  END IF;
+END $$;
+
+GRANT USAGE ON SCHEMA public TO beauty_app_user;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO beauty_app_user;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO beauty_app_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO beauty_app_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO beauty_app_user;
+

@@ -66,8 +66,8 @@ services:
       - DB_HOST=postgres
       - DB_PORT=5432
       - DB_NAME=beauty_db
-      - DB_USER=admin
-      - DB_PASSWORD=admin123
+      - DB_USER=beauty_app_user
+      - DB_PASSWORD=${DB_PASSWORD:-beauty_app_secure_runtime_2026}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - JWT_SECRET=beauty_app_super_secret_key_2026_change_in_production

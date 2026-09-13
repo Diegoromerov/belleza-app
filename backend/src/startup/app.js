@@ -195,6 +195,12 @@ app.use('/api/v1/beauty360', beauty360Routes);
 app.use('/api/trends', tiktokTrendsModule.router);
 app.use('/api', shortcutRoutes);
 app.use('/api', b2bCoPilotRoutes);
+app.use('/api/saas/tickets', require('../routes/nodo08TicketsRoutes'));
+app.use('/api/saas/customers', require('../routes/saasCustomersRoutes'));
+const { staffRouter, publicRouter: staffPublicRouter } = require('../routes/saasStaffRoutes');
+app.use('/api/saas/staff', staffRouter);
+app.use('/api/saas/public/invitations', staffPublicRouter);
+app.use('/api/saas/cash', require('../routes/saasCashRoutes'));
 
 // Beauty Scan Proxy API Route
 const AI_WORKER_URL = process.env.AI_WORKER_URL || 'http://ai-worker:8000';

@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/provider_model.dart';
 import '../models/service_model.dart';
+import 'active_context_holder.dart';
 
 class ApiService {
   // --- CONFIGURACIÓN DE ENTORNO DE DESARROLLO / PRODUCCIÓN ---
@@ -119,8 +120,8 @@ class ApiService {
     return value;
   }
 
-  // 🔹 MÉTODO CENTRALIZADO PARA OBTENER HEADERS CON TOKEN
-  static Future<Map<String, String>> _getAuthHeaders() async {
+  // 🔹 MÉTODO CENTRALIZADO PARA OBTENER HEADERS CON TOKEN Y CONTEXTO SaaS
+  static Future<Map<String, String>> _getAuthHeaders([String? path]) async {
     await ensureBaseUrl();
     final headers = {'Content-Type': 'application/json'};
     final token = await _getToken();
@@ -136,13 +137,27 @@ class ApiService {
         print('⚠️  No hay token disponible para Authorization');
       }
     }
+
+    // 🏛️ NODO-07 FASE 1: Inyección contextual de Active Context para /api/v1/saas/* y /api/saas/*
+    if (path != null && (path.contains('/api/v1/saas/') || path.contains('/api/saas/'))) {
+      final activeMembershipId = ActiveContextHolder().activeMembershipId;
+      if (activeMembershipId != null && activeMembershipId.isNotEmpty) {
+        headers['x-active-membership-id'] = activeMembershipId;
+      }
+    }
+
     return headers;
   }
 
   // Exponer headers públicos para analíticas u otros servicios externos
-  static Future<Map<String, String>> getAuthHeaders() => _getAuthHeaders();
+  static Future<Map<String, String>> getAuthHeaders([String? path]) =>
+      _getAuthHeaders(path);
+
+  @visibleForTesting
+  static String? testToken;
 
   static Future<String?> _getToken() async {
+    if (testToken != null) return testToken;
     try {
       // 🛡️ PARCHE DE SEGURIDAD (GLOW-SEC-02): Leer token de almacenamiento cifrado en llamadas API
       return await const FlutterSecureStorage(
@@ -156,7 +171,7 @@ class ApiService {
   // ─── Métodos genéricos HTTP (para nuevas funcionalidades) ───────
   static Future<dynamic> get(String path) async {
     await ensureBaseUrl();
-    final headers = await _getAuthHeaders();
+    final headers = await _getAuthHeaders(path);
     final uri = Uri.parse('$_baseUrl$path');
     if (kDebugMode) {
       print('🌐 ApiService.get: Requesting URI: $uri');
@@ -173,7 +188,7 @@ class ApiService {
 
   static Future<dynamic> post(String path, Map<String, dynamic> body) async {
     await ensureBaseUrl();
-    final headers = await _getAuthHeaders();
+    final headers = await _getAuthHeaders(path);
     final uri = Uri.parse('$_baseUrl$path');
     final response =
         await http.post(uri, headers: headers, body: jsonEncode(body));
@@ -184,10 +199,35 @@ class ApiService {
 
   static Future<dynamic> put(String path, Map<String, dynamic> body) async {
     await ensureBaseUrl();
-    final headers = await _getAuthHeaders();
+    final headers = await _getAuthHeaders(path);
     final uri = Uri.parse('$_baseUrl$path');
     final response =
         await http.put(uri, headers: headers, body: jsonEncode(body));
+    final data = jsonDecode(response.body);
+    if (response.statusCode >= 200 && response.statusCode < 300) return data;
+    throw Exception(data['error'] ?? 'Error ${response.statusCode}');
+  }
+
+  static Future<dynamic> delete(String path, [Map<String, dynamic>? body]) async {
+    await ensureBaseUrl();
+    final headers = await _getAuthHeaders(path);
+    final uri = Uri.parse('$_baseUrl$path');
+    final response = await http.delete(
+      uri,
+      headers: headers,
+      body: body != null ? jsonEncode(body) : null,
+    );
+    final data = jsonDecode(response.body);
+    if (response.statusCode >= 200 && response.statusCode < 300) return data;
+    throw Exception(data['error'] ?? 'Error ${response.statusCode}');
+  }
+
+  static Future<dynamic> patch(String path, Map<String, dynamic> body) async {
+    await ensureBaseUrl();
+    final headers = await _getAuthHeaders(path);
+    final uri = Uri.parse('$_baseUrl$path');
+    final response =
+        await http.patch(uri, headers: headers, body: jsonEncode(body));
     final data = jsonDecode(response.body);
     if (response.statusCode >= 200 && response.statusCode < 300) return data;
     throw Exception(data['error'] ?? 'Error ${response.statusCode}');
