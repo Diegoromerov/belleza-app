@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import '../widgets/voice_input.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
@@ -88,10 +89,16 @@ class _ChatScreenState extends State<ChatScreen> {
   String? _currentUserId;
   Timer? _pollingTimer;
   bool _isSending = false;
+  bool _isAuraThinking = false;
+  Timer? _auraThinkingTimeout;
 
   WebSocketChannel? _webSocketChannel;
   bool _isWebSocketConnected = false;
   Timer? _reconnectTimer;
+
+  bool get _isAiPartner =>
+      widget.partnerId == '0' ||
+      widget.partnerId == '00000000-0000-0000-0000-000000000000';
 
   @override
   void initState() {
@@ -133,9 +140,23 @@ class _ChatScreenState extends State<ChatScreen> {
             }
             // Parse message and trigger reload
             try {
+              final data = jsonDecode(message.toString());
+              if (data is Map && data['type'] == 'aura_status') {
+                final state = data['state'];
+                setState(() {
+                  _isAuraThinking = (state == 'thinking');
+                });
+                if (_isAuraThinking) {
+                  _scrollToBottom();
+                }
+              } else {
+                _loadMessages(showLoading: false);
+                _markAsRead();
+              }
+            } catch (_) {
               _loadMessages(showLoading: false);
               _markAsRead();
-            } catch (_) {}
+            }
           }
         },
         onError: (error) {
@@ -184,7 +205,10 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> _sendInitialMessage() async {
     final text = widget.initialMessage ?? 'Hola, analicemos esta foto';
-    setState(() => _isSending = true);
+    setState(() {
+      _isSending = true;
+      if (_isAiPartner) _isAuraThinking = true;
+    });
     try {
       await ApiService.sendChatMessage(
         widget.partnerId,
@@ -193,15 +217,8 @@ class _ChatScreenState extends State<ChatScreen> {
       );
       await _loadMessages(showLoading: false);
       _scrollToBottom();
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('❌ Error al enviar mensaje inicial: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+    } catch (_) {
+      // Manejo silencioso en carga inicial para no interrumpir la experiencia
     } finally {
       if (mounted) {
         setState(() => _isSending = false);
@@ -213,6 +230,7 @@ class _ChatScreenState extends State<ChatScreen> {
   void dispose() {
     _pollingTimer?.cancel();
     _reconnectTimer?.cancel();
+    _auraThinkingTimeout?.cancel();
     _webSocketChannel?.sink.close();
     _messageController.dispose();
     _scrollController.dispose();
@@ -279,10 +297,23 @@ class _ChatScreenState extends State<ChatScreen> {
       final oldLength = _messages.length;
 
       if (mounted) {
+        // Si el último mensaje es de la IA, apagar el thinking indicator
+        bool stillThinking = _isAuraThinking;
+        if (messages.isNotEmpty) {
+          final lastMsg = messages.last;
+          final isLastMsgAi = lastMsg['sender_id'] == '0' ||
+              lastMsg['sender_id'] == '00000000-0000-0000-0000-000000000000';
+          if (isLastMsgAi) {
+            stillThinking = false;
+            _auraThinkingTimeout?.cancel();
+          }
+        }
+
         setState(() {
           _messages = messages;
           _isLoading = false;
           _error = null;
+          _isAuraThinking = stillThinking;
         });
 
         // Scroll to bottom if new messages were added
@@ -311,7 +342,7 @@ class _ChatScreenState extends State<ChatScreen> {
   void _scrollToBottom() {
     if (_scrollController.hasClients) {
       _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
+        _scrollController.position.maxScrollExtent + 80,
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeOut,
       );
@@ -351,8 +382,8 @@ class _ChatScreenState extends State<ChatScreen> {
     return false;
   }
 
-  Future<void> _sendMessage() async {
-    final text = _messageController.text.trim();
+  Future<void> _sendMessage([String? customText]) async {
+    final text = (customText ?? _messageController.text).trim();
     if (text.isEmpty || _isSending) return;
 
     if (_containsContactLeakage(text)) {
@@ -369,7 +400,16 @@ class _ChatScreenState extends State<ChatScreen> {
       return;
     }
 
-    setState(() => _isSending = true);
+    setState(() {
+      _isSending = true;
+      if (_isAiPartner) {
+        _isAuraThinking = true;
+        _auraThinkingTimeout?.cancel();
+        _auraThinkingTimeout = Timer(const Duration(seconds: 18), () {
+          if (mounted) setState(() => _isAuraThinking = false);
+        });
+      }
+    });
     _messageController.clear();
 
     try {
@@ -378,10 +418,11 @@ class _ChatScreenState extends State<ChatScreen> {
       _scrollToBottom();
     } catch (e) {
       if (mounted) {
+        setState(() => _isAuraThinking = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('❌ Error al enviar: $e'),
-            backgroundColor: Colors.red,
+            content: Text('❌ No se pudo enviar el mensaje: $e'),
+            backgroundColor: Colors.deepOrange,
           ),
         );
       }
@@ -555,8 +596,11 @@ class _ChatScreenState extends State<ChatScreen> {
                             controller: _scrollController,
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 20),
-                            itemCount: _messages.length,
+                            itemCount: _messages.length + (_isAuraThinking ? 1 : 0),
                             itemBuilder: (context, index) {
+                              if (index == _messages.length) {
+                                return _buildAuraThinkingIndicator();
+                              }
                               final msg = _messages[index];
                               final isMe = msg['sender_id'] == _currentUserId;
                               final isAi = msg['sender_id'] == '0' ||
@@ -936,6 +980,8 @@ class _ChatScreenState extends State<ChatScreen> {
                             },
                           ),
           ),
+          if (_isAiPartner && !_isLoading && _error == null)
+            _buildQuickReplyChips(),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: const BoxDecoration(
@@ -987,6 +1033,12 @@ class _ChatScreenState extends State<ChatScreen> {
                             ),
                     ),
                   ),
+                  const SizedBox(width: 8),
+                  VoiceInput(
+                    onTranscript: (transcript) {
+                      _messageController.text = transcript;
+                    },
+                  ),
                 ],
               ),
             ),
@@ -996,5 +1048,104 @@ class _ChatScreenState extends State<ChatScreen> {
     ),
   ),
 );
+  }
+
+  Widget _buildAuraThinkingIndicator() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            margin: const EdgeInsets.only(right: 8, top: 4),
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: const Color(0xFFD4AF37), width: 1.5),
+              image: const DecorationImage(
+                image: AssetImage('images/avatar_aura.webp'),
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: const BoxDecoration(
+              color: Color(0xFFF3ECE6),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(18),
+                topRight: Radius.circular(18),
+                bottomLeft: Radius.circular(4),
+                bottomRight: Radius.circular(18),
+              ),
+              border: Border.fromBorderSide(BorderSide(color: Color(0xFFE5DDD5))),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Aura está redactando su consejo',
+                  style: TextStyle(
+                    color: Color(0xFF6E5D53),
+                    fontSize: 13.5,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppTheme.primary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickReplyChips() {
+    final suggestions = [
+      '✨ ¿Qué estilo me recomiendas?',
+      '💅 Tendencias en uñas',
+      '🌿 Rutina para el cabello',
+      '💆‍♀️ Salones recomendados',
+    ];
+
+    return Container(
+      height: 42,
+      margin: const EdgeInsets.only(bottom: 4),
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: suggestions.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, i) {
+          final suggestion = suggestions[i];
+          return ActionChip(
+            backgroundColor: const Color(0xFFFBF6F0),
+            surfaceTintColor: Colors.transparent,
+            side: const BorderSide(color: Color(0xFFE5DDD5)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            label: Text(
+              suggestion,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF5A4A42),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            onPressed: () => _sendMessage(suggestion),
+          );
+        },
+      ),
+    );
   }
 }

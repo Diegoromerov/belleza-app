@@ -29,8 +29,11 @@ dependencies:
   flutter_markdown_plus: ^1.0.0
   cached_network_image: ^3.4.1
   intl: ^0.20.2
+  speech_to_text: ^7.5.0
+  permission_handler: ^13.0.2
   mobile_scanner: ^7.4.0
   video_player: ^2.9.2
+  just_audio: ^0.9.36
 
 dev_dependencies:
   flutter_test:
@@ -49,6 +52,7 @@ flutter:
     - assets/fonts/
     - assets/videos/
     - assets/glowapp.mp3
+    - assets/glowguide/aura_canonical.webp
   fonts:
     - family: Manrope
       fonts:

@@ -65,6 +65,12 @@ import 'screens/designs/outfit_result_screen.dart';
 import 'screens/ideas/makeup_lookbook_screen.dart';
 import 'models/provider_model.dart';
 import 'shared/theme.dart';
+import 'glowguide/glowguide.dart';
+import 'glowguide/contracts/navigation_delegate.dart';
+import 'glowguide/contracts/screen_visibility.dart';
+import 'glowguide/audio/audio_engine.dart';
+import 'glowguide/persistence/persistence_engine.dart';
+import 'glowguide/observer/screen_visibility_observer.dart';
 
 import 'dart:async';
 import 'package:flutter/foundation.dart';
@@ -153,7 +159,7 @@ class BeautyApp extends StatelessWidget {
                                       supportedLocales: AppLocalizations.supportedLocales,
                                       navigatorKey: NotificationService.navigatorKey,
                                       debugShowCheckedModeBanner: false,
-                                      navigatorObservers: [AnalyticsRouteObserver()],
+                                      navigatorObservers: [AnalyticsRouteObserver(), ScreenVisibilityObserverSingleton.instance],
                           theme: ThemeData(
                             brightness: isMen ? Brightness.dark : Brightness.light,
                             primaryColor: primaryColor,
@@ -269,7 +275,7 @@ class ProvidersScreen extends StatefulWidget {
   State<ProvidersScreen> createState() => _ProvidersScreenState();
 }
 
-class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderStateMixin {
+class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderStateMixin implements NavigationDelegate {
   late final MapController _mapController;
   List<ProviderModel> _allProviders = [];
   List<ProviderModel> _filteredProviders = [];
@@ -284,9 +290,23 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
   final LatLng _bogotaCenter = const LatLng(4.6735, -74.1422);
   LatLng? _userLocation;
 
+  // Legacy Tutorial state
   bool _showTutorial = false;
   int _tutorialStep = 0;
   bool _isMapMenuOpen = false;
+
+  // GlowGuide Integration (I1)
+  late final GlowGuideEngine _glowGuideEngine;
+  late final ScreenVisibilityObserver _screenVisibilityObserver;
+  late final AudioEngine _audioEngine;
+  late final PersistenceEngine _persistenceEngine;
+
+  // Legacy Mutex state
+  bool _enableGlowGuide = false;
+  bool _enableLegacy = false;
+
+  // Start trigger idempotency guard (I3-START)
+  bool _glowGuideStartScheduled = false;
 
   @override
   void initState() {
@@ -295,21 +315,137 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
     _loadProviders();
     _loadUserRole();
     _determineUserLocation();
-    _checkTutorial();
+    _resolveGuideMutex();
     AudienceService.currentAudience.addListener(_onAudienceChanged);
+
+    // Inicializar GlowGuide Engine (I1) con contratos
+    _screenVisibilityObserver = ScreenVisibilityObserverSingleton.instance;
+    _audioEngine = AudioEngine();
+    _persistenceEngine = PersistenceEngine();
+    _glowGuideEngine = GlowGuideEngineFactory.createWelcomeGuideEngineSync(
+      navigationDelegate: this,
+      audioController: _audioEngine,
+      persistenceAdapter: _persistenceEngine,
+      screenVisibilityObserver: _screenVisibilityObserver,
+    );
   }
 
   @override
   void dispose() {
     AudienceService.currentAudience.removeListener(_onAudienceChanged);
     _searchController.dispose();
+    _glowGuideEngine.dispose();
     super.dispose();
   }
 
+  // ===== NavigationDelegate implementation (I1) =====
+
+  @override
+  Future<NavigationResult> navigate({
+    required String routeName,
+    Map<String, dynamic>? arguments,
+    required Duration timeout,
+  }) async {
+    try {
+      if (!mounted) {
+        return NavigationResult.cancelled(routeName);
+      }
+      await Navigator.of(context).pushNamed(routeName, arguments: arguments);
+      return NavigationResult.success(routeName);
+    } catch (e) {
+      return NavigationResult.failure(routeName, e.toString());
+    }
+  }
+
+  @override
+  Future<NavigationResult> returnToHome({required Duration timeout}) async {
+    try {
+      if (!mounted) {
+        return NavigationResult.cancelled('/home');
+      }
+      Navigator.of(context).popUntil((route) => route.settings.name == '/home');
+      return NavigationResult.success('/home');
+    } catch (e) {
+      return NavigationResult.failure('/home', e.toString());
+    }
+  }
+
+  @override
+  void cancelPending() {
+    // No-op: navigation operations are short-lived and don't hold pending state
+    // beyond the single push call. The ScreenVisibilityObserver handles
+    // pending visibility waits separately.
+  }
+
+  @override
   void _onAudienceChanged() {
     if (mounted) {
       _filterProviders();
     }
+  }
+
+  /// Legacy Mutex: resuelve qué guía mostrar (GlowGuide o Legacy), nunca ambos.
+  Future<void> _resolveGuideMutex() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    // 1. New completion key = true → no guide
+    final glowguideCompleted =
+        prefs.getBool('glowguide_completed_glow_welcome_v1') ?? false;
+    if (glowguideCompleted) {
+      if (mounted) {
+        setState(() {
+          _enableGlowGuide = false;
+          _enableLegacy = false;
+        });
+      }
+      return;
+    }
+
+    // 2. Legacy seen = true → migrate new completion → no guide
+    final legacySeen = prefs.getBool('seen_aura_tutorial') ?? false;
+    if (legacySeen) {
+      await prefs.setBool('glowguide_completed_glow_welcome_v1', true);
+      if (mounted) {
+        setState(() {
+          _enableGlowGuide = false;
+          _enableLegacy = false;
+        });
+      }
+      return;
+    }
+
+    // 3. Neither completed → allow GlowGuide
+    if (mounted) {
+      setState(() {
+        _enableGlowGuide = true;
+        _enableLegacy = false;
+      });
+      // I3-START: programar inicio del Engine solo si corresponde
+      _startGlowGuideWhenReady();
+    }
+  }
+
+  /// I3-START: programa el inicio de GlowGuide de forma idempotente,
+  /// después de que Home haya renderizado su primer frame.
+  /// Solo consume el resultado del mutex (_enableGlowGuide); no re-resuelve
+  /// persistencia ni legacy.
+  void _startGlowGuideWhenReady() {
+    // Guardia local contra doble scheduling
+    if (_glowGuideStartScheduled) return;
+    if (!_enableGlowGuide || _enableLegacy) return;
+
+    _glowGuideStartScheduled = true;
+
+    // Post-frame: garantizar que Home ya renderizó antes de iniciar.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Revalidar guards en el momento real del frame
+      if (!mounted) return;
+      if (!_enableGlowGuide) return;
+      if (_glowGuideEngine.isActive || _glowGuideEngine.isCompleted || _glowGuideEngine.isDismissed) {
+        return;
+      }
+      _glowGuideEngine.start();
+    });
   }
 
   Future<void> _checkTutorial() async {
@@ -2599,9 +2735,39 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                 ),
               ),
             ),
-          // Capa: Tutorial interactivo guiado por Aura
-          if (_showTutorial)
+          // Capa: Tutorial interactivo guiado por Aura (LEGACY)
+          // Legacy Mutex: solo se renderiza cuando _enableLegacy es true.
+          if (_enableLegacy && _showTutorial)
             _buildTutorialOverlay(),
+
+          // Capa: GlowGuide Presenter — Última capa del Stack
+          // Legacy Mutex: solo se renderiza cuando _enableGlowGuide es true.
+          if (_enableGlowGuide)
+            GlowGuidePresenter(
+              engine: _glowGuideEngine,
+              onAction: (action) {
+                switch (action) {
+                  case GlowGuidePresenterAction.next:
+                    _glowGuideEngine.next();
+                    break;
+                  case GlowGuidePresenterAction.previous:
+                    _glowGuideEngine.previous();
+                    break;
+                  case GlowGuidePresenterAction.dismiss:
+                    _glowGuideEngine.dismiss();
+                    break;
+                  case GlowGuidePresenterAction.replay:
+                    _glowGuideEngine.replay();
+                    break;
+                  case GlowGuidePresenterAction.pause:
+                    _glowGuideEngine.pause();
+                    break;
+                  case GlowGuidePresenterAction.resume:
+                    _glowGuideEngine.resume();
+                    break;
+                }
+              },
+            ),
         ],
       ),
     );
