@@ -14,44 +14,20 @@ const EXPECTED_DIMS = 1024;
 
 // ─── Generar embedding de un texto ───────────────────────────────────
 async function generateEmbedding(text) {
-  if (!NVIDIA_API_KEY) {
-    // Fallback determinístico si NVIDIA_API_KEY no está disponible en dev/test
-    const hash = require('crypto').createHash('sha256').update(text).digest();
-    const embedding = new Array(EXPECTED_DIMS).fill(0).map((_, i) => (hash[i % 32] / 255 - 0.5) * 0.01);
-    const norm = Math.sqrt(embedding.reduce((sum, v) => sum + v * v, 0));
-    return embedding.map(v => v / norm);
-  }
-
-  try {
-    const response = await axios.post(
-      NVIDIA_API_URL,
-      {
-        model: NVIDIA_EMBEDDING_MODEL,
-        input: [text.slice(0, 8000)],
-        input_type: 'query',
-        encoding_format: 'float',
-      },
-      {
-        headers: {
-          'Authorization': `Bearer ${NVIDIA_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        timeout: 15000,
-      }
-    );
-
-    const embedding = response.data?.data?.[0]?.embedding;
-    if (!embedding || embedding.length !== EXPECTED_DIMS) {
-      throw new Error(`Embedding inválido: ${embedding ? embedding.length : 0} dims`);
+  if (process.env.NVIDIA_API_KEY) {
+    try {
+      const { generateNvidiaEmbedding } = require('./embeddingService');
+      return await generateNvidiaEmbedding(text, 'query');
+    } catch (err) {
+      throw err;
     }
-    return embedding;
-  } catch (err) {
-    console.warn('⚠️ Error llamando a API Embedding, usando fallback determinístico:', err.message);
-    const hash = require('crypto').createHash('sha256').update(text).digest();
-    const embedding = new Array(EXPECTED_DIMS).fill(0).map((_, i) => (hash[i % 32] / 255 - 0.5) * 0.01);
-    const norm = Math.sqrt(embedding.reduce((sum, v) => sum + v * v, 0));
-    return embedding.map(v => v / norm);
   }
+
+  // Fallback determinístico si NVIDIA_API_KEY no está disponible en dev/test
+  const hash = require('crypto').createHash('sha256').update(text).digest();
+  const embedding = new Array(EXPECTED_DIMS).fill(0).map((_, i) => (hash[i % 32] / 255 - 0.5) * 0.01);
+  const norm = Math.sqrt(embedding.reduce((sum, v) => sum + v * v, 0));
+  return embedding.map(v => v / norm);
 }
 
 // ─── Construir filtros de metadata ───────────────────────────────────
@@ -165,8 +141,8 @@ async function searchBeautyKnowledge(query, options = {}) {
     console.warn('⚠️ [RAG] Vectorial falló o DB desatendida, ejecutando fallback full-text:', error.message);
 
     try {
-      const { whereClause, params: filterParams, nextIndex } = buildMetadataFilters(filters, 3);
-      const textCondition = `(title ILIKE $1 OR content ILIKE $1)`;
+      const { whereClause, params: filterParams, nextIndex } = buildMetadataFilters(filters, 4);
+      const textCondition = `(to_tsvector('spanish', title || ' ' || content) @@ plainto_tsquery('spanish', $1) OR title ILIKE $2 OR content ILIKE $2)`;
 
       const additionalConditions = [textCondition];
       if (whereClause) {
@@ -194,10 +170,10 @@ async function searchBeautyKnowledge(query, options = {}) {
           0.5 AS similarity
         FROM beauty_knowledge_embeddings
         ${finalWhere}
-        LIMIT $2;
+        LIMIT $3;
       `;
 
-      const fallbackParams = [`%${query}%`, topK, ...filterParams];
+      const fallbackParams = [query, `%${query}%`, topK, ...filterParams];
       const dbPool = ragPool || pool;
       const fallbackResult = await dbPool.query(fallbackSql, fallbackParams);
 
