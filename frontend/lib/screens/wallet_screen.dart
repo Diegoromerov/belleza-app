@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../services/api_service.dart';
 import '../shared/theme.dart';
+import '../widgets/provider/bank_account_dialog.dart';
 
 class WalletScreen extends StatefulWidget {
   final bool isEmbedded;
@@ -491,15 +492,30 @@ class _WalletScreenState extends State<WalletScreen>
                                 SizedBox(
                                   width: double.infinity,
                                   child: AnimatedOpacity(
-                                    opacity: puedeRetirar ? 1.0 : 0.7,
+                                    opacity: (puedeRetirar || wallet['cuenta_verificada'] != true) ? 1.0 : 0.7,
                                     duration: const Duration(milliseconds: 300),
                                     child: ElevatedButton.icon(
-                                      onPressed: puedeRetirar ? _solicitarRetiro : null,
-                                      icon: const Icon(Icons.payments_outlined, size: 18, color: Color(0xFF1F1A15)),
+                                      onPressed: puedeRetirar
+                                          ? _solicitarRetiro
+                                          : (wallet['cuenta_verificada'] != true)
+                                              ? () => showDialog(
+                                                    context: context,
+                                                    builder: (_) => BankAccountFormDialog(onSuccess: _cargarWallet),
+                                                  )
+                                              : null,
+                                      icon: Icon(
+                                        (wallet['cuenta_verificada'] != true)
+                                            ? Icons.account_balance_wallet_outlined
+                                            : Icons.payments_outlined,
+                                        size: 18,
+                                        color: const Color(0xFF1F1A15),
+                                      ),
                                       label: Text(
                                         puedeRetirar
-                                            ? 'TRANSFERIR A MI CUENTA NEQUI'
-                                            : razonBloqueo ?? 'RETIRO NO DISPONIBLE',
+                                            ? 'TRANSFERIR A ${wallet['banco']?.toString().toUpperCase() ?? 'MI CUENTA'}'
+                                            : (wallet['cuenta_verificada'] != true)
+                                                ? 'VINCULAR CUENTA DE RETIRO'
+                                                : razonBloqueo ?? 'RETIRO NO DISPONIBLE',
                                         style: const TextStyle(
                                           fontFamily: 'Inter',
                                           fontWeight: FontWeight.bold,
@@ -910,20 +926,80 @@ class _WalletScreenState extends State<WalletScreen>
               children: [
                 const Icon(Icons.verified, color: Color(0xFF10B981)),
                 const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Cuenta verificada',
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Cuenta verificada',
+                          style: TextStyle(
+                              color: Color(0xFF4A3E3D),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13)),
+                      Text(
+                        '${wallet['banco'] ?? ''} ****${wallet['numero_cuenta'].toString().length > 4 ? wallet['numero_cuenta'].toString().substring(wallet['numero_cuenta'].toString().length - 4) : ''}',
+                        style: const TextStyle(
+                            color: Color(0xFF8E7D7A), fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+                TextButton.icon(
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (_) => BankAccountFormDialog(onSuccess: _cargarWallet),
+                    );
+                  },
+                  icon: const Icon(Icons.edit_outlined, size: 16, color: Color(0xFF10B981)),
+                  label: const Text('Cambiar', style: TextStyle(color: Color(0xFF10B981), fontSize: 12)),
+                ),
+              ],
+            ),
+          )
+        else
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF59E0B).withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(12),
+              border:
+                  Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.25)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.account_balance_wallet_outlined, color: Color(0xFFF59E0B)),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Cuenta no vinculada',
+                          style: TextStyle(
+                              color: Color(0xFF4A3E3D),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13)),
+                      Text(
+                        'Vincula tu cuenta bancaria o Nequi para habilitar retiros',
                         style: TextStyle(
-                            color: Color(0xFF4A3E3D),
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13)),
-                    Text(
-                      '${wallet['banco'] ?? ''} ****${wallet['numero_cuenta'].toString().length > 4 ? wallet['numero_cuenta'].toString().substring(wallet['numero_cuenta'].toString().length - 4) : ''}',
-                      style: const TextStyle(
-                          color: Color(0xFF8E7D7A), fontSize: 12),
-                    ),
-                  ],
+                            color: Color(0xFF8E7D7A), fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (_) => BankAccountFormDialog(onSuccess: _cargarWallet),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFF59E0B),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
+                  child: const Text('Vincular'),
                 ),
               ],
             ),

@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
 import '../shared/theme.dart';
+import '../widgets/provider/provider_schedule_dialog.dart';
 
 class ProviderProfileScreen extends StatefulWidget {
   final bool isEmbedded;
@@ -377,16 +378,34 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(Icons.calendar_month, color: AppTheme.primary, size: 20),
-              SizedBox(width: 8),
-              Text(
-                'Horario de Disponibilidad Semanal',
-                style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                    color: Color(0xFF4A3E3D)),
+              const Row(
+                children: [
+                  Icon(Icons.calendar_month, color: AppTheme.primary, size: 20),
+                  SizedBox(width: 8),
+                  Text(
+                    'Horario de Disponibilidad Semanal',
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: Color(0xFF4A3E3D)),
+                  ),
+                ],
+              ),
+              IconButton(
+                icon: const Icon(Icons.tune_rounded, color: AppTheme.primary, size: 20),
+                tooltip: 'Editor rápido de horarios',
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (_) => ProviderScheduleDialog(
+                      currentSchedule: _weeklySchedule,
+                      onSuccess: _loadProfile,
+                    ),
+                  );
+                },
               ),
             ],
           ),

@@ -537,6 +537,152 @@ router.get('/wallet/transactions', authMiddleware, async (req, res) => {
   }
 });
 
+// ─── WALLET — OBTENER CUENTA BANCARIA ───────────────────────────────────────
+
+router.get('/wallet/bank-account', authMiddleware, async (req, res) => {
+  if (!await requirePrestador(req, res)) return;
+
+  try {
+    const { rows } = await pool.query(
+      `SELECT tipo_cuenta, banco, numero_cuenta, tipo_cuenta_bancaria, cuenta_verificada
+       FROM provider_wallet
+       WHERE provider_id = $1`,
+      [req.user.id]
+    );
+
+    if (!rows.length || !rows[0].numero_cuenta) {
+      return res.json({
+        configurada: false,
+        cuenta_verificada: false,
+        mensaje: 'No hay cuenta bancaria configurada.'
+      });
+    }
+
+    const w = rows[0];
+    const enmascarada = w.numero_cuenta.length > 4
+      ? `****${w.numero_cuenta.slice(-4)}`
+      : '****';
+
+    res.json({
+      configurada: true,
+      tipo_cuenta: w.tipo_cuenta,
+      banco: w.banco,
+      numero_cuenta_enmascarado: enmascarada,
+      tipo_cuenta_bancaria: w.tipo_cuenta_bancaria,
+      cuenta_verificada: w.cuenta_verificada
+    });
+  } catch (err) {
+    console.error('Error al consultar cuenta bancaria:', err);
+    res.status(500).json({ error: 'Error al consultar información bancaria.' });
+  }
+});
+
+// ─── WALLET — REGISTRAR / ACTUALIZAR CUENTA BANCARIA ───────────────────────
+
+const handleSaveBankAccount = async (req, res) => {
+  if (!await requirePrestador(req, res)) return;
+
+  const {
+    tipo_cuenta,
+    banco,
+    numero_cuenta,
+    tipo_cuenta_bancaria,
+    titular_nombre,
+    titular_documento_tipo,
+    titular_documento_num
+  } = req.body;
+
+  if (!numero_cuenta || typeof numero_cuenta !== 'string' || numero_cuenta.trim().length < 6) {
+    return res.status(400).json({ error: 'Número de cuenta inválido (mínimo 6 caracteres).' });
+  }
+
+  const tipoNormalizado = (tipo_cuenta || 'NEQUI').toUpperCase();
+  const bancoNormalizado = (tipoNormalizado === 'NEQUI') ? 'Nequi' : (tipoNormalizado === 'DAVIPLATA') ? 'Daviplata' : (banco || 'Bancolombia');
+  const tipoCuentaFinal = (tipoNormalizado === 'NEQUI' || tipoNormalizado === 'DAVIPLATA') ? tipoNormalizado : 'BANCARIA';
+  const tipoBancariaFinal = (tipoNormalizado === 'CORRIENTE') ? 'CORRIENTE' : 'AHORROS';
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // Asegurar existencia del registro de wallet
+    await client.query(
+      `INSERT INTO provider_wallet (provider_id)
+       VALUES ($1)
+       ON CONFLICT (provider_id) DO NOTHING`,
+      [req.user.id]
+    );
+
+    const datosAntesRes = await client.query(
+      `SELECT tipo_cuenta, banco, numero_cuenta, tipo_cuenta_bancaria, cuenta_verificada
+       FROM provider_wallet WHERE provider_id = $1`,
+      [req.user.id]
+    );
+    const datosAntes = datosAntesRes.rows[0];
+
+    // Actualizar datos bancarios y marcar verificada
+    const { rows } = await client.query(
+      `UPDATE provider_wallet
+       SET tipo_cuenta = $2,
+           banco = $3,
+           numero_cuenta = $4,
+           tipo_cuenta_bancaria = $5,
+           cuenta_verificada = TRUE,
+           updated_at = NOW()
+       WHERE provider_id = $1
+       RETURNING tipo_cuenta, banco, numero_cuenta, tipo_cuenta_bancaria, cuenta_verificada`,
+      [req.user.id, tipoCuentaFinal, bancoNormalizado, numero_cuenta.trim(), tipoBancariaFinal]
+    );
+
+    const cuentaActualizada = rows[0];
+
+    // Registrar en audit_log
+    await auditLog(client, {
+      actorId: req.user.id,
+      accion: 'CUENTA_BANCARIA_ACTUALIZADA',
+      tabla: 'provider_wallet',
+      registroId: req.user.id,
+      datosAntes: datosAntes ? { banco: datosAntes.banco, cuenta: datosAntes.numero_cuenta ? `****${datosAntes.numero_cuenta.slice(-4)}` : null } : null,
+      datosDespues: {
+        banco: bancoNormalizado,
+        cuenta: `****${numero_cuenta.trim().slice(-4)}`,
+        tipo: tipoCuentaFinal,
+        titular: titular_nombre || null,
+        doc_tipo: titular_documento_tipo || null,
+        doc_num: titular_documento_num ? `****${titular_documento_num.slice(-4)}` : null
+      },
+      ip: req.ip
+    });
+
+    await client.query('COMMIT');
+
+    const enmascarada = cuentaActualizada.numero_cuenta.length > 4
+      ? `****${cuentaActualizada.numero_cuenta.slice(-4)}`
+      : '****';
+
+    res.json({
+      ok: true,
+      mensaje: 'Cuenta bancaria registrada y verificada exitosamente.',
+      cuenta: {
+        tipo_cuenta: cuentaActualizada.tipo_cuenta,
+        banco: cuentaActualizada.banco,
+        numero_cuenta_enmascarado: enmascarada,
+        tipo_cuenta_bancaria: cuentaActualizada.tipo_cuenta_bancaria,
+        cuenta_verificada: true
+      }
+    });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Error al guardar cuenta bancaria:', err);
+    res.status(500).json({ error: 'Error al registrar la cuenta bancaria.' });
+  } finally {
+    client.release();
+  }
+};
+
+router.post('/wallet/bank-account', authMiddleware, handleSaveBankAccount);
+router.put('/wallet/bank-account', authMiddleware, handleSaveBankAccount);
+
 // ─── RETIRO — SOLICITAR ───────────────────────────────────────────────────────
 
 router.post('/wallet/withdraw', authMiddleware, async (req, res) => {

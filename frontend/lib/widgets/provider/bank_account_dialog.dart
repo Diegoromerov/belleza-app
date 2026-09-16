@@ -59,20 +59,21 @@ class _BankAccountFormDialogState extends State<BankAccountFormDialog> {
     });
 
     try {
-      await ApiService.registerProviderBankAccount(
-        tipoCuenta: _tipoCuenta,
-        numeroCuenta: _numeroCuentaController.text.trim(),
-        banco: _banco,
-        titularNombre: _titularNombreController.text.trim(),
-        titularDocumentoTipo: _titularDocumentoTipo,
-        titularDocumentoNum: _titularDocumentoNumController.text.trim(),
-      );
+      await ApiService.post('/api/wallet/bank-account', {
+        'tipo_cuenta': _tipoCuenta,
+        'banco': _banco,
+        'numero_cuenta': _numeroCuentaController.text.trim(),
+        'tipo_cuenta_bancaria': (_tipoCuenta == 'CORRIENTE') ? 'CORRIENTE' : 'AHORROS',
+        'titular_nombre': _titularNombreController.text.trim(),
+        'titular_documento_tipo': _titularDocumentoTipo,
+        'titular_documento_num': _titularDocumentoNumController.text.trim(),
+      });
 
       if (mounted) {
         Navigator.pop(context, true);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Cuenta bancaria SaaS vinculada correctamente para dispersiones'),
+            content: Text('Cuenta bancaria vinculada y verificada correctamente para retiros'),
             backgroundColor: Color(0xFF059669),
           ),
         );

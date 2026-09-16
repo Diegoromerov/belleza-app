@@ -49,7 +49,7 @@ class _PayoutRequestDialogState extends State<PayoutRequestDialog> {
     });
 
     try {
-      await ApiService.requestProviderPayout(monto: monto);
+      await ApiService.post('/api/wallet/withdraw', {'monto': monto});
 
       if (mounted) {
         Navigator.pop(context, true);

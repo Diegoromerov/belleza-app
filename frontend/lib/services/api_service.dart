@@ -647,6 +647,23 @@ class ApiService {
         json.decode(response.body)['error'] ?? 'Error ${response.statusCode}');
   }
 
+  static Future<Map<String, dynamic>> fetchProviderSchedule() async {
+    final res = await get('/api/provider/schedule');
+    return res as Map<String, dynamic>;
+  }
+
+  static Future<void> updateProviderSchedule({
+    required Map<String, dynamic> weeklySchedule,
+    required int activeStartHour,
+    required int activeEndHour,
+  }) async {
+    await put('/api/provider/schedule', {
+      'weekly_schedule': weeklySchedule,
+      'active_start_hour': activeStartHour,
+      'active_end_hour': activeEndHour,
+    });
+  }
+
   static Future<List<Map<String, dynamic>>> fetchAvailableSlots({
     required String providerId,
     required String date,
