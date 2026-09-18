@@ -145,16 +145,19 @@ const upload = multer({
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 
-// Configuración robusta de CORS y orígenes permitidos
+// Configuración robusta de CORS adaptada por entorno (DEV / STAGING / PRODUCTION)
+const currentEnv = process.env.NODE_ENV || 'development';
+
 const defaultOrigins = [
   'http://localhost:3000',
   'http://127.0.0.1:3000',
   'http://localhost:8080',
   'http://localhost:8081',
+  'http://localhost:8082',
+  'http://localhost:3000',
+  'http://localhost:3001',
   'http://localhost:7357',
   'http://127.0.0.1:8080',
-  'http://localhost:8082',
-  'http://localhost:3001',
   'http://127.0.0.1:3001',
   'https://belleza-app-production.up.railway.app',
   'https://glowapp-frontend-production.up.railway.app',
@@ -162,20 +165,34 @@ const defaultOrigins = [
 ];
 
 const envOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+  ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()).filter(Boolean)
   : [];
 
-const allowedOrigins = Array.from(new Set([...defaultOrigins, ...envOrigins]));
+const allowedOriginsSet = new Set([...defaultOrigins, ...envOrigins]);
+
+// Regex para detectar cualquier puerto en localhost o 127.0.0.1 en entorno de desarrollo
+const devOriginRegex = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
 
 app.use(compression()); // GZIP — debe ir antes de las rutas y estáticos
 
-// ⚠️ CORS DEBE IR PRIMERO para garantizar encabezados Access-Control-Allow-Origin en todas las respuestas (incluyendo errores 429/500)
+// ⚠️ CORS DEBE IR PRIMERO para garantizar encabezados Access-Control-Allow-Origin en todas las respuestas
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin) || false) {
+    // 1. Peticiones sin origin (apps móviles nativas, servidor a servidor, curl local)
+    if (!origin) return callback(null, true);
+
+    // 2. DESARROLLO: Permite localhost / 127.0.0.1 en CUALQUIER puerto dinámico
+    if (currentEnv === 'development' && devOriginRegex.test(origin)) {
       return callback(null, true);
     }
-    return callback(new Error('CORS bloqueado por política de seguridad'));
+
+    // 3. STAGING / PRODUCTION / DESARROLLO: Orígenes explícitamente autorizados (código + ALLOWED_ORIGINS env)
+    if (allowedOriginsSet.has(origin)) {
+      return callback(null, true);
+    }
+
+    // 4. Rechazo estándar W3C (null, false) evita transformar bloqueos CORS en HTTP 500
+    return callback(null, false);
   },
   credentials: true
 }));
