@@ -42,6 +42,9 @@ class GlowGuideEngine {
     }
   }
 
+  /// Total de pasos configurados en la guía
+  int get totalSteps => _steps.length;
+
   /// Estado actual (inmutable)
   GlowGuideState get state => _state;
 

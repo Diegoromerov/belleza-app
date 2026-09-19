@@ -115,6 +115,9 @@ class _GlowGuidePresenterState extends State<GlowGuidePresenter> with WidgetsBin
     // Respetar reduced motion
     final disableAnimations = MediaQuery.of(context).disableAnimations;
 
+    final stepNumber = (_currentStep!.order) + 1;
+    final totalSteps = widget.engine.totalSteps > 0 ? widget.engine.totalSteps : 6;
+
     return AnimatedSwitcher(
       duration: disableAnimations ? Duration.zero : const Duration(milliseconds: 500),
       transitionBuilder: (Widget child, Animation<double> animation) {
@@ -127,30 +130,125 @@ class _GlowGuidePresenterState extends State<GlowGuidePresenter> with WidgetsBin
           ),
         );
       },
-      child: IgnorePointer(
+      child: SafeArea(
         key: ValueKey<GlowGuideStatus>(_currentState.status),
-        ignoring: true,
-        child: Semantics(
-          label: 'Aura, asistente de GlowApp',
-          liveRegion: true,
-          child: SafeArea(
-            child: Align(
-              alignment: alignment,
-              child: SizedBox(
+        child: Align(
+          alignment: alignment,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Tarjeta Interactiva de Aura (Mensaje + Controles)
+              Container(
+                constraints: const BoxConstraints(maxWidth: 320),
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1F1A15).withOpacity(0.94),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: const Color(0xFFC5A052), width: 1.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFC5A052).withOpacity(0.25),
+                      blurRadius: 16,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.auto_awesome, color: Color(0xFFC5A052), size: 14),
+                            const SizedBox(width: 6),
+                            Text(
+                              'AURA • PASO $stepNumber DE $totalSteps',
+                              style: const TextStyle(
+                                fontFamily: 'JetBrainsMono',
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFFC5A052),
+                                letterSpacing: 1.0,
+                              ),
+                            ),
+                          ],
+                        ),
+                        InkWell(
+                          onTap: () => widget.onAction?.call(GlowGuidePresenterAction.dismiss),
+                          borderRadius: BorderRadius.circular(12),
+                          child: const Padding(
+                            padding: EdgeInsets.all(4.0),
+                            child: Icon(Icons.close_rounded, color: Colors.white54, size: 16),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      auraContent.text,
+                      style: const TextStyle(
+                        fontFamily: 'CormorantGaramond',
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        TextButton(
+                          onPressed: () => widget.onAction?.call(GlowGuidePresenterAction.dismiss),
+                          child: const Text(
+                            'Omitir',
+                            style: TextStyle(color: Colors.white54, fontSize: 12),
+                          ),
+                        ),
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFC5A052),
+                            foregroundColor: const Color(0xFF1F1A15),
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            elevation: 2,
+                          ),
+                          onPressed: () => widget.onAction?.call(GlowGuidePresenterAction.next),
+                          icon: const Icon(Icons.arrow_forward_rounded, size: 14),
+                          label: Text(
+                            stepNumber == totalSteps ? 'Finalizar' : 'Siguiente',
+                            style: const TextStyle(
+                              fontFamily: 'JetBrainsMono',
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 6),
+              // Imagen Canónica de Aura
+              SizedBox(
                 width: auraSize,
-                height: auraSize * 1.3,
+                height: auraSize * 0.9,
                 child: Image.asset(
                   auraCanonicalAssetPath,
                   fit: BoxFit.contain,
                   alignment: Alignment.center,
                   errorBuilder: (context, error, stackTrace) {
-                    // Asset falla: Aura hidden, NO placeholder
-                    // Error registrado según FailurePolicy
                     return const SizedBox.shrink();
                   },
                 ),
               ),
-            ),
+            ],
           ),
         ),
       ),

@@ -286,6 +286,26 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                           },
                         ),
                         LuxeProfileTile(
+                          icon: Icons.auto_awesome_rounded,
+                          title: 'Ver Guía Interactiva de Aura',
+                          subtitle: 'Reiniciar el tour guiado de bienvenida de GlowApp',
+                          onTap: () async {
+                            HapticFeedback.lightImpact();
+                            final prefs = await SharedPreferences.getInstance();
+                            await prefs.remove('glowguide_completed_glow_welcome_v1');
+                            await prefs.remove('seen_aura_tutorial');
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('✨ Guía de Aura reiniciada. Regresando al Home...'),
+                                  backgroundColor: Color(0xFFC5A052),
+                                ),
+                              );
+                              Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
+                            }
+                          },
+                        ),
+                        LuxeProfileTile(
                           icon: Icons.gavel_outlined,
                           title: 'Mis Disputas de Servicio',
                           subtitle: 'Gestión y seguimiento de arbitrajes de pago',

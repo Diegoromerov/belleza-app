@@ -35,19 +35,21 @@ class BackgroundVideoPlayerState extends State<BackgroundVideoPlayer> {
   void initState() {
     super.initState();
     _isMuted = widget.initialMuted;
-    _controller = VideoPlayerController.asset(widget.assetPath)
-      ..initialize().then((_) {
-        if (mounted) {
-          _controller.setLooping(widget.loop);
-          _controller.setVolume(_isMuted ? 0.0 : 1.0);
-          _controller.play();
-          setState(() {
-            _isInitialized = true;
-          });
-        }
-      }).catchError((err) {
-        debugPrint('⚠️ Error inicializando video de fondo: $err');
-      });
+    _controller = VideoPlayerController.asset(widget.assetPath);
+    if (_isMuted) {
+      _controller.setVolume(0.0);
+    }
+    _controller.initialize().then((_) {
+      if (mounted) {
+        _controller.setLooping(widget.loop);
+        _controller.play();
+        setState(() {
+          _isInitialized = true;
+        });
+      }
+    }).catchError((err) {
+      debugPrint('⚠️ Error inicializando video de fondo: $err');
+    });
   }
 
   void unmuteOnUserGesture() {
