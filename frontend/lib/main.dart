@@ -527,7 +527,10 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
       }
     } catch (_) {
       if (mounted) {
-        _showManualLocationPicker();
+        setState(() {
+          _userLocation = _bogotaCenter;
+        });
+        _loadProviders();
       }
     }
   }
@@ -2694,12 +2697,16 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
             ),
           ),
 
-          // Pantalla de carga superpuesta
+          // Indicador de carga discreto no bloqueante
           if (_isLoading)
-            Container(
-              color: Colors.black12,
-              child: Center(
-                child: CircularProgressIndicator(color: AppTheme.primary),
+            Positioned(
+              top: MediaQuery.of(context).padding.top,
+              left: 0,
+              right: 0,
+              child: const LinearProgressIndicator(
+                backgroundColor: Colors.transparent,
+                color: Color(0xFFD4AF37),
+                minHeight: 3,
               ),
             ),
 
