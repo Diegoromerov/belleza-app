@@ -49,6 +49,7 @@ const authMiddleware = async (req, res, next) => {
       email: verified.email,
       role: toApiRole(dbRole),
       tenant_id: dbTenantId,
+      businessProfileId: verified.businessProfileId || null,
       token
     };
 
