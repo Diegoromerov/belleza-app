@@ -33,6 +33,7 @@ class GlowWelcomeGuide {
         transitionStyle: AuraTransitionStyle.fade,
       ),
       audioAssetId: 'assets/glowguide/audio/step_01_welcome.mp3',
+      videoAssetId: 'assets/glowguide/videos/step_01_welcome.webm',
       action: null, // Sin acción en welcome
       uiTargetKey: null,
       nextStepId: 'step_02_citas',
@@ -52,6 +53,7 @@ class GlowWelcomeGuide {
         transitionStyle: AuraTransitionStyle.slide,
       ),
       audioAssetId: 'assets/glowguide/audio/step_02_citas.mp3',
+      videoAssetId: 'assets/glowguide/videos/step_02_citas.webm',
       action: GlowGuideAction.navigate(
         route: '/client-bookings',
         estimatedDurationMs: 2000,
@@ -75,6 +77,7 @@ class GlowWelcomeGuide {
         transitionStyle: AuraTransitionStyle.slide,
       ),
       audioAssetId: 'assets/glowguide/audio/step_03_glowshop.mp3',
+      videoAssetId: 'assets/glowguide/videos/step_03_glowshop.webm',
       action: GlowGuideAction.navigate(
         route: '/store',
         estimatedDurationMs: 2000,
@@ -98,6 +101,7 @@ class GlowWelcomeGuide {
         transitionStyle: AuraTransitionStyle.slide,
       ),
       audioAssetId: 'assets/glowguide/audio/step_04_glowia.mp3',
+      videoAssetId: 'assets/glowguide/videos/step_04_glowia.webm',
       action: GlowGuideAction.navigate(
         route: '/ideas',
         estimatedDurationMs: 2000,
@@ -121,37 +125,87 @@ class GlowWelcomeGuide {
         transitionStyle: AuraTransitionStyle.slide,
       ),
       audioAssetId: 'assets/glowguide/audio/step_05_perfil.mp3',
+      videoAssetId: 'assets/glowguide/videos/step_05_perfil.webm',
       action: GlowGuideAction.navigate(
         route: '/profile',
         estimatedDurationMs: 2000,
         blocking: true,
       ),
       uiTargetKey: 'profile_tab',
-      nextStepId: 'step_06_close',
+      nextStepId: 'step_06_aurachat',
       metadata: {'screen': '/profile', 'description': 'User profile'},
     ),
 
-    // PASO 06 — Close
+    // PASO 06 — Chat de Aura
     GlowGuideStep(
-      id: 'step_06_close',
+      id: 'step_06_aurachat',
       order: 5,
-      estimatedDurationMs: 4000,
+      estimatedDurationMs: 7000,
       auraContent: GlowGuideAuraContent(
-        text: 'Eso es todo. Ya estás listo para disfrutar GlowApp.',
+        text: 'Abre y despliega la barra de búsqueda en la parte superior de Home para consultar servicios y prestadores.',
+        position: AuraPosition.center,
+        visualState: AuraVisualState.speaking,
+        visible: true,
+        transitionStyle: AuraTransitionStyle.slide,
+      ),
+      audioAssetId: 'assets/glowguide/audio/step_06_aurachat.mp3',
+      videoAssetId: 'assets/glowguide/videos/step_06_aurachat.webm',
+      action: GlowGuideAction.navigate(
+        route: '/home',
+        estimatedDurationMs: 2000,
+        blocking: true,
+      ),
+      uiTargetKey: 'search_bar_target',
+      nextStepId: 'step_07_mapa',
+      metadata: {'screen': '/home', 'description': 'Aura Chat search bar display'},
+    ),
+
+    // PASO 07 — Proveedores en el Mapa
+    GlowGuideStep(
+      id: 'step_07_mapa',
+      order: 6,
+      estimatedDurationMs: 8000,
+      auraContent: GlowGuideAuraContent(
+        text: 'Toca cualquier globo de proveedor en el mapa para ver sus detalles y acceder a su perfil.',
+        position: AuraPosition.defaultBottom,
+        visualState: AuraVisualState.speaking,
+        visible: true,
+        transitionStyle: AuraTransitionStyle.slide,
+      ),
+      audioAssetId: 'assets/glowguide/audio/step_07_mapa.mp3',
+      videoAssetId: 'assets/glowguide/videos/step_07_mapa.webm',
+      action: GlowGuideAction.navigate(
+        route: '/home',
+        estimatedDurationMs: 2000,
+        blocking: true,
+      ),
+      uiTargetKey: 'map_provider_target',
+      nextStepId: 'step_08_despedida',
+      metadata: {'screen': '/home', 'description': 'Map provider details'},
+    ),
+
+    // PASO 08 — Menú Lateral y Despedida
+    GlowGuideStep(
+      id: 'step_08_despedida',
+      order: 7,
+      estimatedDurationMs: 8000,
+      auraContent: GlowGuideAuraContent(
+        text: 'Despliega el menú lateral por capas y explora las funciones. ¡Disfruta tu experiencia en GlowApp!',
         position: AuraPosition.center,
         visualState: AuraVisualState.speaking,
         visible: true,
         transitionStyle: AuraTransitionStyle.fade,
       ),
-      audioAssetId: 'assets/glowguide/audio/step_06_close.mp3',
+      audioAssetId: 'assets/glowguide/audio/step_08_despedida.mp3',
+      videoAssetId: 'assets/glowguide/videos/step_08_despedida.webm',
       action: GlowGuideAction.navigate(
         route: '/home',
-        estimatedDurationMs: 1500,
+        estimatedDurationMs: 2000,
         blocking: true,
       ),
-      uiTargetKey: null,
-      nextStepId: null, // Último paso
-      metadata: {'screen': '/home', 'description': 'Return to home'},
+      uiTargetKey: 'side_menu_target',
+      nextStepId: null, // Cierre del tour
+      metadata: {'screen': '/home', 'description': 'Side menu and farewell'},
     ),
   ];
 

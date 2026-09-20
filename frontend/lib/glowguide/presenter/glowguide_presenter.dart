@@ -1,14 +1,12 @@
 // lib/glowguide/presenter/glowguide_presenter.dart
 // Presentador visual para GlowGuide
-// I1: Foundation Repair - usa AuraPosition canónico, Semantics, sin GlowGuidePosition.
+// Reproduce la secuencia automática de videos con audio en cada pantalla sin botones de siguiente.
 
 import 'package:flutter/material.dart';
+import 'package:video_player/video_player.dart';
 import '../engine/glowguide_engine.dart';
 import '../state/glowguide_state.dart';
 import '../model/glowguide_step.dart';
-
-/// Ruta del asset de Aura Canónica
-const String auraCanonicalAssetPath = 'assets/glowguide/aura_canonical.webp';
 
 /// Callback para cuando el usuario interactúa con el presenter
 typedef GlowGuidePresenterCallback = void Function(GlowGuidePresenterAction action);
@@ -24,13 +22,10 @@ enum GlowGuidePresenterAction {
 }
 
 /// Presentador visual de GlowGuide
-/// Recibe estado del Engine y define cómo se presenta visualmente.
-/// SOLO responsabilidad visual: rendering, transiciones, visibilidad, semantics.
-/// NO posee: Navigator, AudioPlayer, SharedPreferences, business logic.
 class GlowGuidePresenter extends StatefulWidget {
   final GlowGuideEngine engine;
   final GlowGuidePresenterCallback? onAction;
-  final Widget? child; // Para testing: widget hijo opcional
+  final Widget? child;
 
   const GlowGuidePresenter({
     super.key,
@@ -73,29 +68,12 @@ class _GlowGuidePresenterState extends State<GlowGuidePresenter> with WidgetsBin
   }
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Notificar al engine de cambios de lifecycle si es necesario
-    // El engine maneja pause/resume internamente
-  }
-
-  @override
   Widget build(BuildContext context) {
-    // No mostrar nada si el engine no está activo ni completado
     if (!widget.engine.isActive && !widget.engine.isCompleted) {
       return widget.child ?? const SizedBox.shrink();
     }
 
-    return _buildAuraCanonical(context);
-  }
-
-  Widget _buildAuraCanonical(BuildContext context) {
-    // COMPLETED, DISMISSED, IDLE = hidden
-    // Solo PLAYING, EXECUTING_ACTION, PAUSED = visible
-    if (!_isVisibleState(_currentState.status)) {
-      return const SizedBox.shrink();
-    }
-
-    if (_currentStep == null) {
+    if (!_isVisibleState(_currentState.status) || _currentStep == null) {
       return const SizedBox.shrink();
     }
 
@@ -105,147 +83,71 @@ class _GlowGuidePresenterState extends State<GlowGuidePresenter> with WidgetsBin
     }
 
     final position = auraContent.position;
-    final screenSize = MediaQuery.of(context).size;
-    final auraSize = screenSize.width * 0.35;
-
-    // Convertir AuraPosition normalizado (x,y ∈ [0,1]) a Alignment (-1..1)
-    // con un margen inferior para respetar safe areas y no cubrir nav/FAB.
     final alignment = _calculateAlignment(position);
-
-    // Respetar reduced motion
     final disableAnimations = MediaQuery.of(context).disableAnimations;
+    final videoPath = _currentStep!.videoAssetId ?? 'assets/glowguide/videos/aura_pilot.mp4';
 
-    final stepNumber = (_currentStep!.order) + 1;
-    final totalSteps = widget.engine.totalSteps > 0 ? widget.engine.totalSteps : 6;
+    final screenSize = MediaQuery.of(context).size;
+    final isCenter = position == AuraPosition.center;
+    final videoWidth = isCenter
+        ? (screenSize.width * 0.86).clamp(300.0, 420.0)
+        : (screenSize.width * 0.72).clamp(260.0, 340.0);
 
     return AnimatedSwitcher(
-      duration: disableAnimations ? Duration.zero : const Duration(milliseconds: 500),
+      duration: disableAnimations ? Duration.zero : const Duration(milliseconds: 350),
       transitionBuilder: (Widget child, Animation<double> animation) {
         if (disableAnimations) return child;
         return FadeTransition(
           opacity: animation,
-          child: SlideTransition(
-            position: Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero).animate(animation),
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.94, end: 1.0).animate(animation),
             child: child,
           ),
         );
       },
       child: SafeArea(
-        key: ValueKey<GlowGuideStatus>(_currentState.status),
+        key: ValueKey<String>('glowguide_step_${_currentStep!.id}'),
         child: Align(
           alignment: alignment,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
+          child: Stack(
+            clipBehavior: Clip.none,
             children: [
-              // Tarjeta Interactiva de Aura (Mensaje + Controles)
-              Container(
-                constraints: const BoxConstraints(maxWidth: 320),
-                margin: const EdgeInsets.symmetric(horizontal: 16),
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1F1A15).withOpacity(0.94),
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: const Color(0xFFC5A052), width: 1.5),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFC5A052).withOpacity(0.25),
-                      blurRadius: 16,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(Icons.auto_awesome, color: Color(0xFFC5A052), size: 14),
-                            const SizedBox(width: 6),
-                            Text(
-                              'AURA • PASO $stepNumber DE $totalSteps',
-                              style: const TextStyle(
-                                fontFamily: 'JetBrainsMono',
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFFC5A052),
-                                letterSpacing: 1.0,
-                              ),
-                            ),
-                          ],
-                        ),
-                        InkWell(
-                          onTap: () => widget.onAction?.call(GlowGuidePresenterAction.dismiss),
-                          borderRadius: BorderRadius.circular(12),
-                          child: const Padding(
-                            padding: EdgeInsets.all(4.0),
-                            child: Icon(Icons.close_rounded, color: Colors.white54, size: 16),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      auraContent.text,
-                      style: const TextStyle(
-                        fontFamily: 'CormorantGaramond',
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                        height: 1.4,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        TextButton(
-                          onPressed: () => widget.onAction?.call(GlowGuidePresenterAction.dismiss),
-                          child: const Text(
-                            'Omitir',
-                            style: TextStyle(color: Colors.white54, fontSize: 12),
-                          ),
-                        ),
-                        ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFC5A052),
-                            foregroundColor: const Color(0xFF1F1A15),
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                            elevation: 2,
-                          ),
-                          onPressed: () => widget.onAction?.call(GlowGuidePresenterAction.next),
-                          icon: const Icon(Icons.arrow_forward_rounded, size: 14),
-                          label: Text(
-                            stepNumber == totalSteps ? 'Finalizar' : 'Siguiente',
-                            style: const TextStyle(
-                              fontFamily: 'JetBrainsMono',
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+              // Reproductor de Video de Aura
+              SizedBox(
+                width: videoWidth,
+                child: GlowStepVideoPlayer(
+                  key: ValueKey<String>(videoPath),
+                  videoAssetPath: videoPath,
+                  isFirstStep: _currentStep!.order == 0,
+                  onVideoEnded: () {
+                    // Avance automático al terminar el video
+                    widget.onAction?.call(GlowGuidePresenterAction.next);
+                  },
                 ),
               ),
-              const SizedBox(height: 6),
-              // Imagen Canónica de Aura
-              SizedBox(
-                width: auraSize,
-                height: auraSize * 0.9,
-                child: Image.asset(
-                  auraCanonicalAssetPath,
-                  fit: BoxFit.contain,
-                  alignment: Alignment.center,
-                  errorBuilder: (context, error, stackTrace) {
-                    return const SizedBox.shrink();
-                  },
+
+              // Botón Discreto de Cerrar
+              Positioned(
+                top: -8,
+                right: -8,
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () => widget.onAction?.call(GlowGuidePresenterAction.dismiss),
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF141210).withValues(alpha: 0.85),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: const Color(0xFFC5A052).withValues(alpha: 0.8),
+                          width: 1.2,
+                        ),
+                      ),
+                      child: const Icon(Icons.close_rounded, color: Colors.white70, size: 14),
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -255,25 +157,14 @@ class _GlowGuidePresenterState extends State<GlowGuidePresenter> with WidgetsBin
     );
   }
 
-  /// Convierte AuraPosition (x,y normalizados) a Alignment Flutter.
-  /// AuraPosition: x=0→izquierda..1→derecha, y=0→arriba..1→abajo.
-  /// Alignment: (-1,-1)=arriba-izq .. (1,1)=abajo-der.
-  /// Se aplica un ligero margen inferior para que defaultBottom no
-  /// cubra la navegación inferior ni el FAB.
   Alignment _calculateAlignment(AuraPosition? position) {
     final x = (position?.x ?? AuraPosition.defaultBottom.x).clamp(0.0, 1.0);
     final y = (position?.y ?? AuraPosition.defaultBottom.y).clamp(0.0, 1.0);
-    // Mapear [0,1] → [-1,1]
     final ax = (x * 2.0) - 1.0;
     final ay = (y * 2.0) - 1.0;
-    // Margen interior: alejar ligeramente el aura del borde inferior/izquierdo
-    // para evitar solapamiento con controles críticos del Home.
-    return Alignment(ax * 0.9, ay * 0.9);
+    return Alignment(ax * 0.82, ay * 0.82);
   }
 
-  /// Determina si el estado debe mostrar UI visual
-  /// playing, executingAction, paused = visible
-  /// completed, dismissed, idle, starting = hidden
   bool _isVisibleState(GlowGuideStatus status) {
     return status == GlowGuideStatus.playing ||
            status == GlowGuideStatus.executingAction ||
@@ -281,12 +172,266 @@ class _GlowGuidePresenterState extends State<GlowGuidePresenter> with WidgetsBin
   }
 }
 
-/// Extension para saber si un estado debe mostrar UI (legacy compat)
-extension GlowGuideStatusExtension on GlowGuideStatus {
-  @Deprecated('Usar _isVisibleState en presenter. completed ya no es visible.')
-  bool get isActiveAndVisible {
-    return this == GlowGuideStatus.playing ||
-           this == GlowGuideStatus.executingAction ||
-           this == GlowGuideStatus.paused;
-  }
+/// Reproductor de Video para los Pasos de GlowGuide
+class GlowStepVideoPlayer extends StatefulWidget {
+  final String videoAssetPath;
+  final bool isFirstStep;
+  final VoidCallback? onVideoEnded;
+
+  const GlowStepVideoPlayer({
+    super.key,
+    required this.videoAssetPath,
+    this.isFirstStep = false,
+    this.onVideoEnded,
+  });
+
+  @override
+  State<GlowStepVideoPlayer> createState() => _GlowStepVideoPlayerState();
 }
+
+class _GlowStepVideoPlayerState extends State<GlowStepVideoPlayer> {
+  late VideoPlayerController _controller;
+  bool _isInitialized = false;
+  bool _hasError = false;
+  bool _hasEnded = false;
+  bool _isMuted = false;
+  bool _hasUserStarted = false;
+  double _opacity = 1.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _initVideo();
+  }
+
+  @override
+  void didUpdateWidget(GlowStepVideoPlayer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.videoAssetPath != widget.videoAssetPath) {
+      _controller.removeListener(_onVideoStateChanged);
+      _controller.dispose();
+      _initVideo();
+    }
+  }
+
+  void _initVideo() {
+    _isInitialized = false;
+    _hasError = false;
+    _hasEnded = false;
+    _isMuted = false;
+    _opacity = 1.0;
+
+    _tryLoadVideoAsset(widget.videoAssetPath);
+  }
+
+  void _tryLoadVideoAsset(String path) {
+    _controller = VideoPlayerController.asset(
+      path,
+      videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
+    );
+
+    _controller.initialize().then((_) {
+      if (mounted) {
+        _controller.setLooping(false); // Reproducción única por paso
+        _controller.setVolume(1.0);     // SONIDO ACTIVO POR DEFECTO
+        _controller.addListener(_onVideoStateChanged);
+
+        // Si no es el primer paso, iniciar reproducción inmediatamente
+        if (!widget.isFirstStep || _hasUserStarted) {
+          _controller.play().catchError((err) {
+            debugPrint('⚠️ Web autoplay con sonido restringido por navegador: $err');
+            if (mounted) {
+              setState(() {
+                _isMuted = true;
+              });
+              _controller.setVolume(0.0);
+              _controller.play();
+            }
+          });
+        }
+
+        setState(() {
+          _isInitialized = true;
+        });
+      }
+    }).catchError((err) {
+      debugPrint('⚠️ Error al inicializar video ($path): $err');
+      if (path.endsWith('.webm')) {
+        final fallbackMp4 = path.replaceAll('.webm', '.mp4');
+        debugPrint('🔄 Intentando fallback a .mp4: $fallbackMp4');
+        _controller.dispose();
+        _tryLoadVideoAsset(fallbackMp4);
+      } else if (mounted) {
+        setState(() {
+          _hasError = true;
+        });
+      }
+    });
+  }
+
+  void _startPlayback() {
+    if (!_isInitialized) return;
+    setState(() {
+      _hasUserStarted = true;
+      _isMuted = false;
+    });
+    _controller.setVolume(1.0);
+    _controller.play();
+  }
+
+  void _onVideoStateChanged() async {
+    if (_isInitialized &&
+        _controller.value.isInitialized &&
+        !_controller.value.isPlaying &&
+        _controller.value.position >= _controller.value.duration &&
+        !_hasEnded &&
+        (!widget.isFirstStep || _hasUserStarted)) {
+      _hasEnded = true;
+      debugPrint('🎬 Video completado: ${widget.videoAssetPath}. Avanzando automáticamente...');
+
+      // Desvanecer suavemente el reproductor al finalizar el último video (Despedida)
+      if (widget.videoAssetPath.contains('step_08_despedida') && mounted) {
+        setState(() {
+          _opacity = 0.0;
+        });
+        await Future.delayed(const Duration(milliseconds: 850));
+      }
+
+      widget.onVideoEnded?.call();
+    }
+  }
+
+  void _handleTap() {
+    if (widget.isFirstStep && !_hasUserStarted) {
+      _startPlayback();
+      return;
+    }
+
+    if (_isMuted && _isInitialized) {
+      setState(() {
+        _isMuted = false;
+      });
+      _controller.setVolume(1.0);
+      if (!_controller.value.isPlaying) {
+        _controller.play();
+      }
+    } else {
+      widget.onVideoEnded?.call();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.removeListener(_onVideoStateChanged);
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final showStartButton = widget.isFirstStep && !_hasUserStarted;
+
+    return AnimatedOpacity(
+      opacity: _opacity,
+      duration: const Duration(milliseconds: 850),
+      curve: Curves.easeOutCubic,
+      child: GestureDetector(
+        onTap: _handleTap,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: const Color(0xFFC5A052),
+              width: 2.0,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFC5A052).withValues(alpha: 0.4),
+                blurRadius: 20,
+                spreadRadius: 2,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              if (_isInitialized && !_hasError && _controller.value.isInitialized)
+                AspectRatio(
+                  aspectRatio: _controller.value.aspectRatio > 0 ? _controller.value.aspectRatio : 1.0,
+                  child: VideoPlayer(_controller),
+                )
+              else
+                AspectRatio(
+                  aspectRatio: 1.0,
+                  child: Container(
+                    color: const Color(0xFF141210).withValues(alpha: 0.2),
+                  ),
+                ),
+
+              // Botón "PRESIONE PARA INICIAR" en el primer paso (Home) sobre contenedor traslúcido
+              if (showStartButton)
+                Container(
+                  color: Colors.transparent, // Caja 100% Traslúcida
+                  alignment: Alignment.center,
+                  padding: const EdgeInsets.all(12),
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFC5A052).withValues(alpha: 0.92),
+                      foregroundColor: const Color(0xFF141210),
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                      elevation: 8,
+                      shadowColor: const Color(0xFFC5A052).withValues(alpha: 0.5),
+                    ),
+                    onPressed: _startPlayback,
+                    icon: const Icon(Icons.play_arrow_rounded, size: 22, color: Color(0xFF141210)),
+                    label: const Text(
+                      'PRESIONE PARA INICIAR',
+                      style: TextStyle(
+                        fontFamily: 'JetBrainsMono',
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.8,
+                        color: Color(0xFF141210),
+                      ),
+                    ),
+                  ),
+                ),
+
+              if (_isMuted && !showStartButton)
+                Positioned(
+                  bottom: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.7),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFC5A052), width: 1),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.volume_off_rounded, color: Color(0xFFC5A052), size: 12),
+                        SizedBox(width: 4),
+                        Text(
+                          'Toca para sonido',
+                          style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+}
+
+
+

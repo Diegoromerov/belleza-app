@@ -28,7 +28,10 @@ export 'presenter/glowguide_presenter.dart';
 // Configuration
 export 'config/glow_welcome_guide.dart';
 
+// Service
+export 'service/glowguide_service.dart';
+
 // Implementations (internal)
 export 'audio/audio_engine.dart';
 export 'persistence/persistence_engine.dart';
-export 'observer/screen_visibility_observer.dart';
+export 'observer/screen_visibility_observer.dart';

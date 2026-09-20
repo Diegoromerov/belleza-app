@@ -24,8 +24,11 @@ class GlowGuideStep {
   /// Contenido para Aura (texto, posición, estado visual)
   final GlowGuideAuraContent auraContent;
 
-  /// Audio asociado (referencia, se resuelve en FASE 4)
+  /// Audio asociado
   final String? audioAssetId;
+
+  /// Video asociado para demostración en pantalla
+  final String? videoAssetId;
 
   /// Acción declarativa a ejecutar en este paso
   final GlowGuideAction? action;
@@ -45,6 +48,7 @@ class GlowGuideStep {
     this.estimatedDurationMs = 5000,
     required this.auraContent,
     this.audioAssetId,
+    this.videoAssetId,
     this.action,
     this.uiTargetKey,
     this.nextStepId,

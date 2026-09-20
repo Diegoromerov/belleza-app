@@ -153,13 +153,49 @@ class BeautyApp extends StatelessWidget {
             final surfaceColor = isMen ? MensTheme.obsidianCard : AppTheme.surface;
             final textColor = isMen ? MensTheme.textPrimary : AppTheme.text;
 
+            GlowGuideService.instance.initialize();
+
             return MaterialApp(
-                                      title: 'GlowApp',
-                                      localizationsDelegates: AppLocalizations.localizationsDelegates,
-                                      supportedLocales: AppLocalizations.supportedLocales,
-                                      navigatorKey: NotificationService.navigatorKey,
-                                      debugShowCheckedModeBanner: false,
-                                      navigatorObservers: [AnalyticsRouteObserver(), ScreenVisibilityObserverSingleton.instance],
+              title: 'GlowApp',
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              navigatorKey: GlowGuideService.instance.navigatorKey,
+              debugShowCheckedModeBanner: false,
+              navigatorObservers: [AnalyticsRouteObserver(), ScreenVisibilityObserverSingleton.instance],
+              builder: (context, child) {
+                return Stack(
+                  children: [
+                    if (child != null) child,
+                    if (GlowGuideService.instance.engine != null)
+                      GlowGuidePresenter(
+                        engine: GlowGuideService.instance.engine!,
+                        onAction: (action) {
+                          final engine = GlowGuideService.instance.engine!;
+                          switch (action) {
+                            case GlowGuidePresenterAction.next:
+                              engine.next();
+                              break;
+                            case GlowGuidePresenterAction.previous:
+                              engine.previous();
+                              break;
+                            case GlowGuidePresenterAction.dismiss:
+                              engine.dismiss();
+                              break;
+                            case GlowGuidePresenterAction.replay:
+                              engine.replay();
+                              break;
+                            case GlowGuidePresenterAction.pause:
+                              engine.pause();
+                              break;
+                            case GlowGuidePresenterAction.resume:
+                              engine.resume();
+                              break;
+                          }
+                        },
+                      ),
+                  ],
+                );
+              },
                           theme: ThemeData(
                             brightness: isMen ? Brightness.dark : Brightness.light,
                             primaryColor: primaryColor,
@@ -318,20 +354,25 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
     _resolveGuideMutex();
     AudienceService.currentAudience.addListener(_onAudienceChanged);
 
-    // Inicializar GlowGuide Engine (I1) con contratos
-    _screenVisibilityObserver = ScreenVisibilityObserverSingleton.instance;
-    _audioEngine = AudioEngine();
-    _persistenceEngine = PersistenceEngine();
-    _glowGuideEngine = GlowGuideEngineFactory.createWelcomeGuideEngineSync(
-      navigationDelegate: this,
-      audioController: _audioEngine,
-      persistenceAdapter: _persistenceEngine,
-      screenVisibilityObserver: _screenVisibilityObserver,
-    );
+    // Obtener motor global de GlowGuideService
+    GlowGuideService.instance.initialize();
+    _glowGuideEngine = GlowGuideService.instance.engine!;
+    _glowGuideEngine.addListener(_onGlowGuideStateChanged);
+  }
+
+  void _onGlowGuideStateChanged(GlowGuideState state) {
+    if (!mounted) return;
+    final isStep08 = state.currentStepId == 'step_08_despedida';
+    if (_isMapMenuOpen != isStep08) {
+      setState(() {
+        _isMapMenuOpen = isStep08;
+      });
+    }
   }
 
   @override
   void dispose() {
+    _glowGuideEngine.removeListener(_onGlowGuideStateChanged);
     AudienceService.currentAudience.removeListener(_onAudienceChanged);
     _searchController.dispose();
     _glowGuideEngine.dispose();
@@ -2626,23 +2667,23 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                     ),
                   ),
                   const SizedBox(height: 10),
-                  // Botón 2: Tema de Mapa
+                  // Botón 2: Reiniciar Tutorial GlowGuide
                   FloatingActionButton.small(
-                    heroTag: 'map_theme_main_fab',
-                    tooltip: 'Modo Claro / Oscuro',
+                    heroTag: 'glowguide_tutorial_restart_fab',
+                    tooltip: 'Ver Tutorial GlowGuide',
                     onPressed: () {
+                      HapticFeedback.selectionClick();
                       setState(() {
-                        MapSettings.isDark = !MapSettings.isDark;
+                        _isMapMenuOpen = false;
                       });
+                      GlowGuideService.instance.engine?.forceRestart();
                     },
                     backgroundColor: AppTheme.surface,
-                    foregroundColor: AppTheme.primary,
+                    foregroundColor: const Color(0xFFC5A052),
                     elevation: 3,
                     shape: const CircleBorder(),
-                    child: Icon(
-                      MapSettings.isDark
-                          ? Icons.light_mode_outlined
-                          : Icons.dark_mode_outlined,
+                    child: const Icon(
+                      Icons.play_circle_fill_rounded,
                       size: 20,
                     ),
                   ),
@@ -2746,35 +2787,6 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
           // Legacy Mutex: solo se renderiza cuando _enableLegacy es true.
           if (_enableLegacy && _showTutorial)
             _buildTutorialOverlay(),
-
-          // Capa: GlowGuide Presenter — Última capa del Stack
-          // Legacy Mutex: solo se renderiza cuando _enableGlowGuide es true.
-          if (_enableGlowGuide)
-            GlowGuidePresenter(
-              engine: _glowGuideEngine,
-              onAction: (action) {
-                switch (action) {
-                  case GlowGuidePresenterAction.next:
-                    _glowGuideEngine.next();
-                    break;
-                  case GlowGuidePresenterAction.previous:
-                    _glowGuideEngine.previous();
-                    break;
-                  case GlowGuidePresenterAction.dismiss:
-                    _glowGuideEngine.dismiss();
-                    break;
-                  case GlowGuidePresenterAction.replay:
-                    _glowGuideEngine.replay();
-                    break;
-                  case GlowGuidePresenterAction.pause:
-                    _glowGuideEngine.pause();
-                    break;
-                  case GlowGuidePresenterAction.resume:
-                    _glowGuideEngine.resume();
-                    break;
-                }
-              },
-            ),
         ],
       ),
     );

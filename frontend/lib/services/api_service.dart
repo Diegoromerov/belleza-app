@@ -40,6 +40,13 @@ class ApiService {
   static String get _baseUrl => baseUrl;
   static String get _apiPath => '/api';
 
+  static final List<String> _candidateHosts = [
+    '10.88.245.166',
+    '127.0.0.1',
+    'localhost',
+    '10.0.2.2',
+  ];
+
   static Future<void> ensureBaseUrl() async {
     if (useStaging) {
       _cachedBaseUrl = stagingUrl;
@@ -53,33 +60,39 @@ class ApiService {
       }
     }
     if (_cachedBaseUrl != null) return;
-    for (final port in _ports) {
-      final url = 'http://$_host:$port';
-      try {
-        final response = await http
-            .get(Uri.parse('$url/api/health'))
-            .timeout(const Duration(milliseconds: 2000));
-        if (response.statusCode == 200) {
-          final contentType = response.headers['content-type'] ?? '';
-          if (contentType.toLowerCase().contains('application/json')) {
-            final data = json.decode(response.body);
-            if (data['status'] == 'OK' ||
-                data['message']?.toString().contains('funcionando') == true) {
-              _cachedBaseUrl = url;
-              if (kDebugMode) {
-                print(
-                    '🔌 ApiService: BaseUrl detectado y fijado en $_cachedBaseUrl');
+
+    for (final host in _candidateHosts) {
+      for (final port in _ports) {
+        final url = 'http://$host:$port';
+        try {
+          final response = await http
+              .get(Uri.parse('$url/api/health'))
+              .timeout(const Duration(milliseconds: 1200));
+          if (response.statusCode == 200) {
+            final contentType = response.headers['content-type'] ?? '';
+            if (contentType.toLowerCase().contains('application/json')) {
+              final data = json.decode(response.body);
+              if (data['status'] == 'OK' ||
+                  data['message']?.toString().contains('funcionando') == true) {
+                _cachedBaseUrl = url;
+                if (kDebugMode) {
+                  print('🔌 ApiService: BaseUrl detectado y fijado en $_cachedBaseUrl');
+                }
+                return;
               }
-              return;
             }
           }
+        } catch (_) {
+          // Continuar al siguiente puerto/host
         }
-      } catch (_) {
-        // Continuar al siguiente puerto
       }
     }
-    // Fallback default (el backend local por defecto corre en 8080)
-    _cachedBaseUrl = 'http://$_host:8080';
+
+    // Fallback a staging si los hosts locales no responden en dispositivo físico
+    _cachedBaseUrl = stagingUrl;
+    if (kDebugMode) {
+      print('🔌 ApiService: Fallback automático a staging en $_cachedBaseUrl');
+    }
   }
 
   static String normalizeUrl(String? rawUrl) {

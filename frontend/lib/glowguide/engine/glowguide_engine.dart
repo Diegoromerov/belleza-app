@@ -261,6 +261,15 @@ class GlowGuideEngine {
     await start();
   }
 
+  /// Forzar el reinicio manual del tutorial completado o descartado
+  Future<void> forceRestart() async {
+    await _audioController.stop();
+    _currentPlayback = null;
+    await _persistenceAdapter.clearAll();
+    _updateState(GlowGuideState.initial);
+    await start();
+  }
+
   /// Pausa la guía
   Future<void> pause() async {
     if (_disposed) return;
@@ -332,10 +341,17 @@ class GlowGuideEngine {
     final routeName = action.target;
     final timeout = FailurePolicy.navigationTimeout;
 
-    // 1. Registrar espera de visibilidad ANTES de navegar
+    // Retornar primeramente a /home para garantizar la secuencia perfil -> home -> secundaria -> home
+    await _navigationDelegate.returnToHome(timeout: timeout);
+
+    if (routeName == '/home') {
+      return;
+    }
+
+    // 1. Registrar espera de visibilidad ANTES de navegar a la sub-pantalla
     final visibilityFuture = _screenVisibilityObserver.waitForVisible(routeName, timeout);
 
-    // 2. Ejecutar navegación
+    // 2. Ejecutar navegación a la sub-pantalla
     final result = await _navigationDelegate.navigate(
       routeName: routeName,
       arguments: action.parameters['arguments'] as Map<String, dynamic>?,
