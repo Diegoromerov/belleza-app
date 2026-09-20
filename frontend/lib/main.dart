@@ -30,6 +30,7 @@ import 'screens/auth/onboarding_screen.dart';
 import 'screens/auth/verification_pending_screen.dart';
 import 'screens/auth/forgot_password_screen.dart';
 import 'screens/auth/accept_invitation_screen.dart';
+import 'screens/auth/context_selection_screen.dart';
 import 'screens/provider_detail_screen.dart';
 import 'screens/provider_dashboard_screen.dart';
 import 'screens/salon_dashboard_screen.dart';
@@ -245,6 +246,10 @@ class BeautyApp extends StatelessWidget {
                 },
                 '/onboarding': (_) => const OnboardingScreen(),
                 '/verification-pending': (_) => const VerificationPendingScreen(),
+                '/context-selection': (context) {
+                  final args = ModalRoute.of(context)?.settings.arguments as List<dynamic>? ?? [];
+                  return ContextSelectionScreen(availableContexts: args);
+                },
 
                 // 2. Destinos Principales por Segmentación de Rol
                 '/home': (_) => const ProvidersScreen(),             // Rol CLIENTE (Catálogo / Búsqueda)
