@@ -85,7 +85,7 @@ class _GlowGuidePresenterState extends State<GlowGuidePresenter> with WidgetsBin
     final position = auraContent.position;
     final alignment = _calculateAlignment(position);
     final disableAnimations = MediaQuery.of(context).disableAnimations;
-    final videoPath = _currentStep!.videoAssetId ?? 'assets/glowguide/videos/aura_pilot.mp4';
+    final videoPath = _currentStep!.videoAssetId ?? 'assets/glowguide/videos/aura_pilot.webm';
 
     final screenSize = MediaQuery.of(context).size;
     final isCenter = position == AuraPosition.center;
