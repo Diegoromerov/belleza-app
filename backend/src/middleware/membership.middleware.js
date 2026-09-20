@@ -13,8 +13,7 @@ const membershipMiddleware = async (req, res, next) => {
   const userId = req.user.id;
   let targetBusinessProfileId = req.user.businessProfileId || 
                                 req.headers?.['x-business-profile-id'] || 
-                                req.params?.businessProfileId || 
-                                req.body?.business_profile_id;
+                                req.params?.businessProfileId;
 
   try {
     // Si no se proporcionó un businessProfileId explícito, evaluar las membresías activas del usuario
