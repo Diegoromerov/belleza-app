@@ -54,7 +54,6 @@ flutter:
     - assets/fonts/
     - assets/videos/
     - assets/glowapp.mp3
-    - assets/glowguide/aura_canonical.webp
     - assets/glowguide/videos/
   fonts:
     - family: Manrope
