@@ -1,15 +1,58 @@
 // backend/src/controllers/serviceController.js
+const { Op } = require('sequelize');
 const Service = require('../models/Service');
 
-// GET /api/services/provider → Lista servicios del provider
+/**
+ * 💅 SERVICE CONTROLLER (GLOWAPP SAAS & PROVIDER ENGINE)
+ * Handles service CRUD with strict multi-tenant isolation (Anti-Tenant-Leakage / Anti-IDOR).
+ */
+
+// Helper to build tenant isolation query condition
+const buildTenantWhere = (req, extraWhere = {}) => {
+  const businessProfileId = req.user?.businessProfileId;
+  const providerId = req.user?.id;
+
+  if (businessProfileId) {
+    return {
+      [Op.and]: [
+        extraWhere,
+        {
+          [Op.or]: [
+            { business_profile_id: businessProfileId },
+            { provider_id: providerId }
+          ]
+        }
+      ]
+    };
+  }
+
+  return {
+    [Op.and]: [
+      extraWhere,
+      { provider_id: providerId }
+    ]
+  };
+};
+
+// GET /api/services/provider → Lista servicios del establecimiento/provider activo
 exports.getProviderServices = async (req, res) => {
   try {
-    if (req.user.role !== 'provider' && req.user.role !== 'PRESTADOR') {
-      return res.status(403).json({ error: 'Acceso denegado: solo para proveedores' });
+    const businessProfileId = req.user?.businessProfileId;
+    const providerId = req.user?.id;
+
+    if (!businessProfileId && !providerId) {
+      return res.status(403).json({ 
+        error: 'FORBIDDEN', 
+        message: 'No hay un contexto de negocio activo ni usuario autenticado.' 
+      });
     }
 
+    const whereClause = businessProfileId
+      ? { [Op.or]: [{ business_profile_id: businessProfileId }, { provider_id: providerId }] }
+      : { provider_id: providerId };
+
     const services = await Service.findAll({
-      where: { provider_id: req.user.id },
+      where: whereClause,
       order: [['name', 'ASC']]
     });
 
@@ -20,7 +63,8 @@ exports.getProviderServices = async (req, res) => {
       price: parseFloat(service.price) || 0.0,
       duration_minutes: parseInt(service.duration_minutes) || 30,
       category: service.category || '',
-      is_active: !!service.is_active
+      is_active: !!service.is_active,
+      business_profile_id: service.business_profile_id
     }));
 
     res.json({ success: true, count: formattedServices.length, data: formattedServices });
@@ -30,12 +74,11 @@ exports.getProviderServices = async (req, res) => {
   }
 };
 
-// POST /api/services → Crea servicio
+// POST /api/services → Crea servicio asociado al establecimiento activo
 exports.createService = async (req, res) => {
   try {
-    if (req.user.role !== 'provider' && req.user.role !== 'PRESTADOR') {
-      return res.status(403).json({ error: 'Acceso denegado: solo para proveedores' });
-    }
+    const businessProfileId = req.user?.businessProfileId;
+    const providerId = req.user?.id;
 
     const { name, description, price, duration_minutes, category, is_active } = req.body;
     if (!name || price === undefined || !duration_minutes) {
@@ -54,7 +97,8 @@ exports.createService = async (req, res) => {
     }
 
     const service = await Service.create({
-      provider_id: req.user.id,
+      provider_id: providerId,
+      business_profile_id: businessProfileId || null,
       name,
       description: description || null,
       price: parsedPrice,
@@ -66,9 +110,10 @@ exports.createService = async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'Servicio creado exitosamente',
-      service: {
+      data: {
         id: service.id,
         provider_id: service.provider_id,
+        business_profile_id: service.business_profile_id,
         name: service.name,
         description: service.description,
         price: parseFloat(service.price),
@@ -83,23 +128,21 @@ exports.createService = async (req, res) => {
   }
 };
 
-// PUT /api/services/:id → Actualiza servicio
+// PUT /api/services/:id → Actualiza servicio (IDOR & Multi-tenant Protected)
 exports.updateService = async (req, res) => {
   try {
-    if (req.user.role !== 'provider' && req.user.role !== 'PRESTADOR') {
-      return res.status(403).json({ error: 'Acceso denegado: solo para proveedores' });
-    }
-
     const serviceId = req.params.id;
-    const providerId = req.user.id;
     const { name, description, price, duration_minutes, category, is_active } = req.body;
 
-    const service = await Service.findOne({
-      where: { id: serviceId, provider_id: providerId }
-    });
+    const whereClause = buildTenantWhere(req, { id: serviceId });
+
+    const service = await Service.findOne({ where: whereClause });
 
     if (!service) {
-      return res.status(404).json({ error: 'Servicio no encontrado o no te pertenece' });
+      return res.status(404).json({ 
+        error: 'SERVICE_NOT_FOUND', 
+        message: 'El servicio no existe o no tienes acceso a él.' 
+      });
     }
 
     if (!name || price === undefined || !duration_minutes) {
@@ -121,16 +164,19 @@ exports.updateService = async (req, res) => {
     service.price = parsedPrice;
     service.duration_minutes = parsedDuration;
     service.category = category || null;
-    service.is_active = is_active !== false;
+    if (is_active !== undefined) {
+      service.is_active = is_active !== false;
+    }
 
     await service.save();
 
     res.json({
       success: true,
       message: 'Servicio actualizado exitosamente',
-      service: {
+      data: {
         id: service.id,
         provider_id: service.provider_id,
+        business_profile_id: service.business_profile_id,
         name: service.name,
         description: service.description,
         price: parseFloat(service.price),
@@ -145,22 +191,20 @@ exports.updateService = async (req, res) => {
   }
 };
 
-// DELETE /api/services/:id → Soft delete
+// DELETE /api/services/:id → Elimina / Desactiva servicio (IDOR & Multi-tenant Protected)
 exports.deleteService = async (req, res) => {
   try {
-    if (req.user.role !== 'provider' && req.user.role !== 'PRESTADOR') {
-      return res.status(403).json({ error: 'Acceso denegado: solo para proveedores' });
-    }
-
     const serviceId = req.params.id;
-    const providerId = req.user.id;
 
-    const service = await Service.findOne({
-      where: { id: serviceId, provider_id: providerId }
-    });
+    const whereClause = buildTenantWhere(req, { id: serviceId });
+
+    const service = await Service.findOne({ where: whereClause });
 
     if (!service) {
-      return res.status(404).json({ error: 'Servicio no encontrado o no te pertenece' });
+      return res.status(404).json({ 
+        error: 'SERVICE_NOT_FOUND', 
+        message: 'El servicio no existe o no tienes acceso a él.' 
+      });
     }
 
     service.is_active = false;
@@ -169,7 +213,7 @@ exports.deleteService = async (req, res) => {
     res.json({
       success: true,
       message: 'Servicio desactivado exitosamente',
-      service: {
+      data: {
         id: service.id,
         name: service.name,
         is_active: service.is_active

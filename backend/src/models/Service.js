@@ -9,8 +9,13 @@ const Service = sequelize.define('Service', {
   },
   provider_id: {
     type: DataTypes.INTEGER,
-    allowNull: false,
+    allowNull: true,
     field: 'provider_id'
+  },
+  business_profile_id: {
+    type: DataTypes.STRING(36),
+    allowNull: true,
+    field: 'business_profile_id'
   },
   name: {
     type: DataTypes.STRING(100),
