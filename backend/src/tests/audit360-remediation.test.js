@@ -31,19 +31,26 @@ describe('A360 C-01 — el runner de migraciones no ejecuta rollbacks', () => {
     expect(enDirectorio).toEqual([]);
   });
 
-  test('los 6 runners excluyen explícitamente los rollbacks', () => {
-    const runners = [
-      'index.js',
+  test('los runners versionados excluyen explícitamente los rollbacks', () => {
+    // Solo los runners TRACKEADOS cuentan para el gate: `check_*.js` y `run_*.js`
+    // están en .gitignore (scripts ad-hoc locales), así que se verifican aparte
+    // y solo si existen en este árbol.
+    const versionados = ['index.js', 'src/config/migrationRunner.js'];
+    const locales = [
       'check_and_migrate.js',
       'run_all_migrations.js',
       'run_migrations_ordered.js',
       'run_migrations_until_ready.js',
-      'src/config/migrationRunner.js',
-    ];
-    for (const r of runners) {
-      // Cada runner debe excluir .down.sql en su propio filtro.
+    ].filter((f) => fs.existsSync(path.join(BACKEND, f)));
+
+    for (const r of versionados) {
       expect(leer(r)).toMatch(/endsWith\('\.down\.sql'\)/);
     }
+    for (const r of locales) {
+      expect(leer(r)).toMatch(/endsWith\('\.down\.sql'\)/);
+    }
+    // El runner versionado del arranque es el que importa: no puede quedar sin filtro.
+    expect(leer('index.js')).toMatch(/endsWith\('\.down\.sql'\)/);
   });
 });
 
