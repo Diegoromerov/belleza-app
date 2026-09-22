@@ -2,7 +2,7 @@
 const express = require('express');
 const cors = require('cors');
 const compression = require('compression'); // ← GZIP para reducir main.dart.js de 4MB a ~1MB
-const { pool, testConnection } = require('./src/config/db');
+const { pool, testConnection, getDbStatus } = require('./src/config/db');
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
@@ -39,6 +39,8 @@ const xpLogRoutes = require('./src/routes/xpLogRoutes');
 const eventRoutes = require('./src/routes/eventRoutes');
 const eventRegistrationRoutes = require('./src/routes/eventRegistrationRoutes');
 const aiOrchestratorRoutes = require('./src/routes/aiOrchestratorRoutes');
+const businessRoutes = require('./src/routes/businessRoutes');
+const membershipRoutes = require('./src/routes/membershipRoutes');
 const adminMiddleware = async (req, res, next) => {
   try {
     if (!req.user || !req.user.id) {
@@ -206,6 +208,16 @@ app.use(cors({
   app.use(express.json({ limit: '50mb', verify: (req, res, buf) => { req.rawBody = buf; } }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(traceIdMiddleware); // Trace ID middleware for consistent tracking
+// Servir el build de Flutter Web desde el backend es una comodidad de desarrollo local: en el
+// contenedor desplegado esa ruta NO existe (el contexto de build del backend es ./backend y el web
+// lo sirve nginx con frontend/Dockerfile). Por eso se resuelve UNA sola vez al arrancar, en lugar de
+// hacer un fs.existsSync por cada request.
+const webBuildPath = path.join(__dirname, '../frontend/build/web');
+const webBuildIndex = path.join(webBuildPath, 'index.html');
+const hasWebBuild = fs.existsSync(webBuildIndex);
+if (hasWebBuild) {
+  app.use(express.static(webBuildPath));
+}
 const sanitizer = require('./src/middleware/sanitizer');
 app.use(sanitizer);
 
@@ -412,20 +424,20 @@ app.use('/api/xp-logs', xpLogRoutes);
 // RUTAS DE ORQUESTADOR IA MULTI-AGENTE
 // ==========================================
 app.use('/api/ai', aiOrchestratorRoutes);
-// Health check
+app.use('/api/v1/business', businessRoutes);
+app.use('/api/v1/memberships', membershipRoutes);
+// Health check — NO escribe en la base de datos. Antes ejecutaba un `setval` sobre
+// `usuarios_id_seq` en cada probe (y respondía 200 con la BD caída).
+// A360-2026-09-22/A-06 + C-03.
 app.get('/api/health', async (req, res) => {
-  try {
-    // Alinear la secuencia auto-incremental de usuarios para evitar colisión de IDs (duplicate key value)
-    await pool.query("SELECT setval('usuarios_id_seq', (SELECT COALESCE(MAX(id), 0) FROM usuarios) + 1, false);");
-    console.log("✅ Secuencia de usuarios alineada con éxito.");
-  } catch (err) {
-    console.error("⚠️ Error alineando la secuencia de usuarios:", err.message);
-  }
-  res.json({ 
-    status: 'OK', 
-    message: 'Backend funcionando', 
+  const db = getDbStatus();
+  const degradado = db.servingFabricatedData || db.pgAvailable === false;
+  res.status(degradado ? 503 : 200).json({
+    status: degradado ? 'DEGRADED' : 'OK',
+    message: degradado ? 'Backend con capa de datos degradada' : 'Backend funcionando',
     timestamp: new Date().toISOString(),
-    env: process.env.NODE_ENV || 'development'
+    env: process.env.NODE_ENV || 'development',
+    database: db,
   });
 });
 
@@ -1642,16 +1654,61 @@ const initDatabase = async () => {
     const migrationsDir = path.join(__dirname, 'migrations');
     if (fs.existsSync(migrationsDir)) {
       const files = fs.readdirSync(migrationsDir)
+<<<<<<< HEAD
+=======
+        // Los rollbacks (.down.sql) NUNCA se aplican en el arranque: solo un humano, a propósito.
+>>>>>>> origin/main
         .filter(file => file.endsWith('.sql') && !file.endsWith('.down.sql'))
         .sort(); // Orden alfabético: 001, 002, 003, etc.
-      
-      console.log(`🔍 Encontradas ${files.length} migraciones en la carpeta migrations.`);
+
+      console.log(`🔍 Encontradas ${files.length} migraciones aplicables en la carpeta migrations.`);
+
+      // Registro de migraciones aplicadas: evita re-ejecutar las 68 en cada arranque.
+      // Fail-safe: si el registro no está disponible, se mantiene el comportamiento idempotente anterior.
+      let appliedMigrations = null;
+      try {
+        await pool.query(`
+          CREATE TABLE IF NOT EXISTS schema_migrations (
+            filename TEXT PRIMARY KEY,
+            checksum TEXT,
+            applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+          );
+        `);
+        await pool.query('ALTER TABLE schema_migrations ADD COLUMN IF NOT EXISTS checksum TEXT;');
+        const appliedRows = await pool.query('SELECT filename, checksum FROM schema_migrations;');
+        appliedMigrations = new Map(appliedRows.rows.map(r => [r.filename, r.checksum]));
+      } catch (trackErr) {
+        console.warn('⚠️ Registro schema_migrations no disponible; se aplicarán todas las migraciones (modo idempotente):', trackErr.message);
+        appliedMigrations = null;
+      }
+
+      let skippedMigrations = 0;
       for (const file of files) {
         const filePath = path.join(migrationsDir, file);
+        const checksum = crypto.createHash('sha256').update(fs.readFileSync(filePath)).digest('hex').slice(0, 16);
+
+        if (appliedMigrations && appliedMigrations.has(file)) {
+          if (appliedMigrations.get(file) && appliedMigrations.get(file) !== checksum) {
+            console.warn(`⚠️ Deriva de migración: ${file} cambió después de aplicarse (${appliedMigrations.get(file)} → ${checksum}). No se re-aplica; revisar a mano.`);
+          }
+          skippedMigrations++;
+          continue;
+        }
+
         try {
           const sql = fs.readFileSync(filePath, 'utf8');
           await pool.query(sql);
           console.log(`✅ Base de datos: Migración ${file} aplicada exitosamente.`);
+          if (appliedMigrations) {
+            try {
+              await pool.query(
+                'INSERT INTO schema_migrations (filename, checksum) VALUES ($1, $2) ON CONFLICT (filename) DO UPDATE SET checksum = EXCLUDED.checksum, applied_at = NOW();',
+                [file, checksum]
+              );
+            } catch (recordErr) {
+              console.warn(`⚠️ No se pudo registrar la migración ${file}:`, recordErr.message);
+            }
+          }
         } catch (err) {
           // Ignorar errores comunes de "ya existe" o de alteración idempotente para mantener robustez
           if (!err.message.includes('already exists') && !err.message.includes('ya existe') && !err.message.includes('duplicate key value') && !err.message.includes('already a column')) {
@@ -1659,8 +1716,16 @@ const initDatabase = async () => {
             dbErrors.push({ stage: `migration-file-${file}`, message: err.message });
           } else {
             console.log(`ℹ️ Migración ${file} ya aplicada anteriormente o con elementos existentes.`);
+            if (appliedMigrations) {
+              try {
+                await pool.query('INSERT INTO schema_migrations (filename, checksum) VALUES ($1, $2) ON CONFLICT (filename) DO NOTHING;', [file, checksum]);
+              } catch (recordErr) { /* registro no bloqueante */ }
+            }
           }
         }
+      }
+      if (skippedMigrations > 0) {
+        console.log(`ℹ️ ${skippedMigrations} migraciones ya registradas en schema_migrations (no se re-ejecutan).`);
       }
     }
   } catch (dirErr) {
@@ -1745,7 +1810,14 @@ app.set('notifyUserChatMessage', notifyUserChatMessage);
 // Limpiar historial de chats deshabilitado en producción para evitar pérdida de datos.
 // En desarrollo, utilizar una semilla de limpieza controlada si es necesario.
 
-// Módulo Nail Try-on removido por completo.
+// SPA Fallback para Flutter Web (ver nota en webBuildPath: en el contenedor desplegado no existe)
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api')) return next();
+  if (hasWebBuild) {
+    return res.sendFile(webBuildIndex);
+  }
+  next();
+});
 
 // ==========================================
 // INICIO DEL SERVIDOR

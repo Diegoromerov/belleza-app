@@ -78,7 +78,7 @@ npm install axios redis dotenv
 # YOCAM_API_KEY=tu_api_key_aqui
 # GEMINI_API_KEY=tu_api_key_aqui
 # REDIS_URL=redis://localhost:6379
-# DATABASE_URL=postgresql://user:pass@localhost:5432/glowapp
+# DATABASE_URL=postgresql://user:***@localhost:5432/glowapp
 
 # Iniciar Redis (si no está en docker-compose)
 docker run -d --name redis-glowa -p 6379:6379 redis:alpine

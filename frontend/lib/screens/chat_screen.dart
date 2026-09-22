@@ -173,13 +173,20 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  void _registerWebSocket() {
-    if (_webSocketChannel != null && _currentUserId != null) {
-      _webSocketChannel!.sink.add(jsonEncode({
-        'type': 'register',
-        'userId': _currentUserId,
-      }));
+  void _registerWebSocket() async {
+    if (_webSocketChannel == null) return;
+    // A360-2026-09-22/C-04: el servidor exige un token JWT para registrar la
+    // conexión. Registrarse enviando sólo el userId ya no se acepta, así que sin
+    // token no se registra (el polling existente sigue trayendo los mensajes).
+    final token = await AuthService.getToken();
+    if (token == null || token.isEmpty) {
+      debugPrint('WS chat: sin token, no se registra la conexión');
+      return;
     }
+    _webSocketChannel!.sink.add(jsonEncode({
+      'type': 'register',
+      'token': token,
+    }));
   }
 
   void _handleWebSocketFailure() {

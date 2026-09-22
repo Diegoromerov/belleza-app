@@ -385,6 +385,7 @@ class _StoreScreenState extends State<StoreScreen> {
                                   if (widget.bookingId != null) 'booking_id': widget.bookingId,
                                 };
 
+<<<<<<< HEAD
                                 // Antes aquí se abría la pasarela con un
                                 // identificador inventado ('STORE_<millis>'),
                                 // que la hoja interpretaba como "no llames a
@@ -403,6 +404,40 @@ class _StoreScreenState extends State<StoreScreen> {
                                     setState(() {
                                       _cart.clear();
                                       _isCartOpen = false;
+=======
+                                // A360-2026-09-22/C-03: antes se fabricaba aquí un id
+                                // 'STORE_<epoch>' y se usaba como referencia de pago.
+                                // Si no hay reserva real no hay identificador de pago:
+                                // se pasa vacío y el checkout responde "no integrado".
+                                final paymentResult = await showWompiCheckoutSheet(
+                                  context: context,
+                                  bookingId: widget.bookingId ?? '',
+                                  serviceName: 'Compra GlowShop (${_cart.length} productos)',
+                                  price: total,
+                                  providerName: 'GlowShop Oficial',
+                                  itemType: 'product',
+                                );
+
+                                if (paymentResult == true) {
+                                  setCheckoutState(() {
+                                    processing = true;
+                                  });
+                                  try {
+                                    final response = await ApiService.post('/api/store/checkout', checkoutData);
+                                    if (response != null && response['success'] == true) {
+                                      Navigator.pop(ctx);
+                                      setState(() {
+                                        _cart.clear();
+                                        _isCartOpen = false;
+                                      });
+                                      _showOrderSuccessDialog();
+                                    } else {
+                                      throw Exception(response?['error'] ?? 'Error registrando pedido');
+                                    }
+                                  } catch (e) {
+                                    setCheckoutState(() {
+                                      processing = false;
+>>>>>>> origin/main
                                     });
                                     _showOrderSuccessDialog();
                                   } else {

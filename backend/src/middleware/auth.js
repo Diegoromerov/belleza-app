@@ -56,8 +56,14 @@ const authMiddleware = async (req, res, next) => {
       id: verified.id,
       email: verified.email,
       role: toApiRole(dbRole),
+<<<<<<< HEAD
+=======
+      // `req.user.rol` se leía en dos sitios sin que nadie lo seteara, así que el guard
+      // de consentimiento biométrico nunca pasaba (A360-2026-09-22/A-01).
+>>>>>>> origin/main
       rol: dbRole,
       tenant_id: dbTenantId,
+      businessProfileId: verified.businessProfileId || null,
       token
     };
 

@@ -294,13 +294,23 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                 '0.0') ??
         (gross - platformCut - stateTax);
 
+    // A360-2026-09-22/C-06: el backend sólo devuelve wompi_reference y
+    // payout_status (bookingController.js, /bookings/provider). Nunca devuelve
+    // numero_cuenta_nequi, así que antes se mostraba una cuenta inventada
+    // ('+573****2222') y una referencia inventada. Ahora: "No disponible".
     final String nequiAccount =
-        booking['numero_cuenta_nequi'] ?? '+573001112222';
-    final String wompiRef = booking['wompi_reference'] ??
-        'wompi_ref_${booking['id'].toString().substring(0, 8).toUpperCase()}';
-    final String payoutStatus = booking['payout_status'] == 'paid'
-        ? 'DISPERSADO (Nequi)'
-        : 'EN COLA (Wompi)';
+        booking['numero_cuenta_nequi']?.toString().trim().isNotEmpty == true
+            ? booking['numero_cuenta_nequi'].toString()
+            : 'No disponible';
+    final String wompiRef =
+        booking['wompi_reference']?.toString().trim().isNotEmpty == true
+            ? booking['wompi_reference'].toString()
+            : 'No disponible';
+    final String? rawPayoutStatus = booking['payout_status']?.toString();
+    final String payoutStatus =
+        (rawPayoutStatus == null || rawPayoutStatus.trim().isEmpty)
+            ? 'No disponible'
+            : rawPayoutStatus.toUpperCase();
 
     showDialog(
       context: context,

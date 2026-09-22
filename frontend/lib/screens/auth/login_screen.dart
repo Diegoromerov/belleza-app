@@ -53,6 +53,14 @@ class _LoginScreenState extends State<LoginScreen> {
       final result =
           await AuthService.login(_emailCtrl.text.trim(), _passCtrl.text);
       if (result != null && mounted) {
+        if (result['requires_context_selection'] == true && result['available_contexts'] != null) {
+          Navigator.pushReplacementNamed(
+            context,
+            '/context-selection',
+            arguments: result['available_contexts'],
+          );
+          return;
+        }
         final bool onboardingCompleto =
             result['user']['onboarding_completo'] ?? false;
         final String rLower = (result['user']['role'] ?? '').toString().toLowerCase();

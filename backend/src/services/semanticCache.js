@@ -39,11 +39,14 @@ function cosineSimilarity(a, b) {
  * @param {number[]} embedding - Vector de embedding
  * @returns {string} Clave de cache
  */
-function generateCacheKey(embedding) {
-  // Usar hash de los primeros 32 valores (suficiente para unicidad)
+function generateCacheKey(embedding, identity = '') {
+  // Usar hash de los primeros 32 valores (suficiente para unicidad).
+  // `identity` (tenant/usuario) entra en el hash: sin él, dos usuarios con la misma
+  // consulta compartían la misma clave y uno recibía la respuesta del otro
+  // (A360-2026-09-22/C-12).
   const sample = embedding.slice(0, 32).map(v => Math.round(v * 10000)).join(',');
   const crypto = require('crypto');
-  return crypto.createHash('sha256').update(sample).digest('hex').substring(0, 32);
+  return crypto.createHash('sha256').update(`${identity}|${sample}`).digest('hex').substring(0, 32);
 }
 
 /**
@@ -51,33 +54,40 @@ function generateCacheKey(embedding) {
  * @param {number[]} queryEmbedding - Embedding de la query
  * @returns {Promise<Object|null>} Entrada de cache o null
  */
-async function findSimilarInCache(queryEmbedding) {
+async function findSimilarInCache(queryEmbedding, identity = '') {
   const redis = await getRedisClient();
   if (!redis) return null;
-  
+
+  // El índice de candidatos está SEPARADO por identidad. Antes era uno global
+  // (`semantic:index`, últimos 100) y se comparaban embeddings de todos los
+  // usuarios: prefijar la clave no bastaba, porque el hit se decide por similitud
+  // vectorial sobre esa lista compartida (A360-2026-09-22/C-12).
+  const scope = identity || 'anon';
+  const indexKey = `semantic:index:${scope}`;
+
   try {
-    const cacheKey = `semantic:${generateCacheKey(queryEmbedding)}`;
+    const cacheKey = `semantic:${scope}:${generateCacheKey(queryEmbedding, identity)}`;
     const cached = await redis.get(cacheKey);
     
     if (cached) {
       const entry = JSON.parse(cached);
       // Verificar similitud real (por si hash colisiona)
       const similarity = cosineSimilarity(queryEmbedding, entry.embedding);
-      if (similarity >= SIMILARITY_THRESHOLD) {
+      if (similarity >= SIMILARITY_THRESHOLD && (!identity || entry.identity === identity || !entry.identity)) {
         console.log(`🎯 Cache semántico HIT (similitud: ${similarity.toFixed(4)})`);
         return entry;
       }
     }
     
-    // Buscar en índice de claves si no hay match exacto por hash
-    // Estrategia: mantener índice de embeddings recientes para búsqueda aproximada
-    const indexKey = 'semantic:index';
-    const indexedKeys = await redis.lRange(indexKey, 0, 99); // Últimos 100
+    // Buscar en el índice de candidatos DE ESTA identidad.
+    const indexedKeys = await redis.lRange(indexKey, 0, 99); // Últimos 100 del mismo usuario/tenant
     
     for (const key of indexedKeys) {
       const entryData = await redis.get(`semantic:${key}`);
       if (entryData) {
         const entry = JSON.parse(entryData);
+        // Doble verificación: la entrada debe pertenecer a esta identidad.
+        if (identity && entry.identity && entry.identity !== identity) continue;
         const similarity = cosineSimilarity(queryEmbedding, entry.embedding);
         if (similarity >= SIMILARITY_THRESHOLD) {
           console.log(`🎯 Cache semántico HIT por búsqueda (similitud: ${similarity.toFixed(4)})`);
@@ -103,18 +113,21 @@ async function findSimilarInCache(queryEmbedding) {
  * @param {Object} metadata - Metadata adicional (chunks, tools, etc.)
  * @returns {Promise<void>}
  */
-async function setCache(queryEmbedding, response, metadata = {}) {
+async function setCache(queryEmbedding, response, metadata = {}, identity = '') {
   const redis = await getRedisClient();
   if (!redis) return;
+
+  const scope = identity || 'anon';
   
   try {
-    const cacheKey = generateCacheKey(queryEmbedding);
-    const fullKey = `semantic:${cacheKey}`;
+    const cacheKey = generateCacheKey(queryEmbedding, identity);
+    const fullKey = `semantic:${scope}:${cacheKey}`;
     
     const entry = {
       embedding: queryEmbedding,
       response,
       metadata,
+      identity,
       timestamp: Date.now(),
       hits: 0,
     };
@@ -122,13 +135,13 @@ async function setCache(queryEmbedding, response, metadata = {}) {
     // Guardar entrada
     await redis.setEx(fullKey, SEMANTIC_CACHE_TTL, JSON.stringify(entry));
     
-    // Actualizar índice LRU
-    const indexKey = 'semantic:index';
+    // Actualizar índice LRU de ESTA identidad (antes era global y se desalojaba entre usuarios)
+    const indexKey = `semantic:index:${scope}`;
     await redis.lRem(indexKey, 1, cacheKey);
     await redis.lPush(indexKey, cacheKey);
     await redis.lTrim(indexKey, 0, MAX_CACHE_SIZE - 1);
     
-    console.log(`💾 Cache semántico guardado: ${cacheKey}`);
+    console.log(`💾 Cache semántico guardado: ${scope}:${cacheKey}`);
   } catch (error) {
     console.warn('⚠️ Error guardando en cache semántico:', error.message);
   }

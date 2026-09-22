@@ -29,9 +29,12 @@ nul
 **/nul
 
 # Temporary logs, reports, and diagnostic scripts
+<<<<<<< HEAD
 # Informes de verificación de tests (los genera scripts/verifyTestBaseline.js)
 backend/.jest-baseline-report.json
 backend/jest-baseline-report.json
+=======
+>>>>>>> origin/main
 *borrar.txt
 audit_report.txt
 obsolete_audit_report.txt
@@ -78,3 +81,14 @@ F7.0
 test_direct_conn.js
 __pycache__/
 *.pyc
+<<<<<<< HEAD
+=======
+# Wrapper de Gradle: artefacto regenerable (javadoc + fuentes del wrapper).
+# Se regenera con el Gradle Wrapper oficial; no debe versionarse (A360-2026-09-22/H-01).
+frontend/android/gradle/wrapper/
+
+# Artefactos de análisis locales (pickles de sesiones de auditoría): nunca versionar
+*.pkl
+analyze_rows.pkl
+audit_lib.pkl
+>>>>>>> origin/main

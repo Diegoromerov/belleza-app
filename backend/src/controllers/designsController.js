@@ -1553,6 +1553,16 @@ exports.requestMedicalValidation = async (req, res) => {
 
 exports.payMedicalValidation = async (req, res) => {
   try {
+    // Igual que payBooking: generaba 'wompi_val_ref_<random>' y respondía
+    // "Pago de $15.000 COP verificado por Wompi" SIN verificar ningún pago
+    // (A360-2026-09-22/C-05). Sin pasarela real, 501.
+    if (process.env.NODE_ENV === 'production' && process.env.ALLOW_PAYMENT_SIMULATOR !== 'true') {
+      return res.status(501).json({
+        error: 'PAYMENT_GATEWAY_NOT_INTEGRATED',
+        message: 'La pasarela de pagos real no está integrada en este entorno. No se procesan pagos simulados.'
+      });
+    }
+
     const userId = req.user.id;
     const { ai_diagnostic_id, profesional_id } = req.body;
 
@@ -1576,7 +1586,14 @@ exports.payMedicalValidation = async (req, res) => {
 
     res.status(201).json({
       success: true,
+<<<<<<< HEAD
       message: 'Solicitud registrada. Queda pendiente de pago y de revisión por un profesional.',
+=======
+      // No se afirma que un proveedor verificó el pago: en este camino es una referencia local.
+      message: 'Solicitud registrada. Pago SIMULADO (entorno no productivo): la referencia no proviene de la pasarela.',
+      payment_reference: refToken,
+      simulated: true,
+>>>>>>> origin/main
       data: dbRes.rows[0]
     });
   } catch (error) {
@@ -1632,6 +1649,7 @@ exports.getValidationById = async (req, res) => {
   }
 };
 
+<<<<<<< HEAD
 // ❌ ELIMINADO: `simulateDoctorReview`
 //
 // Programaba, 15 segundos después de crear la solicitud, una respuesta
@@ -1640,6 +1658,19 @@ exports.getValidationById = async (req, res) => {
 // médica inventada en la historia clínica del usuario. Un dictamen médico no se
 // simula por temporizador. Mientras no exista una revisión humana real, la
 // solicitud queda en 'pendiente' — que es el estado que el esquema ya define.
+=======
+// ❌ ELIMINADO: simulateDoctorReview escribía a los 15 s una nota clínica ALEATORIA
+// (una de tres frases) en `validaciones_medicas`, marcaba estado='revisado' y la
+// firmaba como si la hubiera emitido un dermatólogo (A360-2026-09-22/C-08).
+// Una revisión profesional no se puede fabricar: la solicitud queda 'pendiente'
+// hasta que la responda una persona real.
+const simulateDoctorReview = (requestId) => {
+  console.warn(
+    `⚠️ [REVISIÓN MÉDICA] La solicitud ${requestId} queda PENDIENTE: ` +
+    'no existe revisión automática. Requiere un profesional (A360-2026-09-22/C-08).'
+  );
+};
+>>>>>>> origin/main
 
 // 🔹 NUEVO: Colecciones Curadas Editoriales
 exports.getCuratedCollections = async (req, res) => {

@@ -1,14 +1,56 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import { Scissors, Mail, Lock } from 'lucide-react';
 
+type AppRole = 'ADMIN' | 'PRESTADOR' | 'SALON' | 'CLIENTE';
+
+/** Normaliza el rol que devuelve el backend (puede venir como `rol` o `role`, en mayúsculas o minúsculas). */
+function normalizeRole(raw: unknown): AppRole | null {
+  if (typeof raw !== 'string') return null;
+  switch (raw.trim().toUpperCase()) {
+    case 'ADMIN':
+      return 'ADMIN';
+    case 'PRESTADOR':
+    case 'PROVIDER':
+      return 'PRESTADOR';
+    case 'SALON':
+      return 'SALON';
+    case 'CLIENTE':
+    case 'CLIENT':
+      return 'CLIENTE';
+    default:
+      return null;
+  }
+}
+
+/** Fallback: decodifica el payload del JWT y usa su claim de rol cuando la respuesta de login no la incluye. */
+function roleFromToken(token: unknown): AppRole | null {
+  if (typeof token !== 'string' || token.split('.').length < 2) return null;
+  try {
+    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+    const payload = JSON.parse(new TextDecoder().decode(bytes));
+    return normalizeRole(payload?.rol ?? payload?.role);
+  } catch {
+    return null;
+  }
+}
+
+/** El rol se decide por la respuesta real de login(), nunca por el email. */
+function resolveLoginRole(res: unknown): AppRole | null {
+  const data = res as
+    | { user?: Record<string, unknown>; usuario?: Record<string, unknown>; token?: string }
+    | null
+    | undefined;
+  const apiUser = data?.user ?? data?.usuario;
+  return normalizeRole(apiUser?.rol ?? apiUser?.role) ?? roleFromToken(data?.token);
+}
+
 export default function LoginPage() {
   const { login } = useAuth();
-  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -20,14 +62,25 @@ export default function LoginPage() {
     setSubmitting(true);
 
     try {
+<<<<<<< HEAD
       const user = await login(email, password);
       if (user && (user.rol === 'ADMIN' || user.rol === 'admin' || user.role === 'admin')) {
+=======
+      const res = await login(email, password);
+
+      // La autorización depende del ROL real de la cuenta, no del email introducido.
+      const role = resolveLoginRole(res);
+      if (role === 'ADMIN') {
+>>>>>>> origin/main
         window.location.href = '/';
+      } else if (role) {
+        setError('Esta cuenta no tiene permisos de administrador para acceder a este panel.');
       } else {
-        window.location.href = '/admin/academia';
+        setError('No se pudo determinar el rol de tu cuenta. Contacta a soporte.');
       }
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Error al iniciar sesión. Inténtalo de nuevo.');
+    } catch (err: unknown) {
+      const apiError = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
+      setError(apiError || 'Error al iniciar sesión. Inténtalo de nuevo.');
     } finally {
       setSubmitting(false);
     }

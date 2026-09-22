@@ -3,7 +3,7 @@
 -- NOTA: Las FKs a academy_certificates(id) se añaden en migración 034 (después de que 033 cree la columna id)
 
 -- 1. Learning Paths
-CREATE TABLE learning_paths (
+CREATE TABLE IF NOT EXISTS learning_paths (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     description TEXT,
@@ -15,7 +15,7 @@ CREATE TABLE learning_paths (
 
 -- 2. Path Courses (relación muchos a muchos)
 -- academy_courses.id is UUID (from 008_academia_glow.sql)
-CREATE TABLE path_courses (
+CREATE TABLE IF NOT EXISTS path_courses (
     path_id INTEGER REFERENCES learning_paths(id),
     course_id UUID REFERENCES academy_courses(id),
     position INTEGER NOT NULL,
@@ -24,7 +24,7 @@ CREATE TABLE path_courses (
 );
 
 -- 3. Gamification - XP Log
-CREATE TABLE xp_logs (
+CREATE TABLE IF NOT EXISTS xp_logs (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
     xp_amount INTEGER NOT NULL,
@@ -34,7 +34,7 @@ CREATE TABLE xp_logs (
 );
 
 -- 4. User Levels
-CREATE TABLE user_levels (
+CREATE TABLE IF NOT EXISTS user_levels (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
     level VARCHAR(20) CHECK (level IN ('novice', 'intermediate', 'advanced', 'expert')),
@@ -44,7 +44,7 @@ CREATE TABLE user_levels (
 );
 
 -- 5. Badges (para gamificación y certificación)
-CREATE TABLE badges (
+CREATE TABLE IF NOT EXISTS badges (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     description TEXT,
@@ -54,7 +54,7 @@ CREATE TABLE badges (
 );
 
 -- 6. Community (foros, portfolio, chats)
-CREATE TABLE community_posts (
+CREATE TABLE IF NOT EXISTS community_posts (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
     title VARCHAR(255) NOT NULL,
@@ -63,7 +63,7 @@ CREATE TABLE community_posts (
     created_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE TABLE community_comments (
+CREATE TABLE IF NOT EXISTS community_comments (
     id SERIAL PRIMARY KEY,
     post_id INTEGER REFERENCES community_posts(id),
     user_id INTEGER NOT NULL,
@@ -72,7 +72,7 @@ CREATE TABLE community_comments (
 );
 
 -- 7. Portfolios (para profesionales de belleza)
-CREATE TABLE portfolios (
+CREATE TABLE IF NOT EXISTS portfolios (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
     title VARCHAR(255) NOT NULL,
@@ -82,7 +82,7 @@ CREATE TABLE portfolios (
 );
 
 -- 8. Mentorship Sessions (integración con Zoom/Meet)
-CREATE TABLE mentorship_sessions (
+CREATE TABLE IF NOT EXISTS mentorship_sessions (
     id SERIAL PRIMARY KEY,
     mentor_id INTEGER NOT NULL,
     mentee_id INTEGER NOT NULL,
@@ -94,7 +94,7 @@ CREATE TABLE mentorship_sessions (
 );
 
 -- 9. QR Certificates (verificables)
-CREATE TABLE qr_certificates (
+CREATE TABLE IF NOT EXISTS qr_certificates (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
     certificate_id INTEGER, -- FK añadida en migración 034
@@ -104,7 +104,7 @@ CREATE TABLE qr_certificates (
 );
 
 -- 10. Proximity / Location data for events (optional)
-CREATE TABLE events (
+CREATE TABLE IF NOT EXISTS events (
     id SERIAL PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     description TEXT,
@@ -115,7 +115,7 @@ CREATE TABLE events (
 );
 
 -- 11. Event Registrations
-CREATE TABLE event_registrations (
+CREATE TABLE IF NOT EXISTS event_registrations (
     event_id INTEGER REFERENCES events(id),
     user_id INTEGER NOT NULL,
     registration_time TIMESTAMP DEFAULT NOW(),
@@ -123,7 +123,7 @@ CREATE TABLE event_registrations (
 );
 
 -- 12. Analytics (simple tracking table)
-CREATE TABLE analytics_events (
+CREATE TABLE IF NOT EXISTS analytics_events (
     id SERIAL PRIMARY KEY,
     user_id INTEGER,
     event_type VARCHAR(100) NOT NULL,
@@ -132,7 +132,7 @@ CREATE TABLE analytics_events (
 );
 
 -- 13. Settings for Multilingual support
-CREATE TABLE app_locales (
+CREATE TABLE IF NOT EXISTS app_locales (
     id SERIAL PRIMARY KEY,
     locale_code VARCHAR(10) NOT NULL UNIQUE,
     language_name VARCHAR(100) NOT NULL,
@@ -140,7 +140,7 @@ CREATE TABLE app_locales (
 );
 
 -- 14. User consent for GDPR
-CREATE TABLE user_consents (
+CREATE TABLE IF NOT EXISTS user_consents (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
     consent_type VARCHAR(100) NOT NULL,

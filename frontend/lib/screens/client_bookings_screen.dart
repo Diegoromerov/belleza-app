@@ -193,6 +193,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
     }
   }
 
+<<<<<<< HEAD
   // ❌ ELIMINADO: `_runWompiCheckout`
   //
   // Mostraba "Procesando Pago Seguro Wompi" y "Simulando pasarela Wompi...",
@@ -203,6 +204,38 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
   // La propina se retira de la UI: no existe endpoint ni columna de propina en
   // el backend (0 referencias en todo `backend/src`), así que no hay nada que
   // cobrar todavía. Cuando exista cobro real, la propina vuelve con él.
+=======
+  // A360-2026-09-22/C-02: no existe endpoint de propinas en el backend
+  // (verificado con grep en backend/src/routes y backend/src/controllers: sin
+  // rutas ni controladores de propina). Antes se "simulaba" la pasarela con un
+  // Future.delayed(2500) que daba el pago por exitoso sin cobrar nada. Ahora se
+  // informa que el pago no está disponible y NO se fabrica ningún cobro.
+  Future<void> _showTipUnavailableDialog(double amount) async {
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Text(
+          'Pago de propina no disponible',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+        content: Text(
+          'No se puede cobrar la propina de \$${amount.toStringAsFixed(0)} COP: '
+          'la pasarela de pagos aún no está integrada. Tu reseña se registrará '
+          'sin propina.',
+          style: const TextStyle(fontSize: 13),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Entendido'),
+          ),
+        ],
+      ),
+    );
+  }
+>>>>>>> origin/main
 
   void _showRatingSheet(Map<String, dynamic> booking) {
     int ratingSelected = 5;
@@ -315,9 +348,67 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                     ),
                     const SizedBox(height: 20),
 
+<<<<<<< HEAD
                     // La propina se retiró de esta hoja: se "cobraba" con un
                     // temporizador de 2,5 s, sin pasarela y sin registro. No hay
                     // endpoint ni columna de propina que la respalde.
+=======
+                    // Módulo de Propinas como tarjetas con emojis
+                    const Text(
+                      '¿Deseas agregar una propina?',
+                      style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        buildTipCard('0%', 'Sin propina', '😊'),
+                        buildTipCard('5%', '5%', '👍'),
+                        buildTipCard('10%', '10%', '⭐'),
+                        buildTipCard('15%', '15%', '🔥'),
+                        buildTipCard('Custom', 'Personalizada', '✏️'),
+                      ],
+                    ),
+                    // A360-2026-09-22/C-02: aviso explícito — no hay pasarela de
+                    // propinas integrada, así que no se puede cobrar ninguna.
+                    const SizedBox(height: 8),
+                    const Text(
+                      'El cobro de propina todavía no está disponible en la app.',
+                      style: TextStyle(
+                          fontSize: 11,
+                          fontStyle: FontStyle.italic,
+                          color: Colors.grey),
+                    ),
+                    if (showCustomTipField) ...[
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: customTipController,
+                        keyboardType: TextInputType.number,
+                        style: const TextStyle(fontSize: 14),
+                        decoration: InputDecoration(
+                          labelText: 'Valor de propina personalizado (\$)',
+                          labelStyle: const TextStyle(fontSize: 12),
+                          prefixText: '\$ ',
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16)),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: const BorderSide(
+                                color: AppTheme.primary, width: 1.5),
+                          ),
+                        ),
+                        onChanged: (val) {
+                          final parsed = double.tryParse(val) ?? 0.0;
+                          setModalState(() {
+                            tipAmount = parsed;
+                          });
+                        },
+                      ),
+                    ],
+>>>>>>> origin/main
 
                     const SizedBox(height: 16),
                     // Desglose de Pago
@@ -374,9 +465,16 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                       ),
                       onPressed: () async {
                         Navigator.pop(context); // Cerrar rating sheet
+<<<<<<< HEAD
                         // Sin propina: la reseña se envía directo. Antes, con
                         // propina > 0, se abría un "cobro" que era un
                         // temporizador y solo entonces se enviaba la reseña.
+=======
+                        if (tipAmount > 0.0) {
+                          // Sin pasarela integrada: se avisa y no se cobra nada.
+                          await _showTipUnavailableDialog(tipAmount);
+                        }
+>>>>>>> origin/main
                         _submitReviewHelper(
                             booking['id'], ratingSelected, reviewComment);
                       },
@@ -1158,7 +1256,11 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 40),
                       child: Text(
+<<<<<<< HEAD
                         'Tu reseña ha sido enviada correctamente. ¡Muchas gracias por tu opinión!',
+=======
+                        'Tu reseña ha sido registrada correctamente. ¡Muchas gracias por tu opinión!',
+>>>>>>> origin/main
                         textAlign: TextAlign.center,
                         style: TextStyle(
                             fontSize: 14, color: Colors.black54, height: 1.4),

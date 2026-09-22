@@ -322,23 +322,41 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
                         }
                         setModalState(() => _isInviting = true);
                         try {
+<<<<<<< HEAD
                           final salonIdRaw = _salonData?['id'];
                           if (salonIdRaw == null) {
                             // Sin salón identificado NO se invita: el `?? 1` que
                             // había aquí apuntaba a salon_id = 1, o sea a un
                             // salón ajeno, cuando faltaba el dato.
+=======
+                          // A360-2026-09-22/C-07: antes era `_salonData?['id'] ?? 1`,
+                          // que invitaba al salón 1 (otro negocio) cuando los datos
+                          // aún no habían cargado. Sin salonId real no se invita.
+                          final rawSalonId = _salonData?['id'];
+                          final salonId = rawSalonId is int
+                              ? rawSalonId
+                              : int.tryParse(rawSalonId?.toString() ?? '');
+                          if (salonId == null) {
+>>>>>>> origin/main
                             setModalState(() => _isInviting = false);
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text(
+<<<<<<< HEAD
                                     'No se pudo identificar tu salón. Recarga e inténtalo de nuevo.'),
+=======
+                                    'No se pudo identificar tu salón. Espera a que cargue e intenta de nuevo.'),
+>>>>>>> origin/main
                               ),
                             );
                             return;
                           }
+<<<<<<< HEAD
                           final salonId = salonIdRaw is int
                               ? salonIdRaw
                               : int.parse(salonIdRaw.toString());
+=======
+>>>>>>> origin/main
                           final res = await AuthService.inviteTeamMember(
                             salonId: salonId,
                             email: email,

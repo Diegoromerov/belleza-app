@@ -329,7 +329,9 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
         if (knowledgeSearchEnabled && beautyChunks.length > 0) {
           try {
             queryEmbeddingForCache = await generateEmbedding(userMessageText);
-            const cached = await findSimilarInCache(queryEmbeddingForCache);
+            // La identidad entra en la clave y en el conjunto de candidatos: sin ella,
+            // un usuario recibía la respuesta cacheada de otro (A360-2026-09-22/C-12).
+            const cached = await findSimilarInCache(queryEmbeddingForCache, `u${parsedUserId}`);
             if (cached) {
               cachedResponse = cached.response;
               console.log('🎯 Cache semántico HIT - Retornando respuesta cacheada');
@@ -915,7 +917,7 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
               tools: toolCalls,
               llm_used: llmUsed,
               timestamp: Date.now(),
-            });
+            }, `u${parsedUserId}`);
             console.log('💾 Cache semántico guardado para query');
           } catch (cacheError) {
             console.warn('⚠️ Error guardando en cache semántico:', cacheError.message);

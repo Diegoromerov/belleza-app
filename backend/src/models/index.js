@@ -19,6 +19,8 @@ const AnalyticsEvent = require('./AnalyticsEvent');
 const AppLocale = require('./AppLocale');
 const UserConsent = require('./UserConsent');
 const UserBadge = require('./UserBadge');
+const BusinessProfile = require('./BusinessProfile');
+const Membership = require('./Membership');
 
 // A Service belongs to a Provider (User)
 Service.belongsTo(User, { foreignKey: 'provider_id', as: 'provider' });
@@ -40,6 +42,13 @@ Service.hasMany(Booking, { foreignKey: 'service_id', as: 'bookings' });
 Transaction.belongsTo(Booking, { foreignKey: 'booking_id', as: 'booking' });
 Booking.hasOne(Transaction, { foreignKey: 'booking_id', as: 'transaction' });
 
+// Membership Associations
+User.hasMany(Membership, { foreignKey: 'user_id', as: 'memberships' });
+Membership.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+
+BusinessProfile.hasMany(Membership, { foreignKey: 'business_profile_id', as: 'memberships' });
+Membership.belongsTo(BusinessProfile, { foreignKey: 'business_profile_id', as: 'businessProfile' });
+
 module.exports = {
   sequelize,
   User,
@@ -60,5 +69,7 @@ module.exports = {
   AnalyticsEvent,
   AppLocale,
   UserConsent,
-  UserBadge
+  UserBadge,
+  BusinessProfile,
+  Membership
 };

@@ -47,15 +47,18 @@ INSERT INTO academy_courses (id, title, description, category, badge_name) VALUE
 ('c0000000-0000-0000-0000-000000000001', 'Protocolos de Bioseguridad y Calidad Glow', 'Curso obligatorio para conocer los estándares de higiene, desinfección y atención premium a domicilio.', 'bioseguridad', 'Profesional Certificada Glow')
 ON CONFLICT (id) DO NOTHING;
 
+-- NOTA (fix 2026-09-22): los UUID de módulos/lecciones de los cursos 1 y 2 se movieron al
+-- namespace d1…/d2… para que NO colisionen con los del curso 3 (b…/a… definidos en 025/026).
+-- La colisión anterior hacía que 026 renombrara/reasignara módulos de estos cursos en cada arranque.
 INSERT INTO academy_modules (id, course_id, title, sort_order) VALUES
-('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000001', 'Módulo 1: Protocolo de Bioseguridad', 1),
-('b0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000001', 'Módulo 2: Experiencia Premium al Cliente', 2)
+('d1000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000001', 'Módulo 1: Protocolo de Bioseguridad', 1),
+('d1000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000001', 'Módulo 2: Experiencia Premium al Cliente', 2)
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO academy_lessons (id, module_id, title, video_url, content_text, sort_order) VALUES
-('a0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000001', '1. Esterilización del Instrumental', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'Es fundamental esterilizar todas las herramientas metálicas antes de cada servicio utilizando autoclaves o esterilizadores térmicos. Limpia primero con jabón enzimático.', 1),
-('a0000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000001', '2. Uso de Elementos de Protección Personal', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'El uso de tapabocas, guantes de nitrilo y delantal antifluido es obligatorio durante toda la sesión para protegerte a ti y al cliente.', 2),
-('a0000000-0000-0000-0000-000000000003', 'b0000000-0000-0000-0000-000000000002', '3. Puntualidad y Presentación Personal', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'Llegar 5 minutos antes demuestra profesionalismo. Viste el uniforme oficial de GlowApp limpio y mantén una actitud cortés y empática en el hogar del cliente.', 1)
+('d2000000-0000-0000-0000-000000000001', 'd1000000-0000-0000-0000-000000000001', '1. Esterilización del Instrumental', NULL, 'Es fundamental esterilizar todas las herramientas metálicas antes de cada servicio utilizando autoclaves o esterilizadores térmicos. Limpia primero con jabón enzimático.', 1),
+('d2000000-0000-0000-0000-000000000002', 'd1000000-0000-0000-0000-000000000001', '2. Uso de Elementos de Protección Personal', NULL, 'El uso de tapabocas, guantes de nitrilo y delantal antifluido es obligatorio durante toda la sesión para protegerte a ti y al cliente.', 2),
+('d2000000-0000-0000-0000-000000000003', 'd1000000-0000-0000-0000-000000000002', '3. Puntualidad y Presentación Personal', NULL, 'Llegar 5 minutos antes demuestra profesionalismo. Viste el uniforme oficial de GlowApp limpio y mantén una actitud cortés y empática en el hogar del cliente.', 1)
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO academy_quizzes (id, course_id, question, options, correct_index) VALUES
@@ -76,11 +79,11 @@ INSERT INTO academy_courses (id, title, description, category, badge_name) VALUE
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO academy_modules (id, course_id, title, sort_order) VALUES
-('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000002', 'Módulo 1: Gel-X Avanzado', 1)
+('d1000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000002', 'Módulo 1: Gel-X Avanzado', 1)
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO academy_lessons (id, module_id, title, video_url, content_text, sort_order) VALUES
-('a0000000-0000-0000-0000-000000000004', 'b0000000-0000-0000-0000-000000000003', '1. Preparación de la Uña Natural', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'Realiza una manicura seca meticulosa y deshidrata la placa de la uña para asegurar una adherencia perfecta de los tips Gel-X sin desprendimiento prematuro.', 1)
+('d2000000-0000-0000-0000-000000000004', 'd1000000-0000-0000-0000-000000000003', '1. Preparación de la Uña Natural', NULL, 'Realiza una manicura seca meticulosa y deshidrata la placa de la uña para asegurar una adherencia perfecta de los tips Gel-X sin desprendimiento prematuro.', 1)
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO academy_quizzes (id, course_id, question, options, correct_index) VALUES

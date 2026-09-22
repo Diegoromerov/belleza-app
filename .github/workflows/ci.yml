@@ -57,6 +57,7 @@ jobs:
           cd backend
           npm ci --legacy-peer-deps
 
+<<<<<<< HEAD
       # `npm run migrate` es `sequelize.sync({force:true})`: crea tablas desde los
       # modelos, y ninguna política de RLS vive en un modelo. Por eso el esquema y
       # los roles los monta un script propio, con el orden de migraciones probado
@@ -80,12 +81,27 @@ jobs:
       # mismo con el que corre en producción. Medido: la suite da exactamente el
       # mismo resultado con PostgreSQL real que con pg-mem (mismas 12 suites rojas
       # heredadas, 0 fallos nuevos).
+=======
+      - name: Escaneo de credenciales versionadas (bloqueante)
+        run: |
+          cd backend
+          node scripts/verifyNoVersionedSecrets.js
+
+>>>>>>> origin/main
       - name: Run Backend Integration & Unit Tests
         env:
           DATABASE_URL: postgres://app_rls_user:ci_only_password@localhost:5432/glowtest
         run: |
           cd backend
-          npm test -- --coverage --forceExit --testPathIgnorePatterns="geminiService|geminiFallback|auraToolExecutor|contract|biometric|resilience|contextCompressor|fase5|authRoutes|api.cors"
+          npm test -- --coverage --testPathIgnorePatterns="geminiService|geminiFallback|auraToolExecutor|contract|biometric|resilience|contextCompressor|fase5|authRoutes|api.cors"
+
+      # Deuda visible, no oculta: las suites excluidas del gate se ejecutan igual
+      # para que su estado real no desaparezca del tablero (no bloqueante todavía).
+      - name: Suites excluidas del gate (no bloqueante)
+        continue-on-error: true
+        run: |
+          cd backend
+          npm test -- --testPathPattern="geminiService|geminiFallback|auraToolExecutor|contract|biometric|resilience|contextCompressor|fase5|authRoutes|api.cors"
 
   frontend-ci:
     name: Frontend Flutter Analyze & Build Check

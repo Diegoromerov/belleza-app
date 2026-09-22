@@ -1,6 +1,6 @@
 const { Pool } = require('pg');
 
-const REAL_RAILWAY_DATABASE_URL = 'postgresql://postgres:3d3aB6gecf1dcCdB653CGD2dee23dG4A@caboose.proxy.rlwy.net:18931/railway';
+const REAL_RAILWAY_DATABASE_URL = process.env.DATABASE_URL;
 
 async function verifyAfterDeploy() {
   console.log('=== PASO 3: VERIFICACIÓN DE ESQUEMA EN BASE DE DATOS RAILWAY TRAS DESPLIEGUE ===\n');

@@ -345,4 +345,45 @@ class AuthService {
     }
     return null;
   }
+
+  static Future<Map<String, dynamic>?> switchContext(String businessProfileId) async {
+    try {
+      final baseUrl = await getBaseUrl();
+      final token = await SecureStorageService().read('token');
+      final prefs = await SharedPreferences.getInstance();
+      final authToken = token ?? prefs.getString('token');
+
+      if (authToken == null) return null;
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/auth/context/switch'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $authToken',
+        },
+        body: json.encode({'business_profile_id': businessProfileId}),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final newToken = data['token'] as String?;
+        if (newToken != null) {
+          await SecureStorageService().write('token', newToken);
+          await prefs.setString('token', newToken);
+        }
+
+        if (data['active_context'] != null) {
+          await prefs.setString('activeBusinessProfileId', businessProfileId);
+          final activeContext = data['active_context'] as Map<String, dynamic>;
+          if (activeContext['role'] != null) {
+            await prefs.setString('userRole', activeContext['role']);
+          }
+        }
+        return data;
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
 }

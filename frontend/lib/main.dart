@@ -30,6 +30,7 @@ import 'screens/auth/onboarding_screen.dart';
 import 'screens/auth/verification_pending_screen.dart';
 import 'screens/auth/forgot_password_screen.dart';
 import 'screens/auth/accept_invitation_screen.dart';
+import 'screens/auth/context_selection_screen.dart';
 import 'screens/provider_detail_screen.dart';
 import 'screens/provider_dashboard_screen.dart';
 import 'screens/salon_dashboard_screen.dart';
@@ -40,6 +41,13 @@ import 'screens/provider_portfolio_screen.dart';
 import 'screens/chat_list_screen.dart';
 import 'screens/chat_screen.dart';
 import 'screens/profile/user_profile.dart';
+<<<<<<< HEAD
+=======
+import 'screens/profile/settings_screen.dart';
+import 'screens/wallet_screen.dart';
+import 'screens/profile/my_glow_dashboard_screen.dart';
+import 'screens/provider_profile_screen.dart';
+>>>>>>> origin/main
 import 'screens/booking_tracking_screen.dart';
 import 'screens/booking_screen.dart';
 import 'screens/ideas/welcome_screen.dart';
@@ -232,6 +240,10 @@ class BeautyApp extends StatelessWidget {
                 },
                 '/onboarding': (_) => const OnboardingScreen(),
                 '/verification-pending': (_) => const VerificationPendingScreen(),
+                '/context-selection': (context) {
+                  final args = ModalRoute.of(context)?.settings.arguments as List<dynamic>? ?? [];
+                  return ContextSelectionScreen(availableContexts: args);
+                },
 
                 // 2. Destinos Principales por Segmentación de Rol
                 '/home': (_) => const ProvidersScreen(),             // Rol CLIENTE (Catálogo / Búsqueda)
@@ -268,6 +280,50 @@ class BeautyApp extends StatelessWidget {
                 '/ideas': (_) => const BiometricWelcomeScreen(),
                 '/store': (_) => const StoreScreen(),
                 '/evolution': (_) => const EvolutionDashboardScreen(),
+<<<<<<< HEAD
+=======
+                '/medical-validation': (_) => const MedicalValidationScreen(),
+                '/glowup-card': (_) => const GlowUpCardScreen(),
+                '/palette-card': (_) => const PaletteCardScreen(),
+                '/colorimetria-historial': (_) => const ColorimetriaHistorialScreen(),
+                '/wardrobe': (_) => const WardrobeDashboardScreen(),
+                '/outfit-result': (_) => const OutfitResultScreen(),
+                '/makeup-lookbook': (_) => const MakeupLookbookScreen(),
+
+                // 7. Rutas ya navegadas pero NO declaradas (A360-2026-09-22/C-09).
+                //    Sin ellas, Navigator.pushNamed lanzaba "Could not find a
+                //    generator for route".
+                '/wallet': (_) => const WalletScreen(),
+                '/settings': (context) {
+                  // SettingsScreen exige userEmail; se toma del argumento real de
+                  // la navegación. Si no viene, queda vacío (no se inventa).
+                  final args = ModalRoute.of(context)?.settings.arguments;
+                  final email = args is String
+                      ? args
+                      : (args is Map ? (args['email']?.toString() ?? '') : '');
+                  return SettingsScreen(userEmail: email);
+                },
+                '/provider-detail': (context) {
+                  final args = ModalRoute.of(context)?.settings.arguments;
+                  final providerId = args is String
+                      ? args
+                      : (args is Map ? args['provider_id']?.toString() : null);
+                  if (providerId == null || providerId.trim().isEmpty) {
+                    return const Scaffold(
+                      body: Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(24.0),
+                          child: Text(
+                            'No se pudo identificar la proveedora solicitada.',
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+                  return ProviderDetailScreen(providerId: providerId);
+                },
+>>>>>>> origin/main
               },
             );
           },

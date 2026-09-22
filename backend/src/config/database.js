@@ -18,6 +18,7 @@ function usarSsl(connectionString) {
   return !/(^|@|\/\/)(localhost|127\.0\.0\.1|\[::1\])(:|\/|$)/.test(connectionString);
 }
 
+<<<<<<< HEAD
 /**
  * Cablea el contexto de inquilino (o el rol de sistema) al pool de Sequelize.
  *
@@ -150,6 +151,34 @@ if (connectionString) {
     dialect: 'postgres',
     dialectModule: pg,
     logging: false,
+=======
+// Harness en memoria (src/config/pgMemory.js). Se evalúa PRIMERO a propósito: antes las ramas
+// NODE_ENV==='test' y DATABASE_URL tenían prioridad sobre USE_PG_MEM, de modo que el flag se ignoraba
+// en silencio y un script que creía trabajar en memoria terminaba escribiendo en la base apuntada por
+// DATABASE_URL. El mismo módulo expone el adaptador que comparte el pool crudo (src/config/db.js),
+// para que Sequelize y el SQL crudo hablen con la MISMA base en memoria.
+const pgMemory = require('./pgMemory');
+
+if (pgMemory.enabled) {
+  sequelize = new Sequelize('postgres://', {
+    dialect: 'postgres',
+    dialectModule: pgMemory.adapter,
+    logging: false
+  });
+  // pg-mem no soporta CREATE TYPE ... AS ENUM: se neutraliza el helper que Sequelize usa en sync().
+  sequelize.getQueryInterface().ensureEnums = async () => {};
+
+} else if (connectionString) {
+  sequelize = new Sequelize(connectionString, {
+    dialect: 'postgres',
+    dialectOptions: {
+      ssl: {
+        require: true,
+        rejectUnauthorized: false
+      }
+    },
+    logging: false
+>>>>>>> origin/main
   });
 } else {
   sequelize = new Sequelize(

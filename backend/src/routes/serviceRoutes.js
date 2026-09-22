@@ -2,11 +2,41 @@
 const express = require('express');
 const router = express.Router();
 const { authMiddleware } = require('../middleware/auth');
+const membershipMiddleware = require('../middleware/membership.middleware');
+const { requirePermission, RESOURCES, ACTIONS } = require('../middleware/authorization.middleware');
 const serviceController = require('../controllers/serviceController');
 
-router.get('/services/provider', authMiddleware, serviceController.getProviderServices);
-router.post('/services', authMiddleware, serviceController.createService);
-router.put('/services/:id', authMiddleware, serviceController.updateService);
-router.delete('/services/:id', authMiddleware, serviceController.deleteService);
+// 🛡️ Cadena de Protección SaaS: Auth -> Membership -> RBAC -> Controller
+router.get(
+  '/services/provider',
+  authMiddleware,
+  membershipMiddleware,
+  requirePermission(RESOURCES.SERVICE, ACTIONS.READ),
+  serviceController.getProviderServices
+);
+
+router.post(
+  '/services',
+  authMiddleware,
+  membershipMiddleware,
+  requirePermission(RESOURCES.SERVICE, ACTIONS.CREATE),
+  serviceController.createService
+);
+
+router.put(
+  '/services/:id',
+  authMiddleware,
+  membershipMiddleware,
+  requirePermission(RESOURCES.SERVICE, ACTIONS.UPDATE),
+  serviceController.updateService
+);
+
+router.delete(
+  '/services/:id',
+  authMiddleware,
+  membershipMiddleware,
+  requirePermission(RESOURCES.SERVICE, ACTIONS.DELETE),
+  serviceController.deleteService
+);
 
 module.exports = router;

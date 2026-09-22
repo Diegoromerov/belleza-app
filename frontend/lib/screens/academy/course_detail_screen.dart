@@ -179,60 +179,81 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           constraints: const BoxConstraints(maxWidth: 720),
           child: Column(
         children: [
-          // 📽️ Sección del reproductor de video adaptativo con soporte de accesibilidad
-          if (_activeLesson != null)
+          // 📽️ Panel de la lección activa. Antes mostraba una imagen de Unsplash y el
+          // texto "Streaming HD de lección disponible" aunque el video no existiera
+          // (o estuviera vacío): prometía reproducción que nunca ocurría.
+          if (_activeLesson != null && _activeLesson!['locked'] == true)
+            Container(
+              width: double.infinity,
+              color: const Color(0xFF1F1A15),
+              padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
+              child: const Column(
+                children: [
+                  Icon(Icons.lock_outline, color: Colors.white70, size: 40),
+                  SizedBox(height: 10),
+                  Text(
+                    'Lección bloqueada',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  SizedBox(height: 6),
+                  Text(
+                    'Completa la lección anterior para desbloquear este contenido.',
+                    style: TextStyle(color: Colors.white70, fontSize: 12),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            )
+          else if (_activeLesson != null)
             Semantics(
-              label: 'Reproductor de video de la lección ${_activeLesson!['lesson_title'] ?? ''}',
-              child: AspectRatio(
-                aspectRatio: (_activeLesson!['video_url']?.toString().contains('shorts') == true) ? (9 / 16) : (16 / 9),
-                child: Container(
-                  color: Colors.black,
-                  width: double.infinity,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Positioned.fill(
-                        child: Image.network(
-                          'https://images.unsplash.com/photo-1562322140-8baeececf3df?q=80&w=800',
-                          fit: BoxFit.cover,
-                          opacity: const AlwaysStoppedAnimation(0.4),
+              label: 'Lección ${_activeLesson!['lesson_title'] ?? ''}',
+              child: Container(
+                width: double.infinity,
+                color: const Color(0xFF1F1A15),
+                padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                child: Column(
+                  children: [
+                    if ((_activeLesson!['video_url']?.toString().trim().isEmpty ?? true)) ...[
+                      const Icon(Icons.ondemand_video_outlined, color: Colors.white54, size: 40),
+                      const SizedBox(height: 10),
+                      const Text(
+                        'Esta lección no tiene video asociado',
+                        style: TextStyle(color: Colors.white70, fontSize: 13),
+                        textAlign: TextAlign.center,
+                      ),
+                    ] else ...[
+                      Semantics(
+                        button: true,
+                        label: 'Copiar enlace del video de la lección',
+                        child: IconButton(
+                          icon: const Icon(Icons.play_circle_fill, size: 64, color: Colors.white),
+                          onPressed: () async {
+                            HapticFeedback.mediumImpact();
+                            await Clipboard.setData(
+                              ClipboardData(text: _activeLesson!['video_url'].toString()),
+                            );
+                            if (!mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Enlace del video copiado al portapapeles.'),
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                          },
                         ),
                       ),
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Semantics(
-                            button: true,
-                            label: 'Reproducir lección',
-                            hint: 'Toca para iniciar el video de la lección',
-                            child: IconButton(
-                              icon: const Icon(Icons.play_circle_fill, size: 64, color: Colors.white),
-                              onPressed: () {
-                                HapticFeedback.mediumImpact();
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Reproduciendo video: ${_activeLesson!['lesson_title']}'),
-                                    duration: const Duration(seconds: 2),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            _activeLesson!['lesson_title'] ?? '',
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 4),
-                          const Text(
-                            'Streaming HD de lección disponible',
-                            style: TextStyle(color: Colors.white70, fontSize: 11),
-                          ),
-                        ],
+                      const Text(
+                        'Toca para copiar el enlace del video',
+                        style: TextStyle(color: Colors.white70, fontSize: 11),
                       ),
                     ],
-                  ),
+                    const SizedBox(height: 10),
+                    Text(
+                      _activeLesson!['lesson_title'] ?? '',
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -262,10 +283,16 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                     const SizedBox(height: 15),
                   ],
 
-                  Text(
-                    _activeLesson!['content_text'] ?? '',
-                    style: TextStyle(fontSize: 14, color: Colors.grey[800], height: 1.4),
-                  ),
+                  if (_activeLesson!['locked'] == true)
+                    const Text(
+                      'El contenido de esta lección estará disponible cuando completes la anterior.',
+                      style: TextStyle(fontSize: 14, color: Colors.grey, height: 1.4, fontStyle: FontStyle.italic),
+                    )
+                  else
+                    Text(
+                      _activeLesson!['content_text'] ?? '',
+                      style: TextStyle(fontSize: 14, color: Colors.grey[800], height: 1.4),
+                    ),
                   const SizedBox(height: 12),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -280,15 +307,27 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                         )
                       else
                         ElevatedButton.icon(
-                          onPressed: () => _completeLesson(_activeLesson!['lesson_id']),
-                          icon: const Icon(Icons.check, color: Colors.white),
-                          label: const Text('Marcar como Completada', style: TextStyle(color: Colors.white)),
+                          // El servidor rechaza completar una lección bloqueada: la UI
+                          // no debe ofrecer un botón que va a fallar.
+                          onPressed: _activeLesson!['locked'] == true
+                              ? null
+                              : () => _completeLesson(_activeLesson!['lesson_id']),
+                          icon: Icon(
+                            _activeLesson!['locked'] == true ? Icons.lock_outline : Icons.check,
+                            color: Colors.white,
+                          ),
+                          label: Text(
+                            _activeLesson!['locked'] == true
+                                ? 'Completa la lección anterior'
+                                : 'Marcar como Completada',
+                            style: const TextStyle(color: Colors.white),
+                          ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: themeColor,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                           ),
                         ),
-                      if (_areAllLessonsCompleted() && !hasCertificate)
+                      if (_areAllLessonsCompleted() && !hasCertificate && (((_courseData?['attemptsLeft'] as int?) ?? 1) > 0))
                         ElevatedButton.icon(
                           onPressed: () async {
                             final success = await Navigator.push(
@@ -302,11 +341,19 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                             }
                           },
                           icon: const Icon(Icons.quiz, color: Colors.white),
-                          label: const Text('Tomar Examen', style: TextStyle(color: Colors.white)),
+                          label: Text(
+                            'Tomar Examen (${_courseData?['attemptsLeft'] ?? ''} intento/s)',
+                            style: const TextStyle(color: Colors.white),
+                          ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.amber[700],
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                           ),
+                        ),
+                      if (_areAllLessonsCompleted() && !hasCertificate && (((_courseData?['attemptsLeft'] as int?) ?? 1) <= 0))
+                        const Text(
+                          'Sin intentos de examen disponibles. Contacta a soporte para reiniciarlos.',
+                          style: TextStyle(color: Colors.redAccent, fontSize: 12),
                         ),
                     ],
                   ),
@@ -357,32 +404,46 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                   children: lessons.map<Widget>((lesson) {
                     final bool isCurrent = _activeLesson != null && _activeLesson!['lesson_id'] == lesson['lesson_id'];
                     final bool isCompleted = lesson['lesson_completed'] == true;
+                    final bool isLocked = lesson['locked'] == true;
 
                     return ListTile(
                       selected: isCurrent,
                       selectedTileColor: themeColor.withValues(alpha: 0.08),
+                      enabled: !isLocked,
                       leading: Icon(
-                        isCompleted ? Icons.check_circle : Icons.play_arrow_outlined,
-                        color: isCompleted ? Colors.green : (isCurrent ? themeColor : Colors.grey),
+                        isCompleted
+                            ? Icons.check_circle
+                            : (isLocked ? Icons.lock_outline : Icons.play_arrow_outlined),
+                        color: isCompleted ? Colors.green : (isLocked ? Colors.grey : (isCurrent ? themeColor : Colors.grey)),
                       ),
                       title: Text(
                         lesson['lesson_title'] ?? 'Lección',
                         style: TextStyle(
                           fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
-                          color: isCurrent ? themeColor : Colors.black87,
+                          color: isCurrent ? themeColor : (isLocked ? Colors.grey : Colors.black87),
                         ),
                       ),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 12),
-                      onTap: () {
-                        setState(() {
-                          _activeLesson = lesson;
-                        });
-                        AnalyticsService().logCourseLessonView(
-                          courseId: widget.courseId,
-                          lessonId: lesson['lesson_id']?.toString() ?? '',
-                          lessonTitle: lesson['lesson_title'] ?? 'Lección',
-                        );
-                      },
+                      trailing: Icon(isLocked ? Icons.lock : Icons.arrow_forward_ios, size: 12),
+                      onTap: isLocked
+                          ? () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Lección bloqueada: completa la lección anterior.'),
+                                backgroundColor: Colors.amber,
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                          }
+                          : () {
+                            setState(() {
+                              _activeLesson = lesson;
+                            });
+                            AnalyticsService().logCourseLessonView(
+                              courseId: widget.courseId,
+                              lessonId: lesson['lesson_id']?.toString() ?? '',
+                              lessonTitle: lesson['lesson_title'] ?? 'Lección',
+                            );
+                          },
                     );
                   }).toList(),
                 );

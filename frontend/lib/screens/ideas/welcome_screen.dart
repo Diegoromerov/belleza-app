@@ -328,7 +328,7 @@ class _BiometricWelcomeScreenState extends State<BiometricWelcomeScreen> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (_) => ResultsScreen(
-                                      result: BiometricService.getMockBiometricResult(),
+                                      result: BiometricService.getDemoBiometricResult(),
                                     ),
                                   ),
                                 );
