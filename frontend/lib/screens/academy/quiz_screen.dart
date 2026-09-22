@@ -232,24 +232,40 @@ class _QuizScreenState extends State<QuizScreen> {
                     child: const Text('Volver al Curso', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                   ),
                 ] else ...[
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.0),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: Text(
-                      'Para obtener la certificación debes contestar correctamente el 100% de las preguntas.',
-                      style: TextStyle(color: Colors.grey, height: 1.4),
+                      // El umbral lo define el backend (QUIZ_PASS_PCT, 80% por defecto):
+                      // antes esta pantalla prometía "100%" y contradecía al servidor.
+                      _result!['mensaje']?.toString() ??
+                          'Para obtener la certificación debes acertar al menos el $_passPct% de las preguntas.',
+                      style: const TextStyle(color: Colors.grey, height: 1.4),
                       textAlign: TextAlign.center,
                     ),
                   ),
                   const SizedBox(height: 32),
                   ElevatedButton(
-                    onPressed: _loadQuiz,
+                    onPressed: (_attemptsLeft != null && _attemptsLeft! <= 0) ? null : _loadQuiz,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: themeColor,
                       padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                     ),
-                    child: const Text('Volver a Intentar', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                    child: Text(
+                      (_attemptsLeft != null && _attemptsLeft! <= 0)
+                          ? 'Sin intentos disponibles'
+                          : 'Volver a Intentar',
+                      style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
                   ),
+                  if (_attemptsLeft != null && _attemptsLeft! <= 0) ...[
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Contacta a soporte para reiniciar tus intentos.',
+                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                   const SizedBox(height: 12),
                   TextButton(
                     onPressed: () => Navigator.pop(context),

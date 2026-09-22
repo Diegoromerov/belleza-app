@@ -92,6 +92,9 @@ export default function EditarCursoPage() {
   const [modules, setModules] = useState<Module[]>([]);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  // Métricas reales del curso que devuelve el backend (antes "Certificados" estaba
+  // hardcodeado a 0 en la UI).
+  const [stats, setStats] = useState<Record<string, number> | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -135,6 +138,7 @@ export default function EditarCursoPage() {
       setModules(data.modules || []);
       setLessons(data.lessons || []);
       setQuizzes(data.quizzes || []);
+      setStats(data.stats || null);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error desconocido');
@@ -227,13 +231,42 @@ export default function EditarCursoPage() {
     }
   };
 
+  // Persiste el orden de los módulos: antes `moveModule` solo reordenaba el estado
+  // de React y el orden se perdía al recargar (hallazgo T4 de la auditoría).
+  const persistModuleOrder = async (ordered: Module[]) => {
+    try {
+      const token = localStorage.getItem('glow_token');
+      const response = await fetch(`${API_URL}/api/admin/academy/modules/reorder`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          modules: ordered.map((m, i) => ({ id: m.id, sort_order: i + 1 })),
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || 'Error al guardar el orden de los módulos');
+      }
+
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 2500);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al guardar el orden de los módulos');
+    }
+  };
+
   const moveModule = (fromIndex: number, toIndex: number) => {
-    setModules(prev => {
-      const newModules = [...prev];
-      const [moved] = newModules.splice(fromIndex, 1);
-      newModules.splice(toIndex, 0, moved);
-      return newModules.map((m, i) => ({ ...m, sort_order: i + 1 }));
-    });
+    const newModules = [...modules];
+    const [moved] = newModules.splice(fromIndex, 1);
+    newModules.splice(toIndex, 0, moved);
+    const reordered = newModules.map((m, i) => ({ ...m, sort_order: i + 1 }));
+
+    setModules(reordered);
+    void persistModuleOrder(reordered);
   };
 
   // ==================== LESSON ACTIONS ====================
@@ -318,27 +351,52 @@ export default function EditarCursoPage() {
     }
   };
 
+  // Persiste el orden de las lecciones de un módulo (mismo hallazgo que en módulos:
+  // el reordenado vivía solo en el estado de React).
+  const persistLessonOrder = async (orderedForModule: Lesson[]) => {
+    try {
+      const token = localStorage.getItem('glow_token');
+      const response = await fetch(`${API_URL}/api/admin/academy/lessons/reorder`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          lessons: orderedForModule.map((l, i) => ({ id: l.id, sort_order: i + 1 })),
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || 'Error al guardar el orden de las lecciones');
+      }
+
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 2500);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al guardar el orden de las lecciones');
+    }
+  };
+
   const moveLesson = (lessonId: string, direction: 'up' | 'down') => {
     const targetLesson = lessons.find(l => l.id === lessonId);
     if (!targetLesson) return;
-    
-    setLessons(prev => {
-      const moduleLessons = prev
-        .filter(l => l.module_id === targetLesson.module_id)
-        .sort((a, b) => a.sort_order - b.sort_order);
-      const lessonIndex = moduleLessons.findIndex(l => l.id === lessonId);
-      const targetIndex = direction === 'up' ? lessonIndex - 1 : lessonIndex + 1;
-      if (targetIndex < 0 || targetIndex >= moduleLessons.length) return prev;
-      
-      const newModuleLessons = [...moduleLessons];
-      const [moved] = newModuleLessons.splice(lessonIndex, 1);
-      newModuleLessons.splice(targetIndex, 0, moved);
-      
-      return prev.map(l => {
-        const updated = newModuleLessons.find(nl => nl.id === l.id);
-        return updated ? { ...l, sort_order: newModuleLessons.indexOf(updated) + 1 } : l;
-      });
-    });
+
+    const moduleLessons = lessons
+      .filter(l => l.module_id === targetLesson.module_id)
+      .sort((a, b) => a.sort_order - b.sort_order);
+    const lessonIndex = moduleLessons.findIndex(l => l.id === lessonId);
+    const targetIndex = direction === 'up' ? lessonIndex - 1 : lessonIndex + 1;
+    if (targetIndex < 0 || targetIndex >= moduleLessons.length) return;
+
+    const newModuleLessons = [...moduleLessons];
+    const [moved] = newModuleLessons.splice(lessonIndex, 1);
+    newModuleLessons.splice(targetIndex, 0, moved);
+    const withOrder = newModuleLessons.map((l, i) => ({ ...l, sort_order: i + 1 }));
+
+    setLessons(prev => prev.map(l => withOrder.find(nl => nl.id === l.id) || l));
+    void persistLessonOrder(withOrder);
   };
 
   // ==================== QUIZ ACTIONS ====================
@@ -774,7 +832,7 @@ export default function EditarCursoPage() {
             <StatItem label="Módulos" value={modules.length} icon={Layers} color="blue" />
             <StatItem label="Lecciones" value={lessons.length} icon={FileText} color="emerald" />
             <StatItem label="Preguntas Examen" value={quizzes.length} icon={HelpCircle} color="amber" />
-            <StatItem label="Certificados" value={0} icon={Award} color="rose" />
+            <StatItem label="Certificados" value={stats?.certificatesIssued ?? 0} icon={Award} color="rose" />
           </div>
         </div>
       </div>
