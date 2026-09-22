@@ -62,16 +62,11 @@ export default function LoginPage() {
     setSubmitting(true);
 
     try {
-<<<<<<< HEAD
-      const user = await login(email, password);
-      if (user && (user.rol === 'ADMIN' || user.rol === 'admin' || user.role === 'admin')) {
-=======
       const res = await login(email, password);
 
       // La autorización depende del ROL real de la cuenta, no del email introducido.
       const role = resolveLoginRole(res);
       if (role === 'ADMIN') {
->>>>>>> origin/main
         window.location.href = '/';
       } else if (role) {
         setError('Esta cuenta no tiene permisos de administrador para acceder a este panel.');

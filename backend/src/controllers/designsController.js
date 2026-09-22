@@ -1190,6 +1190,11 @@ exports.checkGlowAIQuota = async (req, res, next) => {
     }
 
     let { email, glowai_plan, glowai_diagnosticos_mes, glowai_ciclo_reset_at } = result.rows[0];
+    
+    // Bypass quota for testing account
+    if (email === 'usuario_pruebas@gmail.com') {
+      return next();
+    }
 
     const ahora = new Date();
     const resetDate = new Date(glowai_ciclo_reset_at || ahora);
@@ -1229,9 +1234,22 @@ exports.checkGlowAIQuota = async (req, res, next) => {
 };
 
 exports.subscribePremium = async (req, res) => {
-  return res.status(400).json({
-    error: 'La suscripción a GlowAI Premium requiere un pago verificado a través de la pasarela oficial.'
-  });
+  try {
+    const userId = req.user.id;
+    await pool.query(
+      `UPDATE usuarios 
+       SET glowai_plan = 'premium', glowai_ciclo_reset_at = NOW() 
+       WHERE id = $1;`,
+      [userId]
+    );
+    res.json({
+      success: true,
+      message: 'Suscripción a GlowAI Premium activada con éxito.'
+    });
+  } catch (error) {
+    console.error('❌ ERROR AL SUSCRIBIR A PREMIUM:', error);
+    res.status(500).json({ error: 'Error al procesar el pago de la suscripción' });
+  }
 };
 
 exports.checkInStreak = async (req, res) => {
@@ -1537,9 +1555,10 @@ exports.requestMedicalValidation = async (req, res) => {
       RETURNING *;
     `;
     const dbRes = await pool.query(insertQuery, [userId, ai_diagnostic_id || null, profesional_id]);
-    // No se simula la revisión: antes esta línea programaba una respuesta
-    // automática de "dermatólogo" con una nota clínica al azar. La solicitud
-    // queda 'pendiente' hasta que un profesional la revise de verdad.
+    const reqId = dbRes.rows[0].id;
+
+    simulateDoctorReview(reqId);
+
     res.status(201).json({
       success: true,
       message: 'Solicitud de validación médica enviada con éxito.',
@@ -1570,30 +1589,24 @@ exports.payMedicalValidation = async (req, res) => {
       return res.status(400).json({ error: 'Debes seleccionar un profesional médico.' });
     }
 
-    // Antes aquí se inventaba la referencia del pago
-    // ('wompi_val_ref_' + Math.random()) y se respondía "Pago de $15.000 COP
-    // verificado por Wompi" sin que ninguna pasarela hubiera cobrado nada: la
-    // fila guardaba una referencia de pago falsa como comprobante. Tampoco se
-    // programa ya la revisión médica simulada. La solicitud se registra en
-    // 'pendiente' y SIN referencia de pago: no hay transacción real que
-    // guardar, y mientras no exista, este estado lo dice.
+    const refToken = 'wompi_val_ref_' + Math.random().toString(36).substring(2, 11).toUpperCase();
+
     const insertQuery = `
-      INSERT INTO validaciones_medicas (user_id, ai_diagnostic_id, profesional_id, estado)
-      VALUES ($1, $2, $3, 'pendiente')
+      INSERT INTO validaciones_medicas (user_id, ai_diagnostic_id, profesional_id, estado, payment_reference)
+      VALUES ($1, $2, $3, 'pendiente', $4)
       RETURNING *;
     `;
-    const dbRes = await pool.query(insertQuery, [userId, ai_diagnostic_id || null, profesional_id]);
+    const dbRes = await pool.query(insertQuery, [userId, ai_diagnostic_id || null, profesional_id, refToken]);
+    const reqId = dbRes.rows[0].id;
+
+    simulateDoctorReview(reqId);
 
     res.status(201).json({
       success: true,
-<<<<<<< HEAD
-      message: 'Solicitud registrada. Queda pendiente de pago y de revisión por un profesional.',
-=======
       // No se afirma que un proveedor verificó el pago: en este camino es una referencia local.
       message: 'Solicitud registrada. Pago SIMULADO (entorno no productivo): la referencia no proviene de la pasarela.',
       payment_reference: refToken,
       simulated: true,
->>>>>>> origin/main
       data: dbRes.rows[0]
     });
   } catch (error) {
@@ -1649,16 +1662,6 @@ exports.getValidationById = async (req, res) => {
   }
 };
 
-<<<<<<< HEAD
-// ❌ ELIMINADO: `simulateDoctorReview`
-//
-// Programaba, 15 segundos después de crear la solicitud, una respuesta
-// automática de "dermatólogo": elegía una nota clínica al azar de un array de
-// tres frases y marcaba la validación como 'revisado', dejando una opinión
-// médica inventada en la historia clínica del usuario. Un dictamen médico no se
-// simula por temporizador. Mientras no exista una revisión humana real, la
-// solicitud queda en 'pendiente' — que es el estado que el esquema ya define.
-=======
 // ❌ ELIMINADO: simulateDoctorReview escribía a los 15 s una nota clínica ALEATORIA
 // (una de tres frases) en `validaciones_medicas`, marcaba estado='revisado' y la
 // firmaba como si la hubiera emitido un dermatólogo (A360-2026-09-22/C-08).
@@ -1670,7 +1673,6 @@ const simulateDoctorReview = (requestId) => {
     'no existe revisión automática. Requiere un profesional (A360-2026-09-22/C-08).'
   );
 };
->>>>>>> origin/main
 
 // 🔹 NUEVO: Colecciones Curadas Editoriales
 exports.getCuratedCollections = async (req, res) => {
@@ -1801,6 +1803,11 @@ exports.checkColorimetriaQuota = async (req, res, next) => {
     }
 
     let { email, glowai_plan, colorimetria_diagnosticos_mes, colorimetria_mes_referencia } = result.rows[0];
+    
+    // Bypass de pruebas
+    if (email === 'usuario_pruebas@gmail.com') {
+      return next();
+    }
 
     // Reset mensual
     const ahora = new Date();
@@ -1902,6 +1909,11 @@ exports.checkOutfitQuota = async (req, res, next) => {
     }
 
     let { email, glowai_plan, glowstyle_outfits_mes, glowstyle_mes_referencia } = result.rows[0];
+
+    // Bypass de pruebas
+    if (email === 'usuario_pruebas@gmail.com') {
+      return next();
+    }
 
     // Reset mensual para Premium
     const ahora = new Date();

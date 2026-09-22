@@ -27,12 +27,6 @@ function initializeKey() {
   // (A360-2026-09-22/C-11).
   const keyEnv = process.env.BIOMETRIC_ENCRYPTION_KEY || process.env.ENCRYPTION_KEY;
   if (!keyEnv || typeof keyEnv !== 'string') {
-<<<<<<< HEAD
-    if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'staging') {
-      throw new Error('CRITICAL SECURITY ERROR: BIOMETRIC_ENCRYPTION_KEY no está configurada en el entorno.');
-    }
-    // En desarrollo local o testing se deriva desde un secreto de pruebas controlado
-=======
     if (esEntornoProductivo()) {
       throw new Error(
         'CRITICAL SECURITY ERROR: BIOMETRIC_ENCRYPTION_KEY no está configurada. ' +
@@ -41,7 +35,6 @@ function initializeKey() {
       );
     }
     console.warn('⚠️  [SECURITY WARNING] BIOMETRIC_ENCRYPTION_KEY no configurada: usando derivación SOLO para desarrollo local.');
->>>>>>> origin/main
     const baseSecret = process.env.JWT_SECRET || 'dev_test_biometric_fallback_key_32_bytes!';
     SECRET_KEY = crypto.createHash('sha256').update(baseSecret).digest();
     return;

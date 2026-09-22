@@ -67,21 +67,6 @@ const initWebSocketServer = (server) => {
       try {
         const data = JSON.parse(message);
         if (data.type === 'register') {
-<<<<<<< HEAD
-          if (data.token) {
-            try {
-              const decoded = jwt.verify(data.token, getJwtSecret());
-              const verifiedUserId = decoded.id;
-              ws.authenticatedUserId = verifiedUserId;
-              registerClient(verifiedUserId, ws);
-              ws.send(JSON.stringify({ status: 'registered', userId: verifiedUserId.toString() }));
-            } catch (jwtErr) {
-              console.error('WebSocket JWT verification failed:', jwtErr.message);
-              ws.send(JSON.stringify({ error: 'Token inválido o expirado' }));
-            }
-          } else {
-            ws.send(JSON.stringify({ error: 'Se requiere token JWT de autenticación' }));
-=======
           // El token es OBLIGATORIO. La rama `else if (data.userId)` permitía registrar
           // —y por tanto suplantar— a cualquier usuario enviando solo su id, sin credencial
           // alguna (A360-2026-09-22/C-04).
@@ -98,7 +83,6 @@ const initWebSocketServer = (server) => {
           } catch (jwtErr) {
             console.error('WebSocket auth fallida:', jwtErr.message);
             ws.send(JSON.stringify({ error: 'Token inválido o expirado' }));
->>>>>>> origin/main
           }
         }
         // Integración de Geolocalización en Tiempo Real vía WebSockets para Tracking
@@ -106,8 +90,6 @@ const initWebSocketServer = (server) => {
           if (!ws.authenticatedUserId) {
             return ws.send(JSON.stringify({ error: 'Debes registrarte con un token antes de unirte a una sala' }));
           }
-<<<<<<< HEAD
-=======
           try {
             // Solo el cliente o el prestador de ESA cita pueden unirse a su sala.
             // Antes cualquier conexión podía unirse a cualquier reserva y recibir
@@ -124,21 +106,13 @@ const initWebSocketServer = (server) => {
             console.error('Error verificando acceso a la sala:', authzErr.message);
             return ws.send(JSON.stringify({ error: 'No se pudo verificar el acceso a la reserva' }));
           }
->>>>>>> origin/main
           ws.bookingId = data.bookingId;
           ws.role = data.role || 'client';
-          console.log(`📡 Cliente WS (User ID: ${ws.authenticatedUserId}) unido a la sala del booking_${data.bookingId} como ${ws.role}`);
+          console.log(`📡 Cliente WS unido a la sala del booking_${data.bookingId} como ${ws.role}`);
           ws.send(JSON.stringify({ type: 'joined_room', bookingId: data.bookingId }));
         }
         if (data.type === 'location_update' && data.bookingId && data.latitude && data.longitude) {
           if (!ws.authenticatedUserId) {
-<<<<<<< HEAD
-            return ws.send(JSON.stringify({ error: 'No autenticado' }));
-          }
-          console.log(`📍 Recibida coordenada GPS de prestador ID ${ws.authenticatedUserId} para booking_${data.bookingId}: ${data.latitude}, ${data.longitude}`);
-          
-          // Actualizar base de datos usando el ID verificado del socket en lugar de data.providerId no confiable
-=======
             return ws.send(JSON.stringify({ error: 'Debes registrarte con un token antes de enviar ubicación' }));
           }
           console.log(`📍 Recibida coordenada GPS de prestador para booking_${data.bookingId}: ${data.latitude}, ${data.longitude}`);
@@ -147,7 +121,6 @@ const initWebSocketServer = (server) => {
           // El id del prestador sale del TOKEN, nunca del payload: antes cualquiera podía
           // mover la ubicación de cualquier prestador mandando su providerId (A360-2026-09-22/C-04).
           // `perfiles_prestador.id` es el id del usuario (init.sql), así que authenticatedUserId es el id correcto.
->>>>>>> origin/main
           pool.query(
             `UPDATE perfiles_prestador 
              SET ubicacion = ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography 

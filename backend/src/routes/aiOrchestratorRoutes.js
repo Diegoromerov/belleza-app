@@ -1,8 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const authMiddleware = require('../middleware/auth');
-const { handleOrchestration } = require('../services/ai/orchestrator.service');
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
+const { handleOrchestration } = require('../services/ai/orchestrator.service');
 
 /**
  * @swagger
@@ -28,14 +27,10 @@ const { authMiddleware, adminMiddleware } = require('../middleware/auth');
  *       500:
  *         description: Error interno del orquestador o API de NVIDIA
  */
-<<<<<<< HEAD
-router.post('/orchestrate', authMiddleware, async (req, res) => {
-=======
 // Endpoint de administración: ejecuta herramientas elegidas por el LLM. Estaba
 // ABIERTO (sin autenticación) y su guard de rutas era decorativo
 // (A360-2026-09-22/A-17). Ahora exige sesión y rol de administrador.
 router.post('/orchestrate', authMiddleware, adminMiddleware, async (req, res) => {
->>>>>>> origin/main
   try {
     const { prompt } = req.body;
 

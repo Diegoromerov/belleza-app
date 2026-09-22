@@ -7,12 +7,8 @@ const express = require('express');
 const router = express.Router();
 const businessController = require('../controllers/businessController');
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
-<<<<<<< HEAD
-const subirEvidencia = require('../middleware/evidenceUpload');
-=======
 const membershipMiddleware = require('../middleware/membership.middleware');
 const { requirePermission, RESOURCES, ACTIONS } = require('../middleware/authorization.middleware');
->>>>>>> origin/main
 
 // 1. Ruta Pública de Catálogo (Sin autenticación requerida para descubrimiento)
 router.get('/verticals', businessController.getVerticals);
@@ -26,14 +22,6 @@ router.post(
   businessController.runDiagnostic
 );
 
-<<<<<<< HEAD
-// Tasks & Guided Workflows (Protected by authMiddleware)
-router.get('/tasks', authMiddleware, businessController.getTasks);
-router.post('/tasks/:id/advance', authMiddleware, businessController.advanceTask);
-// La evidencia se sube como archivo real (multipart, campo "file"): el servidor
-// genera la ruta. Ver src/middleware/evidenceUpload.js
-router.post('/tasks/:id/evidence', authMiddleware, subirEvidencia, businessController.submitEvidence);
-=======
 router.get(
   '/summary',
   authMiddleware,
@@ -41,7 +29,6 @@ router.get(
   requirePermission(RESOURCES.BUSINESS_PROFILE, ACTIONS.READ),
   businessController.getSummary
 );
->>>>>>> origin/main
 
 // Tareas y Flujos Guiados
 router.get(

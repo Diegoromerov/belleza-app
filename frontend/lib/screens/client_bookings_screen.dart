@@ -193,18 +193,6 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
     }
   }
 
-<<<<<<< HEAD
-  // ❌ ELIMINADO: `_runWompiCheckout`
-  //
-  // Mostraba "Procesando Pago Seguro Wompi" y "Simulando pasarela Wompi...",
-  // esperaba 2,5 segundos y ejecutaba `onSuccess()` sin llamar a ninguna
-  // pasarela. El usuario veía "tu reseña y propina han sido procesadas
-  // correctamente" sin que se hubiera cobrado nada.
-  //
-  // La propina se retira de la UI: no existe endpoint ni columna de propina en
-  // el backend (0 referencias en todo `backend/src`), así que no hay nada que
-  // cobrar todavía. Cuando exista cobro real, la propina vuelve con él.
-=======
   // A360-2026-09-22/C-02: no existe endpoint de propinas en el backend
   // (verificado con grep en backend/src/routes y backend/src/controllers: sin
   // rutas ni controladores de propina). Antes se "simulaba" la pasarela con un
@@ -235,14 +223,17 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
       ),
     );
   }
->>>>>>> origin/main
 
   void _showRatingSheet(Map<String, dynamic> booking) {
     int ratingSelected = 5;
     String reviewComment = '';
     final commentController = TextEditingController();
 
-    // La propina se retiró de esta hoja (ver _runWompiCheckout más arriba).
+    // Módulo de Propinas
+    String selectedTipOption = 'Sin propina';
+    double tipAmount = 0.0;
+    bool showCustomTipField = false;
+    final customTipController = TextEditingController();
 
     showModalBottomSheet(
       context: context,
@@ -260,6 +251,65 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
 
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setModalState) {
+            Widget buildTipCard(String label, String value, String emoji) {
+              final isSelected = selectedTipOption == value;
+              return GestureDetector(
+                onTap: () {
+                  setModalState(() {
+                    selectedTipOption = value;
+                    if (value == 'Sin propina') {
+                      tipAmount = 0.0;
+                      showCustomTipField = false;
+                    } else if (value == '5%') {
+                      tipAmount = totalAmount * 0.05;
+                      showCustomTipField = false;
+                    } else if (value == '10%') {
+                      tipAmount = totalAmount * 0.10;
+                      showCustomTipField = false;
+                    } else if (value == '15%') {
+                      tipAmount = totalAmount * 0.15;
+                      showCustomTipField = false;
+                    } else if (value == 'Personalizada') {
+                      showCustomTipField = true;
+                      final customVal =
+                          double.tryParse(customTipController.text) ?? 0.0;
+                      tipAmount = customVal;
+                    }
+                  });
+                },
+                child: Container(
+                  width: 72,
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? AppTheme.primary
+                        : AppTheme.accent.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isSelected ? AppTheme.primary : Colors.transparent,
+                      width: 1.5,
+                    ),
+                    boxShadow: isSelected ? AppTheme.softShadow : null,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(emoji, style: const TextStyle(fontSize: 18)),
+                      const SizedBox(height: 4),
+                      Text(
+                        label,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: isSelected ? Colors.white : Colors.black87,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+
             return Padding(
               padding: EdgeInsets.only(
                 bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -348,11 +398,6 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                     ),
                     const SizedBox(height: 20),
 
-<<<<<<< HEAD
-                    // La propina se retiró de esta hoja: se "cobraba" con un
-                    // temporizador de 2,5 s, sin pasarela y sin registro. No hay
-                    // endpoint ni columna de propina que la respalde.
-=======
                     // Módulo de Propinas como tarjetas con emojis
                     const Text(
                       '¿Deseas agregar una propina?',
@@ -408,7 +453,6 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                         },
                       ),
                     ],
->>>>>>> origin/main
 
                     const SizedBox(height: 16),
                     // Desglose de Pago
@@ -433,6 +477,20 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                                       fontWeight: FontWeight.bold)),
                             ],
                           ),
+                          const SizedBox(height: 6),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('Propina:',
+                                  style: TextStyle(
+                                      fontSize: 12, color: Colors.black54)),
+                              Text('\$${tipAmount.toStringAsFixed(0)}',
+                                  style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppTheme.success)),
+                            ],
+                          ),
                           const Divider(height: 16),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -442,7 +500,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                                       fontSize: 13,
                                       fontWeight: FontWeight.bold)),
                               Text(
-                                  '\$${totalAmount.toStringAsFixed(0)}',
+                                  '\$${(totalAmount + tipAmount).toStringAsFixed(0)}',
                                   style: const TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.bold,
@@ -465,16 +523,10 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                       ),
                       onPressed: () async {
                         Navigator.pop(context); // Cerrar rating sheet
-<<<<<<< HEAD
-                        // Sin propina: la reseña se envía directo. Antes, con
-                        // propina > 0, se abría un "cobro" que era un
-                        // temporizador y solo entonces se enviaba la reseña.
-=======
                         if (tipAmount > 0.0) {
                           // Sin pasarela integrada: se avisa y no se cobra nada.
                           await _showTipUnavailableDialog(tipAmount);
                         }
->>>>>>> origin/main
                         _submitReviewHelper(
                             booking['id'], ratingSelected, reviewComment);
                       },
@@ -1256,11 +1308,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 40),
                       child: Text(
-<<<<<<< HEAD
-                        'Tu reseña ha sido enviada correctamente. ¡Muchas gracias por tu opinión!',
-=======
                         'Tu reseña ha sido registrada correctamente. ¡Muchas gracias por tu opinión!',
->>>>>>> origin/main
                         textAlign: TextAlign.center,
                         style: TextStyle(
                             fontSize: 14, color: Colors.black54, height: 1.4),

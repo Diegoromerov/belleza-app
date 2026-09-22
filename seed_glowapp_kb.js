@@ -1,19 +1,4 @@
 // Al principio de seed_glowapp_kb.js
-<<<<<<< HEAD
-// La clave NO se escribe en el repositorio. Este archivo estuvo versionado con
-// una clave real y la nota «Pega tu clave real aquí»; se retiro (esa clave
-// expuesta debe rotarse). Ahora se lee del entorno y el script falla claro.
-if (!process.env.NVIDIA_API_KEY) {
-  console.error("Falta NVIDIA_API_KEY en el entorno. Exportala antes de ejecutar este script.");
-  process.exit(1);
-}
-process.env.DB_HOST = '127.0.0.1';
-process.env.DB_PORT = '5435';
-// ... resto del código
-
-console.log("CLAVE REAL CARGADA: [PRESENTE]");
-console.log("LONGITUD:", process.env.NVIDIA_API_KEY ? process.env.NVIDIA_API_KEY.length : 0);
-=======
 // La clave se toma EXCLUSIVAMENTE del entorno: nunca hardcodear credenciales aquí.
 // Esta clave estuvo versionada en git (A360-2026-09-22/C-02) y debe rotarse.
 if (!process.env.NVIDIA_API_KEY) {
@@ -24,7 +9,6 @@ process.env.DB_PORT = process.env.DB_PORT || '5435';
 // ... resto del código
 
 // No se imprime la clave ni su longitud: eso la filtraba a los logs (A360-2026-09-22/C-06).
->>>>>>> origin/main
 const axios = require('axios');
 const { Pool } = require('pg');
 require('dotenv').config();

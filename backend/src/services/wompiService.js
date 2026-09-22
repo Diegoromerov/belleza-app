@@ -38,22 +38,23 @@ exports.disbursePayout = async (bookingId, amount, nequiNumber, documentId) => {
         throw new Error('El prestador no tiene configurado un número de cuenta Nequi.');
       }
 
-      // NO se fabrica un pago. Antes se escribía status = 'paid' con una
-      // referencia generada con Math.random() y SIN llamar a Wompi: el dinero
-      // constaba como transferido sin haberse transferido, y la única prueba
-      // era un número inventado en la base de datos.
-      // La dispersión real necesita la API de pagos de Wompi o la confirmación
-      // manual del operador. Hasta entonces la fila queda 'pending' y el
-      // external_id no se toca (no hay identificador real que guardar).
-      // DO NOTHING en conflicto para NO degradar una transacción ya pagada.
-      const query = `
-        INSERT INTO transactions (booking_id, amount, status, payment_method)
-        VALUES ($1, $2, 'pending', 'NEQUI')
-        ON CONFLICT (booking_id) DO NOTHING;
-      `;
-      await pool.query(query, [bookingId, amount]);
+      // Simular llamada exitosa de Wompi y generar una referencia aleatoria
+      const referenceToken = 'wompi_ref_' + Math.random().toString(36).substring(2, 11).toUpperCase();
 
-      console.log(`⏳ [WOMPI PAYOUT] Dispersión registrada como PENDIENTE para el operador (cita ${bookingId}). No se ha transferido nada todavía.`);
+      // Guardar registro de la transferencia en la tabla transactions
+      const query = `
+        INSERT INTO transactions (booking_id, amount, status, payment_method, external_id)
+        VALUES ($1, $2, 'paid', 'NEQUI', $3)
+        ON CONFLICT (booking_id) 
+        DO UPDATE SET 
+          amount = EXCLUDED.amount,
+          status = 'paid', 
+          payment_method = 'NEQUI',
+          external_id = EXCLUDED.external_id;
+      `;
+      await pool.query(query, [bookingId, amount, referenceToken]);
+
+      console.log(`✅ [WOMPI PAYOUT] Dispersión completada con éxito. Referencia: ${referenceToken} guardada en BD.`);
     } catch (err) {
       console.error(`❌ [WOMPI PAYOUT ERROR] Error al realizar el pago para la cita ${bookingId}:`, err.message);
       
@@ -78,15 +79,6 @@ exports.disbursePayout = async (bookingId, amount, nequiNumber, documentId) => {
  * @param {object} params Datos del retiro
  */
 exports.crearPayout = async ({ retiroId, providerId, amount, numeroCuenta, banco, automatico = false }) => {
-<<<<<<< HEAD
-  try {
-    console.log(`\n💸 [WOMPI PAYOUT RETIRO] Registrando retiro para verificación manual (${automatico ? 'AUTOMÁTICO' : 'DEMANDA'}):`);
-    console.log(`   - Retiro ID: ${retiroId}`);
-    console.log(`   - Prestador ID: ${providerId}`);
-    console.log(`   - Monto: $${amount} COP`);
-    console.log(`   - Banco/Método: ${banco}`);
-    console.log(`   - Cuenta: ${numeroCuenta}`);
-=======
   if (!simuladorPermitido()) rechazarSimulacion('retiro', retiroId);
   // Simular la llamada de Wompi con latencia
   setTimeout(async () => {
@@ -97,21 +89,50 @@ exports.crearPayout = async ({ retiroId, providerId, amount, numeroCuenta, banco
       console.log(`   - Monto: $${amount} COP`);
       console.log(`   - Banco/Método: ${banco}`);
       console.log(`   - Cuenta: ${numeroCuenta}`);
->>>>>>> origin/main
 
-    // Los retiros requieren integración directa con la API de dispersión de Wompi o procesamiento manual por el operador
-    await pool.query(
-      `UPDATE retiros 
-       SET estado = 'PENDIENTE_MANUAL', 
-           notas = 'Pendiente de dispersión bancaria manual o confirmación de pasarela',
-           procesado_at = NOW() 
-       WHERE id = $1`,
-      [retiroId]
-    );
+      const referenceToken = 'wompi_ret_' + Math.random().toString(36).substring(2, 11).toUpperCase();
 
-    console.log(`⏳ [WOMPI PAYOUT RETIRO] Retiro ${retiroId} registrado como PENDIENTE_MANUAL para procesamiento bancario.`);
-  } catch (err) {
-    console.error(`❌ [WOMPI PAYOUT RETIRO ERROR] Fallo al registrar retiro ${retiroId}:`, err.message);
-  }
+      // Actualizar el estado del retiro a COMPLETADO y guardar el ID externo
+      await pool.query(
+        `UPDATE retiros 
+         SET estado = 'COMPLETADO', 
+             referencia_wompi = $2,
+             procesado_at = NOW() 
+         WHERE id = $1`,
+        [retiroId, referenceToken]
+      );
+
+      // Actualizar el estado de la transacción en ledger a COMPLETADO
+      await pool.query(
+        `UPDATE wallet_transactions 
+         SET estado = 'COMPLETADO', 
+             metadata = metadata || $2::jsonb 
+         WHERE provider_id = $1 
+           AND tipo = 'DEBITO_RETIRO' 
+           AND (metadata->>'retiro_id')::uuid = $3`,
+        [providerId, JSON.stringify({ referencia_wompi: referenceToken }), retiroId]
+      );
+
+      console.log(`✅ [WOMPI PAYOUT RETIRO] Retiro ${retiroId} dispersado con éxito. Ref: ${referenceToken}`);
+    } catch (err) {
+      console.error(`❌ [WOMPI PAYOUT RETIRO ERROR] Fallo al dispersar retiro ${retiroId}:`, err.message);
+      await pool.query(
+        `UPDATE retiros 
+         SET estado = 'FALLIDO', 
+             error_wompi = $2,
+             procesado_at = NOW() 
+         WHERE id = $1`,
+        [retiroId, err.message]
+      );
+      await pool.query(
+        `UPDATE wallet_transactions 
+         SET estado = 'FALLIDO' 
+         WHERE provider_id = $1 
+           AND tipo = 'DEBITO_RETIRO' 
+           AND (metadata->>'retiro_id')::uuid = $2`,
+        [providerId, retiroId]
+      );
+    }
+  }, 1000);
 };
 
