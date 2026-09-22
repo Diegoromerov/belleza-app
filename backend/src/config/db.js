@@ -1,10 +1,6 @@
 const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
-
-// Harness en memoria (src/config/pgMemory.js): en modo test/USE_PG_MEM el pool crudo y Sequelize
-// comparten la MISMA base pg-mem, en lugar de que el pool caiga en handleMemoryQuery (datos fabricados)
-// mientras Sequelize habla con otra BD vacía.
 const pgMemory = require('./pgMemory');
 
 // 🛡️ PARCHE DE SEGURIDAD Y AISLAMIENTO DE ENTORNOS
@@ -15,10 +11,7 @@ if (isProduction && !process.env.DATABASE_URL) {
   console.warn('⚠️ [ENTORNO PRODUCCIÓN] DATABASE_URL no configurada explícitamente en producción.');
 }
 
-// En modo memoria el constructor de Pool viene del adaptador de pg-mem (ignora las opciones de conexión).
-const PoolImpl = pgMemory.enabled ? pgMemory.adapter.Pool : Pool;
-
-const rawPool = new PoolImpl({
+const rawPool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ...(process.env.DATABASE_URL ? {} : {
     user: process.env.DB_USER || 'postgres',
@@ -610,6 +603,7 @@ const pool = {
     }
 
     try {
+      const res = await rawPool.query(text, params);
       if (dbMode === 'indefinido') dbMode = 'postgres';
       return res;
     } catch (err) {
@@ -640,11 +634,6 @@ const pool = {
 };
 
 const testConnection = async () => {
-  if (pgMemory.enabled) {
-    isPgAvailable = true;
-    console.log('✅ Conexión exitosa a PostgreSQL [harness pg-mem en memoria]');
-    return true;
-  }
   try {
     const client = await rawPool.connect();
     const res = await client.query('SELECT current_database(), current_user');
@@ -652,28 +641,22 @@ const testConnection = async () => {
     dbMode = 'postgres';
     console.log(`✅ Conexión exitosa a PostgreSQL [DB: ${res.rows[0].current_database}, Entorno: ${process.env.NODE_ENV || 'development'}]`);
     return true;
-  } catch (err) {
-    dbMode = 'memoria';
-    ultimoIntentoFallidoEn = Date.now();
-    if (isProduction || isStaging) {
-      console.error('❌ CRITICAL DB ERROR: Fallo de conexión a PostgreSQL en producción/staging:', err.message);
-      throw err;
+    } catch (err) {
+      dbMode = 'memoria';
+      ultimoIntentoFallidoEn = Date.now();
+      if (isProduction || isStaging) {
+        console.error('❌ PostgreSQL no disponible:', err.message);
+        console.error('❌ CRITICAL DB ERROR: Fallo de conexión a PostgreSQL en producción/staging:', err.message);
+        throw err;
+      }
+      // Se imprime el MOTIVO. Antes solo decía "no disponible", así que una
+      // credencial incorrecta o una base inexistente eran indistinguibles de un
+      // servidor apagado, y el fallo real se perdía.
+      console.warn(`⚠️ PostgreSQL local no disponible (${err.code || 'sin código'}: ${err.message})`);
+      console.warn('⚠️ Modo de persistencia en memoria local (solo desarrollo). Lo que falle por SQL seguirá lanzando error.');
+      return true;
     }
-    // Se imprime el MOTIVO. Antes solo decía "no disponible", así que una
-    // credencial incorrecta o una base inexistente eran indistinguibles de un
-    // servidor apagado, y el fallo real se perdía.
-    console.warn(`⚠️ PostgreSQL local no disponible (${err.code || 'sin código'}: ${err.message})`);
-    console.warn('⚠️ Modo de persistencia en memoria local (solo desarrollo). Lo que falle por SQL seguirá lanzando error.');
-    return true;
-  }
 };
-
-/** Estado real de la capa de datos, para /api/health. */
-const getDbStatus = () => ({
-  pgAvailable: isPgAvailable,
-  servingFabricatedData,
-  memoryFallbackAllowed: memoryFallbackAllowed(),
-});
 
 // ── Conexión a la base de datos RAG (pgvector) ──
 const ragPool = process.env.RAG_DATABASE_URL
@@ -702,6 +685,20 @@ const testRagConnection = async () => {
     return false;
   }
 };
+
+let isPgAvailable = null;
+let servingFabricatedData = false;
+
+const memoryFallbackAllowed = () =>
+  pgMemory.enabled ||
+  process.env.NODE_ENV === 'test' ||
+  process.env.ALLOW_MEMORY_FALLBACK === 'true';
+
+const getDbStatus = () => ({
+  pgAvailable: isPgAvailable,
+  servingFabricatedData,
+  memoryFallbackAllowed: memoryFallbackAllowed(),
+});
 
 /** ¿Está la conexión sirviendo memoria por decisión explícita (pruebas sin base)
  *  o por falta de enlace? Lo usa businessRepository para decidir si un error de
