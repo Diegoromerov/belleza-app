@@ -1190,11 +1190,6 @@ exports.checkGlowAIQuota = async (req, res, next) => {
     }
 
     let { email, glowai_plan, glowai_diagnosticos_mes, glowai_ciclo_reset_at } = result.rows[0];
-    
-    // Bypass quota for testing account
-    if (email === 'usuario_pruebas@gmail.com') {
-      return next();
-    }
 
     const ahora = new Date();
     const resetDate = new Date(glowai_ciclo_reset_at || ahora);
@@ -1801,11 +1796,6 @@ exports.checkColorimetriaQuota = async (req, res, next) => {
     }
 
     let { email, glowai_plan, colorimetria_diagnosticos_mes, colorimetria_mes_referencia } = result.rows[0];
-    
-    // Bypass de pruebas
-    if (email === 'usuario_pruebas@gmail.com') {
-      return next();
-    }
 
     // Reset mensual
     const ahora = new Date();
@@ -1907,11 +1897,6 @@ exports.checkOutfitQuota = async (req, res, next) => {
     }
 
     let { email, glowai_plan, glowstyle_outfits_mes, glowstyle_mes_referencia } = result.rows[0];
-
-    // Bypass de pruebas
-    if (email === 'usuario_pruebas@gmail.com') {
-      return next();
-    }
 
     // Reset mensual para Premium
     const ahora = new Date();

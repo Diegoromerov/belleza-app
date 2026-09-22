@@ -44,8 +44,8 @@ async function requirePrestador(req, res) {
 }
 
 async function requireAdmin(req, res) {
-  const { rows } = await pool.query('SELECT rol, email FROM usuarios WHERE id = $1', [req.user.id]);
-  if (!rows.length || (rows[0].rol !== 'ADMIN' && rows[0].email !== 'admin@beautyapp.com' && rows[0].email !== 'admin')) {
+  const { rows } = await pool.query('SELECT rol FROM usuarios WHERE id = $1', [req.user.id]);
+  if (!rows.length || rows[0].rol !== 'ADMIN') {
     res.status(403).json({ error: 'Solo administradores pueden realizar esta acción.' });
     return false;
   }

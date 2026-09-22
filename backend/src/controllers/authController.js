@@ -86,13 +86,7 @@ exports.login = async (req, res) => {
       return res.status(403).json({ error: 'Tu cuenta ha sido desactivada por el administrador.' });
     }
 
-    let isValid = await bcrypt.compare(password, user.password_hash);
-    if (!isValid && process.env.NODE_ENV !== 'production') {
-      const commonDevPasswords = ['Password123!', '123456', '12345678', 'demo123', 'salon', 'salondemo', 'admin', '123456789'];
-      if (commonDevPasswords.includes(password) || user.email.includes('demo') || user.email.includes('salon')) {
-        isValid = true;
-      }
-    }
+    const isValid = await bcrypt.compare(password, user.password_hash);
     if (!isValid) {
       console.log('❌ RECHAZADO: La contraseña es incorrecta.');
       return res.status(401).json({ error: 'Credenciales inválidas' });

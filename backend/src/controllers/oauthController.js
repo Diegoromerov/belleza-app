@@ -14,9 +14,8 @@ exports.googleSignIn = async (req, res) => {
       return res.status(400).json({ error: 'Falta el idToken de Google' });
     }
 
-    let payload;
-    // Permitir token de prueba en desarrollo/testing, si ALLOW_MOCK_AUTH es true, o si no se ha configurado CLIENT_ID
-    if ((process.env.NODE_ENV === 'test' || process.env.ALLOW_MOCK_AUTH === 'true' || !CLIENT_ID) && idToken.startsWith('test_google_token_')) {
+    // Permitir token de prueba estrictamente en testing o con ALLOW_MOCK_AUTH === 'true'
+    if ((process.env.NODE_ENV === 'test' || process.env.ALLOW_MOCK_AUTH === 'true') && idToken.startsWith('test_google_token_')) {
       const tokenSuffix = idToken.replace('test_google_token_', '');
       payload = {
         email: `${tokenSuffix}@gmail.com`,
