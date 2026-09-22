@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>GlowApp — Mapa del producto para el usuario</title>
+<style>
+  @page { size: A4 portrait; margin: 15mm 14mm 16mm; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    color: #241E19; font-size: 10pt; line-height: 1.36;
+    background: #FFFFFF; -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  h1, h2, h3, .brand, .lane-title { font-family: Georgia, "Times New Roman", serif; }
+
+  .cover { border: 1.5px solid #C5A052; border-radius: 12px; padding: 18px 20px; background: #FBF7F2; }
+  .brand { font-size: 9pt; letter-spacing: 3px; color: #B08B3E; text-transform: uppercase; margin-bottom: 9px; }
+  h1 { font-size: 24pt; line-height: 1.14; margin: 0 0 8px; color: #1F1A15; }
+  .lead { font-size: 11pt; color: #5C5049; margin: 0 0 12px; }
+  .howto { border-top: 1px solid #E6DCD2; padding-top: 9px; font-size: 9.5pt; color: #6B5E55; }
+
+  h2 { font-size: 13.5pt; margin: 15px 0 2px; color: #1F1A15; }
+  h2 .n { display: block; font-family: "Segoe UI", Arial, sans-serif; font-size: 8pt; letter-spacing: 2px; color: #C5A052; text-transform: uppercase; margin-bottom: 3px; }
+  .rule { height: 2px; width: 34px; background: #C5A052; margin: 0 0 9px; }
+  p { margin: 0 0 5px; }
+  .sub { color: #6B5E55; font-size: 9.5pt; margin-bottom: 7px; }
+  .muted { color: #6B5E55; font-size: 9pt; }
+
+  .card { border: 1px solid #E6DCD2; border-radius: 10px; padding: 9px 12px; background: #FFFFFF; margin-bottom: 8px; }
+  .card.tint { background: #FBF7F2; }
+  ul { margin: 4px 0 0; padding-left: 15px; }
+  li { margin-bottom: 1.5px; }
+  h3 { font-size: 11.5pt; margin: 0 0 4px; }
+  h4 { font-size: 10.5pt; margin: 0 0 4px; font-family: "Segoe UI", Arial, sans-serif; }
+  .tagn { font-size: 8pt; letter-spacing: 0.8px; text-transform: uppercase; color: #B08B3E; }
+
+  .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
+  .c-cli { background: #C5A052; } .c-pro { background: #8C6F65; } .c-salon { background: #4B7F7A; }
+
+  table { border-collapse: collapse; width: 100%; font-size: 9.8pt; }
+  th, td { text-align: left; padding: 5px 7px; border-bottom: 1px solid #EDE4DA; vertical-align: top; }
+  th { font-size: 8.5pt; color: #6B5E55; text-transform: uppercase; letter-spacing: 0.4px; }
+
+  .step { margin: 0 0 3px 0; }
+  .step .k { display: inline-block; width: 16px; height: 16px; border-radius: 50%; border: 1px solid #D8CDBF; color: #6B5E55; font-size: 8pt; text-align: center; line-height: 15px; margin-right: 6px; }
+  .arrow { color: #B5A79B; font-size: 9pt; margin: 0 0 3px 22px; }
+
+  .lane { border: 1px solid #E6DCD2; border-radius: 10px; margin-bottom: 8px; page-break-inside: avoid; break-inside: avoid; }
+  .lane-head { border-left: 5px solid #C5A052; background: #FBF7F2; padding: 7px 12px; border-bottom: 1px solid #E6DCD2; border-radius: 9px 9px 0 0; }
+  .lane-head.pro { border-left-color: #8C6F65; }
+  .lane-head.salon { border-left-color: #4B7F7A; }
+  .lane-title { font-size: 12pt; font-weight: bold; }
+  .lane-where { font-size: 8.5pt; color: #6B5E55; }
+  .lane-body { padding: 9px 12px 10px; }
+
+  .pill { display: inline-block; border: 1px solid #E0D5C8; border-radius: 999px; padding: 2px 9px; font-size: 8.5pt; margin: 0 4px 4px 0; }
+  .pill.mid { border-color: #C5A052; color: #8C6A28; font-weight: 600; }
+  .arrows-row { margin: 4px 0 8px; }
+
+  .node { display: inline-block; border: 1px solid #E0D5C8; border-radius: 7px; padding: 3px 8px; font-size: 9pt; margin: 0 3px 5px 0; }
+  .node.warn { border-color: #C5A052; background: #FDF9F0; }
+  .node.ok { border-color: #4B7F7A; background: #F2F7F6; }
+  .sep { color: #B5A79B; margin-right: 4px; }
+
+  .note { border-left: 3px solid #C5A052; background: #FBF7F2; border-radius: 0 8px 8px 0; padding: 10px 13px; }
+  .foot { margin-top: 18px; border-top: 1px solid #E6DCD2; padding-top: 7px; font-size: 8.5pt; color: #8A7C72; }
+  .page-break { break-before: page; page-break-before: always; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div class="brand">GlowApp · Belleza Luxe</div>
+  <h1>El producto visto por quien lo usa</h1>
+  <p class="lead">Cómo se mueve una persona dentro de GlowApp: qué tres sombreros existen, qué pantalla recibe a cada uno, qué módulos puede usar y qué ocurre desde que reserva hasta que se libera el dinero.</p>
+  <div class="howto"><b>Cómo leerlo:</b> cada sección responde una pregunta del usuario — <b>¿quién soy aquí?</b> (01) · <b>¿cómo entro?</b> (02) · <b>¿qué veo al entrar?</b> (03) · <b>¿qué pasa cuando reservo?</b> (04) · <b>¿qué más puedo hacer?</b> (05) · <b>¿qué todavía no es real?</b> (06).</div>
+</div>
+
+<h2><span class="n">01</span>¿Quién soy aquí? Tres productos en un mismo login</h2>
+<div class="rule"></div>
+<p class="sub">Al crear la cuenta la app pregunta para qué se va a usar. Esa respuesta decide la pantalla de entrada y la barra de navegación de todo el resto del recorrido.</p>
+<table>
+  <tr><th style="width:26%">Sombrero que elige</th><th style="width:34%">Lo que dice (texto de la app)</th><th>Dónde cae al entrar</th></tr>
+  <tr><td><span class="dot c-cli"></span><b>🛍️ Cliente</b></td><td>«Quiero buscar y reservar servicios de belleza.»</td><td>Al <b>mapa de salones</b>: busca, reserva, paga protegido, califica.</td></tr>
+  <tr><td><span class="dot c-pro"></span><b>✂️ Profesional independiente</b></td><td>«Ofrezco servicios y gestiono mi propia agenda.»</td><td>A su <b>panel de trabajo</b>: agenda del día, cobros, wallet.</td></tr>
+  <tr><td><span class="dot c-salon"></span><b>🏢 Salón de belleza (SaaS)</b></td><td>«Administro un local, equipo de trabajo y licencias.»</td><td>Al <b>tablero del negocio</b>: equipo, servicios, cumplimiento legal.</td></tr>
+</table>
+<p class="muted" style="margin-top:8px">Una misma persona puede tener los tres sombreros: al iniciar sesión la app le muestra sus establecimientos, le pregunta con cuál trabajar hoy y la deja en el tablero del rol que tiene en ese local (Dueño, Administrador, Profesional…).</p>
+
+<h2><span class="n">02</span>¿Cómo entro? El camino común a todos</h2>
+<div class="rule"></div>
+<div class="card">
+  <p class="step"><span class="k">1</span>Abre la app → pantalla de bienvenida con la marca y la guía de Aura (tour la primera vez).</p>
+  <p class="arrow">↓</p>
+  <p class="step"><span class="k">2</span><b>Iniciar sesión</b> o <b>crear cuenta</b>; si olvidó la contraseña, la recupera por correo.</p>
+  <p class="arrow">↓</p>
+  <p class="step"><span class="k">3</span>Primera vez: <b>«¿Cómo vas a usar GlowApp?»</b> → Cliente · Profesional independiente · Salón de belleza.</p>
+  <p class="arrow">↓</p>
+  <p class="step"><span class="k">4</span>Si trabaja en <b>varios locales</b>: «Selecciona tu Establecimiento» — cada sede con la etiqueta de su rol (OWNER, ADMIN, MANAGER…).</p>
+  <p class="arrow">↓</p>
+  <p class="step"><span class="k">5</span>Entra a su <b>tablero</b>: mapa de clientes, panel del profesional o tablero del salón.</p>
+  <p class="arrow">↳ Quien fue invitado a un equipo entra por el <b>enlace de invitación</b> y queda dentro del local que lo invitó.</p>
+</div>
+
+<h2><span class="n">03</span>¿Qué veo al entrar? Los tres tableros</h2>
+<div class="rule"></div>
+
+<div class="lane">
+  <div class="lane-head"><span class="lane-title"><span class="dot c-cli"></span>Cliente</span> &nbsp;·&nbsp; <span class="lane-where">pantalla principal: el mapa</span></div>
+  <div class="lane-body">
+    <p>La entrada no es un menú: es un <b>mapa</b> con los salones y profesionales cerca, un buscador («¿Qué ritual deseas hoy?») y filtros por categoría (Cabello · Uñas · Maquillaje · Todos).</p>
+    <p>Toca un salón → tarjeta rápida con fotos del trabajo y tres atajos: <b>Chat directo</b>, <b>Ver perfil</b>, <b>Reservar cita</b>.</p>
+    <p style="margin-bottom:3px">Barra inferior fija, con el botón central destacado:</p>
+    <div class="arrows-row"><span class="pill">Citas</span><span class="pill">GlowShop</span><span class="pill mid">Glow IA+</span><span class="pill">Perfil</span></div>
+    <p style="margin-bottom:3px">El botón flotante <b>«Capas y Opciones»</b> abre:</p>
+    <ul>
+      <li>Mensajes y asistencia (bandeja de chats con estilistas y reservas)</li>
+      <li>Concierge por WhatsApp VIP</li>
+      <li>Tablero Salón (SaaS) — para quien además es dueño de un local</li>
+      <li>Volver a ver el tutorial de Aura y centrar la ubicación</li>
+    </ul>
+  </div>
+</div>
+
+<div class="lane">
+  <div class="lane-head pro"><span class="lane-title"><span class="dot c-pro"></span>Profesional</span> &nbsp;·&nbsp; <span class="lane-where">pantalla principal: panel del día</span></div>
+  <div class="lane-body">
+    <p>Su entrada es un <b>panel operativo</b>: ingresos de hoy, citas, calificación, próxima cita y servicios publicados.</p>
+    <div class="arrows-row"><span class="pill">Inicio</span><span class="pill">Agenda</span><span class="pill">Wallet</span><span class="pill">GlowShop</span><span class="pill">GlowAcademy</span><span class="pill">Chat</span><span class="pill">Perfil</span></div>
+    <p style="margin-bottom:3px">Lo que hace aquí, en orden de uso:</p>
+    <ul>
+      <li><b>Ponerse en línea / fuera de línea</b>: fuera de línea no aparece en el mapa ni recibe citas.</li>
+      <li><b>Iniciar servicio</b> cuando la clienta llega y <b>terminarlo</b> cuando acaba; el cierre lo valida el cliente con su código.</li>
+      <li><b>Ver la agenda completa</b> y el detalle de cada cita: cliente, dirección, estado, chat.</li>
+      <li><b>Ver liquidación</b>: valor bruto, comisión de plataforma, neto y dispersión a Nequi.</li>
+      <li><b>Wallet</b>: saldo, retiros e historial; y <b>Expediente de negocio</b> para lo legal.</li>
+      <li><b>SOS</b> de seguridad con alerta a emergencias.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="lane">
+  <div class="lane-head salon"><span class="lane-title"><span class="dot c-salon"></span>Salón / negocio</span> &nbsp;·&nbsp; <span class="lane-where">pantalla principal: el SaaS del local</span></div>
+  <div class="lane-body">
+    <p>Antes del tablero aparece un <b>hub de bienvenida</b> («Bienvenido, Líder») que pregunta en qué momento está el negocio:</p>
+    <ul>
+      <li><b>Construir mi salón desde cero</b> → ruta guiada de apertura: Cámara de Comercio, concepto sanitario, manual RH1 y bioseguridad.</li>
+      <li><b>Tengo salón: auditar y blindar</b> → diagnóstico de salud legal y sanitaria en 3 minutos.</li>
+      <li><b>Entrar directo al SaaS</b> → al centro de operaciones.</li>
+    </ul>
+    <p style="margin-bottom:3px">El SaaS del salón tiene cuatro pestañas:</p>
+    <div class="arrows-row"><span class="pill">Resumen</span><span class="pill">Equipo</span><span class="pill">Servicios</span><span class="pill">Ajustes</span></div>
+    <ul>
+      <li><b>Resumen</b>: citas de hoy, equipo activo, semáforo de «Salud Legal &amp; Normativa» y la agenda del día con el estado de cada cita.</li>
+      <li><b>Equipo</b>: invitar colaboradores por correo eligiendo rol (Administrador · Prestador independiente · Empleado · Recepcionista) y copiar el enlace de invitación.</li>
+      <li><b>Servicios</b>: el catálogo que verán los clientes, con precio y duración.</li>
+      <li><b>Ajustes</b>: NIT, dirección, contacto y tipo de suscripción.</li>
+    </ul>
+  </div>
+</div>
+
+<h2><span class="n">04</span>¿Qué pasa cuando reservo? Del pago al dinero liberado</h2>
+<div class="rule"></div>
+<p class="sub">Es el eje de todo el producto: el mismo recorrido con tres vistas (cliente, profesional, salón).</p>
+<div class="card">
+  <div class="arrows-row">
+    <span class="node">Elige salón y servicio</span><span class="sep">→</span><span class="node">Fecha y hora</span><span class="sep">→</span><span class="node">Productos sugeridos para después</span><span class="sep">→</span><span class="node">Notas y dirección</span><span class="sep">→</span><span class="node">Revisa su reserva</span><span class="sep">→</span><span class="node warn">Paga protegido (Wompi + código)</span><span class="sep">→</span><span class="node">Cita confirmada</span>
+  </div>
+  <div class="arrows-row">
+    <span class="node">El profesional va en camino (mapa y «llega en»)</span><span class="sep">→</span><span class="node">Check-in y servicio en progreso</span><span class="sep">→</span><span class="node">El profesional marca «terminé»</span><span class="sep">→</span><span class="node">El cliente confirma con su código</span><span class="sep">→</span><span class="node ok">Completada: calificación, propina y dinero liberado</span>
+  </div>
+  <table>
+    <tr><th style="width:32%">Estado que ve el usuario</th><th>Qué significa para él</th></tr>
+    <tr><td>Pendiente de pago</td><td>La cita quedó guardada pero el pago no se completó.</td></tr>
+    <tr><td>Confirmada</td><td>Pagada y agendada; ya aparece en la agenda del salón.</td></tr>
+    <tr><td>En progreso / check-in</td><td>El servicio está ocurriendo.</td></tr>
+    <tr><td>Esperando código</td><td>El trabajo terminó; falta que el cliente valide con su código.</td></tr>
+    <tr><td>Completada</td><td>Se habilita calificar y dejar propina; el pago se libera al profesional.</td></tr>
+    <tr><td>Cancelada / Reprogramar</td><td>La cita se cae o se mueve de fecha.</td></tr>
+    <tr><td>En disputa</td><td>Algo salió mal: el dinero queda retenido hasta que soporte decide (reembolso al cliente, reparto parcial o liberación al profesional).</td></tr>
+  </table>
+</div>
+
+<h2><span class="n">05</span>¿Qué más puedo hacer? Módulos que se usan desde cualquier rol</h2>
+<div class="rule"></div>
+
+<div class="card">
+  <h4>Glow IA+ · diagnóstico y probador virtual</h4>
+  <ul>
+    <li>Autoriza el uso de su imagen (consentimiento biométrico, Ley 1581).</li>
+    <li>Escaneo guiado de rostro, manos o uñas; resultado en «pasaporte» de piel: colorimetría, edad aparente, hidratación, manchas, poros.</li>
+    <li>Recomendación de productos y rutina sugerida.</li>
+    <li>Probarse tonos en vivo (labial, uñas) y comprar o reservar desde ahí mismo.</li>
+    <li>Lookbook de maquillaje por IA y clóset IA con sugerencia de outfits.</li>
+    <li>Comparar evolución: antes vs ahora de piel y cabello (gratis limitado / Premium).</li>
+  </ul>
+</div>
+
+<div class="card">
+  <h4>GlowShop · la tienda</h4>
+  <ul>
+    <li>Buscar por categoría (cabello, uñas, maquillaje, tratamientos, estética).</li>
+    <li>Ver producto, agregar al carrito, control de stock disponible.</li>
+    <li>Pagar con GlowPay (IVA, envío, dirección de entrega) y seguir el estado del pedido desde el perfil.</li>
+    <li>Es también la tienda que el profesional ofrece a sus clientas.</li>
+  </ul>
+</div>
+
+<div class="card">
+  <h4>GlowAcademy · formación</h4>
+  <ul>
+    <li>Entrenamiento cognitivo: juego N-Back por niveles.</li>
+    <li>Belleza &amp; Educación: tutoriales de piel, maquillaje, cabello y wellness.</li>
+    <li>Colorimetría capilar: curso profesional de fundamentos a técnicas avanzadas.</li>
+  </ul>
+</div>
+
+<div class="card">
+  <h4>Wallet · el dinero</h4>
+  <ul>
+    <li>Saldo disponible, movimientos y detalle de cada uno (crédito por servicio, bono, ajuste, retiro).</li>
+    <li>Elegir <b>modelo de retiro</b>: por demanda, cada 15 días o mensual automático.</li>
+    <li>Cuenta bancaria vinculada y verificada; dinero retenido visible durante una disputa.</li>
+  </ul>
+</div>
+
+<div class="card">
+  <h4>Confianza, soporte y privacidad</h4>
+  <ul>
+    <li>PQRSF: crear solicitud (petición, queja, reclamo, emergencia) y seguirla por chat.</li>
+    <li>Disputas de servicio: abrir una, ver el monto retenido y la resolución administrativa.</li>
+    <li>Chats con profesionales, con clientes y con Aura (la asistente).</li>
+    <li>Habeas data: qué autorizó, cómo revocarlo o pedir sus datos (ARCO).</li>
+    <li>Ajustes: notificaciones, huella/FaceID, cambio de contraseña, eliminar cuenta.</li>
+  </ul>
+</div>
+
+<div class="card">
+  <h4>Business Center · el abogado y el contador del salón</h4>
+  <ul>
+    <li>Un puntaje de cumplimiento del negocio y la etapa en que está.</li>
+    <li>Ruta de trámites en pasos: entender → explicar → ejecutar → verificar.</li>
+    <li>Tareas típicas: concepto sanitario municipal, manual de bioseguridad RH1, contrato del estilista.</li>
+    <li>Hallazgos de auditoría con nivel de riesgo y fecha límite.</li>
+    <li>Generador de documentos (contrato laboral, manual RH1) con firma electrónica.</li>
+    <li>Subir evidencia o foto de un trámite y enviarlo a verificación.</li>
+  </ul>
+</div>
+
+<h2><span class="n">06</span>¿Qué todavía no es real? Honestidad de producto</h2>
+<div class="rule"></div>
+<div class="note">
+  <p style="margin-bottom:5px">Para que nadie se confunda al mostrarlo: hay pantallas que hoy enseñan <b>datos de ejemplo</b> en vez de datos del usuario.</p>
+  <ul>
+    <li><b>Tablero del salón:</b> si el servidor no responde, muestra un salón de ejemplo («Salón Elegance Studio») y su catálogo de servicios viene fijo en la pantalla, no del catálogo real.</li>
+    <li><b>Business Center:</b> el nombre del negocio, la etapa y el porcentaje de cumplimiento son fijos; las tareas y hallazgos están escritos a mano.</li>
+    <li><b>Sí son datos reales:</b> panel del profesional, mapa de clientes, citas, chat, tienda, wallet y los flujos de pago.</li>
+    <li>Existe una barra de navegación de 5 botones con variantes por rol en el código, pero <b>no está en uso</b>: la navegación real es la descrita en la sección 03.</li>
+  </ul>
+</div>
+
+<p class="foot">GlowApp · mapa de navegación para el usuario final — documento descriptivo de la experiencia, no de la implementación técnica.</p>
+
+</body>
+</html>
