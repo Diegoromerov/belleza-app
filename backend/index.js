@@ -39,6 +39,8 @@ const xpLogRoutes = require('./src/routes/xpLogRoutes');
 const eventRoutes = require('./src/routes/eventRoutes');
 const eventRegistrationRoutes = require('./src/routes/eventRegistrationRoutes');
 const aiOrchestratorRoutes = require('./src/routes/aiOrchestratorRoutes');
+const businessRoutes = require('./src/routes/businessRoutes');
+const membershipRoutes = require('./src/routes/membershipRoutes');
 const adminMiddleware = async (req, res, next) => {
   try {
     if (!req.user || !req.user.id) {
@@ -200,6 +202,16 @@ app.use(cors({
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(traceIdMiddleware); // Trace ID middleware for consistent tracking
+// Servir el build de Flutter Web desde el backend es una comodidad de desarrollo local: en el
+// contenedor desplegado esa ruta NO existe (el contexto de build del backend es ./backend y el web
+// lo sirve nginx con frontend/Dockerfile). Por eso se resuelve UNA sola vez al arrancar, en lugar de
+// hacer un fs.existsSync por cada request.
+const webBuildPath = path.join(__dirname, '../frontend/build/web');
+const webBuildIndex = path.join(webBuildPath, 'index.html');
+const hasWebBuild = fs.existsSync(webBuildIndex);
+if (hasWebBuild) {
+  app.use(express.static(webBuildPath));
+}
 const sanitizer = require('./src/middleware/sanitizer');
 app.use(sanitizer);
 
@@ -402,6 +414,8 @@ app.use('/api/xp-logs', xpLogRoutes);
 // RUTAS DE ORQUESTADOR IA MULTI-AGENTE
 // ==========================================
 app.use('/api/ai', aiOrchestratorRoutes);
+app.use('/api/v1/business', businessRoutes);
+app.use('/api/v1/memberships', membershipRoutes);
 // Health check
 app.get('/api/health', async (req, res) => {
   try {
@@ -1698,7 +1712,14 @@ app.set('notifyUserChatMessage', notifyUserChatMessage);
 // Limpiar historial de chats deshabilitado en producción para evitar pérdida de datos.
 // En desarrollo, utilizar una semilla de limpieza controlada si es necesario.
 
-// Módulo Nail Try-on removido por completo.
+// SPA Fallback para Flutter Web (ver nota en webBuildPath: en el contenedor desplegado no existe)
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api')) return next();
+  if (hasWebBuild) {
+    return res.sendFile(webBuildIndex);
+  }
+  next();
+});
 
 // ==========================================
 // INICIO DEL SERVIDOR
