@@ -1229,22 +1229,9 @@ exports.checkGlowAIQuota = async (req, res, next) => {
 };
 
 exports.subscribePremium = async (req, res) => {
-  try {
-    const userId = req.user.id;
-    await pool.query(
-      `UPDATE usuarios 
-       SET glowai_plan = 'premium', glowai_ciclo_reset_at = NOW() 
-       WHERE id = $1;`,
-      [userId]
-    );
-    res.json({
-      success: true,
-      message: 'Suscripción a GlowAI Premium activada con éxito.'
-    });
-  } catch (error) {
-    console.error('❌ ERROR AL SUSCRIBIR A PREMIUM:', error);
-    res.status(500).json({ error: 'Error al procesar el pago de la suscripción' });
-  }
+  return res.status(400).json({
+    error: 'La suscripción a GlowAI Premium requiere un pago verificado a través de la pasarela oficial.'
+  });
 };
 
 exports.checkInStreak = async (req, res) => {

@@ -955,23 +955,32 @@ router.post('/disputes', authMiddleware, async (req, res) => {
     );
 
     if (booking.estado === 'COMPLETADA') {
-      const montoCongelar = parseFloat(booking.pago_neto_prestador);
-      await client.query(
-        `UPDATE provider_wallet
-         SET saldo_disponible = GREATEST(0, saldo_disponible - $2),
-             saldo_en_disputa = saldo_en_disputa + $2,
-             updated_at = NOW()
-         WHERE provider_id = $1`,
-        [booking.provider_id, montoCongelar]
+      const montoCongelar = parseFloat(booking.pago_neto_prestador) || 0;
+      const walletRes = await client.query(
+        'SELECT saldo_disponible FROM provider_wallet WHERE provider_id = $1 FOR UPDATE',
+        [booking.provider_id]
       );
-      await client.query(
-        `INSERT INTO wallet_transactions
-           (provider_id, booking_id, tipo, monto, saldo_resultante, estado, descripcion)
-         SELECT $1, $2, 'RETENCION_DISPUTA', $3, saldo_disponible + saldo_pendiente,
-                'COMPLETADO', 'Fondos congelados por disputa'
-         FROM provider_wallet WHERE provider_id = $1`,
-        [booking.provider_id, booking_id, montoCongelar]
-      );
+      const saldoActual = walletRes.rows.length ? parseFloat(walletRes.rows[0].saldo_disponible) : 0;
+      const montoEfectivo = Math.min(saldoActual, montoCongelar);
+
+      if (montoEfectivo > 0) {
+        await client.query(
+          `UPDATE provider_wallet
+           SET saldo_disponible = saldo_disponible - $2,
+               saldo_en_disputa = saldo_en_disputa + $2,
+               updated_at = NOW()
+           WHERE provider_id = $1`,
+          [booking.provider_id, montoEfectivo]
+        );
+        await client.query(
+          `INSERT INTO wallet_transactions
+             (provider_id, booking_id, tipo, monto, saldo_resultante, estado, descripcion)
+           SELECT $1, $2, 'RETENCION_DISPUTA', $3, saldo_disponible + saldo_pendiente,
+                  'COMPLETADO', 'Fondos congelados por disputa'
+           FROM provider_wallet WHERE provider_id = $1`,
+          [booking.provider_id, booking_id, montoEfectivo]
+        );
+      }
     }
 
     await auditLog(client, {
@@ -1134,13 +1143,20 @@ router.put('/admin/disputes/:id/resolve', authMiddleware, async (req, res) => {
         break;
     }
 
+    const walletRes = await client.query(
+      'SELECT saldo_en_disputa FROM provider_wallet WHERE provider_id = $1 FOR UPDATE',
+      [disputa.provider_id]
+    );
+    const enDisputaActual = walletRes.rows.length ? parseFloat(walletRes.rows[0].saldo_en_disputa) : 0;
+    const montoADeducir = Math.min(enDisputaActual, montoEnDisputa);
+
     await client.query(
       `UPDATE provider_wallet
-       SET saldo_en_disputa  = GREATEST(0, saldo_en_disputa - $2),
+       SET saldo_en_disputa  = saldo_en_disputa - $2,
            saldo_disponible  = saldo_disponible + $3,
            updated_at        = NOW()
        WHERE provider_id = $1`,
-      [disputa.provider_id, montoEnDisputa, montoPrestador]
+      [disputa.provider_id, montoADeducir, montoPrestador]
     );
 
     if (montoPrestador > 0) {

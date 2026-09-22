@@ -1,5 +1,5 @@
-﻿-- Migración 064: Agregar ubicación geográfica y flags de visibilidad a la tabla salones
-DO  
+-- Migración 064: Agregar ubicación geográfica y flags de visibilidad a la tabla salones
+DO $$
 BEGIN
     -- 1. Asegurar extensión PostGIS
     CREATE EXTENSION IF NOT EXISTS postgis;
@@ -32,4 +32,4 @@ BEGIN
         CREATE INDEX idx_salones_ubicacion_gist ON salones USING GIST(ubicacion);
     END IF;
 
-END ;
+END $$;

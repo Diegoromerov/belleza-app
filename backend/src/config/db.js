@@ -33,12 +33,15 @@ rawPool.on('error', (err) => {
 const memoryUsers = new Map();
 const memorySalones = new Map();
 const memorySalonMiembros = [];
+const memoryBookings = [];
 
 async function initDefaultUsers() {
-  const hash = await bcrypt.hash('Password123!', 10);
-  const addDemoUser = (email, name, role) => {
-    memoryUsers.set(email, {
-      id: memoryUsers.size + 1,
+  const hash = await bcrypt.hash('password123', 10);
+  const hash2 = await bcrypt.hash('Password123!', 10);
+
+  const addDemoUser = (id, email, name, role) => {
+    const userObj = {
+      id: id,
       nombre: name,
       email: email,
       password_hash: hash,
@@ -48,15 +51,27 @@ async function initDefaultUsers() {
       rol: role,
       onboarding_completo: true,
       is_active: true
-    });
+    };
+    memoryUsers.set(email, userObj);
+    return userObj;
   };
 
-  addDemoUser('demo1@demo.com', 'Demo Salón 1', 'SALON');
-  addDemoUser('salondemo@salon.com', 'Salón Demo', 'SALON');
-  addDemoUser('salon@demo.com', 'Salón Demo', 'SALON');
-  addDemoUser('admin@demo.com', 'Admin Demo', 'SALON');
-  addDemoUser('cliente@demo.com', 'Cliente Demo', 'CLIENTE');
-  addDemoUser('prestador@demo.com', 'Prestador Demo', 'PRESTADOR');
+  addDemoUser(1, 'demo1@demo.com', 'Demo Salón 1', 'SALON');
+  addDemoUser(2, 'salondemo@salon.com', 'Salón Demo', 'SALON');
+  addDemoUser(3, 'salon@demo.com', 'Salón Demo', 'SALON');
+  addDemoUser(4, 'admin@demo.com', 'Admin Demo', 'SALON');
+  addDemoUser(5, 'cliente@demo.com', 'Cliente Demo', 'CLIENTE');
+  addDemoUser(6, 'prestador@demo.com', 'Prestador Demo', 'PRESTADOR');
+
+  // Owner user with 3 years SaaS history
+  const propietario = addDemoUser(10, 'propietario@salonglow.com', 'Carlos Mendoza (Owner)', 'SALON');
+
+  // Staff members
+  const sofia = addDemoUser(11, 'sofia.lopez@salonglow.com', 'Sofía López', 'SALON');
+  const mateo = addDemoUser(12, 'mateo.ruiz@salonglow.com', 'Mateo Ruíz', 'PRESTADOR');
+  const valentina = addDemoUser(13, 'valentina.gomez@salonglow.com', 'Valentina Gómez', 'PRESTADOR');
+  const camila = addDemoUser(14, 'camila.torres@salonglow.com', 'Camila Torres', 'PRESTADOR');
+  const andres = addDemoUser(15, 'andres.morales@salonglow.com', 'Andrés Morales', 'PRESTADOR');
 
   memoryUsers.set('nuevosalon@salon.com', {
     id: 99,
@@ -70,6 +85,42 @@ async function initDefaultUsers() {
     onboarding_completo: false,
     is_active: true
   });
+
+  // Main Salon Instance for Propietario
+  const mainSalon = {
+    id: 1,
+    nombre_salon: 'Salon Glow — Sede Principal Norte',
+    nit: '901888777-1',
+    direccion: 'Calle 127 # 7-18, Usaquén',
+    telefono: '3109998877',
+    ciudad: 'Bogotá',
+    plan_saas: 'ENTERPRISE_PRO',
+    id_dueno: 10,
+    latitude: 4.7012,
+    longitude: -74.0321,
+    location_enabled: true,
+    location_public: true,
+  };
+  memorySalones.set(1, mainSalon);
+
+  // Salon members dataset
+  memorySalonMiembros.push(
+    { id: 1, salon_id: 1, user_id: 10, nombre: 'Carlos Mendoza', email: 'propietario@salonglow.com', phone: '3109998877', sub_rol: 'DUEÑO', estatus: 'ACTIVO', creado_at: '2023-01-15T10:00:00Z' },
+    { id: 2, salon_id: 1, user_id: 11, nombre: 'Sofía López', email: 'sofia.lopez@salonglow.com', phone: '3124567890', sub_rol: 'ADMINISTRADOR', estatus: 'ACTIVO', creado_at: '2023-02-01T09:00:00Z' },
+    { id: 3, salon_id: 1, user_id: 12, nombre: 'Mateo Ruíz', email: 'mateo.ruiz@salonglow.com', phone: '3157890123', sub_rol: 'PRESTADOR_INDEPENDIENTE', estatus: 'ACTIVO', creado_at: '2023-03-10T14:30:00Z' },
+    { id: 4, salon_id: 1, user_id: 13, nombre: 'Valentina Gómez', email: 'valentina.gomez@salonglow.com', phone: '3203456789', sub_rol: 'PRESTADOR_INDEPENDIENTE', estatus: 'ACTIVO', creado_at: '2023-05-20T11:15:00Z' },
+    { id: 5, salon_id: 1, user_id: 14, nombre: 'Camila Torres', email: 'camila.torres@salonglow.com', phone: '3186543210', sub_rol: 'EMPLEADO', estatus: 'ACTIVO', creado_at: '2023-08-01T08:00:00Z' },
+    { id: 6, salon_id: 1, user_id: 15, nombre: 'Andrés Morales', email: 'andres.morales@salonglow.com', phone: '3001112233', sub_rol: 'EMPLEADO', estatus: 'ACTIVO', creado_at: '2024-01-10T10:00:00Z' }
+  );
+
+  // Bookings dataset for Salon Dashboard & Metrics
+  memoryBookings.push(
+    { id: 'b101', service_id: 1, provider_id: 10, client_id: 5, service_name: 'Balayage Cenizo + Hidratación Plex', client_name: 'Mariana Silva', scheduled_at: new Date().toISOString(), status: 'CONFIRMED', price: 320000, total_amount: 320000, provider_name: 'Valentina Gómez' },
+    { id: 'b102', service_id: 2, provider_id: 10, client_id: 5, service_name: 'Corte Caballero Premium + Barba', client_name: 'Alejandro Morales', scheduled_at: new Date().toISOString(), status: 'CONFIRMED', price: 65000, total_amount: 65000, provider_name: 'Mateo Ruíz' },
+    { id: 'b103', service_id: 3, provider_id: 10, client_id: 5, service_name: 'Limpieza Facial Profunda Acneic', client_name: 'Laura Restrepo', scheduled_at: new Date(Date.now() + 3600000).toISOString(), status: 'IN_PROGRESS', price: 120000, total_amount: 120000, provider_name: 'Camila Torres' },
+    { id: 'b104', service_id: 4, provider_id: 10, client_id: 5, service_name: 'Manicura Semipermanente Gel-X', client_name: 'Daniela Gutierrez', scheduled_at: new Date(Date.now() + 7200000).toISOString(), status: 'PENDING', price: 85000, total_amount: 85000, provider_name: 'Andrés Morales' },
+    { id: 'b105', service_id: 5, provider_id: 10, client_id: 5, service_name: 'Ritual Keratina Orgánica Vegana', client_name: 'Carolina Botero', scheduled_at: new Date(Date.now() + 10800000).toISOString(), status: 'CONFIRMED', price: 280000, total_amount: 280000, provider_name: 'Valentina Gómez' }
+  );
 }
 initDefaultUsers();
 
@@ -391,7 +442,38 @@ function handleMemoryQuery(text, params = []) {
     return { rows: [member] };
   }
 
+  // Check bookings
+  if (queryStr.includes('BOOKINGS')) {
+    return { rows: memoryBookings };
+  }
+
+  // Check business_profiles
+  if (queryStr.includes('BUSINESS_PROFILES')) {
+    return {
+      rows: [
+        { id: 'bp-glow-norte', owner_user_id: 10, name: 'Salon Glow — Sede Norte', address: 'Calle 127 # 7-18', city: 'Bogotá', created_at: '2023-01-15T10:00:00Z' },
+        { id: 'bp-glow-chapinero', owner_user_id: 10, name: 'Salon Glow — Sede Chapinero', address: 'Carrera 13 # 63-24', city: 'Bogotá', created_at: '2023-06-01T10:00:00Z' },
+        { id: 'bp-glow-zonat', owner_user_id: 10, name: 'Salon Glow — Sede Zona T', address: 'Calle 82 # 12-10', city: 'Bogotá', created_at: '2024-01-15T10:00:00Z' }
+      ]
+    };
+  }
+
+  // Check memberships
+  if (queryStr.includes('MEMBERSHIPS')) {
+    return {
+      rows: [
+        { id: 'mem-1', user_id: 10, business_profile_id: 'bp-glow-norte', role: 'OWNER', is_active: true },
+        { id: 'mem-2', user_id: 10, business_profile_id: 'bp-glow-chapinero', role: 'OWNER', is_active: true },
+        { id: 'mem-3', user_id: 10, business_profile_id: 'bp-glow-zonat', role: 'OWNER', is_active: true }
+      ]
+    };
+  }
+
   // Check salones / salon_miembros
+  if (queryStr.includes('JOIN USUARIOS') && queryStr.includes('SALON_MIEMBROS')) {
+    return { rows: memorySalonMiembros };
+  }
+
   if (queryStr.includes('SALONES') || queryStr.includes('SALON_MIEMBROS')) {
     const userIdParam = queryStr.includes('USER_ID = $2') || queryStr.includes('USER_ID=$2')
       ? params[1]
@@ -417,10 +499,24 @@ function handleMemoryQuery(text, params = []) {
   return { rows: [] };
 }
 
+// Enrutado de consultas a la conexión dedicada de la petición.
+// Módulo aislado a propósito: no toca handleMemoryQuery ni la degradación a
+// memoria (ver la cabecera de tenantRouting.js).
+const tenantRouting = require('./tenantRouting');
+
 let isPgAvailable = false;
 
 const pool = {
   query: async (text, params) => {
+    // Si la petición tiene una conexión dedicada (y por tanto su app.tenant_id
+    // fijado de forma local), la consulta debe ejecutarse en ESA conexión.
+    // Deliberadamente NO hay fallback a memoria en esta rama: si la transacción
+    // de la petición falla, debe propagarse el error en vez de sustituirlo por
+    // los datos de handleMemoryQuery.
+    const activeClient = tenantRouting.getActiveClient();
+    if (activeClient) {
+      return activeClient.query(text, params);
+    }
     if (isPgAvailable === false) {
       return handleMemoryQuery(text, params);
     }
@@ -463,11 +559,15 @@ const testConnection = async () => {
     isPgAvailable = true;
     console.log(`✅ Conexión exitosa a PostgreSQL [DB: ${res.rows[0].current_database}, Entorno: ${process.env.NODE_ENV || 'development'}]`);
     return true;
-  } catch (err) {
-    isPgAvailable = false;
-    console.warn('⚠️ PostgreSQL local no disponible — Activando modo de persistencia en memoria local');
-    return true;
-  }
+    } catch (err) {
+      isPgAvailable = false;
+      if (isProduction || isStaging) {
+        console.error('❌ CRITICAL DB ERROR: Fallo de conexión a PostgreSQL en producción/staging:', err.message);
+        throw err;
+      }
+      console.warn('⚠️ PostgreSQL local no disponible — Activando modo de persistencia en memoria local');
+      return true;
+    }
 };
 
 // ── Conexión a la base de datos RAG (pgvector) ──
