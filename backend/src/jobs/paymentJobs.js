@@ -5,6 +5,22 @@ const { pool } = require('../config/db');
 const wompiService = require('../services/wompiService');
 const { aplicarPricingDinamico } = require('./dynamicPricing');
 const { enviarNotificacionesRetencion } = require('./retentionNotification');
+const { runAsSystem } = require('../config/tenantRouting');
+
+/**
+ * Ejecuta un job con el ROL DE SISTEMA activo (SET LOCAL ROLE app_system, que
+ * tiene BYPASSRLS).
+ *
+ * Los jobs no nacen de una petición autenticada, así que no tienen inquilino, y
+ * trabajan de forma intencionadamente cross-tenant: maduran saldos, ejecutan
+ * retiros y concilian mirando TODOS los salones. Con FORCE ROW LEVEL SECURITY
+ * (migración 068) sus consultas irían sin contexto y devolverían 0 filas, de modo
+ * que el job se quedaría sin hacer su trabajo EN SILENCIO, sin lanzar un error.
+ *
+ * Requiere `GRANT app_system TO app_rls_user` (scripts/setupRlsRole.sql): sin esa
+ * membresía, el SET LOCAL ROLE falla en voz alta en vez de degradarse.
+ */
+const comoSistema = (job) => () => runAsSystem({ pool }, () => job());
 
 /**
  * Lee un parámetro de configuración de la plataforma.
@@ -249,41 +265,43 @@ function inicializarJobs() {
   console.log('⚙️  Iniciando jobs de pagos...');
 
   // Maduración de saldos: cada 15 minutos
-  setInterval(madurarSaldosPendientes, 15 * 60 * 1000);
+  setInterval(comoSistema(madurarSaldosPendientes), 15 * 60 * 1000);
 
   // Retiros automáticos: cada día a las 6 AM (verificación cada hora)
   setInterval(async () => {
     const hora = new Date().getHours();
-    if (hora === 6) await ejecutarRetirosAutomaticos();
+    if (hora === 6) await comoSistema(ejecutarRetirosAutomaticos)();
   }, 60 * 60 * 1000);
 
   // Conciliación diaria: a las 2 AM
   setInterval(async () => {
     const hora = new Date().getHours();
-    if (hora === 2) await conciliacionDiaria();
+    if (hora === 2) await comoSistema(conciliacionDiaria)();
   }, 60 * 60 * 1000);
 
   // Pricing dinámico: cada día a las 3 AM
   setInterval(async () => {
     const hora = new Date().getHours();
-    if (hora === 3) await aplicarPricingDinamico();
+    if (hora === 3) await comoSistema(aplicarPricingDinamico)();
   }, 60 * 60 * 1000);
 
   // Notificaciones de retención: cada día a las 10 AM
   setInterval(async () => {
     const hora = new Date().getHours();
-    if (hora === 10) await enviarNotificacionesRetencion();
+    if (hora === 10) await comoSistema(enviarNotificacionesRetencion)();
   }, 60 * 60 * 1000);
 
   // Ejecutar maduración inmediatamente al iniciar
-  setTimeout(madurarSaldosPendientes, 5000);
+  setTimeout(comoSistema(madurarSaldosPendientes), 5000);
   
   console.log('✅ Jobs de pagos inicializados.');
 }
 
 module.exports = {
   inicializarJobs,
-  madurarSaldosPendientes,
-  ejecutarRetirosAutomaticos,
-  conciliacionDiaria
+  // Envueltos igual que en el scheduler: también se exportan, y cualquier otro
+  // llamador debe recibir el mismo contexto de sistema.
+  madurarSaldosPendientes: comoSistema(madurarSaldosPendientes),
+  ejecutarRetirosAutomaticos: comoSistema(ejecutarRetirosAutomaticos),
+  conciliacionDiaria: comoSistema(conciliacionDiaria)
 };

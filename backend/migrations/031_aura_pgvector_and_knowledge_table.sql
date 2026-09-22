@@ -16,6 +16,13 @@ CREATE TABLE IF NOT EXISTS beauty_knowledge_embeddings (
     expires_at TIMESTAMP WITH TIME ZONE
 );
 
+-- La tabla puede venir de una versión anterior sin las columnas de retención:
+-- CREATE TABLE IF NOT EXISTS no las añade cuando la tabla ya existe, y los
+-- índices de abajo fallarían con «column "deleted_at" does not exist».
+-- Se añaden de forma idempotente antes de usarlas.
+ALTER TABLE beauty_knowledge_embeddings ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE beauty_knowledge_embeddings ADD COLUMN IF NOT EXISTS expires_at TIMESTAMP WITH TIME ZONE;
+
 CREATE INDEX IF NOT EXISTS idx_beauty_knowledge_category ON beauty_knowledge_embeddings(category);
 CREATE INDEX IF NOT EXISTS idx_beauty_knowledge_tenant ON beauty_knowledge_embeddings(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_beauty_knowledge_deleted ON beauty_knowledge_embeddings(deleted_at);

@@ -20,8 +20,8 @@ export default function LoginPage() {
     setSubmitting(true);
 
     try {
-      const res = await login(email, password);
-      if (email.toLowerCase() === 'admin@glow.app') {
+      const user = await login(email, password);
+      if (user && (user.rol === 'ADMIN' || user.rol === 'admin' || user.role === 'admin')) {
         window.location.href = '/';
       } else {
         window.location.href = '/admin/academia';

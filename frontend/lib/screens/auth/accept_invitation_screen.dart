@@ -14,10 +14,33 @@ class _AcceptInvitationScreenState extends State<AcceptInvitationScreen> {
   String? _error;
   String? _successMessage;
 
+  /// El token llega por argumento de ruta cuando se entra desde la app, pero la
+  /// pantalla también se abre sin él. Sin este campo, quien no tuviera el enlace
+  /// a mano leía "Token de invitación no proporcionado" y no había forma de
+  /// escribir el código que le pasó el dueño del salón.
+  final _tokenCtrl = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _tokenCtrl.text = widget.token ?? '';
+  }
+
+  @override
+  void dispose() {
+    _tokenCtrl.dispose();
+    super.dispose();
+  }
+
   Future<void> _handleAccept() async {
-    final effectiveToken = widget.token ?? '';
+    final effectiveToken = _tokenCtrl.text.trim().toLowerCase();
     if (effectiveToken.isEmpty) {
-      setState(() => _error = 'Token de invitación no proporcionado.');
+      setState(() => _error = 'Escribe el código de invitación.');
+      return;
+    }
+    if (!RegExp(r'^[0-9a-f]{32}$').hasMatch(effectiveToken)) {
+      setState(
+          () => _error = 'El código debe tener 32 caracteres hexadecimales.');
       return;
     }
     setState(() {
@@ -94,7 +117,21 @@ class _AcceptInvitationScreenState extends State<AcceptInvitationScreen> {
                 ),
                 const SizedBox(height: 20),
               ],
-              if (_successMessage == null)
+              if (_successMessage == null) ...[
+                TextField(
+                  controller: _tokenCtrl,
+                  textAlign: TextAlign.center,
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  decoration: const InputDecoration(
+                    labelText: 'Código de invitación',
+                    hintText: '32 caracteres hexadecimales',
+                    border: OutlineInputBorder(),
+                  ),
+                  style: const TextStyle(fontSize: 14, letterSpacing: 1.2),
+                  onSubmitted: (_) => _handleAccept(),
+                ),
+                const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: _isLoading ? null : _handleAccept,
                   style: ElevatedButton.styleFrom(
@@ -110,6 +147,7 @@ class _AcceptInvitationScreenState extends State<AcceptInvitationScreen> {
                         )
                       : const Text('Aceptar Invitación', style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold)),
                 ),
+              ],
             ],
           ),
         ),

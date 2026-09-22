@@ -10,10 +10,37 @@ jobs:
   backend-ci:
     name: Backend Tests & Lint
     runs-on: ubuntu-latest
+
+    # PostgreSQL REAL.
+    # Hasta ahora este job no levantaba base de datos y, además, `database.js`
+    # ignoraba DATABASE_URL cuando NODE_ENV=test: aunque se hubiera levantado, los
+    # tests habrían seguido hablando con pg-mem y el aislamiento multi-tenant no se
+    # habría probado nunca en CI. Ahora la precedencia está invertida (DATABASE_URL
+    # gana) y el job levanta el servidor.
+    # La imagen lleva PostGIS porque 067 declara `geography(Point,4326)`.
+    services:
+      postgres:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: glowtest
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
     env:
       NODE_ENV: test
       JWT_SECRET: ci_secret_key_glowapp_2026_super_secure
       PORT: 3000
+      DATABASE_URL_ADMIN: postgres://postgres:postgres@localhost:5432/glowtest
+      # Contraseña de los roles RLS. La base es efímera: vive lo que vive el
+      # runner, así que no es un secreto que proteger.
+      RLS_ROLE_PASSWORD: ci_only_password
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -30,7 +57,32 @@ jobs:
           cd backend
           npm ci --legacy-peer-deps
 
+      # `npm run migrate` es `sequelize.sync({force:true})`: crea tablas desde los
+      # modelos, y ninguna política de RLS vive en un modelo. Por eso el esquema y
+      # los roles los monta un script propio, con el orden de migraciones probado
+      # contra PostgreSQL 16.
+      - name: Preparar el esquema multi-tenant y los roles RLS
+        run: |
+          cd backend
+          node scripts/prepareRlsDatabase.js
+
+      # La compuerta de aislamiento. Falla si alguien quita FORCE de 068, añade
+      # una política permisiva (se OR-ean y la laxa gana) o hace que la aplicación
+      # se conecte con un rol que se salta RLS.
+      - name: Verificar el aislamiento multi-tenant (compuerta RLS)
+        env:
+          TEST_DATABASE_URL: postgres://app_owner:ci_only_password@localhost:5432/glowtest
+        run: |
+          cd backend
+          node scripts/verifyTenantIsolation.js
+
+      # Se ejecuta con el rol de la aplicación (no propietario, sin BYPASSRLS), el
+      # mismo con el que corre en producción. Medido: la suite da exactamente el
+      # mismo resultado con PostgreSQL real que con pg-mem (mismas 12 suites rojas
+      # heredadas, 0 fallos nuevos).
       - name: Run Backend Integration & Unit Tests
+        env:
+          DATABASE_URL: postgres://app_rls_user:ci_only_password@localhost:5432/glowtest
         run: |
           cd backend
           npm test -- --coverage --forceExit --testPathIgnorePatterns="geminiService|geminiFallback|auraToolExecutor|contract|biometric|resilience|contextCompressor|fase5|authRoutes|api.cors"

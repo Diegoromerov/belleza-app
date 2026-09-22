@@ -125,11 +125,17 @@ exports.createOrder = async (req, res) => {
     const iva = subtotal * 0.19; // 19% IVA
     const total = subtotal + iva + costoEnvio;
 
-    // Crear el registro de pedido
+    // El estado NO se escribe aquí: lo pone el DEFAULT del esquema, que ya es
+    // el correcto ('PENDIENTE_PAGO' en
+    // migrations/010_implement_glowstore_schema.sql:66). Antes se metía el
+    // literal 'PAGADO' en el INSERT, así que el pedido NACÍA pagado sin que
+    // ninguna pasarela hubiera cobrado: la fila quedaba en la base como prueba
+    // de un pago que nunca ocurrió. Un pedido solo pasa a 'PAGADO' cuando
+    // existe una transacción verificada que lo respalde.
     const orderInsertRes = await client.query(
       `INSERT INTO pedidos_tienda 
-        (comprador_id, rol_comprador, booking_id, prestador_comisionado_id, comision_total_prestador, subtotal, envio, iva, total, estado, nombre_entrega, direccion_entrega)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'PAGADO', $10, $11)
+        (comprador_id, rol_comprador, booking_id, prestador_comisionado_id, comision_total_prestador, subtotal, envio, iva, total, nombre_entrega, direccion_entrega)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
        RETURNING *;`,
       [
         compradorId,

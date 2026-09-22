@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import '../services/auth_service.dart';
 import '../services/api_service.dart';
 import 'provider/business/business_dashboard_screen.dart';
+import '../models/service_model.dart';
 import '../core/theme/tokens.dart';
 import '../design/icons/glow_icon.dart';
 
@@ -26,6 +27,8 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
   Map<String, dynamic>? _salonData;
   List<Map<String, dynamic>> _members = [];
   List<Map<String, dynamic>> _bookings = [];
+  List<ServiceModel> _services = [];
+  String? _servicesError;
 
   final _inviteEmailCtrl = TextEditingController();
   String _selectedSubRole = 'PRESTADOR_INDEPENDIENTE';
@@ -69,25 +72,40 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
           bookingsList = await ApiService.fetchProviderBookings();
         } catch (_) {}
 
+        // Los servicios vienen de la API real. Antes esta pestaña mostraba
+        // cuatro servicios con sus precios escritos a mano.
+        List<ServiceModel> servicesList = [];
+        String? servicesError;
+        try {
+          servicesList = await ApiService.fetchProviderServices();
+        } catch (e) {
+          // No se oculta el fallo: si la carga falla la pestaña lo dice, en vez
+          // de enseñar servicios que no existen.
+          servicesError = 'No se pudieron cargar los servicios: $e';
+        }
+
         if (mounted) {
           setState(() {
             _salonData = salon;
             _members = membersList;
             _bookings = bookingsList;
+            _services = servicesList;
+            _servicesError = servicesError;
             _loading = false;
           });
         }
       } else if (mounted) {
+        // Antes aquí se escribía a mano un salón que no existe (nombre, NIT,
+        // dirección y plan inventados) cada vez que la API no devolvía éxito.
+        // El arreglo es quitar los datos a mano, no cambiarlos por otros.
         setState(() {
-          _salonData = {
-            'id': 1,
-            'nombre_salon': 'Salón Elegance Studio',
-            'nit': '901888777-1',
-            'direccion': 'Calle 127 # 7-18',
-            'telefono': '3109998877',
-            'ciudad': 'Bogotá',
-            'plan_saas': 'FREE_TRIAL',
-          };
+          _salonData = null;
+          _members = [];
+          _bookings = [];
+          _services = [];
+          _servicesError = null;
+          _error = res?['error'] ??
+              'No se pudo cargar la información de tu salón.';
           _loading = false;
         });
       }
@@ -304,11 +322,25 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
                         }
                         setModalState(() => _isInviting = true);
                         try {
-                          final salonId = _salonData?['id'] ?? 1;
+                          final salonIdRaw = _salonData?['id'];
+                          if (salonIdRaw == null) {
+                            // Sin salón identificado NO se invita: el `?? 1` que
+                            // había aquí apuntaba a salon_id = 1, o sea a un
+                            // salón ajeno, cuando faltaba el dato.
+                            setModalState(() => _isInviting = false);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                    'No se pudo identificar tu salón. Recarga e inténtalo de nuevo.'),
+                              ),
+                            );
+                            return;
+                          }
+                          final salonId = salonIdRaw is int
+                              ? salonIdRaw
+                              : int.parse(salonIdRaw.toString());
                           final res = await AuthService.inviteTeamMember(
-                            salonId: salonId is int
-                                ? salonId
-                                : int.parse(salonId.toString()),
+                            salonId: salonId,
                             email: email,
                             subRol: _selectedSubRole,
                           );
@@ -373,9 +405,64 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
   @override
   Widget build(BuildContext context) {
     final t = _t;
-    final salonName =
-        _salonData?['nombre_salon'] ?? 'Salón Elegance Studio';
-    final planSaas = _salonData?['plan_saas'] ?? 'FREE_TRIAL';
+
+    // La pantalla no tenía capa de estados: `_loading` y `_error` se asignaban
+    // en _fetchSalonData y NUNCA se leían aquí, así que cuando la API fallaba se
+    // renderizaba el contenido igual y los `??` de abajo ponían el nombre, el
+    // plan, el NIT y la dirección de un salón que no existe.
+    if (_loading) {
+      return Scaffold(
+        backgroundColor: t.surfaceLevel0,
+        body: Center(
+          child: CircularProgressIndicator(color: t.brandPrimary),
+        ),
+      );
+    }
+
+    if (_salonData == null) {
+      return Scaffold(
+        backgroundColor: t.surfaceLevel0,
+        appBar: AppBar(
+          backgroundColor: t.surfaceLevel1,
+          elevation: 0,
+          surfaceTintColor: Colors.transparent,
+          title: Text('Mi Salón', style: TypographyTokens.h3(t)),
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(Spacing.lg),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                GlowIcon.resolve(
+                  'storefront',
+                  size: GlowIconSize.lg,
+                  color: t.textMuted,
+                  semanticLabel: 'Salón',
+                ),
+                const SizedBox(height: Spacing.md),
+                Text(
+                  _error ?? 'No se pudo cargar la información de tu salón.',
+                  textAlign: TextAlign.center,
+                  style: TypographyTokens.bodySmall(t)
+                      .copyWith(color: t.textSecondary),
+                ),
+                const SizedBox(height: Spacing.lg),
+                ElevatedButton(
+                  onPressed: _fetchSalonData,
+                  child: const Text('Reintentar'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Etiquetas neutras: si el salón real no trae el dato, se dice que no está
+    // registrado en vez de rellenarlo con el de otro salón.
+    final salonName = _salonData!['nombre_salon'] ?? 'Mi salón';
+    final planSaas = _salonData!['plan_saas'] ?? 'SIN PLAN';
 
     return Scaffold(
       backgroundColor: t.surfaceLevel0,
@@ -599,11 +686,11 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
               Expanded(
                 child: _buildKpiCard(
                   t: t,
-                  title: 'Citas Hoy',
+                  title: 'Citas',
                   value: '${_bookings.length}',
                   icon: GlowIcon.calendar(
                     color: t.info,
-                    semanticLabel: 'Citas de hoy',
+                    semanticLabel: 'Citas',
                   ),
                   accentColor: t.info,
                 ),
@@ -639,7 +726,7 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
                 style: TypographyTokens.h3(t),
               ),
               Text(
-                'Hoy',
+                'Todas',
                 style: TextStyle(
                   fontFamily: TypographyFamilies.functional,
                   fontSize: 13,
@@ -659,7 +746,7 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
                     color: t.textMuted,
                     semanticLabel: 'Sin citas',
                   ),
-                  message: 'No hay citas agendadas para hoy',
+                  message: 'No hay citas agendadas',
                 )
               : ListView.builder(
                   shrinkWrap: true,
@@ -930,38 +1017,37 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
   // ── Services tab ──────────────────────────────────────────────────────────
 
   Widget _buildServicesTab(Token t) {
-    final defaultServices = [
-      {
-        'name': 'Corte + Cepillado Personalizado',
-        'price': '\$65.000 COP',
-        'duration': '45 min',
-        'icon': 'hair',
-      },
-      {
-        'name': 'Balayage & Colorimetría Avanzada',
-        'price': '\$280.000 COP',
-        'duration': '180 min',
-        'icon': 'hair',
-      },
-      {
-        'name': 'Manicura Semipermanente Profesional',
-        'price': '\$55.000 COP',
-        'duration': '60 min',
-        'icon': 'nails',
-      },
-      {
-        'name': 'Tratamiento Capilar Hidratante Plex',
-        'price': '\$95.000 COP',
-        'duration': '60 min',
-        'icon': 'spa',
-      },
-    ];
+    if (_servicesError != null) {
+      return _buildEmptyState(
+        t: t,
+        icon: GlowIcon.resolve(
+          'spa',
+          size: GlowIconSize.xl,
+          color: t.textMuted,
+          semanticLabel: 'Servicios',
+        ),
+        message: _servicesError!,
+      );
+    }
+
+    if (_services.isEmpty) {
+      return _buildEmptyState(
+        t: t,
+        icon: GlowIcon.resolve(
+          'spa',
+          size: GlowIconSize.xl,
+          color: t.textMuted,
+          semanticLabel: 'Servicios',
+        ),
+        message: 'Todavía no tienes servicios creados.',
+      );
+    }
 
     return ListView.builder(
       padding: const EdgeInsets.all(Spacing.lg),
-      itemCount: defaultServices.length,
+      itemCount: _services.length,
       itemBuilder: (context, index) {
-        final s = defaultServices[index];
+        final s = _services[index];
         return Container(
           margin: const EdgeInsets.only(bottom: Spacing.md),
           decoration: BoxDecoration(
@@ -980,24 +1066,24 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
                 borderRadius: BorderRadius.circular(Radii.sm),
               ),
               child: GlowIcon.resolve(
-                s['icon']!,
+                _iconoServicio(s.category),
                 size: GlowIconSize.sm,
                 color: t.success,
                 semanticLabel: 'Servicio',
               ),
             ),
             title: Text(
-              s['name']!,
+              s.name,
               style: TypographyTokens.body(t)
                   .copyWith(fontWeight: FontWeight.w600),
             ),
             subtitle: Text(
-              'Duración estimada: ${s['duration']}',
+              'Duración: ${s.durationMinutes} min',
               style: TypographyTokens.bodySmall(t)
                   .copyWith(color: t.textSecondary),
             ),
             trailing: Text(
-              s['price']!,
+              '\$${_separadorMiles(s.price.round())} COP',
               style: TypographyTokens.priceDisplay(t).copyWith(
                 color: t.brandPrimary,
                 fontSize: 14,
@@ -1009,12 +1095,48 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
     );
   }
 
+  /// Icono decorativo por categoría; no afirma nada sobre el servicio.
+  String _iconoServicio(String categoria) {
+    switch (categoria.toLowerCase()) {
+      case 'cabello':
+      case 'hair':
+        return 'hair';
+      case 'uñas':
+      case 'unas':
+      case 'nails':
+        return 'nails';
+      default:
+        return 'spa';
+    }
+  }
+
+  String _separadorMiles(int valor) => valor.toString().replaceAllMapped(
+        RegExp(r'(\d)(?=(\d{3})+$)'),
+        (m) => '${m[1]}.',
+      );
+
   // ── Settings tab ──────────────────────────────────────────────────────────
 
   Widget _buildSettingsTab(Token t) {
-    final address = _salonData?['direccion'] ?? 'Calle 127 # 7-18';
-    final city = _salonData?['ciudad'] ?? 'Bogotá';
-    final nit = _salonData?['nit'] ?? '901888777-1';
+    // Nada inventado: si el salón no tiene el dato registrado, se dice. Antes
+    // esta tarjeta mostraba el NIT, la dirección, el teléfono y el plan de un
+    // salón que no existe.
+    String dato(String clave) {
+      final v = _salonData?[clave];
+      final s = v?.toString().trim() ?? '';
+      return s.isEmpty ? 'No registrado' : s;
+    }
+
+    final nit = dato('nit');
+    final telefono = dato('telefono');
+    final direccion = dato('direccion');
+    final ciudad = _salonData?['ciudad']?.toString().trim() ?? '';
+    final plan = _salonData?['plan_saas']
+            ?.toString()
+            .replaceAll('_', ' ')
+            .trim() ??
+        '';
+    final planLabel = plan.isEmpty ? 'No registrado' : plan;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(Spacing.lg),
@@ -1041,11 +1163,12 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
                       color: t.borderSubtle, height: Spacing.xxl),
                   _buildSettingRow(t, 'badge', 'NIT / Registro', nit),
                   _buildSettingRow(
-                      t, 'location', 'Dirección', '$address, $city'),
-                  _buildSettingRow(
-                      t, 'phone', 'Contacto', '+57 310 999 8877'),
-                  _buildSettingRow(
-                      t, 'star', 'Suscripción', 'Free Trial (SaaS PRO)'),
+                      t,
+                      'location',
+                      'Dirección',
+                      ciudad.isEmpty ? direccion : '$direccion, $ciudad'),
+                  _buildSettingRow(t, 'phone', 'Contacto', telefono),
+                  _buildSettingRow(t, 'star', 'Suscripción', planLabel),
                 ],
               ),
             ),

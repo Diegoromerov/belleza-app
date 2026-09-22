@@ -21,23 +21,22 @@ exports.disbursePayout = async (bookingId, amount, nequiNumber, documentId) => {
         throw new Error('El prestador no tiene configurado un número de cuenta Nequi.');
       }
 
-      // Simular llamada exitosa de Wompi y generar una referencia aleatoria
-      const referenceToken = 'wompi_ref_' + Math.random().toString(36).substring(2, 11).toUpperCase();
-
-      // Guardar registro de la transferencia en la tabla transactions
+      // NO se fabrica un pago. Antes se escribía status = 'paid' con una
+      // referencia generada con Math.random() y SIN llamar a Wompi: el dinero
+      // constaba como transferido sin haberse transferido, y la única prueba
+      // era un número inventado en la base de datos.
+      // La dispersión real necesita la API de pagos de Wompi o la confirmación
+      // manual del operador. Hasta entonces la fila queda 'pending' y el
+      // external_id no se toca (no hay identificador real que guardar).
+      // DO NOTHING en conflicto para NO degradar una transacción ya pagada.
       const query = `
-        INSERT INTO transactions (booking_id, amount, status, payment_method, external_id)
-        VALUES ($1, $2, 'paid', 'NEQUI', $3)
-        ON CONFLICT (booking_id) 
-        DO UPDATE SET 
-          amount = EXCLUDED.amount,
-          status = 'paid', 
-          payment_method = 'NEQUI',
-          external_id = EXCLUDED.external_id;
+        INSERT INTO transactions (booking_id, amount, status, payment_method)
+        VALUES ($1, $2, 'pending', 'NEQUI')
+        ON CONFLICT (booking_id) DO NOTHING;
       `;
-      await pool.query(query, [bookingId, amount, referenceToken]);
+      await pool.query(query, [bookingId, amount]);
 
-      console.log(`✅ [WOMPI PAYOUT] Dispersión completada con éxito. Referencia: ${referenceToken} guardada en BD.`);
+      console.log(`⏳ [WOMPI PAYOUT] Dispersión registrada como PENDIENTE para el operador (cita ${bookingId}). No se ha transferido nada todavía.`);
     } catch (err) {
       console.error(`❌ [WOMPI PAYOUT ERROR] Error al realizar el pago para la cita ${bookingId}:`, err.message);
       

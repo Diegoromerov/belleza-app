@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const { pool } = require('../config/db');
 const { getJwtSecret, toApiRole } = require('../config/jwt');
 const redisClient = require('../config/redis');
+const tenantContextMiddleware = require('./tenantContext');
 
 // 1. Middleware para verificar autenticación
 const authMiddleware = async (req, res, next) => {
@@ -38,21 +39,34 @@ const authMiddleware = async (req, res, next) => {
     const dbRole = userRes.rows[0].rol;
     const dbTenantId = userRes.rows[0].tenant_id;
     
-    // Activar RLS para la conexión (NOTA: en pg-pool esto puede tener fugas si la conexión se reutiliza
-    // pero se aplica para satisfacer la recomendación de la auditoría)
-    if (dbTenantId) {
-      await pool.query('SELECT set_config($1, $2, false)', ['app.tenant_id', dbTenantId.toString()]);
-    }
+    // NOTA DE SEGURIDAD (065): aquí se ejecutaba
+    //   pool.query('SELECT set_config($1, $2, false)', ['app.tenant_id', dbTenantId])
+    // con is_local = false, es decir a NIVEL DE SESIÓN. La conexión volvía al
+    // pool con el tenant aún fijado y la siguiente petición que la reutilizara
+    // —incluida una no autenticada, que no pasa por el `if`— heredaba el tenant
+    // anterior: fuga cross-tenant. Además nunca se reseteaba.
+    //
+    // El contexto se fija ahora de forma transaccional y con limpieza garantizada
+    // (set_config con is_local = true + ROLLBACK/COMMIT + release en finally),
+    // en el middleware tenantContext, que es el único punto autorizado a
+    // establecer app.tenant_id. Se conserva dbTenantId en req.user para que ese
+    // middleware y los controladores lo usen.
 
     req.user = {
       id: verified.id,
       email: verified.email,
       role: toApiRole(dbRole),
+      rol: dbRole,
       tenant_id: dbTenantId,
       token
     };
 
-    next();
+    // Se encadena el contexto de tenant aquí porque este es el único punto donde
+    // req.user ya está poblado. Con el flag desactivado (por defecto) es un
+    // passthrough. Los fallos del middleware se envían al manejador de errores
+    // de Express para que no se confundan con un 'Token inválido'.
+    tenantContextMiddleware(req, res, next).catch(next);
+    return;
   } catch (err) {
     res.status(400).json({ error: 'Token inválido o expirado.' });
   }

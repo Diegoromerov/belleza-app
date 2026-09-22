@@ -3,6 +3,20 @@
 
 DO $$
 BEGIN
+    -- La migración 033 añadió la columna surrogate id a academy_certificates,
+    -- pero sin restricción de unicidad, y PostgreSQL no permite referenciar una
+    -- columna que no sea única («there is no unique constraint matching given
+    -- keys for referenced table "academy_certificates"»). Se garantiza de forma
+    -- idempotente antes de crear las FKs que dependen de ella.
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint c
+        JOIN pg_class t ON t.oid = c.conrelid
+        WHERE t.relname = 'academy_certificates' AND c.contype IN ('p', 'u')
+          AND pg_get_constraintdef(c.oid) LIKE '%(id)%'
+    ) THEN
+        ALTER TABLE academy_certificates ADD CONSTRAINT academy_certificates_id_key UNIQUE (id);
+    END IF;
+
     -- FK en learning_paths.badge_id -> badges(id)
     IF NOT EXISTS (
         SELECT 1 FROM information_schema.table_constraints 

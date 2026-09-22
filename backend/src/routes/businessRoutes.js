@@ -9,6 +9,7 @@ const express = require('express');
 const router = express.Router();
 const businessController = require('../controllers/businessController');
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
+const subirEvidencia = require('../middleware/evidenceUpload');
 
 // 1. Public catalog route (Legitimately public for onboarding discovery)
 router.get('/verticals', businessController.getVerticals);
@@ -20,7 +21,9 @@ router.get('/summary', authMiddleware, businessController.getSummary);
 // Tasks & Guided Workflows (Protected by authMiddleware)
 router.get('/tasks', authMiddleware, businessController.getTasks);
 router.post('/tasks/:id/advance', authMiddleware, businessController.advanceTask);
-router.post('/tasks/:id/evidence', authMiddleware, businessController.submitEvidence);
+// La evidencia se sube como archivo real (multipart, campo "file"): el servidor
+// genera la ruta. Ver src/middleware/evidenceUpload.js
+router.post('/tasks/:id/evidence', authMiddleware, subirEvidencia, businessController.submitEvidence);
 
 // Document Generator & Signatures (Protected by authMiddleware)
 router.get('/templates', authMiddleware, businessController.getTemplates);

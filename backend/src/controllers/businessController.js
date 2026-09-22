@@ -145,11 +145,24 @@ class BusinessController {
       const providerId = req.user.id;
       const tenantId = req.user.tenant_id;
 
+      // La ruta del archivo la produce el SERVIDOR al guardar el archivo subido
+      // (middleware evidenceUpload). Antes se aceptaba `file_path` del cuerpo:
+      // el cliente declaraba la ruta de un archivo que no existía y quedaba
+      // registrado como evidencia válida («Certificado_Sanitario_2026.pdf
+      // (Cargado)» sin haber subido nada). Sin archivo no hay evidencia.
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          error: 'BAD_REQUEST: se requiere el archivo (campo multipart "file"); no se acepta una ruta declarada por el cliente',
+        });
+      }
+      const filePath = `/uploads/evidence/${req.file.filename}`;
+
       const result = await businessWorkflowService.submitEvidence({
         taskId: req.params.id,
         providerId,
         tenantId,
-        filePath: validatedBody.file_path || req.body.file_path,
+        filePath,
         evidenceType: validatedBody.evidence_type || req.body.evidence_type,
         notes: validatedBody.notes || req.body.notes
       });

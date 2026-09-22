@@ -17,10 +17,12 @@
 //
 // LÍMITES DEL ALCANCE (importante)
 // --------------------------------
-// Esta pieza NO activa transacciones por petición. Solo provee el mecanismo y
-// la decisión de activación (opt-in por variable de entorno, ver
-// TENANT_TRANSACTION_PER_REQUEST en .env.example). Con el flag desactivado el
-// comportamiento es idéntico al actual.
+// Esta pieza provee el mecanismo de transacción por petición y su decisión de
+// activación. El modo está ACTIVO POR DEFECTO (ver
+// isPerRequestTransactionEnabled): el aislamiento de inquilino no puede depender
+// de un opt-in que nadie enciende. Se desactiva con
+// TENANT_TRANSACTION_PER_REQUEST=false en el entorno, y con el flag desactivado
+// el comportamiento es el anterior.
 
 const { AsyncLocalStorage } = require('async_hooks');
 
@@ -41,14 +43,32 @@ function getActiveClient() {
 /**
  * Ejecuta `fn` de modo que toda consulta hecha con el `pool` exportado use
  * `client`. Se usa para envolver el resto del ciclo de vida de la petición.
+ * `contexto` transporta además el tenant y/o la marca de sistema, que necesitan
+ * los consumidores que NO pasan por el pool de `pg` (ver getContext).
  */
-function runWithClient(client, fn) {
-  return storage.run({ client }, fn);
+function runWithClient(client, fn, contexto = {}) {
+  return storage.run({ client, ...contexto }, fn);
+}
+
+/**
+ * Contexto de la petición en curso. Lo consume el cableado de Sequelize, que
+ * tiene su propio pool y por tanto no puede averiguar el tenant preguntándole a
+ * `getActiveClient()`: necesita el valor para fijarlo él mismo en su conexión.
+ *
+ * @returns {{client: object|null, tenantId?: number|string, system?: boolean}|null}
+ */
+function getContext() {
+  return storage.getStore() || null;
 }
 
 /** ¿Está activado el modo transacción-por-petición? */
 function isPerRequestTransactionEnabled() {
-  return process.env.TENANT_TRANSACTION_PER_REQUEST === 'true';
+  // ACTIVO POR DEFECTO. Un flag opt-in que nadie enciende equivale a no tener
+  // aislamiento: el contexto de inquilino no se fijaba y las políticas de RLS
+  // no tenían con qué comparar. Ahora hay que desactivarlo explícitamente
+  // (TENANT_TRANSACTION_PER_REQUEST=false) para volver al comportamiento
+  // anterior, y eso deja rastro en el entorno.
+  return process.env.TENANT_TRANSACTION_PER_REQUEST !== 'false';
 }
 
 /**
@@ -82,7 +102,7 @@ async function runInTenantTransaction(deps, tenantId, fn) {
       ]);
     }
 
-    const result = await runWithClient(client, () => fn(client));
+    const result = await runWithClient(client, () => fn(client), { tenantId });
 
     // COMMIT explícito. Sin esto la conexión vuelve al pool con la transacción
     // abierta ("idle in transaction"): el trabajo se perdería y la conexión
@@ -110,11 +130,84 @@ async function runInTenantTransaction(deps, tenantId, fn) {
   }
 }
 
+/**
+ * Marca la ejecución como de SISTEMA, sin abrir ninguna conexión.
+ *
+ * Para qué: los caminos que no nacen de una petición autenticada y operan de
+ * forma intencionadamente cross-tenant (el webhook de Wompi, que confirma la
+ * cita de CUALQUIER salón a partir de una referencia firmada). El rol app_system
+ * tiene BYPASSRLS, así que estas consultas no quedan filtradas por las políticas
+ * de 068 ni devuelven 0 filas.
+ *
+ * LIMITE: esto solo marca el contexto; NO entrega un cliente de sistema. Es lo
+ * correcto para código que va por Sequelize (que fija el rol en su propia
+ * conexión desde el contexto). Si el código dentro de `fn` usa el `pool` de
+ * `pg`, esas consultas irían al pool SIN contexto y devolverían 0 filas: en ese
+ * caso hay que usar `runAsSystem`, que sí entrega la conexión.
+ */
+function runAsSystemContext(fn) {
+  return storage.run({ client: null, system: true }, fn);
+}
+
+/**
+ * Ejecuta `fn` dentro de una transacción dedicada con el ROL DE SISTEMA activo
+ * (`SET LOCAL ROLE app_system`, que tiene BYPASSRLS), y libera la conexión
+ * siempre. Para los caminos que usan el `pool` de `pg` sin petición autenticada
+ * (los jobs de cron).
+ *
+ * SET LOCAL ROLE es de alcance transaccional: al COMMIT/ROLLBACK la conexión
+ * vuelve al pool con su rol original. Lo contrario —un `SET ROLE` de sesión—
+ * dejaría una conexión con BYPASSRLS circulando por el pool.
+ *
+ * Requiere la membresía `GRANT app_system TO app_rls_user` (ver
+ * scripts/setupRlsRole.sql). Si falta, este BEGIN/ROLLBACK falla en voz alta en
+ * vez de ejecutar sin privilegios y devolver cero filas en silencio.
+ *
+ * @param {{ pool: {connect: Function} }} deps
+ * @param {(client: object) => Promise<any>} fn
+ */
+async function runAsSystem(deps, fn) {
+  const client = await deps.pool.connect();
+  let began = false;
+
+  try {
+    await client.query('BEGIN');
+    began = true;
+    await client.query('SET LOCAL ROLE app_system');
+
+    const result = await runWithClient(client, () => fn(client), { system: true });
+
+    await client.query('COMMIT');
+    began = false;
+
+    return result;
+  } catch (error) {
+    if (began && typeof client.query === 'function') {
+      try {
+        await client.query('ROLLBACK');
+        began = false;
+      } catch (rollbackError) {
+        console.error('tenantRouting: fallo al hacer ROLLBACK:', rollbackError.message);
+      }
+    }
+    throw error;
+  } finally {
+    try {
+      if (typeof client.release === 'function') client.release();
+    } catch (releaseError) {
+      console.error('tenantRouting: fallo al liberar la conexión:', releaseError.message);
+    }
+  }
+}
+
 module.exports = {
   storage,
   isRouting,
   getActiveClient,
+  getContext,
   runWithClient,
   isPerRequestTransactionEnabled,
   runInTenantTransaction,
+  runAsSystemContext,
+  runAsSystem,
 };

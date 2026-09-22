@@ -197,7 +197,13 @@ app.use(cors({
   credentials: true
 }));
 
-app.use(express.json({ limit: '50mb' }));
+  // El webhook de Wompi firma el CUERPO CRUDO. express.json() lo consume y lo
+  // re-serializa, y JSON.stringify(req.body) NO reproduce los bytes originales
+  // (orden de claves, espacios, escapado de unicode). Sin `verify` la firma se
+  // calculaba sobre el cuerpo reconstruido y nunca habría validado: el
+  // middleware leía req.rawBody, que nadie poblaba, y caía en el fallback.
+  // `verify` recibe el buffer tal como llegó, antes de parsearlo.
+  app.use(express.json({ limit: '50mb', verify: (req, res, buf) => { req.rawBody = buf; } }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(traceIdMiddleware); // Trace ID middleware for consistent tracking
 const sanitizer = require('./src/middleware/sanitizer');
@@ -382,6 +388,10 @@ app.use('/api/glow-cycle', require('./src/routes/glowCycleRoutes'));
 app.use('/api/v1/beauty', require('./src/routes/v1/beautyRoutes'));
 app.use('/api/v1/beauty-scan', require('./src/routes/v1/beautyScanRoutes'));
 app.use('/api/v1/workforce', require('./src/routes/v1/workforceRoutes'));
+// El Business Center tenía el router completo (src/routes/businessRoutes.js) y su
+// pantalla en Flutter, pero NUNCA se montó aquí: las 15 rutas respondían 404 y la
+// pantalla mostraba datos inventados en su lugar.
+app.use('/api/v1/business', require('./src/routes/businessRoutes'));
 app.use('/api/vto', vtoRoutes);
 app.use('/api/color', colorRoutes);
 app.use('/api/academy', academyRoutes);
@@ -1337,6 +1347,27 @@ app.use('/api/*', (req, res) => {
   res.status(404).json({ success: false, error: `Ruta API no encontrada: ${req.method} ${req.originalUrl}` });
 });
 
+// 🔹 Handler de errores no controlados.
+// Sin esto, Express devolvía su HTML por defecto, y una violación del
+// aislamiento multi-tenant (PostgreSQL 42501 / «new row violates row-level
+// security policy») salía como 500: la app la mostraba como «error inesperado
+// del servidor» cuando en realidad es una petición que intentó escribir sobre
+// datos de OTRA organización. Eso es un 403, no un fallo del servidor.
+app.use((err, req, res, _next) => {
+  const violacionAislamiento = Boolean(err)
+    && (err.code === '42501' || /row-level security/i.test(err.message || ''));
+  if (violacionAislamiento) {
+    console.warn(`⚠️ [RLS] escritura cruzada rechazada por el aislamiento de inquilino: ${req.method} ${req.originalUrl}`);
+    return res.status(403).json({
+      success: false,
+      error: 'FORBIDDEN_TENANT',
+      message: 'La operación no pertenece a tu organización.',
+    });
+  }
+  console.error(`❌ Error no controlado en ${req.method} ${req.originalUrl}:`, err && err.message);
+  return res.status(500).json({ success: false, error: 'INTERNAL_ERROR' });
+});
+
 const initDatabase = async () => {
   const dbErrors = [];
   
@@ -1611,7 +1642,7 @@ const initDatabase = async () => {
     const migrationsDir = path.join(__dirname, 'migrations');
     if (fs.existsSync(migrationsDir)) {
       const files = fs.readdirSync(migrationsDir)
-        .filter(file => file.endsWith('.sql'))
+        .filter(file => file.endsWith('.sql') && !file.endsWith('.down.sql'))
         .sort(); // Orden alfabético: 001, 002, 003, etc.
       
       console.log(`🔍 Encontradas ${files.length} migraciones en la carpeta migrations.`);
@@ -1635,6 +1666,22 @@ const initDatabase = async () => {
   } catch (dirErr) {
     console.error('❌ Error leyendo la carpeta de migraciones:', dirErr.message);
     dbErrors.push({ stage: 'migrations-dir-read', message: dirErr.message });
+  }
+
+  // 11b. Catálogo del Business Engine (idempotente, después de las migraciones).
+  // Sin esto, `business_verticals` queda vacía, la FK de `business_profiles`
+  // rechaza todo `createProfile` y el repositorio sirve datos en memoria: la API
+  // responde pero no guarda nada.
+  try {
+    const { seedBusinessCatalog } = require('./scripts/seedBusinessCatalog');
+    const sembrado = await seedBusinessCatalog(pool);
+    console.log(
+      `✅ Catálogo Business Engine persistido: ${sembrado.verticals} verticales, ` +
+        `${sembrado.requirements} requisitos, ${sembrado.templates} plantillas.`
+    );
+  } catch (e) {
+    console.warn('⚠️ No se pudo sembrar el catálogo del Business Engine:', e.message);
+    dbErrors.push({ stage: 'business-catalog-seed', message: e.message });
   }
 
   // 12. Aislamiento de siembra (seed) si es necesario

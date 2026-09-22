@@ -29,6 +29,41 @@ CREATE TABLE IF NOT EXISTS biometric_consents (
   UNIQUE(user_id, consent_type, version_terms)
 );
 
+-- ── La tabla YA EXISTE con otra forma ───────────────────────────────────────
+-- 020 creó biometric_consents y 026 la "alineó" a (id, user_id, version,
+-- accepted_at, ip, user_agent, revoked_at, active) — ver el comentario de
+-- migrations/026_align_biometric_consents_schema.sql:25. Pero el servicio que
+-- la usa de verdad (src/services/consentService.js) escribe y lee
+-- consent_type, granted, granted_at, purpose, ip_address, version_terms,
+-- created_at, updated_at, y hace ON CONFLICT (user_id, consent_type,
+-- version_terms): con la forma de 026 esa ruta falla siempre.
+-- CREATE TABLE IF NOT EXISTS no corrige una tabla que ya existe, así que hay
+-- que completarla. Se añade de forma IDEMPOTENTE y sin eliminar ninguna
+-- columna existente (la tabla está vacía: 0 filas).
+ALTER TABLE biometric_consents ADD COLUMN IF NOT EXISTS consent_type VARCHAR(50);
+ALTER TABLE biometric_consents ADD COLUMN IF NOT EXISTS granted BOOLEAN DEFAULT FALSE;
+ALTER TABLE biometric_consents ADD COLUMN IF NOT EXISTS granted_at TIMESTAMP;
+ALTER TABLE biometric_consents ADD COLUMN IF NOT EXISTS revoked_at TIMESTAMP;
+ALTER TABLE biometric_consents ADD COLUMN IF NOT EXISTS purpose TEXT;
+ALTER TABLE biometric_consents ADD COLUMN IF NOT EXISTS ip_address INET;
+ALTER TABLE biometric_consents ADD COLUMN IF NOT EXISTS user_agent TEXT;
+ALTER TABLE biometric_consents ADD COLUMN IF NOT EXISTS version_terms VARCHAR(20) DEFAULT '1.0';
+ALTER TABLE biometric_consents ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
+ALTER TABLE biometric_consents ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW();
+
+-- El INSERT ... ON CONFLICT del servicio exige que esta restricción exista de
+-- verdad en la base (en una tabla preexistente el UNIQUE de arriba se ignora).
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'biometric_consents_user_consent_version_key'
+    ) THEN
+        ALTER TABLE biometric_consents
+            ADD CONSTRAINT biometric_consents_user_consent_version_key
+            UNIQUE (user_id, consent_type, version_terms);
+    END IF;
+END $$;
+
 -- Índice para búsquedas rápidas por usuario
 CREATE INDEX IF NOT EXISTS idx_consents_user 
 ON biometric_consents (user_id, consent_type, granted);

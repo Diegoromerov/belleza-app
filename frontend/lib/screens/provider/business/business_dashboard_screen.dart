@@ -2,24 +2,93 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/theme/tokens.dart';
 import '../../../../models/business_profile_model.dart';
+import '../../../../services/business_api_service.dart';
 import 'business_document_generator_screen.dart';
 import 'business_onboarding_screen.dart';
 import 'business_task_detail_screen.dart';
 
-/// GLOWAPP BUSINESS DASHBOARD SCREEN (Flutter Expert Refactored)
-/// Operating Center displaying compliance score gauge, guided tasks, and audit findings.
+/// GLOWAPP BUSINESS DASHBOARD SCREEN
+/// Operating Center: puntaje de cumplimiento, tareas guiadas y hallazgos.
+///
+/// Esta pantalla era enteramente inventada: el puntaje (0.65), el nombre
+/// ('Mi Peluquería Studio'), la etapa, tres tareas y un hallazgo estaban
+/// escritos a mano, no llamaba a la API en ningún punto y el «refrescar» era un
+/// `Future.delayed(500ms)`.
+///
+/// Ahora carga el expediente real desde `GET /api/v1/business/summary` y, si el
+/// proveedor todavía no tiene expediente (404), lo dice y lleva al diagnóstico
+/// en vez de enseñar un negocio que no existe.
 class BusinessDashboardScreen extends StatefulWidget {
-  const BusinessDashboardScreen({Key? key}) : super(key: key);
+  /// Servicio inyectable. En la app se resuelve con la sesión real
+  /// (`BusinessApiService.fromSession()`); en pruebas se inyecta un doble para
+  /// provocar de forma determinista un fallo, un 404 o datos reales, sin
+  /// depender de que el entorno de test tenga red (mismo criterio que
+  /// `OwnerDashboardScreen`, que recibe sus métricas por constructor).
+  final BusinessApiService? api;
+
+  const BusinessDashboardScreen({Key? key, this.api}) : super(key: key);
 
   @override
   State<BusinessDashboardScreen> createState() => _BusinessDashboardScreenState();
 }
 
 class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
-  double _complianceScore = 0.65;
-  String _businessName = 'Mi Peluquería Studio';
-  String _stage = 'Constitución / Trámites Sanitaros';
-  String _onboardingModeLabel = 'Modo: Negocio Nuevo';
+  bool _loading = true;
+  String? _error;
+  BusinessProfileModel? _profile;
+  List<BusinessTaskModel> _tasks = [];
+  List<BusinessFindingModel> _findings = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _cargar();
+  }
+
+  Future<void> _cargar() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
+    try {
+      // Con un servicio inyectado (pruebas) no se toca la sesión real.
+      final api = widget.api ?? await BusinessApiService.fromSession();
+      final data = await api.fetchBusinessSummary();
+
+      final profileJson =
+          Map<String, dynamic>.from(data['profile'] as Map? ?? {});
+      final tasks = (data['tasks'] as List? ?? [])
+          .whereType<Map>()
+          .map((t) => BusinessTaskModel.fromJson(Map<String, dynamic>.from(t)))
+          .toList();
+      final findings = (data['findings'] as List? ?? [])
+          .whereType<Map>()
+          .map((f) => BusinessFindingModel.fromJson(Map<String, dynamic>.from(f)))
+          .toList();
+
+      if (!mounted) return;
+      setState(() {
+        _profile = BusinessProfileModel.fromJson(profileJson);
+        _tasks = tasks;
+        _findings = findings;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        // El 404 no es un fallo del servidor: significa que este proveedor
+        // todavía no hizo el diagnóstico, y la salida es otra.
+        _error = e.toString().contains('404')
+            ? 'Todavía no tienes un expediente de negocio. Empieza con el diagnóstico.'
+            : 'No se pudo cargar tu Business Center: $e';
+        _profile = null;
+        _tasks = [];
+        _findings = [];
+        _loading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,73 +138,149 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
       body: RefreshIndicator(
         color: gold871,
         backgroundColor: obsidianBg,
-        onRefresh: () async {
-          HapticFeedback.mediumImpact();
-          await Future.delayed(const Duration(milliseconds: 500));
-        },
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header Card Belleza Luxe
-              _buildHeaderCard(),
-              const SizedBox(height: 24),
+        // Refresco real: vuelve a pedir el expediente a la API. Antes esto era
+        // un `Future.delayed(500ms)` que simulaba una recarga.
+        onRefresh: _cargar,
+        child: _buildBody(),
+      ),
+    );
+  }
 
-              // Active Tasks Header
-              Text(
-                'Ruta de Trámites & Tareas Guiadas',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: obsidianBg,
-                    ),
-              ),
-              const SizedBox(height: 12),
-
-              _buildTaskCard(
-                title: 'Concepto Sanitario Municipal',
-                stage: TaskStage.entender,
-                status: TaskStatus.inProgress,
-                subtitle: 'Revisar requisitos de inspección física',
-              ),
-              _buildTaskCard(
-                title: 'Manual de Bioseguridad y RH1',
-                stage: TaskStage.explicar,
-                status: TaskStatus.pending,
-                subtitle: 'Personalizar protocolo de esterilización',
-              ),
-              _buildTaskCard(
-                title: 'Formalizar Contrato Estilista Líder',
-                stage: TaskStage.ejecutar,
-                status: TaskStatus.verified,
-                subtitle: 'Generar borrador de contrato laboral',
-              ),
-
-              const SizedBox(height: 24),
-              // Findings & Audit
-              Text(
-                'Hallazgos de Auditoría (Continuidad)',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: obsidianBg,
-                    ),
-              ),
-              const SizedBox(height: 12),
-
-              _buildFindingCard(
-                title: 'Actualizar Guardián de Cortopunzantes',
-                subtitle: 'Riesgo Medio: Fecha de recambio programada para el 15 de septiembre.',
-                risk: FindingRiskLevel.medium,
-              ),
-            ],
-          ),
+  Widget _buildBody() {
+    if (_loading) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(48),
+          child: CircularProgressIndicator(),
         ),
+      );
+    }
+
+    if (_profile == null) {
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(24),
+        children: [
+          const SizedBox(height: 60),
+          Icon(
+            Icons.business_center_outlined,
+            size: 56,
+            color: obsidianBg.withValues(alpha: 0.35),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            _error ?? 'Sin expediente de negocio.',
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 14, color: Colors.black87),
+          ),
+          const SizedBox(height: 24),
+          Center(
+            child: ElevatedButton.icon(
+              onPressed: () {
+                HapticFeedback.lightImpact();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const BusinessOnboardingScreen()),
+                );
+              },
+              icon: const Icon(Icons.add_business),
+              label: const Text('Hacer el diagnóstico'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: gold871,
+                foregroundColor: obsidianBg,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header Card Belleza Luxe
+          _buildHeaderCard(),
+          const SizedBox(height: 24),
+
+          // Active Tasks Header
+          Text(
+            'Ruta de Trámites & Tareas Guiadas',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: obsidianBg,
+                ),
+          ),
+          const SizedBox(height: 12),
+
+          if (_tasks.isEmpty)
+            _buildEstadoVacio('Aún no tienes tareas asignadas.')
+          else
+            ..._tasks.map(
+              (t) => _buildTaskCard(task: t),
+            ),
+
+          const SizedBox(height: 24),
+          // Findings & Audit
+          Text(
+            'Hallazgos de Auditoría (Continuidad)',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: obsidianBg,
+                ),
+          ),
+          const SizedBox(height: 12),
+
+          if (_findings.isEmpty)
+            _buildEstadoVacio('Sin hallazgos de auditoría.')
+          else
+            ..._findings.map(
+              (f) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _buildFindingCard(
+                  title: f.title,
+                  subtitle: f.description.isEmpty
+                      ? 'Riesgo ${f.riskLevel.label}'
+                      : f.description,
+                  risk: f.riskLevel,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEstadoVacio(String mensaje) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: obsidianBg.withValues(alpha: 0.12)),
+      ),
+      child: Text(
+        mensaje,
+        style: const TextStyle(fontSize: 12, color: Colors.black54),
       ),
     );
   }
 
   Widget _buildHeaderCard() {
+    final profile = _profile!;
+    // El `compliance_score` que devuelve la API ya viene en escala 0-100
+    // (businessDiagnosticService.getProfileSummary), no en fracción: el 0.65
+    // inventado de antes era otra escala.
+    final score = profile.complianceScore.clamp(0, 100).round();
+    final modo = profile.onboardingMode == 'EXISTING_BUSINESS'
+        ? 'Modo: Negocio Existente'
+        : 'Modo: Negocio Nuevo';
+    final etapa = profile.lifecycleStage.replaceAll('_', ' ');
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -157,7 +302,7 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _businessName,
+                  profile.name,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 18,
@@ -166,7 +311,7 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Etapa: $_stage',
+                  'Etapa: $etapa',
                   style: const TextStyle(color: warmWhite, fontSize: 12),
                 ),
                 const SizedBox(height: 12),
@@ -177,7 +322,7 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    _onboardingModeLabel,
+                    modo,
                     style: const TextStyle(color: obsidianBg, fontSize: 10, fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -186,7 +331,7 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
           ),
           // Compliance Gauge
           Semantics(
-            label: 'Nivel de cumplimiento del negocio: ${(_complianceScore * 100).toInt()}%',
+            label: 'Nivel de cumplimiento del negocio: $score%',
             child: Container(
               width: 76,
               height: 76,
@@ -196,7 +341,7 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
               ),
               child: Center(
                 child: Text(
-                  '${(_complianceScore * 100).toInt()}%',
+                  '$score%',
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -211,42 +356,45 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
     );
   }
 
-  Widget _buildTaskCard({
-    required String title,
-    required String subtitle,
-    required TaskStage stage,
-    required TaskStatus status,
-  }) {
+  Widget _buildTaskCard({required BusinessTaskModel task}) {
     return Semantics(
       button: true,
-      label: 'Tarea: $title. Estado: ${status.label}',
+      label: 'Tarea: ${task.title}. Estado: ${task.status.label}',
       child: Card(
         margin: const EdgeInsets.only(bottom: 12),
         elevation: 1,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: ListTile(
-          onTap: () {
+          onTap: () async {
             HapticFeedback.lightImpact();
-            Navigator.push(
+            // Se pasa la tarea real: la pantalla de detalle necesita su id para
+            // avanzar la etapa contra el backend (antes se abría sin ningún dato
+            // y mostraba un trámite inventado).
+            await Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const BusinessTaskDetailScreen()),
+              MaterialPageRoute(builder: (_) => BusinessTaskDetailScreen(task: task)),
             );
+            // Al volver, la etapa puede haber cambiado en el servidor.
+            if (mounted) _cargar();
           },
           leading: CircleAvatar(
             backgroundColor: auraTeal.withOpacity(0.12),
-            child: Icon(stage.icon, color: auraTeal, size: 20),
+            child: Icon(task.stage.icon, color: auraTeal, size: 20),
           ),
-          title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-          subtitle: Text('Etapa: ${stage.code} ➔ $subtitle', style: const TextStyle(fontSize: 12, color: Colors.black54)),
+          title: Text(task.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+          subtitle: Text(
+            'Etapa: ${task.stage.code} ➔ ${task.description.isEmpty ? 'Sin descripción' : task.description}',
+            style: const TextStyle(fontSize: 12, color: Colors.black54),
+          ),
           trailing: Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: status.color.withOpacity(0.15),
+              color: task.status.color.withOpacity(0.15),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
-              status.label,
-              style: TextStyle(color: status.color, fontWeight: FontWeight.bold, fontSize: 10),
+              task.status.label,
+              style: TextStyle(color: task.status.color, fontWeight: FontWeight.bold, fontSize: 10),
             ),
           ),
         ),

@@ -1,46 +1,110 @@
 // backend/src/middleware/tenantContext.js
-const { Pool } = require('pg');
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
+//
+// Establece el contexto de tenant de la petición de forma TRANSACCIONAL.
+//
+// HISTORIA / POR QUÉ ESTE ARCHIVO CAMBIÓ
+// --------------------------------------
+// La versión anterior tenía tres defectos independientes, y el contexto de
+// tenant NUNCA llegó a aplicarse de verdad en producción:
+//
+//   1. Creaba su PROPIO pool: `const pool = new Pool({ connectionString })`.
+//      Un segundo pool, distinto del de config/db.js. Aunque se hubiera
+//      montado, su set_config se habría aplicado a conexiones que ningún
+//      controlador utiliza.
+//   2. Fijaba el contexto con `pool.query(...)`, un statement suelto. Con
+//      is_local = true el ajuste vive solo dentro de esa transacción implícita,
+//      así que se evaporaba inmediatamente: no llegaba a ninguna consulta real.
+//      El reset posterior asignaba '' — y `''::integer` lanzaría
+//      'invalid input syntax for type integer' en toda política que evaluara
+//      current_setting('app.tenant_id')::int.
+//   3. NO estaba montado en ninguna parte. `src/startup/app.js` solo montaba
+//      authMiddleware y rateLimiter; ningún archivo lo importaba. Era código
+//      muerto. El único punto que fijaba app.tenant_id era auth.js:44, con
+//      is_local = false — esto es, a nivel de sesión y sin reset: una fuga
+//      cross-tenant. Ese bloque se ha eliminado.
+//
+// Ahora el contexto se fija sobre una conexión DEDICADA, dentro de una
+// transacción real, con COMMIT/ROLLBACK y release garantizado (ver
+// config/tenantRouting.js). Las consultas que usen el `pool` exportado por
+// db.js se enrutan a esa conexión, de modo que no hay que reescribir los 335
+// call sites existentes.
+//
+// ACTIVACIÓN
+// ----------
+// Opt-in mediante TENANT_TRANSACTION_PER_REQUEST=true. Con el flag desactivado
+// (por defecto) este middleware es un passthrough: no abre conexión ni
+// transacción, y el comportamiento de la app es idéntico al anterior.
+//
+// LIMITACIÓN CONOCIDA
+// -------------------
+// El COMMIT ocurre cuando la respuesta ya se envió (evento 'finish'), que es lo
+// que permite mantener la transacción abierta durante toda la petición sin
+// envolver res.send/res.json. Contrapartida: si el COMMIT falla, el cliente ya
+// recibió 200 y la escritura se revierte. Es aceptable mientras el flag esté
+// desactivado; si 066 lo activa en producción, conviene mover el COMMIT antes
+// de enviar la respuesta interceptando res.json.
+
+const { pool } = require('../config/db');
+const tenantRouting = require('../config/tenantRouting');
 
 async function tenantContextMiddleware(req, res, next) {
-  // If there's no user (e.g., public endpoint), we skip setting tenant context.
-  // However, note that our RLS policies will restrict access to no rows if tenant_id is not set.
-  // We want to allow public endpoints to access global data (like RAG) but not tenant-owned data.
-  // For now, we will only set tenant context for authenticated users.
+  // Sin usuario o sin tenant no hay contexto que fijar. No se abre transacción:
+  // encarecería las peticiones públicas, y las políticas usan
+  // current_setting('app.tenant_id', true), de modo que sin contexto devuelven
+  // 0 filas en lugar de lanzar error.
   if (!req.user || !req.user.tenant_id) {
-    // If the user is not authenticated or doesn't have a tenant_id, we do not set the tenant context.
-    // This will cause RLS to restrict access to no rows for tenant-owned tables.
-    // For public endpoints that should access tenant-owned data, we would need to handle differently.
-    // But note: the authorization does not specify public endpoints for tenant-owned data.
-    // We'll proceed without setting tenant context for non-authenticated requests.
     return next();
   }
 
+  // Modo por defecto: sin transacción por petición. El aislamiento efectivo lo
+  // aplica la capa de aplicación (066). Aquí es un passthrough explícito.
+  if (!tenantRouting.isPerRequestTransactionEnabled()) {
+    return next();
+  }
+
+  // Marca si ya se cedió el control a la cadena de la aplicación. Sirve para
+  // distinguir un fallo AL MONTAR la transacción (BEGIN/set_config: no se puede
+  // servir la petición con seguridad -> 500) de un fallo DE LA CADENA de
+  // aplicación, que debe reenviarse a Express en vez de enmascararse con un 500
+  // genérico.
+  let cadenaIniciada = false;
+
   try {
-    // Set the tenant_id in the PostgreSQL session for this connection.
-    // We use SET LOCAL so that it only lasts for the current transaction.
-    // However, note: we are not wrapping the entire request in a transaction.
-    // We are setting it at the session level, which will persist for the connection.
-    // We must reset it at the end of the request to avoid leakage.
-    await pool.query('SELECT set_config(\'app.tenant_id\', $1, true)', [req.user.tenant_id]);
+    await tenantRouting.runInTenantTransaction({ pool }, req.user.tenant_id, () =>
+      new Promise((resolve, reject) => {
+        let resuelto = false;
+        const finalizar = (error) => {
+          if (resuelto) return;
+          resuelto = true;
+          if (error) reject(error);
+          else resolve();
+        };
 
-    // Attach a cleanup function to reset the tenant context when the response finishes.
-    res.on('finish', async () => {
-      try {
-        // Reset the tenant context to avoid leaking to other requests using the same connection.
-        await pool.query('SELECT set_config(\'app.tenant_id\', \'\', true)');
-      } catch (error) {
-        console.error('Error resetting tenant context:', error);
-        // We don't want to fail the request because of a cleanup error.
-      }
-    });
+        // 'finish': la respuesta se envió correctamente.
+        // 'close': el cliente se desconectó antes de terminar.
+        res.on('finish', () => finalizar());
+        res.on('close', () => finalizar());
 
-    next();
+        cadenaIniciada = true;
+        try {
+          next();
+        } catch (errorCadena) {
+          // Express no puede capturar un throw lanzado desde dentro de este
+          // ejecutor de promesa: hay que propagarlo a mano.
+          finalizar(errorCadena);
+        }
+      })
+    );
   } catch (error) {
-    console.error('Error setting tenant context:', error);
-    res.status(500).send('Internal server error');
+    if (cadenaIniciada) {
+      // El fallo pertenece a la cadena de la aplicación.
+      return next(error);
+    }
+
+    console.error('❌ tenantContext: fallo al montar la transacción:', error.message);
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Error interno del servidor.' });
+    }
   }
 }
 

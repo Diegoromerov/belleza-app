@@ -58,12 +58,30 @@ describe('tenantContext — ciclo de vida de la transacción por petición', () 
 
   afterAll(() => activarFlag(undefined));
 
-  test('flag desactivado: passthrough, sin conexión ni transacción', async () => {
+  test('flag explícitamente desactivado: passthrough, sin conexión ni transacción', async () => {
+    activarFlag('false');
     const next = jest.fn();
     await tenantContext({ user: { id: 1, tenant_id: 7 } }, fakeRes(), next);
 
     expect(next).toHaveBeenCalledTimes(1);
     expect(mockLlamadas).toEqual([]);
+  });
+
+  test('por defecto (variable AUSENTE) el modo transaccional está ACTIVO', async () => {
+    // Fija el contrato: el aislamiento no es opt-in. Si alguien vuelve a dejar
+    // el default en passthrough, este test se pone rojo.
+    // beforeEach ya ha borrado la variable.
+    const res = fakeRes();
+    const pendiente = tenantContext({ user: { id: 1, tenant_id: 7 } }, res, jest.fn());
+
+    await new Promise((r) => setImmediate(r));
+    expect(mockLlamadas).toContain('BEGIN');
+
+    res.emit('finish');
+    await pendiente;
+
+    expect(mockLlamadas).toContain('COMMIT');
+    expect(mockLlamadas[mockLlamadas.length - 1]).toBe('RELEASE');
   });
 
   test('sin req.user: passthrough aunque el flag esté activo', async () => {

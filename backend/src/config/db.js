@@ -504,7 +504,73 @@ function handleMemoryQuery(text, params = []) {
 // memoria (ver la cabecera de tenantRouting.js).
 const tenantRouting = require('./tenantRouting');
 
-let isPgAvailable = false;
+// ── Modo de base de datos ───────────────────────────────────────────────────
+// El modo memoria existe para poder trabajar en local SIN PostgreSQL. Lo que no
+// puede hacer es sustituir el resultado de una consulta que FALLÓ: eso convierte
+// un error de SQL en un éxito vacío y deja al proceso sirviendo datos inventados
+// sin un solo error en el log.
+//
+// Lo que hacía antes, medido:
+//   pool.query('SELECT * FROM tabla_que_no_existe_zzz')  ->  { rows: [] }
+// y además dejaba el flag en false para siempre, porque el cortocircuito de la
+// cabecera impedía volver a intentar el pool real: un solo tropiezo condenaba al
+// proceso entero a memoria hasta reiniciar.
+//
+// Ahora el modo es una DECISIÓN DE ARRANQUE, no un accidente por consulta:
+//   'indefinido' -> aún no se ha probado: se intenta el pool real
+//   'postgres'   -> hay base: los errores de SQL se propagan siempre
+//   'memoria'    -> no hay base: se sirve memoria, y se reintenta cada 5 s para
+//                   que un servidor que vuelve no deje el proceso en memoria.
+let dbMode = 'indefinido';
+let ultimoIntentoFallidoEn = 0;
+const ENFRIAMIENTO_ENTRE_INTENTOS_MS = 5000;
+let memoriaForzada = false;
+
+// En los TESTS el módulo es hermético: sin DATABASE_URL explícita no se toca
+// ninguna base real, ni se escribe en la de desarrollo que responda en DB_PORT.
+// Es la MISMA regla que aplica src/config/database.js para Sequelize, para que
+// los dos caminos de datos no discrepen. Sin esto, las suites de integración se
+// conectan a la base que haya levantada: pasan en local y caen en CI, y además
+// escriben en una base que no es suya.
+if (process.env.NODE_ENV === 'test' && !process.env.DATABASE_URL) {
+  dbMode = 'memoria';
+  memoriaForzada = true;
+}
+
+// Fallos de ENLACE: no se puede hablar con el servidor, o todavía está
+// arrancando. Solo estos justifican servir memoria en lugar de lanzar.
+const CODIGOS_DE_ENLACE = new Set([
+  'ECONNREFUSED', 'ENOTFOUND', 'ETIMEDOUT', 'EHOSTUNREACH', 'ECONNRESET',
+  'EPIPE', 'EAI_AGAIN',
+  '08000', '08001', '08003', '08004', '08006', // connection_exception y familia
+  '57P01', '57P02', '57P03',                    // admin_shutdown, crash_shutdown, cannot_connect_now
+]);
+
+function esErrorDeEnlace(err) {
+  if (!err) return false;
+  if (err.code && CODIGOS_DE_ENLACE.has(err.code)) return true;
+  return /ECONNREFUSED|Connection terminated|Connection refused|the database system is starting up|could not connect to server/i
+    .test(String(err.message || ''));
+}
+
+/** ¿Toca volver a probar el pool real, o seguimos en enfriamiento tras fallar? */
+function tocaReintentar() {
+  return Date.now() - ultimoIntentoFallidoEn >= ENFRIAMIENTO_ENTRE_INTENTOS_MS;
+}
+
+function clienteEnMemoria() {
+  return {
+    query: async (text, params) => handleMemoryQuery(text, params),
+    release: () => {}
+  };
+}
+
+/** Marca el modo memoria y deja constancia del motivo real. */
+function pasarAMemoria(err) {
+  dbMode = 'memoria';
+  ultimoIntentoFallidoEn = Date.now();
+  console.warn(`⚠️ [DB] Sin enlace con PostgreSQL (${err.code || 'sin código'}: ${err.message}) — se sirve memoria local.`);
+}
 
 const pool = {
   query: async (text, params) => {
@@ -517,35 +583,50 @@ const pool = {
     if (activeClient) {
       return activeClient.query(text, params);
     }
-    if (isPgAvailable === false) {
-      return handleMemoryQuery(text, params);
+
+    if (dbMode === 'memoria') {
+      if (memoriaForzada || !tocaReintentar()) {
+        return handleMemoryQuery(text, params);
+      }
+      // Enfriamiento cumplido: se comprueba si la base ha vuelto. Si vuelve, se
+      // abandona el modo memoria; si no, se sigue sirviendo memoria sin lanzar.
+      try {
+        const res = await rawPool.query(text, params);
+        dbMode = 'postgres';
+        return res;
+      } catch (err) {
+        if (!esErrorDeEnlace(err)) throw err;
+        pasarAMemoria(err);
+        return handleMemoryQuery(text, params);
+      }
     }
+
     try {
       const res = await rawPool.query(text, params);
-      isPgAvailable = true;
+      if (dbMode === 'indefinido') dbMode = 'postgres';
       return res;
     } catch (err) {
-      isPgAvailable = false;
+      if (!esErrorDeEnlace(err)) {
+        // Error de SQL (tabla o columna inexistente, violación de constraint...).
+        // NO se sustituye por datos en memoria: se propaga.
+        throw err;
+      }
+      pasarAMemoria(err);
       return handleMemoryQuery(text, params);
     }
   },
   connect: async () => {
-    if (isPgAvailable === false) {
-      return {
-        query: async (text, params) => handleMemoryQuery(text, params),
-        release: () => {}
-      };
+    if (dbMode === 'memoria' && (memoriaForzada || !tocaReintentar())) {
+      return clienteEnMemoria();
     }
     try {
       const client = await rawPool.connect();
-      isPgAvailable = true;
+      if (dbMode !== 'postgres') dbMode = 'postgres';
       return client;
     } catch (err) {
-      isPgAvailable = false;
-      return {
-        query: async (text, params) => handleMemoryQuery(text, params),
-        release: () => {}
-      };
+      if (!esErrorDeEnlace(err)) throw err;
+      pasarAMemoria(err);
+      return clienteEnMemoria();
     }
   },
   on: (...args) => rawPool.on(...args)
@@ -556,16 +637,21 @@ const testConnection = async () => {
     const client = await rawPool.connect();
     const res = await client.query('SELECT current_database(), current_user');
     client.release();
-    isPgAvailable = true;
+    dbMode = 'postgres';
     console.log(`✅ Conexión exitosa a PostgreSQL [DB: ${res.rows[0].current_database}, Entorno: ${process.env.NODE_ENV || 'development'}]`);
     return true;
     } catch (err) {
-      isPgAvailable = false;
+      dbMode = 'memoria';
+      ultimoIntentoFallidoEn = Date.now();
       if (isProduction || isStaging) {
         console.error('❌ CRITICAL DB ERROR: Fallo de conexión a PostgreSQL en producción/staging:', err.message);
         throw err;
       }
-      console.warn('⚠️ PostgreSQL local no disponible — Activando modo de persistencia en memoria local');
+      // Se imprime el MOTIVO. Antes solo decía "no disponible", así que una
+      // credencial incorrecta o una base inexistente eran indistinguibles de un
+      // servidor apagado, y el fallo real se perdía.
+      console.warn(`⚠️ PostgreSQL local no disponible (${err.code || 'sin código'}: ${err.message})`);
+      console.warn('⚠️ Modo de persistencia en memoria local (solo desarrollo). Lo que falle por SQL seguirá lanzando error.');
       return true;
     }
 };
@@ -598,4 +684,11 @@ const testRagConnection = async () => {
   }
 };
 
-module.exports = { pool, testConnection, ragPool, testRagConnection };
+/** ¿Está la conexión sirviendo memoria por decisión explícita (pruebas sin base)
+ *  o por falta de enlace? Lo usa businessRepository para decidir si un error de
+ *  SQL debe PROPAGARSE (hay base: el error es real) o si la memoria es la fuente
+ *  legítima (no hay base). Sin esta distinción, el repositorio convertía
+ *  cualquier error de SQL en datos inventados y la API parecía funcionar. */
+const dbEnMemoria = () => dbMode === 'memoria';
+
+module.exports = { pool, testConnection, ragPool, testRagConnection, dbEnMemoria };

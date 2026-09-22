@@ -7,6 +7,7 @@ import '../../services/api_service.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../../design/components/s4_text_field.dart';
 import '../../core/theme/tokens.dart';
+import '../../widgets/invitation_code_entry.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -369,6 +370,34 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               ),
                             ),
+
+                            // Entrada al flujo de invitación de equipo.
+                            //
+                            // La ruta /accept-invitation existía en main.dart y
+                            // la pantalla de aceptación estaba construida, pero
+                            // NINGUNA pantalla navegaba a ella: el dueño copiaba
+                            // un enlace y el colaborador no tenía forma de
+                            // consumirlo, así que la invitación moría.
+                            Align(
+                              alignment: Alignment.center,
+                              child: TextButton(
+                                onPressed: () => pedirCodigoInvitacion(context),
+                                style: TextButton.styleFrom(
+                                  padding: EdgeInsets.zero,
+                                  minimumSize: const Size(50, 30),
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                child: Text(
+                                  '¿Tienes un código de invitación?',
+                                  style: TextStyle(
+                                    color: t.brandPrimary,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    fontFamily: 'CormorantGaramond',
+                                  ),
+                                ),
+                              ),
+                            ),
                             const SizedBox(height: 16),
 
                             if (_error != null)
@@ -512,6 +541,24 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ],
                         ),
+                      ),
+                    ),
+
+                    // Términos y condiciones — la ruta '/terms' existía declarada
+                    // en main.dart pero NINGUNA pantalla navegaba a ella (Gate 4).
+                    TextButton(
+                      onPressed: () => Navigator.pushNamed(context, '/terms'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: t.brandPrimary,
+                      ),
+                      child: Text(
+                        'Términos y condiciones',
+                        style: TextStyle(
+                            color: t.n500,
+                            fontSize: 13,
+                            decoration: TextDecoration.underline,
+                            decorationColor: t.n500,
+                            fontFamily: 'CormorantGaramond'),
                       ),
                     ),
                   ],

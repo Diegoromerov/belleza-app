@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const authMiddleware = require('../middleware/auth');
 const { handleOrchestration } = require('../services/ai/orchestrator.service');
 
 /**
@@ -26,7 +27,7 @@ const { handleOrchestration } = require('../services/ai/orchestrator.service');
  *       500:
  *         description: Error interno del orquestador o API de NVIDIA
  */
-router.post('/orchestrate', async (req, res) => {
+router.post('/orchestrate', authMiddleware, async (req, res) => {
   try {
     const { prompt } = req.body;
 

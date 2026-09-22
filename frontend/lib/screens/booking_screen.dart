@@ -458,23 +458,27 @@ class _BookingScreenState extends State<BookingScreen> {
   }
 
   Widget _buildProgressBar() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
-      child: Row(
-        children: List.generate(3, (index) {
-          bool isCompleted = index < _currentStep;
-          bool isActive = index == _currentStep;
-          return Expanded(
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 4.0),
-              height: 6,
-              decoration: BoxDecoration(
-                color: isCompleted || isActive ? AppTheme.primary : Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(3),
+    final stepNames = ['Cuándo y Dónde', 'Productos', 'Confirmación y Pago'];
+    return Semantics(
+      label: 'Paso ${_currentStep + 1} de 3: ${stepNames[_currentStep]}',
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+        child: Row(
+          children: List.generate(3, (index) {
+            bool isCompleted = index < _currentStep;
+            bool isActive = index == _currentStep;
+            return Expanded(
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 4.0),
+                height: 6,
+                decoration: BoxDecoration(
+                  color: isCompleted || isActive ? AppTheme.primary : Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(3),
+                ),
               ),
-            ),
-          );
-        }),
+            );
+          }),
+        ),
       ),
     );
   }
@@ -547,9 +551,13 @@ class _BookingScreenState extends State<BookingScreen> {
                     });
                   },
                 ),
-                Text(
-                  '${_getMonthNameLong(_calendarMonth.month)} ${_calendarMonth.year}',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                Flexible(
+                  child: Text(
+                    '${_getMonthNameLong(_calendarMonth.month)} ${_calendarMonth.year}',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                  ),
                 ),
                 IconButton(
                   icon: const Icon(Icons.chevron_right),

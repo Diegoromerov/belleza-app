@@ -29,6 +29,9 @@ nul
 **/nul
 
 # Temporary logs, reports, and diagnostic scripts
+# Informes de verificación de tests (los genera scripts/verifyTestBaseline.js)
+backend/.jest-baseline-report.json
+backend/jest-baseline-report.json
 *borrar.txt
 audit_report.txt
 obsolete_audit_report.txt
@@ -74,4 +77,4 @@ F7.*-STATUS.txt
 F7.0
 test_direct_conn.js
 __pycache__/
-*.pyc
+*.pyc

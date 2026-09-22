@@ -4,7 +4,18 @@
  * Supports PostgreSQL pool.query with parameterized SQL and fallback in-memory storage.
  */
 
-const { pool } = require('../config/db');
+const { pool, dbEnMemoria } = require('../config/db');
+
+/** El fallback a memoria SOLO es legitimo cuando no hay base (modo memoria de
+ *  las pruebas o caida de enlace). Con base disponible, un error de SQL es un
+ *  error real: se propaga. Antes esta capa convertia CUALQUIER error (una FK
+ *  violada, una tabla ausente) en datos inventados, y la API respondia 200 con
+ *  un salon de demostracion que no existia en la base. */
+function enMemoria(err, metodo) {
+  if (dbEnMemoria()) return true;
+  console.error(`[BusinessRepository] ${metodo}: error de SQL, se propaga sin fallback: ${err.message}`);
+  return false;
+}
 const { verticals, requirements, documentTemplates } = require('../db/seed_business_data');
 
 // In-memory data store for fallback when DB pool is disconnected or table is missing
@@ -24,7 +35,7 @@ class BusinessRepository {
       );
       if (res.rows.length > 0) return res.rows;
     } catch (err) {
-      console.warn('⚠️ [BusinessRepository] DB error in getVerticals, using fallback seed:', err.message);
+      if (!enMemoria(err, 'getVerticals')) throw err;
     }
     return verticals;
   }
@@ -37,7 +48,7 @@ class BusinessRepository {
       );
       if (res.rows.length > 0) return res.rows[0];
     } catch (err) {
-      console.warn('⚠️ [BusinessRepository] DB error in getVerticalByCode, using fallback seed:', err.message);
+      if (!enMemoria(err, 'getVerticalByCode')) throw err;
     }
     return verticals.find(v => v.code === code) || verticals[0];
   }
@@ -74,7 +85,7 @@ class BusinessRepository {
         return { ...res.rows[0], tenant_id: tenantVal };
       }
     } catch (err) {
-      console.warn('⚠️ [BusinessRepository] DB error in createProfile, using memory fallback:', err.message);
+      if (!enMemoria(err, 'createProfile')) throw err;
     }
 
     const profile = {
@@ -103,7 +114,7 @@ class BusinessRepository {
       );
       if (res.rows.length > 0) return res.rows[0];
     } catch (err) {
-      console.warn('⚠️ [BusinessRepository] DB error in getProfileByProviderId, using memory fallback:', err.message);
+      if (!enMemoria(err, 'getProfileByProviderId')) throw err;
     }
 
     const matchingProfiles = Array.from(memoryProfiles.values())
@@ -113,23 +124,13 @@ class BusinessRepository {
       return matchingProfiles[0];
     }
 
-    // Default fallback profile for testing/demo
-    const demoProfile = {
-      id: `biz-demo-${providerId}`,
-      provider_id: providerId,
-      tenant_id: null,
-      vertical_id: verticals[0].id,
-      name: 'Salón de Belleza Demo',
-      onboarding_mode: 'NEW_BUSINESS',
-      lifecycle_stage: 'CONSTITUTION',
-      compliance_score: 35.0,
-      city: 'Bogotá',
-      country: 'Colombia',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-    memoryProfiles.set(demoProfile.id, demoProfile);
-    return demoProfile;
+    // Sin expediente se devuelve null a propósito. Antes esta función fabricaba
+    // un perfil de demostración («Salón de Belleza Demo», cumplimiento 35.0) y
+    // el Business Center mostraba ese negocio inexistente como si fuera el del
+    // proveedor. Quien decide qué hacer sin expediente es el llamador:
+    // businessDiagnosticService.getProfileSummary devuelve null -> la API
+    // responde 404, y runDiagnostic lo crea de verdad.
+    return null;
   }
 
   async updateProfileStage(profileId, stage, complianceScore) {
@@ -145,7 +146,7 @@ class BusinessRepository {
       );
       if (res.rows.length > 0) return res.rows[0];
     } catch (err) {
-      console.warn('⚠️ [BusinessRepository] DB error in updateProfileStage, using memory fallback:', err.message);
+      if (!enMemoria(err, 'updateProfileStage')) throw err;
     }
 
     const profile = memoryProfiles.get(profileId);
@@ -167,7 +168,7 @@ class BusinessRepository {
       );
       if (res.rows.length > 0) return res.rows;
     } catch (err) {
-      console.warn('⚠️ [BusinessRepository] DB error in getRequirementsByVertical, using memory fallback:', err.message);
+      if (!enMemoria(err, 'getRequirementsByVertical')) throw err;
     }
     return requirements.filter(r => r.vertical_id === verticalId || !r.vertical_id);
   }
@@ -199,7 +200,7 @@ class BusinessRepository {
           continue;
         }
       } catch (err) {
-        console.warn('⚠️ [BusinessRepository] DB error in createTasks, using memory fallback:', err.message);
+        if (!enMemoria(err, 'createTasks')) throw err;
       }
 
       const task = {
@@ -228,7 +229,7 @@ class BusinessRepository {
       );
       if (res.rows.length > 0) return res.rows;
     } catch (err) {
-      console.warn('⚠️ [BusinessRepository] DB error in getTasksByProfileId, using memory fallback:', err.message);
+      if (!enMemoria(err, 'getTasksByProfileId')) throw err;
     }
 
     const list = [];
@@ -277,7 +278,7 @@ class BusinessRepository {
       );
       if (res.rows.length > 0) return res.rows[0];
     } catch (err) {
-      console.warn('⚠️ [BusinessRepository] DB error in getTaskByIdAndProvider, using memory fallback:', err.message);
+      if (!enMemoria(err, 'getTaskByIdAndProvider')) throw err;
     }
 
     // Memory fallback check
@@ -309,7 +310,7 @@ class BusinessRepository {
       );
       if (res.rows.length > 0) return res.rows[0];
     } catch (err) {
-      console.warn('⚠️ [BusinessRepository] DB error in updateTaskStage, using memory fallback:', err.message);
+      if (!enMemoria(err, 'updateTaskStage')) throw err;
     }
 
     const task = memoryTasks.get(taskId);
@@ -324,6 +325,9 @@ class BusinessRepository {
 
   // Evidences
   async addEvidence({ id, task_id, file_path, evidence_type, validation_state, reviewer_notes }) {
+    if (!file_path) {
+      throw new Error('addEvidence requiere file_path: no se inventa la ruta de un archivo que no existe');
+    }
     const evId = id || `ev-${Date.now()}`;
     const evType = evidence_type || 'DOCUMENT';
     const valState = validation_state || 'EVIDENCE_SUBMITTED';
@@ -339,7 +343,7 @@ class BusinessRepository {
       );
       if (res.rows.length > 0) return res.rows[0];
     } catch (err) {
-      console.warn('⚠️ [BusinessRepository] DB error in addEvidence, using memory fallback:', err.message);
+      if (!enMemoria(err, 'addEvidence')) throw err;
     }
 
     const evidence = {
@@ -363,7 +367,7 @@ class BusinessRepository {
       );
       if (res.rows.length > 0) return res.rows;
     } catch (err) {
-      console.warn('⚠️ [BusinessRepository] DB error in getEvidencesByTaskId, using memory fallback:', err.message);
+      if (!enMemoria(err, 'getEvidencesByTaskId')) throw err;
     }
 
     const list = [];
@@ -387,7 +391,7 @@ class BusinessRepository {
       );
       if (res.rows.length > 0) return res.rows;
     } catch (err) {
-      console.warn('⚠️ [BusinessRepository] DB error in getAdminEvidenceQueue, using memory fallback:', err.message);
+      if (!enMemoria(err, 'getAdminEvidenceQueue')) throw err;
     }
 
     const queue = [];
@@ -412,7 +416,7 @@ class BusinessRepository {
       );
       if (res.rows.length > 0) return res.rows[0];
     } catch (err) {
-      console.warn('⚠️ [BusinessRepository] DB error in updateEvidenceStatus, using memory fallback:', err.message);
+      if (!enMemoria(err, 'updateEvidenceStatus')) throw err;
     }
 
     const ev = memoryEvidences.get(evidenceId);
@@ -443,7 +447,7 @@ class BusinessRepository {
           continue;
         }
       } catch (err) {
-        console.warn('⚠️ [BusinessRepository] DB error in createFindings, using memory fallback:', err.message);
+        if (!enMemoria(err, 'createFindings')) throw err;
       }
 
       const finding = {
@@ -470,7 +474,7 @@ class BusinessRepository {
       );
       if (res.rows.length > 0) return res.rows;
     } catch (err) {
-      console.warn('⚠️ [BusinessRepository] DB error in getFindingsByProfileId, using memory fallback:', err.message);
+      if (!enMemoria(err, 'getFindingsByProfileId')) throw err;
     }
 
     const list = [];
@@ -488,7 +492,7 @@ class BusinessRepository {
       const res = await pool.query('SELECT * FROM document_templates ORDER BY category, title');
       if (res.rows.length > 0) return res.rows;
     } catch (err) {
-      console.warn('⚠️ [BusinessRepository] DB error in getDocumentTemplates, using memory fallback:', err.message);
+      if (!enMemoria(err, 'getDocumentTemplates')) throw err;
     }
     return documentTemplates;
   }
@@ -498,7 +502,7 @@ class BusinessRepository {
       const res = await pool.query('SELECT * FROM document_templates WHERE code = $1', [code]);
       if (res.rows.length > 0) return res.rows[0];
     } catch (err) {
-      console.warn('⚠️ [BusinessRepository] DB error in getTemplateByCode, using memory fallback:', err.message);
+      if (!enMemoria(err, 'getTemplateByCode')) throw err;
     }
     return documentTemplates.find(t => t.code === code) || documentTemplates[0];
   }
@@ -542,7 +546,7 @@ class BusinessRepository {
       );
       if (res.rows.length > 0) return res.rows[0];
     } catch (err) {
-      console.warn('⚠️ [BusinessRepository] DB error in saveDocument, using memory fallback:', err.message);
+      if (!enMemoria(err, 'saveDocument')) throw err;
     }
 
     return documentRecord;
@@ -553,7 +557,7 @@ class BusinessRepository {
       const res = await pool.query('SELECT * FROM business_documents WHERE id = $1', [docId]);
       if (res.rows.length > 0) return res.rows[0];
     } catch (err) {
-      console.warn('⚠️ [BusinessRepository] DB error in getDocumentById, using memory fallback:', err.message);
+      if (!enMemoria(err, 'getDocumentById')) throw err;
     }
     return memoryDocs.get(docId) || null;
   }
@@ -583,7 +587,7 @@ class BusinessRepository {
       );
       if (res.rows.length > 0) return res.rows[0];
     } catch (err) {
-      console.warn('⚠️ [BusinessRepository] DB error in updateDocumentSignature, using memory fallback:', err.message);
+      if (!enMemoria(err, 'updateDocumentSignature')) throw err;
     }
 
     return docInMemory || null;
@@ -610,7 +614,7 @@ class BusinessRepository {
         [logEntry.id, logEntry.document_id, logEntry.tenant_id, logEntry.provider_id, logEntry.actor_id, logEntry.action, logEntry.metadata]
       );
     } catch (err) {
-      // Memory fallback if table does not exist yet
+      if (!enMemoria(err, 'addDocumentAuditLog')) throw err;
     }
 
     memoryAuditLogs.push(logEntry);
@@ -625,7 +629,7 @@ class BusinessRepository {
       );
       if (res.rows.length > 0) return res.rows;
     } catch (err) {
-      // Fallback to memory
+      if (!enMemoria(err, 'getDocumentAuditLogs')) throw err;
     }
     return memoryAuditLogs.filter(a => a.document_id === documentId);
   }

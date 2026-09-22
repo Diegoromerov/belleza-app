@@ -1,4 +1,5 @@
-// frontend/lib/services/api_service.dart
+// lib/services/api_service.dart
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -7,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/provider_model.dart';
 import '../models/service_model.dart';
+import 'active_salon_service.dart';
 
 class ApiService {
   // --- CONFIGURACIÓN DE ENTORNO DE DESARROLLO / PRODUCCIÓN ---
@@ -155,7 +157,6 @@ class ApiService {
     final token = await _getToken();
     if (token != null && token.isNotEmpty) {
       headers['Authorization'] = 'Bearer $token';
-      // Debug opcional: imprimir en consola de Flutter Web (Dart-safe)
       if (kDebugMode) {
         final preview = token.length > 30 ? token.substring(0, 30) : token;
         print('🔐 Token enviado: $preview...');
@@ -165,6 +166,18 @@ class ApiService {
         print('⚠️  No hay token disponible para Authorization');
       }
     }
+
+    try {
+      final activeSalonId = ActiveSalonService.instance.activeSalonId;
+      if (activeSalonId != null) {
+        headers['x-active-salon-id'] = activeSalonId.toString();
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('⚠️ Error al leer activeSalonId en _getAuthHeaders: $e');
+      }
+    }
+
     return headers;
   }
 
@@ -1568,6 +1581,64 @@ class ApiService {
       return json.decode(response.body);
     }
     throw Exception('Error al graduar ciclo: ${response.statusCode}');
+  }
+
+  // 🔹 MÉTODOS DE INVENTARIO EN CONSIGNACIÓN
+  static Future<List<Map<String, dynamic>>> fetchConsignmentInventory() async {
+    try {
+      final response = await get('/provider/inventory/consignment');
+      if (response != null && response['success'] == true && response['items'] is List) {
+        return List<Map<String, dynamic>>.from(response['items']);
+      }
+      return [];
+    } catch (_) {
+      rethrow;
+    }
+  }
+
+  static Future<Map<String, dynamic>> consumeInventoryItem({
+    required int productoId,
+    required int cantidad,
+  }) async {
+    return await post('/provider/inventory/consume', {
+      'producto_id': productoId,
+      'cantidad': cantidad,
+    });
+  }
+
+  // 🔹 MÉTODOS DE PROPIETARIO MULTI-SEDE (OWNER)
+  static Future<Map<String, dynamic>> switchSalon(int salonId) async {
+    final response = await post('/owner/switch-salon', {'salon_id': salonId});
+    await ActiveSalonService.applySwitchSalonResponse(response);
+    return response ?? {'success': false};
+  }
+
+  static Future<Map<String, dynamic>> fetchOwnerDashboardMetrics({
+    int? salonId,
+    String? startDate,
+    String? endDate,
+  }) async {
+    final queryParams = <String, String>{};
+    if (salonId != null && salonId > 0) {
+      queryParams['salon_id'] = salonId.toString();
+    }
+    if (startDate != null && startDate.isNotEmpty) {
+      queryParams['startDate'] = startDate;
+    }
+    if (endDate != null && endDate.isNotEmpty) {
+      queryParams['endDate'] = endDate;
+    }
+
+    final queryString = queryParams.isNotEmpty
+        ? '?${Uri(queryParameters: queryParams).query}'
+        : '';
+    final response = await get('/owner/dashboard-metrics$queryString');
+    return response ?? {'success': false};
+  }
+
+  static Future<Map<String, dynamic>> fetchOwnerSalones() async {
+    final response = await get('/owner/salones');
+    return response ?? {'success': false};
   }
 }
 

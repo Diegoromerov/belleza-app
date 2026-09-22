@@ -9,7 +9,7 @@ DECLARE
     rls_tables TEXT[] := ARRAY[
         'usuarios',
         'perfiles_prestador',
-        'servicios',
+        'services',
         'bookings',
         'transactions',
         'reviews',
@@ -39,7 +39,7 @@ DECLARE
     policy_tables TEXT[] := ARRAY[
         'usuarios',
         'perfiles_prestador',
-        'servicios',
+        'services',
         'bookings',
         'transactions',
         'reviews',

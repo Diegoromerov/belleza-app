@@ -154,7 +154,7 @@ router.post('/bookings/:id/complete', authMiddleware, async (req, res) => {
 
     await client.query('COMMIT');
 
-    console.log(`📱 OTP para reserva ${id}: ${codigo} (vigente ${vigenciaMin} min)`);
+    console.log(`📱 OTP generado para reserva ${id} (vigente ${vigenciaMin} min)`);
 
     res.json({
       ok: true,
@@ -278,8 +278,14 @@ router.post('/bookings/:id/confirm-otp', authMiddleware, async (req, res) => {
       [id]
     );
 
+    // El estado de la cita cambia a COMPLETADA, pero NO se vuelve a afirmar que
+    // está pagada. El flujo de finalización no es el que cobra: si la cita se
+    // pagó, `payment_status` ya quedó en 'paid' cuando se pagó, y si no se pagó
+    // este UPDATE ya no lo disfrazaba. Antes escribía `payment_status = 'paid'`
+    // aquí, de modo que toda cita completada aparecía como pagada aunque nadie
+    // hubiera cobrado nada.
     await client.query(
-      `UPDATE bookings SET estado = 'COMPLETADA', payment_status = 'paid' WHERE id = $1`,
+      `UPDATE bookings SET estado = 'COMPLETADA' WHERE id = $1`,
       [id]
     );
 

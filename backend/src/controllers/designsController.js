@@ -1537,10 +1537,9 @@ exports.requestMedicalValidation = async (req, res) => {
       RETURNING *;
     `;
     const dbRes = await pool.query(insertQuery, [userId, ai_diagnostic_id || null, profesional_id]);
-    const reqId = dbRes.rows[0].id;
-
-    simulateDoctorReview(reqId);
-
+    // No se simula la revisión: antes esta línea programaba una respuesta
+    // automática de "dermatólogo" con una nota clínica al azar. La solicitud
+    // queda 'pendiente' hasta que un profesional la revise de verdad.
     res.status(201).json({
       success: true,
       message: 'Solicitud de validación médica enviada con éxito.',
@@ -1561,22 +1560,23 @@ exports.payMedicalValidation = async (req, res) => {
       return res.status(400).json({ error: 'Debes seleccionar un profesional médico.' });
     }
 
-    const refToken = 'wompi_val_ref_' + Math.random().toString(36).substring(2, 11).toUpperCase();
-
+    // Antes aquí se inventaba la referencia del pago
+    // ('wompi_val_ref_' + Math.random()) y se respondía "Pago de $15.000 COP
+    // verificado por Wompi" sin que ninguna pasarela hubiera cobrado nada: la
+    // fila guardaba una referencia de pago falsa como comprobante. Tampoco se
+    // programa ya la revisión médica simulada. La solicitud se registra en
+    // 'pendiente' y SIN referencia de pago: no hay transacción real que
+    // guardar, y mientras no exista, este estado lo dice.
     const insertQuery = `
-      INSERT INTO validaciones_medicas (user_id, ai_diagnostic_id, profesional_id, estado, payment_reference)
-      VALUES ($1, $2, $3, 'pendiente', $4)
+      INSERT INTO validaciones_medicas (user_id, ai_diagnostic_id, profesional_id, estado)
+      VALUES ($1, $2, $3, 'pendiente')
       RETURNING *;
     `;
-    const dbRes = await pool.query(insertQuery, [userId, ai_diagnostic_id || null, profesional_id, refToken]);
-    const reqId = dbRes.rows[0].id;
-
-    simulateDoctorReview(reqId);
+    const dbRes = await pool.query(insertQuery, [userId, ai_diagnostic_id || null, profesional_id]);
 
     res.status(201).json({
       success: true,
-      message: 'Pago de $15.000 COP verificado por Wompi y solicitud registrada con éxito.',
-      payment_reference: refToken,
+      message: 'Solicitud registrada. Queda pendiente de pago y de revisión por un profesional.',
       data: dbRes.rows[0]
     });
   } catch (error) {
@@ -1632,27 +1632,14 @@ exports.getValidationById = async (req, res) => {
   }
 };
 
-const simulateDoctorReview = (requestId) => {
-  setTimeout(async () => {
-    try {
-      const notes = [
-        "Se percibe una respuesta positiva de regeneración cutánea. Continúa con hidratantes con ácido hialurónico y no olvides el FPS cada 4 horas.",
-        "Se observa reducción de impurezas y sebo. Recomiendo no sobre-exfoliar la piel; mantén una limpieza suave en las mañanas y noches.",
-        "La hebra capilar muestra mejor elasticidad. Mantén el uso del sérum térmico sin sal y evita el calor directo por 2 semanas."
-      ];
-      const randomNote = notes[Math.floor(Math.random() * notes.length)];
-      await pool.query(
-        `UPDATE validaciones_medicas 
-         SET estado = 'revisado', nota_profesional = $1, fecha_respuesta = NOW(), updated_at = NOW() 
-         WHERE id = $2;`,
-        [randomNote, requestId]
-      );
-      console.log(`🩺 [SIMULATOR SUCCESS] Solicitud de validación ${requestId} revisada por el dermatólogo.`);
-    } catch (err) {
-      console.error('❌ ERROR AL SIMULAR RESPUESTA DEL DOCTOR:', err.message);
-    }
-  }, 15000);
-};
+// ❌ ELIMINADO: `simulateDoctorReview`
+//
+// Programaba, 15 segundos después de crear la solicitud, una respuesta
+// automática de "dermatólogo": elegía una nota clínica al azar de un array de
+// tres frases y marcaba la validación como 'revisado', dejando una opinión
+// médica inventada en la historia clínica del usuario. Un dictamen médico no se
+// simula por temporizador. Mientras no exista una revisión humana real, la
+// solicitud queda en 'pendiente' — que es el estado que el esquema ya define.
 
 // 🔹 NUEVO: Colecciones Curadas Editoriales
 exports.getCuratedCollections = async (req, res) => {

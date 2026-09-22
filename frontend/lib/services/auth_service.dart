@@ -308,6 +308,15 @@ class AuthService {
     if (response.statusCode == 200) {
       return json.decode(response.body);
     }
+    // El backend explica en el cuerpo POR QUÉ no se pudo aceptar (invitación de
+    // otro correo, vencida, ya usada). Devolver null aquí tiraba ese mensaje y
+    // dejaba al usuario con un "no se pudo procesar" genérico.
+    try {
+      final body = json.decode(response.body);
+      if (body is Map<String, dynamic>) return body;
+    } catch (_) {
+      // respuesta sin cuerpo JSON: el llamador usa su mensaje por defecto
+    }
     return null;
   }
 
@@ -324,6 +333,15 @@ class AuthService {
     );
     if (response.statusCode == 200) {
       return json.decode(response.body);
+    }
+    // El backend explica en el cuerpo por qué no cargó (401, 404 sin salón, 500).
+    // Devolver null aquí hacía que la pantalla no distinguiera "no tengo salón"
+    // de "el servidor falló" y acabara inventando un salón.
+    try {
+      final body = json.decode(response.body);
+      if (body is Map<String, dynamic>) return body;
+    } catch (_) {
+      // respuesta sin cuerpo JSON: el llamador usa su mensaje por defecto
     }
     return null;
   }

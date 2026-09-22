@@ -39,15 +39,9 @@ import 'screens/provider_services_screen.dart';
 import 'screens/provider_portfolio_screen.dart';
 import 'screens/chat_list_screen.dart';
 import 'screens/chat_screen.dart';
-import 'screens/client_profile_screen.dart';
 import 'screens/profile/user_profile.dart';
-import 'screens/profile/my_glow_dashboard_screen.dart';
-import 'screens/provider_profile_screen.dart';
 import 'screens/booking_tracking_screen.dart';
 import 'screens/booking_screen.dart';
-import 'screens/provider_route_screen.dart';
-import 'screens/ideas/ideas_empty_screen.dart';
-import 'screens/ideas/biometric_consent_screen.dart';
 import 'screens/ideas/welcome_screen.dart';
 import 'screens/support/support_center_screen.dart';
 import 'screens/support/terms_conditions_screen.dart';
@@ -56,13 +50,6 @@ import 'screens/disputes/open_dispute_screen.dart';
 import 'screens/academy/academy_screen.dart';
 import 'screens/store_screen.dart';
 import 'screens/designs/evolution_dashboard_screen.dart';
-import 'screens/designs/medical_validation_screen.dart';
-import 'screens/designs/glowup_card_screen.dart';
-import 'screens/designs/palette_card_screen.dart';
-import 'screens/designs/colorimetria_historial_screen.dart';
-import 'screens/designs/wardrobe_dashboard_screen.dart';
-import 'screens/designs/outfit_result_screen.dart';
-import 'screens/ideas/makeup_lookbook_screen.dart';
 import 'models/provider_model.dart';
 import 'shared/theme.dart';
 import 'glowguide/glowguide.dart';
@@ -248,7 +235,6 @@ class BeautyApp extends StatelessWidget {
 
                 // 2. Destinos Principales por Segmentación de Rol
                 '/home': (_) => const ProvidersScreen(),             // Rol CLIENTE (Catálogo / Búsqueda)
-                '/my-glow': (_) => const MyGlowDashboardScreen(),   // Rol CLIENTE (Tablero VIP Ritual)
                 '/provider': (_) => const ProviderDashboardScreen(), // Rol PRESTADOR (Tablero Pro Independiente)
                 '/salon': (_) => const SalonDashboardScreen(),       // Rol SALON (Tablero SaaS Salón)
                 '/salon-hub': (_) => const SalonHubScreen(),         // Hub Selector de Momento Empresarial (Dueño)
@@ -256,12 +242,7 @@ class BeautyApp extends StatelessWidget {
                 // 3. Sub-Módulos del Prestador / Salón
                 '/provider/services': (_) => const ProviderServicesScreen(),
                 '/provider/portfolio': (_) => const ProviderPortfolioScreen(),
-                '/provider/profile': (_) => const ProviderProfileScreen(),
                 '/provider/academy': (_) => const AcademyScreen(),
-                '/provider-route': (context) {
-                  final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
-                  return ProviderRouteScreen(booking: args);
-                },
 
                 // 4. Citas, Chat & Perfil
                 '/client-bookings': (_) => const ClientBookingsScreen(),
@@ -285,16 +266,8 @@ class BeautyApp extends StatelessWidget {
 
                 // 6. Diagnósticos IA, GlowStore & Módulos Visuales
                 '/ideas': (_) => const BiometricWelcomeScreen(),
-                '/biometric-consent': (_) => const BiometricConsentScreen(),
                 '/store': (_) => const StoreScreen(),
                 '/evolution': (_) => const EvolutionDashboardScreen(),
-                '/medical-validation': (_) => const MedicalValidationScreen(),
-                '/glowup-card': (_) => const GlowUpCardScreen(),
-                '/palette-card': (_) => const PaletteCardScreen(),
-                '/colorimetria-historial': (_) => const ColorimetriaHistorialScreen(),
-                '/wardrobe': (_) => const WardrobeDashboardScreen(),
-                '/outfit-result': (_) => const OutfitResultScreen(),
-                '/makeup-lookbook': (_) => const MakeupLookbookScreen(),
               },
             );
           },
@@ -1853,78 +1826,82 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
               curve: Curves.easeOutCubic,
               child: Transform.translate(
                 offset: const Offset(0, -18),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 62,
-                      height: 62,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: RadialGradient(
-                          center: const Alignment(0.0, -0.25),
-                          radius: 0.85,
-                          colors: isMen
-                              ? const [
-                                  Color(0xFF3D3228),
-                                  Color(0xFF2A211A),
-                                  Color(0xFF1E1712),
-                                  Color(0xFF14100C),
-                                ]
-                              : const [
-                                  Color(0xFFFFFFFF),
-                                  Color(0xFFFDFBF7),
-                                  Color(0xFFF5EBE1),
-                                  Color(0xFFEADCCF),
-                                ],
-                          stops: const [0.0, 0.35, 0.75, 1.0],
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFFD4AF37).withValues(alpha: isMen ? 0.45 : 0.35),
-                            blurRadius: 16,
-                            spreadRadius: 2,
-                            offset: const Offset(0, 6),
+                child: OverflowBox(
+                  minHeight: 0,
+                  maxHeight: 110,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 62,
+                        height: 62,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            center: const Alignment(0.0, -0.25),
+                            radius: 0.85,
+                            colors: isMen
+                                ? const [
+                                    Color(0xFF3D3228),
+                                    Color(0xFF2A211A),
+                                    Color(0xFF1E1712),
+                                    Color(0xFF14100C),
+                                  ]
+                                : const [
+                                    Color(0xFFFFFFFF),
+                                    Color(0xFFFDFBF7),
+                                    Color(0xFFF5EBE1),
+                                    Color(0xFFEADCCF),
+                                  ],
+                            stops: const [0.0, 0.35, 0.75, 1.0],
                           ),
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.08),
-                            blurRadius: 8,
-                            offset: const Offset(0, 3),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFD4AF37).withValues(alpha: isMen ? 0.45 : 0.35),
+                              blurRadius: 16,
+                              spreadRadius: 2,
+                              offset: const Offset(0, 6),
+                            ),
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.08),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                          border: Border.all(
+                            color: const Color(0xFFD4AF37),
+                            width: 2.2,
                           ),
-                        ],
-                        border: Border.all(
-                          color: const Color(0xFFD4AF37),
-                          width: 2.2,
                         ),
-                      ),
-                      child: Center(
-                        child: Container(
-                          width: 52,
-                          height: 52,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: const Color(0xFFD4AF37).withValues(alpha: 0.35),
-                              width: 1.0,
+                        child: Center(
+                          child: Container(
+                            width: 52,
+                            height: 52,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: const Color(0xFFD4AF37).withValues(alpha: 0.35),
+                                width: 1.0,
+                              ),
+                            ),
+                            child: Center(
+                              child: iconWidget,
                             ),
                           ),
-                          child: Center(
-                            child: iconWidget,
-                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      label,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.6,
-                        color: isMen ? const Color(0xFFE5C158) : const Color(0xFFB8860B),
+                      const SizedBox(height: 4),
+                      Text(
+                        label,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.6,
+                          color: isMen ? const Color(0xFFE5C158) : const Color(0xFFB8860B),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),

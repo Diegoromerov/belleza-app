@@ -193,68 +193,23 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
     }
   }
 
-  // Simulación de pasarela de pago Wompi
-  Future<void> _runWompiCheckout(double amount, VoidCallback onSuccess) async {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return AlertDialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.payment_rounded,
-                  size: 50, color: AppTheme.primary),
-              const SizedBox(height: 20),
-              CircularProgressIndicator(color: AppTheme.primary),
-              const SizedBox(height: 20),
-              const Text(
-                'Procesando Pago Seguro Wompi',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Propina: \$${amount.toStringAsFixed(0)} COP',
-                style: const TextStyle(
-                    color: Colors.grey,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'Simulando pasarela Wompi...',
-                style: TextStyle(
-                    fontStyle: FontStyle.italic,
-                    fontSize: 11,
-                    color: Colors.grey),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-
-    // Simular retraso de pasarela de pago (2.5 segundos)
-    await Future.delayed(const Duration(milliseconds: 2500));
-    if (mounted) {
-      Navigator.pop(context); // Cerrar diálogo Wompi
-      onSuccess();
-    }
-  }
+  // ❌ ELIMINADO: `_runWompiCheckout`
+  //
+  // Mostraba "Procesando Pago Seguro Wompi" y "Simulando pasarela Wompi...",
+  // esperaba 2,5 segundos y ejecutaba `onSuccess()` sin llamar a ninguna
+  // pasarela. El usuario veía "tu reseña y propina han sido procesadas
+  // correctamente" sin que se hubiera cobrado nada.
+  //
+  // La propina se retira de la UI: no existe endpoint ni columna de propina en
+  // el backend (0 referencias en todo `backend/src`), así que no hay nada que
+  // cobrar todavía. Cuando exista cobro real, la propina vuelve con él.
 
   void _showRatingSheet(Map<String, dynamic> booking) {
     int ratingSelected = 5;
     String reviewComment = '';
     final commentController = TextEditingController();
 
-    // Módulo de Propinas
-    String selectedTipOption = 'Sin propina';
-    double tipAmount = 0.0;
-    bool showCustomTipField = false;
-    final customTipController = TextEditingController();
+    // La propina se retiró de esta hoja (ver _runWompiCheckout más arriba).
 
     showModalBottomSheet(
       context: context,
@@ -272,65 +227,6 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
 
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setModalState) {
-            Widget buildTipCard(String label, String value, String emoji) {
-              final isSelected = selectedTipOption == value;
-              return GestureDetector(
-                onTap: () {
-                  setModalState(() {
-                    selectedTipOption = value;
-                    if (value == 'Sin propina') {
-                      tipAmount = 0.0;
-                      showCustomTipField = false;
-                    } else if (value == '5%') {
-                      tipAmount = totalAmount * 0.05;
-                      showCustomTipField = false;
-                    } else if (value == '10%') {
-                      tipAmount = totalAmount * 0.10;
-                      showCustomTipField = false;
-                    } else if (value == '15%') {
-                      tipAmount = totalAmount * 0.15;
-                      showCustomTipField = false;
-                    } else if (value == 'Personalizada') {
-                      showCustomTipField = true;
-                      final customVal =
-                          double.tryParse(customTipController.text) ?? 0.0;
-                      tipAmount = customVal;
-                    }
-                  });
-                },
-                child: Container(
-                  width: 72,
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? AppTheme.primary
-                        : AppTheme.accent.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: isSelected ? AppTheme.primary : Colors.transparent,
-                      width: 1.5,
-                    ),
-                    boxShadow: isSelected ? AppTheme.softShadow : null,
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(emoji, style: const TextStyle(fontSize: 18)),
-                      const SizedBox(height: 4),
-                      Text(
-                        label,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: isSelected ? Colors.white : Colors.black87,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }
-
             return Padding(
               padding: EdgeInsets.only(
                 bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -419,51 +315,9 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                     ),
                     const SizedBox(height: 20),
 
-                    // Módulo de Propinas como tarjetas con emojis
-                    const Text(
-                      '¿Deseas agregar una propina?',
-                      style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87),
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        buildTipCard('0%', 'Sin propina', '😊'),
-                        buildTipCard('5%', '5%', '👍'),
-                        buildTipCard('10%', '10%', '⭐'),
-                        buildTipCard('15%', '15%', '🔥'),
-                        buildTipCard('Custom', 'Personalizada', '✏️'),
-                      ],
-                    ),
-                    if (showCustomTipField) ...[
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: customTipController,
-                        keyboardType: TextInputType.number,
-                        style: const TextStyle(fontSize: 14),
-                        decoration: InputDecoration(
-                          labelText: 'Valor de propina personalizado (\$)',
-                          labelStyle: const TextStyle(fontSize: 12),
-                          prefixText: '\$ ',
-                          border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16)),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: const BorderSide(
-                                color: AppTheme.primary, width: 1.5),
-                          ),
-                        ),
-                        onChanged: (val) {
-                          final parsed = double.tryParse(val) ?? 0.0;
-                          setModalState(() {
-                            tipAmount = parsed;
-                          });
-                        },
-                      ),
-                    ],
+                    // La propina se retiró de esta hoja: se "cobraba" con un
+                    // temporizador de 2,5 s, sin pasarela y sin registro. No hay
+                    // endpoint ni columna de propina que la respalde.
 
                     const SizedBox(height: 16),
                     // Desglose de Pago
@@ -488,20 +342,6 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                                       fontWeight: FontWeight.bold)),
                             ],
                           ),
-                          const SizedBox(height: 6),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text('Propina:',
-                                  style: TextStyle(
-                                      fontSize: 12, color: Colors.black54)),
-                              Text('\$${tipAmount.toStringAsFixed(0)}',
-                                  style: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppTheme.success)),
-                            ],
-                          ),
                           const Divider(height: 16),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -511,7 +351,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                                       fontSize: 13,
                                       fontWeight: FontWeight.bold)),
                               Text(
-                                  '\$${(totalAmount + tipAmount).toStringAsFixed(0)}',
+                                  '\$${totalAmount.toStringAsFixed(0)}',
                                   style: const TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.bold,
@@ -534,15 +374,11 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                       ),
                       onPressed: () async {
                         Navigator.pop(context); // Cerrar rating sheet
-                        if (tipAmount > 0.0) {
-                          await _runWompiCheckout(tipAmount, () {
-                            _submitReviewHelper(
-                                booking['id'], ratingSelected, reviewComment);
-                          });
-                        } else {
-                          _submitReviewHelper(
-                              booking['id'], ratingSelected, reviewComment);
-                        }
+                        // Sin propina: la reseña se envía directo. Antes, con
+                        // propina > 0, se abría un "cobro" que era un
+                        // temporizador y solo entonces se enviaba la reseña.
+                        _submitReviewHelper(
+                            booking['id'], ratingSelected, reviewComment);
                       },
                       child: const Text('Enviar Calificación',
                           style: TextStyle(
@@ -1322,7 +1158,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 40),
                       child: Text(
-                        'Tu reseña y propina han sido procesadas correctamente. ¡Muchas gracias por tu opinión!',
+                        'Tu reseña ha sido enviada correctamente. ¡Muchas gracias por tu opinión!',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                             fontSize: 14, color: Colors.black54, height: 1.4),

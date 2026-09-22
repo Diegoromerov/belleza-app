@@ -1,5 +1,6 @@
 // backend/src/controllers/bookingController.js
 const { pool } = require('../config/db');
+const { runAsSystemContext } = require('../config/tenantRouting');
 const { Booking, Service, User, Transaction } = require('../models');
 const { sequelize } = require('../config/database');
 const { Op } = require('sequelize');
@@ -440,6 +441,22 @@ exports.payBooking = async (req, res) => {
     const clientId = req.user.id;
     const { payment_method } = req.body;
 
+    // ── Simulador de desarrollo, declarado y acotado ───────────────────────
+    // Este endpoint NO cobra: no existe todavía ninguna función de cobro contra
+    // la API de Wompi en el repositorio (wompiService solo dispersa pagos), así
+    // que aquí solo se puede simular. El problema era que simulaba SIEMPRE, en
+    // cualquier entorno, y respondía "Pago procesado y verificado con éxito por
+    // el simulador de Wompi" mientras la cita quedaba CONFIRMADA y pagada con
+    // una referencia inventada. Fuera de desarrollo la respuesta honesta es un
+    // error, no un pago: no se puede marcar como cobrado lo que no se cobró.
+    // guard-allow-simulacion NODE_ENV
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(501).json({
+        error: 'El cobro en línea aún no está disponible: falta integrar la pasarela de pagos.',
+        code: 'PAYMENT_GATEWAY_NOT_INTEGRATED'
+      });
+    }
+
     const method = (payment_method || 'NEQUI').toUpperCase();
     if (!['NEQUI', 'CARD'].includes(method)) {
       return res.status(400).json({ error: 'Método de pago inválido. Permitidos: NEQUI, CARD' });
@@ -459,7 +476,9 @@ exports.payBooking = async (req, res) => {
 
     await new Promise(resolve => setTimeout(resolve, 1500));
 
-    const referenceToken = 'wompi_sim_' + Math.random().toString(36).substring(2, 11).toUpperCase();
+    // Referencia de simulación, no de pasarela: antes se llamaba 'wompi_sim_' y
+    // ese prefijo hacía pasar por transacción de Wompi algo que Wompi nunca vio.
+    const referenceToken = 'simdev_' + Math.random().toString(36).substring(2, 11).toUpperCase();
 
     const result = await sequelize.transaction(async (t) => {
       // 1. Actualizar el estado de la cita
@@ -541,11 +560,12 @@ exports.payBooking = async (req, res) => {
       };
     });
 
-    console.log(`\n💳 [WOMPI SIMULATOR SUCCESS] Pago completado con éxito de forma local. Cita: ${bookingId}. Referencia: ${referenceToken}`);
+    console.log(`\n💳 [WOMPI SIMULADOR / SOLO DESARROLLO] Cita ${bookingId} marcada como pagada de forma simulada. Referencia: ${referenceToken}. NO hubo cobro real.`);
 
     res.json({
       success: true,
-      message: 'Pago procesado y verificado con éxito por el simulador de Wompi',
+      simulated: true,
+      message: 'Pago SIMULADO (solo desarrollo): no se realizó ningún cobro real.',
       status: 'APPROVED',
       ...result
     });
@@ -557,7 +577,7 @@ exports.payBooking = async (req, res) => {
 };
 
 // 🔹 Webhook Simulado de Wompi - REFACTORIZADO A SEQUELIZE TRANSACTIONS
-exports.wompiWebhook = async (req, res) => {
+const procesarWebhookWompi = async (req, res) => {
   try {
     if (!verifyWompiSignature(req)) {
       return res.status(401).json({ error: 'Firma de webhook invÃ¡lida.' });
@@ -687,6 +707,21 @@ exports.wompiWebhook = async (req, res) => {
     res.status(500).json({ error: 'Error al procesar el webhook' });
   }
 };
+
+/**
+ * Webhook de Wompi: procesa con el ROL DE SISTEMA activo.
+ *
+ * No nace de una petición autenticada, así que NO tiene inquilino, y por diseño
+ * es cross-tenant: confirma la cita de CUALQUIER salón a partir de una referencia
+ * firmada. Con FORCE ROW LEVEL SECURITY (migración 068) sus consultas de Sequelize
+ * irían sin contexto y devolverían 0 filas, de modo que `Booking.findByPk`
+ * respondería "Reserva no encontrada" y el pago nunca se confirmaría. El
+ * envoltorio activa app_system (BYPASSRLS) durante el procesamiento.
+ *
+ * El contrato de la API no cambia: misma ruta, misma respuesta, mismos códigos.
+ */
+exports.wompiWebhook = (req, res) =>
+  runAsSystemContext(() => procesarWebhookWompi(req, res));
 
 // 🔹 Crear reseña para cita completada
 exports.createReview = async (req, res) => {

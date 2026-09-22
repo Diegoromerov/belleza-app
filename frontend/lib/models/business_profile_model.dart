@@ -91,7 +91,12 @@ class BusinessProfileModel {
   factory BusinessProfileModel.fromJson(Map<String, dynamic> json) {
     return BusinessProfileModel(
       id: json['id'] as String? ?? '',
-      providerId: json['provider_id'] as String? ?? '',
+      // `business_profiles.provider_id` es INTEGER en la base (migración
+      // 012_business_engine.sql: apunta a usuarios.id), así que la API lo
+      // devuelve como número, no como texto. Castearlo a String? reventaba con
+      // "type 'int' is not a subtype of type 'String?'" en CADA proveedor real y
+      // la pantalla caía al estado de error.
+      providerId: json['provider_id']?.toString() ?? '',
       verticalId: json['vertical_id'] as String? ?? '',
       name: json['name'] as String? ?? 'Mi Negocio de Belleza',
       onboardingMode: json['onboarding_mode'] as String? ?? 'NEW_BUSINESS',

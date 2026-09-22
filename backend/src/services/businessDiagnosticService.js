@@ -15,7 +15,7 @@ class BusinessDiagnosticService {
     
     // Create or fetch profile
     let profile = await businessRepository.getProfileByProviderId(provider_id);
-    if (!profile || profile.id.startsWith('biz-demo-')) {
+    if (!profile) {
       profile = await businessRepository.createProfile({
         provider_id,
         tenant_id,

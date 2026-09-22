@@ -53,11 +53,12 @@ class AppTheme {
   );
 
   // Colores de estado contextuales armonizados
+  static const Color headerOverlayColor = Color(0xFF1F1A15);
   static const Color success = Color(0xFF4A5D4E); // Verde Salvia
   static const Color successBg = Color(0xFFEAEFEA);
   static const Color error = Color(0xFF881337); // Carmín Terroso
   static const Color errorBg = Color(0xFFFDF2F4);
-  static const Color warning = Color(0xFFB45309); // Ámbar terroso
+  static const Color warning = Color(0xFF92400E); // Ámbar terroso oscurecido para WCAG AA (>= 4.8:1)
   static const Color warningBg = Color(0xFFFEF3C7);
   static const Color info = Color(0xFF334155); // Carbón
   static const Color infoBg = Color(0xFFF1F5F9);

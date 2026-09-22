@@ -35,7 +35,11 @@ const advanceTaskSchema = z.object({
 const submitEvidenceSchema = z.object({
   file_path: z.string().optional(),
   evidence_url: z.string().optional(),
-  evidence_type: z.string().optional(),
+  // Estos son EXACTAMENTE los valores de la restricción
+  // business_evidences_evidence_type_check. Antes era z.string(): un valor
+  // distinto llegaba a la base, el CHECK lo rechazaba y el cliente recibía un
+  // 500 («error del servidor») por un dato suyo. Ahora es un 400 explicado.
+  evidence_type: z.enum(['DOCUMENT', 'PHOTO', 'CONTRACT', 'FORM', 'DECLARATION']).optional(),
   file_type: z.string().optional(),
   notes: z.string().optional(),
 });

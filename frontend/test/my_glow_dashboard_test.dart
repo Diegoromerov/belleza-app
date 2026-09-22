@@ -11,7 +11,7 @@ void main() {
       ),
     );
 
-    // Initial state should show loading indicator or title
-    expect(find.text('MY GLOW — MI EVOLUCIÓN'), findsOneWidget);
+    // Initial state should show title
+    expect(find.text('MI TABLERO GLOW CONCIERGE'), findsOneWidget);
   });
 }

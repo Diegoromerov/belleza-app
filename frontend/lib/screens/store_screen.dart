@@ -7,7 +7,6 @@ import '../services/analytics_service.dart';
 import 'package:shimmer/shimmer.dart';
 import '../widgets/store_product_card.dart';
 import '../widgets/product_quick_view_dialog.dart';
-import '../widgets/wompi_payment_sheet.dart';
 import '../widgets/audience_toggle.dart';
 import '../services/audience_service.dart';
 import '../shared/mens_theme.dart';
@@ -386,38 +385,36 @@ class _StoreScreenState extends State<StoreScreen> {
                                   if (widget.bookingId != null) 'booking_id': widget.bookingId,
                                 };
 
-                                final paymentResult = await showWompiCheckoutSheet(
-                                  context: context,
-                                  bookingId: widget.bookingId ?? 'STORE_${DateTime.now().millisecondsSinceEpoch}',
-                                  serviceName: 'Compra GlowShop (${_cart.length} productos)',
-                                  price: total,
-                                  providerName: 'GlowShop Oficial',
-                                );
-
-                                if (paymentResult == true) {
-                                  setCheckoutState(() {
-                                    processing = true;
-                                  });
-                                  try {
-                                    final response = await ApiService.post('/api/store/checkout', checkoutData);
-                                    if (response != null && response['success'] == true) {
-                                      Navigator.pop(ctx);
-                                      setState(() {
-                                        _cart.clear();
-                                        _isCartOpen = false;
-                                      });
-                                      _showOrderSuccessDialog();
-                                    } else {
-                                      throw Exception(response?['error'] ?? 'Error registrando pedido');
-                                    }
-                                  } catch (e) {
-                                    setCheckoutState(() {
-                                      processing = false;
+                                // Antes aquí se abría la pasarela con un
+                                // identificador inventado ('STORE_<millis>'),
+                                // que la hoja interpretaba como "no llames a
+                                // nadie": devolvía un éxito local y este bloque
+                                // registraba el pedido como pagado. El cobro en
+                                // línea todavía no está integrado, así que el
+                                // pedido se registra PENDIENTE DE PAGO y se dice
+                                // tal cual. No se simula un cobro.
+                                setCheckoutState(() {
+                                  processing = true;
+                                });
+                                try {
+                                  final response = await ApiService.post('/api/store/checkout', checkoutData);
+                                  if (response != null && response['success'] == true) {
+                                    Navigator.pop(ctx);
+                                    setState(() {
+                                      _cart.clear();
+                                      _isCartOpen = false;
                                     });
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text('Error registrando pedido: $e')),
-                                    );
+                                    _showOrderSuccessDialog();
+                                  } else {
+                                    throw Exception(response?['error'] ?? 'Error registrando pedido');
                                   }
+                                } catch (e) {
+                                  setCheckoutState(() {
+                                    processing = false;
+                                  });
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Error registrando pedido: $e')),
+                                  );
                                 }
                               }
                             },
@@ -430,7 +427,10 @@ class _StoreScreenState extends State<StoreScreen> {
                               ),
                             ),
                             child: const Text(
-                              'Pagar',
+                              // No dice "Pagar" porque no cobra: el cobro en
+                              // línea no está integrado, el pedido queda
+                              // registrado como PENDIENTE_PAGO.
+                              'Registrar pedido',
                               style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                           ),
@@ -618,7 +618,7 @@ class _StoreScreenState extends State<StoreScreen> {
                 ),
                 const SizedBox(height: 16),
                 const Text(
-                  '¡Pedido Realizado con Éxito!',
+                  '¡Pedido Registrado!',
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
@@ -627,7 +627,7 @@ class _StoreScreenState extends State<StoreScreen> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Tu orden ha sido registrada. Pronto recibirás tus productos y la respectiva factura digital en tu correo electrónico.',
+                  'Tu orden quedó registrada con el pago PENDIENTE. El cobro en línea todavía no está disponible: el equipo de GlowShop te contactará para completarlo.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14,

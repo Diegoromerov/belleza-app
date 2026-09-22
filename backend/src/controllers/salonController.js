@@ -166,24 +166,25 @@ exports.inviteMember = async (req, res) => {
       return res.status(403).json({ error: 'No tienes permisos de administración en este salón para invitar personal.' });
     }
 
-    // Generar token de invitación único de 32 caracteres
-    const invitationToken = crypto.randomBytes(16).toString('hex');
+    // Generar token de invitación único de 32 caracteres (para URL en claro)
+    const rawToken = crypto.randomBytes(16).toString('hex');
+    const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 días de validez
 
     await pool.query(
       `INSERT INTO salon_invitaciones (salon_id, email, sub_rol, token_invitacion, expires_at, creado_por)
        VALUES ($1, $2, $3, $4, $5, $6)`,
-      [salon_id, cleanEmail, cleanSubRol, invitationToken, expiresAt, inviterId]
+      [salon_id, cleanEmail, cleanSubRol, tokenHash, expiresAt, inviterId]
     );
 
-    const inviteLink = `https://glowapp-frontend-production.up.railway.app/#/accept-invitation?token=${invitationToken}`;
+    const inviteLink = `https://glowapp-frontend-production.up.railway.app/#/accept-invitation?token=${rawToken}`;
 
     console.log(`✉️ Invitación creada para ${cleanEmail} como ${cleanSubRol} en Salón ID ${salon_id}`);
 
     res.json({
       success: true,
       message: `Invitación generada exitosamente para ${cleanEmail}.`,
-      invitation_token: invitationToken,
+      invitation_token: rawToken,
       invite_link: inviteLink
     });
   } catch (error) {
@@ -204,12 +205,19 @@ exports.acceptInvitation = async (req, res) => {
       return res.status(400).json({ error: 'El token de invitación es obligatorio.' });
     }
 
-    // Buscar invitación válida
+    const cleanToken = String(token).trim().toLowerCase();
+    if (!/^[0-9a-f]{32}$/i.test(cleanToken)) {
+      return res.status(400).json({ error: 'El formato del token de invitación es inválido.' });
+    }
+
+    const tokenHash = crypto.createHash('sha256').update(cleanToken).digest('hex');
+
+    // Buscar invitación válida por hash SHA-256
     const inviteRes = await pool.query(
       `SELECT id, salon_id, email, sub_rol, expires_at, usado
        FROM salon_invitaciones
        WHERE token_invitacion = $1 AND usado = false AND expires_at > NOW()`,
-      [token]
+      [tokenHash]
     );
 
     if (inviteRes.rows.length === 0) {
@@ -218,25 +226,42 @@ exports.acceptInvitation = async (req, res) => {
 
     const invitation = inviteRes.rows[0];
 
-    // Asociar al usuario en salon_miembros
-    await pool.query(
-      `INSERT INTO salon_miembros (salon_id, user_id, sub_rol, estatus)
-       VALUES ($1, $2, $3, 'ACTIVO')
-       ON CONFLICT (salon_id, user_id) DO UPDATE SET sub_rol = EXCLUDED.sub_rol, estatus = 'ACTIVO'`,
-      [invitation.salon_id, userId, invitation.sub_rol]
-    );
+    // La invitación es NOMINAL: se emitió para un correo concreto. Sin esta
+    // comprobación, cualquiera que obtuviera el token entraba al salón como
+    // EMPLEADO o ADMINISTRADOR aunque la invitación fuera para otra persona, y
+    // el invitado legítimo se encontraba la invitación ya consumida. Se compara
+    // en minúsculas porque el correo se guarda normalizado.
+    const emailInvitado = String(invitation.email || '').trim().toLowerCase();
+    const emailUsuario = String(req.user.email || '').trim().toLowerCase();
+    if (emailInvitado && emailUsuario && emailInvitado !== emailUsuario) {
+      return res.status(403).json({
+        error: `Esta invitación es para ${invitation.email}. Estás conectado como ${req.user.email}: entra con la cuenta invitada para aceptarla.`,
+        code: 'INVITATION_EMAIL_MISMATCH'
+      });
+    }
 
-    // Marcar invitación como usada
+    // Las dos escrituras van en UNA sola sentencia: si el INSERT entrara y el
+    // UPDATE no, la invitación seguiría siendo usable y el mismo token valdría
+    // dos veces. No se puede confiar en el middleware para esto: con el flag
+    // TENANT_TRANSACTION_PER_REQUEST desactivado (su valor por defecto, ver
+    // middleware/tenantContext.js) NO comparte transacción entre consultas.
     await pool.query(
-      `UPDATE salon_invitaciones SET usado = true WHERE id = $1`,
-      [invitation.id]
+      `WITH miembro AS (
+         INSERT INTO salon_miembros (salon_id, user_id, sub_rol, estatus)
+         VALUES ($1, $2, $3, 'ACTIVO')
+         ON CONFLICT (salon_id, user_id) DO UPDATE
+           SET sub_rol = EXCLUDED.sub_rol, estatus = 'ACTIVO'
+         RETURNING 1
+       )
+       UPDATE salon_invitaciones SET usado = true WHERE id = $4;`,
+      [invitation.salon_id, userId, invitation.sub_rol, invitation.id]
     );
 
     console.log(`🤝 Usuario ID ${userId} aceptó invitación como ${invitation.sub_rol} en Salón ID ${invitation.salon_id}`);
 
     res.json({
       success: true,
-      message: `Te has unedido exitosamente al salón con el rol de ${invitation.sub_rol}.`,
+      message: `Te has unido exitosamente al salón con el rol de ${invitation.sub_rol}.`,
       salon_id: invitation.salon_id,
       sub_rol: invitation.sub_rol
     });
@@ -280,5 +305,83 @@ exports.getSalonMembers = async (req, res) => {
   } catch (error) {
     console.error('❌ ERROR GET SALON MEMBERS:', error.message);
     res.status(500).json({ error: 'Error al obtener la lista de miembros del salón' });
+  }
+};
+
+// ==========================================
+// 🔄 ACTUALIZAR ROL DE UN COLABORADOR
+// ==========================================
+exports.updateMemberRole = async (req, res) => {
+  try {
+    const salonId = req.salonId || req.params.salonId;
+    const targetUserId = req.targetUserId || req.params.userId || req.params.memberId || req.body.user_id || req.body.userId;
+    const { sub_rol } = req.body;
+
+    const validSubRoles = ['DUEÑO', 'ADMINISTRADOR', 'PRESTADOR_INDEPENDIENTE', 'EMPLEADO', 'RECEPCIONISTA'];
+    const cleanSubRol = String(sub_rol || '').trim().toUpperCase();
+
+    if (!validSubRoles.includes(cleanSubRol)) {
+      return res.status(400).json({ error: `El sub-rol '${sub_rol}' no es válido.` });
+    }
+
+    // Verificar pertenencia del miembro
+    const memberRes = await pool.query(
+      `SELECT id, sub_rol FROM salon_miembros WHERE salon_id = $1 AND user_id = $2`,
+      [salonId, targetUserId]
+    );
+
+    if (memberRes.rows.length === 0) {
+      return res.status(404).json({ error: 'El colaborador no pertenece a este salón.' });
+    }
+
+    await pool.query(
+      `UPDATE salon_miembros SET sub_rol = $1 WHERE salon_id = $2 AND user_id = $3`,
+      [cleanSubRol, salonId, targetUserId]
+    );
+
+    res.json({
+      success: true,
+      message: `Rol del colaborador actualizado a ${cleanSubRol}.`,
+      salon_id: Number(salonId),
+      user_id: Number(targetUserId),
+      new_sub_rol: cleanSubRol
+    });
+  } catch (error) {
+    console.error('❌ ERROR UPDATE MEMBER ROLE:', error.message);
+    res.status(500).json({ error: 'Error al actualizar el rol del colaborador' });
+  }
+};
+
+// ==========================================
+// ❌ REMOVER COLABORADOR DE UN SALÓN
+// ==========================================
+exports.removeMember = async (req, res) => {
+  try {
+    const salonId = req.salonId || req.params.salonId;
+    const targetUserId = req.targetUserId || req.params.userId || req.params.memberId || req.body.user_id || req.body.userId;
+
+    const memberRes = await pool.query(
+      `SELECT id, sub_rol FROM salon_miembros WHERE salon_id = $1 AND user_id = $2 AND estatus = 'ACTIVO'`,
+      [salonId, targetUserId]
+    );
+
+    if (memberRes.rows.length === 0) {
+      return res.status(404).json({ error: 'El colaborador no existe o ya está inactivo en este salón.' });
+    }
+
+    await pool.query(
+      `UPDATE salon_miembros SET estatus = 'INACTIVO' WHERE salon_id = $1 AND user_id = $2`,
+      [salonId, targetUserId]
+    );
+
+    res.json({
+      success: true,
+      message: 'Colaborador removido exitosamente del salón.',
+      salon_id: Number(salonId),
+      removed_user_id: Number(targetUserId)
+    });
+  } catch (error) {
+    console.error('❌ ERROR REMOVE MEMBER:', error.message);
+    res.status(500).json({ error: 'Error al remover el colaborador del salón' });
   }
 };

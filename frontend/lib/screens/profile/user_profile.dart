@@ -11,6 +11,7 @@ import 'glowstore_orders_screen.dart';
 import 'rewards_xp_screen.dart';
 import 'habeas_data_screen.dart';
 import 'faq_screen.dart';
+import '../../widgets/invitation_code_entry.dart';
 
 class UserProfileScreen extends StatefulWidget {
   final String userName;
@@ -271,6 +272,24 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                           onTap: () {
                             HapticFeedback.lightImpact();
                             Navigator.pushNamed(context, '/support');
+                          },
+                        ),
+                        LuxeProfileTile(
+                          icon: Icons.group_add_outlined,
+                          title: 'Unirme a un salón',
+                          subtitle: 'Ingresar el código que te compartió el dueño',
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            pedirCodigoInvitacion(context);
+                          },
+                        ),
+                        LuxeProfileTile(
+                          icon: Icons.description_outlined,
+                          title: 'Términos y condiciones',
+                          subtitle: 'Contrato de uso, privacidad y tratamiento de datos',
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            Navigator.pushNamed(context, '/terms');
                           },
                         ),
                         LuxeProfileTile(
