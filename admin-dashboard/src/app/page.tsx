@@ -21,8 +21,7 @@ import {
   Zap,
   CheckSquare,
   ClipboardList,
-  PlusCircle,
-  HelpCircle
+  PlusCircle
 } from 'lucide-react';
 import {
   AreaChart,
@@ -37,79 +36,89 @@ import {
   Cell
 } from 'recharts';
 
+interface FinancialMetrics {
+  gmv: number;
+  total_commission: number;
+  total_taxes: number;
+  platform_gross_income: number;
+  total_provider_payouts: number;
+  total_bookings: number;
+}
+
+interface DailyHistoryPoint {
+  date: string;
+  gmv: number;
+  income: number;
+}
+
+interface CategoryPoint {
+  category: string;
+  booking_count: number;
+  total_revenue: number;
+  color: string;
+}
+
+interface SosAlert {
+  id: number;
+  client_name?: string | null;
+  client_phone?: string | null;
+  provider_name?: string | null;
+  provider_phone?: string | null;
+  latitude: string | number;
+  longitude: string | number;
+  fecha_creacion?: string | null;
+}
+
+interface PendingProvider {
+  id: number;
+  nombre: string;
+  email: string;
+  business_name?: string | null;
+  description?: string | null;
+  documento_id_url?: string | null;
+  rut_url?: string | null;
+  certificacion_url?: string | null;
+  estatus_verificacion?: string | null;
+}
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
+
+const CATEGORY_COLORS = ['#f43f5e', '#ec4899', '#a855f7', '#6366f1', '#0ea5e9', '#f59e0b'];
+
+/**
+ * Token de la sesión real de administrador.
+ * NUNCA se debe leer de una variable NEXT_PUBLIC_*: todo lo que empieza por
+ * NEXT_PUBLIC_ se inlinea en el bundle público y el JWT quedaría expuesto.
+ */
+function getAdminSessionToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  return window.localStorage.getItem('adminToken') || window.localStorage.getItem('glow_token');
+}
+
+/** Valor monetario o marca de "sin datos" (nunca un número inventado). */
+function formatCOPSafe(val: number | null | undefined) {
+  if (val === null || val === undefined || Number.isNaN(Number(val))) return 'Sin datos';
+  return new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
+    minimumFractionDigits: 0
+  }).format(Number(val));
+}
+
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [loading, setLoading] = useState(true);
-  const [backendStatus, setBackendStatus] = useState('Checking...');
-  const [metrics, setMetrics] = useState({
-    gmv: 1845000,
-    total_commission: 221400,
-    total_taxes: 147600,
-    platform_gross_income: 369000,
-    total_provider_payouts: 1476000,
-    total_bookings: 112
-  });
-  const [dailyHistory, setDailyHistory] = useState([
-    { date: '01 Jun', gmv: 350000, income: 70000 },
-    { date: '02 Jun', gmv: 420000, income: 84000 },
-    { date: '03 Jun', gmv: 290000, income: 58000 },
-    { date: '04 Jun', gmv: 510000, income: 102000 },
-    { date: '05 Jun', gmv: 620000, income: 124000 },
-    { date: '06 Jun', gmv: 480000, income: 96000 },
-    { date: '07 Jun', gmv: 590000, income: 118000 }
-  ]);
-  const [categoryData, setCategoryData] = useState([
-    { category: 'Uñas', booking_count: 54, total_revenue: 810000, color: '#f43f5e' },
-    { category: 'Cabello', booking_count: 35, total_revenue: 700000, color: '#ec4899' },
-    { category: 'Maquillaje', booking_count: 15, total_revenue: 225000, color: '#a855f7' },
-    { category: 'Otros', booking_count: 8, total_revenue: 110000, color: '#6366f1' }
-  ]);
-  const [sosAlerts, setSosAlerts] = useState([
-    { 
-      id: 1, 
-      client_name: 'Camila Rojas', 
-      client_phone: '+57 312 456 7890',
-      provider_name: 'Daniela Gómez',
-      provider_phone: '+57 300 987 6543',
-      latitude: '4.60971', 
-      longitude: '-74.08175', 
-      fecha_creacion: 'Hace 5 minutos' 
-    },
-    { 
-      id: 2, 
-      client_name: 'Mateo Restrepo', 
-      client_phone: '+57 321 654 0987',
-      provider_name: 'Carlos Ospina',
-      provider_phone: '+57 315 321 6789',
-      latitude: '6.25184', 
-      longitude: '-75.56359', 
-      fecha_creacion: 'Hace 12 minutos' 
-    }
-  ]);
-  const [pendingProviders, setPendingProviders] = useState([
-    {
-      id: 12,
-      nombre: 'Lucía Fernández',
-      email: 'lucia.f@example.com',
-      business_name: 'Fernández Estilistas',
-      description: 'Especialista en colorimetría y tratamientos capilares avanzados en Bogotá.',
-      documento_id_url: '#',
-      rut_url: '#',
-      certificacion_url: '#',
-      estatus_verificacion: 'PENDIENTE'
-    },
-    {
-      id: 15,
-      nombre: 'Mateo Salazar',
-      email: 'mateo.salon@example.com',
-      business_name: 'Barbería Golden',
-      description: 'Barbería profesional y cortes modernos a domicilio.',
-      documento_id_url: '#',
-      rut_url: '#',
-      certificacion_url: '#',
-      estatus_verificacion: 'PENDIENTE'
-    }
-  ]);
+  const [backendStatus, setBackendStatus] = useState('Comprobando conexión...');
+  // Sin datos simulados: los estados arrancan vacíos/sin datos hasta que responda el backend.
+  const [metrics, setMetrics] = useState<FinancialMetrics | null>(null);
+  const [dailyHistory, setDailyHistory] = useState<DailyHistoryPoint[]>([]);
+  const [categoryData, setCategoryData] = useState<CategoryPoint[]>([]);
+  const [sosAlerts, setSosAlerts] = useState<SosAlert[]>([]);
+  const [pendingProviders, setPendingProviders] = useState<PendingProvider[]>([]);
+  const [dataError, setDataError] = useState<string | null>(null);
+  const [failedSections, setFailedSections] = useState<string[]>([]);
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   // board meeting state
   const [selectedDirector, setSelectedDirector] = useState('COO');
@@ -144,59 +153,161 @@ export default function Dashboard() {
   const [newDecisionTitle, setNewDecisionTitle] = useState('');
   const [newDecisionDesc, setNewDecisionDesc] = useState('');
 
-  // Fetch from actual backend when loaded
-  useEffect(() => {
-    async function fetchDashboardData() {
-      try {
-        const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
-        const adminToken =
-          window.localStorage.getItem('adminToken') ||
-          process.env.NEXT_PUBLIC_ADMIN_TOKEN;
+  // Datos reales del backend. Sin sesión o sin backend NO se muestra ningún dato simulado.
+  const fetchDashboardData = async () => {
+    const adminToken = getAdminSessionToken();
 
-        if (!adminToken) {
-          setBackendStatus('Modo SimulaciÃ³n (sin token admin)');
-          return;
-        }
-
-        const response = await fetch(`${apiBaseUrl}/api/glow-admin/dashboard/financial-summary`, {
-          headers: {
-            'Authorization': `Bearer ${adminToken}`
-          }
-        });
-        if (response.ok) {
-          const resJson = await response.json();
-          if (resJson.success && resJson.data) {
-            if (resJson.data.consolidated) setMetrics(resJson.data.consolidated);
-            if (resJson.data.dailyHistory && resJson.data.dailyHistory.length > 0) setDailyHistory(resJson.data.dailyHistory);
-            if (resJson.data.categoryPopularity && resJson.data.categoryPopularity.length > 0) setCategoryData(resJson.data.categoryPopularity);
-            setBackendStatus('Conectado a PostgreSQL');
-          }
-        } else {
-          setBackendStatus('Modo Simulación (Backend Offline)');
-        }
-      } catch (err) {
-        setBackendStatus('Modo Simulación (Backend Offline)');
-      } finally {
-        setLoading(false);
-      }
+    if (!adminToken) {
+      setBackendStatus('Sin sesión de administrador');
+      setDataError('No hay sesión de administrador activa. Inicia sesión con una cuenta ADMIN para ver datos reales.');
+      setMetrics(null);
+      setDailyHistory([]);
+      setCategoryData([]);
+      setSosAlerts([]);
+      setPendingProviders([]);
+      setFailedSections(['financial', 'sos', 'kyc']);
+      setLoading(false);
+      return;
     }
+
+    setLoading(true);
+    setDataError(null);
+    try {
+      const headers = { Authorization: `Bearer ${adminToken}` };
+      const [summaryRes, sosRes, providersRes] = await Promise.all([
+        fetch(`${API_BASE_URL}/api/glow-admin/dashboard/financial-summary`, { headers }),
+        fetch(`${API_BASE_URL}/api/glow-admin/sos/active`, { headers }),
+        fetch(`${API_BASE_URL}/api/glow-admin/provider/pending`, { headers })
+      ]);
+
+      const failures: string[] = [];
+      const failed: string[] = [];
+
+      if (summaryRes.ok) {
+        const resJson = await summaryRes.json();
+        const data = resJson?.data;
+        setMetrics(data?.consolidated ?? null);
+        setDailyHistory(Array.isArray(data?.dailyHistory) ? data.dailyHistory : []);
+        setCategoryData(
+          Array.isArray(data?.categoryPopularity)
+            ? (data.categoryPopularity as Array<{ category: string; booking_count: number; total_revenue: number }>).map(
+                (item, index) => ({ ...item, color: CATEGORY_COLORS[index % CATEGORY_COLORS.length] })
+              )
+            : []
+        );
+      } else {
+        setMetrics(null);
+        setDailyHistory([]);
+        setCategoryData([]);
+        failures.push(`resumen financiero (HTTP ${summaryRes.status})`);
+        failed.push('financial');
+      }
+
+      if (sosRes.ok) {
+        const sosJson = await sosRes.json();
+        setSosAlerts(Array.isArray(sosJson?.data) ? (sosJson.data as SosAlert[]) : []);
+      } else {
+        setSosAlerts([]);
+        failures.push(`alertas SOS (HTTP ${sosRes.status})`);
+        failed.push('sos');
+      }
+
+      if (providersRes.ok) {
+        const providersJson = await providersRes.json();
+        setPendingProviders(Array.isArray(providersJson?.data) ? (providersJson.data as PendingProvider[]) : []);
+      } else {
+        setPendingProviders([]);
+        failures.push(`verificaciones KYC (HTTP ${providersRes.status})`);
+        failed.push('kyc');
+      }
+
+      setFailedSections(failed);
+
+      if (failures.length > 0) {
+        setBackendStatus('Backend con errores');
+        setDataError(`No se pudieron cargar: ${failures.join(', ')}.`);
+      } else {
+        setBackendStatus('Conectado a PostgreSQL');
+      }
+    } catch (err) {
+      setMetrics(null);
+      setDailyHistory([]);
+      setCategoryData([]);
+      setSosAlerts([]);
+      setPendingProviders([]);
+      setFailedSections(['financial', 'sos', 'kyc']);
+      setBackendStatus('Backend no disponible');
+      setDataError(
+        `No se pudo contactar al backend: ${err instanceof Error ? err.message : 'error desconocido'}.`
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchDashboardData();
   }, []);
 
-  const handleResolveSOS = (alertId: number) => {
-    setSosAlerts(prev => prev.filter(alert => alert.id !== alertId));
-    alert(`Alerta SOS #${alertId} resuelta e informada a las autoridades.`);
+  // Endpoints reales en backend/src/modules/admin-glow/admin.routes.js
+  const handleResolveSOS = async (alertId: number) => {
+    setActionError(null);
+    setActionMessage(null);
+    const adminToken = getAdminSessionToken();
+    if (!adminToken) {
+      setActionError('No hay sesión de administrador activa: no se puede resolver la alerta.');
+      return;
+    }
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/glow-admin/sos/resolve/${alertId}`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${adminToken}` }
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      setSosAlerts(prev => prev.filter(alert => alert.id !== alertId));
+      setActionMessage(`Alerta SOS #${alertId} marcada como ATENDIDA en el backend.`);
+    } catch (err) {
+      setActionError(
+        `No se pudo resolver la alerta SOS #${alertId}: ${err instanceof Error ? err.message : 'error desconocido'}.`
+      );
+    }
   };
 
-  const handleApproveProvider = (providerId: number) => {
-    setPendingProviders(prev => prev.filter(prov => prov.id !== providerId));
-    alert(`El prestador #${providerId} ha sido APROBADO. Su etiqueta de verificación verde ha sido activada.`);
+  const handleProviderReview = async (providerId: number, action: 'approve' | 'reject') => {
+    setActionError(null);
+    setActionMessage(null);
+    const adminToken = getAdminSessionToken();
+    if (!adminToken) {
+      setActionError('No hay sesión de administrador activa: no se puede actualizar la verificación.');
+      return;
+    }
+    const label = action === 'approve' ? 'APROBADO' : 'RECHAZADO';
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/glow-admin/provider/${action}`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${adminToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ providerId })
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      setPendingProviders(prev => prev.filter(prov => prov.id !== providerId));
+      setActionMessage(`El prestador #${providerId} ha sido ${label} en el backend.`);
+    } catch (err) {
+      setActionError(
+        `No se pudo marcar al prestador #${providerId} como ${label}: ${err instanceof Error ? err.message : 'error desconocido'}.`
+      );
+    }
   };
 
-  const handleRejectProvider = (providerId: number) => {
-    setPendingProviders(prev => prev.filter(prov => prov.id !== providerId));
-    alert(`El prestador #${providerId} ha sido RECHAZADO.`);
-  };
+  const handleApproveProvider = (providerId: number) => handleProviderReview(providerId, 'approve');
+
+  const handleRejectProvider = (providerId: number) => handleProviderReview(providerId, 'reject');
 
   // Alarma acústica para emergencias SOS
   useEffect(() => {
@@ -252,13 +363,7 @@ export default function Dashboard() {
     setNewDecisionDesc('');
   };
 
-  const formatCOP = (val: number) => {
-    return new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency: 'COP',
-      minimumFractionDigits: 0
-    }).format(val);
-  };
+  const formatCOP = (val: number | null | undefined) => formatCOPSafe(val);
 
   return (
     <div className="flex h-screen w-full bg-[#0b0f19] text-slate-100 font-sans overflow-hidden">
@@ -362,16 +467,41 @@ export default function Dashboard() {
 
         {/* Tab contents */}
         <div className="p-8 space-y-8 flex-1">
+          {/* Estado real de los datos: errores de carga y resultado de acciones */}
+          {dataError && (
+            <div className="flex items-start justify-between gap-4 rounded-2xl border border-rose-500/40 bg-rose-500/10 px-5 py-4">
+              <div className="flex items-start gap-3">
+                <ShieldAlert className="w-4 h-4 mt-0.5 shrink-0 text-rose-400" />
+                <span className="text-xs font-semibold text-rose-300">{dataError}</span>
+              </div>
+              <button
+                onClick={() => fetchDashboardData()}
+                className="shrink-0 px-3 py-1.5 rounded-xl border border-rose-500/40 text-[11px] font-bold text-rose-300 hover:bg-rose-500/10 transition-all"
+              >
+                Reintentar
+              </button>
+            </div>
+          )}
+          {actionError && (
+            <div className="rounded-2xl border border-amber-500/40 bg-amber-500/10 px-5 py-4 text-xs font-semibold text-amber-300">
+              {actionError}
+            </div>
+          )}
+          {actionMessage && (
+            <div className="rounded-2xl border border-emerald-500/40 bg-emerald-500/10 px-5 py-4 text-xs font-semibold text-emerald-300">
+              {actionMessage}
+            </div>
+          )}
           {/* TAB 1: DASHBOARD METRICS */}
           {activeTab === 'dashboard' && (
             <>
               {/* Financial KPI Cards */}
               <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {[
-                  { title: 'GMV Facturado', value: formatCOP(metrics.gmv), sub: 'Total de reservas completadas', icon: DollarSign, color: 'from-emerald-500 to-teal-500 bg-emerald-500/10 border-emerald-500/20 text-emerald-400' },
-                  { title: 'Comisión Plataforma (12%)', value: formatCOP(metrics.total_commission), sub: 'Neto de GlowApp', icon: Percent, color: 'from-pink-500 to-rose-500 bg-pink-500/10 border-pink-500/20 text-pink-400' },
-                  { title: 'Impuesto Recaudado (8%)', value: formatCOP(metrics.total_taxes), sub: 'Retenciones tributarias', icon: Activity, color: 'from-amber-500 to-orange-500 bg-amber-500/10 border-amber-500/20 text-amber-400' },
-                  { title: 'Dispersión Prestadores', value: formatCOP(metrics.total_provider_payouts), sub: 'Transferido a profesionales', icon: Users, color: 'from-indigo-500 to-cyan-500 bg-indigo-500/10 border-indigo-500/20 text-indigo-400' }
+                  { title: 'GMV Facturado', value: loading ? 'Cargando...' : formatCOP(metrics?.gmv), sub: 'Total de reservas completadas', icon: DollarSign, color: 'from-emerald-500 to-teal-500 bg-emerald-500/10 border-emerald-500/20 text-emerald-400' },
+                  { title: 'Comisión Plataforma (12%)', value: loading ? 'Cargando...' : formatCOP(metrics?.total_commission), sub: 'Neto de GlowApp', icon: Percent, color: 'from-pink-500 to-rose-500 bg-pink-500/10 border-pink-500/20 text-pink-400' },
+                  { title: 'Impuesto Recaudado (8%)', value: loading ? 'Cargando...' : formatCOP(metrics?.total_taxes), sub: 'Retenciones tributarias', icon: Activity, color: 'from-amber-500 to-orange-500 bg-amber-500/10 border-amber-500/20 text-amber-400' },
+                  { title: 'Dispersión Prestadores', value: loading ? 'Cargando...' : formatCOP(metrics?.total_provider_payouts), sub: 'Transferido a profesionales', icon: Users, color: 'from-indigo-500 to-cyan-500 bg-indigo-500/10 border-indigo-500/20 text-indigo-400' }
                 ].map((kpi, idx) => {
                   const Icon = kpi.icon;
                   return (
@@ -404,6 +534,11 @@ export default function Dashboard() {
                       <p className="text-xs text-slate-400">Comparativa diaria de volumen de ventas e ingresos</p>
                     </div>
                   </div>
+                  {dailyHistory.length === 0 ? (
+                    <div className="h-80 w-full flex items-center justify-center rounded-2xl border border-dashed border-slate-800 text-xs text-slate-400">
+                      Sin datos de facturación registrados en el backend.
+                    </div>
+                  ) : (
                   <div className="h-80 w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={dailyHistory}>
@@ -426,6 +561,7 @@ export default function Dashboard() {
                       </AreaChart>
                     </ResponsiveContainer>
                   </div>
+                  )}
                 </div>
 
                 {/* Bar Category Popularity */}
@@ -434,6 +570,11 @@ export default function Dashboard() {
                     <h3 className="text-base font-bold text-white">Participación por Categoría</h3>
                     <p className="text-xs text-slate-400 mb-6">Desglose analítico de los servicios estéticos más solicitados</p>
                   </div>
+                  {categoryData.length === 0 ? (
+                    <div className="h-80 w-full flex items-center justify-center rounded-2xl border border-dashed border-slate-800 text-xs text-slate-400">
+                      Sin datos de categorías registrados en el backend.
+                    </div>
+                  ) : (
                   <div className="h-80 w-full flex items-center justify-center">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={categoryData} layout="vertical">
@@ -449,6 +590,7 @@ export default function Dashboard() {
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
+                  )}
                 </div>
               </section>
             </>
@@ -457,6 +599,10 @@ export default function Dashboard() {
           {/* TAB 1.5: BOARD MEETING (Reunión Directiva) */}
           {activeTab === 'board' && (
             <div className="space-y-8">
+              {/* Maqueta local: el backend no expone ningún endpoint de reunión directiva. */}
+              <div className="rounded-2xl border border-amber-500/40 bg-amber-500/10 px-5 py-4 text-xs font-semibold text-amber-300">
+                Esta pestaña usa datos de demostración locales (checklist, minutas y KPIs de ejemplo): no los respalda ningún endpoint del backend y no se persisten.
+              </div>
               {/* KPIs Híbridos Interdependientes */}
               <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {[
@@ -710,9 +856,19 @@ export default function Dashboard() {
 
               {pendingProviders.length === 0 ? (
                 <div className="bg-slate-900/20 border border-slate-900 rounded-3xl p-12 text-center flex flex-col items-center justify-center">
-                  <CheckCircle className="w-12 h-12 text-emerald-500 mb-4" />
-                  <h4 className="text-base font-bold text-white">¡Todo al día!</h4>
-                  <p className="text-xs text-slate-400 max-w-sm mt-1">No quedan solicitudes de verificación de prestadores pendientes en la cola.</p>
+                  {failedSections.includes('kyc') ? (
+                    <>
+                      <ShieldAlert className="w-12 h-12 text-rose-500 mb-4" />
+                      <h4 className="text-base font-bold text-white">No se pudo consultar la cola de KYC</h4>
+                      <p className="text-xs text-slate-400 max-w-sm mt-1">La petición al backend falló: no se puede afirmar que no haya verificaciones pendientes.</p>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-12 h-12 text-emerald-500 mb-4" />
+                      <h4 className="text-base font-bold text-white">¡Todo al día!</h4>
+                      <p className="text-xs text-slate-400 max-w-sm mt-1">No quedan solicitudes de verificación de prestadores pendientes en la cola.</p>
+                    </>
+                  )}
                 </div>
               ) : (
                 <div className="grid grid-cols-1 gap-6">
@@ -742,7 +898,7 @@ export default function Dashboard() {
                           ].map((doc, idx) => (
                             <a 
                               key={idx}
-                              href={doc.url} 
+                              href={doc.url ?? undefined} 
                               target="_blank"
                               rel="noreferrer"
                               className="px-4 py-2 bg-slate-950/60 border border-slate-850 hover:border-slate-700 hover:bg-slate-900 text-slate-300 text-xs font-semibold rounded-xl flex items-center gap-2 transition-all duration-300"
@@ -792,9 +948,19 @@ export default function Dashboard() {
 
               {sosAlerts.length === 0 ? (
                 <div className="bg-slate-900/20 border border-slate-900 rounded-3xl p-12 text-center flex flex-col items-center justify-center">
-                  <CheckCircle className="w-12 h-12 text-emerald-500 mb-4" />
-                  <h4 className="text-base font-bold text-white">¡No hay emergencias!</h4>
-                  <p className="text-xs text-slate-400 max-w-sm mt-1">El estado de seguridad general en Bogotá y Medellín es normal. Cero alertas SOS pendientes.</p>
+                  {failedSections.includes('sos') ? (
+                    <>
+                      <ShieldAlert className="w-12 h-12 text-rose-500 mb-4" />
+                      <h4 className="text-base font-bold text-white">No se pudieron consultar las alertas SOS</h4>
+                      <p className="text-xs text-slate-400 max-w-sm mt-1">La petición al backend falló: no se puede afirmar que no haya emergencias activas.</p>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-12 h-12 text-emerald-500 mb-4" />
+                      <h4 className="text-base font-bold text-white">¡No hay emergencias!</h4>
+                      <p className="text-xs text-slate-400 max-w-sm mt-1">El backend no reporta alertas SOS pendientes.</p>
+                    </>
+                  )}
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -813,7 +979,7 @@ export default function Dashboard() {
                             <h4 className="text-base font-black text-white">Alerta de Pánico #{alert.id}</h4>
                             <span className="text-[10px] text-slate-500 font-bold flex items-center gap-1">
                               <Clock className="w-3.5 h-3.5" />
-                              {alert.fecha_creacion}
+                              {alert.fecha_creacion ? new Date(alert.fecha_creacion).toLocaleString('es-CO') : 'Fecha no disponible'}
                             </span>
                           </div>
                         </div>
@@ -821,11 +987,11 @@ export default function Dashboard() {
                         <div className="space-y-2 text-xs">
                           <div className="flex justify-between items-center border-b border-slate-900/50 pb-2">
                             <span className="text-slate-400 font-semibold">Cliente:</span>
-                            <span className="text-white font-bold">{alert.client_name} ({alert.client_phone})</span>
+                            <span className="text-white font-bold">{alert.client_name || 'No informado'} ({alert.client_phone || 'sin teléfono'})</span>
                           </div>
                           <div className="flex justify-between items-center border-b border-slate-900/50 pb-2">
                             <span className="text-slate-400 font-semibold">Prestador:</span>
-                            <span className="text-white font-bold">{alert.provider_name} ({alert.provider_phone})</span>
+                            <span className="text-white font-bold">{alert.provider_name || 'No informado'} ({alert.provider_phone || 'sin teléfono'})</span>
                           </div>
                           <div className="flex justify-between items-center border-b border-slate-900/50 pb-2">
                             <span className="text-slate-400 font-semibold">Ubicación GPS:</span>

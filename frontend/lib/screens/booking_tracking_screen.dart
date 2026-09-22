@@ -8,6 +8,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:web_socket_channel/web_socket_channel.dart' as web_socket_channel;
 import 'chat_screen.dart';
 import '../services/api_service.dart';
+import '../services/auth_service.dart';
 import '../shared/theme.dart';
 
 class BookingTrackingScreen extends StatefulWidget {
@@ -64,11 +65,20 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen>
     super.dispose();
   }
 
-  void _connectWebSocketTracking() {
+  void _connectWebSocketTracking() async {
     try {
       final wsBase = ApiService.baseUrl.replaceFirst('http', 'ws');
       final wsUrl = '$wsBase/chat'; // Reutilizamos el endpoint configurado en index.js
       _wsChannel = web_socket_channel.WebSocketChannel.connect(Uri.parse(wsUrl));
+
+      // A360-2026-09-22/C-04: primero se registra la conexión con el token JWT; el
+      // servidor sólo deja unirse a la sala de una reserva en la que participes.
+      final token = await AuthService.getToken();
+      if (token == null || token.isEmpty) {
+        debugPrint('WS tracking: sin token, no se registra ni se une a la sala');
+        return;
+      }
+      _wsChannel!.sink.add(jsonEncode({'type': 'register', 'token': token}));
 
       // Unirse a la sala de la reserva
       final bookingId = widget.booking['id']?.toString();

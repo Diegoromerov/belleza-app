@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  allowedRoles?: Array<'CLIENTE' | 'PRESTADOR' | 'ADMIN'>;
+  allowedRoles?: Array<'CLIENTE' | 'PRESTADOR' | 'ADMIN' | 'SALON'>;
 }
 
 export default function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
@@ -17,18 +17,15 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
     if (!loading) {
       if (!user) {
         router.push('/login');
-      } else if (allowedRoles && !allowedRoles.includes(user.rol as any)) {
-        // Redirigir al dashboard correspondiente a su rol
-        if (user.rol === 'PRESTADOR') {
-          router.push('/prestador');
-        } else {
-          router.push('/cliente');
-        }
+      } else if (allowedRoles && !allowedRoles.includes(user.rol)) {
+        // Rol no autorizado para esta área: se devuelve al login.
+        // (No se redirige a otra ruta protegida: eso produciría un bucle de redirecciones.)
+        router.push('/login');
       }
     }
   }, [user, loading, router, allowedRoles]);
 
-  if (loading || !user) {
+  if (loading || !user || (allowedRoles && !allowedRoles.includes(user.rol))) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
