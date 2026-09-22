@@ -40,7 +40,6 @@ import 'screens/provider_services_screen.dart';
 import 'screens/provider_portfolio_screen.dart';
 import 'screens/chat_list_screen.dart';
 import 'screens/chat_screen.dart';
-import 'screens/client_profile_screen.dart';
 import 'screens/profile/user_profile.dart';
 import 'screens/profile/settings_screen.dart';
 import 'screens/wallet_screen.dart';
@@ -49,8 +48,6 @@ import 'screens/provider_profile_screen.dart';
 import 'screens/booking_tracking_screen.dart';
 import 'screens/booking_screen.dart';
 import 'screens/provider_route_screen.dart';
-import 'screens/ideas/ideas_empty_screen.dart';
-import 'screens/ideas/biometric_consent_screen.dart';
 import 'screens/ideas/welcome_screen.dart';
 import 'screens/support/support_center_screen.dart';
 import 'screens/support/terms_conditions_screen.dart';
@@ -59,12 +56,6 @@ import 'screens/disputes/open_dispute_screen.dart';
 import 'screens/academy/academy_screen.dart';
 import 'screens/store_screen.dart';
 import 'screens/designs/evolution_dashboard_screen.dart';
-import 'screens/designs/medical_validation_screen.dart';
-import 'screens/designs/glowup_card_screen.dart';
-import 'screens/designs/palette_card_screen.dart';
-import 'screens/designs/colorimetria_historial_screen.dart';
-import 'screens/designs/wardrobe_dashboard_screen.dart';
-import 'screens/designs/outfit_result_screen.dart';
 import 'screens/ideas/makeup_lookbook_screen.dart';
 import 'models/provider_model.dart';
 import 'shared/theme.dart';
@@ -292,15 +283,8 @@ class BeautyApp extends StatelessWidget {
 
                 // 6. Diagnósticos IA, GlowStore & Módulos Visuales
                 '/ideas': (_) => const BiometricWelcomeScreen(),
-                '/biometric-consent': (_) => const BiometricConsentScreen(),
                 '/store': (_) => const StoreScreen(),
                 '/evolution': (_) => const EvolutionDashboardScreen(),
-                '/medical-validation': (_) => const MedicalValidationScreen(),
-                '/glowup-card': (_) => const GlowUpCardScreen(),
-                '/palette-card': (_) => const PaletteCardScreen(),
-                '/colorimetria-historial': (_) => const ColorimetriaHistorialScreen(),
-                '/wardrobe': (_) => const WardrobeDashboardScreen(),
-                '/outfit-result': (_) => const OutfitResultScreen(),
                 '/makeup-lookbook': (_) => const MakeupLookbookScreen(),
 
                 // 7. Rutas ya navegadas pero NO declaradas (A360-2026-09-22/C-09).
