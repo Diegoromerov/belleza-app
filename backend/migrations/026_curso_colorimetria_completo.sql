@@ -37,9 +37,14 @@ CREATE TABLE IF NOT EXISTS academy_ai_discrepancy_log (
 
 -- 4. Semilla de Estructuración del Curso de Colorimetría
 -- Asegurar que existe el curso principal en academy_courses
+-- NOTA (fix 2026-09-22): el seed de este archivo se re-ejecuta en CADA arranque del backend.
+-- Debe ser NO destructivo (DO NOTHING): antes usaba DO UPDATE sobre IDs que también declaraba
+-- 008, y como el seed solo actualizaba title/sort_order/content_text, dejaba módulos y lecciones
+-- de otros cursos con títulos ajenos (colisión de UUID). La estructura canónica del curso de
+-- colorimetría se garantiza en 066_fix_academia_curriculum.sql.
 INSERT INTO academy_courses (id, title, description, category, badge_name) VALUES
 ('c0000000-0000-0000-0000-000000000003', 'Especialista en Colorimetría Avanzada y Tendencias de Color', 'Domina la teoría del color, decoloraciones seguras, subtonos de piel, neutralización y diagnóstico asistido por IA para potenciar tu portafolio.', 'color', 'Experta Colorista Glow')
-ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, description = EXCLUDED.description;
+ON CONFLICT (id) DO NOTHING;
 
 -- Insertar los 9 módulos secuenciales del curso (Módulo 0 al Módulo 8)
 INSERT INTO academy_modules (id, course_id, title, sort_order) VALUES
@@ -52,7 +57,7 @@ INSERT INTO academy_modules (id, course_id, title, sort_order) VALUES
 ('b0000000-0000-0000-0000-000000000006', 'c0000000-0000-0000-0000-000000000003', 'Módulo 6: Uso del Módulo IA de Colorimetría de GlowApp', 6),
 ('b0000000-0000-0000-0000-000000000007', 'c0000000-0000-0000-0000-000000000003', 'Módulo 7: Asesoría de Venta y Comunicación', 7),
 ('b0000000-0000-0000-0000-000000000008', 'c0000000-0000-0000-0000-000000000003', 'Módulo 8: Evaluación Final y Certificación', 8)
-ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, sort_order = EXCLUDED.sort_order;
+ON CONFLICT (id) DO NOTHING;
 
 -- Insertar Lecciones marcadoras para cada módulo (Lecciones en Blanco)
 INSERT INTO academy_lessons (id, module_id, title, video_url, content_text, sort_order) VALUES
@@ -80,4 +85,4 @@ INSERT INTO academy_lessons (id, module_id, title, video_url, content_text, sort
 ('a0000000-0000-0000-0000-000000000013', 'b0000000-0000-0000-0000-000000000007', '1. Protocolo de Venta Ética de 4 Pasos', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'CONTENIDO_LECCION_MODULO_7_VENTA_AQUI', 1),
 -- Módulo 8
 ('a0000000-0000-0000-0000-000000000014', 'b0000000-0000-0000-0000-000000000008', 'Examen Final Integrador y Entrega de Portafolio', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'CONTENIDO_LECCION_MODULO_8_EXAMEN_AQUI', 1)
-ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, content_text = EXCLUDED.content_text;
+ON CONFLICT (id) DO NOTHING;

@@ -4,7 +4,9 @@
 DO $$
 BEGIN
     -- FK en learning_paths.badge_id -> badges(id)
-    IF NOT EXISTS (
+    IF to_regclass('learning_paths') IS NOT NULL
+       AND to_regclass('badges') IS NOT NULL
+       AND NOT EXISTS (
         SELECT 1 FROM information_schema.table_constraints 
         WHERE table_name='learning_paths' AND constraint_name='fk_learning_paths_badge_id'
     ) THEN
@@ -14,7 +16,9 @@ BEGIN
     END IF;
 
     -- FK en user_levels.badge_id -> badges(id)
-    IF NOT EXISTS (
+    IF to_regclass('user_levels') IS NOT NULL
+       AND to_regclass('badges') IS NOT NULL
+       AND NOT EXISTS (
         SELECT 1 FROM information_schema.table_constraints 
         WHERE table_name='user_levels' AND constraint_name='fk_user_levels_badge_id'
     ) THEN
@@ -24,7 +28,9 @@ BEGIN
     END IF;
 
     -- FK en qr_certificates.certificate_id -> academy_certificates(id)
-    IF NOT EXISTS (
+    IF to_regclass('qr_certificates') IS NOT NULL
+       AND to_regclass('academy_certificates') IS NOT NULL
+       AND NOT EXISTS (
         SELECT 1 FROM information_schema.table_constraints 
         WHERE table_name='qr_certificates' AND constraint_name='fk_qr_certificates_certificate_id'
     ) THEN
