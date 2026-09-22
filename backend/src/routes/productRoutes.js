@@ -1,3 +1,4 @@
+const { wrapRouterAsync } = require('../utils/expressAsync');
 // backend/src/routes/productRoutes.js
 const express = require('express');
 const router = express.Router();
@@ -147,4 +148,5 @@ router.get('/biometric/recommended/:userId', authMiddleware, async (req, res) =>
   }
 });
 
+wrapRouterAsync(router);
 module.exports = router;

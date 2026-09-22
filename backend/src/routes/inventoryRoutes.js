@@ -1,3 +1,4 @@
+const { wrapRouterAsync } = require('../utils/expressAsync');
 // backend/src/routes/inventoryRoutes.js
 const express = require('express');
 const router = express.Router();
@@ -10,4 +11,5 @@ router.get('/inventory/consignacion', authMiddleware, inventoryController.getPro
 // 🔹 REGISTRAR CONSUMO O VENTA DE INSUMO EN SALÓN SAAS
 router.post('/inventory/consume', authMiddleware, inventoryController.consumeInventoryItem);
 
+wrapRouterAsync(router);
 module.exports = router;

@@ -1,3 +1,4 @@
+const { wrapRouterAsync } = require('../utils/expressAsync');
 // src/routes/communityRoutes.js
 const express = require('express');
 const router = express.Router();
@@ -36,4 +37,5 @@ router.post('/posts', authMiddleware, validate(postSchema), communityController.
 // Create a comment on a post
 router.post('/comments', authMiddleware, validate(commentSchema), communityController.createComment);
 
+wrapRouterAsync(router);
 module.exports = router;

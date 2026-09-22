@@ -1,3 +1,4 @@
+const { wrapRouterAsync } = require('../utils/expressAsync');
 // backend/src/routes/academyRoutes.js
 const express = require('express');
 const rateLimit = require('express-rate-limit');
@@ -585,4 +586,5 @@ router.get('/verify/:code', verifyLimiter, ah(async (req, res) => {
   });
 }));
 
+wrapRouterAsync(router);
 module.exports = router;

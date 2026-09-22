@@ -22,12 +22,13 @@ if (pgMemory.enabled) {
   sequelize.getQueryInterface().ensureEnums = async () => {};
 
 } else if (connectionString) {
+  const isInternal = connectionString.includes('railway.internal') || connectionString.includes('localhost');
   sequelize = new Sequelize(connectionString, {
     dialect: 'postgres',
-    dialectOptions: {
+    dialectOptions: isInternal ? {} : {
       ssl: {
         require: true,
-        rejectUnauthorized: false
+        rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false'
       }
     },
     logging: false

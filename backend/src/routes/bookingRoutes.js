@@ -1,3 +1,4 @@
+const { wrapRouterAsync } = require('../utils/expressAsync');
 // backend/src/routes/bookingRoutes.js
 const express = require('express');
 const router = express.Router();
@@ -32,5 +33,6 @@ router.post('/bookings/:id/review', authMiddleware, bookingController.createRevi
 // 🔹 INICIAR SERVICIO
 router.patch('/bookings/:id/start', authMiddleware, pilaCheck, bookingController.startService);
 
+wrapRouterAsync(router);
 module.exports = router;
 

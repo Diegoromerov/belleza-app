@@ -1,3 +1,4 @@
+const { wrapRouterAsync } = require('../utils/expressAsync');
 // backend/src/routes/vtoRoutes.js
 const express = require('express');
 const router = express.Router();
@@ -38,4 +39,5 @@ router.post('/nail-tryon', authMiddleware, async (req, res) => {
   }
 });
 
+wrapRouterAsync(router);
 module.exports = router;

@@ -1,3 +1,4 @@
+const { wrapRouterAsync } = require('../utils/expressAsync');
 ﻿/**
  * backend/src/routes/biometricConsentRoutes.js
  * Rutas API para gestion de consentimientos biometricos
@@ -305,4 +306,5 @@ router.get('/terms', async (req, res) => {
   }
 });
 
+wrapRouterAsync(router);
 module.exports = router;

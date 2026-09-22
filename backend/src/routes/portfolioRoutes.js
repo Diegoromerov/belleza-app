@@ -1,3 +1,4 @@
+const { wrapRouterAsync } = require('../utils/expressAsync');
 // src/routes/portfolioRoutes.js
 const express = require('express');
 const router = express.Router();
@@ -29,4 +30,5 @@ router.get('/', authMiddleware, portfolioController.listItems);
 // Create a new portfolio item
 router.post('/', authMiddleware, validate(portfolioSchema), portfolioController.createItem);
 
+wrapRouterAsync(router);
 module.exports = router;

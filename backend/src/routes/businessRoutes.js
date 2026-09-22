@@ -1,3 +1,4 @@
+const { wrapRouterAsync } = require('../utils/expressAsync');
 /**
  * GLOWAPP BUSINESS ROUTES
  * Express router for GlowApp Business Engine REST API (/api/v1/business).
@@ -116,4 +117,5 @@ router.get(
 router.get('/admin/queue', authMiddleware, adminMiddleware, businessController.getAdminQueue);
 router.put('/admin/evidence/:id', authMiddleware, adminMiddleware, businessController.reviewEvidence);
 
+wrapRouterAsync(router);
 module.exports = router;

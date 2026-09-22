@@ -1,3 +1,4 @@
+const { wrapRouterAsync } = require('../utils/expressAsync');
 const express = require('express');
 const router = express.Router();
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
@@ -79,4 +80,5 @@ router.get('/status', authMiddleware, adminMiddleware, (req, res) => {
   });
 });
 
+wrapRouterAsync(router);
 module.exports = router;

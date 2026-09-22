@@ -1,3 +1,4 @@
+const { wrapRouterAsync } = require('../utils/expressAsync');
 // backend/src/routes/glowCycleRoutes.js
 const express = require('express');
 const router = express.Router();
@@ -166,4 +167,5 @@ router.post('/:id/graduate', verifyToken, async (req, res) => {
   }
 });
 
+wrapRouterAsync(router);
 module.exports = router;

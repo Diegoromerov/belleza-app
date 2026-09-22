@@ -1,3 +1,4 @@
+const { wrapRouterAsync } = require('../utils/expressAsync');
 // backend/src/routes/serviceRoutes.js
 const express = require('express');
 const router = express.Router();
@@ -39,4 +40,5 @@ router.delete(
   serviceController.deleteService
 );
 
+wrapRouterAsync(router);
 module.exports = router;

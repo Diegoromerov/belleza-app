@@ -15,8 +15,18 @@ const authMiddleware = async (req, res, next) => {
   if (!token) return res.status(401).json({ error: 'UNAUTHORIZED' });
 
   try {
-    // PARCHE DE SEGURIDAD: Token Blacklisting con Redis (FAIL-SAFE)
-    if (redisClient && redisClient.isReady) {
+    // POLÍTICA DE SEGURIDAD: Token Blacklisting con Redis
+    // En producción (NODE_ENV === 'production'): Fail-Closed (503 si Redis no está disponible o falla).
+    // En desarrollo/test: Fail-Open con log de advertencia.
+    const isProduction = process.env.NODE_ENV === 'production';
+    if (!redisClient || !redisClient.isReady) {
+      if (isProduction) {
+        console.error('🚨 [AUTH FAIL-CLOSED] Redis no disponible en producción para verificar token blacklist');
+        return res.status(503).json({ error: 'Servicio de autenticación no disponible temporalmente.' });
+      } else {
+        console.warn('⚠️ [AUTH FAIL-OPEN] Redis deshabilitado en dev/test — omitiendo comprobación de blacklist');
+      }
+    } else {
       try {
         const isBlacklisted = await redisClient.get(`beauty:token_blacklist:${token}`);
         if (isBlacklisted) {
@@ -24,6 +34,9 @@ const authMiddleware = async (req, res, next) => {
         }
       } catch (redisErr) {
         console.error('Error de Redis en authMiddleware:', redisErr.message);
+        if (isProduction) {
+          return res.status(503).json({ error: 'Servicio de autenticación no disponible temporalmente.' });
+        }
       }
     }
 

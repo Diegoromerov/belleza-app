@@ -1,14 +1,10 @@
+const { wrapRouterAsync } = require('../utils/expressAsync');
 const express = require('express');
 const router = express.Router();
 const { register, login, logout, forgotPassword, resetPassword, oauth, onboarding, acceptBiometricsConsent, saveFcmToken, getReferralInfo, deleteAccount, changePassword, selectRole, switchContext } = require('../controllers/authController');
 const { googleSignIn } = require('../controllers/oauthController');
-const { authMiddleware, adminMiddleware } = require('../middleware/auth');
-
-const { rateLimitByIP } = require('../middleware/rateLimiter');
-const authLimiter = rateLimitByIP({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  limit: 30, // 30 intentos (basado en auditoría)
-});
+const { authMiddleware } = require('../middleware/auth');
+const { authLimiter, otpLimiter } = require('../middleware/rateLimiter');
 
 router.post('/register', authLimiter, register);
 router.post('/login', authLimiter, login);
@@ -26,4 +22,5 @@ router.get('/referral-info', authMiddleware, getReferralInfo);
 router.delete('/delete-account', authMiddleware, deleteAccount);
 router.patch('/change-password', authMiddleware, changePassword);
 
+wrapRouterAsync(router);
 module.exports = router;
