@@ -2,6 +2,11 @@ const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
+// Harness en memoria (src/config/pgMemory.js): en modo test/USE_PG_MEM el pool crudo y Sequelize
+// comparten la MISMA base pg-mem, en lugar de que el pool caiga en handleMemoryQuery (datos fabricados)
+// mientras Sequelize habla con otra BD vacía.
+const pgMemory = require('./pgMemory');
+
 // 🛡️ PARCHE DE SEGURIDAD Y AISLAMIENTO DE ENTORNOS
 const isProduction = process.env.NODE_ENV === 'production';
 const isStaging = process.env.NODE_ENV === 'staging';
@@ -10,7 +15,10 @@ if (isProduction && !process.env.DATABASE_URL) {
   console.warn('⚠️ [ENTORNO PRODUCCIÓN] DATABASE_URL no configurada explícitamente en producción.');
 }
 
-const rawPool = new Pool({
+// En modo memoria el constructor de Pool viene del adaptador de pg-mem (ignora las opciones de conexión).
+const PoolImpl = pgMemory.enabled ? pgMemory.adapter.Pool : Pool;
+
+const rawPool = new PoolImpl({
   connectionString: process.env.DATABASE_URL,
   ...(process.env.DATABASE_URL ? {} : {
     user: process.env.DB_USER || 'postgres',
@@ -421,6 +429,17 @@ let isPgAvailable = false;
 
 const pool = {
   query: async (text, params) => {
+    if (pgMemory.enabled) {
+      try {
+        return await rawPool.query(text, params);
+      } catch (err) {
+        // El harness modela las tablas del negocio; lo que aún no está modelado (flujos legacy de
+        // usuarios/salones) sigue con el fallback histórico. Se avisa para que no quede invisible.
+        if (!/does not exist|not supported|unsupported/i.test(err.message)) throw err;
+        console.warn(`⚠️ [db] Consulta no cubierta por el harness pg-mem (${text.split('\n')[0].slice(0, 70)}). Fallback en memoria.`);
+        return handleMemoryQuery(text, params);
+      }
+    }
     if (isPgAvailable === false) {
       return handleMemoryQuery(text, params);
     }
@@ -434,6 +453,9 @@ const pool = {
     }
   },
   connect: async () => {
+    if (pgMemory.enabled) {
+      return rawPool.connect();
+    }
     if (isPgAvailable === false) {
       return {
         query: async (text, params) => handleMemoryQuery(text, params),
@@ -456,6 +478,11 @@ const pool = {
 };
 
 const testConnection = async () => {
+  if (pgMemory.enabled) {
+    isPgAvailable = true;
+    console.log('✅ Conexión exitosa a PostgreSQL [harness pg-mem en memoria]');
+    return true;
+  }
   try {
     const client = await rawPool.connect();
     const res = await client.query('SELECT current_database(), current_user');
