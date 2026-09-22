@@ -1,6 +1,22 @@
 const { pool } = require('../config/db');
 
 /**
+ * El simulador de dispersión NO puede marcar dinero como pagado en producción sin
+ * pasarela real: estas funciones generaban una referencia aleatoria y escribían
+ * `transactions.status='paid'` / `retiros.estado='COMPLETADO'` sin llamar a Wompi
+ * (A360-2026-09-22/C-05). El dinero "salía del sistema" sin salir.
+ */
+const simuladorPermitido = () =>
+  process.env.NODE_ENV !== 'production' || process.env.ALLOW_PAYMENT_SIMULATOR === 'true';
+
+const rechazarSimulacion = (etiqueta, id) => {
+  throw new Error(
+    `[WOMPI] Dispersión simulada de ${etiqueta} (${id}) rechazada: la pasarela real no está integrada ` +
+    `y ALLOW_PAYMENT_SIMULATOR no está activo en producción.`
+  );
+};
+
+/**
  * Realiza la dispersión de fondos simulada de forma asíncrona usando Nequi a través de Wompi.
  * @param {string} bookingId ID de la cita.
  * @param {number} amount Monto neto a transferir al prestador.
@@ -8,6 +24,7 @@ const { pool } = require('../config/db');
  * @param {string} documentId Cédula / Identidad del titular.
  */
 exports.disbursePayout = async (bookingId, amount, nequiNumber, documentId) => {
+  if (!simuladorPermitido()) rechazarSimulacion('pago al prestador', bookingId);
   // Desacoplado: Ejecutar en segundo plano simulando la latencia de red de la API de Wompi (1.5s)
   setTimeout(async () => {
     try {
@@ -62,6 +79,7 @@ exports.disbursePayout = async (bookingId, amount, nequiNumber, documentId) => {
  * @param {object} params Datos del retiro
  */
 exports.crearPayout = async ({ retiroId, providerId, amount, numeroCuenta, banco, automatico = false }) => {
+  if (!simuladorPermitido()) rechazarSimulacion('retiro', retiroId);
   // Simular la llamada de Wompi con latencia
   setTimeout(async () => {
     try {

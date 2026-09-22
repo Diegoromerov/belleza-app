@@ -30,10 +30,23 @@ jobs:
           cd backend
           npm ci --legacy-peer-deps
 
+      - name: Escaneo de credenciales versionadas (bloqueante)
+        run: |
+          cd backend
+          node scripts/verifyNoVersionedSecrets.js
+
       - name: Run Backend Integration & Unit Tests
         run: |
           cd backend
-          npm test -- --coverage --forceExit --testPathIgnorePatterns="geminiService|geminiFallback|auraToolExecutor|contract|biometric|resilience|contextCompressor|fase5|authRoutes|api.cors"
+          npm test -- --coverage --testPathIgnorePatterns="geminiService|geminiFallback|auraToolExecutor|contract|biometric|resilience|contextCompressor|fase5|authRoutes|api.cors"
+
+      # Deuda visible, no oculta: las suites excluidas del gate se ejecutan igual
+      # para que su estado real no desaparezca del tablero (no bloqueante todavía).
+      - name: Suites excluidas del gate (no bloqueante)
+        continue-on-error: true
+        run: |
+          cd backend
+          npm test -- --testPathPattern="geminiService|geminiFallback|auraToolExecutor|contract|biometric|resilience|contextCompressor|fase5|authRoutes|api.cors"
 
   frontend-ci:
     name: Frontend Flutter Analyze & Build Check

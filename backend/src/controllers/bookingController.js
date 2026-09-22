@@ -438,6 +438,16 @@ exports.cancelBooking = async (req, res) => {
 // 🔹 Simular Pago con Wompi para una cita (Cliente) - REFACTORIZADO A SEQUELIZE TRANSACTIONS
 exports.payBooking = async (req, res) => {
   try {
+    // El simulador NUNCA debe actuar en producción: marcaba la cita como CONFIRMADA y
+    // payment_status='paid' con una referencia inventada y sin cobrar nada
+    // (A360-2026-09-22/C-05). Sin pasarela real, la respuesta honesta es 501.
+    if (process.env.NODE_ENV === 'production' && process.env.ALLOW_PAYMENT_SIMULATOR !== 'true') {
+      return res.status(501).json({
+        error: 'PAYMENT_GATEWAY_NOT_INTEGRATED',
+        message: 'La pasarela de pagos real no está integrada en este entorno. No se procesan pagos simulados.'
+      });
+    }
+
     const bookingId = req.params.id;
     const clientId = req.user.id;
     const { payment_method } = req.body;

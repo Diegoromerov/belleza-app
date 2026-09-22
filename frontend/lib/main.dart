@@ -42,6 +42,8 @@ import 'screens/chat_list_screen.dart';
 import 'screens/chat_screen.dart';
 import 'screens/client_profile_screen.dart';
 import 'screens/profile/user_profile.dart';
+import 'screens/profile/settings_screen.dart';
+import 'screens/wallet_screen.dart';
 import 'screens/profile/my_glow_dashboard_screen.dart';
 import 'screens/provider_profile_screen.dart';
 import 'screens/booking_tracking_screen.dart';
@@ -300,6 +302,40 @@ class BeautyApp extends StatelessWidget {
                 '/wardrobe': (_) => const WardrobeDashboardScreen(),
                 '/outfit-result': (_) => const OutfitResultScreen(),
                 '/makeup-lookbook': (_) => const MakeupLookbookScreen(),
+
+                // 7. Rutas ya navegadas pero NO declaradas (A360-2026-09-22/C-09).
+                //    Sin ellas, Navigator.pushNamed lanzaba "Could not find a
+                //    generator for route".
+                '/wallet': (_) => const WalletScreen(),
+                '/settings': (context) {
+                  // SettingsScreen exige userEmail; se toma del argumento real de
+                  // la navegación. Si no viene, queda vacío (no se inventa).
+                  final args = ModalRoute.of(context)?.settings.arguments;
+                  final email = args is String
+                      ? args
+                      : (args is Map ? (args['email']?.toString() ?? '') : '');
+                  return SettingsScreen(userEmail: email);
+                },
+                '/provider-detail': (context) {
+                  final args = ModalRoute.of(context)?.settings.arguments;
+                  final providerId = args is String
+                      ? args
+                      : (args is Map ? args['provider_id']?.toString() : null);
+                  if (providerId == null || providerId.trim().isEmpty) {
+                    return const Scaffold(
+                      body: Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(24.0),
+                          child: Text(
+                            'No se pudo identificar la proveedora solicitada.',
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+                  return ProviderDetailScreen(providerId: providerId);
+                },
               },
             );
           },

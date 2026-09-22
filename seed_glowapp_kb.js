@@ -1,11 +1,14 @@
 // Al principio de seed_glowapp_kb.js
-process.env.NVIDIA_API_KEY = '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'; // Pega tu clave real aquí
-process.env.DB_HOST = '127.0.0.1';
-process.env.DB_PORT = '5435';
+// La clave se toma EXCLUSIVAMENTE del entorno: nunca hardcodear credenciales aquí.
+// Esta clave estuvo versionada en git (A360-2026-09-22/C-02) y debe rotarse.
+if (!process.env.NVIDIA_API_KEY) {
+  throw new Error('❌ NVIDIA_API_KEY no está configurada en el entorno. Exporta la variable antes de correr este seed.');
+}
+process.env.DB_HOST = process.env.DB_HOST || '127.0.0.1';
+process.env.DB_PORT = process.env.DB_PORT || '5435';
 // ... resto del código
 
-console.log("CLAVE REAL LEIDA:", process.env.NVIDIA_API_KEY);
-console.log("LONGITUD:", process.env.NVIDIA_API_KEY ? process.env.NVIDIA_API_KEY.length : 0);
+// No se imprime la clave ni su longitud: eso la filtraba a los logs (A360-2026-09-22/C-06).
 const axios = require('axios');
 const { Pool } = require('pg');
 require('dotenv').config();

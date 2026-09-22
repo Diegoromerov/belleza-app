@@ -69,7 +69,7 @@ npm install
 ### Variables de Entorno Requeridas
 ```env
 # Base de datos
-DATABASE_URL=postgresql://user:pass@host:5432/db
+DATABASE_URL=postgresql://user:***@host:5432/db
 
 # NVIDIA NIM Embeddings
 NVIDIA_API_KEY=your_nvidia_api_key

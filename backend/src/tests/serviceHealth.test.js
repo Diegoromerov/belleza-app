@@ -45,7 +45,10 @@ describe('serviceHealth', () => {
       process.env.DEEPSEEK_API_KEY = 'test-key';
       process.env.GEMINI_API_KEY = 'test-key';
       process.env.NVIDIA_API_KEY = 'test-key';
-      process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
+      // Fixture de test: URL ficticia (sin credenciales reales). La sanitización de
+      // A360-2026-09-22/C-02 había dejado esta línea como autoasignación y los casos
+      // "URL presente pero conexión caída" caían en MISSING_URL.
+      process.env.DATABASE_URL = 'postgresql://test_user:test_password_placeholder@127.0.0.1:5432/test_db';
       process.env.REDIS_URL = 'redis://localhost:6379';
 
       pool.query.mockResolvedValue({ rows: [{ '?column?': 1 }] });
@@ -64,7 +67,10 @@ describe('serviceHealth', () => {
       delete process.env.DEEPSEEK_API_KEY;
       process.env.GEMINI_API_KEY = 'test-key';
       process.env.NVIDIA_API_KEY = 'test-key';
-      process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
+      // Fixture de test: URL ficticia (sin credenciales reales). La sanitización de
+      // A360-2026-09-22/C-02 había dejado esta línea como autoasignación y los casos
+      // "URL presente pero conexión caída" caían en MISSING_URL.
+      process.env.DATABASE_URL = 'postgresql://test_user:test_password_placeholder@127.0.0.1:5432/test_db';
 
       pool.query.mockResolvedValue({ rows: [{ '?column?': 1 }] });
 
@@ -97,7 +103,10 @@ describe('serviceHealth', () => {
       process.env.DEEPSEEK_API_KEY = 'test-key';
       process.env.GEMINI_API_KEY = 'test-key';
       process.env.NVIDIA_API_KEY = 'test-key';
-      process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
+      // Fixture de test: URL ficticia (sin credenciales reales). La sanitización de
+      // A360-2026-09-22/C-02 había dejado esta línea como autoasignación y los casos
+      // "URL presente pero conexión caída" caían en MISSING_URL.
+      process.env.DATABASE_URL = 'postgresql://test_user:test_password_placeholder@127.0.0.1:5432/test_db';
 
       pool.query.mockRejectedValue(new Error('Connection refused'));
 
@@ -147,7 +156,10 @@ describe('serviceHealth', () => {
       process.env.DEEPSEEK_API_KEY = 'test-key';
       process.env.GEMINI_API_KEY = 'test-key';
       process.env.NVIDIA_API_KEY = 'test-key';
-      process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
+      // Fixture de test: URL ficticia (sin credenciales reales). La sanitización de
+      // A360-2026-09-22/C-02 había dejado esta línea como autoasignación y los casos
+      // "URL presente pero conexión caída" caían en MISSING_URL.
+      process.env.DATABASE_URL = 'postgresql://test_user:test_password_placeholder@127.0.0.1:5432/test_db';
 
       pool.query.mockResolvedValue({ rows: [{ '?column?': 1 }] });
 

@@ -12,6 +12,7 @@ Future<bool?> showWompiCheckoutSheet({
   required double price,
   required String providerName,
   VoidCallback? onSuccess,
+  String itemType = 'service',
 }) {
   return showModalBottomSheet<bool>(
     context: context,
@@ -23,6 +24,7 @@ Future<bool?> showWompiCheckoutSheet({
       price: price,
       providerName: providerName,
       onSuccess: onSuccess,
+      itemType: itemType,
     ),
   );
 }
@@ -34,6 +36,10 @@ class WompiCheckoutWidget extends StatefulWidget {
   final String providerName;
   final VoidCallback? onSuccess;
 
+  /// Tipo real de la compra, declarado por quien abre el checkout.
+  /// Nunca se deduce de un id fabricado.
+  final String itemType;
+
   const WompiCheckoutWidget({
     super.key,
     required this.bookingId,
@@ -41,6 +47,7 @@ class WompiCheckoutWidget extends StatefulWidget {
     required this.price,
     required this.providerName,
     this.onSuccess,
+    this.itemType = 'service',
   });
 
   @override
@@ -92,9 +99,13 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
   @override
   void initState() {
     super.initState();
+    // A360-2026-09-22/C-03: no se emite el evento de checkout si no hay un
+    // identificador real de compra (antes se enviaba un id fabricado 'STORE_…').
+    final itemId = widget.bookingId.trim();
+    if (itemId.isEmpty) return;
     AnalyticsService().logInitiateCheckout(
-      itemType: widget.bookingId.startsWith('STORE_') ? 'product' : 'service',
-      itemId: widget.bookingId,
+      itemType: widget.itemType,
+      itemId: itemId,
       totalAmount: widget.price,
       metadata: {
         'service_name': widget.serviceName,
@@ -105,6 +116,21 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
 
   Future<void> _handlePayment() async {
     if (!_formKey.currentState!.validate()) return;
+
+    // A360-2026-09-22/C-01: no hay pasarela integrada para compras sin reserva
+    // real (p. ej. GlowShop). Antes se devolvía aquí un pago 'APPROVED' fabricado
+    // tras un Future.delayed, con una referencia inventada y sin ninguna llamada
+    // HTTP. Ese camino se elimina: sin pasarela => fallo explícito, nunca éxito.
+    if (widget.bookingId.trim().isEmpty) {
+      await HapticFeedback.vibrate();
+      setState(() {
+        _isProcessing = false;
+        _errorMsg = 'La pasarela de pago no está integrada para este tipo de '
+            'compra. No se realizó ningún cobro.';
+      });
+      return;
+    }
+
     setState(() {
       _isProcessing = true;
       _errorMsg = null;
@@ -112,22 +138,17 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
 
     try {
       final method = _selectedTab == 0 ? 'NEQUI' : 'CARD';
-      Map<String, dynamic> res;
 
-      if (widget.bookingId.startsWith('STORE_')) {
-        await Future.delayed(const Duration(seconds: 2));
-        res = {
-          'success': true,
-          'status': 'APPROVED',
-          'reference': 'wompi_store_${DateTime.now().millisecondsSinceEpoch}',
-          'amount': widget.price,
-          'payment_method': method,
-        };
-      } else {
-        res = await ApiService.payBooking(widget.bookingId, method);
-        await BookingRecoveryService.clearPendingBooking();
+      // Única fuente de verdad del resultado: la respuesta HTTP del backend.
+      final res = await ApiService.payBooking(widget.bookingId, method);
+
+      if (res['success'] != true) {
+        throw Exception(
+          res['error']?.toString() ?? 'La pasarela no confirmó el pago.',
+        );
       }
 
+      await BookingRecoveryService.clearPendingBooking();
       await HapticFeedback.lightImpact();
 
       AnalyticsService().logPurchaseSuccess(
@@ -296,7 +317,7 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
               Navigator.pop(context, true);
               if (widget.onSuccess != null) {
                 widget.onSuccess!();
-              } else if (!widget.bookingId.startsWith('STORE_')) {
+              } else if (widget.itemType == 'service') {
                 Navigator.pushNamedAndRemoveUntil(
                   context,
                   '/client-bookings',

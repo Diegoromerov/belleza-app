@@ -1572,6 +1572,16 @@ exports.requestMedicalValidation = async (req, res) => {
 
 exports.payMedicalValidation = async (req, res) => {
   try {
+    // Igual que payBooking: generaba 'wompi_val_ref_<random>' y respondía
+    // "Pago de $15.000 COP verificado por Wompi" SIN verificar ningún pago
+    // (A360-2026-09-22/C-05). Sin pasarela real, 501.
+    if (process.env.NODE_ENV === 'production' && process.env.ALLOW_PAYMENT_SIMULATOR !== 'true') {
+      return res.status(501).json({
+        error: 'PAYMENT_GATEWAY_NOT_INTEGRATED',
+        message: 'La pasarela de pagos real no está integrada en este entorno. No se procesan pagos simulados.'
+      });
+    }
+
     const userId = req.user.id;
     const { ai_diagnostic_id, profesional_id } = req.body;
 
@@ -1593,8 +1603,10 @@ exports.payMedicalValidation = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: 'Pago de $15.000 COP verificado por Wompi y solicitud registrada con éxito.',
+      // No se afirma que un proveedor verificó el pago: en este camino es una referencia local.
+      message: 'Solicitud registrada. Pago SIMULADO (entorno no productivo): la referencia no proviene de la pasarela.',
       payment_reference: refToken,
+      simulated: true,
       data: dbRes.rows[0]
     });
   } catch (error) {
@@ -1650,26 +1662,16 @@ exports.getValidationById = async (req, res) => {
   }
 };
 
+// ❌ ELIMINADO: simulateDoctorReview escribía a los 15 s una nota clínica ALEATORIA
+// (una de tres frases) en `validaciones_medicas`, marcaba estado='revisado' y la
+// firmaba como si la hubiera emitido un dermatólogo (A360-2026-09-22/C-08).
+// Una revisión profesional no se puede fabricar: la solicitud queda 'pendiente'
+// hasta que la responda una persona real.
 const simulateDoctorReview = (requestId) => {
-  setTimeout(async () => {
-    try {
-      const notes = [
-        "Se percibe una respuesta positiva de regeneración cutánea. Continúa con hidratantes con ácido hialurónico y no olvides el FPS cada 4 horas.",
-        "Se observa reducción de impurezas y sebo. Recomiendo no sobre-exfoliar la piel; mantén una limpieza suave en las mañanas y noches.",
-        "La hebra capilar muestra mejor elasticidad. Mantén el uso del sérum térmico sin sal y evita el calor directo por 2 semanas."
-      ];
-      const randomNote = notes[Math.floor(Math.random() * notes.length)];
-      await pool.query(
-        `UPDATE validaciones_medicas 
-         SET estado = 'revisado', nota_profesional = $1, fecha_respuesta = NOW(), updated_at = NOW() 
-         WHERE id = $2;`,
-        [randomNote, requestId]
-      );
-      console.log(`🩺 [SIMULATOR SUCCESS] Solicitud de validación ${requestId} revisada por el dermatólogo.`);
-    } catch (err) {
-      console.error('❌ ERROR AL SIMULAR RESPUESTA DEL DOCTOR:', err.message);
-    }
-  }, 15000);
+  console.warn(
+    `⚠️ [REVISIÓN MÉDICA] La solicitud ${requestId} queda PENDIENTE: ` +
+    'no existe revisión automática. Requiere un profesional (A360-2026-09-22/C-08).'
+  );
 };
 
 // 🔹 NUEVO: Colecciones Curadas Editoriales

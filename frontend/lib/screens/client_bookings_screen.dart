@@ -193,56 +193,35 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
     }
   }
 
-  // Simulación de pasarela de pago Wompi
-  Future<void> _runWompiCheckout(double amount, VoidCallback onSuccess) async {
-    showDialog(
+  // A360-2026-09-22/C-02: no existe endpoint de propinas en el backend
+  // (verificado con grep en backend/src/routes y backend/src/controllers: sin
+  // rutas ni controladores de propina). Antes se "simulaba" la pasarela con un
+  // Future.delayed(2500) que daba el pago por exitoso sin cobrar nada. Ahora se
+  // informa que el pago no está disponible y NO se fabrica ningún cobro.
+  Future<void> _showTipUnavailableDialog(double amount) async {
+    if (!mounted) return;
+    await showDialog<void>(
       context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return AlertDialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.payment_rounded,
-                  size: 50, color: AppTheme.primary),
-              const SizedBox(height: 20),
-              CircularProgressIndicator(color: AppTheme.primary),
-              const SizedBox(height: 20),
-              const Text(
-                'Procesando Pago Seguro Wompi',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Propina: \$${amount.toStringAsFixed(0)} COP',
-                style: const TextStyle(
-                    color: Colors.grey,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'Simulando pasarela Wompi...',
-                style: TextStyle(
-                    fontStyle: FontStyle.italic,
-                    fontSize: 11,
-                    color: Colors.grey),
-              ),
-            ],
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Text(
+          'Pago de propina no disponible',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+        content: Text(
+          'No se puede cobrar la propina de \$${amount.toStringAsFixed(0)} COP: '
+          'la pasarela de pagos aún no está integrada. Tu reseña se registrará '
+          'sin propina.',
+          style: const TextStyle(fontSize: 13),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Entendido'),
           ),
-        );
-      },
+        ],
+      ),
     );
-
-    // Simular retraso de pasarela de pago (2.5 segundos)
-    await Future.delayed(const Duration(milliseconds: 2500));
-    if (mounted) {
-      Navigator.pop(context); // Cerrar diálogo Wompi
-      onSuccess();
-    }
   }
 
   void _showRatingSheet(Map<String, dynamic> booking) {
@@ -438,6 +417,16 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                         buildTipCard('Custom', 'Personalizada', '✏️'),
                       ],
                     ),
+                    // A360-2026-09-22/C-02: aviso explícito — no hay pasarela de
+                    // propinas integrada, así que no se puede cobrar ninguna.
+                    const SizedBox(height: 8),
+                    const Text(
+                      'El cobro de propina todavía no está disponible en la app.',
+                      style: TextStyle(
+                          fontSize: 11,
+                          fontStyle: FontStyle.italic,
+                          color: Colors.grey),
+                    ),
                     if (showCustomTipField) ...[
                       const SizedBox(height: 12),
                       TextField(
@@ -535,14 +524,11 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                       onPressed: () async {
                         Navigator.pop(context); // Cerrar rating sheet
                         if (tipAmount > 0.0) {
-                          await _runWompiCheckout(tipAmount, () {
-                            _submitReviewHelper(
-                                booking['id'], ratingSelected, reviewComment);
-                          });
-                        } else {
-                          _submitReviewHelper(
-                              booking['id'], ratingSelected, reviewComment);
+                          // Sin pasarela integrada: se avisa y no se cobra nada.
+                          await _showTipUnavailableDialog(tipAmount);
                         }
+                        _submitReviewHelper(
+                            booking['id'], ratingSelected, reviewComment);
                       },
                       child: const Text('Enviar Calificación',
                           style: TextStyle(
@@ -1322,7 +1308,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 40),
                       child: Text(
-                        'Tu reseña y propina han sido procesadas correctamente. ¡Muchas gracias por tu opinión!',
+                        'Tu reseña ha sido registrada correctamente. ¡Muchas gracias por tu opinión!',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                             fontSize: 14, color: Colors.black54, height: 1.4),

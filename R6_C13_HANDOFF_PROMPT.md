@@ -232,7 +232,7 @@ npm run test 2>&1 | grep -E "^(Test Suites:|Tests:)"
 # 4. BD Integrity
 node -e "
 const {Pool}=require('pg');
-const p=new Pool({connectionString:'postgresql://admin:admin123@localhost:5435/beauty_db'});
+const p=new Pool({connectionString:process.env.DATABASE_URL});
 p.query('SELECT COUNT(*) t, COUNT(*) FILTER (WHERE embedding IS NULL) n FROM beauty_knowledge_embeddings')
   .then(r=>console.log('BD:',r.rows[0])).catch(e=>console.error(e));
 "

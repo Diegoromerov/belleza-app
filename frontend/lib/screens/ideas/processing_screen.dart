@@ -25,6 +25,7 @@ class _ProcessingScreenState extends State<ProcessingScreen> {
   String _status = 'Preparando imágenes...';
   bool _isComplete = false;
   bool _showRetry = false;
+  String? _errorDetail;
   Timer? _timeoutTimer;
 
   @override
@@ -88,15 +89,17 @@ class _ProcessingScreenState extends State<ProcessingScreen> {
         );
       });
     } catch (e, stack) {
-      debugPrint('❌ [PROCESSING SCREEN] Error o sin saldo de IA: $e\n$stack');
+      debugPrint('❌ [PROCESSING SCREEN] Error en el análisis biométrico: $e\n$stack');
+      // A360-2026-09-22/C-05: antes se navegaba a ResultsScreen con datos mock
+      // generados localmente (glowScore 84, bioAge 26…) tras el texto
+      // "✨ Generando diagnóstico de demostración…". No existe tal diagnóstico:
+      // se muestra un estado de error y NO se navega a resultados.
       if (mounted) {
-        _updateProgress(100, '✨ Generando diagnóstico de demostración...');
-        final mockResult = BiometricService.getMockBiometricResult();
-        Future.delayed(const Duration(milliseconds: 1000), () {
-          if (!mounted) return;
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => ResultsScreen(result: mockResult)),
-          );
+        setState(() {
+          _isComplete = true;
+          _showRetry = true;
+          _status = '❌ No pudimos generar tu diagnóstico';
+          _errorDetail = e.toString().replaceFirst('Exception: ', '');
         });
       }
     }
@@ -131,12 +134,20 @@ class _ProcessingScreenState extends State<ProcessingScreen> {
                     color: const Color(0xFFF3D59B).withValues(alpha: 0.25),
                     border: Border.all(color: const Color(0xFFC5A052), width: 1.5),
                   ),
-                  child: const Center(
-                    child: CircularProgressIndicator(
-                      color: Color(0xFFC5A052),
-                      strokeWidth: 2.5,
-                    ),
-                  ),
+                  child: _errorDetail != null
+                      ? const Center(
+                          child: Icon(
+                            Icons.error_outline,
+                            color: Color(0xFFB3261E),
+                            size: 40,
+                          ),
+                        )
+                      : const Center(
+                          child: CircularProgressIndicator(
+                            color: Color(0xFFC5A052),
+                            strokeWidth: 2.5,
+                          ),
+                        ),
                 ),
                 const SizedBox(height: 32),
                 Text(
@@ -182,6 +193,18 @@ class _ProcessingScreenState extends State<ProcessingScreen> {
                   ),
                 ),
                 if (_showRetry) ...[
+                  if (_errorDetail != null) ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      _errorDetail!,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 12,
+                        color: Color(0xFF8E7D7A),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 32),
                   Container(
                     height: 52,
@@ -206,6 +229,8 @@ class _ProcessingScreenState extends State<ProcessingScreen> {
                           _isComplete = false;
                           _showRetry = false;
                           _progress = 0.0;
+                          _errorDetail = null;
+                          _status = 'Preparando imágenes...';
                         });
                         _startProcessing();
                       },

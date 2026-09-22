@@ -2,7 +2,7 @@ const { Pool } = require('pg');
 const fs = require('fs');
 const path = require('path');
 
-const REAL_RAILWAY_DATABASE_URL = 'postgresql://postgres:3d3aB6gecf1dcCdB653CGD2dee23dG4A@caboose.proxy.rlwy.net:18931/railway';
+const REAL_RAILWAY_DATABASE_URL = process.env.DATABASE_URL;
 
 async function generateDump() {
   const pool = new Pool({

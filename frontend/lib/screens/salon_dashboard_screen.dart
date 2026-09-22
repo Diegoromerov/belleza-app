@@ -304,11 +304,25 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
                         }
                         setModalState(() => _isInviting = true);
                         try {
-                          final salonId = _salonData?['id'] ?? 1;
+                          // A360-2026-09-22/C-07: antes era `_salonData?['id'] ?? 1`,
+                          // que invitaba al salón 1 (otro negocio) cuando los datos
+                          // aún no habían cargado. Sin salonId real no se invita.
+                          final rawSalonId = _salonData?['id'];
+                          final salonId = rawSalonId is int
+                              ? rawSalonId
+                              : int.tryParse(rawSalonId?.toString() ?? '');
+                          if (salonId == null) {
+                            setModalState(() => _isInviting = false);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                    'No se pudo identificar tu salón. Espera a que cargue e intenta de nuevo.'),
+                              ),
+                            );
+                            return;
+                          }
                           final res = await AuthService.inviteTeamMember(
-                            salonId: salonId is int
-                                ? salonId
-                                : int.parse(salonId.toString()),
+                            salonId: salonId,
                             email: email,
                             subRol: _selectedSubRole,
                           );

@@ -64,7 +64,7 @@ async function main() {
   console.log('✅ ENV GUARD: PASS (local)');
 
   // === DB POOL ===
-  const ragPool = new Pool({ connectionString: 'postgresql://admin:admin123@localhost:5435/beauty_db', idleTimeoutMillis: 10000 });
+  const ragPool = new Pool({ connectionString: process.env.DATABASE_URL, idleTimeoutMillis: 10000 });
 
   // === BD INTEGRITY CHECK ===
   const integrity = await ragPool.query(`

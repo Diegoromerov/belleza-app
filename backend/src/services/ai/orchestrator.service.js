@@ -12,12 +12,19 @@ const AVAILABLE_TOOLS = {
         return { success: false, error: 'Falta el parámetro file_path' };
       }
       
-      const basePath = path.resolve(process.cwd(), '../../'); 
-      const filePath = path.join(basePath, args.file_path);
-      
-      // Seguridad: evitar traversal fuera del proyecto
-      if (!filePath.startsWith(basePath)) {
+      // El guard anterior resolvía a la RAÍZ del sistema: con cwd=backend,
+      // `path.resolve(process.cwd(), '../../')` daba 'C:/' (o '/' dentro del contenedor),
+      // así que `startsWith(basePath)` no acotaba absolutamente nada (A360-2026-09-22/A-17).
+      const repoRoot = path.resolve(__dirname, '../../../..');
+      const filePath = path.resolve(repoRoot, args.file_path);
+      const dentroDelRepo = filePath === repoRoot || filePath.startsWith(repoRoot + path.sep);
+      if (!dentroDelRepo) {
         return { success: false, error: 'Acceso denegado: ruta fuera del proyecto' };
+      }
+
+      // Rutas que no se leen por esta vía ni dentro del repo.
+      if (/(^|[\\/])(\.env[^\\/]*|\.git|node_modules|scratch)([\\/]|$)|\.(pem|key|p12)$/i.test(filePath)) {
+        return { success: false, error: 'Acceso denegado: ruta excluida (credenciales o dependencias)' };
       }
       
       // Validar que sea archivo, no carpeta

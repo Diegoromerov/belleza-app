@@ -154,14 +154,15 @@ router.post('/bookings/:id/complete', authMiddleware, async (req, res) => {
 
     await client.query('COMMIT');
 
-    console.log(`📱 OTP para reserva ${id}: ${codigo} (vigente ${vigenciaMin} min)`);
+    // El código OTP no se registra en logs (A360-2026-09-22/C-06) ni se devuelve al cliente
+    // salvo opt-in explícito de desarrollo: antes bastaba con que NODE_ENV no fuera exactamente 'production'.
 
     res.json({
       ok: true,
       mensaje: 'Servicio marcado como completado. Se envió el código al cliente.',
       otp_expira_at: expiraAt,
       otp_vigencia_minutos: vigenciaMin,
-      ...(process.env.NODE_ENV !== 'production' && { otp_dev: codigo })
+      ...(process.env.NODE_ENV !== 'production' && process.env.EXPOSE_DEV_OTP === 'true' && { otp_dev: codigo })
     });
   } catch (err) {
     await client.query('ROLLBACK');

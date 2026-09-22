@@ -23,6 +23,10 @@ class _QuizScreenState extends State<QuizScreen> {
   bool _isSubmitting = false;
   Map<String, dynamic>? _result;
 
+  // Umbral de aprobación e intentos restantes que informa el backend
+  int _passPct = 80;
+  int? _attemptsLeft;
+
   @override
   void initState() {
     super.initState();
@@ -38,11 +42,22 @@ class _QuizScreenState extends State<QuizScreen> {
         _userAnswers.clear();
       });
       final data = await ApiService.get('/api/academy/courses/${widget.courseId}/quiz');
+      // El backend puede responder la lista de preguntas o el objeto
+      // { questions, passPct, attemptsLeft } (formato nuevo con umbral e intentos).
+      final List<dynamic> questions = (data is Map && data['questions'] is List)
+          ? data['questions'] as List<dynamic>
+          : (data is List ? data : <dynamic>[]);
+      if (!mounted) return;
       setState(() {
-        _questions = data;
+        _questions = questions;
+        if (data is Map) {
+          if (data['passPct'] is int) _passPct = data['passPct'] as int;
+          if (data['attemptsLeft'] is int) _attemptsLeft = data['attemptsLeft'] as int;
+        }
         _isLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = 'Error al cargar cuestionario: $e';
         _isLoading = false;
@@ -77,15 +92,17 @@ class _QuizScreenState extends State<QuizScreen> {
         {'answers': answersMap},
       );
 
+      if (!mounted) return;
       setState(() {
-        _result = res;
+        _result = res is Map<String, dynamic> ? res : Map<String, dynamic>.from(res as Map);
+        if (_result!['attemptsLeft'] is int) _attemptsLeft = _result!['attemptsLeft'] as int;
         _isSubmitting = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _isSubmitting = false;
       });
-      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error al enviar examen: $e'), backgroundColor: Colors.redAccent),
       );
@@ -184,6 +201,21 @@ class _QuizScreenState extends State<QuizScreen> {
                           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.black87),
                           textAlign: TextAlign.center,
                         ),
+                        // Código público verificable del certificado (antes el certificado
+                        // se emitía sin ningún identificador consultable).
+                        if ((_result!['certificateCode']?.toString() ?? '').isNotEmpty) ...[
+                          const SizedBox(height: 16),
+                          Text(
+                            'Código de verificación: ${_result!['certificateCode']}',
+                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black87),
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'Comparte este código para que cualquiera pueda verificar tu certificado.',
+                            style: TextStyle(fontSize: 11, color: Colors.black54),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
                       ],
                     ),
                   ),

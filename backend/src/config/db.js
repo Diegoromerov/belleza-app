@@ -425,7 +425,30 @@ function handleMemoryQuery(text, params = []) {
   return { rows: [] };
 }
 
-let isPgAvailable = false;
+// null = aún sin determinar; false = el último intento real falló.
+// A360-2026-09-22/C-03.
+let isPgAvailable = null;
+
+// Marca explícita de que se están sirviendo datos FABRICADOS. Se expone en /api/health:
+// la degradación debe ser visible, nunca silenciosa ni permanente.
+let servingFabricatedData = false;
+
+/**
+ * El fallback a datos en memoria solo es aceptable en el harness de test o con
+ * un opt-in explícito. En producción NUNCA: devolver filas inventadas con HTTP 200
+ * es peor que un error, porque el usuario y la app las tratan como reales.
+ */
+const memoryFallbackAllowed = () =>
+  pgMemory.enabled ||
+  process.env.NODE_ENV === 'test' ||
+  process.env.ALLOW_MEMORY_FALLBACK === 'true';
+
+const fallbackOrThrow = (text, params, err) => {
+  if (!memoryFallbackAllowed()) throw err;
+  servingFabricatedData = true;
+  console.warn(`⚠️ [db] Sin PostgreSQL: respuesta desde datos en memoria (${String(text).split('\n')[0].slice(0, 80)}) — ${err.message}`);
+  return handleMemoryQuery(text, params);
+};
 
 const pool = {
   query: async (text, params) => {
@@ -440,34 +463,33 @@ const pool = {
         return handleMemoryQuery(text, params);
       }
     }
-    if (isPgAvailable === false) {
-      return handleMemoryQuery(text, params);
-    }
     try {
       const res = await rawPool.query(text, params);
       isPgAvailable = true;
+      servingFabricatedData = false;
       return res;
     } catch (err) {
+      // El corto-circuito anterior (`if (isPgAvailable === false) return handleMemoryQuery`)
+      // dejaba el proceso sirviendo fixtures para siempre: una sola excepción SQL lo sacaba
+      // del camino real y ya nunca volvía a intentar la BD.
       isPgAvailable = false;
-      return handleMemoryQuery(text, params);
+      return fallbackOrThrow(text, params, err);
     }
   },
   connect: async () => {
     if (pgMemory.enabled) {
       return rawPool.connect();
     }
-    if (isPgAvailable === false) {
-      return {
-        query: async (text, params) => handleMemoryQuery(text, params),
-        release: () => {}
-      };
-    }
     try {
       const client = await rawPool.connect();
       isPgAvailable = true;
+      servingFabricatedData = false;
       return client;
     } catch (err) {
       isPgAvailable = false;
+      if (!memoryFallbackAllowed()) throw err;
+      servingFabricatedData = true;
+      console.warn('⚠️ [db] Sin conexión a PostgreSQL: cliente en memoria (solo test/opt-in explícito).');
       return {
         query: async (text, params) => handleMemoryQuery(text, params),
         release: () => {}
@@ -492,10 +514,24 @@ const testConnection = async () => {
     return true;
   } catch (err) {
     isPgAvailable = false;
-    console.warn('⚠️ PostgreSQL local no disponible — Activando modo de persistencia en memoria local');
-    return true;
+    if (memoryFallbackAllowed()) {
+      servingFabricatedData = true;
+      console.warn('⚠️ PostgreSQL no disponible — modo en memoria (solo test/opt-in explícito ALLOW_MEMORY_FALLBACK):', err.message);
+      return true;
+    }
+    // Antes devolvía `true` aquí: el arranque continuaba creyendo que había BD
+    // mientras todas las respuestas salían de datos fabricados.
+    console.error('❌ PostgreSQL no disponible:', err.message);
+    return false;
   }
 };
+
+/** Estado real de la capa de datos, para /api/health. */
+const getDbStatus = () => ({
+  pgAvailable: isPgAvailable,
+  servingFabricatedData,
+  memoryFallbackAllowed: memoryFallbackAllowed(),
+});
 
 // ── Conexión a la base de datos RAG (pgvector) ──
 const ragPool = process.env.RAG_DATABASE_URL
@@ -525,4 +561,4 @@ const testRagConnection = async () => {
   }
 };
 
-module.exports = { pool, testConnection, ragPool, testRagConnection };
+module.exports = { pool, testConnection, getDbStatus, ragPool, testRagConnection };

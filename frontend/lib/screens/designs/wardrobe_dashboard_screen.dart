@@ -200,8 +200,17 @@ class _WardrobeDashboardScreenState extends State<WardrobeDashboardScreen> with 
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                   ),
                   onPressed: () {
+                    // A360-2026-09-22/C-09: '/glowaipremium' no existía como
+                    // ruta ni como pantalla en lib/screens/. Antes se navegaba
+                    // igual y Flutter lanzaba "Could not find a generator".
+                    final messenger = ScaffoldMessenger.of(context);
                     Navigator.pop(context);
-                    Navigator.pushNamed(context, '/glowaipremium');
+                    messenger.showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                            'GlowAI Premium aún no está disponible: función no disponible aún.'),
+                      ),
+                    );
                   },
                   child: const Text('Obtener GlowAI Premium', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),

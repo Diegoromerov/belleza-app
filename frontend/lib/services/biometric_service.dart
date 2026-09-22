@@ -107,23 +107,31 @@ class BiometricService {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         return jsonDecode(response.body);
-      } else {
-        debugPrint('⚠️ [BiometricService] Servidor respondió con ${response.statusCode}. Activando Mock Fallback.');
-        return getMockBiometricJson();
       }
+      // A360-2026-09-22/C-04: antes se devolvían aquí datos biométricos
+      // inventados (glowScore 84, bioAge 26…) ante cualquier respuesta no-2xx.
+      // Nunca se fabrican resultados: el error se propaga.
+      throw Exception(
+        'El análisis biométrico falló (HTTP ${response.statusCode}). '
+        'No se generó ningún diagnóstico.',
+      );
     } catch (e) {
-      debugPrint('⚠️ [BiometricService] Error de red o sin saldo en modelos IA: $e. Activando Mock Fallback.');
-      return getMockBiometricJson();
+      debugPrint('❌ [BiometricService] Análisis biométrico fallido: $e');
+      throw Exception('No se pudo completar el análisis biométrico: $e');
     }
   }
 
-  /// Retorna un resultado simulado de alta fidelidad para navegar el flujo completo sin saldo de IA
-  static BiometricResult getMockBiometricResult() {
-    return BiometricResult.fromJson(getMockBiometricJson());
+  /// Resultado de demostración. SÓLO puede invocarse desde un punto de entrada
+  /// de demo explícito y visible para el usuario (botón "Modo Demostración").
+  /// Está prohibido usarlo como fallback ante errores de red o del servidor
+  /// (A360-2026-09-22/C-04).
+  static BiometricResult getDemoBiometricResult() {
+    return BiometricResult.fromJson(getDemoBiometricJson());
   }
 
-  /// Mock JSON completo integrando Evimetra (0-100), Bioderma (4 familias) y Media.io (VTO tones)
-  static Map<String, dynamic> getMockBiometricJson() {
+  /// Mock JSON completo integrando Evimetra (0-100), Bioderma (4 familias) y Media.io (VTO tones).
+  /// Datos NO reales: ver [getDemoBiometricResult] para las condiciones de uso.
+  static Map<String, dynamic> getDemoBiometricJson() {
     return {
       'profileId': 'glow_mock_profile_2026',
       'glowScore': 84,
@@ -281,37 +289,14 @@ class BiometricService {
               .toList();
         }
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('❌ [BiometricService] Error cargando productos recomendados: $e');
+    }
 
-    return [
-      ProductDetail(
-        barcode: '770123456789',
-        name: 'Serum Cera-Hyaluronic Booster 30ml',
-        brand: 'GlowLab Clinical',
-        price: '\$78.000 COP',
-        categories: 'Cuidado Facial, Hidratación',
-        compatible: true,
-        compatibilityReason: 'Formulado con Ácido Hialurónico al 2% para restaurar la barrera cutánea identificada en tu GlowScore.',
-      ),
-      ProductDetail(
-        barcode: '340134883441',
-        name: 'Photoderm Nude Touch SPF 50+ Muy Claro',
-        brand: 'Bioderma',
-        price: '\$95.000 COP',
-        categories: 'Protección Solar con Color',
-        compatible: true,
-        compatibilityReason: 'Acabado mate aterciopelado perfecto para el control de sebo y poros sugerido por la IA.',
-      ),
-      ProductDetail(
-        barcode: '770987654321',
-        name: 'Aceite Reparador de Cutículas & Uñas',
-        brand: 'Aura Luxe Atelier',
-        price: '\$45.000 COP',
-        categories: 'Manicura Profesional',
-        compatible: true,
-        compatibilityReason: 'Nutrición con óleo de jojoba y vitamina E para preparar tus manos previo al esmaltado VTO.',
-      ),
-    ];
+    // A360-2026-09-22/C-04: antes se devolvía aquí una lista de productos
+    // inventados (barcodes, precios y marcas ficticias). Sin respuesta real del
+    // backend no hay recomendaciones: se devuelve vacío, nunca datos fabricados.
+    return [];
   }
 
   static Future<ProductDetail?> checkProduct(String barcode) async {

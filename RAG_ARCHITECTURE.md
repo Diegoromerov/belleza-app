@@ -183,8 +183,8 @@ services:
 
 ```bash
 # Local development - NO USAR EN PRODUCCIÓN
-RAG_DATABASE_URL=postgresql://postgres:postgres@localhost:5435/beauty_rag_local
-DATABASE_URL=postgresql://postgres:postgres@localhost:5435/beauty_rag_local
+RAG_DATABASE_URL=postgresql://postgres:***@localhost:5435/beauty_rag_local
+DATABASE_URL=postgresql://postgres:***@localhost:5435/beauty_rag_local
 REDIS_URL=redis://localhost:6379
 
 # NVIDIA (requerido para embeddings reales)
@@ -223,7 +223,7 @@ cp .env.example .env.local
 # Editar .env.local con RAG_DATABASE_URL local + NVIDIA_API_KEY
 
 # 5. Ejecutar ingestión
-RAG_DATABASE_URL=postgresql://postgres:postgres@localhost:5435/beauty_rag_local \
+RAG_DATABASE_URL=postgresql://postgres:***@localhost:5435/beauty_rag_local \
 NVIDIA_API_KEY=xxx \
 node scripts/ingestBeautyKnowledge.js
 

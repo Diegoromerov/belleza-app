@@ -6,9 +6,12 @@ import '../shared/theme.dart';
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
-  NotificationService._internal() {
-    _startMockNotificationGenerator();
-  }
+
+  // A360-2026-09-22/C-08: el constructor ya NO arranca un generador de
+  // notificaciones falsas cada 45 s (ofertas y nombres inventados) cuyo timer
+  // nunca se cancelaba. La única instancia de navigatorKey vive aquí y la
+  // comparte el MaterialApp (ver main.dart y GlowGuideService).
+  NotificationService._internal();
 
   static final GlobalKey<NavigatorState> navigatorKey =
       GlobalKey<NavigatorState>();
@@ -19,30 +22,19 @@ class NotificationService {
   Stream<Map<String, dynamic>> get notificationsStream =>
       _notificationController.stream;
 
-  Timer? _mockTimer;
-
-  void _startMockNotificationGenerator() {
-    _mockTimer = Timer.periodic(const Duration(seconds: 45), (timer) {
-      final mockNotif = {
-        'id': DateTime.now().millisecondsSinceEpoch.toString(),
-        'title': '✨ ¡Nueva oferta de belleza!',
-        'body': 'Carlos Daniel tiene un 20% de descuento en manicura hoy.',
-        'timestamp': DateTime.now().toIso8601String(),
-      };
-      _notificationController.add(mockNotif);
-      showInAppNotification(mockNotif);
-    });
-  }
-
-  void triggerMockNotification({String? title, String? body}) {
-    final mockNotif = {
+  /// Publica una notificación in-app con datos REALES aportados por quien la
+  /// dispara (p. ej. una validación médica que sí ocurrió). No inventa
+  /// contenido: sin datos reales no hay notificación (A360-2026-09-22/C-08).
+  void notify({required String title, required String body}) {
+    if (title.trim().isEmpty || body.trim().isEmpty) return;
+    final notification = {
       'id': DateTime.now().millisecondsSinceEpoch.toString(),
-      'title': title ?? '🔔 Recordatorio de Cita',
-      'body': body ?? 'Tu cita de cejas con María Paula inicia en 15 minutos.',
+      'title': title,
+      'body': body,
       'timestamp': DateTime.now().toIso8601String(),
     };
-    _notificationController.add(mockNotif);
-    showInAppNotification(mockNotif);
+    _notificationController.add(notification);
+    showInAppNotification(notification);
   }
 
   void showInAppNotification(Map<String, dynamic> notification) {
@@ -150,7 +142,6 @@ class NotificationService {
   }
 
   void dispose() {
-    _mockTimer?.cancel();
     _notificationController.close();
   }
 }

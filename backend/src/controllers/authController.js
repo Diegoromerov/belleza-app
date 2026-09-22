@@ -84,7 +84,8 @@ exports.login = async (req, res) => {
     const { email, password } = req.body;
     
     if (!email || !password) {
-      console.log("❌ VALIDACIÓN FALLIDA: Faltan campos. Email:", email, "Password:", password);
+      // Nunca registrar la contraseña: la línea anterior imprimía `Password:` en claro (A360-2026-09-22/C-06).
+      console.log("❌ VALIDACIÓN FALLIDA: Faltan campos. Email:", email);
       return res.status(400).json({ error: 'Email y contraseña son obligatorios' });
     }
 

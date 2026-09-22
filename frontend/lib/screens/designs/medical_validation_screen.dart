@@ -90,7 +90,7 @@ class _MedicalValidationScreenState extends State<MedicalValidationScreen> {
           final newVal = newHistory.firstWhere((element) => element['id'] == oldVal['id'], orElse: () => <String, dynamic>{});
           if (newVal.isNotEmpty && oldVal['estado'] == 'pendiente' && newVal['estado'] == 'revisado') {
             // Gatillar notificación local
-            NotificationService().triggerMockNotification(
+            NotificationService().notify(
               title: '🩺 Validación Médica Lista',
               body: '${newVal['profesional_nombre']} ha revisado tu diagnóstico de piel.',
             );
