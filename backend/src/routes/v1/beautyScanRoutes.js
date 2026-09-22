@@ -82,6 +82,12 @@ router.post('/', authMiddleware, upload.fields([
         }
       });
     }
+    // Alineacion de contrato: si el worker respondio un 4xx (imagen corrupta,
+    // sin rostro detectable, campo faltante), se propaga su codigo y detalle en
+    // lugar de enmascararlo con un 500 generico.
+    if (error.response) {
+      return res.status(error.response.status).json(error.response.data);
+    }
     return res.status(500).json({ error: 'Error procesando escaneo capilar/facial' });
   }
 });
