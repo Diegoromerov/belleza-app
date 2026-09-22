@@ -28,8 +28,34 @@ const paymentLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// 4. Helper dinámico para rate limit por usuario (ej: Chat)
+const rateLimitByUser = (options = {}) => {
+  return rateLimit({
+    windowMs: options.windowMs || 15 * 60 * 1000,
+    max: (process.env.NODE_ENV === 'test') ? 1000 : (options.max || 100),
+    message: { error: 'Demasiados mensajes de chat. Por favor intente más tarde.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+    validate: { xForwardedForHeader: false, default: false },
+    keyGenerator: (req) => (req.user && req.user.id ? String(req.user.id) : req.ip),
+  });
+};
+
+// 5. Helper por IP arbitrario
+const rateLimitByIP = (options = {}) => {
+  return rateLimit({
+    windowMs: options.windowMs || 15 * 60 * 1000,
+    max: (process.env.NODE_ENV === 'test') ? 1000 : (options.limit || options.max || 100),
+    message: { error: 'Demasiadas solicitudes desde esta IP.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+};
+
 module.exports = {
   authLimiter,
   otpLimiter,
   paymentLimiter,
+  rateLimitByUser,
+  rateLimitByIP,
 };
