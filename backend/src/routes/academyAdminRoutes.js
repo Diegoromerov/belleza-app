@@ -5,6 +5,8 @@ const router = express.Router();
 const { pool } = require('../config/db');
 const { authMiddleware } = require('../middleware/auth');
 const adminMiddleware = require('../middleware/admin');
+const academy = require('../services/academyService');
+const { wrapRouterAsync } = require('../utils/expressAsync');
 
 // Aplicar middlewares a todas las rutas
 router.use(authMiddleware, adminMiddleware);
@@ -38,7 +40,8 @@ router.get('/courses', async (req, res) => {
         SELECT course_id, COUNT(*) as count FROM academy_quizzes GROUP BY course_id
       ) q ON q.course_id = c.id
       LEFT JOIN (
-        SELECT course_id, COUNT(*) as count FROM academy_certificates GROUP BY course_id
+        SELECT course_id, COUNT(*) as count FROM academy_certificates
+        WHERE revoked = FALSE GROUP BY course_id
       ) cert ON cert.course_id = c.id
       LEFT JOIN (
         SELECT m.course_id, COUNT(DISTINCT p.provider_id) as count
@@ -47,6 +50,7 @@ router.get('/courses', async (req, res) => {
         JOIN academy_modules m ON l.module_id = m.id
         GROUP BY m.course_id
       ) prog ON prog.course_id = c.id
+      WHERE c.deleted_at IS NULL
       ORDER BY c.created_at DESC
     `);
     res.json(rows);
@@ -58,22 +62,24 @@ router.get('/courses', async (req, res) => {
 
 // POST /api/admin/academy/courses - Crear nuevo curso
 router.post('/courses', async (req, res) => {
+  const { title, description, category, badge_name } = req.body || {};
+
+  // Validar ANTES de abrir la transacción: un `return` con la conexión tomada
+  // dejaba la conexión en `idle in transaction` (pg-pool no hace ROLLBACK solo).
+  if (!title || !description || !category || !badge_name) {
+    return res.status(400).json({ error: 'Faltan campos obligatorios: title, description, category, badge_name' });
+  }
+
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    
-    const { title, description, category, badge_name } = req.body;
-    
-    if (!title || !description || !category || !badge_name) {
-      return res.status(400).json({ error: 'Faltan campos obligatorios: title, description, category, badge_name' });
-    }
-    
+
     const { rows } = await client.query(`
       INSERT INTO academy_courses (title, description, category, badge_name)
       VALUES ($1, $2, $3, $4)
       RETURNING *
     `, [title, description, category, badge_name]);
-    
+
     await client.query('COMMIT');
     res.status(201).json(rows[0]);
   } catch (err) {
@@ -110,12 +116,27 @@ router.get('/courses/:id', async (req, res) => {
     const quizzesRes = await pool.query(`
       SELECT * FROM academy_quizzes WHERE course_id = $1
     `, [courseId]);
-    
+
+    // Métricas reales del curso (antes la UI mostraba "Certificados: 0" hardcodeado)
+    const statsRes = await pool.query(`
+      SELECT
+        (SELECT COUNT(*)::int FROM academy_certificates WHERE course_id = $1 AND revoked = FALSE) as certificates_issued,
+        (SELECT COUNT(*)::int FROM academy_certificates WHERE course_id = $1 AND revoked = TRUE) as certificates_revoked,
+        (SELECT COUNT(*)::int FROM academy_quiz_attempts WHERE course_id = $1) as quiz_attempts,
+        (SELECT COUNT(DISTINCT provider_id)::int FROM academy_quiz_attempts WHERE course_id = $1) as providers_attempted,
+        (SELECT COUNT(DISTINCT p.provider_id)::int
+           FROM academy_progress p
+           JOIN academy_lessons l ON p.lesson_id = l.id
+           JOIN academy_modules m ON l.module_id = m.id
+          WHERE m.course_id = $1) as providers_enrolled
+    `, [courseId]);
+
     res.json({
       course: courseRes.rows[0],
       modules: modulesRes.rows,
       lessons: lessonsRes.rows,
-      quizzes: quizzesRes.rows
+      quizzes: quizzesRes.rows,
+      stats: statsRes.rows[0]
     });
   } catch (err) {
     console.error('Error al obtener curso admin:', err);
@@ -150,20 +171,47 @@ router.put('/courses/:id', async (req, res) => {
   }
 });
 
-// DELETE /api/admin/academy/courses/:id - Eliminar curso (cascada)
+// DELETE /api/admin/academy/courses/:id - Archivar curso (soft delete)
+// Antes borraba en cascada: perdía progreso y credenciales ya emitidas.
 router.delete('/courses/:id', async (req, res) => {
   try {
     const courseId = req.params.id;
-    const { rowCount } = await pool.query('DELETE FROM academy_courses WHERE id = $1', [courseId]);
-    
+    const { rowCount } = await pool.query(
+      'UPDATE academy_courses SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL',
+      [courseId]
+    );
+
     if (rowCount === 0) {
+      return res.status(404).json({ error: 'Curso no encontrado o ya archivado.' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Curso archivado. Los certificados ya emitidos siguen siendo verificables.',
+      softDelete: true
+    });
+  } catch (err) {
+    console.error('Error al archivar curso:', err);
+    res.status(500).json({ error: 'Error al archivar curso.' });
+  }
+});
+
+// POST /api/admin/academy/courses/:id/restore - Reactivar un curso archivado
+router.post('/courses/:id/restore', async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      'UPDATE academy_courses SET deleted_at = NULL WHERE id = $1 RETURNING *',
+      [req.params.id]
+    );
+
+    if (!rows.length) {
       return res.status(404).json({ error: 'Curso no encontrado.' });
     }
-    
-    res.json({ success: true, message: 'Curso eliminado correctamente.' });
+
+    res.json(rows[0]);
   } catch (err) {
-    console.error('Error al eliminar curso:', err);
-    res.status(500).json({ error: 'Error al eliminar curso.' });
+    console.error('Error al restaurar curso:', err);
+    res.status(500).json({ error: 'Error al restaurar curso.' });
   }
 });
 
@@ -246,17 +294,30 @@ router.delete('/modules/:id', async (req, res) => {
 
 // POST /api/admin/academy/modules/reorder - Reordenar módulos
 router.post('/modules/reorder', async (req, res) => {
+  const { modules } = req.body || {};
+
+  // Validar ANTES de tomar la conexión (evita `idle in transaction` en el 400)
+  if (!Array.isArray(modules) || modules.length === 0) {
+    return res.status(400).json({ error: 'Se espera un array "modules" con [{ id, sort_order }].' });
+  }
+  const invalido = modules.some((m) => !m || !academy.isUuid(m.id) || !Number.isFinite(Number(m.sort_order)));
+  if (invalido) {
+    return res.status(400).json({ error: 'Cada entrada requiere id (UUID) y sort_order numérico.' });
+  }
+
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    const { modules } = req.body; // [{ id, sort_order }, ...]
-    
+
     for (const m of modules) {
-      await client.query('UPDATE academy_modules SET sort_order = $1 WHERE id = $2', [m.sort_order, m.id]);
+      await client.query(
+        'UPDATE academy_modules SET sort_order = $1 WHERE id = $2',
+        [Number(m.sort_order), m.id]
+      );
     }
-    
+
     await client.query('COMMIT');
-    res.json({ success: true });
+    res.json({ success: true, updated: modules.length });
   } catch (err) {
     await client.query('ROLLBACK');
     console.error('Error al reordenar módulos:', err);
@@ -346,17 +407,30 @@ router.delete('/lessons/:id', async (req, res) => {
 
 // POST /api/admin/academy/lessons/reorder - Reordenar lecciones
 router.post('/lessons/reorder', async (req, res) => {
+  const { lessons } = req.body || {};
+
+  // Validar ANTES de tomar la conexión (evita `idle in transaction` en el 400)
+  if (!Array.isArray(lessons) || lessons.length === 0) {
+    return res.status(400).json({ error: 'Se espera un array "lessons" con [{ id, sort_order }].' });
+  }
+  const invalido = lessons.some((l) => !l || !academy.isUuid(l.id) || !Number.isFinite(Number(l.sort_order)));
+  if (invalido) {
+    return res.status(400).json({ error: 'Cada entrada requiere id (UUID) y sort_order numérico.' });
+  }
+
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    const { lessons } = req.body; // [{ id, sort_order, module_id }, ...]
-    
+
     for (const l of lessons) {
-      await client.query('UPDATE academy_lessons SET sort_order = $1 WHERE id = $2', [l.sort_order, l.id]);
+      await client.query(
+        'UPDATE academy_lessons SET sort_order = $1 WHERE id = $2',
+        [Number(l.sort_order), l.id]
+      );
     }
-    
+
     await client.query('COMMIT');
-    res.json({ success: true });
+    res.json({ success: true, updated: lessons.length });
   } catch (err) {
     await client.query('ROLLBACK');
     console.error('Error al reordenar lecciones:', err);
@@ -453,16 +527,22 @@ router.get('/stats', async (req, res) => {
   try {
     const { rows } = await pool.query(`
       SELECT 
-        (SELECT COUNT(*) FROM academy_courses) as total_courses,
+        (SELECT COUNT(*) FROM academy_courses WHERE deleted_at IS NULL) as total_courses,
+        (SELECT COUNT(*) FROM academy_courses WHERE deleted_at IS NOT NULL) as archived_courses,
         (SELECT COUNT(*) FROM academy_modules) as total_modules,
         (SELECT COUNT(*) FROM academy_lessons) as total_lessons,
         (SELECT COUNT(*) FROM academy_quizzes) as total_quizzes,
         (SELECT COUNT(*) FROM academy_certificates) as total_certificates,
+        (SELECT COUNT(*) FROM academy_certificates WHERE revoked = FALSE) as valid_certificates,
+        (SELECT COUNT(*) FROM academy_certificates WHERE revoked = TRUE) as revoked_certificates,
+        (SELECT COUNT(*) FROM academy_quiz_attempts) as total_quiz_attempts,
+        (SELECT COUNT(*) FROM academy_quiz_attempts WHERE passed = TRUE) as approved_attempts,
+        (SELECT COUNT(*) FROM academy_consentimientos WHERE aceptado = TRUE) as active_consents,
         (SELECT COUNT(DISTINCT provider_id) FROM academy_progress) as active_learners,
         (SELECT COUNT(*) FROM academy_progress WHERE completed = true) as completed_lessons_total
     `);
     
-    // Cursos más populares
+    // Cursos más populares (excluye archivados)
     const popularRes = await pool.query(`
       SELECT c.id, c.title, c.badge_name,
         COUNT(DISTINCT p.provider_id) as enrolled_count,
@@ -471,14 +551,17 @@ router.get('/stats', async (req, res) => {
       LEFT JOIN academy_modules m ON m.course_id = c.id
       LEFT JOIN academy_lessons l ON l.module_id = m.id
       LEFT JOIN academy_progress p ON p.lesson_id = l.id
+      WHERE c.deleted_at IS NULL
       GROUP BY c.id
       ORDER BY enrolled_count DESC
       LIMIT 5
     `);
     
-    // Certificados por curso
+    // Certificados por curso (vigentes y revocados)
     const certsRes = await pool.query(`
-      SELECT c.title, c.badge_name, COUNT(cert.*) as certificates_count
+      SELECT c.title, c.badge_name,
+        COUNT(cert.id) FILTER (WHERE cert.revoked = FALSE) as certificates_count,
+        COUNT(cert.id) FILTER (WHERE cert.revoked = TRUE) as revoked_count
       FROM academy_certificates cert
       JOIN academy_courses c ON c.id = cert.course_id
       GROUP BY c.id
@@ -495,5 +578,83 @@ router.get('/stats', async (req, res) => {
     res.status(500).json({ error: 'Error al obtener estadísticas.' });
   }
 });
+
+// ============================================================
+// CERTIFICADOS (verificación, revocación y reinicio de intentos)
+// ============================================================
+
+// GET /api/admin/academy/certificates - Certificados emitidos con su estado
+router.get('/certificates', async (req, res) => {
+  const { rows } = await pool.query(`
+    SELECT cert.id, cert.code, cert.obtained_at, cert.revoked, cert.revoked_reason, cert.revoked_at,
+           c.id as course_id, c.title as course_title, c.badge_name,
+           u.id as provider_id, u.nombre as provider_name, u.email as provider_email
+      FROM academy_certificates cert
+      JOIN academy_courses c ON c.id = cert.course_id
+      JOIN usuarios u ON u.id = cert.provider_id
+     ORDER BY cert.obtained_at DESC
+     LIMIT 500
+  `);
+  res.json(rows);
+});
+
+// POST /api/admin/academy/certificates/:code/revoke - Revocar una credencial
+// (antes la única forma de "quitar" un certificado era borrarlo en cascada)
+router.post('/certificates/:code/revoke', async (req, res) => {
+  const reason = String((req.body && req.body.reason) || '').trim();
+  if (reason.length < 5) {
+    return res.status(400).json({ error: 'Se requiere un motivo de revocación (mínimo 5 caracteres).' });
+  }
+
+  const { rows } = await pool.query(`
+    UPDATE academy_certificates
+       SET revoked = TRUE, revoked_reason = $2, revoked_at = NOW()
+     WHERE upper(code) = upper($1) AND revoked = FALSE
+     RETURNING id, code, revoked_at, revoked_reason
+  `, [req.params.code, reason.slice(0, 500)]);
+
+  if (!rows.length) {
+    return res.status(404).json({ error: 'Certificado no encontrado o ya revocado.' });
+  }
+
+  res.json({ ok: true, certificate: rows[0] });
+});
+
+// POST /api/admin/academy/certificates/:code/restore - Deshacer una revocación
+router.post('/certificates/:code/restore', async (req, res) => {
+  const { rows } = await pool.query(`
+    UPDATE academy_certificates
+       SET revoked = FALSE, revoked_reason = NULL, revoked_at = NULL
+     WHERE upper(code) = upper($1) AND revoked = TRUE
+     RETURNING id, code
+  `, [req.params.code]);
+
+  if (!rows.length) {
+    return res.status(404).json({ error: 'Certificado no encontrado o no está revocado.' });
+  }
+
+  res.json({ ok: true, certificate: rows[0] });
+});
+
+// POST /api/admin/academy/providers/:providerId/courses/:courseId/reset-attempts
+// Reinicia los intentos de examen de una alumna (soporte).
+router.post('/providers/:providerId/courses/:courseId/reset-attempts', async (req, res) => {
+  const providerId = parseInt(req.params.providerId, 10);
+  const { courseId } = req.params;
+
+  if (!Number.isInteger(providerId) || !academy.isUuid(courseId)) {
+    return res.status(400).json({ error: 'Parámetros inválidos: providerId numérico y courseId UUID.' });
+  }
+
+  const { rowCount } = await pool.query(
+    'DELETE FROM academy_quiz_attempts WHERE provider_id = $1 AND course_id = $2',
+    [providerId, courseId]
+  );
+
+  res.json({ ok: true, attemptsRemoved: rowCount });
+});
+
+// Express 4: envolver las capas del router para que los rechazos async lleguen a next()
+wrapRouterAsync(router);
 
 module.exports = router;
