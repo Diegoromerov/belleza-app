@@ -13,6 +13,8 @@ exports.googleSignIn = async (req, res) => {
       return res.status(400).json({ error: 'Falta el idToken de Google' });
     }
 
+    let payload; // Declaración explícita: evita ReferenceError en modo estricto
+
     // Permitir token de prueba estrictamente en testing o con ALLOW_MOCK_AUTH === 'true'
     if ((process.env.NODE_ENV === 'test' || process.env.ALLOW_MOCK_AUTH === 'true') && idToken.startsWith('test_google_token_')) {
       const tokenSuffix = idToken.replace('test_google_token_', '');
