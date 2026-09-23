@@ -9,6 +9,7 @@ que cualquiera pueda reproducir las mediciones.
 | Archivo | Qué mide |
 |---|---|
 | `AUDITORIA_RAG_2026-09-22.md` | Informe completo: hallazgos, severidades, prompt de corrección P0 y §7 con la causa raíz (modelo EOL) |
+| `PLAN_MEJORA_RAG.md` | **Plan de mejora por fases** con decisiones (D1-D5), criterios de aceptación por cambio, orden de PRs y trampas ya descartadas con medición |
 | `probes/rag_e2e_after.js` | Aislamiento multi-tenant end-to-end contra Postgres real: 4 filas de prueba (GLOBAL / propio / ajeno / borrado) y el mismo payload de inyección contra el SQL viejo y el nuevo |
 | `probes/matriz.js` | Matriz antes/después ejecutando el **código extraído del propio repo** (`git show <sha>:…`), con y sin `NVIDIA_API_KEY` |
 | `probes/rag_modelo_vivo.js` | ¿Funciona el resto del pipeline con un modelo vivo? Embeddings reales + ranking por similitud coseno en una tabla de scratch |
