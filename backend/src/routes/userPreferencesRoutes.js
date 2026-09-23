@@ -1,3 +1,4 @@
+const { wrapRouterAsync } = require('../utils/expressAsync');
 // backend/src/routes/userPreferencesRoutes.js
 const express = require('express');
 const router = express.Router();
@@ -10,4 +11,5 @@ router.get('/preferences', authMiddleware, userPreferencesController.getPreferen
 // PATCH /api/users/preferences - Actualizar preferencias (parcial)
 router.patch('/preferences', authMiddleware, userPreferencesController.updatePreferences);
 
+wrapRouterAsync(router);
 module.exports = router;

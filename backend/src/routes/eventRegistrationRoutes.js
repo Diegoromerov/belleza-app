@@ -1,3 +1,4 @@
+const { wrapRouterAsync } = require('../utils/expressAsync');
 // src/routes/eventRegistrationRoutes.js
 const express = require('express');
 const router = express.Router();
@@ -23,4 +24,5 @@ const { registerForEvent } = require('../controllers/eventRegistrationController
 // Register a user for an event
 router.post('/events/:id/register', authMiddleware, validate(registrationSchema), registerForEvent);
 
+wrapRouterAsync(router);
 module.exports = router;

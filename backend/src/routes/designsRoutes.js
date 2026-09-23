@@ -1,3 +1,4 @@
+const { wrapRouterAsync } = require('../utils/expressAsync');
 // backend/src/routes/designsRoutes.js
 const express = require('express');
 const router = express.Router();
@@ -92,4 +93,5 @@ router.delete('/wardrobe/garment/:id', authMiddleware, deleteGarment);
 router.post('/wardrobe/outfit/generate', authMiddleware, checkOutfitQuota, generateOutfit);
 router.get('/wardrobe/outfits/history', authMiddleware, getOutfitHistorial);
 
+wrapRouterAsync(router);
 module.exports = router;

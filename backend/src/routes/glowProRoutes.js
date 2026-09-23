@@ -1,3 +1,4 @@
+const { wrapRouterAsync } = require('../utils/expressAsync');
 // src/routes/glowProRoutes.js
 const express = require('express');
 const router = express.Router();
@@ -94,4 +95,5 @@ router.post('/events/:id/register', authMiddleware, async (req, res) => {
 router.get('/user-badges', authMiddleware, userBadgeController.list);
 router.post('/user-badges', authMiddleware, validateBadge, userBadgeController.create);
 
+wrapRouterAsync(router);
 module.exports = router;

@@ -1,3 +1,4 @@
+const { wrapRouterAsync } = require('../utils/expressAsync');
 // backend/src/routes/biometricRoutes.js
 const express = require('express');
 const router = express.Router();
@@ -145,5 +146,6 @@ router.delete('/profile/:userId', authMiddleware, async (req, res) => {
   }
 });
 
+wrapRouterAsync(router);
 module.exports = router;
 

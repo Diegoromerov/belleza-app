@@ -1,3 +1,4 @@
+const { wrapRouterAsync } = require('../utils/expressAsync');
 // backend/src/routes/b2bCoPilotRoutes.js
 const express = require('express');
 const router = express.Router();
@@ -26,4 +27,5 @@ router.post('/api/b2b/dynamic-pricing', authMiddleware, async (req, res) => {
   }
 });
 
+wrapRouterAsync(router);
 module.exports = router;

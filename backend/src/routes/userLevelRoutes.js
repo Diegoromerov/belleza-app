@@ -1,3 +1,4 @@
+const { wrapRouterAsync } = require('../utils/expressAsync');
 // src/routes/userLevelRoutes.js
 const express = require('express');
 const router = express.Router();
@@ -63,4 +64,5 @@ router.delete('/:id', authMiddleware, async (req, res) => {
   }
 });
 
+wrapRouterAsync(router);
 module.exports = router;

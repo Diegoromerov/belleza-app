@@ -1,3 +1,4 @@
+const { wrapRouterAsync } = require('../utils/expressAsync');
 const express = require('express');
 const router = express.Router();
 const {
@@ -20,4 +21,5 @@ router.post('/switch-salon', authMiddleware, requireOwnerRole, switchSalon);
 // Dashboard consolidado de métricas multi-sede
 router.get('/dashboard-metrics', authMiddleware, requireAnyOwnerSede, getDashboardMetrics);
 
+wrapRouterAsync(router);
 module.exports = router;

@@ -173,7 +173,15 @@ async function runAsSystem(deps, fn) {
   try {
     await client.query('BEGIN');
     began = true;
-    await client.query('SET LOCAL ROLE app_system');
+    try {
+      await client.query('SET LOCAL ROLE app_system');
+    } catch (roleError) {
+      if (roleError.code === '22023' || /role "app_system" does not exist/i.test(roleError.message)) {
+        console.warn('⚠️ [tenantRouting] Rol "app_system" no disponible en la BD; ejecutando con privilegios de conexión por defecto.');
+      } else {
+        throw roleError;
+      }
+    }
 
     const result = await runWithClient(client, () => fn(client), { system: true });
 

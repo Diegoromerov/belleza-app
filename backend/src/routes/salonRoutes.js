@@ -1,3 +1,4 @@
+const { wrapRouterAsync } = require('../utils/expressAsync');
 const express = require('express');
 const router = express.Router();
 const {
@@ -60,4 +61,5 @@ router.delete(
   removeMember
 );
 
+wrapRouterAsync(router);
 module.exports = router;

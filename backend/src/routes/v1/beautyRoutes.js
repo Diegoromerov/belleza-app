@@ -1,3 +1,4 @@
+const { wrapRouterAsync } = require('../../utils/expressAsync');
 // backend/src/routes/v1/beautyRoutes.js
 // Version 1.0 of Beauty API endpoints with JSON Schema validation
 const express = require('express');
@@ -340,4 +341,5 @@ router.delete('/profile/:userId', authMiddleware, async (req, res) => {
   }
 });
 
+wrapRouterAsync(router);
 module.exports = router;

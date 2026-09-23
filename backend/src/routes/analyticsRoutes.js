@@ -1,3 +1,4 @@
+const { wrapRouterAsync } = require('../utils/expressAsync');
 // src/routes/analyticsRoutes.js
 const express = require('express');
 const router = express.Router();
@@ -20,4 +21,5 @@ const optionalAuth = (req, res, next) => {
 // Log analytics event (telemetry)
 router.post('/events', optionalAuth, analyticsController.logEvent);
 
+wrapRouterAsync(router);
 module.exports = router;

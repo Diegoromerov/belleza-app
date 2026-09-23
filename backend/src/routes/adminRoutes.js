@@ -1,3 +1,4 @@
+const { wrapRouterAsync } = require('../utils/expressAsync');
 const express = require('express');
 const router = express.Router();
 // CORRECCIÓN: Se agregó la comilla de cierre y el nombre del archivo 'db'
@@ -80,4 +81,5 @@ router.patch('/disputes/:id/resolve', authMiddleware, adminMiddleware, async (re
   }
 });
 
+wrapRouterAsync(router);
 module.exports = router;

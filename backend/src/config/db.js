@@ -11,6 +11,18 @@ if (isProduction && !process.env.DATABASE_URL) {
   console.warn('⚠️ [ENTORNO PRODUCCIÓN] DATABASE_URL no configurada explícitamente en producción.');
 }
 
+function getSslConfig(urlStr, hostStr) {
+  const str = urlStr || '';
+  const host = hostStr || process.env.DB_HOST || '';
+  if (str.includes('railway.internal') || host.includes('railway.internal') || host === 'localhost' || host === '127.0.0.1') {
+    return false;
+  }
+  if (str || isProduction || isStaging) {
+    return { rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false' };
+  }
+  return false;
+}
+
 const rawPool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ...(process.env.DATABASE_URL ? {} : {
@@ -20,7 +32,7 @@ const rawPool = new Pool({
     password: process.env.DB_PASSWORD || 'postgres',
     port: process.env.DB_PORT || 5432,
   }),
-  ssl: (process.env.DATABASE_URL || isProduction || isStaging) ? { rejectUnauthorized: false } : false,
+  ssl: getSslConfig(process.env.DATABASE_URL, process.env.DB_HOST),
   max: isProduction ? 30 : 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 5000,
@@ -123,7 +135,16 @@ async function initDefaultUsers() {
     { id: 'b105', service_id: 5, provider_id: 10, client_id: 5, service_name: 'Ritual Keratina Orgánica Vegana', client_name: 'Carolina Botero', scheduled_at: new Date(Date.now() + 10800000).toISOString(), status: 'CONFIRMED', price: 280000, total_amount: 280000, provider_name: 'Valentina Gómez' }
   );
 }
-initDefaultUsers();
+
+// ── BOOT SECURITY GUARD ──
+if (process.env.NODE_ENV === 'production' && process.env.ALLOW_MEMORY_FALLBACK === 'true') {
+  console.error('🚨 [CRITICAL SECURITY ERROR] ALLOW_MEMORY_FALLBACK is strictly prohibited in production! Aborting boot.');
+  process.exit(1);
+}
+
+if (process.env.NODE_ENV !== 'production' && (process.env.ALLOW_MEMORY_FALLBACK === 'true' || process.env.NODE_ENV === 'test')) {
+  initDefaultUsers();
+}
 
 function handleMemoryQuery(text, params = []) {
   const queryStr = text.toUpperCase();
@@ -662,9 +683,7 @@ const testConnection = async () => {
 const ragPool = process.env.RAG_DATABASE_URL
   ? new Pool({
       connectionString: process.env.RAG_DATABASE_URL,
-      ssl: process.env.RAG_DATABASE_URL.includes('railway.internal')
-        ? false
-        : { rejectUnauthorized: false },
+      ssl: getSslConfig(process.env.RAG_DATABASE_URL),
       max: isProduction ? 15 : 10,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 5000,
@@ -689,10 +708,14 @@ const testRagConnection = async () => {
 let isPgAvailable = null;
 let servingFabricatedData = false;
 
-const memoryFallbackAllowed = () =>
-  pgMemory.enabled ||
-  process.env.NODE_ENV === 'test' ||
-  process.env.ALLOW_MEMORY_FALLBACK === 'true';
+const memoryFallbackAllowed = () => {
+  if (process.env.NODE_ENV === 'production') return false;
+  return (
+    pgMemory.enabled ||
+    process.env.NODE_ENV === 'test' ||
+    process.env.ALLOW_MEMORY_FALLBACK === 'true'
+  );
+};
 
 const getDbStatus = () => ({
   pgAvailable: isPgAvailable,

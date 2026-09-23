@@ -1,3 +1,4 @@
+const { wrapRouterAsync } = require('../utils/expressAsync');
 // backend/src/routes/paymentRoutes.js
 // Sistema completo de pagos: OTP, Wallet, Retiros, Disputas
 
@@ -5,6 +6,7 @@ const express = require('express');
 const router = express.Router();
 const { pool } = require('../config/db');
 const { authMiddleware } = require('../middleware/auth');
+const { paymentLimiter, otpLimiter } = require('../middleware/rateLimiter');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const wompiService = require('../services/wompiService');
@@ -1198,4 +1200,5 @@ router.put('/admin/disputes/:id/resolve', authMiddleware, async (req, res) => {
   }
 });
 
+wrapRouterAsync(router);
 module.exports = router;

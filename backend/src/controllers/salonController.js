@@ -65,7 +65,7 @@ exports.getMySalon = async (req, res) => {
 // 🏢 CREAR SALÓN DE BELLEZA (SaaS Owner Onboarding)
 // ==========================================
 exports.createSalon = async (req, res) => {
-  console.log('🏢 [DEBUG] ENTERED createSalon. Body:', req.body, 'User:', req.user);
+  console.log(`🏢 createSalon solicitado por Usuario ID ${req.user ? req.user.id : 'desconocido'}`);
   try {
     const ownerId = req.user.id;
     const { nombre_salon, nit, direccion, telefono, ciudad, latitude, longitude, location_public } = req.body;
@@ -177,7 +177,8 @@ exports.inviteMember = async (req, res) => {
       [salon_id, cleanEmail, cleanSubRol, tokenHash, expiresAt, inviterId]
     );
 
-    const inviteLink = `https://glowapp-frontend-production.up.railway.app/#/accept-invitation?token=${rawToken}`;
+    const frontendBase = (process.env.FRONTEND_URL || 'https://glowapp-frontend-production.up.railway.app').replace(/\/$/, '');
+    const inviteLink = `${frontendBase}/#/accept-invitation?token=${rawToken}`;
 
     console.log(`✉️ Invitación creada para ${cleanEmail} como ${cleanSubRol} en Salón ID ${salon_id}`);
 

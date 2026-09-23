@@ -1,3 +1,4 @@
+const { wrapRouterAsync } = require('../utils/expressAsync');
 // backend/src/routes/ticketRoutes.js
 const express = require('express');
 const router = express.Router();
@@ -16,4 +17,5 @@ router.get('/tickets/:id/messages', authMiddleware, ticketController.getTicketMe
 // Enviar un mensaje de respuesta a un ticket
 router.post('/tickets/:id/messages', authMiddleware, ticketController.createTicketMessage);
 
+wrapRouterAsync(router);
 module.exports = router;

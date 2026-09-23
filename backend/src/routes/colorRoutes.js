@@ -1,3 +1,4 @@
+const { wrapRouterAsync } = require('../utils/expressAsync');
 // backend/src/routes/colorRoutes.js
 const express = require('express');
 const router = express.Router();
@@ -21,4 +22,5 @@ router.get('/palette', authMiddleware, async (req, res) => {
   }
 });
 
+wrapRouterAsync(router);
 module.exports = router;

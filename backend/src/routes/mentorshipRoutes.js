@@ -1,3 +1,4 @@
+const { wrapRouterAsync } = require('../utils/expressAsync');
 // src/routes/mentorshipRoutes.js
 const express = require('express');
 const router = express.Router();
@@ -29,4 +30,5 @@ router.get('/sessions', authMiddleware, mentorshipController.listSessions);
 // Create a mentorship session
 router.post('/sessions', authMiddleware, validate(mentorshipSchema), mentorshipController.createSession);
 
+wrapRouterAsync(router);
 module.exports = router;

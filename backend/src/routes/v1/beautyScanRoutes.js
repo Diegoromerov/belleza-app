@@ -1,3 +1,4 @@
+const { wrapRouterAsync } = require('../../utils/expressAsync');
 const express = require('express');
 const router = express.Router();
 const fs = require('fs');
@@ -92,4 +93,5 @@ router.post('/', authMiddleware, upload.fields([
   }
 });
 
+wrapRouterAsync(router);
 module.exports = router;

@@ -77,11 +77,12 @@ if (!redisUrl) {
     redisClient.on('error', (err) => {
       if (!loggedError) {
         loggedError = true;
-        console.warn(`⚠️  [REDIS STATUS] DEGRADED / CONNECTION_FAILED (${redisUrl}): ${err.message}`);
+        console.error(`🚨 [REDIS STATUS] DEGRADED / CONNECTION_FAILED (${redisUrl}): ${err.message}`);
       }
     });
 
     redisClient.on('connect', () => {
+      loggedError = false;
       console.log(`✅ [REDIS STATUS] ENABLED / CONNECTED (${redisUrl})`);
     });
 

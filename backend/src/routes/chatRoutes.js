@@ -1,3 +1,4 @@
+const { wrapRouterAsync } = require('../utils/expressAsync');
 // backend/src/routes/chatRoutes.js
 const express = require('express');
 const router = express.Router();
@@ -12,4 +13,5 @@ router.get('/chat/messages/:partnerId', authMiddleware, rateLimitByUser({ tier: 
 router.post('/chat/messages', authMiddleware, rateLimitByUser({ tier: 'free' }), chatController.sendMessage);
 router.patch('/chat/messages/:partnerId/read', authMiddleware, rateLimitByUser({ tier: 'free' }), chatController.readMessages);
 
+wrapRouterAsync(router);
 module.exports = router;

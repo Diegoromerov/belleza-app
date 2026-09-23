@@ -1,3 +1,4 @@
+const { wrapRouterAsync } = require('../utils/expressAsync');
 // src/routes/eventRoutes.js
 const express = require('express');
 const router = express.Router();
@@ -127,4 +128,5 @@ router.put('/:id', authMiddleware, validate(eventSchema), updateEvent);
 router.delete('/:id', authMiddleware, deleteEvent);
 
 
+wrapRouterAsync(router);
 module.exports = router;

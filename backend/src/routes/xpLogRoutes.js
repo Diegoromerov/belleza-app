@@ -1,3 +1,4 @@
+const { wrapRouterAsync } = require('../utils/expressAsync');
 // src/routes/xpLogRoutes.js
 const express = require('express');
 const router = express.Router();
@@ -43,4 +44,5 @@ router.post('/', authMiddleware, normalizeXpPayload, validate(xpLogSchema), xpLo
 // Convert XP to Wallet Cashback balance
 router.post('/convert-cashback', authMiddleware, xpLogController.convertXpToCashback);
 
+wrapRouterAsync(router);
 module.exports = router;

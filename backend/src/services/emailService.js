@@ -4,7 +4,8 @@
  * Enviar correo de recuperación de reserva / carrito abandonado
  */
 async function sendAbandonedBookingEmail(toEmail, userName, bookingId, serviceName) {
-  const checkoutUrl = `https://glowapp-frontend-production.up.railway.app/#/checkout?booking_id=${bookingId}`;
+  const frontendBase = (process.env.FRONTEND_URL || 'https://glowapp-frontend-production.up.railway.app').replace(/\/$/, '');
+  const checkoutUrl = `${frontendBase}/#/checkout?booking_id=${bookingId}`;
   
   console.log(`📧 [EMAIL TRANSACCIONAL] Preparando correo de recuperación para ${toEmail} (${userName}):`);
   console.log(`   Asunto: ¡Tu cita de ${serviceName} te espera en GlowApp!`);

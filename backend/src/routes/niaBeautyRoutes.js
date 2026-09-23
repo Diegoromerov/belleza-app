@@ -1,3 +1,4 @@
+const { wrapRouterAsync } = require('../utils/expressAsync');
 const express = require('express');
 const router = express.Router();
 const { processBiometricScan } = require('../services/aiOrchestrator');
@@ -45,4 +46,5 @@ router.post('/scan', async (req, res) => {
   }
 });
 
+wrapRouterAsync(router);
 module.exports = router;

@@ -1,3 +1,4 @@
+const { wrapRouterAsync } = require('../utils/expressAsync');
 // backend/src/routes/metricsRoutes.js
 const express = require('express');
 const router = express.Router();
@@ -259,4 +260,5 @@ router.get('/rag/export', async (req, res) => {
   }
 })
 
+wrapRouterAsync(router);
 module.exports = router

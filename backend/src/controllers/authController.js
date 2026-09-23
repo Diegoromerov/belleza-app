@@ -465,7 +465,8 @@ exports.getReferralInfo = async (req, res) => {
       await pool.query(`UPDATE usuarios SET referral_code = $1 WHERE id = $2`, [referralCode, userId]);
     }
 
-    const shareUrl = `https://glowapp-frontend-production.up.railway.app/#/register?ref=${referralCode}`;
+    const frontendBase = (process.env.FRONTEND_URL || 'https://glowapp-frontend-production.up.railway.app').replace(/\/$/, '');
+    const shareUrl = `${frontendBase}/#/register?ref=${referralCode}`;
     const shareMessage = `¡Te regalo $10.000 COP para tu primer servicio de belleza en GlowApp! Usá mi código ${referralCode} o registrate aquí: ${shareUrl}`;
 
     res.json({
