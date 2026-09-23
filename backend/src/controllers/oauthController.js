@@ -4,8 +4,7 @@ const jwt = require('jsonwebtoken');
 const { pool } = require('../config/db');
 const { getJwtSecret, toApiRole } = require('../config/jwt');
 
-const CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
-const client = new OAuth2Client(CLIENT_ID);
+const DEFAULT_CLIENT_ID = '374223351186-0fukntsog02r0p1tofd2aju3c7lsr86j.apps.googleusercontent.com';
 
 exports.googleSignIn = async (req, res) => {
   try {
@@ -23,12 +22,16 @@ exports.googleSignIn = async (req, res) => {
         sub: `google_test_id_${tokenSuffix}`
       };
     } else {
-      if (!CLIENT_ID) {
-        return res.status(500).json({ error: 'GOOGLE_CLIENT_ID no está configurado en el servidor' });
-      }
-      const ticket = await client.verifyIdToken({
+      const activeClientId = (process.env.GOOGLE_CLIENT_ID || DEFAULT_CLIENT_ID).trim();
+      const oauthClient = new OAuth2Client(activeClientId);
+      const ticket = await oauthClient.verifyIdToken({
         idToken: idToken,
-        audience: CLIENT_ID,
+        audience: [
+          activeClientId,
+          '374223351186-0fukntsog02r0p1tofd2aju3c7lsr86j.apps.googleusercontent.com',
+          '374223351186-hi0m9k8778gfkg69spbkimgk73t51g5q.apps.googleusercontent.com',
+          '466897054371-qaec2ipcc0pea91obs0ejcb9tene7kma.apps.googleusercontent.com'
+        ].filter(Boolean)
       });
       payload = ticket.getPayload();
     }
@@ -91,7 +94,7 @@ exports.googleSignIn = async (req, res) => {
     console.error('❌ ERROR GOOGLE SIGN-IN:', error.message);
     res.status(401).json({ 
       error: 'Autenticación de Google inválida o fallida',
-      details: process.env.ALLOW_MOCK_AUTH === 'true' ? error.message : undefined
+      details: error.message
     });
   }
 };
