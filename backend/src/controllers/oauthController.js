@@ -1,6 +1,7 @@
 // C:\beauty-app\backend\src\controllers\oauthController.js
 const { OAuth2Client } = require('google-auth-library');
 const jwt = require('jsonwebtoken');
+const axios = require('axios');
 const { pool } = require('../config/db');
 const { getJwtSecret, toApiRole } = require('../config/jwt');
 
@@ -8,22 +9,23 @@ const DEFAULT_CLIENT_ID = '374223351186-0fukntsog02r0p1tofd2aju3c7lsr86j.apps.go
 
 exports.googleSignIn = async (req, res) => {
   try {
-    const { idToken, role_intent } = req.body;
-    if (!idToken) {
-      return res.status(400).json({ error: 'Falta el idToken de Google' });
+    const { idToken, accessToken, role_intent } = req.body;
+    if (!idToken && !accessToken) {
+      return res.status(400).json({ error: 'Falta el idToken o accessToken de Google' });
     }
 
     let payload; // Declaración explícita: evita ReferenceError en modo estricto
 
     // Permitir token de prueba estrictamente en testing o con ALLOW_MOCK_AUTH === 'true'
-    if ((process.env.NODE_ENV === 'test' || process.env.ALLOW_MOCK_AUTH === 'true') && idToken.startsWith('test_google_token_')) {
+    if ((process.env.NODE_ENV === 'test' || process.env.ALLOW_MOCK_AUTH === 'true') && idToken && idToken.startsWith('test_google_token_')) {
       const tokenSuffix = idToken.replace('test_google_token_', '');
       payload = {
         email: `${tokenSuffix}@gmail.com`,
         name: `User Google ${tokenSuffix}`,
         sub: `google_test_id_${tokenSuffix}`
       };
-    } else {
+    } else if (idToken) {
+      // PATH 1: Verificar idToken directamente (más seguro)
       const activeClientId = (process.env.GOOGLE_CLIENT_ID || DEFAULT_CLIENT_ID).trim();
       const oauthClient = new OAuth2Client(activeClientId);
       const ticket = await oauthClient.verifyIdToken({
@@ -36,6 +38,23 @@ exports.googleSignIn = async (req, res) => {
         ].filter(Boolean)
       });
       payload = ticket.getPayload();
+    } else {
+      // PATH 2: Verificar accessToken via Google tokeninfo (fallback para GIS web flow)
+      // google_sign_in_web 6.x con popup a veces solo devuelve accessToken, no idToken
+      const tokenInfoRes = await axios.get(
+        `https://oauth2.googleapis.com/tokeninfo?access_token=${encodeURIComponent(accessToken)}`
+      ).catch(err => {
+        throw new Error(`accessToken inválido: ${err.response?.data?.error || err.message}`);
+      });
+      const tokenInfo = tokenInfoRes.data;
+      if (!tokenInfo.email) {
+        throw new Error('Google tokeninfo no devolvió email');
+      }
+      payload = {
+        email: tokenInfo.email,
+        name: tokenInfo.name || tokenInfo.email,
+        sub: tokenInfo.sub || tokenInfo.user_id
+      };
     }
 
     const { email, name, sub: googleId } = payload;

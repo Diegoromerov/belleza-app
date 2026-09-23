@@ -36,12 +36,12 @@ class _LoginScreenState extends State<LoginScreen> {
   // google_sign_in_web solo rellena googleAuth.idToken cuando serverClientId está presente.
   final GoogleSignIn _googleSignIn = kIsWeb
         ? GoogleSignIn(
-            scopes: ['email'],
+            scopes: ['email', 'openid', 'profile'],
             clientId: _googleClientId.isNotEmpty ? _googleClientId : null,
             serverClientId: _googleClientId.isNotEmpty ? _googleClientId : null,
           )
         : GoogleSignIn(
-            scopes: ['email'],
+            scopes: ['email', 'openid', 'profile'],
             serverClientId: _googleClientId.isNotEmpty ? _googleClientId : null,
           );
 
@@ -120,53 +120,48 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
-      // Obtener idToken (necesario para verificación segura en backend)
+      // Obtener tokens de la autenticación Google
       String? idToken;
+      String? accessToken;
       try {
         final GoogleSignInAuthentication googleAuth = await googleUser.authentication.timeout(
           const Duration(seconds: 15),
         );
         idToken = googleAuth.idToken;
+        accessToken = googleAuth.accessToken;
       } catch (authErr) {
         idToken = null;
+        accessToken = null;
       }
 
-      // Intentar autenticación segura con idToken contra /api/auth/google
+      // PATH 1: idToken disponible → verificación segura en backend
       if (idToken != null && idToken.isNotEmpty) {
         final result = await AuthService.loginWithGoogle(idToken);
         if (result != null && mounted) {
-          String? role = result['user']['role'];
-          if (role == null) {
-            role = await RoleSelectionModal.show(context);
-          }
-          final bool onboardingCompleto = result['user']['onboarding_completo'] ?? false;
-          final String rLower = (role ?? '').toString().toLowerCase();
-          if (mounted) {
-            if (onboardingCompleto) {
-              if (rLower == 'provider') {
-                Navigator.pushReplacementNamed(context, '/provider');
-              } else if (rLower == 'salon') {
-                Navigator.pushReplacementNamed(context, '/salon');
-              } else {
-                Navigator.pushReplacementNamed(context, '/home');
-              }
-            } else {
-              Navigator.pushReplacementNamed(context, '/onboarding');
-            }
-          }
-          return;
+          return _navigateAfterLogin(result);
         }
-        // /api/auth/google falló: mostrar error específico en lugar de silencio
         if (mounted) {
-          setState(() => _error = 'El servidor rechazó el token de Google. Verifica la configuración del servidor.');
+          setState(() => _error = 'El servidor rechazó el token de Google. Intenta de nuevo.');
         }
         return;
       }
 
-      // idToken es null: google_sign_in_web no pudo obtenerlo (serverClientId faltante)
-      // Esto ocurre cuando el clientId web no está configurado correctamente.
+      // PATH 2: GIS popup devuelve solo accessToken (comportamiento normal en 6.x web)
+      // El backend verifica el accessToken contra https://oauth2.googleapis.com/tokeninfo
+      if (accessToken != null && accessToken.isNotEmpty) {
+        final result = await AuthService.loginWithGoogleAccessToken(accessToken);
+        if (result != null && mounted) {
+          return _navigateAfterLogin(result);
+        }
+        if (mounted) {
+          setState(() => _error = 'No se pudo autenticar con Google. Intenta de nuevo.');
+        }
+        return;
+      }
+
+      // Ningún token disponible
       if (mounted) {
-        setState(() => _error = 'No se pudo obtener el token de Google (idToken nulo). Contacta al soporte.');
+        setState(() => _error = 'Google no devolvió credenciales. Verifica la configuración del cliente OAuth.');
       }
     } catch (e) {
       if (mounted) {
@@ -176,6 +171,25 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) setState(() => _isLoading = false);
     }
   }
+
+  void _navigateAfterLogin(Map<String, dynamic> result) {
+    if (!mounted) return;
+    String? role = result['user']['role'];
+    final bool onboardingCompleto = result['user']['onboarding_completo'] ?? false;
+    final String rLower = (role ?? '').toString().toLowerCase();
+    if (onboardingCompleto) {
+      if (rLower == 'provider') {
+        Navigator.pushReplacementNamed(context, '/provider');
+      } else if (rLower == 'salon') {
+        Navigator.pushReplacementNamed(context, '/salon');
+      } else {
+        Navigator.pushReplacementNamed(context, '/home');
+      }
+    } else {
+      Navigator.pushReplacementNamed(context, '/onboarding');
+    }
+  }
+
 
   Future<void> _handleOAuth(String provider) async {
     if (provider == 'GOOGLE') {

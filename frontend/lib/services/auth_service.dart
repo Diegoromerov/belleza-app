@@ -208,6 +208,29 @@ class AuthService {
     return null;
   }
 
+  /// Fallback para cuando google_sign_in_web devuelve accessToken pero no idToken
+  /// (comportamiento de GIS en google_sign_in 6.x con popup flow)
+  static Future<Map<String, dynamic>?> loginWithGoogleAccessToken(String accessToken) async {
+    final baseUrl = await getBaseUrl();
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/auth/google'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({'accessToken': accessToken}),
+    );
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      final prefs = await SharedPreferences.getInstance();
+      await SecureStorageService().write('token', data['token']);
+      await prefs.setString('userId', data['user']['id'].toString());
+      await prefs.setString('userName', data['user']['full_name']);
+      if (data['user']['role'] != null) {
+        await prefs.setString('userRole', data['user']['role']);
+      }
+      return data;
+    }
+    return null;
+  }
+
   static Future<bool> selectRole(String role) async {
     final baseUrl = await getBaseUrl();
     final token = await getToken();
