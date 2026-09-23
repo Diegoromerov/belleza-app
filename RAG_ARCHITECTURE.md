@@ -157,9 +157,9 @@ generateEmbedding(text, 'query')
 
 | Columna | Tipo | Descripción |
 |---------|------|-------------|
-| `category` | VARCHAR(100) | Categoría query: `skincare`, `cabello`, `cejas`, `general` |
+| `category` | VARCHAR(100) | Categoría del conocimiento. **Vocabulario canónico (12 valores, `config/knowledgeCategories.js`)**: `colorimetria_capilar_tinte`, `colorimetria_piel_undertone`, `cuidado_corporal_y_spa`, `diagnostico_capilar`, `guias_unas`, `ingredientes_activos_contraindicaciones`, `maquillaje_tecnicas_por_ocasion`, `skincare_rutinas_por_tipo_piel`, `tendencias_belleza_virales`, `textura_poros`, `tratamientos_esteticos_faciales`, `visajismo_cejas_microblading`. *(Antes decía `skincare`, `cabello`, `cejas`, `general`: esos valores NO existen en el corpus y filtrar por ellos devolvía 0 chunks — corregido en Fase 1.)* |
 | `threshold_used` | NUMERIC(4,3) | Threshold usado (ej: `0.450`, `0.700`) |
-| `filters_applied` | JSONB | Filtros metadata: `{"category": "skincare"}` |
+| `filters_applied` | JSONB | Filtros metadata que se aplicaron realmente: `{"category": "guias_unas"}` (vacío `{}` si el valor no pertenece al vocabulario y se descartó, ver `filters_dropped` en la traza JSON) |
 | `all_scores` | NUMERIC[] | TODOS los scores candidatos (no solo top-K) |
 | `retrieval_mode` | VARCHAR(20) | `hnsw`, `fts`, `hybrid` |
 | `fallback_triggered` | BOOLEAN | Si se activó FTS fallback |
@@ -293,7 +293,7 @@ psql $RAG_DATABASE_URL -c "SELECT count(*), fuente FROM beauty_knowledge_embeddi
 - Suite RAG: **5 suites, 69/69 tests PASS** (embeddingService 16, ragLogger 10, ragMetrics 12, ragEvaluator 23, ciRagEvaluation 8)
 - BD local: 44 filas, 44/44 `document_id`, 44/44 `chunk_id`, 44/44 `content_hash`, 31 hashes reales SHA-256, 0 NULLs, 0 duplicados `(document_id, chunk_id)` — *estado del Ciclo 05. **Verificado 2026-09-22**: la BD local que sirve la app tiene hoy **0 filas**; el corpus canónico (5.619 chunks) está en el repo pero sin embeber*
 - Retrieval vectorial real: query niacinamida → similarity **0.5238** — *medido con el modelo vivo; hoy no reproducible (410, §9.1)*
-- FTS fallback real: NVIDIA 401 simulado → full-text → similarity **0.5**
+- FTS fallback real: NVIDIA 401 simulado → full-text → similarity **0.5** — *valor histórico: el fallback inyectaba `0.5` como constante. Desde Fase 1 (PR #8) devuelve `similarity = null` con `retrieval_mode = 'fts'`: no se presenta una similitud que no se midió*
 - Suite global backend: 263 passed / 8 failed / 1 skipped — los 8 fallos son **FUERA DE ALCANCE / PREEXISTENTES** (biométricos E2E + geminiFallback), NO se reparan en este bloque
 
 ### Nota sobre baselines
