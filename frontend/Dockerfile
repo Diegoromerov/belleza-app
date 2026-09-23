@@ -1,11 +1,13 @@
 # Etapa 1: Construccion de la aplicacion Flutter
 FROM ghcr.io/cirruslabs/flutter:stable AS builder
 
+ARG GOOGLE_WEB_CLIENT_ID=374223351186-0fukntsog02r0p1tofd2aju3c7lsr86j.apps.googleusercontent.com
+
 WORKDIR /app
 COPY . .
 
 # Obtener dependencias y construir
-RUN flutter pub get && flutter build web --release
+RUN flutter pub get && flutter build web --release --dart-define=GOOGLE_WEB_CLIENT_ID=${GOOGLE_WEB_CLIENT_ID}
 
 # Etapa 2: Servidor web con Nginx (Non-Root)
 FROM nginxinc/nginx-unprivileged:alpine

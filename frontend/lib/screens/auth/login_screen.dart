@@ -24,14 +24,22 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
   String? _error;
 
+  static const String _googleClientId = String.fromEnvironment(
+    'GOOGLE_WEB_CLIENT_ID',
+    defaultValue: String.fromEnvironment(
+      'GOOGLE_CLIENT_ID',
+      defaultValue: '374223351186-0fukntsog02r0p1tofd2aju3c7lsr86j.apps.googleusercontent.com',
+    ),
+  );
+
   final GoogleSignIn _googleSignIn = kIsWeb
         ? GoogleSignIn(
             scopes: ['email'],
-            clientId: '466897054371-qaec2ipcc0pea91obs0ejcb9tene7kma.apps.googleusercontent.com',
+            clientId: _googleClientId.isNotEmpty ? _googleClientId : null,
           )
         : GoogleSignIn(
             scopes: ['email'],
-            serverClientId: '466897054371-qaec2ipcc0pea91obs0ejcb9tene7kma.apps.googleusercontent.com',
+            serverClientId: _googleClientId.isNotEmpty ? _googleClientId : null,
           );
 
   @override
