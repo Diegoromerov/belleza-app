@@ -69,8 +69,8 @@ function sanitizeChunksForLog(chunks) {
   if (!chunks || !Array.isArray(chunks)) return [];
   
   return chunks.slice(0, 3).map(chunk => ({
-    chunk_id: chunk.id || hashIdForLog(chunk.id),
-    similarity_score: chunk.similarity ? parseFloat(chunk.similarity.toFixed(4)) : null,
+    chunk_id: chunk.chunk_id || chunk.id || hashIdForLog(chunk.id),
+    similarity_score: typeof chunk.similarity === 'number' ? parseFloat(chunk.similarity.toFixed(4)) : null,
     category: chunk.category || null,
     skin_type: chunk.skinType || chunk.skin_type || null,
     has_content: !!chunk.content,
@@ -127,12 +127,14 @@ async function saveToPostgres(traceData) {
     if (!pool) return;
     
     const query = `
-      INSERT INTO rag_query_logs 
-      (trace_id, user_id_hash, query_sanitized, chunks_retrieved, top_score, llm_used, total_latency_ms, error, created_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
+      INSERT INTO rag_query_logs
+      (trace_id, user_id_hash, query_sanitized, chunks_retrieved, top_score, llm_used,
+       total_latency_ms, error, category, threshold_used, filters_applied, all_scores,
+       retrieval_mode, fallback_triggered, breaker_state_at_query, created_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NOW())
       ON CONFLICT DO NOTHING
     `;
-    
+
     await pool.query(query, [
       traceData.trace_id,
       traceData.user_id_hash,
@@ -142,6 +144,15 @@ async function saveToPostgres(traceData) {
       traceData.llm_used,
       traceData.total_latency_ms,
       traceData.error || null,
+      traceData.category || null,
+      // El umbral REALMENTE usado por el retrieval (antes se registraba un valor fijo
+      // distinto del que usaba la búsqueda: 0.72 en el log, 0.45 en la consulta).
+      typeof traceData.threshold_used === 'number' ? traceData.threshold_used : null,
+      traceData.filters_applied ? JSON.stringify(traceData.filters_applied) : null,
+      Array.isArray(traceData.all_scores) && traceData.all_scores.length > 0 ? traceData.all_scores : null,
+      traceData.retrieval_mode || null,
+      typeof traceData.fallback_triggered === 'boolean' ? traceData.fallback_triggered : null,
+      traceData.breaker_state_at_query || null,
     ]);
   } catch (error) {
     // Silencioso - no bloquear si falla
@@ -203,7 +214,16 @@ async function logRagQuery(traceData) {
       chunks_retrieved,
       top_chunks,
       top_score,
-      filters_applied: traceData.filters || {},
+      category: traceData.category || top_chunks[0]?.category || null,
+      // Umbral y modo reales del retrieval (los aporta ragService vía `trace`).
+      threshold_used: typeof traceData.threshold_used === 'number' ? traceData.threshold_used : null,
+      filters_applied: traceData.filters_applied || traceData.filters || {},
+      filters_dropped: traceData.filters_dropped || [],
+      filters_relaxed: traceData.filters_relaxed === true,
+      all_scores: Array.isArray(traceData.all_scores) ? traceData.all_scores : [],
+      retrieval_mode: traceData.retrieval_mode || null,
+      fallback_triggered: traceData.fallback_triggered === true,
+      breaker_state_at_query: getBreakerStates()?.nvidiaEmbeddings?.state || null,
       llm_used: traceData.llm_used || 'unknown',
       llm_latency_ms: traceData.llm_latency_ms || 0,
       tool_calls,

@@ -174,7 +174,9 @@ async function getServicesContext() {
  */
 function shouldSearchBeautyKnowledge(text) {
   const lowerText = text.toLowerCase();
-  return RAG_TRIGGER_KEYWORDS.some(keyword => lowerText.includes(keyword));
+  // El texto se compara en minúsculas: la palabra clave también (con 'AHA'/'BHA' en
+  // mayúsculas la comparación nunca podía coincidir).
+  return RAG_TRIGGER_KEYWORDS.some(keyword => lowerText.includes(keyword.toLowerCase()));
 }
 
 /**
@@ -253,6 +255,7 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
     let toolCalls = [];
     let retrievalChunks = [];
     let retrievalFilters = {};
+    let retrievalTrace = {};
     let errorMessage = null;
     let parsedUserId = 0;
 
@@ -291,17 +294,32 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
     if (knowledgeSearchEnabled) {
       // Medir latencia de retrieval RAG
       const retrievalStart = Date.now();
-      
+
+      // Una sola fuente para el umbral: el mismo valor que se usa en la búsqueda es el que
+      // se registra en la traza (antes la traza decía 0.72 mientras la consulta usaba 0.45).
+      const ragRetrievalOptions = { topK: 5, threshold: 0.45 };
+      retrievalTrace = {};
+
       const [servicesCtx, chunks] = await Promise.all([
         getServicesContext(),
-        searchBeautyKnowledge(userMessageText, { topK: 5, threshold: 0.45 })
+        searchBeautyKnowledge(userMessageText, { ...ragRetrievalOptions, trace: retrievalTrace })
       ]);
       
       servicesContext = servicesCtx;
       beautyChunks = chunks;
       retrievalLatencyMs = Date.now() - retrievalStart;
       retrievalChunks = chunks;
-      retrievalFilters = { topK: 5, threshold: 0.72 };
+      retrievalFilters = {
+        topK: ragRetrievalOptions.topK,
+        threshold: retrievalTrace.threshold_used,
+        retrieval_mode: retrievalTrace.mode || null,
+        filters_applied: retrievalTrace.filters_applied || {},
+        filters_dropped: retrievalTrace.filters_dropped || [],
+        filters_relaxed: retrievalTrace.filters_relaxed === true,
+      };
+      if (retrievalTrace.filters_dropped?.length) {
+        console.warn(`⚠️ [RAG] Filtros descartados (no existen en el vocabulario/corpus): ${JSON.stringify(retrievalTrace.filters_dropped)}`);
+      }
       
       // Log si RAG activado
      console.log(`📚 Chunks RAG recuperados: ${beautyChunks.map(c => c.title).join(' | ')}`);
@@ -618,7 +636,7 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
                       try {
                         console.log(`🔍 RAG Vectorial en fallback para: "${userMessageText.substring(0, 60)}..."`);
                         const fallbackRetrievalStart = Date.now();
-                        beautyChunksFallback = await searchBeautyKnowledge(userMessageText, { topK: 5, threshold: 0.45 });
+                        beautyChunksFallback = await searchBeautyKnowledge(userMessageText, { topK: 5, threshold: 0.45, trace: retrievalTrace });
                         const fallbackRetrievalLatency = Date.now() - fallbackRetrievalStart;
                         console.log(`✅ RAG Fallback: ${beautyChunksFallback.length} chunks encontrados (latencia: ${fallbackRetrievalLatency}ms)`);
                         console.log(`📚 Chunks RAG fallback: ${beautyChunksFallback.map(c => c.title).join(' | ')}`);
@@ -935,10 +953,20 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
       trace_id: generateTraceId(),
       user_id: parsedUserId,
       query: userMessageText,
-      query_embedding_latency_ms: queryEmbeddingLatencyMs,
+      query_embedding_latency_ms: retrievalTrace.query_embedding_latency_ms || queryEmbeddingLatencyMs,
       retrieval_latency_ms: retrievalLatencyMs,
       chunks: retrievalChunks,
       filters: retrievalFilters,
+      // Trazas reales del retrieval (Fase 1): umbral usado, modo, filtros aplicados o
+      // descartados y si hubo relajación o fallback. Antes quedaban 7 columnas en NULL.
+      filters_applied: retrievalTrace.filters_applied || {},
+      filters_dropped: retrievalTrace.filters_dropped || [],
+      filters_relaxed: retrievalTrace.filters_relaxed === true,
+      threshold_used: retrievalTrace.threshold_used,
+      retrieval_mode: retrievalTrace.mode || null,
+      fallback_triggered: retrievalTrace.fallback_triggered === true,
+      all_scores: retrievalTrace.all_scores || [],
+      category: retrievalTrace.filters_applied?.category || null,
       llm_used: llmUsed,
       llm_latency_ms: llmLatencyMs,
       tool_calls: toolCalls,

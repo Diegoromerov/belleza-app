@@ -10,6 +10,7 @@ const businessDiagnosticService = require('./businessDiagnosticService');
 const businessWorkflowService = require('./businessWorkflowService');
 const businessRequirementService = require('./businessRequirementService');
 const businessRepository = require('../repositories/businessRepository');
+const { KNOWLEDGE_CATEGORIES } = require('../config/knowledgeCategories');
 
 /**
  * Definicón de JSON Schemas de las herramientas (Tool Definitions) para DeepSeek / Gemini Function Calling
@@ -114,7 +115,11 @@ const AURA_TOOLS_DEFINITIONS = [
         type: 'object',
         properties: {
           queryText: { type: 'string', description: 'Consulta del usuario sobre rutina o producto' },
-          category: { type: 'string', description: 'Categoría cosmética (ej. piel, cabello, uñas)' }
+          category: {
+            type: 'string',
+            description: 'Categoría del conocimiento. Usar SOLO uno de estos valores; omitir el campo si ninguno aplica.',
+            enum: KNOWLEDGE_CATEGORIES,
+          }
         },
         required: ['queryText']
       }
@@ -274,9 +279,11 @@ async function executeAuraTool(toolName, args, userId, userRole = 'provider', te
       }
 
       case 'search_beauty_knowledge_rag': {
-        // ragService lee la categoría en `filters.category` (no en la raíz del objeto de
-        // opciones): pasarla suelta se descarta en silencio y se recuperan chunks de
-        // cualquier categoría. tenantId se propaga para el aislamiento multi-tenant.
+        // ragService lee la categoría en `filters.category` y la valida contra el
+        // vocabulario canónico (config/knowledgeCategories): si el valor no existe en el
+        // corpus NO se filtra (fail-open) y queda registrado en la traza, en vez de
+        // devolver 0 chunks en silencio. El enum del tool ya expone los valores válidos.
+        // tenantId se propaga para el aislamiento multi-tenant.
         const results = await searchBeautyKnowledge(args.queryText, {
           filters: args.category ? { category: args.category } : {},
           tenantId
@@ -308,6 +315,13 @@ async function executeAuraTool(toolName, args, userId, userRole = 'provider', te
       }
 
       case 'search_regulatory_knowledge_rag': {
+        // ATENCIÓN (auditoría 2026-09-22): el corpus canónico de `beauty_knowledge_embeddings`
+        // NO contiene documentos regulatorios (0 chunks con 'business'/'resolucion'/'formalizacion';
+        // 2 con 'invima'), así que esta búsqueda devuelve vacío por FALTA DE DATOS, no por el
+        // filtro. El filtro `domain` ya no apunta a una clave inexistente
+        // (`metadata->>'domain'` no existe en ningún chunk): ahora compara contra la categoría
+        // canónica y `metadata->'applicable_modules'`. Cargar el corpus regulatorio es una
+        // decisión de datos pendiente (PLAN_MEJORA_RAG.md, Fase 4).
         const results = await searchBeautyKnowledge(args.queryText, {
           filters: { domain: 'BUSINESS', jurisdiction: args.jurisdiction },
           tenantId

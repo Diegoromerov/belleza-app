@@ -157,9 +157,9 @@ generateEmbedding(text, 'query')
 
 | Columna | Tipo | Descripción |
 |---------|------|-------------|
-| `category` | VARCHAR(100) | Categoría query: `skincare`, `cabello`, `cejas`, `general` |
+| `category` | VARCHAR(100) | Categoría del conocimiento. **Vocabulario canónico (12 valores, `config/knowledgeCategories.js`)**: `colorimetria_capilar_tinte`, `colorimetria_piel_undertone`, `cuidado_corporal_y_spa`, `diagnostico_capilar`, `guias_unas`, `ingredientes_activos_contraindicaciones`, `maquillaje_tecnicas_por_ocasion`, `skincare_rutinas_por_tipo_piel`, `tendencias_belleza_virales`, `textura_poros`, `tratamientos_esteticos_faciales`, `visajismo_cejas_microblading`. *(Antes decía `skincare`, `cabello`, `cejas`, `general`: esos valores NO existen en el corpus y filtrar por ellos devolvía 0 chunks — corregido en Fase 1.)* |
 | `threshold_used` | NUMERIC(4,3) | Threshold usado (ej: `0.450`, `0.700`) |
-| `filters_applied` | JSONB | Filtros metadata: `{"category": "skincare"}` |
+| `filters_applied` | JSONB | Filtros metadata que se aplicaron realmente: `{"category": "guias_unas"}` (vacío `{}` si el valor no pertenece al vocabulario y se descartó, ver `filters_dropped` en la traza JSON) |
 | `all_scores` | NUMERIC[] | TODOS los scores candidatos (no solo top-K) |
 | `retrieval_mode` | VARCHAR(20) | `hnsw`, `fts`, `hybrid` |
 | `fallback_triggered` | BOOLEAN | Si se activó FTS fallback |
@@ -249,7 +249,12 @@ psql $RAG_DATABASE_URL -c "SELECT count(*), fuente FROM beauty_knowledge_embeddi
 2. **ÚNICA** ruta de recuperación para Aura: `auraToolExecutor` → `ragService.searchBeautyKnowledge` → `ragPool` → `beauty_knowledge_embeddings`
 3. **NO** dummy embeddings en camino productivo. Circuit breaker propaga error → `ragService` hace FTS fallback
 4. **Pool separado**: `ragPool` para RAG, `pool` para resto. No mezclar.
-5. **Migraciones RAG**: 031, 035, 046 y **048** ejecutadas (LOCAL). ~~036/047 APLAZADAS~~ — **corregido 2026-09-22**: 036 y 047 **también están aplicadas** (`rag_query_logs` existe con sus 16 columnas; verificado en la BD local). Lo que falta no es ejecutarlas sino **poblarlas**: `ragLogger.saveToPostgres` inserta 9 de 16 columnas, así que `threshold_used`, `filters_applied`, `all_scores`, `retrieval_mode`, `fallback_triggered` y `breaker_state_at_query` quedan en NULL. Observabilidad pendiente de cablear (§9.6).
+5. **Migraciones RAG**: 031, 035, 046 y **048** ejecutadas (LOCAL). ~~036/047 APLAZADAS~~ — **corregido 2026-09-22**: 036 y 047 **también están aplicadas** (`rag_query_logs` existe con sus 16 columnas; verificado en la BD local). Lo que falta no es ejecutarlas sino **poblarlas**: **RESUELTO en Fase 1 (PR #8, 2026-09-23)** —
+`ragLogger.saveToPostgres` inserta las 16 columnas (`category`, `threshold_used`, `filters_applied`,
+`all_scores`, `retrieval_mode`, `fallback_triggered`, `breaker_state_at_query`), verificado
+escribiendo y leyendo una fila real: 0 columnas en NULL. La traza JSON añade `filters_dropped` y
+`filters_relaxed`, y el umbral registrado es el realmente usado (antes: `0.72` en la traza con `0.45`
+en la consulta). Ver §9.8.
 6. **Trazabilidad**: Todas las columnas dedicadas (no solo JSONB) para queries analíticas eficientes
 7. **Tests**: Suite RAG usa mocks. Validación real requiere infra local + eval dataset (30 queries)
 
@@ -293,7 +298,7 @@ psql $RAG_DATABASE_URL -c "SELECT count(*), fuente FROM beauty_knowledge_embeddi
 - Suite RAG: **5 suites, 69/69 tests PASS** (embeddingService 16, ragLogger 10, ragMetrics 12, ragEvaluator 23, ciRagEvaluation 8)
 - BD local: 44 filas, 44/44 `document_id`, 44/44 `chunk_id`, 44/44 `content_hash`, 31 hashes reales SHA-256, 0 NULLs, 0 duplicados `(document_id, chunk_id)` — *estado del Ciclo 05. **Verificado 2026-09-22**: la BD local que sirve la app tiene hoy **0 filas**; el corpus canónico (5.619 chunks) está en el repo pero sin embeber*
 - Retrieval vectorial real: query niacinamida → similarity **0.5238** — *medido con el modelo vivo; hoy no reproducible (410, §9.1)*
-- FTS fallback real: NVIDIA 401 simulado → full-text → similarity **0.5**
+- FTS fallback real: NVIDIA 401 simulado → full-text → similarity **0.5** — *valor histórico: el fallback inyectaba `0.5` como constante. Desde Fase 1 (PR #8) devuelve `similarity = null` con `retrieval_mode = 'fts'`: no se presenta una similitud que no se midió*
 - Suite global backend: 263 passed / 8 failed / 1 skipped — los 8 fallos son **FUERA DE ALCANCE / PREEXISTENTES** (biométricos E2E + geminiFallback), NO se reparan en este bloque
 
 ### Nota sobre baselines
@@ -400,7 +405,7 @@ payload devuelve 1 fila (solo GLOBAL) y el scoping legítimo sigue funcionando e
 | 3 | Re-ingesta completa | los **5.619 chunks** del corpus canónico deben re-embeberse: los vectores existentes pertenecen al espacio del modelo retirado y no son reutilizables |
 | 4 | Recalibrar umbral | con el modelo vivo el acierto puntúa 0.4156, por debajo del `0.45` actual |
 | 5 | Config de despliegue | `NVIDIA_API_KEY` sólo existe en el `.env` de la raíz; el backend hace `dotenv.config()` desde su cwd (`backend/.env`). Verificar que el servicio desplegado realmente la ve |
-| 6 | Trazabilidad | `ragLogger.saveToPostgres` inserta 9 de 16 columnas (§9.1 de la corrección de la regla 5) |
+| 6 | Trazabilidad | **RESUELTO en Fase 1 (PR #8)**: 16/16 columnas pobladas y verificadas escribiendo/leyendo una fila real. La traza añade `filters_dropped`, `filters_relaxed` y el umbral realmente usado (§9.8) |
 | 7 | Rol en el ejecutor | `executeAuraTool` recibe `userRole` y **no lo usa**: un cliente corre con el rol por defecto `provider` |
 
 ### 9.7 Cobertura funcional medida (rúbrica de 17 compuertas, evidencia por compuerta)
@@ -409,15 +414,37 @@ payload devuelve 1 fila (solo GLOBAL) y el scoping legítimo sigue funcionando e
 |---|---|
 | Implementación en el repo | **73,5%** (12,5/17) |
 | Operativo con el código anterior | 58,8% (10/17) |
-| Operativo tras PR #6 | **73,5%** (12,5/17) |
+| **Operativo tras PR #6** | **73,5%** (12,5/17) |
+| **Operativo tras Fase 1 (PR #8, 2026-09-23)** | **79,4%** (13,5/17) — la compuerta `trazabilidad` pasa de 0,5 a 1: 16/16 columnas verificadas |
 | Búsqueda **semántica** (embeddings + vectorial) | **0%** — modelo retirado |
 | Tras aplicar §9.6 (modelo + dims + re-ingesta + umbral) | ~97% (queda la trazabilidad) |
 
 Compuertas rojas hoy: `embeddings reales`, `retrieval vectorial`, `datos cargados` (0 filas),
-`config de despliegue`. A medias: `trazabilidad`.
+`config de despliegue`. A medias: ninguna (`trazabilidad` quedó cerrada en Fase 1).
 
 > Las compuertas son un checklist declarado, no una métrica instrumentada: cada una se puntúa 1 /
 > 0,5 / 0 con la evidencia citada en esta sección.
+
+### 9.8 Correcciones aplicadas en Fase 1 (PR #8, 2026-09-23)
+
+Los filtros de metadata apuntaban a campos que la ingesta canónica **nunca escribe** o a un
+vocabulario que **no existe** en el corpus: cada filtro devolvía 0 chunks con apariencia de "no hay
+información". Medido contra Postgres con el código anterior y el nuevo:
+
+| Filtro | Antes | Después |
+|---|---|---|
+| `category='Piel'` / `'Uñas'` (etiquetas humanas) | **0 chunks** | resultados, con el filtro **descartado y registrado** (`filters_dropped`) |
+| `category='Guías Uñas'` | **0 chunks** | 2 chunks (normalizado a `guias_unas`) |
+| `skin_type='seca'` | **0 chunks** (filtraba por la columna `skin_type`, NULL en toda la ingesta) | 4 chunks (`seca` + contenido universal `all`) |
+| `domain='diagnostico_capilar'` | **0 chunks** (`metadata->>'domain'` no existe en 5.619/5.619) | 2 chunks |
+| `domain='BUSINESS'` (regulatorio) | **0 chunks** | 0 chunks **estricto**: el corpus no tiene documentos regulatorios y **no se relaja** el alcance |
+
+Además: `chunk_id`/`document_id`/`fuente`/`seccion` en el SELECT (citas verificables con la fila de
+la BD), el fallback full-text **ya no inventa** `similarity = 0.5`, y `rag_query_logs` se puebla con
+**16/16** columnas incluido el umbral realmente usado (antes la traza decía `0.72` con `0.45` en uso).
+
+Evidencia y límites: `docs/rag-audit-2026-09-22/FASE1_ENTREGA.md` y `probes/probe_fase1.js`,
+`probes/probe_traza.js`. Suite completa: mismos 73 rojos preexistentes, 0 nuevos (comparado por nombre).
 
 ---
 
