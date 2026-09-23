@@ -106,48 +106,50 @@ describe('embeddingService', () => {
     // Se omiten aquí pero se pueden ejecutar en CI con credenciales reales
   });
   
-  describe('generateEmbedding (con circuit breaker)', () => {
-    test('debe usar dummy embedding si circuit breaker está abierto', async () => {
-      // Forzar contador local al máximo
-      global.nvidiaEmbeddingFailureCount = 10;
-      
-      const embedding = await generateEmbedding('test');
-      
-      expect(embedding).toHaveLength(1024);
-      
-      // Limpiar
-      global.nvidiaEmbeddingFailureCount = 0;
+  describe('generateEmbedding (sin fallback dummy)', () => {
+    test('sin API key propaga el error en lugar de devolver un vector fabricado', async () => {
+      const originalKey = process.env.NVIDIA_API_KEY;
+      delete process.env.NVIDIA_API_KEY;
+
+      await expect(generateEmbedding('test'))
+        .rejects.toThrow('NVIDIA_API_KEY no configurada');
+
+      process.env.NVIDIA_API_KEY = originalKey;
     });
-    
-    test('debe retornar embedding de 1024 dims', async () => {
-      // Forzar fallback dummy
-      global.nvidiaEmbeddingFailureCount = 10;
-      
-      const embedding = await generateEmbedding('test query');
-      
-      expect(embedding).toHaveLength(1024);
-      
-      global.nvidiaEmbeddingFailureCount = 0;
+
+    test('el registro de circuit breakers incluye nvidiaEmbeddings', () => {
+      const { breakers } = require('../services/circuitBreakerService');
+
+      expect(breakers.nvidiaEmbeddings).toBeDefined();
+      expect(breakers.nvidiaEmbeddings.name).toBe('NVIDIA Embeddings');
+    });
+
+    test('generateDummyEmbedding ya no es alcanzable desde generateEmbedding', async () => {
+      const originalKey = process.env.NVIDIA_API_KEY;
+      delete process.env.NVIDIA_API_KEY;
+
+      // El helper sigue existiendo (y es determinista) solo para tests:
+      expect(generateDummyEmbedding('texto')).toHaveLength(1024);
+      // pero el camino productivo no lo usa: sin API key hay error, no vector.
+      await expect(generateEmbedding('texto')).rejects.toThrow();
+
+      process.env.NVIDIA_API_KEY = originalKey;
     });
   });
   
   describe('generateBatchEmbeddings', () => {
-    test('debe procesar lote con rate limiting', async () => {
-      // Forzar dummy embeddings
-      global.nvidiaEmbeddingFailureCount = 10;
-      
-      const texts = ['texto 1', 'texto 2', 'texto 3'];
-      const embeddings = await generateBatchEmbeddings(texts, 'passage', { 
-        batchSize: 2, 
-        delayMs: 10 
-      });
-      
-      expect(embeddings).toHaveLength(3);
-      embeddings.forEach(emb => {
-        expect(emb).toHaveLength(1024);
-      });
-      
-      global.nvidiaEmbeddingFailureCount = 0;
+    test('propaga el fallo del lote cuando no hay API key (no rellena con dummy)', async () => {
+      const originalKey = process.env.NVIDIA_API_KEY;
+      delete process.env.NVIDIA_API_KEY;
+
+      await expect(
+        generateBatchEmbeddings(['texto 1', 'texto 2', 'texto 3'], 'passage', {
+          batchSize: 2,
+          delayMs: 10
+        })
+      ).rejects.toThrow('NVIDIA_API_KEY no configurada');
+
+      process.env.NVIDIA_API_KEY = originalKey;
     });
   });
   

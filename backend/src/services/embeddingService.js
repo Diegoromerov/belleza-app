@@ -131,38 +131,16 @@ async function generateNvidiaEmbedding(text, inputType = 'query', options = {}) 
  * @returns {Promise<number[]>} Vector de embedding
  */
 async function generateEmbedding(text, inputType = 'query', options = {}) {
-  // Usar circuit breaker global si está disponible
+  // R1-R4: SIN fallback. Si NVIDIA falla (o el breaker está OPEN) el error se propaga:
+  //  - la ingesta falla el chunk afectado en lugar de guardar un vector falso;
+  //  - el retrieval (ragService) degrada a búsqueda full-text.
   if (breakers?.nvidiaEmbeddings) {
-    return await breakers.nvidiaEmbeddings.execute(
-      () => generateNvidiaEmbedding(text, inputType, options),
-      () => generateDummyEmbedding(text) // fallback
+    return breakers.nvidiaEmbeddings.execute(
+      () => generateNvidiaEmbedding(text, inputType, options)
     );
   }
-  
-  // Fallback local si no hay breaker global
-  // Mantener contador local simple
-  if (!global.nvidiaEmbeddingFailureCount) global.nvidiaEmbeddingFailureCount = 0;
-  const MAX_FAILURES = 3;
-  
-  if (global.nvidiaEmbeddingFailureCount < MAX_FAILURES) {
-    try {
-      const embedding = await generateNvidiaEmbedding(text, inputType, options);
-      global.nvidiaEmbeddingFailureCount = 0;
-      return embedding;
-    } catch (error) {
-      global.nvidiaEmbeddingFailureCount++;
-      console.warn(`⚠️ NVIDIA Embedding fallo local #${global.nvidiaEmbeddingFailureCount}/3: ${error.message}`);
-      
-      if (global.nvidiaEmbeddingFailureCount >= MAX_FAILURES) {
-        console.error('🔴 NVIDIA Circuit breaker OPEN (local) para embeddings');
-      }
-      
-      return generateDummyEmbedding(text);
-    }
-  }
-  
-  console.warn('⚠️ Usando dummy embedding (circuit breaker open local)');
-  return generateDummyEmbedding(text);
+
+  return generateNvidiaEmbedding(text, inputType, options);
 }
 
 /**

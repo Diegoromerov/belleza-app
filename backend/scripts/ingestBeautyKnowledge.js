@@ -234,6 +234,11 @@ async function processDocument(doc, options = {}) {
       // Metadata ya viene enriquecida (frontmatter + semántica)
       const enrichedMetadata = chunk.metadata || {};
 
+      // Identidad del chunk (046/048): document_id + chunk_id es la clave única aplicada
+      // en beauty_knowledge_embeddings. content_hash se calcula si el chunker no lo trae.
+      const contentHash = chunk.contentHash
+        || require('crypto').createHash('sha256').update(chunk.content).digest('hex');
+
       // Generar embedding (input_type='passage' para indexar)
       const embedding = await require('../src/services/embeddingService').generateEmbedding(
         chunk.content,
@@ -254,7 +259,12 @@ async function processDocument(doc, options = {}) {
         embedding,
         source: enrichedMetadata.source || 'corpus',
         sourceFile: filePath,
-        contentHash: chunk.contentHash,
+        contentHash,
+        documentId: path.basename(filePath),
+        documentVersion: String(enrichedMetadata.version || '1.0'),
+        chunkId: contentHash,
+        fuente: enrichedMetadata.source || 'corpus',
+        seccion: chunk.sectionTitle || null,
         skinType: enrichedMetadata.skin_type,
         seasonStation: enrichedMetadata.season_station,
         ageRange: enrichedMetadata.age_range,
@@ -290,11 +300,17 @@ async function upsertChunks(chunks, dryRun = false) {
   
   for (const chunk of chunks) {
     try {
+      // Identidad de upsert = (document_id, chunk_id): UK real de la tabla
+      // (uk_beauty_knowledge_chunk_identity, 046 + 048). `ON CONFLICT (title)` no
+      // coincidía con ninguna constraint -> cada re-ingesta duplicaba filas.
       const sql = `
         INSERT INTO beauty_knowledge_embeddings 
-        (title, category, content, metadata, embedding, skin_type, season_station, age_range, ingredients, contraindications)
-        VALUES ($1, $2, $3, $4, $5::vector, $6, $7, $8, $9, $10)
-        ON CONFLICT (title) DO UPDATE SET
+        (title, category, content, metadata, embedding, skin_type, season_station, age_range, ingredients, contraindications,
+         document_id, document_version, chunk_id, content_hash, fuente, seccion)
+        VALUES ($1, $2, $3, $4, $5::vector, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+        ON CONFLICT (document_id, chunk_id) DO UPDATE SET
+          title = EXCLUDED.title,
+          category = EXCLUDED.category,
           content = EXCLUDED.content,
           metadata = EXCLUDED.metadata,
           embedding = EXCLUDED.embedding,
@@ -303,6 +319,10 @@ async function upsertChunks(chunks, dryRun = false) {
           age_range = EXCLUDED.age_range,
           ingredients = EXCLUDED.ingredients,
           contraindications = EXCLUDED.contraindications,
+          document_version = EXCLUDED.document_version,
+          content_hash = EXCLUDED.content_hash,
+          fuente = EXCLUDED.fuente,
+          seccion = EXCLUDED.seccion,
           updated_at = NOW()
         RETURNING (xmax = 0) AS inserted;
       `;
@@ -323,6 +343,12 @@ async function upsertChunks(chunks, dryRun = false) {
         chunk.ageRange,
         chunk.ingredients || null,
         chunk.contraindications || null,
+        chunk.documentId,
+        chunk.documentVersion,
+        chunk.chunkId,
+        chunk.contentHash,
+        chunk.fuente,
+        chunk.seccion,
       ]);
       
       if (res.rows[0]?.inserted) {

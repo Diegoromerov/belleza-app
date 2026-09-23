@@ -531,7 +531,10 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
             console.log(`🛠️  Ejecutando herramienta: ${functionName}`);
 
             const toolStart = Date.now();
-            const toolResult = await executeAuraTool(functionName, functionArgs, parsedUserId);
+            // RAG (BUS-RAG-001): el chat de cliente consulta SOLO conocimiento GLOBAL
+            // (tenant_id IS NULL) y no debe recibir documentos privados de un negocio.
+            // tenantId=null es intencional; userRole queda en el default del ejecutor.
+            const toolResult = await executeAuraTool(functionName, functionArgs, parsedUserId, undefined, null);
             const toolLatency = Date.now() - toolStart;
             
             toolCalls.push({
@@ -828,7 +831,8 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
                             console.log(`🛠️  [Fallback Gemini] Ejecutando herramienta: ${functionName}`);
                 
                 const toolStart = Date.now();
-                const toolResult = await executeAuraTool(functionName, functionArgs, parsedUserId);
+                // RAG (BUS-RAG-001): ídem camino principal — solo conocimiento GLOBAL.
+                const toolResult = await executeAuraTool(functionName, functionArgs, parsedUserId, undefined, null);
                 const toolLatency = Date.now() - toolStart;
                 
                 toolCalls.push({

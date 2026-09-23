@@ -274,7 +274,13 @@ async function executeAuraTool(toolName, args, userId, userRole = 'provider', te
       }
 
       case 'search_beauty_knowledge_rag': {
-        const results = await searchBeautyKnowledge(args.queryText, { category: args.category, tenantId });
+        // ragService lee la categoría en `filters.category` (no en la raíz del objeto de
+        // opciones): pasarla suelta se descarta en silencio y se recuperan chunks de
+        // cualquier categoría. tenantId se propaga para el aislamiento multi-tenant.
+        const results = await searchBeautyKnowledge(args.queryText, {
+          filters: args.category ? { category: args.category } : {},
+          tenantId
+        });
         return { status: 'success', knowledge: results };
       }
 
