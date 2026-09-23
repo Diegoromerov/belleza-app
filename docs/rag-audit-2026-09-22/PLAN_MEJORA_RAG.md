@@ -48,6 +48,9 @@ recomendación; si quieres cambiarla, indícalo por número.
 
 ### FASE 1 — Dejar de responder "0 resultados" en silencio *(tamaño M · riesgo bajo · sin dependencias)*
 
+> ✅ **EJECUTADA** — PR #8 (`fix/rag-filtros-citas-trazas`, 2026-09-23). Evidencia y límites en
+> `FASE1_ENTREGA.md`; 50 tests verdes en las suites RAG y mismos 73 rojos preexistentes (0 nuevos).
+
 **Por qué primero**: arregla una **regresión introducida por PR #6** (el tool pasó a aplicar un
 filtro con vocabulario que el LLM no puede acertar → 0 chunks garantizados) y no depende de la
 decisión de modelo, así que se puede verificar ya sobre el fallback FTS.
@@ -120,8 +123,8 @@ explícito en las respuestas que citan el corpus, (b) gate de publicación por e
 ## 3. Orden de ejecución propuesto
 
 ```
-PR #7 (docs)          ← ya publicado (2 commits), pendiente de tu merge
-   └── PR #8  FASE 1  (filtros, citas, trazas)   ← independiente, arregla regresión viva
+PR #7 (docs)          ← ✅ MERGEADO (main = 17815833)
+   └── PR #8  FASE 1  (filtros, citas, trazas)   ← ✅ EJECUTADA, rebasada sobre main, pendiente de merge
    └── PR #9  FASE 0  (modelo, dims, re-ingesta) ← depende de D1/D2
          └── PR #10 FASE 2 (híbrido + rerank)
    └── PR #11 FASE 3  (CI: GOLD-V5 + gates)      ← paralelizable con Fase 0/2
