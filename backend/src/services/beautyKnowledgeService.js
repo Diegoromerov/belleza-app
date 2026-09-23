@@ -13,11 +13,21 @@
 
 const canonicalRag = require('./ragService');
 
+// Flag documentado en README/DEPLOY_CHECKLIST/rag-evaluation.yml: sin 'true' esta
+// ruta no devolvía nada. Se conserva idéntico para no alterar el contrato de
+// despliegue (el camino canónico es ragService, que no depende de este flag).
+const ENABLE_BEAUTY_RAG = process.env.ENABLE_BEAUTY_RAG === 'true';
+
 async function searchBeautyKnowledge(query, topK = 3, threshold = 0.7) {
+  if (!ENABLE_BEAUTY_RAG) {
+    return [];
+  }
+
   return canonicalRag.searchBeautyKnowledge(query, { topK, threshold });
 }
 
 module.exports = {
   searchBeautyKnowledge,
   formatKnowledgeContext: canonicalRag.formatKnowledgeContext,
+  ENABLE_BEAUTY_RAG,
 };
