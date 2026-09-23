@@ -74,7 +74,7 @@ DATABASE_URL=postgresql://user:***@host:5432/db
 # NVIDIA NIM Embeddings
 NVIDIA_API_KEY=your_nvidia_api_key
 NVIDIA_EMBED_URL=https://integrate.api.nvidia.com/v1
-NVIDIA_EMBEDDING_MODEL=nvidia/nv-embedqa-e5-v5
+NVIDIA_EMBEDDING_MODEL=nvidia/nv-embedqa-e5-v5   # ⚠️ EOL 2026-08-25 (410 Gone) — ver RAG_ARCHITECTURE.md §9.1
 
 # Feature flags
 ENABLE_BEAUTY_RAG=true

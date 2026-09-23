@@ -29,6 +29,8 @@ env:
   GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
   NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
   NVIDIA_EMBED_URL: https://integrate.api.nvidia.com/v1
+  # ⚠️ Modelo EOL el 2026-08-25: la API responde 410 Gone (ver RAG_ARCHITECTURE.md §9.1).
+  # Este job no puede generar embeddings hasta migrar de modelo y de dimensiones (1024 -> 2048).
   NVIDIA_EMBEDDING_MODEL: nvidia/nv-embedqa-e5-v5
   ENABLE_BEAUTY_RAG: 'true'
   RAG_SIMILARITY_THRESHOLD: '0.65'
