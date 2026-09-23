@@ -51,7 +51,7 @@ En Railway Dashboard:
 | `GEMINI_API_KEY` | `...` | Google AI Studio |
 | `NVIDIA_API_KEY` | `...` | **KEY DE RECARGO** (NVIDIA NIM) |
 | `NVIDIA_EMBED_URL` | `https://integrate.api.nvidia.com/v1` | Fijo |
-| `NVIDIA_EMBEDDING_MODEL` | `nvidia/nv-embedqa-e5-v5` | Fijo |
+| `NVIDIA_EMBEDDING_MODEL` | `nvidia/nv-embedqa-e5-v5` ⚠️ **EOL 2026-08-25** (`410 Gone`) | **REEMPLAZAR** por un modelo vivo: `nvidia/nemotron-3-embed-1b` (único habilitado para la cuenta, **2048 dims** → exige migración de `vector(1024)`→`vector(2048)`, reconstruir el índice HNSW y re-embeder el corpus). Ver `RAG_ARCHITECTURE.md` §9 |
 | `ENABLE_BEAUTY_RAG` | `true` | Fijo |
 | `JWT_SECRET` | `...` | Generado seguro (32+ chars) |
 | `NODE_ENV` | `production` | Fijo |
