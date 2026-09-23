@@ -73,6 +73,10 @@ const breakers = {
   youcam: new CircuitBreaker('YouCam SDK'),
   gemini: new CircuitBreaker('Gemini Vision'),
   deepseek: new CircuitBreaker('DeepSeek Embeddings/Recs'),
+  // RAG (port R1-R4): NVIDIA NIM embeddings. Se registra SIN fallback a propósito:
+  // si NVIDIA falla, el error se propaga y el retrieval degrada a full-text
+  // (ragService) en lugar de buscar con un vector sin valor semántico.
+  nvidiaEmbeddings: new CircuitBreaker('NVIDIA Embeddings'),
 };
 
 module.exports = {

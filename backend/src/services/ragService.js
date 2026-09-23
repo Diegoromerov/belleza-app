@@ -1,33 +1,31 @@
 /**
  * Servicio RAG (Retrieval-Augmented Generation) para GlowApp
  * Busca conocimiento técnico y regulatorio de belleza con aislamiento Multi-Tenant (BUS-RAG-001)
+ *
+ * Pipeline (port R1-R4, 2026-09-22):
+ *   1. embedding real de la consulta vía embeddingService (NVIDIA NIM + circuit breaker, SIN dummy)
+ *   2. búsqueda vectorial pgvector (HNSW, similitud coseno) con filtros de metadata, tenant y vigencia
+ *   3. si el paso 1 o 2 fallan → fallback full-text (tsvector español) sobre la misma tabla
+ *   El tenant viaja SIEMPRE como parámetro ligado ($n), nunca interpolado en el SQL.
  */
 
 require('dotenv').config();
 const { ragPool, pool } = require('../config/db');
-const axios = require('axios');
+const { generateEmbedding: generateQueryEmbedding } = require('./embeddingService');
 
-const NVIDIA_API_KEY = process.env.NVIDIA_API_KEY;
-const NVIDIA_API_URL = process.env.NVIDIA_API_URL || 'https://integrate.api.nvidia.com/v1/embeddings';
-const NVIDIA_EMBEDDING_MODEL = process.env.NVIDIA_EMBEDDING_MODEL || 'nvidia/nv-embedqa-e5-v5';
 const EXPECTED_DIMS = 1024;
 
-// ─── Generar embedding de un texto ───────────────────────────────────
+// ─── Generar embedding de la consulta ───────────────────────────────
 async function generateEmbedding(text) {
-  if (process.env.NVIDIA_API_KEY) {
-    try {
-      const { generateNvidiaEmbedding } = require('./embeddingService');
-      return await generateNvidiaEmbedding(text, 'query');
-    } catch (err) {
-      throw err;
-    }
+  // Sin vector fabricado: si NVIDIA no está disponible, esto lanza y el retrieval
+  // degrada a full-text (nunca se busca con un embedding sin valor semántico).
+  const embedding = await generateQueryEmbedding(text, 'query');
+
+  if (!Array.isArray(embedding) || embedding.length !== EXPECTED_DIMS) {
+    throw new Error(`Embedding inválido: ${Array.isArray(embedding) ? embedding.length : 0} dims`);
   }
 
-  // Fallback determinístico si NVIDIA_API_KEY no está disponible en dev/test
-  const hash = require('crypto').createHash('sha256').update(text).digest();
-  const embedding = new Array(EXPECTED_DIMS).fill(0).map((_, i) => (hash[i % 32] / 255 - 0.5) * 0.01);
-  const norm = Math.sqrt(embedding.reduce((sum, v) => sum + v * v, 0));
-  return embedding.map(v => v / norm);
+  return embedding;
 }
 
 // ─── Construir filtros de metadata ───────────────────────────────────
@@ -81,6 +79,23 @@ function buildMetadataFilters(filters = {}, startIndex = 1) {
   return { whereClause, params, nextIndex: paramIndex };
 }
 
+/**
+ * Añade la condición de aislamiento multi-tenant con parámetro LIGADO ($n).
+ * Con tenantId: conocimiento GLOBAL (tenant_id IS NULL) o propio del tenant.
+ * Sin tenantId: solo GLOBAL.
+ * Devuelve el siguiente índice de parámetro disponible.
+ */
+function appendTenantCondition(additionalConditions, params, paramIndex, tenantId) {
+  if (tenantId) {
+    additionalConditions.push(`(tenant_id IS NULL OR tenant_id::text = $${paramIndex})`);
+    params.push(String(tenantId));
+    return paramIndex + 1;
+  }
+
+  additionalConditions.push(`tenant_id IS NULL`);
+  return paramIndex;
+}
+
 // ─── Búsqueda vectorial principal con aislamiento Multi-Tenant ────────────────────────────────────
 async function searchBeautyKnowledge(query, options = {}) {
   const { topK = 5, threshold = 0.45, filters = {}, tenantId = null } = options;
@@ -89,6 +104,7 @@ async function searchBeautyKnowledge(query, options = {}) {
     const queryEmbedding = await generateEmbedding(query);
     const embeddingStr = `[${queryEmbedding.join(',')}]`;
 
+    // $1 = vector de la consulta; los filtros de metadata empiezan en $2
     const { whereClause, params: filterParams, nextIndex } = buildMetadataFilters(filters, 2);
 
     const additionalConditions = [];
@@ -96,18 +112,19 @@ async function searchBeautyKnowledge(query, options = {}) {
       additionalConditions.push(`(${whereClause})`);
     }
 
-    // MULTI-TENANT ISOLATION BOUNDARY:
+    // MULTI-TENANT ISOLATION BOUNDARY (BUS-RAG-001):
     // Permite conocimiento GLOBAL (tenant_id IS NULL) O conocimiento propio del tenant especificado.
     // IMPIDE terminantemente la filtración de documentos privados de otros tenants.
-    if (tenantId) {
-      additionalConditions.push(`(tenant_id IS NULL OR tenant_id::text = '${tenantId}')`);
-    } else {
-      additionalConditions.push(`tenant_id IS NULL`);
-    }
+    const queryParams = [embeddingStr, ...filterParams];
+    let paramIndex = appendTenantCondition(additionalConditions, queryParams, nextIndex, tenantId);
 
     // Soft delete & Expiration
     additionalConditions.push(`deleted_at IS NULL`);
     additionalConditions.push(`(expires_at IS NULL OR expires_at > NOW())`);
+
+    const thresholdIndex = paramIndex;
+    const limitIndex = paramIndex + 1;
+    queryParams.push(threshold, topK);
 
     const finalWhere = additionalConditions.length > 0 ? `WHERE ${additionalConditions.join(' AND ')}` : '';
 
@@ -123,12 +140,11 @@ async function searchBeautyKnowledge(query, options = {}) {
         1 - (embedding <=> $1::vector) AS similarity
       FROM beauty_knowledge_embeddings
       ${finalWhere}
-      ${finalWhere ? 'AND' : 'WHERE'} 1 - (embedding <=> $1::vector) >= $${nextIndex}
+      ${finalWhere ? 'AND' : 'WHERE'} 1 - (embedding <=> $1::vector) >= $${thresholdIndex}
       ORDER BY embedding <=> $1::vector
-      LIMIT $${nextIndex + 1};
+      LIMIT $${limitIndex};
     `;
 
-    const queryParams = [embeddingStr, ...filterParams, threshold, topK];
     const dbPool = ragPool || pool;
     const result = await dbPool.query(sql, queryParams);
 
@@ -141,6 +157,7 @@ async function searchBeautyKnowledge(query, options = {}) {
     console.warn('⚠️ [RAG] Vectorial falló o DB desatendida, ejecutando fallback full-text:', error.message);
 
     try {
+      // $1 = query, $2 = patrón ILIKE, $3 = LIMIT; los filtros de metadata empiezan en $4
       const { whereClause, params: filterParams, nextIndex } = buildMetadataFilters(filters, 4);
       const textCondition = `(to_tsvector('spanish', title || ' ' || content) @@ plainto_tsquery('spanish', $1) OR title ILIKE $2 OR content ILIKE $2)`;
 
@@ -148,11 +165,10 @@ async function searchBeautyKnowledge(query, options = {}) {
       if (whereClause) {
         additionalConditions.push(`(${whereClause})`);
       }
-      if (tenantId) {
-        additionalConditions.push(`(tenant_id IS NULL OR tenant_id::text = '${tenantId}')`);
-      } else {
-        additionalConditions.push(`tenant_id IS NULL`);
-      }
+
+      const fallbackParams = [query, `%${query}%`, topK, ...filterParams];
+      appendTenantCondition(additionalConditions, fallbackParams, nextIndex, tenantId);
+
       additionalConditions.push(`deleted_at IS NULL`);
       additionalConditions.push(`(expires_at IS NULL OR expires_at > NOW())`);
 
@@ -173,7 +189,6 @@ async function searchBeautyKnowledge(query, options = {}) {
         LIMIT $3;
       `;
 
-      const fallbackParams = [query, `%${query}%`, topK, ...filterParams];
       const dbPool = ragPool || pool;
       const fallbackResult = await dbPool.query(fallbackSql, fallbackParams);
 
