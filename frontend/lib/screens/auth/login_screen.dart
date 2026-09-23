@@ -32,10 +32,13 @@ class _LoginScreenState extends State<LoginScreen> {
     ),
   );
 
+  // En web: clientId Y serverClientId son requeridos para obtener el idToken.
+  // google_sign_in_web solo rellena googleAuth.idToken cuando serverClientId está presente.
   final GoogleSignIn _googleSignIn = kIsWeb
         ? GoogleSignIn(
             scopes: ['email'],
             clientId: _googleClientId.isNotEmpty ? _googleClientId : null,
+            serverClientId: _googleClientId.isNotEmpty ? _googleClientId : null,
           )
         : GoogleSignIn(
             scopes: ['email'],
@@ -99,71 +102,50 @@ class _LoginScreenState extends State<LoginScreen> {
       _error = null;
     });
     try {
-      // Timeout defensivo de 12s para evitar spinner congelado en loop infinito
+      // Timeout ampliado a 60s: el popup de Google en web puede tardar si el usuario
+      // está eligiendo cuenta o tiene mala conexión.
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn().timeout(
-        const Duration(seconds: 12),
+        const Duration(seconds: 60),
         onTimeout: () => null,
       );
 
-      if (googleUser != null) {
-        String? idToken;
-        try {
-          final GoogleSignInAuthentication googleAuth = await googleUser.authentication.timeout(
-            const Duration(seconds: 8),
-          );
-          idToken = googleAuth.idToken;
-        } catch (_) {
-          idToken = null;
+      // googleUser == null: el usuario canceló o el popup falló silenciosamente
+      if (googleUser == null) {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+            _error = 'Inicio de sesión cancelado o no completado. Intenta de nuevo.';
+          });
         }
+        return;
+      }
 
-        // Si obtuvimos idToken válido, autenticamos contra /api/auth/google
-        if (idToken != null && idToken.isNotEmpty) {
-          final result = await AuthService.loginWithGoogle(idToken);
-          if (result != null && mounted) {
-            String? role = result['user']['role'];
-            if (role == null) {
-              role = await RoleSelectionModal.show(context);
-            }
-            final bool onboardingCompleto = result['user']['onboarding_completo'] ?? false;
-            final String rLower = (role ?? '').toString().toLowerCase();
-            if (mounted) {
-              if (onboardingCompleto) {
-                if (rLower == 'provider') {
-                  Navigator.pushReplacementNamed(context, '/provider');
-                } else if (rLower == 'salon') {
-                  Navigator.pushReplacementNamed(context, '/salon');
-                } else {
-                  Navigator.pushReplacementNamed(context, '/home');
-                }
-              } else {
-                Navigator.pushReplacementNamed(context, '/onboarding');
-              }
-            }
-            return;
-          }
-        }
-
-        // Fallback resiliente
-        final result = await AuthService.loginOAuth(
-          email: googleUser.email,
-          nombre: googleUser.displayName ?? 'Usuario Google',
-          fotoUrl: googleUser.photoUrl ??
-              'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200&auto=format&fit=crop',
-          authProvider: 'GOOGLE',
-          providerId: googleUser.id,
+      // Obtener idToken (necesario para verificación segura en backend)
+      String? idToken;
+      try {
+        final GoogleSignInAuthentication googleAuth = await googleUser.authentication.timeout(
+          const Duration(seconds: 15),
         );
+        idToken = googleAuth.idToken;
+      } catch (authErr) {
+        idToken = null;
+      }
 
+      // Intentar autenticación segura con idToken contra /api/auth/google
+      if (idToken != null && idToken.isNotEmpty) {
+        final result = await AuthService.loginWithGoogle(idToken);
         if (result != null && mounted) {
           String? role = result['user']['role'];
           if (role == null) {
             role = await RoleSelectionModal.show(context);
           }
           final bool onboardingCompleto = result['user']['onboarding_completo'] ?? false;
+          final String rLower = (role ?? '').toString().toLowerCase();
           if (mounted) {
             if (onboardingCompleto) {
-              if (role == 'provider') {
+              if (rLower == 'provider') {
                 Navigator.pushReplacementNamed(context, '/provider');
-              } else if (role == 'salon') {
+              } else if (rLower == 'salon') {
                 Navigator.pushReplacementNamed(context, '/salon');
               } else {
                 Navigator.pushReplacementNamed(context, '/home');
@@ -173,21 +155,22 @@ class _LoginScreenState extends State<LoginScreen> {
             }
           }
           return;
-        } else {
-          if (mounted) setState(() => _error = 'No se pudo vincular la cuenta Google');
         }
-      } else {
+        // /api/auth/google falló: mostrar error específico en lugar de silencio
         if (mounted) {
-          setState(() {
-            _isLoading = false;
-            _error = null; // Cancelado por el usuario o timeout
-          });
+          setState(() => _error = 'El servidor rechazó el token de Google. Verifica la configuración del servidor.');
         }
         return;
       }
+
+      // idToken es null: google_sign_in_web no pudo obtenerlo (serverClientId faltante)
+      // Esto ocurre cuando el clientId web no está configurado correctamente.
+      if (mounted) {
+        setState(() => _error = 'No se pudo obtener el token de Google (idToken nulo). Contacta al soporte.');
+      }
     } catch (e) {
       if (mounted) {
-        setState(() => _error = 'Error de conexión con Google: $e');
+        setState(() => _error = 'Error al conectar con Google: $e');
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
