@@ -39,21 +39,30 @@ exports.googleSignIn = async (req, res) => {
       });
       payload = ticket.getPayload();
     } else {
-      // PATH 2: Verificar accessToken via Google tokeninfo (fallback para GIS web flow)
+      // PATH 2: Verificar accessToken via Google userinfo / tokeninfo API (fallback para GIS web flow)
       // google_sign_in_web 6.x con popup a veces solo devuelve accessToken, no idToken
-      const tokenInfoRes = await axios.get(
-        `https://oauth2.googleapis.com/tokeninfo?access_token=${encodeURIComponent(accessToken)}`
-      ).catch(err => {
-        throw new Error(`accessToken inválido: ${err.response?.data?.error || err.message}`);
-      });
-      const tokenInfo = tokenInfoRes.data;
-      if (!tokenInfo.email) {
-        throw new Error('Google tokeninfo no devolvió email');
+      let userData;
+      try {
+        const userInfoRes = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        });
+        userData = userInfoRes.data;
+      } catch (err) {
+        const tokenInfoRes = await axios.get(
+          `https://oauth2.googleapis.com/tokeninfo?access_token=${encodeURIComponent(accessToken)}`
+        ).catch(err2 => {
+          throw new Error(`accessToken inválido: ${err2.response?.data?.error_description || err2.response?.data?.error || err2.message || err.message}`);
+        });
+        userData = tokenInfoRes.data;
+      }
+
+      if (!userData || !userData.email) {
+        throw new Error('Google no devolvió email en la verificación del token');
       }
       payload = {
-        email: tokenInfo.email,
-        name: tokenInfo.name || tokenInfo.email,
-        sub: tokenInfo.sub || tokenInfo.user_id
+        email: userData.email,
+        name: userData.name || userData.email,
+        sub: userData.sub || userData.user_id
       };
     }
 

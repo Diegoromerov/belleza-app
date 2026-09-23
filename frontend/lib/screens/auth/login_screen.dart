@@ -137,24 +137,26 @@ class _LoginScreenState extends State<LoginScreen> {
       // PATH 1: idToken disponible → verificación segura en backend
       if (idToken != null && idToken.isNotEmpty) {
         final result = await AuthService.loginWithGoogle(idToken);
-        if (result != null && mounted) {
+        if (result != null && result['token'] != null && mounted) {
           return _navigateAfterLogin(result);
         }
         if (mounted) {
-          setState(() => _error = 'El servidor rechazó el token de Google. Intenta de nuevo.');
+          final errMessage = result?['details'] ?? result?['error'] ?? 'El servidor rechazó el token de Google. Intenta de nuevo.';
+          setState(() => _error = errMessage);
         }
         return;
       }
 
       // PATH 2: GIS popup devuelve solo accessToken (comportamiento normal en 6.x web)
-      // El backend verifica el accessToken contra https://oauth2.googleapis.com/tokeninfo
+      // El backend verifica el accessToken contra https://www.googleapis.com/oauth2/v3/userinfo
       if (accessToken != null && accessToken.isNotEmpty) {
         final result = await AuthService.loginWithGoogleAccessToken(accessToken);
-        if (result != null && mounted) {
+        if (result != null && result['token'] != null && mounted) {
           return _navigateAfterLogin(result);
         }
         if (mounted) {
-          setState(() => _error = 'No se pudo autenticar con Google. Intenta de nuevo.');
+          final errMessage = result?['details'] ?? result?['error'] ?? 'No se pudo autenticar con Google. Intenta de nuevo.';
+          setState(() => _error = errMessage);
         }
         return;
       }

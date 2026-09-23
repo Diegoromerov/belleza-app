@@ -191,20 +191,24 @@ class AuthService {
         if (roleIntent != null) 'role_intent': roleIntent,
       }),
     );
-    if (response.statusCode == 200) {
+    try {
       final data = json.decode(response.body);
-      final prefs = await SharedPreferences.getInstance();
-      
-      // 🛡️ PARCHE DE SEGURIDAD (GLOW-SEC-02): Guardar el token en almacenamiento cifrado
-      await SecureStorageService().write('token', data['token']);
-      
-      await prefs.setString('userId', data['user']['id'].toString());
-      await prefs.setString('userName', data['user']['full_name']);
-      if (data['user']['role'] != null) {
-        await prefs.setString('userRole', data['user']['role']);
+      if (response.statusCode == 200 && data is Map<String, dynamic>) {
+        final prefs = await SharedPreferences.getInstance();
+        if (data['token'] != null) {
+          await SecureStorageService().write('token', data['token']);
+        }
+        if (data['user'] != null) {
+          await prefs.setString('userId', data['user']['id'].toString());
+          await prefs.setString('userName', data['user']['full_name']);
+          if (data['user']['role'] != null) {
+            await prefs.setString('userRole', data['user']['role']);
+          }
+        }
+        return data;
       }
-      return data;
-    }
+      if (data is Map<String, dynamic>) return data;
+    } catch (_) {}
     return null;
   }
 
@@ -217,17 +221,24 @@ class AuthService {
       headers: {'Content-Type': 'application/json'},
       body: json.encode({'accessToken': accessToken}),
     );
-    if (response.statusCode == 200) {
+    try {
       final data = json.decode(response.body);
-      final prefs = await SharedPreferences.getInstance();
-      await SecureStorageService().write('token', data['token']);
-      await prefs.setString('userId', data['user']['id'].toString());
-      await prefs.setString('userName', data['user']['full_name']);
-      if (data['user']['role'] != null) {
-        await prefs.setString('userRole', data['user']['role']);
+      if (response.statusCode == 200 && data is Map<String, dynamic>) {
+        final prefs = await SharedPreferences.getInstance();
+        if (data['token'] != null) {
+          await SecureStorageService().write('token', data['token']);
+        }
+        if (data['user'] != null) {
+          await prefs.setString('userId', data['user']['id'].toString());
+          await prefs.setString('userName', data['user']['full_name']);
+          if (data['user']['role'] != null) {
+            await prefs.setString('userRole', data['user']['role']);
+          }
+        }
+        return data;
       }
-      return data;
-    }
+      if (data is Map<String, dynamic>) return data;
+    } catch (_) {}
     return null;
   }
 
