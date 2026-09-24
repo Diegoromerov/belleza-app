@@ -555,9 +555,80 @@ async function getCoherenciaReport(req, res) {
   }
 }
 
+/**
+ * GET /api/admin/precios/export.csv
+ * Exporta el catálogo completo o de una lista a formato CSV.
+ */
+async function exportPreciosCsv(req, res) {
+  try {
+    const lista = req.query.lista ? String(req.query.lista).trim() : null;
+    const { exportarPreciosCsv } = require('../services/preciosCsvService');
+
+    const csvContent = await exportarPreciosCsv({ dbPool: pool, lista });
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="precios_glowshop.csv"');
+    return res.status(200).send(csvContent);
+  } catch (error) {
+    console.error('Error en GET /api/admin/precios/export.csv:', error);
+    return res.status(500).json({ error: 'INTERNAL_SERVER_ERROR', message: error.message });
+  }
+}
+
+/**
+ * POST /api/admin/precios/import.csv
+ * Carga e importación masiva de precios por archivo CSV.
+ */
+async function importPreciosCsv(req, res) {
+  try {
+    if (!req.file || !req.file.buffer) {
+      return res.status(400).json({
+        error: 'INVALID_ARGUMENT',
+        message: 'Debe adjuntar un archivo CSV en el campo "archivo"'
+      });
+    }
+
+    const dryRun = req.query.dry_run === undefined || req.query.dry_run === 'true';
+    const reemplazar = req.query.reemplazar === 'true';
+
+    const { parsearPreciosCsv, aplicarPreciosCsv } = require('../services/preciosCsvService');
+    const csvText = req.file.buffer.toString('utf8');
+
+    const parsed = parsearPreciosCsv(csvText);
+
+    if (parsed.errores.length > 0 && parsed.filas.length === 0) {
+      return res.status(400).json({
+        leidas: parsed.total_leidas,
+        validas: 0,
+        con_error: parsed.errores.length,
+        errores: parsed.errores,
+        cambios: { nuevos: 0, modificados: 0, sin_cambio: 0 }
+      });
+    }
+
+    const actorId = req.user ? req.user.id : null;
+    const report = await aplicarPreciosCsv({
+      dbPool: pool,
+      actorId,
+      filas: parsed.filas,
+      errores: parsed.errores,
+      totalLeidas: parsed.total_leidas,
+      dryRun,
+      reemplazar
+    });
+
+    return res.status(200).json(report);
+  } catch (error) {
+    console.error('Error en POST /api/admin/precios/import.csv:', error);
+    return res.status(500).json({ error: 'INTERNAL_SERVER_ERROR', message: error.message });
+  }
+}
+
 module.exports = {
   getPrecios,
   updatePrecioProducto,
   bulkUpdatePrecios,
-  getCoherenciaReport
+  getCoherenciaReport,
+  exportPreciosCsv,
+  importPreciosCsv
 };
