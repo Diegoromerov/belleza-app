@@ -117,6 +117,19 @@ for (const f of recorrer(FLUTTER_LIB, /\.dart$/)) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// R5 · Asignación de estado por defecto en transacciones con fallback (|| o ??).
+// ─────────────────────────────────────────────────────────────────────────────
+for (const f of recorrer(BACKEND_SRC, /\.js$/)) {
+  const ls = lineas(f);
+  ls.forEach((l, i) => {
+    if (esComentario(l)) return;
+    if (/(status|estado|payment_status)\s*[:=]\s*.*(\||\|\/|\?\?)\s*['"]?(APPROVED|PAGADO|paid|CONFIRMADA)['"]?/i.test(l)) {
+      marcar(f, i + 1, 'R5 fallback de estado por defecto en transacción', l);
+    }
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Salida
 // ─────────────────────────────────────────────────────────────────────────────
 // ─────────────────────────────────────────────────────────────────────────────

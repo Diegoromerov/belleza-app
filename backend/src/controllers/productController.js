@@ -145,7 +145,11 @@ exports.createProduct = async (req, res) => {
     let tenantId = req.user?.tenant_id;
     if (!tenantId) {
       const platRes = await pool.query('SELECT app_platform_tenant_id() AS tid');
-      tenantId = platRes.rows[0]?.tid || 1;
+      tenantId = platRes.rows[0]?.tid;
+    }
+
+    if (!tenantId) {
+      return res.status(500).json({ error: 'No se pudo determinar el contexto del tenant para crear el producto' });
     }
 
     const query = `

@@ -47,7 +47,6 @@ const memoryUsers = new Map();
 const memorySalones = new Map();
 const memorySalonMiembros = [];
 const memoryBookings = [];
-const memoryTransactions = [];
 
 async function initDefaultUsers() {
   const hash = await bcrypt.hash('password123', 10);
@@ -471,27 +470,6 @@ function handleMemoryQuery(text, params = []) {
   // Check bookings
   if (queryStr.includes('BOOKINGS')) {
     return { rows: memoryBookings };
-  }
-
-  // Check transactions
-  if (queryStr.includes('TRANSACTIONS')) {
-    if (queryStr.includes('INSERT INTO TRANSACTIONS')) {
-      const txObj = {
-        id: params[0] || 'tx-1',
-        booking_id: params[1] || 'b-1',
-        client_id: params[2] || 1,
-        provider_id: params[3] || 1,
-        amount: params[4] || 0,
-        status: params[5] || 'APPROVED'
-      };
-      memoryTransactions.push(txObj);
-      return { rows: [txObj] };
-    }
-    const idParam = params.find(p => p !== undefined && p !== null);
-    if (idParam !== undefined) {
-      return { rows: memoryTransactions.filter(t => String(t.id) === String(idParam)) };
-    }
-    return { rows: memoryTransactions };
   }
 
   // Check business_profiles
