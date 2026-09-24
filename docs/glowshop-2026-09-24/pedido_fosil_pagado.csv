@@ -1,0 +1,2 @@
+id,comprador_id,rol_comprador,estado,subtotal,envio,iva,total,creado_en,producto_id,cantidad,precio_unitario_pagado
+76f69c13-053a-484c-904e-316890b100b7,6,CLIENTE,PAGADO,38000.00,12000.00,7220.00,57220.00,2026-09-03 09:46:58.757663+00,2,1,38000.00
