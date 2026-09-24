@@ -1,51 +1,63 @@
-// backend/src/controllers/productController.js
 const { pool } = require('../config/db');
+const { resolverPrecio, rolACodigoLista, conContextoDePlataforma } = require('../services/precioService');
 
-// GET /api/products → Obtener catálogo de productos (filtrado por rol y tag)
+// GET /api/products → Obtener catálogo de productos (filtrado por rol y nivel de precios)
 exports.getProducts = async (req, res) => {
   try {
     const { tag } = req.query;
-    const userRole = req.user ? req.user.role : 'client'; // 'client', 'provider', 'admin'
+    const userRole = req.user ? req.user.role : 'client'; // 'client', 'provider', 'salon', 'admin'
+    const codigoLista = rolACodigoLista(userRole);
 
-    let query = '';
-    const params = [];
-
-    if (userRole === 'provider' || userRole === 'admin') {
-      // Prestador/Admin ve todo (Público e Insumo) a precio_prestador
-      query = `
-        SELECT id, nombre, descripcion, precio_prestador AS precio, stock, imagen_url, tag_especialidad, tipo_visibilidad
-        FROM productos
+    const executeGetProducts = async (dbClient) => {
+      let query = `
+        SELECT p.id, p.nombre, p.descripcion, p.stock, p.imagen_url, p.tag_especialidad, p.tipo_visibilidad,
+               pp.precio, pp.unidad_minima
+        FROM productos p
+        INNER JOIN precios_producto pp ON pp.producto_id = p.id
+        INNER JOIN listas_precios lp ON lp.id = pp.lista_id
+        WHERE lp.codigo = $1
+          AND lp.estado = 'ACTIVA'
+          AND pp.precio IS NOT NULL
       `;
-    } else {
-      // Cliente solo ve productos públicos
-      query = `
-        SELECT id, nombre, descripcion, precio_al_publico AS precio, precio_con_reserva, stock, imagen_url, tag_especialidad, tipo_visibilidad
-        FROM productos
-        WHERE tipo_visibilidad = 'PUBLICO'
-      `;
-    }
+      const params = [codigoLista];
 
-    if (tag) {
-      if (userRole === 'provider' || userRole === 'admin') {
-        query += ' WHERE tag_especialidad = $1';
-      } else {
-        query += ' AND tag_especialidad = $1';
+      if (tag) {
+        query += ' AND p.tag_especialidad = $2';
+        params.push(tag);
       }
-      params.push(tag);
+
+      query += ' ORDER BY p.id ASC;';
+
+      const { rows } = await dbClient.query(query, params);
+
+      const formattedData = rows.map(r => ({
+        id: r.id,
+        nombre: r.nombre,
+        descripcion: r.descripcion,
+        precio: parseFloat(r.precio),
+        unidad_minima: parseInt(r.unidad_minima, 10),
+        stock: r.stock,
+        imagen_url: r.imagen_url,
+        tag_especialidad: r.tag_especialidad,
+        tipo_visibilidad: r.tipo_visibilidad
+      }));
+
+      return res.json({
+        success: true,
+        count: formattedData.length,
+        data: formattedData
+      });
+    };
+
+    if (!req.user) {
+      // Invitado público: ejecutar bajo contexto de plataforma explícito (sin BypassRLS)
+      return await conContextoDePlataforma(pool, executeGetProducts);
+    } else {
+      return await executeGetProducts(pool);
     }
-
-    query += ' ORDER BY id ASC;';
-
-    const { rows } = await pool.query(query, params);
-
-    res.json({
-      success: true,
-      count: rows.length,
-      data: rows
-    });
   } catch (error) {
     console.error('❌ ERROR EN GET /api/products:', error);
-    res.status(500).json({ error: 'Error al obtener productos' });
+    return res.status(500).json({ error: 'Error al obtener productos' });
   }
 };
 
@@ -55,47 +67,55 @@ exports.getProductById = async (req, res) => {
     const productId = req.params.id;
     const userRole = req.user ? req.user.role : 'client';
 
-    const { rows } = await pool.query(
-      'SELECT id, nombre, descripcion, precio_al_publico, precio_con_reserva, precio_prestador, comision_prestador, stock, imagen_url, tag_especialidad, tipo_visibilidad FROM productos WHERE id = $1;',
-      [productId]
-    );
+    const executeGetProductById = async (dbClient) => {
+      const { rows } = await dbClient.query(
+        'SELECT id, nombre, descripcion, stock, imagen_url, tag_especialidad, tipo_visibilidad FROM productos WHERE id = $1;',
+        [productId]
+      );
 
-    if (rows.length === 0) {
-      return res.status(404).json({ error: 'Producto no encontrado' });
-    }
+      if (rows.length === 0) {
+        return res.status(404).json({ error: 'Producto no encontrado' });
+      }
 
-    const product = rows[0];
+      const product = rows[0];
 
-    // Verificar visibilidad por rol
-    if (userRole === 'client' && product.tipo_visibilidad === 'INSUMO_PRESTADOR') {
-      return res.status(403).json({ error: 'No tienes acceso a este producto' });
-    }
+      // Resolver precio por nivel de comprador
+      const resPrecio = await resolverPrecio({
+        rol: userRole,
+        productoId: product.id,
+        cantidad: 1
+      });
 
-    // Adaptar campos de retorno segun rol
-    const responseData = {
-      id: product.id,
-      nombre: product.nombre,
-      descripcion: product.descripcion,
-      stock: product.stock,
-      imagen_url: product.imagen_url,
-      tag_especialidad: product.tag_especialidad,
-      tipo_visibilidad: product.tipo_visibilidad
+      if (resPrecio.estado === 'sin_precio' || resPrecio.precio === null || resPrecio.precio === undefined) {
+        return res.status(403).json({ error: 'No tienes acceso a este producto' });
+      }
+
+      const responseData = {
+        id: product.id,
+        nombre: product.nombre,
+        descripcion: product.descripcion,
+        precio: resPrecio.precio,
+        unidad_minima: resPrecio.unidad_minima,
+        stock: product.stock,
+        imagen_url: product.imagen_url,
+        tag_especialidad: product.tag_especialidad,
+        tipo_visibilidad: product.tipo_visibilidad
+      };
+
+      return res.json({
+        success: true,
+        data: responseData
+      });
     };
 
-    if (userRole === 'provider' || userRole === 'admin') {
-      responseData.precio = parseFloat(product.precio_prestador);
+    if (!req.user) {
+      return await conContextoDePlataforma(pool, executeGetProductById);
     } else {
-      responseData.precio = parseFloat(product.precio_al_publico);
-      responseData.precio_con_reserva = parseFloat(product.precio_con_reserva);
+      return await executeGetProductById(pool);
     }
-
-    res.json({
-      success: true,
-      data: responseData
-    });
   } catch (error) {
     console.error('❌ ERROR EN GET /api/products/:id:', error);
-    res.status(500).json({ error: 'Error al obtener producto' });
+    return res.status(500).json({ error: 'Error al obtener producto' });
   }
 };
 
