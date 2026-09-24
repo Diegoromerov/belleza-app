@@ -8,7 +8,7 @@ READY FOR G1 CONSOLIDATION
 - **Backend**: Node.js + Express (JavaScript), MVC-like architecture with Services and Agents, PostgreSQL + PostGIS database, Redis for caching (mentioned), WebSocket (socket.io) for real-time, Cron jobs for background tasks
 - **Database**: PostgreSQL 14+ with PostGIS extension for geolocation, Redis implied for caching
 - **Infrastructure**: Hosted on Railway, containerized with Docker
-- **AI Services**: Primary provider Google Gemini, AI orchestration via custom routes, Retrieval Augmented Generation (RAG) pipeline, embedding services, custom beauty knowledge corpus, Google ML Kit Face Detection for on-device processing
+- **AI Services**: Primary provider Google Gemini, Retrieval Augmented Generation (RAG) pipeline, embedding services, custom beauty knowledge corpus, Google ML Kit Face Detection for on-device processing. *(Módulo orquestador legado `backend/src/services/ai/` retirado el 2026-09-24: no podía leer código y 2 de sus 3 herramientas devolvían datos fabricados. Su prompt se conserva en `docs/ai/orchestrator-prompt-retirado.md`.)*
 
 ## 3. Architecture
 ### Frontend Layers

@@ -28,7 +28,7 @@
     },
     "ai_services": {
       "primary_provider": "Google Gemini",
-      "orchestration": "AI Orchestrator routes",
+      "orchestration": "Módulo retirado el 2026-09-24: no podía leer código y 2 de sus 3 herramientas devolvían datos fabricados. Su prompt se conserva en docs/ai/orchestrator-prompt-retirado.md.",
       "agents": "Custom agent services",
       "rag": "Retrieval Augmented Generation",
       "embeddings": "Observed in embeddingService.js",

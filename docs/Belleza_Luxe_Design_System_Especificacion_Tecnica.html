@@ -564,7 +564,7 @@ flowchart TD
         <tr>
           <td><span class="badge-critica">Crítica</span></td>
           <td>Eliminar Dead Code</td>
-          <td>Remover <code>beautyScanWorker.js</code> ya que el Worker oficial corre en FastAPI.</td>
+          <td>Remover <code>beautyScanWorker.js</code> ya que el Worker oficial corre en FastAPI. Módulo orquestador legado (<code>backend/src/services/ai/</code>) retirado el 2026-09-24: no podía leer código y 2 de sus 3 herramientas devolvían datos fabricados. Su prompt se conserva en <code>docs/ai/orchestrator-prompt-retirado.md</code>.</td>
         </tr>
         <tr>
           <td><span class="badge-alta">Alta</span></td>

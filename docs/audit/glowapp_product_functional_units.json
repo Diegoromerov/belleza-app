@@ -693,7 +693,7 @@
     {
       "name": "AI",
       "type": "Shared Technical Service",
-      "description": "Model inference, orchestration used by AURA, Design, Store recommendations"
+      "description": "Model inference, RAG pipeline, embedding services used by AURA, Design, Store recommendations. Módulo retirado el 2026-09-24: no podía leer código y 2 de sus 3 herramientas devolvían datos fabricados. Su prompt se conserva en docs/ai/orchestrator-prompt-retirado.md."
     },
     {
       "name": "AURA",

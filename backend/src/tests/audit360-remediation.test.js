@@ -188,21 +188,6 @@ describe('A360 C-12 — el caché semántico está aislado por identidad', () =>
   });
 });
 
-describe('A360 A-17 — el orquestador está cerrado y su guard acota de verdad', () => {
-  test('/api/ai/orchestrate exige autenticación y rol admin', () => {
-    const router = require('../routes/aiOrchestratorRoutes');
-    const capa = router.stack.find((l) => l.route && l.route.path === '/orchestrate');
-    expect(capa).toBeDefined();
-    expect(capa.route.stack.length).toBeGreaterThanOrEqual(3); // auth + admin + handler
-  });
-
-  test('el guard de rutas ya no resuelve a la raíz del sistema', () => {
-    const src = soloCodigo(leer('src/services/ai/orchestrator.service.js'));
-    expect(src).not.toMatch(/path\.resolve\(process\.cwd\(\), '\.\.\/\.\.\/'\)/);
-    expect(src).toMatch(/repoRoot/);
-  });
-});
-
 describe('A360 C-02 — escáner de credenciales versionadas', () => {
   test('no hay credenciales en archivos trackeados', () => {
     execFileSync('node', [path.join('scripts', 'verifyNoVersionedSecrets.js')], {
