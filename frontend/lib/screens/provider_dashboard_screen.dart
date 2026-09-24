@@ -352,7 +352,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                   isBold: true),
               const SizedBox(height: 8),
               _breakdownRow('Descuento Plataforma (20% total)',
-                  '-\$${(gross * 0.20).toStringAsFixed(0)} COP',
+                  '-\$${(platformCut + stateTax).toStringAsFixed(0)} COP',
                   color: Colors.red[800], isBold: true),
               Padding(
                 padding: const EdgeInsets.only(left: 12.0, top: 4.0),
@@ -365,14 +365,6 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                     _breakdownRow('• ReteFuente / Impuesto Estatal (8%)',
                         '-\$${stateTax.toStringAsFixed(0)} COP',
                         color: Colors.red[600]),
-                    const SizedBox(height: 2),
-                    const Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        '  * La plataforma asume y reporta este impuesto en tu beneficio.',
-                        style: TextStyle(fontSize: 10, color: Colors.grey, fontStyle: FontStyle.italic),
-                      ),
-                    ),
                   ],
                 ),
               ),
