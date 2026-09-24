@@ -18,6 +18,8 @@
 | O-006 | **Sistema de agentes + base de conocimiento** | Arquitecto (Hermes) | `docs/sistema-agentes` | **entregada** 2026-09-24 (pendiente de PR) | este repo, `docs/agents/` y `docs/knowledge/` | — |
 | O-007 | **P3 · Poda de ramas** | — | — | **ejecutada** 2026-09-24 | `INFORME-PODA-2026-09-24.md` | — |
 | O-008 | **Autorización y procedimiento de D-001..D-005** — qué se autoriza, por dónde se ejecuta, puertas, verificación y rollback de cada una; incluye el criterio técnico medido sobre el fósil | Arquitecto (Hermes) | `docs/sistema-agentes` | **entregada** 2026-09-24 · **ejecución pendiente de permiso efectivo** | `docs/agents/ordenes/AUTORIZACION-D-001-A-D-005-2026-09-24.md` | Vía CLI con la credencial del `credential.helper`: **bloqueada por la plataforma** (aprobación no entregable al cliente). Vía navegador: sin sesión de GitHub. Vía vault: sin entradas. ⇒ lo ejecuta el Dueño en la UI, o un agente en sesión con aprobaciones |
+| O-009 | **Auditoría de `ci.yml` + `.gitignore` + `index.js`** entregados por el Dueño; incluye la **simulación del CI sobre base descartable** que destapó A-01 | Auditor (Hermes) | `docs/sistema-agentes` | **entregada** 2026-09-24 | `docs/audit/AUDITORIA-CI-INDEX-GITIGNORE-2026-09-24.md` | — |
+| O-010 | **Órdenes A-01 a A-05** (salidas de O-009): cadena RLS 056/058, métricas de dinero inventadas, montajes duplicados, procedencia de cifras; y el escalado de A-04/TEC-68 al Dueño | Ejecutor | ver cada orden | **pendiente** | `docs/agents/ordenes/PROMPT-ANTIGRAVITY-A-01-A-05-2026-09-24.md` | A-05 depende de A-01; A-04 espera decisión del Dueño |
 
 ## 2. Decisiones del Dueño (escaladas)
 
