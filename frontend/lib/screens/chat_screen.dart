@@ -39,11 +39,17 @@ class _ChatScreenState extends State<ChatScreen> {
 
   String _cleanDsmlText(String input) {
     if (input.isEmpty) return input;
-    var clean = input.replaceAll(RegExp(r'<[\s\|]*DSML[\s\|]*[\s\S]*?[\/|\s]*DSML[\s\|]*>', caseSensitive: false), '');
-    clean = clean.replaceAll(RegExp(r'<[\s\|]*DSML[\s\|]*[\s\S]*?>', caseSensitive: false), '');
-    clean = clean.replaceAll(RegExp(r'<\/?[\s\|]*DSML[\s\|]*>', caseSensitive: false), '');
+    var clean = input.replaceAll(RegExp(r'<\s*\|\s*DSML\s*\|\s*\|\s*calls\s*>[\s\S]*?<\/\s*\|\s*DSML\s*\|\s*\|\s*calls\s*>', caseSensitive: false), '');
+    clean = clean.replaceAll(RegExp(r'<\s*\|\s*DSML\s*\|\s*\|\s*invoke[\s\S]*?<\/\s*\|\s*DSML\s*\|\s*\|\s*invoke\s*>', caseSensitive: false), '');
+    clean = clean.replaceAll(RegExp(r'<\s*\|\s*DSML\s*\|\s*\|\s*parameter[\s\S]*?<\/\s*\|\s*DSML\s*\|\s*\|\s*parameter\s*>', caseSensitive: false), '');
+    clean = clean.replaceAll(RegExp(r'<[^>]*DSML[^>]*>', caseSensitive: false), '');
     clean = clean.replaceAll(RegExp(r'<\|im_start\|>[\s\S]*?<\|im_end\|>', caseSensitive: false), '');
-    return clean.replaceAll(RegExp(r'\n{3,}'), '\n\n').trim();
+    clean = clean.replaceAll(RegExp(r'<\|im_start\|>|<\|im_end\|>', caseSensitive: false), '');
+    clean = clean.replaceAll(RegExp(r'\n{3,}'), '\n\n').trim();
+    if (clean.length < 5 && (clean.contains('queryText') || clean.contains('invoke') || clean.contains('parameter') || clean.contains('calls'))) {
+      return '';
+    }
+    return clean;
   }
 
   Map<String, String> _parseAiRecommendation(String text) {

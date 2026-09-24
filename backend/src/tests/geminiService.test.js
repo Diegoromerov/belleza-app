@@ -30,7 +30,7 @@ axios.post.mockResolvedValue({
 });
 
 // Importar después de configurar mocks
-const { processAssistantMessage, AI_USER_ID } = require('../services/geminiService');
+const { processAssistantMessage, sanitizeAiResponseText, parseDsmlToolCalls, AI_USER_ID } = require('../services/geminiService');
 
 describe('Pruebas unitarias de Asistente de IA (geminiService.js)', () => {
   beforeEach(() => {
@@ -70,5 +70,28 @@ describe('Pruebas unitarias de Asistente de IA (geminiService.js)', () => {
     const payload = axios.post.mock.calls[0][1];
     expect(payload.model).toBe('deepseek-v4-flash');
     expect(payload.messages.length).toBeGreaterThan(1);
+  });
+
+  test('Debería sanitizar correctamente marcado DSML completo de invocación de herramientas', () => {
+    const rawDsml = `< | DSML | | calls>
+< | DSML | | invoke name="search_beauty_knowledge_rag">
+< | DSML | | parameter name="queryText" string="true">hena embarazo</ | DSML | | parameter>
+</ | DSML | | invoke>
+< | DSML | | invoke name="search_beauty_knowledge_rag">
+< | DSML | | parameter name="queryText" string="true">tinte cabello embarazo</ | DSML | | parameter>
+</ | DSML | | invoke>
+</ | DSML | | calls>`;
+
+    // 1. parseDsmlToolCalls debe extraer las 2 herramientas
+    const parsedTools = parseDsmlToolCalls(rawDsml);
+    expect(parsedTools.length).toBe(2);
+    expect(parsedTools[0].function.name).toBe('search_beauty_knowledge_rag');
+    expect(JSON.parse(parsedTools[0].function.arguments).queryText).toBe('hena embarazo');
+    expect(parsedTools[1].function.name).toBe('search_beauty_knowledge_rag');
+    expect(JSON.parse(parsedTools[1].function.arguments).queryText).toBe('tinte cabello embarazo');
+
+    // 2. sanitizeAiResponseText debe dejar el texto totalmente limpio / vacío
+    const cleaned = sanitizeAiResponseText(rawDsml);
+    expect(cleaned).toBe('');
   });
 });

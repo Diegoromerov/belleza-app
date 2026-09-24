@@ -37,11 +37,30 @@ const AI_USER_ID = 0;
 function sanitizeAiResponseText(text) {
   if (!text || typeof text !== 'string') return '';
   let clean = text;
-  clean = clean.replace(/<[\s\|]*DSML[\s\|]*[\s\S]*?[\/|\s]*DSML[\s\|]*>/gi, '');
-  clean = clean.replace(/<[\s\|]*DSML[\s\|]*[\s\S]*?>/gi, '');
-  clean = clean.replace(/<\/?[\s\|]*DSML[\s\|]*>/gi, '');
+
+  // 1. Remueve bloques completos de DSML (calls, invoke, parameter) incluyendo multilinea
+  clean = clean.replace(/<\s*\|\s*DSML\s*\|\s*\|\s*calls\s*>[\s\S]*?<\/\s*\|\s*DSML\s*\|\s*\|\s*calls\s*>/gi, '');
+  clean = clean.replace(/<\s*\|\s*DSML\s*\|\s*\|\s*invoke[\s\S]*?<\/\s*\|\s*DSML\s*\|\s*\|\s*invoke\s*>/gi, '');
+  clean = clean.replace(/<\s*\|\s*DSML\s*\|\s*\|\s*parameter[\s\S]*?<\/\s*\|\s*DSML\s*\|\s*\|\s*parameter\s*>/gi, '');
+
+  // 2. Remueve cualquier etiqueta individual que contenga DSML
+  clean = clean.replace(/<[^>]*DSML[^>]*>/gi, '');
+
+  // 3. Remueve etiquetas ChatML / Instruct (<|im_start|>, <|im_end|>, etc.)
   clean = clean.replace(/<\|im_start\|>[\s\S]*?<\|im_end\|>/gi, '');
+  clean = clean.replace(/<\|im_start\|>|<\|im_end\|>/gi, '');
+
+  // 4. Limpia saltos de línea excesivos
   clean = clean.replace(/\n{3,}/g, '\n\n').trim();
+
+  // 5. Si lo que queda es muy corto o contiene remanentes de parámetros/invocaciones
+  if (
+    clean.length < 5 ||
+    (/^[\s\d\w_\-="'\/>]+$/i.test(clean) && (clean.includes('queryText') || clean.includes('invoke') || clean.includes('parameter') || clean.includes('calls')))
+  ) {
+    return '';
+  }
+
   return clean;
 }
 
@@ -51,7 +70,7 @@ function sanitizeAiResponseText(text) {
 function parseDsmlToolCalls(content) {
   if (!content || typeof content !== 'string') return [];
   const toolCalls = [];
-  const invokeRegex = /<\s*\|\s*DSML\s*\|\s*\|\s*invoke\s+name=["']([^"']+)["']\s*>([\s\S]*?)<\/\s*\|\s*DSML\s*\|\s*\|\s*invoke\s*>/gi;
+  const invokeRegex = /<\s*\|\s*DSML\s*\|\s*\|\s*invoke\s+name=["']([^"']+)["'][^>]*>([\s\S]*?)<\/\s*\|\s*DSML\s*\|\s*\|\s*invoke\s*>/gi;
   let match;
   while ((match = invokeRegex.exec(content)) !== null) {
     const name = match[1];
@@ -1052,5 +1071,7 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
 
 module.exports = {
   processAssistantMessage,
+  sanitizeAiResponseText,
+  parseDsmlToolCalls,
   AI_USER_ID
 };
