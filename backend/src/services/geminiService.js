@@ -30,6 +30,49 @@ if (geminiApiKey) {
 
 const AI_USER_ID = 0;
 
+/**
+ * Limpia cualquier marcado DSML o tags internos de modelos LLM (DeepSeek / Qwen)
+ * para evitar que el usuario final vea bloques de invocación de herramientas crudos.
+ */
+function sanitizeAiResponseText(text) {
+  if (!text || typeof text !== 'string') return '';
+  let clean = text;
+  clean = clean.replace(/<[\s\|]*DSML[\s\|]*[\s\S]*?[\/|\s]*DSML[\s\|]*>/gi, '');
+  clean = clean.replace(/<[\s\|]*DSML[\s\|]*[\s\S]*?>/gi, '');
+  clean = clean.replace(/<\/?[\s\|]*DSML[\s\|]*>/gi, '');
+  clean = clean.replace(/<\|im_start\|>[\s\S]*?<\|im_end\|>/gi, '');
+  clean = clean.replace(/\n{3,}/g, '\n\n').trim();
+  return clean;
+}
+
+/**
+ * Parsea herramientas emitidas en formato DSML en la propiedad content del LLM.
+ */
+function parseDsmlToolCalls(content) {
+  if (!content || typeof content !== 'string') return [];
+  const toolCalls = [];
+  const invokeRegex = /<\s*\|\s*DSML\s*\|\s*\|\s*invoke\s+name=["']([^"']+)["']\s*>([\s\S]*?)<\/\s*\|\s*DSML\s*\|\s*\|\s*invoke\s*>/gi;
+  let match;
+  while ((match = invokeRegex.exec(content)) !== null) {
+    const name = match[1];
+    const body = match[2];
+    const args = {};
+    const paramRegex = /<\s*\|\s*DSML\s*\|\s*\|\s*parameter\s+name=["']([^"']+)["'][^>]*>([\s\S]*?)<\/\s*\|\s*DSML\s*\|\s*\|\s*parameter\s*>/gi;
+    let paramMatch;
+    while ((paramMatch = paramRegex.exec(body)) !== null) {
+      args[paramMatch[1]] = paramMatch[2].trim();
+    }
+    toolCalls.push({
+      id: `dsml_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      function: {
+        name,
+        arguments: JSON.stringify(args)
+      }
+    });
+  }
+  return toolCalls;
+}
+
 // ─────────────────────────────────────────────────────────────────
 // PERSONALIDAD DE AURA
 // ─────────────────────────────────────────────────────────────────
@@ -537,13 +580,28 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
 
         let choiceMessage = response.data?.choices?.[0]?.message;
 
-        // ── 5a. Ejecutar Tool Calls si los hay ────────────────────────────
-        if (choiceMessage?.tool_calls?.length > 0) {
-          messages.push(choiceMessage);
+        // ── 5a. Ejecutar Tool Calls si los hay (nativos o formato DSML) ────
+        let activeToolCalls = choiceMessage?.tool_calls || [];
+        if (activeToolCalls.length === 0 && choiceMessage?.content) {
+          activeToolCalls = parseDsmlToolCalls(choiceMessage.content);
+        }
 
-          for (const toolCall of choiceMessage.tool_calls) {
+        if (activeToolCalls.length > 0) {
+          messages.push({
+            role: 'assistant',
+            content: choiceMessage.content || null,
+            tool_calls: activeToolCalls.map((tc, idx) => ({
+              id: tc.id || `call_${idx}`,
+              type: 'function',
+              function: tc.function
+            }))
+          });
+
+          for (const toolCall of activeToolCalls) {
             const functionName = toolCall.function.name;
-            const functionArgs = JSON.parse(toolCall.function.arguments || '{}');
+            const functionArgs = typeof toolCall.function.arguments === 'string'
+              ? JSON.parse(toolCall.function.arguments || '{}')
+              : (toolCall.function.arguments || {});
 
             notifyUserAuraStatus(parsedUserId, { state: 'executing_tool', tool: functionName });
             console.log(`🛠️  Ejecutando herramienta: ${functionName}`);
@@ -564,7 +622,7 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
 
             messages.push({
               role: 'tool',
-              tool_call_id: toolCall.id,
+              tool_call_id: toolCall.id || `call_${toolCalls.length}`,
               content: JSON.stringify(toolResult)
             });
           }
@@ -901,14 +959,17 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
       console.warn('⚠️ DEEPSEEK_API_KEY no configurada. AURA no puede generar respuestas de IA.');
     }
 
-    // ── 7. Respuesta por defecto si fallan todas las APIs ─────────────────
-    if (!aiResponseText) {
+    // ── 7. Sanitizar respuesta final (remover marcado DSML o artefactos de modelo)
+    aiResponseText = sanitizeAiResponseText(aiResponseText);
+
+    // ── 7b. Respuesta por defecto si fallan todas las APIs o el texto quedó vacío
+    if (!aiResponseText || aiResponseText.trim().length === 0) {
       aiResponseText =
         '¡Hola! Qué gusto saludarte ✨ Te dejo un tip rápido: aplica aceite de argán ' +
         'de medios a puntas una vez por semana para evitar el frizz y mantener tu cabello radiante. ' +
         '¿En qué más puedo ayudarte hoy? 🌿';
       llmUsed = 'safe_fallback';
-      errorMessage = 'All LLMs failed';
+      errorMessage = 'All LLMs failed or empty response after DSML sanitization';
     }
 
     // ── 8. Guardar la respuesta de AURA en la base de datos ───────────────

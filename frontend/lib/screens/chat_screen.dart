@@ -37,6 +37,15 @@ class _ChatScreenState extends State<ChatScreen> {
   final ScrollController _scrollController = ScrollController();
   List<Map<String, dynamic>> _messages = [];
 
+  String _cleanDsmlText(String input) {
+    if (input.isEmpty) return input;
+    var clean = input.replaceAll(RegExp(r'<[\s\|]*DSML[\s\|]*[\s\S]*?[\/|\s]*DSML[\s\|]*>', caseSensitive: false), '');
+    clean = clean.replaceAll(RegExp(r'<[\s\|]*DSML[\s\|]*[\s\S]*?>', caseSensitive: false), '');
+    clean = clean.replaceAll(RegExp(r'<\/?[\s\|]*DSML[\s\|]*>', caseSensitive: false), '');
+    clean = clean.replaceAll(RegExp(r'<\|im_start\|>[\s\S]*?<\|im_end\|>', caseSensitive: false), '');
+    return clean.replaceAll(RegExp(r'\n{3,}'), '\n\n').trim();
+  }
+
   Map<String, String> _parseAiRecommendation(String text) {
     final Map<String, String> meta = {};
     final lines = text.split('\n');
@@ -616,7 +625,7 @@ class _ChatScreenState extends State<ChatScreen> {
                               final time = _formatTime(msg['created_at']);
 
                               if (isAi) {
-                                final text = msg['message'] ?? '';
+                                final text = _cleanDsmlText(msg['message'] ?? '');
                                 final isRec =
                                     text.contains('Estilo Recomendado:') ||
                                         text.contains('[SIMULACIÓN IA]');
