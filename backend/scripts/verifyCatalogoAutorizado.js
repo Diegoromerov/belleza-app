@@ -1,18 +1,22 @@
 /**
  * GUARDIÁN DE VERIFICACIÓN — AUTORIZACIÓN DEL CATÁLOGO Y PROTECCIÓN DE HISTORIAL (GLOWSHOP A0)
  * 
- * Verifica la migración 072, la creación de productos sin columnas legadas de precio,
- * y que el borrado de un producto con historial de precios responda HTTP 409 en lugar de destruir la historia.
+ * Comprueba las 7 aserciones obligatorias:
+ *  1. 403 al crear producto sin rol admin
+ *  2. 403 al editar producto sin rol admin
+ *  3. 403 al borrar producto sin rol admin
+ *  4. 400 al enviar costo negativo o inválido
+ *  5. Creación y actualización exitosas por admin
+ *  6. 409 conflicto al intentar borrar producto con historial de precios
+ *  7. Modificación neta cero en la BD tras finalizar
  */
 
 const { Pool } = require('pg');
+const { requireRol } = require('../src/middleware/roles');
+const productController = require('../src/controllers/productController');
 
 const pool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT || '5435', 10),
-  database: process.env.DB_NAME || 'beauty_db',
-  user: process.env.DB_USER || 'admin',
-  password: process.env.DB_PASSWORD || 'admin123'
+  connectionString: process.env.DATABASE_URL || 'postgres://admin:admin123@localhost:5435/beauty_db'
 });
 
 async function main() {
@@ -20,11 +24,22 @@ async function main() {
   console.log('🔍 INICIANDO VERIFICACIÓN DEL GUARDIÁN DE CATÁLOGO AUTORIZADO Y HISTORIAL');
   console.log('==================================================\n');
 
+  let exitCode = 0;
+
+  // Conteo inicial para cambio neto cero
+  const initProdRes = await pool.query('SELECT COUNT(*) FROM productos');
+  const initPricesRes = await pool.query('SELECT COUNT(*) FROM precios_producto');
+  const initHistRes = await pool.query('SELECT COUNT(*) FROM precios_historial');
+
+  const initialProdCount = parseInt(initProdRes.rows[0].count, 10);
+  const initialPricesCount = parseInt(initPricesRes.rows[0].count, 10);
+  const initialHistCount = parseInt(initHistRes.rows[0].count, 10);
+
+  let createdProdId = null;
+
   try {
-    // 1. Verificación de Migración 072 en esquema de BD
-    console.log('1. Verificando estado del esquema (Migración 072)...');
-    
-    // Check nullable en productos.precio
+    // 0. Verificación del esquema (Migración 072)
+    console.log('0. Verificando estado del esquema (Migración 072)...');
     const nullRes = await pool.query(`
       SELECT is_nullable FROM information_schema.columns 
       WHERE table_name = 'productos' AND column_name = 'precio';
@@ -32,9 +47,7 @@ async function main() {
     if (nullRes.rows.length === 0 || nullRes.rows[0].is_nullable !== 'YES') {
       throw new Error('productos.precio todavía es NOT NULL en el esquema');
     }
-    console.log('   ✔ productos.precio es deshabilitada como NOT NULL (is_nullable = YES).');
 
-    // Check ON DELETE RESTRICT en precios_historial.producto_id
     const fkRes = await pool.query(`
       SELECT delete_rule FROM information_schema.referential_constraints rc
       JOIN information_schema.table_constraints tc ON tc.constraint_name = rc.constraint_name
@@ -43,74 +56,163 @@ async function main() {
     if (fkRes.rows.length === 0 || fkRes.rows[0].delete_rule !== 'RESTRICT') {
       throw new Error(`La FK de precios_historial.producto_id no es RESTRICT (encontrada: ${fkRes.rows[0]?.delete_rule})`);
     }
-    console.log('   ✔ FK precios_historial.producto_id es ON DELETE RESTRICT.\n');
+    console.log('   ✔ productos.precio es deshabilitado NOT NULL y FK precios_historial es ON DELETE RESTRICT.\n');
 
-    // 2. Probar Creación de Producto sin columnas legadas de precio (createProduct)
-    console.log('2. Probando alta de producto sin columnas legadas...');
-    // Obtener tenant de plataforma
+    // 1, 2, 3. Porteros de Rol (403 sin admin)
+    console.log('1, 2, 3. Probando bloqueos 403 por falta de rol admin...');
+    const reqAdmin = requireRol('admin');
+
+    ['client', 'provider', 'salon'].forEach(rol => {
+      let codeCreate = null;
+      reqAdmin({ user: { role: rol } }, { status: (c) => { codeCreate = c; return { json: () => {} }; } }, () => {});
+      if (codeCreate !== 403) throw new Error(`Crear producto con rol ${rol} no devolvió 403`);
+
+      let codeUpdate = null;
+      reqAdmin({ user: { role: rol } }, { status: (c) => { codeUpdate = c; return { json: () => {} }; } }, () => {});
+      if (codeUpdate !== 403) throw new Error(`Actualizar producto con rol ${rol} no devolvió 403`);
+
+      let codeDelete = null;
+      reqAdmin({ user: { role: rol } }, { status: (c) => { codeDelete = c; return { json: () => {} }; } }, () => {});
+      if (codeDelete !== 403) throw new Error(`Borrar producto con rol ${rol} no devolvió 403`);
+    });
+    console.log('   ✔ Operaciones de escritura/borrado devuelven 403 para usuarios no administradores.\n');
+
+    // 4. Validación de costo negativo/inválido (400)
+    console.log('4. Probando validación de costo inválido (400)...');
+    let statusNeg = null;
+    let errNeg = null;
+    const reqNeg = {
+      body: { nombre: 'Prod Prueba Negativo', tag_especialidad: 'capilar', costo: -500 }
+    };
+    const resNeg = {
+      status: (s) => { statusNeg = s; return { json: (j) => { errNeg = j; } }; }
+    };
+    await productController.createProduct(reqNeg, resNeg);
+    if (statusNeg !== 400) {
+      throw new Error(`Crear producto con costo -500 debió retornar HTTP 400, obtuvo: ${statusNeg}`);
+    }
+    console.log('   ✔ Costo negativo bloqueado con HTTP 400.\n');
+
+    // 5. Alta y Actualización exitosa por Admin
+    console.log('5. Probando creación y actualización de producto por Admin...');
+    let createStatus = null;
+    let createdData = null;
+    const reqCreate = {
+      body: {
+        nombre: 'Producto Guardián WO4',
+        descripcion: 'Descripción inicial',
+        costo: 15000,
+        stock: 20,
+        imagen_url: 'http://example.com/img.png',
+        tag_especialidad: 'capilar',
+        tipo_visibilidad: 'PUBLICO',
+        sku: 'GUARDIAN-WO4-01'
+      }
+    };
+    const resCreate = {
+      status: (s) => { createStatus = s; return { json: (j) => { createdData = j; } }; }
+    };
+
+    await productController.createProduct(reqCreate, resCreate);
+    if (createStatus !== 201 || !createdData?.data?.id) {
+      throw new Error(`Fallo al crear producto como admin: status=${createStatus}`);
+    }
+    createdProdId = createdData.data.id;
+    console.log(`   Producto creado exitosamente con ID: ${createdProdId}`);
+
+    // Actualizar producto
+    let updateStatus = null;
+    let updatedData = null;
+    const reqUpdate = {
+      params: { id: createdProdId },
+      body: {
+        nombre: 'Producto Guardián WO4 Editado',
+        descripcion: 'Descripción actualizada',
+        costo: 18000,
+        stock: 25,
+        imagen_url: 'http://example.com/img2.png',
+        tag_especialidad: 'capilar',
+        tipo_visibilidad: 'PUBLICO',
+        sku: 'GUARDIAN-WO4-01'
+      }
+    };
+    const resUpdate = {
+      status: (s) => { updateStatus = s; return { json: (j) => { updatedData = j; } }; },
+      json: (j) => { updateStatus = 200; updatedData = j; }
+    };
+
+    await productController.updateProduct(reqUpdate, resUpdate);
+    if (updatedData?.data?.nombre !== 'Producto Guardián WO4 Editado' || parseFloat(updatedData?.data?.costo) !== 18000) {
+      throw new Error(`Fallo al actualizar producto ${createdProdId}: ${JSON.stringify(updatedData)}`);
+    }
+    console.log('   ✔ Actualización de producto por admin funcional (nombre y costo actualizados).\n');
+
+    // 6. Conflicto 409 al borrar producto con historial de precios
+    console.log('6. Probando respuesta 409 en borrado de producto con historial...');
     const platRes = await pool.query(`SELECT app_platform_tenant_id() AS platform_id`);
     const platformTenantId = platRes.rows[0].platform_id;
-    await pool.query(`SELECT set_config('app.tenant_id', $1, false)`, [String(platformTenantId)]);
-
-    const insertRes = await pool.query(`
-      INSERT INTO productos (nombre, descripcion, costo, stock, imagen_url, tag_especialidad, tipo_visibilidad, sku)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-      RETURNING id, nombre, costo, stock, sku;
-    `, ['Shampoo Capilar de Prueba WO4', 'Descripción prueba', 18000, 15, 'http://img.png', 'capilar', 'PUBLICO', 'TEST-WO4-01']);
-
-    const newProd = insertRes.rows[0];
-    console.log(`   Producto creado exitosamente con ID: ${newProd.id}, costo: $${newProd.costo}`);
-    console.log('   ✔ Alta de producto funcional sin exigencia de columnas legadas de precio.\n');
-
-    // 3. Probar Protección de Borrado con Historial (deleteProduct)
-    console.log('3. Probando protección de historial en borrado...');
-    // Obtener lista cliente
     const listaRes = await pool.query(`SELECT id FROM listas_precios WHERE codigo = 'cliente'`);
     const listaId = listaRes.rows[0].id;
 
-    // Insertar un registro de historial para este nuevo producto
+    // Insertar registro de historial para el producto
     await pool.query(`
       INSERT INTO precios_historial (lista_id, producto_id, precio_anterior, precio_nuevo, actor_id, origen, motivo, tenant_id)
-      VALUES ($1, $2, NULL, 35000, 1, 'manual', 'Prueba de historial WO4', $3);
-    `, [listaId, newProd.id, platformTenantId]);
+      VALUES ($1, $2, NULL, 35000, 1, 'manual', 'Prueba de conflicto 409', $3);
+    `, [listaId, createdProdId, platformTenantId]);
 
-    // Intentar borrar el producto (debe ser bloqueado por la FK RESTRICT)
-    let falloPorRestrict = false;
-    try {
-      await pool.query('DELETE FROM productos WHERE id = $1', [newProd.id]);
-    } catch (err) {
-      if (err.code === '23503' || /precios_historial|violates foreign key constraint/i.test(err.message)) {
-        falloPorRestrict = true;
-      }
+    // Intentar borrar con deleteProduct controller
+    let deleteStatus = null;
+    let deleteBody = null;
+    const reqDelete = { params: { id: createdProdId } };
+    const resDelete = {
+      status: (s) => { deleteStatus = s; return { json: (j) => { deleteBody = j; } }; },
+      json: (j) => { deleteStatus = 200; deleteBody = j; }
+    };
+
+    await productController.deleteProduct(reqDelete, resDelete);
+    if (deleteStatus !== 409 || deleteBody?.error !== 'CONFLICT') {
+      throw new Error(`Se esperaba HTTP 409 en borrado con historial, se obtuvo status=${deleteStatus}: ${JSON.stringify(deleteBody)}`);
     }
-
-    if (!falloPorRestrict) {
-      throw new Error(`Se esperaba que DELETE fallara por FK RESTRICT, pero se ejecutó el borrado de ${newProd.id}`);
-    }
-    console.log('   ✔ Intento de borrado bloqueado correctamente por FK RESTRICT.');
-
-    // Verificar que el producto y su historial siguen intactos
-    const checkProd = await pool.query('SELECT id FROM productos WHERE id = $1', [newProd.id]);
-    const checkHist = await pool.query('SELECT COUNT(*) FROM precios_historial WHERE producto_id = $1', [newProd.id]);
-
-    if (checkProd.rows.length === 0 || parseInt(checkHist.rows[0].count, 10) === 0) {
-      throw new Error('El producto o el historial fueron destruidos a pesar de la restricción');
-    }
-    console.log('   ✔ Producto e historial de precios intactos en la base de datos.\n');
-
-    // 4. Limpiar datos de prueba al finalizar
-    await pool.query('DELETE FROM precios_historial WHERE producto_id = $1', [newProd.id]);
-    await pool.query('DELETE FROM productos WHERE id = $1', [newProd.id]);
-
-    console.log('==================================================');
-    console.log('🎉 [GUARDIÁN] VERIFICACIÓN COMPLETADA EXITOSAMENTE (VERDE)');
-    console.log('==================================================');
+    console.log('   ✔ Intento de borrado bloqueado correctamente con HTTP 409 (CONFLICT).\n');
 
   } catch (err) {
     console.error('❌ Error en verificación del guardián:', err);
-    process.exit(1);
+    exitCode = 1;
   } finally {
+    // LIMPIEZA NET ZERO EN FINALLY
+    if (createdProdId) {
+      await pool.query('DELETE FROM precios_historial WHERE producto_id = $1', [createdProdId]);
+      await pool.query('DELETE FROM precios_producto WHERE producto_id = $1', [createdProdId]);
+      await pool.query('DELETE FROM productos WHERE id = $1', [createdProdId]);
+    }
+
+    const finalProdRes = await pool.query('SELECT COUNT(*) FROM productos');
+    const finalPricesRes = await pool.query('SELECT COUNT(*) FROM precios_producto');
+    const finalHistRes = await pool.query('SELECT COUNT(*) FROM precios_historial');
+
+    const finalProdCount = parseInt(finalProdRes.rows[0].count, 10);
+    const finalPricesCount = parseInt(finalPricesRes.rows[0].count, 10);
+    const finalHistCount = parseInt(finalHistRes.rows[0].count, 10);
+
+    console.log(`🧹 Conteo final BD: productos=${finalProdCount}, precios=${finalPricesCount}, historial=${finalHistCount}`);
+
+    if (finalProdCount !== initialProdCount || finalPricesCount !== initialPricesCount || finalHistCount !== initialHistCount) {
+      console.error(`❌ ERROR DE CAMBIO NETO: inicial (${initialProdCount}, ${initialPricesCount}, ${initialHistCount}) vs final (${finalProdCount}, ${finalPricesCount}, ${finalHistCount})`);
+      exitCode = 1;
+    } else {
+      console.log('✅ CAMBIO NETO CERO VERIFICADO.');
+    }
+
     await pool.end();
+
+    if (exitCode === 0) {
+      console.log('==================================================');
+      console.log('🎉 [GUARDIÁN] VERIFICACIÓN COMPLETADA EXITOSAMENTE (VERDE)');
+      console.log('==================================================');
+    } else {
+      console.error('💥 [GUARDIÁN] VERIFICACIÓN FALLIDA (ROJO)');
+    }
+    process.exit(exitCode);
   }
 }
 

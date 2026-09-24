@@ -87,4 +87,78 @@ describe('Admin Precios Routes', () => {
     expect(res.body.filas[0].precios.cliente).toBe(25000);
     expect(res.body.filas[0].precios.profesional).toBeNull();
   });
+
+  test('GET /api/admin/precios/export.csv devuelve CSV con headers correctos', async () => {
+    pool.query.mockImplementation((queryText) => {
+      const q = String(queryText);
+      if (q.includes('SELECT rol, tenant_id FROM usuarios')) {
+        return Promise.resolve({ rows: [{ rol: 'ADMIN', tenant_id: 1 }] });
+      }
+      if (q.includes('FROM listas_precios')) {
+        return Promise.resolve({
+          rows: [
+            { id: 1, codigo: 'cliente' },
+            { id: 2, codigo: 'profesional' },
+            { id: 3, codigo: 'negocio' }
+          ]
+        });
+      }
+      if (q.includes('FROM productos p')) {
+        return Promise.resolve({
+          rows: [
+            { producto_id: 101, sku: 'SKU1', nombre: 'Prod 1', costo: 1000, stock: 5, precio_cliente: 2000, precio_profesional: null, precio_negocio: null, unidad_minima_negocio: 6 }
+          ]
+        });
+      }
+      return Promise.resolve({ rows: [] });
+    });
+
+    const res = await request(app)
+      .get('/api/admin/precios/export.csv')
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.headers['content-type']).toMatch(/text\/csv/);
+    expect(res.text).toContain('producto_id,sku,nombre,costo,stock,precio_cliente,precio_profesional,precio_negocio,unidad_minima_negocio');
+    expect(res.text).toContain('101,SKU1,Prod 1,1000,5,2000');
+  });
+
+  test('POST /api/admin/precios/import.csv procesa archivo CSV en dry_run', async () => {
+    pool.query.mockImplementation((queryText) => {
+      const q = String(queryText);
+      if (q.includes('SELECT rol, tenant_id FROM usuarios')) {
+        return Promise.resolve({ rows: [{ rol: 'ADMIN', tenant_id: 1 }] });
+      }
+      if (q.includes('FROM listas_precios')) {
+        return Promise.resolve({
+          rows: [
+            { id: 1, codigo: 'cliente' },
+            { id: 2, codigo: 'profesional' },
+            { id: 3, codigo: 'negocio' }
+          ]
+        });
+      }
+      if (q.includes('FROM productos')) {
+        return Promise.resolve({
+          rows: [{ id: 101, sku: 'SKU1', costo: 1000, stock: 5, tenant_id: 1 }]
+        });
+      }
+      if (q.includes('FROM precios_producto')) {
+        return Promise.resolve({ rows: [] });
+      }
+      return Promise.resolve({ rows: [] });
+    });
+
+    const csvContent = 'producto_id,sku,nombre,precio_cliente\n101,SKU1,Prod 1,2500';
+
+    const res = await request(app)
+      .post('/api/admin/precios/import.csv?dry_run=true')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .attach('archivo', Buffer.from(csvContent), 'precios.csv');
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.leidas).toBe(1);
+    expect(res.body.validas).toBe(1);
+    expect(res.body.cambios.nuevos).toBe(1);
+  });
 });

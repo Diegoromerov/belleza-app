@@ -11,11 +11,7 @@ const { Pool } = require('pg');
 const { resolverPrecio, conContextoDePlataforma, rolACodigoLista } = require('../src/services/precioService');
 
 const pool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT || '5435', 10),
-  database: process.env.DB_NAME || 'beauty_db',
-  user: process.env.DB_USER || 'admin',
-  password: process.env.DB_PASSWORD || 'admin123'
+  connectionString: process.env.DATABASE_URL || 'postgres://admin:admin123@localhost:5435/beauty_db'
 });
 
 async function main() {
@@ -23,13 +19,25 @@ async function main() {
   console.log('🔍 INICIANDO VERIFICACIÓN DEL GUARDIÁN DE CATÁLOGO Y CHECKOUT');
   console.log('==================================================\n');
 
+  let exitCode = 0;
+
+  // Conteo inicial para cambio neto cero
+  const initProdRes = await pool.query('SELECT COUNT(*) FROM productos');
+  const initPricesRes = await pool.query('SELECT COUNT(*) FROM precios_producto');
+  const initHistRes = await pool.query('SELECT COUNT(*) FROM precios_historial');
+
+  const initialProdCount = parseInt(initProdRes.rows[0].count, 10);
+  const initialPricesCount = parseInt(initPricesRes.rows[0].count, 10);
+  const initialHistCount = parseInt(initHistRes.rows[0].count, 10);
+
+  let insertedPriceKey = null;
+
   try {
     // 1. Auditoría estática de cero columnas heredadas en funciones de lectura
     console.log('1. Auditando estáticamente productController.js...');
     const controllerPath = path.join(__dirname, '../src/controllers/productController.js');
     const controllerContent = fs.readFileSync(controllerPath, 'utf8');
 
-    // Extraer getProducts y getProductById
     const getProductsMatch = controllerContent.match(/exports\.getProducts =[\s\S]*?exports\.getProductById =[\s\S]*?exports\.createProduct/);
     const readCode = getProductsMatch ? getProductsMatch[0] : '';
 
@@ -57,10 +65,10 @@ async function main() {
     });
 
     console.log(`   Productos devueltos para invitado (consumidor): ${guestData.length}`);
-    if (guestData.length !== 296) {
-      throw new Error(`Se esperaban 296 productos de plataforma con precio cliente, pero se obtuvieron ${guestData.length}`);
+    if (guestData.length !== initialProdCount) {
+      throw new Error(`Se esperaban ${initialProdCount} productos de plataforma con precio cliente, pero se obtuvieron ${guestData.length}`);
     }
-    console.log('   ✔ Invitado ve los 296 productos con precio de consumidor.\n');
+    console.log(`   ✔ Invitado ve los ${guestData.length} productos con precio de consumidor.\n`);
 
     // 3. Verificando que productos sin precio en listas B2B (profesional/negocio) devuelven sin_precio
     console.log('3. Verificando que productos sin precio en lista profesional devuelven sin_precio...');
@@ -87,6 +95,17 @@ async function main() {
     console.log('5. Verificando validación de unidad mínima en nivel negocio...');
     const negocioProdId = sampleProd.id;
 
+    const listaNegocioRes = await pool.query(`SELECT id FROM listas_precios WHERE codigo = 'negocio'`);
+    const listaNegocioId = listaNegocioRes.rows[0].id;
+
+    // Sembrar precio en lista negocio para probar la validación de unidad mínima
+    await pool.query(`
+      INSERT INTO precios_producto (lista_id, producto_id, precio, unidad_minima)
+      VALUES ($1, $2, 35000, 6)
+      ON CONFLICT (lista_id, producto_id) DO UPDATE SET precio = EXCLUDED.precio, unidad_minima = EXCLUDED.unidad_minima;
+    `, [listaNegocioId, negocioProdId]);
+    insertedPriceKey = { lista_id: listaNegocioId, producto_id: negocioProdId };
+
     // Probar 5 unidades (debe fallar con MINIMO_NO_CUMPLIDO)
     let fallosCorrectamente = false;
     try {
@@ -103,35 +122,49 @@ async function main() {
     console.log('   ✔ 5 unidades como salón -> Bloqueado correctamente por unidad mínima (6).');
 
     // Probar 6 unidades (debe pasar)
-    // Primero sembrar temporalmente un precio en lista negocio para probar la validación completa
-    const listaNegocioRes = await pool.query(`SELECT id FROM listas_precios WHERE codigo = 'negocio'`);
-    const listaNegocioId = listaNegocioRes.rows[0].id;
-
-    await pool.query(`
-      INSERT INTO precios_producto (lista_id, producto_id, precio, unidad_minima)
-      VALUES ($1, $2, 35000, 6)
-      ON CONFLICT (lista_id, producto_id) DO UPDATE SET precio = EXCLUDED.precio, unidad_minima = EXCLUDED.unidad_minima;
-    `, [listaNegocioId, negocioProdId]);
-
     const resP6 = await resolverPrecio({ rol: 'salon', productoId: negocioProdId, cantidad: 6, dbPool: pool });
     if (resP6.unidad_minima !== 6 || resP6.precio !== 35000) {
       throw new Error(`Fallo en resolución para 6 unidades nivel negocio: ${JSON.stringify(resP6)}`);
     }
 
-    // Limpiar precio de prueba
-    await pool.query(`DELETE FROM precios_producto WHERE lista_id = $1 AND producto_id = $2`, [listaNegocioId, negocioProdId]);
-
     console.log('   ✔ 6 unidades como salón -> Pasa exitosamente con unidad_minima = 6.\n');
-
-    console.log('==================================================');
-    console.log('🎉 [GUARDIÁN] VERIFICACIÓN COMPLETADA EXITOSAMENTE (VERDE)');
-    console.log('==================================================');
 
   } catch (err) {
     console.error('❌ Error en verificación del guardián:', err);
-    process.exit(1);
+    exitCode = 1;
   } finally {
+    // LIMPIEZA NET ZERO EN FINALLY
+    if (insertedPriceKey) {
+      await pool.query(`DELETE FROM precios_producto WHERE lista_id = $1 AND producto_id = $2`, [insertedPriceKey.lista_id, insertedPriceKey.producto_id]);
+    }
+
+    const finalProdRes = await pool.query('SELECT COUNT(*) FROM productos');
+    const finalPricesRes = await pool.query('SELECT COUNT(*) FROM precios_producto');
+    const finalHistRes = await pool.query('SELECT COUNT(*) FROM precios_historial');
+
+    const finalProdCount = parseInt(finalProdRes.rows[0].count, 10);
+    const finalPricesCount = parseInt(finalPricesRes.rows[0].count, 10);
+    const finalHistCount = parseInt(finalHistRes.rows[0].count, 10);
+
+    console.log(`🧹 Conteo final BD: productos=${finalProdCount}, precios=${finalPricesCount}, historial=${finalHistCount}`);
+
+    if (finalProdCount !== initialProdCount || finalPricesCount !== initialPricesCount || finalHistCount !== initialHistCount) {
+      console.error(`❌ ERROR DE CAMBIO NETO: inicial (${initialProdCount}, ${initialPricesCount}, ${initialHistCount}) vs final (${finalProdCount}, ${finalPricesCount}, ${finalHistCount})`);
+      exitCode = 1;
+    } else {
+      console.log('✅ CAMBIO NETO CERO VERIFICADO.');
+    }
+
     await pool.end();
+
+    if (exitCode === 0) {
+      console.log('==================================================');
+      console.log('🎉 [GUARDIÁN] VERIFICACIÓN COMPLETADA EXITOSAMENTE (VERDE)');
+      console.log('==================================================');
+    } else {
+      console.error('💥 [GUARDIÁN] VERIFICACIÓN FALLIDA (ROJO)');
+    }
+    process.exit(exitCode);
   }
 }
 

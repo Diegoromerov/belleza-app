@@ -18,7 +18,7 @@
  * sigue usando la configuración real de PostgreSQL en lugar de tumbar el arranque.
  */
 
-const isMemoryMode = process.env.NODE_ENV === 'test' || process.env.USE_PG_MEM === 'true';
+const isMemoryMode = process.env.NODE_ENV === 'test' || process.env.USE_PG_MEM === 'true' || process.env.JEST_WORKER_ID !== undefined;
 
 // Esquema del harness. Es permisivo a propósito (sin FK ni CHECK): el objetivo es que las suites de
 // integración ejerciten el SQL y las queries reales, no re-validar las restricciones de las
@@ -202,9 +202,28 @@ const SCHEMA_SQL = `
     service_address TEXT,
     notes TEXT,
     estado VARCHAR(50),
-    payment_status VARCHAR(20),
-    pin_verificacion VARCHAR(10),
     productos_adicionales JSONB,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS transactions (
+    id VARCHAR(36) PRIMARY KEY,
+    booking_id VARCHAR(36),
+    client_id INTEGER,
+    provider_id INTEGER,
+    amount NUMERIC(10,2),
+    monto_total NUMERIC(10,2),
+    comision_plataforma NUMERIC(10,2),
+    monto_neto_prestador NUMERIC(10,2),
+    impuestos_retencion NUMERIC(10,2),
+    status VARCHAR(20),
+    payment_method VARCHAR(50),
+    external_id VARCHAR(255),
+    pasarela_pago VARCHAR(50),
+    referencia_pasarela VARCHAR(255),
+    estado_pago VARCHAR(50),
+    liberado_al_prestador BOOLEAN,
+    created_en TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   );
 
@@ -313,21 +332,40 @@ function seedReferenceData(pgMem) {
 let adapter = null;
 let enabled = false;
 
-if (isMemoryMode) {
-  try {
-    // eslint-disable-next-line global-require
-    const { newDb } = require('pg-mem');
-    const pgMem = newDb();
-    pgMem.public.none(SCHEMA_SQL);
-    seedReferenceData(pgMem);
-    adapter = pgMem.adapters.createPg();
-    enabled = true;
-  } catch (err) {
-    console.error(
-      `⚠️ [pgMemory] pg-mem no disponible (${err.message}). ` +
-      'Se usará la configuración real de PostgreSQL en lugar del harness en memoria.'
-    );
+function initMemoryIfNeeded() {
+  const isMem = process.env.NODE_ENV === 'test' || process.env.USE_PG_MEM === 'true' || process.env.JEST_WORKER_ID !== undefined;
+  if (!enabled && isMem) {
+    try {
+      // eslint-disable-next-line global-require
+      const { newDb } = require('pg-mem');
+      const pgMem = newDb();
+      pgMem.public.none(SCHEMA_SQL);
+      seedReferenceData(pgMem);
+      adapter = pgMem.adapters.createPg();
+      const poolInstance = new adapter.Pool();
+      adapter.query = (text, params) => poolInstance.query(text, params);
+      enabled = true;
+    } catch (err) {
+      console.error(
+        `⚠️ [pgMemory] pg-mem no disponible (${err.message}). ` +
+        'Se usará la configuración real de PostgreSQL en lugar del harness en memoria.'
+      );
+    }
   }
 }
 
-module.exports = { isMemoryMode, enabled, adapter };
+initMemoryIfNeeded();
+
+module.exports = {
+  get isMemoryMode() {
+    return process.env.NODE_ENV === 'test' || process.env.USE_PG_MEM === 'true' || process.env.JEST_WORKER_ID !== undefined;
+  },
+  get enabled() {
+    initMemoryIfNeeded();
+    return enabled;
+  },
+  get adapter() {
+    initMemoryIfNeeded();
+    return adapter;
+  }
+};

@@ -47,6 +47,7 @@ const memoryUsers = new Map();
 const memorySalones = new Map();
 const memorySalonMiembros = [];
 const memoryBookings = [];
+const memoryTransactions = [];
 
 async function initDefaultUsers() {
   const hash = await bcrypt.hash('password123', 10);
@@ -147,7 +148,10 @@ if (process.env.NODE_ENV !== 'production' && (process.env.ALLOW_MEMORY_FALLBACK 
 }
 
 function handleMemoryQuery(text, params = []) {
-  const queryStr = text.toUpperCase();
+  if (pgMemory.enabled && pgMemory.adapter && typeof pgMemory.adapter.query === 'function') {
+    return pgMemory.adapter.query(text, params);
+  }
+  const queryStr = String(text).toUpperCase();
 
   // SELECT to_regclass
   if (queryStr.includes('TO_REGCLASS')) {
@@ -469,6 +473,27 @@ function handleMemoryQuery(text, params = []) {
     return { rows: memoryBookings };
   }
 
+  // Check transactions
+  if (queryStr.includes('TRANSACTIONS')) {
+    if (queryStr.includes('INSERT INTO TRANSACTIONS')) {
+      const txObj = {
+        id: params[0] || 'tx-1',
+        booking_id: params[1] || 'b-1',
+        client_id: params[2] || 1,
+        provider_id: params[3] || 1,
+        amount: params[4] || 0,
+        status: params[5] || 'APPROVED'
+      };
+      memoryTransactions.push(txObj);
+      return { rows: [txObj] };
+    }
+    const idParam = params.find(p => p !== undefined && p !== null);
+    if (idParam !== undefined) {
+      return { rows: memoryTransactions.filter(t => String(t.id) === String(idParam)) };
+    }
+    return { rows: memoryTransactions };
+  }
+
   // Check business_profiles
   if (queryStr.includes('BUSINESS_PROFILES')) {
     return {
@@ -604,6 +629,10 @@ const pool = {
     const activeClient = tenantRouting.getActiveClient();
     if (activeClient) {
       return activeClient.query(text, params);
+    }
+
+    if ((pgMemory.isMemoryMode || dbMode === 'memoria') && pgMemory.enabled && pgMemory.adapter && typeof pgMemory.adapter.query === 'function') {
+      return pgMemory.adapter.query(text, params);
     }
 
     if (dbMode === 'memoria') {

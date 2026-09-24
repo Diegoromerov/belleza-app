@@ -142,10 +142,16 @@ exports.createProduct = async (req, res) => {
       return res.status(400).json({ error: 'costo debe ser un número mayor o igual a 0' });
     }
 
+    let tenantId = req.user?.tenant_id;
+    if (!tenantId) {
+      const platRes = await pool.query('SELECT app_platform_tenant_id() AS tid');
+      tenantId = platRes.rows[0]?.tid || 1;
+    }
+
     const query = `
-      INSERT INTO productos (nombre, descripcion, costo, stock, imagen_url, tag_especialidad, tipo_visibilidad, sku)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-      RETURNING id, nombre, descripcion, costo, stock, imagen_url, tag_especialidad, tipo_visibilidad, sku;
+      INSERT INTO productos (nombre, descripcion, costo, stock, imagen_url, tag_especialidad, tipo_visibilidad, sku, tenant_id)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      RETURNING id, nombre, descripcion, costo, stock, imagen_url, tag_especialidad, tipo_visibilidad, sku, tenant_id;
     `;
 
     const { rows } = await pool.query(query, [
@@ -156,7 +162,8 @@ exports.createProduct = async (req, res) => {
       imagen_url || '',
       tag_especialidad,
       tipo_visibilidad || 'PUBLICO',
-      sku || null
+      sku || null,
+      tenantId
     ]);
 
     return res.status(201).json({

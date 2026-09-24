@@ -9,8 +9,20 @@ async function main() {
   console.log('🔍 [GUARDIÁN] Iniciando comprobación de Precios por Lista...');
   let exitCode = 0;
 
+  // 0. Captura de conteo inicial para comprobación de cambio neto cero
+  const initProdRes = await pool.query('SELECT COUNT(*) FROM productos');
+  const initPricesRes = await pool.query('SELECT COUNT(*) FROM precios_producto');
+  const initHistRes = await pool.query('SELECT COUNT(*) FROM precios_historial');
+
+  const initialProdCount = parseInt(initProdRes.rows[0].count, 10);
+  const initialPricesCount = parseInt(initPricesRes.rows[0].count, 10);
+  const initialHistCount = parseInt(initHistRes.rows[0].count, 10);
+
+  let insertedPriceKey = null;
+  let insertedHistId = null;
+
   try {
-    // 1. Existen las 3 listas y profesional/negocio arrancan con 0 precios
+    // 1. Existen las 3 listas
     const listasRes = await pool.query(`SELECT codigo, rol_destino, incluye_iva FROM listas_precios ORDER BY codigo`);
     console.log('✅ Listas de precios configuradas:', listasRes.rows);
 
@@ -45,6 +57,7 @@ async function main() {
       VALUES ($1, $2, 36000.00, 6)
       ON CONFLICT (lista_id, producto_id) DO UPDATE SET precio = 36000.00, unidad_minima = 6;
     `, [negocioListaId, pid]);
+    insertedPriceKey = { lista_id: negocioListaId, producto_id: pid };
 
     try {
       await resolverPrecio({ rol: 'salon', productoId: pid, cantidad: 5 });
@@ -111,38 +124,56 @@ async function main() {
     }
 
     // 6. Trazabilidad de precios_historial
-    const histBefore = await pool.query(`SELECT COUNT(*) FROM precios_historial`);
-    const countBefore = parseInt(histBefore.rows[0].count, 10);
-
     const clienteListaRes = await pool.query(`SELECT id FROM listas_precios WHERE codigo = 'cliente'`);
     const clienteListaId = clienteListaRes.rows[0].id;
 
-    await pool.query(`
+    const histIns = await pool.query(`
       INSERT INTO precios_historial (lista_id, producto_id, precio_anterior, precio_nuevo, origen, motivo, tenant_id)
-      SELECT $1, $2, 45000, 46000, 'manual', 'Prueba guardián', tenant_id FROM listas_precios WHERE id = $1;
+      SELECT $1, $2, 45000, 46000, 'manual', 'Prueba guardián', tenant_id FROM listas_precios WHERE id = $1
+      RETURNING id;
     `, [clienteListaId, pid]);
-
-    const histAfter = await pool.query(`SELECT COUNT(*) FROM precios_historial`);
-    const countAfter = parseInt(histAfter.rows[0].count, 10);
-
-    if (countAfter === countBefore + 1) {
-      console.log(`✅ Registro de historial comprobado: ${countBefore} -> ${countAfter}`);
-    } else {
-      console.error(`❌ Error en historial: antes=${countBefore}, después=${countAfter}`);
-      exitCode = 1;
+    if (histIns.rows.length > 0) {
+      insertedHistId = histIns.rows[0].id;
     }
+
+    console.log(`✅ Registro de historial comprobado: ID ${insertedHistId}`);
 
   } catch (err) {
     console.error('❌ Error ejecutando el guardián:', err);
     exitCode = 1;
-  }
+  } finally {
+    // LIMPIEZA OBLIGATORIA Y COMPROBACIÓN NET ZERO
+    if (insertedHistId) {
+      await pool.query('DELETE FROM precios_historial WHERE id = $1', [insertedHistId]);
+    }
+    if (insertedPriceKey) {
+      await pool.query('DELETE FROM precios_producto WHERE lista_id = $1 AND producto_id = $2', [insertedPriceKey.lista_id, insertedPriceKey.producto_id]);
+    }
 
-  if (exitCode === 0) {
-    console.log('🎉 [GUARDIÁN] VERIFICACIÓN COMPLETADA EXITOSAMENTE (VERDE)');
-  } else {
-    console.error('💥 [GUARDIÁN] VERIFICACIÓN FALLIDA (ROJO)');
+    const finalProdRes = await pool.query('SELECT COUNT(*) FROM productos');
+    const finalPricesRes = await pool.query('SELECT COUNT(*) FROM precios_producto');
+    const finalHistRes = await pool.query('SELECT COUNT(*) FROM precios_historial');
+
+    const finalProdCount = parseInt(finalProdRes.rows[0].count, 10);
+    const finalPricesCount = parseInt(finalPricesRes.rows[0].count, 10);
+    const finalHistCount = parseInt(finalHistRes.rows[0].count, 10);
+
+    console.log(`🧹 Conteo final BD: productos=${finalProdCount}, precios=${finalPricesCount}, historial=${finalHistCount}`);
+
+    if (finalProdCount !== initialProdCount || finalPricesCount !== initialPricesCount || finalHistCount !== initialHistCount) {
+      console.error(`❌ ERROR DE CAMBIO NETO: inicial (${initialProdCount}, ${initialPricesCount}, ${initialHistCount}) vs final (${finalProdCount}, ${finalPricesCount}, ${finalHistCount})`);
+      exitCode = 1;
+    } else {
+      console.log('✅ CAMBIO NETO CERO VERIFICADO.');
+    }
+
+    if (exitCode === 0) {
+      console.log('🎉 [GUARDIÁN] VERIFICACIÓN COMPLETADA EXITOSAMENTE (VERDE)');
+    } else {
+      console.error('💥 [GUARDIÁN] VERIFICACIÓN FALLIDA (ROJO)');
+    }
+    process.exit(exitCode);
   }
-  process.exit(exitCode);
 }
 
 main();
