@@ -2,6 +2,7 @@
 /**
  * verifyNoVersionedSecrets.js
  * A360-2026-09-22/C-02 — Falla si hay credenciales reales en archivos TRACKEADOS.
+ * WO B-02 — Reglas extendidas para valores literales por defecto en vars sensibles y tokens en URL.
  *
  * Sin dependencias externas: usa `git grep` sobre el índice/árbol de trabajo.
  * Nunca imprime el valor del secreto, solo archivo:línea y el tipo de patrón.
@@ -34,6 +35,30 @@ const REGLAS = [
   { nombre: 'clave tipo Google API', buscar: '(^|[^A-Za-z0-9])AIza[A-Za-z0-9_-]{30,}', validar: () => true },
   { nombre: 'clave privada PEM', buscar: '-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----', validar: () => true },
   { nombre: 'token de Slack/GitHub', buscar: '(xox[baprs]-[A-Za-z0-9-]{10,}|gh[pousr]_[A-Za-z0-9]{30,})', validar: () => true },
+  {
+    nombre: 'valor por defecto literal para variable sensible',
+    buscar: '(PASS|PASSWORD|SECRET|TOKEN|KEY|CLAVE|PWD)[A-Za-z0-9_]*[[:space:]]*(\\|\\||\\?\\?|=)[[:space:]]*[\'"][^\'"]{4,}[\'"]',
+    validar: (linea, archivo) => {
+      if (/\.(test|spec)\.[jt]sx?$/.test(archivo)) return false;
+      const re = /(PASS|PASSWORD|SECRET|TOKEN|KEY|CLAVE|PWD)[A-Za-z0-9_]*\s*(?:\|\||\?\?|=)\s*['"]([^'"]+)['"]/i;
+      const m = re.exec(linea);
+      if (!m) return false;
+      const val = m[2];
+      if (/^(\*\*\*|REDACTED|TU_|YOUR_|changeme|PLACEHOLDER|xxx|example|admin123|test|ci_)/i.test(val)) return false;
+      return true;
+    }
+  },
+  {
+    nombre: 'token o JWT en parámetro de URL',
+    buscar: '[?&]token=',
+    validar: (linea, archivo) => {
+      if (!archivo) return false;
+      if (archivo.endsWith('.md')) return false;
+      if (/\.(test|spec)\.[jt]sx?$/.test(archivo)) return false;
+      if (/scripts\/verify/.test(archivo)) return false;
+      return true;
+    }
+  }
 ];
 
 // Rutas exentas (plantillas con placeholders, no credenciales).
@@ -45,8 +70,6 @@ const ALLOW_MARKERS = /(PLACEHOLDER|REPLACE_ME|YOUR_|TU_|REDACTED|\*\*\*|xxxx|XX
 
 function gitGrep(pattern) {
   try {
-    // `-e <patrón>`: sin esto, un patrón que empieza con `-` (la cabecera PEM)
-    // se interpreta como una opción y git grep aborta.
     return execFileSync('git', ['grep', '-n', '-E', '-I', '-e', pattern, '--', '.'], {
       cwd: REPO_ROOT,
       encoding: 'utf8',
@@ -54,7 +77,6 @@ function gitGrep(pattern) {
       stdio: ['ignore', 'pipe', 'pipe'],
     });
   } catch (err) {
-    // git grep devuelve exit 1 cuando no hay coincidencias
     if (err.status === 1) return '';
     throw err;
   }
@@ -72,7 +94,7 @@ for (const regla of REGLAS) {
     if (EXENTAS.some((re) => re.test(archivo))) continue;
     if (VENDOR.some((re) => re.test(archivo))) continue;
     if (ALLOW_MARKERS.test(contenido)) continue;
-    if (!regla.validar(contenido)) continue;
+    if (!regla.validar(contenido, archivo)) continue;
     hallazgos.push({ archivo, numLinea, nombre: regla.nombre });
   }
 }

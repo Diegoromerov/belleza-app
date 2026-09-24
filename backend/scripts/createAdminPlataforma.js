@@ -23,7 +23,7 @@ async function main() {
 
   if (!email || !password) {
     console.error('❌ ERROR: Debe proporcionar las variables de entorno ADMIN_EMAIL y ADMIN_PASSWORD.');
-    console.error('   Ejemplo de uso: ADMIN_EMAIL="admin@beautyapp.com" ADMIN_PASSWORD="PasswordSegura123!" node scripts/createAdminPlataforma.js');
+    console.error('   Ejemplo de uso: ADMIN_EMAIL="admin@beautyapp.com" ADMIN_PASSWORD="TU_PASSWORD" node scripts/createAdminPlataforma.js');
     process.exit(1);
   }
 

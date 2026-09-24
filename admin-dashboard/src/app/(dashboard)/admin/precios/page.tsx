@@ -274,9 +274,28 @@ export default function AdminPreciosPage() {
   };
 
   // Exportar CSV
-  const handleExportCsv = () => {
-    const token = getAuthToken();
-    window.open(`${getApiUrl()}/api/admin/precios/export.csv?token=${encodeURIComponent(token)}`, '_blank');
+  const handleExportCsv = async () => {
+    try {
+      const token = getAuthToken();
+      const res = await fetch(`${getApiUrl()}/api/admin/precios/export.csv`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) {
+        throw new Error(`Exportación falló: HTTP ${res.status}`);
+      }
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'precios_glowshop.csv';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Error al exportar CSV';
+      setError(message);
+    }
   };
 
   // Importar CSV
