@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import '../services/reply_reconcile.dart';
 import '../widgets/voice_input.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import '../services/api_service.dart';
@@ -109,7 +110,15 @@ class _ChatScreenState extends State<ChatScreen> {
 
   WebSocketChannel? _webSocketChannel;
   bool _isWebSocketConnected = false;
+  bool _wsRegistered = false;
   Timer? _reconnectTimer;
+
+  // La entrega de la respuesta de AURA no puede depender de un único push WS:
+  // si la conexión queda abierta pero el registro es rechazado (o el token falta),
+  // el servidor nunca empuja y la respuesta sólo aparecía al enviar el mensaje
+  // siguiente. Estos dos timers garantizan la entrega.
+  Timer? _wsAckWatchdog; // vigila el acuse {status:'registered'} del servidor
+  final ReplyReconciler _replyReconciler = ReplyReconciler();
 
   bool get _isAiPartner =>
       widget.partnerId == '0' ||
@@ -135,6 +144,8 @@ class _ChatScreenState extends State<ChatScreen> {
   void _connectWebSocket() {
     _webSocketChannel?.sink.close();
     _reconnectTimer?.cancel();
+    _wsAckWatchdog?.cancel();
+    _wsRegistered = false;
 
     try {
       final wsBase = ApiService.baseUrl.replaceFirst('http', 'ws');
@@ -148,22 +159,43 @@ class _ChatScreenState extends State<ChatScreen> {
             setState(() {
               _isWebSocketConnected = true;
             });
-            // Stop polling timer if connected
-            if (_pollingTimer != null) {
-              _pollingTimer!.cancel();
-              _pollingTimer = null;
-            }
             // Parse message and trigger reload
             try {
               final data = jsonDecode(message.toString());
               if (data is Map && data['type'] == 'aura_status') {
-                final state = data['state'];
+                // El servidor envía {type:'aura_status', data:{state:...}}: el estado
+                // está anidado. Antes se leía data['state'] (siempre null), así que el
+                // indicador de "AURA está pensando" se apagaba al instante.
+                final payload = data['data'];
+                final state = payload is Map ? payload['state'] : null;
                 setState(() {
                   _isAuraThinking = (state == 'thinking');
                 });
                 if (_isAuraThinking) {
                   _scrollToBottom();
                 }
+              } else if (data is Map &&
+                  (data['status'] == 'registered' || data['type'] == 'registered')) {
+                // Acuse del servidor: esta conexión ya está registrada y puede recibir push.
+                _wsRegistered = true;
+                _wsAckWatchdog?.cancel();
+                debugPrint('WS chat: conexión registrada como ${data['userId']}');
+              } else if (data is Map && data['type'] == 'chat_message') {
+                // Push real: el canal funciona, se puede dejar de reconciliar.
+                _wsRegistered = true;
+                _wsAckWatchdog?.cancel();
+                _stopReconcilePolling();
+                if (_pollingTimer != null) {
+                  _pollingTimer!.cancel();
+                  _pollingTimer = null;
+                }
+                _loadMessages(showLoading: false);
+                _markAsRead();
+              } else if (data is Map && data['error'] != null) {
+                // El servidor rechazó el registro (token ausente/expirado): sin registro
+                // no habrá push, así que la reconciliación por polling queda activa.
+                debugPrint('WS chat: el servidor rechazó el registro: ${data['error']}');
+                if (_isAuraThinking) _startReconcilePolling();
               } else {
                 _loadMessages(showLoading: false);
                 _markAsRead();
@@ -191,17 +223,49 @@ class _ChatScreenState extends State<ChatScreen> {
   void _registerWebSocket() async {
     if (_webSocketChannel == null) return;
     // A360-2026-09-22/C-04: el servidor exige un token JWT para registrar la
-    // conexión. Registrarse enviando sólo el userId ya no se acepta, así que sin
-    // token no se registra (el polling existente sigue trayendo los mensajes).
-    final token = await AuthService.getToken();
+    // conexión. Sin registro el servidor nunca empuja, así que un fallo aquí se
+    // compensa con reconciliación por polling (no basta con no registrarse).
+    String? token;
+    try {
+      token = await AuthService.getToken();
+    } catch (e) {
+      debugPrint('WS chat: error leyendo el token: $e');
+      token = null;
+    }
     if (token == null || token.isEmpty) {
       debugPrint('WS chat: sin token, no se registra la conexión');
+      if (_isAuraThinking) _startReconcilePolling();
       return;
     }
     _webSocketChannel!.sink.add(jsonEncode({
       'type': 'register',
       'token': token,
     }));
+
+    // Sin acuse no podemos asumir que habrá push: si en 6 s no llegó
+    // {status:'registered'}, se activa la reconciliación por polling.
+    _wsAckWatchdog?.cancel();
+    _wsAckWatchdog = Timer(const Duration(seconds: 6), () {
+      if (mounted && !_wsRegistered) {
+        debugPrint('WS chat: sin acuse de registro del servidor; reconciliando por polling');
+        if (_isAuraThinking) _startReconcilePolling();
+      }
+    });
+  }
+
+  // ── Entrega garantizada de la respuesta de AURA ────────────────────────────
+  // Se sondea sólo durante la ventana en que se espera una respuesta (tope 90 s)
+  // para no agotar el rate limit por usuario de los endpoints de chat.
+  void _startReconcilePolling() {
+    _replyReconciler.start(onPoll: () async {
+      if (mounted) {
+        await _loadMessages(showLoading: false);
+      }
+    });
+  }
+
+  void _stopReconcilePolling() {
+    _replyReconciler.stop();
   }
 
   void _handleWebSocketFailure() {
@@ -210,10 +274,11 @@ class _ChatScreenState extends State<ChatScreen> {
       _isWebSocketConnected = false;
     });
 
-    // Fallback: Start 3-second auto-polling for messages if not running
-    _pollingTimer ??= Timer.periodic(const Duration(seconds: 3), (_) {
+    // Fallback: sondeo de reconciliación mientras el push WS no esté disponible.
+    // 10 s (antes 3 s): el rate limit de chat es de 100 req/15 min por usuario y a
+    // 3 s el propio fallback se quedaba sin cuota en pocos minutos.
+    _pollingTimer ??= Timer.periodic(const Duration(seconds: 10), (_) {
         _loadMessages(showLoading: false);
-        _markAsRead();
       });
 
     // Schedule reconnect attempt in 5 seconds
@@ -237,10 +302,14 @@ class _ChatScreenState extends State<ChatScreen> {
         text,
         imagePath: widget.initialImagePath,
       );
+      // La respuesta de AURA se entrega por push WS; si el canal no está
+      // registrado hay que reconciliar, o el saludo inicial se queda sin respuesta.
+      if (_isAiPartner) _startReconcilePolling();
       await _loadMessages(showLoading: false);
       _scrollToBottom();
     } catch (_) {
       // Manejo silencioso en carga inicial para no interrumpir la experiencia
+      _stopReconcilePolling();
     } finally {
       if (mounted) {
         setState(() => _isSending = false);
@@ -253,6 +322,8 @@ class _ChatScreenState extends State<ChatScreen> {
     _pollingTimer?.cancel();
     _reconnectTimer?.cancel();
     _auraThinkingTimeout?.cancel();
+    _wsAckWatchdog?.cancel();
+    _stopReconcilePolling();
     _webSocketChannel?.sink.close();
     _messageController.dispose();
     _scrollController.dispose();
@@ -328,6 +399,8 @@ class _ChatScreenState extends State<ChatScreen> {
           if (isLastMsgAi) {
             stillThinking = false;
             _auraThinkingTimeout?.cancel();
+            // La respuesta ya aterrizó (por push o por este sondeo): se deja de reconciliar.
+            _stopReconcilePolling();
           }
         }
 
@@ -343,6 +416,9 @@ class _ChatScreenState extends State<ChatScreen> {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             _scrollToBottom();
           });
+          // Marcar como leído sólo cuando llegó algo nuevo (no en cada sondeo, para
+          // no gastar la cuota del rate limit de chat por usuario).
+          if (messages.length > oldLength) _markAsRead();
         }
       }
     } catch (e) {
@@ -436,11 +512,15 @@ class _ChatScreenState extends State<ChatScreen> {
 
     try {
       await ApiService.sendChatMessage(widget.partnerId, text);
+      // Garantiza que la respuesta de AURA se vea aunque el push WS no llegue
+      // (conexión abierta pero sin registro, p. ej. tras caducar el token).
+      if (_isAiPartner) _startReconcilePolling();
       await _loadMessages(showLoading: false);
       _scrollToBottom();
     } catch (e) {
       if (mounted) {
         setState(() => _isAuraThinking = false);
+        _stopReconcilePolling();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('❌ No se pudo enviar el mensaje: $e'),
