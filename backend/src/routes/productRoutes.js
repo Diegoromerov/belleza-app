@@ -3,6 +3,7 @@ const { wrapRouterAsync } = require('../utils/expressAsync');
 const express = require('express');
 const router = express.Router();
 const { authMiddleware } = require('../middleware/auth');
+const { requireRol } = require('../middleware/roles');
 const productController = require('../controllers/productController');
 const orderController = require('../controllers/orderController');
 const openBeautyFacts = require('../services/openBeautyFacts');
@@ -26,14 +27,15 @@ router.get('/products', productController.getProducts);
 // Obtener un producto por ID
 router.get('/products/:id', productController.getProductById);
 
-// Cargar un producto (Administrador)
-router.post('/admin/products', authMiddleware, productController.createProduct);
+// Cargar un producto (Administrador de catálogo)
+// Extensión futura: admin || (provider && tenant propietario), gestionado por RLS.
+router.post('/admin/products', authMiddleware, requireRol('admin'), productController.createProduct);
 
-// Actualizar un producto (Administrador)
-router.put('/admin/products/:id', authMiddleware, productController.updateProduct);
+// Actualizar un producto (Administrador de catálogo)
+router.put('/admin/products/:id', authMiddleware, requireRol('admin'), productController.updateProduct);
 
-// Eliminar un producto (Administrador)
-router.delete('/admin/products/:id', authMiddleware, productController.deleteProduct);
+// Eliminar un producto (Administrador de catálogo)
+router.delete('/admin/products/:id', authMiddleware, requireRol('admin'), productController.deleteProduct);
 
 // --- Rutas de Pedidos de GlowStore ---
 router.post('/store/checkout', authMiddleware, orderController.createOrder);

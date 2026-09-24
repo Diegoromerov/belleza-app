@@ -122,102 +122,94 @@ exports.getProductById = async (req, res) => {
 // POST /api/admin/products → Cargar/crear nuevo producto (para el Dashboard)
 exports.createProduct = async (req, res) => {
   try {
-    // Validar rol del usuario logueado
-    if (req.user.role !== 'admin' && req.user.role !== 'provider') {
-      return res.status(403).json({ error: 'No autorizado para realizar esta acción' });
-    }
-
     const { 
       nombre, 
       descripcion, 
-      precio_al_publico, 
-      precio_con_reserva, 
-      precio_prestador, 
-      comision_prestador, 
+      costo,
       stock, 
       imagen_url, 
       tag_especialidad,
+      sku,
       tipo_visibilidad
-    } = req.body;
+    } = req.body || {};
 
-    if (!nombre || !tag_especialidad) {
-      return res.status(400).json({ error: 'nombre y tag_especialidad son obligatorios' });
+    if (!nombre || !tag_especialidad || costo === undefined || costo === null) {
+      return res.status(400).json({ error: 'nombre, tag_especialidad y costo son obligatorios (lineamiento L21)' });
+    }
+
+    const numCosto = parseFloat(costo);
+    if (isNaN(numCosto) || numCosto < 0) {
+      return res.status(400).json({ error: 'costo debe ser un número mayor o igual a 0' });
     }
 
     const query = `
-      INSERT INTO productos (nombre, descripcion, precio_al_publico, precio_con_reserva, precio_prestador, comision_prestador, stock, imagen_url, tag_especialidad, tipo_visibilidad)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-      RETURNING id, nombre, descripcion, precio_al_publico, precio_con_reserva, precio_prestador, comision_prestador, stock, imagen_url, tag_especialidad, tipo_visibilidad;
+      INSERT INTO productos (nombre, descripcion, costo, stock, imagen_url, tag_especialidad, tipo_visibilidad, sku)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING id, nombre, descripcion, costo, stock, imagen_url, tag_especialidad, tipo_visibilidad, sku;
     `;
 
     const { rows } = await pool.query(query, [
       nombre,
       descripcion || '',
-      precio_al_publico || 0.00,
-      precio_con_reserva || 0.00,
-      precio_prestador || 0.00,
-      comision_prestador || 0.00,
-      stock || 0,
+      numCosto,
+      stock !== undefined && stock !== null ? parseInt(stock, 10) : 0,
       imagen_url || '',
       tag_especialidad,
-      tipo_visibilidad || 'PUBLICO'
+      tipo_visibilidad || 'PUBLICO',
+      sku || null
     ]);
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       data: rows[0]
     });
   } catch (error) {
     console.error('❌ ERROR EN POST /api/admin/products:', error);
-    res.status(500).json({ error: 'Error al crear producto' });
+    return res.status(500).json({ error: 'Error al crear producto' });
   }
 };
 
 // PUT /api/admin/products/:id → Actualizar producto existente (para el Dashboard)
 exports.updateProduct = async (req, res) => {
   try {
-    if (req.user.role !== 'admin' && req.user.role !== 'provider') {
-      return res.status(403).json({ error: 'No autorizado para realizar esta acción' });
-    }
-
     const productId = req.params.id;
     const { 
       nombre, 
       descripcion, 
-      precio_al_publico, 
-      precio_con_reserva, 
-      precio_prestador, 
-      comision_prestador, 
+      costo,
       stock, 
       imagen_url, 
       tag_especialidad,
+      sku,
       tipo_visibilidad
-    } = req.body;
+    } = req.body || {};
 
-    if (!nombre || !tag_especialidad) {
-      return res.status(400).json({ error: 'nombre y tag_especialidad son obligatorios' });
+    if (!nombre || !tag_especialidad || costo === undefined || costo === null) {
+      return res.status(400).json({ error: 'nombre, tag_especialidad y costo son obligatorios' });
+    }
+
+    const numCosto = parseFloat(costo);
+    if (isNaN(numCosto) || numCosto < 0) {
+      return res.status(400).json({ error: 'costo debe ser un número mayor o igual a 0' });
     }
 
     const query = `
       UPDATE productos 
-      SET nombre = $1, descripcion = $2, precio_al_publico = $3, precio_con_reserva = $4, 
-          precio_prestador = $5, comision_prestador = $6, stock = $7, imagen_url = $8, 
-          tag_especialidad = $9, tipo_visibilidad = $10
-      WHERE id = $11
-      RETURNING id, nombre, descripcion, precio_al_publico, precio_con_reserva, precio_prestador, comision_prestador, stock, imagen_url, tag_especialidad, tipo_visibilidad;
+      SET nombre = $1, descripcion = $2, costo = $3, stock = $4, imagen_url = $5, 
+          tag_especialidad = $6, tipo_visibilidad = $7, sku = $8
+      WHERE id = $9
+      RETURNING id, nombre, descripcion, costo, stock, imagen_url, tag_especialidad, tipo_visibilidad, sku;
     `;
 
     const { rows } = await pool.query(query, [
       nombre,
       descripcion || '',
-      precio_al_publico || 0.00,
-      precio_con_reserva || 0.00,
-      precio_prestador || 0.00,
-      comision_prestador || 0.00,
-      stock || 0,
+      numCosto,
+      stock !== undefined && stock !== null ? parseInt(stock, 10) : 0,
       imagen_url || '',
       tag_especialidad,
       tipo_visibilidad || 'PUBLICO',
+      sku || null,
       productId
     ]);
 
@@ -225,23 +217,19 @@ exports.updateProduct = async (req, res) => {
       return res.status(404).json({ error: 'Producto no encontrado' });
     }
 
-    res.json({
+    return res.json({
       success: true,
       data: rows[0]
     });
   } catch (error) {
     console.error('❌ ERROR EN PUT /api/admin/products/:id:', error);
-    res.status(500).json({ error: 'Error al actualizar producto' });
+    return res.status(500).json({ error: 'Error al actualizar producto' });
   }
 };
 
 // DELETE /api/admin/products/:id → Eliminar producto de la base de datos (para el Dashboard)
 exports.deleteProduct = async (req, res) => {
   try {
-    if (req.user.role !== 'admin' && req.user.role !== 'provider') {
-      return res.status(403).json({ error: 'No autorizado para realizar esta acción' });
-    }
-
     const productId = req.params.id;
     const { rowCount } = await pool.query('DELETE FROM productos WHERE id = $1;', [productId]);
 
@@ -249,12 +237,20 @@ exports.deleteProduct = async (req, res) => {
       return res.status(404).json({ error: 'Producto no encontrado' });
     }
 
-    res.json({
+    return res.json({
       success: true,
       message: 'Producto eliminado con éxito'
     });
   } catch (error) {
+    // Si viola la Foreign Key RESTRICT de precios_historial (o similar), responder 409
+    if (error.code === '23503' || /precios_historial|violates foreign key constraint/i.test(error.message)) {
+      return res.status(409).json({
+        error: 'CONFLICT',
+        message: 'El producto tiene historial de precios; desactívalo en vez de borrarlo'
+      });
+    }
+
     console.error('❌ ERROR EN DELETE /api/admin/products/:id:', error);
-    res.status(500).json({ error: 'Error al eliminar producto' });
+    return res.status(500).json({ error: 'Error al eliminar producto' });
   }
 };
