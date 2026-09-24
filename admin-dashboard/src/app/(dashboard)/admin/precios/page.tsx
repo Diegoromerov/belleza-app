@@ -51,6 +51,20 @@ interface CoherenciaReport {
   }>;
 }
 
+interface HistorialItem {
+  id: number;
+  producto_id: number;
+  producto_nombre: string;
+  lista_codigo: string;
+  lista_nombre: string;
+  precio_anterior: number | null;
+  precio_nuevo: number;
+  actor_nombre: string | null;
+  origen: string;
+  motivo: string | null;
+  fecha_cambio: string;
+}
+
 export default function AdminPreciosPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -59,6 +73,11 @@ export default function AdminPreciosPage() {
   const [coherencia, setCoherencia] = useState<CoherenciaReport | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'todos' | 'cliente' | 'profesional' | 'negocio'>('todos');
+
+  // Estado para Historial
+  const [showHistorialModal, setShowHistorialModal] = useState(false);
+  const [historialItems, setHistorialItems] = useState<HistorialItem[]>([]);
+  const [loadingHistorial, setLoadingHistorial] = useState(false);
 
   // Estado para Edición Manual
   const [editingProduct, setEditingProduct] = useState<ProductoPrecioRow | null>(null);
@@ -136,6 +155,24 @@ export default function AdminPreciosPage() {
   useEffect(() => {
     fetchPreciosData();
   }, [fetchPreciosData]);
+
+  const fetchHistorialData = useCallback(async () => {
+    setLoadingHistorial(true);
+    try {
+      const token = getAuthToken();
+      const res = await fetch(`${getApiUrl()}/api/admin/precios/historial`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setHistorialItems(data.filas || []);
+      }
+    } catch (err: unknown) {
+      console.error('Error al obtener historial de precios:', err);
+    } finally {
+      setLoadingHistorial(false);
+    }
+  }, []);
 
   // Manejo de Edición Manual
   const handleOpenEdit = (prod: ProductoPrecioRow) => {
@@ -366,6 +403,13 @@ export default function AdminPreciosPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
+          <button
+            onClick={() => { setShowHistorialModal(true); fetchHistorialData(); }}
+            className="flex items-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-purple-400 border border-purple-500/20 rounded-xl text-sm font-medium transition-all"
+          >
+            <History size={16} />
+            Historial
+          </button>
           <button
             onClick={fetchPreciosData}
             className="flex items-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-sm font-medium transition-all"
@@ -871,6 +915,81 @@ export default function AdminPreciosPage() {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE HISTORIAL DE AUDITORÍA DE PRECIOS */}
+      {showHistorialModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-4xl p-6 space-y-6 shadow-2xl">
+            <div className="flex justify-between items-center border-b border-slate-800 pb-4">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <History size={20} className="text-purple-400" />
+                Historial de Auditoría de Precios
+              </h3>
+              <button onClick={() => setShowHistorialModal(false)} className="text-slate-400 hover:text-white"><X size={20} /></button>
+            </div>
+
+            <div className="max-h-96 overflow-y-auto border border-slate-800 rounded-xl">
+              <table className="w-full text-left text-xs text-slate-300">
+                <thead className="bg-slate-800 text-slate-400 sticky top-0">
+                  <tr>
+                    <th className="py-2.5 px-4">Fecha / Hora</th>
+                    <th className="py-2.5 px-4">Producto</th>
+                    <th className="py-2.5 px-4">Lista</th>
+                    <th className="py-2.5 px-4 text-right">Precio Anterior</th>
+                    <th className="py-2.5 px-4 text-right">Precio Nuevo</th>
+                    <th className="py-2.5 px-4">Origen / Actor</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800">
+                  {loadingHistorial ? (
+                    <tr>
+                      <td colSpan={6} className="py-8 text-center text-slate-400">
+                        <RefreshCw size={20} className="animate-spin mx-auto mb-2 text-purple-400" />
+                        Cargando historial de cambios...
+                      </td>
+                    </tr>
+                  ) : historialItems.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="py-8 text-center text-slate-400">
+                        No hay registros en el historial de precios.
+                      </td>
+                    </tr>
+                  ) : (
+                    historialItems.map((item) => (
+                      <tr key={item.id} className="hover:bg-slate-800/40">
+                        <td className="py-2.5 px-4 font-mono text-slate-400">
+                          {new Date(item.fecha_cambio).toLocaleString('es-CO')}
+                        </td>
+                        <td className="py-2.5 px-4 font-medium text-slate-200">{item.producto_nombre}</td>
+                        <td className="py-2.5 px-4 uppercase font-semibold text-purple-300">{item.lista_codigo}</td>
+                        <td className="py-2.5 px-4 text-right font-mono text-slate-400">
+                          {item.precio_anterior !== null ? `$${item.precio_anterior.toLocaleString('es-CO')}` : '-'}
+                        </td>
+                        <td className="py-2.5 px-4 text-right font-mono font-bold text-emerald-400">
+                          ${item.precio_nuevo.toLocaleString('es-CO')}
+                        </td>
+                        <td className="py-2.5 px-4 text-slate-400">
+                          <div>{item.origen}</div>
+                          {item.actor_nombre && <div className="text-[10px] text-slate-500">{item.actor_nombre}</div>}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button
+                onClick={() => setShowHistorialModal(false)}
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-medium"
+              >
+                Cerrar
+              </button>
+            </div>
           </div>
         </div>
       )}

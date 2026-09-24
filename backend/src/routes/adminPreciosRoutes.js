@@ -9,7 +9,8 @@ const {
   bulkUpdatePrecios,
   getCoherenciaReport,
   exportPreciosCsv,
-  importPreciosCsv
+  importPreciosCsv,
+  getHistorialPrecios
 } = require('../controllers/adminPreciosController');
 
 const upload = multer({
@@ -23,6 +24,7 @@ router.use(requireRol('admin'));
 
 router.get('/precios', getPrecios);
 router.get('/precios/coherencia', getCoherenciaReport);
+router.get('/precios/historial', getHistorialPrecios);
 router.get('/precios/export.csv', exportPreciosCsv);
 router.post('/precios/import.csv', upload.single('archivo'), importPreciosCsv);
 router.put('/precios/:productoId', updatePrecioProducto);

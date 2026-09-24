@@ -624,11 +624,105 @@ async function importPreciosCsv(req, res) {
   }
 }
 
+/**
+ * GET /api/admin/precios/historial
+ * Consulta paginada del historial de cambios de precios (precios_historial).
+ */
+async function getHistorialPrecios(req, res) {
+  try {
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const porPagina = Math.min(100, Math.max(1, parseInt(req.query.por_pagina, 10) || 50));
+    const offset = (page - 1) * porPagina;
+
+    const productoId = req.query.producto_id ? parseInt(req.query.producto_id, 10) : null;
+    const listaFilter = req.query.lista ? String(req.query.lista).trim() : null;
+
+    const whereConditions = [];
+    const queryParams = [];
+    let paramIdx = 1;
+
+    if (productoId && !isNaN(productoId)) {
+      whereConditions.push(`ph.producto_id = $${paramIdx}`);
+      queryParams.push(productoId);
+      paramIdx++;
+    }
+
+    if (listaFilter) {
+      whereConditions.push(`lp.codigo = $${paramIdx}`);
+      queryParams.push(listaFilter);
+      paramIdx++;
+    }
+
+    const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
+
+    const countQuery = `
+      SELECT COUNT(*) AS total
+      FROM precios_historial ph
+      JOIN listas_precios lp ON lp.id = ph.lista_id
+      ${whereClause};
+    `;
+    const countRes = await pool.query(countQuery, queryParams);
+    const total = parseInt(countRes.rows[0]?.total || 0, 10);
+
+    const historialQuery = `
+      SELECT 
+        ph.id,
+        ph.producto_id,
+        p.nombre AS producto_nombre,
+        ph.lista_id,
+        lp.codigo AS lista_codigo,
+        lp.nombre AS lista_nombre,
+        ph.precio_anterior,
+        ph.precio_nuevo,
+        ph.actor_id,
+        u.nombre AS actor_nombre,
+        ph.origen,
+        ph.motivo,
+        ph.fecha_cambio
+      FROM precios_historial ph
+      JOIN productos p ON p.id = ph.producto_id
+      JOIN listas_precios lp ON lp.id = ph.lista_id
+      LEFT JOIN usuarios u ON u.id = ph.actor_id
+      ${whereClause}
+      ORDER BY ph.fecha_cambio DESC, ph.id DESC
+      LIMIT $${paramIdx} OFFSET $${paramIdx + 1};
+    `;
+
+    const historialRes = await pool.query(historialQuery, [...queryParams, porPagina, offset]);
+    const filas = (historialRes.rows || []).map(r => ({
+      id: r.id,
+      producto_id: r.producto_id,
+      producto_nombre: r.producto_nombre,
+      lista_id: r.lista_id,
+      lista_codigo: r.lista_codigo,
+      lista_nombre: r.lista_nombre,
+      precio_anterior: r.precio_anterior !== null && r.precio_anterior !== undefined ? parseFloat(r.precio_anterior) : null,
+      precio_nuevo: parseFloat(r.precio_nuevo),
+      actor_id: r.actor_id,
+      actor_nombre: r.actor_nombre || null,
+      origen: r.origen,
+      motivo: r.motivo || null,
+      fecha_cambio: r.fecha_cambio
+    }));
+
+    return res.json({
+      total,
+      pagina: page,
+      por_pagina: porPagina,
+      filas
+    });
+  } catch (error) {
+    console.error('Error en GET /api/admin/precios/historial:', error);
+    return res.status(500).json({ error: 'INTERNAL_SERVER_ERROR', message: error.message });
+  }
+}
+
 module.exports = {
   getPrecios,
   updatePrecioProducto,
   bulkUpdatePrecios,
   getCoherenciaReport,
   exportPreciosCsv,
-  importPreciosCsv
+  importPreciosCsv,
+  getHistorialPrecios
 };

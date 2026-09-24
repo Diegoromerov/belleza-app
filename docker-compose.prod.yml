@@ -29,7 +29,7 @@ services:
     environment:
       - POSTGRES_DB=glowapp
       - POSTGRES_USER=glowapp
-      - POSTGRES_PASSWORD=prod_password
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme_en_despliegue}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
