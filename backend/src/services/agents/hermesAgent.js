@@ -1,5 +1,6 @@
 // backend/src/services/agents/hermesAgent.js
 const { pool } = require('../../config/db');
+const { ESTADOS_QUE_OCUPAN_AGENDA } = require('./bookingStateConstants');
 
 /**
  * AGENTE HERMES: Especialista en Logística, Agendamiento Inteligente y Geometría PostGIS
@@ -16,7 +17,7 @@ class HermesAgent {
     const radiusKm = parseFloat(maxDistanceKm) || 5;
 
     let query = `
-      SELECT s.id as service_id, s.name, s.price, s.duration_minutes, s.category, 
+      SELECT s.id as service_id, s.name, s.price, s.duration_minutes, s.tag_especialidad as category, 
              p.id as provider_id, p.business_name, p.rating_avg,
              ROUND((ST_Distance(p.ubicacion, ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography) / 1000.0)::numeric, 2) as distance_km
       FROM services s
@@ -27,7 +28,7 @@ class HermesAgent {
     const params = [lat, lon, radiusKm];
 
     if (category) {
-      query += ` AND (LOWER(s.category) LIKE $4 OR LOWER(s.name) LIKE $4)`;
+      query += ` AND (LOWER(s.tag_especialidad) LIKE $4 OR LOWER(s.name) LIKE $4)`;
       params.push(`%${category.toLowerCase()}%`);
     }
 
@@ -54,27 +55,32 @@ class HermesAgent {
    * @returns {Promise<Object>} Análisis de agenda y slots ocupados/libres
    */
   async checkAvailability({ providerId, serviceId, date }) {
+    const parsedProviderId = parseInt(providerId, 10);
+    if (isNaN(parsedProviderId)) {
+      return { status: 'error', message: 'providerId inválido' };
+    }
     const targetDate = date || new Date().toISOString().split('T')[0];
 
     const query = `
-      SELECT id, booking_date, start_time, duration_minutes, status 
-      FROM bookings 
-      WHERE provider_id = $1 
-        AND booking_date = $2 
-        AND status IN ('pending', 'confirmed');
+      SELECT b.id, b.scheduled_at, s.duration_minutes, b.estado 
+      FROM bookings b
+      JOIN services s ON b.service_id = s.id
+      WHERE b.provider_id = $1 
+        AND b.scheduled_at::date = $2::date 
+        AND b.estado = ANY($3::varchar[]);
     `;
 
     try {
-      const res = await pool.query(query, [providerId, targetDate]);
+      const res = await pool.query(query, [parsedProviderId, targetDate, ESTADOS_QUE_OCUPAN_AGENDA]);
       const occupiedSlots = res.rows.map(r => ({
         bookingId: r.id,
-        startTime: r.start_time,
-        status: r.status
+        startTime: r.scheduled_at,
+        status: r.estado
       }));
 
       return {
         status: 'success',
-        providerId,
+        providerId: parsedProviderId,
         date: targetDate,
         totalOccupied: occupiedSlots.length,
         occupiedSlots,

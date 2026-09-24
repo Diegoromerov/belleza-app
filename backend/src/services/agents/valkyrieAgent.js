@@ -22,7 +22,7 @@ class ValkyrieAgent {
       // 1. Consultar distribución de agendamientos por día de la semana en los últimos 30 días
       const query = `
         SELECT 
-          EXTRACT(ISODOW FROM booking_date) as day_of_week,
+          EXTRACT(ISODOW FROM scheduled_at) as day_of_week,
           COUNT(id) as total_bookings
         FROM bookings
         WHERE provider_id = $1 AND created_at >= NOW() - INTERVAL '30 days'
@@ -30,18 +30,32 @@ class ValkyrieAgent {
         ORDER BY total_bookings ASC;
       `;
 
-      const res = await pool.query(query, [parsedProviderId]).catch(() => ({ rows: [] }));
+      const res = await pool.query(query, [parsedProviderId]);
 
-      let slowestDayName = 'Martes';
-      let totalBookingsSlowDay = 0;
-
-      if (res.rows && res.rows.length > 0) {
-        const slowestDayNum = parseInt(res.rows[0].day_of_week, 10);
-        slowestDayName = this.DAY_NAMES[slowestDayNum] || 'Martes';
-        totalBookingsSlowDay = parseInt(res.rows[0].total_bookings, 10);
+      if (!res.rows || res.rows.length === 0) {
+        return {
+          status: 'no_data',
+          providerId: parsedProviderId,
+          insights: {
+            slowestDay: null,
+            slowestDayBookingsMonth: 0,
+            recommendation: 'No hay suficientes datos de agendamiento en los últimos 30 días para calcular precios dinámicos.',
+            dynamicPromotion: {
+              authorized: false,
+              discountPercentage: 0,
+              targetDay: null,
+              targetTimeWindow: null,
+              promoCode: null
+            }
+          }
+        };
       }
 
-      // 2. Generar recomendación de precio dinámico
+      const slowestDayNum = parseInt(res.rows[0].day_of_week, 10);
+      const slowestDayName = this.DAY_NAMES[slowestDayNum] || 'Martes';
+      const totalBookingsSlowDay = parseInt(res.rows[0].total_bookings, 10);
+
+      // 2. Generar recomendación de precio dinámico basada en datos reales
       const discountPercentage = 15;
       const dynamicPromo = {
         authorized: true,

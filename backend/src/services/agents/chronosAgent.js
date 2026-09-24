@@ -1,5 +1,6 @@
 // backend/src/services/agents/chronosAgent.js
 const { pool } = require('../../config/db');
+const { ESTADO_COMPLETADO } = require('./bookingStateConstants');
 
 /**
  * AGENTE CHRONOS: Especialista en Ciclo de Vida del Tratamiento, Hábitos y Re-Booking Proactivo
@@ -21,21 +22,26 @@ class ChronosAgent {
 
   /**
    * Evalúa si un usuario tiene tratamientos que vencieron o requieren mantenimiento
-   * @param {number} userId - ID del usuario
+   * @param {number|string} userId - ID del usuario
    * @returns {Promise<Object>} Análisis de tratamientos a re-agendar
    */
   async evaluateUserRebooking(userId) {
+    const parsedUserId = parseInt(userId, 10);
+    if (isNaN(parsedUserId)) {
+      return { status: 'error', message: 'userId inválido' };
+    }
+
     const query = `
-      SELECT b.id as booking_id, b.booking_date, b.status, s.name as service_name, s.category
+      SELECT b.id as booking_id, b.scheduled_at as booking_date, b.estado as status, s.name as service_name, s.tag_especialidad as category
       FROM bookings b
       JOIN services s ON b.service_id = s.id
-      WHERE b.user_id = $1 AND b.status = 'completed'
-      ORDER BY b.booking_date DESC
+      WHERE b.client_id = $1 AND b.estado = $2
+      ORDER BY b.scheduled_at DESC
       LIMIT 5;
     `;
 
     try {
-      const res = await pool.query(query, [userId]);
+      const res = await pool.query(query, [parsedUserId, ESTADO_COMPLETADO]);
       if (res.rows.length === 0) {
         return { status: 'no_history', message: 'El usuario no tiene reservas completadas previas.' };
       }
@@ -70,7 +76,7 @@ class ChronosAgent {
 
       return {
         status: 'success',
-        userId,
+        userId: parsedUserId,
         hasPendingMaintenance: pendingMaintenance.length > 0,
         treatmentsDue: pendingMaintenance
       };

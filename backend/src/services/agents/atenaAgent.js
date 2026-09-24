@@ -12,14 +12,18 @@ class AtenaAgent {
    * @returns {Promise<Object>} Análisis biométrico profundo
    */
   async getBiometricDiagnosis(userId) {
-    const cacheKey = `beauty:profile:${userId}`;
+    const parsedUserId = parseInt(userId, 10);
+    if (isNaN(parsedUserId)) {
+      return { status: 'error', message: 'userId inválido' };
+    }
+    const cacheKey = `beauty:profile:${parsedUserId}`;
     
     // 1. Intentar consultar desde el caché de Redis (30d TTL)
     try {
       if (redisClient && redisClient.isOpen) {
         const cachedData = await redisClient.get(cacheKey);
         if (cachedData) {
-          console.log(`⚡ [ATENA Agent] Perfil biométrico obtenido de Redis cache (userId: ${userId})`);
+          console.log(`⚡ [ATENA Agent] Perfil biométrico obtenido de Redis cache (userId: ${parsedUserId})`);
           return JSON.parse(cachedData);
         }
       }
@@ -35,7 +39,7 @@ class AtenaAgent {
       ORDER BY created_at DESC 
       LIMIT 1;
     `;
-    const res = await pool.query(query, [userId]);
+    const res = await pool.query(query, [parsedUserId]);
 
     if (res.rows.length === 0) {
       return {
