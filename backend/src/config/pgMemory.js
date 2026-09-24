@@ -208,25 +208,56 @@ const SCHEMA_SQL = `
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   );
 
-  CREATE TABLE IF NOT EXISTS transactions (
-    id VARCHAR(36) PRIMARY KEY,
-    booking_id VARCHAR(36),
-    client_id INTEGER,
-    provider_id INTEGER,
-    amount NUMERIC(10,2),
-    monto_total NUMERIC(10,2),
-    comision_plataforma NUMERIC(10,2),
-    monto_neto_prestador NUMERIC(10,2),
-    impuestos_retencion NUMERIC(10,2),
-    status VARCHAR(20),
-    payment_method VARCHAR(50),
-    external_id VARCHAR(255),
-    pasarela_pago VARCHAR(50),
-    referencia_pasarela VARCHAR(255),
-    estado_pago VARCHAR(50),
-    liberado_al_prestador BOOLEAN,
-    created_en TIMESTAMP,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  CREATE TABLE IF NOT EXISTS tenants (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100),
+    slug VARCHAR(100),
+    es_plataforma BOOLEAN DEFAULT false
+  );
+
+  CREATE TABLE IF NOT EXISTS productos (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(255),
+    sku VARCHAR(40),
+    costo NUMERIC(10,2),
+    stock INTEGER DEFAULT 0,
+    tenant_id INTEGER
+  );
+
+  CREATE TABLE IF NOT EXISTS listas_precios (
+    id SERIAL PRIMARY KEY,
+    codigo VARCHAR(40) UNIQUE,
+    nombre VARCHAR(120),
+    rol_destino VARCHAR(20),
+    incluye_iva BOOLEAN DEFAULT true,
+    vigente_desde DATE DEFAULT CURRENT_DATE,
+    vigente_hasta DATE,
+    estado VARCHAR(20) DEFAULT 'ACTIVA',
+    tenant_id INTEGER
+  );
+
+  CREATE TABLE IF NOT EXISTS precios_producto (
+    lista_id INTEGER,
+    producto_id INTEGER,
+    precio NUMERIC(10,2),
+    unidad_minima INTEGER DEFAULT 1,
+    vigente_desde DATE DEFAULT CURRENT_DATE,
+    vigente_hasta DATE,
+    tenant_id INTEGER,
+    PRIMARY KEY (lista_id, producto_id)
+  );
+
+  CREATE TABLE IF NOT EXISTS precios_historial (
+    id SERIAL PRIMARY KEY,
+    lista_id INTEGER,
+    producto_id INTEGER,
+    precio_anterior NUMERIC(10,2),
+    precio_nuevo NUMERIC(10,2),
+    actor_id INTEGER,
+    origen VARCHAR(30),
+    motivo TEXT,
+    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    tenant_id INTEGER
   );
 `;
 
