@@ -2,7 +2,7 @@
 
 **Regla:** nada pendiente vive solo en la cabeza de alguien. Aquí está qué se pidió, en qué estado está y qué lo bloquea. El Arquitecto la actualiza al cerrar cada ronda; una orden sin movimiento a los 5 días se archiva y se replantea.
 
-**Última actualización:** 2026-09-24 · por Hermes (Arquitecto)
+**Última actualización:** 2026-09-24 · por Hermes (Arquitecto) · tras la autorización D-001..D-005
 
 ---
 
@@ -17,15 +17,17 @@
 | O-005 | **Mutación de CI (S3 falsable)** — probar que la compuerta **puede** fallar: rama con un test roto a propósito dentro del paso bloqueante ⇒ CI rojo ⇒ se cierra | Ejecutor | `tmp/mutacion-ci` (se borra al cerrar) | **pendiente** | esta misma orden, §3 | PR de `fase-a` abierto (si no, no hay run del que observar nada) |
 | O-006 | **Sistema de agentes + base de conocimiento** | Arquitecto (Hermes) | `docs/sistema-agentes` | **entregada** 2026-09-24 (pendiente de PR) | este repo, `docs/agents/` y `docs/knowledge/` | — |
 | O-007 | **P3 · Poda de ramas** | — | — | **ejecutada** 2026-09-24 | `INFORME-PODA-2026-09-24.md` | — |
+| O-008 | **Autorización y procedimiento de D-001..D-005** — qué se autoriza, por dónde se ejecuta, puertas, verificación y rollback de cada una; incluye el criterio técnico medido sobre el fósil | Arquitecto (Hermes) | `docs/sistema-agentes` | **entregada** 2026-09-24 · **ejecución pendiente de permiso efectivo** | `docs/agents/ordenes/AUTORIZACION-D-001-A-D-005-2026-09-24.md` | Vía CLI con la credencial del `credential.helper`: **bloqueada por la plataforma** (aprobación no entregable al cliente). Vía navegador: sin sesión de GitHub. Vía vault: sin entradas. ⇒ lo ejecuta el Dueño en la UI, o un agente en sesión con aprobaciones |
 
 ## 2. Decisiones del Dueño (escaladas)
 
 | ID | Decisión | Estado | Qué desbloquea |
 |---|---|---|---|
-| D-001 | **Abrir el PR de `fase-a/verdad-operativa`** (`github.com/Diegoromerov/belleza-app/pull/new/fase-a/verdad-operativa`) | **pendiente** | El primer run real de CI en la historia del repo; O-005; el criterio S3 de la Fase A |
-| D-002 | `delete_branch_on_merge = on` en Settings → General → Pull Requests | pendiente | Que el merge borre su rama solo |
-| D-003 | **Clon fósil**: decidir si algo de sus 331 commits únicos (14 ramas, 5 con nombres sensibles: `migrate-env-to-secrets`, `integrate-secret-manager`…) se publica tras revisión. Hoy está en bundle local de 319 MB, sin publicar (el repo es público) | pendiente | Recuperar o enterrar definitivamente esa línea de trabajo |
-| D-004 | **Mergear PRs #10 y #12** (una vez verdes y revisados) | pendiente | `#12` trae el CSV de precios de GlowShop = base acordada del catálogo |
+| D-001 | **Abrir el PR de `fase-a/verdad-operativa`** (`github.com/Diegoromerov/belleza-app/pull/new/fase-a/verdad-operativa`, cuerpo listo en `docs/agents/ordenes/PR-FASE-A-cuerpo.md`) | **autorizada, sin ejecutar** | El primer run real de CI en la historia del repo; O-005; el criterio S3 de la Fase A |
+| D-002 | `delete_branch_on_merge = on` en Settings → General → Pull Requests | **autorizada, sin ejecutar** | Que el merge borre su rama solo |
+| D-003 | **Clon fósil**: qué se publica de sus 331 commits únicos | **resuelta técnicamente: NO publicar** — las 5 ramas sensibles (todas del 2026-07-31) arrastran `backend/.env.production` y `backend/.env.example` + `scratch/*.js` con patrones de credencial en 8 archivos, y el repo es público. Bundle de 319 MB archivado sin publicar. **Acción real: rotar los secretos**, porque `backend/.env.production` ya está en el historial de `main` (2 commits que lo tocan) | Cerrar SEG-04 (dueño: D) y enterrar la línea de trabajo sin filtrar credenciales |
+| D-004 | **Mergear `docs/sistema-agentes`** (sistema de agentes + base de conocimiento) | **autorizada, sin ejecutar** — puerta de despliegue verificada: el único workflow con deploy (`rag-evaluation.yml`) limita sus `paths` a 5 archivos de RAG, `docs/**` no está entre ellos. Queda por confirmar si Railway despliega por integración nativa en cada push a `main` | Que el sistema y la compuerta vivan en `main` |
+| D-005 | **Mergear PRs #10 y #12** (una vez verdes y revisados) | pendiente, **no** incluida en la autorización | `#12` trae el CSV de precios de GlowShop = base acordada del catálogo |
 
 ## 3. Ficha de O-005 (mutación de CI)
 
