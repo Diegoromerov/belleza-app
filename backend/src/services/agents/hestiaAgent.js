@@ -24,15 +24,16 @@ class HestiaAgent {
       }
 
       // 2. Construir consulta a la tabla productos
+      // La tienda en el cliente (store_screen.dart, store_product_card.dart) consume la columna 'precio' como tarifa principal.
       let query = `
-        SELECT id, nombre, descripcion, precio, categoria, stock, imagen_url
+        SELECT id, nombre, descripcion, precio, tag_especialidad AS categoria, stock, imagen_url
         FROM productos
         WHERE stock > 0
       `;
       const params = [];
 
       if (category) {
-        query += ` AND LOWER(categoria) LIKE $1`;
+        query += ` AND LOWER(tag_especialidad) LIKE $1`;
         params.push(`%${category.toLowerCase()}%`);
       } else if (queryText) {
         query += ` AND (LOWER(nombre) LIKE $1 OR LOWER(descripcion) LIKE $1)`;
@@ -48,7 +49,8 @@ class HestiaAgent {
           dbRows = res.rows;
         }
       } catch (dbErr) {
-        console.warn('⚠️ [HESTIA Agent] Fallo al consultar BD productos, usando fallback:', dbErr.message);
+        console.warn('⚠️ [HESTIA Agent] Fallo al consultar BD productos:', dbErr.message);
+        return { status: 'error', message: `Fallo al consultar productos: ${dbErr.message}` };
       }
 
       // Si la BD devuelve productos
@@ -61,29 +63,13 @@ class HestiaAgent {
         };
       }
 
-      // Fallback a recomendación por defecto si la base de datos no tiene productos aún
+      // Sin fabricación de productos ficticios: respuesta honesta cuando no hay resultados
       return {
-        status: 'success',
-        foundCount: 2,
+        status: 'no_products',
+        foundCount: 0,
         matchedIngredients: targetIngredients,
-        products: [
-          {
-            id: 'prod-001',
-            nombre: 'Sérum Facial Ácido Hialurónico 2%',
-            descripcion: 'Hidratación profunda 24h para todo tipo de piel.',
-            precio: 65000,
-            categoria: 'Piel',
-            stock: 15
-          },
-          {
-            id: 'prod-002',
-            nombre: 'Aceite de Cutículas Nutritivo Almond Care',
-            descripcion: 'Repara cutículas secas y fortalece uñas frágiles.',
-            precio: 28000,
-            categoria: 'Uñas',
-            stock: 20
-          }
-        ]
+        products: [],
+        message: 'No se encontraron productos coincidentes en la tienda.'
       };
     } catch (err) {
       console.error('❌ [HESTIA Agent] Error en recomendación de productos:', err.message);

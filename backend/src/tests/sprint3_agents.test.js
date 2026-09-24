@@ -16,27 +16,23 @@ jest.mock('../config/redis', () => ({
   set: jest.fn()
 }));
 
-describe('Pruebas unitarias de Sprint 3 (Agente CHRONOS y Agente HESTIA)', () => {
+describe('Pruebas unitarias de Sprint 3 (Agentes CHRONOS y HESTIA)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  describe('Agente CHRONOS (Re-booking y Ciclo de Tratamientos)', () => {
-    test('Debería identificar cuando una manicura de hace 25 días requiere re-agendamiento (ciclo 21 días)', async () => {
-      const pastDate = new Date();
-      pastDate.setDate(pastDate.getDate() - 25);
-
-      pool.query.mockResolvedValueOnce({
-        rows: [
-          {
-            booking_id: 'book-999',
-            booking_date: pastDate.toISOString(),
-            status: 'completed',
-            service_name: 'Manicura Semipermanente',
-            category: 'Uñas'
-          }
-        ]
-      });
+  describe('Agente CHRONOS (Re-Booking Proactivo y Hábitos)', () => {
+    test('Debería identificar servicios vencidos que requieren re-agendamiento', async () => {
+      const mockBookings = [
+        {
+          booking_id: 101,
+          booking_date: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000).toISOString(),
+          status: 'COMPLETADA',
+          service_name: 'Manicura Semipermanente',
+          category: 'uñas'
+        }
+      ];
+      pool.query.mockResolvedValueOnce({ rows: mockBookings });
 
       const result = await chronosAgent.evaluateUserRebooking(1);
 
@@ -56,14 +52,41 @@ describe('Pruebas unitarias de Sprint 3 (Agente CHRONOS y Agente HESTIA)', () =>
   });
 
   describe('Agente HESTIA (GlowStore Personal Shopper)', () => {
-    test('Debería recomendar productos e-commerce de la tienda', async () => {
-      pool.query.mockResolvedValueOnce({ rows: [] }); // Simular fallback de DB
+    test('Debería recomendar productos e-commerce reales de la tienda cuando existen en BD', async () => {
+      // 1. Mock para consulta de perfil biométrico ATENA
+      pool.query.mockResolvedValueOnce({ rows: [] });
+      // 2. Mock para consulta de productos HESTIA
+      pool.query.mockResolvedValueOnce({
+        rows: [
+          {
+            id: 10,
+            nombre: 'Sérum Facial Ácido Hialurónico',
+            descripcion: 'Hidratación 24h',
+            precio: 65000,
+            categoria: 'Piel',
+            stock: 15,
+            imagen_url: 'http://img'
+          }
+        ]
+      });
 
       const result = await hestiaAgent.recommendProducts({ userId: 1, queryText: 'hidratante', category: 'Piel' });
 
       expect(result.status).toBe('success');
-      expect(result.products.length).toBeGreaterThan(0);
+      expect(result.foundCount).toBe(1);
+      expect(result.products.length).toBe(1);
       expect(result.products[0].nombre).toContain('Sérum Facial');
+    });
+
+    test('Debería retornar status no_products y 0 productos cuando la consulta no devuelve resultados (sin fabricar datos)', async () => {
+      pool.query.mockResolvedValueOnce({ rows: [] }); // ATENA
+      pool.query.mockResolvedValueOnce({ rows: [] }); // HESTIA
+
+      const result = await hestiaAgent.recommendProducts({ userId: 1, queryText: 'inexistente' });
+
+      expect(result.status).toBe('no_products');
+      expect(result.foundCount).toBe(0);
+      expect(result.products).toEqual([]);
     });
   });
 
@@ -86,8 +109,8 @@ describe('Pruebas unitarias de Sprint 3 (Agente CHRONOS y Agente HESTIA)', () =>
       pool.query.mockResolvedValueOnce({ rows: [] });
 
       const result = await executeAuraTool('recommend_glowstore_products', { queryText: 'uñas' }, 3);
-      expect(result.status).toBe('success');
-      expect(result.products.length).toBeGreaterThan(0);
+      expect(result.status).toBe('no_products');
+      expect(result.products).toEqual([]);
     });
   });
 });
