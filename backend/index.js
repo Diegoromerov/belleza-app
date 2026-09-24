@@ -215,6 +215,14 @@ if (hasWebBuild) {
 const sanitizer = require('./src/middleware/sanitizer');
 app.use(sanitizer);
 
+// Middleware de visibilidad de degradación (A1.T2)
+app.use((req, res, next) => {
+  if (getDbStatus().servingFabricatedData === true) {
+    res.setHeader('X-GlowApp-Degraded', 'memory-fallback');
+  }
+  next();
+});
+
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -526,6 +534,31 @@ app.use('/api/salon', salonRoutes);
 app.use('/api/users', userPreferencesRoutes);
 app.use('/api/designs', designsRoutes);
 app.use('/api/nia-beauty', niaBeautyRoutes);
+app.use('/api', providerRoutes);
+app.use('/api', bookingRoutes);
+app.use('/api', serviceRoutes);
+app.use('/api', productRoutes);
+app.use('/api', paymentRoutes);
+app.use('/api/academy', academyRoutes);
+app.use('/api/academy/admin', academyAdminRoutes);
+app.use('/api/admin/precios', adminPreciosRoutes);
+app.use('/api/v1/business', businessRoutes);
+app.use('/api/membership', membershipRoutes);
+app.use('/api/biometric', biometricRoutes);
+app.use('/api/biometric/consent', biometricConsentRoutes);
+app.use('/api/vto', vtoRoutes);
+app.use('/api/color', colorRoutes);
+app.use('/api/tickets', ticketRoutes);
+app.use('/api/disputes', disputeRoutes);
+app.use('/api/glow-pro', glowProRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/metrics', metricsRoutes);
+app.use('/api/portfolio', portfolioRoutes);
+app.use('/api/community', communityRoutes);
+app.use('/api/mentorship', mentorshipRoutes);
+app.use('/api/xp-log', xpLogRoutes);
+app.use('/api/events', eventRoutes);
+app.use('/api/event-registrations', eventRegistrationRoutes);
 
 // ==========================================
 // RUTAS PROTEGIDAS (Requieren JWT)
