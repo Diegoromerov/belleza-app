@@ -38,7 +38,6 @@ const mentorshipRoutes = require('./src/routes/mentorshipRoutes');
 const xpLogRoutes = require('./src/routes/xpLogRoutes');
 const eventRoutes = require('./src/routes/eventRoutes');
 const eventRegistrationRoutes = require('./src/routes/eventRegistrationRoutes');
-const aiOrchestratorRoutes = require('./src/routes/aiOrchestratorRoutes');
 const businessRoutes = require('./src/routes/businessRoutes');
 const membershipRoutes = require('./src/routes/membershipRoutes');
 const adminMiddleware = async (req, res, next) => {
@@ -410,10 +409,7 @@ app.use('/api/xp-logs', xpLogRoutes);
 
 // ==========================================
 // RUTAS PÚBLICAS
-// ===// ==========================================
-// RUTAS DE ORQUESTADOR IA MULTI-AGENTE
-// ==========================================
-app.use('/api/ai', aiOrchestratorRoutes);
+// ===
 app.use('/api/v1/business', businessRoutes);
 app.use('/api/v1/memberships', membershipRoutes);
 // Health check — NO escribe en la base de datos. Antes ejecutaba un `setval` sobre
