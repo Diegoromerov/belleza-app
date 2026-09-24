@@ -15,7 +15,7 @@
 | O-003 | **P1 · Triage y alineación** — `branchTriage.js` + `checkAlignment.sh`, solo lectura, con `no verificado` si la API de PRs falla | Ejecutor | `chore/ramas-p1-triage` | **pendiente** | `docs/agents/ordenes/PROMPT-ANTIGRAVITY-RAMAS-P1-TRIAGE-2026-09-24.md` | — |
 | O-004 | **P2 · Política en el repo y en CI** — `docs/policies/ramas.md` + sección en `AGENTS.md` + job semanal y chequeo ligero por PR | Ejecutor | `docs/ramas-p2-politica` | **pendiente** | `docs/agents/ordenes/PROMPT-ANTIGRAVITY-RAMAS-P2-POLITICA-2026-09-24.md` | O-003 (el job invoca los scripts de P1) |
 | O-005 | **Mutación de CI (S3 falsable)** — probar que la compuerta **puede** fallar: rama con un test roto a propósito dentro del paso bloqueante ⇒ CI rojo ⇒ se cierra | Ejecutor | `tmp/mutacion-ci` (se borra al cerrar) | **pendiente** | esta misma orden, §3 | PR de `fase-a` abierto (si no, no hay run del que observar nada) |
-| O-006 | **Sistema de agentes + base de conocimiento** (esta entrega) | Arquitecto (Hermes) | `docs/sistema-agentes` | **en curso** | este repo, `docs/agents/` y `docs/knowledge/` | — |
+| O-006 | **Sistema de agentes + base de conocimiento** | Arquitecto (Hermes) | `docs/sistema-agentes` | **entregada** 2026-09-24 (pendiente de PR) | este repo, `docs/agents/` y `docs/knowledge/` | — |
 | O-007 | **P3 · Poda de ramas** | — | — | **ejecutada** 2026-09-24 | `INFORME-PODA-2026-09-24.md` | — |
 
 ## 2. Decisiones del Dueño (escaladas)
