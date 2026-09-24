@@ -57,7 +57,16 @@ jobs:
           cd backend
           npm ci --legacy-peer-deps
 
-<<<<<<< HEAD
+      - name: Compuerta anti-marcadores de conflicto (bloqueante)
+        run: |
+          cd backend
+          node scripts/checkNoConflictMarkers.js
+
+      - name: Escaneo de credenciales versionadas (bloqueante)
+        run: |
+          cd backend
+          node scripts/verifyNoVersionedSecrets.js
+
       # `npm run migrate` es `sequelize.sync({force:true})`: crea tablas desde los
       # modelos, y ninguna política de RLS vive en un modelo. Por eso el esquema y
       # los roles los monta un script propio, con el orden de migraciones probado
@@ -79,15 +88,8 @@ jobs:
 
       # Se ejecuta con el rol de la aplicación (no propietario, sin BYPASSRLS), el
       # mismo con el que corre en producción. Medido: la suite da exactamente el
-      # mismo resultado con PostgreSQL real que con pg-mem (mismas 12 suites rojas
+      # mismo resultado con PostgreSQL real que con pg-mem (mismas 15 suites rojas
       # heredadas, 0 fallos nuevos).
-=======
-      - name: Escaneo de credenciales versionadas (bloqueante)
-        run: |
-          cd backend
-          node scripts/verifyNoVersionedSecrets.js
-
->>>>>>> origin/main
       - name: Run Backend Integration & Unit Tests
         env:
           DATABASE_URL: postgres://app_rls_user:ci_only_password@localhost:5432/glowtest
