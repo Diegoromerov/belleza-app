@@ -13,12 +13,13 @@ Que `backend/scripts/verifyNoVersionedSecrets.js` dé **el mismo veredicto sobre
 ## Reproducción que debes pegar (falla hoy)
 
 ```bash
-# copia A: la del dueño (core.autocrlf=true)
-git -c core.autocrlf=true  worktree add -q --detach /tmp/cr origin/fase-a/verdad-operativa
-# copia B: como el runner de Linux
-git -c core.autocrlf=false worktree add -q --detach /tmp/lf origin/fase-a/verdad-operativa
-cd /tmp/cr/backend && node scripts/verifyNoVersionedSecrets.js; echo "CRLF EXIT=$?"
-cd /tmp/lf/backend && node scripts/verifyNoVersionedSecrets.js; echo "LF   EXIT=$?"
+# desde la raíz de tu copia del repo (rutas relativas: en Windows, /tmp no lo traduce git nativo)
+git -c core.autocrlf=true  worktree add -q --detach ../ci-check-crlf origin/fase-a/verdad-operativa
+git -c core.autocrlf=false worktree add -q --detach ../ci-check-lf   origin/fase-a/verdad-operativa
+(cd ../ci-check-crlf/backend && node scripts/verifyNoVersionedSecrets.js); echo "CRLF EXIT=$?"
+(cd ../ci-check-lf/backend   && node scripts/verifyNoVersionedSecrets.js); echo "LF   EXIT=$?"
+# al terminar, retira las dos copias:
+git worktree remove --force ../ci-check-crlf ../ci-check-lf
 ```
 
 Medido en Windows con la rama `fase-a` @ `c1069e9f`: **CRLF → ✅ EXIT=0** · **LF → ❌ 39 EXIT=1**. Mismo commit, mismo hash de árbol (`6d9464ca1abe`), mismos 3.722 archivos trackeados, mismas 225 líneas candidatas de `git grep`. La única diferencia medida: en la copia con conversión, `git grep` devuelve cada línea **con un `\r` final**, y con ese `\r` los 39 hallazgos desaparecen.
