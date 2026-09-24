@@ -1,10 +1,10 @@
-// backend/src/controllers/orderController.js
 const { pool } = require('../config/db');
+const { resolverPrecio } = require('../services/precioService');
 
 // POST /api/store/checkout → Crear un nuevo pedido
 exports.createOrder = async (req, res) => {
   const compradorId = req.user.id;
-  const userRole = req.user.role; // 'client', 'provider', 'admin'
+  const userRole = req.user.role; // 'client', 'provider', 'salon', 'admin'
   const { booking_id, nombre_entrega, direccion_entrega, items } = req.body;
 
   if (!items || !Array.isArray(items) || items.length === 0) {
@@ -53,7 +53,7 @@ exports.createOrder = async (req, res) => {
     let comisionTotal = 0;
     const processedItems = [];
 
-    // Validar productos y stock, calcular costos
+    // Validar productos, resolver precios y stock
     for (const item of items) {
       const { producto_id, cantidad } = item;
       if (!producto_id || !cantidad || cantidad <= 0) {
@@ -74,32 +74,39 @@ exports.createOrder = async (req, res) => {
 
       const product = prodRes.rows[0];
 
+      // Resolver precio por nivel y validar unidad_minima ANTES de tocar stock
+      let resPrecio;
+      try {
+        resPrecio = await resolverPrecio({
+          rol: userRole,
+          productoId: product.id,
+          cantidad: cantidad
+        });
+      } catch (precioErr) {
+        if (precioErr.code === 'MINIMO_NO_CUMPLIDO') {
+          await client.query('ROLLBACK');
+          return res.status(400).json({
+            error: precioErr.message,
+            unidad_minima: precioErr.unidad_minima,
+            lista: precioErr.lista
+          });
+        }
+        throw precioErr;
+      }
+
+      if (!resPrecio || resPrecio.estado === 'sin_precio' || resPrecio.precio === null || resPrecio.precio === undefined) {
+        await client.query('ROLLBACK');
+        return res.status(403).json({ error: `No tienes acceso al producto ${product.nombre}` });
+      }
+
       // Validar stock
       if (product.stock < cantidad) {
         await client.query('ROLLBACK');
         return res.status(400).json({ error: `Stock insuficiente para ${product.nombre}. Disponible: ${product.stock}` });
       }
 
-      // Validar visibilidad/acceso
-      if (userRole === 'client' && product.tipo_visibilidad === 'INSUMO_PRESTADOR') {
-        await client.query('ROLLBACK');
-        return res.status(403).json({ error: `No tienes acceso al producto ${product.nombre}` });
-      }
-
-      // Determinar precio unitario y comisión unitaria
-      let precioUnitario = 0;
-      let comisionUnitaria = 0;
-
-      if (userRole === 'provider' || userRole === 'admin') {
-        precioUnitario = parseFloat(product.precio_prestador);
-        comisionUnitaria = 0;
-      } else if (tieneDescuentoReserva) {
-        precioUnitario = parseFloat(product.precio_con_reserva);
-        comisionUnitaria = parseFloat(product.comision_prestador);
-      } else {
-        precioUnitario = parseFloat(product.precio_al_publico);
-        comisionUnitaria = 0;
-      }
+      const precioUnitario = resPrecio.precio;
+      const comisionUnitaria = 0;
 
       // Restar stock
       await client.query(

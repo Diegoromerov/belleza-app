@@ -18,7 +18,7 @@
  * sigue usando la configuración real de PostgreSQL en lugar de tumbar el arranque.
  */
 
-const isMemoryMode = process.env.NODE_ENV === 'test' || process.env.USE_PG_MEM === 'true';
+const isMemoryMode = process.env.NODE_ENV === 'test' || process.env.USE_PG_MEM === 'true' || process.env.JEST_WORKER_ID !== undefined;
 
 // Esquema del harness. Es permisivo a propósito (sin FK ni CHECK): el objetivo es que las suites de
 // integración ejerciten el SQL y las queries reales, no re-validar las restricciones de las
@@ -202,8 +202,6 @@ const SCHEMA_SQL = `
     service_address TEXT,
     notes TEXT,
     estado VARCHAR(50),
-    payment_status VARCHAR(20),
-    pin_verificacion VARCHAR(10),
     productos_adicionales JSONB,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   );
@@ -227,6 +225,58 @@ const SCHEMA_SQL = `
     liberado_al_prestador BOOLEAN,
     created_en TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS tenants (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100),
+    slug VARCHAR(100),
+    es_plataforma BOOLEAN DEFAULT false
+  );
+
+  CREATE TABLE IF NOT EXISTS productos (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(255),
+    sku VARCHAR(40),
+    costo NUMERIC(10,2),
+    stock INTEGER DEFAULT 0,
+    tenant_id INTEGER
+  );
+
+  CREATE TABLE IF NOT EXISTS listas_precios (
+    id SERIAL PRIMARY KEY,
+    codigo VARCHAR(40) UNIQUE,
+    nombre VARCHAR(120),
+    rol_destino VARCHAR(20),
+    incluye_iva BOOLEAN DEFAULT true,
+    vigente_desde DATE DEFAULT CURRENT_DATE,
+    vigente_hasta DATE,
+    estado VARCHAR(20) DEFAULT 'ACTIVA',
+    tenant_id INTEGER
+  );
+
+  CREATE TABLE IF NOT EXISTS precios_producto (
+    lista_id INTEGER,
+    producto_id INTEGER,
+    precio NUMERIC(10,2),
+    unidad_minima INTEGER DEFAULT 1,
+    vigente_desde DATE DEFAULT CURRENT_DATE,
+    vigente_hasta DATE,
+    tenant_id INTEGER,
+    PRIMARY KEY (lista_id, producto_id)
+  );
+
+  CREATE TABLE IF NOT EXISTS precios_historial (
+    id SERIAL PRIMARY KEY,
+    lista_id INTEGER,
+    producto_id INTEGER,
+    precio_anterior NUMERIC(10,2),
+    precio_nuevo NUMERIC(10,2),
+    actor_id INTEGER,
+    origen VARCHAR(30),
+    motivo TEXT,
+    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    tenant_id INTEGER
   );
 `;
 
@@ -282,21 +332,40 @@ function seedReferenceData(pgMem) {
 let adapter = null;
 let enabled = false;
 
-if (isMemoryMode) {
-  try {
-    // eslint-disable-next-line global-require
-    const { newDb } = require('pg-mem');
-    const pgMem = newDb();
-    pgMem.public.none(SCHEMA_SQL);
-    seedReferenceData(pgMem);
-    adapter = pgMem.adapters.createPg();
-    enabled = true;
-  } catch (err) {
-    console.error(
-      `⚠️ [pgMemory] pg-mem no disponible (${err.message}). ` +
-      'Se usará la configuración real de PostgreSQL en lugar del harness en memoria.'
-    );
+function initMemoryIfNeeded() {
+  const isMem = process.env.NODE_ENV === 'test' || process.env.USE_PG_MEM === 'true' || process.env.JEST_WORKER_ID !== undefined;
+  if (!enabled && isMem) {
+    try {
+      // eslint-disable-next-line global-require
+      const { newDb } = require('pg-mem');
+      const pgMem = newDb();
+      pgMem.public.none(SCHEMA_SQL);
+      seedReferenceData(pgMem);
+      adapter = pgMem.adapters.createPg();
+      const poolInstance = new adapter.Pool();
+      adapter.query = (text, params) => poolInstance.query(text, params);
+      enabled = true;
+    } catch (err) {
+      console.error(
+        `⚠️ [pgMemory] pg-mem no disponible (${err.message}). ` +
+        'Se usará la configuración real de PostgreSQL en lugar del harness en memoria.'
+      );
+    }
   }
 }
 
-module.exports = { isMemoryMode, enabled, adapter };
+initMemoryIfNeeded();
+
+module.exports = {
+  get isMemoryMode() {
+    return process.env.NODE_ENV === 'test' || process.env.USE_PG_MEM === 'true' || process.env.JEST_WORKER_ID !== undefined;
+  },
+  get enabled() {
+    initMemoryIfNeeded();
+    return enabled;
+  },
+  get adapter() {
+    initMemoryIfNeeded();
+    return adapter;
+  }
+};

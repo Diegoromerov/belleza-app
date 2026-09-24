@@ -147,7 +147,10 @@ if (process.env.NODE_ENV !== 'production' && (process.env.ALLOW_MEMORY_FALLBACK 
 }
 
 function handleMemoryQuery(text, params = []) {
-  const queryStr = text.toUpperCase();
+  if (pgMemory.enabled && pgMemory.adapter && typeof pgMemory.adapter.query === 'function') {
+    return pgMemory.adapter.query(text, params);
+  }
+  const queryStr = String(text).toUpperCase();
 
   // SELECT to_regclass
   if (queryStr.includes('TO_REGCLASS')) {
@@ -604,6 +607,10 @@ const pool = {
     const activeClient = tenantRouting.getActiveClient();
     if (activeClient) {
       return activeClient.query(text, params);
+    }
+
+    if ((pgMemory.isMemoryMode || dbMode === 'memoria') && pgMemory.enabled && pgMemory.adapter && typeof pgMemory.adapter.query === 'function') {
+      return pgMemory.adapter.query(text, params);
     }
 
     if (dbMode === 'memoria') {

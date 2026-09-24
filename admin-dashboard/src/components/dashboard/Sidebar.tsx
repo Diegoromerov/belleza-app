@@ -13,7 +13,8 @@ import {
   User as UserIcon,
   Scissors,
   GraduationCap,
-  LayoutDashboard
+  LayoutDashboard,
+  Tag
 } from 'lucide-react';
 
 export default function Sidebar() {
@@ -34,6 +35,7 @@ export default function Sidebar() {
     if (user?.rol === 'ADMIN') {
       return [
         { href: '/admin/business', label: 'Cumplimiento Business', icon: Scissors },
+        { href: '/admin/precios', label: 'Gestión de Precios', icon: Tag },
         { href: '/admin/academia', label: 'Academia Glow', icon: GraduationCap },
         { href: '/chat', label: 'Mensajes', icon: MessageSquare },
         { href: '/perfil', label: 'Mi Perfil', icon: UserIcon },
