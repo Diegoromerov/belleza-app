@@ -1,0 +1,1234 @@
+[
+  {
+    "method": "GET",
+    "path": "*"
+  },
+  {
+    "method": "GET",
+    "path": "/^(?!\\/api(?:\\/|$))(?!\\/uploads(?:\\/|$))(?!\\/admin(?:\\/|$)).*/"
+  },
+  {
+    "method": "GET",
+    "path": "/api/academy/admin/certificates"
+  },
+  {
+    "method": "POST",
+    "path": "/api/academy/admin/certificates/:code/restore"
+  },
+  {
+    "method": "POST",
+    "path": "/api/academy/admin/certificates/:code/revoke"
+  },
+  {
+    "method": "GET",
+    "path": "/api/academy/admin/courses"
+  },
+  {
+    "method": "POST",
+    "path": "/api/academy/admin/courses"
+  },
+  {
+    "method": "POST",
+    "path": "/api/academy/admin/courses/:courseId/modules"
+  },
+  {
+    "method": "POST",
+    "path": "/api/academy/admin/courses/:courseId/quizzes"
+  },
+  {
+    "method": "GET",
+    "path": "/api/academy/admin/courses/:id"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/academy/admin/courses/:id"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/academy/admin/courses/:id"
+  },
+  {
+    "method": "POST",
+    "path": "/api/academy/admin/courses/:id/restore"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/academy/admin/lessons/:id"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/academy/admin/lessons/:id"
+  },
+  {
+    "method": "POST",
+    "path": "/api/academy/admin/lessons/reorder"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/academy/admin/modules/:id"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/academy/admin/modules/:id"
+  },
+  {
+    "method": "POST",
+    "path": "/api/academy/admin/modules/:moduleId/lessons"
+  },
+  {
+    "method": "POST",
+    "path": "/api/academy/admin/modules/reorder"
+  },
+  {
+    "method": "POST",
+    "path": "/api/academy/admin/providers/:providerId/courses/:courseId/reset-attempts"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/academy/admin/quizzes/:id"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/academy/admin/quizzes/:id"
+  },
+  {
+    "method": "GET",
+    "path": "/api/academy/admin/stats"
+  },
+  {
+    "method": "POST",
+    "path": "/api/academy/ai-discrepancy/log"
+  },
+  {
+    "method": "POST",
+    "path": "/api/academy/consent"
+  },
+  {
+    "method": "GET",
+    "path": "/api/academy/consent/status"
+  },
+  {
+    "method": "GET",
+    "path": "/api/academy/courses"
+  },
+  {
+    "method": "GET",
+    "path": "/api/academy/courses/:id"
+  },
+  {
+    "method": "GET",
+    "path": "/api/academy/courses/:id/quiz"
+  },
+  {
+    "method": "POST",
+    "path": "/api/academy/courses/:id/submit-quiz"
+  },
+  {
+    "method": "POST",
+    "path": "/api/academy/lessons/:id/complete"
+  },
+  {
+    "method": "GET",
+    "path": "/api/academy/verify/:code"
+  },
+  {
+    "method": "POST",
+    "path": "/api/academy/worksheets/submit"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/academy/certificates"
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/academy/certificates/:code/restore"
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/academy/certificates/:code/revoke"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/academy/courses"
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/academy/courses"
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/academy/courses/:courseId/modules"
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/academy/courses/:courseId/quizzes"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/academy/courses/:id"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/admin/academy/courses/:id"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/admin/academy/courses/:id"
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/academy/courses/:id/restore"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/admin/academy/lessons/:id"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/admin/academy/lessons/:id"
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/academy/lessons/reorder"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/admin/academy/modules/:id"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/admin/academy/modules/:id"
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/academy/modules/:moduleId/lessons"
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/academy/modules/reorder"
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/academy/providers/:providerId/courses/:courseId/reset-attempts"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/admin/academy/quizzes/:id"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/admin/academy/quizzes/:id"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/academy/stats"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/dashboard"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/disputes"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/admin/disputes/:id/resolve"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/admin/disputes/:id/resolve"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/events/stream"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/metrics"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/precios"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/admin/precios/:productoId"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/admin/precios/bulk"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/precios/coherencia"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/precios/export.csv"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/precios/historial"
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/precios/import.csv"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/precios/precios"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/admin/precios/precios/:productoId"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/admin/precios/precios/bulk"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/precios/precios/coherencia"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/precios/precios/export.csv"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/precios/precios/historial"
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/precios/precios/import.csv"
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/products"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/admin/products/:id"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/admin/products/:id"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/admin/sos/resolve/:id"
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/users"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/admin/users/:id/toggle-status"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/admin/users/:id/verify"
+  },
+  {
+    "method": "POST",
+    "path": "/api/analytics/events"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/auth/biometrics/consent"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/auth/change-password"
+  },
+  {
+    "method": "POST",
+    "path": "/api/auth/context/switch"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/auth/delete-account"
+  },
+  {
+    "method": "POST",
+    "path": "/api/auth/fcm-token"
+  },
+  {
+    "method": "POST",
+    "path": "/api/auth/forgot-password"
+  },
+  {
+    "method": "POST",
+    "path": "/api/auth/google"
+  },
+  {
+    "method": "POST",
+    "path": "/api/auth/login"
+  },
+  {
+    "method": "POST",
+    "path": "/api/auth/logout"
+  },
+  {
+    "method": "POST",
+    "path": "/api/auth/oauth"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/auth/onboarding"
+  },
+  {
+    "method": "GET",
+    "path": "/api/auth/referral-info"
+  },
+  {
+    "method": "POST",
+    "path": "/api/auth/register"
+  },
+  {
+    "method": "POST",
+    "path": "/api/auth/reset-password"
+  },
+  {
+    "method": "POST",
+    "path": "/api/auth/select-role"
+  },
+  {
+    "method": "POST",
+    "path": "/api/biometric/analyze"
+  },
+  {
+    "method": "POST",
+    "path": "/api/biometric/check"
+  },
+  {
+    "method": "GET",
+    "path": "/api/biometric/consent/access-logs"
+  },
+  {
+    "method": "GET",
+    "path": "/api/biometric/consent/biometric"
+  },
+  {
+    "method": "POST",
+    "path": "/api/biometric/consent/biometric"
+  },
+  {
+    "method": "GET",
+    "path": "/api/biometric/consent/biometric/:consentType"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/biometric/consent/biometric/:consentType"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/biometric/consent/biometric/:consentType/data"
+  },
+  {
+    "method": "GET",
+    "path": "/api/biometric/consent/terms"
+  },
+  {
+    "method": "GET",
+    "path": "/api/biometric/profile/:userId"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/biometric/profile/:userId"
+  },
+  {
+    "method": "GET",
+    "path": "/api/biometric/recommended/:userId"
+  },
+  {
+    "method": "POST",
+    "path": "/api/bookings"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/bookings/:id/cancel"
+  },
+  {
+    "method": "POST",
+    "path": "/api/bookings/:id/checkin"
+  },
+  {
+    "method": "POST",
+    "path": "/api/bookings/:id/complete"
+  },
+  {
+    "method": "POST",
+    "path": "/api/bookings/:id/confirm-otp"
+  },
+  {
+    "method": "POST",
+    "path": "/api/bookings/:id/pay"
+  },
+  {
+    "method": "POST",
+    "path": "/api/bookings/:id/review"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/bookings/:id/start"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/bookings/:id/status"
+  },
+  {
+    "method": "GET",
+    "path": "/api/bookings/client"
+  },
+  {
+    "method": "GET",
+    "path": "/api/bookings/provider"
+  },
+  {
+    "method": "GET",
+    "path": "/api/chat/conversations"
+  },
+  {
+    "method": "POST",
+    "path": "/api/chat/messages"
+  },
+  {
+    "method": "GET",
+    "path": "/api/chat/messages/:partnerId"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/chat/messages/:partnerId/read"
+  },
+  {
+    "method": "GET",
+    "path": "/api/color/palette"
+  },
+  {
+    "method": "POST",
+    "path": "/api/community/comments"
+  },
+  {
+    "method": "GET",
+    "path": "/api/community/posts"
+  },
+  {
+    "method": "POST",
+    "path": "/api/community/posts"
+  },
+  {
+    "method": "GET",
+    "path": "/api/consent/access-logs"
+  },
+  {
+    "method": "GET",
+    "path": "/api/consent/biometric"
+  },
+  {
+    "method": "POST",
+    "path": "/api/consent/biometric"
+  },
+  {
+    "method": "GET",
+    "path": "/api/consent/biometric/:consentType"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/consent/biometric/:consentType"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/consent/biometric/:consentType/data"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/consent/data"
+  },
+  {
+    "method": "POST",
+    "path": "/api/consent/grant"
+  },
+  {
+    "method": "GET",
+    "path": "/api/consent/history"
+  },
+  {
+    "method": "GET",
+    "path": "/api/consent/policy"
+  },
+  {
+    "method": "POST",
+    "path": "/api/consent/revoke"
+  },
+  {
+    "method": "GET",
+    "path": "/api/consent/status"
+  },
+  {
+    "method": "GET",
+    "path": "/api/consent/terms"
+  },
+  {
+    "method": "GET",
+    "path": "/api/debug-db"
+  },
+  {
+    "method": "POST",
+    "path": "/api/designs/analyze"
+  },
+  {
+    "method": "GET",
+    "path": "/api/designs/collections"
+  },
+  {
+    "method": "GET",
+    "path": "/api/designs/collections/exclusive"
+  },
+  {
+    "method": "GET",
+    "path": "/api/designs/colorimetria/historial"
+  },
+  {
+    "method": "POST",
+    "path": "/api/designs/compare"
+  },
+  {
+    "method": "GET",
+    "path": "/api/designs/evolution/:track"
+  },
+  {
+    "method": "GET",
+    "path": "/api/designs/evolution/:track/attribution"
+  },
+  {
+    "method": "GET",
+    "path": "/api/designs/evolution/:track/insight"
+  },
+  {
+    "method": "POST",
+    "path": "/api/designs/face-analysis"
+  },
+  {
+    "method": "POST",
+    "path": "/api/designs/glowup-card/generate"
+  },
+  {
+    "method": "GET",
+    "path": "/api/designs/history"
+  },
+  {
+    "method": "POST",
+    "path": "/api/designs/payments/glowai-premium"
+  },
+  {
+    "method": "GET",
+    "path": "/api/designs/profesionales/recommend"
+  },
+  {
+    "method": "GET",
+    "path": "/api/designs/profile"
+  },
+  {
+    "method": "GET",
+    "path": "/api/designs/proxy"
+  },
+  {
+    "method": "GET",
+    "path": "/api/designs/search"
+  },
+  {
+    "method": "GET",
+    "path": "/api/designs/share/code"
+  },
+  {
+    "method": "GET",
+    "path": "/api/designs/share/go/:code"
+  },
+  {
+    "method": "POST",
+    "path": "/api/designs/streak/check-in"
+  },
+  {
+    "method": "GET",
+    "path": "/api/designs/validation/:id"
+  },
+  {
+    "method": "POST",
+    "path": "/api/designs/validation/pay"
+  },
+  {
+    "method": "POST",
+    "path": "/api/designs/validation/request"
+  },
+  {
+    "method": "GET",
+    "path": "/api/designs/validation/user/history"
+  },
+  {
+    "method": "GET",
+    "path": "/api/designs/wardrobe"
+  },
+  {
+    "method": "POST",
+    "path": "/api/designs/wardrobe/garment"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/designs/wardrobe/garment/:id"
+  },
+  {
+    "method": "POST",
+    "path": "/api/designs/wardrobe/outfit/generate"
+  },
+  {
+    "method": "GET",
+    "path": "/api/designs/wardrobe/outfits/history"
+  },
+  {
+    "method": "POST",
+    "path": "/api/disputas"
+  },
+  {
+    "method": "GET",
+    "path": "/api/disputas/:id"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/disputas/:id/resolve"
+  },
+  {
+    "method": "GET",
+    "path": "/api/disputas/my-disputes"
+  },
+  {
+    "method": "POST",
+    "path": "/api/disputes"
+  },
+  {
+    "method": "POST",
+    "path": "/api/disputes/disputas"
+  },
+  {
+    "method": "GET",
+    "path": "/api/disputes/disputas/:id"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/disputes/disputas/:id/resolve"
+  },
+  {
+    "method": "GET",
+    "path": "/api/disputes/disputas/my-disputes"
+  },
+  {
+    "method": "POST",
+    "path": "/api/event-registrations/events/:id/register"
+  },
+  {
+    "method": "GET",
+    "path": "/api/events"
+  },
+  {
+    "method": "POST",
+    "path": "/api/events"
+  },
+  {
+    "method": "GET",
+    "path": "/api/events/:id"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/events/:id"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/events/:id"
+  },
+  {
+    "method": "POST",
+    "path": "/api/glow-cycle/:id/checkin"
+  },
+  {
+    "method": "POST",
+    "path": "/api/glow-cycle/:id/graduate"
+  },
+  {
+    "method": "POST",
+    "path": "/api/glow-cycle/:id/measurement"
+  },
+  {
+    "method": "POST",
+    "path": "/api/glow-cycle/:id/re-scan"
+  },
+  {
+    "method": "GET",
+    "path": "/api/glow-cycle/active"
+  },
+  {
+    "method": "POST",
+    "path": "/api/glow-cycle/create"
+  },
+  {
+    "method": "POST",
+    "path": "/api/glow-pro/event-registrations/events/:id/register"
+  },
+  {
+    "method": "GET",
+    "path": "/api/glow-pro/events"
+  },
+  {
+    "method": "POST",
+    "path": "/api/glow-pro/events"
+  },
+  {
+    "method": "GET",
+    "path": "/api/glow-pro/events/:id"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/glow-pro/events/:id"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/glow-pro/events/:id"
+  },
+  {
+    "method": "POST",
+    "path": "/api/glow-pro/events/:id/register"
+  },
+  {
+    "method": "GET",
+    "path": "/api/glow-pro/qr-certificates"
+  },
+  {
+    "method": "POST",
+    "path": "/api/glow-pro/qr-certificates"
+  },
+  {
+    "method": "GET",
+    "path": "/api/glow-pro/user-badges"
+  },
+  {
+    "method": "POST",
+    "path": "/api/glow-pro/user-badges"
+  },
+  {
+    "method": "GET",
+    "path": "/api/health"
+  },
+  {
+    "method": "GET",
+    "path": "/api/membership"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/membership/:id"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/membership/:id/role"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/membership/:id/status"
+  },
+  {
+    "method": "POST",
+    "path": "/api/membership/invite"
+  },
+  {
+    "method": "GET",
+    "path": "/api/mentorship/sessions"
+  },
+  {
+    "method": "POST",
+    "path": "/api/mentorship/sessions"
+  },
+  {
+    "method": "GET",
+    "path": "/api/metrics/rag"
+  },
+  {
+    "method": "GET",
+    "path": "/api/metrics/rag/daily"
+  },
+  {
+    "method": "GET",
+    "path": "/api/metrics/rag/dashboard"
+  },
+  {
+    "method": "GET",
+    "path": "/api/metrics/rag/export"
+  },
+  {
+    "method": "GET",
+    "path": "/api/metrics/rag/health"
+  },
+  {
+    "method": "POST",
+    "path": "/api/nia-beauty/scan"
+  },
+  {
+    "method": "POST",
+    "path": "/api/payments/wompi-webhook"
+  },
+  {
+    "method": "GET",
+    "path": "/api/portfolio"
+  },
+  {
+    "method": "POST",
+    "path": "/api/portfolio"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/portfolio/:id"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/portfolio/:id"
+  },
+  {
+    "method": "GET",
+    "path": "/api/portfolio/provider"
+  },
+  {
+    "method": "GET",
+    "path": "/api/products"
+  },
+  {
+    "method": "GET",
+    "path": "/api/products/:id"
+  },
+  {
+    "method": "GET",
+    "path": "/api/provider/schedule"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/provider/schedule"
+  },
+  {
+    "method": "GET",
+    "path": "/api/providers"
+  },
+  {
+    "method": "GET",
+    "path": "/api/providers/:id"
+  },
+  {
+    "method": "GET",
+    "path": "/api/providers/:id/slots"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/providers/status"
+  },
+  {
+    "method": "GET",
+    "path": "/api/salon/:salonId/members"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/salon/:salonId/members/:memberId"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/salon/:salonId/members/:memberId/role"
+  },
+  {
+    "method": "POST",
+    "path": "/api/salon/accept-invitation"
+  },
+  {
+    "method": "POST",
+    "path": "/api/salon/create"
+  },
+  {
+    "method": "POST",
+    "path": "/api/salon/invite"
+  },
+  {
+    "method": "GET",
+    "path": "/api/salon/my-salon"
+  },
+  {
+    "method": "POST",
+    "path": "/api/services"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/services/:id"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/services/:id"
+  },
+  {
+    "method": "GET",
+    "path": "/api/services/provider"
+  },
+  {
+    "method": "GET",
+    "path": "/api/social/accounts"
+  },
+  {
+    "method": "POST",
+    "path": "/api/social/log-share"
+  },
+  {
+    "method": "POST",
+    "path": "/api/sos"
+  },
+  {
+    "method": "POST",
+    "path": "/api/store/checkout"
+  },
+  {
+    "method": "GET",
+    "path": "/api/store/orders"
+  },
+  {
+    "method": "GET",
+    "path": "/api/store/orders/:id"
+  },
+  {
+    "method": "GET",
+    "path": "/api/test-db"
+  },
+  {
+    "method": "POST",
+    "path": "/api/tickets"
+  },
+  {
+    "method": "GET",
+    "path": "/api/tickets/:id/messages"
+  },
+  {
+    "method": "POST",
+    "path": "/api/tickets/:id/messages"
+  },
+  {
+    "method": "GET",
+    "path": "/api/tickets/my-tickets"
+  },
+  {
+    "method": "POST",
+    "path": "/api/tickets/tickets"
+  },
+  {
+    "method": "GET",
+    "path": "/api/tickets/tickets/:id/messages"
+  },
+  {
+    "method": "POST",
+    "path": "/api/tickets/tickets/:id/messages"
+  },
+  {
+    "method": "GET",
+    "path": "/api/tickets/tickets/my-tickets"
+  },
+  {
+    "method": "GET",
+    "path": "/api/tiles/:z/:x/:y.png"
+  },
+  {
+    "method": "POST",
+    "path": "/api/upload"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/users/avatar"
+  },
+  {
+    "method": "GET",
+    "path": "/api/users/preferences"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/users/preferences"
+  },
+  {
+    "method": "GET",
+    "path": "/api/users/profile"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/users/profile"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/beauty-scan"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/beauty/analyze"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/beauty/profile/:userId"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/v1/beauty/profile/:userId"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/v1/business/admin/evidence/:id"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/business/admin/queue"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/business/diagnostic"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/business/documents/:id/audit"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/business/documents/:id/download"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/business/documents/:id/request-signature"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/business/documents/:id/sign"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/business/documents/:id/version"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/business/documents/generate"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/business/summary"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/business/tasks"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/business/tasks/:id/advance"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/business/tasks/:id/evidence"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/business/templates"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/business/verticals"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/memberships"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/v1/memberships/:id"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/v1/memberships/:id/role"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/v1/memberships/:id/status"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/memberships/invite"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/workforce"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/workforce/:id"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/v1/workforce/:id"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/v1/workforce/:id"
+  },
+  {
+    "method": "GET",
+    "path": "/api/vto/catalog"
+  },
+  {
+    "method": "POST",
+    "path": "/api/vto/nail-tryon"
+  },
+  {
+    "method": "GET",
+    "path": "/api/wallet"
+  },
+  {
+    "method": "GET",
+    "path": "/api/wallet/bank-account"
+  },
+  {
+    "method": "POST",
+    "path": "/api/wallet/bank-account"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/wallet/bank-account"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/wallet/model"
+  },
+  {
+    "method": "GET",
+    "path": "/api/wallet/transactions"
+  },
+  {
+    "method": "POST",
+    "path": "/api/wallet/withdraw"
+  },
+  {
+    "method": "GET",
+    "path": "/api/xp-log"
+  },
+  {
+    "method": "POST",
+    "path": "/api/xp-log"
+  },
+  {
+    "method": "POST",
+    "path": "/api/xp-log/convert-cashback"
+  },
+  {
+    "method": "GET",
+    "path": "/api/xp-logs"
+  },
+  {
+    "method": "POST",
+    "path": "/api/xp-logs"
+  },
+  {
+    "method": "POST",
+    "path": "/api/xp-logs/convert-cashback"
+  }
+]
