@@ -10,7 +10,6 @@ require('dotenv').config();
 
 // ⚠️ IMPORTANTE: Imports al inicio para evitar ReferenceError
 const authRoutes = require('./src/routes/authRoutes');
-const salonRoutes = require('./src/routes/salonRoutes');
 const biometricConsentRoutes = require('./src/routes/biometricConsentRoutes');
 const userPreferencesRoutes = require('./src/routes/userPreferencesRoutes');
 const biometricRoutes = require('./src/routes/biometricRoutes');
@@ -356,7 +355,6 @@ app.use('/api', productRoutes);
 app.use('/api', providerRoutes);
 app.use('/api', ticketRoutes);
 app.use('/api', disputeRoutes);
-app.use('/api/salon', salonRoutes);
 app.use('/api/consent', biometricConsentRoutes);
 const consentRoutes = require('./src/routes/consentRoutes');
 app.use('/api/consent', consentRoutes);
@@ -365,6 +363,21 @@ app.use('/api/glow-cycle', require('./src/routes/glowCycleRoutes'));
 app.use('/api/v1/beauty', require('./src/routes/v1/beautyRoutes'));
 app.use('/api/v1/beauty-scan', require('./src/routes/v1/beautyScanRoutes'));
 app.use('/api/v1/workforce', require('./src/routes/v1/workforceRoutes'));
+app.use('/api/v1/saas/context', require('./src/routes/contextRoutes'));
+app.use('/api/v1/saas/context', require('./src/routes/activeContextRoutes'));
+app.use('/api/v1/saas/hub', require('./src/routes/hubSalonRoutes'));
+app.use('/api/v1/saas/hub/onboarding', require('./src/routes/crearDesdeCeroRoutes'));
+app.use('/api/v1/saas/hub/staff', require('./src/routes/staffAvailabilityRoutes'));
+app.use('/api/v1/saas/hub/materializations', require('./src/routes/nodo04MaterializationRoutes'));
+app.use('/api/v1/saas/hub/availability', require('./src/routes/nodo05AvailabilityRoutes'));
+app.use('/api/v1/saas/hub/appointments', require('./src/routes/nodo06AppointmentsRoutes'));
+app.use('/api/saas/tickets', require('./src/routes/nodo08TicketsRoutes'));
+app.use('/api/saas/customers', require('./src/routes/saasCustomersRoutes'));
+const { staffRouter, publicRouter: staffPublicRouter } = require('./src/routes/saasStaffRoutes');
+app.use('/api/saas/staff', staffRouter);
+app.use('/api/saas/public/invitations', staffPublicRouter);
+app.use('/api/saas/cash', require('./src/routes/saasCashRoutes'));
+app.use('/api/v1/saas/calendar', require('./src/routes/saasCalendarRoutes'));
 app.use('/api/vto', vtoRoutes);
 app.use('/api/color', colorRoutes);
 app.use('/api/academy', academyRoutes);
@@ -495,7 +508,6 @@ app.get('/api/debug-db', debugRouteMiddleware, async (req, res) => {
 const niaBeautyRoutes = require('./src/routes/niaBeautyRoutes');
 
 app.use('/api/auth', authRoutes);
-app.use('/api/salon', salonRoutes);
 app.use('/api/users', userPreferencesRoutes);
 app.use('/api/designs', designsRoutes);
 app.use('/api/nia-beauty', niaBeautyRoutes);

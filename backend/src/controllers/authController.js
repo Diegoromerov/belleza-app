@@ -99,22 +99,7 @@ exports.login = async (req, res) => {
     }
 
     // 🛡️ Auto-reconciliación de estado de Onboarding e Invariantes de Rol en PostgreSQL
-    if (user.rol === 'SALON' && !user.onboarding_completo) {
-      const salonCheck = await pool.query(
-        `SELECT s.id FROM salones s WHERE s.id_dueno = $1
-         UNION
-         SELECT sm.salon_id FROM salon_miembros sm WHERE sm.user_id = $1 AND sm.estatus = 'ACTIVO'`,
-        [user.id]
-      );
-      if (salonCheck.rows.length > 0) {
-        await pool.query(
-          `UPDATE usuarios SET onboarding_completo = true WHERE id = $1`,
-          [user.id]
-        );
-        user.onboarding_completo = true;
-        console.log(`🛠️ [Auto-Reconciliation] Usuario Salón ID ${user.id} actualizado a onboarding_completo = true`);
-      }
-    } else if (user.rol === 'PRESTADOR' && !user.onboarding_completo) {
+    if (user.rol === 'PRESTADOR' && !user.onboarding_completo) {
       const providerCheck = await pool.query(
         `SELECT id FROM perfiles_prestador WHERE id = $1`,
         [user.id]

@@ -31,19 +31,21 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen>
   late LatLng _providerLoc;
 
   double _progress = 0.0;
-  Timer? _moveTimer;
   int _minutesRemaining = 8;
+  Timer? _moveTimer;
+  // Estado Canónico N02: LIVE, STALE, OFFLINE
+  String _signalStatus = 'OFFLINE'; // 'LIVE', 'STALE', 'OFFLINE'
+  DateTime? _lastLocationTime;
 
   // Canal de WebSocket para tracking GPS real
   web_socket_channel.WebSocketChannel? _wsChannel;
-  bool _usingRealGPS = false;
 
   late AnimationController _pulseController;
 
   @override
   void initState() {
     super.initState();
-    // Inicia un poco al noreste del cliente
+    // Inicia en la última posición conocida del prestador o referencia
     _providerLoc = const LatLng(4.6795, -74.1310);
 
     // Controlador para la animación pulsante concéntrica del marcador del proveedor
@@ -53,7 +55,7 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen>
     )..repeat();
 
     _connectWebSocketTracking();
-    _startTrackingSimulation();
+    _startStalenessChecker();
   }
 
   @override
@@ -64,13 +66,49 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen>
     super.dispose();
   }
 
-  void _connectWebSocketTracking() {
+  void _startStalenessChecker() {
+    _moveTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+      if (!mounted) return;
+      if (_lastLocationTime == null) {
+        if (_signalStatus != 'OFFLINE') {
+          setState(() => _signalStatus = 'OFFLINE');
+        }
+        return;
+      }
+
+      final diffSec = DateTime.now().difference(_lastLocationTime!).inSeconds;
+      String newStatus = _signalStatus;
+
+      if (diffSec <= 15) {
+        newStatus = 'LIVE';
+      } else if (diffSec <= 30) {
+        newStatus = 'STALE';
+      } else {
+        newStatus = 'OFFLINE';
+      }
+
+      if (newStatus != _signalStatus) {
+        setState(() => _signalStatus = newStatus);
+      }
+    });
+  }
+
+  void _connectWebSocketTracking() async {
     try {
+      final token = await ApiService.getToken();
       final wsBase = ApiService.baseUrl.replaceFirst('http', 'ws');
-      final wsUrl = '$wsBase/chat'; // Reutilizamos el endpoint configurado en index.js
+      final wsUrl = '$wsBase/chat';
       _wsChannel = web_socket_channel.WebSocketChannel.connect(Uri.parse(wsUrl));
 
-      // Unirse a la sala de la reserva
+      // 1. Registrar token autenticado
+      if (token != null) {
+        _wsChannel!.sink.add(jsonEncode({
+          'type': 'register',
+          'token': token
+        }));
+      }
+
+      // 2. Unirse a la sala de la reserva con autorización
       final bookingId = widget.booking['id']?.toString();
       if (bookingId != null) {
         _wsChannel!.sink.add(jsonEncode({
@@ -86,55 +124,36 @@ class _BookingTrackingScreenState extends State<BookingTrackingScreen>
           if (data['type'] == 'location_received' && data['latitude'] != null && data['longitude'] != null) {
             if (mounted) {
               setState(() {
-                _usingRealGPS = true;
-                _moveTimer?.cancel(); // Cancelar simulación si recibimos GPS real
+                _lastLocationTime = DateTime.now();
+                final isStale = data['is_stale'] == true;
+                _signalStatus = isStale ? 'STALE' : 'LIVE';
+
                 _providerLoc = LatLng(
                   double.parse(data['latitude'].toString()),
                   double.parse(data['longitude'].toString()),
                 );
-                // Calcular progreso en función de la distancia
+                // Calcular progreso en función de la distancia real
                 final double distanceInMeters = const Distance().distance(_providerLoc, _clientLoc);
-                const double initialDistance = 1500.0; // Distancia estimada inicial
+                const double initialDistance = 1500.0;
                 _progress = (1.0 - (distanceInMeters / initialDistance)).clamp(0.0, 1.0);
                 _minutesRemaining = (8 * (1.0 - _progress)).round();
                 if (_minutesRemaining < 1) _minutesRemaining = 1;
               });
             }
+          } else if (data['type'] == 'tracking_ended') {
+            if (mounted) {
+              setState(() => _signalStatus = 'OFFLINE');
+            }
           }
         } catch (_) {}
       }, onError: (_) {
-        _usingRealGPS = false;
+        if (mounted) setState(() => _signalStatus = 'OFFLINE');
       }, onDone: () {
-        _usingRealGPS = false;
+        if (mounted) setState(() => _signalStatus = 'OFFLINE');
       });
     } catch (_) {
-      _usingRealGPS = false;
+      if (mounted) setState(() => _signalStatus = 'OFFLINE');
     }
-  }
-
-  void _startTrackingSimulation() {
-    _moveTimer = Timer.periodic(const Duration(seconds: 2), (timer) {
-      if (!mounted || _usingRealGPS) return;
-      setState(() {
-        if (_progress < 1.0) {
-          _progress += 0.05; // Incrementa el progreso en cada tick
-          if (_progress > 1.0) _progress = 1.0;
-
-          // Interpolación lineal simple entre la posición inicial y el cliente
-          final double lat =
-              4.6795 + (_clientLoc.latitude - 4.6795) * _progress;
-          final double lon =
-              -74.1310 + (_clientLoc.longitude - (-74.1310)) * _progress;
-          _providerLoc = LatLng(lat, lon);
-
-          // Disminuir tiempo estimado progresivamente
-          _minutesRemaining = (8 * (1.0 - _progress)).round();
-          if (_minutesRemaining < 1) _minutesRemaining = 1;
-        } else {
-          _moveTimer?.cancel();
-        }
-      });
-    });
   }
 
   @override

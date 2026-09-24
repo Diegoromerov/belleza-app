@@ -465,8 +465,10 @@ exports.payBooking = async (req, res) => {
 
     const result = await sequelize.transaction(async (t) => {
       // 1. Actualizar el estado de la cita
+      const now = new Date();
       booking.estado = 'CONFIRMADA';
       booking.payment_status = 'paid';
+      booking.paid_at = now;
       await booking.save({ transaction: t });
 
       // Propagar a citas hijas enlazadas
@@ -474,7 +476,7 @@ exports.payBooking = async (req, res) => {
         const linkedIds = booking.productos_adicionales.linked_booking_ids;
         if (linkedIds.length > 0) {
           await Booking.update(
-            { estado: 'CONFIRMADA', payment_status: 'paid' },
+            { estado: 'CONFIRMADA', payment_status: 'paid', paid_at: now },
             { where: { id: linkedIds }, transaction: t }
           );
         }
@@ -578,20 +580,30 @@ exports.wompiWebhook = async (req, res) => {
 
       if (status === 'APPROVED') {
         await sequelize.transaction(async (t) => {
-          // Actualizar cita a CONFIRMADA
-          await Booking.update(
-            { estado: 'CONFIRMADA', payment_status: 'paid' },
-            { where: { id: bookingId }, transaction: t }
-          );
+          const now = new Date();
+          // Actualizar cita a CONFIRMADA solo si está en PENDIENTE_PAGO para evitar reabrir citas canceladas
+          const booking = await Booking.findOne({
+            where: { id: bookingId, estado: 'PENDIENTE_PAGO' },
+            transaction: t
+          });
 
-          // Obtener la cita y propagar a citas hijas vinculadas si existen
-          const booking = await Booking.findByPk(bookingId, { transaction: t });
-          if (booking && booking.productos_adicionales && Array.isArray(booking.productos_adicionales.linked_booking_ids)) {
+          if (!booking) {
+            console.log(`⚠️ [WOMPI WEBHOOK] Cita ${bookingId} no encontrada en estado PENDIENTE_PAGO (podría haber sido cancelada o ya confirmada). Omitiendo.`);
+            return;
+          }
+
+          booking.estado = 'CONFIRMADA';
+          booking.payment_status = 'paid';
+          booking.paid_at = now;
+          await booking.save({ transaction: t });
+
+          // Propagar a citas hijas vinculadas si existen
+          if (booking.productos_adicionales && Array.isArray(booking.productos_adicionales.linked_booking_ids)) {
             const linkedIds = booking.productos_adicionales.linked_booking_ids;
             if (linkedIds.length > 0) {
               await Booking.update(
-                { estado: 'CONFIRMADA', payment_status: 'paid' },
-                { where: { id: linkedIds }, transaction: t }
+                { estado: 'CONFIRMADA', payment_status: 'paid', paid_at: now },
+                { where: { id: linkedIds, estado: 'PENDIENTE_PAGO' }, transaction: t }
               );
             }
           }

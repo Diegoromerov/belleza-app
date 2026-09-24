@@ -231,6 +231,13 @@ async function conciliacionDiaria() {
     );
     console.log(`⏱️  OTPs expirados: ${expiredOTPs[0].expirados}`);
 
+    // Purgar logs de telemetría de tracking con más de 30 días (N02 Retention Contract)
+    const { rowCount: purgedTrackingLogs } = await client.query(
+      `DELETE FROM public.booking_tracking_logs 
+       WHERE created_at < NOW() - INTERVAL '30 days'`
+    );
+    console.log(`🧹 Tracking logs purgados (>30 días): ${purgedTrackingLogs}`);
+
     console.log('✅ Conciliación diaria completada.');
     return reporte;
   } catch (err) {
@@ -240,16 +247,165 @@ async function conciliacionDiaria() {
   }
 }
 
+// ─── JOB 4: EXPIRACIÓN DE RESERVAS B2C (N01) ─────────────────────────────────
+/**
+ * Busca reservas CONFIRMADA cuyo paid_at sea anterior a 15 minutos y que no
+ * hayan iniciado servicio. Las cancela y encola la intención de reembolso en refund_outbox.
+ */
+async function procesarExpiracionReservas() {
+  const client = await pool.connect();
+  try {
+    // 1. Obtener candidatos con lock pesimista
+    await client.query('BEGIN');
+
+    const selectQuery = `
+      SELECT b.id, b.valor_bruto, b.paid_at, t.external_id as transaction_id
+      FROM public.bookings b
+      LEFT JOIN public.transactions t ON t.booking_id = b.id AND t.status = 'paid'
+      WHERE b.estado = 'CONFIRMADA'
+        AND b.paid_at IS NOT NULL
+        AND b.paid_at <= NOW() - INTERVAL '15 minutes'
+      FOR UPDATE OF b
+      SKIP LOCKED;
+    `;
+
+    const { rows: expiredBookings } = await client.query(selectQuery);
+
+    for (const booking of expiredBookings) {
+      // 2. Transicionar a CANCELADA atómicamente
+      await client.query(
+        `UPDATE public.bookings 
+         SET estado = 'CANCELADA', 
+             motivo_cancelacion = 'EXPIRACION_AUTOMATICA'
+         WHERE id = $1`,
+        [booking.id]
+      );
+
+      // 3. Crear o asegurar intención única en refund_outbox
+      const amount = parseFloat(booking.valor_bruto) || 0.00;
+      const txId = booking.transaction_id || `sim_tx_${booking.id.substring(0, 8)}`;
+
+      await client.query(
+        `INSERT INTO public.refund_outbox (booking_id, transaction_id, amount, status, attempts, created_at, updated_at)
+         VALUES ($1, $2, $3, 'PENDING', 0, NOW(), NOW())
+         ON CONFLICT (booking_id) DO NOTHING`,
+        [booking.id, txId, amount]
+      );
+
+      console.log(`⏱️ [EXPIRATION WORKER] Reserva ${booking.id} expirada y cancelada. Encolada a refund_outbox.`);
+    }
+
+    await client.query('COMMIT');
+
+    // 4. Procesar el outbox inmediatamente después del COMMIT
+    if (expiredBookings.length > 0) {
+      await procesarRefundOutbox();
+    }
+
+    return expiredBookings.length;
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('❌ Error en job de expiración de reservas:', err.message);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+// ─── JOB 5: WORKER DE REEMBOLSOS (OUTBOX DISPATCHER) ─────────────────────────
+/**
+ * Procesa las intenciones de reembolso pendientes o reintentables fuera de la transacción de BD.
+ */
+async function procesarRefundOutbox() {
+  const client = await pool.connect();
+  let pendingRefunds = [];
+
+  try {
+    await client.query('BEGIN');
+
+    // Bloquear filas elegibles en el outbox
+    const { rows } = await client.query(`
+      SELECT id, booking_id, transaction_id, amount, attempts
+      FROM public.refund_outbox
+      WHERE status IN ('PENDING', 'RETRYABLE_FAILURE')
+        AND attempts < 3
+      FOR UPDATE
+      SKIP LOCKED;
+    `);
+
+    pendingRefunds = rows;
+
+    if (pendingRefunds.length > 0) {
+      const ids = pendingRefunds.map(r => r.id);
+      await client.query(
+        `UPDATE public.refund_outbox 
+         SET status = 'PROCESSING', updated_at = NOW() 
+         WHERE id = ANY($1::uuid[])`,
+        [ids]
+      );
+    }
+
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('❌ Error al reservar ítems de refund_outbox:', err.message);
+    return;
+  } finally {
+    client.release();
+  }
+
+  // Ejecutar llamadas a Wompi fuera del lock de BD
+  for (const refund of pendingRefunds) {
+    const nextAttempts = refund.attempts + 1;
+    try {
+      const res = await wompiService.executeRefund({
+        bookingId: refund.booking_id,
+        transactionId: refund.transaction_id,
+        amount: refund.amount
+      });
+
+      // Éxito o idempotencia confirmada
+      await pool.query(
+        `UPDATE public.refund_outbox
+         SET status = 'SUCCESS',
+             attempts = $2,
+             processed_at = NOW(),
+             updated_at = NOW()
+         WHERE id = $1`,
+        [refund.id, nextAttempts]
+      );
+      console.log(`✅ [REFUND SUCCESS] Reembolso procesado para reserva ${refund.booking_id}. Ref: ${res.external_refund_id || 'N/A'}`);
+    } catch (refundErr) {
+      console.error(`⚠️ [REFUND ATTEMPT FAILED] Intento ${nextAttempts} para reserva ${refund.booking_id}:`, refundErr.message);
+
+      const isFatal = refundErr.isFatal === true || nextAttempts >= 3;
+      const finalStatus = isFatal ? 'FINAL_FAILURE' : 'RETRYABLE_FAILURE';
+
+      await pool.query(
+        `UPDATE public.refund_outbox
+         SET status = $2,
+             attempts = $3,
+             last_error = $4,
+             updated_at = NOW()
+         WHERE id = $1`,
+        [refund.id, finalStatus, nextAttempts, refundErr.message]
+      );
+    }
+  }
+}
+
 // ─── INICIALIZAR JOBS CON setInterval ─────────────────────────────────────────
 /**
- * Configura los jobs periódicos usando setInterval (simple y sin dependencias).
- * Para producción, usar node-cron o un worker separado.
+ * Configura los jobs periódicos usando setInterval.
  */
 function inicializarJobs() {
   console.log('⚙️  Iniciando jobs de pagos...');
 
   // Maduración de saldos: cada 15 minutos
   setInterval(madurarSaldosPendientes, 15 * 60 * 1000);
+
+  // Expiración de reservas B2C (N01): cada 60 segundos
+  setInterval(procesarExpiracionReservas, 60 * 1000);
 
   // Retiros automáticos: cada día a las 6 AM (verificación cada hora)
   setInterval(async () => {
@@ -275,8 +431,9 @@ function inicializarJobs() {
     if (hora === 10) await enviarNotificacionesRetencion();
   }, 60 * 60 * 1000);
 
-  // Ejecutar maduración inmediatamente al iniciar
+  // Ejecutar maduración y expiración inmediatamente al iniciar
   setTimeout(madurarSaldosPendientes, 5000);
+  setTimeout(procesarExpiracionReservas, 2000);
   
   console.log('✅ Jobs de pagos inicializados.');
 }
@@ -285,5 +442,8 @@ module.exports = {
   inicializarJobs,
   madurarSaldosPendientes,
   ejecutarRetirosAutomaticos,
-  conciliacionDiaria
+  conciliacionDiaria,
+  procesarExpiracionReservas,
+  procesarRefundOutbox
 };
+

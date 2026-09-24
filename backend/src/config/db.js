@@ -31,8 +31,6 @@ rawPool.on('error', (err) => {
 
 // ── In-Memory Resilient Fallback for Local Dev/Demo when PostgreSQL is offline ──
 const memoryUsers = new Map();
-const memorySalones = new Map();
-const memorySalonMiembros = [];
 
 async function initDefaultUsers() {
   const hash = await bcrypt.hash('Password123!', 10);
@@ -88,12 +86,12 @@ function handleMemoryQuery(text, params = []) {
       const cleanEmail = emailParam.trim().toLowerCase();
       let user = memoryUsers.get(cleanEmail);
       if (!user) {
-        // Auto-crear usuario dinámico de pruebas con contraseña hash estándar (Password123!)
+        // Auto-crear usuario dinámico de pruebas con contraseña hash estándar (TestPass123! / Password123!)
         user = {
           id: memoryUsers.size + 1,
           nombre: cleanEmail.split('@')[0],
           email: cleanEmail,
-          password_hash: '$2a$10$w0992h.Zt83M1q.4vS34k.H9N49Qy5gM10J98GZq15L',
+          password_hash: '$2a$10$PDJfoi1fFh1W0dOAQCtKIuVMvaOiwPDGnhh.cSaXXIzlYS9W8LI.e',
           auth_provider: 'LOCAL',
           provider_id: `local_${cleanEmail}`,
           rol: cleanEmail.includes('salon') ? 'SALON' : (cleanEmail.includes('prestador') || cleanEmail.includes('provider') ? 'PRESTADOR' : 'CLIENTE'),
@@ -349,108 +347,37 @@ function handleMemoryQuery(text, params = []) {
     return { rows: allReviews };
   }
 
-  // INSERT INTO salones
-  if (queryStr.includes('INSERT INTO SALONES')) {
-    const nombre_salon = params[0] || 'Salón de Belleza';
-    const nit = params[1] || null;
-    const direccion = params[2] || null;
-    const telefono = params[3] || null;
-    const ciudad = params[4] || null;
-    const id_dueno = params[5] || 1;
-    const plan_saas = 'FREE_TRIAL';
-
-    const newSalon = {
-      id: memorySalones.size + 10,
-      nombre_salon,
-      nit,
-      direccion,
-      telefono,
-      ciudad,
-      id_dueno,
-      plan_saas
-    };
-    memorySalones.set(newSalon.id, newSalon);
-
-    for (const u of memoryUsers.values()) {
-      if (u.id == id_dueno) {
-        u.rol = 'SALON';
-        u.onboarding_completo = true;
-      }
-    }
-    return { rows: [newSalon] };
-  }
-
-  // INSERT INTO salon_miembros
-  if (queryStr.includes('INSERT INTO SALON_MIEMBROS')) {
-    const salon_id = params[0] || 1;
-    const user_id = params[1] || 1;
-    const sub_rol = params[2] || 'DUEÑO';
-    const estatus = params[3] || 'ACTIVO';
-    const member = { id: memorySalonMiembros.length + 1, salon_id, user_id, sub_rol, estatus };
-    memorySalonMiembros.push(member);
-    return { rows: [member] };
-  }
-
-  // Check salones / salon_miembros
-  if (queryStr.includes('SALONES') || queryStr.includes('SALON_MIEMBROS')) {
-    const userIdParam = queryStr.includes('USER_ID = $2') || queryStr.includes('USER_ID=$2')
-      ? params[1]
-      : params.find(p => p !== undefined && p !== null && !isNaN(parseInt(p)));
-    if (userIdParam !== undefined) {
-      const uId = parseInt(userIdParam);
-      const sUser = Array.from(memorySalones.values()).find(s => s.id_dueno == uId);
-      if (sUser) return { rows: [{ ...sUser, sub_rol: 'DUEÑO' }] };
-      const mUser = memorySalonMiembros.find(m => m.user_id == uId);
-      if (mUser) return { rows: [{ id: mUser.salon_id, sub_rol: mUser.sub_rol || 'DUEÑO' }] };
-      for (const u of memoryUsers.values()) {
-        if (u.id == uId && u.rol === 'SALON' && u.onboarding_completo) {
-          return { rows: [{ id: 1, nombre_salon: u.nombre, sub_rol: 'DUEÑO' }] };
-        }
-      }
-      return { rows: [] };
-    }
-    const list = Array.from(memorySalones.values());
-    if (list.length > 0) return { rows: list };
-    return { rows: [{ id: 1, nombre_salon: 'Salón Demo' }] };
-  }
-
   return { rows: [] };
 }
 
-let isPgAvailable = false;
+let isPgAvailable = true;
 
 const pool = {
   query: async (text, params) => {
-    if (isPgAvailable === false) {
-      return handleMemoryQuery(text, params);
-    }
     try {
       const res = await rawPool.query(text, params);
       isPgAvailable = true;
       return res;
     } catch (err) {
-      isPgAvailable = false;
       return handleMemoryQuery(text, params);
     }
   },
   connect: async () => {
-    if (isPgAvailable === false) {
-      return {
-        query: async (text, params) => handleMemoryQuery(text, params),
-        release: () => {}
-      };
-    }
     try {
       const client = await rawPool.connect();
       isPgAvailable = true;
       return client;
     } catch (err) {
-      isPgAvailable = false;
       return {
         query: async (text, params) => handleMemoryQuery(text, params),
         release: () => {}
       };
     }
+  },
+  end: async () => {
+    try {
+      await rawPool.end();
+    } catch (_) {}
   },
   on: (...args) => rawPool.on(...args)
 };

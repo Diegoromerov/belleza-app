@@ -3,6 +3,8 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
 import 'secure_storage_service.dart';
+import 'saas_context_service.dart';
+import 'active_context_holder.dart';
 
 class AuthService {
   static Future<String> getBaseUrl() async {
@@ -231,100 +233,44 @@ class AuthService {
     return false;
   }
 
-  static Future<Map<String, dynamic>?> createSalon({
-    required String nombreSalon,
-    String? nit,
-    String? direccion,
-    String? telefono,
-    String? ciudad,
-    double? latitude,
-    double? longitude,
-    bool locationPublic = true,
-  }) async {
-    final baseUrl = await getBaseUrl();
-    final token = await getToken();
-    if (token == null) return null;
-    final response = await http.post(
-      Uri.parse('$baseUrl/api/salon/create'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: json.encode({
-        'nombre_salon': nombreSalon,
-        'nit': nit,
-        'direccion': direccion,
-        'telefono': telefono,
-        'ciudad': ciudad,
-        if (latitude != null) 'latitude': latitude,
-        if (longitude != null) 'longitude': longitude,
-        'location_public': locationPublic,
-      }),
-    );
-    if (response.statusCode == 201) {
-      return json.decode(response.body);
+  static Future<String> resolvePostLoginDestination(Map<String, dynamic>? loginResult) async {
+    if (loginResult == null || loginResult['user'] == null) {
+      return '/login';
     }
-    return null;
-  }
 
-  static Future<Map<String, dynamic>?> inviteTeamMember({
-    required int salonId,
-    required String email,
-    required String subRol,
-  }) async {
-    final baseUrl = await getBaseUrl();
-    final token = await getToken();
-    if (token == null) return null;
-    final response = await http.post(
-      Uri.parse('$baseUrl/api/salon/invite'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: json.encode({
-        'salon_id': salonId,
-        'email': email,
-        'sub_rol': subRol,
-      }),
-    );
-    if (response.statusCode == 200) {
-      return json.decode(response.body);
+    final user = loginResult['user'];
+    final bool onboardingCompleto = user['onboarding_completo'] ?? false;
+    if (!onboardingCompleto) {
+      return '/onboarding';
     }
-    return null;
-  }
 
-  static Future<Map<String, dynamic>?> acceptSalonInvitation(String tokenParam) async {
-    final baseUrl = await getBaseUrl();
-    final token = await getToken();
-    if (token == null) return null;
-    final response = await http.post(
-      Uri.parse('$baseUrl/api/salon/accept-invitation'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: json.encode({'token': tokenParam}),
-    );
-    if (response.statusCode == 200) {
-      return json.decode(response.body);
-    }
-    return null;
-  }
+    final String rLower = (user['role'] ?? '').toString().toLowerCase();
 
-  static Future<Map<String, dynamic>?> getMySalon() async {
-    final baseUrl = await getBaseUrl();
-    final token = await getToken();
-    if (token == null) return null;
-    final response = await http.get(
-      Uri.parse('$baseUrl/api/salon/my-salon'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-    );
-    if (response.statusCode == 200) {
-      return json.decode(response.body);
+    try {
+      final contextResponse = await SaaSContextService.fetchAvailableContexts();
+      if (contextResponse.isMultipleContexts) {
+        // Múltiples sedes: redirigir al selector SCR-04 sin auto-seleccionar
+        return '/saas/hub';
+      } else if (contextResponse.isOneContext && contextResponse.availableContexts.isNotEmpty) {
+        // Una sola sede: activar explícitamente en RAM y entrar a Hub
+        final singleCtx = contextResponse.availableContexts.first;
+        ActiveContextHolder().setActiveMembershipId(singleCtx.membershipId);
+        return '/saas/hub';
+      } else if (contextResponse.isNoContext && rLower == 'salon') {
+        // Salón sin sedes SaaS asignadas: entrar a /saas/hub (SCR-04 selector con opción Crear Desde Cero)
+        return '/saas/hub';
+      }
+    } catch (_) {
+      // Si la consulta de contexto SaaS falla o no aplica, continuar al fallback
     }
-    return null;
+
+    // Fallback estándar por rol B2C
+    if (rLower == 'salon') {
+      return '/saas/hub';
+    } else if (rLower == 'provider') {
+      return '/provider';
+    }
+    return '/home';
   }
 }
+

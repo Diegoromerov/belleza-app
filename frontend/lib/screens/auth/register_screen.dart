@@ -63,10 +63,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
         if (!mounted) return;
 
         if (loginResult != null) {
-          final bool onboardingCompleto =
-              loginResult['user']['onboarding_completo'] ?? false;
-          final String? role = loginResult['user']['role'];
-
           scaffoldMessenger.showSnackBar(
             SnackBar(
               content: Text(
@@ -81,26 +77,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
           );
 
-          if (onboardingCompleto) {
-            if (role == 'salon') {
-              navigator.pushNamedAndRemoveUntil(
-                '/salon',
-                (route) => false,
-              );
-            } else if (role == 'provider') {
-              navigator.pushNamedAndRemoveUntil(
-                '/provider',
-                (route) => false,
-              );
-            } else {
-              navigator.pushNamedAndRemoveUntil(
-                '/home',
-                (route) => false,
-              );
-            }
-          } else {
+          final destination = await AuthService.resolvePostLoginDestination(loginResult);
+          if (mounted) {
             navigator.pushNamedAndRemoveUntil(
-              '/onboarding',
+              destination,
               (route) => false,
             );
           }
@@ -288,7 +268,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Widget _buildFormCard(BuildContext context) {
     final t = context.glowTokens;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
+
+    final strUserType = l10n?.registerUserType ?? 'Tipo de usuario';
+    final strFullNameLabel = l10n?.registerFullNameLabel ?? 'Nombre completo';
+    final strFullNameHint = l10n?.registerFullNameHint ?? 'Ej. María Pérez';
+    final strFullNameError = l10n?.registerFullNameError ?? 'Ingrese su nombre completo';
+    final strEmailLabel = l10n?.registerEmailLabel ?? 'Correo electrónico';
+    final strEmailHint = l10n?.registerEmailHint ?? 'ejemplo@correo.com';
+    final strEmailError = l10n?.registerEmailError ?? 'Ingrese su correo electrónico';
+    final strPasswordLabel = l10n?.registerPasswordLabel ?? 'Contraseña';
+    final strPasswordHint = l10n?.registerPasswordHint ?? 'Mínimo 6 caracteres';
+    final strPasswordError = l10n?.registerPasswordError ?? 'Mínimo 6 caracteres';
+    final strPhoneLabel = l10n?.registerPhoneLabel ?? 'Teléfono / WhatsApp (Opcional)';
+    final strPhoneHint = l10n?.registerPhoneHint ?? '300 123 4567';
+    final strCreateAccount = l10n?.registerCreateAccount ?? 'Crear Cuenta';
 
     return Container(
       width: double.infinity,
@@ -314,7 +308,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              l10n.registerUserType,
+              strUserType,
               style: context.labelLargeContext,
             ),
             const SizedBox(height: 10),
@@ -351,15 +345,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
             S4TextField(
               controller: _nameCtrl,
-              label: l10n.registerFullNameLabel,
-              hint: l10n.registerFullNameHint,
+              label: strFullNameLabel,
+              hint: strFullNameHint,
               prefixIcon: Icon(
                 Icons.person_outline,
                 color: t.brandPrimary,
                 size: 20,
               ),
               validator: (v) => v!.isEmpty
-                  ? l10n.registerFullNameError
+                  ? strFullNameError
                   : null,
               style: context.bodyContext,
             ),
@@ -369,15 +363,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
             S4TextField(
               controller: _emailCtrl,
               keyboardType: TextInputType.emailAddress,
-              label: l10n.registerEmailLabel,
-              hint: l10n.registerEmailHint,
+              label: strEmailLabel,
+              hint: strEmailHint,
               prefixIcon: Icon(
                 Icons.email_outlined,
                 color: t.brandPrimary,
                 size: 20,
               ),
               validator: (v) => v!.isEmpty
-                  ? l10n.registerEmailError
+                  ? strEmailError
                   : null,
               style: context.bodyContext,
             ),
@@ -387,8 +381,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
             S4TextField(
               controller: _passCtrl,
               obscureText: _obscurePassword,
-              label: l10n.registerPasswordLabel,
-              hint: l10n.registerPasswordHint,
+              label: strPasswordLabel,
+              hint: strPasswordHint,
               prefixIcon: Icon(
                 Icons.lock_outlined,
                 color: t.brandPrimary,
@@ -407,7 +401,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
               ),
               validator: (v) => v!.length < 6
-                  ? l10n.registerPasswordError
+                  ? strPasswordError
                   : null,
               style: context.bodyContext,
             ),
@@ -417,8 +411,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
             S4TextField(
               controller: _phoneCtrl,
               keyboardType: TextInputType.phone,
-              label: l10n.registerPhoneLabel,
-              hint: l10n.registerPhoneHint,
+              label: strPhoneLabel,
+              hint: strPhoneHint,
               prefixIcon: Icon(
                 Icons.phone_outlined,
                 color: t.brandPrimary,
@@ -479,7 +473,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                       )
                     : Text(
-                        l10n.registerCreateAccount,
+                        strCreateAccount,
                         style: const TextStyle(
                           fontFamily: 'Inter',
                           fontSize: 15,

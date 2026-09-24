@@ -29,10 +29,9 @@ import 'screens/auth/register_screen.dart';
 import 'screens/auth/onboarding_screen.dart';
 import 'screens/auth/verification_pending_screen.dart';
 import 'screens/auth/forgot_password_screen.dart';
-import 'screens/auth/accept_invitation_screen.dart';
+import 'screens/saas/invitation_acceptance_screen.dart';
 import 'screens/provider_detail_screen.dart';
 import 'screens/provider_dashboard_screen.dart';
-import 'screens/salon_dashboard_screen.dart';
 import 'screens/salon/salon_hub_screen.dart';
 import 'screens/client_bookings_screen.dart';
 import 'screens/provider_services_screen.dart';
@@ -65,6 +64,7 @@ import 'screens/designs/outfit_result_screen.dart';
 import 'screens/ideas/makeup_lookbook_screen.dart';
 import 'models/provider_model.dart';
 import 'shared/theme.dart';
+import 'screens/saas/saas_navigation_orchestrator.dart';
 
 import 'dart:async';
 import 'package:flutter/foundation.dart';
@@ -198,8 +198,8 @@ class BeautyApp extends StatelessWidget {
                 '/forgot-password': (_) => const ForgotPasswordScreen(),
                 '/accept-invitation': (context) {
                   final args = ModalRoute.of(context)?.settings.arguments;
-                  final token = args is String ? args : (args is Map ? (args['token']?.toString()) : null);
-                  return AcceptInvitationScreen(token: token);
+                  final token = args is String ? args : (args is Map ? (args['token']?.toString() ?? '') : '');
+                  return InvitationAcceptanceScreen(token: token);
                 },
                 '/onboarding': (_) => const OnboardingScreen(),
                 '/verification-pending': (_) => const VerificationPendingScreen(),
@@ -208,7 +208,7 @@ class BeautyApp extends StatelessWidget {
                 '/home': (_) => const ProvidersScreen(),             // Rol CLIENTE (Catálogo / Búsqueda)
                 '/my-glow': (_) => const MyGlowDashboardScreen(),   // Rol CLIENTE (Tablero VIP Ritual)
                 '/provider': (_) => const ProviderDashboardScreen(), // Rol PRESTADOR (Tablero Pro Independiente)
-                '/salon': (_) => const SalonDashboardScreen(),       // Rol SALON (Tablero SaaS Salón)
+                '/salon': (_) => const SaasNavigationOrchestrator(), // Rol SALON (Tablero SaaS Salón Canónico)
                 '/salon-hub': (_) => const SalonHubScreen(),         // Hub Selector de Momento Empresarial (Dueño)
 
                 // 3. Sub-Módulos del Prestador / Salón
@@ -253,6 +253,7 @@ class BeautyApp extends StatelessWidget {
                 '/wardrobe': (_) => const WardrobeDashboardScreen(),
                 '/outfit-result': (_) => const OutfitResultScreen(),
                 '/makeup-lookbook': (_) => const MakeupLookbookScreen(),
+                '/saas/hub': (_) => const SaasNavigationOrchestrator(),
               },
             );
           },
@@ -1671,11 +1672,14 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
               scale: isPressed ? 0.93 : 1.0,
               duration: const Duration(milliseconds: 120),
               curve: Curves.easeOutCubic,
-              child: Transform.translate(
-                offset: const Offset(0, -18),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
+              child: OverflowBox(
+                maxHeight: 120,
+                alignment: Alignment.center,
+                child: Transform.translate(
+                  offset: const Offset(0, -18),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
                     Container(
                       width: 62,
                       height: 62,
@@ -1748,7 +1752,8 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                 ),
               ),
             ),
-          );
+          ),
+        );
         },
       ),
     );
@@ -2255,7 +2260,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
             left: 16,
             right: 16,
             child: Container(
-              height: 72,
+              height: 80,
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
                 color: isMen

@@ -1,10 +1,11 @@
-// frontend/lib/screens/provider_route_screen.dart
 import 'dart:async';
+import 'dart:convert';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:web_socket_channel/web_socket_channel.dart' as web_socket_channel;
 import 'chat_screen.dart';
 import '../services/api_service.dart';
 import '../shared/theme.dart';
@@ -35,6 +36,11 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen>
   bool _isArrived = false;
   bool _isStartingService = false;
 
+  // WebSocket y buffer offline para N02
+  web_socket_channel.WebSocketChannel? _wsChannel;
+  bool _wsConnected = false;
+  final List<Map<String, dynamic>> _offlineBuffer = [];
+
   late AnimationController _pulseController;
 
   @override
@@ -42,6 +48,7 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen>
     super.initState();
     // Inicia un poco al noreste del cliente
     _providerLoc = const LatLng(4.6795, -74.1310);
+    _connectWebSocket();
     _startRouteSimulation();
 
     _pulseController = AnimationController(
@@ -50,9 +57,105 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen>
     )..repeat();
   }
 
+  void _connectWebSocket() async {
+    try {
+      final token = await ApiService.getToken();
+      final wsBase = ApiService.baseUrl.replaceFirst('http', 'ws');
+      final wsUrl = '$wsBase/chat';
+      _wsChannel = web_socket_channel.WebSocketChannel.connect(Uri.parse(wsUrl));
+
+      if (token != null) {
+        _wsChannel!.sink.add(jsonEncode({
+          'type': 'register',
+          'token': token,
+        }));
+      }
+
+      final bookingId = widget.booking['id']?.toString();
+      if (bookingId != null) {
+        _wsChannel!.sink.add(jsonEncode({
+          'type': 'join_booking_room',
+          'bookingId': bookingId,
+          'role': 'provider',
+        }));
+      }
+
+      _wsConnected = true;
+
+      // Si teníamos puntos offline pendientes, sincronizarlos
+      _flushOfflineBuffer();
+
+      _wsChannel!.stream.listen(
+        (message) {
+          // Listen for acks or status updates if needed
+        },
+        onError: (_) {
+          _wsConnected = false;
+        },
+        onDone: () {
+          _wsConnected = false;
+        },
+      );
+    } catch (_) {
+      _wsConnected = false;
+    }
+  }
+
+  void _emitLocationUpdate(double lat, double lon) {
+    final bookingId = widget.booking['id']?.toString();
+    if (bookingId == null) return;
+
+    final locationPayload = {
+      'latitude': lat,
+      'longitude': lon,
+      'accuracy': 12.5,
+      'speed': 25.0,
+      'heading': 180.0,
+      'captured_at': DateTime.now().toUtc().toIso8601String(),
+    };
+
+    if (_wsConnected && _wsChannel != null) {
+      try {
+        _wsChannel!.sink.add(jsonEncode({
+          'type': 'location_update',
+          'bookingId': bookingId,
+          ...locationPayload,
+        }));
+      } catch (_) {
+        _wsConnected = false;
+        _bufferOfflineLocation(locationPayload);
+      }
+    } else {
+      _bufferOfflineLocation(locationPayload);
+    }
+  }
+
+  void _bufferOfflineLocation(Map<String, dynamic> point) {
+    if (_offlineBuffer.length >= 50) {
+      _offlineBuffer.removeAt(0);
+    }
+    _offlineBuffer.add(point);
+  }
+
+  void _flushOfflineBuffer() {
+    if (!_wsConnected || _wsChannel == null || _offlineBuffer.isEmpty) return;
+    final bookingId = widget.booking['id']?.toString();
+    if (bookingId == null) return;
+
+    final pointsToSend = List<Map<String, dynamic>>.from(_offlineBuffer);
+    _offlineBuffer.clear();
+
+    _wsChannel!.sink.add(jsonEncode({
+      'type': 'sync_offline_locations',
+      'bookingId': bookingId,
+      'locations': pointsToSend,
+    }));
+  }
+
   @override
   void dispose() {
     _moveTimer?.cancel();
+    _wsChannel?.sink.close();
     _pulseController.dispose();
     super.dispose();
   }
@@ -71,6 +174,8 @@ class _ProviderRouteScreenState extends State<ProviderRouteScreen>
           final double lon =
               -74.1310 + (_clientLoc.longitude - (-74.1310)) * _progress;
           _providerLoc = LatLng(lat, lon);
+
+          _emitLocationUpdate(lat, lon);
 
           _minutesRemaining = (8 * (1.0 - _progress)).round();
           if (_minutesRemaining < 1) _minutesRemaining = 1;

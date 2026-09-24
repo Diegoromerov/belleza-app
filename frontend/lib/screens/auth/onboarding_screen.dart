@@ -193,32 +193,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     });
 
     try {
-      final res = await AuthService.createSalon(
-        nombreSalon: _salonNameCtrl.text.trim(),
-        nit: _salonNitCtrl.text.trim(),
-        direccion: _salonAddressCtrl.text.trim(),
-        telefono: _salonPhoneCtrl.text.trim(),
-        ciudad: _salonCityCtrl.text.trim(),
-        latitude: _salonLocationConfirmed ? _salonLocation.latitude : null,
-        longitude: _salonLocationConfirmed ? _salonLocation.longitude : null,
-        locationPublic: _salonLocationPublic,
+      final completeRes = await AuthService.completeOnboarding(
+        role: 'SALON',
+        aceptarHabeasData: _habeasDataAccepted,
+        aceptarTerminos: _terminosAccepted,
       );
-      if (res != null && res['success'] == true) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('userRole', 'salon');
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('userRole', 'salon');
+      if (mounted) {
+        final destination = await AuthService.resolvePostLoginDestination(completeRes ?? {
+          'user': {
+            'role': 'salon',
+            'onboarding_completo': true,
+          }
+        });
         if (mounted) {
-          Navigator.pushReplacementNamed(context, '/salon-hub');
-        }
-      } else {
-        await AuthService.completeOnboarding(
-          role: 'SALON',
-          aceptarHabeasData: _habeasDataAccepted,
-          aceptarTerminos: _terminosAccepted,
-        );
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('userRole', 'salon');
-        if (mounted) {
-          Navigator.pushReplacementNamed(context, '/salon-hub');
+          Navigator.pushReplacementNamed(context, destination);
         }
       }
     } catch (e) {
@@ -330,7 +320,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           aceptarTerminos: _terminosAccepted,
         );
         if (result != null && mounted) {
-          Navigator.pushReplacementNamed(context, '/home');
+          final destination = await AuthService.resolvePostLoginDestination(result);
+          if (mounted) {
+            Navigator.pushReplacementNamed(context, destination);
+          }
         } else {
           setState(() => _error = 'Error al guardar el perfil');
         }

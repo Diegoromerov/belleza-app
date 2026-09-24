@@ -52,19 +52,9 @@ class _LoginScreenState extends State<LoginScreen> {
       final result =
           await AuthService.login(_emailCtrl.text.trim(), _passCtrl.text);
       if (result != null && mounted) {
-        final bool onboardingCompleto =
-            result['user']['onboarding_completo'] ?? false;
-        final String rLower = (result['user']['role'] ?? '').toString().toLowerCase();
-        if (onboardingCompleto) {
-          if (rLower == 'salon') {
-            Navigator.pushReplacementNamed(context, '/salon');
-          } else if (rLower == 'provider') {
-            Navigator.pushReplacementNamed(context, '/provider');
-          } else {
-            Navigator.pushReplacementNamed(context, '/home');
-          }
-        } else {
-          Navigator.pushReplacementNamed(context, '/onboarding');
+        final destination = await AuthService.resolvePostLoginDestination(result);
+        if (mounted) {
+          Navigator.pushReplacementNamed(context, destination);
         }
       } else {
         setState(() => _error = 'Credenciales incorrectas');
@@ -106,21 +96,14 @@ class _LoginScreenState extends State<LoginScreen> {
             String? role = result['user']['role'];
             if (role == null) {
               role = await RoleSelectionModal.show(context);
-            }
-            final bool onboardingCompleto = result['user']['onboarding_completo'] ?? false;
-            final String rLower = (role ?? '').toString().toLowerCase();
-            if (mounted) {
-              if (onboardingCompleto) {
-                if (rLower == 'provider') {
-                  Navigator.pushReplacementNamed(context, '/provider');
-                } else if (rLower == 'salon') {
-                  Navigator.pushReplacementNamed(context, '/salon');
-                } else {
-                  Navigator.pushReplacementNamed(context, '/home');
-                }
-              } else {
-                Navigator.pushReplacementNamed(context, '/onboarding');
+              if (role != null) {
+                await AuthService.selectRole(role);
+                result['user']['role'] = role;
               }
+            }
+            final destination = await AuthService.resolvePostLoginDestination(result);
+            if (mounted) {
+              Navigator.pushReplacementNamed(context, destination);
             }
             return;
           }
@@ -140,20 +123,14 @@ class _LoginScreenState extends State<LoginScreen> {
           String? role = result['user']['role'];
           if (role == null) {
             role = await RoleSelectionModal.show(context);
-          }
-          final bool onboardingCompleto = result['user']['onboarding_completo'] ?? false;
-          if (mounted) {
-            if (onboardingCompleto) {
-              if (role == 'provider') {
-                Navigator.pushReplacementNamed(context, '/provider');
-              } else if (role == 'salon') {
-                Navigator.pushReplacementNamed(context, '/salon');
-              } else {
-                Navigator.pushReplacementNamed(context, '/home');
-              }
-            } else {
-              Navigator.pushReplacementNamed(context, '/onboarding');
+            if (role != null) {
+              await AuthService.selectRole(role);
+              result['user']['role'] = role;
             }
+          }
+          final destination = await AuthService.resolvePostLoginDestination(result);
+          if (mounted) {
+            Navigator.pushReplacementNamed(context, destination);
           }
           return;
         } else {
@@ -205,18 +182,9 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (result != null && mounted) {
-        final bool onboardingCompleto = result['user']['onboarding_completo'] ?? false;
-        final String rLower = (result['user']['role'] ?? '').toString().toLowerCase();
-        if (onboardingCompleto) {
-          if (rLower == 'salon') {
-            Navigator.pushReplacementNamed(context, '/salon');
-          } else if (rLower == 'provider') {
-            Navigator.pushReplacementNamed(context, '/provider');
-          } else {
-            Navigator.pushReplacementNamed(context, '/home');
-          }
-        } else {
-          Navigator.pushReplacementNamed(context, '/onboarding');
+        final destination = await AuthService.resolvePostLoginDestination(result);
+        if (mounted) {
+          Navigator.pushReplacementNamed(context, destination);
         }
       } else {
         setState(() => _error = 'Error al autenticar con $provider');
@@ -440,7 +408,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               children: [
                                 Expanded(child: Divider(color: t.borderDefault)),
                                 Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 16),
+                                  padding: const EdgeInsets.symmetric(horizontal: 16),
                                   child: Text(
                                     'o accede con',
                                     style: TextStyle(

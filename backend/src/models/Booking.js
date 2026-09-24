@@ -81,6 +81,16 @@ const Booking = sequelize.define('Booking', {
     type: DataTypes.JSONB,
     allowNull: true,
     field: 'productos_adicionales'
+  },
+  paid_at: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    field: 'paid_at'
+  },
+  motivo_cancelacion: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+    field: 'motivo_cancelacion'
   }
 }, {
   tableName: 'bookings',

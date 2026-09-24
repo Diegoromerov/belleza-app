@@ -98,22 +98,12 @@ class S4TextField extends StatelessWidget {
     // Determine colors based on state and enabled
       final Token token = Token.light; // TODO: make this responsive to brightness
 
-    // If we have a validator and there's an error, we need to override the decoration to show error state.
+    // Form validation will be handled dynamically by Form/TextFormField or explicit errorText.
     bool showError = false;
     String? errorText;
 
     if (!enabled) {
       // Disabled state
-    } else {
-      // Default enabled state
-      // If we have a validator and there's an error, show error state
-      if (validator != null) {
-        final String? error = validator!(controller?.text ?? '');
-        if (error != null && error.isNotEmpty) {
-          showError = true;
-          errorText = error;
-        }
-      }
     }
 
     // Build the decoration: use custom if provided, otherwise build default and then override for error/disabled states.

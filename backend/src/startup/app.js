@@ -10,7 +10,6 @@ const FormData = require('form-data');
 
 // Cargar rutas
 const authRoutes = require('../routes/authRoutes');
-const salonRoutes = require('../routes/salonRoutes');
 const paymentRoutes = require('../routes/paymentRoutes');
 const bookingRoutes = require('../routes/bookingRoutes');
 const serviceRoutes = require('../routes/serviceRoutes');
@@ -237,7 +236,6 @@ app.use('/api/payments/wompi-webhook', authAndWebhookLimiter);
 
 // Enlazar Rutas de API
 app.use('/api/auth', authRoutes);
-app.use('/api/salon', salonRoutes);
 app.use('/api', paymentRoutes);
 app.use('/api', bookingRoutes);
 app.use('/api', serviceRoutes);
@@ -257,6 +255,13 @@ app.use('/api/trends', tiktokTrendsModule.router);
 app.use('/api', shortcutRoutes);
 app.use('/api', b2bCoPilotRoutes);
 app.use('/api/v1/business', businessRoutes);
+app.use('/api/saas/tickets', require('../routes/nodo08TicketsRoutes'));
+app.use('/api/saas/customers', require('../routes/saasCustomersRoutes'));
+const { staffRouter, publicRouter: staffPublicRouter } = require('../routes/saasStaffRoutes');
+app.use('/api/saas/staff', staffRouter);
+app.use('/api/saas/public/invitations', staffPublicRouter);
+app.use('/api/saas/cash', require('../routes/saasCashRoutes'));
+app.use('/api/v1/saas/calendar', require('../routes/saasCalendarRoutes'));
 
 // Beauty Scan Proxy API Route
 const AI_WORKER_URL = process.env.AI_WORKER_URL || 'http://ai-worker:8000';

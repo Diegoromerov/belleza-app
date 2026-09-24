@@ -71,7 +71,7 @@ const adminMiddleware = async (req, res, next) => {
   next();
 };
 
-// 3. EXPORTAR AMBOS COMO UN OBJETO
+// 3. EXPORTAR COMO UN OBJETO (con alias verifyToken para compatibilidad)
 module.exports = {
   authMiddleware,
   adminMiddleware,

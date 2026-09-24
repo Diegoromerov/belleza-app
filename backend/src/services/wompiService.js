@@ -118,3 +118,111 @@ exports.crearPayout = async ({ retiroId, providerId, amount, numeroCuenta, banco
   }, 1000);
 };
 
+/**
+ * Ejecuta la reversión o reembolso de una transacción contra Wompi de forma idempotente.
+ * @param {object} params Datos de la reversión
+ * @returns {Promise<{success: boolean, status: string, external_refund_id?: string, is_idempotent?: boolean}>}
+ */
+exports.executeRefund = async ({ bookingId, transactionId, amount }) => {
+  const privateKey = process.env.WOMPI_PRIVATE_KEY;
+  const isSimulated = !privateKey || process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development' || !transactionId || transactionId.startsWith('wompi_sim_');
+
+  if (isSimulated) {
+    // Simulación determinista local para tests y desarrollo
+    if (transactionId === 'FORCE_TIMEOUT') {
+      const err = new Error('Gateway Timeout');
+      err.code = 'ETIMEDOUT';
+      err.status = 504;
+      throw err;
+    }
+    if (transactionId === 'FORCE_500') {
+      const err = new Error('Internal Wompi Server Error');
+      err.status = 500;
+      throw err;
+    }
+    if (transactionId === 'FORCE_400') {
+      const err = new Error('Invalid Request to Wompi');
+      err.status = 400;
+      err.isFatal = true;
+      throw err;
+    }
+    if (transactionId === 'FORCE_ALREADY_VOIDED') {
+      return {
+        success: true,
+        status: 'ALREADY_VOIDED',
+        external_refund_id: 'void_sim_already_done',
+        is_idempotent: true
+      };
+    }
+
+    const mockRef = 'wompi_void_' + Math.random().toString(36).substring(2, 11).toUpperCase();
+    return {
+      success: true,
+      status: 'APPROVED',
+      external_refund_id: mockRef,
+      is_idempotent: false
+    };
+  }
+
+  // Integración HTTP real con Wompi API
+  try {
+    const https = require('https');
+    const endpoint = `https://production.wompi.co/v1/transactions/${transactionId}/void`;
+
+    return await new Promise((resolve, reject) => {
+      const req = https.request(endpoint, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${privateKey}`,
+          'Content-Type': 'application/json'
+        },
+        timeout: 10000
+      }, (res) => {
+        let body = '';
+        res.on('data', chunk => body += chunk);
+        res.on('end', () => {
+          try {
+            const parsed = JSON.parse(body || '{}');
+            if (res.statusCode >= 200 && res.statusCode < 300) {
+              resolve({
+                success: true,
+                status: 'APPROVED',
+                external_refund_id: parsed.data ? parsed.data.id : transactionId
+              });
+            } else if (res.statusCode === 422 && parsed.error && (parsed.error.type === 'TRANSACTION_ALREADY_VOIDED' || parsed.error.type === 'ALREADY_REFUNDED')) {
+              // Manejo de idempotencia: Si ya estaba reversada, se considera éxito
+              resolve({
+                success: true,
+                status: parsed.error.type,
+                external_refund_id: transactionId,
+                is_idempotent: true
+              });
+            } else {
+              const err = new Error(`Wompi Refund Error: ${res.statusCode} ${body}`);
+              err.status = res.statusCode;
+              err.isFatal = res.statusCode >= 400 && res.statusCode < 500 && res.statusCode !== 422;
+              reject(err);
+            }
+          } catch (jsonErr) {
+            reject(new Error(`Invalid JSON response from Wompi: ${body}`));
+          }
+        });
+      });
+
+      req.on('timeout', () => {
+        req.destroy();
+        const err = new Error('Wompi request timeout');
+        err.code = 'ETIMEDOUT';
+        err.status = 504;
+        reject(err);
+      });
+
+      req.on('error', (err) => reject(err));
+      req.end();
+    });
+  } catch (error) {
+    throw error;
+  }
+};
+
+
