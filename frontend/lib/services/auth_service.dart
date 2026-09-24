@@ -127,8 +127,22 @@ class AuthService {
   }
 
   static Future<String?> getToken() async {
-    // 🛡️ PARCHE DE SEGURIDAD (GLOW-SEC-02): Leer token de almacenamiento cifrado
-    return await SecureStorageService().read('token');
+    // 🛡️ PARCHE DE SEGURIDAD (GLOW-SEC-02): Leer token de almacenamiento cifrado.
+    // El fallback a SharedPreferences replica ApiService._getToken(): si el
+    // almacenamiento cifrado no está disponible o lanza (típico en Flutter Web),
+    // getToken() devolvía null y el WebSocket del chat nunca se registraba — sin
+    // registro el servidor no empuja y AURA parecía no responder.
+    try {
+      final token = await SecureStorageService().read('token');
+      if (token != null && token.isNotEmpty) return token;
+    } catch (_) {}
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      return (token != null && token.isNotEmpty) ? token : null;
+    } catch (_) {
+      return null;
+    }
   }
 
   static Future<void> logout() async {
