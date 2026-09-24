@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import '../services/reply_reconcile.dart';
 import '../widgets/voice_input.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import '../services/api_service.dart';
@@ -117,8 +118,7 @@ class _ChatScreenState extends State<ChatScreen> {
   // el servidor nunca empuja y la respuesta sólo aparecía al enviar el mensaje
   // siguiente. Estos dos timers garantizan la entrega.
   Timer? _wsAckWatchdog; // vigila el acuse {status:'registered'} del servidor
-  Timer? _reconcileTimer; // sondeo durante la ventana en que se espera respuesta
-  DateTime? _reconcileUntil;
+  final ReplyReconciler _replyReconciler = ReplyReconciler();
 
   bool get _isAiPartner =>
       widget.partnerId == '0' ||
@@ -257,23 +257,15 @@ class _ChatScreenState extends State<ChatScreen> {
   // Se sondea sólo durante la ventana en que se espera una respuesta (tope 90 s)
   // para no agotar el rate limit por usuario de los endpoints de chat.
   void _startReconcilePolling() {
-    if (_reconcileTimer != null) return;
-    _reconcileUntil = DateTime.now().add(const Duration(seconds: 90));
-    _reconcileTimer = Timer.periodic(const Duration(seconds: 4), (_) {
-      final deadline = _reconcileUntil;
-      if (!mounted || deadline == null || DateTime.now().isAfter(deadline)) {
-        _stopReconcilePolling();
-        return;
+    _replyReconciler.start(onPoll: () async {
+      if (mounted) {
+        await _loadMessages(showLoading: false);
       }
-      _loadMessages(showLoading: false);
     });
-    _loadMessages(showLoading: false);
   }
 
   void _stopReconcilePolling() {
-    _reconcileTimer?.cancel();
-    _reconcileTimer = null;
-    _reconcileUntil = null;
+    _replyReconciler.stop();
   }
 
   void _handleWebSocketFailure() {
