@@ -325,6 +325,13 @@ Cuando una trampa solo quedó documentada en la auditoría 360 o en su material 
 - **Falso veredicto que produce:** el defecto queda «documentado» con una cita que nadie puede reproducir ⇒ el informe se vuelve inauditable y la magnitud real se pierde.
 - **Regla:** **toda cita heredada se re-verifica antes de entrar en la base de conocimiento**; si la línea cambió, se escribe la cita nueva y se declara la corrección con fecha. **Consolidar no es medir.**
 
+### R-06 · «El CI nunca ha corrido» cuando en realidad había 1.679 runs
+- **Síntoma:** durante toda la Fase A se afirmó, y se escribió en el cuerpo del PR, que el CI «nunca corrió un run» en el repositorio. Falso: `GET /actions/workflows/ci.yml/runs` devuelve `total_count: 1679`.
+- **Causa raíz:** se confundió **«no hay runs con jobs»** con **«no hay runs»**. Un `ci.yml` inválido (marcadores de conflicto sin resolver: `<<<<<<< HEAD` en la línea 60) hace que GitHub cree un run **fallido y sin un solo job** en **cualquier** push — porque ni puede evaluar el filtro de ramas. Eso llena el historial de runs vacíos que nadie mira.
+- **Cómo se detectó:** consultando la API pública de Actions (`/actions/runs`, `/actions/workflows/<w>/runs?branch=<b>`, `/actions/runs/<id>/jobs`). El desglose por rama fue lo que reveló el mecanismo: `main` 1.647 runs, `docs/*` 3, `fase-a/verdad-operativa` **0** — y cero precisamente porque su `ci.yml` **sí** es válido y entonces el filtro `branches: [main, staging]` se aplica de verdad.
+- **Falso veredicto que produce:** creer que el repo «no tiene CI» cuando lo que tiene es un CI **roto que finge intentar**; y declarar «el primer run de la historia» cuando el primer run *con pasos* es otra cosa.
+- **Regla:** antes de decir «nunca pasó X» en un servicio con API pública, **consultarla** (`total_count` y el desglose por rama). Y al auditar un workflow, distinguir tres estados: **sin runs**, **runs sin jobs** (archivo inválido) y **runs con jobs** (el workflow se evaluó).
+
 ---
 
 ## Reglas transversales (resumen operativo)

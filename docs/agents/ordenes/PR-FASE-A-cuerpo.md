@@ -8,7 +8,7 @@
 
 ## Qué trae (6 commits sobre `main = f5a1b4fc`)
 
-1. **`ci.yml` reparado** — tenía marcadores de conflicto de merge y por eso **nunca corrió un run** en este repositorio. Se conserva el montaje de esquema multi-tenant y los roles RLS (`prepareRlsDatabase.js`, `verifyTenantIsolation.js`) y se descarta `sequelize.sync({force:true})` (`npm run migrate`): las políticas RLS no viven en un modelo.
+1. **`ci.yml` reparado** — la versión de `main` tiene **marcadores de conflicto sin resolver** (`<<<<<<< HEAD` en la línea 60, `=======`, `>>>>>>> origin/main`) y por eso el workflow aparece como `failure` **sin un solo job**: medido por API, `ci.yml` acumula **1.679 runs** y todos terminan igual, con `jobs=0` — GitHub no puede ni evaluar los disparadores, así que se dispara en cualquier push. Esta rama trae el archivo válido (`yaml.safe_load` OK, jobs `backend-ci` + `frontend-ci`) y con él **el PR ejecutará pasos de verdad por primera vez**: los pushes de esta rama no generaron run porque, al ser el archivo válido, sí se aplica el filtro `branches: [main, staging]`. Al mergear, la reparación llega a `main` y los pushes a `main` dejan de producir runs vacíos. Se conserva el montaje de esquema multi-tenant y los roles RLS (`prepareRlsDatabase.js`, `verifyTenantIsolation.js`) y se descarta `sequelize.sync({force:true})` (`npm run migrate`): las políticas RLS no viven en un modelo.
 2. **`.gitignore` saneado** (marcadores fuera, reglas de ambas ramas conservadas).
 3. **Compuerta anti-marcadores** — `backend/scripts/checkNoConflictMarkers.js`, cableada en CI.
 4. **Honestidad del fallback en memoria** — `servingFabricatedData` se activa al responder desde memoria y se limpia al volver a Postgres (`backend/src/config/db.js`).
