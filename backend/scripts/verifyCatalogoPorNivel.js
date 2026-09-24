@@ -14,6 +14,44 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL || 'postgres://admin:admin123@localhost:5435/beauty_db'
 });
 
+async function getDbSnapshot(dbPool) {
+  const prods = await dbPool.query('SELECT id, nombre, costo, sku, stock, tenant_id FROM productos ORDER BY id');
+  const precios = await dbPool.query('SELECT producto_id, lista_id, precio, unidad_minima FROM precios_producto ORDER BY producto_id, lista_id');
+  const historial = await dbPool.query('SELECT id, lista_id, producto_id, precio_anterior, precio_nuevo, origen FROM precios_historial ORDER BY id');
+  return {
+    prods: prods.rows,
+    precios: precios.rows,
+    historial: historial.rows
+  };
+}
+
+function verifyValueSnapshot(snapshotPre, snapshotPost) {
+  const preStr = JSON.stringify(snapshotPre);
+  const postStr = JSON.stringify(snapshotPost);
+  if (preStr !== postStr) {
+    console.error('❌ ERROR: DIVERGENCIA DE VALORES EN BASE DE DATOS DETECTADA (CAMBIO NETO CERO FALLÓ)');
+    if (snapshotPre.prods.length !== snapshotPost.prods.length) {
+      console.error(`  - Productos: inicial=${snapshotPre.prods.length}, final=${snapshotPost.prods.length}`);
+    }
+    if (snapshotPre.precios.length !== snapshotPost.precios.length) {
+      console.error(`  - Precios: inicial=${snapshotPre.precios.length}, final=${snapshotPost.precios.length}`);
+    }
+    if (snapshotPre.historial.length !== snapshotPost.historial.length) {
+      console.error(`  - Historial: inicial=${snapshotPre.historial.length}, final=${snapshotPost.historial.length}`);
+    }
+    for (let i = 0; i < Math.max(snapshotPre.precios.length, snapshotPost.precios.length); i++) {
+      const p1 = snapshotPre.precios[i];
+      const p2 = snapshotPost.precios[i];
+      if (JSON.stringify(p1) !== JSON.stringify(p2)) {
+        console.error(`  - Diferencia en precio[${i}]: ANTES=${JSON.stringify(p1)} vs DESPUÉS=${JSON.stringify(p2)}`);
+        break;
+      }
+    }
+    return false;
+  }
+  return true;
+}
+
 async function main() {
   console.log('==================================================');
   console.log('🔍 INICIANDO VERIFICACIÓN DEL GUARDIÁN DE CATÁLOGO Y CHECKOUT');
@@ -21,16 +59,12 @@ async function main() {
 
   let exitCode = 0;
 
-  // Conteo inicial para cambio neto cero
-  const initProdRes = await pool.query('SELECT COUNT(*) FROM productos');
-  const initPricesRes = await pool.query('SELECT COUNT(*) FROM precios_producto');
-  const initHistRes = await pool.query('SELECT COUNT(*) FROM precios_historial');
-
-  const initialProdCount = parseInt(initProdRes.rows[0].count, 10);
-  const initialPricesCount = parseInt(initPricesRes.rows[0].count, 10);
-  const initialHistCount = parseInt(initHistRes.rows[0].count, 10);
+  // Captura de snapshot inicial de valores
+  const snapshotPre = await getDbSnapshot(pool);
+  const initialProdCount = snapshotPre.prods.length;
 
   let insertedPriceKey = null;
+  let preExistingPriceRow = null;
 
   try {
     // 1. Auditoría estática de cero columnas heredadas en funciones de lectura
@@ -98,6 +132,9 @@ async function main() {
     const listaNegocioRes = await pool.query(`SELECT id FROM listas_precios WHERE codigo = 'negocio'`);
     const listaNegocioId = listaNegocioRes.rows[0].id;
 
+    const existingPriceRes = await pool.query(`SELECT * FROM precios_producto WHERE lista_id = $1 AND producto_id = $2`, [listaNegocioId, negocioProdId]);
+    preExistingPriceRow = existingPriceRes.rows[0] || null;
+
     // Sembrar precio en lista negocio para probar la validación de unidad mínima
     await pool.query(`
       INSERT INTO precios_producto (lista_id, producto_id, precio, unidad_minima)
@@ -135,24 +172,22 @@ async function main() {
   } finally {
     // LIMPIEZA NET ZERO EN FINALLY
     if (insertedPriceKey) {
-      await pool.query(`DELETE FROM precios_producto WHERE lista_id = $1 AND producto_id = $2`, [insertedPriceKey.lista_id, insertedPriceKey.producto_id]);
+      if (preExistingPriceRow) {
+        await pool.query('UPDATE precios_producto SET precio = $1, unidad_minima = $2 WHERE lista_id = $3 AND producto_id = $4', [
+          preExistingPriceRow.precio, preExistingPriceRow.unidad_minima, insertedPriceKey.lista_id, insertedPriceKey.producto_id
+        ]);
+      } else {
+        await pool.query(`DELETE FROM precios_producto WHERE lista_id = $1 AND producto_id = $2`, [insertedPriceKey.lista_id, insertedPriceKey.producto_id]);
+      }
     }
 
-    const finalProdRes = await pool.query('SELECT COUNT(*) FROM productos');
-    const finalPricesRes = await pool.query('SELECT COUNT(*) FROM precios_producto');
-    const finalHistRes = await pool.query('SELECT COUNT(*) FROM precios_historial');
+    const snapshotPost = await getDbSnapshot(pool);
+    console.log(`🧹 Conteo final BD: productos=${snapshotPost.prods.length}, precios=${snapshotPost.precios.length}, historial=${snapshotPost.historial.length}`);
 
-    const finalProdCount = parseInt(finalProdRes.rows[0].count, 10);
-    const finalPricesCount = parseInt(finalPricesRes.rows[0].count, 10);
-    const finalHistCount = parseInt(finalHistRes.rows[0].count, 10);
-
-    console.log(`🧹 Conteo final BD: productos=${finalProdCount}, precios=${finalPricesCount}, historial=${finalHistCount}`);
-
-    if (finalProdCount !== initialProdCount || finalPricesCount !== initialPricesCount || finalHistCount !== initialHistCount) {
-      console.error(`❌ ERROR DE CAMBIO NETO: inicial (${initialProdCount}, ${initialPricesCount}, ${initialHistCount}) vs final (${finalProdCount}, ${finalPricesCount}, ${finalHistCount})`);
+    if (!verifyValueSnapshot(snapshotPre, snapshotPost)) {
       exitCode = 1;
     } else {
-      console.log('✅ CAMBIO NETO CERO VERIFICADO.');
+      console.log('✅ CAMBIO NETO CERO EN VALORES VERIFICADO.');
     }
 
     await pool.end();

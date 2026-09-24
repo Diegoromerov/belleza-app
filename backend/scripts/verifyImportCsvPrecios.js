@@ -1,7 +1,7 @@
 /**
  * GUARDIÁN DE VERIFICACIÓN — IMPORTACIÓN Y EXPORTACIÓN MASIVA CSV DE PRECIOS GLOWSHOP
  * 
- * Verifica el funcionamiento contra PostgreSQL real en el puerto 5435 con CAMBIO NETO CERO.
+ * Verifica el funcionamiento contra PostgreSQL real en el puerto 5435 con CAMBIO NETO CERO EN VALORES.
  */
 
 const { Pool } = require('pg');
@@ -11,6 +11,44 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL || 'postgres://admin:admin123@localhost:5435/beauty_db'
 });
 
+async function getDbSnapshot(dbPool) {
+  const prods = await dbPool.query('SELECT id, nombre, costo, sku, stock, tenant_id FROM productos ORDER BY id');
+  const precios = await dbPool.query('SELECT producto_id, lista_id, precio, unidad_minima FROM precios_producto ORDER BY producto_id, lista_id');
+  const historial = await dbPool.query('SELECT id, lista_id, producto_id, precio_anterior, precio_nuevo, origen FROM precios_historial ORDER BY id');
+  return {
+    prods: prods.rows,
+    precios: precios.rows,
+    historial: historial.rows
+  };
+}
+
+function verifyValueSnapshot(snapshotPre, snapshotPost) {
+  const preStr = JSON.stringify(snapshotPre);
+  const postStr = JSON.stringify(snapshotPost);
+  if (preStr !== postStr) {
+    console.error('❌ ERROR: DIVERGENCIA DE VALORES EN BASE DE DATOS DETECTADA (CAMBIO NETO CERO FALLÓ)');
+    if (snapshotPre.prods.length !== snapshotPost.prods.length) {
+      console.error(`  - Productos: inicial=${snapshotPre.prods.length}, final=${snapshotPost.prods.length}`);
+    }
+    if (snapshotPre.precios.length !== snapshotPost.precios.length) {
+      console.error(`  - Precios: inicial=${snapshotPre.precios.length}, final=${snapshotPost.precios.length}`);
+    }
+    if (snapshotPre.historial.length !== snapshotPost.historial.length) {
+      console.error(`  - Historial: inicial=${snapshotPre.historial.length}, final=${snapshotPost.historial.length}`);
+    }
+    for (let i = 0; i < Math.max(snapshotPre.precios.length, snapshotPost.precios.length); i++) {
+      const p1 = snapshotPre.precios[i];
+      const p2 = snapshotPost.precios[i];
+      if (JSON.stringify(p1) !== JSON.stringify(p2)) {
+        console.error(`  - Diferencia en precio[${i}]: ANTES=${JSON.stringify(p1)} vs DESPUÉS=${JSON.stringify(p2)}`);
+        break;
+      }
+    }
+    return false;
+  }
+  return true;
+}
+
 async function main() {
   console.log('==================================================');
   console.log('🔍 INICIANDO VERIFICACIÓN DEL GUARDIÁN DE CSV DE PRECIOS');
@@ -18,16 +56,11 @@ async function main() {
 
   let exitCode = 0;
 
-  // Conteo inicial para cambio neto cero
-  const initProdRes = await pool.query('SELECT COUNT(*) FROM productos');
-  const initPricesRes = await pool.query('SELECT COUNT(*) FROM precios_producto');
-  const initHistRes = await pool.query('SELECT COUNT(*) FROM precios_historial');
+  // Captura de snapshot inicial de valores en BD
+  const snapshotPre = await getDbSnapshot(pool);
+  const initialProdCount = snapshotPre.prods.length;
 
-  const initialProdCount = parseInt(initProdRes.rows[0].count, 10);
-  const initialPricesCount = parseInt(initPricesRes.rows[0].count, 10);
-  const initialHistCount = parseInt(initHistRes.rows[0].count, 10);
-
-  let modifiedProdIds = [];
+  let createdProdIds = [];
 
   try {
     // 1. Probar exportación a CSV
@@ -63,15 +96,23 @@ async function main() {
     }
     console.log('   ✔ Analizador sintáctico puro validó errores correctamente.\n');
 
-    // 3. Probar dry_run=true (sin mutación en base de datos)
-    console.log('3. Probando aplicarPreciosCsv() con dryRun = true...');
-    const prodsRes = await pool.query('SELECT id, sku, nombre FROM productos ORDER BY id ASC LIMIT 2');
-    const prods = prodsRes.rows;
-    modifiedProdIds = prods.map(p => p.id);
+    // 3. Probar dry_run=true con un producto de prueba dedicado
+    console.log('3. Creando producto de prueba dedicado para no alterar catálogo existente...');
+    const createdRes = await pool.query(
+      "INSERT INTO productos (nombre, sku, costo, stock, tag_especialidad, tenant_id) VALUES ('Producto Guardián CSV', 'SKU-GUARDIAN-CSV-999', 25000, 50, 'capilar', 1) RETURNING id, nombre, sku"
+    );
+    const tempProd = createdRes.rows[0];
+    createdProdIds.push(tempProd.id);
 
+    // Insertar precio inicial cliente
+    await pool.query(
+      "INSERT INTO precios_producto (lista_id, producto_id, precio, unidad_minima) VALUES (1, $1, 45000.00, 1)",
+      [tempProd.id]
+    );
+
+    console.log('4. Probando aplicarPreciosCsv() con dryRun = true...');
     const sampleCsv = `producto_id,sku,nombre,costo,stock,precio_cliente,precio_profesional,precio_negocio,unidad_minima_negocio
-${prods[0].id},${prods[0].sku || ''},${prods[0].nombre},25000,50,50000,45000,40000,6
-${prods[1].id},${prods[1].sku || ''},${prods[1].nombre},30000,30,60000,54000,48000,6`;
+${tempProd.id},${tempProd.sku},${tempProd.nombre},25000,50,50000,45000,40000,6`;
 
     const parsedSample = parsearPreciosCsv(sampleCsv);
     const dryRunReport = await aplicarPreciosCsv({
@@ -89,8 +130,8 @@ ${prods[1].id},${prods[1].sku || ''},${prods[1].nombre},30000,30,60000,54000,480
     }
     console.log('   ✔ Dry run ejecutado sin alteraciones de datos.\n');
 
-    // 4. Probar aplicarPreciosCsv() con dryRun = false (aplicar cambios reales)
-    console.log('4. Probando aplicarPreciosCsv() con dryRun = false...');
+    // 5. Probar aplicarPreciosCsv() con dryRun = false (aplicar cambios reales al producto de prueba)
+    console.log('5. Probando aplicarPreciosCsv() con dryRun = false...');
     const applyReport = await aplicarPreciosCsv({
       dbPool: pool,
       actorId: 1,
@@ -101,12 +142,12 @@ ${prods[1].id},${prods[1].sku || ''},${prods[1].nombre},30000,30,60000,54000,480
     });
 
     console.log('   Reporte Aplicación:', JSON.stringify(applyReport.cambios));
-    if (applyReport.validas !== 2) {
-      throw new Error(`Se esperaban 2 filas válidas aplicadas, pero fueron ${applyReport.validas}`);
+    if (applyReport.validas !== 1) {
+      throw new Error(`Se esperaba 1 fila válida aplicada, pero fueron ${applyReport.validas}`);
     }
 
     // Verificar auditoría en precios_historial con origen import_csv
-    const histRes = await pool.query(`SELECT COUNT(*) FROM precios_historial WHERE origen = 'import_csv'`);
+    const histRes = await pool.query(`SELECT COUNT(*) FROM precios_historial WHERE origen = 'import_csv' AND producto_id = $1`, [tempProd.id]);
     const histCount = parseInt(histRes.rows[0].count, 10);
     console.log(`   Registros creados en precios_historial con origen 'import_csv': ${histCount}`);
     if (histCount === 0) {
@@ -114,8 +155,8 @@ ${prods[1].id},${prods[1].sku || ''},${prods[1].nombre},30000,30,60000,54000,480
     }
     console.log('   ✔ Aplicación transaccional e historial de auditoría verificados.\n');
 
-    // 5. Probar Idempotencia (reimportar el mismo archivo)
-    console.log('5. Probando Idempotencia (reimportar mismo CSV)...');
+    // 6. Probar Idempotencia (reimportar el mismo archivo)
+    console.log('6. Probando Idempotencia (reimportar mismo CSV)...');
     const reimportReport = await aplicarPreciosCsv({
       dbPool: pool,
       actorId: 1,
@@ -135,27 +176,20 @@ ${prods[1].id},${prods[1].sku || ''},${prods[1].nombre},30000,30,60000,54000,480
     console.error('❌ Error en verificación del guardián:', err);
     exitCode = 1;
   } finally {
-    // LIMPIEZA NET ZERO EN FINALLY
-    if (modifiedProdIds.length > 0) {
-      await pool.query(`DELETE FROM precios_historial WHERE origen = 'import_csv' AND producto_id = ANY($1::int[])`, [modifiedProdIds]);
-      await pool.query(`DELETE FROM precios_producto WHERE lista_id != 1 AND producto_id = ANY($1::int[])`, [modifiedProdIds]);
+    // LIMPIEZA NET ZERO EN FINALLY (elimina únicamente las filas creadas para la prueba)
+    if (createdProdIds.length > 0) {
+      await pool.query(`DELETE FROM precios_historial WHERE producto_id = ANY($1::int[])`, [createdProdIds]);
+      await pool.query(`DELETE FROM precios_producto WHERE producto_id = ANY($1::int[])`, [createdProdIds]);
+      await pool.query(`DELETE FROM productos WHERE id = ANY($1::int[])`, [createdProdIds]);
     }
 
-    const finalProdRes = await pool.query('SELECT COUNT(*) FROM productos');
-    const finalPricesRes = await pool.query('SELECT COUNT(*) FROM precios_producto');
-    const finalHistRes = await pool.query('SELECT COUNT(*) FROM precios_historial');
+    const snapshotPost = await getDbSnapshot(pool);
+    console.log(`🧹 Conteo final BD: productos=${snapshotPost.prods.length}, precios=${snapshotPost.precios.length}, historial=${snapshotPost.historial.length}`);
 
-    const finalProdCount = parseInt(finalProdRes.rows[0].count, 10);
-    const finalPricesCount = parseInt(finalPricesRes.rows[0].count, 10);
-    const finalHistCount = parseInt(finalHistRes.rows[0].count, 10);
-
-    console.log(`🧹 Conteo final BD: productos=${finalProdCount}, precios=${finalPricesCount}, historial=${finalHistCount}`);
-
-    if (finalProdCount !== initialProdCount || finalPricesCount !== initialPricesCount || finalHistCount !== initialHistCount) {
-      console.error(`❌ ERROR DE CAMBIO NETO: inicial (${initialProdCount}, ${initialPricesCount}, ${initialHistCount}) vs final (${finalProdCount}, ${finalPricesCount}, ${finalHistCount})`);
+    if (!verifyValueSnapshot(snapshotPre, snapshotPost)) {
       exitCode = 1;
     } else {
-      console.log('✅ CAMBIO NETO CERO VERIFICADO.');
+      console.log('✅ CAMBIO NETO CERO EN VALORES VERIFICADO.');
     }
 
     await pool.end();
