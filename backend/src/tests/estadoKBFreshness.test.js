@@ -31,7 +31,7 @@ describe('ORDEN A O-014 — Cargo 2: Regla de Frescura R4 en estadoKB.js', () =>
     fs.mkdirSync(partesDir, { recursive: true });
 
     // Ejecutar estadoKB.js --check
-    const res = spawnSync('node', ['backend/scripts/estadoKB.js', '--check'], { cwd: rootDir, encoding: 'utf8' });
+    const res = spawnSync('node', ['backend/scripts/estadoKB.js', '--check'], { cwd: rootDir, encoding: 'utf8', env: { ...process.env, GUARDIAN_SKIP_NETWORK: '1' } });
 
     expect(res.status).toBe(1);
     expect(res.stderr + res.stdout).toContain('R4');
@@ -43,7 +43,7 @@ describe('ORDEN A O-014 — Cargo 2: Regla de Frescura R4 en estadoKB.js', () =>
     const parteFile = path.join(partesDir, 'parte-2026-09-25.md');
     expect(fs.existsSync(parteFile)).toBe(true);
 
-    const res = spawnSync('node', ['backend/scripts/estadoKB.js'], { cwd: rootDir, encoding: 'utf8' });
+    const res = spawnSync('node', ['backend/scripts/estadoKB.js'], { cwd: rootDir, encoding: 'utf8', env: { ...process.env, GUARDIAN_SKIP_NETWORK: '1' } });
 
     const output = res.stdout + res.stderr;
     expect(output).not.toContain('«docs/agents/partes/» no tiene ningún parte');

@@ -82,6 +82,9 @@ const rows = locals.map(b => ({ ...b, ahead: aheadOf(b.name) }));
 
 // PRs abiertos (API pública; si falla, NO VERIFICADO — nunca inventar [])
 const fetchPRs = () => new Promise(resolve => {
+  if (process.env.GUARDIAN_SKIP_NETWORK === '1' || process.env.GUARDIAN_SKIP_NETWORK === 'true') {
+    return resolve(null);
+  }
   const req = https.get({
     hostname: 'api.github.com', path: `/repos/${REPO}/pulls?state=open&per_page=100`,
     headers: { 'User-Agent': 'estadoKB/1.0', Accept: 'application/vnd.github+json' }, timeout: 15000
