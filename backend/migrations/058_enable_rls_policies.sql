@@ -64,6 +64,14 @@ DECLARE
 BEGIN
     FOREACH tbl IN ARRAY policy_tables LOOP
         IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = tbl) THEN
+            -- Aserción explícita: si la tabla existe en el esquema, DEBE tener la columna tenant_id
+            IF NOT EXISTS (
+                SELECT 1 FROM information_schema.columns 
+                 WHERE table_schema = 'public' AND table_name = tbl AND column_name = 'tenant_id'
+            ) THEN
+                RAISE EXCEPTION 'MIGRATION ASSERTION ERROR (058): La tabla "%" existe en el esquema pero carece de la columna "tenant_id" para aplicar RLS.', tbl;
+            END IF;
+
             EXECUTE format(
                 'DROP POLICY IF EXISTS tenant_isolation_%I ON public.%I;'
                 || 'CREATE POLICY tenant_isolation_%I ON public.%I'
