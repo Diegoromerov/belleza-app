@@ -79,3 +79,48 @@ El **importe** era correcto: mentía el mes que ve el admin.
 
 **Ojo para el aterrizaje:** la rama de la ronda 7 ahora también toca `backend/scripts/smokeSurfaces.js`; al integrarla en el tren,
 ese archivo viene de la misma base (`07e7225e`) y no debería dar conflicto, pero **el ensayo del tren debe re-correrse** antes de mergear. No se movió nada compartido: `main` = `f5a1b4fc`, `fase-a` = `b545ef22`, el vehículo sigue en `0a32f718` en el worktree de Antigravity (intacto).
+
+## 6. Tercera tanda — trabajo en paralelo con el Ejecutor
+
+Por pedido del Dueño («dame un prompt para Antigravity y vos adelantá otra tarea»), se repartió el trabajo con una regla:
+**un worktree = un agente** (el reparto nace del incidente de O-016, donde dos agentes escribieron el mismo archivo).
+
+| Agente | Rama / worktree | Tarea |
+|---|---|---|
+| Antigravity (Ejecutor) | `chore/guardian-en-el-repo` (su worktree `setup_glowguide_architecture`) | **O-014 ronda 8** — el runner del guardián ejecuta el chequeo de verdad y su exit es honesto |
+| Hermes (Arquitecto) | `fix/compuerta-secretos-reproducible` (worktree propio en scratch) | **A-06 ronda 5** — la etiqueta del escáner |
+
+### 6.1 A-06 ronda 5 — «la etiqueta tiene que ser cierta» (CI-19) @ `85687237`
+
+**Vía elegida: (B)** un solo grep + re-verificación propia, porque preserva `analizarSalida` tal como quedó en la ronda 4
+(ya aceptada) y no cambia su firma: el diff es un envoltorio de 3 líneas más una línea del bucle.
+
+**Causa raíz (medida)**: `git grep` selecciona las líneas de cada regla con SU `buscar`, pero `analizarSalida` etiquetaba con la
+**primera** regla dispuesta a aceptarlas; la última («token o JWT en parámetro de URL») acepta cualquier línea no comentada sin
+volver a mirar su patrón ⇒ se quedaba con las líneas que las reglas anteriores seleccionaron por grep y **rechazaron al validar**.
+Medido antes del fix: **109 hallazgos, 101 mal etiquetados**.
+
+**Evidencia:**
+- **RED primero**: 3 failed / 3 passed, con la etiqueta equivocada a la vista (`Expected: valor por defecto literal…` / `Received: [token o JWT en parámetro de URL]`).
+- **GREEN 6/6** (fixture multi-regla en LF y CRLF, total unificado = suma por regla, ≥1, y una línea no puede llevar la etiqueta ajena).
+- **Regresión**: la suite de la ronda 4 sigue **4/4**.
+- **Cargo 3 exacto**: el escáner real da **8**, todos «valor por defecto literal para variable sensible», exactamente las 8 rutas citadas en la orden (`AUDITORIA_PREPRODUCCION_MASTER.md:84`, `BLOQUE_TRABAJO_1_BASELINE.md:144`, `auditoria-belleza-app.md:232`, `:233`, `jwt.js:1`, `jwt.js:2`, `biometricCryptoService.js:18`, `COMO_EJECUTAR.md:35`).
+- **Mutación pegada** (volver a `REGLAS` sin re-verificación): test **3 failed / 3 passed** y el escáner real **vuelve a 109**; restaurado con `node --check` OK.
+- El escáner **sigue sin imprimir ningún valor** (no se le añadió el contenido de la línea a los hallazgos).
+
+### 6.2 C6 — 2b no necesita rebase (medido, no supuesto)
+
+`fix/jwt-sin-respaldo` (2b, `dbb87293`) contiene la ronda 4 de 2a como ancestro y su `merge-base` con `fase-a` es `3cef7f88`.
+Ensayo en worktree descartable: **merge de 2a r5 sobre 2b ⇒ limpio, 0 conflictos** (trae sólo los 2 archivos de la r5) y con 2b
+encima el escáner da **5 hallazgos** — exactamente el número que pide el Cargo 3 para 2b.
+⇒ **No hace falta rebasar ni force-push** (que sigue prohibido sin autorización): el encadenamiento se resuelve con un merge normal.
+
+### 6.3 Cargo 4 — no autorizado
+
+CI-14 (las 5 líneas de prosa) **sigue sin autorización del Dueño**: no se tocó ningún archivo de prosa. El escáner queda en 8 (2a)
+y 5 (2b) precisamente por eso, y eso es lo correcto mientras el Dueño no decida.
+
+### 6.4 Pendiente de esta tanda
+
+- `npm test` completo sobre la rama de A-06 r5 (resumen failed/passed/total).
+- O-014 ronda 8: en manos de Antigravity (prompt entregado por el Dueño).
