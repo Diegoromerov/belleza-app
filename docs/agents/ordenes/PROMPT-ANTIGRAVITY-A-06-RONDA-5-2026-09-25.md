@@ -2,6 +2,7 @@
 
 **Auditoría de la ronda 4:** `docs/audit/AUDITORIA-ENTREGA-A-06-RONDA-4-2026-09-25.md` (**RECHAZADA**)
 **Rama:** la misma, `fix/compuerta-secretos-reproducible` (2a). **2b se rebasa encima de nuevo** y sigue encadenada.
+> **Nota de citas (re-medidas el 2026-09-25 sobre `b545ef22`, ya en `fase-a`)**: las 5 líneas de prosa de CI-14 siguen **en las mismas líneas** —`scripts/COMO_EJECUTAR.md:35` incluida— y el árbol sigue dando **8** hallazgos con la lógica correcta, así que el Cargo 4 se puede aplicar tal cual.
 **Lo aceptado de la ronda 4 (no se rehace):** `analizarSalida` pura y exportada, `runScanner` fuera del cálculo, las 9 tiras decorativas fuera, y tu suite (4/4, corrida por mí) con su mutación RED/GREEN.
 
 ## Qué se rompió

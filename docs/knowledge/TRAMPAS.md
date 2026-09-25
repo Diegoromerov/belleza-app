@@ -299,6 +299,12 @@ Cuando una trampa solo quedó documentada en la auditoría 360 o en su material 
 
 **Regla de sonda:** contra `db.js`, mide por `getDbStatus()` o por el error que imprime el módulo, nunca por el resultado de `pool.query`; y declara explícitamente `DB_HOST` (la heurística de SSL lo lee a él, no el host de la URL).
 
+### Una mutación que cae en un comentario no muta nada (falso verde de la propia sonda)
+
+Anclar la mutación en una cadena que aparece **primero en un comentario o en el JSDoc** deja el código intacto y devuelve un **verde limpio** que se lee como «el test no cubre el caso» o, peor, como «el test pasa». Medido: al neutralizar el respaldo silencioso del guardián anclando en `fuente: 'inventario'` (que aparece en el comentario de `decidirRutas`, `smokeSurfaces.js:105`) la suite salió **4/4 verde**; reanclada en el código (`const backupRoutes`) salió **2 failed, 2 passed**.
+
+**Regla:** ancla la mutación en una construcción exclusiva del **código** (una variable, una llamada, un `return`) y **pega la línea que mutaste** en la evidencia. Ojo también con las mutaciones que no cambian comportamiento (`exitCode: 0` en una rama que nadie ejecuta). En este entorno, además, **jest puede imprimir el resumen y quedarse vivo**: envuélvelo en `timeout` para que el cierre no se confunda con un cuelgue.
+
 ## 7. Trampas de razonamiento del auditor (retracciones de esta sesión)
 
 ### R-01 · Contar las clases ignorando una cláusula de la propia regla
