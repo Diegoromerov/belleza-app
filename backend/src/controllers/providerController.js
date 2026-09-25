@@ -1,10 +1,11 @@
-const { pool, getDbStatus } = require('../config/db');
+const db = require('../config/db');
+const pool = db.pool;
 const { getPlansWithEntitlement, SAAS_CAPABILITIES } = require('../config/saasEntitlements');
 
 // GET /api/providers → LISTA DE PRESTADORES Y SALONES (Geolocalización con PostGIS y Entitlements)
 exports.getProviders = async (req, res) => {
   try {
-    const dbStatus = getDbStatus();
+    const dbStatus = db.getDbStatus();
     if (dbStatus.servingFabricatedData === true) {
       return res.status(503).json({
         success: false,

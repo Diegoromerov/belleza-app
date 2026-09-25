@@ -1,6 +1,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const { DEGRADED_ALLOWLIST } = require('../src/middleware/degradedLock');
 
 const PORT = process.env.PORT || 8080;
 const BASE_URL = `http://127.0.0.1:${PORT}`;
@@ -37,7 +38,7 @@ function makeRequest(method, urlPath, headers = {}) {
 }
 
 async function runSmoke() {
-  console.log('🔥 Ejecutando Smoke Test por Superficie (Fase A)...');
+  console.log('🔥 Ejecutando Smoke Test por Superficie (Fase A - Ronda 3)...');
   const routesFile = path.resolve(__dirname, '../../docs/audit/routes-2026-09-24.json');
   
   if (!fs.existsSync(routesFile)) {
@@ -51,11 +52,18 @@ async function runSmoke() {
   let fakedSuccessCount = 0;
   const results = [];
 
-  // Verificar primero si la base de datos o el backend están en modo degradado llamando a /api/health
+  // Capturar estado degradado del servidor una sola vez al inicio mediante probes directos
   const healthRes = await makeRequest('GET', '/api/health');
-  const isServerDegraded = healthRes.status === 503 || (healthRes.body && healthRes.body.status === 'DEGRADED') || (healthRes.body && healthRes.body.database && healthRes.body.database.pgAvailable === false);
+  const testDbRes = await makeRequest('GET', '/api/test-db');
 
-  console.log(`📊 Estado del servidor detectado vía /api/health: HTTP ${healthRes.status}, IsDegraded=${isServerDegraded}`);
+  const isServerDegraded = 
+    healthRes.status === 503 ||
+    healthRes.headers['x-glowapp-degraded'] === 'memory-fallback' ||
+    (healthRes.body && healthRes.body.status === 'DEGRADED') ||
+    (healthRes.body && healthRes.body.database && healthRes.body.database.pgAvailable === false) ||
+    (testDbRes.body && testDbRes.body.status === 'error');
+
+  console.log(`📊 Estado del servidor detectado (probes inicio): IsDegraded=${isServerDegraded}, HealthStatus=${healthRes.status}`);
 
   for (const r of safeRoutes) {
     let testPath = r.path
@@ -70,25 +78,34 @@ async function runSmoke() {
     
     const hasDegradedHeader = !!res.headers['x-glowapp-degraded'];
     const isEmptyLike = Array.isArray(res.body?.data) && res.body.data.length === 0;
+    const cleanPath = testPath.split('?')[0];
 
     let fakedSuccess = false;
 
-    // Detección de faked_success en /api/providers:
-    // Si la base está degradada (o servida por memoria) y /api/providers responde HTTP 200 con datos de prestadores
-    if (r.path.includes('/api/providers') && res.status === 200 && isServerDegraded) {
-      if (res.body && res.body.success === true && Array.isArray(res.body.data) && res.body.data.length > 0) {
-        fakedSuccess = true;
+    if (isServerDegraded) {
+      if (testPath.startsWith('/api/')) {
+        if (DEGRADED_ALLOWLIST.has(cleanPath)) {
+          // Rutas con allowlist motivada: verificar que no respondan 200 engañoso si la base cayó
+          if (res.status >= 200 && res.status < 300) {
+            if (cleanPath === '/api/health' && (res.body?.status === 'OK' || !hasDegradedHeader)) {
+              fakedSuccess = true;
+            } else if (cleanPath === '/api/providers' && res.body?.success === true) {
+              fakedSuccess = true;
+            }
+          }
+        } else {
+          // REGLA DE CLASE (Cargo 2 / S4):
+          // Cualquier superficie de datos bajo /api no en allowlist que responda HTTP 2xx (200-299) estando degradada es FAKED SUCCESS.
+          if (res.status >= 200 && res.status < 300) {
+            fakedSuccess = true;
+          }
+        }
       }
-    }
-
-    // Detección de faked_success en /api/health si respondiera 200 OK estado degradado sin reflejar el fallo
-    if (r.path.includes('/api/health') && res.status === 200 && isServerDegraded) {
-      fakedSuccess = true;
     }
 
     if (fakedSuccess) {
       fakedSuccessCount++;
-      console.error(`❌ FAKED SUCCESS detectado en ${r.method} ${testPath} -> HTTP ${res.status} (servidos datos fabricados sin degradación visible)`);
+      console.error(`❌ FAKED SUCCESS detectado en ${r.method} ${testPath} -> HTTP ${res.status} (respuesta 2xx engañosa en estado degradado)`);
     }
 
     results.push({
@@ -97,10 +114,28 @@ async function runSmoke() {
       status: res.status,
       empty_like: isEmptyLike,
       degraded_header: hasDegradedHeader,
-      wrote_to_db: false,
       faked_success: fakedSuccess
     });
   }
+
+  // Generar informe de auditoría en docs/audit/smoke-<fecha>.json
+  const todayDate = new Date().toISOString().split('T')[0];
+  const reportDir = path.resolve(__dirname, '../../docs/audit');
+  if (!fs.existsSync(reportDir)) {
+    fs.mkdirSync(reportDir, { recursive: true });
+  }
+  const reportFile = path.join(reportDir, `smoke-${todayDate}.json`);
+
+  const reportData = {
+    timestamp: new Date().toISOString(),
+    server_degraded: isServerDegraded,
+    total_surfaces_tested: results.length,
+    faked_success_count: fakedSuccessCount,
+    results: results
+  };
+
+  fs.writeFileSync(reportFile, JSON.stringify(reportData, null, 2), 'utf-8');
+  console.log(`📄 Informe de auditoría del guardián guardado en: ${reportFile}`);
 
   console.log(`\n📋 Resumen de Smoke Test (${results.length} superficies probadas):`);
   console.log(`- Faked Success Totales: ${fakedSuccessCount}`);

@@ -223,6 +223,9 @@ app.use((req, res, next) => {
   next();
 });
 
+const { degradedLockMiddleware } = require('./src/middleware/degradedLock');
+app.use('/api', degradedLockMiddleware);
+
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
