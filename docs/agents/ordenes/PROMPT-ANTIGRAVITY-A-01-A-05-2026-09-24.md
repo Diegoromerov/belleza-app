@@ -22,15 +22,20 @@ NODE_ENV=test TEST_DATABASE_URL="postgres://app_owner:ci_only_password@127.0.0.1
 
 Hoy: `❌ migrations/058_enable_rls_policies.sql: column "tenant_id" does not exist`, `EXIT=1`, y después `password authentication failed for user "app_owner"`, `EXIT=2`.
 
-### Causa raíz confirmada
+### Causa raíz confirmada y **re-medida hoy** (2026-09-24, base vacía `glowtest_a01`, código de `fase-a` @ `c1069e9f`)
 
-- `056_add_tenant_id_to_core_tables.sql:6-9` añade `tenant_id` a **cuatro** tablas: `usuarios`, `servicios`, `bookings`, `transactions`.
-- `058_enable_rls_policies.sql:30,61-63` **recorre otra lista** y hace `CREATE POLICY … USING (tenant_id = current_setting('app.tenant_id')::int)` sobre tablas que no tienen la columna.
-- El script muere antes de crear/configurar los roles de la compuerta ⇒ el paso siguiente ni conecta (`app_owner` no existe).
+La versión anterior de esta orden citaba `056:6-9` («cuatro tablas») y hablaba de «otra lista». Las dos cosas caducaron (clase **R-05**). Medido hoy:
+
+- `056_add_tenant_id_to_core_tables.sql:6-16` añade la columna a **once** tablas, no a cuatro.
+- `056:7` la añade a **`servicios`** — nombre que **no existe** en el esquema: `ALTER TABLE IF EXISTS` lo convierte en una sentencia vacía y silenciosa.
+- `058_enable_rls_policies.sql:9-24` y `:39-54` usan **la misma lista de 14 nombres** en sus dos arrays (`rls_tables` y `policy_tables` son idénticos); el bucle de políticas está en `:57-68` y el `CREATE POLICY … USING (tenant_id = current_setting('app.tenant_id')::int)` en `:61-63`.
+- **El culpable, nombrado:** tras `055`, `056` y `057`, la única de esas 14 tablas que **existe sin la columna** es **`services`** ⇒ `CREATE POLICY` sobre ella lanza `column "tenant_id" does not exist`. La columna de `services` llega en **`065_multi_tenant_hardening.sql:74`**, tres migraciones más tarde.
+- `admin_mfa`, `platform_config`, `productos` y `servicios` **no existen todavía** en ese punto (el `IF EXISTS`/`information_schema` las salta); las otras ocho tienen la columna.
+- Consecuencia medida: **0 políticas** `tenant_isolation*` creadas y los roles de la compuerta nunca se crean ⇒ el paso siguiente no puede ni conectar (`password authentication failed for user "app_owner"`).
 
 ### Qué exactamente hay que arreglar
 
-1. **Una sola fuente para la lista de tablas multi-tenant.** Que `058` derive las tablas de las que realmente tienen `tenant_id` (catálogo `information_schema.columns`) **o** que `056` amplíe su lista a la de `058` con su FK a `tenants`. Con **aserción explícita**: si las dos listas divergen, la migración falla con un mensaje que nombra la tabla que falta. Prohibido resolverlo con `IF EXISTS` a secas: eso es tapar el síntoma.
+1. **Una sola fuente para la lista de tablas multi-tenant, y que el orden respete las dependencias.** `056` debe cubrir **`services`** (hoy se le escapa: su columna llega en `065`) **o** el bloque de columna de `065:74` debe ejecutarse antes que `058`; y el nombre inexistente `servicios` sale de `056:7`. Con **aserción explícita**: si la lista de `056` y la de `058` divergen, la migración **falla nombrando la tabla** que falta. Prohibido resolverlo con `IF EXISTS` a secas: eso es lo que ya tapó este error.
 2. **Idempotencia real** (regla del runner: cada `.sql` se manda en **una** consulta y su error queda como warning; los errores de este camino se comen la compuerta en silencio). La migración debe poder correr dos veces seguidas sobre la misma base sin error ni duplicación de políticas.
 3. **La compuerta de roles**: que `app_owner` y `app_rls_user` queden creados con la contraseña de `RLS_ROLE_PASSWORD` **antes** de que algo intente conectarse como ellos, y que `verifyTenantIsolation.js` lo verifique en vez de reventar con un error de autenticación.
 4. **Autoverificación**: al terminar, el script imprime una línea por tabla (`tabla → RLS activo, FORCE, nº de políticas`) y **falla** si alguna no tiene exactamente una política de aislamiento.
