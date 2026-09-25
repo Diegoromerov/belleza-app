@@ -223,7 +223,7 @@ app.use((req, res, next) => {
   next();
 });
 
-const { degradedLockMiddleware, clasificarSalud } = require('./src/middleware/degradedLock');
+const { degradedLockMiddleware, clasificarSalud, asegurarEstadoComprobado } = require('./src/middleware/degradedLock');
 app.use('/api', degradedLockMiddleware);
 
 app.use(helmet({
@@ -430,7 +430,9 @@ app.use('/api/v1/memberships', membershipRoutes);
 // A360-2026-09-22/A-06 + C-03.
 // Health check — NO escribe en la base de datos.
 app.get('/api/health', async (req, res) => {
-  const dbStatus = getDbStatus();
+  // Ronda 7 (CI-23): si el estado nunca se comprobó, se comprueba AHORA (una vez por TTL) antes de
+  // clasificar; sin comprobar no es lo mismo que sano ni que degradado.
+  const dbStatus = await asegurarEstadoComprobado();
   const salud = clasificarSalud(dbStatus);
   if (salud.degradado) {
     res.setHeader('X-GlowApp-Degraded', 'memory-fallback');
