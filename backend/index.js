@@ -443,10 +443,12 @@ app.get('/api/health', async (req, res) => {
 // Test DB connection
 app.get('/api/test-db', debugRouteMiddleware, async (req, res) => {
   try {
+    const dbStatus = getDbStatus();
+    const isDegraded = dbStatus.servingFabricatedData === true || dbStatus.pgAvailable === false;
     const connected = await testConnection();
-    res.json({ 
-      status: connected ? 'success' : 'error', 
-      message: connected ? 'PostgreSQL conectado' : 'Error de conexión',
+    res.status(isDegraded ? 503 : 200).json({ 
+      status: isDegraded ? 'error' : (connected ? 'success' : 'error'), 
+      message: isDegraded ? 'Error de conexión (Capa de datos degradada)' : 'PostgreSQL conectado',
       postgis: connected ? await pool.query('SELECT PostGIS_Version()').then(r => r.rows[0].postgis_version).catch(() => 'no disponible') : null
     });
   } catch (err) {
