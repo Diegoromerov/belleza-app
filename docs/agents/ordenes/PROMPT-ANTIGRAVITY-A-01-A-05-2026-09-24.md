@@ -58,24 +58,43 @@ La versión anterior de esta orden citaba `056:6-9` («cuatro tablas») y hablab
 
 # ORDEN A-02 · Una métrica de dinero no se inventa
 
-**GOAL:** que `GET /api/admin/metrics` **no** devuelva ingresos ni proyecciones cuando no hay historial suficiente, sino un estado explícito de datos insuficientes.
+**Origen / re-medido 2026-09-25** sobre `fase-a/verdad-operativa` @ `c1069e9f`. Esta orden citaba `812-820`; hoy el bloque está **`813-822`**, con el `Math.random()` en la **`:819`** y la proyección en la **`:840`** (el endpoint arranca en la **`:725`**). Clase **R-05**: la cita caducó, el defecto no.
 
-**Rama:** `fix/admin-metricas-sin-datos` desde `fase-a/verdad-operativa` (o desde `main`, a elección del ejecutor, declarándolo).
+**GOAL:** que `GET /api/admin/metrics` **no** devuelva ingresos ni proyecciones cuando no hay historial real — que declare insuficiencia de datos — y que ningún camino de una métrica de dinero pase por azar.
 
-### Lo que hay que tocar
+**Rama:** `fix/admin-metricas-sin-datos` **desde `fase-a/verdad-operativa`** (no desde `main`: conserva el `ci.yml` con marcadores y todo PR nacido de ahí sale con 0 jobs — **CI-10**). `main` y `fase-a` difieren en 33 líneas de `index.js`; la base es `fase-a`.
 
-`backend/index.js:812-820` (bloque `if (history.length < 3)` con `Math.random()`) y `:840` (`projectedRevenue` por regresión sobre ese historial).
+### Lo medido hoy (`backend/index.js` en `fase-a` @ `c1069e9f`)
 
-### Criterios de aceptación
+| Qué | Dónde |
+|---|---|
+| `app.get('/api/admin/metrics', authMiddleware, adminMiddleware, …)` | `:725` |
+| `if (history.length < 3) { … }` — fabrica **5 meses** con `450000 + (4-i)*120000 + Math.floor(Math.random()*60000)` | `:813-822` (el azar, **`:819`**) |
+| `projectedRevenue = Math.max(0, Math.round(slope * nextMonthIndex + intercept))` — proyecta **sobre ese historial fabricado** | `:840` |
+| Respuesta | `:846+` (`success: true, data: { …, projectedRevenue, … }`) |
+
+El patrón honesto que **ya existe en este mismo archivo** y hay que imitar en vez de inventar: `:220-221` → `if (getDbStatus().servingFabricatedData === true) res.setHeader('X-GlowApp-Degraded', 'memory-fallback')`, y `:429-430` para el estado degradado.
+
+### Qué exactamente hay que arreglar
+
+1. **Con menos de 3 meses reales:** `history: []`, `projectedRevenue: null` y un campo explícito `data_status: 'insuficiente'` (con `meses_con_datos`). **No se inventa ni un mes.**
+2. **Con 3+ meses reales:** las cifras salen **solo** de la base y la proyección usa la misma fórmula que hoy, sobre datos reales.
+3. **Datos degradados** (`getDbStatus().servingFabricatedData === true` o `pgAvailable === false`): la respuesta **no** es 200 con ceros — es `503` con `X-GlowApp-Degraded`, igual que `/api/health`.
+4. **Ningún `Math.random()` en un camino de dinero.** Ojo: el archivo tiene otro en `:119` (`uniqueSuffix` de subidas) que **es legítimo y no se toca**. La compuerta tiene que ser específica, no un `grep` global.
+5. **Contrato del panel:** no borres `projectedRevenue`, pásalo a `null`. Medido hoy: `grep -rn "projectedRevenue" admin-dashboard lib` → **0 resultados**; confirma tú quién lo lee antes de cambiar la forma de la respuesta y declara el resultado en el PR.
+
+### Criterios de aceptación (todos falsables, con salida pegada)
 
 | # | Criterio | Cómo se prueba |
 |---|---|---|
-| C1 | Con 0-2 meses de reservas completadas: `history: []`, `projectedRevenue: null`, y un campo explícito (p. ej. `data_status: 'insuficiente'`) o `503` | test nuevo con base de prueba sin reservas completadas |
-| C2 | Con 3+ meses reales: los números salen **solo** de la base (test que compara contra un `SUM` independiente) | el mismo test, con datos sembrados |
-| C3 | `Math.random` no aparece en ningún camino de una métrica de dinero | `grep -n Math.random backend/index.js` sin resultados en esas líneas + el test de C1 en rojo si alguien lo reintroduce |
-| C4 | Si la capa de datos está degradada, la respuesta lo declara (mismo patrón que `/api/health`: 503 + `X-GlowApp-Degraded`) | test con `getDbStatus().servingFabricatedData === true` |
+| C1 | 0-2 meses de reservas `COMPLETADA`: `history: []`, `projectedRevenue: null`, `data_status: 'insuficiente'` | test nuevo con base de prueba sembrada a mano |
+| C2 | 3+ meses reales: cada cifra cuadra contra un `SUM` independiente | el mismo test, comparando contra la consulta SQL suelta |
+| C3 | Base degradada: **503** + `X-GlowApp-Degraded` (nunca 200 con ceros) | test con `getDbStatus().servingFabricatedData = true` |
+| C4 | Reintroducir el azar en ese camino pone el test en rojo | mutación: devuelve la línea de `Math.random` y muestra el fallo |
+| C5 | `Math.random()` en `:819` ya no existe y el de `:119` sigue ahí | `grep -n "Math.random" backend/index.js` → solo `:119` |
+| C6 | Nada más cambia: la ruta sigue detrás de `authMiddleware` + `adminMiddleware` | `git diff --stat` en el reporte |
 
-**Prohibido:** mover el número inventado a un valor «más creíble», o dejar el `Math.random` detrás de `NODE_ENV !== 'production'` — la salida es *decir que no hay datos*, no inventarlos en otro entorno.
+**Prohibido:** mover el número inventado a un valor «más creíble» (un seed fijo, un `0`, un promedio) · dejar el `Math.random` detrás de `NODE_ENV !== 'production'` — la salida es **decir que no hay datos**, no inventarlos en otro entorno · devolver `null` sin el campo de estado · tocar `index.js` fuera de esa ruta · usar `main` como base.
 
 ---
 
