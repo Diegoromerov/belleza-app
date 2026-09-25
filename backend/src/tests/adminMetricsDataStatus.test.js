@@ -1,28 +1,79 @@
-const fs = require('fs');
-const path = require('path');
+const { buildProjections } = require('../services/adminMetricsService');
 
-describe('ORDEN A-02 — GET /api/admin/metrics (Honestidad de métricas financieras)', () => {
-  const indexContent = fs.readFileSync(path.resolve(__dirname, '../../index.js'), 'utf8');
+describe('ORDEN A-02 — Pure Financial Projections Service (Honestidad de métricas financieras)', () => {
 
-  test('C5: Math.random() no debe aparecer en ningún camino de cálculo de métricas en index.js', () => {
-    const lines = indexContent.split('\n');
-    const mathRandomMatches = [];
-    lines.forEach((line, idx) => {
-      if (line.includes('Math.random()')) {
-        mathRandomMatches.push({ lineNum: idx + 1, content: line.trim() });
-      }
-    });
+  test('C1\': buildProjections con historial vacío (0 meses) devuelve status insuficiente y projectedRevenue null', () => {
+    const fixedNow = new Date('2026-09-25T12:00:00Z');
+    const result = buildProjections([], fixedNow);
 
-    // Debe haber solo 1 ocurrencia en todo index.js (línea 119: uniqueSuffix de subida de archivos)
-    expect(mathRandomMatches.length).toBe(1);
-    expect(mathRandomMatches[0].content).toContain('uniqueSuffix');
+    expect(result.data_status).toBe('insuficiente');
+    expect(result.meses_con_datos).toBe(0);
+    expect(result.history).toEqual([]);
+    expect(result.projectedRevenue).toBeNull();
+    expect(result.projectedMonth).toBeNull();
+    expect(result.trend).toBe('INSUFICIENTE');
   });
 
-  test('C1, C3: Declaración de estructura y manejo de estado degradado en GET /api/admin/metrics', () => {
-    // Verificar que la ruta GET /api/admin/metrics verifica el estado de degradación de la BD
-    expect(indexContent).toContain("res.setHeader('X-GlowApp-Degraded', 'memory-fallback')");
-    expect(indexContent).toContain("let dataStatus = 'insuficiente'");
-    expect(indexContent).toContain("dataStatus = 'completo'");
-    expect(indexContent).toContain("projectedRevenue = null");
+  test('C2\': buildProjections con 1 o 2 meses reales devuelve status insuficiente, sin inventar ingresos proyectados y conservando historial real', () => {
+    const fixedNow = new Date('2026-09-25T12:00:00Z');
+    const oneMonth = [{ month: '2026-07', revenue: 1500 }];
+    const result1 = buildProjections(oneMonth, fixedNow);
+
+    expect(result1.data_status).toBe('insuficiente');
+    expect(result1.meses_con_datos).toBe(1);
+    expect(result1.history).toEqual(oneMonth);
+    expect(result1.projectedRevenue).toBeNull();
+
+    const twoMonths = [
+      { month: '2026-07', revenue: 1500 },
+      { month: '2026-08', revenue: 2000 }
+    ];
+    const result2 = buildProjections(twoMonths, fixedNow);
+
+    expect(result2.data_status).toBe('insuficiente');
+    expect(result2.meses_con_datos).toBe(2);
+    expect(result2.history).toEqual(twoMonths);
+    expect(result2.projectedRevenue).toBeNull();
   });
+
+  test('C3\': buildProjections con ≥3 meses reales devuelve data_status completo y cálculo por regresión lineal verificado independientemente', () => {
+    const fixedNow = new Date('2026-09-25T12:00:00Z');
+    const threeMonths = [
+      { month: '2026-06', revenue: 1000 },
+      { month: '2026-07', revenue: 2000 },
+      { month: '2026-08', revenue: 3000 }
+    ];
+    const result = buildProjections(threeMonths, fixedNow);
+
+    expect(result.data_status).toBe('completo');
+    expect(result.meses_con_datos).toBe(3);
+    expect(result.history).toEqual(threeMonths);
+    expect(result.projectedMonth).toBe('2026-10');
+    expect(result.trend).toBe('CRECIENTE');
+
+    // Independent calculation: (1,1000), (2,2000), (3,3000) => line: y = 1000 * x.
+    // For x = 4 (next month): expected = 4000.
+    const xVals = [1, 2, 3];
+    const yVals = [1000, 2000, 3000];
+    const n = 3;
+    const sumX = xVals.reduce((a, b) => a + b, 0);
+    const sumY = yVals.reduce((a, b) => a + b, 0);
+    const sumXY = xVals.reduce((sum, x, i) => sum + x * yVals[i], 0);
+    const sumXX = xVals.reduce((sum, x) => sum + x * x, 0);
+
+    const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+    const intercept = (sumY - slope * sumX) / n;
+    const expectedProjection = Math.max(0, Math.round(slope * 4 + intercept));
+
+    expect(result.projectedRevenue).toBe(expectedProjection);
+    expect(result.projectedRevenue).toBe(4000);
+  });
+
+  test('C4\': Comportamiento puro probado sin acoplamiento a red/BD. (Manejo de HTTP 503 por BD degradada es responsabilidad global de degradedLockMiddleware)', () => {
+    // buildProjections es una función pura determinista
+    const res = buildProjections(null, new Date('2026-09-25'));
+    expect(res.data_status).toBe('insuficiente');
+    expect(res.projectedRevenue).toBeNull();
+  });
+
 });

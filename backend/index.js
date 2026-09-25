@@ -41,6 +41,7 @@ const eventRoutes = require('./src/routes/eventRoutes');
 const eventRegistrationRoutes = require('./src/routes/eventRegistrationRoutes');
 const businessRoutes = require('./src/routes/businessRoutes');
 const membershipRoutes = require('./src/routes/membershipRoutes');
+const { buildProjections } = require('./src/services/adminMetricsService');
 const adminMiddleware = async (req, res, next) => {
   try {
     if (!req.user || !req.user.id) {
@@ -823,38 +824,7 @@ app.get('/api/admin/metrics', authMiddleware, adminMiddleware, async (req, res) 
       revenue: parseFloat(r.revenue)
     }));
 
-    let history = [];
-    let projectedRevenue = null;
-    let projectedMonthStr = null;
-    let trend = 'INSUFICIENTE';
-    let dataStatus = 'insuficiente';
-
-    if (realHistory.length >= 3) {
-      history = realHistory;
-      dataStatus = 'completo';
-
-      const n = history.length;
-      let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
-      history.forEach((h, index) => {
-        const x = index + 1;
-        const y = h.revenue;
-        sumX += x;
-        sumY += y;
-        sumXY += x * y;
-        sumXX += x * x;
-      });
-
-      const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
-      const intercept = (sumY - slope * sumX) / n;
-
-      const nextMonthIndex = n + 1;
-      projectedRevenue = Math.max(0, Math.round(slope * nextMonthIndex + intercept));
-
-      const nextMonthDate = new Date();
-      nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
-      projectedMonthStr = nextMonthDate.toISOString().substring(0, 7);
-      trend = slope >= 0 ? 'CRECIENTE' : 'DECRECIENTE';
-    }
+    const projections = buildProjections(realHistory);
 
     res.json({
       success: true,
@@ -869,14 +839,7 @@ app.get('/api/admin/metrics', authMiddleware, adminMiddleware, async (req, res) 
         telemetry_screens: telemetryScreensRes.rows,
         telemetry_clicks: telemetryClicksRes.rows,
         categories: categoriesRes.rows,
-        projections: {
-          data_status: dataStatus,
-          meses_con_datos: realHistory.length,
-          history,
-          projectedMonth: projectedMonthStr,
-          projectedRevenue,
-          trend
-        }
+        projections
       }
     });
   } catch (error) {
