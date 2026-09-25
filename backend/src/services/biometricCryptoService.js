@@ -2,11 +2,19 @@ const crypto = require('crypto');
 
 const ALGORITHM = 'aes-256-gcm';
 
+let dynamicTestKey;
+function getDynamicTestKey() {
+  if (!dynamicTestKey) {
+    dynamicTestKey = crypto.randomBytes(32);
+  }
+  return dynamicTestKey;
+}
+
 const getLegacySecret = () => {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
     if (process.env.NODE_ENV === 'test') {
-      return 'test_secret_glowapp_jwt_token_key_at_least_32_chars';
+      return getDynamicTestKey().toString('hex');
     }
     throw new Error('CRITICAL SECURITY ERROR: JWT_SECRET required for legacy biometric decryption.');
   }
@@ -24,7 +32,7 @@ function initializeKey() {
   const keyEnv = process.env.BIOMETRIC_ENCRYPTION_KEY || process.env.ENCRYPTION_KEY;
   if (!keyEnv || typeof keyEnv !== 'string') {
     if (process.env.NODE_ENV === 'test') {
-      SECRET_KEY = crypto.createHash('sha256').update('test_secret_glowapp_jwt_token_key_at_least_32_chars').digest();
+      SECRET_KEY = getDynamicTestKey();
       return;
     }
     throw new Error(

@@ -1,10 +1,19 @@
+const crypto = require('crypto');
 const MIN_SECRET_LENGTH = 32;
+
+let dynamicTestSecret;
+function getDynamicTestSecret() {
+  if (!dynamicTestSecret) {
+    dynamicTestSecret = crypto.randomBytes(32).toString('hex');
+  }
+  return dynamicTestSecret;
+}
 
 const getJwtSecret = () => {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
     if (process.env.NODE_ENV === 'test') {
-      return 'test_secret_glowapp_jwt_token_key_at_least_32_chars';
+      return getDynamicTestSecret();
     }
     throw new Error('CRITICAL SECURITY ERROR: JWT_SECRET environment variable is missing.');
   }
