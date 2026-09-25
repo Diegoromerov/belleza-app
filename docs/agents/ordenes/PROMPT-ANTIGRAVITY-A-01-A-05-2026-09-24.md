@@ -100,24 +100,49 @@ El patrón honesto que **ya existe en este mismo archivo** y hay que imitar en v
 
 # ORDEN A-03 · Un router, un prefijo
 
-**GOAL:** que ningún router quede montado dos veces, ni en el mismo prefijo ni en prefijos distintos.
+**Origen / re-medido 2026-09-25** sobre `fase-a/verdad-operativa` @ `c1069e9f` (`backend/index.js`, 1.886 líneas; Express **4.18.2**). La orden vieja decía «17 montajes repetidos **+ 5** routers con dos prefijos»: los 17 se sostienen exactos, los de dos prefijos hoy son **9** (clase **R-05**).
 
-**Rama:** `fix/montajes-duplicados` desde `fase-a/verdad-operativa`.
+**GOAL:** que cada router se monte **una sola vez** y con **un solo prefijo**, y que ningún path final repita un segmento — **sin cambiar el contrato**: toda ruta que hoy responde debe seguir respondiendo igual.
 
-### Lo medido
+**Rama:** `fix/montajes-unicos` **desde `fase-a/verdad-operativa`**; el PR apunta a **`main`** (con base `fase-a` no dispara ningún run — CI-10).
 
-17 montajes duplicados en el mismo prefijo (`payment` 388/541, `booking` 389/538, `service` 390/539, `product` 392/540, `provider` 393/537, `vto`, `business`, `salon`, `portfolio`, `metrics`, `mentorship`, `glowPro`, `community`, `color`, `biometric`, `analytics`, `academy`) y 5 routers con dos prefijos vivos: `academyAdminRoutes` (408/543), `eventRoutes` (411/560), `xpLogRoutes` (418/559), `membershipRoutes` (424/546), `adminPreciosRoutes` (409/544 — el router ya incluye `/precios` en sus rutas ⇒ la línea 544 produce `/api/admin/precios/precios`).
+### Lo medido hoy
 
-### Criterios de aceptación
+Dos bloques de montaje (`:388-424` y `:532-561`) más la cola (`:1018`, `:1379`).
+
+**1) 17 routers montados dos veces con el MISMO prefijo** (el segundo montaje es inerte; se conserva el primero y se borra el otro): `paymentRoutes 388/541` · `bookingRoutes 389/538` · `serviceRoutes 390/539` · `productRoutes 392/540` · `providerRoutes 393/537` · `salonRoutes 396/533` · `biometricRoutes 400/547` · `vtoRoutes 405/549` · `colorRoutes 406/550` · `academyRoutes 407/542` · `glowProRoutes 410/553` · `analyticsRoutes 413/554` · `metricsRoutes 414/555` · `portfolioRoutes 415/556` · `communityRoutes 416/557` · `mentorshipRoutes 417/558` · `businessRoutes 423/545`.
+
+**2) 9 routers con DOS prefijos distintos** — aquí no decide el gusto, decide el código. Medido, incluida la ruta interna de cada router:
+
+| Router | Montaje A | Montaje B | Ruta interna declarada | Path final de cada uno | Se conserva |
+|---|---|---|---|---|---|
+| `adminPreciosRoutes` | `:409` `/api/admin` | `:544` `/api/admin/precios` | `'/precios'` | A → `/api/admin/precios` ✓ · B → `/api/admin/precios/precios` ✗ | **A (:409)** |
+| `ticketRoutes` | `:394` `/api` | `:551` `/api/tickets` | `'/tickets'` | A → `/api/tickets` ✓ · B → `/api/tickets/tickets` ✗ | **A (:394)** |
+| `disputeRoutes` | `:395` `/api` | `:552` `/api/disputes` | `'/disputas'` | A → `/api/disputas` ✓ · B → `/api/disputes/disputas` ✗ | **A (:395)** |
+| `academyAdminRoutes` | `:408` `/api/admin/academy` | `:543` `/api/academy/admin` | `'/courses'` | A → `/api/admin/academy/courses` (**11 consumidores**) · B → `/api/academy/admin/courses` (0) | **A (:408)** |
+| `eventRoutes` | `:411` `/api/glow-pro/events` | `:560` `/api/events` | `'/'`, `'/:id'` | A → `/api/glow-pro/events` (0) · B → `/api/events` (**4 consumidores**) | **B (:560)** |
+| `eventRegistrationRoutes` | `:412` `/api/glow-pro/event-registrations` | `:561` `/api/event-registrations` | `'/events/:id/register'` | ninguno es canónico: el path real es `/api/events/:id/register` ⇒ **montar en `/api`** | `/api` |
+| `biometricConsentRoutes` | `:397` `/api/consent` | `:548` `/api/biometric/consent` | `'/biometric'` | A → `/api/consent/biometric` · B → `/api/biometric/consent/biometric` (absurdo) | **A (:397)** |
+| `xpLogRoutes` | `:418` `/api/xp-logs` | `:559` `/api/xp-log` | `'/'`, `'/convert-cashback'` | A → `/api/xp-logs/…` · B → `/api/xp-log/…` | **A (:418)**; si un cliente usa el singular, alias **declarado**, no dos montajes |
+| `membershipRoutes` | `:424` `/api/v1/memberships` | `:546` `/api/membership` | declaraciones **multilínea** (`membershipRoutes.js:14-32`) | — | **lo decides tú** leyendo esas 3 rutas y buscando consumidores, y lo dices en el reporte |
+
+**La regla que sale de la tabla (es el hallazgo, no un criterio de estilo):** el prefijo **no debe repetir el segmento que el router ya declara** — `adminPreciosRoutes`, `ticketRoutes` y `disputeRoutes` declaran el segmento (`/precios`, `/tickets`, `/disputas`), así que el montaje «largo» produce `/x/x`. Y cuando el router declara rutas **desnudas** (`'/'`, `'/courses'`), el segmento **solo** existe si el prefijo lo pone.
+
+### Evidencia de consumidores que ya tienes medida
+
+`grep -rl <path> lib admin-dashboard` → `/api/admin/academy` = **11** · `/api/events` = **4** · **el resto = 0**. Cuidado: **cero no es muerto**. La app Flutter puede construir la URL sobre una base que ya incluya `/api`; antes de borrar un prefijo con 0 consumidores, busca la base en `lib/` (`baseUrl`, `apiUrl`, `dio.options.baseUrl`) y **repite la búsqueda con el path sin `/api`**. Si aparece algo, se conserva **un** montaje y el otro se declara retirado (o alias explícito) en el PR.
+
+### Criterios de aceptación (todos falsables, con salida pegada)
 
 | # | Criterio | Cómo se prueba |
 |---|---|---|
-| C1 | Un test enumera los montajes y **falla** si un router aparece dos veces (mismo prefijo o distinto) | `backend/tests/routing.contract.test.js` nuevo, incluido en el paso bloqueante |
-| C2 | Se elimina el montaje sobrante de cada duplicado, declarando en el PR **cuál** se conservó y por qué (ninguno de los dos si el prefijo correcto es otro) | lista en el cuerpo del PR |
-| C3 | Ninguna ruta final contiene un segmento repetido (`/precios/precios`) | el mismo test, sobre las rutas registradas |
-| C4 | El contrato no cambia para lo que el panel ya llama: las rutas que el dashboard usa hoy siguen respondiendo | `smoke:surfaces` + las 2 rutas que ya mira, más las de precios, verificadas a mano con su código de estado |
+| C1 | **Inventario en runtime**, no lectura del texto: 0 duplicados (mismo par router+prefijo) y 0 paths con segmento repetido | `backend/scripts/listRoutes.js` **ya existe**: míralo, hace la función; pega su salida antes y después |
+| C2 | Ninguna ruta con consumidores deja de responder: mismo `status` antes y después en `/api/admin/academy/courses`, `/api/events`, `/api/admin/precios` | dos corridas pegadas (una sobre la rama base, otra sobre la tuya) |
+| C3 | El defecto no puede volver: la compuerta **falla** si un router se monta dos veces | **mutación pegada**: añade un `app.use` duplicado y muestra el rojo |
+| C4 | El caso concreto queda demostrado: `/api/admin/precios` responde y `/api/admin/precios/precios` da **404** | petición real, con su código de estado |
+| C5 | Sin efectos colaterales: solo `index.js` (+ el script/test que añadas); 0 cambios en `lib/`, `admin-dashboard/`, `backend/public/` | `git diff --stat` |
 
-**Prohibido:** borrar un montaje «que parece duplicado» sin comprobar cuál usa el frontend/admin-dashboard; romper una ruta existente para satisfacer el test.
+**Prohibido:** renombrar rutas o mover segmentos (`disputeRoutes` declara `/disputas` en español bajo un prefijo `/disputes`: **se declara, no se arregla aquí**) · borrar un prefijo sin haber buscado consumidor en `lib/` y `admin-dashboard` · tocar el catch-all `app.use('/api/*', …)` de `:1379` (Express 4 lo acepta) · reconstruir `backend/public` · «alias» sin declarar en el reporte · base `main`.
 
 ---
 
