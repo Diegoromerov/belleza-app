@@ -10,6 +10,7 @@ Por instrucción del Dueño («continuar en la ejecución»), el Arquitecto ejec
 - **Qué hace:** el caso C2/C4 neutraliza la capa del candado (`degradedLockMiddleware`) antes de medir, porque el candado responde `503 DATA_LAYER_DEGRADED` a cualquier superficie de datos bajo `/api` cuando el estado no está verificado y taparía el 404 que ese caso mide.
 - **Evidencia:**
   - **4 escenarios**: `NODE_ENV=test` y `development` × con base real y sin base ⇒ **3/3 PASS en los cuatro** (ya no depende del estado de la base).
+    *Precisión (medida después):* en esa primera corrida la credencial iba dentro de una URL que **no conecta** (ver §4), de modo que los dos escenarios «con base» eran en rigor «con `DATABASE_URL` puesta». **Re-medido con las credenciales que sí conectan** (`DB_*` sueltos, base arriba): `test` **3/3** y `development` **3/3**. La evidencia más fuerte sigue siendo el tren integrado (§3).
   - **Mutación pegada**: `app.use('/api/admin', adminPreciosRoutes)` → `'/api/admin/precios'` ⇒ **2 failed / 1 passed** (caen C1,C3 y C2,C4); `index.js` restaurado **IDÉNTICO**.
   - Hash del archivo de test inalterado durante las corridas (sin escritura concurrente mientras medía).
 
