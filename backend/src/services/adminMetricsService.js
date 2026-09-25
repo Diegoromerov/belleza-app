@@ -51,9 +51,16 @@ function buildProjections(realHistory = [], now = new Date()) {
   const nextMonthIndex = count + 1;
   const projectedRevenue = Math.max(0, Math.round(slope * nextMonthIndex + intercept));
 
-  const nextMonthDate = new Date(now);
-  nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
-  const projectedMonthStr = nextMonthDate.toISOString().substring(0, 7);
+  // Ronda 3 (CI-18): el mes proyectado es el mes CALENDARIO siguiente a `now`, anclado al día 1 y
+  // formateado en local. Antes se hacía `setMonth` sobre HOY, y JavaScript normaliza (31 de enero + 1
+  // mes = 3 de marzo) ⇒ la etiqueta saltaba un mes; y `toISOString()` es UTC, así que en husos positivos
+  // hasta podía devolver el mes anterior. Determinista respecto de `now`, sin aritmética de meses sobre el día.
+  const base = new Date(now);
+  const anioBase = base.getFullYear();
+  const mesBase = base.getMonth() + 1; // 1-12
+  const mesProyectado = mesBase === 12 ? 1 : mesBase + 1;
+  const anioProyectado = mesBase === 12 ? anioBase + 1 : anioBase;
+  const projectedMonthStr = `${anioProyectado}-${String(mesProyectado).padStart(2, '0')}`;
   const trend = slope >= 0 ? 'CRECIENTE' : 'DECRECIENTE';
 
   return {
