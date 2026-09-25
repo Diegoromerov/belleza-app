@@ -408,4 +408,19 @@ archivo con markdown y backticks) usá un **archivo `.js`** y `node archivo.js`,
 Y después de escribir, **leé lo escrito** (`tail -c`) para comprobar que no quedó cortado: un `exit 0` no prueba que el
 texto esté entero.
 
+### El `trust` de `127.0.0.1` no aplica a lo que entra por el NAT de Docker
+
+`pg_hba_file_rules` del contenedor local dice `host all all 127.0.0.1 trust`, y eso llevó a concluir que las sondas de
+contraseña «no prueban nada». **Medido hoy y es falso para TCP desde el host**: conectando a `127.0.0.1:5435` desde Windows,
+el servidor ve como cliente la IP de la puerta de enlace del bridge (no `127.0.0.1`), cae en la regla `host all all all
+scram-sha-256` y **exige contraseña**: `28P01 password authentication failed` para `app_rls_user` y para `app_owner` con
+cualquier contraseña inventada.
+
+**Consecuencias prácticas:**
+- Una corrida con `DATABASE_URL` apuntando a un rol cuya contraseña no conocés **no es «con base real»**: es una corrida sin
+  base utilizable, y hay que declararlo (medido: 0 errores de conexión en el log igual, porque el fallo se traga).
+- Para una corrida con base real hacen falta credenciales que autentiquen: la del rol `admin` (la del contenedor) sirve, pero
+  `admin` es superusuario + BYPASSRLS ⇒ **no vale para la compuerta de aislamiento RLS**.
+- Toda medición que diga «con base real» debe pegar antes una sonda que conecte con esa misma URL.
+
 ## 8. Decisiones del Dueño pendientes (escaladas)

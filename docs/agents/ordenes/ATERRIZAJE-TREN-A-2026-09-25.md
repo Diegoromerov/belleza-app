@@ -68,7 +68,14 @@ o `backend/public`.
 - `Backend Tests & Lint` ⇒ **failure** mientras no se cierren CI-14 y TEC-53:
   - paso 7 «Escaneo de credenciales versionadas» ⇒ rojo (8 > 0);
   - paso bloqueante de tests ⇒ rojo por `audit360-remediation` (misma causa raíz).
-- Cuando **2b + CI-14** aterricen: escáner **0** ⇒ los dos pasos anteriores se ponen verdes.
+- Cuando **2b + CI-14** aterricen: el escáner llega a **0** ⇒ el paso 7 y `audit360-remediation` se ponen verdes.
+- **Pero el paso bloqueante de tests sigue rojo por deuda heredada.** Medido hoy sobre el tren: **10 suites rojas de 75**
+  (`adminPreciosRoutes`, `business.integration`, `businessAdminDocs.integration`, `businessHardening.integration`,
+  `businessRAG.integration`, `businessSystem.integration`, `rateLimiter`, `sequelizeTenantContext`, `sprint2_agents`, y
+  `audit360-remediation` que sí cae por la causa de CI-14). Es la deuda que el propio `ci.yml` declara en un comentario
+  (citaba «15»; hoy son 10 en el gate y 19 en la suite completa).
+  ⇒ **Decisión explícita del Dueño**: aterrizar aceptando ese backend rojo por deuda heredada (documentado), o abrir las
+  10 suites como trabajo propio antes de aterrizar.
 
 ## 4. Verificación posterior (obligatoria, con evidencia pegada)
 
