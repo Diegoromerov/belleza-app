@@ -4,18 +4,44 @@
 
 **Abrir en:** `https://github.com/Diegoromerov/belleza-app/pull/new/fase-a/verdad-operativa` (ramas: `fase-a/verdad-operativa` → `main`)
 
+**Al mergear: usar merge commit, NO squash** (el grafo de ramas y las auditorías citan los SHAs intermedios).
+
+> **Actualizado el 2026-09-25** tras las rondas 5, 6 y 7 de Fase A, O-014, O-015, O-016 y las rondas 3 de A-02 y 5 de A-06. La versión anterior de este archivo describía el estado del 24 (decía 6 commits y daba S1/S4 por cerrados en falso): **esa tabla ya no aplica**.
+
 ---
 
-## Qué trae (6 commits sobre `main = f5a1b4fc`)
+## Para aterrizar: el tren que se integra en `fase-a`
 
-1. **`ci.yml` reparado** — la versión de `main` tiene **marcadores de conflicto sin resolver** (`<<<<<<< HEAD` en la línea 60, `=======`, `>>>>>>> origin/main`) y por eso el workflow aparece como `failure` **sin un solo job**: medido por API, `ci.yml` acumula **1.679 runs** y todos terminan igual, con `jobs=0` — GitHub no puede ni evaluar los disparadores, así que se dispara en cualquier push. Esta rama trae el archivo válido (`yaml.safe_load` OK, jobs `backend-ci` + `frontend-ci`) y con él **el PR ejecutará pasos de verdad por primera vez**: los pushes de esta rama no generaron run porque, al ser el archivo válido, sí se aplica el filtro `branches: [main, staging]`. Al mergear, la reparación llega a `main` y los pushes a `main` dejan de producir runs vacíos. Se conserva el montaje de esquema multi-tenant y los roles RLS (`prepareRlsDatabase.js`, `verifyTenantIsolation.js`) y se descarta `sequelize.sync({force:true})` (`npm run migrate`): las políticas RLS no viven en un modelo.
-2. **`.gitignore` saneado** (marcadores fuera, reglas de ambas ramas conservadas).
-3. **Compuerta anti-marcadores** — `backend/scripts/checkNoConflictMarkers.js`, cableada en CI.
-4. **Honestidad del fallback en memoria** — `servingFabricatedData` se activa al responder desde memoria y se limpia al volver a Postgres (`backend/src/config/db.js`).
-5. **Errores honestos** — el `catch` de `GET /api/providers` responde `500`, no `200` con un array vacío.
-6. **Grafo de ramas** — `backend/scripts/branchGraph.js` + artefactos en `docs/audit/`.
+Las ramas aceptadas por el Auditor entran **en este orden** (cada una es una tarea y una PR; se integran aquí porque `main` conserva los marcadores de conflicto en `ci.yml` — ver CI-10 — y ninguna rama nacida de `main` puede producir evidencia de CI):
 
-Verificación de la rama: `flutter analyze` → 0 errores · suite completa → 15 suites rojas **heredadas** (mismos fallos que `main`, 0 regresiones nuevas).
+| # | Rama | SHA | Qué cierra |
+|---|---|---|---|
+| 0 | `fase-a/verdad-operativa` | `b545ef22` | 9 commits, +4752/−48: `ci.yml` reparado, `.gitignore`, compuerta anti-marcadores, honestidad del fallback en memoria, errores honestos, grafo de ramas |
+| 1 | `fix/ci-procedencia` | `6268afff` | A-05 — procedencia de la evidencia |
+| 2 | `fix/rls-056-058-cadena` | `ba06e563` | A-01 r2 ✓ |
+| 3 | `fix/montajes-unicos` | `38a9afe9` | A-03 ✓ — 57 rutas retiradas (308 → 252 únicas), 0 pérdidas reales |
+| 4 | `fix/admin-metricas-sin-datos` | `6f2f656f` | A-02 r2 ✓ + r3 (CI-18: el mes proyectado ya no salta un mes) |
+| 5 | `fix/arranque-y-estado-honesto` | `07e7225e` | Fase A r6 ✓ — tri-estado honesto (`null`/`true`/`false`), cierra CI-17/20/22 |
+| 6 | `fix/contrato-convive-con-candado` | `3a9148ad` | O-016 — el contrato de enrutamiento convive con el candado (CI-28) |
+| 7 | `fix/candado-comprueba-si-desconoce` | `82f84f5e` | Fase A r7 ✓ — el candado **comprueba** cuando no sabe (CI-23) + timeout del guardián medido |
+| 8 | `fix/compuerta-secretos-reproducible` | `85687237` | A-06 r5 ✓ — cada regla re-verifica su patrón: el escáner pasa de **109 hallazgos (101 mal etiquetados) a 8** (CI-19) |
+
+**Fuera del tren, esperando decisión del Dueño:**
+
+| Rama | SHA | Por qué no entra |
+|---|---|---|
+| `fix/jwt-sin-respaldo` (2b de A-06) | `dbb87293` | Quita el `DEFAULT_PROD_SECRET` literal (`jwt.js:5-11`, **TEC-53**) pero **no es mergeable hasta que el Dueño confirme en Railway** que `JWT_SECRET` y `BIOMETRIC_ENCRYPTION_KEY`/`ENCRYPTION_KEY` están puestas: sin ellas el proceso no arranca o pierde compatibilidad de tokens. Medido: **2b + 2a r5 mergea limpio (0 conflictos) y deja el escáner en 5**, sin rebase ni force-push |
+
+## Estado de los criterios de la Fase A (medido, no citado)
+
+| Criterio | Estado | Evidencia |
+|---|---|---|
+| S1 · ninguna superficie `2xx` si su consulta falló | **✓** | con la base caída: `/api/products` ⇒ **503 `DATA_LAYER_DEGRADED`** (r6/r7). Sin base, un proceso que sirve sin el arranque ya no deja pasar datos fabricados |
+| S2 · degradación visible desde fuera | **✓** | `/api/health` ⇒ **503 `DEGRADED`** con `pgAvailable:false`; y `200 OK` con `pgAvailable:true` (PostGIS 3.6, 296 productos) cuando la base está arriba |
+| S3 · el CI existe y puede fallar | **✓** | mutaciones pegadas y reproducidas: en A-06 volver a concatenar ⇒ **3 failed** y el escáner real **vuelve a 109**; en la ronda 7 quitar la comprobación ⇒ **3 failed** |
+| S4 · un comando sale `≠0` si algo finge | **✓** | `smokeSurfaces` sale `≠0` si una superficie finge, y su camino de **timeout está medido** (no cuelga, sale `≠0`, mata al hijo con `SIGTERM`) |
+
+Detalle en `docs/knowledge/ESTADO-ACTUAL.md` y `docs/agents/ordenes/EJECUCION-ARQUITECTO-2026-09-25.md` (todo lo ejecutado el 2026-09-25, con sus mutaciones).
 
 ## Advertencia que este PR declara (D-008 de `docs/knowledge/DECISIONES.md`)
 
@@ -26,20 +52,20 @@ geminiService | geminiFallback | auraToolExecutor | contract | biometric
 resilience | contextCompressor | fase5 | authRoutes | api.cors
 ```
 
-**El verde de ese paso es verde por exclusión.** No equivale a «verificado»: las 15 suites rojas son deuda heredada y el estado real aparece en el paso no bloqueante. Criterio S3 de la Fase A queda **parcial** hasta que exista la mutación que demuestre que la compuerta puede fallar (O-005 en `docs/agents/COLA.md`).
+**El verde de ese paso es verde por exclusión.** No equivale a «verificado»: las 15 suites rojas son deuda heredada y el estado real aparece en el paso no bloqueante.
 
-## Qué NO está cerrado todavía (Fase A)
+## Lo que este PR **no** puede cerrar solo (necesita al Dueño)
 
-| Criterio | Estado |
-|---|---|
-| S1 · ninguna superficie `2xx` si su consulta falló | **✗** — `GET /api/products` sigue devolviendo `200` con datos fabricados y base caída |
-| S2 · degradación visible desde fuera | ✓ — `/api/health` = `503` + `X-GlowApp-Degraded: memory-fallback` |
-| S3 · el CI existe y puede fallar | **~** — falta la mutación |
-| S4 · un comando sale `≠0` si algo finge | **✗** — `smoke:surfaces` sale `0` mientras el sistema miente |
-
-Detalle en `docs/knowledge/ESTADO-ACTUAL.md`.
+| # | Qué | Por qué bloquea |
+|---|---|---|
+| **CI-14** | Las **5 líneas de prosa** con credenciales de ejemplo en informes (`AUDITORIA_PREPRODUCCION_MASTER.md:84`, `BLOQUE_TRABAJO_1_BASELINE.md:144`, `auditoria-belleza-app.md:232`, `:233`, `scripts/COMO_EJECUTAR.md:35`) | Es lo único que mantiene **rojo el paso 7** del CI aun con todas las ramas dentro: el escáner da **8** (5 prosa + 3 literales de código) y sólo baja a 3 si se autoriza sustituir esos valores por `***`. Sin autorización, **no se tocó ningún archivo de prosa** |
+| **TEC-53 · D-003** | Rotar los **7 secretos** (`JWT_SECRET`, `ENCRYPTION_KEY`, `DATABASE_URL`, Gemini, YouCam, OpenUV, NVIDIA) | `backend/.env.production` **ya está en el historial de `main`** y el repo es público: rotar es la única reparación real. Y sin esa confirmación, 2b no aterriza |
+| **CI-16** | El candado de degradación alcanza `/api/payments/wompi-webhook`, `/api/disputes`, `/api/tickets`, `/api/auth/login`, `/api/admin/metrics` | Firma del Dueño: es una decisión de negocio, no de código |
+| **A-04** | `backend/public` (bundle Flutter commiteado): 192 archivos versionados pese a `.gitignore:68` | Decisión de arquitectura; y todo fix de frontend exige rebuild manual o no llega a producción |
 
 ## Procedencia de la verificación
 
-- Rama entregada: `fase-a/verdad-operativa` @ `c1069e9f` · `git status --porcelain` limpio.
-- Auditorías de esta rama: `docs/audit/AUDITORIA-ENTREGA-FASE-A-2026-09-24.md` (H-01..H-05) y `docs/audit/AUDITORIA-ENTREGA-FASE-A-RONDA-2-2026-09-24.md` (B1..B6).
+- Auditorías de esta rama: `docs/audit/AUDITORIA-ENTREGA-FASE-A-2026-09-24.md` (H-01..H-05), `…-RONDA-2-2026-09-24.md` (B1..B6), `AUDITORIA-ENTREGA-FASE-A-R5`, `AUDITORIA-ENTREGA-FASE-A-R6`.
+- Por rama: `docs/audit/AUDITORIA-ENTREGA-{A-01-RONDA-2,A-02-RONDA-2,A-03,A-05,A-06-RONDA-4,O-014,FASE-A-R6}`.
+- Ensayo del tren (merges, suites y escáner sobre el conjunto integrado): `docs/agents/ordenes/ENSAYO-TREN-A-2026-09-25.md`.
+- Ejecutado por el Arquitecto el 2026-09-25 (con declaración de conflicto de interés y sus mutaciones): `docs/agents/ordenes/EJECUCION-ARQUITECTO-2026-09-25.md`.
