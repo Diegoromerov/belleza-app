@@ -1,6 +1,6 @@
 # Estado actual — Belleza App / GlowApp
 
-**Medición:** 2026-09-25 00:15 UTC · **Copia de referencia:** `C:/beauty-app` ↔ `github.com/Diegoromerov/belleza-app` · **Base:** `main = f5a1b4fc` (sin mover desde el 2026-09-24)
+**Medición:** 2026-09-25 00:15 UTC · **§4, §5 y §8 re-medidos el 2026-09-25 ~06:30 UTC** (rondas 3-6 de Fase A sobre `fase-a/verdad-operativa` @ `b545ef22`) · **Copia de referencia:** `C:/beauty-app` ↔ `github.com/Diegoromerov/belleza-app` · **Base:** `main = f5a1b4fc` (sin mover desde el 2026-09-24)
 **Regla:** todo número de este documento tiene un comando que lo produce. Lo que no se pudo medir dice `NO VERIFICADO`.
 
 ---
@@ -40,10 +40,10 @@ La app está **funcionalmente a medias por dentro y aparentemente terminada por 
 
 | # | Criterio | Estado | Medición |
 |---|---|---|---|
-| S1 | Ninguna superficie `2xx` si su consulta falló | **✗** | `GET /api/products` = `200 OK` con datos fabricados y base inalcanzable |
-| S2 | La degradación es visible desde fuera | **✓** | `/api/health` = `503` + `X-GlowApp-Degraded: memory-fallback` |
-| S3 | El CI existe y **puede fallar** | **~** | ya no es hipótesis: PR #16 run [#1681](https://github.com/Diegoromerov/belleza-app/actions/runs/36072881287) ejecutó **6 pasos reales**, frontend ✅, backend ❌ en el paso 7 y **saltó los pasos 8-11**. Falta la mutación deliberada (O-005) |
-| S4 | Un comando sale `≠0` si algo finge | **✗** | `npm run smoke:surfaces` → exit `0` mientras `/api/products` mentía |
+| S1 | Ninguna superficie `2xx` si su consulta falló | **~ ✓** | candado de degradación aterrizado y aceptado (rondas 3-4): con la base inalcanzable `/api/products` = `503 DATA_LAYER_DEGRADED` + `X-GlowApp-Degraded`; con la base **arriba** y la app arrancada **como en producción**, `/api/products` = `200` con `count: 296` (medido 2026-09-25). **Matiz abierto (CI-22)**: `pgAvailable: false` significa también «nunca comprobado» ⇒ el candado puede bloquear con la base sana y la mutación del plan no está medida en los dos sentidos en el mismo arnés |
+| S2 | La degradación es visible desde fuera | **✓** | `/api/health` = `503 DEGRADED` + `X-GlowApp-Degraded: memory-fallback` (verificado en las rondas 1-4) |
+| S3 | El CI existe y **puede fallar** | **~** | PR #16 head `b545ef22`: run [36100419352](https://github.com/Diegoromerov/belleza-app/actions/runs/36100419352) ejecuta pasos reales, frontend ✅, backend ❌ en el **paso 7** («Escaneo de credenciales versionadas») y **salta los pasos 8-11** ⇒ la suite y la compuerta RLS **nunca se han ejecutado**. Falta CI-14 (5 líneas de prosa) para llegar al paso 8, y la mutación deliberada (O-005) |
+| S4 | Un comando sale `≠0` si algo finge | **✓** | verificado **en vivo por el Auditor** (ronda 4): plantó dos rutas con nombres distintos sin tocar el guardián ⇒ descubrió 310 rutas del stack vivo, marcó sólo la que fingía y salió `≠0`; y en la ronda 5, si el stack vivo no carga, el respaldo al inventario **aborta con `exit 1`** en vez de dar verde. **Residuos**: CI-17 (el «caso sano» es inalcanzable por construcción), CI-20 (`-ok.json` commiteado rancio) y CI-22 |
 
 ## 5. Estado de las compuertas (rol Guardián)
 
@@ -53,7 +53,7 @@ La app está **funcionalmente a medias por dentro y aparentemente terminada por 
 | Credenciales versionadas | `backend/scripts/verifyNoVersionedSecrets.js` | secretos en el árbol | **⚠ no fiable todavía**: su veredicto depende del fin de línea (CI-06) y quedó ciego al prefijo `glowapp_` (CI-08); ronda 2 en curso |
 | Aislamiento multi-tenant | `backend/scripts/verifyTenantIsolation.js` | RLS: `FORCE`, políticas laxas, roles con BYPASSRLS | ✓ **cuando el esquema se levanta**; sobre base vacía moría (CI-01) — corregido, sin aterrizar en `main` |
 | Estado y alineación del repositorio | `backend/scripts/estadoKB.js --check` | ramas zombis, ramas sin PR ni tag, worktrees muertos, copia desalineada | ✓ corre en local y en el cron semanal; **hoy sale `exit 1`** por 2 planes sin commitear (R1) |
-| Superficies honestas | `backend/scripts/smokeSurfaces.js` | que ninguna superficie mienta | **✗ no cumple su función** (ver S4) |
+| Superficies honestas | `backend/scripts/smokeSurfaces.js` | que ninguna superficie mienta | **~ cumple, con residuos** (ver S4): falla fuerte si el stack vivo no carga, marca `FAKED SUCCESS` y sale `≠0`. Su «caso sano» es **inalcanzable** mientras el guardián no arranque la app como la arranca la app (CI-17/CI-20/CI-22) ⇒ ronda 6 emitida |
 
 ## 6. Suites rojas heredadas (deuda declarada, no ocultada)
 
@@ -80,6 +80,10 @@ resilience | contextCompressor | fase5 | authRoutes | api.cors
 | A-06 | `fix/compuerta-secretos-reproducible` @ `5020e4df` | compuerta de credenciales reproducible | **✗ rechazada**: allowlist `glowapp_/dev_` ciega la compuerta (mutación demostrada), el fallback del `JWT_SECRET` se declaró «falso positivo», autotest tautológico. Ronda 2 emitida |
 | A-01 | `fix/rls-056-058-cadena` @ `c36accea` | `services` en `056` + aserción en `058` | **✓ aceptada en sustancia**: aserción probada por mutación, `PREPARE ×2 = 0`, `VERIFY = 0`. Ronda 2 (ligera): rebasar sobre `fase-a`, línea muerta `servicios`, aserción en el 2º bucle |
 | — | `docs/sistema-agentes` @ `fafe77fa` | sistema de agentes + base de conocimiento + auditorías | publicado; **nace de `main`, así que sus runs salen con 0 jobs** (CI-10) |
+| Fase A r3 / r4 | `fase-a/verdad-operativa` @ `9a86a902` / `3cef7f88` | candado de degradación + guardián por superficies | **S1 ✓ ACEPTADA** · **S4 ✓ ACEPTADA** (310 rutas del stack vivo, `exit 1`; CI-15 CERRADA) |
+| A-02 r2 | `fix/admin-metricas-sin-datos` @ `f565037c` | `/api/admin/metrics` sin `Math.random` | **✓ ACEPTADA**; **CI-18** nueva (el mes proyectado salta cuando hoy es 29/30/31) ⇒ ronda 3 emitida |
+| A-06 r4 | `fix/compuerta-secretos-reproducible` @ `abfb4bda` + `fix/jwt-sin-respaldo` @ `dbb87293` | compuerta de secretos reproducible | **✗ RECHAZADA**: el refactor perdió la asociación regla→hallazgo (109/104 falsos contra 8/5 reales) ⇒ **CI-19** y **R-08** ⇒ ronda 5 emitida |
+| Fase A r5 | `fase-a/verdad-operativa` @ `b545ef22` | fail-fast del guardián + comando del caso sano + atribución del rechazo | **✓ ACEPTADA** con residuos. **Corrección mía del mismo día** (R-06): CI-17 **re-abierta**, CI-20 **rectificada** (no era Redis: el guardián nunca ejecuta el arranque de la app) y **CI-22** nueva ⇒ ronda 6 emitida |
 
 **Decisión pendiente del Dueño:** D-002 (`delete_branch_on_merge`) · D-003 (**rotar los 7 secretos**, porque `backend/.env.production` está en el historial de `main`) · D-004 (mergear `docs/sistema-agentes`) · D-005 (#10/#12) · **A-04** (¿`backend/public` es artefacto commiteado o derivado?) · y 2 planes sin commitear en `C:/beauty-app/.hermes/plans/` que mantienen al guardián en `exit 1`.
 
