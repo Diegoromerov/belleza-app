@@ -332,6 +332,13 @@ Cuando una trampa solo quedó documentada en la auditoría 360 o en su material 
 - **Falso veredicto que produce:** creer que el repo «no tiene CI» cuando lo que tiene es un CI **roto que finge intentar**; y declarar «el primer run de la historia» cuando el primer run *con pasos* es otra cosa.
 - **Regla:** antes de decir «nunca pasó X» en un servicio con API pública, **consultarla** (`total_count` y el desglose por rama). Y al auditar un workflow, distinguir tres estados: **sin runs**, **runs sin jobs** (archivo inválido) y **runs con jobs** (el workflow se evaluó).
 
+### R-07 · Un test que lee el código como texto no prueba comportamiento
+- **Síntoma:** dos entregas de este ciclo (`A-06` y `A-02`) presentaron como prueba un archivo de test que hace `fs.readFileSync` y luego `expect(contenido).toContain('…')` o cuenta ocurrencias de una cadena (`Math.random()`). Las dos declararon «2 passed, 2 total» y las dos cerraban la orden con esa evidencia.
+- **Causa raíz:** se confundió **comprobar que el arreglo está escrito** con **comprobar que el comportamiento ocurre**. La aserción pasa aunque la lógica esté invertida, aunque la rama muerta no se ejecute nunca y aunque el defecto vuelva por otra vía que no use la cadena vigilada.
+- **Cómo se detectó:** mutando el código **sin tocar las cadenas vigiladas** — en `A-02`, `let history = []` → dos meses de ingresos inventados (sin `Math.random`): la suite siguió verde `2 passed, 2 total`. En `A-06`, la normalización quitada no hacía fallar su «autotest».
+- **Falso veredicto que produce:** «el defecto queda cubierto por un test» cuando el test solo vigila la ortografía del arreglo; la orden se cierra sin compuerta y el dinero puede volver a inventarse con la suite en verde.
+- **Regla:** la prueba **ejerce** el comportamiento (función pura extraída, endpoint con `supertest`, o `res` simulado) y se demuestra **roja** reintroduciendo el defecto por una vía que el texto no delate. `expect(fuente).toContain(…)` sobre el código fuente no es una prueba: es un `grep` con `expect`. (`AUDITORIA-ENTREGA-A-06-2026-09-24.md` §4 · `AUDITORIA-ENTREGA-A-02-2026-09-24.md` §2 · filas `CI-09` y `CI-11`.)
+
 ---
 
 ## Reglas transversales (resumen operativo)
@@ -344,3 +351,4 @@ Cuando una trampa solo quedó documentada en la auditoría 360 o en su material 
 6. **Un saldo, un dueño; una comisión, una fuente; una disputa, un camino; un esquema, un runner.**
 7. **Toda sonda de auditoría es read-only sobre el árbol auditado** (clon desechable para lo que escriba, namespace declarado, temporales en el scratch).
 8. **Consolidar no es medir.** Una fila heredada de una auditoría anterior se re-verifica contra el código de hoy antes de publicarse: las citas de línea caducan.
+9. **La prueba ejerce comportamiento, no texto.** Un test que lee el fuente y hace `toContain` no cierra una tarea: se demuestra que **falla** reintroduciendo el defecto por una vía que el texto no delate.
