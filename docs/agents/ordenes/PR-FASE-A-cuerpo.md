@@ -52,7 +52,15 @@ geminiService | geminiFallback | auraToolExecutor | contract | biometric
 resilience | contextCompressor | fase5 | authRoutes | api.cors
 ```
 
-**El verde de ese paso es verde por exclusión.** No equivale a «verificado»: las 15 suites rojas son deuda heredada y el estado real aparece en el paso no bloqueante.
+**El verde de ese paso es verde por exclusión.** No equivale a «verificado»: el estado real aparece en el paso no bloqueante.
+
+**Medido el 2026-09-25** (suite completa, `npx jest`, 82 suites / 620 tests): **19 suites rojas y 81 tests rojos**. Atribución por
+diferencia contra el commit base (`85687237^`), no por opinión: **el conjunto de suites rojas es idéntico** y el fix de A-06 r5 sólo
+**suma 6 tests verdes** ⇒ **0 regresiones nuevas; las 19 son deuda heredada**.
+
+**Y una de esas 19 no es heredada sino del repo**: `backend/src/tests/audit360-remediation.test.js:192` ejecuta el escáner real y falla
+si sale `≠0`; esa suite **no** está entre los 10 patrones excluidos, así que **corre bloqueando** ⇒ con credenciales versionadas > 0 el CI
+no puede estar verde ni en el paso de tests ni en el paso 7 (ver CI-14 en `docs/knowledge/DEUDA.md`).
 
 ## Lo que este PR **no** puede cerrar solo (necesita al Dueño)
 

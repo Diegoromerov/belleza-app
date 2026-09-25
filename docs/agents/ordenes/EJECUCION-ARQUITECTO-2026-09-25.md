@@ -124,3 +124,18 @@ y 5 (2b) precisamente por eso, y eso es lo correcto mientras el Dueño no decida
 
 - `npm test` completo sobre la rama de A-06 r5 (resumen failed/passed/total).
 - O-014 ronda 8: en manos de Antigravity (prompt entregado por el Dueño).
+
+### 6.5 C5 — la suite completa, medida y atribuida (no citada)
+
+| | suites | tests |
+|---|---|---|
+| base (`85687237^`) | 19 failed / 62 passed (81) | 81 failed / 531 passed (614) |
+| con A-06 r5 (`85687237`) | 19 failed / 63 passed (82) | 81 failed / 537 passed (620) |
+
+La **diferencia de conjuntos de suites rojas es vacía en los dos sentidos**: las mismas 19 fallan antes y después, y el fix
+sólo **suma 6 tests verdes** (mi suite nueva). ⇒ **0 regresiones nuevas**, y las 19 quedan atribuidas por medición, no por
+«son heredadas» (A-05 las tenía como `NO MEDIDO`; ahora está medido).
+
+**Y una de las 19 es del repo, no heredada:** `audit360-remediation.test.js:192` corre el escáner real y falla si sale ≠0; esa
+suite no está excluida del paso bloqueante de `ci.yml:98`, así que **bloquea el CI** mientras haya credenciales versionadas ⇒
+CI-14 y 2b son las dos necesarias para llegar a 0 (registrado en CI-14).
