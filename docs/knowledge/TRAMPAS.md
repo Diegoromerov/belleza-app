@@ -341,6 +341,12 @@ Cuando una trampa solo quedó documentada en la auditoría 360 o en su material 
 
 ---
 
+### R-08 · Refactorizar un pipeline que concatena salidas pierde la asociación patrón → hallazgo
+
+Un escáner con **N reglas** se apoya en dos cosas distintas: el **patrón que selecciona** las líneas (`git grep`) y el **validador que las juzga**. Si un refactor las separa —se recolecta la salida de todas las reglas en un blob y luego se re-clasifica—, la línea que llegó por el patrón A puede quedar etiquetada con la regla B (la primera que la acepte), y basta que **una** regla tenga un `validar` que no re-verifique su propio patrón para que el recuento se infle y las etiquetas mientan. Medido: 8 → 109 hallazgos con 101 mal etiquetados, y `git grep '[?&]token='` daba 9 líneas.
+
+**Regla al ordenar un refactor de este tipo:** (1) preservar la asociación (una salida por regla, o cada validador re-verificando su propio patrón); (2) la prueba debe fijar **la etiqueta**, no solo el recuento (un fixture con **dos** reglas casando en el mismo blob es lo que lo detecta); (3) pedir en la orden el **número esperado** de la corrida real, para que un cambio de veredicto salte a la vista. La culpa fue también del Arquitecto: la orden decía «`gitGrep → analizarSalida`» sin exigir la asociación.
+
 ## Reglas transversales (resumen operativo)
 
 1. **Un número sin comando no es un número.** Conteos, hashes, porcentajes: con el comando que los produce, o no se publican.
