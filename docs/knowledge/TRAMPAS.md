@@ -313,6 +313,12 @@ Mi C5 de la ronda 5 de Fase A pedía «una corrida **sana** pegada». El arnés 
 
 Ejecuté `node backend/scripts/estadoKB.js --check` **desde `C:/beauty-app`** —donde ese archivo no existe, porque vive en la rama `docs/sistema-agentes`— y con ese `MODULE_NOT_FOUND` **retracté** un dato correcto de la KB («el guardián sale `exit 1` por los 2 planes sin commitear»). El runner real busca el script en **dos** rutas y sí lo ejecuta: `exit=1` por los 2 planes, tal como decía la KB. **Regla:** antes de retractar algo, reproducí **el comando exacto del sistema** (el runner, el job del cron, el paso del workflow), no tu reconstrucción de lo que creés que hace. Vale también al revés: cuando el sistema usa un *script* que vive fuera del repo, la medición tiene que correr ese script, no su equivalencia escrita a mano.
 
+### Un camino que ningún caso de test recorre es un camino que no existe
+
+El runner versionado venía con **3 tests que pasan** — y los tres fijan el chequeo a un **mock**, así que el camino real (el que ejecutará el cron) nunca se probó, y era **el único roto** (`pwd` de MSYS ⇒ `/c/...` ⇒ `node.exe` resuelve `C:\c\Users\...`). Al auditar un runner/script, contá **cuántos casos usan el camino real**, no cuántos pasan; y pedí el caso sin override explícitamente.
+
+**Corolario de entorno (este host):** toda ruta que salga de `pwd` y termine en un **binario nativo** (`node`, `curl`, `git.exe`) está mal formada en MSYS. `git rev-parse --show-toplevel` devuelve la forma nativa (`C:/...`) y sirve para ambos mundos; `[ -f ]`, `cd` y `test` sí entienden `/c/...`.
+
 ## 7. Trampas de razonamiento del auditor (retracciones de esta sesión)
 
 ### R-01 · Contar las clases ignorando una cláusula de la propia regla
