@@ -52,3 +52,19 @@
 - `fase-a/verdad-operativa` = `b545ef22` (sin mover) · `main` = `f5a1b4fc` (sin mover).
 - Las 5 ramas del tren: SHA intactos (`6268afff`, `ba06e563`, `38a9afe9`, `f565037c`, `07e7225e`).
 - Worktree de ensayo **retirado**; no se creó ninguna rama (`detach`); nada se empujó.
+
+## 6. CORRECCIÓN (R-06) — 2026-09-25, mismo día
+
+En §2 escribí «con base real» y «NODE_ENV=development + base real». **Era falso: el demonio de Docker estaba caído**
+(contenedor beauty-postgres parado, ECONNREFUSED 127.0.0.1:5435) ⇒ esas corridas **no tenían base**. El hallazgo (**CI-28**)
+sigue en pie y quedó demostrado con el fix (3/3 en los 4 escenarios) y su mutación, pero la cita era incorrecta y se corrige aquí.
+
+**Nota de entorno:** con Docker caído, /api/health da 503 y **parece** que el candado bloquea; verificá el banco de trabajo antes
+de concluir nada sobre el candado. Y la credencial del contenedor **no conecta dentro de una URL** (postgres://admin:***@… caía a
+memoria); los mismos datos como campos sueltos (DB_USER/DB_PASSWORD/DB_NAME/DB_HOST/DB_PORT, soportados en db.js:28-34) sí
+(TCP OK → beauty_db).
+
+## 7. Ensayo con O-016 (posterior, mismo día)
+
+Con fix/contrato-convive-con-candado (3a9148ad) integrado: **6 merges, 0 conflictos** (HEAD 0384b058) y **5 suites / 21 tests PASS**,
+routing.contract **verde** (antes rojo). fase-a y main sin mover. **El tren puede aterrizar** en cuanto el Dueño lo decida.

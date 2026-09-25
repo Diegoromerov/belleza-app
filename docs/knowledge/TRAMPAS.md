@@ -319,6 +319,14 @@ El runner versionado venía con **3 tests que pasan** — y los tres fijan el ch
 
 **Corolario de entorno (este host):** toda ruta que salga de `pwd` y termine en un **binario nativo** (`node`, `curl`, `git.exe`) está mal formada en MSYS. `git rev-parse --show-toplevel` devuelve la forma nativa (`C:/...`) y sirve para ambos mundos; `[ -f ]`, `cd` y `test` sí entienden `/c/...`.
 
+### El 503 puede ser que no haya base, no que el candado bloquee
+
+Con el demonio de Docker parado (beauty-postgres abajo, ECONNREFUSED 5435) toda la app responde 503 y **parece** el candado
+de degradación actuando. Medí el tren tres veces «con base» sin tener base y publiqué esa cita. **Regla:** antes de concluir
+algo sobre el candado o sobre el «caso sano», verificá que el banco de trabajo esté arriba (docker ps + psql select 1) y que la
+credencial realmente conecte. Corolario: la credencial del contenedor **no** funciona dentro de una URL; usá los campos sueltos
+que db.js:28-34 soporta (DB_USER/DB_PASSWORD/DB_NAME/DB_HOST/DB_PORT).
+
 ## 7. Trampas de razonamiento del auditor (retracciones de esta sesión)
 
 ### R-01 · Contar las clases ignorando una cláusula de la propia regla
