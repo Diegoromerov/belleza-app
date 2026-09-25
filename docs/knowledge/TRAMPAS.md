@@ -397,3 +397,15 @@ Un escáner con **N reglas** se apoya en dos cosas distintas: el **patrón que s
 7. **Toda sonda de auditoría es read-only sobre el árbol auditado** (clon desechable para lo que escriba, namespace declarado, temporales en el scratch).
 8. **Consolidar no es medir.** Una fila heredada de una auditoría anterior se re-verifica contra el código de hoy antes de publicarse: las citas de línea caducan.
 9. **La prueba ejerce comportamiento, no texto.** Un test que lee el fuente y hace `toContain` no cierra una tarea: se demuestra que **falla** reintroduciendo el defecto por una vía que el texto no delate.
+
+### No escribas la KB con `node -e` dentro de comillas dobles del shell
+
+Al insertar la re-medición de CI-10 con `node -e "..."` entre comillas dobles, los fragmentos que iban entre backticks
+(`` `ci.yml` ``, `` `docs/sistema-agentes` ``, `` `jobs: 0` ``) los interpretó **bash** como sustitución de comandos y se
+comieron el texto: la fila quedó manglada y el comando imprimió varias veces `unexpected EOF while looking for matching
+backtick`. El script «éxito» igual, porque `node` corrió y escribió algo. **Regla:** para escribir en la KB (o en cualquier
+archivo con markdown y backticks) usá un **archivo `.js`** y `node archivo.js`, nunca `node -e` con comillas dobles.
+Y después de escribir, **leé lo escrito** (`tail -c`) para comprobar que no quedó cortado: un `exit 0` no prueba que el
+texto esté entero.
+
+## 8. Decisiones del Dueño pendientes (escaladas)
