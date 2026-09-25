@@ -3,7 +3,7 @@
  * verifyNoVersionedSecrets.js
  * A360-2026-09-22/C-02 — Falla si hay credenciales reales en archivos TRACKEADOS.
  * WO B-02 — Reglas extendidas para valores literales por defecto en vars sensibles y tokens en URL.
- * ORDEN A-06 — Normalización CRLF/LF, acotamiento de alcance (código ejecutable) y exención de CI efímero.
+ * ORDEN A-06 — Normalización CRLF/LF, acotamiento de alcance (código ejecutable) y compuerta pura exportada.
  *
  * Sin dependencias externas: usa `git grep` sobre el índice/árbol de trabajo.
  * Nunca imprime el valor del secreto, solo archivo:línea y el tipo de patrón.
@@ -24,10 +24,9 @@ const REGLAS = [
     buscar: 'postgres(ql)?://[^:"\'[:space:]]+:[^@"\'[:space:]]+@',
     validar: (linea, archivo) => {
       if (archivo && /\.(test|spec)\.[jt]sx?$/.test(archivo)) return false;
-      const cleanLine = linea.replace(/\r$/, '');
       const re = /postgres(?:ql)?:\/\/([^:\s"'`<>]+):([^@\s"'`<>]+)@/g;
       let m;
-      while ((m = re.exec(cleanLine)) !== null) {
+      while ((m = re.exec(linea)) !== null) {
         const pw = m[2];
         if (pw !== '***' && !ALLOW_MARKERS.test(pw) && !/^(%|REDACTED|\$|\$\{|<|YOUR|TU_|password|pass|changeme|postgres|admin|admin123|root|ci_only_password)/i.test(pw)) return true;
       }
@@ -38,8 +37,7 @@ const REGLAS = [
     nombre: 'clave NVIDIA',
     buscar: 'nvapi-[A-Za-z0-9_-]{10,}',
     validar: (linea) => {
-      const cleanLine = linea.replace(/\r$/, '');
-      const m = cleanLine.match(/nvapi-[A-Za-z0-9_-]{10,}/);
+      const m = linea.match(/nvapi-[A-Za-z0-9_-]{10,}/);
       return m ? !ALLOW_MARKERS.test(m[0]) : false;
     }
   },
@@ -47,8 +45,7 @@ const REGLAS = [
     nombre: 'clave tipo OpenAI',
     buscar: '(^|[^A-Za-z0-9])sk-[A-Za-z0-9_-]{24,}',
     validar: (linea) => {
-      const cleanLine = linea.replace(/\r$/, '');
-      const m = cleanLine.match(/sk-[A-Za-z0-9_-]{24,}/);
+      const m = linea.match(/sk-[A-Za-z0-9_-]{24,}/);
       return m ? !ALLOW_MARKERS.test(m[0]) : false;
     }
   },
@@ -56,22 +53,20 @@ const REGLAS = [
     nombre: 'clave tipo Google API',
     buscar: '(^|[^A-Za-z0-9])AIza[A-Za-z0-9_-]{30,}',
     validar: (linea) => {
-      const cleanLine = linea.replace(/\r$/, '');
-      const m = cleanLine.match(/AIza[A-Za-z0-9_-]{30,}/);
+      const m = linea.match(/AIza[A-Za-z0-9_-]{30,}/);
       return m ? !ALLOW_MARKERS.test(m[0]) : false;
     }
   },
   {
     nombre: 'clave privada PEM',
     buscar: '-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----',
-    validar: (linea) => !ALLOW_MARKERS.test(linea.replace(/\r$/, ''))
+    validar: (linea) => /-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----/.test(linea) && !ALLOW_MARKERS.test(linea)
   },
   {
     nombre: 'token de Slack/GitHub',
     buscar: '(xox[baprs]-[A-Za-z0-9-]{10,}|gh[pousr]_[A-Za-z0-9]{30,})',
     validar: (linea) => {
-      const cleanLine = linea.replace(/\r$/, '');
-      const m = cleanLine.match(/(xox[baprs]-[A-Za-z0-9-]{10,}|gh[pousr]_[A-Za-z0-9]{30,})/);
+      const m = linea.match(/(xox[baprs]-[A-Za-z0-9-]{10,}|gh[pousr]_[A-Za-z0-9]{30,})/);
       return m ? !ALLOW_MARKERS.test(m[0]) : false;
     }
   },
@@ -80,15 +75,14 @@ const REGLAS = [
     buscar: '(PASS|PASSWORD|SECRET|TOKEN|KEY|CLAVE|PWD)[A-Za-z0-9_]*[[:space:]]*(:|=|\\|\\||\\?\\?)[[:space:]]*',
     validar: (linea, archivo) => {
       if (!archivo) return false;
-      const cleanLine = linea.replace(/\r$/, '');
       if (/\.(test|spec)\.[jt]sx?$/.test(archivo)) return false;
       if (/scripts\/verify/.test(archivo)) return false;
-      if (/^\s*(\/\/|\/\*|\*|#)/.test(cleanLine.trim())) return false;
-      if (/^\s*(console\.(log|info|warn|error)|logger\.(log|info|warn|error))\b/.test(cleanLine.trim())) return false;
+      if (/^\s*(\/\/|\/\*|\*|#)/.test(linea.trim())) return false;
+      if (/^\s*(console\.(log|info|warn|error)|logger\.(log|info|warn|error))\b/.test(linea.trim())) return false;
 
       const re = /(?:const|let|var|this\.)?\s*([A-Za-z0-9_]*(?:PASS|PASSWORD|SECRET|TOKEN|KEY|CLAVE|PWD)[A-Za-z0-9_]*)\s*(?::|=|\|\||\?\?)\s*(?:['"]([^'"]+)['"]|([^\s#;,]+))/gi;
       let m;
-      while ((m = re.exec(cleanLine)) !== null) {
+      while ((m = re.exec(linea)) !== null) {
         const val = (m[2] !== undefined ? m[2] : m[3]) || '';
         if (!val || val.length < 4) continue;
         if (val.startsWith('$') || val.startsWith('${') || val.includes('${') || /^process\.env\./i.test(val) || /^env\./i.test(val)) continue;
@@ -107,12 +101,11 @@ const REGLAS = [
     buscar: '[?&]token=',
     validar: (linea, archivo) => {
       if (!archivo) return false;
-      const cleanLine = linea.replace(/\r$/, '');
       if (/^docs\/.*\.md$/i.test(archivo)) return false;
       if (/\.(test|spec)\.[jt]sx?$/.test(archivo)) return false;
       if (/scripts\/verify/.test(archivo)) return false;
-      if (/^\s*(\/\/|\/\*|\*|#)/.test(cleanLine.trim())) return false;
-      if (ALLOW_MARKERS.test(cleanLine) || /<[^>]+>|\$\{[^}]+\}/.test(cleanLine)) return false;
+      if (/^\s*(\/\/|\/\*|\*|#)/.test(linea.trim())) return false;
+      if (ALLOW_MARKERS.test(linea) || /<[^>]+>|\$\{[^}]+\}/.test(linea)) return false;
       return true;
     }
   }
@@ -131,17 +124,47 @@ const VENDOR = [/node_modules\//, /\/gradle\/wrapper\//, /\.min\.js$/, /^backend
 
 function gitGrep(pattern) {
   try {
-    const rawOutput = execFileSync('git', ['grep', '-n', '-E', '-I', '-e', pattern, '--', '.'], {
+    return execFileSync('git', ['grep', '-n', '-E', '-I', '-e', pattern, '--', '.'], {
       cwd: REPO_ROOT,
       encoding: 'utf8',
       maxBuffer: 32 * 1024 * 1024,
       stdio: ['ignore', 'pipe', 'pipe'],
     });
-    return rawOutput.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
   } catch (err) {
     if (err.status === 1) return '';
     throw err;
   }
+}
+
+function analizarSalida(rawOutput, options = {}) {
+  const normalize = options.normalize !== false;
+  const processedOutput = normalize 
+    ? (rawOutput || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+    : (rawOutput || '');
+
+  const hallazgos = [];
+  const lineas = processedOutput.split('\n');
+
+  for (const linea of lineas) {
+    if (!linea.trim()) continue;
+    const m = linea.match(/^([^:]+):(\d+):(.*)$/);
+    if (!m) continue;
+    const [, archivo, numLinea, contenido] = m;
+    if (EXENTAS.some((re) => re.test(archivo))) continue;
+    if (VENDOR.some((re) => re.test(archivo))) continue;
+
+    for (const regla of REGLAS) {
+      if (regla.validar(contenido, archivo)) {
+        hallazgos.push({ archivo, numLinea, nombre: regla.nombre });
+        break;
+      }
+    }
+  }
+
+  return {
+    hallazgos,
+    exitCode: hallazgos.length > 0 ? 1 : 0
+  };
 }
 
 function validarLinea(contenido, archivo, reglaNombre, normalize = true) {
@@ -171,23 +194,14 @@ function validarLinea(contenido, archivo, reglaNombre, normalize = true) {
 }
 
 function runScanner() {
-  const hallazgos = [];
-
+  let rawOutput = '';
   for (const regla of REGLAS) {
-    const salida = gitGrep(regla.buscar);
-    for (const linea of salida.split('\n')) {
-      if (!linea.trim()) continue;
-      const m = linea.match(/^([^:]+):(\d+):(.*)$/);
-      if (!m) continue;
-      const [, archivo, numLinea, contenido] = m;
-      if (EXENTAS.some((re) => re.test(archivo))) continue;
-      if (VENDOR.some((re) => re.test(archivo))) continue;
-      if (!regla.validar(contenido, archivo)) continue;
-      hallazgos.push({ archivo, numLinea, nombre: regla.nombre });
-    }
+    rawOutput += gitGrep(regla.buscar);
   }
 
-  if (hallazgos.length === 0) {
+  const { hallazgos, exitCode } = analizarSalida(rawOutput);
+
+  if (exitCode === 0) {
     console.log('✅ Sin credenciales versionadas en archivos trackeados.');
     process.exit(0);
   }
@@ -197,11 +211,11 @@ function runScanner() {
     console.error(`   ${h.archivo}:${h.numLinea} — ${h.nombre}`);
   }
   console.error('\nAcción: mover el valor a una variable de entorno, rotarlo y purgar del historial (A360-2026-09-22/C-02).');
-  process.exit(1);
+  process.exit(exitCode);
 }
 
 if (require.main === module) {
   runScanner();
 } else {
-  module.exports = { REGLAS, EXENTAS, VENDOR, ALLOW_MARKERS, validarLinea, runScanner };
+  module.exports = { REGLAS, EXENTAS, VENDOR, ALLOW_MARKERS, validarLinea, analizarSalida, runScanner };
 }
