@@ -148,11 +148,43 @@ Dos bloques de montaje (`:388-424` y `:532-561`) más la cola (`:1018`, `:1379`)
 
 # ORDEN A-05 · Procedencia de las cifras en `ci.yml`
 
-**GOAL:** que ninguna afirmación de resultado viva como comentario sin origen.
+**Origen / re-medido 2026-09-25** sobre `fase-a/verdad-operativa` @ `c1069e9f`. **Corrección de la orden vieja:** decía «bloqueada por A-01» — solo lo está en una parte. El reparto de suites y la procedencia de cada cifra **se miden hoy**; lo que espera a A-01/A-06 es *cuántas están rojas*. La orden vieja tampoco citaba línea: hoy sí.
 
-- El comentario del paso de tests afirma «mismas 15 suites rojas heredadas, 0 fallos nuevos». O se reemplaza por una remisión a la evidencia (URL del run o comando + fecha), o se elimina.
-- El paso bloqueante corre ≈66 de las 80 suites (14 archivos casan patrones excluidos; el patrón `authRoutes` hoy **no excluye nada**: corregirlo o quitarlo, y decir cuál).
-- **Bloqueada por A-01**: no se puede medir cuántas suites están rojas hasta que el esquema se levante. No se inventa la cifra mientras tanto.
+**GOAL:** que ninguna cifra de resultado viva sin origen en `ci.yml`, y que el gate diga exactamente qué corre y qué no.
+
+**Rama:** `fix/ci-procedencia` **desde `fase-a/verdad-operativa`**; PR a **`main`** (CI-10).
+
+### Lo medido hoy (`.github/workflows/ci.yml` en `fase-a`)
+
+| Qué | Dónde |
+|---|---|
+| Comentario `# … mismo resultado con PostgreSQL real que con pg-mem (mismas 15 suites rojas …` | `:91-92` |
+| Paso bloqueante: `npm test -- --coverage --testPathIgnorePatterns="geminiService\|geminiFallback\|auraToolExecutor\|contract\|biometric\|resilience\|contextCompressor\|fase5\|authRoutes\|api.cors"` (10 patrones) | `:93-98` |
+| Comentario `# Deuda visible, no oculta: las suites excluidas del gate se ejecutan igual` | `:100` |
+| Paso **no bloqueante** (`continue-on-error: true`) con `--testPathPattern="…"` (los mismos 10 patrones) | `:102-106` |
+| `authRoutes` en todo el archivo | **solo** `:98` y `:106` |
+| Colección de suites: `testMatch: ['**/tests/**/*.test.js','**/__tests__/**/*.test.js']` | `backend/jest.config.js:8-10` |
+| Suites `.test.js` en el repo | **80** (`git ls-tree -r --name-only <R> \| grep -c '\.test\.js$'`) |
+
+### Qué exactamente hay que arreglar
+
+1. **La cifra `:91-92`**: o se reemplaza por una remisión verificable (URL del run + SHA + fecha) o se elimina. Prohibido dejarla como prosa.
+2. **El reparto real de suites**: `npm test -- --listTests` **con** el `--testPathIgnorePatterns` del paso bloqueante y **sin** él; pega **los dos números y los nombres**. El reporte debe decir «N de 80 dentro del gate, M fuera», no «≈66».
+3. **Todo patrón que no case con ningún archivo** (medido: `authRoutes` aparece solo en las dos invocaciones, no como nombre de archivo): o se corrige para que excluya lo que dice, o se quita — y se dice cuál de las dos. Vale para los 10 patrones, uno por uno.
+4. **El comentario `:100`**: verifica que el paso no bloqueante realmente ejecuta las excluidas (`continue-on-error: true` hace que un rojo no tumbe el run, pero el run debe *correr*) y describe el mecanismo real. Hoy ningún run ha mostrado ese camino funcionando (`jobs=0` por CI-10), así que no lo afirmes sin verlo: si no puedes verlo, escríbelo como **NO VERIFICADO**.
+5. **La parte que sigue bloqueada:** cuántas suites están **rojas** no se puede contar hasta que (a) la compuerta de secretos deje de morir en el paso 7 y (b) el esquema se levante. Mientras tanto se escribe `NO MEDIDO — bloqueado por el paso 7` con el enlace al run. **La cifra no se inventa.**
+
+### Criterios de aceptación (todos falsables, con salida pegada)
+
+| # | Criterio | Cómo se prueba |
+|---|---|---|
+| C1 | Cada cifra del archivo tiene comando o enlace que la produce | `grep -nE '[0-9]+ (suites\|tests\|fallos\|rojas)' .github/workflows/ci.yml` → una línea por cifra con su procedencia |
+| C2 | El paso bloqueante declara cuántas suites corre y coincide con la corrida real | salida de `--listTests` con y sin el filtro, pegada |
+| C3 | Todo patrón de exclusión casa con ≥1 archivo o se elimina | el mismo listado, patrón por patrón |
+| C4 | Los comentarios describen el mecanismo real; lo no visto queda `NO VERIFICADO` | diff del archivo + enlace al run |
+| C5 | Cero cambios en el *conjunto* de suites excluidas | `git diff` del archivo: solo comentarios y, si acaso, un patrón corregido (declarado) |
+
+**Prohibido:** poner cifras nuevas sin el comando que las produce · borrar el paso no bloqueante «para simplificar» · cambiar qué suites se excluyen (eso **cambia el gate**: es otra tarea y necesita decisión del Dueño) · medir sobre `main` (su `ci.yml` tiene marcadores de conflicto) · base `main`.
 
 ---
 
