@@ -136,6 +136,29 @@ function gitGrep(pattern) {
   }
 }
 
+/**
+ * Ronda 5 (Cargo 1, vía B) — re-verificación propia del patrón.
+ *
+ * `git grep` selecciona las líneas de cada regla con SU `buscar`, pero `analizarSalida` etiquetaba con
+ * la primera regla dispuesta a aceptarlas; la última («token o JWT en parámetro de URL») acepta
+ * cualquier línea no comentada **sin volver a mirar su patrón**, así que se quedaba con las líneas que
+ * las reglas anteriores seleccionaron por grep y rechazaron al validar (medido: 101 de 109).
+ *
+ * Aquí cada regla vuelve a comprobar SU PROPIO `buscar` antes de aceptar: **una línea no puede quedar
+ * etiquetada con una regla que no la seleccionó** (y el recuento vuelve al real, sin recortar reglas).
+ *
+ * Ojo: `[[:space:]]` es POSIX y no existe en JS (en JS sería una clase con esos caracteres) ⇒ se
+ * traduce a `\s` para medir exactamente lo mismo que `git grep -E` (que es case-sensitive, igual que JS).
+ */
+function patronDeBusqueda(patron) {
+  return new RegExp(String(patron).replace(/\[\[:space:\]\]/g, '\\s'));
+}
+
+const REGLAS_CON_REVERIFICACION = REGLAS.map((regla) => ({
+  ...regla,
+  validar: (linea, archivo) => patronDeBusqueda(regla.buscar).test(linea) && regla.validar(linea, archivo),
+}));
+
 function analizarSalida(rawOutput, options = {}) {
   const normalize = options.normalize !== false;
   const processedOutput = normalize 
@@ -153,7 +176,7 @@ function analizarSalida(rawOutput, options = {}) {
     if (EXENTAS.some((re) => re.test(archivo))) continue;
     if (VENDOR.some((re) => re.test(archivo))) continue;
 
-    for (const regla of REGLAS) {
+    for (const regla of REGLAS_CON_REVERIFICACION) {
       if (regla.validar(contenido, archivo)) {
         hallazgos.push({ archivo, numLinea, nombre: regla.nombre });
         break;
