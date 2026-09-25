@@ -24,7 +24,7 @@
 | C3 | `056` sin la línea de `servicios` | el propio archivo, pegado |
 | C4 | Aserción presente en **los dos** bucles de `058` | pegar las dos ocurrencias de `RAISE EXCEPTION` |
 | C5 | La evidencia local sigue igual tras el rebase | `PREPARE ×2 = 0` y `VERIFY = 0` sobre base descartable, pegado otra vez |
-| C6 | URL del PR **a `main`** y, si sale run, su estado | con la rama ya basada en `fase-a`, el run sí ejecuta pasos |
+| C6 | URL del PR **a `main`** y su estado por paso. **Expectativa real (medido 2026-09-25):** con el rebase el run **sí existirá** (jobs > 0, ya no los 0 jobs de CI-10), pero **seguirá muriendo en el paso 7** — la compuerta de secretos, que hoy ve **2 literales reales** (`jwt.js:2`, `biometricCryptoService.js:18`) y sólo se pondrá verde cuando aterricen A-06 2a+2b. Lo exigido aquí **no es un verde**: es que el run exista, que el **único rojo sea el paso 7** y que los pasos 8-11 queden identificados como `skipped` por esa causa | URL del run + estado paso por paso |
 
 ## Prohibiciones
 
