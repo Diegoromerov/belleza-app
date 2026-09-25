@@ -305,6 +305,10 @@ Anclar la mutación en una cadena que aparece **primero en un comentario o en el
 
 **Regla:** ancla la mutación en una construcción exclusiva del **código** (una variable, una llamada, un `return`) y **pega la línea que mutaste** en la evidencia. Ojo también con las mutaciones que no cambian comportamiento (`exitCode: 0` en una rama que nadie ejecuta). En este entorno, además, **jest puede imprimir el resumen y quedarse vivo**: envuélvelo en `timeout` para que el cierre no se confunda con un cuelgue.
 
+### No exijas evidencia que el arnés no puede producir
+
+Mi C5 de la ronda 5 de Fase A pedía «una corrida **sana** pegada». El arnés no puede producirla: el guardián fuerza `NODE_ENV=test`, la app solo arranca bajo `NODE_ENV !== 'test'` y la comprobación de base vive dentro de ese callback ⇒ `pgAvailable` queda `false` para siempre y **toda** corrida del guardián es degradada. Su autor pegó la corrida que el arnés sí permite y **yo la llamé sana porque salía `EXIT=0` con 0 fakes: confundí «no finge éxito» con «está sano»**. Regla: antes de exigir una evidencia, **probá que el arnés pueda producirla**; y cuando una salida trae un campo de estado (`IsDegraded`, `HealthStatus`, `server_degraded`), **copialo en la cita** — es el discriminador, no el color del texto.
+
 ## 7. Trampas de razonamiento del auditor (retracciones de esta sesión)
 
 ### R-01 · Contar las clases ignorando una cláusula de la propia regla

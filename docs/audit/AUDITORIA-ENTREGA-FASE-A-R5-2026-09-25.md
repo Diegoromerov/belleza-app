@@ -41,3 +41,18 @@ Mi corrida **sana** (base arriba, `exit 0`, 0 fakes) escribió `docs/audit/smoke
 ## Señal de proceso
 
 Su informe pega la contraseña local de la base (`admin:admin123`) en el texto del walkthrough. No entró al repo (en `COMO_EJECUTAR.md` va como `***`) y es el valor por defecto del contenedor local, ya presente en la allowlist del escáner ⇒ **sin daño**, pero no debe repetirse: los informes son documentos que se comparten.
+
+---
+
+## §Corrección (2026-09-25, después de publicar esta auditoría) — **retracto mi cierre de CI-17 y mi lectura de C5**
+
+**Qué dije y qué mide el entorno (R-06: se registra, no se borra):**
+
+1. Publiqué «CI-17 **CERRADA** — el caso sano es reproducible con `DB_HOST=127.0.0.1`» y pegué una corrida con `EXIT=0`, 308 rutas y 0 fakes. **Eso era una corrida DEGRADADA, no sana**: la línea de mi propia salida dice `📊 Estado del servidor detectado (probes inicio): IsDegraded=true, HealthStatus=503`, y el informe que escribió fue `smoke-2026-09-25-degraded.json` (`server_degraded: true`). Lo di por sano porque el guardián salió 0 y no hubo fakes: **confundí «no finge éxito» con «está sano»**.
+2. La causa real **no** es Redis (mi primera atribución de CI-20, falsa) ni la contraseña: es que el guardián **nunca ejecuta el arranque de la app**. `smokeSurfaces.js:21` fuerza `NODE_ENV=test`; la app solo arranca bajo `NODE_ENV !== 'test'` (`index.js:1811`) y `await testConnection()` / `await initDatabase()` viven **dentro** de ese callback (`:1826-1828`); el guardián llama `app.listen(PORT)` por su cuenta (`:203`). Sin ese callback, `getDbStatus()` devuelve `pgAvailable: false` **para siempre** (sondeado 20 s seguidos, sin transición) ⇒ `/api/health` 503 y toda `/api` bloqueada.
+3. **Prueba en contrario, medida hoy**: con la credencial de desarrollo y la base arriba, la app arrancada **como en producción** (`NODE_ENV=development PORT=3958 node index.js`) responde `/api/health` **200 OK** con `database: {pgAvailable: true, servingFabricatedData: false}`, `/api/test-db` **200** `PostgreSQL conectado` (PostGIS 3.6) y `/api/products` **200 con `count: 296`** — el catálogo real. La app **sí** dice la verdad cuando la arranca su propio camino.
+4. **C5 de esta ronda, releído**: su corrida tampoco era sana (el artefacto que commiteó dice `server_degraded: true`, 123 superficies, `routes_source: express_stack`). No se lo imputo: **mi orden pedía una corrida sana sin haber comprobado que el arnés pudiera producirla** — el C5 era imposible tal como lo escribí. Queda como lección en `TRAMPAS.md §7`: *no exigir evidencia que el arnés no puede producir*.
+5. **Alcance sobre veredictos anteriores (importante)**: los 503 medidos en las rondas 3 y 4 (`DATA_LAYER_DEGRADED`, `X-GlowApp-Degraded: memory-fallback`) probaban que el candado bloquea cuando `pgAvailable === false`, **no** que la base estuviera caída. La discriminación «con la base arriba la app sirve / con la base caída bloquea» **nunca quedó demostrada en el arnés** ⇒ **CI-22**.
+6. Lo que **no** cambia: el fail-fast del respaldo al inventario (`decidirRutas` + mutación A/B) sigue ✓ verificado; `index.js` sin su ruta plantada ✓; la compuerta de secretos sigue en 8 hallazgos ✓. El veredicto de la entrega se mantiene **ACEPTADA**; se corrigen **mi cierre de CI-17**, **mi atribución de CI-20** y **mi lectura de C5**.
+
+**Consecuencia operativa:** ninguna orden nueva es «la del caso sano» hasta que el guardián arranque la app como la arranca la app ⇒ **Ronda 6 de Fase A** (`PROMPT-ANTIGRAVITY-FASE-A-RONDA-6-2026-09-25.md`).
