@@ -1,0 +1,870 @@
+{
+  "timestamp": "2026-09-25T05:51:19.591Z",
+  "routes_source": "express_stack",
+  "server_degraded": true,
+  "total_surfaces_tested": 123,
+  "faked_success_count": 13,
+  "results": [
+    {
+      "method": "GET",
+      "path": "/api/__smoke_ronda5_fake",
+      "status": 200,
+      "degraded_header": false,
+      "faked_success": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/academy/admin/certificates",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/academy/admin/courses",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/academy/admin/courses/1",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/academy/admin/stats",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/academy/consent/status",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/academy/courses",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/academy/courses/1",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/academy/courses/1/quiz",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/academy/verify/GLW-TEST",
+      "status": 400,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/academy/certificates",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/academy/courses",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/academy/courses/1",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/academy/stats",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/dashboard",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/disputes",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/events/stream",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/metrics",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/precios",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/precios/coherencia",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/precios/export.csv",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/precios/historial",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/precios/precios",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/precios/precios/coherencia",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/precios/precios/export.csv",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/precios/precios/historial",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/users",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/referral-info",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/biometric/consent/access-logs",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/biometric/consent/biometric",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/biometric/consent/biometric/1",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/biometric/consent/terms",
+      "status": 200,
+      "degraded_header": false,
+      "faked_success": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/biometric/profile/1",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/biometric/recommended/1",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/bookings/client",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/bookings/provider",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/chat/conversations",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/chat/messages/1",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/color/palette",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/community/posts",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/consent/access-logs",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/consent/biometric",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/consent/biometric/1",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/consent/history",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/consent/policy",
+      "status": 200,
+      "degraded_header": false,
+      "faked_success": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/consent/status",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/consent/terms",
+      "status": 200,
+      "degraded_header": false,
+      "faked_success": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/debug-db",
+      "status": 200,
+      "degraded_header": false,
+      "faked_success": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/designs/collections",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/designs/collections/exclusive",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/designs/colorimetria/historial",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/designs/evolution/1",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/designs/evolution/1/attribution",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/designs/evolution/1/insight",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/designs/history",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/designs/profesionales/recommend",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/designs/profile",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/designs/proxy",
+      "status": 400,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/designs/search",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/designs/share/code",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/designs/share/go/GLW-TEST",
+      "status": 302,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/designs/validation/1",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/designs/validation/user/history",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/designs/wardrobe",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/designs/wardrobe/outfits/history",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/disputas/1",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/disputas/my-disputes",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/disputes/disputas/1",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/disputes/disputas/my-disputes",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/events",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/events/1",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/glow-cycle/active",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/glow-pro/events",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/glow-pro/events/1",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/glow-pro/qr-certificates",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/glow-pro/user-badges",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/health",
+      "status": 200,
+      "degraded_header": false,
+      "faked_success": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/membership",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/mentorship/sessions",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/metrics/rag",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/metrics/rag/daily",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/metrics/rag/dashboard",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/metrics/rag/export",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/metrics/rag/health",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/portfolio",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/portfolio/provider",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/products",
+      "status": 200,
+      "degraded_header": false,
+      "faked_success": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/products/1",
+      "status": 200,
+      "degraded_header": false,
+      "faked_success": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/provider/schedule",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/providers",
+      "status": 200,
+      "degraded_header": false,
+      "faked_success": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/providers/1",
+      "status": 404,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/providers/1/slots",
+      "status": 400,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/salon/1/members",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/salon/my-salon",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/services/provider",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/social/accounts",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/store/orders",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/store/orders/1",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/test-db",
+      "status": 200,
+      "degraded_header": false,
+      "faked_success": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/tickets/1/messages",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/tickets/my-tickets",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/tickets/tickets/1/messages",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/tickets/tickets/my-tickets",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/tiles/1/1/1.png",
+      "status": 200,
+      "degraded_header": false,
+      "faked_success": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/users/preferences",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/users/profile",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/beauty/profile/1",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/business/admin/queue",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/business/documents/1/audit",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/business/documents/1/download",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/business/summary",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/business/tasks",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/business/templates",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/business/verticals",
+      "status": 200,
+      "degraded_header": false,
+      "faked_success": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/memberships",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/workforce",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/workforce/1",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/vto/catalog",
+      "status": 200,
+      "degraded_header": false,
+      "faked_success": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/wallet",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/wallet/bank-account",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/wallet/transactions",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/xp-log",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/xp-logs",
+      "status": 401,
+      "degraded_header": false,
+      "faked_success": false
+    }
+  ]
+}

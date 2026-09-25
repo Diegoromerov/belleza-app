@@ -11,7 +11,8 @@
     "ingest:rag": "node scripts/ingestBeautyKnowledge.js",
     "purge:rag": "node scripts/purgeRagKnowledge.js",
     "eval:rag": "node scripts/evaluateRag.js",
-    "ci:eval": "bash scripts/ciRagEvaluation.sh"
+    "ci:eval": "bash scripts/ciRagEvaluation.sh",
+    "smoke:surfaces": "node scripts/smokeSurfaces.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

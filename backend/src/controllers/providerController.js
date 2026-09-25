@@ -1,9 +1,19 @@
-const { pool } = require('../config/db');
+const db = require('../config/db');
+const pool = db.pool;
 const { getPlansWithEntitlement, SAAS_CAPABILITIES } = require('../config/saasEntitlements');
 
 // GET /api/providers → LISTA DE PRESTADORES Y SALONES (Geolocalización con PostGIS y Entitlements)
 exports.getProviders = async (req, res) => {
   try {
+    const dbStatus = db.getDbStatus();
+    if (dbStatus.servingFabricatedData === true) {
+      return res.status(503).json({
+        success: false,
+        error: 'PROVIDER_SEARCH_DEGRADED',
+        message: 'Búsqueda de prestadores no disponible en modo degradado'
+      });
+    }
+
     let lat = parseFloat(req.query.lat);
     let lon = parseFloat(req.query.lon);
     let radius = parseInt(req.query.radius);
@@ -115,7 +125,8 @@ exports.getProviders = async (req, res) => {
       `;
       result = await pool.query(query, [lon, lat, radius, eligiblePlans]);
     } catch (postgisErr) {
-      console.warn('⚠️ Consulta de geolocalización PostGIS falló, ejecutando consulta de respaldo:', postgisErr.message);
+      // DEGRADED FALLBACK: Fallback geográfico con coordenadas fijas (4.6735, -74.1422) cuando falla la extensión PostGIS.
+      console.warn('⚠️ Consulta de geolocalización PostGIS falló, ejecutando consulta de respaldo (degraded: true):', postgisErr.message);
       result = await pool.query(`
         SELECT 
           p.id::text, 
@@ -169,7 +180,7 @@ exports.getProviders = async (req, res) => {
 
   } catch (error) {
     console.error('❌ ERROR en GET /api/providers:', error.message);
-    res.status(200).json({ success: true, count: 0, data: [] });
+    res.status(500).json({ success: false, error: 'INTERNAL_SERVER_ERROR' });
   }
 };
 

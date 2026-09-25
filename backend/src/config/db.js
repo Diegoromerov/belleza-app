@@ -147,6 +147,7 @@ if (process.env.NODE_ENV !== 'production' && (process.env.ALLOW_MEMORY_FALLBACK 
 }
 
 function handleMemoryQuery(text, params = []) {
+  servingFabricatedData = true;
   if (pgMemory.enabled && pgMemory.adapter && typeof pgMemory.adapter.query === 'function') {
     return pgMemory.adapter.query(text, params);
   }
@@ -593,6 +594,7 @@ function clienteEnMemoria() {
 /** Marca el modo memoria y deja constancia del motivo real. */
 function pasarAMemoria(err) {
   dbMode = 'memoria';
+  servingFabricatedData = true;
   ultimoIntentoFallidoEn = Date.now();
   console.warn(`⚠️ [DB] Sin enlace con PostgreSQL (${err.code || 'sin código'}: ${err.message}) — se sirve memoria local.`);
 }
@@ -610,11 +612,13 @@ const pool = {
     }
 
     if ((pgMemory.isMemoryMode || dbMode === 'memoria') && pgMemory.enabled && pgMemory.adapter && typeof pgMemory.adapter.query === 'function') {
+      servingFabricatedData = true;
       return pgMemory.adapter.query(text, params);
     }
 
     if (dbMode === 'memoria') {
       if (memoriaForzada || !tocaReintentar()) {
+        servingFabricatedData = true;
         return handleMemoryQuery(text, params);
       }
       // Enfriamiento cumplido: se comprueba si la base ha vuelto. Si vuelve, se
@@ -622,6 +626,7 @@ const pool = {
       try {
         const res = await rawPool.query(text, params);
         dbMode = 'postgres';
+        servingFabricatedData = false;
         return res;
       } catch (err) {
         if (!esErrorDeEnlace(err)) throw err;
@@ -632,7 +637,10 @@ const pool = {
 
     try {
       const res = await rawPool.query(text, params);
-      if (dbMode === 'indefinido') dbMode = 'postgres';
+      if (dbMode === 'indefinido') {
+        dbMode = 'postgres';
+        servingFabricatedData = false;
+      }
       return res;
     } catch (err) {
       if (!esErrorDeEnlace(err)) {
@@ -646,11 +654,15 @@ const pool = {
   },
   connect: async () => {
     if (dbMode === 'memoria' && (memoriaForzada || !tocaReintentar())) {
+      servingFabricatedData = true;
       return clienteEnMemoria();
     }
     try {
       const client = await rawPool.connect();
-      if (dbMode !== 'postgres') dbMode = 'postgres';
+      if (dbMode !== 'postgres') {
+        dbMode = 'postgres';
+        servingFabricatedData = false;
+      }
       return client;
     } catch (err) {
       if (!esErrorDeEnlace(err)) throw err;
@@ -667,23 +679,25 @@ const testConnection = async () => {
     const res = await client.query('SELECT current_database(), current_user');
     client.release();
     dbMode = 'postgres';
+    servingFabricatedData = false;
     console.log(`✅ Conexión exitosa a PostgreSQL [DB: ${res.rows[0].current_database}, Entorno: ${process.env.NODE_ENV || 'development'}]`);
     return true;
-    } catch (err) {
-      dbMode = 'memoria';
-      ultimoIntentoFallidoEn = Date.now();
-      if (isProduction || isStaging) {
-        console.error('❌ PostgreSQL no disponible:', err.message);
-        console.error('❌ CRITICAL DB ERROR: Fallo de conexión a PostgreSQL en producción/staging:', err.message);
-        throw err;
-      }
-      // Se imprime el MOTIVO. Antes solo decía "no disponible", así que una
-      // credencial incorrecta o una base inexistente eran indistinguibles de un
-      // servidor apagado, y el fallo real se perdía.
-      console.warn(`⚠️ PostgreSQL local no disponible (${err.code || 'sin código'}: ${err.message})`);
-      console.warn('⚠️ Modo de persistencia en memoria local (solo desarrollo). Lo que falle por SQL seguirá lanzando error.');
-      return true;
+  } catch (err) {
+    dbMode = 'memoria';
+    servingFabricatedData = true;
+    ultimoIntentoFallidoEn = Date.now();
+    if (isProduction || isStaging) {
+      console.error('❌ PostgreSQL no disponible:', err.message);
+      console.error('❌ CRITICAL DB ERROR: Fallo de conexión a PostgreSQL en producción/staging:', err.message);
+      throw err;
     }
+    // Se imprime el MOTIVO. Antes solo decía "no disponible", así que una
+    // credencial incorrecta o una base inexistente eran indistinguibles de un
+    // servidor apagado, y el fallo real se perdía.
+    console.warn(`⚠️ PostgreSQL local no disponible (${err.code || 'sin código'}: ${err.message})`);
+    console.warn('⚠️ Modo de persistencia en memoria local (solo desarrollo). Lo que falle por SQL seguirá lanzando error.');
+    return true;
+  }
 };
 
 // ── Conexión a la base de datos RAG (pgvector) ──
@@ -725,7 +739,7 @@ const memoryFallbackAllowed = () => {
 };
 
 const getDbStatus = () => ({
-  pgAvailable: isPgAvailable,
+  pgAvailable: dbMode === 'postgres',
   servingFabricatedData,
   memoryFallbackAllowed: memoryFallbackAllowed(),
 });
