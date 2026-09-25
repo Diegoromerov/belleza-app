@@ -122,6 +122,35 @@ const fetchPRs = () => new Promise(resolve => {
     if (behind !== null && parseInt(behind, 10) > 0) V.push({ r: 'R5', d: `la rama local «${branch}» está ${behind} commits detrás de origin/${branch}` });
   }
 
+  // Regla R4 de frescura de partes (docs/agents/partes/): al menos 1 parte en los últimos 14 días
+  {
+    const partesDir = path.join('docs', 'agents', 'partes');
+    let tieneParteReciente = false;
+    if (fs.existsSync(partesDir)) {
+      const archivos = fs.readdirSync(partesDir);
+      for (const f of archivos) {
+        if (f === 'PLANTILLA-PARTE.md' || !f.endsWith('.md')) continue;
+        const match = f.match(/parte-(\d{4}-\d{2}-\d{2})\.md/);
+        let fechaStr = null;
+        if (match) {
+          fechaStr = match[1];
+        } else {
+          try {
+            const stat = fs.statSync(path.join(partesDir, f));
+            fechaStr = stat.mtime.toISOString().slice(0, 10);
+          } catch (e) {}
+        }
+        if (fechaStr && diasDesde(fechaStr) <= 14) {
+          tieneParteReciente = true;
+          break;
+        }
+      }
+    }
+    if (!tieneParteReciente) {
+      V.push({ r: 'R4', d: '«docs/agents/partes/» no tiene ningún parte de estado en los últimos 14 días' });
+    }
+  }
+
   // ---------- salida ----------
   const stamp = new Date().toISOString().replace('T', ' ').slice(0, 19) + 'Z';
   const L = [];
