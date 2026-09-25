@@ -729,6 +729,15 @@ app.get('/api/admin/events/stream', authMiddleware, adminMiddleware, (req, res) 
 // 🔹 NUEVO: Obtener estadísticas globales y telemetría de analíticas
 app.get('/api/admin/metrics', authMiddleware, adminMiddleware, async (req, res) => {
   try {
+    const dbStatus = getDbStatus();
+    if (dbStatus.servingFabricatedData || dbStatus.pgAvailable === false) {
+      res.setHeader('X-GlowApp-Degraded', 'memory-fallback');
+      return res.status(503).json({
+        error: 'Servicio de métricas degradado. Base de datos no disponible.',
+        data_status: 'degradado'
+      });
+    }
+
     // 1. Estadísticas agregadas de reservas
     const bookingsCountRes = await pool.query(`
       SELECT estado, COUNT(*)::int as count 
@@ -798,7 +807,7 @@ app.get('/api/admin/metrics', authMiddleware, adminMiddleware, async (req, res) 
       GROUP BY s.category;
     `);
 
-    // 9. Historial mensual para proyecciones
+    // 9. Historial mensual real para proyecciones
     const historyRes = await pool.query(`
       SELECT 
         TO_CHAR(DATE_TRUNC('month', scheduled_at), 'YYYY-MM') as month,
@@ -809,44 +818,43 @@ app.get('/api/admin/metrics', authMiddleware, adminMiddleware, async (req, res) 
       ORDER BY month ASC;
     `);
     
-    let history = historyRes.rows.map(r => ({
+    const realHistory = historyRes.rows.map(r => ({
       month: r.month,
       revenue: parseFloat(r.revenue)
     }));
 
-    // Fallback dinámico si no hay historial suficiente en desarrollo local/staging
-    if (history.length < 3) {
-      const today = new Date();
-      history = [];
-      for (let i = 4; i >= 0; i--) {
-        const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
-        const monthStr = d.toISOString().substring(0, 7);
-        const simRevenue = 450000 + (4 - i) * 120000 + Math.floor(Math.random() * 60000);
-        history.push({ month: monthStr, revenue: simRevenue });
-      }
+    let history = [];
+    let projectedRevenue = null;
+    let projectedMonthStr = null;
+    let trend = 'INSUFICIENTE';
+    let dataStatus = 'insuficiente';
+
+    if (realHistory.length >= 3) {
+      history = realHistory;
+      dataStatus = 'completo';
+
+      const n = history.length;
+      let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+      history.forEach((h, index) => {
+        const x = index + 1;
+        const y = h.revenue;
+        sumX += x;
+        sumY += y;
+        sumXY += x * y;
+        sumXX += x * x;
+      });
+
+      const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+      const intercept = (sumY - slope * sumX) / n;
+
+      const nextMonthIndex = n + 1;
+      projectedRevenue = Math.max(0, Math.round(slope * nextMonthIndex + intercept));
+
+      const nextMonthDate = new Date();
+      nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
+      projectedMonthStr = nextMonthDate.toISOString().substring(0, 7);
+      trend = slope >= 0 ? 'CRECIENTE' : 'DECRECIENTE';
     }
-
-    // Regresión lineal simple para la proyección del próximo mes (y = mx + b)
-    const n = history.length;
-    let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
-    history.forEach((h, index) => {
-      const x = index + 1;
-      const y = h.revenue;
-      sumX += x;
-      sumY += y;
-      sumXY += x * y;
-      sumXX += x * x;
-    });
-    
-    const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
-    const intercept = (sumY - slope * sumX) / n;
-    
-    const nextMonthIndex = n + 1;
-    const projectedRevenue = Math.max(0, Math.round(slope * nextMonthIndex + intercept));
-
-    const nextMonthDate = new Date();
-    nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
-    const projectedMonthStr = nextMonthDate.toISOString().substring(0, 7);
 
     res.json({
       success: true,
@@ -862,10 +870,12 @@ app.get('/api/admin/metrics', authMiddleware, adminMiddleware, async (req, res) 
         telemetry_clicks: telemetryClicksRes.rows,
         categories: categoriesRes.rows,
         projections: {
+          data_status: dataStatus,
+          meses_con_datos: realHistory.length,
           history,
           projectedMonth: projectedMonthStr,
           projectedRevenue,
-          trend: slope >= 0 ? 'CRECIENTE' : 'DECRECIENTE'
+          trend
         }
       }
     });
