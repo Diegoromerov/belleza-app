@@ -80,12 +80,26 @@ describe('ORDEN A-03 — Contrato de Enrutamiento (Un router, un prefijo)', () =
   });
 
   test('C2, C4: Verificación HTTP de rutas canónicas vs rutas duplicadas (C4: /api/admin/precios responde y /api/admin/precios/precios da 404)', async () => {
+    // Este caso mide el CONTRATO DE MONTAJES (un router, un prefijo): qué rutas quedan registradas.
+    // Por eso neutraliza el candado de degradación si está montado: ese middleware responde
+    // 503 DATA_LAYER_DEGRADED a cualquier superficie de datos bajo /api cuando el estado de la base
+    // no está verificado o hay datos fabricados, y lo hace ANTES que el router ⇒ taparía el 404 que
+    // aquí se quiere medir (una URL inexistente). Sin el candado, la respuesta la decide el router.
+    const appSinCandado = (a) => {
+      if (a && a._router && Array.isArray(a._router.stack)) {
+        a._router.stack = a._router.stack.filter(
+          (layer) => !(layer.handle && layer.handle.name === 'degradedLockMiddleware')
+        );
+      }
+      return a;
+    };
+
     const testApp = express();
     testApp.use((req, res, next) => {
       req.user = { id: 1, rol: 'admin', email: 'admin@glowapp.com' };
       next();
     });
-    testApp.use(app);
+    testApp.use(appSinCandado(app));
 
     // /api/admin/precios debe responder (200 o 500 si falla BD), NUNCA 404
     const resPrecios = await request(testApp).get('/api/admin/precios');
