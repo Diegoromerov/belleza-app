@@ -135,3 +135,24 @@ $env:PGSSL      = "true"                 # habilita SSL en el fallback Node.js
 
 > [!WARNING]
 > Aplica siempre primero en **desarrollo/staging** y verifica antes de correr en producción.
+
+---
+
+## Ejecución del Guardián de Humo (Smoke Test por Superficie)
+
+Para ejecutar el guardián de humo (`smokeSurfaces.js`) en un entorno local con la base de datos PostgreSQL en ejecución:
+
+```bash
+# Comando reproducible con base de datos arriba (Caso Sano):
+DB_HOST=127.0.0.1 DATABASE_URL="postgres://admin:admin123@127.0.0.1:5435/beauty_db" NODE_ENV=test npm run smoke:surfaces
+```
+
+> [!IMPORTANT]
+> **Configuración de SSL y `DB_HOST`:**
+> `backend/src/config/db.js` evalúa la variable `DB_HOST` (no el host dentro de `DATABASE_URL`) para decidir si deshabilita SSL en conexiones locales. Si se omite `DB_HOST=127.0.0.1`, la función `getSslConfig` exige SSL por defecto y PostgreSQL local falla con:
+> `⚠️ PostgreSQL local no disponible (sin código: The server does not support SSL connections)`.
+
+> [!NOTE]
+> **Diagnóstico de Conexión de Base de Datos:**
+> La función `testConnection()` de `db.js` retorna `true` aun cuando PostgreSQL no responde (debido a que la aplicación conmuta a modo degradado/fallback en memoria). Para comprobar la conectividad real con la base de datos PostgreSQL se debe consultar `getDbStatus()`.
+

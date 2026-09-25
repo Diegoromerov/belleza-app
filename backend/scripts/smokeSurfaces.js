@@ -1,3 +1,18 @@
+/**
+ * smokeSurfaces.js — Guardián de Humo por Superficie (Fase A - Ronda 5)
+ * 
+ * COMANDO REPRODUCIBLE CASO SANO (base arriba):
+ * DB_HOST=127.0.0.1 DATABASE_URL="postgres://admin:admin123@127.0.0.1:5435/beauty_db" NODE_ENV=test npm run smoke:surfaces
+ * 
+ * NOTA DE INFRAESTRUCTURA (SSL & db.js):
+ * `backend/src/config/db.js` compara `DB_HOST` en lugar del host dentro de `DATABASE_URL`
+ * para determinar si debe desactivar SSL. Sin `DB_HOST=127.0.0.1`, `getSslConfig` exige SSL
+ * por defecto y PostgreSQL rechaza con: "The server does not support SSL connections".
+ * 
+ * NOTA SOBRE DIAGNÓSTICO DE CONEXIÓN:
+ * `testConnection()` devuelve `true` aun sin base de datos real (modo memoria/fallback).
+ * La comprobación real de conectividad PostgreSQL debe realizarse mediante `getDbStatus()`.
+ */
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
@@ -79,8 +94,55 @@ function extractRoutes(expressApp) {
   return Array.from(uniqueMap.values()).sort((a, b) => a.path.localeCompare(b.path));
 }
 
+/**
+ * Función pura para decidir la fuente de rutas del guardián de humo.
+ * 
+ * Reglas (Ronda 5):
+ * 1. Si app existe y extractRoutes(app) devuelve rutas (length > 0):
+ *    -> fuente: 'express_stack', exitCode: 0
+ * 2. Si app es null o extractRoutes(app) devuelve 0 rutas:
+ *    - Si inventario existe y tiene elementos:
+ *      -> fuente: 'inventario', exitCode: 1, error: 'no se pudo cargar el entry vivo de la app; el inventario NO sustituye la medición'
+ *    - Si inventario está vacío o no existe:
+ *      -> fuente: 'ninguna', exitCode: 1, error: 'no se pudieron obtener rutas para el smoke test'
+ * 
+ * @param {{ app?: object, inventario?: Array }} params
+ * @returns {{ rutas: Array, fuente: string, exitCode: number, error?: string }}
+ */
+function decidirRutas({ app: expressApp, inventario }) {
+  let liveRoutes = [];
+  if (expressApp) {
+    liveRoutes = extractRoutes(expressApp);
+  }
+
+  if (liveRoutes && liveRoutes.length > 0) {
+    return {
+      rutas: liveRoutes,
+      fuente: 'express_stack',
+      exitCode: 0
+    };
+  }
+
+  const backupRoutes = Array.isArray(inventario) ? inventario : [];
+  if (backupRoutes.length > 0) {
+    return {
+      rutas: backupRoutes,
+      fuente: 'inventario',
+      exitCode: 1,
+      error: 'no se pudo cargar el entry vivo de la app; el inventario NO sustituye la medición'
+    };
+  }
+
+  return {
+    rutas: [],
+    fuente: 'ninguna',
+    exitCode: 1,
+    error: 'no se pudieron obtener rutas para el smoke test'
+  };
+}
+
 function makeRequest(method, urlPath, headers = {}) {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const url = new URL(urlPath, BASE_URL);
     const req = http.request(url, { method, headers, timeout: 5000 }, (res) => {
       let body = '';
@@ -94,45 +156,61 @@ function makeRequest(method, urlPath, headers = {}) {
         }
         resolve({
           status: res.statusCode,
-          headers: res.headers,
+          headers: res.headers || {},
           body: parsed,
           rawBody: body
         });
       });
     });
 
-    req.on('error', (err) => resolve({ error: err.message, status: 0 }));
+    req.on('error', (err) => resolve({ error: err.message, status: 0, headers: {} }));
     req.on('timeout', () => {
       req.destroy();
-      resolve({ error: 'TIMEOUT', status: 0 });
+      resolve({ error: 'TIMEOUT', status: 0, headers: {} });
     });
     req.end();
   });
 }
 
 async function runSmoke() {
-  console.log('🔥 Ejecutando Smoke Test por Superficie (Fase A - Ronda 4 S4)...');
+  console.log('🔥 Ejecutando Smoke Test por Superficie (Fase A - Ronda 5)...');
 
-  // Cargo 1 (S4): Descubrimiento dinámico de rutas desde el stack vivo de Express
-  let routes = [];
-  if (app) {
-    routes = extractRoutes(app);
-    console.log(`🔍 Descubiertas dinámicamente ${routes.length} rutas del stack vivo de Express.`);
-  }
-
-  // Respaldo de inventario si el stack vivo está vacío
-  if (!routes || routes.length === 0) {
-    const routesFile = path.resolve(__dirname, '../../docs/audit/routes-2026-09-24.json');
-    if (fs.existsSync(routesFile)) {
-      routes = JSON.parse(fs.readFileSync(routesFile, 'utf-8'));
-      console.log(`📄 Usando ${routes.length} rutas desde inventario respaldado ${routesFile}`);
+  const routesFile = path.resolve(__dirname, '../../docs/audit/routes-2026-09-24.json');
+  let inventario = null;
+  if (fs.existsSync(routesFile)) {
+    try {
+      inventario = JSON.parse(fs.readFileSync(routesFile, 'utf-8'));
+    } catch (e) {
+      inventario = null;
     }
   }
 
-  if (!routes || routes.length === 0) {
-    console.error('❌ No se pudieron obtener rutas para el smoke test.');
-    process.exit(1);
+  const { rutas: routes, fuente, exitCode, error } = decidirRutas({ app, inventario });
+
+  if (fuente === 'express_stack') {
+    console.log(`🔍 Descubiertas dinámicamente ${routes.length} rutas del stack vivo de Express.`);
+  } else {
+    console.error(`❌ ERROR CRÍTICO EN GUARDIA: ${error}.`);
+    if (fuente === 'inventario') {
+      console.error(`📄 (Diagnóstico: inventario respaldado contiene ${routes.length} rutas, pero se aborta con exit 1).`);
+    }
+    process.exit(exitCode);
   }
+
+  let serverInstance = null;
+  if (app) {
+    await new Promise((resolve) => {
+      serverInstance = app.listen(PORT, () => {
+        resolve();
+      });
+    });
+  }
+
+  const closeServer = () => {
+    if (serverInstance) {
+      serverInstance.close();
+    }
+  };
 
   const safeRoutes = routes.filter(r => ['GET', 'HEAD', 'OPTIONS'].includes(r.method));
   let fakedSuccessCount = 0;
@@ -144,7 +222,7 @@ async function runSmoke() {
 
   const isServerDegraded = 
     healthRes.status === 503 ||
-    healthRes.headers['x-glowapp-degraded'] === 'memory-fallback' ||
+    (healthRes.headers && healthRes.headers['x-glowapp-degraded'] === 'memory-fallback') ||
     (healthRes.body && healthRes.body.status === 'DEGRADED') ||
     (healthRes.body && healthRes.body.database && healthRes.body.database.pgAvailable === false) ||
     (testDbRes.body && testDbRes.body.status === 'error');
@@ -161,7 +239,7 @@ async function runSmoke() {
     if (testPath.includes('*') || testPath.includes('^')) continue;
 
     const res = await makeRequest(r.method, testPath);
-    const hasDegradedHeader = !!res.headers['x-glowapp-degraded'];
+    const hasDegradedHeader = !!(res.headers && res.headers['x-glowapp-degraded']);
     const cleanPath = testPath.split('?')[0];
 
     let fakedSuccess = false;
@@ -194,7 +272,6 @@ async function runSmoke() {
       console.error(`❌ FAKED SUCCESS detectado en ${r.method} ${testPath} -> HTTP ${res.status} (respuesta 2xx engañosa en estado degradado)`);
     }
 
-    // Cargo 2: empty_like eliminado de los resultados individuales
     results.push({
       method: r.method,
       path: testPath,
@@ -204,7 +281,6 @@ async function runSmoke() {
     });
   }
 
-  // Cargo 3: Conservación de informes por sufijo (-degraded.json o -ok.json)
   const todayDate = new Date().toISOString().split('T')[0];
   const statusSuffix = isServerDegraded ? 'degraded' : 'ok';
   const reportDir = path.resolve(__dirname, '../../docs/audit');
@@ -215,6 +291,7 @@ async function runSmoke() {
 
   const reportData = {
     timestamp: new Date().toISOString(),
+    routes_source: fuente,
     server_degraded: isServerDegraded,
     total_surfaces_tested: results.length,
     faked_success_count: fakedSuccessCount,
@@ -227,6 +304,8 @@ async function runSmoke() {
   console.log(`\n📋 Resumen de Smoke Test (${results.length} superficies probadas):`);
   console.log(`- Faked Success Totales: ${fakedSuccessCount}`);
 
+  closeServer();
+
   if (fakedSuccessCount > 0) {
     console.error('❌ SMOKE TEST FALLIDO: Se detectaron respuestas de éxito falso (faked_success).');
     process.exit(1);
@@ -236,4 +315,8 @@ async function runSmoke() {
   }
 }
 
-runSmoke();
+if (require.main === module) {
+  runSmoke();
+} else {
+  module.exports = { decidirRutas, extractRoutes, runSmoke };
+}
