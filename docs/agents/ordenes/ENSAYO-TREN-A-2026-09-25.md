@@ -68,3 +68,25 @@ memoria); los mismos datos como campos sueltos (DB_USER/DB_PASSWORD/DB_NAME/DB_H
 
 Con fix/contrato-convive-con-candado (3a9148ad) integrado: **6 merges, 0 conflictos** (HEAD 0384b058) y **5 suites / 21 tests PASS**,
 routing.contract **verde** (antes rojo). fase-a y main sin mover. **El tren puede aterrizar** en cuanto el Dueño lo decida.
+
+## 8. Ensayo del tren COMPLETO — 2026-09-25 (con las tres ramas nuevas)
+
+Worktree detachado en `b545ef22` + las **8** ramas aceptadas, en orden de aterrizaje.
+
+- **8 merges, 0 conflictos de texto, 0 abortados** (HEAD del ensayo `e819ae5c`). Comprobado por ancestro:
+  `fix/ci-procedencia`, `fix/rls-056-058-cadena`, `fix/montajes-unicos`, `fix/admin-metricas-sin-datos`,
+  `fix/arranque-y-estado-honesto`, `fix/contrato-convive-con-candado`, `fix/candado-comprueba-si-desconoce`,
+  `fix/compuerta-secretos-reproducible` — las 8 son ancestro del HEAD del tren.
+- **Suites clave: 10/10 verdes, 45 tests**. Incluye las cuatro piezas nuevas de hoy: `routing.contract` (O-016),
+  `candadoCompruebaSiDesconoce` (r7), `smokeSurfacesTimeout` (Cargo 2), `adminMetricsProjectedMonth` (A-02 r3) y
+  `verifyNoVersionedSecretsEtiqueta` (A-06 r5).
+- **Escáner (paso 7 del CI) sobre el tren: 8 hallazgos**, todos «valor por defecto literal para variable sensible»:
+  las 5 líneas de prosa de CI-14 + `jwt.js:1`, `jwt.js:2` y `biometricCryptoService.js:18`.
+- `fase-a` = `b545ef22`, `main` = `f5a1b4fc` y el vehículo = `0a32f718` **sin mover**. Nada commiteado ni empujado por el ensayo.
+
+### Qué haría el CI con esto (medido por API pública, no supuesto)
+
+- **PR #16** (base `main`): `open`, `mergeable: true`, 9 commits (+4752/-48). Es el **único** camino que produce jobs reales.
+- Los runs de `ci.yml` en ramas nacidas de `main` existen como `failure` pero con **0 jobs** (runs vacíos, re-medido hoy): no son veredictos.
+- Las ramas nacidas de `fase-a` (las nuestras) **no disparan** `ci.yml` al empujarlas: el workflow válido tiene filtro `branches: [main, staging]`.
+- ⇒ **la evidencia de CI aparecerá sólo cuando el tren entre en `fase-a` y PR #16 se actualice**, y el paso 7 seguirá rojo por CI-14.
