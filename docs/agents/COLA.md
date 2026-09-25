@@ -25,6 +25,8 @@
 
 | O-013 | **Fase A ronda 7 (corta)** — «sin comprobar no es lo mismo que sano»: el candado **comprueba** cuando `pgAvailable === null` (una vez, caché acotada) en vez de dejar pasar sin mirar; `/api/health` comprueba antes de clasificar (base arriba ⇒ 200 `OK`, base caída ⇒ 503); test del **timeout del guardián** (no cuelga, sale `≠0`, mata el hijo). Cargo 3 = CI-14 **solo con autorización del Dueño** | Ejecutor | `fix/candado-comprueba-si-desconoce` (encadenada sobre `07e7225e`) | **emitida 2026-09-25**, sin entregar | `docs/agents/ordenes/PROMPT-ANTIGRAVITY-FASE-A-RONDA-7-2026-09-25.md` | — (su Cargo 3 depende de la autorización de CI-14) |
 
+| O-014 | **El guardián tiene que ser del repo, y su fallo tiene que verse** — versionar el runner (`backend/scripts/guardianBelleza.sh`) con exit code honesto (hoy sale `0` aunque el chequeo falle o no exista), `docs/agents/partes/` + plantilla + primer parte real, y regla de **frescura** en `estadoKB.js --check` (sin parte de los últimos 14 días ⇒ desalineación `R4`) | Ejecutor | `chore/guardian-en-el-repo` (desde `docs/sistema-agentes`) | **emitida 2026-09-25**, sin entregar | `docs/agents/ordenes/PROMPT-ANTIGRAVITY-O-014-GUARDIAN-EN-EL-REPO-2026-09-25.md` | — (el cron lo administra el Arquitecto; ya apunta al worktree de la KB y pide escribir el parte) |
+
 ## 2. Decisiones del Dueño (escaladas)
 
 | ID | Decisión | Estado | Qué desbloquea |

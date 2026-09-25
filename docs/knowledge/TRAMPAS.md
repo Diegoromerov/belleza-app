@@ -309,6 +309,10 @@ Anclar la mutación en una cadena que aparece **primero en un comentario o en el
 
 Mi C5 de la ronda 5 de Fase A pedía «una corrida **sana** pegada». El arnés no puede producirla: el guardián fuerza `NODE_ENV=test`, la app solo arranca bajo `NODE_ENV !== 'test'` y la comprobación de base vive dentro de ese callback ⇒ `pgAvailable` queda `false` para siempre y **toda** corrida del guardián es degradada. Su autor pegó la corrida que el arnés sí permite y **yo la llamé sana porque salía `EXIT=0` con 0 fakes: confundí «no finge éxito» con «está sano»**. Regla: antes de exigir una evidencia, **probá que el arnés pueda producirla**; y cuando una salida trae un campo de estado (`IsDegraded`, `HealthStatus`, `server_degraded`), **copialo en la cita** — es el discriminador, no el color del texto.
 
+### No midas un camino que el sistema no recorre
+
+Ejecuté `node backend/scripts/estadoKB.js --check` **desde `C:/beauty-app`** —donde ese archivo no existe, porque vive en la rama `docs/sistema-agentes`— y con ese `MODULE_NOT_FOUND` **retracté** un dato correcto de la KB («el guardián sale `exit 1` por los 2 planes sin commitear»). El runner real busca el script en **dos** rutas y sí lo ejecuta: `exit=1` por los 2 planes, tal como decía la KB. **Regla:** antes de retractar algo, reproducí **el comando exacto del sistema** (el runner, el job del cron, el paso del workflow), no tu reconstrucción de lo que creés que hace. Vale también al revés: cuando el sistema usa un *script* que vive fuera del repo, la medición tiene que correr ese script, no su equivalencia escrita a mano.
+
 ## 7. Trampas de razonamiento del auditor (retracciones de esta sesión)
 
 ### R-01 · Contar las clases ignorando una cláusula de la propia regla
