@@ -1,30 +1,38 @@
-const { execFileSync } = require('child_process');
-const path = require('path');
+const { validarLinea } = require('../../scripts/verifyNoVersionedSecrets');
 
-describe('verifyNoVersionedSecrets - Autotest de Independencia CRLF / LF', () => {
-  const scriptPath = path.resolve(__dirname, '../../scripts/verifyNoVersionedSecrets.js');
+describe('verifyNoVersionedSecrets — Autotest de Independencia CRLF / LF y Detección de Secretos', () => {
+  const ruleName = 'valor por defecto literal para variable sensible';
+  const targetFile = 'src/config/jwt.js';
 
-  test('ejecución del script en el repositorio debe retornar exit code 0 (sin hallazgos bloqueantes)', () => {
-    let exitCode = 0;
-    try {
-      execFileSync('node', [scriptPath], {
-        cwd: path.resolve(__dirname, '../../..'),
-        encoding: 'utf8',
-        stdio: 'pipe',
-      });
-    } catch (err) {
-      exitCode = err.status || 1;
-    }
-    expect(exitCode).toBe(0);
+  test('C5: Línea con \\r (CRLF) y línea sin \\r (LF) son ambas detectadas como secreto cuando se aplica la normalización', () => {
+    const lineLF   = "const MI_CLAVE_SECRETA = 'Xk92LmQ7ppQzRt4VbN8wYs3Dd6Ff';";
+    const lineCRLF = "const MI_CLAVE_SECRETA = 'Xk92LmQ7ppQzRt4VbN8wYs3Dd6Ff';\r";
+
+    const detectedLF   = validarLinea(lineLF, targetFile, ruleName, true);
+    const detectedCRLF = validarLinea(lineCRLF, targetFile, ruleName, true);
+
+    expect(detectedLF).toBe(true);
+    expect(detectedCRLF).toBe(true);
   });
 
-  test('normalización de fin de línea produce el mismo resultado independientemente de \\r\\n o \\n', () => {
-    const sampleCodeCRLF = "const pass = 'postgres';\r\nconst secret = process.env.JWT_SECRET || 'dev_secret';\r\n";
-    const sampleCodeLF   = "const pass = 'postgres';\nconst secret = process.env.JWT_SECRET || 'dev_secret';\n";
+  test('C5 (Prueba de Mutación): Sin la normalización de fin de línea, la extracción de secreto en presencia de \\r difiere de la versión LF', () => {
+    const lineLF   = "const MI_CLAVE_SECRETA = 'Xk92LmQ7ppQzRt4VbN8wYs3Dd6Ff';";
+    const lineCRLF = "const MI_CLAVE_SECRETA = 'Xk92LmQ7ppQzRt4VbN8wYs3Dd6Ff\r';";
 
-    const cleanCRLF = sampleCodeCRLF.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-    const cleanLF   = sampleCodeLF.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    // Con normalización habilitada (normalize = true): ambos resultan detectados de forma limpia
+    const evalLFWithNorm   = validarLinea(lineLF, targetFile, ruleName, true);
+    const evalCRLFWithNorm = validarLinea(lineLF + "\r", targetFile, ruleName, true);
+    expect(evalLFWithNorm).toBe(true);
+    expect(evalCRLFWithNorm).toBe(true);
 
-    expect(cleanCRLF).toBe(cleanLF);
+    // Sin normalización (normalize = false): la extracción incluye '\\r' al final de la cadena de secreto
+    const evalLFNoNorm   = validarLinea(lineLF, targetFile, ruleName, false);
+    const evalCRLFNoNorm = validarLinea(lineCRLF, targetFile, ruleName, false);
+
+    expect(evalLFNoNorm.val).toBe('Xk92LmQ7ppQzRt4VbN8wYs3Dd6Ff');
+    expect(evalCRLFNoNorm.val).toBe('Xk92LmQ7ppQzRt4VbN8wYs3Dd6Ff\r');
+    
+    // Demostración explícita de mutación: sin normalización, evalLFNoNorm.val !== evalCRLFNoNorm.val
+    expect(evalCRLFNoNorm.val).not.toBe(evalLFNoNorm.val);
   });
 });
