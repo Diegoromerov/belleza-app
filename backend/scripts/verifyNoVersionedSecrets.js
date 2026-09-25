@@ -22,13 +22,14 @@ const REGLAS = [
   {
     nombre: 'cadena de conexión con contraseña',
     buscar: 'postgres(ql)?://[^:"\'[:space:]]+:[^@"\'[:space:]]+@',
-    validar: (linea) => {
+    validar: (linea, archivo) => {
+      if (archivo && /\.(test|spec)\.[jt]sx?$/.test(archivo)) return false;
       const cleanLine = linea.replace(/\r$/, '');
       const re = /postgres(?:ql)?:\/\/([^:\s"'`<>]+):([^@\s"'`<>]+)@/g;
       let m;
       while ((m = re.exec(cleanLine)) !== null) {
         const pw = m[2];
-        if (pw !== '***' && !ALLOW_MARKERS.test(pw) && !/^(%|REDACTED|\$|\$\{|<|YOUR|TU_|password|pass|changeme|postgres|admin|admin123|root|test|ci_only_password)/i.test(pw)) return true;
+        if (pw !== '***' && !ALLOW_MARKERS.test(pw) && !/^(%|REDACTED|\$|\$\{|<|YOUR|TU_|password|pass|changeme|postgres|admin|admin123|root|ci_only_password)/i.test(pw)) return true;
       }
       return false;
     },
@@ -94,7 +95,7 @@ const REGLAS = [
         // Ignorar invocaciones a métodos / expresiones JS (ej: crypto.createHash, Buffer.from)
         if (val.includes('(') || val.includes(')') || /^crypto\./i.test(val) || /^Buffer\./i.test(val)) continue;
         if (m[2] === undefined && /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(val)) continue;
-        if (/^(\*\*\*|REDACTED|TU_|YOUR_|changeme|PLACEHOLDER|xxx|example|admin123|test|ci_|dummy|REPLACE_ME|postgres|root)/i.test(val)) continue;
+        if (/^(\*\*\*|REDACTED|TU_|YOUR_|changeme|PLACEHOLDER|xxx|example|admin123|ci_|dummy|REPLACE_ME|postgres|root)/i.test(val)) continue;
         if (ALLOW_MARKERS.test(val)) continue;
         return true;
       }
@@ -107,7 +108,7 @@ const REGLAS = [
     validar: (linea, archivo) => {
       if (!archivo) return false;
       const cleanLine = linea.replace(/\r$/, '');
-      if (archivo.endsWith('.md')) return false;
+      if (/^docs\/.*\.md$/i.test(archivo)) return false;
       if (/\.(test|spec)\.[jt]sx?$/.test(archivo)) return false;
       if (/scripts\/verify/.test(archivo)) return false;
       if (/^\s*(\/\/|\/\*|\*|#)/.test(cleanLine.trim())) return false;
@@ -117,11 +118,11 @@ const REGLAS = [
   }
 ];
 
-// Rutas exentas: archivos de documentación (.md, .env.example, .example) y caché de .hermes/
+// Rutas exentas: archivos de documentación bajo docs/ (.md, .env.example, .example) y caché de .hermes/
 const EXENTAS = [
   /^\.env\.example$/,
   /\.example$/,
-  /\.md$/i,
+  /^docs\/.*\.md$/i,
   /^\.hermes\//
 ];
 
@@ -158,7 +159,7 @@ function validarLinea(contenido, archivo, reglaNombre, normalize = true) {
       if (val.startsWith('$') || val.startsWith('${') || val.includes('${') || /^process\.env\./i.test(val) || /^env\./i.test(val)) continue;
       if (val.includes('(') || val.includes(')') || /^crypto\./i.test(val) || /^Buffer\./i.test(val)) continue;
       if (m[2] === undefined && /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(val)) continue;
-      if (/^(\*\*\*|REDACTED|TU_|YOUR_|changeme|PLACEHOLDER|xxx|example|admin123|test|ci_|dummy|REPLACE_ME|postgres|root)/i.test(val)) continue;
+      if (/^(\*\*\*|REDACTED|TU_|YOUR_|changeme|PLACEHOLDER|xxx|example|admin123|ci_|dummy|REPLACE_ME|postgres|root)/i.test(val)) continue;
       if (ALLOW_MARKERS.test(val)) continue;
       return { detected: true, val };
     }
