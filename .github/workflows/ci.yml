@@ -87,23 +87,25 @@ jobs:
           node scripts/verifyTenantIsolation.js
 
       # Se ejecuta con el rol de la aplicación (no propietario, sin BYPASSRLS), el
-      # mismo con el que corre en producción. Medido: la suite da exactamente el
-      # mismo resultado con PostgreSQL real que con pg-mem (mismas 15 suites rojas
-      # heredadas, 0 fallos nuevos).
+      # mismo con el que corre en producción. Medido con `npx jest --listTests`:
+      # 66 de 79 suites corren dentro del gate bloqueante; 13 suites quedan excluidas por los 9 patrones activos.
+      # Patrón 'authRoutes' eliminado por tener 0 coincidencias en archivos (el test real es tests/auth.integration.test.js que corre dentro del gate).
+      # Recuento de suites rojas/verdes en CI remoto: NO MEDIDO — bloqueado por el paso 7.
       - name: Run Backend Integration & Unit Tests
         env:
           DATABASE_URL: postgres://app_rls_user:ci_only_password@localhost:5432/glowtest
         run: |
           cd backend
-          npm test -- --coverage --testPathIgnorePatterns="geminiService|geminiFallback|auraToolExecutor|contract|biometric|resilience|contextCompressor|fase5|authRoutes|api.cors"
+          npm test -- --coverage --testPathIgnorePatterns="geminiService|geminiFallback|auraToolExecutor|contract|biometric|resilience|contextCompressor|fase5|api.cors"
 
-      # Deuda visible, no oculta: las suites excluidas del gate se ejecutan igual
-      # para que su estado real no desaparezca del tablero (no bloqueante todavía).
+      # Deuda visible, no oculta: las 13 suites excluidas del gate se ejecutan igual
+      # con `continue-on-error: true` para que su estado real no desaparezca del tablero.
+      # Ejecución real en runner remoto: NO VERIFICADO (bloqueado por fallo en el paso 7 antecedente).
       - name: Suites excluidas del gate (no bloqueante)
         continue-on-error: true
         run: |
           cd backend
-          npm test -- --testPathPattern="geminiService|geminiFallback|auraToolExecutor|contract|biometric|resilience|contextCompressor|fase5|authRoutes|api.cors"
+          npm test -- --testPathPattern="geminiService|geminiFallback|auraToolExecutor|contract|biometric|resilience|contextCompressor|fase5|api.cors"
 
   frontend-ci:
     name: Frontend Flutter Analyze & Build Check
