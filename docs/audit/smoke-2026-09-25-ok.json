@@ -1,6 +1,9 @@
 {
-  "timestamp": "2026-09-25T04:28:54.021Z",
+  "timestamp": "2026-09-25T06:44:11.956Z",
+  "routes_source": "express_stack",
   "server_degraded": false,
+  "health_status": 200,
+  "pg_available": true,
   "total_surfaces_tested": 122,
   "faked_success_count": 0,
   "results": [

@@ -223,7 +223,7 @@ app.use((req, res, next) => {
   next();
 });
 
-const { degradedLockMiddleware } = require('./src/middleware/degradedLock');
+const { degradedLockMiddleware, clasificarSalud } = require('./src/middleware/degradedLock');
 app.use('/api', degradedLockMiddleware);
 
 app.use(helmet({
@@ -428,27 +428,35 @@ app.use('/api/v1/memberships', membershipRoutes);
 // Health check — NO escribe en la base de datos. Antes ejecutaba un `setval` sobre
 // `usuarios_id_seq` en cada probe (y respondía 200 con la BD caída).
 // A360-2026-09-22/A-06 + C-03.
+// Health check — NO escribe en la base de datos.
 app.get('/api/health', async (req, res) => {
-  const db = getDbStatus();
-  const degradado = db.servingFabricatedData || db.pgAvailable === false;
-  res.status(degradado ? 503 : 200).json({
-    status: degradado ? 'DEGRADED' : 'OK',
-    message: degradado ? 'Backend con capa de datos degradada' : 'Backend funcionando',
+  const dbStatus = getDbStatus();
+  const salud = clasificarSalud(dbStatus);
+  if (salud.degradado) {
+    res.setHeader('X-GlowApp-Degraded', 'memory-fallback');
+  }
+  res.status(salud.httpStatus).json({
+    status: salud.status,
+    message: salud.message,
     timestamp: new Date().toISOString(),
     env: process.env.NODE_ENV || 'development',
-    database: db,
+    database: dbStatus,
   });
 });
 
 // Test DB connection
 app.get('/api/test-db', debugRouteMiddleware, async (req, res) => {
   try {
-    const dbStatus = getDbStatus();
-    const isDegraded = dbStatus.servingFabricatedData === true || dbStatus.pgAvailable === false;
-    const connected = await testConnection();
-    res.status(isDegraded ? 503 : 200).json({ 
-      status: isDegraded ? 'error' : (connected ? 'success' : 'error'), 
-      message: isDegraded ? 'Error de conexión (Capa de datos degradada)' : 'PostgreSQL conectado',
+    let dbStatus = getDbStatus();
+    if (dbStatus.pgAvailable === null) {
+      await testConnection();
+      dbStatus = getDbStatus();
+    }
+    const salud = clasificarSalud(dbStatus);
+    const connected = dbStatus.pgAvailable === true;
+    res.status(salud.httpStatus).json({ 
+      status: salud.degradado ? 'error' : (connected ? 'success' : 'error'), 
+      message: salud.degradado ? 'Error de conexión (Capa de datos degradada)' : 'PostgreSQL conectado',
       postgis: connected ? await pool.query('SELECT PostGIS_Version()').then(r => r.rows[0].postgis_version).catch(() => 'no disponible') : null
     });
   } catch (err) {

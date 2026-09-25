@@ -739,9 +739,10 @@ const memoryFallbackAllowed = () => {
 };
 
 const getDbStatus = () => ({
-  pgAvailable: dbMode === 'postgres',
+  pgAvailable: dbMode === 'indefinido' ? null : dbMode === 'postgres',
   servingFabricatedData,
   memoryFallbackAllowed: memoryFallbackAllowed(),
+  dbMode
 });
 
 /** ¿Está la conexión sirviendo memoria por decisión explícita (pruebas sin base)
