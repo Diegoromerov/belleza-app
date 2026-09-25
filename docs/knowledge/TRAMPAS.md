@@ -288,6 +288,17 @@ Cuando una trampa solo quedó documentada en la auditoría 360 o en su material 
 
 ---
 
+### Sondas contra la base de este repo: el `pool` miente en `NODE_ENV=test`
+
+`backend/src/config/db.js` exporta un **wrapper** de `pool` que, en `NODE_ENV=test` (o con `ALLOW_MEMORY_FALLBACK=true`, o con `pgMemory.enabled`), **sirve datos de memoria** cuando la conexión real falla. Consecuencias medidas:
+
+- `pool.query('select 1')` devolvió **`{ok:1}` con una contraseña inválida**: el resultado era **fabricado**, no una conexión. Una sonda así «pasa» siempre.
+- `pool.options` **no existe** (el export es un wrapper) ⇒ no se puede leer la config resuelta por esa vía.
+- `testConnection()` devuelve **`true`** cuando falla (su `true` significa «modo memoria»), así que tampoco discrimina; lo que discrimina es **`getDbStatus()`** (`{pgAvailable, servingFabricatedData, memoryFallbackAllowed}`) y, sobre todo, **el mensaje de error que el propio `db.js` imprime**.
+- `pg_hba` con `trust` para `127.0.0.1` **dentro** del contenedor no implica que la contraseña no se compruebe: la conexión desde Windows llega con la IP del bridge y cae en la regla `scram-sha-256`.
+
+**Regla de sonda:** contra `db.js`, mide por `getDbStatus()` o por el error que imprime el módulo, nunca por el resultado de `pool.query`; y declara explícitamente `DB_HOST` (la heurística de SSL lo lee a él, no el host de la URL).
+
 ## 7. Trampas de razonamiento del auditor (retracciones de esta sesión)
 
 ### R-01 · Contar las clases ignorando una cláusula de la propia regla
