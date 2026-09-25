@@ -4,6 +4,7 @@
 -- The foreign key and NOT NULL constraint will be added in later migrations after backfilling.
 
 ALTER TABLE IF EXISTS usuarios ADD COLUMN IF NOT EXISTS tenant_id INTEGER;
+ALTER TABLE IF EXISTS services ADD COLUMN IF NOT EXISTS tenant_id INTEGER;
 ALTER TABLE IF EXISTS servicios ADD COLUMN IF NOT EXISTS tenant_id INTEGER;
 ALTER TABLE IF EXISTS bookings ADD COLUMN IF NOT EXISTS tenant_id INTEGER;
 ALTER TABLE IF EXISTS transactions ADD COLUMN IF NOT EXISTS tenant_id INTEGER;
