@@ -27,6 +27,8 @@
 
 | O-014 | **El guardián tiene que ser del repo, y su fallo tiene que verse** — versionar el runner (`backend/scripts/guardianBelleza.sh`) con exit code honesto, `docs/agents/partes/` + plantilla + primer parte real, y regla de **frescura** en `estadoKB.js --check` (sin parte de 14 días ⇒ desalineación `R4`) | Ejecutor | `chore/guardian-en-el-repo` (desde `docs/sistema-agentes`) | **r1 `0a32f718` RECHAZADA 2026-09-25** (Cargo 1, CI-25: el runner no puede invocar el chequeo en git-bash y sus tests solo cubren mocks ⇒ verdes falsos) · **Cargo 2 (R4) ACEPTADO** · **ronda 8 emitida** (`PROMPT-ANTIGRAVITY-O-014-RONDA-8-2026-09-25.md`: ruta nativa + test del camino real sin mock + `GUARDIAN_REPO` + parte regenerado + tests sin red) | `docs/agents/ordenes/PROMPT-ANTIGRAVITY-O-014-RONDA-8-2026-09-25.md` | CI-25, CI-26, CI-27 |
 
+| O-015 | **El tren tiene que encajar antes de aterrizar** — ensayo de integración de las **5 aceptadas** (`fix/ci-procedencia`, `fix/rls-056-058-cadena`, `fix/montajes-unicos`, `fix/admin-metricas-sin-datos`, `fix/arranque-y-estado-honesto`) sobre `fase-a/verdad-operativa @ b545ef22` en una rama **local desechable** `integracion/tren-a`: mapa de conflictos por merge + suites por merge + orden recomendado de aterrizaje. **Sin push, sin tocar el vehículo ni `main`** | Ejecutor | `integracion/tren-a` (local) | **emitida 2026-09-25**, sin entregar | `docs/agents/ordenes/PROMPT-ANTIGRAVITY-O-015-ENSAYO-TREN-A-2026-09-25.md` | — (necesita que el Dueño autorice después el aterrizaje real) |
+
 ## 2. Decisiones del Dueño (escaladas)
 
 | ID | Decisión | Estado | Qué desbloquea |
