@@ -1,4 +1,6 @@
-# ORDEN A-07 — «El gate tiene que decir la verdad» (para el Ejecutor)
+> ⚠️ **SUPERSEDIDA (2026-09-26).** Quedó obsoleta al medirse la clasificación de las 10 suites. **La orden vigente es** `PROMPT-ANTIGRAVITY-A-07-GATE-CLASIFICADO-R1-2026-09-26.md`. Se conserva como registro.
+
+# ORDEN A-07 — «El gate tiene que decir la verdad» (borrador, sin el mapa)
 
 > Pegá este documento en el otro chat, tal cual. No necesitás leer la KB para empezar: lo medido va acá adentro.
 
