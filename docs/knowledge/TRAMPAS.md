@@ -423,4 +423,17 @@ cualquier contraseña inventada.
   `admin` es superusuario + BYPASSRLS ⇒ **no vale para la compuerta de aislamiento RLS**.
 - Toda medición que diga «con base real» debe pegar antes una sonda que conecte con esa misma URL.
 
+### La firma «Auditor» no es transferible
+
+Un documento firmado «Auditor (Hermes)» que **no salió de la sesión del Auditor** (medido: una «AUDITORÍA INDEPENDIENTE — ORDEN A · O-014 ·
+RONDA 8» que el Auditor no escribió, y cuyos criterios de mutación estaban declarados sin mutación aplicada) entra al registro **como material a
+re-verificar**, nunca como evidencia. Se re-verifica igual que cualquier cita (R-05) y las afirmaciones que no resistan se reemplazan por medición.
+
+### En un archivo con CRLF, una mutación anclada con `\n` no se aplica — y una mutación sin control no prueba nada
+
+Medido: `guardianBelleza.sh` tiene terminadores **CRLF**; el ancla `local p="$1"\n` no matcheó ⇒ la mutación**no se aplicó** y el test siguió
+verde (falso verde de la propia sonda). Reglas: (a) verificar que la mutación **quedó en el archivo** (`grep` de la línea inyectada) y que la
+sintaxis pasa, además del sha256 antes/después; (b) anclar sin el salto de línea; (c) correr **el control sin mutar con el mismo filtro** — sin
+control no se sabe si la roja la causó la mutación o ya estaba.
+
 ## 8. Decisiones del Dueño pendientes (escaladas)
