@@ -32,17 +32,17 @@ dos causas independientes:
 
 1. **El escáner de credenciales** (paso 7 + `audit360-remediation.test.js`): 8 hallazgos reales; su decisión está en el
    Dueño (CI-14) y en confirmar secretos en Railway (2b). **No es tu tarea.**
-2. **~11 suites rojas dentro del gate.** Medido por el Auditor sobre el tren integrado (8 ramas sobre `b545ef22`), en
+2. **10 suites rojas dentro del gate.** Medido por el Auditor sobre el tren integrado (8 ramas sobre `b545ef22`), en
    base limpia con credenciales que autentican y **0 errores de conexión**:
 
    | sin base | con base real |
    |---|---|
-   | 10 de 75 suites rojas | **11 de 75** — aparece `ciRagEvaluation.test.js` y **ninguna desaparece** |
+   | 10 de 75 suites rojas | **10 de 75** (una suite más apareció una vez: ver aviso) |
 
    Las 11: `adminPreciosRoutes` · `audit360-remediation` (cae por la causa 1) · `business.integration` ·
    `businessAdminDocs.integration` · `businessHardening.integration` · `businessRAG.integration` ·
    `businessSystem.integration` · `rateLimiter` · `sequelizeTenantContext` · `sprint2_agents` ·
-   `ciRagEvaluation` (sólo con base).
+   `ciRagEvaluation` **NO** entra: apareció roja en una corrida del tren, pero en aislamiento pasa **8/8 con y sin base** y el log dice `Test suite failed to run` (murió su worker) ⇒ **falso rojo del arnés**, no deuda. Si te aparece, repetila aislada antes de clasificarla.
 
 ⇒ Aun cerrando la causa 1, el CI seguirá rojo por estas suites. **Eso es esta orden.**
 

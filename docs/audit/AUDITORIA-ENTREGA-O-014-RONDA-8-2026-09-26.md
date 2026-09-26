@@ -57,6 +57,12 @@ falta de base**, y el CI (que sí tiene PostgreSQL) mostrará **`ciRagEvaluation
 ⇒ Consecuencia material: aun con CI-14 y 2b cerrados, **el paso bloqueante de tests seguirá rojo** en el PR. Es deuda
 heredada declarada en el propio `ci.yml` (allí dice «15»: número **desactualizado**; hoy son 10-11 en el gate).
 
+**Corrección registrada (2026-09-26, misma jornada):** el «11 con base real» de arriba **no se sostiene**. La suite de más era
+`ciRagEvaluation.test.js` y su log dice `● Test suite failed to run → TypeError: Converting circular structure to JSON` en
+`jest-worker/…/messageParent.js`: **no llegó a ejecutarse** (murió su worker). En aislamiento pasa **8/8 con y sin base** sobre
+`fase-a @ b545ef22`. ⇒ El recuento correcto del gate es **10 suites rojas de 75**, y esa aparición fue **falso rojo del arnés**.
+Queda registrado, no borrado (R-06); CI-29 se re-caracteriza en `DEUDA.md` y la regla se suma a `TRAMPAS.md`.
+
 **Hilo abierto:** existe un workflow `rag-evaluation` que sale `failure` en nuestros pushes. `ciRagEvaluation.test.js`
 falla sólo con base real: es candidato fuerte a **misma causa raíz** (sin diagnosticar).
 

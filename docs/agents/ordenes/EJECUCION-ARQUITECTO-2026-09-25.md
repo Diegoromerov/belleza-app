@@ -170,5 +170,10 @@ superusuario ⇒ la corrida sí es «con base real».
 | sin base utilizable (credencial que no autenticaba) | **10 de 75** | 59 tests rojos, 525 verdes |
 | con base real (`app_rls_user`) | ver `ATERRIZAJE-TREN-A` §3 | comparación por diferencia de conjuntos |
 
+**Corrección (2026-09-26):** la fila «con base real = 11» de la tabla de arriba es **errónea**. La suite de más era `ciRagEvaluation.test.js`
+y su fallo fue `● Test suite failed to run` → `TypeError: Converting circular structure to JSON` en `jest-worker/…/messageParent.js`
+(murió su worker: **no llegó a ejecutarse**). En aislamiento pasa **8/8 con y sin base** sobre `fase-a @ b545ef22`. Recuento correcto:
+**10 suites rojas de 75**, con y sin base.
+
 El `ci.yml` declara en un comentario «mismas **15** suites rojas heredadas con PostgreSQL real que con pg-mem»: la parte
 «mismo resultado» se sostiene, **el número está desactualizado** (medido hoy: 10 en el gate, 19 en la suite completa).

@@ -436,4 +436,14 @@ verde (falso verde de la propia sonda). Reglas: (a) verificar que la mutación *
 sintaxis pasa, además del sha256 antes/después; (b) anclar sin el salto de línea; (c) correr **el control sin mutar con el mismo filtro** — sin
 control no se sabe si la roja la causó la mutación o ya estaba.
 
+### «La suite no corrió» no es «la suite falló» — y una observación no es un patrón
+
+Medido y de mi propia cosecha: abrí una deuda (CI-29) sobre **una sola** aparición roja del gate («con base real aparece una suite más
+⇒ las otras son reales»), y al ir a la causa el log decía `● Test suite failed to run` → `TypeError: Converting circular structure to JSON`
+en `jest-worker/…/messageParent.js`: **la suite no llegó a ejecutarse**, murió su worker bajo carga. En aislamiento pasaba 8/8 con y sin
+base. Reglas:
+- Antes de abrir deuda por una suite roja, leer **cómo** falló: si dice `Test suite failed to run`, no hay veredicto sobre el código.
+- Una aparición única es **una observación**, no un patrón: repetir la medición aislada antes de publicar la conclusión.
+- El recuento de una corrida con workers por defecto puede incluir falsos rojos ⇒ el número del gate hay que confirmarlo suite por suite.
+
 ## 8. Decisiones del Dueño pendientes (escaladas)
