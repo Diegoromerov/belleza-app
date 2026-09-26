@@ -25,6 +25,7 @@
 | suites clave sobre el tren | **10 suites / 45 tests verdes** |
 | escáner (paso 7) | **8 hallazgos reales**, 0 mal etiquetados |
 | escáner con 2b encima | **5** (sólo prosa) |
+| compuerta de aislamiento RLS (paso 5 del CI) | **exit 0 — AISLAMIENTO MULTI-TENANT VERIFICADO** (corrida local con `app_rls_user`) |
 | `main` / `fase-a` / vehículo | sin mover: `f5a1b4fc` / `b545ef22` / `0a32f718` |
 
 ## 2. Comandos del aterrizaje (uno por uno, sin atajos)

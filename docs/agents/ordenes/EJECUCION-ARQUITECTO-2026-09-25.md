@@ -139,3 +139,36 @@ sólo **suma 6 tests verdes** (mi suite nueva). ⇒ **0 regresiones nuevas**, y 
 **Y una de las 19 es del repo, no heredada:** `audit360-remediation.test.js:192` corre el escáner real y falla si sale ≠0; esa
 suite no está excluida del paso bloqueante de `ci.yml:98`, así que **bloquea el CI** mientras haya credenciales versionadas ⇒
 CI-14 y 2b son las dos necesarias para llegar a 0 (registrado en CI-14).
+
+## 7. Reproducción local del CI sobre el tren (2026-09-25)
+
+Con el tren integrado (8 ramas) y una base **limpia** (`glowtest_gate`, sin tocar ninguna existente) se reprodujeron los pasos
+del `ci.yml` fuera de GitHub:
+
+| Paso del CI | Resultado medido |
+|---|---|
+| 0 · compuerta anti-marcadores | **exit 0** ✓ |
+| 1 · esquema multi-tenant + roles RLS (`prepareRlsDatabase.js`) | **exit 0** ✓ (aviso documentado: `usuarios` sin `FORCE` ni política) |
+| 2 · compuerta de aislamiento RLS (`verifyTenantIsolation.js`) | **exit 0 — AISLAMIENTO MULTI-TENANT VERIFICADO** ✓ |
+| 3 · gate bloqueante (`npm test` con los 10 patrones excluidos) | **rojo**: 10 suites de 75 (ver abajo) |
+
+La compuerta de aislamiento se verificó por primera vez en local: cross-tenant invisible, **sin contexto se ven 0 filas (falla
+cerrado)**, escritura en el inquilino ajeno **rechazada (42501)**, trigger rellenando `tenant_id` desde el contexto.
+
+### Nota de proceso: credenciales locales (autorizado por el Dueño, opción B)
+
+Para poder correr el paso 2 hacían falta credenciales que autentiquen: el `trust` de `pg_hba` **no aplica** a las conexiones que
+entran por el NAT de Docker (ver TRAMPAS). Con autorización explícita del Dueño se asignaron **contraseñas temporales** a los
+roles locales `app_owner` y `app_rls_user` (relación no restaurable: el valor anterior queda hasheado; el nuevo **no se registra**
+en ningún archivo del repo, sólo en el scratch). La sonda previa confirmó que ambas autentican y que `app_rls_user` **no** es
+superusuario ⇒ la corrida sí es «con base real».
+
+### El gate bloqueante: dos configuraciones medidas
+
+| Configuración | Suites rojas | Detalle |
+|---|---|---|
+| sin base utilizable (credencial que no autenticaba) | **10 de 75** | 59 tests rojos, 525 verdes |
+| con base real (`app_rls_user`) | ver `ATERRIZAJE-TREN-A` §3 | comparación por diferencia de conjuntos |
+
+El `ci.yml` declara en un comentario «mismas **15** suites rojas heredadas con PostgreSQL real que con pg-mem»: la parte
+«mismo resultado» se sostiene, **el número está desactualizado** (medido hoy: 10 en el gate, 19 en la suite completa).
