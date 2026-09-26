@@ -54,6 +54,13 @@ resilience | contextCompressor | fase5 | authRoutes | api.cors
 
 **El verde de ese paso es verde por exclusión.** No equivale a «verificado»: el estado real aparece en el paso no bloqueante.
 
+**Y en el paso bloqueante** (el gate, con PostgreSQL real) la cifra no es estable: medido en **4 corridas**, dio **10, 11, 11 y 12** suites
+rojas. El **núcleo de 10 falla con aserciones reales** en las cuatro; lo que oscila son **falsos rojos que no llegan a correr**
+(`● Test suite failed to run` → `TypeError: Converting circular structure to JSON`, muere el worker de jest): `ciRagEvaluation.test.js`
+(en aislamiento pasa 8/8) y `ownerMultiSalonDashboard.test.js` (**sus 4 tests pasan** y el crash ocurre al cerrar). Se probó
+`--maxWorkers=2` y **no lo arregla: muda el crash a otra suite**. ⇒ **En este PR hay que leer cuáles fallan, no cuántas**: aun cerrando
+CI-14 y 2b, el backend queda rojo por esas **10 con aserción real** (deuda heredada, declarada también en un comentario del propio `ci.yml`).
+
 **Medido el 2026-09-25** (suite completa, `npx jest`, 82 suites / 620 tests): **19 suites rojas y 81 tests rojos**. Atribución por
 diferencia contra el commit base (`85687237^`), no por opinión: **el conjunto de suites rojas es idéntico** y el fix de A-06 r5 sólo
 **suma 6 tests verdes** ⇒ **0 regresiones nuevas; las 19 son deuda heredada**.
