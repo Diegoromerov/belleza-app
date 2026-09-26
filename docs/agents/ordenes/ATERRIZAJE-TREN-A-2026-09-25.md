@@ -75,6 +75,11 @@ o `backend/public`.
   `businessRAG.integration`, `businessSystem.integration`, `rateLimiter`, `sequelizeTenantContext`, `sprint2_agents`, y
   `audit360-remediation` que sí cae por la causa de CI-14). Es la deuda que el propio `ci.yml` declara en un comentario
   (citaba «15»; hoy son 10 en el gate y 19 en la suite completa).
+  **Ojo con el recuento**: medido en 4 corridas, el gate da **10, 11, 11 y 12** suites rojas — el núcleo de **10 es estable** (aserción
+  real) y lo demás son **falsos rojos** que no corren por un crash del worker de jest (medido: `ciRagEvaluation` y `ownerMultiSalonDashboard`,
+  esta última con sus 4 tests en verde). `--maxWorkers=2` **no** lo arregla (muda el crash). ⇒ En el PR hay que leer **cuáles** fallan,
+  no cuántas.
+
   ⇒ **Decisión explícita del Dueño**: aterrizar aceptando ese backend rojo por deuda heredada (documentado), o abrir las
   10 suites como trabajo propio antes de aterrizar.
 

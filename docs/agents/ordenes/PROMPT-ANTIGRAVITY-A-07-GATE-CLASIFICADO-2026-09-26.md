@@ -44,6 +44,16 @@ dos causas independientes:
    `businessSystem.integration` · `rateLimiter` · `sequelizeTenantContext` · `sprint2_agents` ·
    `ciRagEvaluation` **NO** entra: apareció roja en una corrida del tren, pero en aislamiento pasa **8/8 con y sin base** y el log dice `Test suite failed to run` (murió su worker) ⇒ **falso rojo del arnés**, no deuda. Si te aparece, repetila aislada antes de clasificarla.
 
+### Falsos rojos medidos, no supuestos (leelo antes de clasificar)
+
+El recuento de suites rojas **no es estable**: en 4 corridas del gate sobre el tren dio **10, 11, 11 y 12**. El **núcleo de 10 falla
+con aserciones reales en las cuatro**; lo que oscila son suites que **no corren**: `● Test suite failed to run` →
+`TypeError: Converting circular structure to JSON` (muere el worker de jest). Medidas dos: `ciRagEvaluation.test.js` (en aislamiento
+pasa **8/8**) y `ownerMultiSalonDashboard.test.js` (**sus 4 tests pasan** y el crash ocurre después). Se probó `--maxWorkers=2` y
+**no lo arregla: muda el crash a otra suite**.
+⇒ **Contá sólo las que fallan con aserción.** Toda suite que aparezca como `failed to run` se repite aislada
+(`npx jest --testPathPattern="<archivo>"`) antes de clasificarla: si pasa, es falso rojo del arnés y **no se arregla en esta orden**.
+
 ### Ahorro de tiempo medido (no hace falta que repitas estas corridas)
 
 - **El mismo conjunto de 10 falla con y sin base**: el Auditor comparó las dos corridas por diferencia de conjuntos y son idénticas,
