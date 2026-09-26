@@ -44,7 +44,20 @@ dos causas independientes:
    `businessSystem.integration` · `rateLimiter` · `sequelizeTenantContext` · `sprint2_agents` ·
    `ciRagEvaluation` **NO** entra: apareció roja en una corrida del tren, pero en aislamiento pasa **8/8 con y sin base** y el log dice `Test suite failed to run` (murió su worker) ⇒ **falso rojo del arnés**, no deuda. Si te aparece, repetila aislada antes de clasificarla.
 
-⇒ Aun cerrando la causa 1, el CI seguirá rojo por estas suites. **Eso es esta orden.**
+### Ahorro de tiempo medido (no hace falta que repitas estas corridas)
+
+- **El mismo conjunto de 10 falla con y sin base**: el Auditor comparó las dos corridas por diferencia de conjuntos y son idénticas,
+  con los mismos tests como primer fallo. ⇒ Para clasificar alcanza con correr **cada suite sola** (`npx jest --testPathPattern="<archivo>"`),
+  no hace falta el gate completo de 75 suites.
+- Clasificadas por **cómo** falla cada una (leído del log, no supuesto): **10 con aserción real** (`FALLÓ`) y la 11ª
+  (`ciRagEvaluation`) **no corrió** (`Test suite failed to run`).
+- Primer test que cae en cada una (punto de partida, verificalo): `adminPreciosRoutes` → «Rechaza peticiones de rol client o provider con 403» ·
+  `audit360-remediation` → «no hay credenciales en archivos trackeados» (causa 1) · `business.integration` → «3. POST /api/v1/…» ·
+  `businessAdminDocs.integration` → GOAL 06 Admin UI · `businessHardening.integration` → GAP 01: Provider · `businessRAG.integration` → GOAL 05 Aura + RAG ·
+  `businessSystem.integration` → Goal 08 · `rateLimiter` → TIER_LIMITS por tier · `sequelizeTenantContext` → contexto de inquilino en el pool ·
+  `sprint2_agents` → Agente HERMES.
+
+⇒ Aun cerrando la causa 1, el CI seguirá rojo por estas 10 suites. **Eso es esta orden.**
 
 ---
 
