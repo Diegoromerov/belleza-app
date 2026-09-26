@@ -1388,6 +1388,12 @@ app.use('/api/*', (req, res) => {
 const initDatabase = async () => {
   const dbErrors = [];
   
+  const status = getDbStatus();
+  if (status && status.pgAvailable === false) {
+    console.warn('⚠️ [initDatabase] PostgreSQL no disponible; omitiendo migración e inicialización de BD.');
+    return { ok: false, dbErrors: [{ stage: 'db-connection', message: 'PostgreSQL no disponible' }] };
+  }
+
   try {
     const tableCheck = await pool.query("SELECT to_regclass('public.usuarios') as exists;");
     const hasTable = tableCheck.rows[0].exists !== null;

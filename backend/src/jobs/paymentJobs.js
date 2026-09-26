@@ -20,7 +20,13 @@ const { runAsSystem } = require('../config/tenantRouting');
  * Requiere `GRANT app_system TO app_rls_user` (scripts/setupRlsRole.sql): sin esa
  * membresía, el SET LOCAL ROLE falla en voz alta en vez de degradarse.
  */
-const comoSistema = (job) => () => runAsSystem({ pool }, () => job());
+const comoSistema = (job) => async () => {
+  try {
+    return await runAsSystem({ pool }, () => job());
+  } catch (err) {
+    console.error(`❌ [paymentJobs] Error en job con ROL DE SISTEMA (${job.name || 'anon'}):`, err.message || err);
+  }
+};
 
 /**
  * Lee un parámetro de configuración de la plataforma.

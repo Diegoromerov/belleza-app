@@ -47,7 +47,7 @@ function initializeKey() {
   } else if (Buffer.byteLength(keyEnv, 'utf8') === 32) {
     keyBuffer = Buffer.from(keyEnv, 'utf8');
   } else {
-    if (process.env.NODE_ENV === 'test') {
+    if (process.env.NODE_ENV === 'test' || esEntornoProductivo()) {
       throw new Error('BIOMETRIC_ENCRYPTION_KEY must be 32 bytes long');
     }
     keyBuffer = crypto.createHash('sha256').update(keyEnv).digest();
@@ -89,6 +89,9 @@ class BiometricCryptoService {
     const [ivHex, authTagHex, encryptedText] = parts;
     const iv = Buffer.from(ivHex, 'hex');
     const authTag = Buffer.from(authTagHex, 'hex');
+    if (iv.length !== 12 || authTag.length !== 16) {
+      throw new Error('Invalid ciphertext format');
+    }
     const decipher = crypto.createDecipheriv(ALGORITHM, SECRET_KEY, iv);
     decipher.setAuthTag(authTag);
 
@@ -134,4 +137,6 @@ class BiometricCryptoService {
   }
 }
 
-module.exports = new BiometricCryptoService();
+const instance = new BiometricCryptoService();
+instance.BiometricCryptoService = BiometricCryptoService;
+module.exports = instance;
