@@ -94,7 +94,7 @@ describe('Pruebas unitarias de Sprint 2 (Agente ATENA y Agente HERMES)', () => {
     test('Debería verificar la disponibilidad de agenda para una fecha', async () => {
       pool.query.mockResolvedValueOnce({
         rows: [
-          { id: 'book-1', booking_date: '2026-08-01', start_time: '14:00', status: 'confirmed' }
+          { id: 'book-1', scheduled_at: '14:00', estado: 'confirmed' }
         ]
       });
 

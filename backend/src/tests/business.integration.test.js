@@ -7,6 +7,8 @@ const request = require('supertest');
 const express = require('express');
 const businessRoutes = require('../routes/businessRoutes');
 
+const { Membership, BusinessProfile } = require('../models');
+
 const app = express();
 app.use(express.json());
 
@@ -14,11 +16,11 @@ app.use(express.json());
 app.use((req, res, next) => {
   const authHeader = req.headers.authorization || '';
   if (authHeader === 'Bearer provider-token-user-a') {
-    req.user = { id: 'provider-user-a', role: 'provider', tenant_id: 'tenant-alpha' };
+    req.user = { id: 101, role: 'provider', tenant_id: 'tenant-alpha' };
   } else if (authHeader === 'Bearer provider-token-user-b') {
-    req.user = { id: 'provider-user-b', role: 'provider', tenant_id: 'tenant-beta' };
+    req.user = { id: 102, role: 'provider', tenant_id: 'tenant-beta' };
   } else if (authHeader === 'Bearer admin-token') {
-    req.user = { id: 'admin-user-sys', role: 'admin', tenant_id: 'tenant-system' };
+    req.user = { id: 999, role: 'admin', tenant_id: 'tenant-system' };
   }
   next();
 });
@@ -28,6 +30,19 @@ app.use('/api/v1/business', businessRoutes);
 describe('GlowApp Business Engine Integration & P0 Security Suite', () => {
   let createdTaskId = null;
   let createdEvidenceId = null;
+
+  beforeAll(async () => {
+    try {
+      await BusinessProfile.create({ id: 'biz-alpha', name: 'Peluquería Alpha', city: 'Bogotá' });
+      await BusinessProfile.create({ id: 'biz-beta', name: 'Peluquería Beta', city: 'Medellín' });
+    } catch (e) {}
+
+    try {
+      await Membership.create({ id: 'm-101', user_id: 101, business_profile_id: 'biz-alpha', role: 'OWNER', status: 'ACTIVE' });
+      await Membership.create({ id: 'm-102', user_id: 102, business_profile_id: 'biz-beta', role: 'OWNER', status: 'ACTIVE' });
+      await Membership.create({ id: 'm-999', user_id: 999, business_profile_id: 'biz-alpha', role: 'ADMIN', status: 'ACTIVE' });
+    } catch (e) {}
+  });
 
   test('1. GET /api/v1/business/verticals - Catalogo publico sin requerir autenticacion (200)', async () => {
     const res = await request(app).get('/api/v1/business/verticals');
@@ -64,7 +79,7 @@ describe('GlowApp Business Engine Integration & P0 Security Suite', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
-    expect(res.body.data.profile.provider_id).toBe('provider-user-a');
+    expect(String(res.body.data.profile.provider_id)).toBe('101');
     expect(res.body.data.profile.onboarding_mode).toBe('NEW_BUSINESS');
     expect(Array.isArray(res.body.data.tasks)).toBe(true);
     expect(res.body.data.tasks.length).toBeGreaterThan(0);
@@ -79,7 +94,7 @@ describe('GlowApp Business Engine Integration & P0 Security Suite', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
-    expect(res.body.data.profile.provider_id).toBe('provider-user-a');
+    expect(String(res.body.data.profile.provider_id)).toBe('101');
     expect(res.body.data).toHaveProperty('tasksCount');
   });
 
@@ -115,11 +130,9 @@ describe('GlowApp Business Engine Integration & P0 Security Suite', () => {
     const res = await request(app)
       .post(`/api/v1/business/tasks/${createdTaskId}/evidence`)
       .set('Authorization', 'Bearer provider-token-user-a')
-      .send({
-        file_path: '/uploads/manual_bioseguridad.pdf',
-        evidence_type: 'DOCUMENT',
-        notes: 'Carga de manual bioseguridad en PDF'
-      });
+      .attach('file', Buffer.from('PDF Manual Content'), 'manual_bioseguridad.pdf')
+      .field('evidence_type', 'DOCUMENT')
+      .field('notes', 'Carga de manual bioseguridad en PDF');
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);

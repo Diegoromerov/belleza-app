@@ -12,38 +12,52 @@ const businessRepository = require('../repositories/businessRepository');
 const { executeAuraTool } = require('../services/auraToolExecutor');
 const { searchBeautyKnowledge } = require('../services/ragService');
 
+const { Membership, BusinessProfile } = require('../models');
+
 describe('GlowApp Business - System Integration & Architecture Validation (Goal 08)', () => {
   let app;
 
   const mockProviderUser = {
-    id: 'provider_system_100',
+    id: 100,
     tenant_id: 'tenant_system_alpha',
     role: 'provider',
     name: 'Dra. System Integration'
   };
 
   const mockOtherProviderUser = {
-    id: 'provider_system_200',
+    id: 200,
     tenant_id: 'tenant_system_alpha',
     role: 'provider',
     name: 'Dr. Other Provider Same Tenant'
   };
 
   const mockOtherTenantUser = {
-    id: 'provider_system_300',
+    id: 300,
     tenant_id: 'tenant_system_beta',
     role: 'provider',
     name: 'Dr. Foreign Tenant User'
   };
 
   const mockAdminUser = {
-    id: 'admin_system_999',
+    id: 999,
     tenant_id: 'tenant_system_alpha',
     role: 'admin',
     name: 'Super Admin'
   };
 
-  beforeAll(() => {
+  beforeAll(async () => {
+    try {
+      await BusinessProfile.create({ id: 'biz-sys-alpha', name: 'Peluquería Alpha', city: 'Bogotá' });
+      await BusinessProfile.create({ id: 'biz-sys-beta', name: 'Peluquería Beta', city: 'Medellín' });
+    } catch (e) {}
+
+    try {
+      await Membership.create({ id: 'm-sys-100', user_id: 100, business_profile_id: 'biz-sys-alpha', role: 'OWNER', status: 'ACTIVE' });
+      await Membership.create({ id: 'm-sys-200', user_id: 200, business_profile_id: 'biz-sys-alpha', role: 'OWNER', status: 'ACTIVE' });
+      await Membership.create({ id: 'm-sys-300', user_id: 300, business_profile_id: 'biz-sys-beta', role: 'OWNER', status: 'ACTIVE' });
+      await Membership.create({ id: 'm-sys-999', user_id: 999, business_profile_id: 'biz-sys-alpha', role: 'ADMIN', status: 'ACTIVE' });
+    } catch (e) {}
+
     app = express();
     app.use(express.json());
 
@@ -80,7 +94,7 @@ describe('GlowApp Business - System Integration & Architecture Validation (Goal 
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.data.profile.provider_id).toBe(mockProviderUser.id);
+      expect(String(res.body.data.profile.provider_id)).toBe(String(mockProviderUser.id));
       expect(res.body.data.profile.tenant_id).toBe(mockProviderUser.tenant_id);
     });
 
@@ -117,11 +131,9 @@ describe('GlowApp Business - System Integration & Architecture Validation (Goal 
       const evidenceRes = await request(app)
         .post(`/api/v1/business/tasks/${createdTaskId}/evidence`)
         .set('x-test-user', 'provider')
-        .send({
-          file_path: 's3://glowapp-evidence/biosecurity_pdf.pdf',
-          evidence_type: 'MANUAL_BIOSEGURIDAD',
-          notes: 'Cargado manual RH1'
-        });
+        .attach('file', Buffer.from('PDF Manual Content'), 'biosecurity_pdf.pdf')
+        .field('evidence_type', 'DOCUMENT')
+        .field('notes', 'Cargado manual RH1');
 
       expect(evidenceRes.status).toBe(200);
       expect(evidenceRes.body.data.validation_state).toBe('EVIDENCE_SUBMITTED');
@@ -318,11 +330,11 @@ describe('GlowApp Business - System Integration & Architecture Validation (Goal 
         .get('/api/v1/business/tasks')
         .set('x-test-user', 'provider');
 
-      expect(summaryRes.body.data.profile.provider_id).toBe(mockProviderUser.id);
+      expect(String(summaryRes.body.data.profile.provider_id)).toBe(String(mockProviderUser.id));
       expect(summaryRes.body.data.profile.tenant_id).toBe(mockProviderUser.tenant_id);
 
       tasksRes.body.data.forEach(task => {
-        expect(task.provider_id).toBe(mockProviderUser.id);
+        expect(String(task.provider_id)).toBe(String(mockProviderUser.id));
         expect(task.tenant_id).toBe(mockProviderUser.tenant_id);
       });
     });

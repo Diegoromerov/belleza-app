@@ -150,13 +150,13 @@ class BusinessController {
       // el cliente declaraba la ruta de un archivo que no existía y quedaba
       // registrado como evidencia válida («Certificado_Sanitario_2026.pdf
       // (Cargado)» sin haber subido nada). Sin archivo no hay evidencia.
-      const filePath = req.file ? `/uploads/evidence/${req.file.filename}` : (validatedBody.file_path || req.body?.file_path);
-      if (!filePath) {
+      if (!req.file) {
         return res.status(400).json({
           success: false,
-          error: 'BAD_REQUEST: se requiere el archivo (campo multipart "file") o file_path',
+          error: 'BAD_REQUEST: se requiere el archivo (campo multipart "file"); no se acepta una ruta declarada por el cliente',
         });
       }
+      const filePath = `/uploads/evidence/${req.file.filename}`;
 
       const result = await businessWorkflowService.submitEvidence({
         taskId: req.params.id,

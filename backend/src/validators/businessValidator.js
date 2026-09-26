@@ -35,10 +35,7 @@ const advanceTaskSchema = z.object({
 const submitEvidenceSchema = z.object({
   file_path: z.string().optional(),
   evidence_url: z.string().optional(),
-  evidence_type: z.preprocess(
-    (val) => (typeof val === 'string' && !['DOCUMENT', 'PHOTO', 'CONTRACT', 'FORM', 'DECLARATION'].includes(val) ? 'DOCUMENT' : val),
-    z.enum(['DOCUMENT', 'PHOTO', 'CONTRACT', 'FORM', 'DECLARATION']).optional()
-  ),
+  evidence_type: z.enum(['DOCUMENT', 'PHOTO', 'CONTRACT', 'FORM', 'DECLARATION']).optional(),
   file_type: z.string().optional(),
   notes: z.string().optional(),
 });

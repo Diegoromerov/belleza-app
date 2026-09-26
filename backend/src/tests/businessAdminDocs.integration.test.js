@@ -7,6 +7,8 @@ const request = require('supertest');
 const express = require('express');
 const businessRoutes = require('../routes/businessRoutes');
 
+const { Membership, BusinessProfile } = require('../models');
+
 const app = express();
 app.use(express.json());
 
@@ -14,11 +16,11 @@ app.use(express.json());
 app.use((req, res, next) => {
   const authHeader = req.headers.authorization || '';
   if (authHeader === 'Bearer provider-token-user-a') {
-    req.user = { id: 'provider-user-a', role: 'provider', tenant_id: 'tenant-alpha' };
+    req.user = { id: 101, role: 'provider', tenant_id: 'tenant-alpha' };
   } else if (authHeader === 'Bearer provider-token-user-b') {
-    req.user = { id: 'provider-user-b', role: 'provider', tenant_id: 'tenant-beta' };
+    req.user = { id: 102, role: 'provider', tenant_id: 'tenant-beta' };
   } else if (authHeader === 'Bearer admin-token') {
-    req.user = { id: 'admin-user-sys', role: 'admin', tenant_id: 'tenant-system' };
+    req.user = { id: 999, role: 'admin', tenant_id: 'tenant-system' };
   }
   next();
 });
@@ -27,6 +29,19 @@ app.use('/api/v1/business', businessRoutes);
 
 describe('GlowApp Business Engine — GOAL 06 Admin UI & Document Rendering & Signature Suite', () => {
   let createdDocId = null;
+
+  beforeAll(async () => {
+    try {
+      await BusinessProfile.create({ id: 'biz-alpha', name: 'Peluquería Alpha', city: 'Bogotá' });
+      await BusinessProfile.create({ id: 'biz-beta', name: 'Peluquería Beta', city: 'Medellín' });
+    } catch (e) {}
+
+    try {
+      await Membership.create({ id: 'm-101', user_id: 101, business_profile_id: 'biz-alpha', role: 'OWNER', status: 'ACTIVE' });
+      await Membership.create({ id: 'm-102', user_id: 102, business_profile_id: 'biz-beta', role: 'OWNER', status: 'ACTIVE' });
+      await Membership.create({ id: 'm-999', user_id: 999, business_profile_id: 'biz-alpha', role: 'ADMIN', status: 'ACTIVE' });
+    } catch (e) {}
+  });
 
   test('TEST 01: Generación y renderizado real de borrador documental (200)', async () => {
     const res = await request(app)

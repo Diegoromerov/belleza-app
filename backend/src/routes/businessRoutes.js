@@ -10,6 +10,7 @@ const businessController = require('../controllers/businessController');
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 const membershipMiddleware = require('../middleware/membership.middleware');
 const { requirePermission, RESOURCES, ACTIONS } = require('../middleware/authorization.middleware');
+const subirEvidencia = require('../middleware/evidenceUpload');
 
 // 1. Ruta Pública de Catálogo (Sin autenticación requerida para descubrimiento)
 router.get('/verticals', businessController.getVerticals);
@@ -53,6 +54,7 @@ router.post(
   authMiddleware,
   membershipMiddleware,
   requirePermission(RESOURCES.BUSINESS_PROFILE, ACTIONS.UPDATE),
+  subirEvidencia,
   businessController.submitEvidence
 );
 
