@@ -1,6 +1,6 @@
 # Estado actual — Belleza App / GlowApp
 
-**Medición:** 2026-09-25 00:15 UTC · **§4, §5 y §8 re-medidos el 2026-09-25 ~06:30 UTC** (rondas 3-6 de Fase A sobre `fase-a/verdad-operativa` @ `b545ef22`) · **Copia de referencia:** `C:/beauty-app` ↔ `github.com/Diegoromerov/belleza-app` · **Base:** `main = f5a1b4fc` (sin mover desde el 2026-09-24)
+**Medición:** 2026-09-26 (ronda del 2026-09-26: informe de avance, A-07 ronda 2, barrido CRLF y compuerta RLS sobre el tren de 9 ramas) · **Medición anterior:** 2026-09-25 00:15 UTC · **§4, §5 y §8 re-medidos el 2026-09-25 ~06:30 UTC** (rondas 3-6 de Fase A sobre `fase-a/verdad-operativa` @ `b545ef22`) · **Copia de referencia:** `C:/beauty-app` ↔ `github.com/Diegoromerov/belleza-app` · **Base:** `main = f5a1b4fc` (sin mover desde el 2026-09-24)
 **Regla:** todo número de este documento tiene un comando que lo produce. Lo que no se pudo medir dice `NO VERIFICADO`.
 
 ---
@@ -42,30 +42,31 @@ La app está **funcionalmente a medias por dentro y aparentemente terminada por 
 |---|---|---|---|
 | S1 | Ninguna superficie `2xx` si su consulta falló | **✓** 1,00 | candado de degradación aterrizado y aceptado (rondas 3-4): con la base inalcanzable `/api/products` = `503 DATA_LAYER_DEGRADED` + `X-GlowApp-Degraded`; con la base **arriba** y la app arrancada **como en producción**, `/api/products` = `200` con `count: 296` (medido 2026-09-25). **Matiz (CI-23, ronda 7)**: `pgAvailable: null` significa «sin comprobar» y el candado **no comprueba** en ese estado ⇒ en un proceso que sirve sin el callback de arranque la primera petición queda a merced de la ruta (medido: 500/503 honestos, sin `2xx` fabricado). Con la app arrancada de verdad, los dos sentidos están medidos. **CI-17, CI-20 y CI-22 CERRADAS en `07e7225e`** |
 | S2 | La degradación es visible desde fuera | **✓** | `/api/health` = `503 DEGRADED` + `X-GlowApp-Degraded: memory-fallback` (verificado en las rondas 1-4) |
-| S3 | El CI existe y **puede fallar** | **0,85** | PR #16 head `b545ef22`: run [36100419352](https://github.com/Diegoromerov/belleza-app/actions/runs/36100419352) ejecuta pasos reales, frontend ✅, backend ❌ en el **paso 7** («Escaneo de credenciales versionadas») y **salta los pasos 8-11** ⇒ la suite y la compuerta RLS **nunca se han ejecutado**. Falta CI-14 (5 líneas de prosa) para llegar al paso 8, y la mutación deliberada (O-005) |
+| S3 | El CI existe y **puede fallar** | **0,90** | PR #16 head `b545ef22`: run [36100419352](https://github.com/Diegoromerov/belleza-app/actions/runs/36100419352) ejecuta pasos reales, frontend ✅, backend ❌ en el **paso 7** («Escaneo de credenciales versionadas») y **salta los pasos 8-11** ⇒ la suite y la compuerta RLS **nunca se han ejecutado**. Falta CI-14 (5 líneas de prosa) para llegar al paso 8, y la mutación deliberada (O-005) |
 | S4 | Un comando sale `≠0` si algo finge | **✓** | verificado **en vivo por el Auditor** (ronda 4): plantó dos rutas con nombres distintos sin tocar el guardián ⇒ descubrió 310 rutas del stack vivo, marcó sólo la que fingía y salió `≠0`; y en la ronda 5, si el stack vivo no carga, el respaldo al inventario **aborta con `exit 1`** en vez de dar verde. **Residuos**: CI-17 (el «caso sano» es inalcanzable por construcción), CI-20 (`-ok.json` commiteado rancio) y CI-22 |
 
-**Puntuación vigente de los criterios (2026-09-26):** S1 1,00 · S2 1,00 · S3 **0,85** (el paso de tests del CI nunca llegó a
-correr en GitHub: el criterio literal «romper un test ⇒ run rojo» no se observó allí, sólo el paso 7 en rojo) · S4 1,00.
+**Puntuación vigente de los criterios (2026-09-26, tarde):** S1 1,00 · S2 1,00 · S3 **0,90** (SUBE: medido con el comando exacto del CI — el gate da **10 suites / 59 tests** rojos con 0 `failed-to-run`, y el «rojo fantasma» quedó **atribuido y reproducido**: el error de timeout de `execSync` no es serializable y mata al worker mientras reporta; sigue sin 1,00 porque el criterio literal «romper un test ⇒ run rojo **en GitHub**» no se pudo medir: el paso de tests nunca corre allí, queda `skipped` detrás del paso 7 ❌) · S4 1,00.
 
-**Avance de la Fase A (medido 2026-09-26, cálculo en `docs/knowledge/scripts/avanceFaseA.js`):**
-**trabajo técnico 73,6 %** (78,3 % sin A-04, que está bloqueada por decisión del Dueño) · **criterios firmables 96,3 %**
-(3 de 4 plenos) · **fase cerrada 0 %** (nada mergeado a `main`; el aterrizaje está en 0,10 de 1,00). Delta +7,6 pp sobre el 66,0 %.
+**Avance de la Fase A (medido 2026-09-26 tarde, cálculo versionado en `docs/knowledge/scripts/avanceFaseA.js`):**
+**trabajo técnico 75,5 %** (80,3 % sin A-04, que está bloqueada por decisión del Dueño) · **criterios firmables 97,5 %**
+(3 de 4 plenos) · **fase cerrada 0 %** (nada mergeado a `main`; el aterrizaje está en 0,15 de 1,00). **Delta +1,9 pp** sobre el 73,6 % del informe previo del mismo día: S3 (la verdad del gate, medida y atribuida), A-06 (verificado que el escáner nuevo da lo mismo en CRLF y en LF) y el aterrizaje (paquete re-verificado).
+
+**A-07 (el gate tiene que decir la verdad) queda FUERA del denominador** porque nació después de declarados los criterios: hoy está en 0,50 (r1 RECHAZADA por introducir un agujero de escalada; r2 aceptada parcialmente, gate 10/59 → **6/28**, ronda 3 pendiente). Si el Dueño decide incorporarlo, el total es **74,3 %** y los entregables 75,0 %.
 
 ## 5. Estado de las compuertas (rol Guardián)
 
 | Compuerta | Ubicación | Qué vigila | Estado |
 |---|---|---|---|
 | Anti-marcadores de conflicto | `backend/scripts/checkNoConflictMarkers.js` | marcadores `<<<<<<<` en archivos versionados | ✓ en CI (bloqueante) **solo en `fase-a`**; `main` sigue con 3 marcadores (CI-10) |
-| Credenciales versionadas | `backend/scripts/verifyNoVersionedSecrets.js` | secretos en el árbol | **⚠ no fiable todavía**: su veredicto depende del fin de línea (CI-06) y quedó ciego al prefijo `glowapp_` (CI-08); ronda 2 en curso |
-| Aislamiento multi-tenant | `backend/scripts/verifyTenantIsolation.js` | RLS: `FORCE`, políticas laxas, roles con BYPASSRLS | ✓ **cuando el esquema se levanta**; sobre base vacía moría (CI-01) — corregido, sin aterrizar en `main` |
+| Credenciales versionadas | `backend/scripts/verifyNoVersionedSecrets.js` | secretos en el árbol | **⚠ no fiable aún en `fase-a`**: ciego al CRLF (CI-31: mismo commit **1 hallazgo con CRLF vs 39 con LF**) — la versión nueva (**A-06 r5**, `85687237`, sin aterrizar) sí es tolerante: **8 = 8**. Barrido hecho: de las compuertas que leen líneas, **sólo el escáner** tenía esta ceguera |
+| Aislamiento multi-tenant | `backend/scripts/verifyTenantIsolation.js` | RLS: `FORCE`, políticas laxas, roles con BYPASSRLS | ✓ **verificado hoy sobre el tren de 9 ramas**: `exit 0`, **22 pruebas / 0 omitidas** (13 tablas RLS+FORCE, escritura ajena 42501, trigger de `tenant_id`). ⚠ **CI-38**: el mismo script sale **0 con 0 pruebas** sobre base vacía ⇒ el número que vale es el de pruebas ejecutadas, no el exit |
 | Estado y alineación del repositorio | `backend/scripts/estadoKB.js --check` | ramas zombis, ramas sin PR ni tag, worktrees muertos, copia desalineada | ✓ corre en local y en el cron semanal; **hoy sale `exit 1`** por 2 planes sin commitear (R1) |
 | Superficies honestas | `backend/scripts/smokeSurfaces.js` | que ninguna superficie mienta | **✓** (ronda 6, `07e7225e`): arranca la app por el camino real (`spawn node index.js`), espera disponibilidad con timeout explícito, escribe `-ok.json` o `-degraded.json` con `health_status`/`pg_available` y mata el hijo. **Medido por mí**: base arriba ⇒ `IsDegraded=false`, 122 superficies, 0 fakes, `EXIT=0`; base caída ⇒ `-degraded.json`. Residuo: el timeout no está probado por test (Cargo 2 de la ronda 7) |
 | **Autonomía** (cron del Arquitecto, fuera del repo) | job «Guardián de estado — Belleza App» lunes 9:00 + `scripts/guardian-belleza.sh` (perfil Hermes) | que el proyecto se mida solo y quede el parte | **✓ funcionando hoy con el runner del perfil**: mide `C:/beauty-app` y detecta la `R1` real (los 2 planes de `.hermes/plans/`) ⇒ `exit=1`. Primer run: **2026-09-28 09:00** (`executions.db` = 0 filas todavía). **O-014 r1 RECHAZADA por CI-25**: el runner versionado (`backend/scripts/guardianBelleza.sh`, `0a32f718`) no puede correr el chequeo en git-bash (`pwd` MSYS ⇒ `/c/...` a `node.exe`) y sus 3 tests solo cubren mocks ⇒ sus verdes son falsos. La **R4 de frescura** sí quedó ✓ (parte viejo ⇒ `--check` falla). **CI-27**: el runner inspecciona la copia donde vive el script ⇒ el cron debe invocarlo apuntando a `C:/beauty-app`. **O-014 ronda 8 emitida** |
 
 ## 6. Suites rojas heredadas (deuda declarada, no ocultada)
 
-**15 suites fallan** en `main` y en `fase-a` (mismos fallos: no son regresiones). El paso **bloqueante** del CI excluye 10 patrones y las corre en un paso **no bloqueante** para que su estado no desaparezca del tablero:
+**El rojo heredado, medido hoy con el comando exacto del CI:** el gate (paso 8, bloqueante) tiene **10 suites / 59 tests rojos** con 0 `failed-to-run` sobre `fase-a`, y **6 / 28** sobre `A-07 r2` (`835e9392`); el paso 9 (no bloqueante, todas las suites) corre **19 suites / 81 tests** rojos. Cuidado con los «fantasmas»: un `Test suite failed to run` no es un hallazgo del producto. **Contexto histórico: 15 suites fallan** en `main` y en `fase-a` (mismos fallos: no son regresiones). El paso **bloqueante** del CI excluye 10 patrones y las corre en un paso **no bloqueante** para que su estado no desaparezca del tablero:
 
 ```
 geminiService | geminiFallback | auraToolExecutor | contract | biometric
@@ -105,13 +106,16 @@ resilience | contextCompressor | fase5 | authRoutes | api.cors
 | A-01 r2 | `fix/rls-056-058-cadena` @ `ba06e563` | cadena RLS 056/058 | **✓ ACEPTADA** (en el tren). **Re-medido por el Arquitecto el 2026-09-26**: compuerta de aislamiento sobre base limpia ⇒ `exit 0` — cross-tenant invisible, **sin contexto 0 filas**, escritura ajena rechazada (42501), trigger rellenando `tenant_id` |
 | Fase A r7 | `fix/candado-comprueba-si-desconoce` @ `82f84f5e` | el candado comprueba cuando no sabe | **✓ ACEPTADA**: `asegurarEstadoComprobado()` (caché TTL 5 s + promesa en vuelo), `/api/health` usa la misma función; RED→GREEN 6/6, mutación 3 failed; comportamiento real sin arranque: base arriba `200 pgAvailable=true`, base caída `503` ⇒ **CI-23 cerrada**. Cargo 2: timeout del guardián medido (3/3 + mutación) |
 | O-016 | `fix/contrato-convive-con-candado` @ `3a9148ad` | contrato vs candado (**CI-28**) | **✓ CERRADA 2026-09-25**: el caso neutraliza la capa del candado (`appSinCandado`) ⇒ **3/3 en los 4 escenarios** (test/development × con/sin base); mutación del prefijo duplicado ⇒ 2 failed/1 passed con `index.js` restaurado idéntico |
+| A-08 | `fix/caminos-muertos` @ `063b19e0` | CI-21 (módulo roto), CI-12 (suite no coleccionada), TEC-72 (logs de migración falsos) | **✓ CERRADA (r2 aceptada)**: la cura real quedó en el wrapper `comoSistema` de `paymentJobs.js` con **mi mutación** (quitar el `try/catch` ⇒ `1 failed`); el `cifrado` hace round-trip de producción. **CI-30 abierta** (con clave ≠ 32 bytes ahora **lanza**: ruta de identidad) |
+| A-07 r1 | `fix/gate-clasificado` @ `461b6362` | el gate tiene que decir la verdad | **✗ RECHAZADA**: introdujo un **agujero de escalada** en `membership.middleware` (id no numérico ⇒ `OWNER` + perfil fabricado) y dos regresiones más; **medido por mutación: 41 tests se apoyaban en el hueco**. Sí se conservan 2 fixes reales (`cablearContextoEnSequelize` cableado en el boot, `tenant_id` persistido) |
+| A-07 r2 | `fix/gate-clasificado` @ `835e9392` | ni un hueco por un test | **⚠ ACEPTADA PARCIALMENTE**: reversiones **verificadas por diff** (middleware y controller idénticos a la base, matriz de permisos intacta) y el rojo bajó **10/59 → 6/28**; pero **sin una sola medición** en la entrega y el Cargo 4 contestado con una causa no medida ⇒ **ronda 3 emitida** |
 | O-014 r8 | `chore/guardian-en-el-repo` @ `b919d45a` | runner versionado + ruta nativa (**CI-25**) | **✓ ACEPTADA 2026-09-26** y **empujada** (verificada contra el remoto por el Arquitecto): corrida real `EXIT=0` con ruta nativa, 7/7 tests, y las tres piezas (ruta nativa, `GUARDIAN_REPO`, `SKIP_NETWORK`) resisten **mutación aplicada por el Auditor con su control** y restauración por `sha256` ⇒ CI-25 cerrada; CI-26/CI-27 con residuos declarados |
 
-**Ensayo del tren COMPLETO (re-verificado 2026-09-26):** `fase-a` + **8 ramas aceptadas** ⇒ **8 merges, 0 conflictos**, HEAD `e819ae5c`; **10 suites / 45 tests verdes**; el escáner queda en **8**. Los 8 SHAs citados en el PR siguen siendo los vigentes (medido hoy). El gate bloqueante (con PostgreSQL real) tiene un **núcleo de 10 suites rojas con aserción real** y falsos rojos intermitentes por crash del worker de jest (medido en 4 corridas: 10/11/11/12). Detalle en `docs/agents/ordenes/ATERRIZAJE-TREN-A-2026-09-25.md`.
+**Ensayo del tren COMPLETO (re-verificado 2026-09-26 tarde):** `fase-a` + **9 ramas aceptadas** (entra `fix/caminos-muertos` = A-08) ⇒ **9 merges, 0 conflictos**, HEAD **`f6e1964d`**; **9 suites / 51 tests verdes** en las suites de las ramas; el escáner queda en **8**; compuerta RLS `exit 0` (22 pruebas) sobre ESE tren; 91 suites coleccionables. Los 8 SHAs citados en el PR siguen siendo los vigentes (medido hoy). El gate bloqueante (con PostgreSQL real) tiene un **núcleo de 10 suites rojas con aserción real** y falsos rojos intermitentes por crash del worker de jest (medido en 4 corridas: 10/11/11/12). Detalle en `docs/agents/ordenes/ATERRIZAJE-TREN-A-2026-09-25.md`.
 
 **Ensayo del tren (hecho por el Arquitecto, 2026-09-25):** las 5 aceptadas entran en el vehículo con **0 conflictos de texto**, pero el conjunto deja **`routing.contract.test.js` en ROJO** — esperado `404`, recibido **503** del candado de degradación (`degradedLock.js:57-59`, `:86-90`), medido con y sin base. **CI-28** ⇒ no aterrizar hasta que O-016 esté. Mapa completo: `docs/agents/ordenes/ENSAYO-TREN-A-2026-09-25.md`.
 
-**Decisión pendiente del Dueño:** D-002 (`delete_branch_on_merge`) · D-003 (**rotar los 7 secretos**, porque `backend/.env.production` está en el historial de `main`) · D-004 (mergear `docs/sistema-agentes`) · D-005 (#10/#12) · **A-04** (¿`backend/public` es artefacto commiteado o derivado?) · **CI-14** (las 5 líneas de prosa que bloquean el paso 7 del CI) · **CI-16** (el candado de degradación alcanza dinero/identidad sin declararlo) · **CI-12** (`biometricCryptoService.test.js` no lo colecciona jest) · y 2 planes sin commitear en `C:/beauty-app/.hermes/plans/` que mantienen al guardián en `exit 1`.
+**Decisiones pendientes del Dueño (2026-09-26):** **aterrizaje del tren** (requiere autorización; merge commit, no squash) · **CI-14** (las 5 líneas de prosa del escáner) · **CI-30** (cripto de biometría: con clave ≠ 32 bytes ahora **lanza**) · **CI-35** (¿cambiar el permiso que exige `/business/documents/generate` o agregar `BUSINESS_PROFILE:CREATE` a OWNER/ADMIN?) · **CI-36** (finales de línea mezclados por worktree + `core.autocrlf=false` en la config del repo) · **CI-37** (mitigación del crash de worker) · observabilidad de los jobs de pagos · los **2 planes duplicados** de `.hermes/plans/` · incorporar o no **A-07** al denominador de la fase · y las anteriores: D-002 (`delete_branch_on_merge`) · D-003 (**rotar los 7 secretos**, porque `backend/.env.production` está en el historial de `main`) · D-004 (mergear `docs/sistema-agentes`) · D-005 (#10/#12) · **A-04** (¿`backend/public` es artefacto commiteado o derivado?) · **CI-14** (las 5 líneas de prosa que bloquean el paso 7 del CI) · **CI-16** (el candado de degradación alcanza dinero/identidad sin declararlo) · **CI-12** (`biometricCryptoService.test.js` no lo colecciona jest) · y 2 planes sin commitear en `C:/beauty-app/.hermes/plans/` que mantienen al guardián en `exit 1`.
 
 ---
 
@@ -120,33 +124,43 @@ resilience | contextCompressor | fase5 | authRoutes | api.cors
 Regenerar con: `node backend/scripts/estadoKB.js --write` · Verificar con: `node backend/scripts/estadoKB.js --check`
 
 <!-- estadoKB:inicio -->
-> Bloque generado por `backend/scripts/estadoKB.js` el **2026-09-25 00:15:24Z**. No se edita a mano.
+> Bloque generado por `backend/scripts/estadoKB.js` el **2026-09-26 15:30:22Z**. No se edita a mano.
 
-**Copia inspeccionada:** `C:/Users/Compu casa/.gemini/antigravity/worktrees/beauty-app/sistema-agentes` · rama `docs/sistema-agentes` @ `fafe77fa` (2026-09-24 19:09:57 -0500) · árbol: **1 entradas sin commitear**
+**Copia inspeccionada:** `C:/Users/Compu casa/.gemini/antigravity/worktrees/beauty-app/sistema-agentes` · rama `docs/sistema-agentes` @ `63e0f054` (2026-09-26 10:25:23 -0500) · árbol: **2 entradas sin commitear**
 
-**Ramas locales (7):**
+**Ramas locales (17):**
 
 | Rama | SHA | Último commit | Commits fuera de main | PR abierto |
 |---|---|---|---|---|
-| `docs/sistema-agentes` | `fafe77fa` | 2026-09-24 | 12 | — |
-| `fix/compuerta-secretos-reproducible` | `5020e4df` | 2026-09-24 | 7 | — |
-| `fase-a/verdad-operativa` | `c1069e9f` | 2026-09-24 | 6 | sí |
+| `docs/sistema-agentes` | `63e0f054` | 2026-09-26 | 84 | — |
+| `chore/guardian-en-el-repo` | `b919d45a` | 2026-09-25 | 40 | — |
+| `fix/jwt-sin-respaldo` | `dbb87293` | 2026-09-25 | 14 | — |
+| `fix/compuerta-secretos-reproducible` | `85687237` | 2026-09-25 | 13 | — |
+| `fix/candado-comprueba-si-desconoce` | `82f84f5e` | 2026-09-25 | 12 | — |
+| `fix/admin-metricas-sin-datos` | `6f2f656f` | 2026-09-25 | 11 | — |
+| `fix/caminos-muertos` | `063b19e0` | 2026-09-26 | 11 | — |
+| `fix/gate-clasificado` | `835e9392` | 2026-09-26 | 11 | — |
+| `fix/arranque-y-estado-honesto` | `07e7225e` | 2026-09-25 | 10 | — |
+| `fase-a/verdad-operativa` | `b545ef22` | 2026-09-25 | 9 | sí |
+| `fix/contrato-convive-con-candado` | `3a9148ad` | 2026-09-25 | 8 | — |
+| `fix/rls-056-058-cadena` | `ba06e563` | 2026-09-24 | 8 | — |
+| `fix/ci-procedencia` | `6268afff` | 2026-09-24 | 7 | — |
+| `fix/montajes-unicos` | `38a9afe9` | 2026-09-24 | 7 | — |
 | `feat/glowshop-niveles-a0` | `3337aadb` | 2026-09-24 | 1 | sí |
 | `feat/glowshop-precios-csv` | `18a04262` | 2026-09-24 | 1 | sí |
-| `fix/rls-056-058-cadena` | `c36accea` | 2026-09-24 | 1 | — |
 | `main` | `f5a1b4fc` | 2026-09-24 | 0 | — |
 
-**Ramas en el remoto:** 7 → `docs/sistema-agentes` · `fase-a/verdad-operativa` · `feat/glowshop-niveles-a0` · `feat/glowshop-precios-csv` · `fix/compuerta-secretos-reproducible` · `fix/rls-056-058-cadena` · `main`
+**Ramas en el remoto:** 17 → `chore/guardian-en-el-repo` · `docs/sistema-agentes` · `fase-a/verdad-operativa` · `feat/glowshop-niveles-a0` · `feat/glowshop-precios-csv` · `fix/admin-metricas-sin-datos` · `fix/arranque-y-estado-honesto` · `fix/caminos-muertos` · `fix/candado-comprueba-si-desconoce` · `fix/ci-procedencia` · `fix/compuerta-secretos-reproducible` · `fix/contrato-convive-con-candado` · `fix/gate-clasificado` · `fix/jwt-sin-respaldo` · `fix/montajes-unicos` · `fix/rls-056-058-cadena` · `main`
 
 **PRs abiertos:** #16 `fase-a/verdad-operativa` → `main` · #12 `feat/glowshop-precios-csv` → `main` · #10 `feat/glowshop-niveles-a0` → `main`
 
 **Tags `archive/*`:** 8 locales · 17 refs en el remoto
 
-**Worktrees (3):** `feat/glowshop-niveles-a0` @ 3337aad · `fix/rls-056-058-cadena` @ c36acce · `docs/sistema-agentes` @ fafe77f
+**Worktrees (3):** `feat/glowshop-niveles-a0` @ 3337aad · `fix/gate-clasificado` @ 835e939 · `docs/sistema-agentes` @ 63e0f05
 
 **Desalineaciones detectadas (1):**
 
 | Regla | Detalle |
 |---|---|
-| R1 | 1 entradas sin commitear (M docs/knowledge/ESTADO-ACTUAL.md) |
+| R1 | 2 entradas sin commitear (M docs/knowledge/ESTADO-ACTUAL.md ·  M docs/knowledge/scripts/avanceFaseA.js) |
 <!-- estadoKB:fin -->
