@@ -42,7 +42,18 @@ Cadena medida leyendo el código instalado:
 - `ciRagEvaluation.test.js` **en aislamiento: 8/8 verdes**, sin un solo rechazo no manejado (medido con un gancho de `unhandledRejection`).
 - La víctima registrada con el comando del CI es **siempre `ciRagEvaluation.test.js`**; el ensayo con `--maxWorkers=2` movió la víctima a `ownerMultiSalonDashboard` ⇒ el defecto **no se arregla con workers**: se mueve.
 
-**Lo que sigue sin atribuir:** **qué** suite produce el error circular (el gancho no llegó a activarse: ese `jest.config.js` no tiene `setupFiles`, así que mi edición no se aplicó — falla mía de método, se puede reintentar con `--setupFiles=` por línea de comandos). El crash se reprodujo en **2 de 6** corridas.
+**PRODUCTOR ATRIBUIDO (reproducido en una línea).** La víctima es siempre la misma porque **el error es suyo**: `ciRagEvaluation.test.js` corre comandos con `execSync(..., { timeout: 5000 })` (dos veces: `evaluateRag.js --help` y `ciRagEvaluation.sh --help`), y cuando el comando **se pasa de tiempo** —lo que ocurre bajo carga, y más con `--coverage`, que instrumenta todo— **el error que lanza `execSync` no es serializable**:
+
+```
+node -e "const{execSync}=require('child_process');try{execSync('node -e \\"setTimeout(()=>{},9000)\\"',{timeout:400})}catch(e){JSON.stringify(e)}"
+⇒ TypeError: Converting circular structure to JSON
+    --> starting at object with constructor 'Error'
+    --- property 'error' closes the circle
+```
+
+Es **el mismo texto y la misma propiedad** que el crash del worker. La suite tiene **8 tests** y en las corridas con fantasma el total baja **551 → 543: exactamente esos 8**. Cadena completa: un test revienta con ese error ⇒ el worker muere **mientras lo reporta** ⇒ el padre se queda sin el resultado de esa suite ⇒ la marca «failed to run» y oculta el error real. Medido en **Node v26.7.0** (mi entorno); **no medido en Node 18/Ubuntu** (el paso de tests nunca corrió en GitHub).
+
+**Los `execSync` de esa suite, tal como están:** `node -c …` con 10 s, `bash -n …` **sin timeout** (puede colgar la suite para siempre), y dos `--help` con 5 s. Otras corridas con el comando del CI: 5 corridas, **3 con fantasma**, 2 limpias; con el gancho de `unhandledRejection` activo, 2 corridas limpias (no reprodujo).
 
 ## Lo que esto NO cambia
 

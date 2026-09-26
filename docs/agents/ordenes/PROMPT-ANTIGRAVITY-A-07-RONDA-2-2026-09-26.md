@@ -35,16 +35,12 @@ Verifiqué el esquema real en las dos bases: las columnas de `bookings` son **`s
 
 ## Cargo 4 — El falso rojo del arnés: **YA ATRIBUIDO, no lo re-midas desde cero**
 
-Mecanismo medido por el Arquitecto (`docs/knowledge/GATE-NUMEROS-2026-09-26.md`): `testCaseReportHandler` → `sendMessageToJest` → `messageParent` → `process.send` ⇒ `JSON.stringify` de un error **no serializable** (ciclo por la propiedad `error`) mata el worker, y jest marca como «failed to run» a una suite **víctima** (cambia entre corridas; `ciRagEvaluation` en aislamiento da 8/8). **Lo único que falta: QUÉ suite deja el rechazo no manejado con ese error circular.** Cazala así (mi gancho anterior no se aplicó porque `jest.config.js` no tiene `setupFiles`):
+El circuito está **cerrado, con reproducción incluida** (`docs/knowledge/GATE-NUMEROS-2026-09-26.md`). **No lo re-midas: arreglalo.**
 
-```
-npx jest --setupFiles="<rootDir>/src/tests/_gancho_rechazos.js" --testPathIgnorePatterns="…" --ci
-```
-con `_gancho_rechazos.js` = `process.on("unhandledRejection", e => console.error("RECHAZO", e && e.message, Object.keys(e||{}).join(",")), process.on("uncaughtException", e => console.error("EXCEPCION", e && e.message)))`. Si no lográs atribuirlo en 3 corridas, se declara **«no atribuido»** con las corridas.
-
-**Y además:** implementá la mitigación (CI-37): un `setupFiles` que convierta los rechazos no manejados en errores **serializables**, para que el gate no pueda volver a fabricar fantasmas. Traé la mutación que la voltea.
-
-**Números de referencia (medidos por mí, 6 corridas, comando del CI):** el rojo honesto es **10 suites / 59 tests** con 0 `failed-to-run`; 11-12 cuando el arnés crashea y 543 en vez de 551 tests. Si tu medición da otra cosa, declaralo.
+- **Productor:** `src/tests/ciRagEvaluation.test.js` corre comandos con `execSync(..., { timeout: 5000 })`. Cuando el comando vence (bajo carga, y más con `--coverage`) **el error de timeout de `execSync` no es serializable**: su `JSON.stringify` tira `Converting circular structure to JSON … property 'error' closes the circle`. El worker muere **reportando** ese error ⇒ el padre pierde la suite completa (sus **8 tests** son los que faltan: 551 → 543) y la marca «failed to run», ocultando el error real.
+- **Fix en la suite:** (a) timeouts realistas (30 s) para los `--help`; (b) **un timeout para `bash -n`**, que hoy no tiene ninguno y puede colgar la suite para siempre; (c) un helper que, si el comando falla o vence, **rethrow un `Error` nuevo con el mensaje en string** (serializable), en vez de dejar propagar el error crudo de `execSync`.
+- **Fix en el arnés (CI-37):** un `setupFiles` que convierta rechazos no manejados y excepciones en errores **serializables**, para que ningún test pueda volver a matar a un worker.
+- **Prueba determinista exigida (no estadística):** mutá el timeout a `1` ms para forzar el vencimiento, y mostrá (1) que **antes** el worker muere con `Converting circular structure to JSON` y la suite figura «failed to run», y (2) que **después** del fix el mismo vencimiento se reporta como un fallo **legible dentro de la suite**. Restaurá con `sha256` y traé los dos textos.
 
 ## Cargo 4-bis — (histórico) la atribución previa, infundada
 
