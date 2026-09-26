@@ -8,7 +8,7 @@ describe('Cargo 1 (CI-21) — tenantRouting.js Unhandled Rejection on DB Failure
   test('(RED -> GREEN) runAsSystem con pool caído no debe emitir unhandledRejection', () => {
     // Proceso hijo que ejecuta invocación de runAsSystem con pool caído
     const childScript = `
-      const { runAsSystem } = require('./backend/src/config/tenantRouting');
+      const { comoSistema } = require('./backend/src/jobs/paymentJobs');
       
       let unhandledFired = false;
       process.on('unhandledRejection', (reason) => {
@@ -23,9 +23,12 @@ describe('Cargo 1 (CI-21) — tenantRouting.js Unhandled Rejection on DB Failure
         }
       };
 
-      // 1. Invocación con catch explícito
-      runAsSystem({ pool: deadPool }, async () => 'ok').catch(err => {
-        console.log('HANDLED_REJECTION:', err.message);
+      // Simula invocación de job de fondo (ej. cron / setInterval / setTimeout) sin await ni .catch()
+      const job = comoSistema(async () => 'ok');
+      
+      // Invocación asíncrona sin await en segundo plano
+      setImmediate(() => {
+        job();
       });
 
       setTimeout(() => {

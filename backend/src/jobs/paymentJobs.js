@@ -305,6 +305,7 @@ function inicializarJobs() {
 
 module.exports = {
   inicializarJobs,
+  comoSistema,
   // Envueltos igual que en el scheduler: también se exportan, y cualquier otro
   // llamador debe recibir el mismo contexto de sistema.
   madurarSaldosPendientes: comoSistema(madurarSaldosPendientes),

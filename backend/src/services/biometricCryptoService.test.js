@@ -33,6 +33,18 @@ describe('BiometricCryptoService - Hardening', () => {
       expect(decrypted).toEqual(original);
     });
 
+    test('should encrypt and decrypt correctly in PRODUCTION environment with 32-byte key (happy path)', () => {
+      process.env.BIOMETRIC_ENCRYPTION_KEY = validKey;
+      process.env.NODE_ENV = 'production';
+      const bcs = getBcs();
+      const original = { faceScores: { hydration: 85, elasticity: 90 }, user: 'prod_user' };
+      const encrypted = bcs.encrypt(original);
+      expect(typeof encrypted).toBe('string');
+      expect(encrypted.split(':')).toHaveLength(3);
+      const decrypted = bcs.decrypt(encrypted);
+      expect(decrypted).toEqual(original);
+    });
+
     test('should encrypt and decrypt a string correctly', () => {
       process.env.BIOMETRIC_ENCRYPTION_KEY = validKey;
       const bcs = getBcs();
