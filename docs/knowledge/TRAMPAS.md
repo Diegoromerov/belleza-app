@@ -446,4 +446,14 @@ base. Reglas:
 - Una aparición única es **una observación**, no un patrón: repetir la medición aislada antes de publicar la conclusión.
 - El recuento de una corrida con workers por defecto puede incluir falsos rojos ⇒ el número del gate hay que confirmarlo suite por suite.
 
+### Un recolector de datos para un cron no señala hallazgos con el exit
+
+Medido en el disparo real del guardián (2026-09-26): el script salía `1` porque el chequeo encontró una desalineación, y el arnés
+del cron tituló el reporte entero como «**Script Error** … Report this to the user» (el job igual quedó `last_status: ok`). El efecto es
+peor que el ruido: **enseña a ignorar la señal de fallo**.
+
+Contrato correcto para este consumidor: **el exit dice si se pudo medir, no si hay hallazgos**. Medido ⇒ `0` (con o sin desalineaciones,
+y el estado va en el texto: `RESULTADO: ALINEADO` / `CON DESALINEACIONES`); no pudo medir (repo ausente, chequeo no encontrado) ⇒ `≠ 0`.
+Regla general: el exit de un recolector es un contrato con su arnés; el hallazgo es contenido.
+
 ## 8. Decisiones del Dueño pendientes (escaladas)
