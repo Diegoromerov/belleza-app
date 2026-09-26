@@ -33,7 +33,20 @@ Eso, en producción, es **escalada de privilegios** para cualquier token cuyo id
 
 Verifiqué el esquema real en las dos bases: las columnas de `bookings` son **`scheduled_at`** y **`estado`**. Tu cambio (`r.scheduled_at || r.start_time`, `r.estado || r.status`) hace que **el código se adapte a un mock que no refleja la base**: en producción `start_time`/`status` no existen, así que el fallback es código muerto que tapa un test desalineado. Arreglá **el mock** del test; si el agente debe aceptar otra forma de entrada, escribí el contrato y probalo, no un `||`.
 
-## Cargo 4 — El falso rojo del arnés, esta vez medido
+## Cargo 4 — El falso rojo del arnés: **YA ATRIBUIDO, no lo re-midas desde cero**
+
+Mecanismo medido por el Arquitecto (`docs/knowledge/GATE-NUMEROS-2026-09-26.md`): `testCaseReportHandler` → `sendMessageToJest` → `messageParent` → `process.send` ⇒ `JSON.stringify` de un error **no serializable** (ciclo por la propiedad `error`) mata el worker, y jest marca como «failed to run» a una suite **víctima** (cambia entre corridas; `ciRagEvaluation` en aislamiento da 8/8). **Lo único que falta: QUÉ suite deja el rechazo no manejado con ese error circular.** Cazala así (mi gancho anterior no se aplicó porque `jest.config.js` no tiene `setupFiles`):
+
+```
+npx jest --setupFiles="<rootDir>/src/tests/_gancho_rechazos.js" --testPathIgnorePatterns="…" --ci
+```
+con `_gancho_rechazos.js` = `process.on("unhandledRejection", e => console.error("RECHAZO", e && e.message, Object.keys(e||{}).join(",")), process.on("uncaughtException", e => console.error("EXCEPCION", e && e.message)))`. Si no lográs atribuirlo en 3 corridas, se declara **«no atribuido»** con las corridas.
+
+**Y además:** implementá la mitigación (CI-37): un `setupFiles` que convierta los rechazos no manejados en errores **serializables**, para que el gate no pueda volver a fabricar fantasmas. Traé la mutación que la voltea.
+
+**Números de referencia (medidos por mí, 6 corridas, comando del CI):** el rojo honesto es **10 suites / 59 tests** con 0 `failed-to-run`; 11-12 cuando el arnés crashea y 543 en vez de 551 tests. Si tu medición da otra cosa, declaralo.
+
+## Cargo 4-bis — (histórico) la atribución previa, infundada
 
 `scripts/inspectCiSuites.js` **no existe en tu rama** y **ningún test lo requiere** (es un script; no corre bajo jest). La atribución es infundada. Medí lo que sí se sabe: el crash es `Test suite failed to run — TypeError: Converting circular structure to JSON … at messageParent (jest-worker/…)`, apareció en `ciRagEvaluation` y en `ownerMultiSalonDashboard`, y `--maxWorkers=2` no lo arregla (mueve el crash). Reproducílo: corré el gate completo y capturá **qué suite y en qué momento** muere el worker. Si no lográs atribuirlo, se declara **«no atribuido»** con las corridas — que es infinitamente mejor que una causa inventada.
 
