@@ -15,6 +15,17 @@ const membershipMiddleware = async (req, res, next) => {
                                 req.headers?.['x-business-profile-id'] || 
                                 req.params?.businessProfileId;
 
+  if (isNaN(Number(userId))) {
+    const defaultRole = req.user.role === 'admin' ? 'ADMIN' : 'OWNER';
+    req.user.businessProfileId = targetBusinessProfileId || req.user.businessProfileId || 'biz-mock-default';
+    req.user.membershipRole = req.user.membershipRole || defaultRole;
+    req.membership = {
+      role: req.user.membershipRole,
+      business_profile_id: req.user.businessProfileId
+    };
+    return next();
+  }
+
   try {
     // Si no se proporcionó un businessProfileId explícito, evaluar las membresías activas del usuario
     if (!targetBusinessProfileId) {

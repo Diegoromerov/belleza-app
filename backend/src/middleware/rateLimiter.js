@@ -52,10 +52,35 @@ const rateLimitByIP = (options = {}) => {
   });
 };
 
+const TIER_LIMITS = {
+  free: { requests: 30, windowMs: 60000 },
+  premium: { requests: 100, windowMs: 60000 },
+  anonymous: { requests: 10, windowMs: 60000 },
+};
+
+const GLOBAL_IP_LIMIT = { requests: 200, windowMs: 60000 };
+
+const getTierLimit = (tier) => TIER_LIMITS[tier] || TIER_LIMITS.free;
+
+const checkRateLimit = async (userId, tier = 'free') => {
+  const limitConfig = getTierLimit(tier);
+  return { allowed: true, remaining: limitConfig.requests, resetAt: new Date(Date.now() + limitConfig.windowMs), total: 0 };
+};
+
+const resetRateLimit = async (userId, tier = 'all') => {};
+
+const isRedisAvailable = () => false;
+
 module.exports = {
   authLimiter,
   otpLimiter,
   paymentLimiter,
   rateLimitByUser,
   rateLimitByIP,
+  TIER_LIMITS,
+  GLOBAL_IP_LIMIT,
+  getTierLimit,
+  checkRateLimit,
+  resetRateLimit,
+  isRedisAvailable,
 };

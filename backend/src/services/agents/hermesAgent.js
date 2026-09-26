@@ -74,8 +74,8 @@ class HermesAgent {
       const res = await pool.query(query, [parsedProviderId, targetDate, ESTADOS_QUE_OCUPAN_AGENDA]);
       const occupiedSlots = res.rows.map(r => ({
         bookingId: r.id,
-        startTime: r.scheduled_at,
-        status: r.estado
+        startTime: r.scheduled_at || r.start_time,
+        status: r.estado || r.status
       }));
 
       return {

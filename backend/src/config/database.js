@@ -47,6 +47,70 @@ if (pgMemory.enabled) {
   );
 }
 
+const tenantRouting = require('./tenantRouting');
+const conexionesConContexto = new WeakSet();
+
+function desempacarConexion(conexion) {
+  if (!conexion) return null;
+  if (conexion.connectionParameters) return conexion;
+  if (conexion.connection && conexion.connection.connectionParameters) return conexion.connection;
+  return conexion;
+}
+
+function cablearContextoEnSequelize(instanciaSequelize) {
+  if (!instanciaSequelize || !instanciaSequelize.connectionManager) return;
+  const cm = instanciaSequelize.connectionManager;
+  if (cm.__contextoDeInquilinoCableado) return;
+
+  const getConnectionOriginal = cm.getConnection.bind(cm);
+  const releaseConnectionOriginal = cm.releaseConnection.bind(cm);
+
+  cm.getConnection = async function (options) {
+    const conexion = await getConnectionOriginal(options);
+    const real = desempacarConexion(conexion);
+    if (!real || typeof real.query !== 'function') return conexion;
+
+    const ctx = tenantRouting.getContext();
+    if (ctx && ctx.system) {
+      try {
+        await real.query('SET ROLE app_system');
+        conexionesConContexto.add(real);
+      } catch (error) {
+        console.warn('⚠️ Sequelize: no se pudo establecer rol app_system:', error.message);
+      }
+    } else if (ctx && ctx.tenantId) {
+      try {
+        await real.query('SELECT set_config(\'app.tenant_id\', $1, false)', [String(ctx.tenantId)]);
+        conexionesConContexto.add(real);
+      } catch (error) {
+        console.warn('⚠️ Sequelize: no se pudo establecer app.tenant_id:', error.message);
+      }
+    }
+    return conexion;
+  };
+
+  cm.releaseConnection = async function (conexion, force) {
+    const real = desempacarConexion(conexion);
+    if (real && conexionesConContexto.has(real) && typeof real.query === 'function') {
+      try {
+        await real.query('RESET ROLE');
+        await real.query('RESET app.tenant_id');
+        conexionesConContexto.delete(real);
+      } catch (error) {
+        console.error('❌ Sequelize: no se pudo limpiar el contexto de inquilino; se destruye la conexión:', error.message);
+        return releaseConnectionOriginal(conexion, true);
+      }
+    }
+    return releaseConnectionOriginal(conexion, force);
+  };
+
+  cm.__contextoDeInquilinoCableado = true;
+}
+
+if (sequelize) {
+  cablearContextoEnSequelize(sequelize);
+}
+
 const testSequelizeConnection = async () => {
   try {
     await sequelize.authenticate();
@@ -60,5 +124,6 @@ const testSequelizeConnection = async () => {
 
 module.exports = {
   sequelize,
-  testSequelizeConnection
+  testSequelizeConnection,
+  cablearContextoEnSequelize,
 };

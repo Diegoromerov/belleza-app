@@ -6,7 +6,19 @@
 const { searchBeautyKnowledge, formatKnowledgeContext } = require('../services/ragService');
 const { executeAuraTool, AURA_TOOLS_DEFINITIONS } = require('../services/auraToolExecutor');
 
+const businessDiagnosticService = require('../services/businessDiagnosticService');
+
 describe('GlowApp Business Engine — GOAL 05 Aura + RAG Security & Quality Suite', () => {
+
+  beforeAll(async () => {
+    await businessDiagnosticService.runDiagnostic({
+      provider_id: 'provider-user-a',
+      tenant_id: 'tenant-alpha',
+      name: 'Spa Alpha Test',
+      onboarding_mode: 'EXISTING_BUSINESS',
+      vertical_code: 'BEAUTY_SALON'
+    });
+  });
 
   describe('Part 1: RAG Security & Multi-Tenant Boundaries (Section 22)', () => {
 
