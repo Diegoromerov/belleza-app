@@ -84,3 +84,27 @@ no puede estar verde ni en el paso de tests ni en el paso 7 (ver CI-14 en `docs/
 - Por rama: `docs/audit/AUDITORIA-ENTREGA-{A-01-RONDA-2,A-02-RONDA-2,A-03,A-05,A-06-RONDA-4,O-014,FASE-A-R6}`.
 - Ensayo del tren (merges, suites y escáner sobre el conjunto integrado): `docs/agents/ordenes/ENSAYO-TREN-A-2026-09-25.md`.
 - Ejecutado por el Arquitecto el 2026-09-25 (con declaración de conflicto de interés y sus mutaciones): `docs/agents/ordenes/EJECUCION-ARQUITECTO-2026-09-25.md`.
+
+## Actualización 2026-09-26 (2) — el rojo, clasificado y sin maquillar
+
+**Composición de la rama:** `fase-a/verdad-operativa` @ `b545ef22` + **8 ramas aceptadas** en cola de aterrizaje (A-08 se sumó después: ver la tabla al pie). Todas auditadas con mutación y contrapeso.
+
+**Lo que el CI dice hoy de esta rama (medido por la API pública sobre los 4 runs del PR):**
+- `Frontend Flutter Analyze & Build Check` ⇒ **success**.
+- `Backend Tests & Lint` ⇒ **failure**, y **siempre en el mismo paso**: «Escaneo de credenciales versionadas (bloqueante)». Todo lo posterior queda **`skipped`** ⇒ **el paso de tests nunca llegó a correr en GitHub**.
+
+**Por qué el escaneo falla (y por qué no alcanza con arreglarlo):**
+- Con el escáner corregido (`fix/compuerta-secretos-reproducible`, pendiente de aterrizar) los hallazgos bajan de 109 a **8** — pero **8 > 0**. Cerrarlo del todo exige **CI-14** (decisión del Dueño sobre 5 líneas de prosa) y **2b** (`fix/jwt-sin-respaldo`).
+- **CI-31 (nuevo):** el escáner **viejo** (el que hoy está en esta rama) es **ciego al CRLF** — usa `git grep` y valida la línea cruda. Medido sobre el mismo commit: checkout **CRLF ⇒ 0 hallazgos** («✅ Sin credenciales», falso limpio, el que produce cualquier Windows) vs checkout **LF ⇒ 39 hallazgos** (el que produce el CI). El escáner de la rama pendiente **sí** es tolerante (8 en CRLF = 8 en LF). O sea: mientras no aterrice, **las mediciones locales de secretos en Windows no valen**.
+
+**Las 10 suites rojas del gate (paso 8), clasificadas por corridas aisladas con base real:**
+
+| Clase | Suites | Evidencia |
+|---|---|---|
+| 500 en endpoint de negocio | 5 (`business.integration`, `businessAdminDocs`, `businessHardening`, `businessSystem`; y `businessRAG` con `"not_found"`) | esperado 200, recibido **500** |
+| Contrato de módulo roto | 2 (`rateLimiter`, `sequelizeTenantContext`) | `TIER_LIMITS` undefined · `cablearContextoEnSequelize is not a function` |
+| Expectativa / semántica | 3 (`adminPreciosRoutes`, `audit360-remediation`, `sprint2_agents`) | 403 esperado y llega 400 · test del escáner · `"14:00"` vs undefined |
+
+Detalle y método en `docs/knowledge/CLASIFICACION-GATE-2026-09-26.md`. Además hay **1-3 suites que no fallan: no corren** (crash de worker de jest, `TypeError: Converting circular structure to JSON`) ⇒ una suite que no corrió **no cuenta** como roja, y hay que repetirla aislada. `--maxWorkers=2` no lo mitiga (mueve el crash).
+
+**Honestidad contractual de esta fase:** el gate **no puede quedar verde con este aterrizaje**. Lo que este PR entrega es un rojo **conocido, clasificado y reproducible** — no un verde aparente.

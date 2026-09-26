@@ -22,7 +22,9 @@
 | Comprobación | Resultado medido |
 |---|---|
 | merges de las 8 ramas sobre `b545ef22` | **8, 0 conflictos de texto, 0 abortados** (`--is-ancestor` confirma las 8) |
+| **re-ensayo con 9 ramas (2026-09-26, tras aceptar A-08)** | **9 merges, 0 conflictos, 0 abortados** (`--is-ancestor` confirma las 9) · HEAD del tren **`3571a831`** · 27 commits propios · en checkout **LF** |
 | suites clave sobre el tren | **10 suites / 45 tests verdes** |
+| suites clave sobre el tren de 9 ramas | **9 suites / 51 tests verdes** (incluye las 2 nuevas de A-08) · suites coleccionables: **91** (en 8 ramas eran 82) |
 | escáner (paso 7) | **8 hallazgos reales**, 0 mal etiquetados |
 | escáner con 2b encima | **5** (sólo prosa) |
 | compuerta de aislamiento RLS (paso 5 del CI) | **exit 0 — AISLAMIENTO MULTI-TENANT VERIFICADO** (corrida local con `app_rls_user`) |
@@ -41,7 +43,7 @@ cd ../fase-a-landing
 for r in fix/ci-procedencia fix/rls-056-058-cadena fix/montajes-unicos \
          fix/admin-metricas-sin-datos fix/arranque-y-estado-honesto \
          fix/contrato-convive-con-candado fix/candado-comprueba-si-desconoce \
-         fix/compuerta-secretos-reproducible; do
+         fix/compuerta-secretos-reproducible fix/caminos-muertos; do
   git merge --no-edit "$r" || { echo "CONFLICTO en $r — PARAR y reportar"; exit 1; }
 done
 

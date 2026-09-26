@@ -57,7 +57,7 @@
 
 ## §3. Colisión con el aterrizaje pendiente (importante)
 
-Ocho ramas aceptadas esperan aterrizaje y ya tocan estos archivos: **`index.js`**, `scripts/{smokeSurfaces,listRoutes,inspectCiSuites,verifyNoVersionedSecrets}.js`, `src/config/db.js`, `src/middleware/degradedLock.js`, `src/controllers/providerController.js`, `src/services/adminMetricsService.js`, `.github/workflows/ci.yml`, `scripts/COMO_EJECUTAR.md`, `migrations/056,058`.
+Ocho ramas aceptadas esperan aterrizaje y ya tocan estos archivos: **`index.js`**, `scripts/{smokeSurfaces,listRoutes,inspectCiSuites,verifyNoVersionedSecrets}.js`, `src/config/db.js`, `src/middleware/degradedLock.js`, `src/controllers/providerController.js`, `src/services/adminMetricsService.js`, `.github/workflows/ci.yml`, `scripts/COMO_EJECUTAR.md`, `migrations/056,058`, y por A-08: `backend/jest.config.js`, `src/config/tenantRouting.js`, `src/jobs/paymentJobs.js`, `src/services/biometricCryptoService.js`.
 
 **No los modifiques en esta orden.** Las suites rojas levantan la app por `index.js` ⇒ si la causa raíz de un 500 vive ahí, **pará y reportá** (yo decido si se toca y cómo se compone con el tren). Tu territorio: los archivos de las suites y los módulos que ellas ejercitan (motor de negocio, rate limiter, contexto de Sequelize, precios admin, agentes).
 
