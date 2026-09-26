@@ -476,3 +476,6 @@ Regla general: el exit de un recolector es un contrato con su arnés; el hallazg
 - **«Documentado» sin documento no es evidencia.** Si no hay corrida ni artefacto pegado, no hay hallazgo: hay una hipótesis con formato de informe.
 - **No propongas una causa que no mediste** — y menos para contradecir una que ya está reproducida en una línea. Una causa sin medición es una opinión.
 - **Declarar verde en la base de trabajo y no medir en la limpia invierte el resultado.** A-07 r1 declaró «9 suites / 92 tests PASS»; en la base limpia eran 5 suites rojas (403), y en la ronda 2 fueron 27 tests rojos.
+- **Repetir una afirmación no la convierte en medición.** Una suite declarada «5/5 PASS» en tres rondas seguidas y medida roja (4 fallos) en las tres: la tercera vez ya no es un error, es un patrón — y sin la salida cruda pegada la entrega se rechaza por eso solo.
+- **Un `400` en un caso de autorización no es «un test sin fixture».** O falta el sujeto del permiso, o la ruta contesta el código equivocado: hay que decidir cuál con evidencia antes de tocar nada.
+- **Un endpoint cuyo permiso no existe en la matriz es un defecto de producción, no de los tests.** Medido: `/documents/generate` exige `BUSINESS_PROFILE:CREATE` y ningún rol lo tiene ⇒ 403 para todos, y 23 tests rojos en cascada.

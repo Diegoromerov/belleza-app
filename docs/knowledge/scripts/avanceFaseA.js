@@ -36,7 +36,7 @@ const aterrizaje = {
 
 // Trabajo nuevo, fuera del denominador declarado (ver nota de cabecera)
 const trabajoNuevo = [
-  { id: 'A-07', nota: 0.50, evidencia: 'el gate tiene que decir la verdad — r1 **RECHAZADA** (introdujo un agujero de escalada en `membership.middleware`), r2 **aceptada parcialmente**: reversiones verificadas por diff y el rojo del gate bajó de **10 suites/59 tests a 6/28**. Implementado con evidencia, **no aceptado**: ronda 3 pendiente (Cargo 4 = fix del crash de `execSync` con prueba determinista, fixtures de las 5 `business*`, causa raíz de `adminPreciosRoutes`) y CI-14/CI-35 esperan decisión del Dueño' },
+    { id: 'A-07', nota: 0.85, evidencia: 'el gate tiene que decir la verdad — r1 **RECHAZADA** (introdujo un agujero de escalada), r2 aceptada parcialmente (reversiones verificadas por diff; rojo del gate **10/59 → 6/28**), **r3 ACEPTADA CON RESIDUOS** (`1a9f13ef`): el crash del worker quedó arreglado con prueba determinista (helper `safeExecSync` serializable, `bash -n` con timeout) y el hallazgo del 403 verificado por el Auditor (CI-40). Residuos: CI-37 (mitigación del arnés) y `adminPreciosRoutes` (declarada verde 3 rondas, medida con 4 fallos) ⇒ **ronda 4 emitida**' },
 ];
 
 const PESOS = { criterios: 0.50, entregables: 0.30, aterrizaje: 0.20 };
