@@ -1,35 +1,38 @@
-# ORDEN A-07 — RONDA 4 · «Cerrar la última suite y la clase del crash»
+# ORDEN A-07 — RONDA 4 (REVISADA) · «La suite hermética y la clase del crash»
 
 **Para:** Antigravity (Ejecutor) · **De:** Hermes (Arquitecto) · **Fecha:** 2026-09-26
 **Rama:** seguí en **`fix/gate-clasificado`** (misma rama, un commit propio). Reglas de siempre: un worktree = un agente, sin `--force` ni `--force-with-lease`, sin merge, sin borrar ramas del remoto.
-**Leé primero:** `docs/audit/AUDITORIA-ENTREGA-A-07-RONDA-3-2026-09-26.md`.
+**Leé primero:** `docs/audit/AUDITORIA-ENTREGA-A-07-RONDA-3-2026-09-26.md` **y** `docs/audit/RETRACTACION-GATE-ENTORNO-2026-09-26.md`.
 
-**Tu ronda 3 quedó aceptada con residuos.** El fix del crash está bien: el helper `safeExecSync` rethrow un error serializable, los cuatro `execSync` pasan por él y el `bash -n` —que no tenía timeout— ahora tiene 30 s; tu prueba determinista (1 ms ⇒ fallo legible dentro de la suite; 30 s ⇒ 8/8) es exactamente lo que se pedía. Y tu hallazgo del 403 lo **verifiqué yo**: ningún rol de la matriz tiene `BUSINESS_PROFILE:CREATE` ⇒ `/documents/generate` es inalcanzable para todos, y 23 de los 27 tests rojos que quedan son su cascada. Buen trabajo de diagnóstico.
+**Tu ronda 3 queda ACEPTADA CON RESIDUOS**, y esta revisión empieza por una corrección **mía**, no tuya:
 
-Quedan dos cosas chicas y una regla.
+> **Retracto el Cargo 3 de mi auditoría anterior.** Medí `adminPreciosRoutes` **sin `JWT_SECRET`** en el entorno. La suite firma su token con un fallback propio (`adminPreciosRoutes.test.js:19`: `'beauty_app_super_secret_key_2026_change_in_production'`) mientras la app verifica con `DEFAULT_PROD_SECRET` (`src/config/jwt.js:2,6,8`) ⇒ **sólo pasa si `JWT_SECRET` está en el entorno**, y el CI lo define (`ci.yml:38`). Re-medido con esa variable: **5/5 PASS** ⇒ **tu 5/5 era correcto y el rojo era mi entorno.** El «tercera vez» también era mío: en las rondas 1 y 2 medí igual de mal.
 
-## Cargo 1 — `adminPreciosRoutes`: la verdad de esa suite
+Dicho eso, queda un defecto **real** en esa suite, y es lo que hay que arreglar.
 
-Declaraste **«5/5 PASS en modo aislado; usa mocks de pool»**. Medido por mí en tu commit `1a9f13ef`, aislada:
+## Cargo 1 — `adminPreciosRoutes` no es hermética
 
-| Configuración | Resultado |
-|---|---|
-| con entorno de base real (la receta del CI) | **4 failed / 1 passed / 5** |
-| **sin** `DATABASE_URL` ni `TEST_DATABASE_URL` | **4 failed / 1 passed / 5** |
+Su resultado **depende de una variable de entorno**: con `JWT_SECRET` ⇒ **5/5**; sin ella ⇒ **4 fallos** (`403 esperado → 400`, `200 esperado → 400`). Una suite cuyo veredicto cambia según el entorno del que la corre **no mide lo que dice medir**: es la misma clase de defecto que la ceguera al CRLF del escáner (CI-31), que ya nos costó una confusión.
 
-⇒ No depende del entorno: es **rojo en las dos**. Los fallos son `403 esperado → 400` y `200 esperado → 400`.
+**Hacé que la suite fije su propio secreto antes de cargar la app** — `process.env.JWT_SECRET = 'test_secret_para_esta_suite'` en la cabecera del archivo (o en un `beforeAll`) **antes** del `require` de la ruta; o firmá con el mismo `DEFAULT_PROD_SECRET` de `src/config/jwt.js`. Que no quede ningún camino por el que el veredicto dependa de lo que haya en el entorno.
 
-Hacé:
-1. **Causa raíz con evidencia:** ¿qué código devuelve `400` en esos casos? Pegá la traza o el handler que lo produce. Si falta el **usuario admin** (o su membresía/rol) en la base de test, sembrala **en el test**; si el `400` es un **defecto** (un caso de autorización que debería contestar `401`/`403`), reportalo como hallazgo con el mismo formato que usaste para el 403 (SQL/fixture + código + resultado) — y **no lo fuerces a verde**.
-2. **Prohibido declararla verde sin la salida cruda de esa suite** (`Tests:` de `npx jest src/tests/adminPreciosRoutes.test.js --runInBand`). Esta es la **tercera** ronda seguida con la misma declaración y la misma medición roja: la próxima vez que aparezca «5/5» sin la salida pegada, la entrega se rechaza por eso solo.
+**Prueba exigida (determinista, dos corridas):**
+```
+npx jest src/tests/adminPreciosRoutes.test.js --runInBand                    # con JWT_SECRET exportado
+env -u JWT_SECRET npx jest src/tests/adminPreciosRoutes.test.js --runInBand   # sin JWT_SECRET
+```
+Las dos tienen que dar **el mismo resultado**. Pegá las dos salidas crudas (`Tests:`).
 
 ## Cargo 2 — CI-37: la mitigación del arnés (o una renuncia por escrito)
 
 El productor del crash ya no puede dañar a `ciRagEvaluation`, pero la **clase** sigue abierta: cualquier test que deje un rechazo no serializable puede matar a un worker. Poné un `setupFiles` que convierta rechazos no manejados y excepciones en errores **serializables**, y traé la mutación que lo prueba (un test de prueba que lance un error circular **debe** reportarse legible en vez de matar al worker). Si preferís no hacerlo, escribí la renuncia con su motivo y queda como residuo declarado — pero no lo dejes sin decir nada.
 
-## Cargo 3 — Regla de reporte (ya vigente, se reitera)
+## Cargo 3 — Lo que NO es tuyo (y conviene declararlo en la entrega)
 
-Toda afirmación de estado lleva su **salida cruda** y su **receta** (checkout LF + base limpia + cómo la preparaste). Tu tabla de 10 suites de esta ronda es el ejemplo a seguir: por primera vez se puede auditar entera. Dos entradas no cuadraron con mi medición (`businessSystem` 4 fallos vs 2 míos, `adminPreciosRoutes` verde vs 4 fallos), así que **pegá el comando y la salida por suite**, no sólo el resumen.
+El rojo que queda no es de los tests:
+- **4 suites** (`business.integration`, `businessAdminDocs`, `businessHardening`, `businessSystem`) = **cascada de CI-40**: `/documents/generate` exige `BUSINESS_PROFILE:CREATE` y ningún rol lo tiene ⇒ **decisión del Dueño**.
+- **`audit360-remediation`** = las 8 credenciales versionadas ⇒ **CI-14, decisión del Dueño**.
+- **`ownerMultiSalonDashboard`** = apareció roja en mi corrida con el entorno del CI; si la mirás, mejor (no es obligatorio en esta ronda).
 
 ## Compuertas antes de empujar
 

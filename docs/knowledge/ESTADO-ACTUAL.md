@@ -45,11 +45,13 @@ La app está **funcionalmente a medias por dentro y aparentemente terminada por 
 | S3 | El CI existe y **puede fallar** | **0,90** | PR #16 head `b545ef22`: run [36100419352](https://github.com/Diegoromerov/belleza-app/actions/runs/36100419352) ejecuta pasos reales, frontend ✅, backend ❌ en el **paso 7** («Escaneo de credenciales versionadas») y **salta los pasos 8-11** ⇒ la suite y la compuerta RLS **nunca se han ejecutado**. Falta CI-14 (5 líneas de prosa) para llegar al paso 8, y la mutación deliberada (O-005) |
 | S4 | Un comando sale `≠0` si algo finge | **✓** | verificado **en vivo por el Auditor** (ronda 4): plantó dos rutas con nombres distintos sin tocar el guardián ⇒ descubrió 310 rutas del stack vivo, marcó sólo la que fingía y salió `≠0`; y en la ronda 5, si el stack vivo no carga, el respaldo al inventario **aborta con `exit 1`** en vez de dar verde. **Residuos**: CI-17 (el «caso sano» es inalcanzable por construcción), CI-20 (`-ok.json` commiteado rancio) y CI-22 |
 
-**Puntuación vigente de los criterios (2026-09-26, tarde):** S1 1,00 · S2 1,00 · S3 **0,90** (SUBE: medido con el comando exacto del CI — el gate da **10 suites / 59 tests** rojos con 0 `failed-to-run`, y el «rojo fantasma» quedó **atribuido y reproducido**: el error de timeout de `execSync` no es serializable y mata al worker mientras reporta; sigue sin 1,00 porque el criterio literal «romper un test ⇒ run rojo **en GitHub**» no se pudo medir: el paso de tests nunca corre allí, queda `skipped` detrás del paso 7 ❌) · S4 1,00.
+**Puntuación vigente de los criterios (2026-09-26, tarde):** S1 1,00 · S2 1,00 · S3 **0,90** (SUBE: medido con el comando exacto del CI — el gate da **10 suites / 55 tests** rojos con 0 `failed-to-run`, y el «rojo fantasma» quedó **atribuido y reproducido**: el error de timeout de `execSync` no es serializable y mata al worker mientras reporta; sigue sin 1,00 porque el criterio literal «romper un test ⇒ run rojo **en GitHub**» no se pudo medir: el paso de tests nunca corre allí, queda `skipped` detrás del paso 7 ❌) · S4 1,00.
 
 **Avance de la Fase A (medido 2026-09-26 tarde, cálculo versionado en `docs/knowledge/scripts/avanceFaseA.js`):**
 **trabajo técnico 75,5 %** (80,3 % sin A-04, que está bloqueada por decisión del Dueño) · **criterios firmables 97,5 %**
 (3 de 4 plenos) · **fase cerrada 0 %** (nada mergeado a `main`; el aterrizaje está en 0,15 de 1,00). **Delta +1,9 pp** sobre el 73,6 % del informe previo del mismo día: S3 (la verdad del gate, medida y atribuida), A-06 (verificado que el escáner nuevo da lo mismo en CRLF y en LF) y el aterrizaje (paquete re-verificado).
+
+> **RETRACTACIÓN (mismo día):** los números del gate publicados antes de esta tarde se midieron **sin `JWT_SECRET`** ⇒ estaban inflados en **4 tests** (la suite `adminPreciosRoutes`, que no es hermética: CI-41). Corregidos con el entorno del CI: base **10 suites / 55** · A-07 r3 **6 suites / 25**. Detalle en `docs/audit/RETRACTACION-GATE-ENTORNO-2026-09-26.md`.
 
 **A-07 (el gate tiene que decir la verdad) queda FUERA del denominador** porque nació después de declarados los criterios: hoy está en **0,85** (r1 RECHAZADA por introducir un agujero de escalada; r2 aceptada parcialmente, gate 10/59 → **6/28**, ronda 3 pendiente). Si el Dueño decide incorporarlo, el total es **75,8 %** y los entregables 80,0 %.
 
@@ -66,7 +68,7 @@ La app está **funcionalmente a medias por dentro y aparentemente terminada por 
 
 ## 6. Suites rojas heredadas (deuda declarada, no ocultada)
 
-**El rojo heredado, medido hoy con el comando exacto del CI:** el gate (paso 8, bloqueante) tiene **10 suites / 59 tests rojos** con 0 `failed-to-run` sobre `fase-a`, y **6 / 28** sobre `A-07 r2` (`835e9392`); el paso 9 (no bloqueante, todas las suites) corre **19 suites / 81 tests** rojos. Cuidado con los «fantasmas»: un `Test suite failed to run` no es un hallazgo del producto. **Contexto histórico: 15 suites fallan** en `main` y en `fase-a` (mismos fallos: no son regresiones). El paso **bloqueante** del CI excluye 10 patrones y las corre en un paso **no bloqueante** para que su estado no desaparezca del tablero:
+**El rojo heredado, medido hoy con el comando exacto del CI:** el gate (paso 8, bloqueante) tiene **10 suites / 55 tests rojos** con **2 `failed-to-run`** (el fantasma del worker, ya atribuido) sobre `fase-a`, y **6 / 28** sobre `A-07 r2` (`835e9392`); el paso 9 (no bloqueante, todas las suites) corre **18 suites / 77 tests** rojos. Cuidado con los «fantasmas»: un `Test suite failed to run` no es un hallazgo del producto. **Contexto histórico: 15 suites fallan** en `main` y en `fase-a` (mismos fallos: no son regresiones). El paso **bloqueante** del CI excluye 10 patrones y las corre en un paso **no bloqueante** para que su estado no desaparezca del tablero:
 
 ```
 geminiService | geminiFallback | auraToolExecutor | contract | biometric
@@ -108,7 +110,7 @@ resilience | contextCompressor | fase5 | authRoutes | api.cors
 | O-016 | `fix/contrato-convive-con-candado` @ `3a9148ad` | contrato vs candado (**CI-28**) | **✓ CERRADA 2026-09-25**: el caso neutraliza la capa del candado (`appSinCandado`) ⇒ **3/3 en los 4 escenarios** (test/development × con/sin base); mutación del prefijo duplicado ⇒ 2 failed/1 passed con `index.js` restaurado idéntico |
 | A-08 | `fix/caminos-muertos` @ `063b19e0` | CI-21 (módulo roto), CI-12 (suite no coleccionada), TEC-72 (logs de migración falsos) | **✓ CERRADA (r2 aceptada)**: la cura real quedó en el wrapper `comoSistema` de `paymentJobs.js` con **mi mutación** (quitar el `try/catch` ⇒ `1 failed`); el `cifrado` hace round-trip de producción. **CI-30 abierta** (con clave ≠ 32 bytes ahora **lanza**: ruta de identidad) |
 | A-07 r1 | `fix/gate-clasificado` @ `461b6362` | el gate tiene que decir la verdad | **✗ RECHAZADA**: introdujo un **agujero de escalada** en `membership.middleware` (id no numérico ⇒ `OWNER` + perfil fabricado) y dos regresiones más; **medido por mutación: 41 tests se apoyaban en el hueco**. Sí se conservan 2 fixes reales (`cablearContextoEnSequelize` cableado en el boot, `tenant_id` persistido) |
-| A-07 r2 | `fix/gate-clasificado` @ `835e9392` | ni un hueco por un test | **⚠ ACEPTADA PARCIALMENTE**: reversiones **verificadas por diff** (middleware y controller idénticos a la base, matriz de permisos intacta) y el rojo bajó **10/59 → 6/28**; pero **sin una sola medición** en la entrega y el Cargo 4 contestado con una causa no medida ⇒ **ronda 3 emitida** |
+| A-07 r2 | `fix/gate-clasificado` @ `835e9392` | ni un hueco por un test | **⚠ ACEPTADA PARCIALMENTE**: reversiones **verificadas por diff** (middleware y controller idénticos a la base, matriz de permisos intacta) y el rojo bajó **10/55 → 6/25**; pero **sin una sola medición** en la entrega y el Cargo 4 contestado con una causa no medida ⇒ **ronda 3 emitida** |
 | A-07 r3 | `fix/gate-clasificado` @ `1a9f13ef` | fix del crash de worker + hallazgo del 403 | **⚠ ACEPTADA CON RESIDUOS**: `safeExecSync` (error serializable, `bash -n` con timeout) con prueba determinista (1 ms ⇒ fallo legible, 30 s ⇒ 8/8) y **CI-40 verificado por el Auditor** (`/documents/generate` exige `BUSINESS_PROFILE:CREATE` y ningún rol lo tiene ⇒ 403 para todos, 23 tests en cascada). Residuos: CI-37 y `adminPreciosRoutes` (declarada verde 3 rondas, medida **4 fallos** con y sin entorno de base) ⇒ ronda 4 |
 | O-014 r8 | `chore/guardian-en-el-repo` @ `b919d45a` | runner versionado + ruta nativa (**CI-25**) | **✓ ACEPTADA 2026-09-26** y **empujada** (verificada contra el remoto por el Arquitecto): corrida real `EXIT=0` con ruta nativa, 7/7 tests, y las tres piezas (ruta nativa, `GUARDIAN_REPO`, `SKIP_NETWORK`) resisten **mutación aplicada por el Auditor con su control** y restauración por `sha256` ⇒ CI-25 cerrada; CI-26/CI-27 con residuos declarados |
 
@@ -125,15 +127,15 @@ resilience | contextCompressor | fase5 | authRoutes | api.cors
 Regenerar con: `node backend/scripts/estadoKB.js --write` · Verificar con: `node backend/scripts/estadoKB.js --check`
 
 <!-- estadoKB:inicio -->
-> Bloque generado por `backend/scripts/estadoKB.js` el **2026-09-26 15:46:30Z**. No se edita a mano.
+> Bloque generado por `backend/scripts/estadoKB.js` el **2026-09-26 16:07:17Z**. No se edita a mano.
 
-**Copia inspeccionada:** `C:/Users/Compu casa/.gemini/antigravity/worktrees/beauty-app/sistema-agentes` · rama `docs/sistema-agentes` @ `f12cb3f7` (2026-09-26 10:30:23 -0500) · árbol: **7 entradas sin commitear**
+**Copia inspeccionada:** `C:/Users/Compu casa/.gemini/antigravity/worktrees/beauty-app/sistema-agentes` · rama `docs/sistema-agentes` @ `9c7cbae5` (2026-09-26 10:46:30 -0500) · árbol: **10 entradas sin commitear**
 
 **Ramas locales (17):**
 
 | Rama | SHA | Último commit | Commits fuera de main | PR abierto |
 |---|---|---|---|---|
-| `docs/sistema-agentes` | `f12cb3f7` | 2026-09-26 | 85 | — |
+| `docs/sistema-agentes` | `9c7cbae5` | 2026-09-26 | 86 | — |
 | `chore/guardian-en-el-repo` | `b919d45a` | 2026-09-25 | 40 | — |
 | `fix/jwt-sin-respaldo` | `dbb87293` | 2026-09-25 | 14 | — |
 | `fix/compuerta-secretos-reproducible` | `85687237` | 2026-09-25 | 13 | — |
@@ -157,11 +159,11 @@ Regenerar con: `node backend/scripts/estadoKB.js --write` · Verificar con: `nod
 
 **Tags `archive/*`:** 8 locales · 17 refs en el remoto
 
-**Worktrees (4):** `feat/glowshop-niveles-a0` @ 3337aad · `fix/gate-clasificado` @ 1a9f13e · `docs/sistema-agentes` @ f12cb3f · `null` @ 1a9f13e
+**Worktrees (3):** `feat/glowshop-niveles-a0` @ 3337aad · `fix/gate-clasificado` @ 1a9f13e · `docs/sistema-agentes` @ 9c7cbae
 
 **Desalineaciones detectadas (1):**
 
 | Regla | Detalle |
 |---|---|
-| R1 | 7 entradas sin commitear (M docs/agents/COLA.md ·  M docs/knowledge/DEUDA.md ·  M docs/knowledge/ESTADO-ACTUAL.md …) |
+| R1 | 10 entradas sin commitear (M docs/agents/COLA.md ·  M docs/agents/ordenes/PROMPT-ANTIGRAVITY-A-07-RONDA-4-2026-09-26.md ·  M docs/audit/AUDITORIA-ENTREGA-A-07-RONDA-2-2026-09-26.md …) |
 <!-- estadoKB:fin -->

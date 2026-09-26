@@ -16,7 +16,7 @@
 const criterios = [
   { id: 'S1', nota: 1.00, evidencia: 'con la base caída `/api/products` ⇒ 503 DATA_LAYER_DEGRADED (r6/r7, medido por el Auditor)' },
   { id: 'S2', nota: 1.00, evidencia: '`/api/health` 503 DEGRADED con pgAvailable:false y 200 con true (ronda 7, base arriba)' },
-  { id: 'S3', nota: 0.90, evidencia: 'SUBE 0,85→0,90: medido HOY con el comando exacto del CI — el gate da **10 suites / 59 tests** rojos con 0 `failed-to-run` (6/28 tras A-07 r2) y el «rojo fantasma» quedó **atribuido y reproducido** (error de timeout de `execSync` no serializable). Sigue sin 1,0 porque el criterio literal —«romper un test ⇒ run rojo» **observado en GitHub**— no se pudo medir: en el PR #16 el paso de tests nunca llegó a correr (todo `skipped` detrás del paso 7 ❌)' },
+  { id: 'S3', nota: 0.90, evidencia: 'SUBE 0,85→0,90: medido HOY con el comando exacto del CI — el gate da **10 suites / 55 tests** rojos con 0 `failed-to-run` (6/28 tras A-07 r2) y el «rojo fantasma» quedó **atribuido y reproducido** (error de timeout de `execSync` no serializable). Sigue sin 1,0 porque el criterio literal —«romper un test ⇒ run rojo» **observado en GitHub**— no se pudo medir: en el PR #16 el paso de tests nunca llegó a correr (todo `skipped` detrás del paso 7 ❌)' },
   { id: 'S4', nota: 1.00, evidencia: '`smoke:surfaces` sale ≠0 si algo finge; camino de timeout medido (3/3 + mutación)' },
 ];
 
@@ -36,7 +36,7 @@ const aterrizaje = {
 
 // Trabajo nuevo, fuera del denominador declarado (ver nota de cabecera)
 const trabajoNuevo = [
-    { id: 'A-07', nota: 0.85, evidencia: 'el gate tiene que decir la verdad — r1 **RECHAZADA** (introdujo un agujero de escalada), r2 aceptada parcialmente (reversiones verificadas por diff; rojo del gate **10/59 → 6/28**), **r3 ACEPTADA CON RESIDUOS** (`1a9f13ef`): el crash del worker quedó arreglado con prueba determinista (helper `safeExecSync` serializable, `bash -n` con timeout) y el hallazgo del 403 verificado por el Auditor (CI-40). Residuos: CI-37 (mitigación del arnés) y `adminPreciosRoutes` (declarada verde 3 rondas, medida con 4 fallos) ⇒ **ronda 4 emitida**' },
+    { id: 'A-07', nota: 0.85, evidencia: 'el gate tiene que decir la verdad — r1 **RECHAZADA** (introdujo un agujero de escalada), r2 aceptada parcialmente (reversiones verificadas por diff; rojo del gate **10/55 → 6/25**), **r3 ACEPTADA CON RESIDUOS** (`1a9f13ef`): el crash del worker quedó arreglado con prueba determinista (helper `safeExecSync` serializable, `bash -n` con timeout) y el hallazgo del 403 verificado por el Auditor (CI-40). Residuos: CI-37 (mitigación del arnés) y `adminPreciosRoutes` (declarada verde 3 rondas, medida con 4 fallos) ⇒ **ronda 4 emitida**' },
 ];
 
 const PESOS = { criterios: 0.50, entregables: 0.30, aterrizaje: 0.20 };

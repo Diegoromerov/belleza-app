@@ -46,3 +46,9 @@ Sus **9 suites aisladas** (`--runInBand`, base real): **5 rojas / 27 tests**. Pa
 - **«Documentado» sin documento no es evidencia.** Si no hay corrida ni artefacto, no hay hallazgo: hay una hipótesis.
 - **No propongas una causa que no mediste** — y menos para contradecir una que el Arquitecto ya reprodujo en una línea. Una causa sin medición es una opinión con formato de informe.
 - **Declarar verde en la base de trabajo y no medir en la limpia invierte el resultado**: en la limpia, 5 de sus 9 suites están rojas.
+
+---
+
+## CORRECCIÓN (2026-09-26, mismo día)
+
+Los números del gate de esta auditoría (`10/59 → 6/28`) y el cargo sobre `adminPreciosRoutes` se midieron **sin `JWT_SECRET`** exportado: esa suite **no es hermética** (firma con un fallback distinto al de la app, CI-41) y sus **4 tests** entraban como rojos falsos. Con el entorno completo del CI: base **10 suites / 55 tests** · A-07 r3 **6 suites / 25**. El texto de arriba se conserva (R-06). Detalle: `RETRACTACION-GATE-ENTORNO-2026-09-26.md`.

@@ -65,3 +65,9 @@ Mi corrida aislada (LF + base real) sobre `1a9f13ef`: **5 suites rojas / 27 test
 
 - **Repetir una afirmación no la convierte en medición.** `adminPreciosRoutes` fue declarada verde tres rondas seguidas y medida roja en las tres: la tercera declaración ya no es un error, es un patrón.
 - **Un `400` en un caso de autorización no es «un test sin fixture»**: o falta el sujeto del permiso, o la ruta contesta el código equivocado. Hay que decidir cuál antes de tocar nada.
+
+## 7. RETRACTACIÓN DE ESTA AUDITORÍA (2026-09-26, mismo día)
+
+El **Cargo 3** de arriba es **FALSO** y era **mío**. Medí `adminPreciosRoutes` sin `JWT_SECRET` en el entorno; la suite firma con un fallback propio (`adminPreciosRoutes.test.js:19`) que no coincide con el `DEFAULT_PROD_SECRET` de la app (`src/config/jwt.js:2,6,8`), así que **sólo pasa si esa variable está exportada** — y el CI la define (`ci.yml:38`). Re-medido con ella: **5/5 PASS**. La declaración «5/5 PASS» del Ejecutor era **correcta en el entorno del CI**, y el rojo que yo le atribuí, en las tres rondas, era mi entorno. Las mediciones del §4 que citan `adminPreciosRoutes` como roja también quedan corregidas.
+
+El texto del §3 **se conserva** (R-06: se registra, no se borra). El detalle completo, con las dos corridas y los números corregidos del gate, está en **`RETRACTACION-GATE-ENTORNO-2026-09-26.md`**. Lo que sí queda como defecto real —y por eso no borro el cargo, lo reencuadro— es que **esa suite no es hermética** (CI-41).

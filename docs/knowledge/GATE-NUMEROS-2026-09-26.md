@@ -69,3 +69,8 @@ Dos corridas con la suite completa (`npx jest --silent --ci`, **sin** el comando
 | B | 19 | 81 | 614 (1 skipped) | 0 |
 
 **Lectura:** el gate excluye 10 patrones que alcanzan a **13 suites** (81 − 68) y esas 13 aportan **9 de esas 19 rojas** ⇒ el no bloqueante ya corre en 19 y el bloqueante en 10. Al aterrizar, lo que se declara rojo es eso: **10 en el paso que bloquea, 19 en el que no**, y el paso 9 nace con `continue-on-error` a propósito.
+---
+
+## CORRECCIÓN (2026-09-26, mismo día)
+
+Los números de este documento se midieron **sin `JWT_SECRET`** exportado, y la suite `adminPreciosRoutes` **no es hermética** (firma con un fallback distinto al de la app) ⇒ sus **4 tests** entraban como rojos falsos. Re-medido con el entorno completo del CI: base `b545ef22` = **10 suites / 55 tests** (543 totales, 2 `failed-to-run`) y A-07 r3 = **6 suites / 25 tests** (0 `failed-to-run`). El texto de arriba **se conserva** (R-06). Detalle: `docs/audit/RETRACTACION-GATE-ENTORNO-2026-09-26.md`.
