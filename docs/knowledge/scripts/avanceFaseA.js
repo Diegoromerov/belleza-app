@@ -36,7 +36,7 @@ const aterrizaje = {
 
 // Trabajo nuevo, fuera del denominador declarado (ver nota de cabecera)
 const trabajoNuevo = [
-    { id: 'A-07', nota: 0.85, evidencia: 'el gate tiene que decir la verdad — r1 **RECHAZADA** (introdujo un agujero de escalada), r2 aceptada parcialmente (reversiones verificadas por diff; rojo del gate **10/55 → 6/25**), **r3 ACEPTADA CON RESIDUOS** (`1a9f13ef`): el crash del worker quedó arreglado con prueba determinista (helper `safeExecSync` serializable, `bash -n` con timeout) y el hallazgo del 403 verificado por el Auditor (CI-40). Residuos: CI-37 (mitigación del arnés) y `adminPreciosRoutes` (declarada verde 3 rondas, medida con 4 fallos) ⇒ **ronda 4 emitida**' },
+    { id: 'A-07', nota: 0.95, evidencia: 'el gate tiene que decir la verdad — r1 **RECHAZADA** (introdujo un agujero de escalada), r2 aceptada parcialmente (reversiones verificadas por diff; rojo del gate **10/55 → 6/25**), **r3 ACEPTADA CON RESIDUOS** (`1a9f13ef`): el crash del worker quedó arreglado con prueba determinista (helper `safeExecSync` serializable, `bash -n` con timeout) y el hallazgo del 403 verificado por el Auditor (CI-40). Residuos: CI-37 (mitigación del arnés) y `adminPreciosRoutes` (declarada verde 3 rondas, medida con 4 fallos) ⇒ **ronda 4 emitida**; **r4 ACEPTADA** (`4e9145ad`, 3 archivos): el test importa `getJwtSecret` de la app ⇒ **5/5 con y sin `JWT_SECRET`** (medido por mí) ⇒ **CI-41 cerrada**; CI-37 queda como mitigación **sin demostración** (ninguna de las dos mutaciones disparó el arnés)' },
 ];
 
 const PESOS = { criterios: 0.50, entregables: 0.30, aterrizaje: 0.20 };

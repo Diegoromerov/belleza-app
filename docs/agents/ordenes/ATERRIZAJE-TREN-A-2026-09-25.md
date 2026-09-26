@@ -23,6 +23,7 @@
 |---|---|
 | merges de las 8 ramas sobre `b545ef22` | **8, 0 conflictos de texto, 0 abortados** (`--is-ancestor` confirma las 8) |
 | **re-ensayo con 9 ramas (2026-09-26, tras aceptar A-08)** | **9 merges, 0 conflictos, 0 abortados** (`--is-ancestor` confirma las 9) · HEAD del tren **`3571a831`** · 27 commits propios · en checkout **LF** |
+| **re-ensayo con 10 ramas (2026-09-26, tras CERRAR A-07)** | **10 merges, 0 conflictos, 0 abortados** (`--is-ancestor` confirma **10 de 10**) · HEAD **`723df93d3`** · 32 commits propios · anti-marcadores **exit 0** · suites de las ramas **11 suites / 64 tests verdes** · **gate: 5 suites / 24 tests rojos de 586 · 0 `failed-to-run`** ⇒ aterrizar las 10 **no suma ni un rojo** · **RLS sobre el tren: `VERIFICADO`, 0 tablas omitidas** (A-07 toca `database.js`, así que se re-verificó) · suites coleccionables **91** |
 | suites clave sobre el tren | **10 suites / 45 tests verdes** |
 | suites clave sobre el tren de 9 ramas | **9 suites / 51 tests verdes** (incluye las 2 nuevas de A-08) · suites coleccionables: **91** (en 8 ramas eran 82) |
 | **compuerta RLS (paso 5) sobre el tren de 9 ramas** | **exit 0 · 22 pruebas ejecutadas · 0 omitidas** (base preparada con los 8 SQL del CI: 13 tablas con RLS+FORCE+1 política, escritura en inquilino ajeno rechazada 42501, trigger rellenando `tenant_id`) — el cableado de Sequelize de A-08 **no** rompió el aislamiento. **Ojo:** el mismo script sale 0 con la base vacía y **0 pruebas** (CI-38) ⇒ el número que vale es el de pruebas ejecutadas |
@@ -44,9 +45,15 @@ cd ../fase-a-landing
 for r in fix/ci-procedencia fix/rls-056-058-cadena fix/montajes-unicos \
          fix/admin-metricas-sin-datos fix/arranque-y-estado-honesto \
          fix/contrato-convive-con-candado fix/candado-comprueba-si-desconoce \
-         fix/compuerta-secretos-reproducible fix/caminos-muertos; do
+         fix/compuerta-secretos-reproducible fix/caminos-muertos \
+         fix/gate-clasificado; do
   git merge --no-edit "$r" || { echo "CONFLICTO en $r — PARAR y reportar"; exit 1; }
 done
+
+# OJO: exportar TODAS las variables del CI antes de correr los tests
+# (NODE_ENV, JWT_SECRET, DATABASE_URL, TEST_DATABASE_URL, RLS_ROLE_PASSWORD).
+# Medir sin JWT_SECRET dio 4 tests rojos falsos durante una jornada entera:
+# ver docs/audit/RETRACTACION-GATE-ENTORNO-2026-09-26.md
 
 # 2) compuertas ANTES de empujar (todas mecánicas, ninguna "a ojo")
 node backend/scripts/checkNoConflictMarkers.js            # exit 0
@@ -73,18 +80,14 @@ o `backend/public`.
   - paso 7 «Escaneo de credenciales versionadas» ⇒ rojo (8 > 0);
   - paso bloqueante de tests ⇒ rojo por `audit360-remediation` (misma causa raíz).
 - Cuando **2b + CI-14** aterricen: el escáner llega a **0** ⇒ el paso 7 y `audit360-remediation` se ponen verdes.
-- **Pero el paso bloqueante de tests sigue rojo por deuda heredada.** Medido hoy sobre el tren: **10 suites rojas de 75**
-  (`adminPreciosRoutes`, `business.integration`, `businessAdminDocs.integration`, `businessHardening.integration`,
-  `businessRAG.integration`, `businessSystem.integration`, `rateLimiter`, `sequelizeTenantContext`, `sprint2_agents`, y
-  `audit360-remediation` que sí cae por la causa de CI-14). Es la deuda que el propio `ci.yml` declara en un comentario
-  (citaba «15»; hoy son 10 en el gate y 19 en la suite completa).
-  **Ojo con el recuento**: medido en 4 corridas, el gate da **10, 11, 11 y 12** suites rojas — el núcleo de **10 es estable** (aserción
-  real) y lo demás son **falsos rojos** que no corren por un crash del worker de jest (medido: `ciRagEvaluation` y `ownerMultiSalonDashboard`,
-  esta última con sus 4 tests en verde). `--maxWorkers=2` **no** lo arregla (muda el crash). ⇒ En el PR hay que leer **cuáles** fallan,
-  no cuántas.
+- **El paso bloqueante de tests: hoy son 5 suites / 24 tests rojos de 586, y el rojo NO es deuda de tests.** Medido sobre el tren de 10 con el entorno completo del CI:
+  - `audit360-remediation` = **1 test** por las 8 credenciales ⇒ **CI-14 (decisión del Dueño)**;
+  - `business.integration`, `businessAdminDocs.integration`, `businessHardening.integration`, `businessSystem.integration` = **23 tests** = **cascada de CI-40**: `/documents/generate` exige `BUSINESS_PROFILE:CREATE` y **ningún rol lo tiene** ⇒ el endpoint es inalcanzable para todos ⇒ **CI-35 (decisión del Dueño)**.
+  - **Ninguna de las dos se arregla con código de tests.** Con esas dos decisiones, el paso de tests queda **verde por primera vez**.
+  - `0 failed-to-run`: el «rojo fantasma» del crash de worker ya no aparece tras A-07 (r3 lo arregló en el código).
+  - **Recuento corregido (2026-09-26):** las cifras anteriores de este runbook («10 suites rojas de 75», «19 en la suite completa») se midieron **sin `JWT_SECRET`** y estaban infladas en 4 tests (`adminPreciosRoutes`, que sí es falsa roja por entorno y ya no lo es: CI-41). Serie correcta: base **55 → tren 24** tests rojos; paso 9: base **77**, A-07 r2 **46**, r3 **47**. Ver `docs/audit/RETRACTACION-GATE-ENTORNO-2026-09-26.md`.
 
-  ⇒ **Decisión explícita del Dueño**: aterrizar aceptando ese backend rojo por deuda heredada (documentado), o abrir las
-  10 suites como trabajo propio antes de aterrizar.
+  ⇒ **Decisión explícita del Dueño**: (a) decidir **CI-35** y **CI-14** (y entonces el aterrizaje llega con el paso de tests **verde**), o (b) aterrizar aceptando esos **24 tests rojos** documentados como deuda con dueño identificado. Lo que **no** sería legítimo es decir que el CI está verde.
 
 ## 4. Verificación posterior (obligatoria, con evidencia pegada)
 

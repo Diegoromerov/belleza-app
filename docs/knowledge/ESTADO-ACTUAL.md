@@ -53,7 +53,7 @@ La app está **funcionalmente a medias por dentro y aparentemente terminada por 
 
 > **RETRACTACIÓN (mismo día):** los números del gate publicados antes de esta tarde se midieron **sin `JWT_SECRET`** ⇒ estaban inflados en **4 tests** (la suite `adminPreciosRoutes`, que no es hermética: CI-41). Corregidos con el entorno del CI: base **10 suites / 55** · A-07 r3 **6 suites / 25**. Detalle en `docs/audit/RETRACTACION-GATE-ENTORNO-2026-09-26.md`.
 
-**A-07 (el gate tiene que decir la verdad) queda FUERA del denominador** porque nació después de declarados los criterios: hoy está en **0,85** (r1 RECHAZADA por introducir un agujero de escalada; r2 aceptada parcialmente, gate 10/59 → **6/28**, ronda 3 pendiente). Si el Dueño decide incorporarlo, el total es **75,8 %** y los entregables 80,0 %.
+**A-07 (el gate tiene que decir la verdad) queda FUERA del denominador** porque nació después de declarados los criterios: hoy está **cerrada** (r1 RECHAZADA por introducir un agujero de escalada; r2 aceptada parcialmente, gate 10/59 → **6/28**, ronda 3 pendiente). Si el Dueño decide incorporarlo, el total es **75,8 %** y los entregables 80,0 %.
 
 ## 5. Estado de las compuertas (rol Guardián)
 
@@ -111,6 +111,7 @@ resilience | contextCompressor | fase5 | authRoutes | api.cors
 | A-08 | `fix/caminos-muertos` @ `063b19e0` | CI-21 (módulo roto), CI-12 (suite no coleccionada), TEC-72 (logs de migración falsos) | **✓ CERRADA (r2 aceptada)**: la cura real quedó en el wrapper `comoSistema` de `paymentJobs.js` con **mi mutación** (quitar el `try/catch` ⇒ `1 failed`); el `cifrado` hace round-trip de producción. **CI-30 abierta** (con clave ≠ 32 bytes ahora **lanza**: ruta de identidad) |
 | A-07 r1 | `fix/gate-clasificado` @ `461b6362` | el gate tiene que decir la verdad | **✗ RECHAZADA**: introdujo un **agujero de escalada** en `membership.middleware` (id no numérico ⇒ `OWNER` + perfil fabricado) y dos regresiones más; **medido por mutación: 41 tests se apoyaban en el hueco**. Sí se conservan 2 fixes reales (`cablearContextoEnSequelize` cableado en el boot, `tenant_id` persistido) |
 | A-07 r2 | `fix/gate-clasificado` @ `835e9392` | ni un hueco por un test | **⚠ ACEPTADA PARCIALMENTE**: reversiones **verificadas por diff** (middleware y controller idénticos a la base, matriz de permisos intacta) y el rojo bajó **10/55 → 6/25**; pero **sin una sola medición** en la entrega y el Cargo 4 contestado con una causa no medida ⇒ **ronda 3 emitida** |
+| A-07 r4 | `fix/gate-clasificado` @ `4e9145ad` | cerrar el gate | **✓ ACEPTADA ⇒ A-07 CERRADA**: el test importa `getJwtSecret` de la app ⇒ **5/5 con y sin `JWT_SECRET`** (medido por mí) ⇒ **CI-41 cerrada**; el arnés de CI-37 presente pero **sin demostración**. El gate queda en **5 suites / 24 tests** rojos = 23 de la cascada de CI-40 + 1 de CI-14 |
 | A-07 r3 | `fix/gate-clasificado` @ `1a9f13ef` | fix del crash de worker + hallazgo del 403 | **⚠ ACEPTADA CON RESIDUOS**: `safeExecSync` (error serializable, `bash -n` con timeout) con prueba determinista (1 ms ⇒ fallo legible, 30 s ⇒ 8/8) y **CI-40 verificado por el Auditor** (`/documents/generate` exige `BUSINESS_PROFILE:CREATE` y ningún rol lo tiene ⇒ 403 para todos, 23 tests en cascada). Residuos: CI-37 y `adminPreciosRoutes` (declarada verde 3 rondas, medida **4 fallos** con y sin entorno de base) ⇒ ronda 4 |
 | O-014 r8 | `chore/guardian-en-el-repo` @ `b919d45a` | runner versionado + ruta nativa (**CI-25**) | **✓ ACEPTADA 2026-09-26** y **empujada** (verificada contra el remoto por el Arquitecto): corrida real `EXIT=0` con ruta nativa, 7/7 tests, y las tres piezas (ruta nativa, `GUARDIAN_REPO`, `SKIP_NETWORK`) resisten **mutación aplicada por el Auditor con su control** y restauración por `sha256` ⇒ CI-25 cerrada; CI-26/CI-27 con residuos declarados |
 
@@ -127,31 +128,31 @@ resilience | contextCompressor | fase5 | authRoutes | api.cors
 Regenerar con: `node backend/scripts/estadoKB.js --write` · Verificar con: `node backend/scripts/estadoKB.js --check`
 
 <!-- estadoKB:inicio -->
-> Bloque generado por `backend/scripts/estadoKB.js` el **2026-09-26 16:07:17Z**. No se edita a mano.
+> Bloque generado por `backend/scripts/estadoKB.js` el **2026-09-26 17:07:55Z**. No se edita a mano.
 
-**Copia inspeccionada:** `C:/Users/Compu casa/.gemini/antigravity/worktrees/beauty-app/sistema-agentes` · rama `docs/sistema-agentes` @ `9c7cbae5` (2026-09-26 10:46:30 -0500) · árbol: **10 entradas sin commitear**
+**Copia inspeccionada:** `C:/Users/Compu casa/.gemini/antigravity/worktrees/beauty-app/sistema-agentes` · rama `docs/sistema-agentes` @ `5913b9c81` (2026-09-26 11:07:17 -0500) · árbol: **6 entradas sin commitear**
 
 **Ramas locales (17):**
 
 | Rama | SHA | Último commit | Commits fuera de main | PR abierto |
 |---|---|---|---|---|
-| `docs/sistema-agentes` | `9c7cbae5` | 2026-09-26 | 86 | — |
-| `chore/guardian-en-el-repo` | `b919d45a` | 2026-09-25 | 40 | — |
-| `fix/jwt-sin-respaldo` | `dbb87293` | 2026-09-25 | 14 | — |
-| `fix/compuerta-secretos-reproducible` | `85687237` | 2026-09-25 | 13 | — |
-| `fix/candado-comprueba-si-desconoce` | `82f84f5e` | 2026-09-25 | 12 | — |
-| `fix/gate-clasificado` | `1a9f13ef` | 2026-09-26 | 12 | — |
-| `fix/admin-metricas-sin-datos` | `6f2f656f` | 2026-09-25 | 11 | — |
-| `fix/caminos-muertos` | `063b19e0` | 2026-09-26 | 11 | — |
-| `fix/arranque-y-estado-honesto` | `07e7225e` | 2026-09-25 | 10 | — |
-| `fase-a/verdad-operativa` | `b545ef22` | 2026-09-25 | 9 | sí |
-| `fix/contrato-convive-con-candado` | `3a9148ad` | 2026-09-25 | 8 | — |
-| `fix/rls-056-058-cadena` | `ba06e563` | 2026-09-24 | 8 | — |
-| `fix/ci-procedencia` | `6268afff` | 2026-09-24 | 7 | — |
-| `fix/montajes-unicos` | `38a9afe9` | 2026-09-24 | 7 | — |
-| `feat/glowshop-niveles-a0` | `3337aadb` | 2026-09-24 | 1 | sí |
-| `feat/glowshop-precios-csv` | `18a04262` | 2026-09-24 | 1 | sí |
-| `main` | `f5a1b4fc` | 2026-09-24 | 0 | — |
+| `docs/sistema-agentes` | `5913b9c81` | 2026-09-26 | 87 | — |
+| `chore/guardian-en-el-repo` | `b919d45ad` | 2026-09-25 | 40 | — |
+| `fix/jwt-sin-respaldo` | `dbb872930` | 2026-09-25 | 14 | — |
+| `fix/compuerta-secretos-reproducible` | `856872374` | 2026-09-25 | 13 | — |
+| `fix/gate-clasificado` | `4e9145ad9` | 2026-09-26 | 13 | — |
+| `fix/candado-comprueba-si-desconoce` | `82f84f5ec` | 2026-09-25 | 12 | — |
+| `fix/admin-metricas-sin-datos` | `6f2f656f5` | 2026-09-25 | 11 | — |
+| `fix/caminos-muertos` | `063b19e0a` | 2026-09-26 | 11 | — |
+| `fix/arranque-y-estado-honesto` | `07e7225e9` | 2026-09-25 | 10 | — |
+| `fase-a/verdad-operativa` | `b545ef225` | 2026-09-25 | 9 | sí |
+| `fix/contrato-convive-con-candado` | `3a9148ad5` | 2026-09-25 | 8 | — |
+| `fix/rls-056-058-cadena` | `ba06e5633` | 2026-09-24 | 8 | — |
+| `fix/ci-procedencia` | `6268afff5` | 2026-09-24 | 7 | — |
+| `fix/montajes-unicos` | `38a9afe98` | 2026-09-24 | 7 | — |
+| `feat/glowshop-niveles-a0` | `3337aadb6` | 2026-09-24 | 1 | sí |
+| `feat/glowshop-precios-csv` | `18a04262b` | 2026-09-24 | 1 | sí |
+| `main` | `f5a1b4fcf` | 2026-09-24 | 0 | — |
 
 **Ramas en el remoto:** 17 → `chore/guardian-en-el-repo` · `docs/sistema-agentes` · `fase-a/verdad-operativa` · `feat/glowshop-niveles-a0` · `feat/glowshop-precios-csv` · `fix/admin-metricas-sin-datos` · `fix/arranque-y-estado-honesto` · `fix/caminos-muertos` · `fix/candado-comprueba-si-desconoce` · `fix/ci-procedencia` · `fix/compuerta-secretos-reproducible` · `fix/contrato-convive-con-candado` · `fix/gate-clasificado` · `fix/jwt-sin-respaldo` · `fix/montajes-unicos` · `fix/rls-056-058-cadena` · `main`
 
@@ -159,11 +160,11 @@ Regenerar con: `node backend/scripts/estadoKB.js --write` · Verificar con: `nod
 
 **Tags `archive/*`:** 8 locales · 17 refs en el remoto
 
-**Worktrees (3):** `feat/glowshop-niveles-a0` @ 3337aad · `fix/gate-clasificado` @ 1a9f13e · `docs/sistema-agentes` @ 9c7cbae
+**Worktrees (3):** `feat/glowshop-niveles-a0` @ 3337aad · `fix/gate-clasificado` @ 4e9145a · `docs/sistema-agentes` @ 5913b9c
 
 **Desalineaciones detectadas (1):**
 
 | Regla | Detalle |
 |---|---|
-| R1 | 10 entradas sin commitear (M docs/agents/COLA.md ·  M docs/agents/ordenes/PROMPT-ANTIGRAVITY-A-07-RONDA-4-2026-09-26.md ·  M docs/audit/AUDITORIA-ENTREGA-A-07-RONDA-2-2026-09-26.md …) |
+| R1 | 6 entradas sin commitear (M docs/agents/COLA.md ·  M docs/agents/ordenes/ATERRIZAJE-TREN-A-2026-09-25.md ·  M docs/knowledge/DEUDA.md …) |
 <!-- estadoKB:fin -->
