@@ -45,3 +45,14 @@ Cadena medida leyendo el código instalado:
 ## Lo que esto NO cambia
 
 El núcleo rojo sigue siendo el que ya se clasificó (5×500, 2 contratos rotos, 3 de semántica) — ver `CLASIFICACION-GATE-2026-09-26.md`. Lo que cambia es **cuánto sumar**: cualquier tabla que diga «11/12 rojas» sin declarar `failed-to-run` está inflando el rojo con un defecto del arnés.
+
+## El paso 9 (no bloqueante): todas las suites, sin exclusiones
+
+Dos corridas con la suite completa (`npx jest --silent --ci`, **sin** el comando del gate y sin `--coverage`), LF y base real:
+
+| Corrida | suites rojas | tests rojos | tests totales | failed to run |
+|---|---|---|---|---|
+| A | 19 | 81 | 614 (1 skipped) | 0 |
+| B | 19 | 81 | 614 (1 skipped) | 0 |
+
+**Lectura:** el gate excluye 10 patrones que alcanzan a **13 suites** (81 − 68) y esas 13 aportan **9 de esas 19 rojas** ⇒ el no bloqueante ya corre en 19 y el bloqueante en 10. Al aterrizar, lo que se declara rojo es eso: **10 en el paso que bloquea, 19 en el que no**, y el paso 9 nace con `continue-on-error` a propósito.
