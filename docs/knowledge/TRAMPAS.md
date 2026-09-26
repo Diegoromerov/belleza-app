@@ -465,3 +465,7 @@ Regla general: el exit de un recolector es un contrato con su arnés; el hallazg
 
 - **Un veredicto de escáner que lee líneas depende de los finales de línea.** En Windows el checkout por defecto es **CRLF** y el CI es **LF**: medido sobre el mismo commit, el escáner viejo daba **0 hallazgos en CRLF y 39 en LF**. Antes de creer un «limpio» local, corré el escáner en un checkout LF (`git -c core.autocrlf=false worktree add …`) o convertí el archivo y re-medí.
 - **Las suites que leen archivos mienten si el checkout es CRLF.** `audit360-remediation` pasó 19/19 en CRLF y falla en LF en el mismo commit. Medí las suites aisladas en un checkout LF.
+
+- **Un `return next()` que se saltea una comprobación para que pasen los mocks no es un fix: es un hueco.** Preguntá qué pasa en producción cuando esa condición se cumple. Medido: revertir ese bloque devolvió 41 tests a rojo ⇒ el verde se apoyaba en el hueco.
+- **Medí el verde contra la base del CI (limpia), no contra la base de trabajo.** Si el verde depende de datos ambiente que el CI no tiene (1 ADMIN y 41 PRESTADOR contra 0 ADMIN), el verde no existe.
+- **`a || b` para aceptar dos nombres de campo es adaptar el código al mock.** Verificá el esquema real antes de tocar el código: en `bookings` las columnas son `scheduled_at` y `estado`, y `start_time`/`status` no existen.
