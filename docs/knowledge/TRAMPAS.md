@@ -457,3 +457,8 @@ y el estado va en el texto: `RESULTADO: ALINEADO` / `CON DESALINEACIONES`); no p
 Regla general: el exit de un recolector es un contrato con su arnés; el hallazgo es contenido.
 
 ## 8. Decisiones del Dueño pendientes (escaladas)
+
+- **Un test cuyo propio arnés adjunta el manejador no puede probar un rechazo sin manejar.** Si el hijo del test hace `.catch(...)` o `try/catch`, el evento nunca se dispara: hay que invocar por el mismo camino que producción (aquí, dentro de `setInterval`, sin esperar la promesa).
+- **Si revertir el fix declarado no voltea el test, el cargo no está probado** — aunque el test pase y la entrega diga «RED → GREEN». Mutar el fix es la única prueba de que el test lo guarda.
+- **Un fix que no cambia el comportamiento observable no es la cura: buscá dónde está la cura real.** Mover el `connect` dentro del `try` endurece el manejo del error, pero el rechazo sin manejar seguía igual; la cura estaba en el wrapper que captura.
+- **Una restauración por `/tmp` hecha desde `node` no es visible para bash**: un programa nativo escribe `C:\tmp`, que **no** es el `/tmp` de MSYS ⇒ `cp /tmp/archivo` falla y el mutante queda vivo. Restaurá con `git checkout --` o con rutas nativas/$TMPDIR, y verificá con `grep` que el mutante desapareció.
