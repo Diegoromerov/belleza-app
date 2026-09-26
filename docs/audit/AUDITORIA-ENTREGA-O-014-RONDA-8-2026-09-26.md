@@ -34,7 +34,7 @@ en `b919d45a` (`scratch/audit-o014/wt`), nunca en el worktree del Ejecutor; cada
 
 | # | Hallazgo | Gravedad |
 |---|---|---|
-| H-1 | **La rama `chore/guardian-en-el-repo` no existe en el remoto** (`git ls-remote --heads origin` no la lista). El trabajo vive sólo en ese worktree local, contra la regla «GitHub = única fuente de verdad» y con riesgo de pérdida. No la empujé yo: **el Ejecutor está activo y podría reescribirla**; empujarla es su paso (o del Dueño). | **Bloqueante para cerrar O-014**, no para la calidad del código |
+| H-1 | **La rama `chore/guardian-en-el-repo` no existe en el remoto** (`git ls-remote --heads origin` no la lista). El trabajo vive sólo en ese worktree local, contra la regla «GitHub = única fuente de verdad» y con riesgo de pérdida. No la empujé yo: **el Ejecutor está activo y podría reescribirla**; empujarla es su paso (o del Dueño). | **CERRADO 2026-09-26**: la rama quedó empujada @ `b919d45a`; verificado por el Arquitecto contra el remoto (`git ls-remote` + `git fetch` + contenido) |
 | H-2 | El documento que se me presentó declaraba las mutaciones (sus criterios 6 y 7) como verificadas, pero **su evidencia era «el test valida el patrón»** — no una mutación aplicada. Rehechas aquí (filas 6-8): sostienen. | Corregido en esta auditoría |
 | H-3 | **`worktree null` @ `8c940f1`**: es **mi** worktree de medición (el tren para la reproducción del CI), no un defecto de la entrega. **Ya retirado**; quedan 3 worktrees (banco, el del Ejecutor, KB). | Cerrado |
 | H-4 | El recuento de suites rojas de la suite completa (17 rojas / 64 verdes en el documento) **no lo re-medí**: es cita, no medición propia. Mi medición de referencia es sobre el tren (ver §3). | Declarado |
