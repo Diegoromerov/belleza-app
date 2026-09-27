@@ -128,15 +128,15 @@ resilience | contextCompressor | fase5 | authRoutes | api.cors
 Regenerar con: `node backend/scripts/estadoKB.js --write` · Verificar con: `node backend/scripts/estadoKB.js --check`
 
 <!-- estadoKB:inicio -->
-> Bloque generado por `backend/scripts/estadoKB.js` el **2026-09-27 15:57:50Z**. No se edita a mano.
+> Bloque generado por `backend/scripts/estadoKB.js` el **2026-09-27 16:23:17Z**. No se edita a mano.
 
-**Copia inspeccionada:** `C:/Users/Compu casa/.gemini/antigravity/worktrees/beauty-app/sistema-agentes` · rama `docs/sistema-agentes` @ `da88dde69` (2026-09-27 10:53:21 -0500) · árbol: **2 entradas sin commitear**
+**Copia inspeccionada:** `C:/Users/Compu casa/.gemini/antigravity/worktrees/beauty-app/sistema-agentes` · rama `docs/sistema-agentes` @ `6e4908e91` (2026-09-27 11:12:58 -0500) · árbol: **5 entradas sin commitear**
 
-**Ramas locales (18):**
+**Ramas locales (19):**
 
 | Rama | SHA | Último commit | Commits fuera de main | PR abierto |
 |---|---|---|---|---|
-| `docs/sistema-agentes` | `da88dde69` | 2026-09-27 | 94 | — |
+| `docs/sistema-agentes` | `6e4908e91` | 2026-09-27 | 96 | — |
 | `chore/guardian-en-el-repo` | `b919d45ad` | 2026-09-25 | 40 | — |
 | `fix/jwt-sin-respaldo` | `dbb872930` | 2026-09-25 | 14 | — |
 | `fix/compuerta-secretos-reproducible` | `856872374` | 2026-09-25 | 13 | — |
@@ -146,6 +146,7 @@ Regenerar con: `node backend/scripts/estadoKB.js --write` · Verificar con: `nod
 | `fix/caminos-muertos` | `063b19e0a` | 2026-09-26 | 11 | — |
 | `fix/ci40-permiso-documentos` | `6c81b17b1` | 2026-09-27 | 11 | — |
 | `fix/arranque-y-estado-honesto` | `07e7225e9` | 2026-09-25 | 10 | — |
+| `fix/secretos-sin-respaldo-literal` | `2ac5c554f` | 2026-09-27 | 10 | — |
 | `fase-a/verdad-operativa` | `b545ef225` | 2026-09-25 | 9 | sí |
 | `fix/contrato-convive-con-candado` | `3a9148ad5` | 2026-09-25 | 8 | — |
 | `fix/rls-056-058-cadena` | `ba06e5633` | 2026-09-24 | 8 | — |
@@ -155,17 +156,17 @@ Regenerar con: `node backend/scripts/estadoKB.js --write` · Verificar con: `nod
 | `feat/glowshop-precios-csv` | `18a04262b` | 2026-09-24 | 1 | sí |
 | `main` | `f5a1b4fcf` | 2026-09-24 | 0 | — |
 
-**Ramas en el remoto:** 18 → `chore/guardian-en-el-repo` · `docs/sistema-agentes` · `fase-a/verdad-operativa` · `feat/glowshop-niveles-a0` · `feat/glowshop-precios-csv` · `fix/admin-metricas-sin-datos` · `fix/arranque-y-estado-honesto` · `fix/caminos-muertos` · `fix/candado-comprueba-si-desconoce` · `fix/ci-procedencia` · `fix/ci40-permiso-documentos` · `fix/compuerta-secretos-reproducible` · `fix/contrato-convive-con-candado` · `fix/gate-clasificado` · `fix/jwt-sin-respaldo` · `fix/montajes-unicos` · `fix/rls-056-058-cadena` · `main`
+**Ramas en el remoto:** 19 → `chore/guardian-en-el-repo` · `docs/sistema-agentes` · `fase-a/verdad-operativa` · `feat/glowshop-niveles-a0` · `feat/glowshop-precios-csv` · `fix/admin-metricas-sin-datos` · `fix/arranque-y-estado-honesto` · `fix/caminos-muertos` · `fix/candado-comprueba-si-desconoce` · `fix/ci-procedencia` · `fix/ci40-permiso-documentos` · `fix/compuerta-secretos-reproducible` · `fix/contrato-convive-con-candado` · `fix/gate-clasificado` · `fix/jwt-sin-respaldo` · `fix/montajes-unicos` · `fix/rls-056-058-cadena` · `fix/secretos-sin-respaldo-literal` · `main`
 
 **PRs abiertos:** #16 `fase-a/verdad-operativa` → `main` · #12 `feat/glowshop-precios-csv` → `main` · #10 `feat/glowshop-niveles-a0` → `main`
 
 **Tags `archive/*`:** 8 locales · 17 refs en el remoto
 
-**Worktrees (3):** `feat/glowshop-niveles-a0` @ 3337aad · `fix/ci40-permiso-documentos` @ 6c81b17 · `docs/sistema-agentes` @ da88dde
+**Worktrees (3):** `feat/glowshop-niveles-a0` @ 3337aad · `fix/secretos-sin-respaldo-literal` @ 2ac5c55 · `docs/sistema-agentes` @ 6e4908e
 
 **Desalineaciones detectadas (1):**
 
 | Regla | Detalle |
 |---|---|
-| R1 | 2 entradas sin commitear (M docs/agents/ordenes/PROMPT-ANTIGRAVITY-TEC53-CI14-SECRETOS-2026-09-26.md ·  M docs/knowledge/DEUDA.md) |
+| R1 | 5 entradas sin commitear (M docs/agents/COLA.md ·  M docs/knowledge/DEUDA.md ·  M docs/knowledge/TRAMPAS.md …) |
 <!-- estadoKB:fin -->
