@@ -1,5 +1,5 @@
 /**
- * smokeSurfaces.js — Guardián de Humo por Superficie (Fase A - Ronda 5)
+ * smokeSurfaces.js — Guardián de Humo por Superficie (Fase A - Ronda 6)
  * 
  * COMANDO REPRODUCIBLE CASO SANO (base arriba):
  * DB_HOST=127.0.0.1 DATABASE_URL="postgres://admin:admin123@127.0.0.1:5435/beauty_db" NODE_ENV=test npm run smoke:surfaces
@@ -16,22 +16,23 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const { spawn } = require('child_process');
 const { DEGRADED_ALLOWLIST } = require('../src/middleware/degradedLock');
 
-// Asegurar NODE_ENV=test durante el require para no intentar iniciar un segundo app.listen(8080)
-const envBeforeRequire = process.env.NODE_ENV;
-process.env.NODE_ENV = 'test';
-let app;
-try {
-  app = require('../index');
-} catch (e) {
-  console.warn('⚠️ No se pudo requerir app directamente de index.js:', e.message);
-} finally {
-  process.env.NODE_ENV = envBeforeRequire;
-}
-
+const REPO_ROOT_BACKEND = path.resolve(__dirname, '..');
 const PORT = process.env.PORT || 8080;
 const BASE_URL = `http://127.0.0.1:${PORT}`;
+
+// Extraer rutas del stack Express
+let app;
+try {
+  const envBeforeRequire = process.env.NODE_ENV;
+  process.env.NODE_ENV = 'test';
+  app = require('../index');
+  process.env.NODE_ENV = envBeforeRequire;
+} catch (e) {
+  console.warn('⚠️ No se pudo requerir app directamente de index.js:', e.message);
+}
 
 function cleanRegexpSource(source) {
   if (!source || source === '^\\/' || source === '^\\/\\/?') return '';
@@ -96,18 +97,6 @@ function extractRoutes(expressApp) {
 
 /**
  * Función pura para decidir la fuente de rutas del guardián de humo.
- * 
- * Reglas (Ronda 5):
- * 1. Si app existe y extractRoutes(app) devuelve rutas (length > 0):
- *    -> fuente: 'express_stack', exitCode: 0
- * 2. Si app es null o extractRoutes(app) devuelve 0 rutas:
- *    - Si inventario existe y tiene elementos:
- *      -> fuente: 'inventario', exitCode: 1, error: 'no se pudo cargar el entry vivo de la app; el inventario NO sustituye la medición'
- *    - Si inventario está vacío o no existe:
- *      -> fuente: 'ninguna', exitCode: 1, error: 'no se pudieron obtener rutas para el smoke test'
- * 
- * @param {{ app?: object, inventario?: Array }} params
- * @returns {{ rutas: Array, fuente: string, exitCode: number, error?: string }}
  */
 function decidirRutas({ app: expressApp, inventario }) {
   let liveRoutes = [];
@@ -172,8 +161,66 @@ function makeRequest(method, urlPath, headers = {}) {
   });
 }
 
+/**
+ * Arranca el proceso servidor real (camino real de entrada) y sondea /api/health
+ * hasta que el estado de la base de datos es comprobado (pgAvailable !== null).
+ */
+async function startRealServerAndAwaitChecked() {
+  console.log('🚀 Iniciando servidor backend vía proceso hijo real (node index.js)...');
+  
+  const serverProcess = spawn('node', ['index.js'], {
+    cwd: REPO_ROOT_BACKEND,
+    env: {
+      ...process.env,
+      PORT: String(PORT),
+      NODE_ENV: 'development'
+    },
+    stdio: ['ignore', 'pipe', 'pipe']
+  });
+
+  serverProcess.stdout.on('data', (d) => {
+    const line = d.toString().trim();
+    if (line.includes('✅ Conexión exitosa a PostgreSQL') || line.includes('⚠️ PostgreSQL local no disponible')) {
+      console.log(`   [server] ${line}`);
+    }
+  });
+
+  serverProcess.stderr.on('data', (d) => {
+    const line = d.toString().trim();
+    if (line.includes('ERROR') || line.includes('warn') || line.includes('Unhandled')) {
+      console.log(`   [server err] ${line}`);
+    }
+  });
+
+  const startTime = Date.now();
+  const maxWaitMs = 15000;
+  let healthRes = null;
+
+  while (Date.now() - startTime < maxWaitMs) {
+    await new Promise(r => setTimeout(r, 400));
+    healthRes = await makeRequest('GET', '/api/health');
+
+    // Esperar hasta que el servidor responda Y la base de datos haya sido comprobada (pgAvailable !== null)
+    if (healthRes && healthRes.status > 0 && healthRes.body && healthRes.body.database && healthRes.body.database.pgAvailable !== null) {
+      console.log(`✅ Servidor real respondiendo con estado comprobado (pgAvailable: ${healthRes.body.database.pgAvailable}).`);
+      break;
+    }
+  }
+
+  if (!healthRes || healthRes.status === 0 || !healthRes.body || !healthRes.body.database || healthRes.body.database.pgAvailable === null) {
+    console.error('❌ TIMEOUT: El servidor real no logró comprobar el estado de la base de datos a tiempo.');
+    serverProcess.kill('SIGTERM');
+    process.exit(1);
+  }
+
+  return {
+    serverProcess,
+    healthRes
+  };
+}
+
 async function runSmoke() {
-  console.log('🔥 Ejecutando Smoke Test por Superficie (Fase A - Ronda 5)...');
+  console.log('🔥 Ejecutando Smoke Test por Superficie (Fase A - Ronda 6)...');
 
   const routesFile = path.resolve(__dirname, '../../docs/audit/routes-2026-09-24.json');
   let inventario = null;
@@ -197,18 +244,11 @@ async function runSmoke() {
     process.exit(exitCode);
   }
 
-  let serverInstance = null;
-  if (app) {
-    await new Promise((resolve) => {
-      serverInstance = app.listen(PORT, () => {
-        resolve();
-      });
-    });
-  }
+  const { serverProcess, healthRes: initialHealth } = await startRealServerAndAwaitChecked();
 
-  const closeServer = () => {
-    if (serverInstance) {
-      serverInstance.close();
+  const stopServer = () => {
+    if (serverProcess) {
+      serverProcess.kill('SIGTERM');
     }
   };
 
@@ -216,7 +256,6 @@ async function runSmoke() {
   let fakedSuccessCount = 0;
   const results = [];
 
-  // Capturar estado degradado del servidor una sola vez al inicio mediante probes directos
   const healthRes = await makeRequest('GET', '/api/health');
   const testDbRes = await makeRequest('GET', '/api/test-db');
 
@@ -227,7 +266,9 @@ async function runSmoke() {
     (healthRes.body && healthRes.body.database && healthRes.body.database.pgAvailable === false) ||
     (testDbRes.body && testDbRes.body.status === 'error');
 
-  console.log(`📊 Estado del servidor detectado (probes inicio): IsDegraded=${isServerDegraded}, HealthStatus=${healthRes.status}`);
+  const pgAvailable = healthRes.body?.database?.pgAvailable ?? null;
+
+  console.log(`📊 Estado del servidor detectado (probes inicio): IsDegraded=${isServerDegraded}, HealthStatus=${healthRes.status}, PgAvailable=${pgAvailable}`);
 
   for (const r of safeRoutes) {
     let testPath = r.path
@@ -247,7 +288,6 @@ async function runSmoke() {
     if (isServerDegraded) {
       if (testPath.startsWith('/api/')) {
         if (DEGRADED_ALLOWLIST.has(cleanPath)) {
-          // Cargo 4: Comprobación de rutas de allowlist (exentas del bloqueo pero no de ser verificadas)
           if (res.status >= 200 && res.status < 300) {
             if (cleanPath === '/api/health' && (res.body?.status === 'OK' || !hasDegradedHeader)) {
               fakedSuccess = true;
@@ -258,8 +298,6 @@ async function runSmoke() {
             }
           }
         } else {
-          // REGLA DE CLASE (Cargo 2 / S4):
-          // Cualquier superficie de datos bajo /api no exenta que responda HTTP 2xx (200-299) estando degradada es FAKED SUCCESS.
           if (res.status >= 200 && res.status < 300) {
             fakedSuccess = true;
           }
@@ -293,6 +331,8 @@ async function runSmoke() {
     timestamp: new Date().toISOString(),
     routes_source: fuente,
     server_degraded: isServerDegraded,
+    health_status: healthRes.status,
+    pg_available: pgAvailable,
     total_surfaces_tested: results.length,
     faked_success_count: fakedSuccessCount,
     results: results
@@ -304,7 +344,7 @@ async function runSmoke() {
   console.log(`\n📋 Resumen de Smoke Test (${results.length} superficies probadas):`);
   console.log(`- Faked Success Totales: ${fakedSuccessCount}`);
 
-  closeServer();
+  stopServer();
 
   if (fakedSuccessCount > 0) {
     console.error('❌ SMOKE TEST FALLIDO: Se detectaron respuestas de éxito falso (faked_success).');
