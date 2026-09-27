@@ -15,7 +15,10 @@ const esEntornoProductivo = () =>
  * Ver backend/scripts/reencryptBiometricData.js
  */
 const CLAVE_LEGADA = () => {
-  const secret = process.env.JWT_SECRET || 'glowapp_biometric_fallback_key_32_bytes!';
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET requerida para derivar CLAVE_LEGADA');
+  }
   return crypto.createHash('sha256').update(secret).digest();
 };
 
