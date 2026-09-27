@@ -76,7 +76,7 @@ async function main() {
     const { rows: [estado] } = await cliente.query(
       `SELECT count(*)::int AS tablas
          FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
-        WHERE n.nspname = 'public' AND c.relkind = 'r'`
+        WHERE n.nspname = 'public' AND c.relkind = 'r' AND c.relname NOT IN ('spatial_ref_sys')`
     );
     const baseVacia = estado.tablas === 0;
 
