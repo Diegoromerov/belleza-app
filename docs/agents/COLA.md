@@ -66,3 +66,5 @@
 - **CI-40 ronda 2** emitida (`PROMPT-ANTIGRAVITY-CI-40-RONDA-2-2026-09-27.md`): el arreglo de la ruta se acepta (gate 24 → 18), el test hay que rehacerlo o quitarlo. **Descubierto en la auditoría: el último bloqueo del verde son las fixtures de las 4 suites `business*` (CI-43), no los permisos.**
 
 - **TEC-53/CI-14 ronda 2** emitida: falta quitar el literal de `CLAVE_LEGADA` (una línea) + la prueba booleana de que la clave legada no cambia + el escáner medido con su escáner/árbol. **CI-40 ronda 2** también emitida (quitar el Test 12). **CI-43** (esquema del subsistema en la base del CI) sin emitir.
+
+- **TEC-53/CI-14: CERRADA por el código** (ronda 2 aceptada). **Pendiente de aterrizaje** con el resto del tren: con ella dentro el escáner queda en **0** y el paso 7 verde. Ronda 2 pendiente: **CI-40** (quitar el Test 12). Sin emitir: **CI-43** (esquema del subsistema) y **CI-45** (alcance del guard).
