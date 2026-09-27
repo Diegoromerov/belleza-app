@@ -68,3 +68,5 @@
 - **TEC-53/CI-14 ronda 2** emitida: falta quitar el literal de `CLAVE_LEGADA` (una línea) + la prueba booleana de que la clave legada no cambia + el escáner medido con su escáner/árbol. **CI-40 ronda 2** también emitida (quitar el Test 12). **CI-43** (esquema del subsistema en la base del CI) sin emitir.
 
 - **TEC-53/CI-14: CERRADA por el código** (ronda 2 aceptada). **Pendiente de aterrizaje** con el resto del tren: con ella dentro el escáner queda en **0** y el paso 7 verde. Ronda 2 pendiente: **CI-40** (quitar el Test 12). Sin emitir: **CI-43** (esquema del subsistema) y **CI-45** (alcance del guard).
+
+- **ATERRIZAJE SUBIDO (2026-09-27)**: `fase-a/verdad-operativa` pasó de `b545ef225` a **`a6e40e017`** por fast-forward (autorizado con «dale»), 11 ramas, 1 conflicto resuelto. PR #16: `mergeable: true`, 43 commits, +6092/−284. **CI real del PR**: anti-marcadores ✅, **escáner ✅ (paso 7 verde por primera vez)**, `Flutter Analyze & Build` ✅, **«Preparar el esquema multi-tenant y los roles RLS» ✗ ⇒ CI-46**, tests `skipped`. **Falta que el Dueño mergee PR #16 con merge commit (nunca squash).**
