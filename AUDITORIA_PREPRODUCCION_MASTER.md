@@ -77,11 +77,11 @@
 
 ### 11. **Secrets Hardcodeados en docker-compose.yml** (DevOps #1, Security #1)
 ```yaml
-POSTGRES_PASSWORD: admin123
-JWT_SECRET: beauty_app_super_secret_key_2026_change_in_production
+POSTGRES_PASSWORD: ***
+JWT_SECRET: ***
 ```
 - En repositorio, visibles en Git history
-- `docker-compose.prod.yml`: `POSTGRES_PASSWORD=prod_password` en plaintext
+- `docker-compose.prod.yml`: `POSTGRES_PASSWORD=***` en plaintext
 - **Acción:** Usar `.env` + Docker secrets / Railway variables / AWS Secrets Manager
 
 ### 12. **CORS Wildcard `*.up.railway.app` — Subdomain Takeover Risk** (Security #4, DevOps)
@@ -272,3 +272,5 @@ JWT_SECRET: beauty_app_super_secret_key_2026_change_in_production
 
 *Generado por equipo de 5 subagentes Hermes en auditoría paralela (4.7h tiempo total de análisis)*
 *Fecha consolidación: 2026-09-02 20:45*
+
+> Valor redactado el 2026-09-26 (CI-14). El original queda en el historial de Git; se conserva como registro, no se borra la línea.

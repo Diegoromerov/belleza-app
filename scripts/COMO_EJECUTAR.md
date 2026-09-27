@@ -32,7 +32,7 @@ $env:PGDATABASE = "beauty_db"
 $env:PGUSER     = "admin"
 
 # Opción segura — te pide la contraseña interactivamente, sin exponerla:
-$env:PGPASSWORD = Read-Host -AsSecureString "Password" | ConvertFrom-SecureString -AsPlainText
+$env:PGPASSWORD = ***
 
 # Opción directa (solo en sesión local, nunca en scripts commiteados):
 # $env:PGPASSWORD = "tu_password"
@@ -144,7 +144,7 @@ Para ejecutar el guardián de humo (`smokeSurfaces.js`) en un entorno local con 
 
 ```bash
 # Comando reproducible con base de datos arriba (Caso Sano):
-DB_HOST=127.0.0.1 DATABASE_URL="postgres://admin:admin123@127.0.0.1:5435/beauty_db" NODE_ENV=test npm run smoke:surfaces
+DB_HOST=127.0.0.1 DATABASE_URL="postgres://admin:***@127.0.0.1:5435/beauty_db" NODE_ENV=test npm run smoke:surfaces
 ```
 
 > [!IMPORTANT]
@@ -155,4 +155,6 @@ DB_HOST=127.0.0.1 DATABASE_URL="postgres://admin:admin123@127.0.0.1:5435/beauty_
 > [!NOTE]
 > **Diagnóstico de Conexión de Base de Datos:**
 > La función `testConnection()` de `db.js` retorna `true` aun cuando PostgreSQL no responde (debido a que la aplicación conmuta a modo degradado/fallback en memoria). Para comprobar la conectividad real con la base de datos PostgreSQL se debe consultar `getDbStatus()`.
+
+> Valor redactado el 2026-09-26 (CI-14). El original queda en el historial de Git; se conserva como registro, no se borra la línea.
 
