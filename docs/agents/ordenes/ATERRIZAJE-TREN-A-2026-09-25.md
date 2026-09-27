@@ -142,3 +142,18 @@ Al resolverlo, verificar las **dos** y pegarlo:
 **Predicciones corregidas (error mío en la primera pasada):** dije «gate 4 suites / 17 tests» mezclando dos conjuntos. El **17** corresponde a **este tren + el arreglo de ruta de CI-40**; el tren de 11 **sin** CI-40 da **23**. Con CI-40 (su ronda 2, sólo la línea de ruta) ⇒ **17**.
 
 **CI-40 queda fuera de esta ola**: su rama todavía trae `Test 12`, que **suma** un rojo. Entra después de su ronda 2.
+
+---
+
+## §8 · ATERRIZAJE EJECUTADO (2026-09-27) — verificado sobre `main`
+
+| Paso | Estado |
+|---|---|
+| Autorización del Dueño | «dale» — 2026-09-27 |
+| Empuje del tren a `fase-a/verdad-operativa` | **fast-forward** `b545ef225..a6e40e017`, sin `--force` |
+| Merge a `main` | `main` = **`e8243432f`**, merge commit de PR #16 (padres `f5a1b4fcf` + `a6e40e017`). El Dueño lo hizo en su clon y lo empujó; GitHub marcó el PR como mergeado. **Nunca squash.** |
+| §6-a · CI-30 sobrevive | ✅ producción sin `BIOMETRIC_ENCRYPTION_KEY` lanza; con 64 hex arranca |
+| §6-b · ningún literal volvió | ✅ 0 en `jwt.js` y en el biométrico; escáner exit 0; anti-marcadores exit 0 |
+| CI de `main` | run `36336949240`: **paso 7 verde por primera vez**, `ci.yml` válido, job de backend con 15 pasos (antes: workflow inválido sin jobs) |
+| Residuo | **CI-46** (paso de preparación de la base) ⇒ los tests siguen `skipped` en GitHub |
+| Fase A | **92,5 %** (aterrizaje 0,15 → 1,00) |

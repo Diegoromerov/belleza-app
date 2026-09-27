@@ -30,8 +30,8 @@ const entregables = [
 ];
 
 const aterrizaje = {
-  nota: 0.15,
-  evidencia: 'SUBE 0,10→0,15: el paquete está **verificado hoy** — tren de 9 ramas re-ensayado (`f6e1964d`, 9 merges, 0 conflictos, anti-marcadores exit 0), compuerta RLS exit 0 sobre ESE tren, los números honestos del gate medidos y el runbook y el cuerpo del PR actualizados. Lo que bloquea no cambió: PR #16 sigue `open`/`mergeable` con 9 commits y **ningún CI verde** (backend ❌ en el paso 7; el paso de tests nunca corrió en GitHub), y **0 merges a `main`**',
+  nota: 1.00,
+  evidencia: 'ATERRIZÓ: **`main` = `e8243432f`**, merge commit de PR #16 (padres `f5a1b4fcf` + `a6e40e017`), verificado por el Arquitecto contra el remoto: el tren de 11 ramas es ancestro de main (44 commits, 11 merges desde el main viejo). Los dos chequeos obligatorios de la §6 del runbook, corridos **sobre main**: (a) CI-30 sobrevive — producción sin `BIOMETRIC_ENCRYPTION_KEY` LANZA y con clave real de 64 hex arranca; (b) ningún literal volvió — 0 coincidencias en jwt.js y en el biométrico, `verifyNoVersionedSecrets.js` exit 0 y `checkNoConflictMarkers.js` exit 0. **El CI de main ya corre de verdad** (antes: run sin jobs): el paso 7 pasó verde por primera vez y el rojo del gate bajo de 55 a 23, con CI-44 cerrada (ci.yml válido en main). Residuo: el paso «Preparar el esquema multi-tenant» falla en el runner (CI-46) y deja los tests en skipped.',
 };
 
 // Trabajo nuevo, fuera del denominador declarado (ver nota de cabecera)
@@ -62,7 +62,7 @@ const fila = (x) => `  ${x.id.padEnd(6)} ${x.nota.toFixed(2)}  ${x.evidencia}`;
 console.log('TRES NÚMEROS');
 console.log('  1) trabajo técnico hecho :', pc(total), '  (sin A-04:', pc(totalSin) + ')');
 console.log('  2) criterios firmables   :', pc(c), ` (${criterios.filter((x) => x.nota === 1).length}/${criterios.length} plenos)`);
-console.log('  3) fase cerrada          : 0,0 % (nada mergeado a main; el aterrizaje está en', a.toFixed(2), 'de 1,00)');
+console.log('  3) fase cerrada          : aterrizaje en', a.toFixed(2), 'de 1,00 — el tren está en main (`e8243432f`); el cierre pleno sigue dependiendo de los criterios (' + pc(c) + ')');
 console.log('');
 console.log('CRITERIOS (peso ' + PESOS.criterios + ')  ⇒ ' + pc(c));
 criterios.forEach((x) => console.log(fila(x)));

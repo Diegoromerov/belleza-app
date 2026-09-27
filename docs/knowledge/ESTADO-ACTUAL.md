@@ -45,11 +45,11 @@ La app está **funcionalmente a medias por dentro y aparentemente terminada por 
 | S3 | El CI existe y **puede fallar** | **0,90** | PR #16 head `b545ef22`: run [36100419352](https://github.com/Diegoromerov/belleza-app/actions/runs/36100419352) ejecuta pasos reales, frontend ✅, backend ❌ en el **paso 7** («Escaneo de credenciales versionadas») y **salta los pasos 8-11** ⇒ la suite y la compuerta RLS **nunca se han ejecutado**. Falta CI-14 (5 líneas de prosa) para llegar al paso 8, y la mutación deliberada (O-005) |
 | S4 | Un comando sale `≠0` si algo finge | **✓** | verificado **en vivo por el Auditor** (ronda 4): plantó dos rutas con nombres distintos sin tocar el guardián ⇒ descubrió 310 rutas del stack vivo, marcó sólo la que fingía y salió `≠0`; y en la ronda 5, si el stack vivo no carga, el respaldo al inventario **aborta con `exit 1`** en vez de dar verde. **Residuos**: CI-17 (el «caso sano» es inalcanzable por construcción), CI-20 (`-ok.json` commiteado rancio) y CI-22 |
 
-**Puntuación vigente de los criterios (2026-09-26, tarde):** S1 1,00 · S2 1,00 · S3 **0,90** (SUBE: medido con el comando exacto del CI — el gate da **10 suites / 55 tests** rojos con 0 `failed-to-run`, y el «rojo fantasma» quedó **atribuido y reproducido**: el error de timeout de `execSync` no es serializable y mata al worker mientras reporta; sigue sin 1,00 porque el criterio literal «romper un test ⇒ run rojo **en GitHub**» no se pudo medir: el paso de tests nunca corre allí, queda `skipped` detrás del paso 7 ❌) · S4 1,00.
+**Puntuación vigente de los criterios (2026-09-26, tarde):** S1 1,00 · S2 1,00 · S3 **0,90** (SUBE: medido con el comando exacto del CI — el gate da **10 suites / 55 tests** rojos con 0 `failed-to-run`, y el «rojo fantasma» quedó **atribuido y reproducido**: el error de timeout de `execSync` no es serializable y mata al worker mientras reporta; sigue sin 1,00 porque el criterio literal «romper un test ⇒ run rojo **en GitHub**» no se pudo medir: el paso de tests nunca corre allí, queda `skipped` — antes detrás del paso 7 ❌, que **ya pasa**; ahora detrás del paso «Preparar el esquema multi-tenant y los roles RLS» (CI-46) ❌) · S4 1,00.
 
-**Avance de la Fase A (medido 2026-09-26 tarde, cálculo versionado en `docs/knowledge/scripts/avanceFaseA.js`):**
-**trabajo técnico 75,5 %** (80,3 % sin A-04, que está bloqueada por decisión del Dueño) · **criterios firmables 97,5 %**
-(3 de 4 plenos) · **fase cerrada 0 %** (nada mergeado a `main`; el aterrizaje está en 0,15 de 1,00). **Delta +1,9 pp** sobre el 73,6 % del informe previo del mismo día: S3 (la verdad del gate, medida y atribuida), A-06 (verificado que el escáner nuevo da lo mismo en CRLF y en LF) y el aterrizaje (paquete re-verificado).
+**Avance de la Fase A (medido 2026-09-27 tarde, cálculo versionado en `docs/knowledge/scripts/avanceFaseA.js`):**
+**trabajo técnico 92,5 %** (97,2 % sin A-04, que está bloqueada por decisión del Dueño) · **criterios firmables 97,5 %**
+(3 de 4 plenos) · **aterrizaje 1,00 de 1,00 — el tren está en `main` (`e8243432f`)**. **Delta +17,0 pp** sobre el 75,5 % del informe previo: el aterrizaje (PR #16 mergeado con merge commit, verificado contra el remoto) y lo que trajo consigo (CI-44 cerrada: el `ci.yml` de `main` es válido y su CI corre de verdad; el paso 7 verde por primera vez; el rojo del gate de 55 a 23). El cierre pleno sigue dependiendo de los criterios (S3 y S4 no son plenos).
 
 > **RETRACTACIÓN (mismo día):** los números del gate publicados antes de esta tarde se midieron **sin `JWT_SECRET`** ⇒ estaban inflados en **4 tests** (la suite `adminPreciosRoutes`, que no es hermética: CI-41). Corregidos con el entorno del CI: base **10 suites / 55** · A-07 r3 **6 suites / 25**. Detalle en `docs/audit/RETRACTACION-GATE-ENTORNO-2026-09-26.md`.
 
@@ -128,45 +128,61 @@ resilience | contextCompressor | fase5 | authRoutes | api.cors
 Regenerar con: `node backend/scripts/estadoKB.js --write` · Verificar con: `node backend/scripts/estadoKB.js --check`
 
 <!-- estadoKB:inicio -->
-> Bloque generado por `backend/scripts/estadoKB.js` el **2026-09-27 16:32:49Z**. No se edita a mano.
+> Bloque generado por `backend/scripts/estadoKB.js` el **2026-09-27 17:31:05Z**. No se edita a mano.
 
-**Copia inspeccionada:** `C:/Users/Compu casa/.gemini/antigravity/worktrees/beauty-app/sistema-agentes` · rama `docs/sistema-agentes` @ `b715e577e` (2026-09-27 11:23:17 -0500) · árbol: **4 entradas sin commitear**
+**Copia inspeccionada:** `C:/Users/Compu casa/.gemini/antigravity/worktrees/beauty-app/sistema-agentes` · rama `docs/sistema-agentes` @ `b5da792eb` (2026-09-27 12:05:08 -0500) · árbol: **7 entradas sin commitear**
 
-**Ramas locales (19):**
+**Ramas locales (20):**
 
 | Rama | SHA | Último commit | Commits fuera de main | PR abierto |
 |---|---|---|---|---|
-| `docs/sistema-agentes` | `b715e577e` | 2026-09-27 | 97 | — |
+| `docs/sistema-agentes` | `b5da792eb` | 2026-09-27 | 100 | — |
 | `chore/guardian-en-el-repo` | `b919d45ad` | 2026-09-25 | 40 | — |
-| `fix/jwt-sin-respaldo` | `dbb872930` | 2026-09-25 | 14 | — |
-| `fix/compuerta-secretos-reproducible` | `856872374` | 2026-09-25 | 13 | — |
-| `fix/gate-clasificado` | `4e9145ad9` | 2026-09-26 | 13 | — |
-| `fix/candado-comprueba-si-desconoce` | `82f84f5ec` | 2026-09-25 | 12 | — |
-| `fix/admin-metricas-sin-datos` | `6f2f656f5` | 2026-09-25 | 11 | — |
-| `fix/caminos-muertos` | `063b19e0a` | 2026-09-26 | 11 | — |
-| `fix/ci40-permiso-documentos` | `6c81b17b1` | 2026-09-27 | 11 | — |
-| `fix/secretos-sin-respaldo-literal` | `eb72635d5` | 2026-09-27 | 11 | — |
-| `fix/arranque-y-estado-honesto` | `07e7225e9` | 2026-09-25 | 10 | — |
-| `fase-a/verdad-operativa` | `b545ef225` | 2026-09-25 | 9 | sí |
-| `fix/contrato-convive-con-candado` | `3a9148ad5` | 2026-09-25 | 8 | — |
-| `fix/rls-056-058-cadena` | `ba06e5633` | 2026-09-24 | 8 | — |
-| `fix/ci-procedencia` | `6268afff5` | 2026-09-24 | 7 | — |
-| `fix/montajes-unicos` | `38a9afe98` | 2026-09-24 | 7 | — |
+| `fix/ci40-permiso-documentos` | `6c81b17b1` | 2026-09-27 | 2 | — |
+| `fix/jwt-sin-respaldo` | `dbb872930` | 2026-09-25 | 2 | — |
 | `feat/glowshop-niveles-a0` | `3337aadb6` | 2026-09-24 | 1 | sí |
 | `feat/glowshop-precios-csv` | `18a04262b` | 2026-09-24 | 1 | sí |
-| `main` | `f5a1b4fcf` | 2026-09-24 | 0 | — |
+| `fase-a/verdad-operativa` | `b545ef225` | 2026-09-25 | 0 | — |
+| `fix/admin-metricas-sin-datos` | `6f2f656f5` | 2026-09-25 | 0 | — |
+| `fix/arranque-y-estado-honesto` | `07e7225e9` | 2026-09-25 | 0 | — |
+| `fix/caminos-muertos` | `063b19e0a` | 2026-09-26 | 0 | — |
+| `fix/candado-comprueba-si-desconoce` | `82f84f5ec` | 2026-09-25 | 0 | — |
+| `fix/ci-procedencia` | `6268afff5` | 2026-09-24 | 0 | — |
+| `fix/compuerta-secretos-reproducible` | `856872374` | 2026-09-25 | 0 | — |
+| `fix/contrato-convive-con-candado` | `3a9148ad5` | 2026-09-25 | 0 | — |
+| `fix/gate-clasificado` | `4e9145ad9` | 2026-09-26 | 0 | — |
+| `fix/montajes-unicos` | `38a9afe98` | 2026-09-24 | 0 | — |
+| `fix/rls-056-058-cadena` | `ba06e5633` | 2026-09-24 | 0 | — |
+| `fix/secretos-sin-respaldo-literal` | `eb72635d5` | 2026-09-27 | 0 | — |
+| `main` | `e8243432f` | 2026-09-27 | 0 | — |
+| `tren/aterrizaje-11` | `a6e40e017` | 2026-09-27 | 0 | — |
 
 **Ramas en el remoto:** 19 → `chore/guardian-en-el-repo` · `docs/sistema-agentes` · `fase-a/verdad-operativa` · `feat/glowshop-niveles-a0` · `feat/glowshop-precios-csv` · `fix/admin-metricas-sin-datos` · `fix/arranque-y-estado-honesto` · `fix/caminos-muertos` · `fix/candado-comprueba-si-desconoce` · `fix/ci-procedencia` · `fix/ci40-permiso-documentos` · `fix/compuerta-secretos-reproducible` · `fix/contrato-convive-con-candado` · `fix/gate-clasificado` · `fix/jwt-sin-respaldo` · `fix/montajes-unicos` · `fix/rls-056-058-cadena` · `fix/secretos-sin-respaldo-literal` · `main`
 
-**PRs abiertos:** #16 `fase-a/verdad-operativa` → `main` · #12 `feat/glowshop-precios-csv` → `main` · #10 `feat/glowshop-niveles-a0` → `main`
+**PRs abiertos:** #12 `feat/glowshop-precios-csv` → `main` · #10 `feat/glowshop-niveles-a0` → `main`
 
 **Tags `archive/*`:** 8 locales · 17 refs en el remoto
 
-**Worktrees (3):** `feat/glowshop-niveles-a0` @ 3337aad · `fix/secretos-sin-respaldo-literal` @ eb72635 · `docs/sistema-agentes` @ b715e57
+**Worktrees (5):** `feat/glowshop-niveles-a0` @ 3337aad · `main` @ e824343 · `docs/sistema-agentes` @ b5da792 · `tren/aterrizaje-11` @ a6e40e0 · `null` @ e824343
 
-**Desalineaciones detectadas (1):**
+**Desalineaciones detectadas (16):**
 
 | Regla | Detalle |
 |---|---|
-| R1 | 4 entradas sin commitear (M docs/agents/COLA.md ·  M docs/knowledge/DEUDA.md ·  M docs/knowledge/TRAMPAS.md …) |
+| R1 | 7 entradas sin commitear (M docs/agents/COLA.md ·  M docs/agents/ordenes/ATERRIZAJE-TREN-A-2026-09-25.md ·  M docs/knowledge/DEUDA.md …) |
+| R3 | «fase-a/verdad-operativa» es muerta viva (0 commits fuera de main) |
+| R3 | «fix/admin-metricas-sin-datos» es muerta viva (0 commits fuera de main) |
+| R3 | «fix/arranque-y-estado-honesto» es muerta viva (0 commits fuera de main) |
+| R3 | «fix/caminos-muertos» es muerta viva (0 commits fuera de main) |
+| R3 | «fix/candado-comprueba-si-desconoce» es muerta viva (0 commits fuera de main) |
+| R3 | «fix/ci-procedencia» es muerta viva (0 commits fuera de main) |
+| R3 | «fix/compuerta-secretos-reproducible» es muerta viva (0 commits fuera de main) |
+| R3 | «fix/contrato-convive-con-candado» es muerta viva (0 commits fuera de main) |
+| R3 | «fix/gate-clasificado» es muerta viva (0 commits fuera de main) |
+| R3 | «fix/montajes-unicos» es muerta viva (0 commits fuera de main) |
+| R3 | «fix/rls-056-058-cadena» es muerta viva (0 commits fuera de main) |
+| R3 | «fix/secretos-sin-respaldo-literal» es muerta viva (0 commits fuera de main) |
+| R3 | «tren/aterrizaje-11» es muerta viva (0 commits fuera de main) |
+| R4 | el worktree C:/Users/Compu casa/.gemini/antigravity/worktrees/beauty-app/setup_glowguide_architecture apunta a la rama muerta «main» |
+| R4 | el worktree C:/Users/Compu casa/AppData/Local/hermes/cache/scratch/aterr11/wt apunta a la rama muerta «tren/aterrizaje-11» |
 <!-- estadoKB:fin -->
