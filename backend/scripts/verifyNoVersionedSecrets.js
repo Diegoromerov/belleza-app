@@ -108,6 +108,53 @@ const REGLAS = [
       if (ALLOW_MARKERS.test(linea) || /<[^>]+>|\$\{[^}]+\}/.test(linea)) return false;
       return true;
     }
+  },
+  {
+    nombre: 'contraseña documentada en prosa o comentario',
+    buscar: '(contrase[a-zñ]*|password|clave)[[:space:]]+.*:[[:space:]]*',
+    validar: (linea, archivo) => {
+      if (!archivo) return false;
+      if (/^docs\//i.test(archivo)) return false;
+      if (/\.(test|spec)\.[jt]sx?$/.test(archivo)) return false;
+      if (/scripts\/verify/.test(archivo)) return false;
+      const trimmed = linea.trim();
+      if (/^\s*(console\.(log|info|warn|error)|logger\.(log|info|warn|error)|res\.status|return res|throw new)\b/.test(trimmed)) return false;
+      const re = /(?:contraseñ|contrasen|password)\b[^\n:]{0,40}\b(?:es|is|para|for|todos|all|defecto|predeterminada)\b[^\n:]{0,20}:\s*([^\s;,"]+)/gi;
+      let m;
+      while ((m = re.exec(linea)) !== null) {
+        const val = m[1];
+        if (!val || val.length < 3) continue;
+        if (ALLOW_MARKERS.test(val)) continue;
+        if (/^(\$|\$\{|<|YOUR|TU_|PLACEHOLDER|REDACTED|\*\*\*|\.\.\.)/i.test(val)) continue;
+        return true;
+      }
+      return false;
+    }
+  },
+  {
+    nombre: 'hash de contraseña débil conocida',
+    buscar: '\\$2[aby]\\$\\d{2}\\$[A-Za-z0-9./]{53}',
+    validar: (linea, archivo) => {
+      if (!archivo) return false;
+      if (/\.(test|spec)\.[jt]sx?$/.test(archivo)) return false;
+      if (/scripts\/verify/.test(archivo)) return false;
+      const bcrypt = require('bcryptjs');
+      const WEAK_PASSWORDS = ['password123', '123456', 'admin', 'admin123', 'demo', 'test1234', 'password', '12345678'];
+      const re = /\$2[aby]\$\d{2}\$[A-Za-z0-9./]{53}/g;
+      let m;
+      while ((m = re.exec(linea)) !== null) {
+        const hashStr = m[0];
+        if (ALLOW_MARKERS.test(hashStr)) continue;
+        for (const pass of WEAK_PASSWORDS) {
+          try {
+            if (bcrypt.compareSync(pass, hashStr)) {
+              return true;
+            }
+          } catch (_) {}
+        }
+      }
+      return false;
+    }
   }
 ];
 

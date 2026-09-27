@@ -35,17 +35,57 @@ describe('verifyNoVersionedSecrets — Pipeline Pure Scanner Test (CRLF / LF Inv
     const rawLF   = `${targetFile}:10:${secretLine}\n`;
     const rawCRLF = `${targetFile}:10:${secretLine}\r\n`;
 
-    // Con normalización habilitada (normalize = true)
     const resLFWithNorm   = analizarSalida(rawLF, { normalize: true });
     const resCRLFWithNorm = analizarSalida(rawCRLF, { normalize: true });
     expect(resLFWithNorm.hallazgos).toEqual(resCRLFWithNorm.hallazgos);
 
-    // Sin normalización (normalize = false): rawCRLF produce una línea con \r al final
     const resLFNoNorm   = analizarSalida(rawLF, { normalize: false });
     const resCRLFNoNorm = analizarSalida(rawCRLF, { normalize: false });
 
-    // Con los strips decorativos eliminados, la evaluación sin normalizar difiere o retiene \r
     expect(resCRLFNoNorm.hallazgos).not.toEqual(resLFNoNorm.hallazgos);
+  });
+
+  test('Regla 1: Contraseña documentada en prosa o comentario es detectada por el escáner', () => {
+    const proseLine = "-- contraseña para todos los usuarios es: secret123";
+    const rawInput = `seed.sql:1:${proseLine}\n`;
+    const res = analizarSalida(rawInput);
+
+    expect(res.hallazgos).toHaveLength(1);
+    expect(res.hallazgos[0]).toEqual({
+      archivo: 'seed.sql',
+      numLinea: '1',
+      nombre: 'contraseña documentada en prosa o comentario'
+    });
+    expect(res.exitCode).toBe(1);
+  });
+
+  test('Regla 2: Hash de contraseña débil conocida (bcrypt) es detectado por el escáner', () => {
+    // Hash bcrypt conocido de 'password123'
+    const hashLine = "INSERT INTO usuarios VALUES ('$2a$10$XG3dsKkJJFx9cldnFJHGt.FJqYVTNiSsoJAaSVwUQkYis22mXk/7O');";
+    const rawInput = `seed.sql:5:${hashLine}\n`;
+    const res = analizarSalida(rawInput);
+
+    expect(res.hallazgos).toHaveLength(1);
+    expect(res.hallazgos[0]).toEqual({
+      archivo: 'seed.sql',
+      numLinea: '5',
+      nombre: 'hash de contraseña débil conocida'
+    });
+    expect(res.exitCode).toBe(1);
+  });
+
+  test('Regla 3: Valor por defecto literal en variable sensible sigue siendo detectado (re-verificación de cobertura)', () => {
+    const defaultValLine = "const DB_PASS = 'SuperSecret123!';";
+    const rawInput = `src/config/db.js:15:${defaultValLine}\n`;
+    const res = analizarSalida(rawInput);
+
+    expect(res.hallazgos).toHaveLength(1);
+    expect(res.hallazgos[0]).toEqual({
+      archivo: 'src/config/db.js',
+      numLinea: '15',
+      nombre: 'valor por defecto literal para variable sensible'
+    });
+    expect(res.exitCode).toBe(1);
   });
 
   test('Coexistencia legacy: validarLinea (normalize = false) demuestra divergencia por \\r', () => {

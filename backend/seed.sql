@@ -1,13 +1,12 @@
--- 1. Usuarios base (contraseña para todos es: password123)
--- Hash bcrypt de "password123": $2a$10$XG3dsKkJJFx9cldnFJHGt.FJqYVTNiSsoJAaSVwUQkYis22mXk/7O
+-- 1. Usuarios base (las contraseñas se generan dinámicamente en runtime mediante SEED_PASSWORD)
 INSERT INTO usuarios (id, email, password_hash, nombre, phone, auth_provider, provider_id, rol, onboarding_completo) VALUES
-(1, 'admin@beautyapp.com', '$2a$10$XG3dsKkJJFx9cldnFJHGt.FJqYVTNiSsoJAaSVwUQkYis22mXk/7O', 'Admin System', '+573000000000', 'LOCAL', 'admin-local', 'ADMIN', true),
-(2, 'maria@correo.com', '$2a$10$XG3dsKkJJFx9cldnFJHGt.FJqYVTNiSsoJAaSVwUQkYis22mXk/7O', 'María López', '+573001112222', 'LOCAL', 'maria-local', 'PRESTADOR', true),
-(3, 'carlos@correo.com', '$2a$10$XG3dsKkJJFx9cldnFJHGt.FJqYVTNiSsoJAaSVwUQkYis22mXk/7O', 'Carlos Ruiz', '+573003334444', 'LOCAL', 'carlos-local', 'PRESTADOR', true),
-(4, 'ana@cliente.com', '$2a$10$XG3dsKkJJFx9cldnFJHGt.FJqYVTNiSsoJAaSVwUQkYis22mXk/7O', 'Ana Gómez', '+573005556666', 'LOCAL', 'ana-local', 'CLIENTE', true),
-(5, 'provider@beautyapp.com', '$2a$10$XG3dsKkJJFx9cldnFJHGt.FJqYVTNiSsoJAaSVwUQkYis22mXk/7O', 'Ana Silva Estilista', '+573159876543', 'LOCAL', 'local_provider@beautyapp.com', 'PRESTADOR', true),
-(6, 'miusuario@correo.com', '$2a$10$XG3dsKkJJFx9cldnFJHGt.FJqYVTNiSsoJAaSVwUQkYis22mXk/7O', 'Cliente de Prueba', '+573000000001', 'LOCAL', 'local_miusuario@correo.com', 'CLIENTE', true),
-(7, 'salon@beautyapp.com', '$2a$10$XG3dsKkJJFx9cldnFJHGt.FJqYVTNiSsoJAaSVwUQkYis22mXk/7O', 'Dueño Salón Luxe', '+573009998877', 'LOCAL', 'local_salon@beautyapp.com', 'SALON', true)
+(1, 'admin@beautyapp.com', '__SEED_PASSWORD_HASH__', 'Admin System', '+573000000000', 'LOCAL', 'admin-local', 'ADMIN', true),
+(2, 'maria@correo.com', '__SEED_PASSWORD_HASH__', 'María López', '+573001112222', 'LOCAL', 'maria-local', 'PRESTADOR', true),
+(3, 'carlos@correo.com', '__SEED_PASSWORD_HASH__', 'Carlos Ruiz', '+573003334444', 'LOCAL', 'carlos-local', 'PRESTADOR', true),
+(4, 'ana@cliente.com', '__SEED_PASSWORD_HASH__', 'Ana Gómez', '+573005556666', 'LOCAL', 'ana-local', 'CLIENTE', true),
+(5, 'provider@beautyapp.com', '__SEED_PASSWORD_HASH__', 'Ana Silva Estilista', '+573159876543', 'LOCAL', 'local_provider@beautyapp.com', 'PRESTADOR', true),
+(6, 'miusuario@correo.com', '__SEED_PASSWORD_HASH__', 'Cliente de Prueba', '+573000000001', 'LOCAL', 'local_miusuario@correo.com', 'CLIENTE', true),
+(7, 'salon@beautyapp.com', '__SEED_PASSWORD_HASH__', 'Dueño Salón Luxe', '+573009998877', 'LOCAL', 'local_salon@beautyapp.com', 'SALON', true)
 ON CONFLICT (id) DO NOTHING;
 
 -- Ajustar la secuencia del serial tras las inserciones manuales de ID
