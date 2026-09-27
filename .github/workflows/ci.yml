@@ -71,10 +71,23 @@ jobs:
       # modelos, y ninguna política de RLS vive en un modelo. Por eso el esquema y
       # los roles los monta un script propio, con el orden de migraciones probado
       # contra PostgreSQL 16.
+      # El error de este paso TIENE que ser legible sin la sesión de GitHub: el log de un
+      # run exige login incluso en repo público, y por eso CI-46 lleva días sin poder
+      # diagnosticarse. `::error::` escribe en las ANOTACIONES del check-run, que sí son
+      # públicas (verificado: se leen por API). Sin este eco, un fallo aquí solo dice
+      # «exit 1» y obliga a pedirle el log a una persona.
       - name: Preparar el esquema multi-tenant y los roles RLS
         run: |
           cd backend
-          node scripts/prepareRlsDatabase.js
+          set -o pipefail
+          node scripts/prepareRlsDatabase.js 2>&1 | tee /tmp/prep-rls.log
+          rc=$?
+          if [ $rc -ne 0 ]; then
+            echo "::error::prepareRlsDatabase.js falló con exit $rc — últimas 20 líneas:"
+            tail -20 /tmp/prep-rls.log | while IFS= read -r l; do echo "::error::$l"; done
+            echo "::error::entorno: node $(node -v) · pg cliente: $(pg_isready -h 127.0.0.1 -p 5432 2>&1 || echo 'pg_isready ausente')"
+          fi
+          exit $rc
 
       # La compuerta de aislamiento. Falla si alguien quita FORCE de 068, añade
       # una política permisiva (se OR-ean y la laxa gana) o hace que la aplicación
@@ -84,13 +97,23 @@ jobs:
           TEST_DATABASE_URL: postgres://app_owner:ci_only_password@localhost:5432/glowtest
         run: |
           cd backend
-          node scripts/verifyTenantIsolation.js
+          set -o pipefail
+          node scripts/verifyTenantIsolation.js 2>&1 | tee /tmp/verify-rls.log
+          rc=$?
+          if [ $rc -ne 0 ]; then
+            echo "::error::verifyTenantIsolation.js falló con exit $rc — últimas 20 líneas:"
+            tail -20 /tmp/verify-rls.log | while IFS= read -r l; do echo "::error::$l"; done
+          fi
+          exit $rc
 
       # Se ejecuta con el rol de la aplicación (no propietario, sin BYPASSRLS), el
-      # mismo con el que corre en producción. Medido con `npx jest --listTests`:
-      # 66 de 79 suites corren dentro del gate bloqueante; 13 suites quedan excluidas por los 9 patrones activos.
+      # mismo con el que corre en producción. Recuento medido el 2026-09-27 sobre
+      # `main`, con el comando del propio jest para que se pueda re-derivar:
+      #   cd backend && npx jest --listTests   ⇒  92 suites coleccionadas
+      #   de ésas, 15 caen en los 9 patrones de exclusión  ⇒  77 corren dentro del gate
       # Patrón 'authRoutes' eliminado por tener 0 coincidencias en archivos (el test real es tests/auth.integration.test.js que corre dentro del gate).
-      # Recuento de suites rojas/verdes en CI remoto: NO MEDIDO — bloqueado por el paso 7.
+      # Estado del gate medido EN LOCAL sobre `main` (2026-09-27): 4 suites / 23 tests rojos de 592, 0 sin ejecutar.
+      # En el runner remoto sigue NO MEDIDO: el paso de tests queda `skipped` detrás del paso de preparación (CI-46).
       - name: Run Backend Integration & Unit Tests
         env:
           DATABASE_URL: postgres://app_rls_user:ci_only_password@localhost:5432/glowtest
