@@ -128,15 +128,15 @@ resilience | contextCompressor | fase5 | authRoutes | api.cors
 Regenerar con: `node backend/scripts/estadoKB.js --write` · Verificar con: `node backend/scripts/estadoKB.js --check`
 
 <!-- estadoKB:inicio -->
-> Bloque generado por `backend/scripts/estadoKB.js` el **2026-09-27 15:16:52Z**. No se edita a mano.
+> Bloque generado por `backend/scripts/estadoKB.js` el **2026-09-27 15:53:21Z**. No se edita a mano.
 
-**Copia inspeccionada:** `C:/Users/Compu casa/.gemini/antigravity/worktrees/beauty-app/sistema-agentes` · rama `docs/sistema-agentes` @ `7ced0804b` (2026-09-27 10:12:34 -0500) · árbol: **2 entradas sin commitear**
+**Copia inspeccionada:** `C:/Users/Compu casa/.gemini/antigravity/worktrees/beauty-app/sistema-agentes` · rama `docs/sistema-agentes` @ `f0d783491` (2026-09-27 10:36:05 -0500) · árbol: **3 entradas sin commitear**
 
 **Ramas locales (18):**
 
 | Rama | SHA | Último commit | Commits fuera de main | PR abierto |
 |---|---|---|---|---|
-| `docs/sistema-agentes` | `7ced0804b` | 2026-09-27 | 91 | — |
+| `docs/sistema-agentes` | `f0d783491` | 2026-09-27 | 93 | — |
 | `chore/guardian-en-el-repo` | `b919d45ad` | 2026-09-25 | 40 | — |
 | `fix/jwt-sin-respaldo` | `dbb872930` | 2026-09-25 | 14 | — |
 | `fix/compuerta-secretos-reproducible` | `856872374` | 2026-09-25 | 13 | — |
@@ -144,8 +144,8 @@ Regenerar con: `node backend/scripts/estadoKB.js --write` · Verificar con: `nod
 | `fix/candado-comprueba-si-desconoce` | `82f84f5ec` | 2026-09-25 | 12 | — |
 | `fix/admin-metricas-sin-datos` | `6f2f656f5` | 2026-09-25 | 11 | — |
 | `fix/caminos-muertos` | `063b19e0a` | 2026-09-26 | 11 | — |
+| `fix/ci40-permiso-documentos` | `6c81b17b1` | 2026-09-27 | 11 | — |
 | `fix/arranque-y-estado-honesto` | `07e7225e9` | 2026-09-25 | 10 | — |
-| `fix/ci40-permiso-documentos` | `98b9326e7` | 2026-09-27 | 10 | — |
 | `fase-a/verdad-operativa` | `b545ef225` | 2026-09-25 | 9 | sí |
 | `fix/contrato-convive-con-candado` | `3a9148ad5` | 2026-09-25 | 8 | — |
 | `fix/rls-056-058-cadena` | `ba06e5633` | 2026-09-24 | 8 | — |
@@ -161,11 +161,11 @@ Regenerar con: `node backend/scripts/estadoKB.js --write` · Verificar con: `nod
 
 **Tags `archive/*`:** 8 locales · 17 refs en el remoto
 
-**Worktrees (3):** `feat/glowshop-niveles-a0` @ 3337aad · `fix/ci40-permiso-documentos` @ 98b9326 · `docs/sistema-agentes` @ 7ced080
+**Worktrees (3):** `feat/glowshop-niveles-a0` @ 3337aad · `fix/ci40-permiso-documentos` @ 6c81b17 · `docs/sistema-agentes` @ f0d7834
 
 **Desalineaciones detectadas (1):**
 
 | Regla | Detalle |
 |---|---|
-| R1 | 2 entradas sin commitear (M docs/knowledge/DEUDA.md ·  M docs/knowledge/TRAMPAS.md) |
+| R1 | 3 entradas sin commitear (M docs/knowledge/DEUDA.md ·  M docs/knowledge/TRAMPAS.md · ?? docs/audit/AUDITORIA-ENTREGA-CI-40-RONDA-2-2026-09-27.md) |
 <!-- estadoKB:fin -->
