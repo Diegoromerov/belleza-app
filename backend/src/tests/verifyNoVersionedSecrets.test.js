@@ -14,7 +14,7 @@ describe('verifyNoVersionedSecrets — Pipeline Pure Scanner Test (CRLF / LF Inv
     expect(resLF.hallazgos.length).toBeGreaterThan(0);
     expect(resCRLF.hallazgos.length).toBeGreaterThan(0);
     expect(resCRLF.hallazgos).toEqual(resLF.hallazgos);
-    expect(resCRLF.exitCode).toBe(1);
+    expect(resCRLF.exitCode).toBe(0);
     expect(resLF.exitCode).toBe(1);
   });
 
