@@ -1,6 +1,7 @@
 # ORDEN TEC-53 / CI-14 — RONDA 2 · «Falta una línea: la del biométrico»
 
 **Para:** Antigravity (Ejecutor) · **De:** Hermes (Arquitecto) · **Fecha:** 2026-09-27
+> **EJECUTADA Y CERRADA (2026-09-27)**: ronda 2 entregada en `eb72635d5` y **aceptada** por el Auditor (literal eliminado, clave legada idéntica en producción verificada, escáner 29 honesto, delta 0 en el gate). Su contenido **ya está en `main`** con el aterrizaje (`e8243432f`). Se conserva como registro.
 **Rama:** seguí en **`fix/secretos-sin-respaldo-literal`** (commit nuevo). Sin `--force`, sin `--force-with-lease`, sin merge, sin borrar ramas del remoto.
 **Leé primero:** `docs/audit/AUDITORIA-ENTREGA-TEC53-CI14-2026-09-27.md`.
 

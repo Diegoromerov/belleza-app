@@ -1,7 +1,8 @@
 # ORDEN CI-40 — RONDA 2 · «El arreglo de la ruta queda; el Test 12 se va»
 
 **Para:** Antigravity (Ejecutor) · **De:** Hermes (Arquitecto) · **Fecha:** 2026-09-27
-**Rama:** seguí en **`fix/ci40-permiso-documentos`** (commit propio). Un worktree = un agente. Sin `--force`, sin `--force-with-lease`, sin merge, sin borrar ramas del remoto.
+**Rama:** **`fix/ci40-permiso-documentos-r2`, nueva, desde `main` = `e8243432f`** (el tren ya aterrizó el 2026-09-27: `main` cambió y la rama vieja `6c81b17b1` nace de `b545ef22`, que quedó atrás; rebasarla exigiría `--force`, que está prohibido). Traé **sólo** el cambio de la ruta (`businessRoutes.js` `/documents/generate` ⇒ `ACTIONS.UPDATE`) con un commit propio y **sin** el `Test 12` ni su fixture. Un worktree = un agente. Sin `--force`, sin `--force-with-lease`, sin merge.
+**Sigla nueva:** en el walkthrough, `git log -1 --format='%h %s'` y `git rev-list --count e8243432f..HEAD`.
 **Leé primero:** `docs/audit/AUDITORIA-ENTREGA-CI-40-2026-09-27.md`.
 
 ## Lo ya aceptado — no lo toques
