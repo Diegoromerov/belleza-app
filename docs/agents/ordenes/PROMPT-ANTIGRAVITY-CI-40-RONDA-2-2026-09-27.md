@@ -1,28 +1,27 @@
-# ORDEN CI-40 — RONDA 2 · «Un test que discrimine, o ninguno»
+# ORDEN CI-40 — RONDA 2 · «El arreglo de la ruta queda; el Test 12 se va»
 
 **Para:** Antigravity (Ejecutor) · **De:** Hermes (Arquitecto) · **Fecha:** 2026-09-27
 **Rama:** seguí en **`fix/ci40-permiso-documentos`** (commit propio). Un worktree = un agente. Sin `--force`, sin `--force-with-lease`, sin merge, sin borrar ramas del remoto.
 **Leé primero:** `docs/audit/AUDITORIA-ENTREGA-CI-40-2026-09-27.md`.
 
-**Tu cambio de la ruta queda ACEPTADO** — lo medí sobre el tren de 10 ramas, con base real: el gate baja de **24 a 18 tests rojos** y las 4 suites de 23 a 17 fallos. Se queda.
+## Lo ya aceptado — no lo toques
 
-Quedan dos cosas: el test que agregaste **no funciona**, y la entrega **no trajo mediciones**.
+El cambio de la ruta **se queda tal cual**. Medido por mí sobre el tren de 10 ramas + tu cambio, con PostgreSQL real y el entorno del CI: el gate baja de **24 a 18 tests rojos** y las 4 suites `business*` de 23 a 17 fallos. Al terminar esta ronda, `git diff --stat` de la rama debe volver a ser **1 archivo, +1/−1**.
 
-## Cargo 1 — `Test 12`: hoy no prueba nada y suma un rojo
+## Cargo 1 — Quitá `Test 12` y su fixture (no es que tu idea esté mal: es la base)
 
-Medido por mí en el tren con tu arreglo puesto:
+Medido por mí, en el tren con tu arreglo puesto:
 
 ```
-Test 12 → Expected: 403 · Received: 500
+Test 12, ruta en UPDATE → Expected: 403 · Received: 500
+Test 12, ruta en READ   → idéntico (8 failed / 4 passed / 12 total)
 ```
 
-Y con la **mutación** (la ruta puesta en `READ`, que MEMBER **sí** tiene) la corrida da **exactamente lo mismo** (`8 failed / 4 passed / 12 total`) ⇒ el test **no depende del permiso**: no lo fija.
+**Por qué.** La cadena real es `authMiddleware → membershipMiddleware → requirePermission`, y `membershipMiddleware` (`src/middleware/membership.middleware.js:21` y `:62`) resuelve el rol con los **modelos Sequelize** `Membership` y `BusinessProfile` ⇒ tablas **`business_profiles`** y la de membresías. **Ninguna de las dos existe en la base de tests del CI**: el único paso que monta esquema es `node scripts/prepareRlsDatabase.js`, que crea 15 tablas sin ellas (medido en la base del CI: `business_profiles → 0`, ninguna tabla de membresías). Así, `Membership.findAll` revienta y el middleware devuelve **500** antes de que el permiso se evalúe. Y tu `id: 'member-user'` **no es numérico**: las dos cosas apuntan al mismo lado ⇒ **en esta base no hay forma honesta de producir ese 403**.
 
-**Causa raíz:** tu fixture inyecta `req.user = { id: 'member-user', … }`. El id **no es numérico** y la cadena real revienta con **500** antes de evaluar el permiso.
+⇒ **Borrá el test y su fixture**: las líneas **22-23** de `src/tests/business.integration.test.js` (la rama `Bearer member-token` con `req.user = { id: 'member-user', … }`) y el bloque del **Test 12** (desde la línea 192). Si queda un `else if` colgando, se va también.
 
-**Hacé una de las dos, y decí cuál:**
-1. **Que discrimine**: un usuario con **id numérico** y su **membresía + perfil sembrados en el propio test** (contra la base real), con rol sin `BUSINESS_PROFILE:UPDATE`. Y la prueba exigida: con la ruta en `UPDATE` ⇒ el test **pasa** (403); con la ruta en `READ` ⇒ el test **falla**. Pegá las **dos** salidas crudas.
-2. **O quitá el test** y dejá sólo el arreglo de la ruta, explicando por qué no se puede fijar con una fixture honesta. **Mejor sin test que con un test que miente.**
+**No lo reemplaces por una fixture que finja la membresía** (ni mocks del middleware, ni filas en `salon_miembros`: el rol lo lee del modelo `Membership`, no de esa tabla). El test que discrimina va con **CI-43**, cuando el esquema del subsistema exista. En el walkthrough, decilo así: **«no se puede fijar con una fixture honesta en esta base; se quita»**.
 
 ## Cargo 2 — la medición, con la base viva y las variables del CI
 
@@ -38,8 +37,10 @@ Tu walkthrough declara un `JWT_SECRET` que es **byte a byte el literal público 
 
 ## Compuertas antes de empujar
 
-1. `git status --porcelain` + `git log -1 --format='%h %s'` + `git rev-list --count b545ef22..HEAD`.
-2. Las salidas crudas del Cargo 2 y las dos del Cargo 1 (si elegís la opción 1).
-3. `node --check` de lo tocado; `node scripts/checkNoConflictMarkers.js` ⇒ exit 0.
-4. `git diff --stat` sin archivos fuera de `businessRoutes.js` y el test.
-5. Lo que no se pueda medir: **«no medido»** con el motivo.
+1. `git status --porcelain` · `git log -1 --format='%h %s'` · `git rev-list --count b545ef22..HEAD`.
+2. `git diff --stat` ⇒ **sólo** `backend/src/routes/businessRoutes.js`, **+1/−1**.
+3. `node --check backend/src/routes/businessRoutes.js`.
+4. `node scripts/checkNoConflictMarkers.js` ⇒ exit 0.
+5. Las salidas crudas del Cargo 2 (`Test Suites:` y `Tests:`), declarando **qué exportaste** y **que la base respondió**.
+
+**Contexto, para que no pierdas tiempo:** los 17 rojos que quedan **no** son de permisos — son 10 × 403, 4 × 500, 2 × 400 y 1 de contenido, todos porque **el esquema del subsistema de negocio no existe en la base de tests del CI** (**CI-43**, orden aparte). No intentes taparlos en esta rama.
