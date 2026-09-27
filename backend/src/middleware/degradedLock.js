@@ -55,6 +55,7 @@ async function asegurarEstadoComprobado() {
  * REGLAS OBLIGATORIAS (C7):
  * 1. Cada entrada TIENE un motivo explícito documentado a su lado.
  * 2. PROHIBIDO usar prefijos comodín (ej: /api/*, /api/public/*).
+ * 3. PROHIBIDO eximir cualquier ruta de dinero o identidad (C-01/C-02/C-03).
  */
 const DEGRADED_ALLOWLIST = new Set([
   '/api/health',    // Motivo: Endpoint de salud del sistema que debe reportar el estado de degradación (503 DEGRADED) por sí mismo.
@@ -112,8 +113,10 @@ function decidirBloqueo(dbStatus) {
 }
 
 /**
- * Middleware para bloquear superficies de datos bajo /api cuando la capa de datos está degradada.
+ * Middleware para bloquear todas las rutas bajo /api cuando la capa de datos está degradada.
  * Garantiza que ninguna superficie de datos engañe al cliente con HTTP 200 y datos en memoria/fabricados.
+ * Alcance real: todas las rutas bajo /api, incluyendo explícitamente dinero (C-02) e identidad (C-01).
+ * Razón de negocio: el webhook de Wompi recibe 503 y la pasarela reintenta; es preferible a procesar dinero o identidad contra datos fabricados.
  */
 async function degradedLockMiddleware(req, res, next) {
   let dbStatus;
