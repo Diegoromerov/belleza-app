@@ -1,5 +1,5 @@
-﻿const jwt = require('jsonwebtoken');
-const JWT_SECRET = process.env.JWT_SECRET || 'beauty_app_secret_key_2026';
+const jwt = require('jsonwebtoken');
+const JWT_SECRET = process.env.JWT_SECRET;
 
 module.exports = (req, res, next) => {
   const token = req.header('Authorization')?.replace('Bearer ', '');

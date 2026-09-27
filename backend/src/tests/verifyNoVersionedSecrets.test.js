@@ -45,18 +45,19 @@ describe('verifyNoVersionedSecrets — Pipeline Pure Scanner Test (CRLF / LF Inv
     expect(resCRLFNoNorm.hallazgos).not.toEqual(resLFNoNorm.hallazgos);
   });
 
-  test('Regla 1: Contraseña documentada en prosa o comentario es detectada por el escáner', () => {
-    const proseLine = "-- contraseña para todos los usuarios es: secret123";
-    const rawInput = `seed.sql:1:${proseLine}\n`;
-    const res = analizarSalida(rawInput);
+  test('Regla 1: Contraseña documentada en prosa o comentario es detectada por el escáner (con y sin acento)', () => {
+    const proseLineAccent = "-- contraseña para todos los usuarios es: secret123";
+    const proseLineNoAccent = "// contrasena por defecto: secret123";
+    const rawInputAccent = `seed.sql:1:${proseLineAccent}\n`;
+    const rawInputNoAccent = `seed.sql:2:${proseLineNoAccent}\n`;
 
-    expect(res.hallazgos).toHaveLength(1);
-    expect(res.hallazgos[0]).toEqual({
-      archivo: 'seed.sql',
-      numLinea: '1',
-      nombre: 'contraseña documentada en prosa o comentario'
-    });
-    expect(res.exitCode).toBe(1);
+    const resAccent = analizarSalida(rawInputAccent);
+    const resNoAccent = analizarSalida(rawInputNoAccent);
+
+    expect(resAccent.hallazgos).toHaveLength(1);
+    expect(resAccent.hallazgos[0].nombre).toBe('contraseña documentada en prosa o comentario');
+    expect(resNoAccent.hallazgos).toHaveLength(1);
+    expect(resNoAccent.hallazgos[0].nombre).toBe('contraseña documentada en prosa o comentario');
   });
 
   test('Regla 2: Hash de contraseña débil conocida (bcrypt) es detectado por el escáner', () => {
@@ -86,6 +87,16 @@ describe('verifyNoVersionedSecrets — Pipeline Pure Scanner Test (CRLF / LF Inv
       nombre: 'valor por defecto literal para variable sensible'
     });
     expect(res.exitCode).toBe(1);
+  });
+
+  test('Regla 3 (ronda 2): Expresiones de fallback process.env.X || "literal" y process.env.X ?? "literal" son detectadas', () => {
+    const line1 = "const DB_PASSWORD = process.env.DB_PASSWORD || 'Literal123!';";
+    const line2 = "const JWT_SECRET = process.env.JWT_SECRET || 'devsecret123';";
+    const line3 = "const API_KEY = process.env.API_KEY ?? 'live_key_1234567890';";
+
+    expect(analizarSalida(`src/config/db.js:1:${line1}\n`).hallazgos).toHaveLength(1);
+    expect(analizarSalida(`src/config/db.js:2:${line2}\n`).hallazgos).toHaveLength(1);
+    expect(analizarSalida(`src/config/db.js:3:${line3}\n`).hallazgos).toHaveLength(1);
   });
 
   test('Coexistencia legacy: validarLinea (normalize = false) demuestra divergencia por \\r', () => {

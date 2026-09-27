@@ -98,7 +98,7 @@ async function main() {
   const solo = (args.find((a) => a.startsWith('--only=')) || '').split('=')[1];
 
   const connectionString = process.env.DATABASE_URL
-    || `postgres://${process.env.DB_USER || 'postgres'}:${process.env.DB_PASSWORD || ''}@${process.env.DB_HOST || 'localhost'}:${process.env.DB_PORT || 5432}/${process.env.DB_NAME || 'beauty_db'}`;
+    || `postgres://${process.env.DB_USER || 'postgres'}:${process.env.DB_PASSWORD}@${process.env.DB_HOST || 'localhost'}:${process.env.DB_PORT || 5432}/${process.env.DB_NAME || 'beauty_db'}`;
 
   const planes = [];
   for (const pub of PUBLICACIONES) {

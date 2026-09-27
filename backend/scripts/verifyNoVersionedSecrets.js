@@ -80,18 +80,23 @@ const REGLAS = [
       if (/^\s*(\/\/|\/\*|\*|#)/.test(linea.trim())) return false;
       if (/^\s*(console\.(log|info|warn|error)|logger\.(log|info|warn|error))\b/.test(linea.trim())) return false;
 
-      const re = /(?:const|let|var|this\.)?\s*([A-Za-z0-9_]*(?:PASS|PASSWORD|SECRET|TOKEN|KEY|CLAVE|PWD)[A-Za-z0-9_]*)\s*(?::|=|\|\||\?\?)\s*(?:['"]([^'"]+)['"]|([^\s#;,]+))/gi;
-      let m;
-      while ((m = re.exec(linea)) !== null) {
-        const val = (m[2] !== undefined ? m[2] : m[3]) || '';
-        if (!val || val.length < 4) continue;
-        if (val.startsWith('$') || val.startsWith('${') || val.includes('${') || /^process\.env\./i.test(val) || /^env\./i.test(val)) continue;
-        // Ignorar invocaciones a métodos / expresiones JS (ej: crypto.createHash, Buffer.from)
-        if (val.includes('(') || val.includes(')') || /^crypto\./i.test(val) || /^Buffer\./i.test(val)) continue;
-        if (m[2] === undefined && /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(val)) continue;
-        if (/^(\*\*\*|REDACTED|TU_|YOUR_|changeme|PLACEHOLDER|xxx|example|admin123|ci_|dummy|REPLACE_ME|postgres|root)/i.test(val)) continue;
-        if (ALLOW_MARKERS.test(val)) continue;
-        return true;
+      const patterns = [
+        /(?:process\.env\.)?([A-Za-z0-9_]*(?:PASS|PASSWORD|SECRET|TOKEN|KEY|CLAVE|PWD)[A-Za-z0-9_]*)\s*(?:\|\||\?\?)\s*(?:['"]([^'"]+)['"]|([^\s#;,]+))/gi,
+        /(?:const|let|var|this\.)?\s*([A-Za-z0-9_]*(?:PASS|PASSWORD|SECRET|TOKEN|KEY|CLAVE|PWD)[A-Za-z0-9_]*)\s*(?::|=)\s*(?:['"]([^'"]+)['"]|([^\s#;,]+))/gi
+      ];
+
+      for (const re of patterns) {
+        let m;
+        while ((m = re.exec(linea)) !== null) {
+          const val = (m[2] !== undefined ? m[2] : m[3]) || '';
+          if (!val || val.length < 4) continue;
+          if (val.startsWith('$') || val.startsWith('${') || val.includes('${') || /^process\.env\./i.test(val) || /^env\./i.test(val)) continue;
+          if (val.includes('(') || val.includes(')') || /^crypto\./i.test(val) || /^Buffer\./i.test(val)) continue;
+          if (m[2] === undefined && /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(val)) continue;
+          if (/^(\*\*\*|REDACTED|TU_|YOUR_|changeme|PLACEHOLDER|xxx|example|dummy|REPLACE_ME)/i.test(val)) continue;
+          if (ALLOW_MARKERS.test(val)) continue;
+          return true;
+        }
       }
       return false;
     }
@@ -119,7 +124,7 @@ const REGLAS = [
       if (/scripts\/verify/.test(archivo)) return false;
       const trimmed = linea.trim();
       if (/^\s*(console\.(log|info|warn|error)|logger\.(log|info|warn|error)|res\.status|return res|throw new)\b/.test(trimmed)) return false;
-      const re = /(?:contraseñ|contrasen|password)\b[^\n:]{0,40}\b(?:es|is|para|for|todos|all|defecto|predeterminada)\b[^\n:]{0,20}:\s*([^\s;,"]+)/gi;
+      const re = /(?:contraseñ[a-z]*|contrasena|password)\b[^\n:]{0,40}\b(?:es|is|para|for|todos|all|defecto|predeterminada)\b[^\n:]{0,20}:\s*([^\s;,"]+)/gi;
       let m;
       while ((m = re.exec(linea)) !== null) {
         const val = m[1];
@@ -252,7 +257,7 @@ function validarLinea(contenido, archivo, reglaNombre, normalize = true) {
       if (val.startsWith('$') || val.startsWith('${') || val.includes('${') || /^process\.env\./i.test(val) || /^env\./i.test(val)) continue;
       if (val.includes('(') || val.includes(')') || /^crypto\./i.test(val) || /^Buffer\./i.test(val)) continue;
       if (m[2] === undefined && /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(val)) continue;
-      if (/^(\*\*\*|REDACTED|TU_|YOUR_|changeme|PLACEHOLDER|xxx|example|admin123|ci_|dummy|REPLACE_ME|postgres|root)/i.test(val)) continue;
+      if (/^(\*\*\*|REDACTED|TU_|YOUR_|changeme|PLACEHOLDER|xxx|example|dummy|REPLACE_ME)/i.test(val)) continue;
       if (ALLOW_MARKERS.test(val)) continue;
       return { detected: true, val };
     }

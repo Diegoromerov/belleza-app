@@ -1,7 +1,7 @@
 const crypto = require('crypto');
 
 // Clave secreta para cifrar tokens sociales en reposo
-const ENCRYPTION_KEY = process.env.SOCIAL_ENCRYPTION_KEY || '12345678901234567890123456789012'; // 32 chars
+const ENCRYPTION_KEY = process.env.SOCIAL_ENCRYPTION_KEY;
 const IV_LENGTH = 16;
 
 function encryptToken(text) {
