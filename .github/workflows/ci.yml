@@ -74,7 +74,15 @@ jobs:
       - name: Preparar el esquema multi-tenant y los roles RLS
         run: |
           cd backend
-          node scripts/prepareRlsDatabase.js
+          set -o pipefail
+          node scripts/prepareRlsDatabase.js 2>&1 | tee /tmp/prep-rls.log
+          rc=$?
+          if [ $rc -ne 0 ]; then
+            echo "::error::prepareRlsDatabase.js falló con exit $rc — últimas 20 líneas:"
+            tail -20 /tmp/prep-rls.log | while IFS= read -r l; do echo "::error::$l"; done
+            echo "::error::entorno: node $(node -v) · pg cliente: $(pg_isready -h 127.0.0.1 -p 5432 2>&1 || echo 'pg_isready ausente')"
+          fi
+          exit $rc
 
       # La compuerta de aislamiento. Falla si alguien quita FORCE de 068, añade
       # una política permisiva (se OR-ean y la laxa gana) o hace que la aplicación
@@ -84,7 +92,14 @@ jobs:
           TEST_DATABASE_URL: postgres://app_owner:ci_only_password@localhost:5432/glowtest
         run: |
           cd backend
-          node scripts/verifyTenantIsolation.js
+          set -o pipefail
+          node scripts/verifyTenantIsolation.js 2>&1 | tee /tmp/verify-rls.log
+          rc=$?
+          if [ $rc -ne 0 ]; then
+            echo "::error::verifyTenantIsolation.js falló con exit $rc — últimas 20 líneas:"
+            tail -20 /tmp/verify-rls.log | while IFS= read -r l; do echo "::error::$l"; done
+          fi
+          exit $rc
 
       # Se ejecuta con el rol de la aplicación (no propietario, sin BYPASSRLS), el
       # mismo con el que corre en producción. Medido con `npx jest --listTests`:
