@@ -89,7 +89,8 @@ const REGLAS = [
         /(?:const|let|var|this\.)?\s*([A-Za-z0-9_]*(?:PASS|PASSWORD|SECRET|TOKEN|KEY|CLAVE|PWD)[A-Za-z0-9_]*)\s*(?::|=)\s*(?:['"]([^'"]+)['"]|([^\s#;,]+))/gi
       ];
 
-      for (const re of patterns) {
+      for (let patternIdx = 0; patternIdx < patterns.length; patternIdx++) {
+        const re = patterns[patternIdx];
         let m;
         while ((m = re.exec(linea)) !== null) {
           const varName = m[1] || '';
@@ -101,10 +102,17 @@ const REGLAS = [
           if (/^(\*\*\*|REDACTED|TU_|YOUR_|changeme|PLACEHOLDER|xxx|example|dummy|REPLACE_ME)/i.test(val)) continue;
           if (ALLOW_MARKERS.test(val)) continue;
 
-          // --- FILTROS DE FALSOS POSITIVOS (CI-52) ---
+          // --- FILTROS DE FALSOS POSITIVOS (CI-52 / CI-52 bis) ---
+          // 1. Sufijos de metadatos/descriptores (sacrificio aceptado CI-52: API_KEY_NAME = 'sk-live-...' no se detecta)
           if (NON_SECRET_SUFFIXES.test(varName)) continue;
+
+          // 2. Vocabulario técnico conocido
           if (TECHNICAL_VOCAB.test(val)) continue;
-          if (!WEAK_PASSWORDS.has(val.toLowerCase()) && /^[a-z_]+$/.test(val) && val.length < 12) continue;
+
+          // 3. Filtro de baja entropía: se aplica únicamente a asignación directa (patternIdx === 1).
+          // En fallback (patternIdx === 0, ||/??), cualquier literal es defecto (CI-52 bis).
+          // Sacrificio aceptado (CI-52): X_PASSWORD = 'letmein' (asignación directa de baja entropía) no se detecta.
+          if (patternIdx === 1 && !WEAK_PASSWORDS.has(val.toLowerCase()) && /^[a-z_]+$/.test(val) && val.length < 12) continue;
 
           return true;
         }

@@ -117,14 +117,16 @@ describe('verifyNoVersionedSecrets — Pipeline Pure Scanner Test (CRLF / LF Inv
       }
     });
 
-    test('Casos Positivos (6 fallos reales DEBEN ser marcados)', () => {
+    test('Casos Positivos (fallos reales DEBEN ser marcados, incluyendo fallbacks de baja entropía CI-52 bis)', () => {
       const casosDefectuosos = [
         { linea: "const DB_PASSWORD = process.env.X_PASSWORD || 'Literal123!';", desc: "X_PASSWORD fallback" },
         { linea: "const API_KEY = process.env.API_KEY ?? 'live_key_1234567890';", desc: "API_KEY nullish fallback" },
         { linea: "DB_PASSWORD=Literal123!", desc: "Dotenv inline assignment" },
         { linea: "const DB_PASSWORD = process.env.DB_PASSWORD || 'postgres';", desc: "DB_PASSWORD weak postgres fallback" },
         { linea: "const KYC_WEBHOOK_SECRET = process.env.KYC_WEBHOOK_SECRET || 'glowapp_secure_kyc_webhook_secret_2026';", desc: "KYC secret fallback" },
-        { linea: "const ADMIN_SECRET = 'SuperSecret123!';", desc: "ADMIN_SECRET direct assignment" }
+        { linea: "const ADMIN_SECRET = 'SuperSecret123!';", desc: "ADMIN_SECRET direct assignment" },
+        { linea: "const X_PASSWORD = process.env.X_PASSWORD || 'letmein';", desc: "X_PASSWORD low-entropy fallback (CI-52 bis fix)" },
+        { linea: "const X_PASSWORD = process.env.X_PASSWORD ?? 'secret';", desc: "X_PASSWORD low-entropy nullish fallback (CI-52 bis fix)" }
       ];
 
       for (const caso of casosDefectuosos) {
