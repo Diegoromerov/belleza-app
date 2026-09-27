@@ -37,7 +37,29 @@
 
 ## 2. Decisiones del Dueño (escaladas)
 
-### Pendientes del Dueño — lista vigente (medida 2026-09-27 tarde)
+### Pendientes del Dueño — lista vigente (medida 2026-09-27 **noche**, tras ejecutar las tareas 2/4/5/6/10/11)
+
+| # | Qué | Estado medido |
+|---|---|---|
+| 1 | **Firmar D-017** — «Firmo D-017: acepto que el candado de degradación bloquee dinero e identidad (C-01/C-02/C-03) durante la caída de la base.» | **Sigue pendiente**: CI-16 está mergeado (`380af0b4b`) pero la firma es tuya |
+| 2 | ~~Decidir A-04~~ | ✅ **HECHO**: aceptaste el versionado y el `.gitignore` lo documenta (`4c46344f0`). A-04 = 1,00 ⇒ **Fase A 92,5 → 97,5 %** |
+| 3 | **Decidir si A-07 entra al denominador** | Con A-04 cerrada, incorporarla **baja** 0,04 pp (97,50 → 97,46 %): su 0,95 queda bajo el promedio nuevo (95,8 %) |
+| 4 | ~~Mergear CI-16~~ | ✅ **HECHO** (`380af0b4b`, merge commit real: padres `e8243432f` + `917c0a65d`) |
+| 5 | ~~D-004 `docs/sistema-agentes`~~ | ✅ **HECHO** (`1008d94b8`): la KB está en `main` (12 archivos), `docs/agents` 55, `docs/audit` 86 |
+| 6 | ~~D-005 PRs #10 y #12~~ | ✅ **HECHO** (`eaf289e64`, `15d81b863`): catálogo verificado **296 productos / 296 precios**; los 3 archivos resueltos a mano: sintaxis OK, 0 marcadores, `adminPreciosRoutes` 5/5 |
+| **6-bis** | **Mergear `chore/guardian-en-el-repo`** (3 commits fuera de `main`) | **NUEVO — y es corrección mía**: dije que D-004 lo arrastraba. **Falso**: es otra rama, y el guardián versionado (O-014) **no está en `main`** (`git ls-files` sólo encuentra la orden) |
+| 7 | **D-002** `delete_branch_on_merge` | Sigue sin verificar (la API pública no expone el campo) |
+| 8 | **Las 2 líneas del log de CI-46** (o permiso para leerlo con un login guardado) | Sigue pendiente: es lo único que falta para emitir «que la base del CI sirva» |
+| 9 | **D-003 — revocar** lo del historial | Sigue pendiente (la rotación ya está hecha y verificada) |
+| 10 | **Poda** | ✅ 15 ramas borradas. **Quedan 3 podables** (`docs/sistema-agentes`, `feat/glowshop-niveles-a0`, `feat/glowshop-precios-csv`: 0 commits fuera de `main`) |
+| 11 | **Banco en `main`** | **NO HECHO como dice el informe**: `C:\beauty-app` está en `feat/glowshop-niveles-a0` @ `15d81b863`, **ancestro** de `main` (3 commits atrás) y rama que ya no existe en el remoto. Los 2 planes **sí** quedaron trackeados (`4737b2a67`) |
+| 12 | **¿ADMIN en producción?** | Sigue pendiente (API de precios inusable con 0 ADMIN) |
+
+**Tras esta entrega: trabajo técnico 97,5 %** (entregables 95,8 %, criterios 97,5 %, aterrizaje 1,00). Auditoría: `docs/audit/AUDITORIA-EJECUCION-DUEÑO-2026-09-27.md`.
+
+---
+
+### Pendientes del Dueño — lista anterior (2026-09-27 tarde) ⟶ **SUPERSEDIDA, se conserva como registro**
 
 | # | Qué | Por qué es tuyo | Tamaño |
 |---|---|---|---|

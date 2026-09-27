@@ -47,6 +47,10 @@ La app está **funcionalmente a medias por dentro y aparentemente terminada por 
 
 **Puntuación vigente de los criterios (2026-09-26, tarde):** S1 1,00 · S2 1,00 · S3 **0,90** (SUBE: medido con el comando exacto del CI — el gate da **10 suites / 55 tests** rojos con 0 `failed-to-run`, y el «rojo fantasma» quedó **atribuido y reproducido**: el error de timeout de `execSync` no es serializable y mata al worker mientras reporta; sigue sin 1,00 porque el criterio literal «romper un test ⇒ run rojo **en GitHub**» no se pudo medir: el paso de tests nunca corre allí, queda `skipped` — antes detrás del paso 7 ❌, que **ya pasa**; ahora detrás del paso «Preparar el esquema multi-tenant y los roles RLS» (CI-46) ❌) · S4 1,00.
 
+**Avance de la Fase A (medido 2026-09-27 noche, tras cerrar A-04):** **trabajo técnico 97,5 %** · entregables **95,8 %** · criterios firmables 97,5 % (3 de 4 plenos) · **aterrizaje 1,00** (`main` = `4c46344f0`). **Delta +5,0 pp** sobre el 92,5 % de la tarde: es A-04, la decisión del Dueño de aceptar el versionado de `backend/public` con el `.gitignore` documentándolo (`4c46344f0`).
+
+*(Registro de la tarde, se conserva:)*
+
 **Avance de la Fase A (medido 2026-09-27 tarde, cálculo versionado en `docs/knowledge/scripts/avanceFaseA.js`):**
 **trabajo técnico 92,5 %** (97,2 % sin A-04, que está bloqueada por decisión del Dueño) · **criterios firmables 97,5 %**
 (3 de 4 plenos) · **aterrizaje 1,00 de 1,00 — el tren está en `main` (`e8243432f`)**. **Delta +17,0 pp** sobre el 75,5 % del informe previo: el aterrizaje (PR #16 mergeado con merge commit, verificado contra el remoto) y lo que trajo consigo (CI-44 cerrada: el `ci.yml` de `main` es válido y su CI corre de verdad; el paso 7 verde por primera vez; el rojo del gate de 55 a 23). El cierre pleno sigue dependiendo de los criterios (S3 y S4 no son plenos).
