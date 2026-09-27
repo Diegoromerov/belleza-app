@@ -60,3 +60,5 @@
 | O-101 | Fase A rondas 1 y 2 auditadas (H-01..H-05, B1..B6) | 2026-09-24 | `docs/audit/AUDITORIA-ENTREGA-FASE-A-*.md` |
 | O-102 | Grafo de ramas auditado (D1..D8) | 2026-09-24 | `docs/audit/AUDITORIA-GRAFO-RAMAS-2026-09-24.md` |
 | O-103 | Poda: 44 → 9 referencias, 6 → 2 worktrees, 398 entradas rescatadas, 8 tags `archive/*` | 2026-09-24 | `docs/audit/INFORME-PODA-2026-09-24.md` |
+
+- **TEC-53 + CI-14 — sin respaldos literales.** Decisión del Dueño tomada y **verificada contra producción** (las 3 variables están puestas y bien formadas ⇒ el fix no rompe nada). Orden: `PROMPT-ANTIGRAVITY-TEC53-CI14-SECRETOS-2026-09-26.md` → rama `fix/secretos-sin-respaldo-literal`. **Cierra el paso 7** (escáner 8 → 0) y `audit360-remediation`.
