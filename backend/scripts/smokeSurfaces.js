@@ -165,11 +165,20 @@ function makeRequest(method, urlPath, headers = {}) {
  * Arranca el proceso servidor real (camino real de entrada) y sondea /api/health
  * hasta que el estado de la base de datos es comprobado (pgAvailable !== null).
  */
-async function startRealServerAndAwaitChecked() {
+async function startRealServerAndAwaitChecked(deps = {}) {
+  // Cargo 2 (ronda 7): dependencias inyectables para poder MEDIR el camino del timeout sin depender
+  // de la red ni de que un hijo real se cuelgue. Con deps vacío el comportamiento es el de siempre.
+  const spawnFn = deps.spawn || spawn;
+  const requestFn = deps.makeRequest || makeRequest;
+  const exitFn = deps.exit || process.exit;
+  const maxWaitMs = deps.maxWaitMs || 15000;
+  const cwd = deps.cwd || REPO_ROOT_BACKEND;
+  const entry = deps.entry || 'index.js';
+
   console.log('🚀 Iniciando servidor backend vía proceso hijo real (node index.js)...');
   
-  const serverProcess = spawn('node', ['index.js'], {
-    cwd: REPO_ROOT_BACKEND,
+  const serverProcess = spawnFn('node', [entry], {
+    cwd,
     env: {
       ...process.env,
       PORT: String(PORT),
@@ -193,12 +202,11 @@ async function startRealServerAndAwaitChecked() {
   });
 
   const startTime = Date.now();
-  const maxWaitMs = 15000;
   let healthRes = null;
 
   while (Date.now() - startTime < maxWaitMs) {
     await new Promise(r => setTimeout(r, 400));
-    healthRes = await makeRequest('GET', '/api/health');
+    healthRes = await requestFn('GET', '/api/health');
 
     // Esperar hasta que el servidor responda Y la base de datos haya sido comprobada (pgAvailable !== null)
     if (healthRes && healthRes.status > 0 && healthRes.body && healthRes.body.database && healthRes.body.database.pgAvailable !== null) {
@@ -209,8 +217,11 @@ async function startRealServerAndAwaitChecked() {
 
   if (!healthRes || healthRes.status === 0 || !healthRes.body || !healthRes.body.database || healthRes.body.database.pgAvailable === null) {
     console.error('❌ TIMEOUT: El servidor real no logró comprobar el estado de la base de datos a tiempo.');
-    serverProcess.kill('SIGTERM');
-    process.exit(1);
+    if (serverProcess && typeof serverProcess.kill === 'function') {
+      serverProcess.kill('SIGTERM');
+    }
+    exitFn(1);
+    return { timedOut: true, serverProcess, healthRes };
   }
 
   return {
@@ -358,5 +369,5 @@ async function runSmoke() {
 if (require.main === module) {
   runSmoke();
 } else {
-  module.exports = { decidirRutas, extractRoutes, runSmoke };
+  module.exports = { decidirRutas, extractRoutes, runSmoke, startRealServerAndAwaitChecked };
 }

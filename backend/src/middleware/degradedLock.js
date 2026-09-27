@@ -1,6 +1,55 @@
 const db = require('../config/db');
 
 /**
+ * Caché acotada de la comprobación de estado (CI-23 / ronda 7).
+ * El candado no puede decidir con `pgAvailable === null` («nunca se comprobó») como si fuera sano:
+ * provoca UNA comprobación y decide con el resultado. El TTL evita martillar la base en cada
+ * petición y la promesa en vuelo evita comprobaciones simultáneas.
+ */
+const CHECK_TTL_MS = 5000;
+let ultimaComprobacionMs = 0;
+let comprobacionEnVuelo = null;
+
+/**
+ * Devuelve el estado de la base garantizando que, si nunca se comprobó, se compruebe ahora
+ * (una vez por TTL). No inventa estado: si la comprobación falla o explota, devuelve lo que
+ * `getDbStatus()` reporte en ese momento.
+ *
+ * @returns {Promise<Object>} el estado de la base, ya comprobado si era desconocido
+ */
+async function asegurarEstadoComprobado() {
+  const dbStatus = db.getDbStatus();
+  const desconocido = !!dbStatus && dbStatus.pgAvailable === null && dbStatus.servingFabricatedData !== true;
+  if (!desconocido || typeof db.testConnection !== 'function') {
+    return dbStatus;
+  }
+
+  if (comprobacionEnVuelo) {
+    await comprobacionEnVuelo;
+    return db.getDbStatus();
+  }
+
+  if (Date.now() - ultimaComprobacionMs < CHECK_TTL_MS) {
+    return dbStatus;
+  }
+
+  comprobacionEnVuelo = (async () => {
+    try {
+      await db.testConnection();
+    } catch (e) {
+      // El resultado real queda en getDbStatus(); no se fabrica un estado aquí.
+    } finally {
+      ultimaComprobacionMs = Date.now();
+      comprobacionEnVuelo = null;
+    }
+  })();
+
+  await comprobacionEnVuelo;
+  return db.getDbStatus();
+}
+
+
+/**
  * Allowlist explícita de rutas de API exentas del bloqueo automático 503 durante estado degradado.
  * 
  * REGLAS OBLIGATORIAS (C7):
@@ -66,8 +115,13 @@ function decidirBloqueo(dbStatus) {
  * Middleware para bloquear superficies de datos bajo /api cuando la capa de datos está degradada.
  * Garantiza que ninguna superficie de datos engañe al cliente con HTTP 200 y datos en memoria/fabricados.
  */
-function degradedLockMiddleware(req, res, next) {
-  const dbStatus = db.getDbStatus();
+async function degradedLockMiddleware(req, res, next) {
+  let dbStatus;
+  try {
+    dbStatus = await asegurarEstadoComprobado();
+  } catch (e) {
+    dbStatus = db.getDbStatus();
+  }
   const decision = decidirBloqueo(dbStatus);
 
   if (!decision.shouldBlock) {
@@ -96,5 +150,6 @@ module.exports = {
   DEGRADED_ALLOWLIST,
   degradedLockMiddleware,
   clasificarSalud,
-  decidirBloqueo
+  decidirBloqueo,
+  asegurarEstadoComprobado
 };
