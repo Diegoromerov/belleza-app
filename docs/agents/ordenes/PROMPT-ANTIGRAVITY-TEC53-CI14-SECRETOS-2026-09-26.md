@@ -54,6 +54,13 @@ Con el **entorno completo del CI** (`NODE_ENV`, `JWT_SECRET`, `DATABASE_URL`, `T
 3. Las suites que firman y verifican tokens ⇒ verdes **con** y **sin** `JWT_SECRET` exportado (el mismo resultado en las dos).
 4. **Mutación (obligatoria):** con `NODE_ENV=production` y `JWT_SECRET` **sin poner**, el arranque debe **fallar** con el error del Cargo 1 — pegá la salida cruda. Sin esto, «fallo rápido» es una hipótesis.
 
+## Nota de la ronda del 2026-09-27 (medido por el Arquitecto)
+
+- **La CI-30 (el control de 32 bytes de la clave biométrica) NO se toca: se queda.** `initializeKey()` corre en el **cargado del módulo** (`biometricCryptoService.js:63`) ⇒ un formato inválido hace **fallar el arranque**, no un 500 en caliente. Medido hoy en producción (42 variables, sin imprimir valores): `BIOMETRIC_ENCRYPTION_KEY` **64 chars hex** ⇒ la rama hex lo decodifica a **32 bytes** ⇒ **aceptado, no lanza**; `ENCRYPTION_KEY` igual. ⇒ Es un **no-op** sobre los valores de hoy.
+- **Formato válido para cualquier rotación**: **64 chars hex** o **32 bytes utf8**, nada más. Y las claves biométricas **no se rotan sin correr `scripts/reencryptBiometricData.js`** (los datos guardados están cifrados con la clave actual).
+- **A-08 no quitó este literal**: `biometricCryptoService.js:18` (`CLAVE_LEGADA` con el respaldo literal) **sigue ahí** en el tren y en `fix/caminos-muertos` (verificado: el escáner lo señala en las dos) ⇒ **esta orden sigue siendo la única que lo quita**; aterrizar A-08 no limpia el paso 7.
+- **No dupliques trabajo con `origin/fix/jwt-sin-respaldo`** (ya escrito, sin aterrizar): hace lo mismo en `jwt.js` y en el biométrico y trae **dos tests aprovechables** — `backend/src/tests/jwtNoFallback.test.js` y `backend/src/tests/biometricNoFallback.test.js`. **Usalos como referencia del test que primero falla** y podés traerlos a tu rama; lo que **no** hay que hacer es aterrizar esa rama: está **vieja** (nació de un `main` anterior: su árbol hoy da **104 hallazgos**, con `ci.yml` y prosa que ya están arreglados en el tren) y **choca** con la reescritura del biométrico de A-08.
+
 ## Compuertas antes de empujar
 
 1. `git status --porcelain` + `git log -1 --format='%h %s'` + `git rev-list --count b545ef22..HEAD`.
