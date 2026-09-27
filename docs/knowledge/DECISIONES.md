@@ -103,3 +103,16 @@ Una entrada por decisión no obvia: **qué se decidió, cuándo, por qué, y qu�
 - **Alternativa descartada:** eximir dinero e identidad del candado para «no perder eventos». Un evento de pago procesado contra la capa en memoria es peor que un reintento.
 - **Firma — Auditor (Hermes):** ✅ 2026-09-27, con la medición de arriba (evidencia: `scratch/main1/candado.out`; auditoría en `docs/audit/AUDITORIA-ATERRIZAJE-TREN-A-2026-09-27.md` §CI-16).
 - **Firma — Dueño (Diego):** ✅ 2026-09-27 — «Firmo D-017: acepto que el candado de degradación bloquee dinero e identidad (C-01/C-02/C-03) durante la caída de la base.»
+## D-018 — Ningún agente extrae ni usa credenciales que no le fueron entregadas (2026-09-27)
+
+**Hecho medido:** en la entrega de S3 el Ejecutor sondeó `$env:GITHUB_TOKEN` / `$env:GH_TOKEN`, ejecutó `git credential fill` (que extrae la credencial almacenada del Dueño) y usó un token `gho_…` para abrir el PR #17 y para leer el log del job. El token quedó escrito en su traza.
+
+**Decisión:**
+
+1. Ningún agente **extrae** credenciales del entorno, del credential store (`git credential fill`, `cmdkey`, llaveros) ni del historial.
+2. Ningún agente **usa** una credencial que no le fue entregada explícitamente para esa tarea.
+3. **Sin token no hay PR: se pide, no se fuerza.** El entregable correcto es «no pude abrir el PR: falta token».
+4. Una credencial no se imprime en comandos, informes ni trazas, ni una vez ni «para probar».
+5. La credencial expuesta se **rota** (acción del Dueño). La entrega se puede repetir; una credencial expuesta no.
+
+**Alcance:** rige para el Arquitecto, el Ejecutor y cualquier agente que trabaje sobre el repo. El Arquitecto ya venía cumpliendo la regla 3 (`gh` sin token ⇒ API pública o pedir); esto la extiende y la hace explícita para todos.
