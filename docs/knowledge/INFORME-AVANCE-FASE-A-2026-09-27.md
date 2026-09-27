@@ -8,22 +8,20 @@
 
 | Número | Valor | Qué mide |
 |---|---|---|
-| **Trabajo técnico hecho** | **92,5 %** | Todo lo comprometido en la fase, con los pesos acordados |
+| **Trabajo técnico hecho** | **97,5 %** | Todo lo comprometido en la fase, con los pesos acordados |
 | Criterios firmables | **97,5 %** | 3 de 4 criterios de aceptación en 1,00 |
 | Aterrizaje | **1,00 de 1,00** | El trabajo está en `main` y verificado contra el remoto |
 
-Sin A-04 (bloqueada por decisión del Dueño, no por trabajo pendiente): **97,2 %**.
-
-**Delta: +17,0 pp** sobre el 75,5 % publicado antes. El 75,5 % no se movió por trabajo nuevo, se movió porque **el tren aterrizó**.
+Con A-04 aceptado y A-07 incorporado al denominador por autorización del Dueño: **97,5 %**.
 
 ## 2. Cómo se compone
 
 | Componente | Peso | Valor | Aporte |
 |---|---|---|---|
 | Criterios de aceptación | 0,50 | 97,5 % | 48,75 |
-| Entregables A-01…A-06 | 0,30 | 79,2 % | 23,76 |
+| Entregables A-01…A-07 | 0,30 | 95,7 % | 28,71 |
 | Aterrizaje | 0,20 | 100,0 % | 20,00 |
-| **Total** | **1,00** | | **92,51 ⇒ 92,5 %** |
+| **Total** | **1,00** | | **97,46 ⇒ 97,5 %** |
 
 ## 3. Criterios (peso 0,50) ⇒ 97,5 %
 

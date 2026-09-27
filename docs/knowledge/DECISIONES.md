@@ -102,4 +102,4 @@ Una entrada por decisión no obvia: **qué se decidió, cuándo, por qué, y qu�
 - **Consecuencia de negocio que el Dueño acepta al firmar:** durante la degradación, **la app no cobra ni autentica**: el webhook de Wompi recibe `503` y la pasarela reintenta cuando la infraestructura vuelve; reservas, wallet y OTP quedan bloqueados. Es preferible a procesar dinero o identidad contra datos fabricados.
 - **Alternativa descartada:** eximir dinero e identidad del candado para «no perder eventos». Un evento de pago procesado contra la capa en memoria es peor que un reintento.
 - **Firma — Auditor (Hermes):** ✅ 2026-09-27, con la medición de arriba (evidencia: `scratch/main1/candado.out`; auditoría en `docs/audit/AUDITORIA-ATERRIZAJE-TREN-A-2026-09-27.md` §CI-16).
-- **Firma — Dueño (Diego):** ⬜ pendiente — firma la **aceptación del alcance** (dinero e identidad bloqueados a propósito durante la degradación).
+- **Firma — Dueño (Diego):** ✅ 2026-09-27 — «Firmo D-017: acepto que el candado de degradación bloquee dinero e identidad (C-01/C-02/C-03) durante la caída de la base.»
