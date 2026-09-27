@@ -128,15 +128,15 @@ resilience | contextCompressor | fase5 | authRoutes | api.cors
 Regenerar con: `node backend/scripts/estadoKB.js --write` · Verificar con: `node backend/scripts/estadoKB.js --check`
 
 <!-- estadoKB:inicio -->
-> Bloque generado por `backend/scripts/estadoKB.js` el **2026-09-27 17:31:05Z**. No se edita a mano.
+> Bloque generado por `backend/scripts/estadoKB.js` el **2026-09-27 17:37:20Z**. No se edita a mano.
 
-**Copia inspeccionada:** `C:/Users/Compu casa/.gemini/antigravity/worktrees/beauty-app/sistema-agentes` · rama `docs/sistema-agentes` @ `b5da792eb` (2026-09-27 12:05:08 -0500) · árbol: **7 entradas sin commitear**
+**Copia inspeccionada:** `C:/Users/Compu casa/.gemini/antigravity/worktrees/beauty-app/sistema-agentes` · rama `docs/sistema-agentes` @ `415584842` (2026-09-27 12:31:05 -0500) · árbol: **3 entradas sin commitear**
 
 **Ramas locales (20):**
 
 | Rama | SHA | Último commit | Commits fuera de main | PR abierto |
 |---|---|---|---|---|
-| `docs/sistema-agentes` | `b5da792eb` | 2026-09-27 | 100 | — |
+| `docs/sistema-agentes` | `415584842` | 2026-09-27 | 101 | — |
 | `chore/guardian-en-el-repo` | `b919d45ad` | 2026-09-25 | 40 | — |
 | `fix/ci40-permiso-documentos` | `6c81b17b1` | 2026-09-27 | 2 | — |
 | `fix/jwt-sin-respaldo` | `dbb872930` | 2026-09-25 | 2 | — |
@@ -163,13 +163,13 @@ Regenerar con: `node backend/scripts/estadoKB.js --write` · Verificar con: `nod
 
 **Tags `archive/*`:** 8 locales · 17 refs en el remoto
 
-**Worktrees (5):** `feat/glowshop-niveles-a0` @ 3337aad · `main` @ e824343 · `docs/sistema-agentes` @ b5da792 · `tren/aterrizaje-11` @ a6e40e0 · `null` @ e824343
+**Worktrees (5):** `feat/glowshop-niveles-a0` @ 3337aad · `main` @ e824343 · `docs/sistema-agentes` @ 4155848 · `tren/aterrizaje-11` @ a6e40e0 · `null` @ e824343
 
 **Desalineaciones detectadas (16):**
 
 | Regla | Detalle |
 |---|---|
-| R1 | 7 entradas sin commitear (M docs/agents/COLA.md ·  M docs/agents/ordenes/ATERRIZAJE-TREN-A-2026-09-25.md ·  M docs/knowledge/DEUDA.md …) |
+| R1 | 3 entradas sin commitear (M docs/knowledge/DECISIONES.md ·  M docs/knowledge/DEUDA.md · ?? docs/agents/ordenes/PROMPT-ANTIGRAVITY-CI-16-CANDADO-DECLARADO-2026-09-27.md) |
 | R3 | «fase-a/verdad-operativa» es muerta viva (0 commits fuera de main) |
 | R3 | «fix/admin-metricas-sin-datos» es muerta viva (0 commits fuera de main) |
 | R3 | «fix/arranque-y-estado-honesto» es muerta viva (0 commits fuera de main) |
