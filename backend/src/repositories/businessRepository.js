@@ -68,9 +68,10 @@ class BusinessRepository {
       // Upsert profile in PostgreSQL
       const res = await pool.query(
         `INSERT INTO business_profiles 
-          (id, provider_id, vertical_id, name, onboarding_mode, lifecycle_stage, compliance_score, city, country, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, CURRENT_TIMESTAMP)
+          (id, provider_id, tenant_id, vertical_id, name, onboarding_mode, lifecycle_stage, compliance_score, city, country, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, CURRENT_TIMESTAMP)
          ON CONFLICT (id) DO UPDATE SET
+           tenant_id = EXCLUDED.tenant_id,
            name = EXCLUDED.name,
            onboarding_mode = EXCLUDED.onboarding_mode,
            lifecycle_stage = EXCLUDED.lifecycle_stage,
@@ -79,10 +80,10 @@ class BusinessRepository {
            country = EXCLUDED.country,
            updated_at = CURRENT_TIMESTAMP
          RETURNING *`,
-        [profileId, provider_id, vertId, name, mode, stage, score, cityVal, countryVal]
+        [profileId, provider_id, tenantVal, vertId, name, mode, stage, score, cityVal, countryVal]
       );
       if (res.rows.length > 0) {
-        return { ...res.rows[0], tenant_id: tenantVal };
+        return res.rows[0];
       }
     } catch (err) {
       if (!enMemoria(err, 'createProfile')) throw err;

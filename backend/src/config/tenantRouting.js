@@ -167,10 +167,11 @@ function runAsSystemContext(fn) {
  * @param {(client: object) => Promise<any>} fn
  */
 async function runAsSystem(deps, fn) {
-  const client = await deps.pool.connect();
+  let client;
   let began = false;
 
   try {
+    client = await deps.pool.connect();
     await client.query('BEGIN');
     began = true;
     try {
@@ -190,7 +191,7 @@ async function runAsSystem(deps, fn) {
 
     return result;
   } catch (error) {
-    if (began && typeof client.query === 'function') {
+    if (began && client && typeof client.query === 'function') {
       try {
         await client.query('ROLLBACK');
         began = false;
@@ -200,10 +201,12 @@ async function runAsSystem(deps, fn) {
     }
     throw error;
   } finally {
-    try {
-      if (typeof client.release === 'function') client.release();
-    } catch (releaseError) {
-      console.error('tenantRouting: fallo al liberar la conexión:', releaseError.message);
+    if (client && typeof client.release === 'function') {
+      try {
+        client.release();
+      } catch (releaseError) {
+        console.error('tenantRouting: fallo al liberar la conexión:', releaseError.message);
+      }
     }
   }
 }

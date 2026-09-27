@@ -1,6 +1,7 @@
 /** @type {import('jest').Config} */
 module.exports = {
   testEnvironment: 'node',
+  setupFiles: ['<rootDir>/src/tests/setupHarness.js'],
   transform: {
     '^.+\\.js$': 'babel-jest',
   },
@@ -8,6 +9,7 @@ module.exports = {
   testMatch: [
     '**/tests/**/*.test.js',
     '**/__tests__/**/*.test.js',
+    '**/src/**/*.test.js',
   ],
   collectCoverageFrom: [
     'src/**/*.js',

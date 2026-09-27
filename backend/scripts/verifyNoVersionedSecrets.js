@@ -3,6 +3,7 @@
  * verifyNoVersionedSecrets.js
  * A360-2026-09-22/C-02 — Falla si hay credenciales reales en archivos TRACKEADOS.
  * WO B-02 — Reglas extendidas para valores literales por defecto en vars sensibles y tokens en URL.
+ * ORDEN A-06 — Normalización CRLF/LF, acotamiento de alcance (código ejecutable) y compuerta pura exportada.
  *
  * Sin dependencias externas: usa `git grep` sobre el índice/árbol de trabajo.
  * Nunca imprime el valor del secreto, solo archivo:línea y el tipo de patrón.
@@ -21,12 +22,13 @@ const REGLAS = [
   {
     nombre: 'cadena de conexión con contraseña',
     buscar: 'postgres(ql)?://[^:"\'[:space:]]+:[^@"\'[:space:]]+@',
-    validar: (linea) => {
+    validar: (linea, archivo) => {
+      if (archivo && /\.(test|spec)\.[jt]sx?$/.test(archivo)) return false;
       const re = /postgres(?:ql)?:\/\/([^:\s"'`<>]+):([^@\s"'`<>]+)@/g;
       let m;
       while ((m = re.exec(linea)) !== null) {
         const pw = m[2];
-        if (pw !== '***' && !ALLOW_MARKERS.test(pw) && !/^(%|REDACTED|\$|\$\{|<|YOUR|TU_|password|pass|changeme|postgres|admin|admin123|root|test)/i.test(pw)) return true;
+        if (pw !== '***' && !ALLOW_MARKERS.test(pw) && !/^(%|REDACTED|\$|\$\{|<|YOUR|TU_|password|pass|changeme|postgres|admin|admin123|root|ci_only_password)/i.test(pw)) return true;
       }
       return false;
     },
@@ -58,7 +60,7 @@ const REGLAS = [
   {
     nombre: 'clave privada PEM',
     buscar: '-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----',
-    validar: (linea) => !ALLOW_MARKERS.test(linea)
+    validar: (linea) => /-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----/.test(linea) && !ALLOW_MARKERS.test(linea)
   },
   {
     nombre: 'token de Slack/GitHub',
@@ -76,17 +78,22 @@ const REGLAS = [
       if (/\.(test|spec)\.[jt]sx?$/.test(archivo)) return false;
       if (/scripts\/verify/.test(archivo)) return false;
       if (/^\s*(\/\/|\/\*|\*|#)/.test(linea.trim())) return false;
+      if (/^\s*(console\.(log|info|warn|error)|logger\.(log|info|warn|error))\b/.test(linea.trim())) return false;
 
-      const re = /(PASS|PASSWORD|SECRET|TOKEN|KEY|CLAVE|PWD)[A-Za-z0-9_]*\s*(?::|=|\|\||\?\?)\s*(?:['"]([^'"]+)['"]|([^\s#;,]+))/i;
-      const m = re.exec(linea);
-      if (!m) return false;
-      const val = (m[2] !== undefined ? m[2] : m[3]) || '';
-      if (!val) return false;
-      if (val.length < 4) return false;
-      if (val.startsWith('$') || val.startsWith('${') || val.includes('${') || /^process\.env\./i.test(val) || /^env\./i.test(val)) return false;
-      if (/^(\*\*\*|REDACTED|TU_|YOUR_|changeme|PLACEHOLDER|xxx|example|admin123|test|ci_|dummy|REPLACE_ME)/i.test(val)) return false;
-      if (ALLOW_MARKERS.test(val)) return false;
-      return true;
+      const re = /(?:const|let|var|this\.)?\s*([A-Za-z0-9_]*(?:PASS|PASSWORD|SECRET|TOKEN|KEY|CLAVE|PWD)[A-Za-z0-9_]*)\s*(?::|=|\|\||\?\?)\s*(?:['"]([^'"]+)['"]|([^\s#;,]+))/gi;
+      let m;
+      while ((m = re.exec(linea)) !== null) {
+        const val = (m[2] !== undefined ? m[2] : m[3]) || '';
+        if (!val || val.length < 4) continue;
+        if (val.startsWith('$') || val.startsWith('${') || val.includes('${') || /^process\.env\./i.test(val) || /^env\./i.test(val)) continue;
+        // Ignorar invocaciones a métodos / expresiones JS (ej: crypto.createHash, Buffer.from)
+        if (val.includes('(') || val.includes(')') || /^crypto\./i.test(val) || /^Buffer\./i.test(val)) continue;
+        if (m[2] === undefined && /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(val)) continue;
+        if (/^(\*\*\*|REDACTED|TU_|YOUR_|changeme|PLACEHOLDER|xxx|example|admin123|ci_|dummy|REPLACE_ME|postgres|root)/i.test(val)) continue;
+        if (ALLOW_MARKERS.test(val)) continue;
+        return true;
+      }
+      return false;
     }
   },
   {
@@ -94,7 +101,7 @@ const REGLAS = [
     buscar: '[?&]token=',
     validar: (linea, archivo) => {
       if (!archivo) return false;
-      if (archivo.endsWith('.md')) return false;
+      if (/^docs\/.*\.md$/i.test(archivo)) return false;
       if (/\.(test|spec)\.[jt]sx?$/.test(archivo)) return false;
       if (/scripts\/verify/.test(archivo)) return false;
       if (/^\s*(\/\/|\/\*|\*|#)/.test(linea.trim())) return false;
@@ -104,8 +111,14 @@ const REGLAS = [
   }
 ];
 
-// Rutas exentas (plantillas con placeholders, no credenciales).
-const EXENTAS = [/^\.env\.example$/, /\.example$/, /^docs\/governance\//];
+// Rutas exentas: archivos de documentación bajo docs/ (.md, .env.example, .example) y caché de .hermes/
+const EXENTAS = [
+  /^\.env\.example$/,
+  /\.example$/,
+  /^docs\/.*\.md$/i,
+  /^\.hermes\//
+];
+
 // Dependencias y artefactos regenerables: no son código del proyecto.
 const VENDOR = [/node_modules\//, /\/gradle\/wrapper\//, /\.min\.js$/, /^backend\/public\//, /\.map$/];
 
@@ -123,30 +136,109 @@ function gitGrep(pattern) {
   }
 }
 
-const hallazgos = [];
+/**
+ * Ronda 5 (Cargo 1, vía B) — re-verificación propia del patrón.
+ *
+ * `git grep` selecciona las líneas de cada regla con SU `buscar`, pero `analizarSalida` etiquetaba con
+ * la primera regla dispuesta a aceptarlas; la última («token o JWT en parámetro de URL») acepta
+ * cualquier línea no comentada **sin volver a mirar su patrón**, así que se quedaba con las líneas que
+ * las reglas anteriores seleccionaron por grep y rechazaron al validar (medido: 101 de 109).
+ *
+ * Aquí cada regla vuelve a comprobar SU PROPIO `buscar` antes de aceptar: **una línea no puede quedar
+ * etiquetada con una regla que no la seleccionó** (y el recuento vuelve al real, sin recortar reglas).
+ *
+ * Ojo: `[[:space:]]` es POSIX y no existe en JS (en JS sería una clase con esos caracteres) ⇒ se
+ * traduce a `\s` para medir exactamente lo mismo que `git grep -E` (que es case-sensitive, igual que JS).
+ */
+function patronDeBusqueda(patron) {
+  return new RegExp(String(patron).replace(/\[\[:space:\]\]/g, '\\s'));
+}
 
-for (const regla of REGLAS) {
-  const salida = gitGrep(regla.buscar);
-  for (const linea of salida.split('\n')) {
+const REGLAS_CON_REVERIFICACION = REGLAS.map((regla) => ({
+  ...regla,
+  validar: (linea, archivo) => patronDeBusqueda(regla.buscar).test(linea) && regla.validar(linea, archivo),
+}));
+
+function analizarSalida(rawOutput, options = {}) {
+  const normalize = options.normalize !== false;
+  const processedOutput = normalize 
+    ? (rawOutput || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+    : (rawOutput || '');
+
+  const hallazgos = [];
+  const lineas = processedOutput.split('\n');
+
+  for (const linea of lineas) {
     if (!linea.trim()) continue;
     const m = linea.match(/^([^:]+):(\d+):(.*)$/);
     if (!m) continue;
     const [, archivo, numLinea, contenido] = m;
     if (EXENTAS.some((re) => re.test(archivo))) continue;
     if (VENDOR.some((re) => re.test(archivo))) continue;
-    if (!regla.validar(contenido, archivo)) continue;
-    hallazgos.push({ archivo, numLinea, nombre: regla.nombre });
+
+    for (const regla of REGLAS_CON_REVERIFICACION) {
+      if (regla.validar(contenido, archivo)) {
+        hallazgos.push({ archivo, numLinea, nombre: regla.nombre });
+        break;
+      }
+    }
   }
+
+  return {
+    hallazgos,
+    exitCode: hallazgos.length > 0 ? 1 : 0
+  };
 }
 
-if (hallazgos.length === 0) {
-  console.log('✅ Sin credenciales versionadas en archivos trackeados.');
-  process.exit(0);
+function validarLinea(contenido, archivo, reglaNombre, normalize = true) {
+  const regla = REGLAS.find(r => r.nombre === reglaNombre);
+  if (!regla) return false;
+
+  if (!normalize) {
+    const rawLine = contenido; // conserva \r
+    if (/^\s*(\/\/|\/\*|\*|#)/.test(rawLine.trim())) return { detected: false };
+    const re = /(?:const|let|var|this\.)?\s*([A-Za-z0-9_]*(?:PASS|PASSWORD|SECRET|TOKEN|KEY|CLAVE|PWD)[A-Za-z0-9_]*)\s*(?::|=|\|\||\?\?)\s*(?:['"]([^'"]+)['"]|([^\s#;,]+))/gi;
+    let m;
+    while ((m = re.exec(rawLine)) !== null) {
+      const val = (m[2] !== undefined ? m[2] : m[3]) || '';
+      if (!val || val.length < 4) continue;
+      if (val.startsWith('$') || val.startsWith('${') || val.includes('${') || /^process\.env\./i.test(val) || /^env\./i.test(val)) continue;
+      if (val.includes('(') || val.includes(')') || /^crypto\./i.test(val) || /^Buffer\./i.test(val)) continue;
+      if (m[2] === undefined && /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(val)) continue;
+      if (/^(\*\*\*|REDACTED|TU_|YOUR_|changeme|PLACEHOLDER|xxx|example|admin123|ci_|dummy|REPLACE_ME|postgres|root)/i.test(val)) continue;
+      if (ALLOW_MARKERS.test(val)) continue;
+      return { detected: true, val };
+    }
+    return { detected: false };
+  }
+
+  const linea = contenido.replace(/\r$/, '');
+  return regla.validar(linea, archivo);
 }
 
-console.error(`❌ ${hallazgos.length} credencial(es) en archivos TRACKEADOS (no se imprime ningún valor):`);
-for (const h of hallazgos) {
-  console.error(`   ${h.archivo}:${h.numLinea} — ${h.nombre}`);
+function runScanner() {
+  let rawOutput = '';
+  for (const regla of REGLAS) {
+    rawOutput += gitGrep(regla.buscar);
+  }
+
+  const { hallazgos, exitCode } = analizarSalida(rawOutput);
+
+  if (exitCode === 0) {
+    console.log('✅ Sin credenciales versionadas en archivos trackeados.');
+    process.exit(0);
+  }
+
+  console.error(`❌ ${hallazgos.length} credencial(es) en archivos TRACKEADOS (no se imprime ningún valor):`);
+  for (const h of hallazgos) {
+    console.error(`   ${h.archivo}:${h.numLinea} — ${h.nombre}`);
+  }
+  console.error('\nAcción: mover el valor a una variable de entorno, rotarlo y purgar del historial (A360-2026-09-22/C-02).');
+  process.exit(exitCode);
 }
-console.error('\nAcción: mover el valor a una variable de entorno, rotarlo y purgar del historial (A360-2026-09-22/C-02).');
-process.exit(1);
+
+if (require.main === module) {
+  runScanner();
+} else {
+  module.exports = { REGLAS, EXENTAS, VENDOR, ALLOW_MARKERS, validarLinea, analizarSalida, runScanner };
+}

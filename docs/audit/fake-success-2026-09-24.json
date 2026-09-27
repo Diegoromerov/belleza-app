@@ -1,0 +1,37 @@
+[
+  {
+    "archivo": "backend/src/controllers/analyticsController.js",
+    "linea": 36,
+    "codigo": "return res.status(200).json({ message: 'Telemetry processed with warning', error: err.message });",
+    "veredicto": "finge",
+    "explicacion": "Retorna respuesta de éxito (200 o success: true) dentro de un bloque catch"
+  },
+  {
+    "archivo": "backend/src/controllers/authController.js",
+    "linea": 512,
+    "codigo": "res.json({",
+    "veredicto": "finge",
+    "explicacion": "Retorna respuesta de éxito (200 o success: true) dentro de un bloque catch"
+  },
+  {
+    "archivo": "backend/src/controllers/authController.js",
+    "linea": 513,
+    "codigo": "success: true,",
+    "veredicto": "finge",
+    "explicacion": "Retorna respuesta de éxito (200 o success: true) dentro de un bloque catch"
+  },
+  {
+    "archivo": "backend/src/controllers/authController.js",
+    "linea": 721,
+    "codigo": "res.json({",
+    "veredicto": "finge",
+    "explicacion": "Retorna respuesta de éxito (200 o success: true) dentro de un bloque catch"
+  },
+  {
+    "archivo": "backend/src/controllers/authController.js",
+    "linea": 722,
+    "codigo": "success: true,",
+    "veredicto": "finge",
+    "explicacion": "Retorna respuesta de éxito (200 o success: true) dentro de un bloque catch"
+  }
+]

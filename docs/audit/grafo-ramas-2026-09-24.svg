@@ -1,0 +1,406 @@
+<svg width="1920" height="2650" viewBox="0 0 1920 2650" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <style>
+    .title { font-family: system-ui, -apple-system, sans-serif; font-weight: 700; font-size: 26px; fill: #ffffff; }
+    .subtitle { font-family: system-ui, -apple-system, sans-serif; font-size: 14px; fill: #94a3b8; }
+    .section-head { font-family: system-ui, -apple-system, sans-serif; font-weight: 700; font-size: 15px; }
+    .commit-text { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12px; fill: #334155; }
+    .commit-sha { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12px; font-weight: bold; fill: #0284c7; }
+    .commit-date { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 11px; fill: #64748b; }
+    .branch-badge { font-family: system-ui, -apple-system, sans-serif; font-size: 13px; font-weight: 600; }
+    .badge-sub { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 11px; }
+    .panel-title { font-family: system-ui, -apple-system, sans-serif; font-weight: 700; font-size: 16px; fill: #ffffff; }
+    .legend-title { font-family: system-ui, -apple-system, sans-serif; font-weight: 700; font-size: 14px; fill: #0f172a; }
+    .legend-text { font-family: system-ui, -apple-system, sans-serif; font-size: 12px; fill: #334155; }
+  </style>
+</defs>
+<rect width="1920" height="2650" fill="#f8fafc"/>
+<rect x="30" y="30" width="1860" height="100" rx="12" ry="12" fill="#0f172a"/>
+<text x="60" y="72" class="title">ÁRBOLES Y MAPA DE RAMAS — LOCAL VS GITHUB</text>
+<text x="60" y="102" class="subtitle">Medición: 2026-09-24 · Base: origin/main = f5a1b4fc · Repositorio: C:\beauty-app · Rama auditada: fase-a/verdad-operativa</text>
+<line x1="520" y1="170" x2="520" y2="1936" stroke="#0f172a" stroke-width="6" stroke-linecap="round"/>
+<circle cx="520" cy="190" r="9" fill="#0969da" stroke="#ffffff" stroke-width="2"/>
+<text x="502" y="194" text-anchor="end" class="commit-sha">f5a1b4fc</text>
+<text x="425" y="194" text-anchor="end" class="commit-date">2026-09-24</text>
+<text x="340" y="194" text-anchor="end" class="commit-text">Merge branch &apos;feat/glowshop-tienda-operable-b01&apos;</text>
+<circle cx="520" cy="234" r="6" fill="#0284c7" stroke="#ffffff" stroke-width="2"/>
+<text x="502" y="238" text-anchor="end" class="commit-sha">6db2a554</text>
+<text x="425" y="238" text-anchor="end" class="commit-date">2026-09-24</text>
+<text x="340" y="238" text-anchor="end" class="commit-text">Merge branch &apos;main&apos; of https://github.com/Diegor…</text>
+<circle cx="520" cy="278" r="6" fill="#0284c7" stroke="#ffffff" stroke-width="2"/>
+<text x="502" y="282" text-anchor="end" class="commit-sha">35318494</text>
+<text x="425" y="282" text-anchor="end" class="commit-date">2026-09-24</text>
+<text x="340" y="282" text-anchor="end" class="commit-text">fix(glowshop): resolve all findings H1-H5 for 10…</text>
+<circle cx="520" cy="322" r="6" fill="#0284c7" stroke="#ffffff" stroke-width="2"/>
+<text x="502" y="326" text-anchor="end" class="commit-sha">dfffa9fd</text>
+<text x="425" y="326" text-anchor="end" class="commit-date">2026-09-24</text>
+<text x="340" y="326" text-anchor="end" class="commit-text">Merge remote-tracking branch &apos;origin/main&apos; into …</text>
+<circle cx="520" cy="366" r="6" fill="#0284c7" stroke="#ffffff" stroke-width="2"/>
+<text x="502" y="370" text-anchor="end" class="commit-sha">72f3cd9e</text>
+<text x="425" y="370" text-anchor="end" class="commit-date">2026-09-24</text>
+<text x="340" y="370" text-anchor="end" class="commit-text">fix(glowshop): WO B-02 - Fixture-based admin tes…</text>
+<circle cx="520" cy="410" r="6" fill="#0284c7" stroke="#ffffff" stroke-width="2"/>
+<text x="502" y="414" text-anchor="end" class="commit-sha">25075c69</text>
+<text x="425" y="414" text-anchor="end" class="commit-date">2026-09-24</text>
+<text x="340" y="414" text-anchor="end" class="commit-text">feat(glowshop): WO B-01 - Platform admin provisi…</text>
+<circle cx="520" cy="454" r="6" fill="#0284c7" stroke="#ffffff" stroke-width="2"/>
+<text x="502" y="458" text-anchor="end" class="commit-sha">0ee1eb37</text>
+<text x="425" y="458" text-anchor="end" class="commit-date">2026-09-24</text>
+<text x="340" y="458" text-anchor="end" class="commit-text">fix(glowshop): WO-07 final QA corrections - valu…</text>
+<circle cx="520" cy="498" r="6" fill="#0284c7" stroke="#ffffff" stroke-width="2"/>
+<text x="502" y="502" text-anchor="end" class="commit-sha">1ef708c8</text>
+<text x="425" y="502" text-anchor="end" class="commit-date">2026-09-24</text>
+<text x="340" y="502" text-anchor="end" class="commit-text">Merge pull request #9 from Diegoromerov/fix/aura…</text>
+<circle cx="520" cy="542" r="6" fill="#0284c7" stroke="#ffffff" stroke-width="2"/>
+<text x="502" y="546" text-anchor="end" class="commit-sha">ff2a116a</text>
+<text x="425" y="546" text-anchor="end" class="commit-date">2026-09-24</text>
+<text x="340" y="546" text-anchor="end" class="commit-text">fix(glowshop): WO-06 QA corrections - remove fab…</text>
+<circle cx="520" cy="586" r="6" fill="#0284c7" stroke="#ffffff" stroke-width="2"/>
+<text x="502" y="590" text-anchor="end" class="commit-sha">5c3e879c</text>
+<text x="425" y="590" text-anchor="end" class="commit-date">2026-09-24</text>
+<text x="340" y="590" text-anchor="end" class="commit-text">fix(chat): reconciliacion de respuestas de AURA …</text>
+<circle cx="520" cy="630" r="6" fill="#0284c7" stroke="#ffffff" stroke-width="2"/>
+<text x="502" y="634" text-anchor="end" class="commit-sha">820f63a4</text>
+<text x="425" y="634" text-anchor="end" class="commit-date">2026-09-24</text>
+<text x="340" y="634" text-anchor="end" class="commit-text">fix(glowshop): WO-05 QA corrections - transactio…</text>
+<circle cx="520" cy="674" r="6" fill="#0284c7" stroke="#ffffff" stroke-width="2"/>
+<text x="502" y="678" text-anchor="end" class="commit-sha">3e7b8a35</text>
+<text x="425" y="678" text-anchor="end" class="commit-date">2026-09-24</text>
+<text x="340" y="678" text-anchor="end" class="commit-text">fix(chat): entrega garantizada de la respuesta d…</text>
+<circle cx="520" cy="718" r="6" fill="#0284c7" stroke="#ffffff" stroke-width="2"/>
+<text x="502" y="722" text-anchor="end" class="commit-sha">ab65ab34</text>
+<text x="425" y="722" text-anchor="end" class="commit-date">2026-09-24</text>
+<text x="340" y="722" text-anchor="end" class="commit-text">feat(glowshop): implement migration 072 for cata…</text>
+<circle cx="520" cy="762" r="6" fill="#0284c7" stroke="#ffffff" stroke-width="2"/>
+<text x="502" y="766" text-anchor="end" class="commit-sha">caaa57d7</text>
+<text x="425" y="766" text-anchor="end" class="commit-date">2026-09-24</text>
+<text x="340" y="766" text-anchor="end" class="commit-text">feat(glowshop): connect catalog and checkout to …</text>
+<circle cx="520" cy="806" r="6" fill="#0284c7" stroke="#ffffff" stroke-width="2"/>
+<text x="502" y="810" text-anchor="end" class="commit-sha">accba403</text>
+<text x="425" y="810" text-anchor="end" class="commit-date">2026-09-24</text>
+<text x="340" y="810" text-anchor="end" class="commit-text">feat(glowshop): implement level pricing service,…</text>
+<circle cx="520" cy="850" r="6" fill="#0284c7" stroke="#ffffff" stroke-width="2"/>
+<text x="502" y="854" text-anchor="end" class="commit-sha">e6e116bd</text>
+<text x="425" y="854" text-anchor="end" class="commit-date">2026-09-24</text>
+<text x="340" y="854" text-anchor="end" class="commit-text">docs(glowshop): work orders de A0 para el ejecut…</text>
+<circle cx="520" cy="894" r="6" fill="#0284c7" stroke="#ffffff" stroke-width="2"/>
+<text x="502" y="898" text-anchor="end" class="commit-sha">ef9deafe</text>
+<text x="425" y="898" text-anchor="end" class="commit-date">2026-09-24</text>
+<text x="340" y="898" text-anchor="end" class="commit-text">feat(glowshop): A0 — niveles comerciales, catálo…</text>
+<circle cx="520" cy="938" r="6" fill="#0284c7" stroke="#ffffff" stroke-width="2"/>
+<text x="502" y="942" text-anchor="end" class="commit-sha">7ad01a0f</text>
+<text x="425" y="942" text-anchor="end" class="commit-date">2026-09-24</text>
+<text x="340" y="942" text-anchor="end" class="commit-text">fix(ai): sanitize multiline DSML tool invocation…</text>
+<circle cx="520" cy="982" r="6" fill="#0284c7" stroke="#ffffff" stroke-width="2"/>
+<text x="502" y="986" text-anchor="end" class="commit-sha">dc825d6e</text>
+<text x="425" y="986" text-anchor="end" class="commit-date">2026-09-24</text>
+<text x="340" y="986" text-anchor="end" class="commit-text">merge: alinear consultas SQL de agentes con esqu…</text>
+<circle cx="520" cy="1026" r="6" fill="#0284c7" stroke="#ffffff" stroke-width="2"/>
+<text x="502" y="1030" text-anchor="end" class="commit-sha">6bee917e</text>
+<text x="425" y="1030" text-anchor="end" class="commit-date">2026-09-24</text>
+<text x="340" y="1030" text-anchor="end" class="commit-text">merge: retirar orquestador legado backend/src/se…</text>
+<circle cx="520" cy="1070" r="6" fill="#0284c7" stroke="#ffffff" stroke-width="2"/>
+<text x="502" y="1074" text-anchor="end" class="commit-sha">d0af3236</text>
+<text x="425" y="1074" text-anchor="end" class="commit-date">2026-09-24</text>
+<text x="340" y="1074" text-anchor="end" class="commit-text">fix(agents): align agent SQL queries with real D…</text>
+<circle cx="520" cy="1114" r="6" fill="#0284c7" stroke="#ffffff" stroke-width="2"/>
+<text x="502" y="1118" text-anchor="end" class="commit-sha">6d8c5173</text>
+<text x="425" y="1118" text-anchor="end" class="commit-date">2026-09-24</text>
+<text x="340" y="1118" text-anchor="end" class="commit-text">chore(ai): retirar orquestador legado backend/sr…</text>
+<circle cx="520" cy="1158" r="6" fill="#0284c7" stroke="#ffffff" stroke-width="2"/>
+<text x="502" y="1162" text-anchor="end" class="commit-sha">3052ebae</text>
+<text x="425" y="1162" text-anchor="end" class="commit-date">2026-09-23</text>
+<text x="340" y="1162" text-anchor="end" class="commit-text">fix(chat): parse and sanitize DSML tool call mar…</text>
+<circle cx="520" cy="1202" r="6" fill="#0284c7" stroke="#ffffff" stroke-width="2"/>
+<text x="502" y="1206" text-anchor="end" class="commit-sha">453d15ea</text>
+<text x="425" y="1206" text-anchor="end" class="commit-date">2026-09-23</text>
+<text x="340" y="1206" text-anchor="end" class="commit-text">Merge pull request #8 from Diegoromerov/fix/rag-…</text>
+<circle cx="520" cy="1246" r="6" fill="#0284c7" stroke="#ffffff" stroke-width="2"/>
+<text x="502" y="1250" text-anchor="end" class="commit-sha">454448ac</text>
+<text x="425" y="1250" text-anchor="end" class="commit-date">2026-09-23</text>
+<text x="340" y="1250" text-anchor="end" class="commit-text">docs(rag): sincronizar el registro canónico con …</text>
+<circle cx="520" cy="1290" r="6" fill="#0284c7" stroke="#ffffff" stroke-width="2"/>
+<text x="502" y="1294" text-anchor="end" class="commit-sha">7f692c57</text>
+<text x="425" y="1294" text-anchor="end" class="commit-date">2026-09-23</text>
+<text x="340" y="1294" text-anchor="end" class="commit-text">fix(rag): filtros, citas y trazabilidad — dejar …</text>
+<circle cx="520" cy="1334" r="6" fill="#0284c7" stroke="#ffffff" stroke-width="2"/>
+<text x="502" y="1338" text-anchor="end" class="commit-sha">17815833</text>
+<text x="425" y="1338" text-anchor="end" class="commit-date">2026-09-23</text>
+<text x="340" y="1338" text-anchor="end" class="commit-text">Merge pull request #7 from Diegoromerov/docs/rag…</text>
+<circle cx="520" cy="1378" r="6" fill="#0284c7" stroke="#ffffff" stroke-width="2"/>
+<text x="502" y="1382" text-anchor="end" class="commit-sha">e2b2a7fc</text>
+<text x="425" y="1382" text-anchor="end" class="commit-date">2026-09-23</text>
+<text x="340" y="1382" text-anchor="end" class="commit-text">docs(rag): plan de mejora por fases con decision…</text>
+<circle cx="520" cy="1422" r="6" fill="#0284c7" stroke="#ffffff" stroke-width="2"/>
+<text x="502" y="1426" text-anchor="end" class="commit-sha">fd1c11ed</text>
+<text x="425" y="1426" text-anchor="end" class="commit-date">2026-09-23</text>
+<text x="340" y="1426" text-anchor="end" class="commit-text">docs(rag): banco de pruebas del modelo vivo + pl…</text>
+<circle cx="520" cy="1466" r="6" fill="#0284c7" stroke="#ffffff" stroke-width="2"/>
+<text x="502" y="1470" text-anchor="end" class="commit-sha">e56c6ceb</text>
+<text x="425" y="1470" text-anchor="end" class="commit-date">2026-09-23</text>
+<text x="340" y="1470" text-anchor="end" class="commit-text">docs(rag): corregir el registro canónico — el mo…</text>
+<circle cx="520" cy="1510" r="6" fill="#0284c7" stroke="#ffffff" stroke-width="2"/>
+<text x="502" y="1514" text-anchor="end" class="commit-sha">cfa99da3</text>
+<text x="425" y="1514" text-anchor="end" class="commit-date">2026-09-23</text>
+<text x="340" y="1514" text-anchor="end" class="commit-text">fix(auth): define MIN_SECRET_LENGTH and add defa…</text>
+<circle cx="520" cy="1554" r="6" fill="#0284c7" stroke="#ffffff" stroke-width="2"/>
+<text x="502" y="1558" text-anchor="end" class="commit-sha">88059cda</text>
+<text x="425" y="1558" text-anchor="end" class="commit-date">2026-09-23</text>
+<text x="340" y="1558" text-anchor="end" class="commit-text">Merge pull request #6 from Diegoromerov/fix/rag-…</text>
+<circle cx="520" cy="1598" r="6" fill="#0284c7" stroke="#ffffff" stroke-width="2"/>
+<text x="502" y="1602" text-anchor="end" class="commit-sha">838dee86</text>
+<text x="425" y="1602" text-anchor="end" class="commit-date">2026-09-23</text>
+<text x="340" y="1602" text-anchor="end" class="commit-text">fix(auth): use userinfo endpoint with Bearer tok…</text>
+<circle cx="520" cy="1642" r="6" fill="#0284c7" stroke="#ffffff" stroke-width="2"/>
+<text x="502" y="1646" text-anchor="end" class="commit-sha">a94d21f7</text>
+<text x="425" y="1646" text-anchor="end" class="commit-date">2026-09-22</text>
+<text x="340" y="1646" text-anchor="end" class="commit-text">fix(rag): conservar el flag ENABLE_BEAUTY_RAG en…</text>
+<circle cx="520" cy="1686" r="6" fill="#0284c7" stroke="#ffffff" stroke-width="2"/>
+<text x="502" y="1690" text-anchor="end" class="commit-sha">eec24bf5</text>
+<text x="425" y="1690" text-anchor="end" class="commit-date">2026-09-22</text>
+<text x="340" y="1690" text-anchor="end" class="commit-text">fix(rag): port R1-R4 a main — sin dummy, tenant …</text>
+<circle cx="520" cy="1730" r="6" fill="#0284c7" stroke="#ffffff" stroke-width="2"/>
+<text x="502" y="1734" text-anchor="end" class="commit-sha">43170150</text>
+<text x="425" y="1734" text-anchor="end" class="commit-date">2026-09-22</text>
+<text x="340" y="1734" text-anchor="end" class="commit-text">fix(auth): add accessToken fallback for GIS web …</text>
+<circle cx="520" cy="1774" r="6" fill="#0284c7" stroke="#ffffff" stroke-width="2"/>
+<text x="502" y="1778" text-anchor="end" class="commit-sha">2971202d</text>
+<text x="425" y="1778" text-anchor="end" class="commit-date">2026-09-22</text>
+<text x="340" y="1778" text-anchor="end" class="commit-text">fix(auth): add serverClientId to web GoogleSignI…</text>
+<circle cx="520" cy="1818" r="6" fill="#0284c7" stroke="#ffffff" stroke-width="2"/>
+<text x="502" y="1822" text-anchor="end" class="commit-sha">7f461caf</text>
+<text x="425" y="1822" text-anchor="end" class="commit-date">2026-09-22</text>
+<text x="340" y="1822" text-anchor="end" class="commit-text">fix(auth): declare &apos;let payload&apos; in oauthControl…</text>
+<circle cx="520" cy="1862" r="6" fill="#0284c7" stroke="#ffffff" stroke-width="2"/>
+<text x="502" y="1866" text-anchor="end" class="commit-sha">fa549f46</text>
+<text x="425" y="1866" text-anchor="end" class="commit-date">2026-09-22</text>
+<text x="340" y="1866" text-anchor="end" class="commit-text">fix(auth): support array of valid audiences and …</text>
+<circle cx="520" cy="1906" r="6" fill="#0284c7" stroke="#ffffff" stroke-width="2"/>
+<text x="502" y="1910" text-anchor="end" class="commit-sha">018ae175</text>
+<text x="425" y="1910" text-anchor="end" class="commit-date">2026-09-22</text>
+<text x="340" y="1910" text-anchor="end" class="commit-text">Merge remote-tracking branch &apos;origin/main&apos; into …</text>
+<path d="M 520 1906 C 400 1906, 300 190, 400 190" fill="none" stroke="#1a7f37" stroke-width="3.5" stroke-linecap="round" opacity="0.85"/>
+<rect x="80" y="165" width="310" height="50" rx="8" ry="8" fill="#f0fdf4" stroke="#1a7f37" stroke-width="2"/>
+<text x="92" y="185" class="branch-badge" fill="#166534">audit_glowapp_architecture_integrity</text>
+<text x="92" y="204" class="badge-sub" fill="#1a7f37">7dd6fff3 · +1 commits ⌂ audit_glowapp_architecture_integrity</text>
+<path d="M 520 1906 C 400 1906, 300 275, 400 275" fill="none" stroke="#9a6700" stroke-width="3.5" stroke-linecap="round" opacity="0.85"/>
+<rect x="80" y="250" width="310" height="50" rx="8" ry="8" fill="#fffbeb" stroke="#9a6700" stroke-width="2"/>
+<text x="92" y="270" class="branch-badge" fill="#92400e">audit/hermes</text>
+<text x="92" y="289" class="badge-sub" fill="#9a6700">434f7f21 · +190 commits</text>
+<path d="M 520 1906 C 400 1906, 300 360, 400 360" fill="none" stroke="#1a7f37" stroke-width="3.5" stroke-linecap="round" opacity="0.85"/>
+<rect x="80" y="335" width="310" height="50" rx="8" ry="8" fill="#f0fdf4" stroke="#1a7f37" stroke-width="2"/>
+<text x="92" y="355" class="branch-badge" fill="#166534">backup/linea-base-osm-modifications</text>
+<text x="92" y="374" class="badge-sub" fill="#1a7f37">ea8077bb · +4 commits ⌂ startup_glowapp_antigravity</text>
+<path d="M 520 1906 C 400 1906, 300 445, 400 445" fill="none" stroke="#9a6700" stroke-width="3.5" stroke-linecap="round" opacity="0.85"/>
+<rect x="80" y="420" width="310" height="50" rx="8" ry="8" fill="#fffbeb" stroke="#9a6700" stroke-width="2"/>
+<text x="92" y="440" class="branch-badge" fill="#92400e">codex/rag-aura-r1-r4</text>
+<text x="92" y="459" class="badge-sub" fill="#9a6700">68ce4b4e · +1 commits</text>
+<path d="M 520 1906 C 400 1906, 300 530, 400 530" fill="none" stroke="#9a6700" stroke-width="3.5" stroke-linecap="round" opacity="0.85"/>
+<rect x="80" y="505" width="310" height="50" rx="8" ry="8" fill="#fffbeb" stroke="#9a6700" stroke-width="2"/>
+<text x="92" y="525" class="branch-badge" fill="#92400e">diegoromerov-feature-biometric-hub</text>
+<text x="92" y="544" class="badge-sub" fill="#9a6700">d99ed223 · +19 commits</text>
+<path d="M 520 190 C 400 190, 300 615, 400 615" fill="none" stroke="#1a7f37" stroke-width="3.5" stroke-linecap="round" opacity="0.85"/>
+<rect x="80" y="590" width="310" height="50" rx="8" ry="8" fill="#f0fdf4" stroke="#1a7f37" stroke-width="2"/>
+<text x="92" y="610" class="branch-badge" fill="#166534">fase-a/verdad-operativa</text>
+<text x="92" y="629" class="badge-sub" fill="#1a7f37">cfec993a · +5 commits ⌂ setup_glowguide_architecture</text>
+<path d="M 520 850 C 400 850, 300 700, 400 700" fill="none" stroke="#1a7f37" stroke-width="3.5" stroke-linecap="round" opacity="0.85"/>
+<rect x="80" y="675" width="310" height="50" rx="8" ry="8" fill="#f0fdf4" stroke="#1a7f37" stroke-width="2"/>
+<text x="92" y="695" class="branch-badge" fill="#166534">feat/glowshop-niveles-a0</text>
+<text x="92" y="714" class="badge-sub" fill="#1a7f37">3337aadb · +1 commits ⌂ beauty-app</text>
+<path d="M 520 806 C 400 806, 300 785, 400 785" fill="none" stroke="#1a7f37" stroke-width="3.5" stroke-linecap="round" opacity="0.85"/>
+<rect x="80" y="760" width="310" height="50" rx="8" ry="8" fill="#f0fdf4" stroke="#1a7f37" stroke-width="2"/>
+<text x="92" y="780" class="branch-badge" fill="#166534">feat/glowshop-precios-csv</text>
+<text x="92" y="799" class="badge-sub" fill="#1a7f37">18a04262 · +1 commits</text>
+<path d="M 520 1906 C 400 1906, 300 870, 400 870" fill="none" stroke="#9a6700" stroke-width="3.5" stroke-linecap="round" opacity="0.85"/>
+<rect x="80" y="845" width="310" height="50" rx="8" ry="8" fill="#fffbeb" stroke="#9a6700" stroke-width="2"/>
+<text x="92" y="865" class="branch-badge" fill="#92400e">feature/ai-nail-tryon-legacy</text>
+<text x="92" y="884" class="badge-sub" fill="#9a6700">a1c7002d · +25 commits</text>
+<path d="M 520 190 Q 535 190, 545 190" fill="none" stroke="#57606a" stroke-width="2" opacity="0.7"/>
+<rect x="545" y="178" width="280" height="24" rx="4" ry="4" fill="#ffffff" stroke="#57606a" stroke-width="1.2"/>
+<text x="553" y="194" font-family="ui-monospace, monospace" font-size="11px" fill="#475569">baseline-v1-stable · d47032fd</text>
+<path d="M 520 1114 Q 535 1114, 545 1114" fill="none" stroke="#57606a" stroke-width="2" opacity="0.7"/>
+<rect x="545" y="1102" width="280" height="24" rx="4" ry="4" fill="#ffffff" stroke="#57606a" stroke-width="1.2"/>
+<text x="553" y="1118" font-family="ui-monospace, monospace" font-size="11px" fill="#475569">chore/retirar-orquestador-legado · 6d8c5173</text>
+<path d="M 520 1378 Q 535 1378, 545 1378" fill="none" stroke="#57606a" stroke-width="2" opacity="0.7"/>
+<rect x="545" y="1366" width="280" height="24" rx="4" ry="4" fill="#ffffff" stroke="#57606a" stroke-width="1.2"/>
+<text x="553" y="1382" font-family="ui-monospace, monospace" font-size="11px" fill="#475569">docs/rag-eol-corrections-2026-09-22 · e2b2a7fc</text>
+<path d="M 520 718 Q 535 718, 545 718" fill="none" stroke="#57606a" stroke-width="2" opacity="0.7"/>
+<rect x="545" y="706" width="280" height="24" rx="4" ry="4" fill="#ffffff" stroke="#57606a" stroke-width="1.2"/>
+<text x="553" y="722" font-family="ui-monospace, monospace" font-size="11px" fill="#475569">feat/glowshop-catalogo-autorizado · ab65ab34</text>
+<path d="M 520 762 Q 535 762, 545 762" fill="none" stroke="#57606a" stroke-width="2" opacity="0.7"/>
+<rect x="545" y="750" width="280" height="24" rx="4" ry="4" fill="#ffffff" stroke="#57606a" stroke-width="1.2"/>
+<text x="553" y="766" font-family="ui-monospace, monospace" font-size="11px" fill="#475569">feat/glowshop-catalogo-niveles · caaa57d7</text>
+<path d="M 520 454 Q 535 454, 545 454" fill="none" stroke="#57606a" stroke-width="2" opacity="0.7"/>
+<rect x="545" y="442" width="280" height="24" rx="4" ry="4" fill="#ffffff" stroke="#57606a" stroke-width="1.2"/>
+<text x="553" y="458" font-family="ui-monospace, monospace" font-size="11px" fill="#475569">feat/glowshop-correcciones-a0 · 0ee1eb37</text>
+<path d="M 520 806 Q 535 806, 545 806" fill="none" stroke="#57606a" stroke-width="2" opacity="0.7"/>
+<rect x="545" y="794" width="280" height="24" rx="4" ry="4" fill="#ffffff" stroke="#57606a" stroke-width="1.2"/>
+<text x="553" y="810" font-family="ui-monospace, monospace" font-size="11px" fill="#475569">feat/glowshop-precios-api · accba403</text>
+<path d="M 520 278 Q 535 278, 545 278" fill="none" stroke="#57606a" stroke-width="2" opacity="0.7"/>
+<rect x="545" y="266" width="280" height="24" rx="4" ry="4" fill="#ffffff" stroke="#57606a" stroke-width="1.2"/>
+<text x="553" y="282" font-family="ui-monospace, monospace" font-size="11px" fill="#475569">feat/glowshop-tienda-operable-b01 · 35318494</text>
+<path d="M 520 510 Q 535 510, 545 510" fill="none" stroke="#57606a" stroke-width="2" opacity="0.7"/>
+<rect x="545" y="498" width="280" height="24" rx="4" ry="4" fill="#ffffff" stroke="#57606a" stroke-width="1.2"/>
+<text x="553" y="514" font-family="ui-monospace, monospace" font-size="11px" fill="#475569">feature/saas-railway-integrated · c1bcc313 ⌂ database_audit_read_only</text>
+<path d="M 520 1070 Q 535 1070, 545 1070" fill="none" stroke="#57606a" stroke-width="2" opacity="0.7"/>
+<rect x="545" y="1058" width="280" height="24" rx="4" ry="4" fill="#ffffff" stroke="#57606a" stroke-width="1.2"/>
+<text x="553" y="1074" font-family="ui-monospace, monospace" font-size="11px" fill="#475569">fix/agentes-esquema-columnas · d0af3236</text>
+<path d="M 520 1158 Q 535 1158, 545 1158" fill="none" stroke="#57606a" stroke-width="2" opacity="0.7"/>
+<rect x="545" y="1146" width="280" height="24" rx="4" ry="4" fill="#ffffff" stroke="#57606a" stroke-width="1.2"/>
+<text x="553" y="1162" font-family="ui-monospace, monospace" font-size="11px" fill="#475569">fix/audit-360-remediation · 3052ebae</text>
+<path d="M 520 586 Q 535 586, 545 586" fill="none" stroke="#57606a" stroke-width="2" opacity="0.7"/>
+<rect x="545" y="574" width="280" height="24" rx="4" ry="4" fill="#ffffff" stroke="#57606a" stroke-width="1.2"/>
+<text x="553" y="590" font-family="ui-monospace, monospace" font-size="11px" fill="#475569">fix/aura-chat-entrega-respuesta · 5c3e879c ⌂ beauty-fix-aura</text>
+<path d="M 520 1246 Q 535 1246, 545 1246" fill="none" stroke="#57606a" stroke-width="2" opacity="0.7"/>
+<rect x="545" y="1234" width="280" height="24" rx="4" ry="4" fill="#ffffff" stroke="#57606a" stroke-width="1.2"/>
+<text x="553" y="1250" font-family="ui-monospace, monospace" font-size="11px" fill="#475569">fix/rag-filtros-citas-trazas · 454448ac</text>
+<path d="M 520 1642 Q 535 1642, 545 1642" fill="none" stroke="#57606a" stroke-width="2" opacity="0.7"/>
+<rect x="545" y="1630" width="280" height="24" rx="4" ry="4" fill="#ffffff" stroke="#57606a" stroke-width="1.2"/>
+<text x="553" y="1646" font-family="ui-monospace, monospace" font-size="11px" fill="#475569">fix/rag-p0-port-r1 · a94d21f7</text>
+<path d="M 520 586 Q 535 586, 545 586" fill="none" stroke="#57606a" stroke-width="2" opacity="0.7"/>
+<rect x="545" y="574" width="280" height="24" rx="4" ry="4" fill="#ffffff" stroke="#57606a" stroke-width="1.2"/>
+<text x="553" y="590" font-family="ui-monospace, monospace" font-size="11px" fill="#475569">pr9 · 5c3e879c</text>
+<rect x="1200" y="160" width="680" height="1520" rx="12" ry="12" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+<rect x="1200" y="160" width="680" height="55" rx="12" ry="12" fill="#1e293b"/>
+<rect x="1200" y="200" width="680" height="15" fill="#1e293b"/>
+<text x="1224" y="194" class="panel-title">PANEL DE GITHUB · origin (19 Referencias Remotas)</text>
+<rect x="1216" y="222" width="648" height="62" rx="6" ry="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+<text x="1232" y="244" font-family="system-ui, sans-serif" font-weight="600" font-size="13px" fill="#0f172a">origin/audit/hermes</text>
+<text x="1232" y="264" font-family="ui-monospace, monospace" font-size="11px" fill="#64748b">434f7f21 · 2026-07-19 · feat: redirect superuser admin@glow.app to ro</text>
+<rect x="1710" y="232" width="140" height="26" rx="13" ry="13" fill="#f0fdf4" stroke="#166534" stroke-width="1"/>
+<text x="1780" y="249" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="600" font-size="11px" fill="#166534">= local</text>
+<rect x="1216" y="296" width="648" height="62" rx="6" ry="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+<text x="1232" y="318" font-family="system-ui, sans-serif" font-weight="600" font-size="13px" fill="#0f172a">origin/chore/retirar-orquestador-legado</text>
+<text x="1232" y="338" font-family="ui-monospace, monospace" font-size="11px" fill="#64748b">6d8c5173 · 2026-09-24 · chore(ai): retirar orquestador legado backend</text>
+<rect x="1710" y="306" width="140" height="26" rx="13" ry="13" fill="#f0fdf4" stroke="#166534" stroke-width="1"/>
+<text x="1780" y="323" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="600" font-size="11px" fill="#166534">= local</text>
+<rect x="1216" y="370" width="648" height="62" rx="6" ry="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+<text x="1232" y="392" font-family="system-ui, sans-serif" font-weight="600" font-size="13px" fill="#0f172a">origin/codex/rag-aura-r1-r4</text>
+<text x="1232" y="412" font-family="ui-monospace, monospace" font-size="11px" fill="#64748b">68ce4b4e · 2026-08-13 · feat(rag): consolidate Aura RAG MVP R1-R4</text>
+<rect x="1710" y="380" width="140" height="26" rx="13" ry="13" fill="#f0fdf4" stroke="#166534" stroke-width="1"/>
+<text x="1780" y="397" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="600" font-size="11px" fill="#166534">= local</text>
+<rect x="1216" y="444" width="648" height="62" rx="6" ry="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+<text x="1232" y="466" font-family="system-ui, sans-serif" font-weight="600" font-size="13px" fill="#0f172a">origin/diegoromerov-feature-biometric-hub</text>
+<text x="1232" y="486" font-family="ui-monospace, monospace" font-size="11px" fill="#64748b">d99ed223 · 2026-08-01 · chore(theme): resolve merge conflict keeping </text>
+<rect x="1710" y="454" width="140" height="26" rx="13" ry="13" fill="#eff6ff" stroke="#1e40af" stroke-width="1"/>
+<text x="1780" y="471" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="600" font-size="11px" fill="#1e40af">solo-remoto</text>
+<rect x="1216" y="518" width="648" height="62" rx="6" ry="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+<text x="1232" y="540" font-family="system-ui, sans-serif" font-weight="600" font-size="13px" fill="#0f172a">origin/docs/rag-eol-corrections-2026-09-22</text>
+<text x="1232" y="560" font-family="ui-monospace, monospace" font-size="11px" fill="#64748b">e2b2a7fc · 2026-09-23 · docs(rag): plan de mejora por fases con decis</text>
+<rect x="1710" y="528" width="140" height="26" rx="13" ry="13" fill="#f0fdf4" stroke="#166534" stroke-width="1"/>
+<text x="1780" y="545" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="600" font-size="11px" fill="#166534">= local</text>
+<rect x="1216" y="592" width="648" height="62" rx="6" ry="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+<text x="1232" y="614" font-family="system-ui, sans-serif" font-weight="600" font-size="13px" fill="#0f172a">origin/fase-a/verdad-operativa</text>
+<text x="1232" y="634" font-family="ui-monospace, monospace" font-size="11px" fill="#64748b">cfec993a · 2026-09-24 · fix(frontend): remove PAN/CVV/Nequi form on s</text>
+<rect x="1710" y="602" width="140" height="26" rx="13" ry="13" fill="#f0fdf4" stroke="#166534" stroke-width="1"/>
+<text x="1780" y="619" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="600" font-size="11px" fill="#166534">= local</text>
+<rect x="1216" y="666" width="648" height="62" rx="6" ry="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+<text x="1232" y="688" font-family="system-ui, sans-serif" font-weight="600" font-size="13px" fill="#0f172a">origin/feat/glowshop-catalogo-autorizado</text>
+<text x="1232" y="708" font-family="ui-monospace, monospace" font-size="11px" fill="#64748b">ab65ab34 · 2026-09-24 · feat(glowshop): implement migration 072 for c</text>
+<rect x="1710" y="676" width="140" height="26" rx="13" ry="13" fill="#f0fdf4" stroke="#166534" stroke-width="1"/>
+<text x="1780" y="693" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="600" font-size="11px" fill="#166534">= local</text>
+<rect x="1216" y="740" width="648" height="62" rx="6" ry="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+<text x="1232" y="762" font-family="system-ui, sans-serif" font-weight="600" font-size="13px" fill="#0f172a">origin/feat/glowshop-catalogo-niveles</text>
+<text x="1232" y="782" font-family="ui-monospace, monospace" font-size="11px" fill="#64748b">caaa57d7 · 2026-09-24 · feat(glowshop): connect catalog and checkout </text>
+<rect x="1710" y="750" width="140" height="26" rx="13" ry="13" fill="#f0fdf4" stroke="#166534" stroke-width="1"/>
+<text x="1780" y="767" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="600" font-size="11px" fill="#166534">= local</text>
+<rect x="1216" y="814" width="648" height="62" rx="6" ry="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+<text x="1232" y="836" font-family="system-ui, sans-serif" font-weight="600" font-size="13px" fill="#0f172a">origin/feat/glowshop-correcciones-a0</text>
+<text x="1232" y="856" font-family="ui-monospace, monospace" font-size="11px" fill="#64748b">0ee1eb37 · 2026-09-24 · fix(glowshop): WO-07 final QA corrections - v</text>
+<rect x="1710" y="824" width="140" height="26" rx="13" ry="13" fill="#f0fdf4" stroke="#166534" stroke-width="1"/>
+<text x="1780" y="841" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="600" font-size="11px" fill="#166534">= local</text>
+<rect x="1216" y="888" width="648" height="62" rx="6" ry="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+<text x="1232" y="910" font-family="system-ui, sans-serif" font-weight="600" font-size="13px" fill="#0f172a">origin/feat/glowshop-niveles-a0</text>
+<text x="1232" y="930" font-family="ui-monospace, monospace" font-size="11px" fill="#64748b">3337aadb · 2026-09-24 · docs(glowshop): script de restauración del ca</text>
+<rect x="1710" y="898" width="140" height="26" rx="13" ry="13" fill="#f0fdf4" stroke="#166534" stroke-width="1"/>
+<text x="1780" y="915" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="600" font-size="11px" fill="#166534">= local</text>
+<rect x="1216" y="962" width="648" height="62" rx="6" ry="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+<text x="1232" y="984" font-family="system-ui, sans-serif" font-weight="600" font-size="13px" fill="#0f172a">origin/feat/glowshop-precios-api</text>
+<text x="1232" y="1004" font-family="ui-monospace, monospace" font-size="11px" fill="#64748b">accba403 · 2026-09-24 · feat(glowshop): implement level pricing servi</text>
+<rect x="1710" y="972" width="140" height="26" rx="13" ry="13" fill="#f0fdf4" stroke="#166534" stroke-width="1"/>
+<text x="1780" y="989" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="600" font-size="11px" fill="#166534">= local</text>
+<rect x="1216" y="1036" width="648" height="62" rx="6" ry="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+<text x="1232" y="1058" font-family="system-ui, sans-serif" font-weight="600" font-size="13px" fill="#0f172a">origin/feat/glowshop-precios-csv</text>
+<text x="1232" y="1078" font-family="ui-monospace, monospace" font-size="11px" fill="#64748b">18a04262 · 2026-09-24 · feat(glowshop): implement level price CSV exp</text>
+<rect x="1710" y="1046" width="140" height="26" rx="13" ry="13" fill="#f0fdf4" stroke="#166534" stroke-width="1"/>
+<text x="1780" y="1063" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="600" font-size="11px" fill="#166534">= local</text>
+<rect x="1216" y="1110" width="648" height="62" rx="6" ry="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+<text x="1232" y="1132" font-family="system-ui, sans-serif" font-weight="600" font-size="13px" fill="#0f172a">origin/feat/glowshop-tienda-operable-b01</text>
+<text x="1232" y="1152" font-family="ui-monospace, monospace" font-size="11px" fill="#64748b">35318494 · 2026-09-24 · fix(glowshop): resolve all findings H1-H5 for</text>
+<rect x="1710" y="1120" width="140" height="26" rx="13" ry="13" fill="#f0fdf4" stroke="#166534" stroke-width="1"/>
+<text x="1780" y="1137" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="600" font-size="11px" fill="#166534">= local</text>
+<rect x="1216" y="1184" width="648" height="62" rx="6" ry="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+<text x="1232" y="1206" font-family="system-ui, sans-serif" font-weight="600" font-size="13px" fill="#0f172a">origin/fix/agentes-esquema-columnas</text>
+<text x="1232" y="1226" font-family="ui-monospace, monospace" font-size="11px" fill="#64748b">d0af3236 · 2026-09-24 · fix(agents): align agent SQL queries with rea</text>
+<rect x="1710" y="1194" width="140" height="26" rx="13" ry="13" fill="#f0fdf4" stroke="#166534" stroke-width="1"/>
+<text x="1780" y="1211" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="600" font-size="11px" fill="#166534">= local</text>
+<rect x="1216" y="1258" width="648" height="62" rx="6" ry="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+<text x="1232" y="1280" font-family="system-ui, sans-serif" font-weight="600" font-size="13px" fill="#0f172a">origin/fix/audit-360-remediation</text>
+<text x="1232" y="1300" font-family="ui-monospace, monospace" font-size="11px" fill="#64748b">fa549f46 · 2026-09-22 · fix(auth): support array of valid audiences a</text>
+<rect x="1710" y="1268" width="140" height="26" rx="13" ry="13" fill="#fef2f2" stroke="#991b1b" stroke-width="1"/>
+<text x="1780" y="1285" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="600" font-size="11px" fill="#991b1b">≠ local (diverge)</text>
+<rect x="1216" y="1332" width="648" height="62" rx="6" ry="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+<text x="1232" y="1354" font-family="system-ui, sans-serif" font-weight="600" font-size="13px" fill="#0f172a">origin/fix/aura-chat-entrega-respuesta</text>
+<text x="1232" y="1374" font-family="ui-monospace, monospace" font-size="11px" fill="#64748b">5c3e879c · 2026-09-24 · fix(chat): reconciliacion de respuestas de AU</text>
+<rect x="1710" y="1342" width="140" height="26" rx="13" ry="13" fill="#f0fdf4" stroke="#166534" stroke-width="1"/>
+<text x="1780" y="1359" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="600" font-size="11px" fill="#166534">= local</text>
+<rect x="1216" y="1406" width="648" height="62" rx="6" ry="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+<text x="1232" y="1428" font-family="system-ui, sans-serif" font-weight="600" font-size="13px" fill="#0f172a">origin/fix/rag-filtros-citas-trazas</text>
+<text x="1232" y="1448" font-family="ui-monospace, monospace" font-size="11px" fill="#64748b">454448ac · 2026-09-23 · docs(rag): sincronizar el registro canónico c</text>
+<rect x="1710" y="1416" width="140" height="26" rx="13" ry="13" fill="#f0fdf4" stroke="#166534" stroke-width="1"/>
+<text x="1780" y="1433" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="600" font-size="11px" fill="#166534">= local</text>
+<rect x="1216" y="1480" width="648" height="62" rx="6" ry="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+<text x="1232" y="1502" font-family="system-ui, sans-serif" font-weight="600" font-size="13px" fill="#0f172a">origin/fix/rag-p0-port-r1</text>
+<text x="1232" y="1522" font-family="ui-monospace, monospace" font-size="11px" fill="#64748b">a94d21f7 · 2026-09-22 · fix(rag): conservar el flag ENABLE_BEAUTY_RAG</text>
+<rect x="1710" y="1490" width="140" height="26" rx="13" ry="13" fill="#f0fdf4" stroke="#166534" stroke-width="1"/>
+<text x="1780" y="1507" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="600" font-size="11px" fill="#166534">= local</text>
+<rect x="1216" y="1554" width="648" height="62" rx="6" ry="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+<text x="1232" y="1576" font-family="system-ui, sans-serif" font-weight="600" font-size="13px" fill="#0f172a">origin/main</text>
+<text x="1232" y="1596" font-family="ui-monospace, monospace" font-size="11px" fill="#64748b">f5a1b4fc · 2026-09-24 · Merge branch &apos;feat/glowshop-tienda-operable-b</text>
+<rect x="1710" y="1564" width="140" height="26" rx="13" ry="13" fill="#f0fdf4" stroke="#166534" stroke-width="1"/>
+<text x="1780" y="1581" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="600" font-size="11px" fill="#166534">= local</text>
+<rect x="1216" y="1628" width="648" height="62" rx="6" ry="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+<text x="1232" y="1650" font-family="system-ui, sans-serif" font-weight="600" font-size="13px" fill="#0f172a">origin/pr9</text>
+<text x="1232" y="1670" font-family="ui-monospace, monospace" font-size="11px" fill="#64748b">5c3e879c · 2026-09-24 · fix(chat): reconciliacion de respuestas de AU</text>
+<rect x="1710" y="1638" width="140" height="26" rx="13" ry="13" fill="#eff6ff" stroke="#1e40af" stroke-width="1"/>
+<text x="1780" y="1655" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="600" font-size="11px" fill="#1e40af">solo-remoto</text>
+<rect x="1200" y="1710" width="680" height="220" rx="12" ry="12" fill="#faf5ff" stroke="#7c3aed" stroke-width="2" stroke-dasharray="6,4"/>
+<text x="1224" y="1746" font-family="system-ui, sans-serif" font-weight="700" font-size="16px" fill="#6b21a8">COPIA FÓSIL — C:/Users/Compu casa/belleza-app</text>
+<text x="1224" y="1778" font-family="ui-monospace, monospace" font-size="13px" fill="#581c87">main = 4f803a0b (2026-08-04) · fix: corregir tabla aura_knowledge_chunks, input_t</text>
+<rect x="1224" y="1805" width="300" height="40" rx="6" ry="6" fill="#f3e8ff" stroke="#9333ea" stroke-width="1"/>
+<text x="1236" y="1830" font-family="system-ui, sans-serif" font-weight="600" font-size="13px" fill="#6b21a8">Distancia: +1.363 commits desde main</text>
+<rect x="1540" y="1805" width="310" height="40" rx="6" ry="6" fill="#f3e8ff" stroke="#9333ea" stroke-width="1"/>
+<text x="1552" y="1830" font-family="system-ui, sans-serif" font-weight="600" font-size="13px" fill="#6b21a8">Limpieza: 22.036 archivos eliminados</text>
+<path d="M 520 490 C 920 490, 1100 1820, 1200 1820" fill="none" stroke="#7c3aed" stroke-width="3" stroke-dasharray="8,5"/>
+<rect x="30" y="1960" width="1860" height="640" rx="12" ry="12" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+<text x="60" y="2000" class="legend-title" font-size="18px">LEYENDA Y METODOLOGÍA DE AUDITORÍA DETERMINISTA</text>
+<rect x="60" y="2030" width="420" height="75" rx="8" ry="8" fill="#f0fdf4" stroke="#1a7f37" stroke-width="1.5"/>
+<text x="76" y="2060" font-family="system-ui, sans-serif" font-weight="700" font-size="14px" fill="#1a7f37">ACTIVAS (5 ramas)</text>
+<text x="76" y="2084" font-family="system-ui, sans-serif" font-size="12px" fill="#475569">AHEAD > 0 y (Worktree activo o commit ≤ 14d)</text>
+<rect x="500" y="2030" width="420" height="75" rx="8" ry="8" fill="#fffbeb" stroke="#9a6700" stroke-width="1.5"/>
+<text x="516" y="2060" font-family="system-ui, sans-serif" font-weight="700" font-size="14px" fill="#9a6700">HUÉRFANAS (4 ramas)</text>
+<text x="516" y="2084" font-family="system-ui, sans-serif" font-size="12px" fill="#475569">AHEAD > 0 y sin actividad > 14 días</text>
+<rect x="940" y="2030" width="420" height="75" rx="8" ry="8" fill="#f8fafc" stroke="#57606a" stroke-width="1.5"/>
+<text x="956" y="2060" font-family="system-ui, sans-serif" font-weight="700" font-size="14px" fill="#57606a">MUERTAS (15 ramas)</text>
+<text x="956" y="2084" font-family="system-ui, sans-serif" font-size="12px" fill="#475569">AHEAD = 0 (integradas completamente en main)</text>
+<rect x="1380" y="2030" width="420" height="75" rx="8" ry="8" fill="#eff6ff" stroke="#0969da" stroke-width="1.5"/>
+<text x="1396" y="2060" font-family="system-ui, sans-serif" font-weight="700" font-size="14px" fill="#0969da">BASE (2 referencias)</text>
+<text x="1396" y="2084" font-family="system-ui, sans-serif" font-size="12px" fill="#475569">main trunk y referencia suelta local origin</text>
+<text x="60" y="2130" font-family="system-ui, sans-serif" font-weight="700" font-size="14px" fill="#0f172a">ICONOS DE SIMBOLOGÍA:</text>
+<text x="60" y="2158" class="legend-text">⌂ : Worktree activo registrado · = : Tip coincide exactamente con origin · ≠ : Tip diverge de origin · — — : Conexión a clon fósil externo · ± : Commits de diferencia respecto a main</text>
+<text x="60" y="2205" font-family="system-ui, sans-serif" font-weight="700" font-size="14px" fill="#0f172a">COMANDOS EJECUTADOS PARA RECOLECCIÓN DE DATOS (REPRODUCIBLES):</text>
+<rect x="60" y="2217" width="1740" height="24" rx="4" ry="4" fill="#f1f5f9"/>
+<text x="75" y="2233" font-family="ui-monospace, monospace" font-size="12px" fill="#0f172a">git for-each-ref --format=&quot;%(refname:short)|%(objectname:short)|%(committerdate:short)|%(subject)&quot; refs/heads refs/remotes/origin</text>
+<rect x="60" y="2247" width="1740" height="24" rx="4" ry="4" fill="#f1f5f9"/>
+<text x="75" y="2263" font-family="ui-monospace, monospace" font-size="12px" fill="#0f172a">git merge-base main &lt;rama&gt;</text>
+<rect x="60" y="2277" width="1740" height="24" rx="4" ry="4" fill="#f1f5f9"/>
+<text x="75" y="2293" font-family="ui-monospace, monospace" font-size="12px" fill="#0f172a">git rev-list --count main..&lt;rama&gt;</text>
+<rect x="60" y="2307" width="1740" height="24" rx="4" ry="4" fill="#f1f5f9"/>
+<text x="75" y="2323" font-family="ui-monospace, monospace" font-size="12px" fill="#0f172a">git log main --date=short --pretty=&quot;%h|%ad|%s&quot; -n 40</text>
+<rect x="60" y="2337" width="1740" height="24" rx="4" ry="4" fill="#f1f5f9"/>
+<text x="75" y="2353" font-family="ui-monospace, monospace" font-size="12px" fill="#0f172a">git worktree list --porcelain</text>
+<rect x="60" y="2367" width="1740" height="24" rx="4" ry="4" fill="#f1f5f9"/>
+<text x="75" y="2383" font-family="ui-monospace, monospace" font-size="12px" fill="#0f172a">git ls-remote --heads origin</text>
+<rect x="60" y="2397" width="1740" height="24" rx="4" ry="4" fill="#f1f5f9"/>
+<text x="75" y="2413" font-family="ui-monospace, monospace" font-size="12px" fill="#0f172a">git -C &quot;C:/Users/Compu casa/belleza-app&quot; log -1 --format=&quot;%h|%ci|%s&quot;</text>
+</svg>

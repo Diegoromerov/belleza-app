@@ -5,17 +5,26 @@ const ALGORITHM = 'aes-256-gcm';
 describe('BiometricCryptoService - Hardening', () => {
   const validKey = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'; // 32 bytes
 
+  const initialEnv = process.env.NODE_ENV;
+
   beforeEach(() => {
-    // Clean up environment variable
     delete process.env.BIOMETRIC_ENCRYPTION_KEY;
+    delete process.env.ENCRYPTION_KEY;
+    process.env.NODE_ENV = initialEnv || 'test';
     jest.resetModules();
   });
+
+  const getBcs = () => {
+    const mod = require(path.join(__dirname, 'biometricCryptoService.js'));
+    if (typeof mod === 'function') return new mod();
+    if (mod.BiometricCryptoService) return new mod.BiometricCryptoService();
+    return mod;
+  };
 
   describe('encrypt() and decrypt() with valid key', () => {
     test('should encrypt and decrypt an object correctly', () => {
       process.env.BIOMETRIC_ENCRYPTION_KEY = validKey;
-      const BiometricCryptoService = require(path.join(__dirname, 'biometricCryptoService.js'));
-      const bcs = new BiometricCryptoService();
+      const bcs = getBcs();
       const original = { hydration: 80, wrinkles: 10 };
       const encrypted = bcs.encrypt(original);
       expect(typeof encrypted).toBe('string');
@@ -24,10 +33,21 @@ describe('BiometricCryptoService - Hardening', () => {
       expect(decrypted).toEqual(original);
     });
 
+    test('should encrypt and decrypt correctly in PRODUCTION environment with 32-byte key (happy path)', () => {
+      process.env.BIOMETRIC_ENCRYPTION_KEY = validKey;
+      process.env.NODE_ENV = 'production';
+      const bcs = getBcs();
+      const original = { faceScores: { hydration: 85, elasticity: 90 }, user: 'prod_user' };
+      const encrypted = bcs.encrypt(original);
+      expect(typeof encrypted).toBe('string');
+      expect(encrypted.split(':')).toHaveLength(3);
+      const decrypted = bcs.decrypt(encrypted);
+      expect(decrypted).toEqual(original);
+    });
+
     test('should encrypt and decrypt a string correctly', () => {
       process.env.BIOMETRIC_ENCRYPTION_KEY = validKey;
-      const BiometricCryptoService = require(path.join(__dirname, 'biometricCryptoService.js'));
-      const bcs = new BiometricCryptoService();
+      const bcs = getBcs();
       const original = 'some string';
       const encrypted = bcs.encrypt(original);
       const decrypted = bcs.decrypt(encrypted);
@@ -36,56 +56,56 @@ describe('BiometricCryptoService - Hardening', () => {
 
     test('should return null for null input', () => {
       process.env.BIOMETRIC_ENCRYPTION_KEY = validKey;
-      const BiometricCryptoService = require(path.join(__dirname, 'biometricCryptoService.js'));
-      const bcs = new BiometricCryptoService();
+      const bcs = getBcs();
       expect(bcs.encrypt(null)).toBeNull();
       expect(bcs.decrypt(null)).toBeNull();
     });
 
     test('should return null for undefined input', () => {
       process.env.BIOMETRIC_ENCRYPTION_KEY = validKey;
-      const BiometricCryptoService = require(path.join(__dirname, 'biometricCryptoService.js'));
-      const bcs = new BiometricCryptoService();
+      const bcs = getBcs();
       expect(bcs.encrypt(undefined)).toBeNull();
       expect(bcs.decrypt(undefined)).toBeNull();
     });
 
     test('should return null for empty string', () => {
       process.env.BIOMETRIC_ENCRYPTION_KEY = validKey;
-      const BiometricCryptoService = require(path.join(__dirname, 'biometricCryptoService.js'));
-      const bcs = new BiometricCryptoService();
+      const bcs = getBcs();
       expect(bcs.encrypt('')).toBeNull();
       expect(bcs.decrypt('')).toBeNull();
     });
   });
 
   describe('Key validation', () => {
-    test('should throw when BIOMETRIC_ENCRYPTION_KEY is missing', () => {
+    test('should throw when BIOMETRIC_ENCRYPTION_KEY is missing in production', () => {
       delete process.env.BIOMETRIC_ENCRYPTION_KEY;
+      delete process.env.ENCRYPTION_KEY;
+      process.env.NODE_ENV = 'production';
       expect(() => {
         require(path.join(__dirname, 'biometricCryptoService.js'));
-      }).toThrow('BIOMETRIC_ENCRYPTION_KEY is required and must be a string');
+      }).toThrow(/BIOMETRIC_ENCRYPTION_KEY no está configurada/);
     });
 
-    test('should throw when BIOMETRIC_ENCRYPTION_KEY is not a string', () => {
-      process.env.BIOMETRIC_ENCRYPTION_KEY = 123;
+    test('should throw when BIOMETRIC_ENCRYPTION_KEY is invalid length in production', () => {
+      process.env.BIOMETRIC_ENCRYPTION_KEY = 'short_key';
+      process.env.NODE_ENV = 'production';
       expect(() => {
         require(path.join(__dirname, 'biometricCryptoService.js'));
-      }).toThrow('BIOMETRIC_ENCRYPTION_KEY is required and must be a string');
+      }).toThrow(/32 bytes long/);
     });
 
     test('should throw when BIOMETRIC_ENCRYPTION_KEY is not 32 bytes', () => {
       process.env.BIOMETRIC_ENCRYPTION_KEY = 'short'; // 5 bytes
       expect(() => {
         require(path.join(__dirname, 'biometricCryptoService.js'));
-      }).toThrow('BIOMETRIC_ENCRYPTION_KEY must be 32 bytes long');
+      }).toThrow(/32 bytes long/);
     });
 
     test('should throw when BIOMETRIC_ENCRYPTION_KEY is too long', () => {
       process.env.BIOMETRIC_ENCRYPTION_KEY = 'a'.repeat(33); // 33 bytes
       expect(() => {
         require(path.join(__dirname, 'biometricCryptoService.js'));
-      }).toThrow('BIOMETRIC_ENCRYPTION_KEY must be 32 bytes long');
+      }).toThrow(/32 bytes long/);
     });
   });
 
@@ -97,16 +117,14 @@ describe('BiometricCryptoService - Hardening', () => {
     });
 
     test('should throw for invalid format (not three parts)', () => {
-      const BiometricCryptoService = require(path.join(__dirname, 'biometricCryptoService.js'));
-      const bcs = new BiometricCryptoService();
+      const bcs = getBcs();
       expect(() => bcs.decrypt('invalid')).toThrow('Invalid ciphertext format');
       expect(() => bcs.decrypt('part1:part2')).toThrow('Invalid ciphertext format');
       expect(() => bcs.decrypt('part1:part2:part3:part4')).toThrow('Invalid ciphertext format');
     });
 
     test('should throw for invalid hex in iv', () => {
-      const BiometricCryptoService = require(path.join(__dirname, 'biometricCryptoService.js'));
-      const bcs = new BiometricCryptoService();
+      const bcs = getBcs();
       // Create a valid ciphertext first to then tamper with the iv part
       const original = { test: 1 };
       const encrypted = bcs.encrypt(original);
@@ -118,8 +136,7 @@ describe('BiometricCryptoService - Hardening', () => {
     });
 
     test('should throw for invalid hex in authTag', () => {
-      const BiometricCryptoService = require(path.join(__dirname, 'biometricCryptoService.js'));
-      const bcs = new BiometricCryptoService();
+      const bcs = getBcs();
       const original = { test: 1 };
       const encrypted = bcs.encrypt(original);
       const [ivHex, authTagHex, encryptedText] = encrypted.split(':');
@@ -129,8 +146,7 @@ describe('BiometricCryptoService - Hardening', () => {
     });
 
     test('should throw for corrupted ciphertext (auth tag mismatch)', () => {
-      const BiometricCryptoService = require(path.join(__dirname, 'biometricCryptoService.js'));
-      const bcs = new BiometricCryptoService();
+      const bcs = getBcs();
       const original = { test: 1 };
       const encrypted = bcs.encrypt(original);
       const [ivHex, authTagHex, encryptedText] = encrypted.split(':');
@@ -141,8 +157,7 @@ describe('BiometricCryptoService - Hardening', () => {
     });
 
     test('should throw for invalid authentication tag (tampered)', () => {
-      const BiometricCryptoService = require(path.join(__dirname, 'biometricCryptoService.js'));
-      const bcs = new BiometricCryptoService();
+      const bcs = getBcs();
       const original = { test: 1 };
       const encrypted = bcs.encrypt(original);
       const [ivHex, authTagHex, encryptedText] = encrypted.split(':');
@@ -153,8 +168,7 @@ describe('BiometricCryptoService - Hardening', () => {
     });
 
     test('should not return the original ciphertext on decryption failure', () => {
-      const BiometricCryptoService = require(path.join(__dirname, 'biometricCryptoService.js'));
-      const bcs = new BiometricCryptoService();
+      const bcs = getBcs();
       const original = { test: 1 };
       const encrypted = bcs.encrypt(original);
       // Tamper with the encrypted string
@@ -176,8 +190,7 @@ describe('BiometricCryptoService - Hardening', () => {
   describe('Compatibility with existing data', () => {
     test('should produce ciphertext in the expected iv:authTag:encryptedData format', () => {
       process.env.BIOMETRIC_ENCRYPTION_KEY = validKey;
-      const BiometricCryptoService = require(path.join(__dirname, 'biometricCryptoService.js'));
-      const bcs = new BiometricCryptoService();
+      const bcs = getBcs();
       const original = { test: 1 };
       const encrypted = bcs.encrypt(original);
       const parts = encrypted.split(':');

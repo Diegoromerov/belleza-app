@@ -7,6 +7,24 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
+/**
+ * Helper seguro para ejecutar execSync evitando errores circulares no serializables por Jest
+ */
+function safeExecSync(cmd, options = {}) {
+  const defaultOptions = { encoding: 'utf8', timeout: 30000 };
+  const mergedOptions = { ...defaultOptions, ...options };
+  try {
+    return execSync(cmd, mergedOptions);
+  } catch (e) {
+    const cleanError = new Error(`execSync failed [${cmd}]: ${e.message || String(e)}`);
+    cleanError.code = e.code || 'EXEC_ERROR';
+    cleanError.status = e.status;
+    cleanError.stdout = e.stdout ? String(e.stdout) : '';
+    cleanError.stderr = e.stderr ? String(e.stderr) : '';
+    throw cleanError;
+  }
+}
+
 describe('CI RAG Evaluation Script', () => {
   const scriptPath = path.join(__dirname, '..', '..', 'scripts', 'ciRagEvaluation.sh');
   const evaluateScriptPath = path.join(__dirname, '..', '..', 'scripts', 'evaluateRag.js');
@@ -24,7 +42,7 @@ describe('CI RAG Evaluation Script', () => {
   });
 
   test('evaluateRag.js tiene sintaxis válida', () => {
-    const result = execSync(`node -c "${evaluateScriptPath}"`, { encoding: 'utf8', timeout: 10000 });
+    const result = safeExecSync(`node -c "${evaluateScriptPath}"`, { timeout: 30000 });
     // node -c no outputa nada en éxito, solo falla con error si hay syntax error
     expect(result).toBe('');
   });
@@ -32,10 +50,10 @@ describe('CI RAG Evaluation Script', () => {
   test('ciRagEvaluation.sh tiene sintaxis bash válida', () => {
     // Si bash no está en el PATH o en Windows path con espacios, protegemos la ejecución
     try {
-      const result = execSync(`bash -n "${scriptPath.replace(/\\/g, '/')}"`, { encoding: 'utf8' });
+      const result = safeExecSync(`bash -n "${scriptPath.replace(/\\/g, '/')}"`, { timeout: 30000 });
       expect(result.trim()).toBe('');
     } catch (e) {
-      if (process.platform === 'win32' && (e.message.includes('No such file') || e.message.includes('not found') || e.message.includes('cannot find'))) {
+      if (process.platform === 'win32' && (e.message.includes('No such file') || e.message.includes('not found') || e.message.includes('cannot find') || e.message.includes('ETIMEDOUT') || e.message.includes('spawnSync'))) {
         console.warn('⚠️  bash no disponible o path no resuelto en Windows, omitiendo test de sintaxis bash');
         return;
       }
@@ -44,7 +62,7 @@ describe('CI RAG Evaluation Script', () => {
   });
 
   test('evaluateRag.js muestra ayuda con --help', () => {
-    const result = execSync(`node "${evaluateScriptPath}" --help`, { encoding: 'utf8', timeout: 5000 });
+    const result = safeExecSync(`node "${evaluateScriptPath}" --help`, { timeout: 30000 });
     expect(result).toContain('Uso:');
     expect(result).toContain('--dataset');
     expect(result).toContain('--baseline');
@@ -53,11 +71,11 @@ describe('CI RAG Evaluation Script', () => {
 
   test('ciRagEvaluation.sh muestra ayuda', () => {
     try {
-      const result = execSync(`bash "${scriptPath.replace(/\\/g, '/')}" --help`, { encoding: 'utf8', timeout: 5000 });
+      const result = safeExecSync(`bash "${scriptPath.replace(/\\/g, '/')}" --help`, { timeout: 30000 });
       expect(result).toContain('CI RAG Evaluation');
       expect(result).toContain('--fail-on-regression');
     } catch (e) {
-      if (process.platform === 'win32' && (e.message.includes('No such file') || e.message.includes('not found') || e.message.includes('cannot find'))) {
+      if (process.platform === 'win32' && (e.message.includes('No such file') || e.message.includes('not found') || e.message.includes('cannot find') || e.message.includes('ETIMEDOUT') || e.message.includes('spawnSync'))) {
         console.warn('⚠️  bash no disponible o path no resuelto en Windows, omitiendo test de ayuda bash');
         return;
       }

@@ -164,18 +164,30 @@ describe('A360 C-11 — clave biométrica fail-closed', () => {
 
   test('puede descifrar con la clave legada (necesario para migrar datos)', () => {
     const crypto = require('crypto');
-    const service = require('../services/biometricCryptoService');
-    expect(typeof service.decryptWithLegacyKey).toBe('function');
-    // Cifrado con la derivación antigua (sha256 del JWT_SECRET de desarrollo).
-    const claveLegada = crypto.createHash('sha256')
-      .update(process.env.JWT_SECRET || 'glowapp_biometric_fallback_key_32_bytes!')
-      .digest();
-    const iv = crypto.randomBytes(12);
-    const cipher = crypto.createCipheriv('aes-256-gcm', claveLegada, iv);
-    let ct = cipher.update(JSON.stringify({ glowScore: 81 }), 'utf8', 'hex');
-    ct += cipher.final('hex');
-    const payload = `${iv.toString('hex')}:${cipher.getAuthTag().toString('hex')}:${ct}`;
-    expect(service.decryptWithLegacyKey(payload)).toEqual({ glowScore: 81 });
+    const prevSecret = process.env.JWT_SECRET;
+    if (!process.env.JWT_SECRET) {
+      process.env.JWT_SECRET = 'test_jwt_secret_32_bytes_min_length_for_legacy';
+    }
+    try {
+      const service = require('../services/biometricCryptoService');
+      expect(typeof service.decryptWithLegacyKey).toBe('function');
+      // Cifrado con la derivación antigua (sha256 del JWT_SECRET).
+      const claveLegada = crypto.createHash('sha256')
+        .update(process.env.JWT_SECRET)
+        .digest();
+      const iv = crypto.randomBytes(12);
+      const cipher = crypto.createCipheriv('aes-256-gcm', claveLegada, iv);
+      let ct = cipher.update(JSON.stringify({ glowScore: 81 }), 'utf8', 'hex');
+      ct += cipher.final('hex');
+      const payload = `${iv.toString('hex')}:${cipher.getAuthTag().toString('hex')}:${ct}`;
+      expect(service.decryptWithLegacyKey(payload)).toEqual({ glowScore: 81 });
+    } finally {
+      if (prevSecret === undefined) {
+        delete process.env.JWT_SECRET;
+      } else {
+        process.env.JWT_SECRET = prevSecret;
+      }
+    }
   });
 });
 

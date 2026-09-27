@@ -41,6 +41,7 @@ const eventRoutes = require('./src/routes/eventRoutes');
 const eventRegistrationRoutes = require('./src/routes/eventRegistrationRoutes');
 const businessRoutes = require('./src/routes/businessRoutes');
 const membershipRoutes = require('./src/routes/membershipRoutes');
+const { buildProjections } = require('./src/services/adminMetricsService');
 const adminMiddleware = async (req, res, next) => {
   try {
     if (!req.user || !req.user.id) {
@@ -215,6 +216,17 @@ if (hasWebBuild) {
 const sanitizer = require('./src/middleware/sanitizer');
 app.use(sanitizer);
 
+// Middleware de visibilidad de degradación (A1.T2)
+app.use((req, res, next) => {
+  if (getDbStatus().servingFabricatedData === true) {
+    res.setHeader('X-GlowApp-Degraded', 'memory-fallback');
+  }
+  next();
+});
+
+const { degradedLockMiddleware, clasificarSalud, asegurarEstadoComprobado } = require('./src/middleware/degradedLock');
+app.use('/api', degradedLockMiddleware);
+
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -375,8 +387,9 @@ const webhookLimiter = rateLimitByIP({
 app.use('/api/payments/wompi-webhook', webhookLimiter);
 
 // ==========================================
-// SISTEMA DE PAGOS
+// SISTEMA DE RUTAS DE LA API (Montajes únicos)
 // ==========================================
+app.use('/api/auth', authRoutes);
 app.use('/api', paymentRoutes);
 app.use('/api', bookingRoutes);
 app.use('/api', serviceRoutes);
@@ -385,7 +398,12 @@ app.use('/api', productRoutes);
 app.use('/api', providerRoutes);
 app.use('/api', ticketRoutes);
 app.use('/api', disputeRoutes);
+app.use('/api', eventRegistrationRoutes);
 app.use('/api/salon', salonRoutes);
+app.use('/api/users', userPreferencesRoutes);
+app.use('/api/designs', designsRoutes);
+const niaBeautyRoutes = require('./src/routes/niaBeautyRoutes');
+app.use('/api/nia-beauty', niaBeautyRoutes);
 app.use('/api/consent', biometricConsentRoutes);
 const consentRoutes = require('./src/routes/consentRoutes');
 app.use('/api/consent', consentRoutes);
@@ -400,42 +418,49 @@ app.use('/api/academy', academyRoutes);
 app.use('/api/admin/academy', academyAdminRoutes);
 app.use('/api/admin', adminPreciosRoutes);
 app.use('/api/glow-pro', glowProRoutes);
-app.use('/api/glow-pro/events', eventRoutes);
-app.use('/api/glow-pro/event-registrations', eventRegistrationRoutes);
+app.use('/api/events', eventRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/metrics', metricsRoutes);
 app.use('/api/portfolio', portfolioRoutes);
 app.use('/api/community', communityRoutes);
 app.use('/api/mentorship', mentorshipRoutes);
 app.use('/api/xp-logs', xpLogRoutes);
-
-// ==========================================
-// RUTAS PÚBLICAS
-// ===
 app.use('/api/v1/business', businessRoutes);
 app.use('/api/v1/memberships', membershipRoutes);
 // Health check — NO escribe en la base de datos. Antes ejecutaba un `setval` sobre
 // `usuarios_id_seq` en cada probe (y respondía 200 con la BD caída).
 // A360-2026-09-22/A-06 + C-03.
+// Health check — NO escribe en la base de datos.
 app.get('/api/health', async (req, res) => {
-  const db = getDbStatus();
-  const degradado = db.servingFabricatedData || db.pgAvailable === false;
-  res.status(degradado ? 503 : 200).json({
-    status: degradado ? 'DEGRADED' : 'OK',
-    message: degradado ? 'Backend con capa de datos degradada' : 'Backend funcionando',
+  // Ronda 7 (CI-23): si el estado nunca se comprobó, se comprueba AHORA (una vez por TTL) antes de
+  // clasificar; sin comprobar no es lo mismo que sano ni que degradado.
+  const dbStatus = await asegurarEstadoComprobado();
+  const salud = clasificarSalud(dbStatus);
+  if (salud.degradado) {
+    res.setHeader('X-GlowApp-Degraded', 'memory-fallback');
+  }
+  res.status(salud.httpStatus).json({
+    status: salud.status,
+    message: salud.message,
     timestamp: new Date().toISOString(),
     env: process.env.NODE_ENV || 'development',
-    database: db,
+    database: dbStatus,
   });
 });
 
 // Test DB connection
 app.get('/api/test-db', debugRouteMiddleware, async (req, res) => {
   try {
-    const connected = await testConnection();
-    res.json({ 
-      status: connected ? 'success' : 'error', 
-      message: connected ? 'PostgreSQL conectado' : 'Error de conexión',
+    let dbStatus = getDbStatus();
+    if (dbStatus.pgAvailable === null) {
+      await testConnection();
+      dbStatus = getDbStatus();
+    }
+    const salud = clasificarSalud(dbStatus);
+    const connected = dbStatus.pgAvailable === true;
+    res.status(salud.httpStatus).json({ 
+      status: salud.degradado ? 'error' : (connected ? 'success' : 'error'), 
+      message: salud.degradado ? 'Error de conexión (Capa de datos degradada)' : 'PostgreSQL conectado',
       postgis: connected ? await pool.query('SELECT PostGIS_Version()').then(r => r.rows[0].postgis_version).catch(() => 'no disponible') : null
     });
   } catch (err) {
@@ -516,16 +541,7 @@ app.get('/api/debug-db', debugRouteMiddleware, async (req, res) => {
 
 // 🔹 LISTA DE PRESTADORES Y DETALLE (Refactorizados a providerRoutes.js y providerController.js)
 
-// ==========================================
-// RUTAS DE NIA BEAUTY & AURA IA
-// ==========================================
-const niaBeautyRoutes = require('./src/routes/niaBeautyRoutes');
-
-app.use('/api/auth', authRoutes);
-app.use('/api/salon', salonRoutes);
-app.use('/api/users', userPreferencesRoutes);
-app.use('/api/designs', designsRoutes);
-app.use('/api/nia-beauty', niaBeautyRoutes);
+// NOTE: Todas las rutas de la API han sido consolidadas en el bloque único de montajes arriba (líneas 385+).
 
 // ==========================================
 // RUTAS PROTEGIDAS (Requieren JWT)
@@ -691,6 +707,15 @@ app.get('/api/admin/events/stream', authMiddleware, adminMiddleware, (req, res) 
 // 🔹 NUEVO: Obtener estadísticas globales y telemetría de analíticas
 app.get('/api/admin/metrics', authMiddleware, adminMiddleware, async (req, res) => {
   try {
+    const dbStatus = getDbStatus();
+    if (dbStatus.servingFabricatedData || dbStatus.pgAvailable === false) {
+      res.setHeader('X-GlowApp-Degraded', 'memory-fallback');
+      return res.status(503).json({
+        error: 'Servicio de métricas degradado. Base de datos no disponible.',
+        data_status: 'degradado'
+      });
+    }
+
     // 1. Estadísticas agregadas de reservas
     const bookingsCountRes = await pool.query(`
       SELECT estado, COUNT(*)::int as count 
@@ -760,7 +785,7 @@ app.get('/api/admin/metrics', authMiddleware, adminMiddleware, async (req, res) 
       GROUP BY s.category;
     `);
 
-    // 9. Historial mensual para proyecciones
+    // 9. Historial mensual real para proyecciones
     const historyRes = await pool.query(`
       SELECT 
         TO_CHAR(DATE_TRUNC('month', scheduled_at), 'YYYY-MM') as month,
@@ -771,44 +796,12 @@ app.get('/api/admin/metrics', authMiddleware, adminMiddleware, async (req, res) 
       ORDER BY month ASC;
     `);
     
-    let history = historyRes.rows.map(r => ({
+    const realHistory = historyRes.rows.map(r => ({
       month: r.month,
       revenue: parseFloat(r.revenue)
     }));
 
-    // Fallback dinámico si no hay historial suficiente en desarrollo local/staging
-    if (history.length < 3) {
-      const today = new Date();
-      history = [];
-      for (let i = 4; i >= 0; i--) {
-        const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
-        const monthStr = d.toISOString().substring(0, 7);
-        const simRevenue = 450000 + (4 - i) * 120000 + Math.floor(Math.random() * 60000);
-        history.push({ month: monthStr, revenue: simRevenue });
-      }
-    }
-
-    // Regresión lineal simple para la proyección del próximo mes (y = mx + b)
-    const n = history.length;
-    let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
-    history.forEach((h, index) => {
-      const x = index + 1;
-      const y = h.revenue;
-      sumX += x;
-      sumY += y;
-      sumXY += x * y;
-      sumXX += x * x;
-    });
-    
-    const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
-    const intercept = (sumY - slope * sumX) / n;
-    
-    const nextMonthIndex = n + 1;
-    const projectedRevenue = Math.max(0, Math.round(slope * nextMonthIndex + intercept));
-
-    const nextMonthDate = new Date();
-    nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
-    const projectedMonthStr = nextMonthDate.toISOString().substring(0, 7);
+    const projections = buildProjections(realHistory);
 
     res.json({
       success: true,
@@ -823,12 +816,7 @@ app.get('/api/admin/metrics', authMiddleware, adminMiddleware, async (req, res) 
         telemetry_screens: telemetryScreensRes.rows,
         telemetry_clicks: telemetryClicksRes.rows,
         categories: categoriesRes.rows,
-        projections: {
-          history,
-          projectedMonth: projectedMonthStr,
-          projectedRevenue,
-          trend: slope >= 0 ? 'CRECIENTE' : 'DECRECIENTE'
-        }
+        projections
       }
     });
   } catch (error) {
@@ -1350,6 +1338,12 @@ app.use('/api/*', (req, res) => {
 const initDatabase = async () => {
   const dbErrors = [];
   
+  const status = getDbStatus();
+  if (status && status.pgAvailable === false) {
+    console.warn('⚠️ [initDatabase] PostgreSQL no disponible; omitiendo migración e inicialización de BD.');
+    return { ok: false, dbErrors: [{ stage: 'db-connection', message: 'PostgreSQL no disponible' }] };
+  }
+
   try {
     const tableCheck = await pool.query("SELECT to_regclass('public.usuarios') as exists;");
     const hasTable = tableCheck.rows[0].exists !== null;

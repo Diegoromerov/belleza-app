@@ -592,6 +592,29 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
   }
 
   Widget _buildNequiForm() {
+    if (widget.itemType == 'service') {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF8E1),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFFFE082)),
+        ),
+        child: const Row(
+          children: [
+            Icon(Icons.info_outline, color: Color(0xFFF57F17), size: 20),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'El cobro en línea para citas de servicio no requiere ingresar número de celular. El pago se procesa directamente en el establecimiento.',
+                style: TextStyle(fontSize: 13, color: Color(0xFF5D4037)),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return TextFormField(
       controller: _nequiCtrl,
       keyboardType: TextInputType.phone,
@@ -609,6 +632,29 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
   }
 
   Widget _buildCardForm() {
+    if (widget.itemType == 'service') {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF8E1),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFFFE082)),
+        ),
+        child: const Row(
+          children: [
+            Icon(Icons.info_outline, color: Color(0xFFF57F17), size: 20),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'No solicitamos datos de tarjeta de crédito (PAN/CVV) para citas de servicio. La transacción se confirma sin recolectar credenciales bancarias.',
+                style: TextStyle(fontSize: 13, color: Color(0xFF5D4037)),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Column(
       children: [
         TextFormField(

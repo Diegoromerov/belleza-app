@@ -229,8 +229,8 @@ git push origin main
 
 Luego, en el backend, asegurarse de que el `.env` de producción tenga:
 ```env
-JWT_SECRET=<mínimo 64 caracteres aleatorios>
-GEMINI_API_KEY=<clave real>
+JWT_SECRET=***
+GEMINI_API_KEY=***
 DATABASE_URL=<conexión producción>
 ALLOWED_ORIGINS=https://tudominio.com
 PAYMENT_MODE=sandbox
@@ -239,3 +239,5 @@ PAYMENT_MODE=sandbox
 ---
 
 *Auditoría generada sobre commit c2bf281 — rama main*
+
+> Valor redactado el 2026-09-26 (CI-14). El original queda en el historial de Git; se conserva como registro, no se borra la línea.
