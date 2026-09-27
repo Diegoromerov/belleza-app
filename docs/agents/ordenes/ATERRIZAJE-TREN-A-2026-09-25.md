@@ -120,3 +120,25 @@ Al resolverlo, verificar las **dos** y pegarlo:
 2. **No vuelve ningún literal**: `grep -nE "fallback|clave_vieja|glowapp_biometric|beauty_app_super_secret" backend/src/services/biometricCryptoService.js` ⇒ sin coincidencias, y `node scripts/verifyNoVersionedSecrets.js < /dev/null` ⇒ **exit 0, 0 hallazgos**.
 
 **Además (duplicación trivial):** TEC-53 toca `backend/src/tests/adminPreciosRoutes.test.js` con el mismo cambio que ya hizo **A-07 r4** (`4e9145ad9`, en el tren): usar `getJwtSecret()`. Ese hunk debe resolverse como **no-op** (o conflicto trivial); si el archivo aterriza con el literal de respaldo, es una regresión.
+
+---
+
+## §7 · Tren de 11 ensayado (2026-09-27) — los 10 + TEC-53
+
+**Rama de ensayo:** `tren/aterrizaje-11` desde `b545ef22` · **HEAD `a6e40e017`** · **11 merges**, 34 commits desde la base.
+
+| Medición (base real, entorno del CI) | Resultado |
+|---|---|
+| Merges | **11, con 1 conflicto** — `backend/src/services/biometricCryptoService.js` (A-08 vs TEC-53) |
+| Resolución del conflicto | **versión de TEC-53**, verificada contra la §6: **0 literales de respaldo** · control de 32 bytes presente · `jwt.js` con `getJwtSecret` y sin literales · **producción sin `BIOMETRIC_ENCRYPTION_KEY` LANZA** (no deriva del JWT) y **con clave de 64 hex arranca** |
+| Compuerta anti-marcadores (desde `backend/`, como el CI) | **exit 0** |
+| **Escáner de secretos (paso 7)** | **exit 0 · ✅ Sin credenciales versionadas** ⇒ **el paso 7 se pone verde por primera vez** |
+| Gate de tests | **4 suites / 23 tests rojos de 586** (sólo las 4 `business*`) — `audit360` ya **verde** |
+| Compuerta RLS (paso 5) | **exit 0 · ✅ AISLAMIENTO MULTI-TENANT VERIFICADO** |
+| `ci.yml` del tren | `DATABASE_URL_ADMIN: postgres://postgres:***@localhost:5432/glowtest` ⇒ **el aterrizaje repara el workflow roto de `main`** (CI-44) |
+
+**Comparación honesta, mismo protocolo:** hoy `fase-a` (`b545ef22`) da **9 suites / 55 tests rojos** ⇒ el tren de 11 **baja el rojo a 23** y pone el paso 7 en verde.
+
+**Predicciones corregidas (error mío en la primera pasada):** dije «gate 4 suites / 17 tests» mezclando dos conjuntos. El **17** corresponde a **este tren + el arreglo de ruta de CI-40**; el tren de 11 **sin** CI-40 da **23**. Con CI-40 (su ronda 2, sólo la línea de ruta) ⇒ **17**.
+
+**CI-40 queda fuera de esta ola**: su rama todavía trae `Test 12`, que **suma** un rojo. Entra después de su ronda 2.
