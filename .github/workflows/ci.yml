@@ -96,7 +96,24 @@ jobs:
           DATABASE_URL: postgres://app_rls_user:ci_only_password@localhost:5432/glowtest
         run: |
           cd backend
-          npm test -- --coverage --testPathIgnorePatterns="geminiService|geminiFallback|auraToolExecutor|contract|biometric|resilience|contextCompressor|fase5|api.cors"
+          set -o pipefail
+          npm test -- --coverage --testPathIgnorePatterns="geminiService|geminiFallback|auraToolExecutor|contract|biometric|resilience|contextCompressor|fase5|api.cors" 2>&1 | tee /tmp/jest-gate.log
+
+      - name: Publicar salida del gate de tests (anotacion)
+        if: failure()
+        run: |
+          if [ -f /tmp/jest-gate.log ]; then
+            SUMMARY=$(grep -E 'Test Suites:|Tests:' /tmp/jest-gate.log | paste -sd ' · ' -)
+            if [ -n "$SUMMARY" ]; then
+              echo "::error title=Resumen del gate::$SUMMARY"
+            else
+              echo "::error title=Resumen del gate::No se encontraron líneas de resumen de Jest en /tmp/jest-gate.log"
+            fi
+            echo "::error title=Ultimas 20 lineas del log del gate::"
+            tail -20 /tmp/jest-gate.log | while IFS= read -r l; do echo "::error::$l"; done
+          else
+            echo "::error title=Resumen del gate::No se encontró /tmp/jest-gate.log"
+          fi
 
       # Deuda visible, no oculta: las 13 suites excluidas del gate se ejecutan igual
       # con `continue-on-error: true` para que su estado real no desaparezca del tablero.
