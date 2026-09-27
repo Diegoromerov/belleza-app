@@ -54,8 +54,11 @@
 | 10 | **Poda** | ✅ 15 ramas borradas. **Quedan 3 podables** (`docs/sistema-agentes`, `feat/glowshop-niveles-a0`, `feat/glowshop-precios-csv`: 0 commits fuera de `main`) |
 | 11 | **Banco en `main`** | **NO HECHO como dice el informe**: `C:\beauty-app` está en `feat/glowshop-niveles-a0` @ `15d81b863`, **ancestro** de `main` (3 commits atrás) y rama que ya no existe en el remoto. Los 2 planes **sí** quedaron trackeados (`4737b2a67`) |
 | 12 | **¿ADMIN en producción?** | Sigue pendiente (API de precios inusable con 0 ADMIN) |
+| 13 | **CI-50 — 14 cuentas demo activas con la contraseña publicada** (`cliente_demo@`, `demo1@demo.com`, `salon_owner@`, `santiago.barber@`, `valeria.makeup@`, `sonia.herrera@`, `carolina.hair@`, `diana.facials@`, `prov_nails_001@`, `mi-salon@demo.com`, `misalon@demo.com`, `salon_demo@`, `salondemo@demo.com`, `mi_salon_saas@`) | **NUEVO, medido hoy**: el censo por contraseña (no por hash: bcrypt lleva sal) da **20 cuentas que autentican con `password123`, 14 activas**. Ninguna es ADMIN, así que no reabren la puerta de admin; lo que exponen es la cuenta y sus datos. **Tu decisión: desactivar o rotar.** El canal está verificado y la sonda lista para dejarlo medido antes/después; no toco datos de producción sin tu palabra |
+| 14 | **CI-51 — `KYC_WEBHOOK_SECRET`** | **NUEVO, medido**: la variable **no existe** en producción y el código publica el literal como default (`admin.controller.js:267`). Severidad real **baja**: el router `glow-admin` no está montado (`/api/glow-admin/...` ⇒ **404**, con `/api/health` 200 y `/api/admin/dashboard` 401 como controles). Tu decisión: rotarlo y definirlo, o dejarlo mientras siga sin montar. El lado del código va en la ronda 2 de CI-49 |
+| 15 | **El clic de `fix/ci46-segunda-causa`** | Es lo que destraba **S3 (+1,25 pp)**: con el paso de preparación de base verde, el paso de tests corre en GitHub **por primera vez** y deja de quedar `skipped`. La rama está aceptada y verificada por mí contra base fresca (exit 0, 13 tablas con `tenant_id`, 12 con `FORCE`) |
 
-**Tras esta entrega: trabajo técnico 97,5 %** (entregables 95,8 %, criterios 97,5 %, aterrizaje 1,00). Auditoría: `docs/audit/AUDITORIA-EJECUCION-DUEÑO-2026-09-27.md`.
+**Tras esta entrega: Fase A 98,5 %** (criterios 97,5 · entregables 99,3 · aterrizaje 1,00). Falta **1,5 pp**: S3 (+1,25, esperando el clic de `fix/ci46-segunda-causa`) y A-07 (+0,21). Auditorías: `docs/audit/AUDITORIA-EJECUCION-DUEÑO-2026-09-27.md`, `docs/audit/AUDITORIA-CI49-RONDA-1-2026-09-27.md`.
 
 ---
 
