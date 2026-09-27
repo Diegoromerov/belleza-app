@@ -1,6 +1,7 @@
 /** @type {import('jest').Config} */
 module.exports = {
   testEnvironment: 'node',
+  setupFiles: ['<rootDir>/src/tests/setupHarness.js'],
   transform: {
     '^.+\\.js$': 'babel-jest',
   },

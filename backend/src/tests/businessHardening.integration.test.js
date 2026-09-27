@@ -12,6 +12,8 @@ const request = require('supertest');
 const express = require('express');
 const businessRoutes = require('../routes/businessRoutes');
 
+const { Membership, BusinessProfile } = require('../models');
+
 // Setup Test Express Server with Mock Auth Middleware Simulator
 const app = express();
 app.use(express.json());
@@ -19,11 +21,11 @@ app.use(express.json());
 app.use((req, res, next) => {
   const authHeader = req.headers.authorization || '';
   if (authHeader === 'Bearer token-provider-a') {
-    req.user = { id: 'prov-tenant-x-001', name: 'Estética Maria', role: 'provider', tenant_id: 'tenant-x' };
+    req.user = { id: 201, name: 'Estética Maria', role: 'provider', tenant_id: 'tenant-x' };
   } else if (authHeader === 'Bearer token-provider-b') {
-    req.user = { id: 'prov-tenant-x-002', name: 'Spa Sofia', role: 'provider', tenant_id: 'tenant-x' };
+    req.user = { id: 202, name: 'Spa Sofia', role: 'provider', tenant_id: 'tenant-x' };
   } else if (authHeader === 'Bearer token-admin') {
-    req.user = { id: 'admin-global-001', name: 'Super Admin', role: 'admin', tenant_id: 'tenant-admin' };
+    req.user = { id: 999, name: 'Super Admin', role: 'admin', tenant_id: 'tenant-admin' };
   }
   next();
 });
@@ -36,6 +38,19 @@ describe('GlowApp Business Goal 07 — Hardening & Final Validation', () => {
   const tokenAdmin = 'token-admin';
 
   let docAId = null;
+
+  beforeAll(async () => {
+    try {
+      await BusinessProfile.create({ id: 'biz-x', name: 'Estética Maria', city: 'Bogotá' });
+      await BusinessProfile.create({ id: 'biz-x-2', name: 'Spa Sofia', city: 'Medellín' });
+    } catch (e) {}
+
+    try {
+      await Membership.create({ id: 'm-201', user_id: 201, business_profile_id: 'biz-x', role: 'OWNER', status: 'ACTIVE' });
+      await Membership.create({ id: 'm-202', user_id: 202, business_profile_id: 'biz-x-2', role: 'OWNER', status: 'ACTIVE' });
+      await Membership.create({ id: 'm-999-h', user_id: 999, business_profile_id: 'biz-x', role: 'ADMIN', status: 'ACTIVE' });
+    } catch (e) {}
+  });
 
   // Setup initial document owned by Provider A
   beforeAll(async () => {

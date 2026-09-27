@@ -3,6 +3,7 @@ const express = require('express');
 const adminPreciosRoutes = require('../routes/adminPreciosRoutes');
 const { pool } = require('../config/db');
 const jwt = require('jsonwebtoken');
+const { getJwtSecret } = require('../config/jwt');
 
 jest.mock('../config/db', () => ({
   pool: {
@@ -15,7 +16,7 @@ app.use(express.json());
 app.use('/api/admin', adminPreciosRoutes);
 
 describe('Admin Precios Routes', () => {
-  const secret = process.env.JWT_SECRET || 'beauty_app_super_secret_key_2026_change_in_production';
+  const secret = getJwtSecret();
   const adminToken = jwt.sign({ id: 1, email: 'admin@test.com', role: 'admin' }, secret);
   const clientToken = jwt.sign({ id: 2, email: 'client@test.com', role: 'client' }, secret);
 
