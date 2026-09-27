@@ -18,6 +18,10 @@ const REPO_ROOT = path.resolve(__dirname, '../..');
 
 const ALLOW_MARKERS = /(PLACEHOLDER|REPLACE_ME|YOUR_|TU_|REDACTED|\*\*\*|\.\.\.|xxxx|XXXX|dummy|example\.com|<[^>]+>)/;
 
+const NON_SECRET_SUFFIXES = /_(HEADER|NAME|FIELD|TYPE|ALGO|SCOPE|PARAM)$/i;
+const TECHNICAL_VOCAB = /^(authorization|bearer|x-api-key|hs256|rs256|es256|basic|password_hash|jwt_secret|glow_token)$/i;
+const WEAK_PASSWORDS = new Set(['postgres', 'admin', 'admin123', 'password', 'password123', '123456', 'demo', 'test1234', 'root']);
+
 const REGLAS = [
   {
     nombre: 'cadena de conexión con contraseña',
@@ -88,6 +92,7 @@ const REGLAS = [
       for (const re of patterns) {
         let m;
         while ((m = re.exec(linea)) !== null) {
+          const varName = m[1] || '';
           const val = (m[2] !== undefined ? m[2] : m[3]) || '';
           if (!val || val.length < 4) continue;
           if (val.startsWith('$') || val.startsWith('${') || val.includes('${') || /^process\.env\./i.test(val) || /^env\./i.test(val)) continue;
@@ -95,6 +100,12 @@ const REGLAS = [
           if (m[2] === undefined && /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(val)) continue;
           if (/^(\*\*\*|REDACTED|TU_|YOUR_|changeme|PLACEHOLDER|xxx|example|dummy|REPLACE_ME)/i.test(val)) continue;
           if (ALLOW_MARKERS.test(val)) continue;
+
+          // --- FILTROS DE FALSOS POSITIVOS (CI-52) ---
+          if (NON_SECRET_SUFFIXES.test(varName)) continue;
+          if (TECHNICAL_VOCAB.test(val)) continue;
+          if (!WEAK_PASSWORDS.has(val.toLowerCase()) && /^[a-z_]+$/.test(val) && val.length < 12) continue;
+
           return true;
         }
       }

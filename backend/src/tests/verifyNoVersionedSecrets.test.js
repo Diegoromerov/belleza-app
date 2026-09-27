@@ -99,6 +99,42 @@ describe('verifyNoVersionedSecrets — Pipeline Pure Scanner Test (CRLF / LF Inv
     expect(analizarSalida(`src/config/db.js:3:${line3}\n`).hallazgos).toHaveLength(1);
   });
 
+  describe('Regla 7 (ronda 3 — CI-52): Discriminación de falsos positivos vs defectos reales', () => {
+    test('Casos Negativos (7 constantes legítimas NO deben ser marcadas)', () => {
+      const casosLegitimos = [
+        { linea: "const SECRET_HEADER = 'authorization';", desc: "SECRET_HEADER" },
+        { linea: "const KEY_ALGO = 'HS256';", desc: "KEY_ALGO" },
+        { linea: "const TOKEN_TYPE = 'Bearer';", desc: "TOKEN_TYPE" },
+        { linea: "const API_KEY_HEADER = 'x-api-key';", desc: "API_KEY_HEADER" },
+        { linea: "const DB_PASSWORD_FIELD = 'password_hash';", desc: "DB_PASSWORD_FIELD" },
+        { linea: "const TOKEN_KEY = 'glow_token';", desc: "TOKEN_KEY" },
+        { linea: "const SECRET_NAME = 'JWT_SECRET';", desc: "SECRET_NAME" }
+      ];
+
+      for (const caso of casosLegitimos) {
+        const res = analizarSalida(`src/config/app.js:10:${caso.linea}\n`);
+        expect(res.hallazgos).toHaveLength(0);
+      }
+    });
+
+    test('Casos Positivos (6 fallos reales DEBEN ser marcados)', () => {
+      const casosDefectuosos = [
+        { linea: "const DB_PASSWORD = process.env.X_PASSWORD || 'Literal123!';", desc: "X_PASSWORD fallback" },
+        { linea: "const API_KEY = process.env.API_KEY ?? 'live_key_1234567890';", desc: "API_KEY nullish fallback" },
+        { linea: "DB_PASSWORD=Literal123!", desc: "Dotenv inline assignment" },
+        { linea: "const DB_PASSWORD = process.env.DB_PASSWORD || 'postgres';", desc: "DB_PASSWORD weak postgres fallback" },
+        { linea: "const KYC_WEBHOOK_SECRET = process.env.KYC_WEBHOOK_SECRET || 'glowapp_secure_kyc_webhook_secret_2026';", desc: "KYC secret fallback" },
+        { linea: "const ADMIN_SECRET = 'SuperSecret123!';", desc: "ADMIN_SECRET direct assignment" }
+      ];
+
+      for (const caso of casosDefectuosos) {
+        const res = analizarSalida(`src/config/app.js:10:${caso.linea}\n`);
+        expect(res.hallazgos.length).toBeGreaterThanOrEqual(1);
+        expect(res.hallazgos[0].nombre).toBe('valor por defecto literal para variable sensible');
+      }
+    });
+  });
+
   test('Coexistencia legacy: validarLinea (normalize = false) demuestra divergencia por \\r', () => {
     const lineLF   = "const MI_CLAVE_SECRETA = 'Xk92LmQ7ppQzRt4VbN8wYs3Dd6Ff';";
     const lineCRLF = "const MI_CLAVE_SECRETA = 'Xk92LmQ7ppQzRt4VbN8wYs3Dd6Ff\r';";
