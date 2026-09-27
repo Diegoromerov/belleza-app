@@ -31,7 +31,33 @@ Resumen del gate: Test Suites: 77 failed, 77 total · Tests: 0 total
 Léase de nuevo: **77 suites «failed», `Tests: 0 total`**. Ninguna suite llega a cargar; **no corre un solo test**. El rojo del CI **no** es «4 suites heredadas + 23 tests» (eso es un fenómeno **local**, de mi banco): es un fallo de carga de Babel/ESM que mata las 77 antes de ejecutar nada.
 
 - **Ficha CI-54 (nueva, 🔴):** el paso de tests del CI **no ejecuta la suite**. Consecuencias: (a) es el residuo real de **A-07** — el gate *no* dice la verdad, y ahora está **medido**, no supuesto; (b) **bloquea S3**: con 0 tests corridos, una mutación no puede producir diferencia observable.
-- **Corrección de un error mío:** yo había **descartado Node 18** con `n18c.sh`. Esa medición era del paso de **preparación**, no del de **tests**. El descarte era más amplio que la medición. Hipótesis viva: Node 18 en el runner (`Setup Node.js 18`) contra este `babel.config.js` (`@babel/plugin-transform-runtime`). Reproducción en contenedor en curso.
+
+### 2.1 La reproducción (evidencia, no conjetura)
+
+Contenedor limpio, árbol del backend por tar-por-stdin (el bind mount de Windows rompe `npm ci` con exit 217), sin montar nada del banco:
+
+```
+node: v18.20.8   npm: 10.8.2   npm ci (desde el lockfile): OK
+$ node node_modules/jest/bin/jest.js src/tests/verifyNoVersionedSecrets.test.js
+
+FAIL src/tests/verifyNoVersionedSecrets.test.js
+  ● Test suite failed to run
+    [BABEL]: You appear to be using a native ECMAScript module plugin, which is only supported when
+    running Babel asynchronously or when using the Node.js `--experimental-require-module` flag.
+    (While processing: /app/node_modules/@babel/plugin-transform-runtime/lib/index.js)
+      at loadPartialConfigSync (node_modules/@babel/core/lib/config/index.js:37:84)
+      at loadPartialConfig (node_modules/@babel/core/lib/config/index.js:45:12)
+      at ScriptTransformer._getCacheKey (node_modules/@jest/transform/build/ScriptTransformer.js:228:41)
+
+Test Suites: 1 failed, 1 total
+Tests:       0 total          <-- la firma del runner, reproducida en limpio
+```
+
+`--listTests` en ese contenedor: **92** suites (el gate excluye 15 ⇒ los 77 «failed» de la anotación del CI cierran con los 92 totales).
+
+**Lectura:** `@babel/plugin-transform-runtime` se resuelve como módulo ESM nativo y Babel lo carga en modo síncrono ⇒ ninguna suite llega a transformarse ⇒ `Tests: 0`. El disparador es el entorno del runner (Node 18), no el código de las suites.
+
+- **Corrección de un error mío:** yo había **descartado Node 18** con `n18c.sh`. Esa medición era del paso de **preparación**, no del de **tests**. El descarte era más amplio que la medición. La hipótesis quedó **confirmada por la reproducción de §2.1**: es Node 18 en el runner (`Setup Node.js 18`) contra este `babel.config.js`. El control del mismo árbol con Node moderno está corriendo y entra como enmienda, no como supuesto.
 - **Calidad menor de CI-53:** el titular «77 failed, 77 total» **induce a error** (parecen 77 suites rotas cuando son 77 que no cargaron). El parche sí trae las líneas `FAIL` y el error de Babel, así que la visibilidad está; falta que el titular distinga *failed to run* de *tests failed*.
 
 ## 3. Las 4 suites heredadas siguen sin poder clasificarse
