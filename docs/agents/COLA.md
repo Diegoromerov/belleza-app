@@ -37,6 +37,30 @@
 
 ## 2. Decisiones del Dueño (escaladas)
 
+### Pendientes del Dueño — lista vigente (medida 2026-09-27 tarde)
+
+| # | Qué | Por qué es tuyo | Tamaño |
+|---|---|---|---|
+| 1 | **Firmar D-017**: «Firmo D-017: acepto que el candado de degradación bloquee dinero e identidad (C-01/C-02/C-03) durante la caída de la base.» | Es la aceptación de la **consecuencia de negocio** (durante la degradación la app no cobra ni autentica). El código y la medición ya están; CI-16 no cierra sin esto | 1 línea |
+| 2 | **Decidir A-04** (`backend/public`: **192 archivos versionados** pese a `.gitignore:68`) | Es el **5,0 pp** más grande que falta: purgar, aceptar o versionar distinto. No es trabajo pendiente, es decisión | decisión |
+| 3 | **Decidir si A-07 entra al denominador** | Hoy está fuera, en 0,95 ⇒ si entra: entregables 81,4 % y total **93,2 %** | decisión |
+| 4 | **CI-16 — abrir y mergear `fix/candado-declara-alcance`** (`917c0a65df`, 1 commit desde `main`) | Sólo el Dueño mergea. Su PR mostrará el rojo conocido de CI-46 en el paso de preparación de base | 1 merge |
+| 5 | **D-004 — mergear `docs/sistema-agentes`** (**106** commits fuera de `main`; arrastra `chore/guardian-en-el-repo`, 40) | El sistema de agentes y la KB viven **sólo** en esa rama: en `main` hay **0** archivos de `docs/knowledge` y `docs/agents`. Queda por confirmar si Railway despliega por integración nativa en cada push a `main` | 1 merge |
+| 6 | **D-005 — mergear PRs #10 y #12** (los dos **open**, sin mergear: `feat/glowshop-niveles-a0`, `feat/glowshop-precios-csv`) | `#12` trae el CSV de precios = base acordada del catálogo GlowShop | 2 merges |
+| 7 | **D-002 — `delete_branch_on_merge = on`** (Settings → General → Pull Requests) | La API no expone ese campo ⇒ sólo lo podés verificar vos. Con 12 ramas podables hoy, es el que evita que vuelvan a acumularse | 1 click |
+| 8 | **Las 2 líneas del log de CI-46** (el paso «Preparar el esquema multi-tenant y los roles RLS», del run `36336949240`) — o permiso para leerlo con un login guardado | Es lo único que falta para emitir «que la base del CI sirva» (CI-46 + CI-43 + CI-45) ⇒ el paso de tests corre en GitHub **por primera vez** y S3 pasa a ser medible (**+1,25 pp**) | pegar 2 líneas |
+| 9 | **D-003 — revocar** lo del historial (la **rotación ya está hecha y verificada** contra producción; falta **revocar**): Google/OpenUV/etc. y verificar/revocar `YOCAM_API_KEY` (typo del histórico). **No rotar** las biométricas sin `reencryptBiometricData.js` | Seguridad: los valores viejos siguen vivos en los proveedores aunque el repo ya no los tenga | ops |
+| 10 | **Poda de ramas** (medida hoy, `origin/main` como referencia) | **12 remotas podables ya** (su contenido está en `main`, 0 commits fuera): `fase-a/verdad-operativa`, `fix/admin-metricas-sin-datos`, `fix/arranque-y-estado-honesto`, `fix/caminos-muertos`, `fix/candado-comprueba-si-desconoce`, `fix/ci-procedencia`, `fix/compuerta-secretos-reproducible`, `fix/contrato-convive-con-candado`, `fix/gate-clasificado`, `fix/montajes-unicos`, `fix/rls-056-058-cadena`, `fix/secretos-sin-respaldo-literal`. **2 a cerrar por decisión, sin mergear**: `fix/jwt-sin-respaldo` (ya declarada no aterrizable) y `fix/ci40-permiso-documentos` (reemplazada por la r2). **1 local de ensayo** (`tren/aterrizaje-11`, contenida en `main`) | decisión |
+| 11 | **Banco local**: está en `feat/glowshop-niveles-a0 @ 3337aadb6`, no en `main`; y hay **2 planes sin trackear** en `.hermes/plans/` (sacan en rojo el parte del lunes por R1) | El banco de trabajo debe estar en `main` para no medir sobre rama vieja; los planes: trackear o borrar | 2 min |
+| 12 | **¿Hay un usuario ADMIN en producción?** (el API de precios de GlowShop es inusable con 0 ADMIN) | No lo puedo verificar sin tu consola | verificar |
+
+**Correcciones de esta medición (R-05: ninguna cita heredada se da por buena):** `audit/hermes` y `feature/ai-nail-tryon-legacy` **ya no existen** ni en el remoto ni en local ⇒ salen de la lista de poda. `delete_branch_on_merge` **no es verificable desde fuera** (la API pública no lo devuelve).
+
+---
+
+*(Tabla histórica, sin cambios desde 2026-09-25:)*
+
+
 | ID | Decisión | Estado | Qué desbloquea |
 |---|---|---|---|
 | D-001 | **Abrir el PR de `fase-a/verdad-operativa`** | **ejecutada** 2026-09-24 — [PR #16](https://github.com/Diegoromerov/belleza-app/pull/16), run [#1681](https://github.com/Diegoromerov/belleza-app/actions/runs/36072881287) | El primer run del repo **con pasos reales**: frontend ✅, backend ❌ en el paso 7 (compuerta de secretos) ⇒ ahora existen los hallazgos CI-06 y CI-07 y la orden A-06 |
