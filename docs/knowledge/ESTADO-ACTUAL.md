@@ -128,15 +128,15 @@ resilience | contextCompressor | fase5 | authRoutes | api.cors
 Regenerar con: `node backend/scripts/estadoKB.js --write` · Verificar con: `node backend/scripts/estadoKB.js --check`
 
 <!-- estadoKB:inicio -->
-> Bloque generado por `backend/scripts/estadoKB.js` el **2026-09-27 14:56:22Z**. No se edita a mano.
+> Bloque generado por `backend/scripts/estadoKB.js` el **2026-09-27 15:12:34Z**. No se edita a mano.
 
-**Copia inspeccionada:** `C:/Users/Compu casa/.gemini/antigravity/worktrees/beauty-app/sistema-agentes` · rama `docs/sistema-agentes` @ `b65bb4edf` (2026-09-27 09:45:34 -0500) · árbol: **5 entradas sin commitear**
+**Copia inspeccionada:** `C:/Users/Compu casa/.gemini/antigravity/worktrees/beauty-app/sistema-agentes` · rama `docs/sistema-agentes` @ `60edb7e23` (2026-09-27 09:56:22 -0500) · árbol: **5 entradas sin commitear**
 
 **Ramas locales (18):**
 
 | Rama | SHA | Último commit | Commits fuera de main | PR abierto |
 |---|---|---|---|---|
-| `docs/sistema-agentes` | `b65bb4edf` | 2026-09-27 | 89 | — |
+| `docs/sistema-agentes` | `60edb7e23` | 2026-09-27 | 90 | — |
 | `chore/guardian-en-el-repo` | `b919d45ad` | 2026-09-25 | 40 | — |
 | `fix/jwt-sin-respaldo` | `dbb872930` | 2026-09-25 | 14 | — |
 | `fix/compuerta-secretos-reproducible` | `856872374` | 2026-09-25 | 13 | — |
@@ -161,11 +161,11 @@ Regenerar con: `node backend/scripts/estadoKB.js --write` · Verificar con: `nod
 
 **Tags `archive/*`:** 8 locales · 17 refs en el remoto
 
-**Worktrees (4):** `feat/glowshop-niveles-a0` @ 3337aad · `fix/ci40-permiso-documentos` @ 98b9326 · `docs/sistema-agentes` @ b65bb4e · `null` @ 723df93
+**Worktrees (3):** `feat/glowshop-niveles-a0` @ 3337aad · `fix/ci40-permiso-documentos` @ 98b9326 · `docs/sistema-agentes` @ 60edb7e
 
 **Desalineaciones detectadas (1):**
 
 | Regla | Detalle |
 |---|---|
-| R1 | 5 entradas sin commitear (M docs/agents/COLA.md ·  M docs/knowledge/DECISIONES.md ·  M docs/knowledge/DEUDA.md …) |
+| R1 | 5 entradas sin commitear (M docs/agents/COLA.md ·  M docs/knowledge/DEUDA.md ·  M docs/knowledge/TRAMPAS.md …) |
 <!-- estadoKB:fin -->
