@@ -8,94 +8,6 @@
     "path": "/^(?!\\/api(?:\\/|$))(?!\\/uploads(?:\\/|$))(?!\\/admin(?:\\/|$)).*/"
   },
   {
-    "method": "GET",
-    "path": "/api/academy/admin/certificates"
-  },
-  {
-    "method": "POST",
-    "path": "/api/academy/admin/certificates/:code/restore"
-  },
-  {
-    "method": "POST",
-    "path": "/api/academy/admin/certificates/:code/revoke"
-  },
-  {
-    "method": "GET",
-    "path": "/api/academy/admin/courses"
-  },
-  {
-    "method": "POST",
-    "path": "/api/academy/admin/courses"
-  },
-  {
-    "method": "POST",
-    "path": "/api/academy/admin/courses/:courseId/modules"
-  },
-  {
-    "method": "POST",
-    "path": "/api/academy/admin/courses/:courseId/quizzes"
-  },
-  {
-    "method": "GET",
-    "path": "/api/academy/admin/courses/:id"
-  },
-  {
-    "method": "PUT",
-    "path": "/api/academy/admin/courses/:id"
-  },
-  {
-    "method": "DELETE",
-    "path": "/api/academy/admin/courses/:id"
-  },
-  {
-    "method": "POST",
-    "path": "/api/academy/admin/courses/:id/restore"
-  },
-  {
-    "method": "PUT",
-    "path": "/api/academy/admin/lessons/:id"
-  },
-  {
-    "method": "DELETE",
-    "path": "/api/academy/admin/lessons/:id"
-  },
-  {
-    "method": "POST",
-    "path": "/api/academy/admin/lessons/reorder"
-  },
-  {
-    "method": "PUT",
-    "path": "/api/academy/admin/modules/:id"
-  },
-  {
-    "method": "DELETE",
-    "path": "/api/academy/admin/modules/:id"
-  },
-  {
-    "method": "POST",
-    "path": "/api/academy/admin/modules/:moduleId/lessons"
-  },
-  {
-    "method": "POST",
-    "path": "/api/academy/admin/modules/reorder"
-  },
-  {
-    "method": "POST",
-    "path": "/api/academy/admin/providers/:providerId/courses/:courseId/reset-attempts"
-  },
-  {
-    "method": "PUT",
-    "path": "/api/academy/admin/quizzes/:id"
-  },
-  {
-    "method": "DELETE",
-    "path": "/api/academy/admin/quizzes/:id"
-  },
-  {
-    "method": "GET",
-    "path": "/api/academy/admin/stats"
-  },
-  {
     "method": "POST",
     "path": "/api/academy/ai-discrepancy/log"
   },
@@ -276,34 +188,6 @@
     "path": "/api/admin/precios/import.csv"
   },
   {
-    "method": "GET",
-    "path": "/api/admin/precios/precios"
-  },
-  {
-    "method": "PUT",
-    "path": "/api/admin/precios/precios/:productoId"
-  },
-  {
-    "method": "PATCH",
-    "path": "/api/admin/precios/precios/bulk"
-  },
-  {
-    "method": "GET",
-    "path": "/api/admin/precios/precios/coherencia"
-  },
-  {
-    "method": "GET",
-    "path": "/api/admin/precios/precios/export.csv"
-  },
-  {
-    "method": "GET",
-    "path": "/api/admin/precios/precios/historial"
-  },
-  {
-    "method": "POST",
-    "path": "/api/admin/precios/precios/import.csv"
-  },
-  {
     "method": "POST",
     "path": "/api/admin/products"
   },
@@ -402,34 +286,6 @@
   {
     "method": "POST",
     "path": "/api/biometric/check"
-  },
-  {
-    "method": "GET",
-    "path": "/api/biometric/consent/access-logs"
-  },
-  {
-    "method": "GET",
-    "path": "/api/biometric/consent/biometric"
-  },
-  {
-    "method": "POST",
-    "path": "/api/biometric/consent/biometric"
-  },
-  {
-    "method": "GET",
-    "path": "/api/biometric/consent/biometric/:consentType"
-  },
-  {
-    "method": "DELETE",
-    "path": "/api/biometric/consent/biometric/:consentType"
-  },
-  {
-    "method": "DELETE",
-    "path": "/api/biometric/consent/biometric/:consentType/data"
-  },
-  {
-    "method": "GET",
-    "path": "/api/biometric/consent/terms"
   },
   {
     "method": "GET",
@@ -708,26 +564,6 @@
     "path": "/api/disputes"
   },
   {
-    "method": "POST",
-    "path": "/api/disputes/disputas"
-  },
-  {
-    "method": "GET",
-    "path": "/api/disputes/disputas/:id"
-  },
-  {
-    "method": "PATCH",
-    "path": "/api/disputes/disputas/:id/resolve"
-  },
-  {
-    "method": "GET",
-    "path": "/api/disputes/disputas/my-disputes"
-  },
-  {
-    "method": "POST",
-    "path": "/api/event-registrations/events/:id/register"
-  },
-  {
     "method": "GET",
     "path": "/api/events"
   },
@@ -746,6 +582,10 @@
   {
     "method": "DELETE",
     "path": "/api/events/:id"
+  },
+  {
+    "method": "POST",
+    "path": "/api/events/:id/register"
   },
   {
     "method": "POST",
@@ -772,28 +612,12 @@
     "path": "/api/glow-cycle/create"
   },
   {
-    "method": "POST",
-    "path": "/api/glow-pro/event-registrations/events/:id/register"
-  },
-  {
     "method": "GET",
     "path": "/api/glow-pro/events"
   },
   {
     "method": "POST",
     "path": "/api/glow-pro/events"
-  },
-  {
-    "method": "GET",
-    "path": "/api/glow-pro/events/:id"
-  },
-  {
-    "method": "PUT",
-    "path": "/api/glow-pro/events/:id"
-  },
-  {
-    "method": "DELETE",
-    "path": "/api/glow-pro/events/:id"
   },
   {
     "method": "POST",
@@ -818,26 +642,6 @@
   {
     "method": "GET",
     "path": "/api/health"
-  },
-  {
-    "method": "GET",
-    "path": "/api/membership"
-  },
-  {
-    "method": "DELETE",
-    "path": "/api/membership/:id"
-  },
-  {
-    "method": "PATCH",
-    "path": "/api/membership/:id/role"
-  },
-  {
-    "method": "PATCH",
-    "path": "/api/membership/:id/status"
-  },
-  {
-    "method": "POST",
-    "path": "/api/membership/invite"
   },
   {
     "method": "GET",
@@ -1016,22 +820,6 @@
     "path": "/api/tickets/my-tickets"
   },
   {
-    "method": "POST",
-    "path": "/api/tickets/tickets"
-  },
-  {
-    "method": "GET",
-    "path": "/api/tickets/tickets/:id/messages"
-  },
-  {
-    "method": "POST",
-    "path": "/api/tickets/tickets/:id/messages"
-  },
-  {
-    "method": "GET",
-    "path": "/api/tickets/tickets/my-tickets"
-  },
-  {
     "method": "GET",
     "path": "/api/tiles/:z/:x/:y.png"
   },
@@ -1206,18 +994,6 @@
   {
     "method": "POST",
     "path": "/api/wallet/withdraw"
-  },
-  {
-    "method": "GET",
-    "path": "/api/xp-log"
-  },
-  {
-    "method": "POST",
-    "path": "/api/xp-log"
-  },
-  {
-    "method": "POST",
-    "path": "/api/xp-log/convert-cashback"
   },
   {
     "method": "GET",

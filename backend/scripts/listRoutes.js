@@ -78,6 +78,7 @@ function run() {
   const outputPath = path.join(docsDir, 'routes-2026-09-24.json');
   fs.writeFileSync(outputPath, JSON.stringify(routesList, null, 2), 'utf-8');
   console.log(`📄 Archivo de inventario de rutas generado exitosamente en: ${outputPath}`);
+  process.exit(0);
 }
 
 run();
