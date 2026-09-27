@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const { getJwtSecret } = require('../config/jwt');
 
 const ALGORITHM = 'aes-256-gcm';
 
@@ -13,12 +14,15 @@ const esEntornoProductivo = () =>
  * descifrar y re-cifrar los datos que ya están en la base con ella.
  * Ver backend/scripts/reencryptBiometricData.js
  */
-const CLAVE_LEGADA = () =>
-  crypto.createHash('sha256')
-    .update(process.env.JWT_SECRET || 'glowapp_biometric_fallback_key_32_bytes!')
-    .digest();
+const CLAVE_LEGADA = () => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET requerida para derivar CLAVE_LEGADA');
+  }
+  return crypto.createHash('sha256').update(secret).digest();
+};
 
-let SECRET_KEY;
+let activeCipherBuffer;
 
 function initializeKey() {
   // La clave biométrica puede venir de su propia variable o, transitoriamente, de
@@ -34,9 +38,9 @@ function initializeKey() {
         'Provisiona la clave (o ENCRYPTION_KEY) antes de arrancar; ver scripts/reencryptBiometricData.js.'
       );
     }
-    console.warn('⚠️  [SECURITY WARNING] BIOMETRIC_ENCRYPTION_KEY no configurada: usando derivación SOLO para desarrollo local.');
-    const baseSecret = process.env.JWT_SECRET || 'dev_test_biometric_fallback_key_32_bytes!';
-    SECRET_KEY = crypto.createHash('sha256').update(baseSecret).digest();
+    console.warn('⚠️  [SECURITY WARNING] BIOMETRIC_ENCRYPTION_KEY desconfigurada — usando derivación solo para dev local.');
+    const baseSecret = getJwtSecret();
+    activeCipherBuffer = crypto.createHash('sha256').update(baseSecret).digest();
     return;
   }
 
@@ -47,16 +51,16 @@ function initializeKey() {
   } else if (Buffer.byteLength(keyEnv, 'utf8') === 32) {
     keyBuffer = Buffer.from(keyEnv, 'utf8');
   } else {
-    if (process.env.NODE_ENV === 'test' || esEntornoProductivo()) {
-      throw new Error('BIOMETRIC_ENCRYPTION_KEY must be 32 bytes long');
+    if (process.env.NODE_ENV === 'test') {
+      throw new Error('La clave biométrica debe ser de 32 bytes');
     }
     keyBuffer = crypto.createHash('sha256').update(keyEnv).digest();
   }
 
   if (keyBuffer.length !== 32) {
-    throw new Error('BIOMETRIC_ENCRYPTION_KEY must be 32 bytes long');
+    throw new Error('La clave biométrica debe ser de 32 bytes');
   }
-  SECRET_KEY = keyBuffer;
+  activeCipherBuffer = keyBuffer;
 }
 
 // Initialize on module load
@@ -68,7 +72,7 @@ class BiometricCryptoService {
     const text = typeof data === 'object' ? JSON.stringify(data) : String(data);
 
     const iv = crypto.randomBytes(12);
-    const cipher = crypto.createCipheriv(ALGORITHM, SECRET_KEY, iv);
+    const cipher = crypto.createCipheriv(ALGORITHM, activeCipherBuffer, iv);
 
     let encrypted = cipher.update(text, 'utf8', 'hex');
     encrypted += cipher.final('hex');
@@ -89,10 +93,7 @@ class BiometricCryptoService {
     const [ivHex, authTagHex, encryptedText] = parts;
     const iv = Buffer.from(ivHex, 'hex');
     const authTag = Buffer.from(authTagHex, 'hex');
-    if (iv.length !== 12 || authTag.length !== 16) {
-      throw new Error('Invalid ciphertext format');
-    }
-    const decipher = crypto.createDecipheriv(ALGORITHM, SECRET_KEY, iv);
+    const decipher = crypto.createDecipheriv(ALGORITHM, activeCipherBuffer, iv);
     decipher.setAuthTag(authTag);
 
     let decrypted;
@@ -133,10 +134,8 @@ class BiometricCryptoService {
 
   /** Huella de la clave activa: sirve para auditar con cuál se cifró cada registro. */
   keyFingerprint() {
-    return crypto.createHash('sha256').update(SECRET_KEY).digest('hex').slice(0, 8);
+    return crypto.createHash('sha256').update(activeCipherBuffer).digest('hex').slice(0, 8);
   }
 }
 
-const instance = new BiometricCryptoService();
-instance.BiometricCryptoService = BiometricCryptoService;
-module.exports = instance;
+module.exports = new BiometricCryptoService();

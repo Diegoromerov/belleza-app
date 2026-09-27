@@ -141,7 +141,7 @@ cp backend/src/data/beauty_corpus/001_skincare_basics.md backend/src/data/beauty
   * Palabras clave que activan la búsqueda RAG de conocimiento técnico de belleza.
   * Ampliar este array si se añaden nuevas categorías de consulta.
   */
- const RAG_TRIGGER_KEYWORDS = ['piel', 'cabello', 'ingrediente', 'ingredientes', 'rutina'];
+ const RAG_TRIGGER_KEYWORDS = ***;
 +const RAG_TRIGGER_KEYWORDS = [
 +  'piel', 'cabello', 'ingrediente', 'ingredientes', 'rutina',
 +  'acné', 'acne', 'grasa', 'seca', 'mixta', 'sensible',
@@ -287,3 +287,5 @@ Una vez Fase 1 validada → **Bloque 2: Metadata Semántica + RAG en Fallback**
 **FIRMA INICIAL:** _______________ **FECHA:** _______________  
 **COMMIT INICIAL:** `git rev-parse HEAD` → _______________  
 **RAILWAY DEPLOY ID:** _______________
+
+> Valor redactado el 2026-09-26 (CI-14). El original queda en el historial de Git; se conserva como registro, no se borra la línea.
