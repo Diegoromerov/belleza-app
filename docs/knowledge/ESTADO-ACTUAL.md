@@ -53,7 +53,7 @@ La app está **funcionalmente a medias por dentro y aparentemente terminada por 
 
 > **RETRACTACIÓN (mismo día):** los números del gate publicados antes de esta tarde se midieron **sin `JWT_SECRET`** ⇒ estaban inflados en **4 tests** (la suite `adminPreciosRoutes`, que no es hermética: CI-41). Corregidos con el entorno del CI: base **10 suites / 55** · A-07 r3 **6 suites / 25**. Detalle en `docs/audit/RETRACTACION-GATE-ENTORNO-2026-09-26.md`.
 
-**A-07 (el gate tiene que decir la verdad) queda FUERA del denominador** porque nació después de declarados los criterios: hoy está **cerrada** (r1 RECHAZADA por introducir un agujero de escalada; r2 aceptada parcialmente, gate 10/59 → **6/28**, ronda 3 pendiente). Si el Dueño decide incorporarlo, el total es **75,8 %** y los entregables 80,0 %.
+**A-07 (el gate tiene que decir la verdad) queda FUERA del denominador** porque nació después de declarados los criterios: hoy está en **0,95** (r1 RECHAZADA por introducir un agujero de escalada; r2 aceptada parcialmente; r3 ACEPTADA CON RESIDUOS, gate 10/55 → **6/25**; r4 ACEPTADA, CI-41 cerrada; CI-37 queda como mitigación **sin demostración**). Si el Dueño decide incorporarlo, los entregables van a **81,4 %** y el total a **93,2 %**.
 
 ## 5. Estado de las compuertas (rol Guardián)
 
