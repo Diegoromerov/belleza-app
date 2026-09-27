@@ -24,7 +24,7 @@ const entregables = [
   { id: 'A-01', nota: 1.00, evidencia: 'r2 ✓ `ba06e563`; **re-medido el 2026-09-26 sobre el tren de 9 ramas**: compuerta de aislamiento exit 0, **22 pruebas ejecutadas / 0 omitidas** (13 tablas RLS+FORCE, escritura ajena 42501, trigger de tenant_id) ⇒ el cableado de Sequelize de A-08 no rompió el aislamiento' },
   { id: 'A-02', nota: 1.00, evidencia: 'r2 ✓ + r3 `6f2f656f` (CI-18 cerrada: el mes proyectado ya no salta un mes)' },
   { id: 'A-03', nota: 1.00, evidencia: '`38a9afe9` ✓ — 57 rutas retiradas (308→252), 0 pérdidas; mutaciones A/B rojas' },
-  { id: 'A-04', nota: 0.00, evidencia: '`backend/public`: 192 archivos versionados pese a `.gitignore:68` — **bloqueada por decisión del Dueño**, no es trabajo pendiente del Arquitecto' },
+  { id: 'A-04', nota: 1.00, evidencia: '**CERRADA POR DECISIÓN DEL DUEÑO (2026-09-27)**: el `.gitignore` deja de ignorar `backend/public` y documenta que el versionado es intencional (servido estático de Flutter Web en Express); los dos globs de media pesada (`.webm`/`.mp4` de glowguide) siguen ignorados y los 192 archivos no cambiaron. Verificado por el Arquitecto: `git diff` del cambio, 192 archivos intactos, y sin efectos colaterales (`git status --porcelain` limpio; `get_users.js`/`list_tables.js` no existen)' },
   { id: 'A-05', nota: 0.85, evidencia: '`6268afff` en el tren (merge limpio): documenta la procedencia del recuento y retira el patrón `authRoutes` que no matcheaba nada; verifiqué el 2026-09-26 además que su `inspectCiSuites.js` es **robusto al CRLF** (salida idéntica en CRLF y LF); sin auditoría propia ⇒ no 1,0' },
   { id: 'A-06', nota: 0.90, evidencia: 'SUBE 0,85→0,90: r5 `85687237` ✓ y **verifiqué el 2026-09-26 su afirmación central**: el escáner nuevo da **8 hallazgos en CRLF y 8 en LF** (el viejo: 1 vs 39 ⇒ CI-31), o sea el gate dice lo mismo en Windows y en el CI. Residuos que **no son trabajo del Arquitecto**: 2b `dbb87293` espera confirmación en Railway y CI-14 espera decisión del Dueño' },
 ];
@@ -77,4 +77,4 @@ console.log('TRABAJO NUEVO — FUERA DEL DENOMINADOR (no altera el total de arri
 trabajoNuevo.forEach((x) => console.log(fila(x)));
 console.log('  Si el Dueño decide incorporarlo al denominador: entregables ⇒ ' + pc(eCon) + ' · total ⇒ ' + pc(totalCon));
 console.log('');
-console.log('Ronda anterior (informe del mismo día): 73,6 %  ⇒  hoy ' + pc(total) + '  (delta ' + ((total - 0.736) * 100).toFixed(1).replace('.', ',') + ' pp)');
+console.log('Ronda anterior (informe del mismo día, 92,5 %):  ' + pc(total) + '  (delta ' + ((total - 0.925) * 100).toFixed(1).replace('.', ',') + ' pp)');
