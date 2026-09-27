@@ -74,7 +74,11 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public
 --
 --     grep -rn "SET ROLE\|set_config('app.system'" backend/src --include=*.js
 --
-GRANT app_system TO app_rls_user;
+-- El GRANT de membresía NO va acá: va después de crear el rol (ver §2). En una base
+-- recién creada, `GRANT app_system TO app_rls_user` antes del CREATE ROLE falla con
+-- `role "app_system" does not exist` — medido en el contenedor del CI
+-- (`postgis/postgis:16-3.4`, base vacía). El archivo sólo era idempotente-safe en
+-- entornos donde el rol ya existía por acumulación.
 
 -- ---------------------------------------------------------------------------
 -- 2. Rol de sistema: solo para webhooks y jobs
@@ -90,6 +94,11 @@ BEGIN
       NOSUPERUSER BYPASSRLS NOCREATEDB NOCREATEROLE NOINHERIT;
   END IF;
 END $$;
+
+-- Membresía: app_rls_user puede ESCALAR a app_system dentro de una transacción
+-- (mecanismo de los caminos sin petición autenticada, ver §1b). Va DESPUÉS del
+-- CREATE ROLE de arriba: es la corrección del orden que rompía la base vacía.
+GRANT app_system TO app_rls_user;
 
 DO $$
 BEGIN
