@@ -128,15 +128,15 @@ resilience | contextCompressor | fase5 | authRoutes | api.cors
 Regenerar con: `node backend/scripts/estadoKB.js --write` · Verificar con: `node backend/scripts/estadoKB.js --check`
 
 <!-- estadoKB:inicio -->
-> Bloque generado por `backend/scripts/estadoKB.js` el **2026-09-26 17:07:55Z**. No se edita a mano.
+> Bloque generado por `backend/scripts/estadoKB.js` el **2026-09-27 14:45:34Z**. No se edita a mano.
 
-**Copia inspeccionada:** `C:/Users/Compu casa/.gemini/antigravity/worktrees/beauty-app/sistema-agentes` · rama `docs/sistema-agentes` @ `5913b9c81` (2026-09-26 11:07:17 -0500) · árbol: **6 entradas sin commitear**
+**Copia inspeccionada:** `C:/Users/Compu casa/.gemini/antigravity/worktrees/beauty-app/sistema-agentes` · rama `docs/sistema-agentes` @ `3523f32ad` (2026-09-26 12:07:55 -0500) · árbol: **3 entradas sin commitear**
 
 **Ramas locales (17):**
 
 | Rama | SHA | Último commit | Commits fuera de main | PR abierto |
 |---|---|---|---|---|
-| `docs/sistema-agentes` | `5913b9c81` | 2026-09-26 | 87 | — |
+| `docs/sistema-agentes` | `3523f32ad` | 2026-09-26 | 88 | — |
 | `chore/guardian-en-el-repo` | `b919d45ad` | 2026-09-25 | 40 | — |
 | `fix/jwt-sin-respaldo` | `dbb872930` | 2026-09-25 | 14 | — |
 | `fix/compuerta-secretos-reproducible` | `856872374` | 2026-09-25 | 13 | — |
@@ -160,11 +160,11 @@ Regenerar con: `node backend/scripts/estadoKB.js --write` · Verificar con: `nod
 
 **Tags `archive/*`:** 8 locales · 17 refs en el remoto
 
-**Worktrees (3):** `feat/glowshop-niveles-a0` @ 3337aad · `fix/gate-clasificado` @ 4e9145a · `docs/sistema-agentes` @ 5913b9c
+**Worktrees (3):** `feat/glowshop-niveles-a0` @ 3337aad · `fix/gate-clasificado` @ 4e9145a · `docs/sistema-agentes` @ 3523f32
 
 **Desalineaciones detectadas (1):**
 
 | Regla | Detalle |
 |---|---|
-| R1 | 6 entradas sin commitear (M docs/agents/COLA.md ·  M docs/agents/ordenes/ATERRIZAJE-TREN-A-2026-09-25.md ·  M docs/knowledge/DEUDA.md …) |
+| R1 | 3 entradas sin commitear (M docs/knowledge/DECISIONES.md ·  M docs/knowledge/DEUDA.md · ?? docs/agents/ordenes/PROMPT-ANTIGRAVITY-CI-40-PERMISO-DOCUMENTOS-2026-09-26.md) |
 <!-- estadoKB:fin -->

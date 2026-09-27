@@ -79,3 +79,10 @@ Una entrada por decisión no obvia: **qué se decidió, cuándo, por qué, y qu�
 ## 2026-09-24 · D-014 · Todo fix nace de un test que primero falla
 
 - **Decisión:** no se acepta un arreglo sin la corrida en rojo que demuestra el defecto. Sin rojo no hay auditoría, solo opinión.
+
+## 2026-09-26 · D-015 · El endpoint de documentos exige `UPDATE`, no `CREATE` (y la matriz no se amplía)
+
+- **Decisión:** `POST /api/v1/business/documents/generate` pasa de `requirePermission(BUSINESS_PROFILE, CREATE)` a `…, UPDATE)`. `PERMISSIONS_MATRIX` **no** se toca.
+- **Por qué:** medido — **ningún rol** tiene `BUSINESS_PROFILE:CREATE` ⇒ el endpoint devolvía **403 para todos** (y 23 de los 24 tests rojos del gate eran su cascada). Las **tres rutas hermanas de documentos** (`request-signature`, `sign`, `version`) exigen `UPDATE`; `CREATE` era el único outlier de 7 rutas POST del recurso. `UPDATE` lo tienen **exactamente OWNER y ADMIN** ⇒ la audiencia es la misma que tendría «agregar `CREATE` a OWNER/ADMIN», sin ampliar la matriz (nada de revisión de privilegios) y coherente con el comentario del controlador («Private Provider»).
+- **Alternativa descartada:** agregar `BUSINESS_PROFILE:CREATE` a OWNER/ADMIN en la matriz (opción b). Descartada por **ampliar** la matriz de permisos para algo que el resto del recurso ya resuelve con `UPDATE`; además deja un permiso huérfano a futuro.
+- **Residuo que deja abierto:** el API de precios exige un **ADMIN**; si producción tiene 0 usuarios ADMIN, está muerta igual. **Verificación del Dueño en Railway.**
