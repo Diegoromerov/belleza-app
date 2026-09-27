@@ -329,7 +329,10 @@
 
 **Trampa medida — un 429 NO es una puerta cerrada.** Tras varias pasadas seguidas, `POST /api/auth/login` empieza a responder **429** (límite de tasa del propio endpoint). La verificación de cierre **debe** hacerse fuera de esa ventana, y un 429 se reporta como «no pude medirlo», nunca como éxito.
 
-**Estado: la intervención sigue PENDIENTE.** Ninguno de los dos agentes accede a la base de producción (Antigravity lo declaró honestamente: «no pude acceder a la base de producción»). El CLI de Railway **sí** soporta SSH con comando no interactivo (`railway ssh -- <cmd>`), pero ejecutarlo contra producción requiere autorización explícita del Dueño.
+**Ronda 2 (2026-09-27): bloqueo específico y vía viable identificada.** Antigravity generó la clave SSH pero `railway ssh keys` le respondió **«SSH key management is not supported with project tokens (RAILWAY_TOKEN)»** y `railway ssh` falló con `Unauthorized`: en su entorno manda un **token de proyecto**. Declaró el Plan B con honestidad («no hay canal a la base de producción desde mi terminal»), respetó la prohibición de deshabilitar TLS y volvió a medir las 6 cuentas: **las seis entregan token (200)**; el admin real, 401. El SQL que dejó para el Dueño es correcto y coincide con esta ficha.
+
+**La sesión del CLI (sin token) sí tiene permiso**: al Arquitecto le respondió *«No registered SSH keys found. Register one with: `railway ssh keys add`»* ⇒ el único paso que falta es registrar la clave, y `railway ssh keys add -k <ruta>` **acepta la clave por archivo**, o sea que es automatizable sin interacción. Registrarla afecta la **cuenta personal** de Railway del Dueño (reversible) ⇒ requiere su autorización explícita aparte de esta orden.
+
 
 | CI-49 | GUARDIÁN | **El escáner de credenciales no ve el caso de CI-48.** `backend/scripts/verifyNoVersionedSecrets.js` da exit 0 («✅ Sin credenciales versionadas en archivos trackeados.») con `password123` documentada **en claro** en `backend/seed.sql` y su hash bcrypt versionado. El guardián no cubre contraseñas documentadas en seeds ni hashes de contraseñas conocidas. | ⬜ | Ampliar las reglas del escáner para marcar credenciales documentadas y hashes de contraseñas conocidas en seeds y comentarios; añadir el caso como prueba. |
 
