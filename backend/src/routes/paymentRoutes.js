@@ -45,9 +45,12 @@ async function requirePrestador(req, res) {
   return true;
 }
 
+// CI-48: la compuerta depende del ROL de la base, nunca del email.
+// Antes aceptaba además los emails 'admin@beautyapp.com' y 'admin', lo que dejaba
+// entrar a cualquier cuenta con ese email aunque su rol fuese PRESTADOR o CLIENTE.
 async function requireAdmin(req, res) {
-  const { rows } = await pool.query('SELECT rol, email FROM usuarios WHERE id = $1', [req.user.id]);
-  if (!rows.length || (rows[0].rol !== 'ADMIN' && rows[0].email !== 'admin@beautyapp.com' && rows[0].email !== 'admin')) {
+  const { rows } = await pool.query('SELECT rol FROM usuarios WHERE id = $1', [req.user.id]);
+  if (!rows.length || rows[0].rol !== 'ADMIN') {
     res.status(403).json({ error: 'Solo administradores pueden realizar esta acción.' });
     return false;
   }
