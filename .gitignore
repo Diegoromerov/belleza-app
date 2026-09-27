@@ -60,12 +60,13 @@ backend/final_validation.js
 backend/db_check.js
 backend/alter_constraint.js
 backend/inspect_*.js
-backend/get_users.js
-backend/list_tables.js
 backend/coverage/
 backend/coverage-youcam.json
 backend/docker-compose.override.yml
-backend/public/
+# A-04: backend/public versionado intencionalmente para servido estático de Flutter Web
+# backend/public/
+backend/public/assets/assets/glowguide/*.webm
+backend/public/assets/assets/glowguide/*.mp4
 *.bak
 *.backup*
 *.backup
