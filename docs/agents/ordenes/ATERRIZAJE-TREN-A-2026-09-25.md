@@ -107,3 +107,16 @@ Si algo sale mal **después** de empujar: `git revert -m 1 <sha-del-merge>` en u
 - No toca `main` (eso es el merge del PR #16, decisión del Dueño en la interfaz de GitHub).
 - No rota secretos (D-003) ni decide sobre `backend/public` (A-04) ni sobre el alcance del candado (CI-16).
 - No cierra la Fase A: queda el residuo de CI-14/TEC-53 y el diagnóstico del workflow `rag-evaluation` (no bloquea el PR).
+
+---
+
+## §6 · Chequeos obligatorios al resolver el conflicto del servicio biométrico (2026-09-27)
+
+**Por qué:** dos ramas reescriben el mismo archivo — `backend/src/services/biometricCryptoService.js`. **A-08** (`fix/caminos-muertos`, **ya en el tren**) le puso el control **fail-closed de 32 bytes** (CI-30) y quita la derivación por `sha256` en producción; **TEC-53** (`fix/secretos-sin-respaldo-literal`, en vuelo) lo reescribe para **quitar el literal de respaldo** de `CLAVE_LEGADA`. Además, su rama nace de `b545ef22`, así que **no** trae el control de A-08: si el conflicto se resuelve quedándose con un lado, se pierde una de las dos cosas.
+
+Al resolverlo, verificar las **dos** y pegarlo:
+
+1. **Sobrevive CI-30**: el arranque con una clave que no son 32 bytes (ni 64 hex ni 32 utf8) **lanza** en producción/test (`NODE_ENV=production node -e "require('./src/services/biometricCryptoService')"` ⇒ error), y con la clave real (**64 hex**) **no** lanza.
+2. **No vuelve ningún literal**: `grep -nE "fallback|clave_vieja|glowapp_biometric|beauty_app_super_secret" backend/src/services/biometricCryptoService.js` ⇒ sin coincidencias, y `node scripts/verifyNoVersionedSecrets.js < /dev/null` ⇒ **exit 0, 0 hallazgos**.
+
+**Además (duplicación trivial):** TEC-53 toca `backend/src/tests/adminPreciosRoutes.test.js` con el mismo cambio que ya hizo **A-07 r4** (`4e9145ad9`, en el tren): usar `getJwtSecret()`. Ese hunk debe resolverse como **no-op** (o conflicto trivial); si el archivo aterriza con el literal de respaldo, es una regresión.
