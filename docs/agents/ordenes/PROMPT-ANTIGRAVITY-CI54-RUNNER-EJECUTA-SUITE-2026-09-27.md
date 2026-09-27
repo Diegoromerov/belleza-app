@@ -21,13 +21,16 @@ Resumen del gate: Test Suites: 77 failed, 77 total · Tests: 0 total
 Datos de entorno que ya conozco (no hace falta que los midas de nuevo):
 
 - El runner usa **`Setup Node.js 18`**.
-- `backend/package.json`: `"test": "jest"` — sin flags.
+- `backend/package.json`: `"test": "jest"` — sin flags, y **sin `engines`** (nada fija la versión).
 - `backend/babel.config.js`: `@babel/preset-env` + **`@babel/plugin-transform-runtime`**.
 - En local la suite **sí** corre (Node moderno, mismo `jest`).
 
+**Y la causa raíz ya está reproducida por el Arquitecto** (no hace falta que la reproduzcas): en un contenedor limpio `node:18` con `npm ci` desde el lockfile, jest falla con **el mismo** `[BABEL]` en `loadPartialConfig` y reporta `Test Suites: 1 failed, 1 total · Tests: 0 total` — la firma exacta del runner. La variable que decide es **la versión de Node del runner contra este `babel.config.js`**, no las suites ni el banco local. (El control del mismo árbol con Node moderno está en curso; su resultado entra como enmienda a esta orden, no como supuesto.)
+
+
 ## 2. Qué hacer
 
-1. **Reproducí el fallo primero, en un contenedor limpio**, con el Node exacto del runner y `npm ci` desde el lockfile. Sin reproducción no hay diagnóstico, sólo conjetura: quiero la línea del `[BABEL]` saliendo **en tu terminal** antes de que toques nada.
+1. **No hace falta reproducir nada: la firma ya está medida** (§1). Pasá directo a la causa y al arreglo. Si querés tu propia confirmación, el contenedor es `node:18` + `npm ci` + `node node_modules/jest/bin/jest.js src/tests/verifyNoVersionedSecrets.test.js`.
 2. **Elegí la causa raíz, no el parche.** Las candidatas, todas legítimas si la medición las respalda: alinear la versión de Node del runner con la que el proyecto soporta (una sola fuente de verdad) · corregir `babel.config.js` para que funcione en las dos · o pasar a jest el flag que su propio error indica. Lo que **no** vale: hacer que el paso «pase» silenciando el fallo de carga.
 3. **Criterio de aceptación, falsable:** el run del PR tiene que publicar una anotación con **`Tests:` mayor que cero** y un `Test Suites:` donde las suites **carguen**. Si sigue apareciendo `Tests: 0 total`, no está arreglado, aunque el paso diga `success`.
 4. **Ajuste chico de CI-53, si te resulta cómodo en el mismo PR:** el titular «77 failed, 77 total» induce a error (parecen 77 suites rotas; eran 77 que no cargaron). Que el titular distinga *failed to run* de *tests failed*.
