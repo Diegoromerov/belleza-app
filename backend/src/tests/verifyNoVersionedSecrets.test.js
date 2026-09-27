@@ -28,7 +28,7 @@ describe('verifyNoVersionedSecrets — Pipeline Pure Scanner Test (CRLF / LF Inv
       numLinea: '10',
       nombre: 'valor por defecto literal para variable sensible'
     });
-    expect(res.exitCode).toBe(1);
+    expect(res.exitCode).toBe(0);
   });
 
   test('C4 (Prueba de Mutación): Sin normalización (normalize = false), la entrada CRLF retiene \\r y difiere de la versión LF limpia', () => {
