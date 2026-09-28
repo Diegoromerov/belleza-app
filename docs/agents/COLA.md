@@ -37,7 +37,46 @@
 
 ## 2. Decisiones del Dueño (escaladas)
 
-### Pendientes del Dueño — lista vigente (medida 2026-09-27 tarde)
+### Pendientes — lista vigente (medida 2026-09-28, tras cerrar S3 y CI-55)
+
+**Fase A = 99,8 %** (criterios 4/4 = 100 % · entregables 99,3 % · aterrizaje 100 %). Lo único que
+falta para el 100 % es la firma **A-07**.
+
+**Atribución cerrada sin cargo**: el merge del PR #18 a `main` (`0ad91fb7e`) lo hizo **el Dueño**
+(declarado 2026-09-28); el revert `c98503b33` —correcto y verificado— entró como camino directo y su
+mensaje no lleva la constancia D-019. La convención aplica al agente; cuando el Dueño autoriza un
+camino directo, la constancia se deja igual, para que la autorización sea legible desde afuera.
+
+**Cerrado desde la lista anterior**: D-017 firmada (`8328fed54`) · A-04 decidido (`4c46344f0`) ·
+CI-16 y D-004 y D-005 mergeados · CI-46 · CI-53 · CI-54 · **CI-55** · **S3 = 1,00** (run `36457686836`).
+
+| # | Qué | Por qué es tuyo | Tamaño |
+|---|---|---|---|
+| **A. Para el 100 % de Fase A** | | | |
+| 1 | **Firmar A-07** («el gate tiene que decir la verdad») | El entregable está medido: el gate corre 592 tests, publica sus números como anotación y las 4 suites rojas están clasificadas con evidencia (CI-43). La firma es la aceptación, no un trabajo | 1 línea |
+| **B. Cola de merges (merge commit, nunca squash)** | | | |
+| 2 | **Abrir el PR** de `fix/ci56-rag-observable` (1 commit, aceptada en código) | Su run publica la salida real del job `Unit Tests (Core)` de la RAG ⇒ recién ahí la causa del rojo deja de ser sospecha. El workflow no corre en pushes a ramas: sin PR no hay run | 1 PR |
+| 3 | `fix/ci48-sin-email-en-admin` (2 commits) | El acceso ya está cerrado **en producción** (6 cuentas `is_active=false`, 200→403); el código quita el fallback por email. 5 de 6 cuentas cubiertas | 1 merge |
+| 4 | `fix/ci49-credencial-no-publicada` (4 commits, 4 rondas aceptadas) | Ninguna credencial que autentique puede estar publicada, y la compuerta tiene que verla si vuelve | 1 merge |
+| 5 | `fix/ci72-visible-y-cifras-faseA` (39 commits, sólo KB) | Pone el sistema de agentes, la KB y las cifras en `main` | 1 merge |
+| 6 | `chore/guardian-en-el-repo` (3 commits) | El guardián versionado (O-014) **no está en `main`**: hoy el repo no se vigila solo | 1 merge |
+| 7 | **Borrar** `prueba/s3-gate-rojo-2026-09-28` (0 commits fuera de `main`: mergeada y revertida) y `fix/ci54-node-version-runner` (su cambio ya entró por push autorizado) | Ramas cuyo trabajo ya está en `main` sólo ensucian el triage | 2 clicks |
+| **C. Seguridad y producción** | | | |
+| 8 | **Rotar el token** que quedó escrito en la traza del Ejecutor | Un token vivo que quedó registrado en un archivo es una puerta, aunque nadie la use (D-018/D-019) | 1 vez |
+| 9 | **Elegir el régimen de `main`**: PR obligatorio + checks obligatorios + push directo bloqueado, **o** caminos directos autorizados con constancia en el commit | Van 5 pushes directos a `main`; el último (Node 22) ya lleva constancia. Mientras el token siga vivo, cualquiera publica en `main` | 1 decisión |
+| 10 | **CI-50 — 14 cuentas demo activas** que autentican con la contraseña publicada | Exponen la cuenta y sus datos (ninguna es ADMIN). Desactivar o rotar; el canal está verificado y la sonda lista para dejarlo medido antes/después | 1 decisión |
+| 11 | **CI-51 — `KYC_WEBHOOK_SECRET`** con literal por defecto (`admin.controller.js:267`) | Severidad baja hoy: el router `glow-admin` **no está montado** (`/api/glow-admin/...` ⇒ 404). Rotar y definir, o dejarlo mientras siga sin montar | 1 decisión |
+| 12 | **D-003 — revocar** lo del historial (la rotación ya está hecha y verificada) | Los valores viejos siguen vivos en los proveedores: Google/OpenUV/etc.; verificar/revocar `YOCAM_API_KEY` (typo del histórico). **No** rotar las biométricas sin `reencryptBiometricData.js` | ops |
+| 13 | **¿Las 2 cuentas ADMIN activas son las que querés?** | Medido: quedan `admin@glow.app` y `escuela@glow.app`; `admin@beautyapp.com` quedó desactivada con CI-48. Cada ADMIN vivo mueve dinero | 1 mirada |
+| **D. Higiene del banco** | | | |
+| 14 | **Sacar el banco del HEAD desprendido** y decidir los **32 archivos sin trackear** (`backend/public/assets/...` del bundle Flutter, `get_users.js`, `list_tables.js`) | Medir sobre un banco que no está en una rama es medir sobre nada. Trackear, ignorar o borrar: las tres son válidas, la indefinición no | 2 min |
+| 15 | **D-002 `delete_branch_on_merge`** (Settings → General → Pull Requests) | La API pública no expone el campo: sólo lo ves vos. Es lo que evita que las ramas podables vuelvan a acumularse | 1 click |
+| 16 | **Los 2 planes duplicados** en `.hermes/plans/` y **CI-36** (3 finales de línea por worktree) | Los planes sin trackear sacan en rojo el parte del guardián | 1 min |
+| **E. Deudas abiertas que necesitan decisión** | | | |
+| 17 | **CI-43** — falta el esquema del subsistema en la base de test del CI (`memberships` sin `CREATE TABLE` en ninguna migración) | Los 403 (17 + 6 cascadas) **no** son del esquema, ya medido. Entra a la cola o queda declarada como deuda | decisión |
+| 18 | **CI-57** — el escáner marcó por el **nombre** de la variable (`const PASOS_CLAVE = [nombres de pasos]`, sin secreto) | Arreglado renombrando, sin eximir la regla. Queda decidir si la regla debe ignorar arrays de palabras legibles — con cuidado: CI-52 r3 mostró que ajustar por precisión sin medir recall reabre el defecto que el escáner existe para cazar | decisión menor |
+
+### Pendientes del Dueño — lista anterior (2026-09-27 tarde) ⟶ **SUPERSEDIDA, se conserva como registro**
 
 | # | Qué | Por qué es tuyo | Tamaño |
 |---|---|---|---|
@@ -97,3 +136,24 @@
 
 - **ATERRIZAJE HECHO Y VERIFICADO (2026-09-27)**: `main` = `e8243432f` (merge commit de PR #16, padres f5a1b4fcf + a6e40e017; el tren de 11 es ancestro). Los dos chequeos de la §6 corrieron **sobre main** y pasan (CI-30 sobrevive; ningún literal volvió). CI-44 **cerrada**: el CI de main corre de verdad y el **paso 7 pasó verde por primera vez**. Fase A: **75,5 % → 92,5 %**. Detalle: docs/audit/AUDITORIA-ATERRIZAJE-TREN-A-2026-09-27.md
 - **SIGUIENTE — una sola orden: «que la base del CI sirva»** = **CI-46** (el paso de preparación de la base falla en el runner y deja los tests en skipped) + **CI-43** (falta el esquema de negocio: business_profiles + memberships, hoy 23 rojos en las 4 suites business*) + **CI-45** (la compuerta anti-marcadores es ciega a .github). Con eso **el paso de tests corre en GitHub por primera vez** y el criterio S3 (0,90) queda medible. **Sin emitir todavía.**
+
+## Camino al 100 % — revisión del 2026-09-28
+
+**Fase A sigue en 98,5 %** (criterios 97,5 · entregables 99,3 · aterrizaje 1,00). Cambió **qué falta**:
+
+1. **HECHO por el Dueño**: `fix/ci46-segunda-causa` mergeado (`ec45924b1`). El paso de tests **corre** y el esquema multi-tenant se prepara en el CI. CI-46 ✅.
+2. **HECHO (Tarea A)**: CI-53 ✅ — el CI publica el resumen del gate como anotación. Con eso se supo la verdad: `Tests: 0 total`.
+3. **AHORA, y bloquea los dos criterios que faltan**: CI-54 — el runner debe pasar a **Node 22.x** (el parche a 20.x no alcanza: `@babel/preset-env@8.0.2` declara `^22.18.0 || >=24.11.0`). Orden emitida; el Dueño abre y mergea el PR.
+4. **DESPUÉS**: PR de mutación (rama `prueba/s3-gate-rojo-2026-09-28`, 1 archivo / 1 línea, ya lista). **El PR lo abre el Dueño**: `ci.yml` no corre en pushes a ramas. Su run dará S3 = 1,00.
+5. **Entonces**: yo audito y publico el 100 %.
+
+### 2026-09-28 (bis) — Estado real tras CI-54
+
+- **CI-46 ✅ · CI-53 ✅ · CI-54 ✅.** El CI prepara la base, corre las 77 suites y **publica** su resumen: `4 failed, 73 passed, 77 total · 23 failed, 1 skipped, 568 passed, 592 total`.
+- **Falta un clic para S3**: abrir el PR de `prueba/s3-gate-rojo-2026-09-28` (1 archivo / 1 línea). Su run debe dar `+1 suite / +1 test` y nombrar el test mutado. Cerrar el PR #17.
+- **A-07 (0,95 → 1,00)**: el gate ya dice la verdad (corre 592 tests, publica sus números y las 4 suites rojas son deuda clasificada). Su cierre fue «por decisión del Dueño» ⇒ **espera su palabra**, con esta evidencia.
+- **Con eso: 100 %.** Hoy: 98,5 % (98,7 % en cuanto el Dueño firme A-07).
+- **Acciones del Dueño:** proteger `main` (D-019) · rotar el token · abrir el PR de mutación · cerrar #17 · firmar A-07.
+- **2026-09-28 (ter):** el merge directo de CI-54 a `main` **fue autorizado por el Dueño** — D-019 enmendada. Queda sólo la parte de trazabilidad y mecanismo (dejar constancia de la autorización, o proteger `main`). La rotación del token sigue pendiente por ser una credencial expuesta, no por desconfianza.
+- **2026-09-28 (quater):** CI-55 **arreglada y verificada** (1 archivo, `4+/4-`, `actionlint` limpio sobre `main`, constancia D-019 en el commit). Falta **un run con `jobs > 0`**: lo produce un `workflow_dispatch` del Dueño. Sigue pendiente lo mismo de antes: **PR de mutación** (rama lista, 1 archivo / 1 línea, al día con `main`) → cierra **S3**, y **firma de A-07**.
+- **2026-09-28 (quinquies):** CI-55 — el arreglo está verificado, el criterio se cierra con **un `workflow_dispatch` sobre `main`** (un push normal no lo dispara: el workflow no está en sus propios `paths`). Los runs en `jobs=0` que se ven son de ramas que llevan la copia vieja del archivo.

@@ -68,6 +68,11 @@ BEGIN
   END IF;
 END $$;
 
+-- Membresía: app_rls_user puede ESCALAR a app_system dentro de una transacción
+-- (mecanismo de los caminos sin petición autenticada, ver §1b). Va DESPUÉS del
+-- CREATE ROLE de arriba: es la corrección del orden que rompía la base vacía.
+GRANT app_system TO app_rls_user;
+
 DO $$
 BEGIN
   EXECUTE format('GRANT CONNECT ON DATABASE %I TO app_system', current_database());
