@@ -146,3 +146,4 @@
 - **Con eso: 100 %.** Hoy: 98,5 % (98,7 % en cuanto el Dueño firme A-07).
 - **Acciones del Dueño:** proteger `main` (D-019) · rotar el token · abrir el PR de mutación · cerrar #17 · firmar A-07.
 - **2026-09-28 (ter):** el merge directo de CI-54 a `main` **fue autorizado por el Dueño** — D-019 enmendada. Queda sólo la parte de trazabilidad y mecanismo (dejar constancia de la autorización, o proteger `main`). La rotación del token sigue pendiente por ser una credencial expuesta, no por desconfianza.
+- **2026-09-28 (quater):** CI-55 **arreglada y verificada** (1 archivo, `4+/4-`, `actionlint` limpio sobre `main`, constancia D-019 en el commit). Falta **un run con `jobs > 0`**: lo produce un `workflow_dispatch` del Dueño. Sigue pendiente lo mismo de antes: **PR de mutación** (rama lista, 1 archivo / 1 línea, al día con `main`) → cierra **S3**, y **firma de A-07**.
