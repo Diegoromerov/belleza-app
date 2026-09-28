@@ -378,3 +378,11 @@
 3. **RETRACTACIÓN (R-06) del baseline del gate.** Durante varias rondas comparé ramas contra un baseline local de **`4 suites / 23 rojos / 592 tests`**. Ese baseline **nunca describió al CI**: en el runner el gate da **`77 suites failed, 77 total · 0 tests`**. La comparación «sin rojo nuevo» era entre locales. Se mantiene como medida **local** válida y se retira como referencia del CI. Baseline del CI, hoy: **ninguna suite carga**.
 4. **`ci.yml` no corre en pushes a ramas de trabajo**: corre en `main` y en **PRs**. Medido: el push de la rama de mutación no produjo run de `ci.yml` (sólo `rag-evaluation`, 0 jobs); el run de `ci.yml` del PR #17 sí existe. Consecuencia: **una mutación necesita PR**, y el PR lo abre el Dueño (D-018).
 5. **S3 y A-07**: siguen en 0,90 y 0,95. Ahora son **medibles** (el paso corre) pero **no cerrables**: con `Tests: 0 total` el rojo ya está en todas las suites. El desbloqueo pasó de «falta el merge» a «falta el motor correcto en el runner» (→ CI-54).
+
+### 2026-09-28 (bis) — CI-54: rama lista, evidencia del contraste rechazada
+
+- **Verificado por mí (API pública):** `fix/ci54-node-version-runner` @ `ab3c72752`, 1 archivo `.github/workflows/ci.yml` `+9/-4`, neto `18.x` → `22.x`. Condición y exclusiones del gate **intactas**. Sin PR (D-018 respetada: cero búsqueda de credenciales).
+- **Rechazado como medición:** el contraste `node:20` vs `node:22`. La corrida de 20 falla por **resolución de `npx`** (`Cannot find module '@babel/plugin-transform-runtime'`, require stack en `/root/.npm/_npx/…`), que **no es el error del CI**; y las cuatro invocaciones distintas de la traza (`npx jest`, `npm test`, `npm ci --legacy-peer-deps && npx jest`, `node node_modules/jest/bin/jest.js`) no aíslan la variable. Trampa registrada en `TRAMPAS.md`.
+- **Aceptada la dirección igual:** el `engines` de `@babel/preset-env@8.0.2` y `@babel/plugin-transform-runtime@8.0.1` (`^22.18.0 || >=24.11.0`, `type: module`) respalda `22.x`, y **el juez es el CI**: si tras el merge el resumen sigue en `Tests: 0 total`, la dirección estaba mal y se revierte.
+- **Pendiente del Dueño:** abrir y mergear el PR de CI-54; abrir el PR de `prueba/s3-gate-rojo-2026-09-28` (`b7a96a4a3`, 1 archivo / 1 línea); cerrar el PR #17 (su run quedó `skipped`).
+- **Auditoría completa:** `docs/audit/AUDITORIA-CI54-2026-09-28.md`.
