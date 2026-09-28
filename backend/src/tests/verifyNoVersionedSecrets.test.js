@@ -35,17 +35,106 @@ describe('verifyNoVersionedSecrets — Pipeline Pure Scanner Test (CRLF / LF Inv
     const rawLF   = `${targetFile}:10:${secretLine}\n`;
     const rawCRLF = `${targetFile}:10:${secretLine}\r\n`;
 
-    // Con normalización habilitada (normalize = true)
     const resLFWithNorm   = analizarSalida(rawLF, { normalize: true });
     const resCRLFWithNorm = analizarSalida(rawCRLF, { normalize: true });
     expect(resLFWithNorm.hallazgos).toEqual(resCRLFWithNorm.hallazgos);
 
-    // Sin normalización (normalize = false): rawCRLF produce una línea con \r al final
     const resLFNoNorm   = analizarSalida(rawLF, { normalize: false });
     const resCRLFNoNorm = analizarSalida(rawCRLF, { normalize: false });
 
-    // Con los strips decorativos eliminados, la evaluación sin normalizar difiere o retiene \r
     expect(resCRLFNoNorm.hallazgos).not.toEqual(resLFNoNorm.hallazgos);
+  });
+
+  test('Regla 1: Contraseña documentada en prosa o comentario es detectada por el escáner (con y sin acento)', () => {
+    const proseLineAccent = "-- contraseña para todos los usuarios es: secret123";
+    const proseLineNoAccent = "// contrasena por defecto: secret123";
+    const rawInputAccent = `seed.sql:1:${proseLineAccent}\n`;
+    const rawInputNoAccent = `seed.sql:2:${proseLineNoAccent}\n`;
+
+    const resAccent = analizarSalida(rawInputAccent);
+    const resNoAccent = analizarSalida(rawInputNoAccent);
+
+    expect(resAccent.hallazgos).toHaveLength(1);
+    expect(resAccent.hallazgos[0].nombre).toBe('contraseña documentada en prosa o comentario');
+    expect(resNoAccent.hallazgos).toHaveLength(1);
+    expect(resNoAccent.hallazgos[0].nombre).toBe('contraseña documentada en prosa o comentario');
+  });
+
+  test('Regla 2: Hash de contraseña débil conocida (bcrypt) es detectado por el escáner', () => {
+    // Hash bcrypt conocido de 'password123'
+    const hashLine = "INSERT INTO usuarios VALUES ('$2a$10$XG3dsKkJJFx9cldnFJHGt.FJqYVTNiSsoJAaSVwUQkYis22mXk/7O');";
+    const rawInput = `seed.sql:5:${hashLine}\n`;
+    const res = analizarSalida(rawInput);
+
+    expect(res.hallazgos).toHaveLength(1);
+    expect(res.hallazgos[0]).toEqual({
+      archivo: 'seed.sql',
+      numLinea: '5',
+      nombre: 'hash de contraseña débil conocida'
+    });
+    expect(res.exitCode).toBe(1);
+  });
+
+  test('Regla 3: Valor por defecto literal en variable sensible sigue siendo detectado (re-verificación de cobertura)', () => {
+    const defaultValLine = "const DB_PASS = 'SuperSecret123!';";
+    const rawInput = `src/config/db.js:15:${defaultValLine}\n`;
+    const res = analizarSalida(rawInput);
+
+    expect(res.hallazgos).toHaveLength(1);
+    expect(res.hallazgos[0]).toEqual({
+      archivo: 'src/config/db.js',
+      numLinea: '15',
+      nombre: 'valor por defecto literal para variable sensible'
+    });
+    expect(res.exitCode).toBe(1);
+  });
+
+  test('Regla 3 (ronda 2): Expresiones de fallback process.env.X || "literal" y process.env.X ?? "literal" son detectadas', () => {
+    const line1 = "const DB_PASSWORD = process.env.DB_PASSWORD || 'Literal123!';";
+    const line2 = "const JWT_SECRET = process.env.JWT_SECRET || 'devsecret123';";
+    const line3 = "const API_KEY = process.env.API_KEY ?? 'live_key_1234567890';";
+
+    expect(analizarSalida(`src/config/db.js:1:${line1}\n`).hallazgos).toHaveLength(1);
+    expect(analizarSalida(`src/config/db.js:2:${line2}\n`).hallazgos).toHaveLength(1);
+    expect(analizarSalida(`src/config/db.js:3:${line3}\n`).hallazgos).toHaveLength(1);
+  });
+
+  describe('Regla 7 (ronda 3 — CI-52): Discriminación de falsos positivos vs defectos reales', () => {
+    test('Casos Negativos (7 constantes legítimas NO deben ser marcadas)', () => {
+      const casosLegitimos = [
+        { linea: "const SECRET_HEADER = 'authorization';", desc: "SECRET_HEADER" },
+        { linea: "const KEY_ALGO = 'HS256';", desc: "KEY_ALGO" },
+        { linea: "const TOKEN_TYPE = 'Bearer';", desc: "TOKEN_TYPE" },
+        { linea: "const API_KEY_HEADER = 'x-api-key';", desc: "API_KEY_HEADER" },
+        { linea: "const DB_PASSWORD_FIELD = 'password_hash';", desc: "DB_PASSWORD_FIELD" },
+        { linea: "const TOKEN_KEY = 'glow_token';", desc: "TOKEN_KEY" },
+        { linea: "const SECRET_NAME = 'JWT_SECRET';", desc: "SECRET_NAME" }
+      ];
+
+      for (const caso of casosLegitimos) {
+        const res = analizarSalida(`src/config/app.js:10:${caso.linea}\n`);
+        expect(res.hallazgos).toHaveLength(0);
+      }
+    });
+
+    test('Casos Positivos (fallos reales DEBEN ser marcados, incluyendo fallbacks de baja entropía CI-52 bis)', () => {
+      const casosDefectuosos = [
+        { linea: "const DB_PASSWORD = process.env.X_PASSWORD || 'Literal123!';", desc: "X_PASSWORD fallback" },
+        { linea: "const API_KEY = process.env.API_KEY ?? 'live_key_1234567890';", desc: "API_KEY nullish fallback" },
+        { linea: "DB_PASSWORD=Literal123!", desc: "Dotenv inline assignment" },
+        { linea: "const DB_PASSWORD = process.env.DB_PASSWORD || 'postgres';", desc: "DB_PASSWORD weak postgres fallback" },
+        { linea: "const KYC_WEBHOOK_SECRET = process.env.KYC_WEBHOOK_SECRET || 'glowapp_secure_kyc_webhook_secret_2026';", desc: "KYC secret fallback" },
+        { linea: "const ADMIN_SECRET = 'SuperSecret123!';", desc: "ADMIN_SECRET direct assignment" },
+        { linea: "const X_PASSWORD = process.env.X_PASSWORD || 'letmein';", desc: "X_PASSWORD low-entropy fallback (CI-52 bis fix)" },
+        { linea: "const X_PASSWORD = process.env.X_PASSWORD ?? 'secret';", desc: "X_PASSWORD low-entropy nullish fallback (CI-52 bis fix)" }
+      ];
+
+      for (const caso of casosDefectuosos) {
+        const res = analizarSalida(`src/config/app.js:10:${caso.linea}\n`);
+        expect(res.hallazgos.length).toBeGreaterThanOrEqual(1);
+        expect(res.hallazgos[0].nombre).toBe('valor por defecto literal para variable sensible');
+      }
+    });
   });
 
   test('Coexistencia legacy: validarLinea (normalize = false) demuestra divergencia por \\r', () => {

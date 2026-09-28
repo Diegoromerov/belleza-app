@@ -39,7 +39,7 @@ const { Client } = require('pg');
 
 const RAIZ = path.join(__dirname, '..');
 const ADMIN_URL = process.env.DATABASE_URL_ADMIN || process.env.DATABASE_URL;
-const PASSWORD = process.env.RLS_ROLE_PASSWORD || 'ci_only_password';
+const PASSWORD = process.env.RLS_ROLE_PASSWORD;
 
 const MIGRACIONES = [
   'init.sql',

@@ -16,7 +16,7 @@ const { REGLAS, analizarSalida } = require('../../scripts/verifyNoVersionedSecre
 // Tres reglas distintas casan en el mismo blob crudo (Cargo 2.1).
 const LINEA_REGLA_LITERAL = "deploy/db.sh:12:PGPASSWORD: 'supersecreto123'";           // la selecciona 'valor por defecto literal'
 const LINEA_REGLA_TOKEN = 'backend/src/rutas/api.js:22:const u = "https://api.x/v1/?token=abc123def456";'; // la selecciona 'token o JWT'
-const LINEA_QUE_NADIE_DEBERIA_ETIQUETAR = "backend/src/config/app.js:7:const API_KEY = process.env.API_KEY || 'dev-fallback';"; // su regla la rechaza ⇒ NO puede caer en 'token o JWT'
+const LINEA_QUE_NADIE_DEBERIA_ETIQUETAR = "backend/src/config/app.js:7:const API_KEY = process.env.API_KEY || 'REDACTED';"; // su regla la rechaza ⇒ NO puede caer en 'token o JWT'
 
 const BLOB = [LINEA_REGLA_LITERAL, LINEA_REGLA_TOKEN, LINEA_QUE_NADIE_DEBERIA_ETIQUETAR].join('\n');
 

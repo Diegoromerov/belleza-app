@@ -1697,16 +1697,11 @@ const initDatabase = async () => {
     const needsSeed = checkUser.rows.length === 0;
 
     if (needsSeed) {
-      if (process.env.NODE_ENV === 'production') {
-        console.warn('⚠️  Omitiendo siembra de base de datos: la siembra automática está prohibida en producción.');
-      } else if (process.env.SEED_DATABASE === 'true') {
-        const seedPath = path.join(__dirname, 'seed.sql');
-        if (fs.existsSync(seedPath)) {
-          const seedSql = fs.readFileSync(seedPath, 'utf8');
-          await pool.query(seedSql);
-          console.log('🌱 Datos de prueba (seed.sql) sembrados exitosamente.');
-        }
-      } else {
+      const { executeSeed } = require('./src/utils/seedRunner');
+      const res = await executeSeed({ pool });
+      if (res.seeded) {
+        console.log('🌱 Datos de prueba (seed.sql) sembrados exitosamente.');
+      } else if (res.reason === 'SEED_DATABASE_NOT_TRUE') {
         console.log('⚠️  Omitiendo la siembra de base de datos (SEED_DATABASE no está establecida como "true").');
       }
     }

@@ -24,7 +24,7 @@ const pool = new Pool({
   port: parseInt(process.env.DB_PORT, 10) || 5435,
   database: process.env.DB_NAME || 'beauty_db',
   user: process.env.DB_USER || 'admin',
-  password: process.env.DB_PASSWORD || 'admin123',
+  password: process.env.DB_PASSWORD,
 });
 
 // Configuración NVIDIA NIM
