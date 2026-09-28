@@ -386,3 +386,21 @@
 - **Aceptada la dirección igual:** el `engines` de `@babel/preset-env@8.0.2` y `@babel/plugin-transform-runtime@8.0.1` (`^22.18.0 || >=24.11.0`, `type: module`) respalda `22.x`, y **el juez es el CI**: si tras el merge el resumen sigue en `Tests: 0 total`, la dirección estaba mal y se revierte.
 - **Pendiente del Dueño:** abrir y mergear el PR de CI-54; abrir el PR de `prueba/s3-gate-rojo-2026-09-28` (`b7a96a4a3`, 1 archivo / 1 línea); cerrar el PR #17 (su run quedó `skipped`).
 - **Auditoría completa:** `docs/audit/AUDITORIA-CI54-2026-09-28.md`.
+
+### 2026-09-28 (ter) — CI-54 CERRADA. El gate del CI corre 592 tests y dice la verdad
+
+**Medido por el Arquitecto (API pública, sin token):**
+
+- `main` = **`ab3c72752`** (fecha 16:31Z). El merge fue **fast-forward** y **directo a `main`**, sin PR (ver incidente abajo).
+- Run **`36453827505`**: `Setup Node.js 22` ✓ · `Preparar el esquema multi-tenant y los roles RLS` ✓ · `Verificar el aislamiento multi-tenant (compuerta RLS)` ✓ · **`Run Backend Integration & Unit Tests` = failure** · `Publicar salida del gate de tests (anotacion)` ✓.
+- Anotación publicada por el propio CI: `Salida del gate (resumen de ejecucion) :: Test Suites: 4 failed, 73 passed, 77 total · Tests: 23 failed, 1 skipped, 568 passed, 592 total`.
+- **CI-54 ✅**: con Node 22 las 77 suites **cargan**. El número pasó de `Tests: 0 total` a **`Tests: 592 total`**. Se confirmó que el objetivo era `22.x` y no `20.x`.
+- **Bonus medido:** el `tail -20` del log en las anotaciones expone ahora fallos **por test** (`expect(createdDocId).toBeTruthy()`, `Received: null`, `TEST 08: Flujo completo de Firma Electrónica…`) ⇒ hay instrumento para **atribuir** un rojo nuevo sin sesión.
+
+**Refinamiento de la retractación del baseline (R-06, se enmienda, no se borra).** En la entrada anterior retiré mi medida local (`4 suites / 23 rojos / 592 tests`) como referencia del CI porque el CI daba `77 failed / 0 tests`. Hoy el CI, ya sano, da **`4 failed / 23 failed / 592 total`**: **coincide con mi baseline local**. Lo correcto era más preciso: mi baseline **sí** describía el estado real del proyecto; lo que no describía era el estado **roto** del CI mientras el paso estaba `skipped`. Ambas cosas quedan registradas.
+
+**S3, criterio literal** (`docs/plans/2026-09-24_FASE-A-verdad-operativa.md:20`): «Romper un test a propósito ⇒ run rojo; `yaml.safe_load` de los dos workflows sin error».
+- Segunda mitad: **CUMPLIDA y medida** — `ci.yml` y `rag-evaluation.yml` parsean OK con `js-yaml` (jobs `[backend-ci, frontend-ci]` y `[lint-and-typecheck, unit-tests, integration-tests, update-baseline, deploy-gate]`).
+- Primera mitad: **pendiente de un clic** — el PR de `prueba/s3-gate-rojo-2026-09-28` (1 archivo / 1 línea). Su run debe mostrar el delta `+1 suite / +1 test` contra el baseline, con el test mutado nombrado en las anotaciones.
+
+**CI-55, precisado:** `rag-evaluation.yml` **parsea bien** pero falla al arrancar en Actions (`jobs=0`, 5/5 de sus últimos runs, incluido `main`). No es YAML inválido: es un rechazo de esquema en el arranque ⇒ **no entra en el literal de S3**, pero ensucia el tablero con un rojo permanente.

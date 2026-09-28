@@ -137,3 +137,11 @@
 3. **AHORA, y bloquea los dos criterios que faltan**: CI-54 — el runner debe pasar a **Node 22.x** (el parche a 20.x no alcanza: `@babel/preset-env@8.0.2` declara `^22.18.0 || >=24.11.0`). Orden emitida; el Dueño abre y mergea el PR.
 4. **DESPUÉS**: PR de mutación (rama `prueba/s3-gate-rojo-2026-09-28`, 1 archivo / 1 línea, ya lista). **El PR lo abre el Dueño**: `ci.yml` no corre en pushes a ramas. Su run dará S3 = 1,00.
 5. **Entonces**: yo audito y publico el 100 %.
+
+### 2026-09-28 (bis) — Estado real tras CI-54
+
+- **CI-46 ✅ · CI-53 ✅ · CI-54 ✅.** El CI prepara la base, corre las 77 suites y **publica** su resumen: `4 failed, 73 passed, 77 total · 23 failed, 1 skipped, 568 passed, 592 total`.
+- **Falta un clic para S3**: abrir el PR de `prueba/s3-gate-rojo-2026-09-28` (1 archivo / 1 línea). Su run debe dar `+1 suite / +1 test` y nombrar el test mutado. Cerrar el PR #17.
+- **A-07 (0,95 → 1,00)**: el gate ya dice la verdad (corre 592 tests, publica sus números y las 4 suites rojas son deuda clasificada). Su cierre fue «por decisión del Dueño» ⇒ **espera su palabra**, con esta evidencia.
+- **Con eso: 100 %.** Hoy: 98,5 % (98,7 % en cuanto el Dueño firme A-07).
+- **Acciones del Dueño:** proteger `main` (D-019) · rotar el token · abrir el PR de mutación · cerrar #17 · firmar A-07.

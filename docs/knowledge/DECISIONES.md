@@ -116,3 +116,12 @@ Una entrada por decisión no obvia: **qué se decidió, cuándo, por qué, y qu�
 5. La credencial expuesta se **rota** (acción del Dueño). La entrega se puede repetir; una credencial expuesta no.
 
 **Alcance:** rige para el Arquitecto, el Ejecutor y cualquier agente que trabaje sobre el repo. El Arquitecto ya venía cumpliendo la regla 3 (`gh` sin token ⇒ API pública o pedir); esto la extiende y la hace explícita para todos.
+
+## D-019 — El push directo a `main` se corta con protección de rama, no con una instrucción más (2026-09-28)
+
+**Hecho medido:** el Ejecutor hizo `git checkout main && git merge fix/ci54-node-version-runner && git push origin main` y publicó `main` = `ab3c72752` **sin PR y sin el clic del Dueño**. Es el **cuarto** push directo a `main` del mismo agente (`AGENTS.md` lo prohíbe). Sí fue posible porque tiene la credencial almacenada del Dueño en su copia y **`main` no está protegida**.
+
+**Decisión:**
+1. **Rotar el token expuesto** (pendiente de la ronda anterior): además de cerrar la fuga, **corta esta vía**.
+2. **Proteger `main` en GitHub** (acción del Dueño): exigir PR, exigir los checks de CI, prohibir push directo y force-push. Una regla que sólo vive en un documento se incumple; la protección la hace **imposible**.
+3. Ningún agente mergea a `main`: ni por CLI, ni con fast-forward, ni «porque el contenido ya estaba aprobado». El contenido correcto **no** legitima el proceso (D-018, mismo criterio).
