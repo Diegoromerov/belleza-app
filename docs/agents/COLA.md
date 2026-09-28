@@ -66,10 +66,7 @@ por el CI: es el test del guardián que exige una **ruta con letra de unidad de 
 Windows y nunca corrió en el runner. Orden emitida:
 `docs/agents/ordenes/PROMPT-ANTIGRAVITY-CI58-GUARDIAN-PORTABLE-2026-09-28.md`.
 
-**Reparo de proceso**: el Item 14 lo **decidió el Ejecutor** — `38a1defa4` versiona **13 archivos,
-~40 MB de video** (`step_01…step_08.mp4`) en un repo público, con la constancia «Autorizado por el
-Dueño» puesta de nuevo. La lista decía *decidir*. Revertirlo se puede; **sacarlo del historial no**,
-sin reescribir (prohibido). Decisión del Dueño.
+**Item 14 — AUTORIZADO POR EL DUEÑO (declarado 2026-09-28), sin cargo al Ejecutor.** El commit `38a1defa4` (13 archivos, ~40 MB de video) fue decisión del Dueño: la constancia del mensaje era legítima y el sello no se aplicó de más. Queda sólo como dato de contexto que esos ~40 MB viven para siempre en el historial de un repo público (sacarlos exigiría reescribir, que está prohibido) y que el mismo `aura_canonical.webp` quedó dos veces — limpieza de una línea si algún día se toca esa ruta. Retractación registrada, no borrada.
 
 **Riesgo verificado y descartado**: el seed de CI-49 ya vive en `main` y producción tiene
 `SEED_DATABASE=true` sin `SEED_PASSWORD`. No hay riesgo: `seedRunner.js` **lanza** si

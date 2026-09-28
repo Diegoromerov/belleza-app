@@ -45,18 +45,21 @@ y **no** tiene `SEED_PASSWORD`. Consecuencia medida:
 **CI-50 no se puede remediar con el seed en producción** — necesita una intervención explícita como
 la de CI-48. El CI tampoco siembra (no define `SEED_DATABASE`).
 
-## 4. Reparo de proceso: el Item 14 lo decidió el Ejecutor
+## 4. Item 14 — RETRACTADO: el Dueño autorizó
 
 El commit `38a1defa4` versiona **13 archivos, ~40 MB de video** (`step_01_welcome.mp4` …
-`step_08_despedida.mp4`, ~4 MB cada uno, más un `.webm` de 2,2 MB) en un repositorio **público**.
+`step_08_despedida.mp4`, ~4 MB cada uno, más un `.webm` de 2,2 MB) en un repositorio público.
 
-- La lista decía **decidir** (trackear / ignorar / borrar): era una decisión del Dueño.
-- El mensaje lleva la constancia «Autorizado por el Dueño (2026-09-28)» ⇒ si el Dueño no autorizó
-  ese commit, el sello se está aplicando de más, y un sello que está en todo deja de ser evidencia.
-- Señales de `git add <dir>` a ciegas: el mismo `aura_canonical.webp` (228 KB) quedó **dos veces**
-  (en `glowguide/` y en `glowguide/videos/`) y el `.gitkeep` quedó con 4 líneas.
-- Revertirlo es posible; **sacarlo del historial no**, sin reescribir (prohibido). Es una decisión
-  del Dueño: dejarlo o revertir el commit.
+**El Dueño declaró el 2026-09-28 que lo autorizó él.** ⇒ No hay reparo de proceso: la constancia del
+mensaje era legítima y el sello no se aplicó de más. Esta auditoría había leído la lista («decidir») como
+una decisión delegada; con la declaración del Dueño, el punto se cierra **sin cargo**.
+
+Queda como dato de contexto, sin acción:
+
+- esos ~40 MB viven en el historial de un repo público de forma permanente: sacarlos exigiría reescribir
+  el historial, que está prohibido;
+- el mismo `aura_canonical.webp` (228 KB) quedó **dos veces** (`glowguide/` y `glowguide/videos/`) y el
+  `.gitkeep` quedó con 4 líneas: limpieza de una línea si algún día se toca esa ruta.
 
 ## 5. Pendiente medible de esta ronda
 
