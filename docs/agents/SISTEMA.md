@@ -15,7 +15,11 @@
 | **Guardián** | Scripts (sin LLM) | Falla (exit ≠0) cuando se viola una regla. Su veredicto no se discute, se cumple | — (no opina: mide) |
 | **Dueño** | Diego | Decide dinero, seguridad, producción y excepciones; mergea; activa ajustes del repositorio | — |
 
-**Guardián — inventario de compuertas:** `backend/scripts/checkNoConflictMarkers.js` · `backend/scripts/verifyNoVersionedSecrets.js` · `backend/scripts/estadoKB.js --check` (alineación y salud de ramas) · superficies (ninguna respuesta 2xx si su consulta falló) · CI por PR (`.github/workflows/ci.yml`).
+**Guardián — inventario de compuertas:** `backend/scripts/checkNoConflictMarkers.js` · `backend/scripts/verifyNoVersionedSecrets.js` · `backend/scripts/estadoKB.js --check` (alineación y salud de ramas) · `backend/scripts/guardianBelleza.sh` (runner versionado) · superficies (ninguna respuesta 2xx si su consulta falló) · CI por PR (`.github/workflows/ci.yml`).
+
+**Invocación y Administración del Guardián:**
+- **Invocación:** `GUARDIAN_REPO=... bash backend/scripts/guardianBelleza.sh` (admite `GUARDIAN_SKIP_NETWORK=1` en tests de CI/local para omitir conectividad externa).
+- **Gobernanza:** El **Arquitecto** administra la programación del `cron` semanal del Guardián (fuera del repo); el repositorio versiona y expone el runner.
 
 ## 2. El ciclo (bucle de una ronda)
 
