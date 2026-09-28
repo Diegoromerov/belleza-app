@@ -39,7 +39,7 @@ const { Client } = require('pg');
 
 const RAIZ = path.join(__dirname, '..');
 const ADMIN_URL = process.env.DATABASE_URL_ADMIN || process.env.DATABASE_URL;
-const PASSWORD = process.env.RLS_ROLE_PASSWORD || 'ci_only_password';
+const PASSWORD = process.env.RLS_ROLE_PASSWORD;
 
 const MIGRACIONES = [
   'init.sql',
@@ -76,7 +76,7 @@ async function main() {
     const { rows: [estado] } = await cliente.query(
       `SELECT count(*)::int AS tablas
          FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
-        WHERE n.nspname = 'public' AND c.relkind = 'r'`
+        WHERE n.nspname = 'public' AND c.relkind = 'r' AND c.relname NOT IN ('spatial_ref_sys')`
     );
     const baseVacia = estado.tablas === 0;
 

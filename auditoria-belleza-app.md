@@ -22,10 +22,10 @@ El proyecto está en un estado sólido para un ~90% de completitud. La arquitect
 **Problema:** Hay dos JWT secrets distintos hardcodeados como fallback:
 ```js
 // auth.js
-const JWT_SECRET = process.env.JWT_SECRET || 'beauty_app_super_secret_key_2026_change_in_production';
+const JWT_SECRET = process.env.JWT_SECRET || 'REDACTED';
 
 // authAdmin.middleware.js  
-const JWT_SECRET = process.env.JWT_SECRET || 'glowapp_super_secret_admin_key_2026';
+const JWT_SECRET = process.env.JWT_SECRET || 'REDACTED';
 ```
 Además son **diferentes entre sí**, lo que significa que un token generado con el login normal NO puede validarse contra el middleware admin correctamente en fallback. Cualquier atacante que vea el repo puede forjar tokens de administrador válidos.
 

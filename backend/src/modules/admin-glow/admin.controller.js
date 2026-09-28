@@ -264,7 +264,7 @@ async function verifyProviderAuto(req, res) {
     // Si no hay sesión de administrador, validar token del webhook (SEC-05)
     if (!adminId) {
       const webhookToken = req.headers['x-webhook-token'];
-      const expectedToken = process.env.KYC_WEBHOOK_SECRET || 'glowapp_secure_kyc_webhook_secret_2026';
+      const expectedToken = process.env.KYC_WEBHOOK_SECRET;
       
       if (!webhookToken || webhookToken !== expectedToken) {
         return res.status(401).json({

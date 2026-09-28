@@ -54,33 +54,6 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public
   GRANT USAGE, SELECT ON SEQUENCES TO app_rls_user;
 
 -- ---------------------------------------------------------------------------
--- 1b. Membresía: app_rls_user puede ESCALAR a app_system dentro de una
---     transacción. Es el mecanismo para los caminos sin petición autenticada.
--- ---------------------------------------------------------------------------
--- El webhook de Wompi y los jobs no tienen sesión de usuario y operan de forma
--- intencionadamente cross-tenant. En vez de un segundo pool —que obligaría a una
--- segunda instancia de Sequelize, con los modelos duplicados— o de un
--- superusuario —que bypassa todo, incluido lo que no debería— la aplicación hace:
---
---     BEGIN; SET LOCAL ROLE app_system;   -- current_user pasa a tener BYPASSRLS
---     ... consultas cross-tenant ...; COMMIT;
---
--- SET LOCAL ROLE es de alcance transaccional: al COMMIT/ROLLBACK la conexión
--- recupera su rol original, así que no queda una conexión privilegiada en el
--- pool. La contrapartida es que esta concesión permite escalar privilegios, de
--- modo que el código de aplicación NO debe ejecutar SET ROLE fuera de los dos
--- puntos autorizados (backend/src/config/tenantRouting.js: runAsSystem*) y hay
--- que auditar que siga siendo así:
---
---     grep -rn "SET ROLE\|set_config('app.system'" backend/src --include=*.js
---
--- El GRANT de membresía NO va acá: va después de crear el rol (ver §2). En una base
--- recién creada, `GRANT app_system TO app_rls_user` antes del CREATE ROLE falla con
--- `role "app_system" does not exist` — medido en el contenedor del CI
--- (`postgis/postgis:16-3.4`, base vacía). El archivo sólo era idempotente-safe en
--- entornos donde el rol ya existía por acumulación.
-
--- ---------------------------------------------------------------------------
 -- 2. Rol de sistema: solo para webhooks y jobs
 -- ---------------------------------------------------------------------------
 DO $$
@@ -107,6 +80,29 @@ END $$;
 GRANT USAGE   ON SCHEMA public TO app_system;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES    IN SCHEMA public TO app_system;
 GRANT USAGE, SELECT                  ON ALL SEQUENCES IN SCHEMA public TO app_system;
+
+-- ---------------------------------------------------------------------------
+-- 1b. Membresía: app_rls_user puede ESCALAR a app_system dentro de una
+--     transacción. Es el mecanismo para los caminos sin petición autenticada.
+-- ---------------------------------------------------------------------------
+-- El webhook de Wompi y los jobs no tienen sesión de usuario y operan de forma
+-- intencionadamente cross-tenant. En vez de un segundo pool —que obligaría a una
+-- segunda instancia de Sequelize, con los modelos duplicados— o de un
+-- superusuario —que bypassa todo, incluido lo que no debería— la aplicación hace:
+--
+--     BEGIN; SET LOCAL ROLE app_system;   -- current_user pasa a tener BYPASSRLS
+--     ... consultas cross-tenant ...; COMMIT;
+--
+-- SET LOCAL ROLE es de alcance transaccional: al COMMIT/ROLLBACK la conexión
+-- recupera su rol original, así que no queda una conexión privilegiada en el
+-- pool. La contrapartida es que esta concesión permite escalar privilegios, de
+-- modo que el código de aplicación NO debe ejecutar SET ROLE fuera de los dos
+-- puntos autorizados (backend/src/config/tenantRouting.js: runAsSystem*) y hay
+-- que auditar que siga siendo así:
+--
+--     grep -rn "SET ROLE\|set_config('app.system'" backend/src --include=*.js
+--
+GRANT app_system TO app_rls_user;
 
 -- ---------------------------------------------------------------------------
 -- 3. Verificación: que los roles tengan los atributos que dicen tener

@@ -135,3 +135,10 @@ Lo que sigue en pie, y es el motivo real de la ficha, es distinto de la autoriza
 **Regla que queda, con la autorización incluida:** si el proceso correcto es que el Dueño autoriza merges directos, el agente **deja constancia** de la autorización (mensaje del commit + una línea en la KB) y `AGENTS.md` deja de decir lo contrario. Si se prefiere que el camino sea siempre un PR, se protege `main` y el Dueño mergea con un clic. Cualquiera de las dos es válida; lo que no es válido es que la regla escrita y la práctica se contradigan en silencio.
 
 **Nada de esto alcanza a la rotación del token:** que quedó escrito en una traza es un hecho, con autorización o sin ella.
+
+## 2026-09-28 · D-020 · Firma A-07 — Gobierno y Aceptación de Compuertas del CI (100.0% Fase A)
+
+- **Contexto:** Todas las compuertas (CI-46, CI-53, CI-54, CI-55, S3) han sido totalmente implementadas y empíricamente verificadas en GitHub Actions. El runner ejecuta 592 tests (73 suites verdes, 4 suites de deuda declarada).
+- **Decisión:** El Dueño (Diego) firma formalmente la aceptación de las compuertas y el conteo del CI (A-07).
+- **Firma — Dueño (Diego):** ✅ 2026-09-28 — «Firmo A-07: Acepto formalmente las compuertas y el conteo del CI (592 tests iterando, 73 suites verdes, 4 suites de deuda declarada). Fase A = 100%.»
+- **Consecuencia:** La Fase A alcanza formalmente el **100.0%** de cumplimiento global.
