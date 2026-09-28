@@ -127,3 +127,13 @@
 
 - **ATERRIZAJE HECHO Y VERIFICADO (2026-09-27)**: `main` = `e8243432f` (merge commit de PR #16, padres f5a1b4fcf + a6e40e017; el tren de 11 es ancestro). Los dos chequeos de la §6 corrieron **sobre main** y pasan (CI-30 sobrevive; ningún literal volvió). CI-44 **cerrada**: el CI de main corre de verdad y el **paso 7 pasó verde por primera vez**. Fase A: **75,5 % → 92,5 %**. Detalle: docs/audit/AUDITORIA-ATERRIZAJE-TREN-A-2026-09-27.md
 - **SIGUIENTE — una sola orden: «que la base del CI sirva»** = **CI-46** (el paso de preparación de la base falla en el runner y deja los tests en skipped) + **CI-43** (falta el esquema de negocio: business_profiles + memberships, hoy 23 rojos en las 4 suites business*) + **CI-45** (la compuerta anti-marcadores es ciega a .github). Con eso **el paso de tests corre en GitHub por primera vez** y el criterio S3 (0,90) queda medible. **Sin emitir todavía.**
+
+## Camino al 100 % — revisión del 2026-09-28
+
+**Fase A sigue en 98,5 %** (criterios 97,5 · entregables 99,3 · aterrizaje 1,00). Cambió **qué falta**:
+
+1. **HECHO por el Dueño**: `fix/ci46-segunda-causa` mergeado (`ec45924b1`). El paso de tests **corre** y el esquema multi-tenant se prepara en el CI. CI-46 ✅.
+2. **HECHO (Tarea A)**: CI-53 ✅ — el CI publica el resumen del gate como anotación. Con eso se supo la verdad: `Tests: 0 total`.
+3. **AHORA, y bloquea los dos criterios que faltan**: CI-54 — el runner debe pasar a **Node 22.x** (el parche a 20.x no alcanza: `@babel/preset-env@8.0.2` declara `^22.18.0 || >=24.11.0`). Orden emitida; el Dueño abre y mergea el PR.
+4. **DESPUÉS**: PR de mutación (rama `prueba/s3-gate-rojo-2026-09-28`, 1 archivo / 1 línea, ya lista). **El PR lo abre el Dueño**: `ci.yml` no corre en pushes a ramas. Su run dará S3 = 1,00.
+5. **Entonces**: yo audito y publico el 100 %.
