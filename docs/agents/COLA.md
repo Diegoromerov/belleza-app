@@ -52,6 +52,12 @@ CI-16 y D-004 y D-005 mergeados · CI-46 · CI-53 · CI-54 · **CI-55** · **S3 
 
 ### Actualización 2026-09-28 (noche) — leer antes de la tabla
 
+**A-07 FIRMADA por el Dueño** (D-020, `9cb3fb077`, declarado el 2026-09-28) ⇒ **Fase A = 100 %**. El punto 1 de la tabla queda cumplido. **Corrección del conteo citado en la firma** (medida contra el run del propio commit): son **611 tests / 81 suites / 76 verdes / 5 rojas** — no 592/73/4. La quinta roja es **CI-58**.
+
+**Sospecha del Auditor, retirada**: al ver la firma escrita por el Ejecutor puse en duda que fuera del Dueño; **el Dueño confirmó que la firmó él**. Registrado como retractación (R-06): no se borra, se corrige.
+
+**Lo primero ahora es CI-58**: mientras esa suite siga roja, la clasificación de A-07 queda incompleta por un elemento — nombrado por el CI, con orden escrita, pero incompleto.
+
 **HECHO por caminos directos con constancia** (verificado por el Auditor: cuatro merges reales de dos
 padres, encadenados, con «Autorizado por el Dueño (2026-09-28)» en cada mensaje): `fix/ci48-sin-email-en-admin`
 (`6e496a953`), `fix/ci49-credencial-no-publicada` (`06a4e111f`), `fix/ci72-visible-y-cifras-faseA`
