@@ -405,3 +405,7 @@
 **CI-55, precisado:** `rag-evaluation.yml` **parsea bien** pero falla al arrancar en Actions (`jobs=0`, 5/5 de sus últimos runs, incluido `main`). No es YAML inválido: es un rechazo de esquema en el arranque ⇒ **no entra en el literal de S3**, pero ensucia el tablero con un rojo permanente.
 
 **Observación sin explicar (2026-09-28):** `rag-evaluation.yml` aparece corrido con `event=push` sobre commits de **mi rama de KB** (`9ba1940e`, `66a8cfc6`, `35b478f4`, `c7adcf57`), aunque su `on.push` declara `branches: [main, develop]`. No lo explico y no afecta al criterio de aceptación; queda anotado como anomalía a mirar si vuelve a aparecer.
+
+**Anomalía explicada y precisión del criterio de CI-55 (2026-09-28, medido).** El push de mi propio commit de KB (`b4c4166a`) produjo un run de `rag-evaluation` a las 17:12 **posterior al merge del arreglo** (17:07) y ese run sigue en **`jobs=0`**. No es evidencia contra el arreglo: **cada run ejecuta el archivo de workflow de su propio commit**, y mi rama de KB (creada sobre un `main` viejo) lleva la copia **rota** — la que además disparaba en cualquier push, lo que explica la «anomalía» que había quedado sin explicar. El `main` arreglado, en cambio, restringe sus disparos a `main`/`develop` + `paths`.
+
+**Consecuencia operativa:** el criterio `jobs > 0` se cierra con un run sobre **`main`**, y el camino limpio es un **`workflow_dispatch` del Dueño** (usa el archivo del branch por defecto, ya arreglado). Un push a `main` no lo dispara porque el propio `rag-evaluation.yml` no está en su lista de `paths`.
