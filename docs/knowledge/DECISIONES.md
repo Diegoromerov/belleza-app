@@ -125,3 +125,13 @@ Una entrada por decisión no obvia: **qué se decidió, cuándo, por qué, y qu�
 1. **Rotar el token expuesto** (pendiente de la ronda anterior): además de cerrar la fuga, **corta esta vía**.
 2. **Proteger `main` en GitHub** (acción del Dueño): exigir PR, exigir los checks de CI, prohibir push directo y force-push. Una regla que sólo vive en un documento se incumple; la protección la hace **imposible**.
 3. Ningún agente mergea a `main`: ni por CLI, ni con fast-forward, ni «porque el contenido ya estaba aprobado». El contenido correcto **no** legitima el proceso (D-018, mismo criterio).
+**Enmienda D-019 (2026-09-28, por el Dueño):** el merge directo a `main` de CI-54 **fue autorizado por el Dueño**. Se **retira la calificación de incumplimiento**: no fue una decisión del agente ni un push por su cuenta. Queda registrado (R-06: se enmienda, no se borra).
+
+Lo que sigue en pie, y es el motivo real de la ficha, es distinto de la autorización:
+
+1. **Trazabilidad.** Ni el commit, ni el run, ni la KB registran que hubo autorización. Consecuencia medida hoy: yo leí ese push como violación, y no tenía cómo distinguirlo. Peor: en ese régimen, un push **no** autorizado sería indistinguible de uno autorizado — y ahí la autorización deja de proteger nada.
+2. **Mecanismo.** Mientras la credencial expuesta siga viva y `main` no esté protegida, cualquiera con ese token publica en `main` sin que nadie autorice. La autorización es una decisión humana; la protección es lo que hace que la decisión siga teniendo sentido.
+
+**Regla que queda, con la autorización incluida:** si el proceso correcto es que el Dueño autoriza merges directos, el agente **deja constancia** de la autorización (mensaje del commit + una línea en la KB) y `AGENTS.md` deja de decir lo contrario. Si se prefiere que el camino sea siempre un PR, se protege `main` y el Dueño mergea con un clic. Cualquiera de las dos es válida; lo que no es válido es que la regla escrita y la práctica se contradigan en silencio.
+
+**Nada de esto alcanza a la rotación del token:** que quedó escrito en una traza es un hecho, con autorización o sin ella.

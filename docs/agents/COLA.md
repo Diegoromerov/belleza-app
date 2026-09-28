@@ -145,3 +145,4 @@
 - **A-07 (0,95 → 1,00)**: el gate ya dice la verdad (corre 592 tests, publica sus números y las 4 suites rojas son deuda clasificada). Su cierre fue «por decisión del Dueño» ⇒ **espera su palabra**, con esta evidencia.
 - **Con eso: 100 %.** Hoy: 98,5 % (98,7 % en cuanto el Dueño firme A-07).
 - **Acciones del Dueño:** proteger `main` (D-019) · rotar el token · abrir el PR de mutación · cerrar #17 · firmar A-07.
+- **2026-09-28 (ter):** el merge directo de CI-54 a `main` **fue autorizado por el Dueño** — D-019 enmendada. Queda sólo la parte de trazabilidad y mecanismo (dejar constancia de la autorización, o proteger `main`). La rotación del token sigue pendiente por ser una credencial expuesta, no por desconfianza.
