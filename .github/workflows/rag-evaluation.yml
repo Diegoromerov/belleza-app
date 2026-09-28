@@ -87,7 +87,29 @@ jobs:
       - name: Run core tests
         run: |
           cd backend
-          npx jest --no-cache --testPathIgnorePatterns="geminiService|fase5_e2e_integration|authRoutes|api.cors|biometric.integration|biometricE2E|contract|geminiFallback" --ci --maxWorkers=2
+          set -o pipefail
+          npx jest --no-cache --testPathIgnorePatterns="geminiService|fase5_e2e_integration|authRoutes|api.cors|biometric.integration|biometricE2E|contract|geminiFallback" --ci --maxWorkers=2 2>&1 | tee /tmp/jest-rag-core.log
+
+      - name: Publicar salida de tests RAG core (anotacion)
+        if: failure()
+        run: |
+          if [ -f /tmp/jest-rag-core.log ]; then
+            if grep -q "failed to run" /tmp/jest-rag-core.log; then
+              TITLE="Salida de RAG Core (suites fallaron al cargar)"
+            else
+              TITLE="Salida de RAG Core (resumen de ejecucion)"
+            fi
+            SUMMARY=$(grep -E 'Test Suites:|Tests:' /tmp/jest-rag-core.log | paste -sd ' · ' -)
+            if [ -n "$SUMMARY" ]; then
+              echo "::error title=$TITLE::$SUMMARY"
+            else
+              echo "::error title=$TITLE::No se encontraron líneas de resumen de Jest en /tmp/jest-rag-core.log"
+            fi
+            echo "::error title=Ultimas 20 lineas del log del gate::"
+            tail -20 /tmp/jest-rag-core.log | while IFS= read -r l; do echo "::error::$l"; done
+          else
+            echo "::error title=Salida de RAG Core::No se encontró /tmp/jest-rag-core.log"
+          fi
 
   # ============================================================
   # JOB 3: Integration Tests (con servicios reales)
