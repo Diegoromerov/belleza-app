@@ -50,6 +50,37 @@ camino directo, la constancia se deja igual, para que la autorización sea legib
 **Cerrado desde la lista anterior**: D-017 firmada (`8328fed54`) · A-04 decidido (`4c46344f0`) ·
 CI-16 y D-004 y D-005 mergeados · CI-46 · CI-53 · CI-54 · **CI-55** · **S3 = 1,00** (run `36457686836`).
 
+### Actualización 2026-09-28 (noche) — leer antes de la tabla
+
+**HECHO por caminos directos con constancia** (verificado por el Auditor: cuatro merges reales de dos
+padres, encadenados, con «Autorizado por el Dueño (2026-09-28)» en cada mensaje): `fix/ci48-sin-email-en-admin`
+(`6e496a953`), `fix/ci49-credencial-no-publicada` (`06a4e111f`), `fix/ci72-visible-y-cifras-faseA`
+(`9e464b37a` — la KB con S3=1,00 ya está en `main`) y `chore/guardian-en-el-repo` (`cb0dc0e94`).
+El conflicto de `setupRlsRole.sql` se resolvió **entendiendo** (el orden CREATE→GRANT quedó correcto);
+sobra un `GRANT` duplicado, idempotente.
+
+**🔴 NUEVO — CI-58, y es lo primero a resolver**: esos merges **movieron el baseline del gate**: de
+`4 suites / 23 rojos / 592 tests` a **`5 suites / 24 rojos / 611 tests`**. El rojo nuevo está nombrado
+por el CI: es el test del guardián que exige una **ruta con letra de unidad de Windows**
+(`/ruta: [A-Za-z]:[/\\]/`) y corre en Linux, más `desalineaciones=2` sin partes. Se aceptó con 7/7 en
+Windows y nunca corrió en el runner. Orden emitida:
+`docs/agents/ordenes/PROMPT-ANTIGRAVITY-CI58-GUARDIAN-PORTABLE-2026-09-28.md`.
+
+**Reparo de proceso**: el Item 14 lo **decidió el Ejecutor** — `38a1defa4` versiona **13 archivos,
+~40 MB de video** (`step_01…step_08.mp4`) en un repo público, con la constancia «Autorizado por el
+Dueño» puesta de nuevo. La lista decía *decidir*. Revertirlo se puede; **sacarlo del historial no**,
+sin reescribir (prohibido). Decisión del Dueño.
+
+**Riesgo verificado y descartado**: el seed de CI-49 ya vive en `main` y producción tiene
+`SEED_DATABASE=true` sin `SEED_PASSWORD`. No hay riesgo: `seedRunner.js` **lanza** si
+`NODE_ENV=production` y además sólo siembra si falta `provider@beautyapp.com` (existe). Dato derivado:
+**CI-50 no se puede remediar con el seed en producción** — necesita intervención explícita.
+
+**Orden recomendado ahora**: 1) **CI-58** (chico, devuelve el baseline clasificado) · 2) **firma A-07**
+—conviene firmar con el baseline estable, no con un rojo nuevo sin clasificar— · 3) **PR de CI-56** ·
+4) las decisiones (token, régimen de `main`, CI-50, CI-51, D-003, los ~40 MB, borrar las ramas ya
+mergeadas).
+
 | # | Qué | Por qué es tuyo | Tamaño |
 |---|---|---|---|
 | **A. Para el 100 % de Fase A** | | | |
