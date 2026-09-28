@@ -235,10 +235,10 @@ jobs:
           echo "All quality gates passed - safe to deploy"
           
       - name: Trigger Railway Deploy
-        if: ${{ secrets.RAILWAY_DEPLOY_HOOK }}
+        if: env.RAILWAY_DEPLOY_HOOK != ''
+        env:
+          RAILWAY_DEPLOY_HOOK: ${{ secrets.RAILWAY_DEPLOY_HOOK }}
         run: |
           curl -X POST "${{ secrets.RAILWAY_DEPLOY_HOOK }}" \
             -H "Content-Type: application/json" \
             -d '{"branch": "main"}'
-        env:
-          RAILWAY_DEPLOY_HOOK: ${{ secrets.RAILWAY_DEPLOY_HOOK }}
