@@ -142,3 +142,14 @@ Lo que sigue en pie, y es el motivo real de la ficha, es distinto de la autoriza
 - **Decisión:** El Dueño (Diego) firma formalmente la aceptación de las compuertas y el conteo del CI (A-07).
 - **Firma — Dueño (Diego):** ✅ 2026-09-28 — «Firmo A-07: Acepto formalmente las compuertas y el conteo del CI (592 tests iterando, 73 suites verdes, 4 suites de deuda declarada). Fase A = 100%.»
 - **Consecuencia:** La Fase A alcanza formalmente el **100.0%** de cumplimiento global.
+
+## 2026-09-28 · D-021 · Los agentes trabajan sobre un worktree real por tarjeta, y ninguno tiene credenciales hacia GitHub
+
+- **Contexto:** el tablero ya despachaba workers, pero su workspace estaba aislado del repo: la tarea del webhook agotó **60/60 iteraciones** sin poder producir el fix (run 16, `timed_out`). El Dueño eligió «worktree real por tarjeta» para que un agente pueda entregar una rama lista para PR.
+- **Decisión:** cada tarjeta recibe un worktree del repo en `kanban/boards/glowapp/worktrees/<task_id>`, rama `agent/<task_id>-<slug>` nacida de `main`. La base es un **bare de staging local** (`kanban/boards/glowapp/repo.git`) cuyo `origin` apunta a sí mismo: los agentes **no tienen credenciales ni remoto de producción**.
+- **Por qué:** da el beneficio pedido —rama real, lista para PR— sin poner a un LLM a un `git push` de distancia del repo de producción. El peor caso de un agente comprometido es un commit en un repositorio local.
+- **Alternativa descartada (dar el clon del banco):** `C:/beauty-app` tiene `origin` = GitHub y credenciales en el entorno. Es exactamente la clase de permiso que la D-018 reserva al Dueño.
+- **Alternativa descartada (propuesta en texto):** medido: el worker no termina (60/60 iteraciones) porque la tarea es implementar y no tiene el código.
+- **Enforcement (medido):** la compuerta `estadoTablero.py` marca `sin-aislamiento` a toda tarjeta en `ready`/`running`/`review` de un bot sin rama declarada ni worktree en disco. Probada en los dos sentidos: sin aislamiento muerde; con rama, con worktree en disco y con un agente que no es bot, calla.
+- **Convención completa:** `docs/agents/CONVENCION-WORKTREE.md`.
+- **Firma — Dueño (Diego):** ✅ 2026-09-28 — «WORKTREE REAL POR TARJETA».
