@@ -1,5 +1,7 @@
 # Estado actual — Belleza App / GlowApp
 
+**Fase A = 100,0 % (2026-09-28, cierre):** criterios **4/4** · entregables **7/7** (A-07 firmada por el Dueño en D-020) · aterrizaje **1,00 en `main`**. Conteo del gate corregido contra el CI: **611 tests / 81 suites / 76 verdes / 5 rojas**, y la quinta roja es **CI-58** (abierta, nombrada, con orden emitida).
+
 **Medición:** 2026-09-26 (ronda del 2026-09-26: informe de avance, A-07 ronda 2, barrido CRLF y compuerta RLS sobre el tren de 9 ramas) · **Medición anterior:** 2026-09-25 00:15 UTC · **§4, §5 y §8 re-medidos el 2026-09-25 ~06:30 UTC** (rondas 3-6 de Fase A sobre `fase-a/verdad-operativa` @ `b545ef22`) · **Copia de referencia:** `C:/beauty-app` ↔ `github.com/Diegoromerov/belleza-app` · **Base:** `main = f5a1b4fc` (sin mover desde el 2026-09-24)
 **Regla:** todo número de este documento tiene un comando que lo produce. Lo que no se pudo medir dice `NO VERIFICADO`.
 
