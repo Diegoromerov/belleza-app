@@ -17,7 +17,7 @@ const https = require("https");
 
 const REPO = "Diegoromerov/belleza-app";
 const HEREDADAS = ["business.integration", "businessAdminDocs.integration", "businessHardening.integration", "businessSystem.integration"];
-const PASOS_CLAVE = ["test", "jest", "prueba", "Preparar el esquema", "RLS"];
+const PASOS_ESPERADOS = ["test", "jest", "prueba", "Preparar el esquema", "RLS"];
 
 function api(path) {
   return new Promise(function (resolve, reject) {
@@ -48,7 +48,7 @@ function api(path) {
   console.log("  check-runs en ese commit: " + runs.length);
   console.log("");
 
-  const pasos = runs.filter(function (r) { return PASOS_CLAVE.some(function (p) { return r.name.toLowerCase().indexOf(p.toLowerCase()) !== -1; }); });
+  const pasos = runs.filter(function (r) { return PASOS_ESPERADOS.some(function (p) { return r.name.toLowerCase().indexOf(p.toLowerCase()) !== -1; }); });
   console.log("  --- pasos clave ---");
   pasos.forEach(function (r) { console.log("     " + r.conclusion.padEnd(9) + " " + r.name.slice(0, 78)); });
   if (!pasos.length) console.log("     (ninguno: puede ser un workflow inválido, failure sin jobs)");
