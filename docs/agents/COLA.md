@@ -37,35 +37,44 @@
 
 ## 2. Decisiones del Dueño (escaladas)
 
-### Pendientes del Dueño — lista vigente (medida 2026-09-27 **noche**, tras ejecutar las tareas 2/4/5/6/10/11)
+### Pendientes — lista vigente (medida 2026-09-28, tras cerrar S3 y CI-55)
 
-| # | Qué | Estado medido |
-|---|---|---|
-| 1 | **Firmar D-017** — «Firmo D-017: acepto que el candado de degradación bloquee dinero e identidad (C-01/C-02/C-03) durante la caída de la base.» | **Sigue pendiente**: CI-16 está mergeado (`380af0b4b`) pero la firma es tuya |
-| 2 | ~~Decidir A-04~~ | ✅ **HECHO**: aceptaste el versionado y el `.gitignore` lo documenta (`4c46344f0`). A-04 = 1,00 ⇒ **Fase A 92,5 → 97,5 %** |
-| 3 | **Decidir si A-07 entra al denominador** | Con A-04 cerrada, incorporarla **baja** 0,04 pp (97,50 → 97,46 %): su 0,95 queda bajo el promedio nuevo (95,8 %) |
-| 4 | ~~Mergear CI-16~~ | ✅ **HECHO** (`380af0b4b`, merge commit real: padres `e8243432f` + `917c0a65d`) |
-| 5 | ~~D-004 `docs/sistema-agentes`~~ | ✅ **HECHO** (`1008d94b8`): la KB está en `main` (12 archivos), `docs/agents` 55, `docs/audit` 86 |
-| 6 | ~~D-005 PRs #10 y #12~~ | ✅ **HECHO** (`eaf289e64`, `15d81b863`): catálogo verificado **296 productos / 296 precios**; los 3 archivos resueltos a mano: sintaxis OK, 0 marcadores, `adminPreciosRoutes` 5/5 |
-| **6-bis** | **Mergear `chore/guardian-en-el-repo`** (3 commits fuera de `main`) | **NUEVO — y es corrección mía**: dije que D-004 lo arrastraba. **Falso**: es otra rama, y el guardián versionado (O-014) **no está en `main`** (`git ls-files` sólo encuentra la orden) |
-| 7 | **D-002** `delete_branch_on_merge` | Sigue sin verificar (la API pública no expone el campo) |
-| 8 | **Las 2 líneas del log de CI-46** (o permiso para leerlo con un login guardado) | Sigue pendiente: es lo único que falta para emitir «que la base del CI sirva» |
-| 9 | **D-003 — revocar** lo del historial | Sigue pendiente (la rotación ya está hecha y verificada) |
-| 10 | **Poda** | ✅ 15 ramas borradas. **Quedan 3 podables** (`docs/sistema-agentes`, `feat/glowshop-niveles-a0`, `feat/glowshop-precios-csv`: 0 commits fuera de `main`) |
-| 11 | **Banco en `main`** | **NO HECHO como dice el informe**: `C:\beauty-app` está en `feat/glowshop-niveles-a0` @ `15d81b863`, **ancestro** de `main` (3 commits atrás) y rama que ya no existe en el remoto. Los 2 planes **sí** quedaron trackeados (`4737b2a67`) |
-| 12 | **¿ADMIN en producción?** | Sigue pendiente (API de precios inusable con 0 ADMIN) |
-| 13 | **CI-50 — 14 cuentas demo activas con la contraseña publicada** (`cliente_demo@`, `demo1@demo.com`, `salon_owner@`, `santiago.barber@`, `valeria.makeup@`, `sonia.herrera@`, `carolina.hair@`, `diana.facials@`, `prov_nails_001@`, `mi-salon@demo.com`, `misalon@demo.com`, `salon_demo@`, `salondemo@demo.com`, `mi_salon_saas@`) | **NUEVO, medido hoy**: el censo por contraseña (no por hash: bcrypt lleva sal) da **20 cuentas que autentican con `password123`, 14 activas**. Ninguna es ADMIN, así que no reabren la puerta de admin; lo que exponen es la cuenta y sus datos. **Tu decisión: desactivar o rotar.** El canal está verificado y la sonda lista para dejarlo medido antes/después; no toco datos de producción sin tu palabra |
-| 14 | **CI-51 — `KYC_WEBHOOK_SECRET`** | **NUEVO, medido**: la variable **no existe** en producción y el código publica el literal como default (`admin.controller.js:267`). Severidad real **baja**: el router `glow-admin` no está montado (`/api/glow-admin/...` ⇒ **404**, con `/api/health` 200 y `/api/admin/dashboard` 401 como controles). Tu decisión: rotarlo y definirlo, o dejarlo mientras siga sin montar. El lado del código va en la ronda 2 de CI-49 |
-| 15-bis | **El orden de merges de la cola de CI** | Recomendado y medido: **1)** `fix/ci46-segunda-causa` (destraba el paso de tests ⇒ S3 +1,25 pp), **2)** `fix/ci48-sin-email-en-admin` (PR abierto, 2 archivos / 94 inserciones, gate idéntico a `main`), **3)** `fix/ci49-credencial-no-publicada` (2 commits, aceptada, gate sin rojo nuevo), **4)** `fix/ci72-visible-y-cifras-faseA` (solo KB). Todos merge commit, nunca squash |
-| 15 | ~~El clic de `fix/ci46-segunda-causa`~~ ✅ **HECHO** | Es lo que destraba **S3 (+1,25 pp)**: con el paso de preparación de base verde, el paso de tests corre en GitHub **por primera vez** y deja de quedar `skipped`. La rama está aceptada y verificada por mí contra base fresca (exit 0, 13 tablas con `tenant_id`, 12 con `FORCE`) |
-| 16 | **CI-54 — que el runner ejecute la suite** | **Medido hoy**: el paso de tests del CI corre **0 tests** (`Test Suites: 77 failed, 77 total` · `Tests: 0 total`, error de Babel/ESM) — el «4 suites / 23 rojos» es de mi banco local, no del runner. Es el **residuo real de A-07** y **bloquea S3**. Hipótesis: Node 18 del runner contra `babel.config.js`; reproducción en contenedor en curso |
-| 17 | **CI-52 — la compuerta marca código legítimo** | **NUEVO, medido**: 7 falsos positivos **preexistentes** (idénticos en `main`), del tipo `const KEY_ALGO = 'HS256'`. Hoy no rompe nada (exit 0 en el árbol) pero es la vía por la que un equipo aprende a ampliar exenciones. **CI-52 CERRADA**: ronda 3 (sonda de los dos sentidos **20/20**, tests 16/16) y ronda 4 (la regresión del filtro de entropía, cerrada y verificada por mí). No requiere nada tuyo; el PR de `fix/ci49-credencial-no-publicada` espera tu merge en la cola |
+**Fase A = 99,8 %** (criterios 4/4 = 100 % · entregables 99,3 % · aterrizaje 100 %). Lo único que
+falta para el 100 % es la firma **A-07**.
 
+**Atribución cerrada sin cargo**: el merge del PR #18 a `main` (`0ad91fb7e`) lo hizo **el Dueño**
+(declarado 2026-09-28); el revert `c98503b33` —correcto y verificado— entró como camino directo y su
+mensaje no lleva la constancia D-019. La convención aplica al agente; cuando el Dueño autoriza un
+camino directo, la constancia se deja igual, para que la autorización sea legible desde afuera.
 
+**Cerrado desde la lista anterior**: D-017 firmada (`8328fed54`) · A-04 decidido (`4c46344f0`) ·
+CI-16 y D-004 y D-005 mergeados · CI-46 · CI-53 · CI-54 · **CI-55** · **S3 = 1,00** (run `36457686836`).
 
-**Tras esta entrega: Fase A 98,5 %** (criterios 97,5 · entregables 99,3 · aterrizaje 1,00). Falta **1,5 pp**: S3 (+1,25, esperando el clic de `fix/ci46-segunda-causa`) y A-07 (+0,21). Auditorías: `docs/audit/AUDITORIA-EJECUCION-DUEÑO-2026-09-27.md`, `docs/audit/AUDITORIA-CI49-RONDA-1-2026-09-27.md`.
-
----
+| # | Qué | Por qué es tuyo | Tamaño |
+|---|---|---|---|
+| **A. Para el 100 % de Fase A** | | | |
+| 1 | **Firmar A-07** («el gate tiene que decir la verdad») | El entregable está medido: el gate corre 592 tests, publica sus números como anotación y las 4 suites rojas están clasificadas con evidencia (CI-43). La firma es la aceptación, no un trabajo | 1 línea |
+| **B. Cola de merges (merge commit, nunca squash)** | | | |
+| 2 | **Abrir el PR** de `fix/ci56-rag-observable` (1 commit, aceptada en código) | Su run publica la salida real del job `Unit Tests (Core)` de la RAG ⇒ recién ahí la causa del rojo deja de ser sospecha. El workflow no corre en pushes a ramas: sin PR no hay run | 1 PR |
+| 3 | `fix/ci48-sin-email-en-admin` (2 commits) | El acceso ya está cerrado **en producción** (6 cuentas `is_active=false`, 200→403); el código quita el fallback por email. 5 de 6 cuentas cubiertas | 1 merge |
+| 4 | `fix/ci49-credencial-no-publicada` (4 commits, 4 rondas aceptadas) | Ninguna credencial que autentique puede estar publicada, y la compuerta tiene que verla si vuelve | 1 merge |
+| 5 | `fix/ci72-visible-y-cifras-faseA` (39 commits, sólo KB) | Pone el sistema de agentes, la KB y las cifras en `main` | 1 merge |
+| 6 | `chore/guardian-en-el-repo` (3 commits) | El guardián versionado (O-014) **no está en `main`**: hoy el repo no se vigila solo | 1 merge |
+| 7 | **Borrar** `prueba/s3-gate-rojo-2026-09-28` (0 commits fuera de `main`: mergeada y revertida) y `fix/ci54-node-version-runner` (su cambio ya entró por push autorizado) | Ramas cuyo trabajo ya está en `main` sólo ensucian el triage | 2 clicks |
+| **C. Seguridad y producción** | | | |
+| 8 | **Rotar el token** que quedó escrito en la traza del Ejecutor | Un token vivo que quedó registrado en un archivo es una puerta, aunque nadie la use (D-018/D-019) | 1 vez |
+| 9 | **Elegir el régimen de `main`**: PR obligatorio + checks obligatorios + push directo bloqueado, **o** caminos directos autorizados con constancia en el commit | Van 5 pushes directos a `main`; el último (Node 22) ya lleva constancia. Mientras el token siga vivo, cualquiera publica en `main` | 1 decisión |
+| 10 | **CI-50 — 14 cuentas demo activas** que autentican con la contraseña publicada | Exponen la cuenta y sus datos (ninguna es ADMIN). Desactivar o rotar; el canal está verificado y la sonda lista para dejarlo medido antes/después | 1 decisión |
+| 11 | **CI-51 — `KYC_WEBHOOK_SECRET`** con literal por defecto (`admin.controller.js:267`) | Severidad baja hoy: el router `glow-admin` **no está montado** (`/api/glow-admin/...` ⇒ 404). Rotar y definir, o dejarlo mientras siga sin montar | 1 decisión |
+| 12 | **D-003 — revocar** lo del historial (la rotación ya está hecha y verificada) | Los valores viejos siguen vivos en los proveedores: Google/OpenUV/etc.; verificar/revocar `YOCAM_API_KEY` (typo del histórico). **No** rotar las biométricas sin `reencryptBiometricData.js` | ops |
+| 13 | **¿Las 2 cuentas ADMIN activas son las que querés?** | Medido: quedan `admin@glow.app` y `escuela@glow.app`; `admin@beautyapp.com` quedó desactivada con CI-48. Cada ADMIN vivo mueve dinero | 1 mirada |
+| **D. Higiene del banco** | | | |
+| 14 | **Sacar el banco del HEAD desprendido** y decidir los **32 archivos sin trackear** (`backend/public/assets/...` del bundle Flutter, `get_users.js`, `list_tables.js`) | Medir sobre un banco que no está en una rama es medir sobre nada. Trackear, ignorar o borrar: las tres son válidas, la indefinición no | 2 min |
+| 15 | **D-002 `delete_branch_on_merge`** (Settings → General → Pull Requests) | La API pública no expone el campo: sólo lo ves vos. Es lo que evita que las ramas podables vuelvan a acumularse | 1 click |
+| 16 | **Los 2 planes duplicados** en `.hermes/plans/` y **CI-36** (3 finales de línea por worktree) | Los planes sin trackear sacan en rojo el parte del guardián | 1 min |
+| **E. Deudas abiertas que necesitan decisión** | | | |
+| 17 | **CI-43** — falta el esquema del subsistema en la base de test del CI (`memberships` sin `CREATE TABLE` en ninguna migración) | Los 403 (17 + 6 cascadas) **no** son del esquema, ya medido. Entra a la cola o queda declarada como deuda | decisión |
+| 18 | **CI-57** — el escáner marcó por el **nombre** de la variable (`const PASOS_CLAVE = [nombres de pasos]`, sin secreto) | Arreglado renombrando, sin eximir la regla. Queda decidir si la regla debe ignorar arrays de palabras legibles — con cuidado: CI-52 r3 mostró que ajustar por precisión sin medir recall reabre el defecto que el escáner existe para cazar | decisión menor |
 
 ### Pendientes del Dueño — lista anterior (2026-09-27 tarde) ⟶ **SUPERSEDIDA, se conserva como registro**
 
