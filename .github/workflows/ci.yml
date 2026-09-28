@@ -45,10 +45,10 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 18
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: '18.x'
+          node-version: '22.x'
           cache: 'npm'
           cache-dependency-path: backend/package-lock.json
 
@@ -118,11 +118,16 @@ jobs:
         if: failure()
         run: |
           if [ -f /tmp/jest-gate.log ]; then
+            if grep -q "failed to run" /tmp/jest-gate.log; then
+              TITLE="Salida del gate (suites fallaron al cargar)"
+            else
+              TITLE="Salida del gate (resumen de ejecucion)"
+            fi
             SUMMARY=$(grep -E 'Test Suites:|Tests:' /tmp/jest-gate.log | paste -sd ' · ' -)
             if [ -n "$SUMMARY" ]; then
-              echo "::error title=Resumen del gate::$SUMMARY"
+              echo "::error title=$TITLE::$SUMMARY"
             else
-              echo "::error title=Resumen del gate::No se encontraron líneas de resumen de Jest en /tmp/jest-gate.log"
+              echo "::error title=$TITLE::No se encontraron líneas de resumen de Jest en /tmp/jest-gate.log"
             fi
             echo "::error title=Ultimas 20 lineas del log del gate::"
             tail -20 /tmp/jest-gate.log | while IFS= read -r l; do echo "::error::$l"; done
