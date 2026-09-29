@@ -236,12 +236,7 @@ router.post('/bookings/:id/confirm-otp', authMiddleware, otpLimiter, async (req,
       });
     }
 
-    const maxIntentos = parseInt(await getConfig('otp_max_intentos', '3'));
-<<<<<<< HEAD
     if (otp.intentos_fallidos >= maxIntentos) {
-=======
-        if (otp.intentos_fallidos >= maxIntentos) {
->>>>>>> agent/t_fix_bec_005-retry-after-balance-withdraw
           await client.query('ROLLBACK');
           const segundosRetry = Math.max(1, Math.ceil((new Date(otp.expira_at) - Date.now()) / 1000));
           res.set('Retry-After', String(segundosRetry));
