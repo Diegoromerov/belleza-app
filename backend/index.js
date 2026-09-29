@@ -581,8 +581,44 @@ app.post('/api/upload', authMiddleware, (req, res) => {
 // Lista de clientes conectados a eventos SSE de administración
 const sseClients = [];
 
+// Constantes de configuración SSE
+const SSE_MAX_CLIENTS = 50;
+const SSE_HEARTBEAT_INTERVAL_MS = 30000;
+
+// Función para limpiar clientes zombis (conexiones cerradas/rotas)
+const cleanupZombieClients = () => {
+  let removed = 0;
+  for (let i = sseClients.length - 1; i >= 0; i--) {
+    const client = sseClients[i];
+    if (client.destroyed || client.writableEnded || !client.writable) {
+      sseClients.splice(i, 1);
+      removed++;
+    }
+  }
+  if (removed > 0) {
+    console.log(`🧹 [SSE] Limpieza: ${removed} cliente(s) zombi(s) removido(s). Total: ${sseClients.length}`);
+  }
+};
+
+// Heartbeat periódico para detectar conexiones muertas
+setInterval(() => {
+  cleanupZombieClients();
+  // Enviar ping a clientes vivos
+  const payload = JSON.stringify({ type: 'ping', timestamp: new Date().toISOString() });
+  sseClients.forEach(client => {
+    try {
+      client.write(`data: ${payload}\n\n`);
+    } catch (err) {
+      // Cliente muerto, se limpiará en el próximo ciclo
+    }
+  });
+}, SSE_HEARTBEAT_INTERVAL_MS);
+
 // Función para transmitir eventos a todos los clientes del dashboard conectados
 const broadcastAdminEvent = (type, data) => {
+  // Limpiar zombis antes de transmitir
+  cleanupZombieClients();
+  
   const payload = JSON.stringify({ type, data });
   sseClients.forEach(client => {
     try {
@@ -684,6 +720,16 @@ const optionalAuthMiddleware = async (req, res, next) => {
 
 // 🔹 NUEVO: Canal SSE en tiempo real para eventos de administración
 app.get('/api/admin/events/stream', authMiddleware, adminMiddleware, (req, res) => {
+  // Verificar límite de conexiones concurrentes
+  if (sseClients.length >= SSE_MAX_CLIENTS) {
+    console.warn(`⚠️ [SSE] Límite de ${SSE_MAX_CLIENTS} conexiones alcanzado. Conexión rechazada.`);
+    return res.status(503).json({
+      error: 'Servicio no disponible',
+      message: `Límite de ${SSE_MAX_CLIENTS} conexiones SSE concurrentes alcanzado. Intente más tarde.`,
+      retry_after_segundos: 30
+    });
+  }
+
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
