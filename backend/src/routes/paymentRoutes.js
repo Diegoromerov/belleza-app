@@ -59,7 +59,7 @@ async function requireAdmin(req, res) {
 
 // ─── CHECK-IN GPS ────────────────────────────────────────────────────────────
 
-router.post('/bookings/:id/checkin', authMiddleware, async (req, res) => {
+router.post('/bookings/:id/checkin', authMiddleware, paymentLimiter, async (req, res) => {
   if (!await requirePrestador(req, res)) return;
 
   const { id } = req.params;
@@ -104,7 +104,7 @@ router.post('/bookings/:id/checkin', authMiddleware, async (req, res) => {
 
 // ─── COMPLETAR SERVICIO → GENERAR OTP ────────────────────────────────────────
 
-router.post('/bookings/:id/complete', authMiddleware, async (req, res) => {
+router.post('/bookings/:id/complete', authMiddleware, otpLimiter, async (req, res) => {
   if (!await requirePrestador(req, res)) return;
 
   const { id } = req.params;
@@ -180,7 +180,7 @@ router.post('/bookings/:id/complete', authMiddleware, async (req, res) => {
 
 // ─── CONFIRMAR OTP → DISPERSIÓN ──────────────────────────────────────────────
 
-router.post('/bookings/:id/confirm-otp', authMiddleware, async (req, res) => {
+router.post('/bookings/:id/confirm-otp', authMiddleware, otpLimiter, async (req, res) => {
   const { id } = req.params;
   const { codigo } = req.body;
 
@@ -401,7 +401,7 @@ router.post('/bookings/:id/confirm-otp', authMiddleware, async (req, res) => {
 
 // ─── WALLET — SALDO Y RESUMEN ─────────────────────────────────────────────────
 
-router.get('/wallet', authMiddleware, async (req, res) => {
+router.get('/wallet', authMiddleware, paymentLimiter, async (req, res) => {
   if (!await requirePrestador(req, res)) return;
 
   try {
@@ -507,7 +507,7 @@ router.get('/wallet', authMiddleware, async (req, res) => {
 
 // ─── WALLET — HISTORIAL DE TRANSACCIONES ─────────────────────────────────────
 
-router.get('/wallet/transactions', authMiddleware, async (req, res) => {
+router.get('/wallet/transactions', authMiddleware, paymentLimiter, async (req, res) => {
   if (!await requirePrestador(req, res)) return;
 
   const page = parseInt(req.query.page) || 1;
@@ -545,7 +545,7 @@ router.get('/wallet/transactions', authMiddleware, async (req, res) => {
 
 // ─── WALLET — OBTENER CUENTA BANCARIA ───────────────────────────────────────
 
-router.get('/wallet/bank-account', authMiddleware, async (req, res) => {
+router.get('/wallet/bank-account', authMiddleware, paymentLimiter, async (req, res) => {
   if (!await requirePrestador(req, res)) return;
 
   try {
@@ -686,12 +686,12 @@ const handleSaveBankAccount = async (req, res) => {
   }
 };
 
-router.post('/wallet/bank-account', authMiddleware, handleSaveBankAccount);
-router.put('/wallet/bank-account', authMiddleware, handleSaveBankAccount);
+router.post('/wallet/bank-account', authMiddleware, paymentLimiter, handleSaveBankAccount);
+router.put('/wallet/bank-account', authMiddleware, paymentLimiter, handleSaveBankAccount);
 
 // ─── RETIRO — SOLICITAR ───────────────────────────────────────────────────────
 
-router.post('/wallet/withdraw', authMiddleware, async (req, res) => {
+router.post('/wallet/withdraw', authMiddleware, paymentLimiter, async (req, res) => {
   if (!await requirePrestador(req, res)) return;
 
   const { monto } = req.body;
@@ -846,7 +846,7 @@ router.post('/wallet/withdraw', authMiddleware, async (req, res) => {
 
 // ─── WALLET — CAMBIAR MODELO DE RETIRO ───────────────────────────────────────
 
-router.put('/wallet/model', authMiddleware, async (req, res) => {
+router.put('/wallet/model', authMiddleware, paymentLimiter, async (req, res) => {
   if (!await requirePrestador(req, res)) return;
 
   const { modelo } = req.body;
@@ -891,7 +891,7 @@ router.put('/wallet/model', authMiddleware, async (req, res) => {
 
 // ─── DISPUTAS — ABRIR ─────────────────────────────────────────────────────────
 
-router.post('/disputes', authMiddleware, async (req, res) => {
+router.post('/disputes', authMiddleware, paymentLimiter, async (req, res) => {
   const { booking_id, tipo, descripcion, evidencia_urls } = req.body;
 
   if (!booking_id || !tipo) {
@@ -1007,7 +1007,7 @@ router.post('/disputes', authMiddleware, async (req, res) => {
 
 // ─── ADMIN — DASHBOARD FINANCIERO ────────────────────────────────────────────
 
-router.get('/admin/dashboard', authMiddleware, async (req, res) => {
+router.get('/admin/dashboard', authMiddleware, paymentLimiter, async (req, res) => {
   if (!await requireAdmin(req, res)) return;
   try {
     const [financiero, disputas, alertas] = await Promise.all([
@@ -1050,7 +1050,7 @@ router.get('/admin/dashboard', authMiddleware, async (req, res) => {
 
 // ─── ADMIN — LISTAR DISPUTAS ──────────────────────────────────────────────────
 
-router.get('/admin/disputes', authMiddleware, async (req, res) => {
+router.get('/admin/disputes', authMiddleware, paymentLimiter, async (req, res) => {
   if (!await requireAdmin(req, res)) return;
   const estado = req.query.estado || 'ABIERTA';
   const page = parseInt(req.query.page) || 1;
@@ -1088,7 +1088,7 @@ router.get('/admin/disputes', authMiddleware, async (req, res) => {
 
 // ─── ADMIN — RESOLVER DISPUTA ─────────────────────────────────────────────────
 
-router.put('/admin/disputes/:id/resolve', authMiddleware, async (req, res) => {
+router.put('/admin/disputes/:id/resolve', authMiddleware, paymentLimiter, async (req, res) => {
   if (!await requireAdmin(req, res)) return;
   const { id } = req.params;
   const { resolucion, porcentaje_prestador, nota_resolucion } = req.body;
