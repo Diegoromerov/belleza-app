@@ -9,12 +9,14 @@ const { breakers } = require('./circuitBreakerService');
 
 /**
  * Configuración por defecto
+ * Modelo anterior nvidia/nv-embedqa-e5-v5 alcanzó EOL 2026-08-25 (410 Gone).
+ * Modelo vivo actual para esta cuenta: nvidia/nemotron-3-embed-1b (2048 dims).
  */
 const DEFAULT_CONFIG = {
-  model: process.env.NVIDIA_EMBEDDING_MODEL || 'nvidia/nv-embedqa-e5-v5',
+  model: process.env.NVIDIA_EMBEDDING_MODEL || 'nvidia/nemotron-3-embed-1b',
   baseUrl: (process.env.NVIDIA_EMBED_URL || 'https://integrate.api.nvidia.com/v1').replace(/\/embeddings$/, ''),
   apiKey: process.env.NVIDIA_API_KEY,
-  expectedDimension: 1024,
+  expectedDimension: 2048,
   timeout: 15000,
   maxRetries: 3,
   baseDelayMs: 1000,
@@ -146,12 +148,12 @@ async function generateEmbedding(text, inputType = 'query', options = {}) {
 /**
  * Genera embedding dummy determinístico (fallback)
  * @param {string} text - Texto para generar embedding determinístico
- * @returns {number[]} Vector normalizado de 1024 dimensiones
+ * @returns {number[]} Vector normalizado de 2048 dimensiones
  */
 function generateDummyEmbedding(text) {
   const crypto = require('crypto');
   const hash = crypto.createHash('sha256').update(text).digest();
-  const embedding = new Array(1024).fill(0).map((_, i) => {
+  const embedding = new Array(2048).fill(0).map((_, i) => {
     return (hash[i % 32] / 255 - 0.5) * 0.01;
   });
   const norm = Math.sqrt(embedding.reduce((sum, v) => sum + v * v, 0));

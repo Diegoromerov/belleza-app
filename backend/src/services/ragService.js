@@ -28,7 +28,7 @@ const { ragPool, pool } = require('../config/db');
 const { generateEmbedding: generateQueryEmbedding } = require('./embeddingService');
 const { resolveCategory } = require('../config/knowledgeCategories');
 
-const EXPECTED_DIMS = 1024;
+const EXPECTED_DIMS = 2048;
 
 /**
  * Filtros de ALCANCE: acotan de qué trata la respuesta (normativa vs belleza). NO se relajan
