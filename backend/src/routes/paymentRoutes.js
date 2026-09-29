@@ -7,6 +7,16 @@ const router = express.Router();
 const { pool } = require('../config/db');
 const { authMiddleware } = require('../middleware/auth');
 const { paymentLimiter, otpLimiter } = require('../middleware/rateLimiter');
+const { validate, validateQuery } = require('../middleware/validation');
+const {
+  bankAccountSchema,
+  withdrawSchema,
+  withdrawalModelSchema,
+  adminDisputesQuerySchema,
+  disputeSchema,
+  resolveDisputeSchema,
+  adminDashboardQuerySchema
+} = require('../middleware/validation');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const wompiService = require('../services/wompiService');
@@ -686,20 +696,16 @@ const handleSaveBankAccount = async (req, res) => {
   }
 };
 
-router.post('/wallet/bank-account', authMiddleware, handleSaveBankAccount);
-router.put('/wallet/bank-account', authMiddleware, handleSaveBankAccount);
+router.post('/wallet/bank-account', authMiddleware, paymentLimiter, validate(bankAccountSchema), handleSaveBankAccount);
+router.put('/wallet/bank-account', authMiddleware, paymentLimiter, validate(bankAccountSchema), handleSaveBankAccount);
 
 // ─── RETIRO — SOLICITAR ───────────────────────────────────────────────────────
 
-router.post('/wallet/withdraw', authMiddleware, async (req, res) => {
+router.post('/wallet/withdraw', authMiddleware, paymentLimiter, validate(withdrawSchema), async (req, res) => {
   if (!await requirePrestador(req, res)) return;
 
   const { monto } = req.body;
   const montoSolicitado = parseFloat(monto);
-
-  if (!monto || isNaN(montoSolicitado) || montoSolicitado <= 0) {
-    return res.status(400).json({ error: 'Monto inválido.' });
-  }
 
   const client = await pool.connect();
   try {
@@ -846,15 +852,10 @@ router.post('/wallet/withdraw', authMiddleware, async (req, res) => {
 
 // ─── WALLET — CAMBIAR MODELO DE RETIRO ───────────────────────────────────────
 
-router.put('/wallet/model', authMiddleware, async (req, res) => {
+router.put('/wallet/model', authMiddleware, paymentLimiter, validate(withdrawalModelSchema), async (req, res) => {
   if (!await requirePrestador(req, res)) return;
 
   const { modelo } = req.body;
-  const modelosValidos = ['DEMANDA', 'QUINCENA', 'MENSUAL'];
-
-  if (!modelosValidos.includes(modelo)) {
-    return res.status(400).json({ error: 'Modelo inválido. Use: DEMANDA, QUINCENA o MENSUAL.' });
-  }
 
   try {
     let proximoRetiro = null;
@@ -891,12 +892,8 @@ router.put('/wallet/model', authMiddleware, async (req, res) => {
 
 // ─── DISPUTAS — ABRIR ─────────────────────────────────────────────────────────
 
-router.post('/disputes', authMiddleware, async (req, res) => {
+router.post('/disputes', authMiddleware, validate(disputeSchema), async (req, res) => {
   const { booking_id, tipo, descripcion, evidencia_urls } = req.body;
-
-  if (!booking_id || !tipo) {
-    return res.status(400).json({ error: 'Se requieren booking_id y tipo de disputa.' });
-  }
 
   const client = await pool.connect();
   try {
@@ -1007,7 +1004,7 @@ router.post('/disputes', authMiddleware, async (req, res) => {
 
 // ─── ADMIN — DASHBOARD FINANCIERO ────────────────────────────────────────────
 
-router.get('/admin/dashboard', authMiddleware, async (req, res) => {
+router.get('/admin/dashboard', authMiddleware, validateQuery(adminDashboardQuerySchema), async (req, res) => {
   if (!await requireAdmin(req, res)) return;
   try {
     const [financiero, disputas, alertas] = await Promise.all([
@@ -1050,7 +1047,7 @@ router.get('/admin/dashboard', authMiddleware, async (req, res) => {
 
 // ─── ADMIN — LISTAR DISPUTAS ──────────────────────────────────────────────────
 
-router.get('/admin/disputes', authMiddleware, async (req, res) => {
+router.get('/admin/disputes', authMiddleware, validateQuery(adminDisputesQuerySchema), async (req, res) => {
   if (!await requireAdmin(req, res)) return;
   const estado = req.query.estado || 'ABIERTA';
   const page = parseInt(req.query.page) || 1;
@@ -1088,18 +1085,10 @@ router.get('/admin/disputes', authMiddleware, async (req, res) => {
 
 // ─── ADMIN — RESOLVER DISPUTA ─────────────────────────────────────────────────
 
-router.put('/admin/disputes/:id/resolve', authMiddleware, async (req, res) => {
+router.put('/admin/disputes/:id/resolve', authMiddleware, validate(resolveDisputeSchema), async (req, res) => {
   if (!await requireAdmin(req, res)) return;
   const { id } = req.params;
   const { resolucion, porcentaje_prestador, nota_resolucion } = req.body;
-
-  const resolucionesValidas = ['FAVOR_PRESTADOR', 'REEMBOLSO_TOTAL', 'DIVISION', 'COMPENSACION_PLATAFORMA'];
-  if (!resolucionesValidas.includes(resolucion)) {
-    return res.status(400).json({ error: 'Resolución inválida.' });
-  }
-  if (resolucion === 'DIVISION' && (porcentaje_prestador === undefined || porcentaje_prestador < 0 || porcentaje_prestador > 100)) {
-    return res.status(400).json({ error: 'Para DIVISION se requiere porcentaje_prestador (0-100).' });
-  }
 
   const client = await pool.connect();
   try {
