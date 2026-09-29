@@ -1,11 +1,19 @@
-const { pool } = require('./backend/src/config/db'); // Ajusta la ruta a tu config de DB
+const { pool } = require('./src/config/db');
 const axios = require('axios');
 require('dotenv').config();
 
-// Configuración para generar embeddings con DeepSeek
-const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
-const EMBEDDING_MODEL = 'deepseek-embedding'; // O el modelo específico que uses para vectores
-const EMBEDDING_URL = 'https://api.deepseek.com/v1/embeddings';
+if (!process.env.NVIDIA_API_KEY) {
+  throw new Error('❌ NVIDIA_API_KEY no está configurada en el entorno. Exporta la variable antes de correr este seed.');
+}
+
+// Configuración NVIDIA NIM (1024 dims, compatible con beauty_knowledge_embeddings)
+const NVIDIA_API_KEY = process.env.NVIDIA_API_KEY;
+const EMBEDDING_MODEL = process.env.EMBEDDING_MODEL || 'nvidia/nv-embedqa-e5-v5';
+const EMBEDDING_URL = process.env.EMBEDDING_URL || 'https://integrate.api.nvidia.com/v1/embeddings';
+
+console.log('🔍 Verificando entorno local...');
+console.log('NVIDIA_API_KEY:', process.env.NVIDIA_API_KEY ? '✅ Detectada' : '❌ Faltante');
+console.log('EMBEDDING_MODEL:', EMBEDDING_MODEL);
 
 // Base de datos extraída de tu Guía Estratégica v1.0
 const beautyData = [
@@ -45,8 +53,8 @@ async function generateEmbedding(text) {
   try {
     const response = await axios.post(
       EMBEDDING_URL,
-      { model: EMBEDDING_MODEL, input: text },
-      { headers: { 'Authorization': `Bearer ${DEEPSEEK_API_KEY}`, 'Content-Type': 'application/json' } }
+      { model: EMBEDDING_MODEL, input: text, input_type: 'passage', encoding_format: 'float' },
+      { headers: { 'Authorization': `Bearer ${NVIDIA_API_KEY}`, 'Content-Type': 'application/json' } }
     );
     return response.data.data[0].embedding;
   } catch (error) {
