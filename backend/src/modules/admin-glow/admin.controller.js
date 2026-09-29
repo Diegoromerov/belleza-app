@@ -1,5 +1,6 @@
 const adminModel = require('./admin.model');
 const financialHelper = require('./financial.helper');
+const crypto = require('crypto');
 
 /**
  * Obtener todas las alertas SOS en estado 'ACTIVO'.
@@ -265,11 +266,22 @@ async function verifyProviderAuto(req, res) {
     if (!adminId) {
       const webhookToken = req.headers['x-webhook-token'];
       const expectedToken = process.env.KYC_WEBHOOK_SECRET;
-      
-      if (!webhookToken || webhookToken !== expectedToken) {
+
+      if (!webhookToken || !expectedToken) {
         return res.status(401).json({
           success: false,
           error: 'No autorizado. Se requiere un token de webhook válido para la verificación automatizada.'
+        });
+      }
+
+      // Comparación en tiempo constante para prevenir timing attacks
+      const tokenBuffer = Buffer.from(webhookToken);
+      const expectedBuffer = Buffer.from(expectedToken);
+
+      if (tokenBuffer.length !== expectedBuffer.length || !crypto.timingSafeEqual(tokenBuffer, expectedBuffer)) {
+        return res.status(401).json({
+          success: false,
+          error: 'No autorizado. Token de webhook inválido.'
         });
       }
     }
