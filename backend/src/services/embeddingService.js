@@ -11,10 +11,10 @@ const { breakers } = require('./circuitBreakerService');
  * Configuración por defecto
  */
 const DEFAULT_CONFIG = {
-  model: process.env.NVIDIA_EMBEDDING_MODEL || 'nvidia/nv-embedqa-e5-v5',
+  model: process.env.NVIDIA_EMBEDDING_MODEL || 'nvidia/nemotron-3-embed-1b',
   baseUrl: (process.env.NVIDIA_EMBED_URL || 'https://integrate.api.nvidia.com/v1').replace(/\/embeddings$/, ''),
   apiKey: process.env.NVIDIA_API_KEY,
-  expectedDimension: 1024,
+  expectedDimension: parseInt(process.env.NVIDIA_EMBEDDING_DIMS || '2048', 10),
   timeout: 15000,
   maxRetries: 3,
   baseDelayMs: 1000,
@@ -24,10 +24,10 @@ const DEFAULT_CONFIG = {
 /**
  * Valida que el embedding tenga la dimensión esperada
  * @param {number[]} embedding - Vector de embedding
- * @param {number} expectedDimension - Dimensión esperada (default 1024)
+ * @param {number} expectedDimension - Dimensión esperada (default 2048)
  * @throws {Error} Si la dimensión no coincide
  */
-function validateEmbeddingDimension(embedding, expectedDimension = 1024) {
+function validateEmbeddingDimension(embedding, expectedDimension = parseInt(process.env.NVIDIA_EMBEDDING_DIMS || '2048', 10)) {
   if (!Array.isArray(embedding)) {
     throw new Error('Embedding no es un array');
   }
@@ -146,12 +146,13 @@ async function generateEmbedding(text, inputType = 'query', options = {}) {
 /**
  * Genera embedding dummy determinístico (fallback)
  * @param {string} text - Texto para generar embedding determinístico
- * @returns {number[]} Vector normalizado de 1024 dimensiones
+ * @param {number} dims - Dimensión esperada (default 2048)
+ * @returns {number[]} Vector normalizado de 2048 dimensiones
  */
-function generateDummyEmbedding(text) {
+function generateDummyEmbedding(text, dims = parseInt(process.env.NVIDIA_EMBEDDING_DIMS || '2048', 10)) {
   const crypto = require('crypto');
   const hash = crypto.createHash('sha256').update(text).digest();
-  const embedding = new Array(1024).fill(0).map((_, i) => {
+  const embedding = new Array(dims).fill(0).map((_, i) => {
     return (hash[i % 32] / 255 - 0.5) * 0.01;
   });
   const norm = Math.sqrt(embedding.reduce((sum, v) => sum + v * v, 0));

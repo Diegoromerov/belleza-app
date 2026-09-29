@@ -5,7 +5,14 @@
  * Ahorro estimado: 30-40% tokens LLM + latencia
  */
 
-const { getRedisClient } = require('../middleware/rateLimiter');
+const redisClient = require('../config/redis');
+
+async function getRedisClient() {
+  if (redisClient && (redisClient.isOpen || redisClient.isReady)) {
+    return redisClient;
+  }
+  return null;
+}
 
 const SEMANTIC_CACHE_TTL = 24 * 60 * 60; // 24 horas
 const SIMILARITY_THRESHOLD = 0.92; // Umbral para considerar queries equivalentes

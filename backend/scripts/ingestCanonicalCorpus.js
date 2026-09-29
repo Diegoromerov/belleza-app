@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 /**
  * backend/scripts/ingestCanonicalCorpus.js
- * R5-B — Ingesta del CORPUS CANÓNICO en BD local (para evaluación real)
- * Lee corpus_canonico.json y hace upsert con ON CONFLICT (document_id, chunk_id)
- * Genera embeddings NVIDIA reales (passage, 1024-dim)
+ * RAG FASE 1 — Ingesta e Idempotencia del CORPUS CANÓNICO en BD local
+ * Lee corpus_canonico.json y realiza upsert idempotente con ON CONFLICT (document_id, chunk_id)
+ * Genera embeddings NVIDIA reales (passage, 2048-dim por defecto para nemotron-3-embed-1b)
  *
- * Uso: node scripts/ingestCanonicalCorpus.js [--limit=N] [--dry-run]
+ * Uso: node scripts/ingestCanonicalCorpus.js [--limit=N] [--dry-run] [--batch-size=N]
  */
 
 require('dotenv').config();
@@ -16,18 +16,11 @@ const { ragPool } = require('../src/config/db');
 const CORPUS_PATH = path.join(__dirname, '..', 'src', 'data', 'corpus_canonico', 'corpus_canonico.json');
 const NVIDIA_API_KEY = process.env.NVIDIA_API_KEY;
 const NVIDIA_API_URL = process.env.NVIDIA_API_URL || 'https://integrate.api.nvidia.com/v1/embeddings';
-const NVIDIA_EMBEDDING_MODEL = process.env.NVIDIA_EMBEDDING_MODEL || 'nvidia/nv-embedqa-e5-v5';
-const EXPECTED_DIMS = 1024;
-const DELAY_MS = 120; // rate limiting
+const NVIDIA_EMBEDDING_MODEL = process.env.NVIDIA_EMBEDDING_MODEL || 'nvidia/nemotron-3-embed-1b';
+const EXPECTED_DIMS = parseInt(process.env.NVIDIA_EMBEDDING_DIMS || '2048', 10);
+const DELAY_MS = 50; // rate limiting entre lotes
 
 async function generateEmbedding(text) {
-  // R5-B / CICLO 09 — LÍMITE NVIDIA 512 TOKENS (investigación documentada):
-  // 54/5619 chunks (0.96%) exceden 512 tokens; máximo real 579 tokens (1,670 chars);
-  // ratio medido 2.884 chars/token (español técnico); 1 expected_chunk afectado.
-  // Estrategia: truncar SOLO la UNIDAD DE EMBEDDING a un prefijo seguro (~1400 chars ≈ 485 tokens).
-  // El CHUNK CANÓNICO (content, chunk_id, content_hash, document_id) permanece INTACTO en BD.
-  // Esto conserva: identidad (mapeo 1:1), trazabilidad, idempotencia, sin duplicados.
-  // Alternativa descartada: auto-split (como ingest_json_chunks.js) rompería UNIQUE(document_id, chunk_id).
   const MAX_EMBED_CHARS = 1400;
   const embeddingText = text.length > MAX_EMBED_CHARS ? text.substring(0, MAX_EMBED_CHARS) : text;
   const response = await fetch(NVIDIA_API_URL, {
@@ -50,26 +43,28 @@ async function generateEmbedding(text) {
   const data = await response.json();
   const emb = data.data && data.data[0] && data.data[0].embedding;
   if (!emb || emb.length !== EXPECTED_DIMS) {
-    throw new Error('Embedding con dimensiones incorrectas: ' + (emb ? emb.length : 0));
+    throw new Error(`Embedding con dimensiones incorrectas: esperado ${EXPECTED_DIMS}, recibido ${emb ? emb.length : 0}`);
   }
   return emb;
 }
 
 async function upsertChunk(chunk, dryRun) {
+  const is2048 = EXPECTED_DIMS === 2048;
+  const targetCol = is2048 ? 'embedding_next' : 'embedding';
+  
   const sql = `
     INSERT INTO beauty_knowledge_embeddings
-    (title, category, content, metadata, embedding, document_id, document_version, chunk_id, content_hash, fuente, seccion, updated_at)
+    (title, category, content, metadata, ${targetCol}, document_id, document_version, chunk_id, content_hash, fuente, seccion, created_at)
     VALUES ($1, $2, $3, $4, $5::vector, $6, $7, $8, $9, $10, $11, NOW())
     ON CONFLICT (document_id, chunk_id) DO UPDATE SET
       title = EXCLUDED.title,
       category = EXCLUDED.category,
       content = EXCLUDED.content,
       metadata = EXCLUDED.metadata,
-      embedding = EXCLUDED.embedding,
+      ${targetCol} = EXCLUDED.${targetCol},
       content_hash = EXCLUDED.content_hash,
       fuente = EXCLUDED.fuente,
-      seccion = EXCLUDED.seccion,
-      updated_at = NOW()
+      seccion = EXCLUDED.seccion
     RETURNING (xmax = 0) AS inserted;
   `;
   const params = [
@@ -94,10 +89,10 @@ async function main() {
   const dryRun = args.includes('--dry-run');
   const limitArg = args.find(a => a.startsWith('--limit='));
   const limit = limitArg ? parseInt(limitArg.split('=')[1], 10) : null;
+  const batchArg = args.find(a => a.startsWith('--batch-size='));
+  const batchSize = batchArg ? parseInt(batchArg.split('=')[1], 10) : 16;
 
   // ── SEGURIDAD: abortar si RAG_DATABASE_URL apunta a producción ──
-  // Mecanismo equivalente a evaluateRagReal.js (CICLO 08, sección 20).
-  // Regla del Director: la BD de ingesta debe ser LOCAL, jamás Railway producción.
   const ragUrl = process.env.RAG_DATABASE_URL || '';
   if (!ragUrl) {
     console.error('🚫 RAG_DATABASE_URL no está definida. Abortando (seguridad).');
@@ -110,8 +105,9 @@ async function main() {
     process.exit(1);
   }
   console.log('✅ RAG_DATABASE_URL LOCAL verificada — ingesta permitida');
+  console.log(`🤖 Modelo: ${NVIDIA_EMBEDDING_MODEL} (${EXPECTED_DIMS} dims)`);
 
-  if (!NVIDIA_API_KEY) {
+  if (!dryRun && !NVIDIA_API_KEY) {
     console.error('❌ Falta NVIDIA_API_KEY');
     process.exit(1);
   }
@@ -124,38 +120,47 @@ async function main() {
   let chunks = corpus.chunks;
   if (limit) chunks = chunks.slice(0, limit);
 
-  console.log(`🚀 Ingesta corpus canónico: ${chunks.length} chunks (dry-run: ${dryRun})`);
+  console.log(`🚀 Ingesta corpus canónico: ${chunks.length} chunks (dry-run: ${dryRun}, batchSize: ${batchSize})`);
   const before = await ragPool.query('SELECT COUNT(*)::int AS c FROM beauty_knowledge_embeddings');
   console.log(`   Chunks en BD antes: ${before.rows[0].c}`);
 
   let inserted = 0, updated = 0, errors = 0;
   const startTime = Date.now();
 
-  for (let i = 0; i < chunks.length; i++) {
-    const c = chunks[i];
-    try {
-      if (dryRun) {
-        console.log(`[DRY] ${c.chunk_id}`);
-        continue;
+  for (let i = 0; i < chunks.length; i += batchSize) {
+    const batch = chunks.slice(i, i + batchSize);
+    
+    await Promise.all(batch.map(async (c) => {
+      try {
+        if (dryRun) {
+          console.log(`[DRY] ${c.chunk_id}`);
+          inserted++;
+          return;
+        }
+        const embedding = await generateEmbedding((c.title || '') + '\n\n' + (c.content || '').substring(0, 4000));
+        const result = await upsertChunk({ ...c, embedding }, dryRun);
+        if (result === 'inserted') inserted++; else updated++;
+      } catch (err) {
+        errors++;
+        console.error(`   ❌ ${c.chunk_id}: ${err.message}`);
       }
-      const embedding = await generateEmbedding((c.title || '') + '\n\n' + (c.content || '').substring(0, 4000));
-      const result = await upsertChunk({ ...c, embedding }, dryRun);
-      if (result === 'inserted') inserted++; else updated++;
-      if ((i + 1) % 50 === 0) {
-        const elapsed = ((Date.now() - startTime) / 1000).toFixed(0);
-        console.log(`   [${i + 1}/${chunks.length}] +${inserted} ~${updated} err=${errors} (${elapsed}s)`);
-      }
+    }));
+
+    const processed = Math.min(i + batchSize, chunks.length);
+    if (processed % 50 === 0 || processed === chunks.length) {
+      const elapsed = ((Date.now() - startTime) / 1000).toFixed(0);
+      console.log(`   [${processed}/${chunks.length}] +${inserted} ~${updated} err=${errors} (${elapsed}s)`);
+    }
+    
+    if (i + batchSize < chunks.length) {
       await new Promise(r => setTimeout(r, DELAY_MS));
-    } catch (err) {
-      errors++;
-      console.error(`   ❌ ${c.chunk_id}: ${err.message}`);
     }
   }
 
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
   const after = await ragPool.query('SELECT COUNT(*)::int AS c FROM beauty_knowledge_embeddings');
   console.log('\n' + '='.repeat(50));
-  console.log('📊 RESUMEN INGESTA CORPUS CANÓNICO');
+  console.log('📊 RESUMEN INGESTA CORPUS CANÓNICO (FASE 1)');
   console.log('   Chunks procesados: ' + chunks.length);
   console.log('   Insertados: ' + inserted);
   console.log('   Actualizados: ' + updated);
