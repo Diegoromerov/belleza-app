@@ -726,7 +726,6 @@ const testRagConnection = async () => {
   }
 };
 
-let isPgAvailable = null;
 let servingFabricatedData = false;
 
 const memoryFallbackAllowed = () => {
