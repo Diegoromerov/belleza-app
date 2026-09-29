@@ -10,16 +10,24 @@ const esEntornoProductivo = () =>
   !!process.env.RAILWAY_ENVIRONMENT;
 
 /**
- * Clave LEGADA (anterior a C-11): se derivaba de JWT_SECRET. Solo existe para poder
- * descifrar y re-cifrar los datos que ya están en la base con ella.
+ * Clave LEGADA (anterior a C-11): clave fija para descifrar datos históricos cifrados
+ * con la derivación legacy (sha256 del secret legacy). NO deriva de JWT_SECRET actual
+ * para mantener aislamiento criptográfico (A360-2026-09-22/C-11, TEC-53/CI-14).
  * Ver backend/scripts/reencryptBiometricData.js
  */
 const CLAVE_LEGADA = () => {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error('JWT_SECRET requerida para derivar CLAVE_LEGADA');
+  const legacyKeyEnv = process.env.LEGACY_BIOMETRIC_KEY;
+  if (!legacyKeyEnv) {
+    throw new Error('LEGACY_BIOMETRIC_KEY no configurada para descifrado legacy');
   }
-  return crypto.createHash('sha256').update(secret).digest();
+  // Soporta 64-char hex (32 bytes) o 32-char utf8
+  if (/^[0-9a-fA-F]{64}$/.test(legacyKeyEnv.trim())) {
+    return Buffer.from(legacyKeyEnv.trim(), 'hex');
+  }
+  if (Buffer.byteLength(legacyKeyEnv, 'utf8') === 32) {
+    return Buffer.from(legacyKeyEnv, 'utf8');
+  }
+  throw new Error('LEGACY_BIOMETRIC_KEY debe ser 32 bytes (64 hex o 32 utf8)');
 };
 
 let activeCipherBuffer;
@@ -45,17 +53,14 @@ function initializeKey() {
   }
 
   // Key must be 32 bytes for AES-256 (supports 64-char hex or 32-char utf8)
-  let keyBuffer;
-  if (/^[0-9a-fA-F]{64}$/.test(keyEnv.trim())) {
-    keyBuffer = Buffer.from(keyEnv.trim(), 'hex');
-  } else if (Buffer.byteLength(keyEnv, 'utf8') === 32) {
-    keyBuffer = Buffer.from(keyEnv, 'utf8');
-  } else {
-    if (process.env.NODE_ENV === 'test') {
-      throw new Error('La clave biométrica debe ser de 32 bytes');
+    let keyBuffer;
+    if (/^[0-9a-fA-F]{64}$/.test(keyEnv.trim())) {
+      keyBuffer = Buffer.from(keyEnv.trim(), 'hex');
+    } else if (Buffer.byteLength(keyEnv, 'utf8') === 32) {
+      keyBuffer = Buffer.from(keyEnv, 'utf8');
+    } else {
+      throw new Error('La clave biométrica debe ser de 32 bytes (64 hex o 32 utf8)');
     }
-    keyBuffer = crypto.createHash('sha256').update(keyEnv).digest();
-  }
 
   if (keyBuffer.length !== 32) {
     throw new Error('La clave biométrica debe ser de 32 bytes');

@@ -87,26 +87,26 @@ describe('BiometricCryptoService - Hardening', () => {
     });
 
     test('should throw when BIOMETRIC_ENCRYPTION_KEY is invalid length in production', () => {
-      process.env.BIOMETRIC_ENCRYPTION_KEY = 'short_key';
-      process.env.NODE_ENV = 'production';
-      expect(() => {
-        require(path.join(__dirname, 'biometricCryptoService.js'));
-      }).toThrow(/32 bytes long/);
-    });
+          process.env.BIOMETRIC_ENCRYPTION_KEY = 'short_key';
+          process.env.NODE_ENV = 'production';
+          expect(() => {
+            require(path.join(__dirname, 'biometricCryptoService.js'));
+          }).toThrow(/32 bytes/);
+        });
 
-    test('should throw when BIOMETRIC_ENCRYPTION_KEY is not 32 bytes', () => {
-      process.env.BIOMETRIC_ENCRYPTION_KEY = 'short'; // 5 bytes
-      expect(() => {
-        require(path.join(__dirname, 'biometricCryptoService.js'));
-      }).toThrow(/32 bytes long/);
-    });
+        test('should throw when BIOMETRIC_ENCRYPTION_KEY is not 32 bytes', () => {
+          process.env.BIOMETRIC_ENCRYPTION_KEY = 'short'; // 5 bytes
+          expect(() => {
+            require(path.join(__dirname, 'biometricCryptoService.js'));
+          }).toThrow(/32 bytes/);
+        });
 
-    test('should throw when BIOMETRIC_ENCRYPTION_KEY is too long', () => {
-      process.env.BIOMETRIC_ENCRYPTION_KEY = 'a'.repeat(33); // 33 bytes
-      expect(() => {
-        require(path.join(__dirname, 'biometricCryptoService.js'));
-      }).toThrow(/32 bytes long/);
-    });
+        test('should throw when BIOMETRIC_ENCRYPTION_KEY is too long', () => {
+          process.env.BIOMETRIC_ENCRYPTION_KEY = 'a'.repeat(33); // 33 bytes
+          expect(() => {
+            require(path.join(__dirname, 'biometricCryptoService.js'));
+          }).toThrow(/32 bytes/);
+        });
   });
 
   describe('decrypt() error handling', () => {
