@@ -395,22 +395,23 @@ router.get('/courses/:id/quiz', authMiddleware, requireAcademyRole, ah(async (re
   }
 
   const progress = academy.progressOf(data.lessons);
-  if (!progress.allCompleted) {
-    return res.status(409).json({
-      error: 'Debes completar todas las lecciones del curso antes de presentar el examen.',
-      pendingLessons: progress.totalLessons - progress.completedLessons,
-    });
-  }
+    if (!progress.allCompleted) {
+      return res.status(409).json({
+        error: 'Debes completar todas las lecciones del curso antes de presentar el examen.',
+        pendingLessons: progress.totalLessons - progress.completedLessons,
+      });
+    }
 
-  const used = await attemptsUsed(req.user.id, courseId);
-  if (used >= academy.maxAttempts()) {
-    return res.status(429).json({
-      error: `Alcanzaste el máximo de ${academy.maxAttempts()} intentos para este curso. Contacta a soporte para reiniciarlos.`,
-      attemptsLeft: 0,
-    });
-  }
+    const used = await attemptsUsed(req.user.id, courseId);
+    if (used >= academy.maxAttempts()) {
+      return res.set('Retry-After', '3600').status(429).json({
+        retry_after_segundos: 3600,
+        error: `Alcanzaste el máximo de ${academy.maxAttempts()} intentos para este curso. Contacta a soporte para reiniciarlos.`,
+        attemptsLeft: 0,
+      });
+    }
 
-  const { rows: quizzes } = await pool.query(
+    const { rows: quizzes } = await pool.query(
     'SELECT id, question, options FROM academy_quizzes WHERE course_id = $1 ORDER BY id ASC',
     [courseId]
   );
@@ -452,14 +453,15 @@ router.post('/courses/:id/submit-quiz', authMiddleware, requireAcademyRole, ah(a
   }
 
   // 2. Límite de intentos.
-  const maxAttempts = academy.maxAttempts();
-  const used = await attemptsUsed(req.user.id, courseId);
-  if (used >= maxAttempts) {
-    return res.status(429).json({
-      error: `Alcanzaste el máximo de ${maxAttempts} intentos para este curso.`,
-      attemptsLeft: 0,
-    });
-  }
+    const maxAttempts = academy.maxAttempts();
+    const used = await attemptsUsed(req.user.id, courseId);
+    if (used >= maxAttempts) {
+      return res.set('Retry-After', '3600').status(429).json({
+        retry_after_segundos: 3600,
+        error: `Alcanzaste el máximo de ${maxAttempts} intentos para este curso.`,
+        attemptsLeft: 0,
+      });
+    }
 
   const { rows: quizzes } = await pool.query(
     'SELECT id, question, options, correct_index FROM academy_quizzes WHERE course_id = $1 ORDER BY id ASC',
