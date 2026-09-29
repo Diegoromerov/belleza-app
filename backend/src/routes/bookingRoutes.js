@@ -4,10 +4,11 @@ const express = require('express');
 const router = express.Router();
 const { authMiddleware } = require('../middleware/auth');
 const pilaCheck = require('../middleware/pilaCheck');
+const { paymentLimiter } = require('../middleware/rateLimiter');
 const bookingController = require('../controllers/bookingController');
 
 // 🔹 CREAR RESERVA
-router.post('/bookings', authMiddleware, bookingController.createBooking);
+router.post('/bookings', authMiddleware, paymentLimiter, bookingController.createBooking);
 
 // 🔹 PANEL DE PRESTADOR: OBTENER CITAS
 router.get('/bookings/provider', authMiddleware, pilaCheck, bookingController.getProviderBookings);
