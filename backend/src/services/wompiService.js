@@ -31,7 +31,8 @@ exports.disbursePayout = async (bookingId, amount, nequiNumber, documentId) => {
       console.log(`\n💸 [WOMPI PAYOUT] Iniciando dispersión automática:`);
       console.log(`   - Cita ID: ${bookingId}`);
       console.log(`   - Monto Neto: $${amount} COP`);
-      console.log(`   - Cuenta Nequi: ${nequiNumber}`);
+      const nequiMasked = nequiNumber ? nequiNumber.replace(/^.*(\d{4})$/, '****$1') : 'N/A';
+      console.log(`   - Cuenta Nequi: ${nequiMasked}`);
       console.log(`   - Cédula Titular: ${documentId}`);
 
       if (!nequiNumber) {
@@ -88,7 +89,8 @@ exports.crearPayout = async ({ retiroId, providerId, amount, numeroCuenta, banco
       console.log(`   - Prestador ID: ${providerId}`);
       console.log(`   - Monto: $${amount} COP`);
       console.log(`   - Banco/Método: ${banco}`);
-      console.log(`   - Cuenta: ${numeroCuenta}`);
+            const cuentaMasked = numeroCuenta ? numeroCuenta.replace(/^.*(\d{4})$/, '****$1') : 'N/A';
+            console.log(`   - Cuenta: ${cuentaMasked}`);
 
       const referenceToken = 'wompi_ret_' + Math.random().toString(36).substring(2, 11).toUpperCase();
 
