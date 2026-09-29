@@ -69,8 +69,8 @@ describe('colisiones de UUID entre migraciones de la academia', () => {
 
   test('los cursos 1 y 2 usan un namespace propio (d1…/d2…) sin solaparse con 025/026', () => {
     const migraciones = readMigrations();
-    const ocho = migraciones.find((m) => m.file.startsWith('008'));
-    const veintiseis = migraciones.find((m) => m.file.startsWith('026'));
+    const ocho = migraciones.find((m) => m.file.includes('academia_glow'));
+    const veintiseis = migraciones.find((m) => m.file.includes('curso_colorimetria_completo'));
 
     const idsOcho = extractPairs(ocho.sql, 'academy_modules').map((p) => p.id);
     const idsVeintiseis = extractPairs(veintiseis.sql, 'academy_modules').map((p) => p.id);
@@ -90,9 +90,9 @@ describe('colisiones de UUID entre migraciones de la academia', () => {
   });
 });
 
-describe('migración 066 (reparación del currículo)', () => {
+describe('migración de reparación del currículo (070/066)', () => {
   const files = readMigrations();
-  const reparadora = files.find((m) => m.file.startsWith('066'));
+  const reparadora = files.find((m) => m.file.includes('fix_academia_curriculum_and_content'));
   const COURSE = 'c0000000-0000-0000-0000-000000000003';
 
   test('existe y define 9 módulos del curso de colorimetría', () => {
@@ -136,8 +136,8 @@ describe('migración 066 (reparación del currículo)', () => {
   });
 });
 
-describe('migración 067 (integridad y certificado verificable)', () => {
-  const integridad = readMigrations().find((m) => m.file.startsWith('067'));
+describe('migración de integridad y certificado verificable (072/067)', () => {
+  const integridad = readMigrations().find((m) => m.file.includes('academy_integrity_and_verifiable_certificates'));
 
   test('crea el registro de intentos del examen', () => {
     expect(integridad).toBeDefined();
