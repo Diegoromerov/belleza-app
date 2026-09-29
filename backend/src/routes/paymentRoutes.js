@@ -228,12 +228,15 @@ router.post('/bookings/:id/confirm-otp', authMiddleware, otpLimiter, async (req,
 
     const maxIntentos = parseInt(await getConfig('otp_max_intentos', '3'));
     if (otp.intentos_fallidos >= maxIntentos) {
-      await client.query('ROLLBACK');
-      return res.status(429).json({
-        error: 'Código bloqueado por demasiados intentos fallidos.',
-        accion: 'DISPUTA_AUTOMATICA'
-      });
-    }
+          await client.query('ROLLBACK');
+          const segundosRetry = Math.max(1, Math.ceil((new Date(otp.expira_at) - Date.now()) / 1000));
+          res.set('Retry-After', String(segundosRetry));
+          return res.status(429).json({
+            error: 'Código bloqueado por demasiados intentos fallidos.',
+            accion: 'DISPUTA_AUTOMATICA',
+            retry_after_segundos: segundosRetry
+          });
+        }
 
     const esValido = await bcrypt.compare(codigo, otp.codigo_hash);
     if (!esValido) {
@@ -249,13 +252,16 @@ router.post('/bookings/:id/confirm-otp', authMiddleware, otpLimiter, async (req,
       await client.query('COMMIT');
 
       const intentosRestantes = maxIntentos - nuevosIntentos;
-      if (nuevoEstado === 'BLOQUEADO') {
-        return res.status(429).json({
-          error: 'Código incorrecto. OTP bloqueado.',
-          intentos_restantes: 0,
-          accion: 'DISPUTA_AUTOMATICA'
-        });
-      }
+            if (nuevoEstado === 'BLOQUEADO') {
+              const segundosRetry = Math.max(1, Math.ceil((new Date(otp.expira_at) - Date.now()) / 1000));
+              res.set('Retry-After', String(segundosRetry));
+              return res.status(429).json({
+                error: 'Código incorrecto. OTP bloqueado.',
+                intentos_restantes: 0,
+                accion: 'DISPUTA_AUTOMATICA',
+                retry_after_segundos: segundosRetry
+              });
+            }
       return res.status(400).json({
         error: `Código incorrecto. ${intentosRestantes} intento(s) restante(s).`,
         intentos_restantes: intentosRestantes
@@ -749,16 +755,19 @@ router.post('/wallet/withdraw', authMiddleware, paymentLimiter, async (req, res)
     }
 
     if (wallet.ultimo_retiro_at) {
-      const diasTranscurridos = (Date.now() - new Date(wallet.ultimo_retiro_at)) / (1000 * 60 * 60 * 24);
-      if (diasTranscurridos < diasMin) {
-        const proximaFecha = new Date(new Date(wallet.ultimo_retiro_at).getTime() + diasMin * 24 * 60 * 60 * 1000);
-        await client.query('ROLLBACK');
-        return res.status(429).json({
-          error: `Solo puedes retirar una vez cada ${diasMin} días.`,
-          proxima_fecha: proximaFecha
-        });
-      }
-    }
+          const diasTranscurridos = (Date.now() - new Date(wallet.ultimo_retiro_at)) / (1000 * 60 * 60 * 24);
+          if (diasTranscurridos < diasMin) {
+            const proximaFecha = new Date(new Date(wallet.ultimo_retiro_at).getTime() + diasMin * 24 * 60 * 60 * 1000);
+            const segundosRetry = Math.max(1, Math.ceil((proximaFecha - Date.now()) / 1000));
+            await client.query('ROLLBACK');
+            res.set('Retry-After', String(segundosRetry));
+            return res.status(429).json({
+              error: `Solo puedes retirar una vez cada ${diasMin} días.`,
+              proxima_fecha: proximaFecha,
+              retry_after_segundos: segundosRetry
+            });
+          }
+        }
 
     const { rows: disputasActivas } = await client.query(
       `SELECT COUNT(*) FROM disputas d
