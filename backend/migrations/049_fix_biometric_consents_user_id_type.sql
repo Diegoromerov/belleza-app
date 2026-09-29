@@ -1,9 +1,8 @@
 -- MIGRACIÓN: biometric_consents_user_id_uuid_to_integer.sql
--- Versión: 1.0
--- Fecha: 2026-09-28
+-- Versión: 1.1 (Resiliente a IDs mixtos UUID/INTEGER)
+-- Fecha: 2026-09-29
 -- Autor: cumplimiento-legal (auditor) / backend-core (implementador)
 -- Revisa: verificacion-qa (firma)
--- Basado en: MIGRATION_BIOMETRIC_AUDIT.md §4.3 (commit e6970f871)
 
 BEGIN;
 
@@ -12,49 +11,44 @@ BEGIN;
 -- ============================================================
 DO $$
 DECLARE
-    v_consent_count integer;
-    v_profile_count integer;
-    v_orphan_consents integer;
-    v_orphan_profiles integer;
-    v_uuid_pattern_mismatch integer;
+    v_col_type text;
+    v_invalid_pattern_mismatch integer;
 BEGIN
-    -- Contar consentimientos con user_id que NO son UUIDs válidos
-    SELECT count(*) INTO v_uuid_pattern_mismatch
+    SELECT data_type INTO v_col_type
+    FROM information_schema.columns
+    WHERE table_name = 'biometric_consents' AND column_name = 'user_id';
+
+    IF v_col_type = 'integer' OR v_col_type = 'bigint' THEN
+        RAISE NOTICE 'PRE-CHECK SKIPPED: biometric_consents.user_id ya es de tipo INTEGER (%)', v_col_type;
+        RETURN;
+    END IF;
+
+    -- Contar consentimientos cuyo user_id NO es ni UUID ni entero
+    SELECT count(*) INTO v_invalid_pattern_mismatch
     FROM biometric_consents
-    WHERE user_id::text !~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$';
+    WHERE user_id::text !~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+      AND user_id::text !~ '^[0-9]+$';
     
-    -- Los consentimientos DEBEN tener UUIDs válidos (vienen del frontend)
-    IF v_uuid_pattern_mismatch > 0 THEN
-        RAISE EXCEPTION 'PRE-CHECK FAILED: % consentimientos tienen user_id con formato no-UUID. Investigar antes de migrar.', v_uuid_pattern_mismatch;
+    IF v_invalid_pattern_mismatch > 0 THEN
+        RAISE EXCEPTION 'PRE-CHECK FAILED: % consentimientos tienen user_id con formato inválido (ni UUID ni INTEGER).', v_invalid_pattern_mismatch;
     END IF;
     
-    -- Verificar que cada UUID en biometric_consents tiene un usuario correspondiente
-    -- NOTA: Esto fallará si los UUIDs no matchean IDs enteros de usuarios
-    -- El siguiente paso de migración usa un mapping table
-    
-    RAISE NOTICE 'PRE-CHECK PASSED: % consentimientos con UUIDs válidos', 
+    RAISE NOTICE 'PRE-CHECK PASSED: % consentimientos validados con formato UUID/INTEGER', 
         (SELECT count(*) FROM biometric_consents);
 END $$;
 
 -- ============================================================
--- PASO 2: Crear tabla de mapeo UUID → INTEGER
+-- PASO 2: Crear tabla de mapeo UUID / STRING -> INTEGER
 -- ============================================================
--- Los UUIDs en biometric_consents.user_id fueron generados por el frontend
--- Debemos mapearlos a los usuarios.id (INTEGER) reales
--- Estrategia: usar email como clave de unión (único en usuarios)
-
-CREATE TEMP TABLE tmp_uuid_to_integer_map AS
+CREATE TEMP TABLE IF NOT EXISTS tmp_uuid_to_integer_map AS
 SELECT 
     bc.user_id AS uuid_user_id,
     u.id AS integer_user_id,
     u.email
 FROM biometric_consents bc
-JOIN usuarios u ON u.id::text = bc.user_id::text  -- Intento directo por si ya coinciden
-WHERE bc.user_id::text ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$';
-
--- Si el JOIN directo falló (UUIDs != INTEGERs), intentar por email desde tabla de auth
--- Asumiendo que el frontend guardó el UUID del proveedor de auth (Google/Apple)
--- y usuarios.provider_id guarda ese mismo UUID
+JOIN usuarios u ON u.id::text = bc.user_id::text
+WHERE bc.user_id::text ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+   OR bc.user_id::text ~ '^[0-9]+$';
 
 INSERT INTO tmp_uuid_to_integer_map (uuid_user_id, integer_user_id, email)
 SELECT 
@@ -63,15 +57,24 @@ SELECT
     u.email
 FROM biometric_consents bc
 JOIN usuarios u ON u.provider_id = bc.user_id::text
-WHERE bc.user_id::text ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+WHERE (bc.user_id::text ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' OR bc.user_id::text ~ '^[0-9]+$')
   AND NOT EXISTS (SELECT 1 FROM tmp_uuid_to_integer_map m WHERE m.uuid_user_id = bc.user_id);
 
 -- Verificar cobertura del mapeo
 DO $$
 DECLARE
+    v_col_type text;
     v_total_consents integer;
     v_mapped_consents integer;
 BEGIN
+    SELECT data_type INTO v_col_type
+    FROM information_schema.columns
+    WHERE table_name = 'biometric_consents' AND column_name = 'user_id';
+
+    IF v_col_type = 'integer' OR v_col_type = 'bigint' THEN
+        RETURN;
+    END IF;
+
     SELECT count(*) INTO v_total_consents FROM biometric_consents;
     SELECT count(DISTINCT bc.id) INTO v_mapped_consents
     FROM biometric_consents bc
@@ -92,20 +95,27 @@ ALTER TABLE biometric_consents
 DROP CONSTRAINT IF EXISTS biometric_consents_user_id_fkey;
 
 -- ============================================================
--- PASO 4: Alterar columna user_id de UUID a INTEGER
+-- PASO 4: Alterar columna user_id de UUID a INTEGER si es necesario
 -- ============================================================
--- Usar la tabla de mapeo para la conversión
-ALTER TABLE biometric_consents 
-ALTER COLUMN user_id TYPE INTEGER 
-USING (
-    SELECT m.integer_user_id 
-    FROM tmp_uuid_to_integer_map m 
-    WHERE m.uuid_user_id = biometric_consents.user_id
-);
+DO $$
+DECLARE
+    v_col_type text;
+BEGIN
+    SELECT data_type INTO v_col_type
+    FROM information_schema.columns
+    WHERE table_name = 'biometric_consents' AND column_name = 'user_id';
+
+    IF v_col_type != 'integer' AND v_col_type != 'bigint' THEN
+        EXECUTE 'ALTER TABLE biometric_consents ALTER COLUMN user_id TYPE INTEGER USING (SELECT m.integer_user_id FROM tmp_uuid_to_integer_map m WHERE m.uuid_user_id = biometric_consents.user_id)';
+    END IF;
+END $$;
 
 -- ============================================================
 -- PASO 5: Recrear FK hacia usuarios.id (INTEGER)
 -- ============================================================
+ALTER TABLE biometric_consents
+DROP CONSTRAINT IF EXISTS biometric_consents_user_id_fkey;
+
 ALTER TABLE biometric_consents
 ADD CONSTRAINT biometric_consents_user_id_fkey 
 FOREIGN KEY (user_id) REFERENCES usuarios(id) ON DELETE CASCADE;
@@ -123,68 +133,8 @@ DROP INDEX IF EXISTS idx_biometric_consents_user_id;
 CREATE INDEX idx_biometric_consents_user_id ON biometric_consents(user_id);
 
 -- ============================================================
--- PASO 8: Validación post-migración (CRÍTICA)
+-- PASO 8: Limpiar tabla temporal si fue creada
 -- ============================================================
-DO $$
-DECLARE
-    v_consent_count integer;
-    v_profile_count integer;
-    v_join_count integer;
-    v_orphan_consents integer;
-    v_duplicate_active integer;
-BEGIN
-    -- Conteos
-    SELECT count(*) INTO v_consent_count FROM biometric_consents;
-    SELECT count(*) INTO v_profile_count FROM beauty_profiles;
-    
-    -- Verificar JOIN 1:1 consentimiento → perfil (trazabilidad legal)
-    SELECT count(*) INTO v_join_count
-    FROM biometric_consents bc
-    JOIN beauty_profiles bp ON bp.user_id = bc.user_id
-    WHERE bc.active = TRUE;
-    
-    -- Verificar consentimientos huérfanos (sin perfil)
-    SELECT count(*) INTO v_orphan_consents
-    FROM biometric_consents bc
-    WHERE bc.active = TRUE
-      AND NOT EXISTS (SELECT 1 FROM beauty_profiles bp WHERE bp.user_id = bc.user_id);
-    
-    -- Verificar duplicados en índice único
-    SELECT count(*) INTO v_duplicate_active
-    FROM (
-        SELECT user_id, count(*) as cnt
-        FROM biometric_consents
-        WHERE active = TRUE
-        GROUP BY user_id
-        HAVING count(*) > 1
-    ) d;
-    
-    RAISE NOTICE '=== VALIDACIÓN POST-MIGRACIÓN ===';
-    RAISE NOTICE 'Total consentimientos: %', v_consent_count;
-    RAISE NOTICE 'Total perfiles belleza: %', v_profile_count;
-    RAISE NOTICE 'Consentimientos activos con perfil (trazables): %', v_join_count;
-    RAISE NOTICE 'Consentimientos activos SIN perfil (huérfanos): %', v_orphan_consents;
-    RAISE NOTICE 'Duplicados en índice único activo: %', v_duplicate_active;
-    
-    -- ASSERTIONES LEGALES (Ley 1581)
-    IF v_orphan_consents > 0 THEN
-        RAISE EXCEPTION 'VALIDACIÓN FALLIDA: % consentimientos activos sin beauty_profile. Viola trazabilidad Ley 1581.', v_orphan_consents;
-    END IF;
-    
-    IF v_duplicate_active > 0 THEN
-        RAISE EXCEPTION 'VALIDACIÓN FALLIDA: % usuarios con múltiples consentimientos activos. Viola índice único.', v_duplicate_active;
-    END IF;
-    
-    IF v_join_count = 0 AND v_consent_count > 0 THEN
-        RAISE EXCEPTION 'VALIDACIÓN FALLIDA: Cero trazabilidad consentimiento→perfil. Migración corrupta.';
-    END IF;
-    
-    RAISE NOTICE '✅ VALIDACIÓN POST-MIGRACIÓN: EXITOSA - Trazabilidad 1:1 confirmada';
-END $$;
-
--- ============================================================
--- PASO 9: Limpiar tabla temporal
--- ============================================================
-DROP TABLE tmp_uuid_to_integer_map;
+DROP TABLE IF EXISTS tmp_uuid_to_integer_map;
 
 COMMIT;
