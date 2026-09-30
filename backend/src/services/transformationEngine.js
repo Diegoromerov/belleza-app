@@ -4,6 +4,8 @@ const hestiaAgent = require('./agents/hestiaAgent');
 const hermesAgent = require('./agents/hermesAgent');
 const logger = require('../config/logger');
 
+const { isGoalReached, calculateSemanticDelta } = require('./glowContracts');
+
 class TransformationEngine {
   /**
    * Genera un plan de intervención estructurado con rutina AM/PM y sugerencias comerciales opcionales
@@ -101,13 +103,13 @@ class TransformationEngine {
   }) {
     logger.info('Adaptando plan según Delta evolutivo', { metricKey, delta, currentValue, targetValue });
 
-    const isGoalReached = currentValue >= targetValue;
+    const goalReached = isGoalReached(metricKey, currentValue, targetValue);
     let adaptationType = 'maintain';
     let adaptationReason = '';
     let updatedAm = [...(currentPlan.amRoutine || [])];
     let updatedPm = [...(currentPlan.pmRoutine || [])];
 
-    if (isGoalReached) {
+    if (goalReached) {
       adaptationType = 'completed';
       adaptationReason = `¡Objetivo de ${metricKey} alcanzado con éxito (${currentValue}/${targetValue})! Pasando a fase de mantenimiento o nuevo ciclo.`;
     } else if (delta > 0) {

@@ -210,8 +210,9 @@ class GlowCycleService {
     const baselineVal = parseFloat(cycle.baseline_value || 50);
     const newScoreVal = faceScores && faceScores[metricKey] !== undefined ? parseFloat(faceScores[metricKey]) : baselineVal;
 
-    // 2. Calcular Delta
-    const deltaVal = parseFloat((newScoreVal - baselineVal).toFixed(2));
+    // 2. Calcular Delta Semántico (CONTRACT_01)
+    const { calculateSemanticDelta } = require('./glowContracts');
+    const deltaVal = parseFloat(calculateSemanticDelta(metricKey, baselineVal, newScoreVal).toFixed(2));
     const scoreDelta = {
       [metricKey]: deltaVal,
       previous_baseline: baselineVal,
