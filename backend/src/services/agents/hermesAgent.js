@@ -37,11 +37,16 @@ class HermesAgent {
 
     try {
       const res = await pool.query(query, params);
+      const enrichedServices = (res.rows || []).map(r => ({
+        ...r,
+        estimated_transit_minutes: Math.ceil(parseFloat(r.distance_km || 0) * 4 + 5)
+      }));
+
       return {
         status: 'success',
-        foundCount: res.rows.length,
+        foundCount: enrichedServices.length,
         searchOrigin: { latitude: lat, longitude: lon, radiusKm },
-        services: res.rows
+        services: enrichedServices
       };
     } catch (err) {
       console.error('❌ [HERMES Agent] Error en consulta PostGIS:', err.message);

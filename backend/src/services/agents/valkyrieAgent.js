@@ -39,7 +39,12 @@ class ValkyrieAgent {
           insights: {
             slowestDay: null,
             slowestDayBookingsMonth: 0,
-            recommendation: 'No hay suficientes datos de agendamiento en los últimos 30 días para calcular precios dinámicos.',
+            recommendation: 'No hay suficientes datos de agendamiento en los últimos 30 días para calcular precios dinámicos. Basado en el promedio de mercado de la industria, el Martes suele ser el día con menor ocupación.',
+            marketBaseline: {
+              suggestedSlowDay: 'Martes',
+              suggestedTimeWindow: 'Mañana (09:00 AM - 12:00 PM)',
+              recommendedStarterCode: 'GLOW-STARTER-15'
+            },
             dynamicPromotion: {
               authorized: false,
               discountPercentage: 0,
