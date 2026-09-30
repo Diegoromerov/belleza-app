@@ -92,53 +92,84 @@ class TransformationEngine {
   }
 
   /**
-   * Adapta una rutina existente basada en la evolución (Delta) de un re-escaneo
+   * Adapta una rutina existente basada en la matriz multidimensional (Delta, Adherencia y Calidad de Medición)
    */
   adaptPlanBasedOnDelta({
     currentPlan,
     delta,
     metricKey,
     currentValue,
-    targetValue
+    targetValue,
+    adherenceRate = 1.0,
+    qualityScore = 0.90,
+    isReliable = true
   }) {
-    logger.info('Adaptando plan según Delta evolutivo', { metricKey, delta, currentValue, targetValue });
+    logger.info('Adaptando plan según matriz de decisión multidimensional (CONTRACT_10)', {
+      metricKey, delta, currentValue, targetValue, adherenceRate, qualityScore
+    });
 
-    const goalReached = isGoalReached(metricKey, currentValue, targetValue);
-    let adaptationType = 'maintain';
-    let adaptationReason = '';
     let updatedAm = [...(currentPlan.amRoutine || [])];
     let updatedPm = [...(currentPlan.pmRoutine || [])];
+    const goalReached = isGoalReached(metricKey, currentValue, targetValue);
+
+    // 1. Filtro de Calidad / Confianza de Medición (CONTRACT_03)
+    if (qualityScore < 0.50 || isReliable === false) {
+      return {
+        adaptationType: 'unreliable_measurement_warning',
+        adaptationReason: 'La medición biométrica no alcanza el nivel mínimo de nitidez o iluminación. Se conserva la rutina actual hasta realizar un nuevo re-escaneo en condiciones óptimas.',
+        isGoalReached: false,
+        adherenceRate,
+        amRoutine: updatedAm,
+        pmRoutine: updatedPm
+      };
+    }
+
+    // 2. Matriz Adaptativa Multidimensional (CONTRACT_10)
+    let adaptationType = 'maintain';
+    let adaptationReason = '';
+    const adherencePercent = Math.round(adherenceRate * 100);
 
     if (goalReached) {
       adaptationType = 'completed';
-      adaptationReason = `¡Objetivo de ${metricKey} alcanzado con éxito (${currentValue}/${targetValue})! Pasando a fase de mantenimiento o nuevo ciclo.`;
+      adaptationReason = `¡Objetivo de ${metricKey} alcanzado con éxito (${currentValue}/${targetValue})! Pasando a fase de graduación o mantenimiento.`;
     } else if (delta > 0) {
-      adaptationType = 'maintain';
-      adaptationReason = `Progreso positivo (+${delta} en ${metricKey}). Mantenemos la rutina actual con refuerzo de hidratación.`;
-    } else if (delta === 0) {
-      adaptationType = 'intensify';
-      adaptationReason = `Estabilidad dérmica. Intensificamos el paso de sérum en rutina nocturna para estimular avance.`;
-      updatedPm.push({
-        step: updatedPm.length + 1,
-        time: '21:00',
-        action: 'Aplicación de Mascarilla Reparadora / Booster',
-        ingredient: 'Ceramidas + Niacinamida',
-        reason: 'Estimulación de barrera dérmica ante meseta de progreso.'
-      });
-    } else {
-      adaptationType = 'modify';
-      adaptationReason = `Variación no esperada (${delta} puntos). Atena ajusta la fórmula reemplazando activos irritantes por emolientes calmantes.`;
-      updatedAm = updatedAm.map(step => ({
-        ...step,
-        action: step.action.replace('Exfoliante', 'Limpiador Ultra-Suave'),
-        reason: 'Sustitución por tolerancia dérmica.'
-      }));
+      if (adherenceRate >= 0.70) {
+        adaptationType = 'maintain';
+        adaptationReason = `Progreso positivo (+${delta} en ${metricKey}) sostenido con alta adherencia (${adherencePercent}%). Mantenemos la estrategia actual.`;
+      } else {
+        adaptationType = 'maintain_with_habit_warning';
+        adaptationReason = `Progreso positivo (+${delta} en ${metricKey}), pero tu adherencia es baja (${adherencePercent}%). Es fundamental completar la rutina AM/PM para consolidar el resultado.`;
+      }
+    } else if (delta <= 0) {
+      if (adherenceRate < 0.70) {
+        adaptationType = 'reinforce_adherence';
+        adaptationReason = `Progreso estancado (${delta} puntos) coincidente con baja adherencia (${adherencePercent}%). Reforzaremos el hábito de registro diario antes de modificar la fórmula del tratamiento.`;
+      } else if (delta >= -5) {
+        adaptationType = 'intensify';
+        adaptationReason = `Estabilidad dérmica observada a pesar de una alta adherencia (${adherencePercent}%). Intensificamos la rutina nocturna con mascarilla reparadora y ceramidas.`;
+        updatedPm.push({
+          step: updatedPm.length + 1,
+          time: '21:00',
+          action: 'Aplicación de Mascarilla Reparadora / Booster',
+          ingredient: 'Ceramidas + Niacinamida',
+          reason: 'Estimulación de barrera dérmica ante meseta de progreso.'
+        });
+      } else {
+        adaptationType = 'modify';
+        adaptationReason = `Variación no esperada (${delta} puntos) a pesar de un cumplimiento constante (${adherencePercent}% adherencia). Sustituimos activos irritantes por limpiadores y emolientes ultra-suaves.`;
+        updatedAm = updatedAm.map(step => ({
+          ...step,
+          action: step.action ? step.action.replace('Exfoliante', 'Limpiador Ultra-Suave') : 'Limpiador Ultra-Suave',
+          reason: 'Sustitución por tolerancia dérmica.'
+        }));
+      }
     }
 
     return {
       adaptationType,
       adaptationReason,
-      isGoalReached,
+      isGoalReached: goalReached,
+      adherenceRate,
       amRoutine: updatedAm,
       pmRoutine: updatedPm
     };

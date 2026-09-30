@@ -331,14 +331,17 @@ class GlowCycleService {
     const newScoreVal = faceScores && faceScores[metricKey] !== undefined ? parseFloat(faceScores[metricKey]) : baselineVal;
     const targetVal = parseFloat(cycle.target_value || 75);
 
-    // 2. Calcular Delta
-    const deltaVal = parseFloat((newScoreVal - baselineVal).toFixed(2));
+    // 2. Calcular Delta Semántico (CONTRACT_01)
+    const { calculateSemanticDelta } = require('./glowContracts');
+    const deltaVal = parseFloat(calculateSemanticDelta(metricKey, baselineVal, newScoreVal).toFixed(2));
 
-    // 3. Evaluar adherencia
+    // 3. Evaluar adherencia efectiva AM/PM (CONTRACT_08)
     const checkins = Array.isArray(cycle.checkin_history) ? cycle.checkin_history : [];
-    const adherencePercent = dayNumber > 0 ? Math.min(100, Math.round((checkins.length / dayNumber) * 100)) : 100;
+    const completedDays = checkins.filter(c => c.amCompleted && c.pmCompleted).length;
+    const adherenceRate = dayNumber > 0 ? Math.min(1.0, completedDays / dayNumber) : 1.0;
+    const adherencePercent = Math.round(adherenceRate * 100);
 
-    // 4. Adaptar Plan con TransformationEngine
+    // 4. Adaptar Plan con TransformationEngine (CONTRACT_10)
     const adaptationResult = transformationEngine.adaptPlanBasedOnDelta({
       currentPlan: {
         amRoutine: cycle.am_routine,
@@ -347,7 +350,9 @@ class GlowCycleService {
       delta: deltaVal,
       metricKey,
       currentValue: newScoreVal,
-      targetValue: targetVal
+      targetValue: targetVal,
+      adherenceRate,
+      qualityScore: faceScores.qualityScore !== undefined ? parseFloat(faceScores.qualityScore) : 0.90
     });
 
     // 5. Guardar medición cifrada
