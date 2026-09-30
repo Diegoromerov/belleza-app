@@ -427,9 +427,9 @@ class GlowCycleService {
   }
 
   /**
-   * Gradúa y cierra formalmente un ciclo permitiendo iniciar el siguiente
+   * CONTRACT_12: Gradúa y cierra formalmente un ciclo activo, generando la recomendación continua del siguiente Glow Cycle
    */
-  async graduateCycle(cycleId, userId, { nextGoal = null, nextMetricKey = 'pores' } = {}) {
+  async graduateCycle(cycleId, userId, { evaluationNotes = null } = {}) {
     const parsedUserId = parseInt(userId, 10);
     const res = await pool.query(
       "UPDATE glow_cycles SET status = 'completed', updated_at = NOW() WHERE id = $1 AND user_id = $2 RETURNING *;",
@@ -437,18 +437,62 @@ class GlowCycleService {
     );
 
     if (res.rows.length === 0) throw new Error('Ciclo no encontrado.');
+    const cycle = res.rows[0];
 
-    // Invalidar caché
+    // Invalidar caché de ciclo activo
     if (redisClient && redisClient.isOpen) {
       await redisClient.del(`glow:active_cycle:${parsedUserId}`);
     }
 
+    const { calculateSemanticDelta } = require('./glowContracts');
+    const finalDelta = calculateSemanticDelta(
+      cycle.target_metric_key,
+      cycle.baseline_value,
+      cycle.current_value
+    );
+
+    const nextRecommendation = this.recommendNextGlowCycle(cycle.target_metric_key, finalDelta);
+
     return {
       success: true,
-      graduatedCycleId: cycleId,
+      graduationStatus: 'GRADUATED',
+      cycleId: cycle.id,
       status: 'completed',
-      message: 'Ciclo graduado con éxito. Listo para comenzar el siguiente Glow Cycle.'
+      finalDelta,
+      targetMetricKey: cycle.target_metric_key,
+      baselineValue: parseFloat(cycle.baseline_value),
+      finalValue: parseFloat(cycle.current_value),
+      evaluationNotes: evaluationNotes || `Ciclo completado con un delta final de ${finalDelta} puntos en ${cycle.target_metric_key}.`,
+      recommendationForNextCycle: nextRecommendation,
+      message: 'Ciclo graduado exitosamente. Listo para iniciar el siguiente Glow Cycle.'
     };
+  }
+
+  /**
+   * Recomienda la siguiente meta lógica de transformación basada en la graduación previa (CONTRACT_12)
+   */
+  recommendNextGlowCycle(previousMetricKey, finalDelta) {
+    const keyLower = String(previousMetricKey || '').toLowerCase();
+    
+    if (keyLower === 'hydration') {
+      return {
+        suggestedMetricKey: 'pores',
+        suggestedGoal: 'Optimización de Poros y Textura',
+        reasoning: 'Hidratación consolidada. El siguiente paso lógico de transformación es el refinamiento de poros y barrera dérmica.'
+      };
+    } else if (keyLower === 'pores') {
+      return {
+        suggestedMetricKey: 'wrinkles',
+        suggestedGoal: 'Firmeza y Atenuación de Líneas',
+        reasoning: 'Poros y sebo bajo control. Se recomienda avanzar hacia firmeza dérmica y elasticidad.'
+      };
+    } else {
+      return {
+        suggestedMetricKey: 'hydration',
+        suggestedGoal: 'Mantenimiento Preventivo de Barrera Cutánea',
+        reasoning: 'Ciclo completado con éxito. Se recomienda sostener el hábito con un ciclo de mantenimiento hidratante.'
+      };
+    }
   }
 
   async _cacheActiveCycle(userId, cycle) {
