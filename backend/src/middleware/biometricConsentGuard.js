@@ -16,13 +16,13 @@ const biometricConsentGuard = async (req, res, next) => {
   }
 
   try {
-    const result = await pool.query(
-      `SELECT id, version, accepted_at 
-       FROM biometric_consents 
-       WHERE user_id = $1 AND active = true 
-       LIMIT 1`,
-      [parseInt(userId, 10)]
-    );
+      const result = await pool.query(
+        `SELECT id, version, accepted_at
+         FROM biometric_consents
+         WHERE user_id = $1 AND active = true
+         LIMIT 1`,
+        [userId]
+      );
 
     if (result.rows.length === 0) {
       console.warn(`⛔ [CONSENT_GUARD] Bloqueada petición biométrica para usuario ${userId}: Sin consentimiento activo.`);
