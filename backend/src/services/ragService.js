@@ -222,13 +222,30 @@ async function runFullTextSearch({ query, filters, tenantId, topK, useMetadataFi
       `;
 
   const dbPool = ragPool || pool;
-  const fallbackResult = await dbPool.query(fallbackSql, fallbackParams);
-
-  return {
-    rows: fallbackResult.rows.map(r => ({ ...r, similarity: r.similarity === null ? null : parseFloat(r.similarity), mode: 'fts' })),
-    applied,
-    dropped,
-  };
+  try {
+    const fallbackResult = await dbPool.query(fallbackSql, fallbackParams);
+    return {
+      rows: fallbackResult.rows.map(r => ({ ...r, similarity: r.similarity === null ? null : parseFloat(r.similarity), mode: 'fts' })),
+      applied,
+      dropped,
+    };
+  } catch (fallbackSqlError) {
+    if (fallbackSqlError.message && (fallbackSqlError.message.includes('does not exist') || fallbackSqlError.message.includes('column'))) {
+      const simpleSql = `
+        SELECT id, title, content, category, COALESCE(metadata, '{}'::jsonb) as metadata, NULL::double precision AS similarity
+        FROM beauty_knowledge_embeddings
+        WHERE (title ILIKE $1 OR content ILIKE $1)
+        LIMIT $2;
+      `;
+      const simpleResult = await dbPool.query(simpleSql, [`%${query}%`, topK]);
+      return {
+        rows: simpleResult.rows.map(r => ({ ...r, similarity: null, mode: 'fts_resilient' })),
+        applied,
+        dropped,
+      };
+    }
+    throw fallbackSqlError;
+  }
 }
 
 // ─── Cross-Encoder Reranker ──────────────────────────────────────────

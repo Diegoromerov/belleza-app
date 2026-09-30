@@ -20,8 +20,12 @@ const RAG_LOG_FILE = path.join(LOGS_DIR, 'rag_traces.log');
  * Asegurar directorio de logs existe
  */
 function ensureLogsDir() {
-  if (!fs.existsSync(LOGS_DIR)) {
-    fs.mkdirSync(LOGS_DIR, { recursive: true });
+  try {
+    if (!fs.existsSync(LOGS_DIR)) {
+      fs.mkdirSync(LOGS_DIR, { recursive: true });
+    }
+  } catch {
+    // Ignorar si el sistema de archivos del contenedor no permite crear carpetas en raíz
   }
 }
 
@@ -104,11 +108,11 @@ function writeLog(traceData) {
   if (isProduction) {
     try {
       ensureLogsDir();
-      fs.appendFileSync(RAG_LOG_FILE, logLine + '\n');
-    } catch (error) {
-      console.error('❌ Error escribiendo rag log:', error.message);
-      // Fallback a console
-      console.log(logLine);
+      if (fs.existsSync(LOGS_DIR)) {
+        fs.appendFileSync(RAG_LOG_FILE, logLine + '\n');
+      }
+    } catch {
+      // Silencioso en contenedores con permisos restringidos
     }
   } else {
     // En desarrollo: pretty print a console

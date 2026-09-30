@@ -7,14 +7,31 @@
 const axios = require('axios');
 const { breakers } = require('./circuitBreakerService');
 
+function sanitizeEnv(val, defaultVal = '') {
+  if (!val) return defaultVal;
+  return String(val).trim().replace(/^["']|["']$/g, '');
+}
+
 /**
  * Configuración por defecto
  */
 const DEFAULT_CONFIG = {
-  model: process.env.NVIDIA_EMBEDDING_MODEL || 'nvidia/nemotron-3-embed-1b',
-  baseUrl: (process.env.NVIDIA_EMBED_URL || 'https://integrate.api.nvidia.com/v1').replace(/\/embeddings$/, ''),
-  apiKey: process.env.NVIDIA_API_KEY,
-  expectedDimension: parseInt(process.env.NVIDIA_EMBEDDING_DIMS || '2048', 10),
+  get model() {
+    const raw = sanitizeEnv(process.env.NVIDIA_EMBEDDING_MODEL, 'nvidia/llama-3.2-nv-embedqa-1b-v2');
+    return (raw === 'nvidia/nemotron-3-embed-1b' || raw === 'nvidia/nv-embedqa-e5-v5') 
+      ? 'nvidia/llama-3.2-nv-embedqa-1b-v2' 
+      : raw;
+  },
+  get baseUrl() {
+    const raw = sanitizeEnv(process.env.NVIDIA_EMBED_URL, 'https://integrate.api.nvidia.com/v1');
+    return raw.replace(/\/embeddings\/?$/, '').replace(/\/$/, '');
+  },
+  get apiKey() {
+    return sanitizeEnv(process.env.NVIDIA_API_KEY);
+  },
+  get expectedDimension() {
+    return parseInt(sanitizeEnv(process.env.NVIDIA_EMBEDDING_DIMS, '2048'), 10);
+  },
   timeout: 15000,
   maxRetries: 3,
   baseDelayMs: 1000,
@@ -67,14 +84,15 @@ async function generateNvidiaEmbedding(text, inputType = 'query', options = {}) 
     try {
       const url = `${config.baseUrl}/embeddings`;
       
+      const payload = {
+        input: [truncatedText],
+        model: config.model,
+        input_type: inputType,
+      };
+
       const response = await axios.post(
         url,
-        {
-          input: [truncatedText],
-          model: config.model,
-          encoding_format: 'float',
-          input_type: inputType,
-        },
+        payload,
         {
           timeout: config.timeout,
           headers: {
