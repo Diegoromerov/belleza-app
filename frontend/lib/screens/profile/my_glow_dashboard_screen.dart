@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../glow_cycle/glow_cycle_journey_screen.dart';
+import '../glow_cycle/glow_cycle_adaptation_screen.dart';
 
 class MyGlowDashboardScreen extends StatelessWidget {
   const MyGlowDashboardScreen({super.key});
@@ -245,7 +247,14 @@ class MyGlowDashboardScreen extends StatelessWidget {
                                   side: const BorderSide(color: Color(0xFFD4AF37), width: 1),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                 ),
-                                onPressed: () {},
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const GlowCycleJourneyScreen(),
+                                    ),
+                                  );
+                                },
                               ),
                             ),
                             const SizedBox(width: 10),
@@ -261,7 +270,14 @@ class MyGlowDashboardScreen extends StatelessWidget {
                                   padding: const EdgeInsets.symmetric(vertical: 10),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                 ),
-                                onPressed: () {},
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const GlowCycleAdaptationScreen(),
+                                    ),
+                                  );
+                                },
                               ),
                             ),
                           ],
