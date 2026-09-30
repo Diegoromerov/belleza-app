@@ -75,7 +75,9 @@ class TransformationEngine {
       }
     }
 
-    const planSummary = `Plan de Transformación Beauty enfocado en ${targetMetricKey}. Incluye rutina AM/PM con ${targetIngredients.join(', ')} y hábitos de hidratación diaria.`;
+    // 5. Consultar evidencia RAG a través de Atena (CONTRACT_06)
+    const ragEvidence = await atenaAgent.generateRAGRationale(targetMetricKey, targetIngredients);
+    const planSummary = `Plan de Transformación Beauty enfocado en ${targetMetricKey}. ${ragEvidence.rationale} Incluye rutina AM/PM con ${targetIngredients.join(', ')}.`;
 
     return {
       success: true,
@@ -84,6 +86,8 @@ class TransformationEngine {
       priorities,
       targetIngredients,
       planSummary,
+      ragReferences: ragEvidence.ragReferences,
+      hasRagEvidence: ragEvidence.hasRagEvidence,
       amRoutine,
       pmRoutine,
       recommendedProducts,
