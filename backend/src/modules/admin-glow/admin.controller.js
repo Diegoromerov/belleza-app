@@ -1,5 +1,8 @@
 const adminModel = require('./admin.model');
 const financialHelper = require('./financial.helper');
+const { CertifiedKYCProvider } = require('./CertifiedKYCProvider');
+
+const kycProvider = new CertifiedKYCProvider();
 
 /**
  * Obtener todas las alertas SOS en estado 'ACTIVO'.
@@ -254,7 +257,9 @@ async function rejectProvider(req, res) {
 }
 
 /**
- * Automatización de KYC (Mock): Aprueba y verifica inmediatamente un prestador.
+ * Automatización de KYC con Proveedor Certificado (DataCrédito/Experian/MidData).
+ * Requiere contrato vigente y KYC_API_KEY configurada.
+ * Registra evidencia inmutable en kyc_audit_logs para cumplimiento legal.
  */
 async function verifyProviderAuto(req, res) {
   try {
@@ -281,30 +286,53 @@ async function verifyProviderAuto(req, res) {
       });
     }
 
-    // Simulamos que el mock KYC/OCR valida el documento
-    if (documentNumber && documentNumber.trim() === 'INVALIDO') {
-      await adminModel.setProviderVerifiedStatus(providerId, false);
-      return res.status(422).json({
+    if (!documentType || !documentNumber) {
+      return res.status(400).json({
         success: false,
-        error: 'El documento falló la validación KYC.'
+        error: 'Tipo y número de documento son obligatorios para la verificación KYC certificada.'
       });
     }
 
-    // 1. Aprobar y Verificar el prestador
-    await adminModel.setProviderVerifiedStatus(providerId, true);
+    // Validar documento con proveedor certificado (DataCrédito/Experian/MidData)
+    let kycResult;
+    try {
+      kycResult = await kycProvider.verifyDocument(documentType, documentNumber, providerId);
+    } catch (kycError) {
+      // Error de configuración del proveedor (sin contrato, sin API key)
+      if (kycError.message.includes('KYC_PROVIDER_NOT_CONFIGURED')) {
+        console.error('[KYC] Proveedor certificado no configurado:', kycError.message);
+        return res.status(503).json({
+          success: false,
+          error: 'Servicio KYC no disponible. Requiere contrato con proveedor certificado (DataCrédito/Experian/MidData).',
+          details: 'KYC_PROVIDER_NOT_CONFIGURED'
+        });
+      }
+      throw kycError;
+    }
 
-    // 2. Registrar auditoría si hay admin
+    // 1. Actualizar estado del prestador según resultado KYC real
+    const isVerified = kycResult.valid;
+    await adminModel.setProviderVerifiedStatus(providerId, isVerified);
+
+    // 2. Registrar auditoría administrativa
     if (adminId) {
       await adminModel.logAdminAction(
         adminId,
         'KYC_AUTO_VERIFICACION',
-        `Prestador ID ${providerId} aprobado automáticamente por KYC Mock`
+        `Prestador ID ${providerId} verificado por ${kycProvider.providerName.toUpperCase()}: ${isVerified ? 'APROBADO' : 'RECHAZADO'} (Audit: ${kycResult.auditId})`
       );
     }
 
     return res.status(200).json({
       success: true,
-      message: `El prestador #${providerId} ha sido verificado automáticamente mediante KYC Mock.`
+      message: `El prestador #${providerId} ha sido ${isVerified ? 'verificado' : 'rechazado'} mediante KYC certificado (${kycProvider.providerName.toUpperCase()}).`,
+      data: {
+        providerId,
+        verified: isVerified,
+        provider: kycProvider.providerName,
+        auditId: kycResult.auditId,
+        verifiedAt: kycResult.providerResponse.verifiedAt
+      }
     });
   } catch (error) {
     console.error('Error al realizar auto-verificación KYC:', error);
