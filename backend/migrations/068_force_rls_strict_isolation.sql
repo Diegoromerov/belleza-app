@@ -25,6 +25,10 @@
 --
 -- QUÉ HACE
 -- --------
+--   0. Garantiza `tenant_id` en las 4 tablas de DINERO (provider_wallet,
+--      wallet_transactions, retiros, disputas) DENTRO de 068. Su DDL vive en el
+--      repositorio (001_payment_system.sql), así que ya no se las puede eximir
+--      del aislamiento: antes se las saltaba en silencio y quedaban sin aislar.
 --   1. `app_current_tenant_id()`: `NULLIF(current_setting(..., true), '')::integer`.
 --      El `true` es `missing_ok`: sin contexto devuelve NULL (0 filas), no error.
 --   2. BORRA TODAS las políticas de cada tabla objetivo, sea cual sea su
@@ -80,6 +84,21 @@ END;
 $$;
 
 -- ---------------------------------------------------------------------------
+-- 0b. tenant_id en las tablas de DINERO (garantía propia, idempotente)
+-- ---------------------------------------------------------------------------
+-- El DDL de estas tablas SÍ está en el repositorio (001_payment_system.sql) y
+-- 065 ya les añade tenant_id, pero 068 no puede depender de que 065 se haya
+-- aplicado: un esquema creado por init.sql + 001 (o por db_create_disputas.js /
+-- index.js) tiene las 4 tablas SIN tenant_id. Antes se las saltaba en silencio
+-- ("externas") y quedaban SIN AISLAR. Aquí se garantiza la columna y, al estar
+-- ya en el arreglo `tablas`, el bucle de abajo les aplica política + trigger +
+-- ENABLE/FORCE como a cualquier tabla del repositorio.
+ALTER TABLE IF EXISTS provider_wallet     ADD COLUMN IF NOT EXISTS tenant_id INTEGER;
+ALTER TABLE IF EXISTS wallet_transactions ADD COLUMN IF NOT EXISTS tenant_id INTEGER;
+ALTER TABLE IF EXISTS retiros             ADD COLUMN IF NOT EXISTS tenant_id INTEGER;
+ALTER TABLE IF EXISTS disputas            ADD COLUMN IF NOT EXISTS tenant_id INTEGER;
+
+-- ---------------------------------------------------------------------------
 -- 1. Tablas con datos propiedad de un inquilino.
 --    Si la tabla no existe en este esquema se informa en voz alta y se sigue;
 --    lo que NO se permite es dejarla con RLS activo y sin política.
@@ -91,17 +110,14 @@ DECLARE
   cubiertas    text[] := ARRAY[]::text[];
   ausentes     text[] := ARRAY[]::text[];
   sin_aislar   text[] := ARRAY[]::text[];
-  -- Tablas cuyo DDL NO está en el repositorio (viven solo en Railway). Si
-  -- existen en este esquema pero NO tienen tenant_id, aquí no se puede derivar
-  -- la columna: se informa en voz alta y se SIGUE. Abortar la migración entera
-  -- por una tabla que el repositorio no gobierna deja sin FORCE a todas las
-  -- demás — que es exactamente lo que pasaba en el esquema real.
-  externas text[] := ARRAY[
-    'provider_wallet',
-    'wallet_transactions',
-    'retiros',
-    'disputas'
-  ];
+  -- Tablas cuyo DDL NO está en el repositorio. Hoy no hay ninguna: las 4 tablas
+  -- de DINERO que antes vivían aquí (provider_wallet, wallet_transactions,
+  -- retiros, disputas) SÍ tienen su DDL versionado en
+  -- 001_payment_system.sql, así que se tratan como tablas del repositorio y su
+  -- tenant_id se garantiza en el paso 0b. Si aparece una tabla realmente
+  -- externa, o se versiona su DDL en el repositorio o se lista aquí: nunca se
+  -- la deja con RLS activo y sin política.
+  externas text[] := ARRAY[]::text[];
   tablas text[] := ARRAY[
     -- presentes en cualquier esquema (creadas por init.sql)
     'services',
@@ -116,7 +132,12 @@ DECLARE
     -- creadas por 067_create_multi_salon_ddl.sql
     'salones',
     'salon_miembros',
-    'salon_invitaciones'
+    'salon_invitaciones',
+    -- tablas de DINERO: DDL en 001_payment_system.sql; tenant_id garantizado en 0b
+    'provider_wallet',
+    'wallet_transactions',
+    'retiros',
+    'disputas'
   ];
 BEGIN
   FOREACH t IN ARRAY (tablas || externas) LOOP
