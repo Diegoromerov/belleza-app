@@ -150,11 +150,12 @@ async function main() {
     console.log(`   ✅ ${tablas.map((t) => t.relname).join(', ')}`);
 
     // ── 4. Resumen verificable ─────────────────────────────────────────────
-    // `usuarios` es la ÚNICA excepción y es deliberada: `auth.js` la consulta para
-    // DESCUBRIR el inquilino, cuando todavía no hay contexto; forzarla dejaría el
-    // sistema entero en 401 (razón documentada en la cabecera de 068). Todo lo
-    // demás debe tener FORCE y política: otra tabla sin ellas es una fuga.
-    const EXENTAS_DE_FORCE = ['usuarios'];
+    // `usuarios` ya NO es una excepción: la migración 068 le habilita RLS con
+    // FORCE y la política `usuarios_isolation` (más las funciones SECURITY
+    // DEFINER para el arranque de identidad). Antes quedaba con RLS desactivado
+    // y eso era una fuga de PII cross-tenant. Ninguna tabla con `tenant_id`
+    // puede quedar sin FORCE ni sin política.
+    const EXENTAS_DE_FORCE = [];
 
     const { rows: [resumen] } = await cliente.query(
       `SELECT count(*)::int AS total,
