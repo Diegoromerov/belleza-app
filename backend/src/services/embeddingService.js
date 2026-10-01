@@ -1,7 +1,22 @@
 /**
  * backend/src/services/embeddingService.js
- * Wrapper reutilizable para NVIDIA NIM Embeddings (NV-Embed-QA-E5-v5, 1024 dimensiones)
- * Incluye circuit breaker, rate limiting, validación de dimensiones, backoff exponencial
+ * Wrapper reutilizable para NVIDIA NIM Embeddings + circuit breaker, rate limiting,
+ * validación de dimensiones y backoff exponencial.
+ *
+ * Modelo por defecto (fix t_fix_ragaura_01 · P0 «Modelo NVIDIA EOL 410 Gone»):
+ *   El modelo anterior `nvidia/nv-embedqa-e5-v5` alcanzó su end of life el 2026-08-25 y la
+ *   API NVIDIA NIM responde HTTP 410 Gone para él (RAG_ARCHITECTURE.md §9.1): la ruta
+ *   vectorial no puede producir embeddings con un modelo retirado. Se sustituye por el
+ *   ÚNICO modelo de embeddings habilitado para la cuenta del proyecto (medido con la key
+ *   real: GET /v1/models → 200; POST /v1/embeddings con los otros 6 modelos del catálogo
+ *   → 404 not found for account).
+ *
+ *   PENDIENTE ACOPLADO (no resuelto por este cambio de código; ver RAG_ARCHITECTURE.md §9.6
+ *   y PLAN_MEJORA_RAG.md FASE 0): el modelo vivo devuelve vectores de 2048 dimensiones,
+ *   mientras que `expectedDimension` y la columna pgvector siguen en 1024. La migración de
+ *   dimensiones (columna vector(1024)→vector(2048), índice HNSW y re-ingesta del corpus) es
+ *   un paso secuenciado de despliegue: migrar ANTES de re-ingestar. Hasta que aterrice, la
+ *   ingesta fallará de forma explícita (no silenciosa) y el retrieval degradará a full-text.
  */
 
 const axios = require('axios');
@@ -11,7 +26,9 @@ const { breakers } = require('./circuitBreakerService');
  * Configuración por defecto
  */
 const DEFAULT_CONFIG = {
-  model: process.env.NVIDIA_EMBEDDING_MODEL || 'nvidia/nv-embedqa-e5-v5',
+  // Modelo vivo por defecto (override: NVIDIA_EMBEDDING_MODEL). El valor anterior estaba
+  // retirado (EOL 2026-08-25 → HTTP 410 Gone).
+  model: process.env.NVIDIA_EMBEDDING_MODEL || 'nvidia/nemotron-3-embed-1b',
   baseUrl: (process.env.NVIDIA_EMBED_URL || 'https://integrate.api.nvidia.com/v1').replace(/\/embeddings$/, ''),
   apiKey: process.env.NVIDIA_API_KEY,
   expectedDimension: 1024,
