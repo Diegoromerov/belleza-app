@@ -10,6 +10,7 @@ const { paymentLimiter, otpLimiter } = require('../middleware/rateLimiter');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const wompiService = require('../services/wompiService');
+const { aCentavos, aDecimal, aplicarRetencionesCentavos, sumarMontos } = require('../utils/money');
 
 // ─── UTILIDADES ──────────────────────────────────────────────────────────────
 
@@ -269,15 +270,29 @@ router.post('/bookings/:id/confirm-otp', authMiddleware, async (req, res) => {
     const reteicaPct = parseFloat(await getConfig('reteica_pct', '0.414'));
     const reteivaPct = parseFloat(await getConfig('reteiva_pct', '15.0'));
 
-    const basePagoNeto = parseFloat(otp.pago_neto_prestador);
-    const comisionPlataforma = parseFloat(otp.comision_plataforma);
+    // P0 dinero (t_fix_pagos_06): las retenciones y el neto se calculan en CENTAVOS
+    // ENTEROS. Con punto flotante, un IVA de 22,5 centavos (15% de una comisión de
+    // 1.50) se redondeaba a 22 (0.22) en vez de 23 (0.23): la dispersión perdía un
+    // centavo de forma silenciosa. Ver src/utils/money.js.
+    const basePagoNetoCentavos = aCentavos(otp.pago_neto_prestador);
+    const comisionPlataformaCentavos = aCentavos(otp.comision_plataforma);
 
-    const retencionFuente = Math.round(basePagoNeto * (retefuentePct / 100) * 100) / 100;
-    const retencionIca = Math.round(basePagoNeto * (reteicaPct / 100) * 100) / 100;
-    const retencionIva = Math.round(comisionPlataforma * (reteivaPct / 100) * 100) / 100;
+    const retenciones = aplicarRetencionesCentavos({
+      baseCentavos: basePagoNetoCentavos,
+      comisionCentavos: comisionPlataformaCentavos,
+      pctFuente: retefuentePct,
+      pctIca: reteicaPct,
+      pctIva: reteivaPct
+    });
 
-    const totalRetenciones = retencionFuente + retencionIca + retencionIva;
-    const montoNeto = basePagoNeto - totalRetenciones;
+    const basePagoNeto = aDecimal(basePagoNetoCentavos);
+    const comisionPlataforma = aDecimal(comisionPlataformaCentavos);
+    const retencionFuente = aDecimal(retenciones.fuenteCentavos);
+    const retencionIca = aDecimal(retenciones.icaCentavos);
+    const retencionIva = aDecimal(retenciones.ivaCentavos);
+
+    const totalRetenciones = aDecimal(retenciones.totalCentavos);
+    const montoNeto = aDecimal(retenciones.netoCentavos);
 
     await client.query(
       `UPDATE otp_validaciones SET estado = 'USADO', usado_at = NOW() WHERE booking_id = $1`,
@@ -307,7 +322,7 @@ router.post('/bookings/:id/confirm-otp', authMiddleware, async (req, res) => {
        VALUES ($1, $2, 'CREDITO_SERVICIO', $3, $4, 'PENDIENTE', $5, $6)`,
       [
         otp.provider_id, id, montoNeto,
-        parseFloat(wallet.saldo_disponible) + parseFloat(wallet.saldo_pendiente),
+        sumarMontos(wallet.saldo_disponible, wallet.saldo_pendiente),
         `Servicio completado. Disponible en ${ventanaHoras}h.`,
         JSON.stringify({
           madura_at: maduraAt,
@@ -335,7 +350,8 @@ router.post('/bookings/:id/confirm-otp', authMiddleware, async (req, res) => {
 
     if (storeOrderRes.rows.length > 0) {
       const storeOrder = storeOrderRes.rows[0];
-      const comisionTienda = parseFloat(storeOrder.comision_total_prestador);
+      const comisionTiendaCentavos = aCentavos(storeOrder.comision_total_prestador);
+      const comisionTienda = aDecimal(comisionTiendaCentavos);
 
       if (comisionTienda > 0) {
         // Actualizar wallet sumando la comisión de la tienda al saldo pendiente
@@ -359,7 +375,7 @@ router.post('/bookings/:id/confirm-otp', authMiddleware, async (req, res) => {
             otp.provider_id, 
             id, 
             comisionTienda,
-            parseFloat(walletTienda.saldo_disponible) + parseFloat(walletTienda.saldo_pendiente),
+            sumarMontos(walletTienda.saldo_disponible, walletTienda.saldo_pendiente),
             `Comisión de productos en GlowStore - Pedido #${storeOrder.id}`,
             JSON.stringify({
               madura_at: maduraAt.toISOString(),
