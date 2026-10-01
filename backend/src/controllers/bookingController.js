@@ -6,6 +6,30 @@ const { sequelize } = require('../config/database');
 const { Op } = require('sequelize');
 const crypto = require('crypto');
 
+// ── Anti-replay del webhook de Wompi (Fix P0 DINERO #4 / t_fix_pagos_04) ──────
+// La versión anterior solo firmaba el payload: un webhook válido capturado podía
+// reenviarse indefinidamente (replay). Ahora la firma HMAC cubre
+// `timestamp.nonce.rawBody`, el timestamp debe caer en una ventana de tolerancia
+// y el nonce es de un solo uso.
+const WOMPI_WEBHOOK_TOLERANCE_MS = (() => {
+  const raw = parseInt(process.env.WOMPI_WEBHOOK_TOLERANCE_MS, 10);
+  return Number.isFinite(raw) && raw > 0 ? raw : 5 * 60 * 1000; // 5 minutos por defecto
+})();
+
+// Caché de nonces ya procesados: nonce -> instante de expiración (ms).
+// LIMITE: es por proceso. En un despliegue multi-instancia debe respaldarse en
+// un almacén compartido (p.ej. Redis) para que el replay se bloquee entre nodos.
+const wompiUsedNonces = new Map();
+
+const pruneWompiNonces = (now) => {
+  for (const [nonce, expiresAt] of wompiUsedNonces) {
+    if (expiresAt <= now) wompiUsedNonces.delete(nonce);
+  }
+};
+
+// Solo para tests: limpia el registro de nonces entre casos.
+const resetWompiNonceStore = () => wompiUsedNonces.clear();
+
 const verifyWompiSignature = (req) => {
   const secret = process.env.WOMPI_WEBHOOK_SECRET;
   if (!secret) {
@@ -17,15 +41,42 @@ const verifyWompiSignature = (req) => {
   }
 
   const signature = req.header('x-wompi-signature') || req.header('x-signature');
+  const timestamp = req.header('x-wompi-timestamp');
+  const nonce = req.header('x-wompi-nonce');
+
   if (!signature) {
     console.warn(`🚨 [FINTECH SECURITY ALERT] Webhook recibido sin firma desde IP ${req.ip}`);
     return false;
   }
 
+  // Anti-replay: timestamp y nonce son obligatorios. Sin ellos no hay forma de
+  // distinguir un webhook fresco de una repetición de uno capturado.
+  if (!timestamp || !nonce) {
+    console.warn(`🚨 [FINTECH SECURITY ALERT] Webhook sin timestamp/nonce desde IP ${req.ip}. Rechazado (posible replay).`);
+    return false;
+  }
+
+  // Ventana de tolerancia: rechaza timestamps antiguos y futuros (desfase de reloj).
+  const timestampNumber = Number(timestamp);
+  if (!Number.isFinite(timestampNumber)) {
+    return false;
+  }
+  // Acepta epoch en segundos o milisegundos.
+  const timestampMs = timestampNumber < 1e12 ? timestampNumber * 1000 : timestampNumber;
+  const now = Date.now();
+  if (Math.abs(now - timestampMs) > WOMPI_WEBHOOK_TOLERANCE_MS) {
+    console.warn(`🚨 [FINTECH SECURITY ALERT] Webhook con timestamp fuera de ventana (${timestamp}) desde IP ${req.ip}.`);
+    return false;
+  }
+
   const payloadString = req.rawBody ? req.rawBody.toString('utf8') : JSON.stringify(req.body);
+
+  // La firma cubre timestamp y nonce: no basta con presentar una firma válida,
+  // hay que presentarla junto al timestamp/nonce exactos que se firmaron.
+  const signedContent = `${timestamp}.${nonce}.${payloadString}`;
   const expected = crypto
     .createHmac('sha256', secret)
-    .update(payloadString)
+    .update(signedContent)
     .digest('hex');
 
   const signatureBuffer = Buffer.from(signature, 'hex');
@@ -35,7 +86,19 @@ const verifyWompiSignature = (req) => {
     return false;
   }
 
-  return crypto.timingSafeEqual(signatureBuffer, expectedBuffer);
+  if (!crypto.timingSafeEqual(signatureBuffer, expectedBuffer)) {
+    return false;
+  }
+
+  // Anti-replay: un nonce firmado solo puede consumirse una vez dentro de la ventana.
+  pruneWompiNonces(now);
+  if (wompiUsedNonces.has(nonce)) {
+    console.warn(`🚨 [FINTECH SECURITY ALERT] Webhook con nonce reutilizado (${nonce}) desde IP ${req.ip}. Rechazado (replay).`);
+    return false;
+  }
+  wompiUsedNonces.set(nonce, now + WOMPI_WEBHOOK_TOLERANCE_MS);
+
+  return true;
 };
 
 // 🔹 CREAR RESERVA
@@ -782,6 +845,11 @@ const procesarWebhookWompi = async (req, res) => {
  */
 exports.wompiWebhook = (req, res) =>
   runAsSystemContext(() => procesarWebhookWompi(req, res));
+
+// Expuestos para pruebas unitarias del contrato anti-replay.
+exports.verifyWompiSignature = verifyWompiSignature;
+exports.resetWompiNonceStore = resetWompiNonceStore;
+exports.WOMPI_WEBHOOK_TOLERANCE_MS = WOMPI_WEBHOOK_TOLERANCE_MS;
 
 // 🔹 Crear reseña para cita completada
 exports.createReview = async (req, res) => {
