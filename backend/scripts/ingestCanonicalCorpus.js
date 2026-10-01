@@ -3,7 +3,7 @@
  * backend/scripts/ingestCanonicalCorpus.js
  * R5-B — Ingesta del CORPUS CANÓNICO en BD local (para evaluación real)
  * Lee corpus_canonico.json y hace upsert con ON CONFLICT (document_id, chunk_id)
- * Genera embeddings NVIDIA reales (passage, 1024-dim)
+ * Genera embeddings NVIDIA reales (passage, 2048-dim)
  *
  * Uso: node scripts/ingestCanonicalCorpus.js [--limit=N] [--dry-run]
  */
@@ -16,8 +16,8 @@ const { ragPool } = require('../src/config/db');
 const CORPUS_PATH = path.join(__dirname, '..', 'src', 'data', 'corpus_canonico', 'corpus_canonico.json');
 const NVIDIA_API_KEY = process.env.NVIDIA_API_KEY;
 const NVIDIA_API_URL = process.env.NVIDIA_API_URL || 'https://integrate.api.nvidia.com/v1/embeddings';
-const NVIDIA_EMBEDDING_MODEL = process.env.NVIDIA_EMBEDDING_MODEL || 'nvidia/nv-embedqa-e5-v5';
-const EXPECTED_DIMS = 1024;
+const NVIDIA_EMBEDDING_MODEL = process.env.NVIDIA_EMBEDDING_MODEL || 'nvidia/nemotron-3-embed-1b';
+const EXPECTED_DIMS = 2048;
 const DELAY_MS = 120; // rate limiting
 
 async function generateEmbedding(text) {
