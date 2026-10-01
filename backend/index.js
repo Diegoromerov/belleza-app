@@ -224,6 +224,14 @@ app.use((req, res, next) => {
   next();
 });
 
+// P0 infra/observabilidad #4 (t_fix_infra_04): plano de métricas máquina-legible.
+// Se monta ANTES del candado de degradación para que TODA respuesta (incluidos los
+// 503 tempranos y los 404) quede contabilizada y sea alertable. `express-status-monitor`
+// (página humana en /status) no expone /metrics ni es consumible por Prometheus.
+const { metricsMiddleware, metricsHandler } = require('./src/metrics/prometheus');
+app.use(metricsMiddleware);
+app.get('/metrics', metricsHandler);
+
 const { degradedLockMiddleware, clasificarSalud, asegurarEstadoComprobado } = require('./src/middleware/degradedLock');
 app.use('/api', degradedLockMiddleware);
 
