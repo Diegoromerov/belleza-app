@@ -260,25 +260,48 @@ class _ProductQuickViewDialogState extends State<ProductQuickViewDialog> {
                     ),
                     const SizedBox(height: 16),
                     const Divider(),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Descripción',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                        color: AppTheme.text,
+                    const SizedBox(height: 12),
+                    // Active Ingredients & Biometric Benefits Card (GlowShop Kaizen Cycle 3)
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFAF6F0),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFE8DFD8)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Row(
+                            children: [
+                              Icon(Icons.science_outlined, size: 18, color: Color(0xFFC5A052)),
+                              SizedBox(width: 8),
+                              Text(
+                                'Ingredientes Activos & Biometría',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                  color: Color(0xFF1F1A15),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            (widget.product['ingredientes_activos'] ??
+                                    widget.product['compatibilityReason'] ??
+                                    'Formulación con Ácido Hialurónico, Vitamina C y Extractos Botánicos Puros para alta nutrición cutánea.')
+                                .toString(),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF6B5E55),
+                              height: 1.35,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      widget.product['descripcion']?.toString() ?? 'Sin descripción disponible.',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: AppTheme.text.withOpacity(0.8),
-                        height: 1.4,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
