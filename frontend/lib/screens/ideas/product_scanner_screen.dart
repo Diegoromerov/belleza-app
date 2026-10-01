@@ -162,14 +162,14 @@ class _ProductScannerScreenState extends State<ProductScannerScreen> {
         setState(() {
           _scannedProduct = ProductDetail(
             barcode: barcode,
-            name: 'Producto Cosmético ($barcode)',
-            brand: 'OpenBeautyFacts / GlowShop',
+            name: 'Producto No Registrado en Cosmética ($barcode)',
+            brand: 'Sin Registro en OpenBeautyFacts',
             imageUrl: '',
-            ingredients: 'Ácido Hialurónico, Glicerina, Niacinamida, Agua Purificada',
-            categories: 'Skincare & Tratamiento Facial',
-            price: '\$45.000 COP',
-            compatible: true,
-            compatibilityReason: '✨ Código de barras $barcode verificado por IA. Producto 94% compatible con tu perfil de hidratación y barrera cutánea.',
+            ingredients: 'Sin ingredientes cosméticos detectados',
+            categories: 'No Cosmético / Tabaco / Mercancía general',
+            price: 'N/A',
+            compatible: false,
+            compatibilityReason: '⚠️ El código de barras $barcode no pertenece a un producto cosmético en OpenBeautyFacts (ej. cigarrillos o alimentos). No es apto para tratamiento dermatológico.',
           );
           _isProcessing = false;
         });
@@ -178,14 +178,14 @@ class _ProductScannerScreenState extends State<ProductScannerScreen> {
       setState(() {
         _scannedProduct = ProductDetail(
           barcode: barcode,
-          name: 'Producto Escaneado ($barcode)',
+          name: 'Producto No Evaluado ($barcode)',
           brand: 'OpenBeautyFacts',
           imageUrl: '',
-          ingredients: 'Complejo Biométrico Nutritivo',
-          categories: 'Cuidado Personal',
-          price: '\$38.000 COP',
-          compatible: true,
-          compatibilityReason: '✨ Código $barcode escaneado con éxito. Compatible con uso diario y balance dermatológico.',
+          ingredients: 'Información no disponible',
+          categories: 'General',
+          price: 'N/A',
+          compatible: false,
+          compatibilityReason: '⚠️ No se pudo verificar la compatibilidad dermatológica para el código $barcode. Asegúrate de escanear un cosmético o crema facial.',
         );
         _isProcessing = false;
       });
