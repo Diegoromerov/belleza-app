@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../services/api_service.dart';
 import '../shared/theme.dart';
 import '../services/booking_recovery_service.dart';
+import '../services/web_geolocation.dart';
 
 import '../widgets/wompi_payment_sheet.dart';
 
@@ -632,6 +633,52 @@ class _BookingScreenState extends State<BookingScreen> {
     );
   }
 
+  
+  Widget _buildDurationBreakdownPill() {
+    if (selectedServiceIds.isEmpty) return const SizedBox.shrink();
+    
+    final items = <String>[];
+    int total = 0;
+    for (final id in selectedServiceIds) {
+      final s = widget.services.firstWhere((srv) => srv['id']?.toString() == id, orElse: () => <String, dynamic>{});
+      if (s.isNotEmpty) {
+        final name = s['name'] ?? 'Servicio';
+        final dur = s['duration_minutes'] ?? s['duration'] ?? 45;
+        int mins = dur is int ? dur : (int.tryParse(dur.toString()) ?? 45);
+        total += mins;
+        items.add('$name (${mins}m)');
+      }
+    }
+
+    if (items.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFAF6F0),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE8DFD8)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.timer_outlined, size: 16, color: Color(0xFFC5A052)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              items.length > 1 ? '${items.join(" + ")} = ${total}m total' : '${items.first} total',
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF6B5E55),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildStepLogistics() {
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12),
@@ -665,6 +712,51 @@ class _BookingScreenState extends State<BookingScreen> {
               serviceAddress = value;
             });
           },
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            ActionChip(
+              avatar: const Icon(Icons.my_location, size: 14, color: Color(0xFFC5A052)),
+              label: const Text('GPS Actual', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+              backgroundColor: const Color(0xFFFAF6F0),
+              side: const BorderSide(color: Color(0xFFE8DFD8)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              onPressed: () async {
+                try {
+                  final pos = await getWebGeolocation();
+                  final lat = pos['lat']!;
+                  final lon = pos['lon']!;
+                  final addr = 'Ubicación GPS (${lat.toStringAsFixed(4)}, ${lon.toStringAsFixed(4)})';
+                  setState(() {
+                    _addressController.text = addr;
+                    serviceAddress = addr;
+                  });
+                } catch (_) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('No se pudo obtener la ubicación GPS actual.')),
+                    );
+                  }
+                }
+              },
+            ),
+            const SizedBox(width: 8),
+            ActionChip(
+              avatar: const Icon(Icons.home_outlined, size: 14, color: Color(0xFFC5A052)),
+              label: const Text('Mi Dirección', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+              backgroundColor: const Color(0xFFFAF6F0),
+              side: const BorderSide(color: Color(0xFFE8DFD8)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              onPressed: () {
+                const defaultAddr = 'Calle 24 # 95-32, Fontibón, Bogotá';
+                setState(() {
+                  _addressController.text = defaultAddr;
+                  serviceAddress = defaultAddr;
+                });
+              },
+            ),
+          ],
         ),
         const SizedBox(height: 24),
         _buildNotesExpandable(),
@@ -932,6 +1024,7 @@ class _BookingScreenState extends State<BookingScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        _buildDurationBreakdownPill(),
         if (_selectedSlotTime != null) ...[
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
