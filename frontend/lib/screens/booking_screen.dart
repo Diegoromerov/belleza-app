@@ -55,6 +55,10 @@ class _BookingScreenState extends State<BookingScreen> {
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
 
+  // recovery & search variables
+  Map<String, dynamic>? _pendingRecoveryData;
+  String _productSearchQuery = '';
+
   @override
   void initState() {
     super.initState();
@@ -73,6 +77,16 @@ class _BookingScreenState extends State<BookingScreen> {
     }
     _loadSlots();
     _loadRecommendedProducts();
+    _checkPendingRecovery();
+  }
+
+  Future<void> _checkPendingRecovery() async {
+    final pending = await BookingRecoveryService.getPendingBooking();
+    if (pending != null && mounted) {
+      setState(() {
+        _pendingRecoveryData = pending;
+      });
+    }
   }
 
   @override
@@ -458,27 +472,162 @@ class _BookingScreenState extends State<BookingScreen> {
   }
 
   Widget _buildProgressBar() {
-    final stepNames = ['Cuándo y Dónde', 'Productos', 'Confirmación y Pago'];
+    final stepNames = ['1. Logística', '2. Productos', '3. Confirmación'];
     return Semantics(
       label: 'Paso ${_currentStep + 1} de 3: ${stepNames[_currentStep]}',
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
-        child: Row(
-          children: List.generate(3, (index) {
-            bool isCompleted = index < _currentStep;
-            bool isActive = index == _currentStep;
-            return Expanded(
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 4.0),
-                height: 6,
-                decoration: BoxDecoration(
-                  color: isCompleted || isActive ? AppTheme.primary : Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(3),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+        color: const Color(0xFFFAF8F5),
+        child: Column(
+          children: [
+            Row(
+              children: List.generate(3, (index) {
+                bool isCompleted = index < _currentStep;
+                bool isActive = index == _currentStep;
+                bool canTap = isCompleted;
+
+                return Expanded(
+                  child: GestureDetector(
+                    onTap: canTap
+                        ? () {
+                            HapticFeedback.selectionClick();
+                            setState(() => _currentStep = index);
+                            _pageController.animateToPage(
+                              index,
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeInOut,
+                            );
+                          }
+                        : null,
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 3.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            height: 5,
+                            decoration: BoxDecoration(
+                              color: isCompleted || isActive ? AppTheme.primary : const Color(0xFFE8DFD8),
+                              borderRadius: BorderRadius.circular(3),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            stepNames[index],
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: isActive || isCompleted ? FontWeight.bold : FontWeight.w500,
+                              color: isActive
+                                  ? AppTheme.primary
+                                  : isCompleted
+                                      ? const Color(0xFF1F1A15)
+                                      : Colors.grey[500],
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPendingRecoveryBanner() {
+    if (_pendingRecoveryData == null) return const SizedBox.shrink();
+
+    final serviceName = _pendingRecoveryData!['serviceName'] ?? 'Servicio';
+    final providerName = _pendingRecoveryData!['providerName'] ?? 'Prestador';
+    final price = _parseDouble(_pendingRecoveryData!['price']);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFFCD34D)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.restore_page_outlined, color: Color(0xFFD97706), size: 20),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'Reserva Incompleta Detectada',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF92400E)),
                 ),
               ),
-            );
-          }),
-        ),
+              IconButton(
+                icon: const Icon(Icons.close, size: 16, color: Color(0xFF92400E)),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                onPressed: () async {
+                  await BookingRecoveryService.clearPendingBooking();
+                  setState(() => _pendingRecoveryData = null);
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Tenías un proceso de reserva sin finalizar para "$serviceName" con $providerName (\$${price.toStringAsFixed(0)} COP).',
+            style: const TextStyle(fontSize: 12, color: Color(0xFF78350F)),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFD97706),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: () {
+                  final bookingId = _pendingRecoveryData!['bookingId']?.toString();
+                  if (bookingId != null) {
+                    showWompiCheckoutSheet(
+                      context: context,
+                      bookingId: bookingId,
+                      serviceName: serviceName,
+                      price: price,
+                      providerName: providerName,
+                    );
+                  }
+                },
+                icon: const Icon(Icons.payment, size: 14),
+                label: const Text('Reanudar Pago', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              ),
+              const SizedBox(width: 8),
+              TextButton(
+                onPressed: () async {
+                  await BookingRecoveryService.clearPendingBooking();
+                  setState(() => _pendingRecoveryData = null);
+                },
+                child: const Text('Descartar', style: TextStyle(color: Color(0xFF78350F), fontSize: 12)),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -487,6 +636,7 @@ class _BookingScreenState extends State<BookingScreen> {
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12),
       children: [
+        _buildPendingRecoveryBanner(),
         _buildSectionTitle('1. Selecciona un Servicio'),
         const SizedBox(height: 12),
         _buildServiceSelectionList(),
@@ -1053,19 +1203,52 @@ class _BookingScreenState extends State<BookingScreen> {
             ],
           ),
         ),
-        const SizedBox(height: 20),
-        if (_recommendedProducts.isEmpty)
+        const SizedBox(height: 16),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12.0),
+          child: TextField(
+            style: const TextStyle(fontSize: 13),
+            decoration: InputDecoration(
+              hintText: 'Buscar productos por nombre...',
+              prefixIcon: const Icon(Icons.search, size: 18, color: Color(0xFFC5A052)),
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              filled: true,
+              fillColor: Colors.white,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: Color(0xFFE8DFD8)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: Color(0xFFE8DFD8)),
+              ),
+            ),
+            onChanged: (val) {
+              setState(() {
+                _productSearchQuery = val.trim().toLowerCase();
+              });
+            },
+          ),
+        ),
+        if (_recommendedProducts.where((p) {
+          if (_productSearchQuery.isEmpty) return true;
+          return (p['nombre'] ?? '').toString().toLowerCase().contains(_productSearchQuery);
+        }).isEmpty)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 24.0),
             child: Center(
               child: Text(
-                'No hay productos sugeridos para este servicio.',
+                'No se encontraron productos coincidentes.',
                 style: TextStyle(color: Colors.grey, fontSize: 13),
               ),
             ),
           )
         else
-          ..._recommendedProducts.map((prod) {
+          ..._recommendedProducts.where((p) {
+            if (_productSearchQuery.isEmpty) return true;
+            return (p['nombre'] ?? '').toString().toLowerCase().contains(_productSearchQuery);
+          }).map((prod) {
             final id = prod['id'].toString();
             final nombre = prod['nombre']?.toString() ?? 'Producto';
             final precio = _parseDouble(prod['precio']);
