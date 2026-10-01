@@ -1351,13 +1351,13 @@ const initDatabase = async () => {
     if (hasTable) {
       console.log('✅ Base de datos ya inicializada. Omitiendo recreación de tablas.');
     } else {
-      const schemaPath = path.join(__dirname, 'schema.sql');
+      const schemaPath = path.join(__dirname, 'init.sql');
       if (fs.existsSync(schemaPath)) {
         const schemaSql = fs.readFileSync(schemaPath, 'utf8');
         await pool.query(schemaSql);
-        console.log('✅ Base de datos: Esquema inicializado/verificado desde schema.sql');
+        console.log('✅ Base de datos: Esquema inicializado/verificado desde init.sql (fuente canónica)');
       } else {
-        console.warn('⚠️ No se encontró schema.sql. Se omitió la creación automática de tablas.');
+        console.warn('⚠️ No se encontró init.sql. Se omitió la creación automática de tablas.');
       }
     }
   } catch (error) {
