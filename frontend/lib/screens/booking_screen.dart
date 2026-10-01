@@ -1513,19 +1513,59 @@ class _BookingScreenState extends State<BookingScreen> {
     );
   }
 
+  double _calculateCurrentSubtotal() {
+    double servicesPrice = 0.0;
+    for (final id in selectedServiceIds) {
+      final s = widget.services.firstWhere(
+        (srv) => srv['id']?.toString() == id,
+        orElse: () => <String, dynamic>{},
+      );
+      if (s.isNotEmpty) {
+        servicesPrice += _parseDouble(s['price']);
+      }
+    }
+
+    double productsSubtotal = 0.0;
+    int totalProductsQty = 0;
+    _selectedProductsQty.forEach((id, qty) {
+      final prod = _recommendedProducts.firstWhere((p) => p['id'].toString() == id, orElse: () => <String, dynamic>{});
+      if (prod.isNotEmpty) {
+        final price = _parseDouble(prod['precio']);
+        productsSubtotal += price * qty;
+        totalProductsQty += qty;
+      }
+    });
+
+    double discount = 0.0;
+    if (totalProductsQty >= 2) {
+      discount = productsSubtotal * 0.15;
+    }
+
+    return servicesPrice + productsSubtotal - discount;
+  }
+
   Widget _buildStickyBottomButtons() {
     bool canNext = false;
+    String validationHint = '';
+
     if (_currentStep == 0) {
-      canNext = selectedServiceId != null &&
-          selectedDate != null &&
-          _selectedSlotTime != null &&
-          serviceAddress.trim().isNotEmpty;
+      if (selectedServiceId == null) {
+        validationHint = 'Selecciona un servicio';
+      } else if (selectedDate == null || _selectedSlotTime == null) {
+        validationHint = 'Elige fecha y horario';
+      } else if (serviceAddress.trim().isEmpty) {
+        validationHint = 'Ingresa dirección del servicio';
+      } else {
+        canNext = true;
+      }
     } else if (_currentStep == 1) {
       canNext = true;
     } else if (_currentStep == 2) {
       canNext = true;
     }
 
+    final currentSubtotal = _calculateCurrentSubtotal();
+    final totalItems = selectedServiceIds.length + _selectedProductsQty.values.fold(0, (sum, q) => sum + q);
     bool hasProducts = _selectedProductsQty.values.any((qty) => qty > 0);
 
     return Container(
@@ -1535,46 +1575,88 @@ class _BookingScreenState extends State<BookingScreen> {
         border: const Border(top: BorderSide(color: Color(0xFFF3EAE8))),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 8,
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
             offset: const Offset(0, -4),
           ),
         ],
       ),
       child: SafeArea(
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            if (_currentStep > 0) ...[
-                          OutlinedButton(
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                              side: BorderSide(color: AppTheme.primary),
-                            ),
-                            onPressed: _prevStep,
-                            child: Text('Atrás', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
-                          ),
-                          const SizedBox(width: 12),
-                        ],
-            Expanded(
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _currentStep == 2 ? Colors.green.shade700 : AppTheme.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  elevation: 0,
-                ),
-                onPressed: canNext ? _handleBottomButtonPress : null,
-                child: Text(
-                  _currentStep == 2
-                      ? 'Confirmar y Pagar'
-                      : _currentStep == 1
-                          ? (hasProducts ? 'Continuar' : 'Omitir y Ver Resumen')
-                          : 'Continuar',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+            if (_currentStep < 2 && !canNext && validationHint.isNotEmpty) ...[
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.info_outline_rounded, size: 14, color: Color(0xFFD97706)),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Paso 1: $validationHint para continuar',
+                      style: const TextStyle(color: Color(0xFFD97706), fontSize: 12, fontWeight: FontWeight.w600),
+                    ),
+                  ],
                 ),
               ),
+            ],
+            Row(
+              children: [
+                if (_currentStep > 0) ...[
+                  OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      side: BorderSide(color: AppTheme.primary),
+                    ),
+                    onPressed: _prevStep,
+                    child: Text('Atrás', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
+                  ),
+                  const SizedBox(width: 12),
+                ],
+                if (_currentStep < 2) ...[
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '\$${currentSubtotal.toStringAsFixed(0)} COP',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1F1A15),
+                          ),
+                        ),
+                        Text(
+                          '$totalItems ítems seleccionados',
+                          style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                ],
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _currentStep == 2 ? Colors.green.shade700 : AppTheme.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    elevation: 0,
+                  ),
+                  onPressed: canNext ? _handleBottomButtonPress : null,
+                  child: Text(
+                    _currentStep == 2
+                        ? 'Confirmar y Pagar'
+                        : _currentStep == 1
+                            ? (hasProducts ? 'Continuar' : 'Omitir y Ver Resumen')
+                            : 'Continuar',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
