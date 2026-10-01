@@ -8,6 +8,14 @@ class SecureStorageService {
 
   final FlutterSecureStorage _storage = const FlutterSecureStorage(
     aOptions: AndroidOptions(encryptedSharedPreferences: true),
+    // 🛡️ FIX-FLUTTER-03: configuración web explícita. En Flutter Web el plugin
+    // cifra el valor en vez de delegar en SharedPreferences (que mapea a
+    // localStorage en texto plano). Se declaran las claves para que la
+    // intención sea evidente y no dependa de los defaults implícitos.
+    webOptions: WebOptions(
+      dbName: 'FlutterEncryptedStorage',
+      publicKey: 'FlutterSecureStorage',
+    ),
   );
 
   Future<void> write(String key, String value) async {

@@ -4,11 +4,10 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart' as http_parser;
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/provider_model.dart';
 import '../models/service_model.dart';
 import 'active_salon_service.dart';
+import 'secure_storage_service.dart';
 
 class ApiService {
   // --- CONFIGURACIÓN DE ENTORNO DE DESARROLLO / PRODUCCIÓN ---
@@ -185,15 +184,13 @@ class ApiService {
   static Future<Map<String, String>> getAuthHeaders() => _getAuthHeaders();
 
   static Future<String?> _getToken() async {
+    // 🛡️ FIX-FLUTTER-03: única fuente de verdad para el token. Se elimina el
+    // fallback a SharedPreferences (localStorage en web, texto plano) que un XSS
+    // podía exfiltrar. Antes existía una segunda instancia de FlutterSecureStorage
+    // aquí; ahora se centraliza en SecureStorageService (con config web).
     try {
-      final token = await const FlutterSecureStorage(
-        aOptions: AndroidOptions(encryptedSharedPreferences: true),
-      ).read(key: 'token');
-      if (token != null && token.isNotEmpty) return token;
-    } catch (_) {}
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString('token');
+      final token = await SecureStorageService().read('token');
+      return (token != null && token.isNotEmpty) ? token : null;
     } catch (_) {
       return null;
     }

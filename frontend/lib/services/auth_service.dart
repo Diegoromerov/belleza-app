@@ -38,11 +38,12 @@ class AuthService {
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       final prefs = await SharedPreferences.getInstance();
-      
-      // 🛡️ PARCHE DE SEGURIDAD (GLOW-SEC-02): Guardar el token en almacenamiento cifrado y SharedPreferences
+
+      // 🛡️ FIX-FLUTTER-03: el JWT vive ÚNICAMENTE en almacenamiento cifrado.
+      // Antes se duplicaba en SharedPreferences (localStorage en web, texto
+      // plano) y cualquier XSS podía exfiltrarlo. Se eliminó esa copia.
       await SecureStorageService().write('token', data['token']);
-      await prefs.setString('token', data['token']);
-      
+
       await prefs.setString('userId', data['user']['id'].toString());
       await prefs.setString('userName', data['user']['full_name']);
       if (data['user']['role'] != null) {
@@ -127,18 +128,13 @@ class AuthService {
   }
 
   static Future<String?> getToken() async {
-    // 🛡️ PARCHE DE SEGURIDAD (GLOW-SEC-02): Leer token de almacenamiento cifrado.
-    // El fallback a SharedPreferences replica ApiService._getToken(): si el
-    // almacenamiento cifrado no está disponible o lanza (típico en Flutter Web),
-    // getToken() devolvía null y el WebSocket del chat nunca se registraba — sin
-    // registro el servidor no empuja y AURA parecía no responder.
+    // 🛡️ FIX-FLUTTER-03: el token se lee SOLO de almacenamiento cifrado.
+    // Antes había un fallback a SharedPreferences (localStorage en web, texto
+    // plano) que se activaba justo cuando el almacén cifrado lanzaba — es decir,
+    // degradaba a lo inseguro ante el error. Si el almacén cifrado no responde,
+    // se devuelve null en vez de exponer el token a un XSS.
     try {
       final token = await SecureStorageService().read('token');
-      if (token != null && token.isNotEmpty) return token;
-    } catch (_) {}
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
       return (token != null && token.isNotEmpty) ? token : null;
     } catch (_) {
       return null;
@@ -397,9 +393,8 @@ class AuthService {
   static Future<Map<String, dynamic>?> switchContext(String businessProfileId) async {
     try {
       final baseUrl = await getBaseUrl();
-      final token = await SecureStorageService().read('token');
-      final prefs = await SharedPreferences.getInstance();
-      final authToken = token ?? prefs.getString('token');
+      // 🛡️ FIX-FLUTTER-03: token solo desde almacenamiento cifrado.
+      final authToken = await SecureStorageService().read('token');
 
       if (authToken == null) return null;
 
@@ -416,11 +411,12 @@ class AuthService {
         final data = json.decode(response.body);
         final newToken = data['token'] as String?;
         if (newToken != null) {
+          // 🛡️ FIX-FLUTTER-03: rotación de token solo en almacenamiento cifrado.
           await SecureStorageService().write('token', newToken);
-          await prefs.setString('token', newToken);
         }
 
         if (data['active_context'] != null) {
+          final prefs = await SharedPreferences.getInstance();
           await prefs.setString('activeBusinessProfileId', businessProfileId);
           final activeContext = data['active_context'] as Map<String, dynamic>;
           if (activeContext['role'] != null) {
