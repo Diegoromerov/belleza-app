@@ -44,4 +44,14 @@ dev_dependencies:
 flutter:
   generate: true
   uses-material-design: true
+
+  assets:
+    - assets/
+    - assets/icons/glow/
+    - assets/glowguide/videos/
+    - assets/videos/
+    - images/
+    - images/auth/
+    - images/onboarding/
+    - images/branding/
   # Internationalization
