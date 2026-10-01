@@ -4,6 +4,17 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <!-- PR-FIX P0: beauty-scan usa la camara (paquete `camera` + image_picker).
+         Sin estas declaraciones la app no puede abrir la camara en Android. -->
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <!-- image_picker: acceso a imagenes de la galeria. API 33+ usa READ_MEDIA_IMAGES;
+         versiones anteriores caen al permiso legacy acotado a maxSdkVersion 32. -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32"/>
+    <!-- La camara no debe ser obligatoria: permite instalar en equipos sin camara. -->
+    <uses-feature android:name="android.hardware.camera" android:required="false"/>
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false"/>
     <application
         android:label="beauty_app"
         android:name="${applicationName}"
