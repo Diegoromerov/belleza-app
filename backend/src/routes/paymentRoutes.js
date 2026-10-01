@@ -320,13 +320,6 @@ router.post('/bookings/:id/confirm-otp', authMiddleware, async (req, res) => {
       ]
     );
 
-    await client.query(
-      `UPDATE wallet_transactions
-       SET metadata = metadata || $2::jsonb
-       WHERE booking_id = $1 AND tipo = 'CREDITO_SERVICIO'`,
-      [id, JSON.stringify({ madura_at: maduraAt.toISOString() })]
-    );
-
     // ─── LIBERAR COMISIÓN DE GLOWSTORE SI APLICA ───
     const storeOrderRes = await client.query(
       'SELECT id, comision_total_prestador FROM pedidos_tienda WHERE booking_id = $1 AND prestador_comisionado_id = $2;',
@@ -405,23 +398,19 @@ router.get('/wallet', authMiddleware, async (req, res) => {
   if (!await requirePrestador(req, res)) return;
 
   try {
-    await pool.query(
-      `UPDATE wallet_transactions
-       SET estado = 'COMPLETADO'
-       WHERE tipo IN ('CREDITO_SERVICIO', 'CREDITO_PRODUCTO')
-         AND estado = 'PENDIENTE'
-         AND (metadata->>'madura_at')::timestamptz <= NOW()
-         AND provider_id = $1`,
-      [req.user.id]
-    );
-
+    // Ledger append-only: la maduración NO muta el asiento; se deriva de
+    // metadata.madura_at y se registra la acreditación como evento.
     const madurados = await pool.query(
-      `SELECT COALESCE(SUM(monto), 0) as total
-       FROM wallet_transactions
-       WHERE tipo IN ('CREDITO_SERVICIO', 'CREDITO_PRODUCTO')
-         AND estado = 'COMPLETADO'
-         AND provider_id = $1
-         AND (metadata->>'acreditado') IS NULL`,
+      `SELECT COALESCE(SUM(wt.monto), 0) as total
+       FROM wallet_transactions wt
+       WHERE wt.tipo IN ('CREDITO_SERVICIO', 'CREDITO_PRODUCTO')
+         AND wt.estado <> 'REVERTIDO'
+         AND wt.provider_id = $1
+         AND (wt.metadata->>'madura_at')::timestamptz <= NOW()
+         AND NOT EXISTS (
+           SELECT 1 FROM wallet_ledger_events e
+           WHERE e.tx_id = wt.id AND e.evento = 'ACREDITADO'
+         )`,
       [req.user.id]
     );
 
@@ -435,12 +424,18 @@ router.get('/wallet', authMiddleware, async (req, res) => {
         [req.user.id, parseFloat(madurados.rows[0].total)]
       );
       await pool.query(
-        `UPDATE wallet_transactions
-         SET metadata = metadata || '{"acreditado": true}'::jsonb
-         WHERE tipo IN ('CREDITO_SERVICIO', 'CREDITO_PRODUCTO')
-           AND estado = 'COMPLETADO'
-           AND provider_id = $1
-           AND (metadata->>'acreditado') IS NULL`,
+        `INSERT INTO wallet_ledger_events (tx_id, provider_id, evento, detalle)
+         SELECT wt.id, wt.provider_id, 'ACREDITADO',
+                jsonb_build_object('monto', wt.monto, 'origen', 'wallet-consulta')
+         FROM wallet_transactions wt
+         WHERE wt.tipo IN ('CREDITO_SERVICIO', 'CREDITO_PRODUCTO')
+           AND wt.estado <> 'REVERTIDO'
+           AND wt.provider_id = $1
+           AND (wt.metadata->>'madura_at')::timestamptz <= NOW()
+           AND NOT EXISTS (
+             SELECT 1 FROM wallet_ledger_events e
+             WHERE e.tx_id = wt.id AND e.evento = 'ACREDITADO'
+           )`,
         [req.user.id]
       );
     }
