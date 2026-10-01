@@ -34,7 +34,10 @@ if (!process.env.TEST_DATABASE_URL && !process.env.DATABASE_URL) {
 const TABLAS_ESPERADAS = [
   'services', 'bookings', 'transactions', 'messages', 'reviews',
   'portfolio_items', 'nail_tryon_jobs', 'perfiles_prestador', 'productos',
-  'salones', 'salon_miembros', 'salon_invitaciones'
+  'salones', 'salon_miembros', 'salon_invitaciones',
+  // `usuarios` dejó de ser una excepción (P0 t_fix_tenant_07): con RLS apagado
+  // cualquier inquilino leía la PII de todos. Ahora exige RLS + FORCE + 1 política.
+  'usuarios'
 ];
 
 const URL = process.env.TEST_DATABASE_URL || process.env.DATABASE_URL;
@@ -89,13 +92,29 @@ async function asegurarUsuarioDueno(cli) {
   const etiqueta = (n, def) => (enums.find((e) => e.attname === n) || {}).etiqueta || def;
   const id = 900001;
 
-  await cli.query(
-    `INSERT INTO usuarios (id, email, nombre, auth_provider, provider_id, rol, tenant_id)
-     VALUES ($1, $2, $3, $4, $5, $6, NULL)
-     ON CONFLICT (id) DO NOTHING`,
-    [id, 'verify-isolation@test.local', 'Verify Isolation',
-     etiqueta('auth_provider', 'LOCAL'), 'verify-isolation', etiqueta('rol', 'CLIENTE')]
-  );
+  // Sin ON CONFLICT: con RLS + FORCE un ON CONFLICT contra una fila NO visible
+  // lanza 'new row violates row-level security policy' en vez de no hacer nada.
+  // Un INSERT normal que choque con el indice unico da 23505, que si se puede
+  // absorber, y funciona igual con RLS apagado (que es el estado ROJO).
+  await cli.query('BEGIN');
+  try {
+    await cli.query('SAVEPOINT seed_owner');
+    try {
+      await cli.query(
+        `INSERT INTO usuarios (id, email, nombre, auth_provider, provider_id, rol, tenant_id)
+         VALUES ($1, $2, $3, $4, $5, $6, NULL)`,
+        [id, 'verify-isolation@test.local', 'Verify Isolation',
+         etiqueta('auth_provider', 'LOCAL'), 'verify-isolation', etiqueta('rol', 'CLIENTE')]
+      );
+    } catch (e) {
+      if (e.code !== '23505') throw e; // ya existe
+      await cli.query('ROLLBACK TO SAVEPOINT seed_owner');
+    }
+    await cli.query('COMMIT');
+  } catch (e) {
+    await cli.query('ROLLBACK');
+    throw e;
+  }
   return id;
 }
 
@@ -251,10 +270,73 @@ async function main() {
       else mal(`el trigger no rellenó tenant_id (quedó ${rellenado}): los INSERT sin tenant_id `
         + 'fallarán y FORCE romperá la aplicación');
 
+      // ── 2b. PII de `usuarios` (hallazgo P0 t_fix_tenant_07) ───────────────
+      // Con RLS DESACTIVADO en `usuarios`, cualquier inquilino leía a TODOS los
+      // usuarios (email, teléfono, hash de contraseña...). Debe ver sólo su
+      // propia fila y las de su inquilino, y el arranque de identidad sin
+      // contexto debe seguir funcionando por las funciones SECURITY DEFINER.
+      const sembrarUsuario = (uid, tenantId, email, nombre) => conContexto(cli, tenantId, async () => {
+        // Sin ON CONFLICT (ver asegurarUsuarioDueno): SAVEPOINT absorbe el 23505
+        // si la fila ya existia de una corrida anterior.
+        await cli.query('SAVEPOINT seed_user');
+        try {
+          await cli.query(
+            `INSERT INTO usuarios (id, email, nombre, auth_provider, provider_id, rol, tenant_id)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+            [uid, email, nombre, 'LOCAL', `verif-${uid}`, 'CLIENTE', tenantId]
+          );
+        } catch (e) {
+          if (e.code !== '23505') throw e;
+          await cli.query('ROLLBACK TO SAVEPOINT seed_user');
+        }
+      }, { commit: true });
+
+      await sembrarUsuario(900011, T1, 'pii-t1@verif.test', 'PII Inquilino 1');
+      await sembrarUsuario(900012, T2, 'pii-t2@verif.test', 'PII Inquilino 2');
+      ok('sembrados dos usuarios con PII, uno por inquilino');
+
+      const piiAjena = await conContexto(cli, T1, async () => {
+        const r = await cli.query(
+          "SELECT count(*)::int AS n FROM usuarios WHERE email = 'pii-t2@verif.test'"
+        );
+        return r.rows[0].n;
+      });
+      if (piiAjena === 0) ok('con contexto del inquilino 1 NO se ve la PII del usuario del inquilino 2');
+      else mal(`con contexto del inquilino 1 se ve la PII del inquilino 2 (${piiAjena} fila/s): FUGA CROSS-TENANT en usuarios`);
+
+      const piiPropia = await conContexto(cli, T1, async () => {
+        const r = await cli.query(
+          "SELECT count(*)::int AS n FROM usuarios WHERE email = 'pii-t1@verif.test'"
+        );
+        return r.rows[0].n;
+      });
+      if (piiPropia >= 1) ok('con contexto del inquilino 1 SÍ se ve su propio usuario');
+      else mal('con contexto del inquilino 1 no se ve su propio usuario: el aislamiento bloquea de más');
+
+      // El arranque de identidad (auth.js: SELECT rol, tenant_id ... WHERE id=$1)
+      // ocurre ANTES de fijar contexto: debe resolverse sin sujeto ni inquilino.
+      const identidad = await conContexto(cli, null, async () => {
+        const r = await cli.query('SELECT rol, tenant_id FROM app_usuario_identidad($1::integer)', [900011]);
+        return r.rows[0];
+      });
+      if (identidad && identidad.tenant_id === T1) ok('app_usuario_identidad devuelve la identidad SIN contexto (arranque preservado)');
+      else mal('app_usuario_identidad no devolvió la identidad sin contexto: el arranque de auth quedaría roto (401)');
+
+      // Sin contexto y sin sujeto, la lectura directa debe ser CERO (falla cerrado).
+      const usuariosSinContexto = await conContexto(cli, null, async () => {
+        const r = await cli.query(
+          "SELECT count(*)::int AS n FROM usuarios WHERE email LIKE 'pii-%@verif.test'"
+        );
+        return r.rows[0].n;
+      });
+      if (usuariosSinContexto === 0) ok('sin contexto, la lectura directa de usuarios ve 0 filas (falla cerrado)');
+      else mal(`sin contexto se ven ${usuariosSinContexto} filas de usuarios: el aislamiento falla ABIERTO`);
+
       // Limpieza: también con commit, o los datos de prueba se quedan.
       for (const t of [T1, T2]) {
         await conContexto(cli, t, async () => {
           await cli.query("DELETE FROM salones WHERE nombre_salon LIKE 'verificacion-%'");
+          await cli.query("DELETE FROM usuarios WHERE email LIKE 'pii-%@verif.test'");
         }, { commit: true });
       }
       ok('datos de prueba eliminados');

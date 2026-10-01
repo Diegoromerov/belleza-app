@@ -34,21 +34,38 @@
 --   4. FORCE ROW LEVEL SECURITY: ahora las políticas también obligan al
 --      propietario.
 --
--- EXCLUSIÓN DELIBERADA (no es una omisión)
--- ----------------------------------------
---   `usuarios` queda con RLS DESACTIVADO, y se documenta por qué:
---     * es la tabla de identidad CROSS-TENANT: un cliente no pertenece a ningún
---       salón y su `tenant_id` es NULL;
---     * `auth.js:34` la consulta para DESCUBRIR el inquilino
---       (`SELECT rol, tenant_id FROM usuarios WHERE id = $1`) cuando todavía no
---       hay contexto: cualquier política que exija contexto la deja en cero
---       filas y deja al sistema entero en 401;
---     * una política que admita tenant_id NULL expondría a TODOS los clientes a
---       cualquier inquilino, que es peor que no tener política.
---   RIESGO RESIDUAL ASUMIDO: el aislamiento de `usuarios` depende de la capa de
---   consulta. Las lecturas de usuarios que no filtren por id/tenant son una
---   fuga — ver backend/scripts/verifyTenantIsolation.js, que falla si alguna
---   consulta de la aplicación lee usuarios sin acotar.
+-- `usuarios`: RLS EN VIGOR (ya no es una exclusión)
+-- ------------------------------------------------
+--   La versión anterior DESACTIVABA RLS en `usuarios` (`DISABLE ROW LEVEL
+--   SECURITY`) para no romper el arranque de identidad: `auth.js` la consulta
+--   para DESCUBRIR el inquilino (`SELECT rol, tenant_id FROM usuarios WHERE
+--   id = $1`) cuando todavía no hay contexto. El coste de aquella decisión era
+--   una fuga de PII cross-tenant: con RLS apagado, CUALQUIER consulta (de
+--   cualquier inquilino, o sin contexto) leía TODAS las filas de usuarios.
+--
+--   Ahora `usuarios` queda AISLADA POR FILA como las demás tablas, y el arranque
+--   de identidad se conserva por una vía EXPLÍCITA y auditable — funciones
+--   SECURITY DEFINER, no acceso directo:
+--     * `app_current_user_id()`: el sujeto del token en curso (`app.user_id`).
+--     * Política única `usuarios_isolation`:
+--         - la propia fila (`id = app_current_user_id()`);
+--         - las filas del inquilino en curso (`tenant_id = app_current_tenant_id()`).
+--       Sin contexto Y sin sujeto => 0 filas (falla CERRADO, no lanza error).
+--     * Funciones SECURITY DEFINER para las lecturas que NO pueden tener
+--       contexto (login/arranque por email o id). Ejecutan con los privilegios de
+--       quien aplica la migración (rol no sujeto a la política de esta tabla), de
+--       modo que atraviesan RLS de forma deliberada y localizada:
+--         app_usuario_identidad(integer)  -> (rol, tenant_id)
+--         app_usuario_por_id(integer)     -> SETOF usuarios
+--         app_usuario_por_email(text)     -> SETOF usuarios
+--
+--   RIESGO RESIDUAL (declarado): las lecturas/escrituras de `usuarios` que haga
+--   la aplicación con contexto de inquilino (JOINs, listados, UPDATEs) siguen
+--   funcionando SÓLO si la conexión lleva fijado `app.tenant_id`; las que vayan
+--   por id/email fuera de contexto deben usar las funciones SECURITY DEFINER de
+--   arriba. Ver backend/scripts/verifyTenantIsolation.js, que ahora exige RLS +
+--   FORCE + 1 política en `usuarios` y prueba que un inquilino NO ve la PII de
+--   otro.
 --
 -- REQUISITO DE OPERACIÓN
 -- ----------------------
@@ -67,6 +84,13 @@ BEGIN;
 CREATE OR REPLACE FUNCTION app_current_tenant_id() RETURNS integer
 LANGUAGE sql STABLE AS $$
   SELECT NULLIF(current_setting('app.tenant_id', true), '')::integer
+$$;
+
+-- Sujeto de la petición (el `id` del usuario del token). Igual que el inquilino,
+-- sin contexto devuelve NULL (`missing_ok = true`) y NUNCA lanza error.
+CREATE OR REPLACE FUNCTION app_current_user_id() RETURNS integer
+LANGUAGE sql STABLE AS $$
+  SELECT NULLIF(current_setting('app.user_id', true), '')::integer
 $$;
 
 CREATE OR REPLACE FUNCTION app_assign_tenant_id() RETURNS trigger
@@ -195,26 +219,91 @@ BEGIN
 END $$;
 
 -- ---------------------------------------------------------------------------
--- 2. usuarios: excepción documentada (ver cabecera).
+-- 2. usuarios: RLS en vigor + arranque de identidad por funciones EXPLÍCITAS.
+--    Ver la cabecera. Esta sección reemplaza la anterior, que DESACTIVABA RLS
+--    en `usuarios` y con ello permitía leer la PII de TODOS los inquilinos.
 -- ---------------------------------------------------------------------------
 DO $$
 DECLARE
   p record;
 BEGIN
-  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
-              WHERE n.nspname = 'public' AND c.relname = 'usuarios' AND c.relkind = 'r') THEN
-    -- Se borran también sus políticas: dejar 4 políticas laxas en una tabla con
-    -- RLS desactivado es una trampa, porque el día que alguien vuelva a
-    -- activarlo recuperaría precisamente las que se OR-ean y no comprueban.
-    FOR p IN SELECT policyname FROM pg_policies
-              WHERE schemaname = 'public' AND tablename = 'usuarios' LOOP
-      EXECUTE format('DROP POLICY %I ON public.usuarios', p.policyname);
-    END LOOP;
-
-    EXECUTE 'ALTER TABLE public.usuarios NO FORCE ROW LEVEL SECURITY';
-    EXECUTE 'ALTER TABLE public.usuarios DISABLE ROW LEVEL SECURITY';
-    RAISE NOTICE '068: usuarios con RLS DESACTIVADO y sin políticas a propósito (identidad cross-tenant; auth.js:34 la lee antes de fijar contexto)';
+  IF NOT EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+                  WHERE n.nspname = 'public' AND c.relname = 'usuarios' AND c.relkind = 'r') THEN
+    RAISE NOTICE '068: "usuarios" no existe en este esquema — se omite';
+    RETURN;
   END IF;
+
+  -- 2a. Borrar TODAS las políticas previas de usuarios. Dejar una permisiva
+  --     suelta (056/058 creaban 4) anularía la estricta por OR.
+  FOR p IN SELECT policyname FROM pg_policies
+            WHERE schemaname = 'public' AND tablename = 'usuarios' LOOP
+    EXECUTE format('DROP POLICY %I ON public.usuarios', p.policyname);
+  END LOOP;
+
+  -- 2b. UNA sola política: propia fila (arranque de identidad) o filas del
+  --     inquilino en curso. Sin contexto Y sin sujeto => 0 filas (falla cerrado).
+  EXECUTE $pol$
+    CREATE POLICY usuarios_isolation ON public.usuarios FOR ALL
+      USING (
+        id = app_current_user_id()
+        OR (tenant_id IS NOT NULL AND tenant_id = app_current_tenant_id())
+      )
+      WITH CHECK (
+        id = app_current_user_id()
+        OR (tenant_id IS NOT NULL AND tenant_id = app_current_tenant_id())
+        -- Alta de usuario (registro local / primer login OAuth): ocurre SIN
+        -- sujeto todavía. Sin esta válvula el alta sería imposible; una vez que
+        -- hay sujeto autenticado, la escritura vuelve a exigir pertenencia.
+        OR app_current_user_id() IS NULL
+      )
+  $pol$;
+
+  -- 2c. Relleno de tenant_id en INSERT cuando SÍ hay contexto de inquilino.
+  EXECUTE 'DROP TRIGGER IF EXISTS trg_assign_tenant_id ON public.usuarios';
+  EXECUTE 'CREATE TRIGGER trg_assign_tenant_id BEFORE INSERT ON public.usuarios '
+          'FOR EACH ROW EXECUTE FUNCTION app_assign_tenant_id()';
+
+  -- 2d. Habilitar y FORZAR. El propietario deja de estar exento.
+  EXECUTE 'ALTER TABLE public.usuarios ENABLE ROW LEVEL SECURITY';
+  EXECUTE 'ALTER TABLE public.usuarios FORCE  ROW LEVEL SECURITY';
+
+  RAISE NOTICE '068: usuarios asegurada (RLS + FORCE + política usuarios_isolation + trigger)';
+END $$;
+
+-- 2e. Arranque de identidad: lecturas que NO pueden tener contexto (login por
+--     email, bootstrap por id) se hacen con funciones SECURITY DEFINER. Ejecutan
+--     con los privilegios de quien aplica la migración (rol no sujeto a la
+--     política de usuarios), de modo que atraviesan RLS de forma deliberada,
+--     localizada y auditable — en lugar de dejar la tabla sin proteger.
+--     Devuelven SETOF usuarios (o columnas mínimas) para no depender del DDL.
+CREATE OR REPLACE FUNCTION app_usuario_por_id(p_id integer)
+RETURNS SETOF public.usuarios
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT * FROM public.usuarios WHERE id = p_id
+$$;
+
+CREATE OR REPLACE FUNCTION app_usuario_por_email(p_email text)
+RETURNS SETOF public.usuarios
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT * FROM public.usuarios WHERE lower(email) = lower(p_email)
+$$;
+
+CREATE OR REPLACE FUNCTION app_usuario_identidad(p_id integer)
+RETURNS TABLE(rol public.tipo_rol, tenant_id integer)
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT u.rol, u.tenant_id FROM public.usuarios u WHERE u.id = p_id
+$$;
+
+DO $$
+DECLARE r text;
+BEGIN
+  FOREACH r IN ARRAY ARRAY['app_rls_user','app_owner','app_system'] LOOP
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = r) THEN
+      EXECUTE format('GRANT EXECUTE ON FUNCTION app_usuario_por_id(integer)   TO %I', r);
+      EXECUTE format('GRANT EXECUTE ON FUNCTION app_usuario_por_email(text)   TO %I', r);
+      EXECUTE format('GRANT EXECUTE ON FUNCTION app_usuario_identidad(integer) TO %I', r);
+    END IF;
+  END LOOP;
 END $$;
 
 -- ---------------------------------------------------------------------------

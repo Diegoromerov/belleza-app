@@ -43,7 +43,10 @@ const authMiddleware = async (req, res, next) => {
     const verified = jwt.verify(token, getJwtSecret());
 
     // Consultar el rol y tenant_id actual del usuario en la base de datos
-    const userRes = await pool.query('SELECT rol, tenant_id FROM usuarios WHERE id = $1', [verified.id]);
+    // Arranque de identidad ANTES de fijar contexto de inquilino: se resuelve con
+    // la función SECURITY DEFINER de 068 (la tabla usuarios ya tiene RLS + FORCE,
+    // así que una lectura directa sin contexto devolvería 0 filas -> 401 global).
+    const userRes = await pool.query('SELECT rol, tenant_id FROM app_usuario_identidad($1::integer)', [verified.id]);
     if (userRes.rows.length === 0) {
       return res.status(401).json({ error: 'Usuario no encontrado en el sistema.' });
     }
