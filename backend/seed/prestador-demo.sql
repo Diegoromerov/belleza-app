@@ -4,7 +4,7 @@
 -- O en Railway: railway connect postgresql < backend/seed/prestador-demo.sql
 -- ============================================================
 
--- Contraseña en texto plano: 'Demo123456'
+-- Contraseña del usuario demo REDACTED — no se versiona; se define con SEED_PASSWORD al sembrar.
 -- Hash bcrypt (cost 10): $2b$10$K7L/8X9J2mN4pQ5rS6tU7uV8wX9yZ0aB1cD2eF3gH4iJ5kL6mN7o
 
 DO $$
@@ -146,7 +146,7 @@ BEGIN
 
     RAISE NOTICE '=== SEED PROVEEDOR DEMO COMPLETADO ===';
     RAISE NOTICE 'Email: proveedor.demo@glowapp.com';
-    RAISE NOTICE 'Password: Demo123456';
+    RAISE NOTICE 'Password: REDACTED (definida por SEED_PASSWORD al sembrar)';
     RAISE NOTICE 'Provider ID: %', v_user_id;
     RAISE NOTICE 'Business: Salón Demo GlowApp';
     RAISE NOTICE 'Servicios: 6 creados';
