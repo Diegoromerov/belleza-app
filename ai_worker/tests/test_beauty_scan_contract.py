@@ -38,7 +38,7 @@ if str(AI_WORKER_DIR) not in sys.path:
 
 from main import app  # noqa: E402
 
-client = TestClient(app)
+client = TestClient(app, raise_server_exceptions=False)
 
 # Literales que se devolvían para CUALQUIER imagen antes de la remediación.
 LITERALES_FABRICADOS = (85.5, 40.2)
@@ -95,8 +95,12 @@ def _files():
     }
 
 
+def _base_data():
+    return {"user_id": "user-test-1", "consent_biometric": "explicit"}
+
+
 def test_beauty_scan_acepta_los_4_campos_multipart():
-    response = client.post("/api/v1/beauty-scan", files=_files(), data={"user_id": "user-test-1"})
+    response = client.post("/api/v1/beauty-scan", files=_files(), data=_base_data())
     assert response.status_code == 200, response.text
     body = response.json()
     print("  status=200 user_id=", body["user_id"], "estado=", body["estado"])
@@ -154,6 +158,7 @@ def test_beauty_scan_no_devuelve_los_literales_fabricados():
             "hair": ("hair2.jpg", _hair_jpeg(23), "image/jpeg"),
             "hand": ("hand2.jpg", _hand_jpeg(29), "image/jpeg"),
         },
+        data=_base_data(),
     ).json()
     print("  hidratacion imagen A=", hidratacion, "imagen B=", body_b["face"]["hidratacion"])
     assert body_b["face"]["hidratacion"] != hidratacion or body_b["face"]["subtono"] != body["face"]["subtono"], (
@@ -164,7 +169,7 @@ def test_beauty_scan_no_devuelve_los_literales_fabricados():
 def test_beauty_scan_imagen_corrupta_devuelve_4xx():
     files = _files()
     files["hair"] = ("hair.jpg", b"esto-no-es-una-imagen", "image/jpeg")
-    response = client.post("/api/v1/beauty-scan", files=files)
+    response = client.post("/api/v1/beauty-scan", files=files, data=_base_data())
     print("  status=", response.status_code, "detail=", response.json().get("detail"))
     assert 400 <= response.status_code < 500, f"se esperaba 4xx, se obtuvo {response.status_code}"
     assert "[hair]" in response.json().get("detail", ""), "el error no identifica la region"
@@ -174,13 +179,13 @@ def test_beauty_scan_imagen_sin_rostro_devuelve_4xx():
     plano = _image_bytes((128, 128, 128), noise=0.0, gradient=0.0, seed=5)  # plano uniforme
     files = _files()
     files["face_frontal"] = ("frontal.jpg", plano, "image/jpeg")
-    response = client.post("/api/v1/beauty-scan", files=files)
+    response = client.post("/api/v1/beauty-scan", files=files, data=_base_data())
     print("  status=", response.status_code, "detail=", response.json().get("detail"))
     assert 400 <= response.status_code < 500, f"se esperaba 4xx, se obtuvo {response.status_code}"
 
     sin_piel = _image_bytes((40, 90, 60), noise=10.0, seed=9)  # verde vegetacion: no es piel
     files["face_frontal"] = ("frontal.jpg", sin_piel, "image/jpeg")
-    response2 = client.post("/api/v1/beauty-scan", files=files)
+    response2 = client.post("/api/v1/beauty-scan", files=files, data=_base_data())
     print("  status sin_piel=", response2.status_code, "detail=", response2.json().get("detail"))
     assert 400 <= response2.status_code < 500
 
@@ -188,9 +193,22 @@ def test_beauty_scan_imagen_sin_rostro_devuelve_4xx():
 def test_beauty_scan_falta_un_archivo_devuelve_422():
     files = _files()
     files.pop("hand")
-    response = client.post("/api/v1/beauty-scan", files=files)
+    response = client.post("/api/v1/beauty-scan", files=files, data=_base_data())
     print("  status=", response.status_code)
     assert response.status_code == 422, f"se esperaba 422, se obtuvo {response.status_code}"
+
+
+def test_beauty_scan_sin_consentimiento_devuelve_403():
+    """Verifica que sin consent_biometric=explicit se rechaza con 403 (Ley 1581 Art.6)."""
+    response = client.post("/api/v1/beauty-scan", files=_files(), data={"user_id": "user-test-1"})
+    print("  status=", response.status_code, "detail=", response.json().get("detail"))
+    assert response.status_code == 403, f"se esperaba 403, se obtuvo {response.status_code}"
+    assert "Consentimiento biométrico requerido" in response.json().get("detail", "")
+
+    # También probar con consent_biometric con valor incorrecto
+    response2 = client.post("/api/v1/beauty-scan", files=_files(), data={"user_id": "user-test-1", "consent_biometric": "no"})
+    print("  status incorrecto=", response2.status_code, "detail=", response2.json().get("detail"))
+    assert response2.status_code == 403
 
 
 def test_analyze_skin_legacy_sigue_funcionando():
