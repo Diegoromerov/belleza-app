@@ -653,6 +653,75 @@ class _BookingScreenState extends State<BookingScreen> {
     return months[month];
   }
 
+  int _calculateTotalDurationMinutes() {
+    int total = 0;
+    for (final id in selectedServiceIds) {
+      final s = widget.services.firstWhere(
+        (srv) => srv['id']?.toString() == id,
+        orElse: () => <String, dynamic>{},
+      );
+      if (s.isNotEmpty) {
+        final dur = s['duration_minutes'] ?? s['duration'] ?? 45;
+        if (dur is int) {
+          total += dur;
+        } else if (dur is double) {
+          total += dur.toInt();
+        } else if (dur is String) {
+          total += int.tryParse(dur) ?? 45;
+        }
+      }
+    }
+    return total > 0 ? total : 45;
+  }
+
+  String _getEstimatedEndTime(String startTime, int durationMinutes) {
+    try {
+      final parts = startTime.split(':');
+      final startHour = int.parse(parts[0]);
+      final startMin = int.parse(parts[1]);
+      final startDt = DateTime(2026, 1, 1, startHour, startMin);
+      final endDt = startDt.add(Duration(minutes: durationMinutes));
+      final endHourStr = endDt.hour.toString().padLeft(2, '0');
+      final endMinStr = endDt.minute.toString().padLeft(2, '0');
+      return '$endHourStr:$endMinStr';
+    } catch (e) {
+      return '';
+    }
+  }
+
+  Widget _buildPeriodHeader(String periodName, IconData icon, int availableCount) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: const Color(0xFFC5A052)),
+        const SizedBox(width: 6),
+        Text(
+          periodName,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF1F1A15),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF5EBE6),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            '$availableCount disponibles',
+            style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF6B5E55),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildTimeSelector() {
     if (selectedDate == null || selectedServiceId == null) {
       return const Padding(
@@ -693,15 +762,106 @@ class _BookingScreenState extends State<BookingScreen> {
       );
     }
 
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: _slots.map((slot) {
-        final String time = slot['time'] as String;
-        final bool isAvailable = slot['is_available'] as bool? ?? false;
-        final isSelected = _selectedSlotTime == time;
-        return _buildTimeSlotButton(time, isAvailable, isSelected);
-      }).toList(),
+    final morningSlots = _slots.where((s) {
+      final hour = int.tryParse((s['time'] as String).split(':')[0]) ?? 0;
+      return hour < 12;
+    }).toList();
+
+    final afternoonSlots = _slots.where((s) {
+      final hour = int.tryParse((s['time'] as String).split(':')[0]) ?? 0;
+      return hour >= 12 && hour < 17;
+    }).toList();
+
+    final eveningSlots = _slots.where((s) {
+      final hour = int.tryParse((s['time'] as String).split(':')[0]) ?? 0;
+      return hour >= 17;
+    }).toList();
+
+    final totalDuration = _calculateTotalDurationMinutes();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (_selectedSlotTime != null) ...[
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFDF8F3),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFFC5A052).withValues(alpha: 0.4)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.stars_rounded, color: Color(0xFFC5A052), size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: RichText(
+                    text: TextSpan(
+                      style: const TextStyle(fontSize: 13, color: Color(0xFF1F1A15)),
+                      children: [
+                        const TextSpan(text: 'Horario seleccionado: '),
+                        TextSpan(
+                          text: '$_selectedSlotTime – ${_getEstimatedEndTime(_selectedSlotTime!, totalDuration)} ',
+                          style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF9E7C33)),
+                        ),
+                        TextSpan(
+                          text: '($totalDuration min estimación total)',
+                          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+        if (morningSlots.isNotEmpty) ...[
+          _buildPeriodHeader('Mañana', Icons.wb_sunny_outlined, morningSlots.where((s) => s['is_available'] == true).length),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: morningSlots.map((slot) {
+              final String time = slot['time'] as String;
+              final bool isAvailable = slot['is_available'] as bool? ?? false;
+              final isSelected = _selectedSlotTime == time;
+              return _buildTimeSlotButton(time, isAvailable, isSelected);
+            }).toList(),
+          ),
+          const SizedBox(height: 16),
+        ],
+        if (afternoonSlots.isNotEmpty) ...[
+          _buildPeriodHeader('Tarde', Icons.wb_twilight_outlined, afternoonSlots.where((s) => s['is_available'] == true).length),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: afternoonSlots.map((slot) {
+              final String time = slot['time'] as String;
+              final bool isAvailable = slot['is_available'] as bool? ?? false;
+              final isSelected = _selectedSlotTime == time;
+              return _buildTimeSlotButton(time, isAvailable, isSelected);
+            }).toList(),
+          ),
+          const SizedBox(height: 16),
+        ],
+        if (eveningSlots.isNotEmpty) ...[
+          _buildPeriodHeader('Noche', Icons.bedtime_outlined, eveningSlots.where((s) => s['is_available'] == true).length),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: eveningSlots.map((slot) {
+              final String time = slot['time'] as String;
+              final bool isAvailable = slot['is_available'] as bool? ?? false;
+              final isSelected = _selectedSlotTime == time;
+              return _buildTimeSlotButton(time, isAvailable, isSelected);
+            }).toList(),
+          ),
+        ],
+      ],
     );
   }
 
@@ -709,6 +869,7 @@ class _BookingScreenState extends State<BookingScreen> {
     return GestureDetector(
       onTap: isAvailable
           ? () {
+              HapticFeedback.selectionClick();
               setState(() {
                 _selectedSlotTime = time;
               });

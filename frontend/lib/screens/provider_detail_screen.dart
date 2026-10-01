@@ -665,7 +665,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
-                                  color: const Color(0xFFE8DFD8).withOpacity(0.6),
+                                  color: const Color(0xFFE8DFD8).withValues(alpha: 0.6),
                                   width: 1,
                                 ),
                                 boxShadow: const [
@@ -780,7 +780,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                             Container(
                                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                               decoration: BoxDecoration(
-                                                color: const Color(0xFFC5A052).withOpacity(0.12),
+                                                color: const Color(0xFFC5A052).withValues(alpha: 0.12),
                                                 borderRadius: BorderRadius.circular(12),
                                               ),
                                               child: const Row(
