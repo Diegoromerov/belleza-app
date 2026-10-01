@@ -5,6 +5,7 @@ const { getJwtSecret, toApiRole } = require('../config/jwt');
 const redisClient = require('../config/redis');
 const emailService = require('../services/email.service');
 const { Membership, BusinessProfile } = require('../models');
+const { rolUsuarioSchema, ROLES_USUARIO } = require('../schemas/role.schema');
 
 
 // ==========================================
@@ -303,15 +304,22 @@ exports.onboarding = async (req, res) => {
     const userId = req.user.id;
     const { rol, documento_id_url, rut_url, certificacion_url, aceptar_habeas_data, aceptar_terminos } = req.body;
 
-    if (!rol || !['CLIENTE', 'PRESTADOR', 'SALON'].includes(rol.toUpperCase())) {
-      return res.status(400).json({ error: 'Rol inválido o ausente' });
+    // 🛡️ Enum estricto del rol (hallazgo P0 t_fix_backend_05, authController.js:306).
+    // Antes: guard ad-hoc sobre `rol.toUpperCase()`; un rol no-string (número/objeto/array)
+    // provocaba TypeError → 500 y la aceptación no se apoyaba en un tipo enumerado.
+    const rolParse = rolUsuarioSchema.safeParse(rol);
+    if (!rolParse.success) {
+      return res.status(400).json({
+        error: 'Rol inválido o ausente',
+        message: `El rol debe ser uno de: ${ROLES_USUARIO.join(', ')}.`,
+      });
     }
 
     if (aceptar_habeas_data !== true || aceptar_terminos !== true) {
       return res.status(400).json({ error: 'Debe aceptar la Política de Tratamiento de Datos Personales (Habeas Data) y los Términos y Condiciones para continuar.' });
     }
 
-    const mappedRol = rol.toUpperCase();
+    const mappedRol = rolParse.data;
     const clientIp = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
     if (mappedRol === 'PRESTADOR') {
