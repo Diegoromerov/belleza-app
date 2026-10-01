@@ -50,12 +50,24 @@ const authMiddleware = async (req, res, next) => {
 
     const dbRole = userRes.rows[0].rol;
     const dbTenantId = userRes.rows[0].tenant_id;
-    
-    // Activar RLS para la conexión (NOTA: en pg-pool esto puede tener fugas si la conexión se reutiliza
-    // pero se aplica para satisfacer la recomendación de la auditoría)
-    if (dbTenantId) {
-      await pool.query('SELECT set_config($1, $2, false)', ['app.tenant_id', dbTenantId.toString()]);
-    }
+
+    // AISLAMIENTO DE TENANT (fix P0 — tarjeta t_fix_tenant_04)
+    // -------------------------------------------------------
+    // authMiddleware NO debe fijar `app.tenant_id` sobre la conexión del pool.
+    // El bloque anterior (`set_config($1, $2, false)`) era de alcance SESIÓN
+    // (is_local = false): el ajuste sobrevivía al fin de la petición y quedaba
+    // pegado a la conexión que volvía al pool. Cualquier petición posterior que
+    // reutilizara esa conexión —antes de fijar su propio contexto, o en un
+    // camino no autenticado— heredaba el tenant anterior: fuga cross-tenant.
+    //
+    // El contexto de tenant se establece de forma TRANSACCIONAL (is_local = true)
+    // sobre una conexión DEDICADA, por la capa de enrutado de tenant
+    // (config/tenantRouting.js + middleware/tenantContext.js), que además
+    // redirige las consultas hechas con este `pool` a ESA conexión. Aquí solo se
+    // publica el tenant en `req.user` para que esa capa lo aplique.
+    //
+    // NO reintroducir aquí un set_config de sesión. El test
+    // `src/tests/tenantAuthIsolation.test.js` falla si vuelve.
 
     req.user = {
       id: verified.id,
