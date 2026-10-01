@@ -8,6 +8,13 @@
  *   3. si el paso 1 o 2 fallan → fallback full-text (tsvector español) sobre la misma tabla
  *   El tenant viaja SIEMPRE como parámetro ligado ($n), nunca interpolado en el SQL.
  *
+ * Evidence Layer (Fase C, AUD-RAGAURA-01 · P0 #2):
+ *   El retrieval se envuelve con la capa de evidencia:
+ *     chunks → Evidence (identidad, rank, provenance) → Sufficiency Gate
+ *     (SUPPORTED / PARTIAL / UNSUPPORTED / RETRIEVAL_UNCERTAIN) → EvidencePacket
+ *   `searchWithEvidence()` es el punto de integración; el contrato de
+ *   `searchBeautyKnowledge()` no cambia.
+ *
  * Filtros (Fase 1, 2026-09-23):
  *   - Los predicados apuntan a los CAMPOS QUE LA INGESTA REALMENTE ESCRIBE. La ingesta
  *     canónica (`ingestCanonicalCorpus.js`) escribe: title, category, content, metadata,
@@ -24,6 +31,7 @@
  */
 
 require('dotenv').config();
+const crypto = require('crypto');
 const { ragPool, pool } = require('../config/db');
 const { generateEmbedding: generateQueryEmbedding } = require('./embeddingService');
 const { resolveCategory } = require('../config/knowledgeCategories');
@@ -376,6 +384,266 @@ async function searchBeautyKnowledge(query, options = {}) {
   }
 }
 
+// ─── Evidence Layer (AUD-RAGAURA-01 · P0 #2) ─────────────────────────
+/**
+ * La capa de retrieval devuelve chunks crudos; inyectarlos así al LLM no permitía
+ * certificar el «Estado 7»: sin identidad de evidencia, sin estado de suficiencia y sin
+ * provenance estructurada, una respuesta parcial pasaba por certeza.
+ *
+ * Esta sección implementa el CONTRATO de la Evidence Layer diseñado en R6-C1
+ * (`backend/scripts/r6c1EvidenceArchitectureAnalysis.js`):
+ *   chunks → Evidence Candidate Builder → Sufficiency Gate → EvidencePacket
+ *
+ * El retrieval (`searchBeautyKnowledge`) NO cambia: se envuelve. `searchWithEvidence`
+ * es el punto de integración para `auraToolExecutor`.
+ */
+
+/**
+ * Estados de suficiencia del EvidencePacket (contrato R6-C1).
+ *   SUPPORTED            cobertura ≥ umbral y ≥1 evidencia con gate fuerte (score ≥ 0.55)
+ *   PARTIAL              hay evidencia relevante pero falta el gate fuerte o cobertura
+ *   UNSUPPORTED          no hay evidencia que sostenga la respuesta
+ *   RETRIEVAL_UNCERTAIN  la señal no permite decidir (fallback FTS: similarity = null)
+ */
+const EVIDENCE_STATES = Object.freeze({
+  SUPPORTED: 'SUPPORTED',
+  PARTIAL: 'PARTIAL',
+  UNSUPPORTED: 'UNSUPPORTED',
+  RETRIEVAL_UNCERTAIN: 'RETRIEVAL_UNCERTAIN',
+});
+
+/**
+ * Umbrales del Sufficiency Gate. `strong_score` = 0.55 es el «gate fuerte» validado en
+ * R5-C25/C28/C29 (evita el falso SUFFICIENT de cejas_004 con cobertura léxica alta).
+ * Es interpretable, no un score-único: la decisión combina cobertura + gate fuerte.
+ */
+const SUFFICIENCY_POLICY = Object.freeze({
+  strong_score: 0.55,
+  coverage_supported: 0.5,
+  coverage_partial: 0.2,
+});
+
+/** Restricciones anti-alucinación que viajan en el packet hacia el generador. */
+const ANTI_HALLUCINATION_CONSTRAINTS = Object.freeze([
+  'No afirmar información sin evidencia en el packet (corpus-grounded)',
+  'No completar gaps con conocimiento externo',
+  'No usar hard negatives como evidencia',
+  'No mezclar categorías incorrectamente',
+  'No ocultar insuficiencia: PARTIAL/UNSUPPORTED se comunican explícitamente',
+  'No convertir evidencia parcial en certeza (confidence refleja cobertura)',
+]);
+
+const RETRIEVAL_STOPWORDS = new Set([
+  'para', 'por', 'con', 'los', 'las', 'una', 'uno', 'unos', 'unas', 'del', 'que', 'como',
+  'mas', 'pero', 'sin', 'sobre', 'entre', 'este', 'esta', 'estos', 'estas', 'ese', 'esa',
+  'esos', 'esas', 'son', 'sus', 'ser', 'hay', 'muy', 'mis', 'tus', 'puedo', 'puede',
+]);
+
+function normalizeForMatching(text) {
+  return String(text || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+}
+
+/** Términos (claims léxicos) de la consulta: sin stopwords, sin duplicados, length ≥ 3. */
+function extractQueryTerms(query) {
+  const seen = new Set();
+  const terms = [];
+  for (const raw of normalizeForMatching(query).split(/[^a-z0-9]+/)) {
+    if (raw.length < 3 || RETRIEVAL_STOPWORDS.has(raw) || seen.has(raw)) continue;
+    seen.add(raw);
+    terms.push(raw);
+  }
+  return terms;
+}
+
+/** Fracción de claims de la query presentes en el texto de la evidencia (0..1). */
+function computeCoverage(query, evidence) {
+  if (!Array.isArray(evidence) || evidence.length === 0) return 0;
+  const terms = extractQueryTerms(query);
+  if (terms.length === 0) return 1;
+  const haystack = normalizeForMatching(
+    evidence.map((e) => `${e.title || ''} ${e.content || ''}`).join(' ')
+  );
+  const covered = terms.filter((t) => haystack.includes(t)).length;
+  return covered / terms.length;
+}
+
+function hashQuery(query) {
+  if (query === undefined || query === null) return null;
+  return crypto.createHash('sha256').update(String(query)).digest('hex').slice(0, 16);
+}
+
+function round3(n) {
+  return Math.round(n * 1000) / 1000;
+}
+
+/**
+ * Evidence Candidate Builder: convierte los chunks recuperados en `Evidence` con
+ * identidad trazable (`evidence_id`, `chunk_id`, `source_id`), rank ordinal, la
+ * similitud realmente medida y provenance estructurada.
+ *
+ * @param {Array} chunks - filas de `searchBeautyKnowledge` (o cualquier chunk con title/content)
+ * @param {object} [options] - { query }
+ * @returns {Array} Evidence[]
+ */
+function buildEvidenceCandidates(chunks, options = {}) {
+  if (!Array.isArray(chunks) || chunks.length === 0) return [];
+  const queryHash = options.query !== undefined ? hashQuery(options.query) : null;
+
+  return chunks.map((chunk, index) => {
+    const rank = index + 1;
+    const retrievalScore =
+      typeof chunk.similarity === 'number' && !Number.isNaN(chunk.similarity)
+        ? chunk.similarity
+        : (typeof chunk.retrieval_score === 'number' ? chunk.retrieval_score : null);
+
+    return {
+      evidence_id: typeof crypto.randomUUID === 'function'
+        ? crypto.randomUUID()
+        : `ev-${Date.now()}-${rank}`,
+      chunk_id: chunk.chunk_id !== undefined ? chunk.chunk_id : (chunk.id !== undefined ? chunk.id : null),
+      source_id: chunk.document_id !== undefined ? chunk.document_id : null,
+      category: chunk.category !== undefined ? chunk.category : null,
+      title: chunk.title || '',
+      content: chunk.content || '',
+      retrieval_score: retrievalScore,
+      similarity: retrievalScore, // compatibilidad con formatKnowledgeContext
+      rank,
+      mode: chunk.mode || null,
+      fuente: chunk.fuente !== undefined ? chunk.fuente : null,
+      seccion: chunk.seccion !== undefined ? chunk.seccion : null,
+      metadata: chunk.metadata || {},
+      provenance: {
+        chunk_id: chunk.chunk_id !== undefined ? chunk.chunk_id : null,
+        source_id: chunk.document_id !== undefined ? chunk.document_id : null,
+        category: chunk.category !== undefined ? chunk.category : null,
+        fuente: chunk.fuente !== undefined ? chunk.fuente : null,
+        seccion: chunk.seccion !== undefined ? chunk.seccion : null,
+        retrieval_rank: rank,
+        retrieval_score: retrievalScore,
+        query_hash: queryHash,
+        source: 'vector_retrieval',
+      },
+    };
+  });
+}
+
+/**
+ * Sufficiency Gate: decide si la evidencia recuperada sostiene una respuesta, con un
+ * modelo interpretable (cobertura de claims + gate fuerte). No es `score > threshold`.
+ *
+ * @param {Array} evidence - Evidence[] (o chunks, que se adaptan internamente)
+ * @param {object} [options] - { query, policy, corpusGap }
+ * @returns {{state:string, confidence:number, coverage:number, strong_gate:boolean,
+ *            strong_evidence_count:number, candidate_count:number,
+ *            retrieval_measured:boolean, unsupported_reason:?string}}
+ */
+function evaluateSufficiency(evidence, options = {}) {
+  const list = Array.isArray(evidence) ? evidence : [];
+  const query = options.query || '';
+  const policy = { ...SUFFICIENCY_POLICY, ...(options.policy || {}) };
+
+  const coverage = computeCoverage(query, list);
+  const measured = list.filter((e) => typeof e.retrieval_score === 'number');
+  const strong = measured.filter((e) => e.retrieval_score >= policy.strong_score);
+  const strongGate = strong.length > 0;
+  const hasMeasuredRetrieval = measured.length > 0;
+
+  let state;
+  let unsupported_reason = null;
+
+  if (list.length === 0) {
+    state = EVIDENCE_STATES.UNSUPPORTED;
+    unsupported_reason = options.corpusGap ? 'CORPUS_GAP' : 'EVIDENCE_INSUFFICIENT';
+  } else if (!hasMeasuredRetrieval) {
+    // Fallback full-text: similarity = null. No se puede distinguir corpus gap de miss.
+    state = EVIDENCE_STATES.RETRIEVAL_UNCERTAIN;
+    unsupported_reason = 'RETRIEVAL_UNCERTAIN';
+  } else if (coverage >= policy.coverage_supported && strongGate) {
+    state = EVIDENCE_STATES.SUPPORTED;
+  } else if (coverage >= policy.coverage_partial) {
+    state = EVIDENCE_STATES.PARTIAL;
+  } else {
+    state = EVIDENCE_STATES.UNSUPPORTED;
+    unsupported_reason = options.corpusGap ? 'CORPUS_GAP' : 'EVIDENCE_INSUFFICIENT';
+  }
+
+  let confidence;
+  if (state === EVIDENCE_STATES.SUPPORTED) {
+    confidence = round3(coverage * 0.7 + 0.3);
+  } else if (state === EVIDENCE_STATES.PARTIAL) {
+    confidence = round3(coverage * 0.7);
+  } else if (state === EVIDENCE_STATES.RETRIEVAL_UNCERTAIN) {
+    confidence = 0;
+  } else {
+    confidence = round3(Math.min(coverage, 0.2));
+  }
+
+  return {
+    state,
+    confidence,
+    coverage: round3(coverage),
+    strong_gate: strongGate,
+    strong_evidence_count: strong.length,
+    candidate_count: list.length,
+    retrieval_measured: hasMeasuredRetrieval,
+    unsupported_reason,
+  };
+}
+
+/**
+ * EvidencePacket: contrato entre la Evidence Layer y el Answer Generator. Contiene SOLO
+ * evidencia autorizada + estado de suficiencia + provenance + restricciones.
+ *
+ * @param {Array} chunks - chunks recuperados, o Evidence[] ya construida
+ * @param {object} [options] - { query, mode, corpusGap }
+ * @returns {object} EvidencePacket
+ */
+function buildEvidencePacket(chunks, options = {}) {
+  const alreadyEvidence = Array.isArray(chunks) && chunks.length > 0 && chunks[0] && chunks[0].evidence_id;
+  const evidence = alreadyEvidence ? chunks : buildEvidenceCandidates(chunks, options);
+  const sufficiency = evaluateSufficiency(evidence, options);
+  const mode = options.mode || (evidence[0] && evidence[0].mode) || null;
+
+  return {
+    evidence,
+    state: sufficiency.state,
+    confidence: sufficiency.confidence,
+    provenance: {
+      query_hash: options.query !== undefined ? hashQuery(options.query) : null,
+      retrieval_mode: mode,
+      candidate_count: sufficiency.candidate_count,
+      strong_evidence_count: sufficiency.strong_evidence_count,
+      coverage: sufficiency.coverage,
+      gate: {
+        strong_score: SUFFICIENCY_POLICY.strong_score,
+        coverage_supported: SUFFICIENCY_POLICY.coverage_supported,
+        coverage_partial: SUFFICIENCY_POLICY.coverage_partial,
+      },
+    },
+    constraints: [...ANTI_HALLUCINATION_CONSTRAINTS],
+    sufficiency,
+    unsupported_reason: sufficiency.unsupported_reason,
+  };
+}
+
+/**
+ * Integración: retrieval real + Evidence Layer en una sola llamada.
+ * `trace` (opcional) se propaga a `searchBeautyKnowledge` y su `mode` alimenta el packet.
+ *
+ * @param {string} query
+ * @param {object} [options] - mismos que `searchBeautyKnowledge` (+ trace)
+ * @returns {Promise<object>} EvidencePacket
+ */
+async function searchWithEvidence(query, options = {}) {
+  const trace = options.trace || null;
+  const chunks = await searchBeautyKnowledge(query, options);
+  const mode = (trace && trace.mode) || (chunks[0] && chunks[0].mode) || null;
+  return buildEvidencePacket(chunks, { ...options, query, mode });
+}
+
 // ─── Formatear chunks para inyección en prompt ───────────────────────
 /**
  * Cita con los campos reales del corpus: `fuente` y `seccion` (columnas que escribe la
@@ -392,9 +660,10 @@ function formatKnowledgeContext(chunks) {
     const source = chunk.fuente || chunk.metadata?.source || sourceFiles[0] || chunk.category || 'Corpus canónico GlowApp';
     const seccion = chunk.seccion ? ` [Sección: ${chunk.seccion}]` : '';
     const chunkRef = chunk.chunk_id ? ` [Chunk: ${chunk.chunk_id}]` : '';
+    const rankRef = typeof chunk.rank === 'number' ? ` [Rank: ${chunk.rank}]` : '';
     const similarity = typeof chunk.similarity === 'number' ? ` (Similitud: ${(chunk.similarity * 100).toFixed(0)}%)` : '';
 
-    return `[${idx + 1}] ${chunk.title}${similarity}\n   📚 Fuente: ${source}${seccion}${chunkRef}\n   ${chunk.content}`;
+    return `[${idx + 1}] ${chunk.title}${similarity}\n   📚 Fuente: ${source}${seccion}${chunkRef}${rankRef}\n   ${chunk.content}`;
   }).join('\n\n');
 }
 
@@ -402,4 +671,11 @@ module.exports = {
   searchBeautyKnowledge,
   formatKnowledgeContext,
   generateEmbedding,
+  // Evidence Layer (AUD-RAGAURA-01 · P0 #2)
+  EVIDENCE_STATES,
+  SUFFICIENCY_POLICY,
+  buildEvidenceCandidates,
+  evaluateSufficiency,
+  buildEvidencePacket,
+  searchWithEvidence,
 };
