@@ -1653,7 +1653,71 @@ class _BookingScreenState extends State<BookingScreen> {
             ),
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
+        const Text(
+          'Métodos de Pago Aceptados via Wompi',
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black87),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _buildPaymentMethodBadge('💳 Tarjetas', 'Crédito y Débito'),
+            _buildPaymentMethodBadge('📱 Nequi / PSE', 'PSE Instantáneo'),
+            _buildPaymentMethodBadge('🏦 Bancolombia', 'Botón Bancolombia'),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0FDF4),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFBBF7D0)),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.verified_user_outlined, color: Color(0xFF16A34A), size: 18),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Garantía Glow 100%\nSatisfacción asegurada',
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF15803D)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFBFDBFE)),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.access_time_rounded, color: Color(0xFF2563EB), size: 18),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Cancelación Flexible\nHasta 2h antes',
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF1E40AF)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
@@ -1686,6 +1750,31 @@ class _BookingScreenState extends State<BookingScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildPaymentMethodBadge(String title, String subtitle) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE8DFD8)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Text(title, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1F1A15))),
+          const SizedBox(height: 2),
+          Text(subtitle, style: const TextStyle(fontSize: 9, color: Colors.grey)),
+        ],
+      ),
     );
   }
 
