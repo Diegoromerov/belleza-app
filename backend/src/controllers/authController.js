@@ -5,6 +5,35 @@ const { getJwtSecret, toApiRole } = require('../config/jwt');
 const redisClient = require('../config/redis');
 const emailService = require('../services/email.service');
 const { Membership, BusinessProfile } = require('../models');
+const {
+  registerSchema,
+  loginSchema,
+  oauthSchema,
+  onboardingSchema,
+  biometricsConsentSchema,
+  fcmTokenSchema,
+  changePasswordSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+  selectRoleSchema,
+  switchContextSchema,
+} = require('../schemas/auth.schema');
+
+// ==========================================
+// 🛡️ VALIDACIÓN ZOD (ADR-001, Checklist Item 3)
+// Toda entrada por req.body se valida antes de tocar la base de datos.
+// ==========================================
+const validateBody = (schema, body, res) => {
+  const parsed = schema.safeParse(body);
+  if (!parsed.success) {
+    const message = parsed.error.errors.map((e) => e.message).join(', ');
+    console.warn(`⚠️ [AUTH] Validación Zod fallida: ${message}`);
+    res.status(400).json({ error: 'VALIDATION_ERROR', message, details: parsed.error.format() });
+    return null;
+  }
+  return parsed.data;
+};
+
 
 
 // ==========================================
@@ -12,11 +41,10 @@ const { Membership, BusinessProfile } = require('../models');
 // ==========================================
 exports.register = async (req, res) => {
   try {
-    const { full_name, email, password, phone, role } = req.body;
-    
-    if (!full_name || !email || !password) {
-      return res.status(400).json({ error: 'Faltan campos obligatorios' });
-    }
+    const data = validateBody(registerSchema, req.body, res);
+    if (!data) return;
+
+    const { full_name, email, password, phone, role } = data;
 
     const cleanEmail = email.trim().toLowerCase();
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -81,13 +109,10 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
   try {
 
-    const { email, password } = req.body;
-    
-    if (!email || !password) {
-      // Nunca registrar la contraseña: la línea anterior imprimía `Password:` en claro (A360-2026-09-22/C-06).
-      console.log("❌ VALIDACIÓN FALLIDA: Faltan campos. Email:", email);
-      return res.status(400).json({ error: 'Email y contraseña son obligatorios' });
-    }
+    const data = validateBody(loginSchema, req.body, res);
+    if (!data) return;
+
+    const { email, password } = data;
 
     const cleanEmail = email.trim().toLowerCase();
 
@@ -219,11 +244,10 @@ exports.oauth = async (req, res) => {
       });
     }
 
-    const { email, nombre, foto_url, auth_provider, provider_id } = req.body;
+    const data = validateBody(oauthSchema, req.body, res);
+    if (!data) return;
 
-    if (!email || !nombre || !auth_provider || !provider_id) {
-      return res.status(400).json({ error: 'Faltan campos requeridos para OAuth' });
-    }
+    const { email, nombre, foto_url, auth_provider, provider_id } = data;
 
     const cleanEmail = email.trim().toLowerCase();
     const provider = auth_provider.toUpperCase(); // GOOGLE, OUTLOOK, LOCAL
@@ -301,11 +325,10 @@ exports.oauth = async (req, res) => {
 exports.onboarding = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { rol, documento_id_url, rut_url, certificacion_url, aceptar_habeas_data, aceptar_terminos } = req.body;
+    const data = validateBody(onboardingSchema, req.body, res);
+    if (!data) return;
 
-    if (!rol || !['CLIENTE', 'PRESTADOR', 'SALON'].includes(rol.toUpperCase())) {
-      return res.status(400).json({ error: 'Rol inválido o ausente' });
-    }
+    const { rol, documento_id_url, rut_url, certificacion_url, aceptar_habeas_data, aceptar_terminos } = data;
 
     if (aceptar_habeas_data !== true || aceptar_terminos !== true) {
       return res.status(400).json({ error: 'Debe aceptar la Política de Tratamiento de Datos Personales (Habeas Data) y los Términos y Condiciones para continuar.' });
@@ -379,11 +402,10 @@ exports.onboarding = async (req, res) => {
 exports.acceptBiometricsConsent = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { consentimiento_otorgado, version_politica, dispositivo } = req.body;
+    const data = validateBody(biometricsConsentSchema, req.body, res);
+    if (!data) return;
 
-    if (consentimiento_otorgado === undefined || !version_politica) {
-      return res.status(400).json({ error: 'consentimiento_otorgado y version_politica son obligatorios.' });
-    }
+    const { consentimiento_otorgado, version_politica, dispositivo } = data;
 
     const clientIp = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
@@ -413,11 +435,10 @@ exports.acceptBiometricsConsent = async (req, res) => {
 exports.saveFcmToken = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { fcm_token, device_os } = req.body;
+    const data = validateBody(fcmTokenSchema, req.body, res);
+    if (!data) return;
 
-    if (!fcm_token) {
-      return res.status(400).json({ error: 'fcm_token es requerido' });
-    }
+    const { fcm_token, device_os } = data;
 
     await pool.query(
       `UPDATE usuarios 
@@ -525,15 +546,10 @@ exports.deleteAccount = async (req, res) => {
 exports.changePassword = async (req, res) => {
       try {
         const userId = req.user.id;
-        const { current_password, new_password } = req.body;
+        const data = validateBody(changePasswordSchema, req.body, res);
+        if (!data) return;
 
-        if (!current_password || !new_password) {
-          return res.status(400).json({ error: 'Contraseña actual y nueva contraseña son requeridas.' });
-        }
-
-        if (new_password.length < 6) {
-          return res.status(400).json({ error: 'La nueva contraseña debe tener al menos 6 caracteres.' });
-        }
+        const { current_password, new_password } = data;
 
         // Obtener hash actual del usuario
         const userRes = await pool.query(
@@ -619,10 +635,10 @@ exports.logout = async (req, res) => {
 // ==========================================
 exports.forgotPassword = async (req, res) => {
   try {
-    const { email } = req.body;
-    if (!email) {
-      return res.status(400).json({ error: 'El correo electrónico es obligatorio.' });
-    }
+    const data = validateBody(forgotPasswordSchema, req.body, res);
+    if (!data) return;
+
+    const { email } = data;
 
     const cleanEmail = email.trim().toLowerCase();
 
@@ -680,15 +696,10 @@ exports.forgotPassword = async (req, res) => {
 // ==========================================
 exports.resetPassword = async (req, res) => {
   try {
-    const { email, otp, new_password } = req.body;
+    const data = validateBody(resetPasswordSchema, req.body, res);
+    if (!data) return;
 
-    if (!email || !otp || !new_password) {
-      return res.status(400).json({ error: 'Email, OTP y nueva contraseña son requeridos.' });
-    }
-
-    if (new_password.length < 6) {
-      return res.status(400).json({ error: 'La nueva contraseña debe tener al menos 6 caracteres.' });
-    }
+    const { email, otp, new_password } = data;
 
     const cleanEmail = email.trim().toLowerCase();
 
@@ -735,11 +746,10 @@ exports.resetPassword = async (req, res) => {
 exports.selectRole = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { role } = req.body;
+    const data = validateBody(selectRoleSchema, req.body, res);
+    if (!data) return;
 
-    if (!role || !['CLIENTE', 'PRESTADOR', 'SALON'].includes(role.toUpperCase())) {
-      return res.status(400).json({ error: 'Rol inválido o ausente. Debe ser CLIENTE, PRESTADOR o SALON.' });
-    }
+    const { role } = data;
 
     const cleanRole = role.toUpperCase();
     const onboarding = cleanRole === 'CLIENTE';
@@ -771,10 +781,10 @@ exports.selectRole = async (req, res) => {
 // ==========================================
 exports.switchContext = async (req, res) => {
   try {
-    const { business_profile_id } = req.body;
-    if (!business_profile_id) {
-      return res.status(400).json({ error: 'business_profile_id es obligatorio' });
-    }
+    const data = validateBody(switchContextSchema, req.body, res);
+    if (!data) return;
+
+    const { business_profile_id } = data;
 
     const userId = req.user.id;
 
