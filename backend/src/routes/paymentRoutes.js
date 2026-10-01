@@ -10,6 +10,7 @@ const { paymentLimiter, otpLimiter } = require('../middleware/rateLimiter');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const wompiService = require('../services/wompiService');
+const money = require('../utils/money');
 
 // ─── UTILIDADES ──────────────────────────────────────────────────────────────
 
@@ -269,15 +270,24 @@ router.post('/bookings/:id/confirm-otp', authMiddleware, async (req, res) => {
     const reteicaPct = parseFloat(await getConfig('reteica_pct', '0.414'));
     const reteivaPct = parseFloat(await getConfig('reteiva_pct', '15.0'));
 
-    const basePagoNeto = parseFloat(otp.pago_neto_prestador);
-    const comisionPlataforma = parseFloat(otp.comision_plataforma);
+    // t_fix_backend_04: liquidación en CENTAVOS ENTEROS (money.js).
+    // El dinero nunca se suma/resta en float: 100.10 - 5.31 = 94.78999999999999.
+    const basePagoNetoCents = money.toCents(otp.pago_neto_prestador);
+    const comisionPlataformaCents = money.toCents(otp.comision_plataforma);
 
-    const retencionFuente = Math.round(basePagoNeto * (retefuentePct / 100) * 100) / 100;
-    const retencionIca = Math.round(basePagoNeto * (reteicaPct / 100) * 100) / 100;
-    const retencionIva = Math.round(comisionPlataforma * (reteivaPct / 100) * 100) / 100;
+    const liquidacion = money.calcularRetenciones({
+      basePagoNetoCents,
+      comisionPlataformaCents,
+      retefuentePct,
+      reteicaPct,
+      reteivaPct
+    });
 
-    const totalRetenciones = retencionFuente + retencionIca + retencionIva;
-    const montoNeto = basePagoNeto - totalRetenciones;
+    const retencionFuente = money.fromCents(liquidacion.retencionFuenteCents);
+    const retencionIca = money.fromCents(liquidacion.retencionIcaCents);
+    const retencionIva = money.fromCents(liquidacion.retencionIvaCents);
+    const totalRetenciones = money.fromCents(liquidacion.totalRetencionesCents);
+    const montoNeto = money.fromCents(liquidacion.montoNetoCents);
 
     await client.query(
       `UPDATE otp_validaciones SET estado = 'USADO', usado_at = NOW() WHERE booking_id = $1`,
@@ -315,7 +325,8 @@ router.post('/bookings/:id/confirm-otp', authMiddleware, async (req, res) => {
           retencion_fuente: retencionFuente,
           retencion_ica: retencionIca,
           retencion_iva: retencionIva,
-          base_pago_neto: basePagoNeto
+          base_pago_neto: money.fromCents(basePagoNetoCents),
+          total_retenciones: totalRetenciones
         })
       ]
     );
