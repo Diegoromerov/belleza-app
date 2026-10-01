@@ -15,13 +15,17 @@ const authMiddleware = async (req, res, next) => {
   if (!token) return res.status(401).json({ error: 'UNAUTHORIZED' });
 
   try {
-    // POLÍTICA DE SEGURIDAD: Token Blacklisting con Redis
-    // En producción (NODE_ENV === 'production'): Fail-Closed (503 si Redis no está disponible o falla).
-    // En desarrollo/test: Fail-Open con log de advertencia.
-    const isProduction = process.env.NODE_ENV === 'production';
+    // POLÍTICA DE SEGURIDAD: Token Blacklisting con Redis (AUD-INFRA-01 #14)
+    // FAIL-CLOSED POR DEFECTO: si el blacklist no está disponible o falla, se rechaza
+    // con 503 y NO se llama next(). Sólo se permite obviar la comprobación (fail-open
+    // con advertencia) cuando NODE_ENV es EXPLÍCITAMENTE 'development' o 'test'.
+    // Un NODE_ENV ausente, 'staging' o mal escrito NO habilita fail-open: un token
+    // revocado nunca debe seguir siendo aceptado por un guard de entorno implícito.
+    const entorno = String(process.env.NODE_ENV || '').trim().toLowerCase();
+    const failOpenPermitido = entorno === 'development' || entorno === 'test';
     if (!redisClient || !redisClient.isReady) {
-      if (isProduction) {
-        console.error('🚨 [AUTH FAIL-CLOSED] Redis no disponible en producción para verificar token blacklist');
+      if (!failOpenPermitido) {
+        console.error('🚨 [AUTH FAIL-CLOSED] Redis no disponible para verificar token blacklist — rechazando petición');
         return res.status(503).json({ error: 'Servicio de autenticación no disponible temporalmente.' });
       } else {
         console.warn('⚠️ [AUTH FAIL-OPEN] Redis deshabilitado en dev/test — omitiendo comprobación de blacklist');
@@ -34,7 +38,7 @@ const authMiddleware = async (req, res, next) => {
         }
       } catch (redisErr) {
         console.error('Error de Redis en authMiddleware:', redisErr.message);
-        if (isProduction) {
+        if (!failOpenPermitido) {
           return res.status(503).json({ error: 'Servicio de autenticación no disponible temporalmente.' });
         }
       }
