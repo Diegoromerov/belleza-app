@@ -18,7 +18,14 @@
  * sigue usando la configuración real de PostgreSQL en lugar de tumbar el arranque.
  */
 
-const isMemoryMode = process.env.NODE_ENV === 'test' || process.env.USE_PG_MEM === 'true' || process.env.JEST_WORKER_ID !== undefined;
+// ¿Debe hablarse con el arnés en memoria?
+// `USE_PG_MEM=false` es una salida explícita: permite que una suite E2E hable con el PostgreSQL
+// real configurado en DATABASE_URL en lugar de quedar desviada al arnés. Es opt-in, así que sin
+// esa variable el comportamiento es exactamente el de siempre.
+const pideBaseReal = () => process.env.USE_PG_MEM === 'false';
+const enModoMemoria = () =>
+  !pideBaseReal() &&
+  (process.env.NODE_ENV === 'test' || process.env.USE_PG_MEM === 'true' || process.env.JEST_WORKER_ID !== undefined);
 
 // Esquema del harness. Es permisivo a propósito (sin FK ni CHECK): el objetivo es que las suites de
 // integración ejerciten el SQL y las queries reales, no re-validar las restricciones de las
@@ -333,7 +340,7 @@ let adapter = null;
 let enabled = false;
 
 function initMemoryIfNeeded() {
-  const isMem = process.env.NODE_ENV === 'test' || process.env.USE_PG_MEM === 'true' || process.env.JEST_WORKER_ID !== undefined;
+  const isMem = enModoMemoria();
   if (!enabled && isMem) {
     try {
       // eslint-disable-next-line global-require
@@ -358,7 +365,7 @@ initMemoryIfNeeded();
 
 module.exports = {
   get isMemoryMode() {
-    return process.env.NODE_ENV === 'test' || process.env.USE_PG_MEM === 'true' || process.env.JEST_WORKER_ID !== undefined;
+    return enModoMemoria();
   },
   get enabled() {
     initMemoryIfNeeded();

@@ -5,9 +5,20 @@ const jwt = require('jsonwebtoken');
 const JWT_SECRET = 'test_secret_key_2026_at_least_32_chars_long';
 process.env.JWT_SECRET = JWT_SECRET;
 
+// ── Detección de base de datos REAL ─────────────────────────────────────────────────────────
+// En modo test el pool de la aplicación desvía toda consulta a pg-mem (src/config/db.js), de
+// modo que ni provisionando un PostgreSQL real se llegaba a tocar la base real. Cuando el
+// entorno declara las dos URLs (administrador + rol de aplicación) esta suite pide el motor
+// real de forma explícita. Sin base declarada nada cambia: se usa el arnés en memoria.
+const ADMIN_DB_URL = process.env.DATABASE_URL_ADMIN || process.env.TEST_DATABASE_URL;
+const APP_DB_URL = process.env.DATABASE_URL;
+const HAY_BD_REAL = Boolean(ADMIN_DB_URL && APP_DB_URL);
+if (HAY_BD_REAL) process.env.USE_PG_MEM = 'false';
+
 const { pool } = require('../src/config/db');
 const ownerRoutes = require('../src/routes/ownerRoutes');
 const ownerController = require('../src/controllers/ownerController');
+const { getJwtSecret } = require('../src/config/jwt');
 
 const app = express();
 app.use(express.json());
@@ -294,79 +305,320 @@ describe('Fase 3: Multi-Sede OWNER Dashboard & Endpoints Integration Tests', () 
   });
 });
 
-// Test de Integración Gated con PostgreSQL real (se activa únicamente si TEST_DATABASE_URL está definida)
-const runRealDbTests = process.env.TEST_DATABASE_URL ? describe : describe.skip;
-runRealDbTests('Prueba de Integración SQL Real contra PostgreSQL (Gated)', () => {
-  let testPool;
+// ============================================================================================
+// E2E REAL contra PostgreSQL — OWNER multi-sede (sin mocks de pool.query)
+// ============================================================================================
+// Hallazgo P0 t_fix_qa_02 «Backend sin E2E contra BD real»:
+//   1. Todo el bloque de arriba sustituye pool.query por jest.fn() con filas fabricadas, así que
+//      el SQL del controlador nunca se ejecuta contra un motor SQL real.
+//   2. El único bloque "contra BD real" vivía tras `describe.skip` condicionado por
+//      TEST_DATABASE_URL, variable que el paso de jest de CI (.github/workflows/ci.yml) no
+//      define → no corría ni en local ni en CI.
+//   3. Y aun con un PostgreSQL provisionado, el pool en modo test desviaba toda consulta al
+//      arnés en memoria, por lo que la base real era inalcanzable desde la app bajo test.
+// Esta suite reemplaza ese bloque: levanta la app Express real (authMiddleware + ownerGuard +
+// controlador), firma JWT reales y ejecuta el SQL real contra un PostgreSQL REAL usando el
+// mismo rol de aplicación que producción, con RLS activo. Solo se salta si no hay BD declarada.
+
+const REAL_QUERY = pool.query; // referencia real capturada antes de que corran los mocks de arriba
+const describeE2EReal = HAY_BD_REAL ? describe : describe.skip;
+
+describeE2EReal('E2E REAL contra PostgreSQL: OWNER multi-sede (sin mocks de pool.query)', () => {
+  const TENANT_A = 910001;
+  const TENANT_B = 910002;
+  const OWNER = 911010;
+  const PRESTADOR_COMPARTIDO = 911050;
+  const PRESTADOR_LOCAL = 911060;
+  const PRESTADOR_INACTIVO = 911061;
+  const PRESTADOR_AJENO = 911070;
+  const OTRO_DUENO = 919999;
+  const CLIENTE = 912000;
+  const SEDE_NORTE = 910001;
+  const SEDE_SUR = 910002;
+  const SEDE_AJENA = 910099;
+  const SERVICIO = 'aaaa0005-0000-4000-8000-000000000005';
+  const BK_COMPARTIDO = 'aaaa0001-0000-4000-8000-000000000001';
+  const BK_LOCAL = 'aaaa0002-0000-4000-8000-000000000002';
+  const BK_PENDIENTE = 'aaaa0003-0000-4000-8000-000000000003';
+  const BK_AJENO = 'aaaa0004-0000-4000-8000-000000000004';
+
+  let adminPool;
+  let ownerToken;
+  let clienteToken;
+  // Agregados esperados, derivados de las filas que la BD real produjo al sembrar (el trigger
+  // calc_booking_split recalcula el reparto sobre valor_bruto, así que no se hardcodea).
+  let esperado;
+
+  const FIXTURE = () => ({
+    usuarios: [OWNER, PRESTADOR_COMPARTIDO, PRESTADOR_LOCAL, PRESTADOR_INACTIVO, PRESTADOR_AJENO, OTRO_DUENO, CLIENTE],
+    emails: [
+      'owner.e2e@salonglow.com', 'shared.e2e@salonglow.com', 'local.e2e@salonglow.com',
+      'inactivo.e2e@salonglow.com', 'ajeno.e2e@salonglow.com', 'otro.e2e@salonglow.com',
+      'cliente.e2e@salonglow.com',
+    ],
+    salones: [SEDE_NORTE, SEDE_SUR, SEDE_AJENA],
+    bookings: [BK_COMPARTIDO, BK_LOCAL, BK_PENDIENTE, BK_AJENO],
+  });
+
+  /** Ejecuta `fn` en una transacción y siempre deja la conexión en estado reutilizable. */
+  const enTransaccion = async (fn) => {
+    const client = await adminPool.connect();
+    try {
+      await client.query('BEGIN');
+      await fn(client);
+      await client.query('COMMIT');
+    } catch (err) {
+      try {
+        await client.query('ROLLBACK');
+      } catch (_) {
+        /* la conexión ya está inutilizable; el pool la descartará */
+      }
+      throw err;
+    } finally {
+      client.release();
+    }
+  };
+
+  /** Borra el fixture. Se repite por inquilino porque las políticas RLS acotan cada borrado. */
+  const borrarFixture = async (client) => {
+    const f = FIXTURE();
+    for (const tenant of [TENANT_A, TENANT_B]) {
+      await client.query(`SELECT set_config('app.tenant_id', $1, true)`, [String(tenant)]);
+      await client.query(
+        `DELETE FROM bookings WHERE id = ANY($1::uuid[]) OR provider_id = ANY($2::int[])`,
+        [f.bookings, f.usuarios]
+      );
+      await client.query(`DELETE FROM salon_miembros WHERE salon_id = ANY($1::int[])`, [f.salones]);
+      await client.query(`DELETE FROM services WHERE id = $1`, [SERVICIO]);
+      await client.query(`DELETE FROM salones WHERE id = ANY($1::int[])`, [f.salones]);
+      await client.query(`DELETE FROM perfiles_prestador WHERE id = ANY($1::int[])`, [f.usuarios]);
+      await client.query(
+        `DELETE FROM usuarios WHERE id = ANY($1::int[]) OR email = ANY($2::varchar[])`,
+        [f.usuarios, f.emails]
+      );
+    }
+    await client.query(`DELETE FROM tenants WHERE id = ANY($1::int[])`, [[TENANT_A, TENANT_B]]);
+  };
+
+  /** Siembra real e idempotente: primero limpia, después inserta. */
+  const ejecutarSeed = () => enTransaccion(async (client) => {
+    await borrarFixture(client);
+
+    await client.query(
+      `INSERT INTO tenants (id, name, slug) VALUES ($1, 'E2E Tenant A', 'e2e-a'), ($2, 'E2E Tenant B', 'e2e-b')`,
+      [TENANT_A, TENANT_B]
+    );
+
+    // ── Inquilino A ─────────────────────────────────────────────────────────────
+    await client.query(`SELECT set_config('app.tenant_id', $1, true)`, [String(TENANT_A)]);
+    await client.query(
+      `INSERT INTO usuarios (id, email, nombre, auth_provider, provider_id, rol, tenant_id) VALUES
+         ($1, 'owner.e2e@salonglow.com',    'Owner E2E',            'LOCAL', 'e2e:owner',    'PRESTADOR', $6),
+         ($2, 'shared.e2e@salonglow.com',   'Prestador Compartido', 'LOCAL', 'e2e:shared',   'PRESTADOR', $6),
+         ($3, 'local.e2e@salonglow.com',    'Prestador Local',      'LOCAL', 'e2e:local',    'PRESTADOR', $6),
+         ($4, 'inactivo.e2e@salonglow.com', 'Prestador Inactivo',   'LOCAL', 'e2e:inactivo', 'PRESTADOR', $6),
+         ($5, 'cliente.e2e@salonglow.com',  'Cliente E2E',          'LOCAL', 'e2e:cliente',  'CLIENTE',   $6)`,
+      [OWNER, PRESTADOR_COMPARTIDO, PRESTADOR_LOCAL, PRESTADOR_INACTIVO, CLIENTE, TENANT_A]
+    );
+    await client.query(
+      `INSERT INTO perfiles_prestador (id, business_name, tenant_id)
+         SELECT u.id, u.nombre, u.tenant_id FROM usuarios u
+          WHERE u.id = ANY($1::int[])
+            AND NOT EXISTS (SELECT 1 FROM perfiles_prestador p WHERE p.id = u.id)`,
+      [[OWNER, PRESTADOR_COMPARTIDO, PRESTADOR_LOCAL, PRESTADOR_INACTIVO]]
+    );
+    await client.query(
+      `INSERT INTO services (id, provider_id, name, price, duration_minutes, tenant_id)
+         VALUES ($1, $2, 'Servicio E2E', 100000, 60, $3)`,
+      [SERVICIO, PRESTADOR_COMPARTIDO, TENANT_A]
+    );
+    await client.query(
+      `INSERT INTO salones (id, nombre_salon, id_dueno, ciudad, plan_saas, tenant_id) VALUES
+         ($1, 'Sede Norte E2E', $3, 'Bogota',   'PRO', $4),
+         ($2, 'Sede Sur E2E',   $3, 'Medellin', 'PRO', $4)`,
+      [SEDE_NORTE, SEDE_SUR, OWNER, TENANT_A]
+    );
+    await client.query(
+      `INSERT INTO salon_miembros (salon_id, user_id, sub_rol, estatus, tenant_id) VALUES
+         ($1, $3, 'DUEÑO', 'ACTIVO', $7), ($2, $3, 'DUEÑO', 'ACTIVO', $7),
+         ($1, $4, 'PRESTADOR_INDEPENDIENTE', 'ACTIVO', $7),
+         ($2, $4, 'PRESTADOR_INDEPENDIENTE', 'ACTIVO', $7),
+         ($1, $5, 'PRESTADOR_INDEPENDIENTE', 'ACTIVO', $7),
+         ($1, $6, 'PRESTADOR_INDEPENDIENTE', 'INACTIVO', $7)`,
+      [SEDE_NORTE, SEDE_SUR, OWNER, PRESTADOR_COMPARTIDO, PRESTADOR_LOCAL, PRESTADOR_INACTIVO, TENANT_A]
+    );
+    await client.query(
+      `INSERT INTO bookings (id, client_id, provider_id, service_id, scheduled_at, valor_bruto,
+                             comision_plataforma, impuestos_estado, pago_neto_prestador, estado, tenant_id) VALUES
+         ($1, $4, $5, $7, '2026-09-20 10:00:00+00', 100000, 20000, 8000, 72000, 'COMPLETADA', $8),
+         ($2, $4, $6, $7, '2026-09-21 14:00:00+00',  50000, 10000, 4000, 36000, 'COMPLETADA', $8),
+         ($3, $4, $5, $7, '2026-09-22 10:00:00+00', 999999,     0,    0,     0, 'PENDIENTE_PAGO', $8)`,
+      [BK_COMPARTIDO, BK_LOCAL, BK_PENDIENTE, CLIENTE, PRESTADOR_COMPARTIDO, PRESTADOR_LOCAL, SERVICIO, TENANT_A]
+    );
+
+    // ── Inquilino B: datos que NO deben filtrarse al inquilino A ────────────────
+    await client.query(`SELECT set_config('app.tenant_id', $1, true)`, [String(TENANT_B)]);
+    await client.query(
+      `INSERT INTO usuarios (id, email, nombre, auth_provider, provider_id, rol, tenant_id) VALUES
+         ($1, 'ajeno.e2e@salonglow.com', 'Prestador Ajeno', 'LOCAL', 'e2e:ajeno', 'PRESTADOR', $3),
+         ($2, 'otro.e2e@salonglow.com',  'Otro Dueno',      'LOCAL', 'e2e:otro',  'PRESTADOR', $3)`,
+      [PRESTADOR_AJENO, OTRO_DUENO, TENANT_B]
+    );
+    await client.query(
+      `INSERT INTO perfiles_prestador (id, business_name, tenant_id)
+         SELECT u.id, u.nombre, u.tenant_id FROM usuarios u
+          WHERE u.id = ANY($1::int[])
+            AND NOT EXISTS (SELECT 1 FROM perfiles_prestador p WHERE p.id = u.id)`,
+      [[PRESTADOR_AJENO]]
+    );
+    await client.query(
+      `INSERT INTO salones (id, nombre_salon, id_dueno, ciudad, plan_saas, tenant_id)
+         VALUES ($1, 'Sede Ajena E2E', $2, 'Cali', 'PRO', $3)`,
+      [SEDE_AJENA, OTRO_DUENO, TENANT_B]
+    );
+    await client.query(
+      `INSERT INTO salon_miembros (salon_id, user_id, sub_rol, estatus, tenant_id) VALUES
+         ($1, $3, 'PRESTADOR_INDEPENDIENTE', 'ACTIVO', $4),
+         ($1, $2, 'PRESTADOR_INDEPENDIENTE', 'ACTIVO', $4)`,
+      [SEDE_AJENA, PRESTADOR_AJENO, PRESTADOR_COMPARTIDO, TENANT_B]
+    );
+    await client.query(
+      `INSERT INTO bookings (id, client_id, provider_id, service_id, scheduled_at, valor_bruto,
+                             comision_plataforma, impuestos_estado, pago_neto_prestador, estado, tenant_id)
+         VALUES ($1, $2, $3, $4, '2026-09-23 10:00:00+00', 888888, 0, 0, 0, 'COMPLETADA', $5)`,
+      [BK_AJENO, CLIENTE, PRESTADOR_AJENO, SERVICIO, TENANT_B]
+    );
+  });
+
+  const limpiarSeed = () => enTransaccion(async (client) => { await borrarFixture(client); });
 
   beforeAll(async () => {
+    // Los mocks del bloque de arriba restauran la referencia real en su afterEach; se reafirma.
+    pool.query = REAL_QUERY;
+
     const { Pool } = require('pg');
-    testPool = new Pool({
-      connectionString: process.env.TEST_DATABASE_URL,
-      connectionTimeoutMillis: 3000,
-    });
-    // Intentar conexión real a PostgreSQL: falla si el host/puerto es inalcanzable
-    await testPool.query('SELECT 1');
+    adminPool = new Pool({ connectionString: ADMIN_DB_URL, connectionTimeoutMillis: 5000, max: 2 });
+    await ejecutarSeed();
+
+    const sembradas = await adminPool.query(
+      `SELECT valor_bruto, comision_plataforma, impuestos_estado, pago_neto_prestador
+         FROM bookings WHERE id = ANY($1::uuid[])`,
+      [[BK_COMPARTIDO, BK_LOCAL]]
+    );
+    const suma = (columna) => sembradas.rows.reduce((acc, fila) => acc + Number(fila[columna] || 0), 0);
+    esperado = {
+      ingresos_brutos: suma('valor_bruto'),
+      comision_plataforma: suma('comision_plataforma'),
+      impuestos_estado: suma('impuestos_estado'),
+      pago_neto_prestadores: suma('pago_neto_prestador'),
+    };
+    esperado.ingresos_netos_negocio =
+      esperado.ingresos_brutos - esperado.comision_plataforma - esperado.impuestos_estado;
+
+    ownerToken = jwt.sign({ id: OWNER, role: 'SALON', email: 'owner.e2e@salonglow.com' }, getJwtSecret());
+    clienteToken = jwt.sign({ id: CLIENTE, role: 'CLIENTE', email: 'cliente.e2e@salonglow.com' }, getJwtSecret());
   });
 
   afterAll(async () => {
-    if (testPool) {
-      await testPool.end();
+    if (adminPool) {
+      await limpiarSeed();
+      await adminPool.end();
+    }
+    pool.query = REAL_QUERY;
+    delete process.env.USE_PG_MEM; // que el resto de suites del worker vuelvan al arnés en memoria
+  });
+
+  test('la app bajo prueba consulta un PostgreSQL real, no el motor en memoria', async () => {
+    // `current_database()` no existe en pg-mem: si el pool desvía al arnés, esta consulta falla.
+    const res = await pool.query('SELECT current_database() AS db');
+    expect(typeof res.rows[0].db).toBe('string');
+    expect(res.rows[0].db.length).toBeGreaterThan(0);
+    expect(jest.isMockFunction(pool.query)).toBe(false);
+
+    // Y el catálogo real describe `salones` con sus columnas de producción.
+    const cols = await pool.query(
+      `SELECT column_name FROM information_schema.columns WHERE table_name = 'salones'`
+    );
+    const nombres = cols.rows.map((r) => r.column_name);
+    for (const esperada of ['id', 'nombre_salon', 'id_dueno', 'plan_saas', 'location_public', 'tenant_id']) {
+      expect(nombres).toContain(esperada);
     }
   });
 
-  test('Ejecuta consulta SQL real contra PostgreSQL y valida que las columnas del controlador existen en el esquema real de bookings', async () => {
-    // 1. Obtener la consulta real generada por el controlador
-    let queryCaptured = '';
-    const tempReq = { user: { id: 10 }, ownedSalonIds: [1], query: {} };
-    const tempRes = { json: jest.fn(), status: jest.fn().mockReturnThis() };
+  test('GET /api/v1/owner/salones devuelve las sedes reales con total_colaboradores calculado por SQL', async () => {
+    const res = await request(app)
+      .get('/api/v1/owner/salones')
+      .set('Authorization', `Bearer ${ownerToken}`);
 
-    const mockPool = {
-      query: jest.fn().mockImplementation((text) => {
-        if (/FROM salon_miembros/i.test(text)) {
-          return Promise.resolve({ rows: [{ provider_id: 50, salon_id: 1, nombre_prestador: 'Carlos Mendoza' }] });
-        }
-        if (/FROM bookings/i.test(text)) {
-          queryCaptured = text;
-          return Promise.resolve({ rows: [] });
-        }
-        return Promise.resolve({ rows: [] });
-      }),
-    };
+    expect(res.statusCode).toBe(200);
+    expect(res.body.success).toBe(true);
 
-    const originalPoolQuery = pool.query;
-    pool.query = mockPool.query;
-    await ownerController.getDashboardMetrics(tempReq, tempRes);
-    pool.query = originalPoolQuery;
+    const ids = res.body.salones.map((s) => s.id);
+    expect(ids).toEqual([SEDE_NORTE, SEDE_SUR]);
+    // El aislamiento multi-tenant (RLS) impide que la sede de otro dueño aparezca.
+    expect(ids).not.toContain(SEDE_AJENA);
 
-    expect(queryCaptured).toBeDefined();
+    const porId = Object.fromEntries(res.body.salones.map((s) => [s.id, s]));
+    expect(porId[SEDE_NORTE].nombre_salon).toBe('Sede Norte E2E');
+    // ACTIVOS: dueño + compartido + local = 3; el miembro INACTIVO no cuenta (FILTER real).
+    expect(porId[SEDE_NORTE].total_colaboradores).toBe(3);
+    expect(porId[SEDE_SUR].total_colaboradores).toBe(2);
+  });
 
-    // Extraer columnas de SELECT y WHERE
-    const selectMatch = queryCaptured.match(/SELECT\s+([\s\S]+?)\s+FROM\s+bookings/i);
-    const selectedCols = selectMatch[1].split(',').map((c) => c.trim().split(/\s+/)[0]);
+  test('GET /api/v1/owner/dashboard-metrics agrega sobre filas reales de bookings', async () => {
+    const res = await request(app)
+      .get('/api/v1/owner/dashboard-metrics')
+      .set('Authorization', `Bearer ${ownerToken}`);
 
-    const whereMatch = queryCaptured.match(/WHERE\s+([\s\S]+?)$/i);
-    const cleanWhereText = whereMatch[1]
-      .replace(/'[^']*'/g, '')
-      .replace(/::[a-z0-9_]+/gi, '');
+    expect(res.statusCode).toBe(200);
+    const m = res.body.metrics;
 
-    const sqlKeywords = new Set(['and', 'or', 'any', 'in', 'not', 'is', 'null']);
-    const rawTokens = cleanWhereText.match(/\b([a-z_][a-z0-9_]*)\b/gi) || [];
-    const whereCols = Array.from(new Set(rawTokens.map((t) => t.toLowerCase()).filter((t) => !sqlKeywords.has(t) && isNaN(Number(t)))));
+    // Solo entran las dos citas COMPLETADA del inquilino A (100000 + 50000): el
+    // PENDIENTE_PAGO queda fuera por el filtro de estado y la cita del otro inquilino por RLS.
+    expect(m.ingresos_brutos).toBe(150000);
+    expect(m.total_citas).toBe(2);
 
-    const allUsedCols = Array.from(new Set([...selectedCols, ...whereCols]));
+    // El resto de la agregación se contrasta contra lo que la base real guardó en esas filas
+    // (el trigger calc_booking_split recalcula comisión/impuestos/neto al insertar).
+    expect(m.comision_plataforma).toBe(esperado.comision_plataforma);
+    expect(m.impuestos_estado).toBe(esperado.impuestos_estado);
+    expect(m.pago_neto_prestadores).toBe(esperado.pago_neto_prestadores);
+    expect(m.ingresos_netos_negocio).toBe(esperado.ingresos_netos_negocio);
+    expect(m.ingresos_netos_negocio).toBe(m.ingresos_brutos - m.comision_plataforma - m.impuestos_estado);
+    expect(m.sedes_compartidas).toBe(true);
 
-    // 2. Consultar el esquema real de PostgreSQL
-    const dbRes = await testPool.query(`
-      SELECT column_name
-        FROM information_schema.columns
-       WHERE table_name = 'bookings'
-    `);
-    expect(dbRes.rows.length).toBeGreaterThan(0);
-    const dbColumns = dbRes.rows.map((r) => r.column_name);
+    // Bajo RLS las membresías de OTRO inquilino son invisibles, así que el detector
+    // cross-tenant no encuentra filas. El test mockeado de arriba afirmaba `true` porque
+    // el mock se saltaba el aislamiento: esa es exactamente la clase de diferencia que
+    // sólo un E2E contra la base real puede revelar.
+    expect(m.prestadores_cross_tenant).toBe(false);
+    expect(m.prestadores_externos).toEqual([]);
+    expect(m.advertencia).toBeUndefined();
+  });
 
-    // 3. Toda columna referenciada en la SQL del controlador debe existir en el esquema real de PostgreSQL
-    const columnasDesconocidas = allUsedCols.filter((col) => !dbColumns.includes(col));
-    expect(columnasDesconocidas).toEqual([]);
+  test('POST /api/v1/owner/switch-salon autoriza contra salon_miembros real y rechaza sedes ajenas', async () => {
+    const propio = await request(app)
+      .post('/api/v1/owner/switch-salon')
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .set('x-active-salon-id', String(SEDE_SUR));
+    expect(propio.statusCode).toBe(200);
+    expect(propio.body.active_salon_id).toBe(SEDE_SUR);
+    expect(propio.body.sub_rol).toBe('DUEÑO');
+
+    const ajeno = await request(app)
+      .post('/api/v1/owner/switch-salon')
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .set('x-active-salon-id', String(SEDE_AJENA));
+    expect(ajeno.statusCode).toBe(403);
+    expect(ajeno.body.error).toContain('No perteneces a este salón');
+  });
+
+  test('GET /api/v1/owner/salones responde 403 real a un usuario sin sedes', async () => {
+    const res = await request(app)
+      .get('/api/v1/owner/salones')
+      .set('Authorization', `Bearer ${clienteToken}`);
+
+    expect(res.statusCode).toBe(403);
+    expect(res.body.error).toContain('No tienes sedes registradas como propietario');
   });
 });

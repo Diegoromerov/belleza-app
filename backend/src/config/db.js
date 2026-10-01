@@ -14,7 +14,24 @@ if (isProduction && !process.env.DATABASE_URL) {
 function getSslConfig(urlStr, hostStr) {
   const str = urlStr || '';
   const host = hostStr || process.env.DB_HOST || '';
-  if (str.includes('railway.internal') || host.includes('railway.internal') || host === 'localhost' || host === '127.0.0.1') {
+
+  // El host puede venir DENTRO de la URL (DATABASE_URL). Antes solo se miraba DB_HOST, así que
+  // cualquier DATABASE_URL —incluida una local de desarrollo— activaba SSL y el servidor
+  // respondía "The server does not support SSL connections".
+  let hostDeUrl = '';
+  try {
+    hostDeUrl = new URL(str).hostname;
+  } catch (_) {
+    hostDeUrl = '';
+  }
+  const esLocal = (h) => h === 'localhost' || h === '127.0.0.1' || h === '::1';
+
+  if (
+    str.includes('railway.internal') ||
+    host.includes('railway.internal') ||
+    esLocal(host) ||
+    esLocal(hostDeUrl)
+  ) {
     return false;
   }
   if (str || isProduction || isStaging) {
