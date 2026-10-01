@@ -414,8 +414,58 @@ exports.cancelBooking = async (req, res) => {
       return res.status(400).json({ error: 'No se puede cancelar una cita que ya ha sido completada' });
     }
 
-    booking.estado = 'CANCELADA';
-    await booking.save();
+    // P0 DINERO #2 — reversión de stock al cancelar.
+    // payBooking() y el webhook de Wompi descuentan el stock de los productos adicionales
+    // cuando la cita pasa a pagada. Si la cita se cancela y ese stock no se devuelve, las
+    // unidades quedan 'fantasma': descontadas de un pedido que ya no existe (inventario
+    // real > stock en base) mientras el pago sí se reversa. Sólo se revierte lo que se
+    // descontó: citas que nunca se pagaron (payment_status != 'paid') no tocaron stock.
+    // Todo dentro de la MISMA transacción que el cambio de estado: o se cancela y se
+    // devuelve el stock, o no ocurre ninguna de las dos cosas.
+    await sequelize.transaction(async (t) => {
+      const wasPaid = booking.payment_status === 'paid';
+
+      const productsList = Array.isArray(booking.productos_adicionales)
+        ? booking.productos_adicionales
+        : (booking.productos_adicionales && Array.isArray(booking.productos_adicionales.products)
+            ? booking.productos_adicionales.products
+            : []);
+
+      if (wasPaid && productsList.length > 0) {
+        for (const item of productsList) {
+          const qty = parseInt(item.cantidad) || 0;
+          if (qty <= 0) continue;
+
+          const prodRes = await sequelize.query(
+            'SELECT stock, nombre FROM productos WHERE id = :productId FOR UPDATE;',
+            {
+              replacements: { productId: item.id },
+              type: sequelize.QueryTypes.SELECT,
+              transaction: t
+            }
+          );
+
+          if (prodRes.length === 0) {
+            // El producto ya no existe: no se puede devolver su stock, pero eso no debe
+            // impedir la cancelación de la cita.
+            console.warn(`⚠️ [CANCEL] Producto ${item.id} no encontrado al revertir stock de la cita ${bookingId}`);
+            continue;
+          }
+
+          await sequelize.query(
+            'UPDATE productos SET stock = stock + :qty WHERE id = :productId;',
+            {
+              replacements: { qty, productId: item.id },
+              type: sequelize.QueryTypes.UPDATE,
+              transaction: t
+            }
+          );
+        }
+      }
+
+      booking.estado = 'CANCELADA';
+      await booking.save({ transaction: t });
+    });
 
     console.log(`❌ Cita ${bookingId} cancelada por el cliente ${clientId}`);
 
