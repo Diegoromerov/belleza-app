@@ -11,6 +11,7 @@ import '../widgets/wompi_payment_sheet.dart';
 import '../widgets/audience_toggle.dart';
 import '../services/audience_service.dart';
 import '../shared/mens_theme.dart';
+import 'ideas/product_scanner_screen.dart';
 
 class StoreScreen extends StatefulWidget {
   final String? bookingId;
@@ -890,10 +891,10 @@ class _StoreScreenState extends State<StoreScreen> {
                                              ),
                                              ElevatedButton.icon(
                                                onPressed: () {
-                                                 ScaffoldMessenger.of(context).showSnackBar(
-                                                   const SnackBar(
-                                                     content: Text('📷 Iniciando escáner biométrico OpenBeautyFacts...'),
-                                                     duration: Duration(seconds: 2),
+                                                 Navigator.push(
+                                                   context,
+                                                   MaterialPageRoute(
+                                                     builder: (_) => const ProductScannerScreen(),
                                                    ),
                                                  );
                                                },
