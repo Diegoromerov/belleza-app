@@ -1,1 +1,0 @@
-console.error("Mock Fail"); process.exit(1);

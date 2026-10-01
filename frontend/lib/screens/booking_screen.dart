@@ -59,6 +59,7 @@ class _BookingScreenState extends State<BookingScreen> {
   // recovery & search variables
   Map<String, dynamic>? _pendingRecoveryData;
   String _productSearchQuery = '';
+  String _selectedProductCategory = 'Todos';
 
   @override
   void initState() {
@@ -515,7 +516,7 @@ class _BookingScreenState extends State<BookingScreen> {
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            stepNames[index],
+                            isCompleted ? '${stepNames[index]} ✓' : stepNames[index],
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: isActive || isCompleted ? FontWeight.bold : FontWeight.w500,
@@ -1297,6 +1298,41 @@ class _BookingScreenState extends State<BookingScreen> {
           ),
         ),
         const SizedBox(height: 16),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: ['Todos', 'Cabello', 'Uñas', 'Estética', 'Maquillaje'].map((cat) {
+              final isSelected = _selectedProductCategory == cat;
+              return Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: FilterChip(
+                  label: Text(cat),
+                  selected: isSelected,
+                  onSelected: (selected) {
+                    setState(() {
+                      _selectedProductCategory = cat;
+                    });
+                  },
+                  selectedColor: AppTheme.primary,
+                  backgroundColor: const Color(0xFFF5EBE6),
+                  labelStyle: TextStyle(
+                    color: isSelected ? Colors.white : const Color(0xFF1F1A15),
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                    fontSize: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    side: BorderSide(
+                      color: isSelected ? AppTheme.primary : const Color(0xFFE8DFD8),
+                    ),
+                  ),
+                  showCheckmark: false,
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+        const SizedBox(height: 12),
         Padding(
           padding: const EdgeInsets.only(bottom: 12.0),
           child: TextField(
@@ -1325,8 +1361,10 @@ class _BookingScreenState extends State<BookingScreen> {
           ),
         ),
         if (_recommendedProducts.where((p) {
-          if (_productSearchQuery.isEmpty) return true;
-          return (p['nombre'] ?? '').toString().toLowerCase().contains(_productSearchQuery);
+          final nameMatches = _productSearchQuery.isEmpty || (p['nombre'] ?? '').toString().toLowerCase().contains(_productSearchQuery);
+          final catTag = (p['tag_especialidad'] ?? '').toString().toLowerCase();
+          final categoryMatches = _selectedProductCategory == 'Todos' || catTag == _selectedProductCategory.toLowerCase();
+          return nameMatches && categoryMatches;
         }).isEmpty)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 24.0),
@@ -1339,8 +1377,10 @@ class _BookingScreenState extends State<BookingScreen> {
           )
         else
           ..._recommendedProducts.where((p) {
-            if (_productSearchQuery.isEmpty) return true;
-            return (p['nombre'] ?? '').toString().toLowerCase().contains(_productSearchQuery);
+            final nameMatches = _productSearchQuery.isEmpty || (p['nombre'] ?? '').toString().toLowerCase().contains(_productSearchQuery);
+            final catTag = (p['tag_especialidad'] ?? '').toString().toLowerCase();
+            final categoryMatches = _selectedProductCategory == 'Todos' || catTag == _selectedProductCategory.toLowerCase();
+            return nameMatches && categoryMatches;
           }).map((prod) {
             final id = prod['id'].toString();
             final nombre = prod['nombre']?.toString() ?? 'Producto';
