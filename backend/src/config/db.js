@@ -201,7 +201,7 @@ function handleMemoryQuery(text, params = []) {
           id: memoryUsers.size + 1,
           nombre: cleanEmail.split('@')[0],
           email: cleanEmail,
-          password_hash: '$2a$10$w0992h.Zt83M1q.4vS34k.H9N49Qy5gM10J98GZq15L',
+          password_hash: '__SEED_PASSWORD_HASH__',
           auth_provider: 'LOCAL',
           provider_id: `local_${cleanEmail}`,
           rol: cleanEmail.includes('salon') ? 'SALON' : (cleanEmail.includes('prestador') || cleanEmail.includes('provider') ? 'PRESTADOR' : 'CLIENTE'),
