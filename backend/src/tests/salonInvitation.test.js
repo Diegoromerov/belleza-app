@@ -10,9 +10,9 @@
  * invitación del invitado legítimo.
  *
  * También se verifica que la asociación y el consumo del token ocurran en UNA
- * sola sentencia: sin el flag TENANT_TRANSACTION_PER_REQUEST (desactivado por
- * defecto) dos `pool.query` seguidas NO comparten transacción, así que un fallo
- * entre ambas dejaba el mismo token utilizable dos veces.
+ * sola sentencia: salvo que corra el middleware de contexto (tenantContext), dos
+ * `pool.query` seguidas NO comparten transacción, así que un fallo entre ambas
+ * dejaba el mismo token utilizable dos veces.
  */
 const crypto = require('crypto');
 
