@@ -1,4 +1,27 @@
 const { pool } = require('../config/db');
+const crypto = require('crypto');
+
+/**
+ * Genera una referencia Wompi DETERMINISTA (idempotente) a partir de la clave de
+ * negocio de la operación.
+ *
+ * Antes se usaba `Math.random()`, que no es idempotente ni garantiza unicidad:
+ * un reintento del mismo pago generaba una referencia distinta, creando
+ * dispersiones duplicadas y rompiendo la conciliación con Wompi.
+ *
+ * Ahora: misma operación -> misma referencia (un reintento es reconocible como el
+ * mismo pago); operaciones distintas -> referencias distintas (colisión
+ * despreciable con SHA-256 truncado a 16 hex / 64 bits).
+ */
+const generarReferenciaIdempotente = (prefijo, ...claves) => {
+  const huella = crypto
+    .createHash('sha256')
+    .update(claves.map((clave) => String(clave)).join('|'))
+    .digest('hex')
+    .slice(0, 16)
+    .toUpperCase();
+  return `${prefijo}_${huella}`;
+};
 
 /**
  * El simulador de dispersión NO puede marcar dinero como pagado en producción sin
@@ -38,8 +61,8 @@ exports.disbursePayout = async (bookingId, amount, nequiNumber, documentId) => {
         throw new Error('El prestador no tiene configurado un número de cuenta Nequi.');
       }
 
-      // Simular llamada exitosa de Wompi y generar una referencia aleatoria
-      const referenceToken = 'wompi_ref_' + Math.random().toString(36).substring(2, 11).toUpperCase();
+      // Referencia idempotente: misma cita + mismo monto => misma referencia Wompi
+      const referenceToken = generarReferenciaIdempotente('wompi_ref', bookingId, amount);
 
       // Guardar registro de la transferencia en la tabla transactions
       const query = `
@@ -90,7 +113,8 @@ exports.crearPayout = async ({ retiroId, providerId, amount, numeroCuenta, banco
       console.log(`   - Banco/Método: ${banco}`);
       console.log(`   - Cuenta: ${numeroCuenta}`);
 
-      const referenceToken = 'wompi_ret_' + Math.random().toString(36).substring(2, 11).toUpperCase();
+      // Referencia idempotente: mismo retiro + prestador + monto => misma referencia
+      const referenceToken = generarReferenciaIdempotente('wompi_ret', retiroId, providerId, amount);
 
       // Actualizar el estado del retiro a COMPLETADO y guardar el ID externo
       await pool.query(
