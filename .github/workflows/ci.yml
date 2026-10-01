@@ -67,6 +67,19 @@ jobs:
           cd backend
           node scripts/verifyNoVersionedSecrets.js
 
+      # Guard de numeración de migraciones (bloqueante). Corre AQUÍ, junto a las otras
+      # compuertas estáticas y antes de levantar PostgreSQL, por dos razones:
+      # (1) el fallo es del repositorio, no de la base, y debe verse en los primeros
+      # segundos; (2) el paso de jest queda `skipped` detrás de la preparación del
+      # esquema (CI-46), así que un guard que viviera solo dentro de jest no se
+      # ejecutaría. Dos ramas eligiendo el mismo número no es cosmético: el runner
+      # ordena alfabéticamente y aplica AMBAS, en un orden que nadie eligió.
+      # Ver backend/migrations/REGISTRY.md.
+      - name: Guard de numeración de migraciones (bloqueante)
+        run: |
+          cd backend
+          node tests/migrationsNoDuplicateNumbers.test.js
+
       # `npm run migrate` es `sequelize.sync({force:true})`: crea tablas desde los
       # modelos, y ninguna política de RLS vive en un modelo. Por eso el esquema y
       # los roles los monta un script propio, con el orden de migraciones probado
