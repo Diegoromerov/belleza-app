@@ -42,8 +42,11 @@ El frontend consume servicios exclusivamente desde la tabla normalizada:
 1. `backend/seed/prestador-demo.sql` — se eliminó la columna y el valor
    JSONB del INSERT de `perfiles_prestador` (el seed sigue creando los
    servicios en la tabla `services`, sección 4 del mismo archivo).
-2. `backend/init.sql` y `backend/schema.sql` — comentario de deprecación
-   sobre la definición de la columna.
+2. `backend/init.sql` — comentario de deprecación
+   sobre la definición de la columna. (`backend/schema.sql` se eliminó en el
+   fix P0 `t_fix_tenant_01`: era un volcado pg_dump UTF-16 divergente de
+   `init.sql`; la fuente única de verdad del esquema es `init.sql` +
+   `backend/migrations/*.sql`.)
 
 ## NO aplicado (requiere decisión explícita)
 

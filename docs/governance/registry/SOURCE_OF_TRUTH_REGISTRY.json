@@ -196,7 +196,7 @@
     {
       "domain": "Data",
       "classification": "CANONICAL",
-      "canonical": "PostgreSQL schema (backend/init.sql, backend/schema.sql)",
+      "canonical": "PostgreSQL schema (backend/init.sql + backend/migrations/*.sql)",
       "legacy": [
         "N",
         "o",
