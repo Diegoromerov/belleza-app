@@ -1,0 +1,20 @@
+# =============================================================================
+# scripts/backup.cron — programación de respaldos GlowApp
+#
+# Instalar con:  sudo ./scripts/install_backup_cron.sh   (idempotente)
+# Formato /etc/cron.d: cada línea lleva el usuario que ejecuta el comando.
+#
+# Objetivos de continuidad (cierran «RPO/RTO indefinidos», AUDITORIA_...:73):
+#   RPO <= 24 h   -> backup diario 02:00 UTC (formato custom, PARALELO y comprimido).
+#   RTO <= 30 min -> restore con pg_restore -j verificado por el drill de restauración.
+# =============================================================================
+SHELL=/bin/bash
+MAILTO=ops@glowapp.example
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+# Backup diario a las 02:00 UTC (retención y checksum los gestiona db_backup.sh).
+0 2 * * * root /opt/glowapp/scripts/db_backup.sh >> /var/log/glowapp/backup.log 2>&1
+
+# Drill de RESTAURACIÓN mensual (día 1, 04:00 UTC): prueba que el respaldo RESTAURA.
+# Si falla, el RTO no está garantizado y el cron avisa por MAILTO.
+0 4 1 * * root /opt/glowapp/scripts/db_restore_test.sh >> /var/log/glowapp/restore_drill.log 2>&1

@@ -1,2 +1,6 @@
 
 backend/data/corpus/*.json text eol=lf
+
+# Shell scripts y crontabs se ejecutan en Linux (cron/POSIX): LF obligatorio.
+*.sh   text eol=lf
+*.cron text eol=lf
