@@ -835,7 +835,85 @@ class _StoreScreenState extends State<StoreScreen> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.stretch,
                                     children: [
-                                      // 1. Barra de Búsqueda (Ocupa el ancho completo)
+                                      // Banner Escáner Biométrico / OpenBeautyFacts IA (Ciclo 4)
+                                       Container(
+                                         margin: const EdgeInsets.only(bottom: 12),
+                                         padding: const EdgeInsets.all(12),
+                                         decoration: BoxDecoration(
+                                           gradient: LinearGradient(
+                                             colors: isMen
+                                                 ? [MensTheme.obsidianCard, MensTheme.bronzeAccent.withValues(alpha: 0.3)]
+                                                 : [AppTheme.primary.withValues(alpha: 0.15), AppTheme.accent.withValues(alpha: 0.25)],
+                                           ),
+                                           borderRadius: BorderRadius.circular(16),
+                                           border: Border.all(
+                                             color: isMen ? MensTheme.bronzeAccent : AppTheme.primary.withValues(alpha: 0.5),
+                                           ),
+                                         ),
+                                         child: Row(
+                                           children: [
+                                             Container(
+                                               padding: const EdgeInsets.all(8),
+                                               decoration: BoxDecoration(
+                                                 color: isMen ? MensTheme.champagneGold.withValues(alpha: 0.2) : AppTheme.primary.withValues(alpha: 0.2),
+                                                 shape: BoxShape.circle,
+                                               ),
+                                               child: Icon(
+                                                 Icons.qr_code_scanner,
+                                                 color: isMen ? MensTheme.champagneGold : AppTheme.primary,
+                                                 size: 22,
+                                               ),
+                                             ),
+                                             const SizedBox(width: 12),
+                                             Expanded(
+                                               child: Column(
+                                                 crossAxisAlignment: CrossAxisAlignment.start,
+                                                 children: [
+                                                   Text(
+                                                     '✨ Escáner Biométrico IA',
+                                                     style: TextStyle(
+                                                       fontSize: 13,
+                                                       fontWeight: FontWeight.bold,
+                                                       color: isMen ? MensTheme.champagneGold : AppTheme.primary,
+                                                     ),
+                                                   ),
+                                                   const SizedBox(height: 2),
+                                                   Text(
+                                                     'Escanea productos con OpenBeautyFacts',
+                                                     style: TextStyle(
+                                                       fontSize: 11,
+                                                       color: textColor.withValues(alpha: 0.8),
+                                                     ),
+                                                   ),
+                                                 ],
+                                               ),
+                                             ),
+                                             ElevatedButton.icon(
+                                               onPressed: () {
+                                                 ScaffoldMessenger.of(context).showSnackBar(
+                                                   const SnackBar(
+                                                     content: Text('📷 Iniciando escáner biométrico OpenBeautyFacts...'),
+                                                     duration: Duration(seconds: 2),
+                                                   ),
+                                                 );
+                                               },
+                                               icon: const Icon(Icons.camera_alt, size: 14),
+                                               label: const Text('Escanear', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                                               style: ElevatedButton.styleFrom(
+                                                 backgroundColor: isMen ? MensTheme.bronzeAccent : AppTheme.primary,
+                                                 foregroundColor: Colors.white,
+                                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                                 minimumSize: Size.zero,
+                                                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                                 shape: RoundedRectangleBorder(
+                                                   borderRadius: BorderRadius.circular(20),
+                                                 ),
+                                               ),
+                                             ),
+                                           ],
+                                         ),
+                                       ),
+                                       // 1. Barra de Búsqueda (Ocupa el ancho completo)
                                       Container(
                                         height: 42,
                                         decoration: BoxDecoration(
