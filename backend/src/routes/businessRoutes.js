@@ -11,6 +11,7 @@ const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 const membershipMiddleware = require('../middleware/membership.middleware');
 const { requirePermission, RESOURCES, ACTIONS } = require('../middleware/authorization.middleware');
 const subirEvidencia = require('../middleware/evidenceUpload');
+const { adminAuditLog } = require('../middleware/adminAuditLog');
 
 // 1. Ruta Pública de Catálogo (Sin autenticación requerida para descubrimiento)
 router.get('/verticals', businessController.getVerticals);
@@ -72,6 +73,7 @@ router.post(
   authMiddleware,
   membershipMiddleware,
   requirePermission(RESOURCES.BUSINESS_PROFILE, ACTIONS.CREATE),
+  adminAuditLog('document.generate', 'document'),
   businessController.generateDocument
 );
 
@@ -116,8 +118,15 @@ router.get(
 );
 
 // 3. Rutas de Administración del Sistema (Protegidas por Admin Middleware)
+//    Las acciones sensibles quedan trazadas de forma append-only (FIX-FLUTTER-10).
 router.get('/admin/queue', authMiddleware, adminMiddleware, businessController.getAdminQueue);
-router.put('/admin/evidence/:id', authMiddleware, adminMiddleware, businessController.reviewEvidence);
+router.put(
+  '/admin/evidence/:id',
+  authMiddleware,
+  adminMiddleware,
+  adminAuditLog((req) => `evidence.${String((req.body && req.body.action) || 'review').toLowerCase()}`, 'evidence'),
+  businessController.reviewEvidence
+);
 
 wrapRouterAsync(router);
 module.exports = router;
