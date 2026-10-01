@@ -97,3 +97,37 @@ services:
         condition: service_healthy
     healthCheckPath: /health
     healthCheckInterval: 30
+
+# ---------------------------------------------------------------------------
+# ENVIRONMENTS (P0 QA #4 - t_fix_qa_04 / AUD-QA-01 #10)
+#
+# Railway config-as-code resuelve por entorno segun `environments.[nombre]`
+# (prioridad: override por entorno > config base > dashboard).
+#
+# `staging` clona la configuracion de produccion (mismos servicios y mismo
+# build) y solo cambia lo imprescindible para correr la suite E2E contra una
+# base real aislada:
+#   - rama `staging` (la misma que dispara .github/workflows/ci.yml),
+#   - NODE_ENV=staging,
+#   - TEST_DATABASE_URL, inyectada por entorno (placeholder ${...}); su valor
+#     real se define en Railway -> Variables del entorno staging, nunca aqui.
+#
+# El entorno real debe existir en Railway (dashboard/API) y las variables
+# definirse alli; este bloque declara la intencion y la paridad con prod.
+# ---------------------------------------------------------------------------
+environments:
+  production:
+    branch: main
+  staging:
+    branch: staging
+    clone_of: production
+    services:
+      - pgvector-db
+      - redis
+      - ai-worker
+      - backend
+    variables:
+      - name: NODE_ENV
+        value: staging
+      - name: TEST_DATABASE_URL
+        value: ${TEST_DATABASE_URL}
