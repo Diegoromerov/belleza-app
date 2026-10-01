@@ -126,15 +126,16 @@ exports.crearPayout = async ({ retiroId, providerId, amount, numeroCuenta, banco
         [retiroId, referenceToken]
       );
 
-      // Actualizar el estado de la transacción en ledger a COMPLETADO
+      // Registrar el desenlace del retiro como evento append-only (el ledger es inmutable)
       await pool.query(
-        `UPDATE wallet_transactions 
-         SET estado = 'COMPLETADO', 
-             metadata = metadata || $2::jsonb 
-         WHERE provider_id = $1 
-           AND tipo = 'DEBITO_RETIRO' 
-           AND (metadata->>'retiro_id')::uuid = $3`,
-        [providerId, JSON.stringify({ referencia_wompi: referenceToken }), retiroId]
+        `INSERT INTO wallet_ledger_events (tx_id, provider_id, evento, detalle)
+         SELECT wt.id, wt.provider_id, 'RETIRO_COMPLETADO',
+                jsonb_build_object('referencia_wompi', $2::text)
+         FROM wallet_transactions wt
+         WHERE wt.provider_id = $1
+           AND wt.tipo = 'DEBITO_RETIRO'
+           AND (wt.metadata->>'retiro_id')::uuid = $3`,
+        [providerId, referenceToken, retiroId]
       );
 
       console.log(`✅ [WOMPI PAYOUT RETIRO] Retiro ${retiroId} dispersado con éxito. Ref: ${referenceToken}`);
@@ -148,13 +149,16 @@ exports.crearPayout = async ({ retiroId, providerId, amount, numeroCuenta, banco
          WHERE id = $1`,
         [retiroId, err.message]
       );
+      // Registrar el desenlace fallido como evento append-only
       await pool.query(
-        `UPDATE wallet_transactions 
-         SET estado = 'FALLIDO' 
-         WHERE provider_id = $1 
-           AND tipo = 'DEBITO_RETIRO' 
-           AND (metadata->>'retiro_id')::uuid = $2`,
-        [providerId, retiroId]
+        `INSERT INTO wallet_ledger_events (tx_id, provider_id, evento, detalle)
+         SELECT wt.id, wt.provider_id, 'RETIRO_FALLIDO',
+                jsonb_build_object('error', $3::text)
+         FROM wallet_transactions wt
+         WHERE wt.provider_id = $1
+           AND wt.tipo = 'DEBITO_RETIRO'
+           AND (wt.metadata->>'retiro_id')::uuid = $2`,
+        [providerId, retiroId, err.message]
       );
     }
   }, 1000);
