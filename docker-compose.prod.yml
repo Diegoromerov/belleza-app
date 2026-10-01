@@ -29,7 +29,11 @@ services:
     environment:
       - POSTGRES_DB=glowapp
       - POSTGRES_USER=glowapp
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme_en_despliegue}
+      # Sin valor por defecto: `${VAR:?mensaje}` aborta el despliegue si POSTGRES_PASSWORD
+      # no llega al entorno. Antes traía `:-changeme_en_despliegue`, una credencial conocida
+      # por cualquiera que leyera el repo. El valor va entre comillas porque el mensaje de
+      # error de compose contiene `: ` y el YAML lo leería como un mapa.
+      - "POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD es obligatorio en produccion (definela en el entorno del despliegue)}"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:

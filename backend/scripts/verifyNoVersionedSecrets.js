@@ -121,6 +121,34 @@ const REGLAS = [
     }
   },
   {
+    // FASE C / P0 INFRA #2 — El `:-` de la interpolación de compose no lo veían las reglas
+    // anteriores: el `$` inicial hace que «valor por defecto literal» lo descarte como
+    // referencia, y `changeme…` estaba en la lista de marcadores benignos. Pero en un
+    // docker-compose de producción el `:-` NO es un marcador: pasa a ser la credencial
+    // viva del contenedor si la variable no llega. Aquí no se exime `changeme`.
+    nombre: 'valor por defecto literal en interpolación de compose',
+    buscar: '\\$\\{[A-Za-z0-9_]*(PASS|PASSWORD|SECRET|TOKEN|KEY|CLAVE|PWD)[A-Za-z0-9_]*:-',
+    validar: (linea, archivo) => {
+      if (!archivo) return false;
+      if (/\.(test|spec)\.[jt]sx?$/.test(archivo)) return false;
+      if (/scripts\/verify/.test(archivo)) return false;
+      if (/^\s*(\/\/|\/\*|\*|#)/.test(linea.trim())) return false;
+
+      const re = /\$\{([A-Za-z0-9_]*(?:PASS|PASSWORD|SECRET|TOKEN|KEY|CLAVE|PWD)[A-Za-z0-9_]*):-([^}]*)\}/g;
+      let m;
+      while ((m = re.exec(linea)) !== null) {
+        const varName = m[1];
+        const valorPorDefecto = m[2];
+        if (NON_SECRET_SUFFIXES.test(varName)) continue;
+        if (valorPorDefecto === '') continue; // `${X:-}` no aporta credencial
+        if (/^(\$|<)/.test(valorPorDefecto)) continue; // referencia a otra variable o marcador
+        if (/^(\*{2,}|REDACTED|\.\.\.|PLACEHOLDER|REPLACE_ME|dummy|xxx+)$/i.test(valorPorDefecto)) continue;
+        return true;
+      }
+      return false;
+    },
+  },
+  {
     nombre: 'token o JWT en parámetro de URL',
     buscar: '[?&]token=',
     validar: (linea, archivo) => {
@@ -292,7 +320,18 @@ function runScanner() {
     rawOutput += gitGrep(regla.buscar);
   }
 
-  const { hallazgos, exitCode } = analizarSalida(rawOutput);
+  // Una línea que casa el `buscar` de varias reglas llega una vez por regla (git grep por regla).
+  // Se deduplica por línea cruda (`archivo:linea:contenido`) para que el recuento del mensaje sea el
+  // real y no cuente dos veces la misma credencial. La etiqueta la sigue decidiendo `analizarSalida`.
+  const vistas = new Set();
+  const lineasUnicas = [];
+  for (const linea of (rawOutput || '').split('\n')) {
+    if (!linea || vistas.has(linea)) continue;
+    vistas.add(linea);
+    lineasUnicas.push(linea);
+  }
+
+  const { hallazgos, exitCode } = analizarSalida(lineasUnicas.join('\n'));
 
   if (exitCode === 0) {
     console.log('✅ Sin credenciales versionadas en archivos trackeados.');
