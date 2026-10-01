@@ -12,7 +12,10 @@
     "purge:rag": "node scripts/purgeRagKnowledge.js",
     "eval:rag": "node scripts/evaluateRag.js",
     "ci:eval": "bash scripts/ciRagEvaluation.sh",
-    "smoke:surfaces": "node scripts/smokeSurfaces.js"
+    "smoke:surfaces": "node scripts/smokeSurfaces.js",
+    "openapi:generate": "node scripts/generateOpenApiSpec.js",
+    "openapi:check": "node scripts/checkOpenApiSpec.js",
+    "test:contract": "jest src/tests/contract/openapi.contract.test.js src/tests/contract/critical-endpoints.contract.test.js --runInBand --forceExit"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
