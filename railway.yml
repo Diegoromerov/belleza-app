@@ -2,18 +2,31 @@
 # CRITICAL: Service NAME must be UNIQUE to force new volume creation
 # Railway associates volumes with SERVICE NAME, not volumes.name in YAML
 # Changing service name from "postgres" to "pgvector-db" forces clean volume
+#
+# ---------------------------------------------------------------------------
+# SECRETS POLICY (P0 infra/observabilidad - t_fix_infra_01 / AUD-INFRA-01 #1)
+# Este archivo esta TRACKEADO en git => NO declara secretos.
+#
+# Los valores sensibles se inyectan como variables de ENTORNO del servicio
+# (Railway dashboard -> Variables, o `railway variables --set`), NUNCA aqui,
+# de modo que puedan rotarse sin editar el repositorio ni redesplegar.
+#
+# Inventario de nombres requeridos por el entorno (valores fuera de git):
+#   ver `.env.example` (raiz).
+#     POSTGRES_PASSWORD  REDIS_PASSWORD  JWT_SECRET  GEMINI_API_KEY
+#     DEEPSEEK_API_KEY   FAL_KEY         REPLICATE_API_TOKEN
+# ---------------------------------------------------------------------------
 
 services:
   pgvector-db:                    # ← UNIQUE name forces NEW volume (was "postgres")
     dockerfilePath: Dockerfile.postgres
     restartPolicyType: ON_FAILURE
     variables:
+      # POSTGRES_PASSWORD se inyecta por entorno (Railway Variables).
       - name: POSTGRES_DB
         value: railway
       - name: POSTGRES_USER
         value: postgres
-      - name: POSTGRES_PASSWORD
-        value: ${POSTGRES_PASSWORD}
     volumes:
       - name: pgvector-db-data    # New volume name
         mountPath: /var/lib/postgresql/data
@@ -23,9 +36,7 @@ services:
   redis:
     image: redis:7-alpine
     container_name: beauty-redis
-    variables:
-      - name: REDIS_PASSWORD
-        value: ${REDIS_PASSWORD}
+    # REDIS_PASSWORD se inyecta por entorno (Railway Variables).
     volumes:
       - name: redis-data
         mountPath: /data
@@ -38,16 +49,13 @@ services:
       dockerfile: Dockerfile
     container_name: beauty-ai-worker
     variables:
+      # FAL_KEY y REPLICATE_API_TOKEN se inyectan por entorno (Railway Variables).
       - name: REDIS_HOST
         value: redis
       - name: REDIS_PORT
         value: "6379"
       - name: MOCK_MODE
         value: "true"
-      - name: FAL_KEY
-        value: ${FAL_KEY:-}
-      - name: REPLICATE_API_TOKEN
-        value: ${REPLICATE_API_TOKEN:-}
     depends_on:
       redis:
         condition: service_healthy
@@ -60,6 +68,8 @@ services:
       dockerfile: Dockerfile
     container_name: beauty-backend
     variables:
+      # DB_PASSWORD, JWT_SECRET, GEMINI_API_KEY y DEEPSEEK_API_KEY se inyectan
+      # por entorno (Railway Variables) — no se declaran en este archivo.
       - name: PORT
         value: "8080"
       - name: DB_HOST
@@ -70,22 +80,14 @@ services:
         value: railway
       - name: DB_USER
         value: postgres
-      - name: DB_PASSWORD
-        value: ${POSTGRES_PASSWORD}
       - name: REDIS_HOST
         value: redis
       - name: REDIS_PORT
         value: "6379"
-      - name: JWT_SECRET
-        value: ${JWT_SECRET}
       - name: NODE_ENV
         value: production
       - name: ALLOWED_ORIGINS
         value: ${ALLOWED_ORIGINS}
-      - name: GEMINI_API_KEY
-        value: ${GEMINI_API_KEY}
-      - name: DEEPSEEK_API_KEY
-        value: ${DEEPSEEK_API_KEY}
       - name: DEEPSEEK_MODEL
         value: deepseek-v4-flash
       - name: DEEPSEEK_BASE_URL
