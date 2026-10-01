@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { SECURITY_HEADERS } from './lib/security';
 
 // Rutas públicas: accesibles sin sesión.
 const PUBLIC_PATHS = ['/login', '/register'];
@@ -39,6 +40,14 @@ function redirectToLogin(request: NextRequest, pathname: string) {
   return NextResponse.redirect(loginUrl);
 }
 
+/** Aplica las cabeceras de seguridad (CSP incluida) a cualquier respuesta. */
+function withSecurityHeaders(response: NextResponse): NextResponse {
+  for (const { key, value } of SECURITY_HEADERS) {
+    response.headers.set(key, value);
+  }
+  return response;
+}
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -47,31 +56,31 @@ export function middleware(request: NextRequest) {
     (path) => pathname === path || pathname.startsWith(`${path}/`)
   );
   if (isPublicPath) {
-    return NextResponse.next();
+    return withSecurityHeaders(NextResponse.next());
   }
 
   // API routes de auth son públicas (las valida el backend)
   if (pathname.startsWith('/api/auth')) {
-    return NextResponse.next();
+    return withSecurityHeaders(NextResponse.next());
   }
 
   // Archivos estáticos de /public (imágenes, iconos, etc.) no requieren sesión.
   if (/\.[a-zA-Z0-9]+$/.test(pathname)) {
-    return NextResponse.next();
+    return withSecurityHeaders(NextResponse.next());
   }
 
   // Sin sesión en una ruta protegida: redirigir a /login.
   const token = getSessionToken(request);
   if (!token) {
-    return redirectToLogin(request, pathname);
+    return withSecurityHeaders(redirectToLogin(request, pathname));
   }
 
   // El panel es exclusivamente de administración.
   if (getTokenRole(token) !== 'ADMIN') {
-    return redirectToLogin(request, pathname);
+    return withSecurityHeaders(redirectToLogin(request, pathname));
   }
 
-  return NextResponse.next();
+  return withSecurityHeaders(NextResponse.next());
 }
 
 export const config = {
