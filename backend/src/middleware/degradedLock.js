@@ -64,6 +64,152 @@ const DEGRADED_ALLOWLIST = new Set([
 ]);
 
 /**
+ * MATRIZ DE DEGRADACIÓN POR DEPENDENCIA (hallazgo P0 — degradedLock.js:52).
+ *
+ * Antes: el candado decidía con UN único flag binario (pgAvailable / servingFabricatedData) y
+ * bloqueaba el 100% de /api, sin importar QUÉ dependencia había caído. Una dependencia lateral
+ * (RAG/pgvector, Redis, IA externa) tenía el mismo blast radius que una caída del PostgreSQL
+ * transaccional, que es lo que este hallazgo tipifica.
+ *
+ * Ahora: cada dependencia declara su alcance y su comportamiento de degradación.
+ *   - `alcanceGlobal: true`  ⇒ su caída afecta a toda superficie de datos /api (solo el core).
+ *   - `alcanceGlobal: false` ⇒ su caída degrada SOLO las superficies que la consumen
+ *     (familias de ruta), sin bloquear el resto del servicio.
+ *   - `comportamiento` documenta qué se hace con esa capa al caer (bloquear o degradar función).
+ *
+ * Regla de honestidad (C7): una dependencia LATERAL nunca puede eximir ni abrir dinero/identidad;
+ * solo el core degradado bloquea esas superficies, y lo sigue haciendo con 503.
+ */
+const DEPENDENCIAS_CONOCIDAS = ['database', 'rag', 'redis', 'ai'];
+
+const MATRIZ_DEGRADACION_POR_DEPENDENCIA = {
+  database: {
+    descripcion: 'PostgreSQL transaccional (datos de negocio, dinero e identidad).',
+    alcanceGlobal: true,
+    familiasDeRuta: [],
+    comportamiento: 'BLOQUEAR_503',
+    httpStatus: 503,
+    header: 'memory-fallback'
+  },
+  rag: {
+    descripcion: 'PostgreSQL RAG / pgvector (recuperación semántica y conocimiento de negocio).',
+    alcanceGlobal: false,
+    familiasDeRuta: ['/api/v1/business', '/api/chat', '/api/nia-beauty', '/api/v1/beauty'],
+    comportamiento: 'DEGRADAR_FUNCION',
+    httpStatus: 200,
+    header: 'rag-degraded'
+  },
+  redis: {
+    descripcion: 'Redis (caché y rate limiting distribuido; degrada a memoria local).',
+    alcanceGlobal: false,
+    familiasDeRuta: [],
+    comportamiento: 'DEGRADAR_FUNCION',
+    httpStatus: 200,
+    header: 'cache-degraded'
+  },
+  ai: {
+    descripcion: 'Proveedores de IA externos (Gemini/DeepSeek/NVIDIA); cae a fallback determinista.',
+    alcanceGlobal: false,
+    familiasDeRuta: ['/api/chat', '/api/nia-beauty', '/api/v1/beauty'],
+    comportamiento: 'AI_FALLBACK',
+    httpStatus: 200,
+    header: 'ai-fallback'
+  }
+};
+
+/**
+ * Normaliza el estado heterogéneo de la BD a un mapa de dependencias degradadas.
+ * El core se deriva del flag binario vigente; las dependencias laterales se leen de
+ * `dependencias` / `dependencies` cuando el productor de estado las expone.
+ *
+ * @param {Object} dbStatus
+ * @returns {Object} p. ej. { database: false, rag: true, redis: false, ai: false } (true = degradada)
+ */
+function normalizarEstadoDependencias(dbStatus) {
+  const estado = {};
+  for (const id of DEPENDENCIAS_CONOCIDAS) estado[id] = false;
+  if (!dbStatus || typeof dbStatus !== 'object') return estado;
+
+  if (dbStatus.pgAvailable === false || dbStatus.servingFabricatedData === true) {
+    estado.database = true;
+  }
+
+  const extra = dbStatus.dependencias || dbStatus.dependencies;
+  if (extra && typeof extra === 'object') {
+    for (const id of DEPENDENCIAS_CONOCIDAS) {
+      if (id === 'database') continue;
+      if (extra[id] === true) estado[id] = true;
+    }
+  }
+
+  return estado;
+}
+
+/**
+ * Evalúa de forma pura el estado de dependencias y separa el bloqueo global del alcance lateral.
+ *
+ * @param {Object} estadoDependencias - mapa { id: boolean } (true = degradada)
+ * @returns {{ bloqueoGlobal: boolean, dependenciasDegradadas: string[], dependenciasGlobales: string[], dependenciasScoped: string[] }}
+ */
+function evaluarDegradacionPorDependencia(estadoDependencias) {
+  const estado = estadoDependencias || {};
+  const dependenciasDegradadas = DEPENDENCIAS_CONOCIDAS.filter((id) => estado[id] === true);
+  const dependenciasGlobales = dependenciasDegradadas.filter(
+    (id) => MATRIZ_DEGRADACION_POR_DEPENDENCIA[id] && MATRIZ_DEGRADACION_POR_DEPENDENCIA[id].alcanceGlobal === true
+  );
+  const dependenciasScoped = dependenciasDegradadas.filter(
+    (id) => MATRIZ_DEGRADACION_POR_DEPENDENCIA[id] && MATRIZ_DEGRADACION_POR_DEPENDENCIA[id].alcanceGlobal !== true
+  );
+
+  return { bloqueoGlobal: dependenciasGlobales.length > 0, dependenciasDegradadas, dependenciasGlobales, dependenciasScoped };
+}
+
+/**
+ * Dependencias laterales (no globales) que consume una ruta, según las familias de la matriz.
+ * Devuelve [] para rutas sin dependencia lateral (incluidas dinero/identidad: solo dependen del core).
+ *
+ * @param {string} reqPath - path completo sin query
+ * @returns {string[]}
+ */
+function dependenciasDeRuta(reqPath) {
+  const path = String(reqPath || '').split('?')[0];
+  return DEPENDENCIAS_CONOCIDAS.filter((id) => {
+    const def = MATRIZ_DEGRADACION_POR_DEPENDENCIA[id];
+    if (!def || def.alcanceGlobal === true) return false;
+    return def.familiasDeRuta.some((prefijo) => path === prefijo || path.startsWith(prefijo + '/'));
+  });
+}
+
+/**
+ * Decide de forma pura la degradación de UNA ruta a partir del estado de dependencias.
+ * Conserva el bloqueo global cuando el core cae; si no, degrada solo las superficies laterales afectadas.
+ *
+ * @param {string} reqPath
+ * @param {Object} estadoDependencias
+ * @returns {{ bloqueada: boolean, degradada: boolean, header: (string|null), httpStatus: number, dependencias: string[] }}
+ */
+function decidirDegradacionDeRuta(reqPath, estadoDependencias) {
+  const evaluacion = evaluarDegradacionPorDependencia(estadoDependencias);
+  if (evaluacion.bloqueoGlobal) {
+    const core = MATRIZ_DEGRADACION_POR_DEPENDENCIA.database;
+    return { bloqueada: true, degradada: true, header: core.header, httpStatus: core.httpStatus, dependencias: evaluacion.dependenciasDegradadas };
+  }
+
+  const depsRuta = dependenciasDeRuta(reqPath);
+  const degradadasRuta = depsRuta.filter((id) => estadoDependencias && estadoDependencias[id] === true);
+  const def = degradadasRuta.length > 0 ? MATRIZ_DEGRADACION_POR_DEPENDENCIA[degradadasRuta[0]] : null;
+
+  return {
+    bloqueada: false,
+    degradada: degradadasRuta.length > 0,
+    header: def ? def.header : null,
+    httpStatus: def ? def.httpStatus : 200,
+    dependencias: degradadasRuta
+  };
+}
+
+
+/**
  * Clasifica de forma pura el estado de salud de la base de datos sin mentir.
  * 
  * @param {Object} dbStatus - Objeto devuelto por getDbStatus()
@@ -127,32 +273,48 @@ async function degradedLockMiddleware(req, res, next) {
   }
   const decision = decidirBloqueo(dbStatus);
 
-  if (!decision.shouldBlock) {
-    return next();
-  }
-
   // Extraer el path completo de la URL sin query parameters
   const rawUrl = req.originalUrl || req.url || '';
   const reqPath = rawUrl.split('?')[0];
 
-  // Si la ruta está en la allowlist motivada, permitir que su propio controller procese y responda
-  if (DEGRADED_ALLOWLIST.has(reqPath)) {
-    return next();
+  const estadoDependencias = normalizarEstadoDependencias(dbStatus);
+  const evaluacion = evaluarDegradacionPorDependencia(estadoDependencias);
+
+  // Bloqueo global: dependencia core degradada (o el flag binario vigente). Blast radius 100% honesto.
+  if (decision.shouldBlock || evaluacion.bloqueoGlobal) {
+    // Si la ruta está en la allowlist motivada, permitir que su propio controller procese y responda
+    if (DEGRADED_ALLOWLIST.has(reqPath)) {
+      return next();
+    }
+
+    // Para cualquier otra superficie de datos bajo /api: bloquear con 503 y declarar la degradación
+    res.setHeader('X-GlowApp-Degraded', decision.header || MATRIZ_DEGRADACION_POR_DEPENDENCIA.database.header);
+    return res.status(decision.httpStatus || MATRIZ_DEGRADACION_POR_DEPENDENCIA.database.httpStatus).json({
+      success: false,
+      error: 'DATA_LAYER_DEGRADED',
+      message: 'Servicio no disponible en modo degradado sin conexión a la base de datos'
+    });
   }
 
-  // Para cualquier otra superficie de datos bajo /api: bloquear con 503 y declarar la degradación
-  res.setHeader('X-GlowApp-Degraded', decision.header || 'memory-fallback');
-  return res.status(decision.httpStatus || 503).json({
-    success: false,
-    error: 'DATA_LAYER_DEGRADED',
-    message: 'Servicio no disponible en modo degradado sin conexión a la base de datos'
-  });
+  // Core sano: aplicar la matriz por dependencia. Una dependencia lateral caída degrada SOLO
+  // las superficies que la consumen; no bloquea el resto del servicio (blast radius acotado).
+  const degradacionRuta = decidirDegradacionDeRuta(reqPath, estadoDependencias);
+  if (degradacionRuta.degradada && degradacionRuta.header) {
+    res.setHeader('X-GlowApp-Degraded', degradacionRuta.header);
+  }
+  return next();
 }
 
 module.exports = {
   DEGRADED_ALLOWLIST,
+  MATRIZ_DEGRADACION_POR_DEPENDENCIA,
+  DEPENDENCIAS_CONOCIDAS,
   degradedLockMiddleware,
   clasificarSalud,
   decidirBloqueo,
+  normalizarEstadoDependencias,
+  evaluarDegradacionPorDependencia,
+  dependenciasDeRuta,
+  decidirDegradacionDeRuta,
   asegurarEstadoComprobado
 };
