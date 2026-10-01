@@ -16,7 +16,7 @@ const path = require('path');
 
 const REPO_ROOT = path.resolve(__dirname, '../..');
 
-const ALLOW_MARKERS = /(PLACEHOLDER|REPLACE_ME|YOUR_|TU_|REDACTED|\*\*\*|\.\.\.|xxxx|XXXX|dummy|example\.com|<[^>]+>)/;
+const ALLOW_MARKERS = /(PLACEHOLDER|REPLACE_ME|__SEED_PASSWORD_HASH__|YOUR_|TU_|REDACTED|\*\*\*|\.\.\.|xxxx|XXXX|dummy|example\.com|<[^>]+>)/;
 
 const NON_SECRET_SUFFIXES = /_(HEADER|NAME|FIELD|TYPE|ALGO|SCOPE|PARAM)$/i;
 const TECHNICAL_VOCAB = /^(authorization|bearer|x-api-key|hs256|rs256|es256|basic|password_hash|jwt_secret|glow_token)$/i;
@@ -156,26 +156,25 @@ const REGLAS = [
     }
   },
   {
-    nombre: 'hash de contraseña débil conocida',
-    buscar: '\\$2[aby]\\$\\d{2}\\$[A-Za-z0-9./]{53}',
+    // N-2 (t_fix_tenant_08) — Compuerta ENDURECIDA.
+    // Antes: el `buscar` usaba `\d`, que POSIX ERE (`git grep -E`) NO interpreta como dígito,
+    // así que la regla nunca seleccionaba una línea y era una compuerta muerta. Además exigía
+    // exactamente 53 caracteres y comparaba contra bcryptjs (dependencia de instalación) para
+    // decidir si la contraseña era "débil conocida".
+    // Ahora: detección ESTÁTICA (sin bcryptjs) de cualquier hash bcrypt versionado —$2a$/$2b$/$2y$—,
+    // que es el defecto real: versionar un hash permite crackearlo offline. Se admiten hashes
+    // recortados (>= 40 caracteres tras el prefijo) porque también son material de credencial.
+    nombre: 'hash bcrypt versionado',
+    buscar: '\\$2[aby]\\$[0-9]{2}\\$[A-Za-z0-9./]{40,}',
     validar: (linea, archivo) => {
       if (!archivo) return false;
       if (/\.(test|spec)\.[jt]sx?$/.test(archivo)) return false;
       if (/scripts\/verify/.test(archivo)) return false;
-      const bcrypt = require('bcryptjs');
-      const WEAK_PASSWORDS = ['password123', '123456', 'admin', 'admin123', 'demo', 'test1234', 'password', '12345678'];
-      const re = /\$2[aby]\$\d{2}\$[A-Za-z0-9./]{53}/g;
+      const re = /\$2[aby]\$[0-9]{2}\$[A-Za-z0-9./]{40,}/g;
       let m;
       while ((m = re.exec(linea)) !== null) {
-        const hashStr = m[0];
-        if (ALLOW_MARKERS.test(hashStr)) continue;
-        for (const pass of WEAK_PASSWORDS) {
-          try {
-            if (bcrypt.compareSync(pass, hashStr)) {
-              return true;
-            }
-          } catch (_) {}
-        }
+        if (ALLOW_MARKERS.test(m[0])) continue;
+        return true;
       }
       return false;
     }

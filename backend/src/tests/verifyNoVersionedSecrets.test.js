@@ -60,8 +60,8 @@ describe('verifyNoVersionedSecrets — Pipeline Pure Scanner Test (CRLF / LF Inv
     expect(resNoAccent.hallazgos[0].nombre).toBe('contraseña documentada en prosa o comentario');
   });
 
-  test('Regla 2: Hash de contraseña débil conocida (bcrypt) es detectado por el escáner', () => {
-    // Hash bcrypt conocido de 'password123'
+  test('Regla 2: Hash bcrypt versionado es detectado por el escáner (detección estática del patrón $2a$/$2b$)', () => {
+    // Hash bcrypt con patrón $2a$/$2b$ (la regla es estática: ya no depende de bcryptjs)
     const hashLine = "INSERT INTO usuarios VALUES ('$2a$10$XG3dsKkJJFx9cldnFJHGt.FJqYVTNiSsoJAaSVwUQkYis22mXk/7O');";
     const rawInput = `seed.sql:5:${hashLine}\n`;
     const res = analizarSalida(rawInput);
@@ -70,9 +70,30 @@ describe('verifyNoVersionedSecrets — Pipeline Pure Scanner Test (CRLF / LF Inv
     expect(res.hallazgos[0]).toEqual({
       archivo: 'seed.sql',
       numLinea: '5',
-      nombre: 'hash de contraseña débil conocida'
+      nombre: 'hash bcrypt versionado'
     });
     expect(res.exitCode).toBe(1);
+  });
+
+  test('Regla 2 (N-2): El patrón bcrypt $2b$ se detecta en un seed .sql versionado (fuera de JS)', () => {
+    const sqlLine = "(101,'x@y.com','$2b$12$K7vXbM8Wz2oPl9R1NqYeOu1AhGj5FkLmNpQrStUvWxYzAbCdEfGhI','X',true),";
+    const res = analizarSalida(`backend/railway_seed.sql:9:${sqlLine}\n`);
+
+    expect(res.hallazgos).toHaveLength(1);
+    expect(res.hallazgos[0]).toEqual({
+      archivo: 'backend/railway_seed.sql',
+      numLinea: '9',
+      nombre: 'hash bcrypt versionado'
+    });
+    expect(res.exitCode).toBe(1);
+  });
+
+  test('Regla 2 (N-2): El marcador __SEED_PASSWORD_HASH__ NO se marca (placeholder reconocido)', () => {
+    const placeholderLine = "const PASSWORD_HASH = '__SEED_PASSWORD_HASH__';";
+    const res = analizarSalida(`backend/src/config/db.js:173:${placeholderLine}\n`);
+
+    expect(res.hallazgos).toHaveLength(0);
+    expect(res.exitCode).toBe(0);
   });
 
   test('Regla 3: Valor por defecto literal en variable sensible sigue siendo detectado (re-verificación de cobertura)', () => {

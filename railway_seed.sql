@@ -6,12 +6,12 @@ BEGIN;
 
 -- USUARIOS
 INSERT INTO usuarios (id, email, password_hash, nombre, phone, auth_provider, provider_id, rol, onboarding_completo) VALUES
-(101,'carolina.hair@bellezaapp.com','$2b$12$K7vXbM8Wz2oPl9R1NqYeOu1AhGj5FkLmNpQrStUvWxYzAbCdEfGhI','Carolina Mendoza Rios','+573124567890','LOCAL','local_carolina','PRESTADOR',true),
-(102,'santiago.barber@bellezaapp.com','$2b$12$E8mZnP9L4xQwK2j1TvYbUo3BiHk6GmNqPrStUvWxYzAbCdEfGhJ','Santiago Castro Devia','+573157890123','LOCAL','local_santiago','PRESTADOR',true),
-(103,'valeria.makeup@bellezaapp.com','$2b$12$V3bNmK8Wz1oPl9R2XqYeOu4AhGj6FkLmNpQrStUvWxYzAbCdEfGhK','Valeria Sofia Tobon','+573203456789','LOCAL','local_valeria','PRESTADOR',true),
-(104,'prov_nails_001@bellezaapp.com','$2b$12$B9nKj8Wz3oPl9R1NqYeOu2AhGj4FkLmNpQrStUvWxYzAbCdEfGhL','Ana Silva Torres','+573159876543','LOCAL','local_ana_silva','PRESTADOR',true),
-(105,'diana.facials@bellezaapp.com','$2b$12$Z1xCvB9NqWeRtYuIoPaSdFgHjKlZxCvBnMqWeRtYuIoPaSdFgHjK','Diana Marcela Gomez','+573186543210','LOCAL','local_diana','PRESTADOR',true),
-(1,'cliente.demo@bellezaapp.com','$2b$12$K7vXbM8Wz2oPl9R1NqYeOu1AhGj5FkLmNpQrStUvWxYzAbCdEfGhI','Cliente Demo','+573100000001','LOCAL','local_cliente_demo','CLIENTE',true)
+(101,'carolina.hair@bellezaapp.com','__SEED_PASSWORD_HASH__','Carolina Mendoza Rios','+573124567890','LOCAL','local_carolina','PRESTADOR',true),
+(102,'santiago.barber@bellezaapp.com','__SEED_PASSWORD_HASH__','Santiago Castro Devia','+573157890123','LOCAL','local_santiago','PRESTADOR',true),
+(103,'valeria.makeup@bellezaapp.com','__SEED_PASSWORD_HASH__','Valeria Sofia Tobon','+573203456789','LOCAL','local_valeria','PRESTADOR',true),
+(104,'prov_nails_001@bellezaapp.com','__SEED_PASSWORD_HASH__','Ana Silva Torres','+573159876543','LOCAL','local_ana_silva','PRESTADOR',true),
+(105,'diana.facials@bellezaapp.com','__SEED_PASSWORD_HASH__','Diana Marcela Gomez','+573186543210','LOCAL','local_diana','PRESTADOR',true),
+(1,'cliente.demo@bellezaapp.com','__SEED_PASSWORD_HASH__','Cliente Demo','+573100000001','LOCAL','local_cliente_demo','CLIENTE',true)
 ON CONFLICT (id) DO UPDATE SET nombre=EXCLUDED.nombre, phone=EXCLUDED.phone;
 
 -- FOTOS DE PERFIL

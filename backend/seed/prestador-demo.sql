@@ -5,7 +5,7 @@
 -- ============================================================
 
 -- Contraseña en texto plano: 'Demo123456'
--- Hash bcrypt (cost 10): $2b$10$K7L/8X9J2mN4pQ5rS6tU7uV8wX9yZ0aB1cD2eF3gH4iJ5kL6mN7o
+-- Hash bcrypt (cost 10): __SEED_PASSWORD_HASH__
 
 DO $$
 DECLARE
@@ -30,7 +30,7 @@ BEGIN
         'LOCAL',
         'proveedor.demo@glowapp.com',
         'PRESTADOR',
-        '$2b$10$K7L/8X9J2mN4pQ5rS6tU7uV8wX9yZ0aB1cD2eF3gH4iJ5kL6mN7o',
+        '__SEED_PASSWORD_HASH__',
         true,
         true,
         '+573001234567',
