@@ -38,6 +38,46 @@ const VALID_ACCESS_TYPES = [
 ];
 
 /**
+ * Criterio ÚNICO de consentimiento biométrico válido en TODO el backend
+ * (FASE C · t_fix_secapp_01, hallazgo P0 «granted vs active»).
+ *
+ * Un consentimiento autoriza SOLO si fue otorgado (granted = TRUE) y no fue
+ * revocado (revoked_at IS NULL). La columna legado de estado (migración 026)
+ * NO se usa para autorizar: su valor no cambia al revocar, por lo que autorizar
+ * con ella deja pasar consentimientos REVOCADOS (fuga de datos biométricos).
+ *
+ * Esta es la única condición de autorización del backend. La usan
+ * hasAnyValidConsent() y, por delegación, biometricConsentGuard.
+ */
+const VALID_CONSENT_SQL_PREDICATE = 'granted = TRUE AND revoked_at IS NULL';
+
+/**
+ * ¿Tiene el usuario ALGÚN consentimiento biométrico válido (otorgado y no revocado)?
+ * Fuente única de verdad para los guards que no exigen un consent_type concreto
+ * (p. ej. biometricConsentGuard aplicado a POST /api/biometric/analyze).
+ * @param {string} userId - Identificador del usuario (el mismo que llega en el JWT)
+ * @returns {Promise<Object|null>} Fila de consentimiento válido, o null si no hay
+ */
+async function hasAnyValidConsent(userId) {
+  try {
+    const query = `
+      SELECT id, consent_type, granted, granted_at, revoked_at, purpose, version_terms
+      FROM biometric_consents
+      WHERE user_id = $1
+        AND ${VALID_CONSENT_SQL_PREDICATE}
+      ORDER BY granted_at DESC NULLS LAST
+      LIMIT 1
+    `;
+    const res = await pool.query(query, [userId]);
+    return res.rows[0] || null;
+  } catch (error) {
+    console.error('❌ Error verificando consentimiento global:', error.message);
+    // Fail closed por seguridad legal
+    return null;
+  }
+}
+
+/**
  * Verifica si un usuario tiene consentimiento válido para un tipo específico
  * @param {string} userId - UUID del usuario
  * @param {string} consentType - Tipo de consentimiento requerido
@@ -446,6 +486,8 @@ async function getAccessLogs(filters = {}) {
 
 module.exports = {
   verifyConsent,
+  hasAnyValidConsent,
+  VALID_CONSENT_SQL_PREDICATE,
   requireBiometricConsent,
   logBiometricAccess,
   getUserConsents,
