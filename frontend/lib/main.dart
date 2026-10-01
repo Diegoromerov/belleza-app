@@ -11,6 +11,7 @@ import 'package:beauty_app/l10n/app_localizations.dart';
 
 import 'services/api_service.dart';
 import 'services/analytics_service.dart';
+import 'services/crash_reporting_service.dart';
 import 'services/auth_service.dart';
 import 'services/web_geolocation.dart';
 import 'package:geocoding/geocoding.dart' as geo;
@@ -77,11 +78,9 @@ void main() async {
     if (kDebugMode) {
       print('🔴 [FLUTTER ERROR DETECTED]: ${details.exception}');
     }
-    AnalyticsService().logEvent(
-      eventType: 'APP_CRASH_FLUTTER',
-      screenName: 'global',
-      metadata: {'error': details.exceptionAsString(), 'stack': details.stack.toString()},
-    );
+    // FIX-FLUTTER-07: reporte correlacionable (X-Trace-Id) y entrega inmediata,
+    // sin depender del batching/opt-out de AnalyticsService.
+    CrashReportingService.instance.reportFlutterError(details);
   };
 
   ErrorWidget.builder = (FlutterErrorDetails details) {
@@ -114,6 +113,8 @@ void main() async {
       DeviceOrientation.portraitDown,
     ]);
     AnalyticsService().init();
+    // FIX-FLUTTER-07: reintenta los crashes de ejecuciones anteriores.
+    CrashReportingService.instance.init();
     await AppTheme.loadThemePreference();
     await AudienceService.init();
     GlowIconRegistryInit.initialize();
@@ -122,11 +123,7 @@ void main() async {
     if (kDebugMode) {
       print('🔴 [UNHANDLED ASYNC ERROR]: $error');
     }
-    AnalyticsService().logEvent(
-      eventType: 'APP_CRASH_ASYNC',
-      screenName: 'global',
-      metadata: {'error': error.toString(), 'stack': stack.toString()},
-    );
+    CrashReportingService.instance.reportAsyncError(error, stack);
   });
 }
 
