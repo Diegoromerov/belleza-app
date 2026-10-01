@@ -42,6 +42,8 @@ const eventRegistrationRoutes = require('./src/routes/eventRegistrationRoutes');
 const businessRoutes = require('./src/routes/businessRoutes');
 const membershipRoutes = require('./src/routes/membershipRoutes');
 const { buildProjections } = require('./src/services/adminMetricsService');
+// FIX-FLUTTER-06: política de versión mínima publicada en GET /api/health.
+const { resolveAppVersionPolicy } = require('./src/services/appVersionPolicy');
 const adminMiddleware = async (req, res, next) => {
   try {
     if (!req.user || !req.user.id) {
@@ -445,6 +447,10 @@ app.get('/api/health', async (req, res) => {
     timestamp: new Date().toISOString(),
     env: process.env.NODE_ENV || 'development',
     database: dbStatus,
+    // FIX-FLUTTER-06: política de versión de la app (fuente: MINIMUM_APP_VERSION /
+    // LATEST_APP_VERSION). La app compara su versión instalada y bloquea si está
+    // por debajo de minimum_app_version.
+    ...resolveAppVersionPolicy(),
   });
 });
 

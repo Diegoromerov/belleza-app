@@ -24,6 +24,7 @@ import 'shared/mens_theme.dart';
 import 'shared/theme.dart';
 
 import 'services/notification_service.dart';
+import 'widgets/app_update_gate.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/auth/onboarding_screen.dart';
@@ -157,37 +158,43 @@ class BeautyApp extends StatelessWidget {
               debugShowCheckedModeBanner: false,
               navigatorObservers: [AnalyticsRouteObserver(), ScreenVisibilityObserverSingleton.instance],
               builder: (context, child) {
-                return Stack(
-                  children: [
-                    if (child != null) child,
-                    if (GlowGuideService.instance.engine != null)
-                      GlowGuidePresenter(
-                        engine: GlowGuideService.instance.engine!,
-                        onAction: (action) {
-                          final engine = GlowGuideService.instance.engine!;
-                          switch (action) {
-                            case GlowGuidePresenterAction.next:
-                              engine.next();
-                              break;
-                            case GlowGuidePresenterAction.previous:
-                              engine.previous();
-                              break;
-                            case GlowGuidePresenterAction.dismiss:
-                              engine.dismiss();
-                              break;
-                            case GlowGuidePresenterAction.replay:
-                              engine.replay();
-                              break;
-                            case GlowGuidePresenterAction.pause:
-                              engine.pause();
-                              break;
-                            case GlowGuidePresenterAction.resume:
-                              engine.resume();
-                              break;
-                          }
-                        },
-                      ),
-                  ],
+                // FIX-FLUTTER-06: chequeo de versión mínima en arranque.
+                // El builder vive POR ENCIMA del Navigator, por eso el gate
+                // recibe la navigatorKey raíz para poder bloquear con el diálogo.
+                return AppUpdateGate(
+                  navigatorKey: GlowGuideService.instance.navigatorKey,
+                  child: Stack(
+                    children: [
+                      if (child != null) child,
+                      if (GlowGuideService.instance.engine != null)
+                        GlowGuidePresenter(
+                          engine: GlowGuideService.instance.engine!,
+                          onAction: (action) {
+                            final engine = GlowGuideService.instance.engine!;
+                            switch (action) {
+                              case GlowGuidePresenterAction.next:
+                                engine.next();
+                                break;
+                              case GlowGuidePresenterAction.previous:
+                                engine.previous();
+                                break;
+                              case GlowGuidePresenterAction.dismiss:
+                                engine.dismiss();
+                                break;
+                              case GlowGuidePresenterAction.replay:
+                                engine.replay();
+                                break;
+                              case GlowGuidePresenterAction.pause:
+                                engine.pause();
+                                break;
+                              case GlowGuidePresenterAction.resume:
+                                engine.resume();
+                                break;
+                            }
+                          },
+                        ),
+                    ],
+                  ),
                 );
               },
                           theme: ThemeData(
