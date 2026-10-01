@@ -176,10 +176,15 @@ router.delete('/data', authMiddleware, async (req, res) => {
     const userId = req.user.id;
     const result = await deleteBiometricData(userId);
     
-    if (!result.deleted) {
+    // N-11 (SECAPP-05): confirmación explícita de borrado. `!result.deleted`
+    // aceptaba cualquier valor falsy, pero el contrato es que solo
+    // `deleted === true` autoriza responder éxito; ante fallo de BD el
+    // servicio devuelve {deleted:false, recordsAffected:0} y el cliente debe
+    // recibir 500, no una supresión ficticia (Ley 1581 Art. 8/15).
+    if (!result || result.deleted !== true) {
       return res.status(500).json({
         error: 'deletion_failed',
-        message: result.error || 'Error eliminando datos biométricos'
+        message: (result && result.error) || 'Error eliminando datos biométricos'
       });
     }
     
