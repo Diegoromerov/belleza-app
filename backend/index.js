@@ -375,12 +375,18 @@ app.get(/^(?!\/api(?:\/|$))(?!\/uploads(?:\/|$))(?!\/admin(?:\/|$)).*/, (req, re
   res.sendFile(path.join(__dirname, 'public/index.html'));
 });
 
-const allowDebugRoutes = process.env.ALLOW_DEBUG_ROUTES === 'true' || process.env.NODE_ENV !== 'production';
+// Fail-closed (AUD-SECAPP-03, P0): /api/test-db y /api/debug-db NUNCA quedan abiertas
+// por defecto. El guard anterior era fail-OPEN: se servían SIN auth en cualquier entorno
+// donde NODE_ENV no fuese exactamente 'production' (incluido NODE_ENV ausente) y también
+// en producción si ALLOW_DEBUG_ROUTES='true'. Ahora exigen auth+admin SIEMPRE, salvo el
+// opt-in explícito ALLOW_DEBUG_ROUTES='true' Y sólo fuera de producción (depuración local).
+const allowDebugRoutes =
+  process.env.NODE_ENV !== 'production' && process.env.ALLOW_DEBUG_ROUTES === 'true';
 const debugRouteMiddleware = (req, res, next) => {
-  if (!allowDebugRoutes) {
-    return authMiddleware(req, res, () => adminMiddleware(req, res, next));
+  if (allowDebugRoutes) {
+    return next();
   }
-  return next();
+  return authMiddleware(req, res, () => adminMiddleware(req, res, next));
 };
 
 const { rateLimitByIP } = require('./src/middleware/rateLimiter');
