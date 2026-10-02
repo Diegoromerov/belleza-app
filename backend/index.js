@@ -1808,8 +1808,9 @@ app.get('*', (req, res, next) => {
 // INICIO DEL SERVIDOR
 // ==========================================
 if (process.env.NODE_ENV !== 'test') {
-  const server = app.listen(PORT, async () => {
-    console.log(`🚀 Servidor en http://localhost:${PORT}`);
+  const HOST = process.env.HOST || '0.0.0.0';
+  const server = app.listen(PORT, HOST, async () => {
+    console.log(`🚀 Servidor escuchando en http://${HOST}:${PORT}`);
     // 🏭 Auto-ingesta de corpus en cada deploy
 try {
   let mod = null;
