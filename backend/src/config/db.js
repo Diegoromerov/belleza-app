@@ -749,10 +749,10 @@ const testConnection = async () => {
 };
 
 // ── Conexión a la base de datos RAG (pgvector) ──
-const ragPool = process.env.RAG_DATABASE_URL
+const ragPool = (process.env.RAG_DATABASE_URL || process.env.DATABASE_URL)
   ? new Pool({
-      connectionString: process.env.RAG_DATABASE_URL,
-      ssl: getSslConfig(process.env.RAG_DATABASE_URL),
+      connectionString: process.env.RAG_DATABASE_URL || process.env.DATABASE_URL,
+      ssl: getSslConfig(process.env.RAG_DATABASE_URL || process.env.DATABASE_URL),
       max: isProduction ? 15 : 10,
       connectionTimeoutMillis: CONNECTION_TIMEOUT_MS,
       idleTimeoutMillis: IDLE_TIMEOUT_MS,
