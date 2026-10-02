@@ -293,7 +293,9 @@ const CRITICAL_PROBES = [
     request: {
       method: 'post',
       path: '/api/auth/login',
-      body: { email: 'contrato@glowapp.test', password: 'contrasena-invalida-123' },
+      body: { email: 'contrato@glowapp.test', // Fixture, no credencial: el contrato espera 401. Se marca PLACEHOLDER para que la
+      // compuerta de credenciales versionadas (N-10) no lo confunda con un secreto real.
+      password: 'PLACEHOLDER_password_invalida' },
     },
     expectStatus: 401,
     expectBodyKeys: ['error'],
