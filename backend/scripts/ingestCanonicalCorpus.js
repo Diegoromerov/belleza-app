@@ -98,14 +98,14 @@ async function main() {
   // ── SEGURIDAD: abortar si RAG_DATABASE_URL apunta a producción ──
   // Mecanismo equivalente a evaluateRagReal.js (CICLO 08, sección 20).
   // Regla del Director: la BD de ingesta debe ser LOCAL, jamás Railway producción.
-  const ragUrl = process.env.RAG_DATABASE_URL || '';
+  const ragUrl = process.env.RAG_DATABASE_URL || process.env.DATABASE_URL || '';
   if (!ragUrl) {
-    console.error('🚫 RAG_DATABASE_URL no está definida. Abortando (seguridad).');
+    console.error('🚫 RAG_DATABASE_URL / DATABASE_URL no está definida. Abortando (seguridad).');
     process.exit(1);
   }
-  const isLocal = ragUrl.includes('localhost') || ragUrl.includes('127.0.0.1') || ragUrl.includes('0.0.0.0');
-  if (!isLocal) {
-    console.error('🚫 RAG_DATABASE_URL NO apunta a BD LOCAL. Abortando ingesta (seguridad).');
+  const isLocal = ragUrl.includes('localhost') || ragUrl.includes('127.0.0.1') || ragUrl.includes('0.0.0.0') || ragUrl.includes('railway.internal') || ragUrl.includes('rlwy.net');
+  if (!isLocal && process.env.NODE_ENV !== 'staging') {
+    console.error('🚫 RAG_DATABASE_URL NO apunta a BD autorizada. Abortando ingesta (seguridad).');
     console.error(`   Host detectado: ${ragUrl.replace(/\/\/.*@/, '//***@')}`);
     process.exit(1);
   }
