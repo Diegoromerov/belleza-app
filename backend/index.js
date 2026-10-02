@@ -1,3 +1,4 @@
+console.log('🚀 [BOOT] Starting GlowApp API Container...');
 // backend/index.js - Loopback updated
 const express = require('express');
 const cors = require('cors');
