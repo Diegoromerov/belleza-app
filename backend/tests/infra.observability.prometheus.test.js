@@ -39,9 +39,11 @@ function valorDeMetrica(body, nombreFamilia) {
   return m ? Number(m[1]) : NaN;
 }
 
-/** ¿Existe en el cuerpo alguna muestra de la familia de métrica indicada? */
 function exponeMetrica(body, nombreFamilia) {
-  return new RegExp(`^${nombreFamilia}(?:\\{[^}]*\\})?(?:\\s|$)`, 'm').test(body);
+  // Prometheus expone histogramas con sufijos _bucket, _sum, _count.
+  // Aceptamos la familia base O cualquiera de sus sufijos.
+  const re = new RegExp(`^${nombreFamilia}(?:_bucket|_sum|_count)?(?:\\{[^}]*\\})?(?:\\s|$)`, 'm');
+  return re.test(body);
 }
 
 describe('P0 infra/observabilidad · Prometheus + health endpoint', () => {

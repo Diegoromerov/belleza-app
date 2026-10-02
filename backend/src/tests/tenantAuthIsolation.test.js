@@ -49,8 +49,12 @@ const mockPool = {
     }
 
     if (/FROM usuarios/i.test(text)) {
-      return { rows: [{ rol: 'SALON', tenant_id: 1 }] };
-    }
+          return { rows: [{ rol: 'SALON', tenant_id: 1 }] };
+        }
+
+        if (/app_usuario_identidad/i.test(text)) {
+          return { rows: [{ rol: 'SALON', tenant_id: 1 }] };
+        }
 
     return { rows: [] };
   },

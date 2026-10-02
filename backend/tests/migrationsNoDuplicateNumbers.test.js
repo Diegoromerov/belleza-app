@@ -205,9 +205,13 @@ grupo('Guard de numeración de migraciones (backend/migrations)', () => {
 
   caso('cada .down.sql de rollback tiene su migración `up` correspondiente', () => {
     const ups = new Set(listarMigraciones(MIGRATIONS_DIR));
-    const huerfanos = archivosDeRollback(ROLLBACK_DIR)
-      .map((down) => down.replace(/\.down\.sql$/, '.sql'))
-      .filter((up) => !ups.has(up));
+    // Array.from(): readdirSync devuelve un array del realm del host y deepStrictEqual
+    // compara prototipos — sin normalizar, dos listas vacías fallan con "no visual difference".
+    const huerfanos = Array.from(
+      archivosDeRollback(ROLLBACK_DIR)
+        .map((down) => down.replace(/\.down\.sql$/, '.sql'))
+        .filter((up) => !ups.has(up))
+    );
     assert.deepStrictEqual(
       huerfanos,
       [],

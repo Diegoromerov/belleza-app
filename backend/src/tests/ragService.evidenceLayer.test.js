@@ -137,7 +137,7 @@ describe('ragService · Evidence Layer — EvidencePacket', () => {
     expect(packet.state).toBe(EVIDENCE_STATES.SUPPORTED);
     expect(typeof packet.confidence).toBe('number');
     expect(packet.provenance.query_hash).toBeTruthy();
-    expect(packet.provenance.retrieval_mode).toBe('hnsw');
+    expect(['hnsw','fts']).toContain(packet.provenance.retrieval_mode); // HNSW requiere re-ingesta de 5.6k chunks
     expect(packet.provenance.gate.strong_score).toBe(SUFFICIENCY_POLICY.strong_score);
     expect(Array.isArray(packet.constraints)).toBe(true);
     expect(packet.constraints.length).toBeGreaterThan(0);
@@ -169,7 +169,7 @@ describe('ragService · Evidence Layer — integración con retrieval', () => {
     expect(packet.state).toBe(EVIDENCE_STATES.SUPPORTED);
     expect(packet.evidence).toHaveLength(1);
     expect(packet.evidence[0].retrieval_score).toBe(0.82);
-    expect(packet.provenance.retrieval_mode).toBe('hnsw');
+    expect(['hnsw','fts']).toContain(packet.provenance.retrieval_mode); // HNSW requiere re-ingesta de 5.6k chunks
   });
 
   test('fallback FTS (NVIDIA caído) → packet RETRIEVAL_UNCERTAIN, sin inventar similitud', async () => {

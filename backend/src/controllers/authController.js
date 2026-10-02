@@ -331,11 +331,11 @@ exports.onboarding = async (req, res) => {
 
     const { rol, documento_id_url, rut_url, certificacion_url, aceptar_habeas_data, aceptar_terminos } = data;
 
-    if (aceptar_habeas_data !== true || aceptar_terminos !== true) {
-      return res.status(400).json({ error: 'Debe aceptar la Política de Tratamiento de Datos Personales (Habeas Data) y los Términos y Condiciones para continuar.' });
-    }
+        if (aceptar_habeas_data !== true || aceptar_terminos !== true) {
+          return res.status(400).json({ error: 'Debe aceptar la Política de Tratamiento de Datos Personales (Habeas Data) y los Términos y Condiciones para continuar.' });
+        }
 
-    const mappedRol = rolParse.data;
+        const mappedRol = rol;
     const clientIp = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
     if (mappedRol === 'PRESTADOR') {

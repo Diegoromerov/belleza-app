@@ -36,13 +36,16 @@ describe('Fase 3: Multi-Sede OWNER Dashboard & Endpoints Integration Tests', () 
   });
 
   test('GET /api/v1/owner/salones debe retornar las sedes del propietario con total de colaboradores', async () => {
-    const ownerToken = jwt.sign({ id: 10, role: 'SALON', email: 'owner@salonglow.com' }, JWT_SECRET);
+      const ownerToken = jwt.sign({ id: 10, role: 'SALON', email: 'owner@salonglow.com' }, JWT_SECRET);
 
-    pool.query = jest.fn().mockImplementation((text, params) => {
-      if (/SELECT rol, tenant_id FROM usuarios/i.test(text)) {
-        return Promise.resolve({ rows: [{ rol: 'SALON', tenant_id: 1 }] });
-      }
-      if (/SELECT DISTINCT s\.id[\s\S]*FROM salones s/i.test(text)) {
+      pool.query = jest.fn().mockImplementation((text, params) => {
+        if (/SELECT rol, tenant_id FROM usuarios/i.test(text)) {
+          return Promise.resolve({ rows: [{ rol: 'SALON', tenant_id: 1 }] });
+        }
+        if (/app_usuario_identidad/i.test(text)) {
+          return Promise.resolve({ rows: [{ rol: 'SALON', tenant_id: 1 }] });
+        }
+        if (/SELECT DISTINCT s\.id[\s\S]*FROM salones s/i.test(text)) {
         return Promise.resolve({ rows: [{ id: 1 }, { id: 2 }] });
       }
       if (/SELECT s\.id, s\.nombre_salon[\s\S]*FROM salones s/i.test(text)) {
@@ -78,17 +81,20 @@ describe('Fase 3: Multi-Sede OWNER Dashboard & Endpoints Integration Tests', () 
   });
 
   test('GET /api/v1/owner/salones debe rebotar 403 a usuarios que no poseen ninguna sede', async () => {
-    const userToken = jwt.sign({ id: 99, role: 'CLIENTE', email: 'cliente@gmail.com' }, JWT_SECRET);
+      const userToken = jwt.sign({ id: 99, role: 'CLIENTE', email: 'cliente@gmail.com' }, JWT_SECRET);
 
-    pool.query = jest.fn().mockImplementation((text, params) => {
-      if (/SELECT rol, tenant_id FROM usuarios/i.test(text)) {
-        return Promise.resolve({ rows: [{ rol: 'CLIENTE', tenant_id: null }] });
-      }
-      if (/SELECT DISTINCT s\.id[\s\S]*FROM salones s/i.test(text)) {
+      pool.query = jest.fn().mockImplementation((text, params) => {
+        if (/SELECT rol, tenant_id FROM usuarios/i.test(text)) {
+          return Promise.resolve({ rows: [{ rol: 'CLIENTE', tenant_id: null }] });
+        }
+        if (/app_usuario_identidad/i.test(text)) {
+          return Promise.resolve({ rows: [{ rol: 'CLIENTE', tenant_id: null }] });
+        }
+        if (/SELECT DISTINCT s\.id[\s\S]*FROM salones s/i.test(text)) {
+          return Promise.resolve({ rows: [] });
+        }
         return Promise.resolve({ rows: [] });
-      }
-      return Promise.resolve({ rows: [] });
-    });
+      });
 
     const res = await request(app)
       .get('/api/v1/owner/salones')
@@ -99,17 +105,20 @@ describe('Fase 3: Multi-Sede OWNER Dashboard & Endpoints Integration Tests', () 
   });
 
   test('POST /api/v1/owner/switch-salon debe autorizar sedes propias y responder active_salon_id pasando por query, body o cabecera x-active-salon-id', async () => {
-    const ownerToken = jwt.sign({ id: 10, role: 'SALON', email: 'owner@salonglow.com' }, JWT_SECRET);
+      const ownerToken = jwt.sign({ id: 10, role: 'SALON', email: 'owner@salonglow.com' }, JWT_SECRET);
 
-    pool.query = jest.fn().mockImplementation((text, params) => {
-      if (/SELECT rol, tenant_id FROM usuarios/i.test(text)) {
-        return Promise.resolve({ rows: [{ rol: 'SALON', tenant_id: 1 }] });
-      }
-      if (/SELECT sub_rol[\s\S]*FROM salon_miembros/i.test(text)) {
-        return Promise.resolve({ rows: [{ sub_rol: 'DUEÑO' }] });
-      }
-      return Promise.resolve({ rows: [] });
-    });
+      pool.query = jest.fn().mockImplementation((text, params) => {
+        if (/SELECT rol, tenant_id FROM usuarios/i.test(text)) {
+          return Promise.resolve({ rows: [{ rol: 'SALON', tenant_id: 1 }] });
+        }
+        if (/app_usuario_identidad/i.test(text)) {
+          return Promise.resolve({ rows: [{ rol: 'SALON', tenant_id: 1 }] });
+        }
+        if (/SELECT sub_rol[\s\S]*FROM salon_miembros/i.test(text)) {
+          return Promise.resolve({ rows: [{ sub_rol: 'DUEÑO' }] });
+        }
+        return Promise.resolve({ rows: [] });
+      });
 
     // Prueba 1: Vía body
     const resBody = await request(app)
@@ -132,14 +141,17 @@ describe('Fase 3: Multi-Sede OWNER Dashboard & Endpoints Integration Tests', () 
   });
 
   test('GET /api/v1/owner/dashboard-metrics debe consultar columnas reales SQL, detectar prestadores cross-tenant y emitir advertencia', async () => {
-    const ownerToken = jwt.sign({ id: 10, role: 'SALON', email: 'owner@salonglow.com' }, JWT_SECRET);
-    let executedBookingsQuery = null;
+      const ownerToken = jwt.sign({ id: 10, role: 'SALON', email: 'owner@salonglow.com' }, JWT_SECRET);
+      let executedBookingsQuery = null;
 
-    pool.query = jest.fn().mockImplementation((text, params) => {
-      if (/SELECT rol, tenant_id FROM usuarios/i.test(text)) {
-        return Promise.resolve({ rows: [{ rol: 'SALON', tenant_id: 1 }] });
-      }
-      if (/SELECT DISTINCT s\.id[\s\S]*FROM salones s/i.test(text)) {
+      pool.query = jest.fn().mockImplementation((text, params) => {
+        if (/SELECT rol, tenant_id FROM usuarios/i.test(text)) {
+          return Promise.resolve({ rows: [{ rol: 'SALON', tenant_id: 1 }] });
+        }
+        if (/app_usuario_identidad/i.test(text)) {
+          return Promise.resolve({ rows: [{ rol: 'SALON', tenant_id: 1 }] });
+        }
+        if (/SELECT DISTINCT s\.id[\s\S]*FROM salones s/i.test(text)) {
         return Promise.resolve({ rows: [{ id: 1 }, { id: 2 }] });
       }
       if (/JOIN usuarios u/i.test(text)) {
