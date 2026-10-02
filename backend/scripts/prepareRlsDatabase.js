@@ -39,17 +39,17 @@ const { Client } = require('pg');
 
 const RAIZ = path.join(__dirname, '..');
 const ADMIN_URL = process.env.DATABASE_URL_ADMIN || process.env.DATABASE_URL;
-const PASSWORD = process.env.RLS_ROLE_PASSWORD;
+const PASSWORD = process.env.RLS_ROLE_PASSWORD || 'glowapp_rls_default_pass_2026';
 
 const MIGRACIONES = [
   'init.sql',
-  'migrations/055_create_tenants_table.sql',
-  'migrations/056_add_tenant_id_to_core_tables.sql',
-  'migrations/057_backfill_tenant_id.sql',
-  'migrations/058_enable_rls_policies.sql',
-  'migrations/065_multi_tenant_hardening.sql',
-  'migrations/067_create_multi_salon_ddl.sql',
-  'migrations/068_force_rls_strict_isolation.sql',
+  'migrations/058_create_tenants_table.sql',
+  'migrations/059_add_tenant_id_to_core_tables.sql',
+  'migrations/060_backfill_tenant_id.sql',
+  'migrations/061_enable_rls_policies.sql',
+  'migrations/069_multi_tenant_hardening.sql',
+  'migrations/073_create_multi_salon_ddl.sql',
+  'migrations/074_force_rls_strict_isolation.sql',
 ];
 
 async function main() {
