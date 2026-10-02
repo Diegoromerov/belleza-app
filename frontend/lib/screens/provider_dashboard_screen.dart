@@ -17,6 +17,7 @@ import '../services/analytics_service.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'dart:convert';
 import '../services/audio_player.dart';
+import '../services/audience_service.dart';
 import '../shared/theme.dart';
 import '../design/icons/glow_icon.dart';
 
@@ -2183,132 +2184,134 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
   }
 
   Widget _buildNavItem({
-        required int index,
-        required String semanticName,
-        required GlowIconColorRole selectedRole,
-        required GlowIconColorRole unselectedRole,
-        required String label,
-      }) {
-        final isSelected = _currentIndex == index;
-        return Expanded(
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () {
-                setState(() {
-                  _currentIndex = index;
-                });
-              },
-              onHover: (hovering) {
-                if (hovering && !isSelected) {
-                  // Hover feedback handled by InkWell ripple
-                }
-              },
-              focusColor: Colors.transparent,
-              hoverColor: Colors.transparent,
-              borderRadius: BorderRadius.circular(16),
-              child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                GlowIcon.resolve(
-                                  semanticName,
-                                  size: 20,
-                                  colorRole: isSelected ? selectedRole : unselectedRole,
-                                  semanticLabel: label,
-                                ),
-                  const SizedBox(height: 3),
-                  Text(
-                    label,
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                      fontFamily: 'CormorantGaramond',
-                      color: context.glowIconColor(isSelected ? selectedRole : unselectedRole),
-                    ),
+    required int index,
+    required String semanticName,
+    required String label,
+    bool isMen = false,
+  }) {
+    final isSelected = _currentIndex == index;
+    return Expanded(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            HapticFeedback.selectionClick();
+            setState(() {
+              _currentIndex = index;
+            });
+          },
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                GlowIcon.resolve(
+                  semanticName,
+                  size: 20,
+                  color: isSelected
+                      ? const Color(0xFFC5A052)
+                      : (isMen ? const Color(0xFFB0A89F) : const Color(0xFF8C7A6B)),
+                  semanticLabel: label,
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 9.5,
+                    fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                    color: isSelected
+                        ? const Color(0xFFC5A052)
+                        : (isMen ? const Color(0xFFB0A89F) : const Color(0xFF8C7A6B)),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-        );
-      }
+        ),
+      ),
+    );
+  }
 
   Widget _buildProminentCenterNavItem({
-        required int index,
-        required String semanticName,
-        required String label,
-      }) {
-        final isSelected = _currentIndex == index;
-        return Expanded(
-          child: GestureDetector(
-            onTap: () {
-              setState(() {
-                _currentIndex = index;
-              });
-            },
-            child: Transform.translate(
-              offset: const Offset(0, -14),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 52,
-                    height: 52,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: const LinearGradient(
-                        colors: [
-                          Color(0xFFE8D7D3), // Golden soft rose
-                          AppTheme.primary, // Warm primary pink
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppTheme.primary.withOpacity(0.4),
-                          blurRadius: 10,
-                          spreadRadius: 2,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                      border: Border.all(
-                        color: Colors.white,
-                        width: 2.5,
-                      ),
-                    ),
-                    child: GlowIcon.resolve(
-                                          semanticName,
-                                          size: 26,
-                                          color: Colors.white,
-                                          semanticLabel: label,
-                                        ),
+    required int index,
+    required String semanticName,
+    required String label,
+    bool isMen = false,
+  }) {
+    final isSelected = _currentIndex == index;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.mediumImpact();
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        child: Transform.translate(
+          offset: const Offset(0, -14),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: isMen
+                        ? const [Color(0xFF2A241E), Color(0xFFC5A052)]
+                        : const [Color(0xFFF4EFEA), Color(0xFFC5A052)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      fontFamily: 'CormorantGaramond',
-                      color: isSelected
-                          ? context.glowIconColor(GlowIconColorRole.primary)
-                          : context.glowIconColor(GlowIconColorRole.neutral),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFC5A052).withValues(alpha: isMen ? 0.5 : 0.35),
+                      blurRadius: 12,
+                      spreadRadius: 2,
+                      offset: const Offset(0, 4),
                     ),
+                  ],
+                  border: Border.all(
+                    color: isSelected ? const Color(0xFFD4AF37) : Colors.white,
+                    width: 2.5,
                   ),
-                ],
+                ),
+                child: Center(
+                  child: GlowIcon.resolve(
+                    semanticName,
+                    size: 24,
+                    color: Colors.white,
+                    semanticLabel: label,
+                  ),
+                ),
               ),
-            ),
+              const SizedBox(height: 2),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.w800,
+                  color: isSelected
+                      ? const Color(0xFFC5A052)
+                      : (isMen ? const Color(0xFFD4AF37) : const Color(0xFFB07D62)),
+                ),
+              ),
+            ],
           ),
-        );
-      }
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final isMen = AudienceService.currentAudience.value == AudienceMode.men;
     final isPageLoading = (_bookings.isEmpty && _loading) || _loadingProfile;
     if (isPageLoading) {
       return const Scaffold(
@@ -2525,85 +2528,83 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
             ),
           ),
           
-          // Custom Glassmorphic Navigation Dock matching client-side cover styles
+          // Luxury Navigation Dock (Haute Horlogerie & Quiet Luxury)
           Positioned(
-            bottom: 16,
+            bottom: MediaQuery.of(context).padding.bottom + 16,
             left: 16,
             right: 16,
-            child: SafeArea(
-              top: false,
-              bottom: true,
-              child: Container(
-                height: 72,
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                decoration: BoxDecoration(
-                  color: context.glowIconColor(GlowIconColorRole.neutral).withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(36),
-                  border: Border.all(
-                      color: context.glowIconColor(GlowIconColorRole.neutral).withOpacity(0.2),
-                      width: 1.5),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.06),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    _buildNavItem(
-                      index: 0,
-                      semanticName: 'home',
-                      selectedRole: GlowIconColorRole.primary,
-                      unselectedRole: GlowIconColorRole.neutral,
-                      label: 'Inicio',
-                    ),
-                    _buildNavItem(
-                      index: 1,
-                      semanticName: 'calendar',
-                      selectedRole: GlowIconColorRole.primary,
-                      unselectedRole: GlowIconColorRole.neutral,
-                      label: 'Agenda',
-                    ),
-                    _buildNavItem(
-                      index: 2,
-                      semanticName: 'wallet',
-                      selectedRole: GlowIconColorRole.secondary,
-                      unselectedRole: GlowIconColorRole.neutral,
-                      label: 'Wallet',
-                    ),
+            child: Container(
+              height: 72,
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              decoration: BoxDecoration(
+                color: isMen
+                    ? const Color(0xFF141210).withValues(alpha: 0.95)
+                    : const Color(0xFFFDFBF7),
+                borderRadius: BorderRadius.circular(36),
+                border: Border.all(
+                    color: const Color(0xFFD4AF37).withValues(alpha: isMen ? 0.6 : 0.5),
+                    width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isMen ? 0.45 : 0.08),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                  BoxShadow(
+                    color: const Color(0xFFD4AF37).withValues(alpha: isMen ? 0.25 : 0.15),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  _buildNavItem(
+                    index: 0,
+                    semanticName: 'home',
+                    label: 'Inicio',
+                    isMen: isMen,
+                  ),
+                  _buildNavItem(
+                    index: 1,
+                    semanticName: 'calendar',
+                    label: 'Agenda',
+                    isMen: isMen,
+                  ),
+                  _buildNavItem(
+                    index: 2,
+                    semanticName: 'wallet',
+                    label: 'Wallet',
+                    isMen: isMen,
+                  ),
 
-                    // Botón central prominente: GlowShop
-                    _buildProminentCenterNavItem(
-                      index: 3,
-                      semanticName: 'bag',
-                      label: 'GlowShop',
-                    ),
+                  // Botón central prominente: GlowShop (Luxe Medallion)
+                  _buildProminentCenterNavItem(
+                    index: 3,
+                    semanticName: 'bag',
+                    label: 'GlowShop',
+                    isMen: isMen,
+                  ),
 
-                    // Botón central prominente: GlowAcademy
-                    _buildProminentCenterNavItem(
-                      index: 4,
-                      semanticName: 'school',
-                      label: 'GlowAcademy',
-                    ),
-
-                    _buildNavItem(
-                      index: 5,
-                      semanticName: 'chat',
-                      selectedRole: GlowIconColorRole.secondary,
-                      unselectedRole: GlowIconColorRole.neutral,
-                      label: 'Chat',
-                    ),
-                    _buildNavItem(
-                      index: 6,
-                      semanticName: 'profile',
-                      selectedRole: GlowIconColorRole.secondary,
-                      unselectedRole: GlowIconColorRole.neutral,
-                      label: 'Perfil',
-                    ),
-                  ],
-                ),
+                  _buildNavItem(
+                    index: 4,
+                    semanticName: 'school',
+                    label: 'Academia',
+                    isMen: isMen,
+                  ),
+                  _buildNavItem(
+                    index: 5,
+                    semanticName: 'chat',
+                    label: 'Chat',
+                    isMen: isMen,
+                  ),
+                  _buildNavItem(
+                    index: 6,
+                    semanticName: 'profile',
+                    label: 'Perfil',
+                    isMen: isMen,
+                  ),
+                ],
               ),
             ),
           ),
