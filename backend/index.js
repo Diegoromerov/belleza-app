@@ -432,10 +432,7 @@ app.use('/api/v1/memberships', membershipRoutes);
 // Health check — NO escribe en la base de datos. Antes ejecutaba un `setval` sobre
 // `usuarios_id_seq` en cada probe (y respondía 200 con la BD caída).
 // A360-2026-09-22/A-06 + C-03.
-// Health check — NO escribe en la base de datos.
-app.get('/api/health', async (req, res) => {
-  // Ronda 7 (CI-23): si el estado nunca se comprobó, se comprueba AHORA (una vez por TTL) antes de
-  // clasificar; sin comprobar no es lo mismo que sano ni que degradado.
+const healthHandler = async (req, res) => {
   const dbStatus = await asegurarEstadoComprobado();
   const salud = clasificarSalud(dbStatus);
   if (salud.degradado) {
@@ -448,7 +445,13 @@ app.get('/api/health', async (req, res) => {
     env: process.env.NODE_ENV || 'development',
     database: dbStatus,
   });
-});
+};
+
+app.get('/api/health', healthHandler);
+app.get('/health', healthHandler);
+app.get('/healthz', healthHandler);
+app.get('/live', healthHandler);
+app.get('/ready', healthHandler);
 
 // Test DB connection
 app.get('/api/test-db', debugRouteMiddleware, async (req, res) => {
