@@ -1841,14 +1841,18 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF6B21A8), Color(0xFF9333EA)],
+                  colors: [Color(0xFF2A241E), Color(0xFF1F1A15)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: const Color(0xFFD4AF37).withValues(alpha: 0.4),
+                  width: 1.2,
+                ),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF6B21A8).withValues(alpha: 0.35),
+                    color: const Color(0xFFC5A052).withValues(alpha: 0.15),
                     blurRadius: 16,
                     offset: const Offset(0, 6),
                   ),
@@ -1860,30 +1864,34 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(12),
+                      color: const Color(0xFFC5A052).withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: const Color(0xFFD4AF37).withValues(alpha: 0.3),
+                        width: 1,
+                      ),
                     ),
-                    child: const Icon(Icons.account_balance_wallet,
-                        color: Colors.white, size: 26),
+                    child: const Icon(Icons.account_balance_wallet_rounded,
+                        color: Color(0xFFC5A052), size: 26),
                   ),
                   const SizedBox(width: 14),
                   const Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Mi Wallet',
+                        Text('Mi Billetera Pro',
                             style: TextStyle(
-                                color: Colors.white,
+                                color: Color(0xFFF4EFEA),
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16)),
-                        Text('Ver saldo, retiros e historial',
+                        Text('Ver saldo, solicitar retiros e historial',
                             style:
-                                TextStyle(color: Colors.white70, fontSize: 12)),
+                                TextStyle(color: Color(0xFFB0A89F), fontSize: 12)),
                       ],
                     ),
                   ),
-                  const Icon(Icons.arrow_forward_ios,
-                      color: Colors.white70, size: 16),
+                  const Icon(Icons.arrow_forward_ios_rounded,
+                      color: Color(0xFFC5A052), size: 16),
                 ],
               ),
             ),
