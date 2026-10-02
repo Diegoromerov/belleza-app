@@ -79,6 +79,39 @@ jobs:
         run: |
           cd backend
           node tests/migrationsNoDuplicateNumbers.test.js
+      # FIX-FLUTTER-09 — Contract testing OpenAPI (bloqueante).
+      # El contrato (backend/openapi/openapi.json) se regenera desde el app real y
+      # se compara con el artefacto versionado. Un endpoint nuevo, una ruta
+      # renombrada o un método cambiado sin regenerar el contrato pone el CI en
+      # rojo AQUI, antes de llegar al cliente Flutter.
+      - name: Compuerta de contrato OpenAPI (deriva de API)
+        run: |
+          cd backend
+          set -o pipefail
+          node scripts/checkOpenApiSpec.js 2>&1 | tee /tmp/openapi-drift.log
+          rc=$?
+          if [ $rc -ne 0 ]; then
+            echo "::error::Compuerta de contrato OpenAPI en rojo (exit $rc)"
+            tail -30 /tmp/openapi-drift.log | while IFS= read -r l; do echo "::error::$l"; done
+          fi
+          exit $rc
+
+      # Los tests de contrato se excluyen del patron del gate de jest
+      # ('--testPathIgnorePatterns=...|contract|...'), por eso corren en su propio
+      # paso BLOQUEANTE: si no, la compuerta de contrato seria decorativa.
+      # --forceExit es necesario: index.js deja handles abiertos (cron, pool) que
+      # impiden que jest termine por si solo.
+      - name: Tests de contrato (OpenAPI vs rutas reales + endpoints criticos)
+        run: |
+          cd backend
+          set -o pipefail
+          npx jest src/tests/contract/openapi.contract.test.js src/tests/contract/critical-endpoints.contract.test.js --runInBand --forceExit 2>&1 | tee /tmp/contract-tests.log
+          rc=$?
+          if [ $rc -ne 0 ]; then
+            echo "::error::Tests de contrato en rojo (exit $rc)"
+            grep -E 'Tests:|Test Suites:' /tmp/contract-tests.log | paste -sd ' Â· ' - | while IFS= read -r l; do echo "::error::$l"; done
+          fi
+          exit $rc
 
       # `npm run migrate` es `sequelize.sync({force:true})`: crea tablas desde los
       # modelos, y ninguna política de RLS vive en un modelo. Por eso el esquema y
@@ -163,7 +196,9 @@ jobs:
         continue-on-error: true
         run: |
           cd backend
-          npm test -- --testPathPattern="geminiService|geminiFallback|auraToolExecutor|contract|biometric|resilience|contextCompressor|fase5|api.cors"
+          # --forceExit: suites que importan index.js dejan handles abiertos (cron,
+          # pool, status-monitor) y jest no termina por si solo.
+          npm test -- --forceExit --testPathPattern="geminiService|geminiFallback|auraToolExecutor|contract|biometric|resilience|contextCompressor|fase5|api.cors"
 
   frontend-ci:
     name: Frontend Flutter Analyze & Build Check
