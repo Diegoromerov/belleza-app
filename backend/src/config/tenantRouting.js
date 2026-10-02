@@ -22,7 +22,8 @@
 // isPerRequestTransactionEnabled): el aislamiento de inquilino no puede depender
 // de un opt-in que nadie enciende. Se desactiva con
 // TENANT_TRANSACTION_PER_REQUEST=false en el entorno, y con el flag desactivado
-// el comportamiento es el anterior.
+// el comportamiento es el anterior. En PRODUCCIÓN el flag no puede
+// desactivarlo: el aislamiento es obligatorio (ver isPerRequestTransactionEnabled).
 
 const { AsyncLocalStorage } = require('async_hooks');
 
@@ -68,6 +69,22 @@ function isPerRequestTransactionEnabled() {
   // no tenían con qué comparar. Ahora hay que desactivarlo explícitamente
   // (TENANT_TRANSACTION_PER_REQUEST=false) para volver al comportamiento
   // anterior, y eso deja rastro en el entorno.
+  //
+  // ENDURECIMIENTO P0 (t_fix_tenant_06): en producción el aislamiento NO puede
+  // desactivarse por variable de entorno. Un control de aislamiento
+  // cross-tenant que un `.env` mal puesto —o un despliegue— puede apagar en
+  // silencio es, exactamente, la fuga que describe el hallazgo. En producción
+  // `TENANT_TRANSACTION_PER_REQUEST=false` no tiene efecto; en desarrollo y
+  // test se conserva la escotilla para poder comparar comportamientos.
+  if (process.env.NODE_ENV === 'production') {
+    if (process.env.TENANT_TRANSACTION_PER_REQUEST === 'false') {
+      console.warn(
+        '⚠️ [tenantRouting] TENANT_TRANSACTION_PER_REQUEST=false ignorado en producción: el aislamiento por inquilino es obligatorio.'
+      );
+    }
+    return true;
+  }
+
   return process.env.TENANT_TRANSACTION_PER_REQUEST !== 'false';
 }
 

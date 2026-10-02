@@ -194,6 +194,24 @@ async function getCategoryPopularity() {
   return await executeQuery(query);
 }
 
+/**
+ * Registra evidencia KYC inmutable para auditoría legal.
+ * Tabla: kyc_audit_logs (inmutable - solo INSERT)
+ */
+async function logKYCEvidence(providerId, documentType, documentNumberHash, providerName, providerResponseHash, result, auditId, auditHash) {
+  const query = `
+    INSERT INTO kyc_audit_logs (
+      audit_id, provider_id, document_type, document_number_hash,
+      provider_name, provider_response_hash, result, created_at, audit_hash
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    ON CONFLICT (audit_id) DO NOTHING;
+  `;
+  return await executeQuery(query, [
+    auditId, providerId, documentType, documentNumberHash,
+    providerName, providerResponseHash, result, new Date().toISOString(), auditHash
+  ]);
+}
+
 module.exports = {
   getActiveSOSAlerts,
   updateSOSAlertStatus,
@@ -205,5 +223,6 @@ module.exports = {
   processWalletWithdrawal,
   getConsolidatedFinancialMetrics,
   getDailyFinancialHistory,
-  getCategoryPopularity
+  getCategoryPopularity,
+  logKYCEvidence
 };

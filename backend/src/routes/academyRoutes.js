@@ -403,14 +403,12 @@ router.get('/courses/:id/quiz', authMiddleware, requireAcademyRole, ah(async (re
   }
 
   const used = await attemptsUsed(req.user.id, courseId);
-    if (used >= academy.maxAttempts()) {
-      const segundosRetry = 3600; // 1 hora hasta que soporte pueda reiniciar
-      return res.set('Retry-After', String(segundosRetry)).status(429).json({
-        error: `Alcanzaste el máximo de ${academy.maxAttempts()} intentos para este curso. Contacta a soporte para reiniciarlos.`,
-        attemptsLeft: 0,
-        retry_after_segundos: segundosRetry,
-      });
-    }
+  if (used >= academy.maxAttempts()) {
+    return res.status(429).json({
+      error: `Alcanzaste el máximo de ${academy.maxAttempts()} intentos para este curso. Contacta a soporte para reiniciarlos.`,
+      attemptsLeft: 0,
+    });
+  }
 
   const { rows: quizzes } = await pool.query(
     'SELECT id, question, options FROM academy_quizzes WHERE course_id = $1 ORDER BY id ASC',
@@ -456,14 +454,12 @@ router.post('/courses/:id/submit-quiz', authMiddleware, requireAcademyRole, ah(a
   // 2. Límite de intentos.
   const maxAttempts = academy.maxAttempts();
   const used = await attemptsUsed(req.user.id, courseId);
-      if (used >= academy.maxAttempts()) {
-        const segundosRetry = 3600; // 1 hora hasta que soporte pueda reiniciar
-        return res.set('Retry-After', String(segundosRetry)).status(429).json({
-          error: `Alcanzaste el máximo de ${academy.maxAttempts()} intentos para este curso. Contacta a soporte para reiniciarlos.`,
-          attemptsLeft: 0,
-          retry_after_segundos: segundosRetry,
-        });
-      }
+  if (used >= maxAttempts) {
+    return res.status(429).json({
+      error: `Alcanzaste el máximo de ${maxAttempts} intentos para este curso.`,
+      attemptsLeft: 0,
+    });
+  }
 
   const { rows: quizzes } = await pool.query(
     'SELECT id, question, options, correct_index FROM academy_quizzes WHERE course_id = $1 ORDER BY id ASC',

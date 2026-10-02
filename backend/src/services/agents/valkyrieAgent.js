@@ -80,51 +80,6 @@ class ValkyrieAgent {
       return { status: 'error', message: err.message };
     }
   }
-
-  /**
-   * Genera insights B2B cruzando ciclos de transformación Glow IA+ activos con oportunidades de servicios
-   */
-  async getGlowCycleB2BInsights({ providerId }) {
-    const parsedProviderId = parseInt(providerId, 10);
-    if (isNaN(parsedProviderId)) {
-      return { status: 'error', message: 'providerId inválido' };
-    }
-
-    try {
-      const query = `
-        SELECT target_metric_key, COUNT(id) as active_cycles
-        FROM glow_cycles
-        WHERE status IN ('active', 'reassessment_due')
-        GROUP BY target_metric_key;
-      `;
-
-      const res = await pool.query(query);
-      const metricsSummary = res.rows || [];
-
-      return {
-        status: 'success',
-        providerId: parsedProviderId,
-        activeClientCycles: metricsSummary.reduce((sum, r) => sum + parseInt(r.active_cycles || 0, 10), 0),
-        b2bRecommendation: 'Se sugiere crear un paquete de mantenimiento para clientes en ciclo activo de Hidratación / Poros.',
-        opportunityDetails: metricsSummary.map(r => ({
-          metricKey: r.target_metric_key,
-          clientCount: parseInt(r.active_cycles, 10)
-        }))
-      };
-    } catch (err) {
-      console.error('❌ [VALKYRIE Agent] Error generando B2B Glow Cycle insights:', err.message);
-      return {
-        status: 'success',
-        providerId: parsedProviderId,
-        activeClientCycles: 12,
-        b2bRecommendation: 'Oportunidad B2B: El 65% de clientes en tu zona con ciclo activo de Hidratación requieren limpieza facial profesional.',
-        opportunityDetails: [
-          { metricKey: 'hydration', clientCount: 8 },
-          { metricKey: 'pores', clientCount: 4 }
-        ]
-      };
-    }
-  }
 }
 
 module.exports = new ValkyrieAgent();

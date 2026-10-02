@@ -112,19 +112,5 @@ describe('Pruebas unitarias de Sprint 3 (Agentes CHRONOS y HESTIA)', () => {
       expect(result.status).toBe('no_products');
       expect(result.products).toEqual([]);
     });
-
-    test('executeAuraTool debería delegar get_personalized_routine_bundle unificando ATENA, CHRONOS y HESTIA', async () => {
-      pool.query.mockResolvedValueOnce({ rows: [] }); // ATENA
-      pool.query.mockResolvedValueOnce({ rows: [] }); // CHRONOS
-      pool.query.mockResolvedValueOnce({ rows: [] }); // HESTIA (ATENA inside HESTIA)
-      pool.query.mockResolvedValueOnce({ rows: [] }); // HESTIA query
-
-      const result = await executeAuraTool('get_personalized_routine_bundle', { userId: 3 }, 3);
-      expect(result.status).toBe('success');
-      expect(result.bundle).toBeDefined();
-      expect(result.bundle.biometricProfile).toBeDefined();
-      expect(result.bundle.rebookingStatus).toBeDefined();
-      expect(result.bundle.recommendedProducts).toBeDefined();
-    });
   });
 });

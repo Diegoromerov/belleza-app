@@ -7,19 +7,10 @@ const router = express.Router();
 const { pool } = require('../config/db');
 const { authMiddleware } = require('../middleware/auth');
 const { paymentLimiter, otpLimiter } = require('../middleware/rateLimiter');
-const { validate, validateQuery } = require('../middleware/validation');
-const {
-  bankAccountSchema,
-  withdrawSchema,
-  withdrawalModelSchema,
-  adminDisputesQuerySchema,
-  disputeSchema,
-  resolveDisputeSchema,
-  adminDashboardQuerySchema
-} = require('../middleware/validation');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const wompiService = require('../services/wompiService');
+const { aCentavos, aDecimal, calcularRetenciones, sumarMontos } = require('../utils/money');
 
 // ─── UTILIDADES ──────────────────────────────────────────────────────────────
 
@@ -69,7 +60,7 @@ async function requireAdmin(req, res) {
 
 // ─── CHECK-IN GPS ────────────────────────────────────────────────────────────
 
-router.post('/bookings/:id/checkin', authMiddleware, paymentLimiter, async (req, res) => {
+router.post('/bookings/:id/checkin', authMiddleware, async (req, res) => {
   if (!await requirePrestador(req, res)) return;
 
   const { id } = req.params;
@@ -114,7 +105,7 @@ router.post('/bookings/:id/checkin', authMiddleware, paymentLimiter, async (req,
 
 // ─── COMPLETAR SERVICIO → GENERAR OTP ────────────────────────────────────────
 
-router.post('/bookings/:id/complete', authMiddleware, otpLimiter, async (req, res) => {
+router.post('/bookings/:id/complete', authMiddleware, async (req, res) => {
   if (!await requirePrestador(req, res)) return;
 
   const { id } = req.params;
@@ -190,7 +181,7 @@ router.post('/bookings/:id/complete', authMiddleware, otpLimiter, async (req, re
 
 // ─── CONFIRMAR OTP → DISPERSIÓN ──────────────────────────────────────────────
 
-router.post('/bookings/:id/confirm-otp', authMiddleware, otpLimiter, async (req, res) => {
+router.post('/bookings/:id/confirm-otp', authMiddleware, async (req, res) => {
   const { id } = req.params;
   const { codigo } = req.body;
 
@@ -236,16 +227,14 @@ router.post('/bookings/:id/confirm-otp', authMiddleware, otpLimiter, async (req,
       });
     }
 
+    const maxIntentos = parseInt(await getConfig('otp_max_intentos', '3'));
     if (otp.intentos_fallidos >= maxIntentos) {
-          await client.query('ROLLBACK');
-          const segundosRetry = Math.max(1, Math.ceil((new Date(otp.expira_at) - Date.now()) / 1000));
-          res.set('Retry-After', String(segundosRetry));
-          return res.status(429).json({
-            error: 'Código bloqueado por demasiados intentos fallidos.',
-            accion: 'DISPUTA_AUTOMATICA',
-            retry_after_segundos: segundosRetry
-          });
-        }
+      await client.query('ROLLBACK');
+      return res.status(429).json({
+        error: 'Código bloqueado por demasiados intentos fallidos.',
+        accion: 'DISPUTA_AUTOMATICA'
+      });
+    }
 
     const esValido = await bcrypt.compare(codigo, otp.codigo_hash);
     if (!esValido) {
@@ -261,16 +250,13 @@ router.post('/bookings/:id/confirm-otp', authMiddleware, otpLimiter, async (req,
       await client.query('COMMIT');
 
       const intentosRestantes = maxIntentos - nuevosIntentos;
-            if (nuevoEstado === 'BLOQUEADO') {
-              const segundosRetry = Math.max(1, Math.ceil((new Date(otp.expira_at) - Date.now()) / 1000));
-              res.set('Retry-After', String(segundosRetry));
-              return res.status(429).json({
-                error: 'Código incorrecto. OTP bloqueado.',
-                intentos_restantes: 0,
-                accion: 'DISPUTA_AUTOMATICA',
-                retry_after_segundos: segundosRetry
-              });
-            }
+      if (nuevoEstado === 'BLOQUEADO') {
+        return res.status(429).json({
+          error: 'Código incorrecto. OTP bloqueado.',
+          intentos_restantes: 0,
+          accion: 'DISPUTA_AUTOMATICA'
+        });
+      }
       return res.status(400).json({
         error: `Código incorrecto. ${intentosRestantes} intento(s) restante(s).`,
         intentos_restantes: intentosRestantes
@@ -284,15 +270,29 @@ router.post('/bookings/:id/confirm-otp', authMiddleware, otpLimiter, async (req,
     const reteicaPct = parseFloat(await getConfig('reteica_pct', '0.414'));
     const reteivaPct = parseFloat(await getConfig('reteiva_pct', '15.0'));
 
-    const basePagoNeto = parseFloat(otp.pago_neto_prestador);
-    const comisionPlataforma = parseFloat(otp.comision_plataforma);
+    // P0 dinero (t_fix_pagos_06): las retenciones y el neto se calculan en CENTAVOS
+    // ENTEROS. Con punto flotante, un IVA de 22,5 centavos (15% de una comisión de
+    // 1.50) se redondeaba a 22 (0.22) en vez de 23 (0.23): la dispersión perdía un
+    // centavo de forma silenciosa. Ver src/utils/money.js.
+    const basePagoNetoCentavos = aCentavos(otp.pago_neto_prestador);
+    const comisionPlataformaCentavos = aCentavos(otp.comision_plataforma);
 
-    const retencionFuente = Math.round(basePagoNeto * (retefuentePct / 100) * 100) / 100;
-    const retencionIca = Math.round(basePagoNeto * (reteicaPct / 100) * 100) / 100;
-    const retencionIva = Math.round(comisionPlataforma * (reteivaPct / 100) * 100) / 100;
+    const retenciones = calcularRetenciones({
+      basePagoNetoCents: basePagoNetoCentavos,
+      comisionPlataformaCents: comisionPlataformaCentavos,
+      retefuentePct,
+      reteicaPct,
+      reteivaPct
+    });
 
-    const totalRetenciones = retencionFuente + retencionIca + retencionIva;
-    const montoNeto = basePagoNeto - totalRetenciones;
+    const basePagoNeto = aDecimal(basePagoNetoCentavos);
+    const comisionPlataforma = aDecimal(comisionPlataformaCentavos);
+    const retencionFuente = aDecimal(retenciones.retencionFuenteCents);
+    const retencionIca = aDecimal(retenciones.retencionIcaCents);
+    const retencionIva = aDecimal(retenciones.retencionIvaCents);
+
+    const totalRetenciones = aDecimal(retenciones.totalRetencionesCents);
+    const montoNeto = aDecimal(retenciones.montoNetoCents);
 
     await client.query(
       `UPDATE otp_validaciones SET estado = 'USADO', usado_at = NOW() WHERE booking_id = $1`,
@@ -322,7 +322,7 @@ router.post('/bookings/:id/confirm-otp', authMiddleware, otpLimiter, async (req,
        VALUES ($1, $2, 'CREDITO_SERVICIO', $3, $4, 'PENDIENTE', $5, $6)`,
       [
         otp.provider_id, id, montoNeto,
-        parseFloat(wallet.saldo_disponible) + parseFloat(wallet.saldo_pendiente),
+        sumarMontos(wallet.saldo_disponible, wallet.saldo_pendiente),
         `Servicio completado. Disponible en ${ventanaHoras}h.`,
         JSON.stringify({
           madura_at: maduraAt,
@@ -330,16 +330,10 @@ router.post('/bookings/:id/confirm-otp', authMiddleware, otpLimiter, async (req,
           retencion_fuente: retencionFuente,
           retencion_ica: retencionIca,
           retencion_iva: retencionIva,
-          base_pago_neto: basePagoNeto
+          base_pago_neto: basePagoNeto,
+          total_retenciones: totalRetenciones
         })
       ]
-    );
-
-    await client.query(
-      `UPDATE wallet_transactions
-       SET metadata = metadata || $2::jsonb
-       WHERE booking_id = $1 AND tipo = 'CREDITO_SERVICIO'`,
-      [id, JSON.stringify({ madura_at: maduraAt.toISOString() })]
     );
 
     // ─── LIBERAR COMISIÓN DE GLOWSTORE SI APLICA ───
@@ -350,7 +344,8 @@ router.post('/bookings/:id/confirm-otp', authMiddleware, otpLimiter, async (req,
 
     if (storeOrderRes.rows.length > 0) {
       const storeOrder = storeOrderRes.rows[0];
-      const comisionTienda = parseFloat(storeOrder.comision_total_prestador);
+      const comisionTiendaCentavos = aCentavos(storeOrder.comision_total_prestador);
+      const comisionTienda = aDecimal(comisionTiendaCentavos);
 
       if (comisionTienda > 0) {
         // Actualizar wallet sumando la comisión de la tienda al saldo pendiente
@@ -374,7 +369,7 @@ router.post('/bookings/:id/confirm-otp', authMiddleware, otpLimiter, async (req,
             otp.provider_id, 
             id, 
             comisionTienda,
-            parseFloat(walletTienda.saldo_disponible) + parseFloat(walletTienda.saldo_pendiente),
+            sumarMontos(walletTienda.saldo_disponible, walletTienda.saldo_pendiente),
             `Comisión de productos en GlowStore - Pedido #${storeOrder.id}`,
             JSON.stringify({
               madura_at: maduraAt.toISOString(),
@@ -416,27 +411,23 @@ router.post('/bookings/:id/confirm-otp', authMiddleware, otpLimiter, async (req,
 
 // ─── WALLET — SALDO Y RESUMEN ─────────────────────────────────────────────────
 
-router.get('/wallet', authMiddleware, paymentLimiter, async (req, res) => {
+router.get('/wallet', authMiddleware, async (req, res) => {
   if (!await requirePrestador(req, res)) return;
 
   try {
-    await pool.query(
-      `UPDATE wallet_transactions
-       SET estado = 'COMPLETADO'
-       WHERE tipo IN ('CREDITO_SERVICIO', 'CREDITO_PRODUCTO')
-         AND estado = 'PENDIENTE'
-         AND (metadata->>'madura_at')::timestamptz <= NOW()
-         AND provider_id = $1`,
-      [req.user.id]
-    );
-
+    // Ledger append-only: la maduración NO muta el asiento; se deriva de
+    // metadata.madura_at y se registra la acreditación como evento.
     const madurados = await pool.query(
-      `SELECT COALESCE(SUM(monto), 0) as total
-       FROM wallet_transactions
-       WHERE tipo IN ('CREDITO_SERVICIO', 'CREDITO_PRODUCTO')
-         AND estado = 'COMPLETADO'
-         AND provider_id = $1
-         AND (metadata->>'acreditado') IS NULL`,
+      `SELECT COALESCE(SUM(wt.monto), 0) as total
+       FROM wallet_transactions wt
+       WHERE wt.tipo IN ('CREDITO_SERVICIO', 'CREDITO_PRODUCTO')
+         AND wt.estado <> 'REVERTIDO'
+         AND wt.provider_id = $1
+         AND (wt.metadata->>'madura_at')::timestamptz <= NOW()
+         AND NOT EXISTS (
+           SELECT 1 FROM wallet_ledger_events e
+           WHERE e.tx_id = wt.id AND e.evento = 'ACREDITADO'
+         )`,
       [req.user.id]
     );
 
@@ -450,12 +441,18 @@ router.get('/wallet', authMiddleware, paymentLimiter, async (req, res) => {
         [req.user.id, parseFloat(madurados.rows[0].total)]
       );
       await pool.query(
-        `UPDATE wallet_transactions
-         SET metadata = metadata || '{"acreditado": true}'::jsonb
-         WHERE tipo IN ('CREDITO_SERVICIO', 'CREDITO_PRODUCTO')
-           AND estado = 'COMPLETADO'
-           AND provider_id = $1
-           AND (metadata->>'acreditado') IS NULL`,
+        `INSERT INTO wallet_ledger_events (tx_id, provider_id, evento, detalle)
+         SELECT wt.id, wt.provider_id, 'ACREDITADO',
+                jsonb_build_object('monto', wt.monto, 'origen', 'wallet-consulta')
+         FROM wallet_transactions wt
+         WHERE wt.tipo IN ('CREDITO_SERVICIO', 'CREDITO_PRODUCTO')
+           AND wt.estado <> 'REVERTIDO'
+           AND wt.provider_id = $1
+           AND (wt.metadata->>'madura_at')::timestamptz <= NOW()
+           AND NOT EXISTS (
+             SELECT 1 FROM wallet_ledger_events e
+             WHERE e.tx_id = wt.id AND e.evento = 'ACREDITADO'
+           )`,
         [req.user.id]
       );
     }
@@ -522,7 +519,7 @@ router.get('/wallet', authMiddleware, paymentLimiter, async (req, res) => {
 
 // ─── WALLET — HISTORIAL DE TRANSACCIONES ─────────────────────────────────────
 
-router.get('/wallet/transactions', authMiddleware, paymentLimiter, async (req, res) => {
+router.get('/wallet/transactions', authMiddleware, async (req, res) => {
   if (!await requirePrestador(req, res)) return;
 
   const page = parseInt(req.query.page) || 1;
@@ -560,7 +557,7 @@ router.get('/wallet/transactions', authMiddleware, paymentLimiter, async (req, r
 
 // ─── WALLET — OBTENER CUENTA BANCARIA ───────────────────────────────────────
 
-router.get('/wallet/bank-account', authMiddleware, paymentLimiter, async (req, res) => {
+router.get('/wallet/bank-account', authMiddleware, async (req, res) => {
   if (!await requirePrestador(req, res)) return;
 
   try {
@@ -701,16 +698,20 @@ const handleSaveBankAccount = async (req, res) => {
   }
 };
 
-router.post('/wallet/bank-account', authMiddleware, paymentLimiter, validate(bankAccountSchema), handleSaveBankAccount);
-router.put('/wallet/bank-account', authMiddleware, paymentLimiter, validate(bankAccountSchema), handleSaveBankAccount);
+router.post('/wallet/bank-account', authMiddleware, handleSaveBankAccount);
+router.put('/wallet/bank-account', authMiddleware, handleSaveBankAccount);
 
 // ─── RETIRO — SOLICITAR ───────────────────────────────────────────────────────
 
-router.post('/wallet/withdraw', authMiddleware, paymentLimiter, validate(withdrawSchema), async (req, res) => {
+router.post('/wallet/withdraw', authMiddleware, async (req, res) => {
   if (!await requirePrestador(req, res)) return;
 
   const { monto } = req.body;
   const montoSolicitado = parseFloat(monto);
+
+  if (!monto || isNaN(montoSolicitado) || montoSolicitado <= 0) {
+    return res.status(400).json({ error: 'Monto inválido.' });
+  }
 
   const client = await pool.connect();
   try {
@@ -760,19 +761,16 @@ router.post('/wallet/withdraw', authMiddleware, paymentLimiter, validate(withdra
     }
 
     if (wallet.ultimo_retiro_at) {
-          const diasTranscurridos = (Date.now() - new Date(wallet.ultimo_retiro_at)) / (1000 * 60 * 60 * 24);
-          if (diasTranscurridos < diasMin) {
-            const proximaFecha = new Date(new Date(wallet.ultimo_retiro_at).getTime() + diasMin * 24 * 60 * 60 * 1000);
-            const segundosRetry = Math.max(1, Math.ceil((proximaFecha - Date.now()) / 1000));
-            await client.query('ROLLBACK');
-            res.set('Retry-After', String(segundosRetry));
-            return res.status(429).json({
-              error: `Solo puedes retirar una vez cada ${diasMin} días.`,
-              proxima_fecha: proximaFecha,
-              retry_after_segundos: segundosRetry
-            });
-          }
-        }
+      const diasTranscurridos = (Date.now() - new Date(wallet.ultimo_retiro_at)) / (1000 * 60 * 60 * 24);
+      if (diasTranscurridos < diasMin) {
+        const proximaFecha = new Date(new Date(wallet.ultimo_retiro_at).getTime() + diasMin * 24 * 60 * 60 * 1000);
+        await client.query('ROLLBACK');
+        return res.status(429).json({
+          error: `Solo puedes retirar una vez cada ${diasMin} días.`,
+          proxima_fecha: proximaFecha
+        });
+      }
+    }
 
     const { rows: disputasActivas } = await client.query(
       `SELECT COUNT(*) FROM disputas d
@@ -860,10 +858,15 @@ router.post('/wallet/withdraw', authMiddleware, paymentLimiter, validate(withdra
 
 // ─── WALLET — CAMBIAR MODELO DE RETIRO ───────────────────────────────────────
 
-router.put('/wallet/model', authMiddleware, paymentLimiter, validate(withdrawalModelSchema), async (req, res) => {
+router.put('/wallet/model', authMiddleware, async (req, res) => {
   if (!await requirePrestador(req, res)) return;
 
   const { modelo } = req.body;
+  const modelosValidos = ['DEMANDA', 'QUINCENA', 'MENSUAL'];
+
+  if (!modelosValidos.includes(modelo)) {
+    return res.status(400).json({ error: 'Modelo inválido. Use: DEMANDA, QUINCENA o MENSUAL.' });
+  }
 
   try {
     let proximoRetiro = null;
@@ -900,8 +903,12 @@ router.put('/wallet/model', authMiddleware, paymentLimiter, validate(withdrawalM
 
 // ─── DISPUTAS — ABRIR ─────────────────────────────────────────────────────────
 
-router.post('/disputes', authMiddleware, paymentLimiter, validate(disputeSchema), async (req, res) => {
+router.post('/disputes', authMiddleware, async (req, res) => {
   const { booking_id, tipo, descripcion, evidencia_urls } = req.body;
+
+  if (!booking_id || !tipo) {
+    return res.status(400).json({ error: 'Se requieren booking_id y tipo de disputa.' });
+  }
 
   const client = await pool.connect();
   try {
@@ -1012,7 +1019,7 @@ router.post('/disputes', authMiddleware, paymentLimiter, validate(disputeSchema)
 
 // ─── ADMIN — DASHBOARD FINANCIERO ────────────────────────────────────────────
 
-router.get('/admin/dashboard', authMiddleware, paymentLimiter, validateQuery(adminDashboardQuerySchema), async (req, res) => {
+router.get('/admin/dashboard', authMiddleware, async (req, res) => {
   if (!await requireAdmin(req, res)) return;
   try {
     const [financiero, disputas, alertas] = await Promise.all([
@@ -1055,7 +1062,7 @@ router.get('/admin/dashboard', authMiddleware, paymentLimiter, validateQuery(adm
 
 // ─── ADMIN — LISTAR DISPUTAS ──────────────────────────────────────────────────
 
-router.get('/admin/disputes', authMiddleware, paymentLimiter, validateQuery(adminDisputesQuerySchema), async (req, res) => {
+router.get('/admin/disputes', authMiddleware, async (req, res) => {
   if (!await requireAdmin(req, res)) return;
   const estado = req.query.estado || 'ABIERTA';
   const page = parseInt(req.query.page) || 1;
@@ -1093,10 +1100,18 @@ router.get('/admin/disputes', authMiddleware, paymentLimiter, validateQuery(admi
 
 // ─── ADMIN — RESOLVER DISPUTA ─────────────────────────────────────────────────
 
-router.put('/admin/disputes/:id/resolve', authMiddleware, paymentLimiter, validate(resolveDisputeSchema), async (req, res) => {
+router.put('/admin/disputes/:id/resolve', authMiddleware, async (req, res) => {
   if (!await requireAdmin(req, res)) return;
   const { id } = req.params;
   const { resolucion, porcentaje_prestador, nota_resolucion } = req.body;
+
+  const resolucionesValidas = ['FAVOR_PRESTADOR', 'REEMBOLSO_TOTAL', 'DIVISION', 'COMPENSACION_PLATAFORMA'];
+  if (!resolucionesValidas.includes(resolucion)) {
+    return res.status(400).json({ error: 'Resolución inválida.' });
+  }
+  if (resolucion === 'DIVISION' && (porcentaje_prestador === undefined || porcentaje_prestador < 0 || porcentaje_prestador > 100)) {
+    return res.status(400).json({ error: 'Para DIVISION se requiere porcentaje_prestador (0-100).' });
+  }
 
   const client = await pool.connect();
   try {

@@ -23,7 +23,9 @@ async function seed3YearsData() {
       ownerUser = await User.create({
         nombre: 'Carlos Mendoza (Propietario GlowApp)',
         email: 'propietario@salonglow.com',
-        password_hash: '$2b$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW', // password123
+        // N-15: placeholder, NO hash (un hash versionado es el defecto N-2) ni comentario
+        // con la clave en claro (Regla 8 de N-10).
+        password_hash: '__SEED_PASSWORD_HASH__',
         phone: '3009876543',
         auth_provider: 'LOCAL',
         rol: 'PRESTADOR',
@@ -51,7 +53,7 @@ async function seed3YearsData() {
       if (!u) {
         u = await User.create({
           ...data,
-          password_hash: '$2b$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW',
+          password_hash: '__SEED_PASSWORD_HASH__',
           auth_provider: 'LOCAL',
           onboarding_completo: true,
           is_active: true
@@ -176,7 +178,7 @@ async function seed3YearsData() {
       clientUser = await User.create({
         nombre: 'Carolina Restrepo (Cliente VIP)',
         email: 'cliente.vip@glowapp.com',
-        password_hash: '$2b$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW',
+        password_hash: '__SEED_PASSWORD_HASH__',
         phone: '3159998877',
         auth_provider: 'LOCAL',
         rol: 'CLIENTE',
@@ -227,7 +229,7 @@ async function seed3YearsData() {
     console.log('\n======================================================');
     console.log('👤 CREDENCIALES DEL PROPIETARIO DEMO:');
     console.log('   Email: propietario@salonglow.com');
-    console.log('   Password: password123');
+    console.log('   Password: REDACTED (definida por SEED_PASSWORD al sembrar)');
     console.log('🏢 SEDES HABILITADAS (3 AÑOS DE OPERACIÓN):');
     console.log('   1. GlowApp Salón & Spa Sede Norte (ID: bp-glow-norte)');
     console.log('   2. GlowApp Barbería & Estética Chapinero (ID: bp-glow-chapinero)');

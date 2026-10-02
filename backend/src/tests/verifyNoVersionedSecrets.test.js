@@ -60,8 +60,8 @@ describe('verifyNoVersionedSecrets — Pipeline Pure Scanner Test (CRLF / LF Inv
     expect(resNoAccent.hallazgos[0].nombre).toBe('contraseña documentada en prosa o comentario');
   });
 
-  test('Regla 2: Hash de contraseña débil conocida (bcrypt) es detectado por el escáner', () => {
-    // Hash bcrypt conocido de 'password123'
+  test('Regla 2: Hash bcrypt versionado es detectado por el escáner (detección estática del patrón $2a$/$2b$)', () => {
+    // Hash bcrypt con patrón $2a$/$2b$ (la regla es estática: ya no depende de bcryptjs)
     const hashLine = "INSERT INTO usuarios VALUES ('$2a$10$XG3dsKkJJFx9cldnFJHGt.FJqYVTNiSsoJAaSVwUQkYis22mXk/7O');";
     const rawInput = `seed.sql:5:${hashLine}\n`;
     const res = analizarSalida(rawInput);
@@ -70,9 +70,30 @@ describe('verifyNoVersionedSecrets — Pipeline Pure Scanner Test (CRLF / LF Inv
     expect(res.hallazgos[0]).toEqual({
       archivo: 'seed.sql',
       numLinea: '5',
-      nombre: 'hash de contraseña débil conocida'
+      nombre: 'hash bcrypt versionado'
     });
     expect(res.exitCode).toBe(1);
+  });
+
+  test('Regla 2 (N-2): El patrón bcrypt $2b$ se detecta en un seed .sql versionado (fuera de JS)', () => {
+    const sqlLine = "(101,'x@y.com','$2b$12$K7vXbM8Wz2oPl9R1NqYeOu1AhGj5FkLmNpQrStUvWxYzAbCdEfGhI','X',true),";
+    const res = analizarSalida(`backend/railway_seed.sql:9:${sqlLine}\n`);
+
+    expect(res.hallazgos).toHaveLength(1);
+    expect(res.hallazgos[0]).toEqual({
+      archivo: 'backend/railway_seed.sql',
+      numLinea: '9',
+      nombre: 'hash bcrypt versionado'
+    });
+    expect(res.exitCode).toBe(1);
+  });
+
+  test('Regla 2 (N-2): El marcador __SEED_PASSWORD_HASH__ NO se marca (placeholder reconocido)', () => {
+    const placeholderLine = "const PASSWORD_HASH = '__SEED_PASSWORD_HASH__';";
+    const res = analizarSalida(`backend/src/config/db.js:173:${placeholderLine}\n`);
+
+    expect(res.hallazgos).toHaveLength(0);
+    expect(res.exitCode).toBe(0);
   });
 
   test('Regla 3: Valor por defecto literal en variable sensible sigue siendo detectado (re-verificación de cobertura)', () => {
@@ -147,5 +168,47 @@ describe('verifyNoVersionedSecrets — Pipeline Pure Scanner Test (CRLF / LF Inv
     expect(evalLFNoNorm.val).toBe('Xk92LmQ7ppQzRt4VbN8wYs3Dd6Ff');
     expect(evalCRLFNoNorm.val).toBe('Xk92LmQ7ppQzRt4VbN8wYs3Dd6Ff\r');
     expect(evalCRLFNoNorm.val).not.toBe(evalLFNoNorm.val);
+  });
+
+  describe('Regla 8 (N-10): contraseñas EN TEXTO PLANO versionadas', () => {
+    const NOMBRE = 'contraseña en texto plano (literal versionado)';
+
+    test('Positivos: las formas del hallazgo N-10 se detectan (una por línea)', () => {
+      const casos = [
+        { archivo: 'seed/prestador-demo.sql', n: '7', linea: "-- Contraseña en texto plano: 'Demo123456'" },
+        { archivo: 'seed/prestador-demo.sql', n: '149', linea: "    RAISE NOTICE 'Password: Demo123456';" },
+        { archivo: 'src/db/seed_3years_saas_data.js', n: '26', linea: "        password_hash: '<HASH>', // password123" },
+        { archivo: 'src/db/seed_3years_saas_data.js', n: '230', linea: "    console.log('   Password: password123');" },
+        { archivo: 'scripts/beauty-app-start.ps1', n: '34', linea: '    client = @{ email = "a@b.com"; password = "password123"; role = "client" }' }
+      ];
+
+      for (const caso of casos) {
+        const res = analizarSalida(`${caso.archivo}:${caso.n}:${caso.linea}\n`);
+        expect(res.hallazgos).toHaveLength(1);
+        expect(res.hallazgos[0].nombre).toBe(NOMBRE);
+        expect(res.exitCode).toBe(1);
+      }
+    });
+
+    test('Negativos: referencias de código, tipos, actas y prosa de UI NO se marcan', () => {
+      const casos = [
+        '    password: process.env.DB_PASSWORD,',
+        '  login: (email: string, password: string) => Promise<AuthResponse>;',
+        '    const hashedPassword = await bcrypt.hash(password, 10);',
+        "    const password_hash = params[2] || '';",
+        '  "registerPasswordError": "Minimum 6 characters",',
+        '      "Login password: S4TextField",',
+        "        password_hash: '<HASH>', // hash bcrypt de la clave demo (REDACTED — se define con SEED_PASSWORD al sembrar)"
+      ];
+
+      for (const linea of casos) {
+        expect(analizarSalida(`src/config/app.js:10:${linea}\n`).hallazgos).toHaveLength(0);
+      }
+    });
+
+    test('El valor nunca se imprime: el hallazgo sólo trae archivo, línea y tipo', () => {
+      const res = analizarSalida("backend/seed/prestador-demo.sql:149:    RAISE NOTICE 'Password: Demo123456';\n");
+      expect(Object.keys(res.hallazgos[0]).sort()).toEqual(['archivo', 'nombre', 'numLinea']);
+    });
   });
 });

@@ -184,20 +184,6 @@ const AURA_TOOLS_DEFINITIONS = [
         required: ['queryText']
       }
     }
-  },
-  {
-    type: 'function',
-    function: {
-      name: 'get_personalized_routine_bundle',
-      description: 'Invoca el ecosistema multi-agente (ATENA + HESTIA + CHRONOS) para construir un paquete 360° de rutina personalizada, productos e-commerce compatibles y estado de re-agendamiento.',
-      parameters: {
-        type: 'object',
-        properties: {
-          userId: { type: 'number', description: 'ID numérico del usuario' }
-        },
-        required: ['userId']
-      }
-    }
   }
 ];
 
@@ -329,30 +315,18 @@ async function executeAuraTool(toolName, args, userId, userRole = 'provider', te
       }
 
       case 'search_regulatory_knowledge_rag': {
+        // ATENCIÓN (auditoría 2026-09-22): el corpus canónico de `beauty_knowledge_embeddings`
+        // NO contiene documentos regulatorios (0 chunks con 'business'/'resolucion'/'formalizacion';
+        // 2 con 'invima'), así que esta búsqueda devuelve vacío por FALTA DE DATOS, no por el
+        // filtro. El filtro `domain` ya no apunta a una clave inexistente
+        // (`metadata->>'domain'` no existe en ningún chunk): ahora compara contra la categoría
+        // canónica y `metadata->'applicable_modules'`. Cargar el corpus regulatorio es una
+        // decisión de datos pendiente (PLAN_MEJORA_RAG.md, Fase 4).
         const results = await searchBeautyKnowledge(args.queryText, {
           filters: { domain: 'BUSINESS', jurisdiction: args.jurisdiction },
           tenantId
         });
         return { status: 'success', domain: 'REGULATORY', knowledge: results };
-      }
-
-      case 'get_personalized_routine_bundle': {
-        const targetUserId = args.userId || userId;
-        const [atenaData, chronosData, hestiaData] = await Promise.all([
-          atenaAgent.getBiometricDiagnosis(targetUserId),
-          chronosAgent.evaluateUserRebooking(targetUserId),
-          hestiaAgent.recommendProducts({ userId: targetUserId })
-        ]);
-
-        return {
-          status: 'success',
-          userId: targetUserId,
-          bundle: {
-            biometricProfile: atenaData,
-            rebookingStatus: chronosData,
-            recommendedProducts: hestiaData
-          }
-        };
       }
 
       default:

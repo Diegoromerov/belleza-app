@@ -39,17 +39,17 @@ const { Client } = require('pg');
 
 const RAIZ = path.join(__dirname, '..');
 const ADMIN_URL = process.env.DATABASE_URL_ADMIN || process.env.DATABASE_URL;
-const PASSWORD = process.env.RLS_ROLE_PASSWORD || 'glowapp_rls_default_pass_2026';
+const PASSWORD = process.env.RLS_ROLE_PASSWORD;
 
 const MIGRACIONES = [
   'init.sql',
-  'migrations/058_create_tenants_table.sql',
-  'migrations/059_add_tenant_id_to_core_tables.sql',
-  'migrations/060_backfill_tenant_id.sql',
-  'migrations/061_enable_rls_policies.sql',
-  'migrations/069_multi_tenant_hardening.sql',
-  'migrations/073_create_multi_salon_ddl.sql',
-  'migrations/074_force_rls_strict_isolation.sql',
+  'migrations/055_create_tenants_table.sql',
+  'migrations/056_add_tenant_id_to_core_tables.sql',
+  'migrations/057_backfill_tenant_id.sql',
+  'migrations/058_enable_rls_policies.sql',
+  'migrations/065_multi_tenant_hardening.sql',
+  'migrations/067_create_multi_salon_ddl.sql',
+  'migrations/068_force_rls_strict_isolation.sql',
 ];
 
 async function main() {
@@ -79,15 +79,6 @@ async function main() {
         WHERE n.nspname = 'public' AND c.relkind = 'r' AND c.relname NOT IN ('spatial_ref_sys')`
     );
     const baseVacia = estado.tablas === 0;
-
-    if (!baseVacia && estado.tablas > 30 && process.env.FORCE_PREPARE !== 'true') {
-      const roleCheck = await cliente.query("SELECT 1 FROM pg_roles WHERE rolname = 'app_rls_user';");
-      if (roleCheck.rows.length > 0) {
-        console.log(`✅ Base de datos ya preparada (${estado.tablas} tablas y rol app_rls_user presente). Omitiendo ejecuciones redundantes.`);
-        await cliente.end();
-        process.exit(0);
-      }
-    }
 
     console.log(
       baseVacia
@@ -159,11 +150,12 @@ async function main() {
     console.log(`   ✅ ${tablas.map((t) => t.relname).join(', ')}`);
 
     // ── 4. Resumen verificable ─────────────────────────────────────────────
-    // `usuarios` es la ÚNICA excepción y es deliberada: `auth.js` la consulta para
-    // DESCUBRIR el inquilino, cuando todavía no hay contexto; forzarla dejaría el
-    // sistema entero en 401 (razón documentada en la cabecera de 068). Todo lo
-    // demás debe tener FORCE y política: otra tabla sin ellas es una fuga.
-    const EXENTAS_DE_FORCE = ['usuarios'];
+    // `usuarios` ya NO es una excepción: la migración 068 le habilita RLS con
+    // FORCE y la política `usuarios_isolation` (más las funciones SECURITY
+    // DEFINER para el arranque de identidad). Antes quedaba con RLS desactivado
+    // y eso era una fuga de PII cross-tenant. Ninguna tabla con `tenant_id`
+    // puede quedar sin FORCE ni sin política.
+    const EXENTAS_DE_FORCE = [];
 
     const { rows: [resumen] } = await cliente.query(
       `SELECT count(*)::int AS total,

@@ -31,18 +31,21 @@
 //
 // ACTIVACIÓN
 // ----------
-// Opt-in mediante TENANT_TRANSACTION_PER_REQUEST=true. Con el flag desactivado
-// (por defecto) este middleware es un passthrough: no abre conexión ni
-// transacción, y el comportamiento de la app es idéntico al anterior.
+// ACTIVO POR DEFECTO. Con TENANT_TRANSACTION_PER_REQUEST ausente este middleware
+// abre una transacción dedicada por petición autenticada. Sólo se desactiva con
+// TENANT_TRANSACTION_PER_REQUEST=false, y en producción ese valor se ignora: el
+// aislamiento por inquilino es obligatorio (ver config/tenantRouting.js,
+// isPerRequestTransactionEnabled). Con el modo desactivado el middleware es un
+// passthrough: no abre conexión ni transacción, y el comportamiento de la app
+// es idéntico al anterior.
 //
 // LIMITACIÓN CONOCIDA
 // -------------------
 // El COMMIT ocurre cuando la respuesta ya se envió (evento 'finish'), que es lo
 // que permite mantener la transacción abierta durante toda la petición sin
 // envolver res.send/res.json. Contrapartida: si el COMMIT falla, el cliente ya
-// recibió 200 y la escritura se revierte. Es aceptable mientras el flag esté
-// desactivado; si 066 lo activa en producción, conviene mover el COMMIT antes
-// de enviar la respuesta interceptando res.json.
+// recibió 200 y la escritura se revierte. Conviene mover el COMMIT antes de
+// enviar la respuesta interceptando res.json.
 
 const { pool } = require('../config/db');
 const tenantRouting = require('../config/tenantRouting');

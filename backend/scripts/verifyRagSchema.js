@@ -15,7 +15,7 @@ const EXPECTED_SCHEMA = {
   tableName: 'beauty_knowledge_embeddings',
   embedding: {
     columnName: 'embedding',
-    expectedDimension: parseInt(process.env.NVIDIA_EMBEDDING_DIMS || '2048', 10),
+    expectedDimension: 1024,
     expectedType: 'vector',
   },
   indexes: {

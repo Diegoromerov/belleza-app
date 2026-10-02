@@ -102,43 +102,6 @@ class AtenaAgent {
       createdAt: rawProfile.created_at
     };
   }
-
-  /**
-   * Consulta el conocimiento RAG (~20k chunks) para respaldar la evidencia técnica (CONTRACT_04 & CONTRACT_06)
-   */
-  async generateRAGRationale(targetMetricKey, ingredients = []) {
-    const ragService = require('../ragService');
-    const queryText = `Tratamiento y principios activos para ${targetMetricKey} ${ingredients.join(' ')}`;
-
-    try {
-      if (typeof ragService.searchKnowledge === 'function') {
-        const ragRes = await ragService.searchKnowledge({
-          query: queryText,
-          topK: 3
-        });
-
-        if (ragRes && Array.isArray(ragRes.results) && ragRes.results.length > 0) {
-          return {
-            hasRagEvidence: true,
-            ragReferences: ragRes.results.map(r => ({
-              chunkId: r.chunk_id || r.id,
-              title: r.title || 'Evidencia Técnica Dermocosmética',
-              snippet: r.content ? r.content.substring(0, 150) + '...' : ''
-            })),
-            rationale: `Tratamiento fundamentado en ${ragRes.results.length} fuentes de evidencia técnica RAG.`
-          };
-        }
-      }
-    } catch (e) {
-      console.warn('⚠️ [ATENA Agent] RAG service no disponible, aplicando fallback nativo:', e.message);
-    }
-
-    return {
-      hasRagEvidence: false,
-      ragReferences: [],
-      rationale: `Tratamiento formulado según principios dermatológicos de la plataforma para ${targetMetricKey}.`
-    };
-  }
 }
 
 module.exports = new AtenaAgent();

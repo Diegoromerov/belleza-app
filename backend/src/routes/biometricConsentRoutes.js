@@ -204,7 +204,20 @@ router.delete('/biometric/:consentType/data', authMiddleware, async (req, res) =
     }
     
     const result = await deleteBiometricData(userId, consentType);
-    
+
+    // N-11 (SECAPP-05): la supresión es fail-closed. Si la implementación no
+    // CONFIRMA el borrado (`deleted !== true`, p.ej. {deleted:false,
+    // recordsAffected:0} por error de BD), NUNCA se responde éxito: el titular
+    // creería ejercido su derecho de supresión (Ley 1581 Art. 8/15) sin serlo.
+    // Sin este guard la ruta respondía 200 {success:true} con "eliminados
+    // permanentemente" aunque el borrado hubiera fallado.
+    if (!result || result.deleted !== true) {
+      return res.status(500).json({
+        error: 'deletion_failed',
+        message: (result && result.error) || 'No se pudo confirmar la supresion de los datos biometricos'
+      });
+    }
+
     res.json({
       success: true,
       data: result,

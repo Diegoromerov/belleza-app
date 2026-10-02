@@ -1,4 +1,3 @@
-console.log('🚀 [BOOT] Starting GlowApp API Container...');
 // backend/index.js - Loopback updated
 const express = require('express');
 const cors = require('cors');
@@ -38,12 +37,13 @@ const portfolioRoutes = require('./src/routes/portfolioRoutes');
 const communityRoutes = require('./src/routes/communityRoutes');
 const mentorshipRoutes = require('./src/routes/mentorshipRoutes');
 const xpLogRoutes = require('./src/routes/xpLogRoutes');
-const membershipTierRoutes = require('./src/routes/membershipTierRoutes');
 const eventRoutes = require('./src/routes/eventRoutes');
 const eventRegistrationRoutes = require('./src/routes/eventRegistrationRoutes');
 const businessRoutes = require('./src/routes/businessRoutes');
 const membershipRoutes = require('./src/routes/membershipRoutes');
 const { buildProjections } = require('./src/services/adminMetricsService');
+// FIX-FLUTTER-06: política de versión mínima publicada en GET /api/health.
+const { resolveAppVersionPolicy } = require('./src/services/appVersionPolicy');
 const adminMiddleware = async (req, res, next) => {
   try {
     if (!req.user || !req.user.id) {
@@ -226,6 +226,14 @@ app.use((req, res, next) => {
   next();
 });
 
+// P0 infra/observabilidad #4 (t_fix_infra_04): plano de métricas máquina-legible.
+// Se monta ANTES del candado de degradación para que TODA respuesta (incluidos los
+// 503 tempranos y los 404) quede contabilizada y sea alertable. `express-status-monitor`
+// (página humana en /status) no expone /metrics ni es consumible por Prometheus.
+const { metricsMiddleware, metricsHandler } = require('./src/metrics/prometheus');
+app.use(metricsMiddleware);
+app.get('/metrics', metricsHandler);
+
 const { degradedLockMiddleware, clasificarSalud, asegurarEstadoComprobado } = require('./src/middleware/degradedLock');
 app.use('/api', degradedLockMiddleware);
 
@@ -369,12 +377,18 @@ app.get(/^(?!\/api(?:\/|$))(?!\/uploads(?:\/|$))(?!\/admin(?:\/|$)).*/, (req, re
   res.sendFile(path.join(__dirname, 'public/index.html'));
 });
 
-const allowDebugRoutes = process.env.ALLOW_DEBUG_ROUTES === 'true' || process.env.NODE_ENV !== 'production';
+// Fail-closed (AUD-SECAPP-03, P0): /api/test-db y /api/debug-db NUNCA quedan abiertas
+// por defecto. El guard anterior era fail-OPEN: se servían SIN auth en cualquier entorno
+// donde NODE_ENV no fuese exactamente 'production' (incluido NODE_ENV ausente) y también
+// en producción si ALLOW_DEBUG_ROUTES='true'. Ahora exigen auth+admin SIEMPRE, salvo el
+// opt-in explícito ALLOW_DEBUG_ROUTES='true' Y sólo fuera de producción (depuración local).
+const allowDebugRoutes =
+  process.env.NODE_ENV !== 'production' && process.env.ALLOW_DEBUG_ROUTES === 'true';
 const debugRouteMiddleware = (req, res, next) => {
-  if (!allowDebugRoutes) {
-    return authMiddleware(req, res, () => adminMiddleware(req, res, next));
+  if (allowDebugRoutes) {
+    return next();
   }
-  return next();
+  return authMiddleware(req, res, () => adminMiddleware(req, res, next));
 };
 
 const { rateLimitByIP } = require('./src/middleware/rateLimiter');
@@ -427,13 +441,15 @@ app.use('/api/portfolio', portfolioRoutes);
 app.use('/api/community', communityRoutes);
 app.use('/api/mentorship', mentorshipRoutes);
 app.use('/api/xp-logs', xpLogRoutes);
-app.use('/api/membership-tier', membershipTierRoutes);
 app.use('/api/v1/business', businessRoutes);
 app.use('/api/v1/memberships', membershipRoutes);
 // Health check — NO escribe en la base de datos. Antes ejecutaba un `setval` sobre
 // `usuarios_id_seq` en cada probe (y respondía 200 con la BD caída).
 // A360-2026-09-22/A-06 + C-03.
-const healthHandler = async (req, res) => {
+// Health check — NO escribe en la base de datos.
+app.get('/api/health', async (req, res) => {
+  // Ronda 7 (CI-23): si el estado nunca se comprobó, se comprueba AHORA (una vez por TTL) antes de
+  // clasificar; sin comprobar no es lo mismo que sano ni que degradado.
   const dbStatus = await asegurarEstadoComprobado();
   const salud = clasificarSalud(dbStatus);
   if (salud.degradado) {
@@ -445,14 +461,12 @@ const healthHandler = async (req, res) => {
     timestamp: new Date().toISOString(),
     env: process.env.NODE_ENV || 'development',
     database: dbStatus,
+    // FIX-FLUTTER-06: política de versión de la app (fuente: MINIMUM_APP_VERSION /
+    // LATEST_APP_VERSION). La app compara su versión instalada y bloquea si está
+    // por debajo de minimum_app_version.
+    ...resolveAppVersionPolicy(),
   });
-};
-
-app.get('/api/health', healthHandler);
-app.get('/health', healthHandler);
-app.get('/healthz', healthHandler);
-app.get('/live', healthHandler);
-app.get('/ready', healthHandler);
+});
 
 // Test DB connection
 app.get('/api/test-db', debugRouteMiddleware, async (req, res) => {
@@ -587,44 +601,8 @@ app.post('/api/upload', authMiddleware, (req, res) => {
 // Lista de clientes conectados a eventos SSE de administración
 const sseClients = [];
 
-// Constantes de configuración SSE
-const SSE_MAX_CLIENTS = 50;
-const SSE_HEARTBEAT_INTERVAL_MS = 30000;
-
-// Función para limpiar clientes zombis (conexiones cerradas/rotas)
-const cleanupZombieClients = () => {
-  let removed = 0;
-  for (let i = sseClients.length - 1; i >= 0; i--) {
-    const client = sseClients[i];
-    if (client.destroyed || client.writableEnded || !client.writable) {
-      sseClients.splice(i, 1);
-      removed++;
-    }
-  }
-  if (removed > 0) {
-    console.log(`🧹 [SSE] Limpieza: ${removed} cliente(s) zombi(s) removido(s). Total: ${sseClients.length}`);
-  }
-};
-
-// Heartbeat periódico para detectar conexiones muertas
-setInterval(() => {
-  cleanupZombieClients();
-  // Enviar ping a clientes vivos
-  const payload = JSON.stringify({ type: 'ping', timestamp: new Date().toISOString() });
-  sseClients.forEach(client => {
-    try {
-      client.write(`data: ${payload}\n\n`);
-    } catch (err) {
-      // Cliente muerto, se limpiará en el próximo ciclo
-    }
-  });
-}, SSE_HEARTBEAT_INTERVAL_MS);
-
 // Función para transmitir eventos a todos los clientes del dashboard conectados
 const broadcastAdminEvent = (type, data) => {
-  // Limpiar zombis antes de transmitir
-  cleanupZombieClients();
-  
   const payload = JSON.stringify({ type, data });
   sseClients.forEach(client => {
     try {
@@ -726,16 +704,6 @@ const optionalAuthMiddleware = async (req, res, next) => {
 
 // 🔹 NUEVO: Canal SSE en tiempo real para eventos de administración
 app.get('/api/admin/events/stream', authMiddleware, adminMiddleware, (req, res) => {
-  // Verificar límite de conexiones concurrentes
-  if (sseClients.length >= SSE_MAX_CLIENTS) {
-    console.warn(`⚠️ [SSE] Límite de ${SSE_MAX_CLIENTS} conexiones alcanzado. Conexión rechazada.`);
-    return res.status(503).json({
-      error: 'Servicio no disponible',
-      message: `Límite de ${SSE_MAX_CLIENTS} conexiones SSE concurrentes alcanzado. Intente más tarde.`,
-      retry_after_segundos: 30
-    });
-  }
-
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
@@ -1403,13 +1371,13 @@ const initDatabase = async () => {
     if (hasTable) {
       console.log('✅ Base de datos ya inicializada. Omitiendo recreación de tablas.');
     } else {
-      const schemaPath = path.join(__dirname, 'schema.sql');
+      const schemaPath = path.join(__dirname, 'init.sql');
       if (fs.existsSync(schemaPath)) {
         const schemaSql = fs.readFileSync(schemaPath, 'utf8');
         await pool.query(schemaSql);
-        console.log('✅ Base de datos: Esquema inicializado/verificado desde schema.sql');
+        console.log('✅ Base de datos: Esquema inicializado/verificado desde init.sql (fuente canónica)');
       } else {
-        console.warn('⚠️ No se encontró schema.sql. Se omitió la creación automática de tablas.');
+        console.warn('⚠️ No se encontró init.sql. Se omitió la creación automática de tablas.');
       }
     }
   } catch (error) {
@@ -1801,20 +1769,19 @@ app.set('notifyUserChatMessage', notifyUserChatMessage);
 
 // SPA Fallback para Flutter Web (ver nota en webBuildPath: en el contenedor desplegado no existe)
 app.get('*', (req, res, next) => {
-  if (req.path.startsWith('/api')) return next();
-  if (hasWebBuild) {
-    return res.sendFile(webBuildIndex);
-  }
-  next();
+if (req.path.startsWith('/api') || req.path === '/metrics' || req.path.startsWith('/api-docs')) return next();
+if (hasWebBuild) {
+return res.sendFile(webBuildIndex);
+}
+next();
 });
 
 // ==========================================
 // INICIO DEL SERVIDOR
 // ==========================================
 if (process.env.NODE_ENV !== 'test') {
-  const HOST = process.env.HOST || '0.0.0.0';
-  const server = app.listen(PORT, HOST, async () => {
-    console.log(`🚀 Servidor escuchando en http://${HOST}:${PORT}`);
+  const server = app.listen(PORT, async () => {
+    console.log(`🚀 Servidor en http://localhost:${PORT}`);
     // 🏭 Auto-ingesta de corpus en cada deploy
 try {
   let mod = null;
@@ -1852,13 +1819,7 @@ process.on('unhandledRejection', (reason, promise) => {
 
 process.on('uncaughtException', (error) => {
   console.error('❌ Uncaught Exception:', error);
-  const isTransientNetError = error && error.message && (
-    error.message.includes('Redis') ||
-    error.message.includes('ENOTFOUND') ||
-    error.message.includes('ECONNREFUSED') ||
-    error.message.includes('ETIMEDOUT')
-  );
-  if (!isTransientNetError && process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'staging') {
+  if (process.env.NODE_ENV !== 'development') {
     process.exit(1);
   }
 });

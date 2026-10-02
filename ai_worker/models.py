@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """Modelos Pydantic del ai_worker.
 
 Contrato de ``POST /api/v1/beauty-scan``
@@ -30,6 +32,27 @@ from pydantic import BaseModel
 from typing import Dict, List, Optional
 
 
+class SkinMetricsResponse(BaseModel):
+    """Salida de ``services.skin_metrics.SkinMetricsService.analyze_skin_metrics``.
+
+    Scores normalizados 0.0-1.0 derivados del gradiente y la dispersión de
+    luminancia de la imagen (proxies de textura, no mediciones instrumentales).
+    """
+
+    hydration_score: float
+    pore_density_score: float
+    sebum_balance_score: float
+    elasticity_score: float
+    detailed_metrics: Dict[str, float]
+
+
+class NoMedido(BaseModel):
+    """Campo clínico que el worker NO puede medir, con el motivo explícito."""
+
+    campo: str
+    motivo: str
+
+
 class ScanRequest(BaseModel):
     """Request legacy de ``POST /api/v1/analyze-skin`` (imagen única en base64)."""
 
@@ -55,28 +78,7 @@ class BiometricResult(BaseModel):
     warmth_ratio: Optional[float] = None
     mensaje_aura: str
     metodo: Optional[Dict[str, str]] = None
-    no_medido: Optional[List["NoMedido"]] = None
-
-
-class SkinMetricsResponse(BaseModel):
-    """Salida de ``services.skin_metrics.SkinMetricsService.analyze_skin_metrics``.
-
-    Scores normalizados 0.0-1.0 derivados del gradiente y la dispersión de
-    luminancia de la imagen (proxies de textura, no mediciones instrumentales).
-    """
-
-    hydration_score: float
-    pore_density_score: float
-    sebum_balance_score: float
-    elasticity_score: float
-    detailed_metrics: Dict[str, float]
-
-
-class NoMedido(BaseModel):
-    """Campo clínico que el worker NO puede medir, con el motivo explícito."""
-
-    campo: str
-    motivo: str
+    no_medido: Optional[List[NoMedido]] = None
 
 
 class RegionSignals(BaseModel):

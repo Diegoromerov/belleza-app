@@ -400,9 +400,9 @@ payload devuelve 1 fila (solo GLOBAL) y el scoping legítimo sigue funcionando e
 
 | # | Acción | Detalle |
 |---|---|---|
-| 1 | Elegir modelo vivo | `nvidia/nemotron-3-embed-1b` es el único habilitado para esta cuenta |
-| 2 | Migración de dimensiones | `expectedDimension 1024→2048`, columna `vector(2048)`, reconstruir índice HNSW |
-| 3 | Re-ingesta completa | los **5.619 chunks** del corpus canónico deben re-embeberse: los vectores existentes pertenecen al espacio del modelo retirado y no son reutilizables |
+| 1 | Elegir modelo vivo | **RESUELTO en t_fix_ragaura_01**: `embeddingService.js` usa `nvidia/nemotron-3-embed-1b` por defecto |
+| 2 | Migración de dimensiones | **RESUELTO en t_fix_ragaura_03**: `expectedDimension 1024→2048`, columna `vector(2048)` (migración 073), índice HNSW reconstruido |
+| 3 | Re-ingesta completa | **PROCEDIMIENTO DOCUMENTADO en t_fix_ragaura_03** (ver §9.9 y `docs/rag-audit-2026-09-22/FASE0_REINGESTA_2048.md`): los **5.619 chunks** del corpus canónico deben re-embeberse — los vectores existentes pertenecen al espacio del modelo retirado y no son reutilizables |
 | 4 | Recalibrar umbral | con el modelo vivo el acierto puntúa 0.4156, por debajo del `0.45` actual |
 | 5 | Config de despliegue | `NVIDIA_API_KEY` sólo existe en el `.env` de la raíz; el backend hace `dotenv.config()` desde su cwd (`backend/.env`). Verificar que el servicio desplegado realmente la ve |
 | 6 | Trazabilidad | **RESUELTO en Fase 1 (PR #8)**: 16/16 columnas pobladas y verificadas escribiendo/leyendo una fila real. La traza añade `filters_dropped`, `filters_relaxed` y el umbral realmente usado (§9.8) |
@@ -448,4 +448,30 @@ Evidencia y límites: `docs/rag-audit-2026-09-22/FASE1_ENTREGA.md` y `probes/pro
 
 ---
 
-*Fin del documento — RAG_ARCHITECTURE.md v1.0 (Ciclo 02) · §9 añadido en la actualización 2026-09-22*
+### 9.9 Migración de dimensión 1024→2048 (t_fix_ragaura_03)
+
+Cierra el bloqueo §9.2 y los pendientes §9.6 #1–#3. Cambiar de modelo de embeddings cambia el
+**espacio vectorial**: los vectores del modelo retirado no son comparables con los del modelo vivo,
+así que la corrección es indivisible (esquema + código + re-ingesta) y ordenada.
+
+| Artefacto | Antes | Después |
+|---|---|---|
+| Columna `beauty_knowledge_embeddings.embedding` | `vector(1024)` (migración 035) | `vector(2048)` (migración 073) |
+| Índice vectorial | HNSW coseno 1024d | HNSW coseno 2048d (`m=16, ef_construction=64`), IVFFlat de respaldo |
+| `embeddingService.js` `expectedDimension` | `1024` | `2048` |
+| `embeddingService.js` modelo por defecto | `nvidia/nv-embedqa-e5-v5` (EOL) | `nvidia/nemotron-3-embed-1b` |
+| `ragService.js` `EXPECTED_DIMS` | `1024` | `2048` |
+
+**Regla de despliegue (obligatoria, en orden):** migrar → **re-ingestar** → recalibrar umbral → verificar.
+El procedimiento de re-ingesta está documentado en
+`docs/rag-audit-2026-09-22/FASE0_REINGESTA_2048.md`. Hasta completar la re-ingesta, la columna
+contiene vectores `NULL` y la ruta vectorial devuelve 0 filas (el retrieval degrada a full-text de
+forma explícita, no silenciosa).
+
+Verificación estática: `backend/tests/rag.embedding-dimension.test.js` compara que las TRES fuentes
+(DDL efectivo de la columna, `expectedDimension` y `EXPECTED_DIMS`) igualen la dimensión del modelo
+vivo (2048). Regresión: no se reescribe la evidencia histórica de los ciclos R5/R6 (`src/data/eval/`).
+
+---
+
+*Fin del documento — RAG_ARCHITECTURE.md v1.1 (Ciclo 02) · §9 añadido en la actualización 2026-09-22 · §9.9 añadido en t_fix_ragaura_03*

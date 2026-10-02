@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """GlowApp AI Worker & Aura Business Engine (FastAPI).
 
 Endpoints:
@@ -140,6 +142,7 @@ def _decode_region(data: bytes, etiqueta: str):
     response_description="Métricas derivadas de señal de imagen + campos no medidos",
     responses={
         400: {"description": "Archivo vacío o parámetro inválido"},
+        403: {"description": "Consentimiento biométrico no válido o no provisto (Ley 1581 Art.6)"},
         413: {"description": "Archivo más grande que AI_WORKER_MAX_UPLOAD_BYTES"},
         422: {
             "description": (
@@ -157,12 +160,20 @@ async def beauty_scan_endpoint(
     hair: UploadFile = File(..., description="Cabello (JPEG/PNG/WEBP)"),
     hand: UploadFile = File(..., description="Mano (JPEG/PNG/WEBP)"),
     user_id: Optional[str] = Form(None, description="ID de usuario (opcional)"),
+    consent_biometric: Optional[str] = Form(
+        None, description="Consentimiento previo, expreso, informado y verificable para procesamiento de datos biométricos (Ley 1581 Art.6)"
+    ),
 ):
     """Contrato ``multipart/form-data`` del escaneo biométrico.
 
     **Request**: los 4 campos de archivo ``face_frontal``, ``face_lateral``,
     ``hair`` y ``hand`` (todos requeridos, ``maxCount 1`` cada uno según el proxy
     ``backend/src/routes/v1/beautyScanRoutes.js``) más ``user_id`` de texto.
+
+    **Consentimiento**: Requiere ``consent_biometric`` con valor ``"explicit"``
+    confirmando consentimiento previo, expreso, informado y verificable
+    (Ley 1581 Art.6 Colombia). Sin este consentimiento, la petición se rechaza
+    con 403.
 
     **Response 200** (``BeautyScanResponse``): ``face`` (subtono/estación/paleta +
     proxies de hidratación, sebo, poros, elasticidad), ``face_lateral``, ``hair``
@@ -171,11 +182,19 @@ async def beauty_scan_endpoint(
     Cada bloque trae ``metodo`` con la fórmula usada y la respuesta trae
     ``no_medido`` con los campos clínicos que este worker NO puede medir.
 
-    **Errores**: 422 si falta un archivo (validación FastAPI), si la imagen está
-    corrupta/no decodificable, si es un plano uniforme o si no se detecta la
-    región de piel esperada; 400 archivo vacío; 413 archivo demasiado grande.
+    **Errores**: 403 si falta o es inválido el consentimiento biométrico;
+    422 si falta un archivo (validación FastAPI), si la imagen está corrupta/
+    no decodificable, si es un plano uniforme o si no se detecta la región de
+    piel esperada; 400 archivo vacío; 413 archivo demasiado grande.
     Nunca se devuelve un diagnóstico sintético con 200.
     """
+    # Validar consentimiento biométrico previo, expreso, informado y verificable (Ley 1581 Art.6)
+    if consent_biometric != "explicit":
+        raise HTTPException(
+            status_code=403,
+            detail="Consentimiento biométrico requerido: debe proporcionar consent_biometric=explicit confirmando consentimiento previo, expreso, informado y verificable para el procesamiento de datos biométricos (Ley 1581 Art.6).",
+        )
+
     try:
         face_frontal_bytes = await _read_upload(face_frontal, "face_frontal")
         face_lateral_bytes = await _read_upload(face_lateral, "face_lateral")

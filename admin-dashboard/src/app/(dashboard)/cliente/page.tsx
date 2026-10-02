@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { useBookings } from '@/hooks/useBookings';
+import { maskProviderName, maskServiceAddress, toClientVisibleAmount } from '@/lib/security';
 import { Calendar, Clock, MapPin, DollarSign, Tag, UserCheck, XCircle } from 'lucide-react';
 
 export default function ClienteDashboard() {
@@ -16,7 +17,7 @@ export default function ClienteDashboard() {
     ['COMPLETADA'].includes(b.estado)
   );
 
-  const totalSpent = completedReservas.reduce((acc, curr) => acc + Number(curr.valor_bruto), 0);
+  const totalSpent = completedReservas.reduce((acc, curr) => acc + toClientVisibleAmount(curr.valor_bruto), 0);
 
   const handleCancel = async (id: string) => {
     if (confirm('¿Estás seguro de que deseas cancelar esta reserva?')) {
@@ -99,11 +100,11 @@ export default function ClienteDashboard() {
                     }`}>
                       {booking.estado.replace('_', ' ')}
                     </span>
-                    <span className="text-sm font-bold text-gray-900">${Number(booking.valor_bruto).toLocaleString('es-CO')}</span>
+                    <span className="text-sm font-bold text-gray-900">${toClientVisibleAmount(booking.valor_bruto).toLocaleString('es-CO')}</span>
                   </div>
                   <h4 className="font-bold text-gray-900 text-base">{booking.service_name || 'Servicio de Belleza'}</h4>
                   <p className="text-sm text-gray-500 flex items-center gap-2">
-                    <span>Estilista: <strong>{booking.provider_name || 'Profesional de Belleza'}</strong></span>
+                    <span>Estilista: <strong>{maskProviderName(booking.provider_name)}</strong></span>
                   </p>
                   <div className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-gray-400">
                     <span className="flex items-center gap-1.5">
@@ -114,10 +115,10 @@ export default function ClienteDashboard() {
                       <Clock size={14} />
                       {new Date(booking.scheduled_at).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
                     </span>
-                    {booking.service_address && (
+                    {maskServiceAddress(booking.service_address) && (
                       <span className="flex items-center gap-1.5">
                         <MapPin size={14} />
-                        {booking.service_address}
+                        {maskServiceAddress(booking.service_address)}
                       </span>
                     )}
                   </div>

@@ -1,68 +1,96 @@
 /**
- * Servicio RAG (Retrieval-Augmented Generation) para GlowApp — CEREBRO DE AURA ELITE (CLASE AAA)
- * Búsqueda Híbrida Vectorial + FTS (RRF), Self-Querying, Cross-Encoder Reranking, Grafo Clínico & Cache Semántico.
+ * Servicio RAG (Retrieval-Augmented Generation) para GlowApp
+ * Busca conocimiento técnico y regulatorio de belleza con aislamiento Multi-Tenant (BUS-RAG-001)
+ *
+ * Pipeline:
+ *   1. embedding real de la consulta vía embeddingService (NVIDIA NIM + circuit breaker, SIN dummy)
+ *   2. búsqueda vectorial pgvector (HNSW, similitud coseno) con filtros de metadata, tenant y vigencia
+ *   3. si el paso 1 o 2 fallan → fallback full-text (tsvector español) sobre la misma tabla
+ *   El tenant viaja SIEMPRE como parámetro ligado ($n), nunca interpolado en el SQL.
+ *
+ * Evidence Layer (Fase C, AUD-RAGAURA-01 · P0 #2):
+ *   El retrieval se envuelve con la capa de evidencia:
+ *     chunks → Evidence (identidad, rank, provenance) → Sufficiency Gate
+ *     (SUPPORTED / PARTIAL / UNSUPPORTED / RETRIEVAL_UNCERTAIN) → EvidencePacket
+ *   `searchWithEvidence()` es el punto de integración; el contrato de
+ *   `searchBeautyKnowledge()` no cambia.
+ *
+ * Filtros (Fase 1, 2026-09-23):
+ *   - Los predicados apuntan a los CAMPOS QUE LA INGESTA REALMENTE ESCRIBE. La ingesta
+ *     canónica (`ingestCanonicalCorpus.js`) escribe: title, category, content, metadata,
+ *     embedding, document_id, document_version, chunk_id, content_hash, fuente, seccion.
+ *     Las columnas `skin_type`, `ingredients` y `contraindications` quedan NULL: los datos
+ *     viven en `metadata->'skin_types' | 'ingredients' | 'contraindications'`.
+ *   - Un `category` fuera del vocabulario canónico (`config/knowledgeCategories.js`) NO se
+ *     aplica como filtro: se registra en la traza y se busca sin él (fail-open). Antes
+ *     devolvía 0 filas en silencio, con apariencia de "no hay información".
+ *   - Si la búsqueda filtrada devuelve 0 filas, se reintenta UNA vez sin filtros de metadata
+ *     (la condición de tenant y la vigencia NUNCA se relajan) y se marca `relaxed`.
+ *   - El fallback full-text ya no inventa `similarity = 0.5`: devuelve `similarity = null`
+ *     y `mode = 'fts'`, para que nadie presente una similitud que no se midió.
  */
 
 require('dotenv').config();
+const crypto = require('crypto');
 const { ragPool, pool } = require('../config/db');
 const { generateEmbedding: generateQueryEmbedding } = require('./embeddingService');
-const { resolveCategory, expandColombianBeautySynonyms, getAdaptiveThreshold } = require('../config/knowledgeCategories');
-const { findSimilarInCache, setCache } = require('./semanticCache');
-const { generateHyDEQuery, compressKnowledgeContext, queryMultiHopKnowledgeGraph, mapVisionScanToFilters, recordRagFeedback } = require('./ragSotaService');
+const { resolveCategory } = require('../config/knowledgeCategories');
 
-const EXPECTED_DIMS = parseInt(process.env.NVIDIA_EMBEDDING_DIMS || '2048', 10);
+// Dimensión del modelo de embeddings VIVO (nvidia/nemotron-3-embed-1b, 2048d).
+// Debe coincidir con embeddingService.expectedDimension y con el DDL de la columna
+// beauty_knowledge_embeddings.embedding (migración 073). Ver tests/rag.embedding-dimension.test.js.
+const EXPECTED_DIMS = 2048;
+
+/**
+ * Filtros de ALCANCE: acotan de qué trata la respuesta (normativa vs belleza). NO se relajan
+ * nunca: si el dominio no tiene documentos, devolver contenido de otro dominio rotulado como
+ * regulatorio sería peor que no devolver nada. El resto de filtros (category, skin_type,
+ * ingredients, contraindications) son PISTAS de relevancia y sí pueden relajarse.
+ */
 const SCOPE_FILTERS = ['domain', 'jurisdiction'];
 
 // ─── Generar embedding de la consulta ───────────────────────────────
 async function generateEmbedding(text) {
+  // Sin vector fabricado: si NVIDIA no está disponible, esto lanza y el retrieval
+  // degrada a full-text (nunca se busca con un embedding sin valor semántico).
   const embedding = await generateQueryEmbedding(text, 'query');
+
   if (!Array.isArray(embedding) || embedding.length !== EXPECTED_DIMS) {
     throw new Error(`Embedding inválido: ${Array.isArray(embedding) ? embedding.length : 0} dims`);
   }
+
   return embedding;
 }
 
-// ─── Self-Querying & Intent Rewriter ─────────────────────────────────
 /**
- * Extrae automáticamente filtros implícitos (tipo de piel, ingredientes, contraindicaciones)
- * desde el texto de la consulta del usuario.
+ * Predicado para un filtro sobre una lista JSONB de metadata (skin_types, ingredients,
+ * contraindications). Compara cada elemento de la lista, no el JSON entero: el ILIKE
+ * sobre `metadata::text` coincidía con nombres de archivo y textos no relacionados.
+ *
+ * @param {string} key - clave de metadata (ej. 'skin_types')
+ * @param {number} paramIndex
+ * @param {object} options - { includeUniversal: boolean } añade los valores universales
+ *                           ('all' | 'todas' | 'todos'), que marcan contenido válido para
+ *                           cualquier caso: 4.526 de 5.619 chunks están etiquetados 'all'.
+ * @returns {string} condición SQL con `$n` ligado
  */
-function extractQueryFilters(queryText) {
-  const lower = queryText.toLowerCase();
-  const filters = {};
-
-  // 1. Tipo de Piel
-  if (lower.includes('piel grasa') || lower.includes('sebo') || lower.includes('brillo')) filters.skin_type = 'grasa';
-  else if (lower.includes('piel seca') || lower.includes('deshidratad')) filters.skin_type = 'seca';
-  else if (lower.includes('piel mixta')) filters.skin_type = 'mixta';
-  else if (lower.includes('piel sensible') || lower.includes('rosacea') || lower.includes('eritema')) filters.skin_type = 'sensible';
-
-  // 2. Ingredientes Clave
-  const ingredients = [];
-  if (lower.includes('retinol') || lower.includes('retinoide')) ingredients.push('retinol');
-  if (lower.includes('hialuronico')) ingredients.push('acido_hialuronico');
-  if (lower.includes('niacinamida')) ingredients.push('niacinamida');
-  if (lower.includes('salicilico') || lower.includes('bha')) ingredients.push('acido_salicilico');
-  if (lower.includes('glicolico') || lower.includes('aha')) ingredients.push('acido_glicolico');
-  if (ingredients.length > 0) filters.ingredients = ingredients;
-
-  // 3. Contraindicaciones / Estados Especiales
-  const contraindications = [];
-  if (lower.includes('embarazo') || lower.includes('gestant') || lower.includes('lactanc')) contraindications.push('embarazo');
-  if (lower.includes('dermatitis') || lower.includes('eccema')) contraindications.push('dermatitis');
-  if (contraindications.length > 0) filters.contraindications = contraindications;
-
-  return filters;
-}
-
 function jsonbListMatch(key, paramIndex, options = {}) {
-  const universal = options.includeUniversal ? ` OR lower(st) IN ('all', 'todas', 'todos')` : '';
+  const universal = options.includeUniversal
+    ? ` OR lower(st) IN ('all', 'todas', 'todos')`
+    : '';
   return `EXISTS (
-    SELECT 1 FROM jsonb_array_elements_text(COALESCE(metadata->'${key}', '[]'::jsonb)) st
-    WHERE lower(st) LIKE lower($${paramIndex})${universal}
-  )`;
+            SELECT 1 FROM jsonb_array_elements_text(COALESCE(metadata->'${key}', '[]'::jsonb)) AS st
+            WHERE st ILIKE $${paramIndex}${universal}
+          )`;
 }
 
+// ─── Construir filtros de metadata ───────────────────────────────────
+/**
+ * @param {object} filters - filtros solicitados
+ * @param {number} startIndex - primer índice de parámetro disponible
+ * @param {object} [trace] - objeto de traza que se completa con lo aplicado/descartado
+ * @returns {{whereClause: string, params: Array, nextIndex: number, applied: object, dropped: Array}}
+ */
 function buildMetadataFilters(filters = {}, startIndex = 1, trace = null) {
   const conditions = [];
   const params = [];
@@ -85,11 +113,17 @@ function buildMetadataFilters(filters = {}, startIndex = 1, trace = null) {
       applied.category = category;
       paramIndex++;
     } else {
+      // Fail-open: filtrar por un valor inexistente devolvía 0 filas sin explicación.
       dropped.push({ filter: 'category', value: String(filters.category), reason: 'not_in_canonical_vocabulary' });
     }
   }
 
   if (filters.domain) {
+    // `domain` se compara contra los campos que existen: la categoría canónica o los
+    // módulos aplicables. El corpus NO tiene `metadata->>'domain'` (0 de 5.619 chunks):
+    // ese predicado devolvía vacío siempre. Si el dominio no existe en el corpus, la
+    // búsqueda puede quedar vacía legítimamente (p. ej. 'BUSINESS': el corpus canónico
+    // no contiene documentos regulatorios), y la traza lo deja registrado.
     const domain = resolveCategory(filters.domain);
     conditions.push(`(category = $${paramIndex} OR metadata->'applicable_modules' ? $${paramIndex})`);
     params.push(domain || String(filters.domain));
@@ -98,6 +132,9 @@ function buildMetadataFilters(filters = {}, startIndex = 1, trace = null) {
   }
 
   if (filters.jurisdiction) {
+    // `metadata->>'jurisdiction'` no existe en el corpus canónico (0 de 5.619): se mantiene
+    // el predicado por contrato, pero queda registrado en la traza para que un resultado
+    // vacío sea diagnosticable en lugar de silencioso.
     conditions.push(`metadata->>'jurisdiction' = $${paramIndex}`);
     params.push(filters.jurisdiction);
     applied.jurisdiction = filters.jurisdiction;
@@ -128,19 +165,28 @@ function buildMetadataFilters(filters = {}, startIndex = 1, trace = null) {
   }
 
   const whereClause = conditions.length > 0 ? conditions.join(' AND ') : '';
+
   return { whereClause, params, nextIndex: paramIndex, applied, dropped };
 }
 
+/**
+ * Añade la condición de aislamiento multi-tenant con parámetro LIGADO ($n).
+ * Con tenantId: conocimiento GLOBAL (tenant_id IS NULL) o propio del tenant.
+ * Sin tenantId: solo GLOBAL.
+ * Devuelve el siguiente índice de parámetro disponible.
+ */
 function appendTenantCondition(additionalConditions, params, paramIndex, tenantId) {
   if (tenantId) {
     additionalConditions.push(`(tenant_id IS NULL OR tenant_id::text = $${paramIndex})`);
     params.push(String(tenantId));
     return paramIndex + 1;
   }
+
   additionalConditions.push(`tenant_id IS NULL`);
   return paramIndex;
 }
 
+// Columnas que devuelve todo retrieval: identidad del chunk para citar en la respuesta.
 const SELECTED_COLUMNS = `
         id,
         title,
@@ -154,18 +200,29 @@ const SELECTED_COLUMNS = `
         fuente,
         seccion`;
 
-// ─── Búsqueda Vectorial ──────────────────────────────────────────────
-async function runVectorSearch({ queryEmbedding, filters, tenantId, threshold, topK, useMetadataFilters = true, trace = null }) {
+/**
+ * Búsqueda vectorial. `useMetadataFilters = false` permite el reintento relajado.
+ * La condición de tenant y la vigencia (soft delete / expiración) NUNCA se relajan.
+ */
+async function runVectorSearch({ queryEmbedding, filters, tenantId, threshold, topK, useMetadataFilters = true }) {
   const embeddingStr = `[${queryEmbedding.join(',')}]`;
+
+  // $1 = vector de la consulta; los filtros de metadata empiezan en $2
   const { whereClause, params: filterParams, nextIndex, applied, dropped } =
-    buildMetadataFilters(useMetadataFilters ? filters : {}, 2, trace);
+    buildMetadataFilters(useMetadataFilters ? filters : {}, 2, null);
 
   const additionalConditions = [];
-  if (whereClause) additionalConditions.push(`(${whereClause})`);
+  if (whereClause) {
+    additionalConditions.push(`(${whereClause})`);
+  }
 
+  // MULTI-TENANT ISOLATION BOUNDARY (BUS-RAG-001):
+  // Permite conocimiento GLOBAL (tenant_id IS NULL) O conocimiento propio del tenant especificado.
+  // IMPIDE terminantemente la filtración de documentos privados de otros tenants.
   const queryParams = [embeddingStr, ...filterParams];
   let paramIndex = appendTenantCondition(additionalConditions, queryParams, nextIndex, tenantId);
 
+  // Soft delete & Expiration
   additionalConditions.push(`deleted_at IS NULL`);
   additionalConditions.push(`(expires_at IS NULL OR expires_at > NOW())`);
 
@@ -174,15 +231,14 @@ async function runVectorSearch({ queryEmbedding, filters, tenantId, threshold, t
   queryParams.push(threshold, topK);
 
   const finalWhere = additionalConditions.length > 0 ? `WHERE ${additionalConditions.join(' AND ')}` : '';
-  const vectorCol = EXPECTED_DIMS === 2048 ? 'embedding_next' : 'embedding';
 
   const sql = `
       SELECT${SELECTED_COLUMNS},
-        1 - (${vectorCol} <=> $1::vector) AS similarity
+        1 - (embedding <=> $1::vector) AS similarity
       FROM beauty_knowledge_embeddings
       ${finalWhere}
-      ${finalWhere ? 'AND' : 'WHERE'} 1 - (${vectorCol} <=> $1::vector) >= $${thresholdIndex}
-      ORDER BY ${vectorCol} <=> $1::vector
+      ${finalWhere ? 'AND' : 'WHERE'} 1 - (embedding <=> $1::vector) >= $${thresholdIndex}
+      ORDER BY embedding <=> $1::vector
       LIMIT $${limitIndex};
     `;
 
@@ -196,14 +252,17 @@ async function runVectorSearch({ queryEmbedding, filters, tenantId, threshold, t
   };
 }
 
-// ─── Fallback Full-Text Search ───────────────────────────────────────
+/** Fallback full-text. Sin filtros de metadata cuando `useMetadataFilters = false`. */
 async function runFullTextSearch({ query, filters, tenantId, topK, useMetadataFilters = true }) {
+  // $1 = query, $2 = patrón ILIKE, $3 = LIMIT; los filtros de metadata empiezan en $4
   const { whereClause, params: filterParams, nextIndex, applied, dropped } =
     buildMetadataFilters(useMetadataFilters ? filters : {}, 4, null);
   const textCondition = `(to_tsvector('spanish', title || ' ' || content) @@ plainto_tsquery('spanish', $1) OR title ILIKE $2 OR content ILIKE $2)`;
 
   const additionalConditions = [textCondition];
-  if (whereClause) additionalConditions.push(`(${whereClause})`);
+  if (whereClause) {
+    additionalConditions.push(`(${whereClause})`);
+  }
 
   const fallbackParams = [query, `%${query}%`, topK, ...filterParams];
   appendTenantCondition(additionalConditions, fallbackParams, nextIndex, tenantId);
@@ -222,137 +281,70 @@ async function runFullTextSearch({ query, filters, tenantId, topK, useMetadataFi
       `;
 
   const dbPool = ragPool || pool;
-  try {
-    const fallbackResult = await dbPool.query(fallbackSql, fallbackParams);
-    return {
-      rows: fallbackResult.rows.map(r => ({ ...r, similarity: r.similarity === null ? null : parseFloat(r.similarity), mode: 'fts' })),
-      applied,
-      dropped,
-    };
-  } catch (fallbackSqlError) {
-    if (fallbackSqlError.message && (fallbackSqlError.message.includes('does not exist') || fallbackSqlError.message.includes('column'))) {
-      const simpleSql = `
-        SELECT id, title, content, category, COALESCE(metadata, '{}'::jsonb) as metadata, NULL::double precision AS similarity
-        FROM beauty_knowledge_embeddings
-        WHERE (title ILIKE $1 OR content ILIKE $1)
-        LIMIT $2;
-      `;
-      const simpleResult = await dbPool.query(simpleSql, [`%${query}%`, topK]);
-      return {
-        rows: simpleResult.rows.map(r => ({ ...r, similarity: null, mode: 'fts_resilient' })),
-        applied,
-        dropped,
-      };
-    }
-    throw fallbackSqlError;
-  }
+  const fallbackResult = await dbPool.query(fallbackSql, fallbackParams);
+
+  // similarity null: el full-text no mide similitud coseno y no se inventa un valor.
+  return {
+    rows: fallbackResult.rows.map(r => ({ ...r, similarity: r.similarity === null ? null : parseFloat(r.similarity), mode: 'fts' })),
+    applied,
+    dropped,
+  };
 }
 
-// ─── Cross-Encoder Reranker ──────────────────────────────────────────
+// ─── Búsqueda principal con aislamiento Multi-Tenant ────────────────────────────────────
 /**
- * Re-ordena los candidatos recuperados combinando similitud vectorial, densidad de palabras clave
- * y relevancia de la sección.
+ * @param {string} query - consulta del usuario
+ * @param {object} [options] - { topK, threshold, filters, tenantId, trace }
+ *   `trace` (opcional) se completa con: mode, threshold_used, filters_applied,
+ *   filters_dropped, filters_relaxed, fallback_triggered, fallback_reason, all_scores.
+ * @returns {Promise<Array>} chunks con similarity (null si vino del fallback full-text)
  */
-function rerankChunks(query, chunks) {
-  if (!chunks || chunks.length === 0) return [];
-  const queryTerms = query.toLowerCase().split(/\s+/).filter(t => t.length > 2);
-
-  return chunks.map(chunk => {
-    let textScore = 0;
-    const contentLower = (chunk.title + ' ' + chunk.content).toLowerCase();
-
-    queryTerms.forEach(term => {
-      if (contentLower.includes(term)) textScore += 0.1;
-    });
-
-    const vecScore = typeof chunk.similarity === 'number' ? chunk.similarity : 0.4;
-    const finalScore = vecScore * 0.7 + textScore * 0.3;
-
-    return { ...chunk, rerank_score: finalScore };
-  }).sort((a, b) => b.rerank_score - a.rerank_score);
-}
-
-// ─── Consultation to Knowledge Graph ─────────────────────────────────
-async function queryKnowledgeGraph(queryText) {
-  try {
-    const dbPool = ragPool || pool;
-    const sql = `
-      SELECT e1.entity_name AS source, r.relation_type, e2.entity_name AS target, r.notes
-      FROM rag_relations r
-      JOIN rag_entities e1 ON r.source_entity_id = e1.id
-      JOIN rag_entities e2 ON r.target_entity_id = e2.id
-      WHERE $1 ILIKE '%' || e1.entity_name || '%' OR $1 ILIKE '%' || e2.entity_name || '%'
-      LIMIT 3;
-    `;
-    const res = await dbPool.query(sql, [queryText]);
-    return res.rows;
-  } catch {
-    return [];
-  }
-}
-
-// ─── Búsqueda Principal Elite RAG ────────────────────────────────────
 async function searchBeautyKnowledge(query, options = {}) {
-  // 1. Enriquecer consulta con sinónimos dialectales colombianos
-  const enrichedQuery = expandColombianBeautySynonyms(query);
-
-  // Auto-extraer filtros con Self-Querying
-  const autoFilters = extractQueryFilters(query);
-  const combinedFilters = { ...autoFilters, ...(options.filters || {}) };
-
-  // 2. Umbral Adaptativo según severidad/categoría
-  const defaultAdaptive = getAdaptiveThreshold(combinedFilters.category);
-  const threshold = options.threshold !== undefined ? options.threshold : defaultAdaptive;
-  const { topK = 5, tenantId = null, trace = null } = options;
+  const { topK = 5, threshold = 0.45, filters = {}, tenantId = null, trace = null } = options;
 
   if (trace) {
     trace.threshold_used = threshold;
     trace.top_k = topK;
     trace.fallback_triggered = false;
     trace.filters_relaxed = false;
-    trace.mode = 'hybrid_rrf';
-    trace.enriched_query = enrichedQuery;
+    trace.mode = null;
   }
 
-  const hasRelaxableFilters = Object.keys(combinedFilters || {}).some(k => !SCOPE_FILTERS.includes(k));
+  // Sólo se relaja si hay filtros que son pistas de relevancia (nunca filtros de alcance).
+  const hasRelaxableFilters = Object.keys(filters || {}).some(k => !SCOPE_FILTERS.includes(k));
 
   try {
     const embStart = Date.now();
-    const queryEmbedding = await generateEmbedding(enrichedQuery);
+    const queryEmbedding = await generateEmbedding(query);
     if (trace) {
       trace.query_embedding_latency_ms = Date.now() - embStart;
     }
 
-    // 1. Verificar Cache Semántico en Redis
-    const cachedHit = await findSimilarInCache(queryEmbedding, tenantId || 'global');
-    if (cachedHit && cachedHit.metadata?.chunks) {
-      if (trace) trace.mode = 'semantic_cache';
-      return cachedHit.metadata.chunks;
-    }
+    let attempt = await runVectorSearch({ queryEmbedding, filters, tenantId, threshold, topK });
 
-    // 2. Búsqueda Vectorial HNSW (2048 dims)
-    let vectorAttempt = await runVectorSearch({ queryEmbedding, filters: combinedFilters, tenantId, threshold, topK, trace });
-
-    if (vectorAttempt.rows.length === 0 && hasRelaxableFilters) {
-      const relaxed = await runVectorSearch({ queryEmbedding, filters: combinedFilters, tenantId, threshold, topK, useMetadataFilters: false, trace });
+    // Red de seguridad: un filtro de metadata que no existe en el corpus (categoría
+    // desconocida, skin_type con datos sucios) devolvía 0 filas como si no hubiera
+    // conocimiento. Se reintenta UNA vez sin esos filtros. Los filtros de ALCANCE
+    // (domain/jurisdiction) NO se relajan: acotan el tema de la respuesta.
+    if (attempt.rows.length === 0 && hasRelaxableFilters) {
+      const relaxed = await runVectorSearch({ queryEmbedding, filters, tenantId, threshold, topK, useMetadataFilters: false });
       if (relaxed.rows.length > 0) {
-        if (trace) trace.filters_relaxed = true;
-        vectorAttempt = { ...relaxed, dropped: vectorAttempt.dropped };
+        if (trace) {
+          trace.filters_relaxed = true;
+          trace.relaxed_reason = '0 filas con filtros de metadata; reintento sin filtros (tenant y vigencia intactos)';
+        }
+        attempt = { ...relaxed, dropped: attempt.dropped };
       }
     }
 
-    // 3. Re-ordenamiento Cross-Encoder Reranker
-    const rerankedRows = rerankChunks(query, vectorAttempt.rows).slice(0, topK);
-
-    // 4. Guardar en Cache Semántico (Async)
-    setCache(queryEmbedding, { status: 'success' }, { chunks: rerankedRows }, tenantId || 'global').catch(() => {});
-
     if (trace) {
       trace.mode = 'hnsw';
-      trace.all_scores = rerankedRows.map(r => r.similarity);
+      trace.filters_applied = attempt.applied;
+      trace.filters_dropped = attempt.dropped;
+      trace.all_scores = attempt.rows.map(r => r.similarity);
     }
 
-    return rerankedRows;
+    return attempt.rows;
 
   } catch (error) {
     if (trace) {
@@ -362,18 +354,31 @@ async function searchBeautyKnowledge(query, options = {}) {
     console.warn('⚠️ [RAG] Vectorial falló o DB desatendida, ejecutando fallback full-text:', error.message);
 
     try {
-      let attempt = await runFullTextSearch({ query, filters: combinedFilters, tenantId, topK });
+      let attempt = await runFullTextSearch({ query, filters, tenantId, topK });
+
       if (attempt.rows.length === 0 && hasRelaxableFilters) {
-        const relaxed = await runFullTextSearch({ query, filters: combinedFilters, tenantId, topK, useMetadataFilters: false });
-        if (relaxed.rows.length > 0) attempt = relaxed;
+        const relaxed = await runFullTextSearch({ query, filters, tenantId, topK, useMetadataFilters: false });
+        if (relaxed.rows.length > 0) {
+          if (trace) {
+            trace.filters_relaxed = true;
+            trace.relaxed_reason = '0 filas con filtros de metadata; reintento sin filtros (tenant y vigencia intactos)';
+          }
+          attempt = { ...relaxed, dropped: attempt.dropped };
+        }
       }
+
       if (trace) {
         trace.mode = 'fts';
+        trace.filters_applied = attempt.applied;
+        trace.filters_dropped = attempt.dropped;
         trace.all_scores = [];
       }
+
       return attempt.rows;
+
     } catch (fallbackError) {
       if (trace) {
+        trace.mode = 'unavailable';
         trace.fallback_error = fallbackError.message;
       }
       console.warn('⚠️ [RAG] Fallback full-text también falló, devolviendo array vacío:', fallbackError.message);
@@ -382,7 +387,274 @@ async function searchBeautyKnowledge(query, options = {}) {
   }
 }
 
-// ─── Formatear Chunks con Atribución y Parent-Child Context ──────────
+// ─── Evidence Layer (AUD-RAGAURA-01 · P0 #2) ─────────────────────────
+/**
+ * La capa de retrieval devuelve chunks crudos; inyectarlos así al LLM no permitía
+ * certificar el «Estado 7»: sin identidad de evidencia, sin estado de suficiencia y sin
+ * provenance estructurada, una respuesta parcial pasaba por certeza.
+ *
+ * Esta sección implementa el CONTRATO de la Evidence Layer diseñado en R6-C1
+ * (`backend/scripts/r6c1EvidenceArchitectureAnalysis.js`):
+ *   chunks → Evidence Candidate Builder → Sufficiency Gate → EvidencePacket
+ *
+ * El retrieval (`searchBeautyKnowledge`) NO cambia: se envuelve. `searchWithEvidence`
+ * es el punto de integración para `auraToolExecutor`.
+ */
+
+/**
+ * Estados de suficiencia del EvidencePacket (contrato R6-C1).
+ *   SUPPORTED            cobertura ≥ umbral y ≥1 evidencia con gate fuerte (score ≥ 0.55)
+ *   PARTIAL              hay evidencia relevante pero falta el gate fuerte o cobertura
+ *   UNSUPPORTED          no hay evidencia que sostenga la respuesta
+ *   RETRIEVAL_UNCERTAIN  la señal no permite decidir (fallback FTS: similarity = null)
+ */
+const EVIDENCE_STATES = Object.freeze({
+  SUPPORTED: 'SUPPORTED',
+  PARTIAL: 'PARTIAL',
+  UNSUPPORTED: 'UNSUPPORTED',
+  RETRIEVAL_UNCERTAIN: 'RETRIEVAL_UNCERTAIN',
+});
+
+/**
+ * Umbrales del Sufficiency Gate. `strong_score` = 0.55 es el «gate fuerte» validado en
+ * R5-C25/C28/C29 (evita el falso SUFFICIENT de cejas_004 con cobertura léxica alta).
+ * Es interpretable, no un score-único: la decisión combina cobertura + gate fuerte.
+ */
+const SUFFICIENCY_POLICY = Object.freeze({
+  strong_score: 0.55,
+  coverage_supported: 0.5,
+  coverage_partial: 0.2,
+});
+
+/** Restricciones anti-alucinación que viajan en el packet hacia el generador. */
+const ANTI_HALLUCINATION_CONSTRAINTS = Object.freeze([
+  'No afirmar información sin evidencia en el packet (corpus-grounded)',
+  'No completar gaps con conocimiento externo',
+  'No usar hard negatives como evidencia',
+  'No mezclar categorías incorrectamente',
+  'No ocultar insuficiencia: PARTIAL/UNSUPPORTED se comunican explícitamente',
+  'No convertir evidencia parcial en certeza (confidence refleja cobertura)',
+]);
+
+const RETRIEVAL_STOPWORDS = new Set([
+  'para', 'por', 'con', 'los', 'las', 'una', 'uno', 'unos', 'unas', 'del', 'que', 'como',
+  'mas', 'pero', 'sin', 'sobre', 'entre', 'este', 'esta', 'estos', 'estas', 'ese', 'esa',
+  'esos', 'esas', 'son', 'sus', 'ser', 'hay', 'muy', 'mis', 'tus', 'puedo', 'puede',
+]);
+
+function normalizeForMatching(text) {
+  return String(text || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+}
+
+/** Términos (claims léxicos) de la consulta: sin stopwords, sin duplicados, length ≥ 3. */
+function extractQueryTerms(query) {
+  const seen = new Set();
+  const terms = [];
+  for (const raw of normalizeForMatching(query).split(/[^a-z0-9]+/)) {
+    if (raw.length < 3 || RETRIEVAL_STOPWORDS.has(raw) || seen.has(raw)) continue;
+    seen.add(raw);
+    terms.push(raw);
+  }
+  return terms;
+}
+
+/** Fracción de claims de la query presentes en el texto de la evidencia (0..1). */
+function computeCoverage(query, evidence) {
+  if (!Array.isArray(evidence) || evidence.length === 0) return 0;
+  const terms = extractQueryTerms(query);
+  if (terms.length === 0) return 1;
+  const haystack = normalizeForMatching(
+    evidence.map((e) => `${e.title || ''} ${e.content || ''}`).join(' ')
+  );
+  const covered = terms.filter((t) => haystack.includes(t)).length;
+  return covered / terms.length;
+}
+
+function hashQuery(query) {
+  if (query === undefined || query === null) return null;
+  return crypto.createHash('sha256').update(String(query)).digest('hex').slice(0, 16);
+}
+
+function round3(n) {
+  return Math.round(n * 1000) / 1000;
+}
+
+/**
+ * Evidence Candidate Builder: convierte los chunks recuperados en `Evidence` con
+ * identidad trazable (`evidence_id`, `chunk_id`, `source_id`), rank ordinal, la
+ * similitud realmente medida y provenance estructurada.
+ *
+ * @param {Array} chunks - filas de `searchBeautyKnowledge` (o cualquier chunk con title/content)
+ * @param {object} [options] - { query }
+ * @returns {Array} Evidence[]
+ */
+function buildEvidenceCandidates(chunks, options = {}) {
+  if (!Array.isArray(chunks) || chunks.length === 0) return [];
+  const queryHash = options.query !== undefined ? hashQuery(options.query) : null;
+
+  return chunks.map((chunk, index) => {
+    const rank = index + 1;
+    const retrievalScore =
+      typeof chunk.similarity === 'number' && !Number.isNaN(chunk.similarity)
+        ? chunk.similarity
+        : (typeof chunk.retrieval_score === 'number' ? chunk.retrieval_score : null);
+
+    return {
+      evidence_id: typeof crypto.randomUUID === 'function'
+        ? crypto.randomUUID()
+        : `ev-${Date.now()}-${rank}`,
+      chunk_id: chunk.chunk_id !== undefined ? chunk.chunk_id : (chunk.id !== undefined ? chunk.id : null),
+      source_id: chunk.document_id !== undefined ? chunk.document_id : null,
+      category: chunk.category !== undefined ? chunk.category : null,
+      title: chunk.title || '',
+      content: chunk.content || '',
+      retrieval_score: retrievalScore,
+      similarity: retrievalScore, // compatibilidad con formatKnowledgeContext
+      rank,
+      mode: chunk.mode || null,
+      fuente: chunk.fuente !== undefined ? chunk.fuente : null,
+      seccion: chunk.seccion !== undefined ? chunk.seccion : null,
+      metadata: chunk.metadata || {},
+      provenance: {
+        chunk_id: chunk.chunk_id !== undefined ? chunk.chunk_id : null,
+        source_id: chunk.document_id !== undefined ? chunk.document_id : null,
+        category: chunk.category !== undefined ? chunk.category : null,
+        fuente: chunk.fuente !== undefined ? chunk.fuente : null,
+        seccion: chunk.seccion !== undefined ? chunk.seccion : null,
+        retrieval_rank: rank,
+        retrieval_score: retrievalScore,
+        query_hash: queryHash,
+        source: 'vector_retrieval',
+      },
+    };
+  });
+}
+
+/**
+ * Sufficiency Gate: decide si la evidencia recuperada sostiene una respuesta, con un
+ * modelo interpretable (cobertura de claims + gate fuerte). No es `score > threshold`.
+ *
+ * @param {Array} evidence - Evidence[] (o chunks, que se adaptan internamente)
+ * @param {object} [options] - { query, policy, corpusGap }
+ * @returns {{state:string, confidence:number, coverage:number, strong_gate:boolean,
+ *            strong_evidence_count:number, candidate_count:number,
+ *            retrieval_measured:boolean, unsupported_reason:?string}}
+ */
+function evaluateSufficiency(evidence, options = {}) {
+  const list = Array.isArray(evidence) ? evidence : [];
+  const query = options.query || '';
+  const policy = { ...SUFFICIENCY_POLICY, ...(options.policy || {}) };
+
+  const coverage = computeCoverage(query, list);
+  const measured = list.filter((e) => typeof e.retrieval_score === 'number');
+  const strong = measured.filter((e) => e.retrieval_score >= policy.strong_score);
+  const strongGate = strong.length > 0;
+  const hasMeasuredRetrieval = measured.length > 0;
+
+  let state;
+  let unsupported_reason = null;
+
+  if (list.length === 0) {
+    state = EVIDENCE_STATES.UNSUPPORTED;
+    unsupported_reason = options.corpusGap ? 'CORPUS_GAP' : 'EVIDENCE_INSUFFICIENT';
+  } else if (!hasMeasuredRetrieval) {
+    // Fallback full-text: similarity = null. No se puede distinguir corpus gap de miss.
+    state = EVIDENCE_STATES.RETRIEVAL_UNCERTAIN;
+    unsupported_reason = 'RETRIEVAL_UNCERTAIN';
+  } else if (coverage >= policy.coverage_supported && strongGate) {
+    state = EVIDENCE_STATES.SUPPORTED;
+  } else if (coverage >= policy.coverage_partial) {
+    state = EVIDENCE_STATES.PARTIAL;
+  } else {
+    state = EVIDENCE_STATES.UNSUPPORTED;
+    unsupported_reason = options.corpusGap ? 'CORPUS_GAP' : 'EVIDENCE_INSUFFICIENT';
+  }
+
+  let confidence;
+  if (state === EVIDENCE_STATES.SUPPORTED) {
+    confidence = round3(coverage * 0.7 + 0.3);
+  } else if (state === EVIDENCE_STATES.PARTIAL) {
+    confidence = round3(coverage * 0.7);
+  } else if (state === EVIDENCE_STATES.RETRIEVAL_UNCERTAIN) {
+    confidence = 0;
+  } else {
+    confidence = round3(Math.min(coverage, 0.2));
+  }
+
+  return {
+    state,
+    confidence,
+    coverage: round3(coverage),
+    strong_gate: strongGate,
+    strong_evidence_count: strong.length,
+    candidate_count: list.length,
+    retrieval_measured: hasMeasuredRetrieval,
+    unsupported_reason,
+  };
+}
+
+/**
+ * EvidencePacket: contrato entre la Evidence Layer y el Answer Generator. Contiene SOLO
+ * evidencia autorizada + estado de suficiencia + provenance + restricciones.
+ *
+ * @param {Array} chunks - chunks recuperados, o Evidence[] ya construida
+ * @param {object} [options] - { query, mode, corpusGap }
+ * @returns {object} EvidencePacket
+ */
+function buildEvidencePacket(chunks, options = {}) {
+  const alreadyEvidence = Array.isArray(chunks) && chunks.length > 0 && chunks[0] && chunks[0].evidence_id;
+  const evidence = alreadyEvidence ? chunks : buildEvidenceCandidates(chunks, options);
+  const sufficiency = evaluateSufficiency(evidence, options);
+  const mode = options.mode || (evidence[0] && evidence[0].mode) || null;
+
+  return {
+    evidence,
+    state: sufficiency.state,
+    confidence: sufficiency.confidence,
+    provenance: {
+      query_hash: options.query !== undefined ? hashQuery(options.query) : null,
+      retrieval_mode: mode,
+      candidate_count: sufficiency.candidate_count,
+      strong_evidence_count: sufficiency.strong_evidence_count,
+      coverage: sufficiency.coverage,
+      gate: {
+        strong_score: SUFFICIENCY_POLICY.strong_score,
+        coverage_supported: SUFFICIENCY_POLICY.coverage_supported,
+        coverage_partial: SUFFICIENCY_POLICY.coverage_partial,
+      },
+    },
+    constraints: [...ANTI_HALLUCINATION_CONSTRAINTS],
+    sufficiency,
+    unsupported_reason: sufficiency.unsupported_reason,
+  };
+}
+
+/**
+ * Integración: retrieval real + Evidence Layer en una sola llamada.
+ * `trace` (opcional) se propaga a `searchBeautyKnowledge` y su `mode` alimenta el packet.
+ *
+ * @param {string} query
+ * @param {object} [options] - mismos que `searchBeautyKnowledge` (+ trace)
+ * @returns {Promise<object>} EvidencePacket
+ */
+async function searchWithEvidence(query, options = {}) {
+  const trace = options.trace || null;
+  const chunks = await searchBeautyKnowledge(query, options);
+  const mode = (trace && trace.mode) || (chunks[0] && chunks[0].mode) || null;
+  return buildEvidencePacket(chunks, { ...options, query, mode });
+}
+
+// ─── Formatear chunks para inyección en prompt ───────────────────────
+/**
+ * Cita con los campos reales del corpus: `fuente` y `seccion` (columnas que escribe la
+ * ingesta). `metadata.source | legal_basis | jurisdiction | authority | version` existen en
+ * 0 de 5.619 chunks, así que la "Fuente" que se mostraba antes era el slug de categoría o
+ * el literal 'GlowApp Canon'. La similitud sólo se muestra cuando se midió de verdad
+ * (el fallback full-text devuelve null).
+ */
 function formatKnowledgeContext(chunks) {
   if (!chunks || chunks.length === 0) return '';
 
@@ -391,9 +663,10 @@ function formatKnowledgeContext(chunks) {
     const source = chunk.fuente || chunk.metadata?.source || sourceFiles[0] || chunk.category || 'Corpus canónico GlowApp';
     const seccion = chunk.seccion ? ` [Sección: ${chunk.seccion}]` : '';
     const chunkRef = chunk.chunk_id ? ` [Chunk: ${chunk.chunk_id}]` : '';
+    const rankRef = typeof chunk.rank === 'number' ? ` [Rank: ${chunk.rank}]` : '';
     const similarity = typeof chunk.similarity === 'number' ? ` (Similitud: ${(chunk.similarity * 100).toFixed(0)}%)` : '';
 
-    return `[${idx + 1}] ${chunk.title}${similarity}\n   📚 Fuente: ${source}${seccion}${chunkRef}\n   ${chunk.content}`;
+    return `[${idx + 1}] ${chunk.title}${similarity}\n   📚 Fuente: ${source}${seccion}${chunkRef}${rankRef}\n   ${chunk.content}`;
   }).join('\n\n');
 }
 
@@ -401,12 +674,11 @@ module.exports = {
   searchBeautyKnowledge,
   formatKnowledgeContext,
   generateEmbedding,
-  queryKnowledgeGraph,
-  extractQueryFilters,
-  rerankChunks,
-  generateHyDEQuery,
-  compressKnowledgeContext,
-  queryMultiHopKnowledgeGraph,
-  mapVisionScanToFilters,
-  recordRagFeedback,
+  // Evidence Layer (AUD-RAGAURA-01 · P0 #2)
+  EVIDENCE_STATES,
+  SUFFICIENCY_POLICY,
+  buildEvidenceCandidates,
+  evaluateSufficiency,
+  buildEvidencePacket,
+  searchWithEvidence,
 };

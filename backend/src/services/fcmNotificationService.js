@@ -66,21 +66,6 @@ class FCMNotificationService {
     });
   }
 
-  /** Enviar notificación de recordatorio de Glow Cycle (Rutina AM/PM / Re-scan) */
-  async sendGlowCyclePushNotification(deviceToken, { cycleId, reminderType, title, body }) {
-    const defaultTitle = reminderType === 'RESCAN_DUE'
-      ? '📸 ¡Hito de Re-scan Listo!'
-      : reminderType === 'ROUTINE_AM'
-      ? '🌅 Rutina de Mañana Glow IA+'
-      : '🌙 Rutina de Noche Glow IA+';
-
-    return await this._sendNotification(deviceToken, title || defaultTitle, body, {
-      type: 'GLOW_CYCLE_REMINDER',
-      cycleId: String(cycleId),
-      reminderType
-    });
-  }
-
   async _sendNotification(deviceToken, title, body, data = {}) {
     if (this.initialized && this.admin && deviceToken) {
       try {

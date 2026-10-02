@@ -3,7 +3,7 @@ const axios = require('axios');
 
 class OpenBeautyFactsClient {
   constructor() {
-    this.baseUrl = 'https://world.openbeautyfacts.org/api/v0';
+    this.baseUrl = 'https://world.openbeautyfacts.org/api/v2';
     this.timeout = 5000;
   }
 

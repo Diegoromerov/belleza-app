@@ -4,11 +4,11 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart' as http_parser;
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/provider_model.dart';
 import '../models/service_model.dart';
 import 'active_salon_service.dart';
+import 'secure_storage_service.dart';
+import 'connectivity_service.dart';
 
 class ApiService {
   // --- CONFIGURACIÓN DE ENTORNO DE DESARROLLO / PRODUCCIÓN ---
@@ -185,58 +185,179 @@ class ApiService {
   static Future<Map<String, String>> getAuthHeaders() => _getAuthHeaders();
 
   static Future<String?> _getToken() async {
+    // 🛡️ FIX-FLUTTER-03: única fuente de verdad para el token. Se elimina el
+    // fallback a SharedPreferences (localStorage en web, texto plano) que un XSS
+    // podía exfiltrar. Antes existía una segunda instancia de FlutterSecureStorage
+    // aquí; ahora se centraliza en SecureStorageService (con config web).
     try {
-      final token = await const FlutterSecureStorage(
-        aOptions: AndroidOptions(encryptedSharedPreferences: true),
-      ).read(key: 'token');
-      if (token != null && token.isNotEmpty) return token;
-    } catch (_) {}
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString('token');
+      final token = await SecureStorageService().read('token');
+      return (token != null && token.isNotEmpty) ? token : null;
     } catch (_) {
       return null;
     }
   }
 
+  // ─── Resiliencia de red (FIX-FLUTTER-08) ────────────────────────
+  // Antes: 50 timeouts fijos de 30s duplicados, 0 reintentos y ninguna
+  // detección de conectividad. Ahora: un timeout único configurable, un motor
+  // de reintentos con backoff exponencial y cortocircuito si no hay red.
+
+  /// Timeout único para todas las peticiones HTTP.
+  static Duration requestTimeout = const Duration(seconds: 30);
+
+  /// Reintentos tras el intento inicial (backoff 1x, 2x, 4x…).
+  static const int maxRetries = 3;
+
+  /// Retardo base del backoff exponencial.
+  static const Duration baseRetryDelay = Duration(milliseconds: 400);
+
+  /// `true` si [error] es transitorio y la petición admite reintento.
+  ///
+  /// Se clasifica por tipo y por mensaje para no importar `dart:io` aquí
+  /// (rompería la compilación web del paquete).
+  static bool isRetryableError(Object error) {
+    if (error is OfflineException) return true;
+    if (error is TimeoutException) return true;
+    if (error is http.ClientException) return true;
+
+    final type = error.runtimeType.toString();
+    if (type == 'SocketException' ||
+        type == 'HttpException' ||
+        type == 'HandshakeException' ||
+        type == 'WebSocketException') {
+      return true;
+    }
+
+    final message = error.toString().toLowerCase();
+    if (message.contains('timeout') ||
+        message.contains('timed out') ||
+        message.contains('connection') ||
+        message.contains('socket') ||
+        message.contains('network') ||
+        message.contains('handshake') ||
+        message.contains('temporarily unavailable')) {
+      return true;
+    }
+
+    // 5xx, 408 y 429 son reintentables; el resto de 4xx no.
+    return RegExp(r'\b(5\d\d|408|429)\b').hasMatch(message);
+  }
+
+  /// Ejecuta [request] con backoff exponencial (base, 2x, 4x…).
+  ///
+  /// - Sin conectividad no se envía la petición: se agota el presupuesto de
+  ///   reintentos y se lanza [OfflineException].
+  /// - Los errores no reintentables (4xx, validación) se propagan de inmediato.
+  ///
+  /// [isConnected] y [delay] son inyectables para pruebas deterministas.
+  @visibleForTesting
+  static Future<T> runWithRetry<T>(
+    Future<T> Function() request, {
+    int retries = ApiService.maxRetries,
+    Duration baseDelay = ApiService.baseRetryDelay,
+    Future<bool> Function()? isConnected,
+    Future<void> Function(Duration duration)? delay,
+  }) async {
+    final connectivityCheck = isConnected ?? ConnectivityService.check;
+    final sleep = delay ?? Future<void>.delayed;
+
+    Object lastError = const OfflineException();
+    var attempt = 0;
+
+    while (true) {
+      var online = true;
+      try {
+        online = await connectivityCheck();
+      } catch (_) {
+        online = true; // sondeo caído: preferimos intentar la petición
+      }
+
+      if (online) {
+        try {
+          return await request();
+        } catch (error) {
+          if (!isRetryableError(error)) rethrow;
+          lastError = error;
+        }
+      } else {
+        lastError = const OfflineException();
+      }
+
+      if (attempt >= retries) break;
+      final wait = baseDelay * (1 << attempt); // 1x, 2x, 4x…
+      if (kDebugMode) {
+        print('🔁 ApiService: reintento ${attempt + 1}/$retries en ${wait.inMilliseconds}ms');
+      }
+      await sleep(wait);
+      attempt++;
+    }
+
+    throw lastError;
+  }
+
+  /// Decodifica [response] y normaliza el error incluyendo el status code,
+  /// de forma que [isRetryableError] pueda clasificarlo.
+  static dynamic _decodeResponse(http.Response response) {
+    final status = response.statusCode;
+    if (status >= 200 && status < 300) {
+      if (response.body.trim().isEmpty) return null;
+      return safeJsonDecode(response.body);
+    }
+    var detail = 'Error $status';
+    try {
+      final data = jsonDecode(response.body);
+      if (data is Map && data['error'] != null) {
+        detail = '${data['error']}';
+      }
+    } catch (_) {}
+    throw Exception('$status $detail');
+  }
+
   // ─── Métodos genéricos HTTP (para nuevas funcionalidades) ───────
-  static Future<dynamic> get(String path) async {
-    await ensureBaseUrl();
-    final headers = await _getAuthHeaders();
-    final uri = Uri.parse('$_baseUrl$path');
-    if (kDebugMode) {
-      print('🌐 ApiService.get: Requesting URI: $uri');
-    }
-    final response = await http.get(uri, headers: headers);
-    if (kDebugMode) {
-      print('🌐 ApiService.get: Response Code: ${response.statusCode}');
-      print('🌐 ApiService.get: Response Body Preview: ${response.body.length > 200 ? response.body.substring(0, 200) : response.body}');
-    }
-    final data = jsonDecode(response.body);
-    if (response.statusCode >= 200 && response.statusCode < 300) return data;
-    throw Exception(data['error'] ?? 'Error ${response.statusCode}');
+  /// GET con reintentos (petición idempotente).
+  static Future<dynamic> get(String path) {
+    return runWithRetry(() async {
+      await ensureBaseUrl();
+      final headers = await _getAuthHeaders();
+      final uri = Uri.parse('$_baseUrl$path');
+      if (kDebugMode) {
+        print('🌐 ApiService.get: Requesting URI: $uri');
+      }
+      final response =
+          await http.get(uri, headers: headers).timeout(requestTimeout);
+      if (kDebugMode) {
+        print('🌐 ApiService.get: Response Code: ${response.statusCode}');
+        print('🌐 ApiService.get: Response Body Preview: ${response.body.length > 200 ? response.body.substring(0, 200) : response.body}');
+      }
+      return _decodeResponse(response);
+    });
   }
 
-  static Future<dynamic> post(String path, Map<String, dynamic> body) async {
-    await ensureBaseUrl();
-    final headers = await _getAuthHeaders();
-    final uri = Uri.parse('$_baseUrl$path');
-    final response =
-        await http.post(uri, headers: headers, body: jsonEncode(body));
-    final data = jsonDecode(response.body);
-    if (response.statusCode >= 200 && response.statusCode < 300) return data;
-    throw Exception(data['error'] ?? 'Error ${response.statusCode}');
+  /// POST sin reintentos automáticos: no es idempotente y reintentarlo podría
+  /// duplicar efectos (reservas, pagos). Aun así corta en seco sin red.
+  static Future<dynamic> post(String path, Map<String, dynamic> body) {
+    return runWithRetry(retries: 0, () async {
+      await ensureBaseUrl();
+      final headers = await _getAuthHeaders();
+      final uri = Uri.parse('$_baseUrl$path');
+      final response = await http
+          .post(uri, headers: headers, body: jsonEncode(body))
+          .timeout(requestTimeout);
+      return _decodeResponse(response);
+    });
   }
 
-  static Future<dynamic> put(String path, Map<String, dynamic> body) async {
-    await ensureBaseUrl();
-    final headers = await _getAuthHeaders();
-    final uri = Uri.parse('$_baseUrl$path');
-    final response =
-        await http.put(uri, headers: headers, body: jsonEncode(body));
-    final data = jsonDecode(response.body);
-    if (response.statusCode >= 200 && response.statusCode < 300) return data;
-    throw Exception(data['error'] ?? 'Error ${response.statusCode}');
+  /// PUT con reintentos (petición idempotente).
+  static Future<dynamic> put(String path, Map<String, dynamic> body) {
+    return runWithRetry(() async {
+      await ensureBaseUrl();
+      final headers = await _getAuthHeaders();
+      final uri = Uri.parse('$_baseUrl$path');
+      final response = await http
+          .put(uri, headers: headers, body: jsonEncode(body))
+          .timeout(requestTimeout);
+      return _decodeResponse(response);
+    });
   }
 
   // ─────────────────────────────────────────────────────────────
@@ -259,7 +380,7 @@ class ApiService {
       url += '?lat=$latitude&lon=$longitude';
     }
     final response =
-        await http.get(Uri.parse(url)).timeout(const Duration(seconds: 30));
+        await http.get(Uri.parse(url)).timeout(requestTimeout);
     if (response.statusCode == 200) {
       final decoded = safeJsonDecode(response.body);
       final data = _normalizeDynamicUrls(decoded);
@@ -279,7 +400,7 @@ class ApiService {
           Uri.parse('$_baseUrl$_apiPath/products?tag=$tag'),
           headers: headers,
         )
-        .timeout(const Duration(seconds: 30));
+        .timeout(requestTimeout);
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       return List<Map<String, dynamic>>.from(data['data']);
@@ -292,7 +413,7 @@ class ApiService {
     await ensureBaseUrl();
     final response = await http
         .get(Uri.parse('$_baseUrl$_apiPath/providers/$providerId'))
-        .timeout(const Duration(seconds: 30));
+        .timeout(requestTimeout);
     if (response.statusCode == 200) {
       final data = _normalizeDynamicUrls(json.decode(response.body));
       return Map<String, dynamic>.from(data['data']);
@@ -327,7 +448,7 @@ class ApiService {
             'productos_adicionales': productosAdicionales,
           }),
         )
-        .timeout(const Duration(seconds: 30));
+        .timeout(requestTimeout);
     if (response.statusCode == 200 || response.statusCode == 201)
       return json.decode(response.body);
     throw Exception(
@@ -341,7 +462,7 @@ class ApiService {
           Uri.parse('$_baseUrl$_apiPath/bookings/client'),
           headers: headers,
         )
-        .timeout(const Duration(seconds: 30));
+        .timeout(requestTimeout);
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       return List<Map<String, dynamic>>.from(data['data']);
@@ -357,7 +478,7 @@ class ApiService {
           Uri.parse('$_baseUrl$_apiPath/bookings/$bookingId/cancel'),
           headers: headers,
         )
-        .timeout(const Duration(seconds: 30));
+        .timeout(requestTimeout);
     if (response.statusCode == 200) return json.decode(response.body);
     throw Exception(
         json.decode(response.body)['error'] ?? 'Error ${response.statusCode}');
@@ -375,7 +496,7 @@ class ApiService {
             'comment': comment.isNotEmpty ? comment : null
           }),
         )
-        .timeout(const Duration(seconds: 30));
+        .timeout(requestTimeout);
     if (response.statusCode == 200 || response.statusCode == 201)
       return json.decode(response.body);
     throw Exception(
@@ -391,7 +512,7 @@ class ApiService {
           headers: headers,
           body: json.encode({'payment_method': paymentMethod}),
         )
-        .timeout(const Duration(seconds: 30));
+        .timeout(requestTimeout);
     if (response.statusCode == 200) return json.decode(response.body);
     throw Exception(
         json.decode(response.body)['error'] ?? 'Error ${response.statusCode}');
@@ -408,7 +529,7 @@ class ApiService {
           Uri.parse('$_baseUrl$_apiPath/services/provider'),
           headers: headers,
         )
-        .timeout(const Duration(seconds: 30));
+        .timeout(requestTimeout);
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       return (data['data'] as List<dynamic>)
@@ -442,7 +563,7 @@ class ApiService {
             'is_active': isActive,
           }),
         )
-        .timeout(const Duration(seconds: 30));
+        .timeout(requestTimeout);
     if (response.statusCode == 201) {
       final data = json.decode(response.body);
       return ServiceModel.fromJson(data['service']);
@@ -474,7 +595,7 @@ class ApiService {
             'is_active': isActive,
           }),
         )
-        .timeout(const Duration(seconds: 30));
+        .timeout(requestTimeout);
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       return ServiceModel.fromJson(data['service']);
@@ -490,7 +611,7 @@ class ApiService {
           Uri.parse('$_baseUrl$_apiPath/services/$id'),
           headers: headers,
         )
-        .timeout(const Duration(seconds: 30));
+        .timeout(requestTimeout);
     if (response.statusCode == 200) return json.decode(response.body);
     throw Exception(
         json.decode(response.body)['error'] ?? 'Error ${response.statusCode}');
@@ -550,7 +671,7 @@ class ApiService {
           headers: headers,
           body: json.encode({'avatar_url': imageUrl}),
         )
-        .timeout(const Duration(seconds: 30));
+        .timeout(requestTimeout);
     if (response.statusCode == 200) return json.decode(response.body);
     throw Exception(
         json.decode(response.body)['error'] ?? 'Error ${response.statusCode}');
@@ -563,7 +684,7 @@ class ApiService {
           Uri.parse('$_baseUrl$_apiPath/portfolio/provider'),
           headers: headers,
         )
-        .timeout(const Duration(seconds: 30));
+        .timeout(requestTimeout);
     if (response.statusCode == 200) {
       final data = _normalizeDynamicUrls(json.decode(response.body));
       return List<Map<String, dynamic>>.from(data['data']);
@@ -588,7 +709,7 @@ class ApiService {
             'category': category,
           }),
         )
-        .timeout(const Duration(seconds: 30));
+        .timeout(requestTimeout);
     if (response.statusCode == 200 || response.statusCode == 201)
       return json.decode(response.body);
     throw Exception(
@@ -602,7 +723,7 @@ class ApiService {
           Uri.parse('$_baseUrl$_apiPath/portfolio/$id'),
           headers: headers,
         )
-        .timeout(const Duration(seconds: 30));
+        .timeout(requestTimeout);
     if (response.statusCode == 200) return json.decode(response.body);
     throw Exception(
         json.decode(response.body)['error'] ?? 'Error ${response.statusCode}');
@@ -623,7 +744,7 @@ class ApiService {
             'category': category,
           }),
         )
-        .timeout(const Duration(seconds: 30));
+        .timeout(requestTimeout);
     if (response.statusCode == 200) return json.decode(response.body);
     throw Exception(
         json.decode(response.body)['error'] ?? 'Error ${response.statusCode}');
@@ -636,7 +757,7 @@ class ApiService {
           Uri.parse('$_baseUrl$_apiPath/users/profile'),
           headers: headers,
         )
-        .timeout(const Duration(seconds: 30));
+        .timeout(requestTimeout);
     if (response.statusCode == 200) {
       final data = _normalizeDynamicUrls(json.decode(response.body));
       return data['user'] as Map<String, dynamic>;
@@ -667,7 +788,7 @@ class ApiService {
             if (weeklySchedule != null) 'weekly_schedule': weeklySchedule,
           }),
         )
-        .timeout(const Duration(seconds: 30));
+        .timeout(requestTimeout);
     if (response.statusCode == 200) return json.decode(response.body);
     throw Exception(
         json.decode(response.body)['error'] ?? 'Error ${response.statusCode}');
@@ -701,7 +822,7 @@ class ApiService {
           Uri.parse(
               '$_baseUrl$_apiPath/providers/$providerId/slots?date=$date&service_id=$serviceId'),
         )
-        .timeout(const Duration(seconds: 30));
+        .timeout(requestTimeout);
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       return List<Map<String, dynamic>>.from(data['slots']);
@@ -721,7 +842,7 @@ class ApiService {
           Uri.parse('$_baseUrl$_apiPath/chat/conversations'),
           headers: headers,
         )
-        .timeout(const Duration(seconds: 30));
+        .timeout(requestTimeout);
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       return List<Map<String, dynamic>>.from(data['data']);
@@ -738,7 +859,7 @@ class ApiService {
           Uri.parse('$_baseUrl$_apiPath/chat/messages/$partnerId'),
           headers: headers,
         )
-        .timeout(const Duration(seconds: 30));
+        .timeout(requestTimeout);
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       return List<Map<String, dynamic>>.from(data['data']);
@@ -761,7 +882,7 @@ class ApiService {
             if (imagePath != null) 'image_path': imagePath,
           }),
         )
-        .timeout(const Duration(seconds: 30));
+        .timeout(requestTimeout);
     if (response.statusCode == 200 || response.statusCode == 201) {
       return json.decode(response.body);
     }
@@ -777,7 +898,7 @@ class ApiService {
           Uri.parse('$_baseUrl$_apiPath/chat/messages/$partnerId/read'),
           headers: headers,
         )
-        .timeout(const Duration(seconds: 30));
+        .timeout(requestTimeout);
     if (response.statusCode == 200) {
       return json.decode(response.body);
     }
@@ -798,7 +919,7 @@ class ApiService {
             if (longitude != null) 'longitude': longitude,
           }),
         )
-        .timeout(const Duration(seconds: 30));
+        .timeout(requestTimeout);
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       return data['is_active'] as bool;
@@ -814,7 +935,7 @@ class ApiService {
           Uri.parse('$_baseUrl$_apiPath/bookings/$bookingId/start'),
           headers: headers,
         )
-        .timeout(const Duration(seconds: 30));
+        .timeout(requestTimeout);
     if (response.statusCode == 200) {
       return json.decode(response.body);
     }
@@ -843,7 +964,7 @@ class ApiService {
             if (clientLon != null) 'client_lon': clientLon,
           }),
         )
-        .timeout(const Duration(seconds: 30));
+        .timeout(requestTimeout);
     if (response.statusCode == 200) {
       return json.decode(response.body);
     }
@@ -858,7 +979,7 @@ class ApiService {
           Uri.parse('$_baseUrl$_apiPath/bookings/provider'),
           headers: headers,
         )
-        .timeout(const Duration(seconds: 30));
+        .timeout(requestTimeout);
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       return List<Map<String, dynamic>>.from(data['data']);
@@ -876,7 +997,7 @@ class ApiService {
           headers: headers,
           body: json.encode({'status': newStatus}),
         )
-        .timeout(const Duration(seconds: 30));
+        .timeout(requestTimeout);
     if (response.statusCode == 200) return json.decode(response.body);
     throw Exception(
         json.decode(response.body)['error'] ?? 'Error ${response.statusCode}');
@@ -899,7 +1020,7 @@ class ApiService {
             if (longitude != null) 'longitude': longitude,
           }),
         )
-        .timeout(const Duration(seconds: 30));
+        .timeout(requestTimeout);
     if (response.statusCode == 200 || response.statusCode == 201) {
       return json.decode(response.body);
     }
@@ -922,7 +1043,7 @@ class ApiService {
           Uri.parse('$_baseUrl$_apiPath/designs/search?q=${Uri.encodeComponent(query)}$urlSuffix'),
           headers: headers,
         )
-        .timeout(const Duration(seconds: 30));
+        .timeout(requestTimeout);
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       return List<Map<String, dynamic>>.from(data['data']);
@@ -938,7 +1059,7 @@ class ApiService {
           Uri.parse('$_baseUrl$_apiPath/designs/collections?category=${Uri.encodeComponent(category)}'),
           headers: headers,
         )
-        .timeout(const Duration(seconds: 30));
+        .timeout(requestTimeout);
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       return List<Map<String, dynamic>>.from(data['data']);
@@ -953,7 +1074,7 @@ class ApiService {
           Uri.parse('$_baseUrl$_apiPath/designs/collections/exclusive'),
           headers: headers,
         )
-        .timeout(const Duration(seconds: 30));
+        .timeout(requestTimeout);
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       return List<Map<String, dynamic>>.from(data['data']);
@@ -976,7 +1097,7 @@ class ApiService {
       'track': track,
     });
 
-    final response = await http.post(uri, headers: headers, body: body).timeout(const Duration(seconds: 30));
+    final response = await http.post(uri, headers: headers, body: body).timeout(requestTimeout);
     final data = json.decode(response.body);
     if (response.statusCode == 200) {
       return Map<String, dynamic>.from(data['data']);
@@ -991,7 +1112,7 @@ class ApiService {
           Uri.parse('$_baseUrl$_apiPath/designs/colorimetria/historial'),
           headers: headers,
         )
-        .timeout(const Duration(seconds: 30));
+        .timeout(requestTimeout);
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       return List<Map<String, dynamic>>.from(data['data']);
@@ -1034,7 +1155,7 @@ class ApiService {
           Uri.parse('$_baseUrl$_apiPath/designs/wardrobe'),
           headers: headers,
         )
-        .timeout(const Duration(seconds: 30));
+        .timeout(requestTimeout);
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       return List<Map<String, dynamic>>.from(data['data']);
@@ -1081,7 +1202,7 @@ class ApiService {
           Uri.parse('$_baseUrl$_apiPath/designs/wardrobe/outfits/history'),
           headers: headers,
         )
-        .timeout(const Duration(seconds: 30));
+        .timeout(requestTimeout);
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       return List<Map<String, dynamic>>.from(data['data']);
@@ -1174,7 +1295,7 @@ class ApiService {
           Uri.parse(url),
           headers: headers,
         )
-        .timeout(const Duration(seconds: 30));
+        .timeout(requestTimeout);
         
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
@@ -1244,7 +1365,7 @@ class ApiService {
           uri,
           headers: headers,
         )
-        .timeout(const Duration(seconds: 30));
+        .timeout(requestTimeout);
         
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
@@ -1268,7 +1389,7 @@ class ApiService {
           uri,
           headers: headers,
         )
-        .timeout(const Duration(seconds: 30));
+        .timeout(requestTimeout);
         
     if (response.statusCode == 200 || response.statusCode == 201) {
       return Map<String, dynamic>.from(json.decode(response.body));
@@ -1291,7 +1412,7 @@ class ApiService {
           uri,
           headers: headers,
         )
-        .timeout(const Duration(seconds: 30));
+        .timeout(requestTimeout);
         
     if (response.statusCode == 200 || response.statusCode == 201) {
       return Map<String, dynamic>.from(json.decode(response.body));
@@ -1314,7 +1435,7 @@ class ApiService {
           uri,
           headers: headers,
         )
-        .timeout(const Duration(seconds: 30));
+        .timeout(requestTimeout);
         
     if (response.statusCode == 200 || response.statusCode == 201) {
       return Map<String, dynamic>.from(json.decode(response.body));
@@ -1337,7 +1458,7 @@ class ApiService {
           uri,
           headers: headers,
         )
-        .timeout(const Duration(seconds: 30));
+        .timeout(requestTimeout);
         
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
@@ -1357,7 +1478,7 @@ class ApiService {
       headers['Authorization'] = 'Bearer $token';
     }
 
-    final response = await http.get(uri, headers: headers).timeout(const Duration(seconds: 30));
+    final response = await http.get(uri, headers: headers).timeout(requestTimeout);
     final data = json.decode(response.body);
     if (response.statusCode == 200) {
       return List<Map<String, dynamic>>.from(data['data']);
@@ -1375,7 +1496,7 @@ class ApiService {
       headers['Authorization'] = 'Bearer $token';
     }
 
-    final response = await http.get(uri, headers: headers).timeout(const Duration(seconds: 30));
+    final response = await http.get(uri, headers: headers).timeout(requestTimeout);
     final data = json.decode(response.body);
     if (response.statusCode == 200) {
       return data['insight'] ?? '';
@@ -1393,7 +1514,7 @@ class ApiService {
       headers['Authorization'] = 'Bearer $token';
     }
 
-    final response = await http.get(uri, headers: headers).timeout(const Duration(seconds: 30));
+    final response = await http.get(uri, headers: headers).timeout(requestTimeout);
     final data = json.decode(response.body);
     if (response.statusCode == 200) {
       return data['attribution'];
@@ -1417,7 +1538,7 @@ class ApiService {
       'profesional_id': profesionalId,
     });
 
-    final response = await http.post(uri, headers: headers, body: body).timeout(const Duration(seconds: 30));
+    final response = await http.post(uri, headers: headers, body: body).timeout(requestTimeout);
     final data = json.decode(response.body);
     if (response.statusCode == 200 || response.statusCode == 201) {
       return Map<String, dynamic>.from(data['data']);
@@ -1440,7 +1561,7 @@ class ApiService {
       'profesional_id': profesionalId,
     });
 
-    final response = await http.post(uri, headers: headers, body: body).timeout(const Duration(seconds: 30));
+    final response = await http.post(uri, headers: headers, body: body).timeout(requestTimeout);
     final data = json.decode(response.body);
     if (response.statusCode == 200 || response.statusCode == 201) {
       return Map<String, dynamic>.from(data['data']);
@@ -1458,7 +1579,7 @@ class ApiService {
       headers['Authorization'] = 'Bearer $token';
     }
 
-    final response = await http.get(uri, headers: headers).timeout(const Duration(seconds: 30));
+    final response = await http.get(uri, headers: headers).timeout(requestTimeout);
     final data = json.decode(response.body);
     if (response.statusCode == 200) {
       return List<Map<String, dynamic>>.from(data['data']);
@@ -1476,7 +1597,7 @@ class ApiService {
       headers['Authorization'] = 'Bearer $token';
     }
 
-    final response = await http.get(uri, headers: headers).timeout(const Duration(seconds: 30));
+    final response = await http.get(uri, headers: headers).timeout(requestTimeout);
     final data = json.decode(response.body);
     if (response.statusCode == 200) {
       return Map<String, dynamic>.from(data['data']);

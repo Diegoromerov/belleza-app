@@ -4,11 +4,10 @@ const express = require('express');
 const router = express.Router();
 const { authMiddleware } = require('../middleware/auth');
 const pilaCheck = require('../middleware/pilaCheck');
-const { paymentLimiter } = require('../middleware/rateLimiter');
 const bookingController = require('../controllers/bookingController');
 
 // 🔹 CREAR RESERVA
-router.post('/bookings', authMiddleware, paymentLimiter, bookingController.createBooking);
+router.post('/bookings', authMiddleware, bookingController.createBooking);
 
 // 🔹 PANEL DE PRESTADOR: OBTENER CITAS
 router.get('/bookings/provider', authMiddleware, pilaCheck, bookingController.getProviderBookings);
@@ -23,7 +22,7 @@ router.patch('/bookings/:id/status', authMiddleware, pilaCheck, bookingControlle
 router.patch('/bookings/:id/cancel', authMiddleware, bookingController.cancelBooking);
 
 // 🔹 SIMULAR PAGO CON WOMPI
-router.post('/bookings/:id/pay', authMiddleware, paymentLimiter, bookingController.payBooking);
+router.post('/bookings/:id/pay', authMiddleware, bookingController.payBooking);
 
 // 🔹 WEBHOOK SIMULADO DE WOMPI
 router.post('/payments/wompi-webhook', bookingController.wompiWebhook);

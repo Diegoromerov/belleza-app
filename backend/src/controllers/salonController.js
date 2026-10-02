@@ -243,9 +243,10 @@ exports.acceptInvitation = async (req, res) => {
 
     // Las dos escrituras van en UNA sola sentencia: si el INSERT entrara y el
     // UPDATE no, la invitación seguiría siendo usable y el mismo token valdría
-    // dos veces. No se puede confiar en el middleware para esto: con el flag
-    // TENANT_TRANSACTION_PER_REQUEST desactivado (su valor por defecto, ver
-    // middleware/tenantContext.js) NO comparte transacción entre consultas.
+    // dos veces. No se puede confiar en el middleware para esto: el modo
+    // transacción-por-petición está ACTIVO POR DEFECTO, pero este salón no
+    // depende de él (ver middleware/tenantContext.js) y no comparte transacción
+    // entre consultas.
     await pool.query(
       `WITH miembro AS (
          INSERT INTO salon_miembros (salon_id, user_id, sub_rol, estatus)

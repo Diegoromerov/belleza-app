@@ -14,7 +14,24 @@ if (isProduction && !process.env.DATABASE_URL) {
 function getSslConfig(urlStr, hostStr) {
   const str = urlStr || '';
   const host = hostStr || process.env.DB_HOST || '';
-  if (str.includes('railway.internal') || host.includes('railway.internal') || host === 'localhost' || host === '127.0.0.1') {
+
+  // El host puede venir DENTRO de la URL (DATABASE_URL). Antes solo se miraba DB_HOST, así que
+  // cualquier DATABASE_URL —incluida una local de desarrollo— activaba SSL y el servidor
+  // respondía "The server does not support SSL connections".
+  let hostDeUrl = '';
+  try {
+    hostDeUrl = new URL(str).hostname;
+  } catch (_) {
+    hostDeUrl = '';
+  }
+  const esLocal = (h) => h === 'localhost' || h === '127.0.0.1' || h === '::1';
+
+  if (
+    str.includes('railway.internal') ||
+    host.includes('railway.internal') ||
+    esLocal(host) ||
+    esLocal(hostDeUrl)
+  ) {
     return false;
   }
   if (str || isProduction || isStaging) {
@@ -22,6 +39,29 @@ function getSslConfig(urlStr, hostStr) {
   }
   return false;
 }
+
+// ── Límites de tiempo del pool ───────────────────────────────────────────────
+// `connectionTimeoutMillis` solo cubre la ADQUISICIÓN de una conexión libre: no
+// limita una consulta ya lanzada ni una transacción que queda abierta. Sin esos
+// límites, un statement atascado retiene la conexión indefinidamente y el pool
+// se agota sin que ninguna consulta haya fallado. Se fijan los tres que faltan,
+// configurables por entorno para poder ajustarlos por despliegue:
+//   DB_STATEMENT_TIMEOUT_MS              cancelación en servidor (PostgreSQL)
+//   DB_QUERY_TIMEOUT_MS                  red de seguridad del cliente (pg)
+//   DB_IDLE_IN_TRANSACTION_TIMEOUT_MS    mata transacciones que quedan idle
+function msDesdeEntorno(nombre, porDefecto) {
+  const crudo = process.env[nombre];
+  const valor = crudo === undefined || crudo === '' ? porDefecto : parseInt(crudo, 10);
+  return Number.isInteger(valor) && valor > 0 ? valor : porDefecto;
+}
+
+const CONNECTION_TIMEOUT_MS = msDesdeEntorno('DB_CONNECTION_TIMEOUT_MS', 5000);
+const IDLE_TIMEOUT_MS = msDesdeEntorno('DB_IDLE_TIMEOUT_MS', 30000);
+const STATEMENT_TIMEOUT_MS = msDesdeEntorno('DB_STATEMENT_TIMEOUT_MS', 30000);
+// Por encima de statement_timeout: el servidor debe cancelar primero (error
+// limpio y conexión reutilizable); query_timeout solo entra si eso no ocurre.
+const QUERY_TIMEOUT_MS = msDesdeEntorno('DB_QUERY_TIMEOUT_MS', STATEMENT_TIMEOUT_MS + 5000);
+const IDLE_IN_TRANSACTION_TIMEOUT_MS = msDesdeEntorno('DB_IDLE_IN_TRANSACTION_TIMEOUT_MS', 30000);
 
 const rawPool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -34,8 +74,16 @@ const rawPool = new Pool({
   }),
   ssl: getSslConfig(process.env.DATABASE_URL, process.env.DB_HOST),
   max: isProduction ? 30 : 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 5000,
+  connectionTimeoutMillis: CONNECTION_TIMEOUT_MS,
+  idleTimeoutMillis: IDLE_TIMEOUT_MS,
+  // Sin límite de consulta, un statement colgado (lock, tabla bloqueada, red a
+  // medias) retenía la conexión para siempre y el proceso se quedaba sin pool
+  // sin que ninguna consulta hubiera fallado. statement_timeout lo cancela en
+  // el servidor (error limpio, conexión reutilizable); query_timeout es la red
+  // de seguridad del cliente, por eso va por encima de statement_timeout.
+  statement_timeout: STATEMENT_TIMEOUT_MS,
+  query_timeout: QUERY_TIMEOUT_MS,
+  idle_in_transaction_session_timeout: IDLE_IN_TRANSACTION_TIMEOUT_MS,
 });
 
 rawPool.on('error', (err) => {
@@ -170,7 +218,7 @@ function handleMemoryQuery(text, params = []) {
           id: memoryUsers.size + 1,
           nombre: cleanEmail.split('@')[0],
           email: cleanEmail,
-          password_hash: '$2a$10$w0992h.Zt83M1q.4vS34k.H9N49Qy5gM10J98GZq15L',
+          password_hash: '__SEED_PASSWORD_HASH__',
           auth_provider: 'LOCAL',
           provider_id: `local_${cleanEmail}`,
           rol: cleanEmail.includes('salon') ? 'SALON' : (cleanEmail.includes('prestador') || cleanEmail.includes('provider') ? 'PRESTADOR' : 'CLIENTE'),
@@ -706,8 +754,11 @@ const ragPool = process.env.RAG_DATABASE_URL
       connectionString: process.env.RAG_DATABASE_URL,
       ssl: getSslConfig(process.env.RAG_DATABASE_URL),
       max: isProduction ? 15 : 10,
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 5000,
+      connectionTimeoutMillis: CONNECTION_TIMEOUT_MS,
+      idleTimeoutMillis: IDLE_TIMEOUT_MS,
+      statement_timeout: STATEMENT_TIMEOUT_MS,
+      query_timeout: QUERY_TIMEOUT_MS,
+      idle_in_transaction_session_timeout: IDLE_IN_TRANSACTION_TIMEOUT_MS,
     })
   : null;
 
@@ -726,6 +777,7 @@ const testRagConnection = async () => {
   }
 };
 
+let isPgAvailable = null;
 let servingFabricatedData = false;
 
 const memoryFallbackAllowed = () => {
