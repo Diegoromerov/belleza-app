@@ -1769,11 +1769,11 @@ app.set('notifyUserChatMessage', notifyUserChatMessage);
 
 // SPA Fallback para Flutter Web (ver nota en webBuildPath: en el contenedor desplegado no existe)
 app.get('*', (req, res, next) => {
-  if (req.path.startsWith('/api')) return next();
-  if (hasWebBuild) {
-    return res.sendFile(webBuildIndex);
-  }
-  next();
+if (req.path.startsWith('/api') || req.path === '/metrics' || req.path.startsWith('/api-docs')) return next();
+if (hasWebBuild) {
+return res.sendFile(webBuildIndex);
+}
+next();
 });
 
 // ==========================================
