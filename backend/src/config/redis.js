@@ -63,9 +63,10 @@ if (!redisUrl) {
       url: redisUrl,
       socket: {
         reconnectStrategy: (retries) => {
-          // Detener reintentos continuos tras 3 intentos para no inundar logs
-          if (retries >= 3) {
-            return new Error('Max reconnect retries reached');
+          // Detener reintentos continuos tras 5 intentos para no inundar logs
+          if (retries >= 5) {
+            console.warn('⚠️ [REDIS STATUS] Máximo de reintentos alcanzado. Operando en modo degradado.');
+            return false;
           }
           return Math.min(retries * 500, 2000);
         }

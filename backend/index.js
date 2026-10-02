@@ -1848,7 +1848,13 @@ process.on('unhandledRejection', (reason, promise) => {
 
 process.on('uncaughtException', (error) => {
   console.error('❌ Uncaught Exception:', error);
-  if (process.env.NODE_ENV !== 'development') {
+  const isTransientNetError = error && error.message && (
+    error.message.includes('Redis') ||
+    error.message.includes('ENOTFOUND') ||
+    error.message.includes('ECONNREFUSED') ||
+    error.message.includes('ETIMEDOUT')
+  );
+  if (!isTransientNetError && process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'staging') {
     process.exit(1);
   }
 });
