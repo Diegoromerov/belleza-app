@@ -39,6 +39,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
 
   // Sprint 2 Navigation State
   int _currentIndex = 0;
+  String _selectedAgendaFilter = 'TODAS';
 
   // Localized loading states
   final Set<String> _loadingBookings = {};
@@ -1965,8 +1966,130 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
     );
   }
 
+  Widget _buildAgendaHeroBanner() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFFFFDF8), Color(0xFFFAF4EB)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFEFE8DE), width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFC5A052).withValues(alpha: 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: const Color(0xFFFAF6EE),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFFD4AF37).withValues(alpha: 0.3)),
+            ),
+            child: const Icon(Icons.calendar_month_rounded, color: Color(0xFFC5A052), size: 22),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Control de Agenda Pro',
+                  style: TextStyle(
+                    fontFamily: 'CormorantGaramond',
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1F1A15),
+                    letterSpacing: 0.3,
+                  ),
+                ),
+                Text(
+                  '${_bookings.length} servicios registrados en total',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF8C7E74),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAgendaFilterChips() {
+    final filters = [
+      {'id': 'TODAS', 'label': 'Todas'},
+      {'id': 'PROXIMAS', 'label': 'Próximas'},
+      {'id': 'COMPLETADAS', 'label': 'Completadas'},
+      {'id': 'CANCELADAS', 'label': 'Canceladas'},
+    ];
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      child: Row(
+        children: filters.map((f) {
+          final isSelected = _selectedAgendaFilter == f['id'];
+          return Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: InkWell(
+              onTap: () {
+                HapticFeedback.selectionClick();
+                setState(() {
+                  _selectedAgendaFilter = f['id']!;
+                });
+              },
+              borderRadius: BorderRadius.circular(20),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isSelected ? const Color(0xFF1F1A15) : const Color(0xFFFFFDF8),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isSelected ? const Color(0xFFD4AF37) : const Color(0xFFEFE8DE),
+                    width: isSelected ? 1.5 : 1,
+                  ),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: const Color(0xFFC5A052).withValues(alpha: 0.2),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          )
+                        ]
+                      : [],
+                ),
+                child: Text(
+                  f['label']!,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                    color: isSelected ? const Color(0xFFD4AF37) : const Color(0xFF786C60),
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
   Widget _buildAgendaList(
-      {bool limitToRecent = false, String? excludeBookingId}) {
+      {bool limitToRecent = false, String? excludeBookingId, String filter = 'TODAS'}) {
     var filtered = _bookings;
     if (excludeBookingId != null) {
       filtered = filtered
@@ -1974,11 +2097,36 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
           .toList();
     }
 
+    if (filter == 'PROXIMAS') {
+      filtered = filtered.where((b) {
+        final st = (b['status'] as String? ?? '').toUpperCase();
+        return st != 'COMPLETED' &&
+            st != 'COMPLETADA' &&
+            st != 'CANCELLED' &&
+            st != 'CANCELADA';
+      }).toList();
+    } else if (filter == 'COMPLETADAS') {
+      filtered = filtered.where((b) {
+        final st = (b['status'] as String? ?? '').toUpperCase();
+        return st == 'COMPLETED' || st == 'COMPLETADA';
+      }).toList();
+    } else if (filter == 'CANCELADAS') {
+      filtered = filtered.where((b) {
+        final st = (b['status'] as String? ?? '').toUpperCase();
+        return st == 'CANCELLED' || st == 'CANCELADA' || st == 'EN_DISPUTA';
+      }).toList();
+    }
+
     if (limitToRecent && filtered.length > 3) {
       filtered = filtered.sublist(0, 3);
     }
 
     if (filtered.isEmpty) {
+      String emptyMsg = 'No hay citas agendadas disponibles.';
+      if (filter == 'PROXIMAS') emptyMsg = 'No tienes citas próximas agendadas.';
+      if (filter == 'COMPLETADAS') emptyMsg = 'No hay citas completadas en tu historial.';
+      if (filter == 'CANCELADAS') emptyMsg = 'No tienes citas canceladas o en disputa.';
+
       return Container(
         height: 150,
         alignment: Alignment.center,
@@ -1994,14 +2142,14 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
             ),
           ],
         ),
-        child: const Column(
+        child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.calendar_today_outlined, color: Color(0xFFC5A052), size: 36),
-            SizedBox(height: 12),
+            const Icon(Icons.calendar_today_outlined, color: Color(0xFFC5A052), size: 36),
+            const SizedBox(height: 12),
             Text(
-              'No hay citas agendadas disponibles.',
-              style: TextStyle(
+              emptyMsg,
+              style: const TextStyle(
                   color: Color(0xFF8C7E74), fontWeight: FontWeight.w600),
             ),
           ],
@@ -2473,31 +2621,15 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
             await _fetchBookings();
             await _fetchProfile();
           },
-          color: AppTheme.primary,
+          color: const Color(0xFFC5A052),
           child: ListView(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Agenda Completa',
-                    style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: -0.5),
-                  ),
-                  Text(
-                    '${_bookings.length} servicios',
-                    style: const TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey,
-                        fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              _buildAgendaList(limitToRecent: false),
+              _buildAgendaHeroBanner(),
+              const SizedBox(height: 20),
+              _buildAgendaFilterChips(),
+              const SizedBox(height: 20),
+              _buildAgendaList(limitToRecent: false, filter: _selectedAgendaFilter),
             ],
           ),
         );
