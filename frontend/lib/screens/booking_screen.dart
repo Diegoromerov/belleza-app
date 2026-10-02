@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import '../services/api_service.dart';
 import '../shared/theme.dart';
 import '../services/booking_recovery_service.dart';
-import '../services/web_geolocation.dart';
 
 import '../widgets/wompi_payment_sheet.dart';
 
@@ -56,11 +55,6 @@ class _BookingScreenState extends State<BookingScreen> {
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
 
-  // recovery & search variables
-  Map<String, dynamic>? _pendingRecoveryData;
-  String _productSearchQuery = '';
-  String _selectedProductCategory = 'Todos';
-
   @override
   void initState() {
     super.initState();
@@ -79,16 +73,6 @@ class _BookingScreenState extends State<BookingScreen> {
     }
     _loadSlots();
     _loadRecommendedProducts();
-    _checkPendingRecovery();
-  }
-
-  Future<void> _checkPendingRecovery() async {
-    final pending = await BookingRecoveryService.getPendingBooking();
-    if (pending != null && mounted) {
-      setState(() {
-        _pendingRecoveryData = pending;
-      });
-    }
   }
 
   @override
@@ -474,208 +458,27 @@ class _BookingScreenState extends State<BookingScreen> {
   }
 
   Widget _buildProgressBar() {
-    final stepNames = ['1. Logística', '2. Productos', '3. Confirmación'];
+    final stepNames = ['Cuándo y Dónde', 'Productos', 'Confirmación y Pago'];
     return Semantics(
       label: 'Paso ${_currentStep + 1} de 3: ${stepNames[_currentStep]}',
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-        color: const Color(0xFFFAF8F5),
-        child: Column(
-          children: [
-            Row(
-              children: List.generate(3, (index) {
-                bool isCompleted = index < _currentStep;
-                bool isActive = index == _currentStep;
-                bool canTap = isCompleted;
-
-                return Expanded(
-                  child: GestureDetector(
-                    onTap: canTap
-                        ? () {
-                            HapticFeedback.selectionClick();
-                            setState(() => _currentStep = index);
-                            _pageController.animateToPage(
-                              index,
-                              duration: const Duration(milliseconds: 300),
-                              curve: Curves.easeInOut,
-                            );
-                          }
-                        : null,
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 3.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            height: 5,
-                            decoration: BoxDecoration(
-                              color: isCompleted || isActive ? AppTheme.primary : const Color(0xFFE8DFD8),
-                              borderRadius: BorderRadius.circular(3),
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            isCompleted ? '${stepNames[index]} ✓' : stepNames[index],
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: isActive || isCompleted ? FontWeight.bold : FontWeight.w500,
-                              color: isActive
-                                  ? AppTheme.primary
-                                  : isCompleted
-                                      ? const Color(0xFF1F1A15)
-                                      : Colors.grey[500],
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              }),
-            ),
-          ],
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+        child: Row(
+          children: List.generate(3, (index) {
+            bool isCompleted = index < _currentStep;
+            bool isActive = index == _currentStep;
+            return Expanded(
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 4.0),
+                height: 6,
+                decoration: BoxDecoration(
+                  color: isCompleted || isActive ? AppTheme.primary : Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              ),
+            );
+          }),
         ),
-      ),
-    );
-  }
-
-  Widget _buildPendingRecoveryBanner() {
-    if (_pendingRecoveryData == null) return const SizedBox.shrink();
-
-    final serviceName = _pendingRecoveryData!['serviceName'] ?? 'Servicio';
-    final providerName = _pendingRecoveryData!['providerName'] ?? 'Prestador';
-    final price = _parseDouble(_pendingRecoveryData!['price']);
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFFBEB),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFFCD34D)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.restore_page_outlined, color: Color(0xFFD97706), size: 20),
-              const SizedBox(width: 8),
-              const Expanded(
-                child: Text(
-                  'Reserva Incompleta Detectada',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF92400E)),
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.close, size: 16, color: Color(0xFF92400E)),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-                onPressed: () async {
-                  await BookingRecoveryService.clearPendingBooking();
-                  setState(() => _pendingRecoveryData = null);
-                },
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Tenías un proceso de reserva sin finalizar para "$serviceName" con $providerName (\$${price.toStringAsFixed(0)} COP).',
-            style: const TextStyle(fontSize: 12, color: Color(0xFF78350F)),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFD97706),
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                onPressed: () {
-                  final bookingId = _pendingRecoveryData!['bookingId']?.toString();
-                  if (bookingId != null) {
-                    showWompiCheckoutSheet(
-                      context: context,
-                      bookingId: bookingId,
-                      serviceName: serviceName,
-                      price: price,
-                      providerName: providerName,
-                    );
-                  }
-                },
-                icon: const Icon(Icons.payment, size: 14),
-                label: const Text('Reanudar Pago', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-              ),
-              const SizedBox(width: 8),
-              TextButton(
-                onPressed: () async {
-                  await BookingRecoveryService.clearPendingBooking();
-                  setState(() => _pendingRecoveryData = null);
-                },
-                child: const Text('Descartar', style: TextStyle(color: Color(0xFF78350F), fontSize: 12)),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  
-  Widget _buildDurationBreakdownPill() {
-    if (selectedServiceIds.isEmpty) return const SizedBox.shrink();
-    
-    final items = <String>[];
-    int total = 0;
-    for (final id in selectedServiceIds) {
-      final s = widget.services.firstWhere((srv) => srv['id']?.toString() == id, orElse: () => <String, dynamic>{});
-      if (s.isNotEmpty) {
-        final name = s['name'] ?? 'Servicio';
-        final dur = s['duration_minutes'] ?? s['duration'] ?? 45;
-        int mins = dur is int ? dur : (int.tryParse(dur.toString()) ?? 45);
-        total += mins;
-        items.add('$name (${mins}m)');
-      }
-    }
-
-    if (items.isEmpty) return const SizedBox.shrink();
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFAF6F0),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE8DFD8)),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.timer_outlined, size: 16, color: Color(0xFFC5A052)),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              items.length > 1 ? '${items.join(" + ")} = ${total}m total' : '${items.first} total',
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF6B5E55),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -684,7 +487,6 @@ class _BookingScreenState extends State<BookingScreen> {
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12),
       children: [
-        _buildPendingRecoveryBanner(),
         _buildSectionTitle('1. Selecciona un Servicio'),
         const SizedBox(height: 12),
         _buildServiceSelectionList(),
@@ -713,51 +515,6 @@ class _BookingScreenState extends State<BookingScreen> {
               serviceAddress = value;
             });
           },
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            ActionChip(
-              avatar: const Icon(Icons.my_location, size: 14, color: Color(0xFFC5A052)),
-              label: const Text('GPS Actual', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-              backgroundColor: const Color(0xFFFAF6F0),
-              side: const BorderSide(color: Color(0xFFE8DFD8)),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              onPressed: () async {
-                try {
-                  final pos = await getWebGeolocation();
-                  final lat = pos['lat']!;
-                  final lon = pos['lon']!;
-                  final addr = 'Ubicación GPS (${lat.toStringAsFixed(4)}, ${lon.toStringAsFixed(4)})';
-                  setState(() {
-                    _addressController.text = addr;
-                    serviceAddress = addr;
-                  });
-                } catch (_) {
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('No se pudo obtener la ubicación GPS actual.')),
-                    );
-                  }
-                }
-              },
-            ),
-            const SizedBox(width: 8),
-            ActionChip(
-              avatar: const Icon(Icons.home_outlined, size: 14, color: Color(0xFFC5A052)),
-              label: const Text('Mi Dirección', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-              backgroundColor: const Color(0xFFFAF6F0),
-              side: const BorderSide(color: Color(0xFFE8DFD8)),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              onPressed: () {
-                const defaultAddr = 'Calle 24 # 95-32, Fontibón, Bogotá';
-                setState(() {
-                  _addressController.text = defaultAddr;
-                  serviceAddress = defaultAddr;
-                });
-              },
-            ),
-          ],
         ),
         const SizedBox(height: 24),
         _buildNotesExpandable(),
@@ -896,75 +653,6 @@ class _BookingScreenState extends State<BookingScreen> {
     return months[month];
   }
 
-  int _calculateTotalDurationMinutes() {
-    int total = 0;
-    for (final id in selectedServiceIds) {
-      final s = widget.services.firstWhere(
-        (srv) => srv['id']?.toString() == id,
-        orElse: () => <String, dynamic>{},
-      );
-      if (s.isNotEmpty) {
-        final dur = s['duration_minutes'] ?? s['duration'] ?? 45;
-        if (dur is int) {
-          total += dur;
-        } else if (dur is double) {
-          total += dur.toInt();
-        } else if (dur is String) {
-          total += int.tryParse(dur) ?? 45;
-        }
-      }
-    }
-    return total > 0 ? total : 45;
-  }
-
-  String _getEstimatedEndTime(String startTime, int durationMinutes) {
-    try {
-      final parts = startTime.split(':');
-      final startHour = int.parse(parts[0]);
-      final startMin = int.parse(parts[1]);
-      final startDt = DateTime(2026, 1, 1, startHour, startMin);
-      final endDt = startDt.add(Duration(minutes: durationMinutes));
-      final endHourStr = endDt.hour.toString().padLeft(2, '0');
-      final endMinStr = endDt.minute.toString().padLeft(2, '0');
-      return '$endHourStr:$endMinStr';
-    } catch (e) {
-      return '';
-    }
-  }
-
-  Widget _buildPeriodHeader(String periodName, IconData icon, int availableCount) {
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: const Color(0xFFC5A052)),
-        const SizedBox(width: 6),
-        Text(
-          periodName,
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF1F1A15),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF5EBE6),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text(
-            '$availableCount disponibles',
-            style: const TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF6B5E55),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildTimeSelector() {
     if (selectedDate == null || selectedServiceId == null) {
       return const Padding(
@@ -1005,107 +693,15 @@ class _BookingScreenState extends State<BookingScreen> {
       );
     }
 
-    final morningSlots = _slots.where((s) {
-      final hour = int.tryParse((s['time'] as String).split(':')[0]) ?? 0;
-      return hour < 12;
-    }).toList();
-
-    final afternoonSlots = _slots.where((s) {
-      final hour = int.tryParse((s['time'] as String).split(':')[0]) ?? 0;
-      return hour >= 12 && hour < 17;
-    }).toList();
-
-    final eveningSlots = _slots.where((s) {
-      final hour = int.tryParse((s['time'] as String).split(':')[0]) ?? 0;
-      return hour >= 17;
-    }).toList();
-
-    final totalDuration = _calculateTotalDurationMinutes();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildDurationBreakdownPill(),
-        if (_selectedSlotTime != null) ...[
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFDF8F3),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFFC5A052).withValues(alpha: 0.4)),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.stars_rounded, color: Color(0xFFC5A052), size: 20),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: RichText(
-                    text: TextSpan(
-                      style: const TextStyle(fontSize: 13, color: Color(0xFF1F1A15)),
-                      children: [
-                        const TextSpan(text: 'Horario seleccionado: '),
-                        TextSpan(
-                          text: '$_selectedSlotTime – ${_getEstimatedEndTime(_selectedSlotTime!, totalDuration)} ',
-                          style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF9E7C33)),
-                        ),
-                        TextSpan(
-                          text: '($totalDuration min estimación total)',
-                          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-        ],
-        if (morningSlots.isNotEmpty) ...[
-          _buildPeriodHeader('Mañana', Icons.wb_sunny_outlined, morningSlots.where((s) => s['is_available'] == true).length),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: morningSlots.map((slot) {
-              final String time = slot['time'] as String;
-              final bool isAvailable = slot['is_available'] as bool? ?? false;
-              final isSelected = _selectedSlotTime == time;
-              return _buildTimeSlotButton(time, isAvailable, isSelected);
-            }).toList(),
-          ),
-          const SizedBox(height: 16),
-        ],
-        if (afternoonSlots.isNotEmpty) ...[
-          _buildPeriodHeader('Tarde', Icons.wb_twilight_outlined, afternoonSlots.where((s) => s['is_available'] == true).length),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: afternoonSlots.map((slot) {
-              final String time = slot['time'] as String;
-              final bool isAvailable = slot['is_available'] as bool? ?? false;
-              final isSelected = _selectedSlotTime == time;
-              return _buildTimeSlotButton(time, isAvailable, isSelected);
-            }).toList(),
-          ),
-          const SizedBox(height: 16),
-        ],
-        if (eveningSlots.isNotEmpty) ...[
-          _buildPeriodHeader('Noche', Icons.bedtime_outlined, eveningSlots.where((s) => s['is_available'] == true).length),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: eveningSlots.map((slot) {
-              final String time = slot['time'] as String;
-              final bool isAvailable = slot['is_available'] as bool? ?? false;
-              final isSelected = _selectedSlotTime == time;
-              return _buildTimeSlotButton(time, isAvailable, isSelected);
-            }).toList(),
-          ),
-        ],
-      ],
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: _slots.map((slot) {
+        final String time = slot['time'] as String;
+        final bool isAvailable = slot['is_available'] as bool? ?? false;
+        final isSelected = _selectedSlotTime == time;
+        return _buildTimeSlotButton(time, isAvailable, isSelected);
+      }).toList(),
     );
   }
 
@@ -1113,7 +709,6 @@ class _BookingScreenState extends State<BookingScreen> {
     return GestureDetector(
       onTap: isAvailable
           ? () {
-              HapticFeedback.selectionClick();
               setState(() {
                 _selectedSlotTime = time;
               });
@@ -1297,91 +892,19 @@ class _BookingScreenState extends State<BookingScreen> {
             ],
           ),
         ),
-        const SizedBox(height: 16),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: ['Todos', 'Cabello', 'Uñas', 'Estética', 'Maquillaje'].map((cat) {
-              final isSelected = _selectedProductCategory == cat;
-              return Padding(
-                padding: const EdgeInsets.only(right: 8.0),
-                child: FilterChip(
-                  label: Text(cat),
-                  selected: isSelected,
-                  onSelected: (selected) {
-                    setState(() {
-                      _selectedProductCategory = cat;
-                    });
-                  },
-                  selectedColor: AppTheme.primary,
-                  backgroundColor: const Color(0xFFF5EBE6),
-                  labelStyle: TextStyle(
-                    color: isSelected ? Colors.white : const Color(0xFF1F1A15),
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                    fontSize: 12,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    side: BorderSide(
-                      color: isSelected ? AppTheme.primary : const Color(0xFFE8DFD8),
-                    ),
-                  ),
-                  showCheckmark: false,
-                ),
-              );
-            }).toList(),
-          ),
-        ),
-        const SizedBox(height: 12),
-        Padding(
-          padding: const EdgeInsets.only(bottom: 12.0),
-          child: TextField(
-            style: const TextStyle(fontSize: 13),
-            decoration: InputDecoration(
-              hintText: 'Buscar productos por nombre...',
-              prefixIcon: const Icon(Icons.search, size: 18, color: Color(0xFFC5A052)),
-              isDense: true,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(color: Color(0xFFE8DFD8)),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(color: Color(0xFFE8DFD8)),
-              ),
-            ),
-            onChanged: (val) {
-              setState(() {
-                _productSearchQuery = val.trim().toLowerCase();
-              });
-            },
-          ),
-        ),
-        if (_recommendedProducts.where((p) {
-          final nameMatches = _productSearchQuery.isEmpty || (p['nombre'] ?? '').toString().toLowerCase().contains(_productSearchQuery);
-          final catTag = (p['tag_especialidad'] ?? '').toString().toLowerCase();
-          final categoryMatches = _selectedProductCategory == 'Todos' || catTag == _selectedProductCategory.toLowerCase();
-          return nameMatches && categoryMatches;
-        }).isEmpty)
+        const SizedBox(height: 20),
+        if (_recommendedProducts.isEmpty)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 24.0),
             child: Center(
               child: Text(
-                'No se encontraron productos coincidentes.',
+                'No hay productos sugeridos para este servicio.',
                 style: TextStyle(color: Colors.grey, fontSize: 13),
               ),
             ),
           )
         else
-          ..._recommendedProducts.where((p) {
-            final nameMatches = _productSearchQuery.isEmpty || (p['nombre'] ?? '').toString().toLowerCase().contains(_productSearchQuery);
-            final catTag = (p['tag_especialidad'] ?? '').toString().toLowerCase();
-            final categoryMatches = _selectedProductCategory == 'Todos' || catTag == _selectedProductCategory.toLowerCase();
-            return nameMatches && categoryMatches;
-          }).map((prod) {
+          ..._recommendedProducts.map((prod) {
             final id = prod['id'].toString();
             final nombre = prod['nombre']?.toString() ?? 'Producto';
             final precio = _parseDouble(prod['precio']);
@@ -1653,71 +1176,7 @@ class _BookingScreenState extends State<BookingScreen> {
             ),
           ),
         ),
-        const SizedBox(height: 16),
-        const Text(
-          'Métodos de Pago Aceptados via Wompi',
-          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black87),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildPaymentMethodBadge('💳 Tarjetas', 'Crédito y Débito'),
-            _buildPaymentMethodBadge('📱 Nequi / PSE', 'PSE Instantáneo'),
-            _buildPaymentMethodBadge('🏦 Bancolombia', 'Botón Bancolombia'),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF0FDF4),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFFBBF7D0)),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(Icons.verified_user_outlined, color: Color(0xFF16A34A), size: 18),
-                    SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Garantía Glow 100%\nSatisfacción asegurada',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF15803D)),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFFBFDBFE)),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(Icons.access_time_rounded, color: Color(0xFF2563EB), size: 18),
-                    SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Cancelación Flexible\nHasta 2h antes',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF1E40AF)),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
@@ -1750,31 +1209,6 @@ class _BookingScreenState extends State<BookingScreen> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildPaymentMethodBadge(String title, String subtitle) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE8DFD8)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Text(title, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1F1A15))),
-          const SizedBox(height: 2),
-          Text(subtitle, style: const TextStyle(fontSize: 9, color: Colors.grey)),
-        ],
-      ),
     );
   }
 
@@ -1918,59 +1352,19 @@ class _BookingScreenState extends State<BookingScreen> {
     );
   }
 
-  double _calculateCurrentSubtotal() {
-    double servicesPrice = 0.0;
-    for (final id in selectedServiceIds) {
-      final s = widget.services.firstWhere(
-        (srv) => srv['id']?.toString() == id,
-        orElse: () => <String, dynamic>{},
-      );
-      if (s.isNotEmpty) {
-        servicesPrice += _parseDouble(s['price']);
-      }
-    }
-
-    double productsSubtotal = 0.0;
-    int totalProductsQty = 0;
-    _selectedProductsQty.forEach((id, qty) {
-      final prod = _recommendedProducts.firstWhere((p) => p['id'].toString() == id, orElse: () => <String, dynamic>{});
-      if (prod.isNotEmpty) {
-        final price = _parseDouble(prod['precio']);
-        productsSubtotal += price * qty;
-        totalProductsQty += qty;
-      }
-    });
-
-    double discount = 0.0;
-    if (totalProductsQty >= 2) {
-      discount = productsSubtotal * 0.15;
-    }
-
-    return servicesPrice + productsSubtotal - discount;
-  }
-
   Widget _buildStickyBottomButtons() {
     bool canNext = false;
-    String validationHint = '';
-
     if (_currentStep == 0) {
-      if (selectedServiceId == null) {
-        validationHint = 'Selecciona un servicio';
-      } else if (selectedDate == null || _selectedSlotTime == null) {
-        validationHint = 'Elige fecha y horario';
-      } else if (serviceAddress.trim().isEmpty) {
-        validationHint = 'Ingresa dirección del servicio';
-      } else {
-        canNext = true;
-      }
+      canNext = selectedServiceId != null &&
+          selectedDate != null &&
+          _selectedSlotTime != null &&
+          serviceAddress.trim().isNotEmpty;
     } else if (_currentStep == 1) {
       canNext = true;
     } else if (_currentStep == 2) {
       canNext = true;
     }
 
-    final currentSubtotal = _calculateCurrentSubtotal();
-    final totalItems = selectedServiceIds.length + _selectedProductsQty.values.fold(0, (sum, q) => sum + q);
     bool hasProducts = _selectedProductsQty.values.any((qty) => qty > 0);
 
     return Container(
@@ -1980,88 +1374,46 @@ class _BookingScreenState extends State<BookingScreen> {
         border: const Border(top: BorderSide(color: Color(0xFFF3EAE8))),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
             offset: const Offset(0, -4),
           ),
         ],
       ),
       child: SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+        child: Row(
           children: [
-            if (_currentStep < 2 && !canNext && validationHint.isNotEmpty) ...[
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.info_outline_rounded, size: 14, color: Color(0xFFD97706)),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Paso 1: $validationHint para continuar',
-                      style: const TextStyle(color: Color(0xFFD97706), fontSize: 12, fontWeight: FontWeight.w600),
-                    ),
-                  ],
+            if (_currentStep > 0) ...[
+                          OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                              side: BorderSide(color: AppTheme.primary),
+                            ),
+                            onPressed: _prevStep,
+                            child: Text('Atrás', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
+                          ),
+                          const SizedBox(width: 12),
+                        ],
+            Expanded(
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _currentStep == 2 ? Colors.green.shade700 : AppTheme.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  elevation: 0,
+                ),
+                onPressed: canNext ? _handleBottomButtonPress : null,
+                child: Text(
+                  _currentStep == 2
+                      ? 'Confirmar y Pagar'
+                      : _currentStep == 1
+                          ? (hasProducts ? 'Continuar' : 'Omitir y Ver Resumen')
+                          : 'Continuar',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                 ),
               ),
-            ],
-            Row(
-              children: [
-                if (_currentStep > 0) ...[
-                  OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      side: BorderSide(color: AppTheme.primary),
-                    ),
-                    onPressed: _prevStep,
-                    child: Text('Atrás', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
-                  ),
-                  const SizedBox(width: 12),
-                ],
-                if (_currentStep < 2) ...[
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          '\$${currentSubtotal.toStringAsFixed(0)} COP',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF1F1A15),
-                          ),
-                        ),
-                        Text(
-                          '$totalItems ítems seleccionados',
-                          style: TextStyle(fontSize: 11, color: Colors.grey[600]),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                ],
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _currentStep == 2 ? Colors.green.shade700 : AppTheme.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    elevation: 0,
-                  ),
-                  onPressed: canNext ? _handleBottomButtonPress : null,
-                  child: Text(
-                    _currentStep == 2
-                        ? 'Confirmar y Pagar'
-                        : _currentStep == 1
-                            ? (hasProducts ? 'Continuar' : 'Omitir y Ver Resumen')
-                            : 'Continuar',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                  ),
-                ),
-              ],
             ),
           ],
         ),

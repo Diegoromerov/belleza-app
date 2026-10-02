@@ -11,7 +11,6 @@ import '../widgets/wompi_payment_sheet.dart';
 import '../widgets/audience_toggle.dart';
 import '../services/audience_service.dart';
 import '../shared/mens_theme.dart';
-import 'ideas/product_scanner_screen.dart';
 
 class StoreScreen extends StatefulWidget {
   final String? bookingId;
@@ -836,85 +835,7 @@ class _StoreScreenState extends State<StoreScreen> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.stretch,
                                     children: [
-                                      // Banner Escáner Biométrico / OpenBeautyFacts IA (Ciclo 4)
-                                       Container(
-                                         margin: const EdgeInsets.only(bottom: 12),
-                                         padding: const EdgeInsets.all(12),
-                                         decoration: BoxDecoration(
-                                           gradient: LinearGradient(
-                                             colors: isMen
-                                                 ? [MensTheme.obsidianCard, MensTheme.bronzeAccent.withValues(alpha: 0.3)]
-                                                 : [AppTheme.primary.withValues(alpha: 0.15), AppTheme.accent.withValues(alpha: 0.25)],
-                                           ),
-                                           borderRadius: BorderRadius.circular(16),
-                                           border: Border.all(
-                                             color: isMen ? MensTheme.bronzeAccent : AppTheme.primary.withValues(alpha: 0.5),
-                                           ),
-                                         ),
-                                         child: Row(
-                                           children: [
-                                             Container(
-                                               padding: const EdgeInsets.all(8),
-                                               decoration: BoxDecoration(
-                                                 color: isMen ? MensTheme.champagneGold.withValues(alpha: 0.2) : AppTheme.primary.withValues(alpha: 0.2),
-                                                 shape: BoxShape.circle,
-                                               ),
-                                               child: Icon(
-                                                 Icons.qr_code_scanner,
-                                                 color: isMen ? MensTheme.champagneGold : AppTheme.primary,
-                                                 size: 22,
-                                               ),
-                                             ),
-                                             const SizedBox(width: 12),
-                                             Expanded(
-                                               child: Column(
-                                                 crossAxisAlignment: CrossAxisAlignment.start,
-                                                 children: [
-                                                   Text(
-                                                     '✨ Escáner Biométrico IA',
-                                                     style: TextStyle(
-                                                       fontSize: 13,
-                                                       fontWeight: FontWeight.bold,
-                                                       color: isMen ? MensTheme.champagneGold : AppTheme.primary,
-                                                     ),
-                                                   ),
-                                                   const SizedBox(height: 2),
-                                                   Text(
-                                                     'Escanea productos con OpenBeautyFacts',
-                                                     style: TextStyle(
-                                                       fontSize: 11,
-                                                       color: textColor.withValues(alpha: 0.8),
-                                                     ),
-                                                   ),
-                                                 ],
-                                               ),
-                                             ),
-                                             ElevatedButton.icon(
-                                               onPressed: () {
-                                                 Navigator.push(
-                                                   context,
-                                                   MaterialPageRoute(
-                                                     builder: (_) => const ProductScannerScreen(),
-                                                   ),
-                                                 );
-                                               },
-                                               icon: const Icon(Icons.camera_alt, size: 14),
-                                               label: const Text('Escanear', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                                               style: ElevatedButton.styleFrom(
-                                                 backgroundColor: isMen ? MensTheme.bronzeAccent : AppTheme.primary,
-                                                 foregroundColor: Colors.white,
-                                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                                 minimumSize: Size.zero,
-                                                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                                 shape: RoundedRectangleBorder(
-                                                   borderRadius: BorderRadius.circular(20),
-                                                 ),
-                                               ),
-                                             ),
-                                           ],
-                                         ),
-                                       ),
-                                       // 1. Barra de Búsqueda (Ocupa el ancho completo)
+                                      // 1. Barra de Búsqueda (Ocupa el ancho completo)
                                       Container(
                                         height: 42,
                                         decoration: BoxDecoration(
@@ -1256,64 +1177,6 @@ class _StoreScreenState extends State<StoreScreen> {
               ),
               child: Column(
                 children: [
-                  // Free Shipping Progress Banner (GlowShop Kaizen)
-                  Builder(
-                    builder: (context) {
-                      const double freeShippingThreshold = 100000.0;
-                      final double progress = (subtotal / freeShippingThreshold).clamp(0.0, 1.0);
-                      final double remaining = freeShippingThreshold - subtotal;
-                      final bool isFree = subtotal >= freeShippingThreshold;
-
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 14),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: isFree ? const Color(0xFFF0FDF4) : const Color(0xFFFFFBEB),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: isFree ? const Color(0xFFBBF7D0) : const Color(0xFFFDE68A)),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(
-                                  isFree ? Icons.local_shipping : Icons.local_shipping_outlined,
-                                  size: 16,
-                                  color: isFree ? const Color(0xFF16A34A) : const Color(0xFFD97706),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    isFree
-                                        ? '🎉 ¡Felicitaciones! Tienes Envío Gratuito'
-                                        : 'Te faltan ${_formatCOP(remaining)} para Envío Gratis',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                      color: isFree ? const Color(0xFF15803D) : const Color(0xFF92400E),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(4),
-                              child: LinearProgressIndicator(
-                                value: progress,
-                                minHeight: 6,
-                                backgroundColor: isFree ? const Color(0xFFDCFCE7) : const Color(0xFFFEF3C7),
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  isFree ? const Color(0xFF16A34A) : const Color(0xFFD97706),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [

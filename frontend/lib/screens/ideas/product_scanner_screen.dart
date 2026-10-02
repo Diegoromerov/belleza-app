@@ -13,7 +13,6 @@ class ProductScannerScreen extends StatefulWidget {
 }
 
 class _ProductScannerScreenState extends State<ProductScannerScreen> {
-  final TextEditingController _barcodeController = TextEditingController();
   bool _isScanning = true;
   bool _isProcessing = false;
   ProductDetail? _scannedProduct;
@@ -43,107 +42,19 @@ class _ProductScannerScreenState extends State<ProductScannerScreen> {
               ? const Center(child: CircularProgressIndicator(color: Color(0xFFC5A052)))
               : _scannedProduct != null
                   ? _buildResultView()
-                  : Column(
-                      children: [
-                        Expanded(
-                          child: MobileScanner(
-                            onDetect: (capture) async {
-                              if (_isScanning) {
-                                final barcode = capture.barcodes.first.rawValue;
-                                if (barcode != null) {
-                                  setState(() {
-                                    _isScanning = false;
-                                    _isProcessing = true;
-                                  });
-                                  await _checkProduct(barcode);
-                                }
-                              }
-                            },
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-                            boxShadow: [
-                              BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, -2))
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: TextField(
-                                      controller: _barcodeController,
-                                      keyboardType: TextInputType.number,
-                                      decoration: InputDecoration(
-                                        hintText: 'Digite código de barras (ej. 770123456789)...',
-                                        hintStyle: const TextStyle(fontSize: 12),
-                                        isDense: true,
-                                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  ElevatedButton(
-                                    onPressed: () {
-                                      final code = _barcodeController.text.trim();
-                                      if (code.isNotEmpty) {
-                                        setState(() {
-                                          _isScanning = false;
-                                          _isProcessing = true;
-                                        });
-                                        _checkProduct(code);
-                                      }
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFFC5A052),
-                                      foregroundColor: Colors.white,
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                    ),
-                                    child: const Text('Consultar'),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Wrap(
-                                spacing: 8,
-                                crossAxisAlignment: WrapCrossAlignment.center,
-                                children: [
-                                  const Text('Prueba rápida:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey)),
-                                  ActionChip(
-                                    label: const Text('Serum Retinol (770123456789)', style: TextStyle(fontSize: 11)),
-                                    onPressed: () {
-                                      _barcodeController.text = '770123456789';
-                                      setState(() {
-                                        _isScanning = false;
-                                        _isProcessing = true;
-                                      });
-                                      _checkProduct('770123456789');
-                                    },
-                                  ),
-                                  ActionChip(
-                                    label: const Text('Ácido Hialurónico (770999888777)', style: TextStyle(fontSize: 11)),
-                                    onPressed: () {
-                                      _barcodeController.text = '770999888777';
-                                      setState(() {
-                                        _isScanning = false;
-                                        _isProcessing = true;
-                                      });
-                                      _checkProduct('770999888777');
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                  : MobileScanner(
+                      onDetect: (capture) async {
+                        if (_isScanning) {
+                          final barcode = capture.barcodes.first.rawValue;
+                          if (barcode != null) {
+                            setState(() {
+                              _isScanning = false;
+                              _isProcessing = true;
+                            });
+                            await _checkProduct(barcode);
+                          }
+                        }
+                      },
                     ),
         ),
       ),
@@ -153,42 +64,23 @@ class _ProductScannerScreenState extends State<ProductScannerScreen> {
   Future<void> _checkProduct(String barcode) async {
     try {
       final product = await BiometricService.checkProduct(barcode);
-      if (product != null) {
-        setState(() {
-          _scannedProduct = product;
-          _isProcessing = false;
-        });
-      } else {
-        setState(() {
-          _scannedProduct = ProductDetail(
-            barcode: barcode,
-            name: 'Producto No Registrado en Cosmética ($barcode)',
-            brand: 'Sin Registro en OpenBeautyFacts',
-            imageUrl: '',
-            ingredients: 'Sin ingredientes cosméticos detectados',
-            categories: 'No Cosmético / Tabaco / Mercancía general',
-            price: 'N/A',
-            compatible: false,
-            compatibilityReason: '⚠️ El código de barras $barcode no pertenece a un producto cosmético en OpenBeautyFacts (ej. cigarrillos o alimentos). No es apto para tratamiento dermatológico.',
-          );
-          _isProcessing = false;
-        });
-      }
-    } catch (e) {
       setState(() {
-        _scannedProduct = ProductDetail(
-          barcode: barcode,
-          name: 'Producto No Evaluado ($barcode)',
-          brand: 'OpenBeautyFacts',
-          imageUrl: '',
-          ingredients: 'Información no disponible',
-          categories: 'General',
-          price: 'N/A',
-          compatible: false,
-          compatibilityReason: '⚠️ No se pudo verificar la compatibilidad dermatológica para el código $barcode. Asegúrate de escanear un cosmético o crema facial.',
-        );
+        _scannedProduct = product;
         _isProcessing = false;
       });
+    } catch (e) {
+      setState(() {
+        _isProcessing = false;
+        _scannedProduct = null;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Producto no encontrado o error al verificar.'),
+          ),
+        );
+        Navigator.pop(context);
+      }
     }
   }
 

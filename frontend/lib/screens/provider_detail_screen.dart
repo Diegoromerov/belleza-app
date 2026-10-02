@@ -51,215 +51,6 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
     return 0.0;
   }
 
-  String _formatDuration(dynamic rawMinutes) {
-    int mins = 0;
-    if (rawMinutes is int) mins = rawMinutes;
-    else if (rawMinutes is String) mins = int.tryParse(rawMinutes) ?? 0;
-    else if (rawMinutes is double) mins = rawMinutes.toInt();
-
-    if (mins <= 0) return 'Tiempo variable';
-    if (mins < 60) return '$mins min';
-    final hours = mins ~/ 60;
-    final remainingMins = mins % 60;
-    if (remainingMins == 0) {
-      return hours == 1 ? '1 hora' : '$hours horas';
-    }
-    return '${hours}h ${remainingMins}m';
-  }
-
-  void _showGuaranteeSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(24),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE8DFD8),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFAF6F0),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: const Icon(
-                      Icons.verified_user_outlined,
-                      color: Color(0xFFC5A052),
-                      size: 26,
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Garantía de Confianza GlowApp',
-                          style: TextStyle(
-                            fontFamily: 'CormorantGaramond',
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF1F1A15),
-                          ),
-                        ),
-                        Text(
-                          'Tu tranquilidad y seguridad son nuestra prioridad',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF6B5E55),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              const Divider(color: Color(0xFFF0EAE3)),
-              const SizedBox(height: 16),
-              _buildGuaranteeItem(
-                icon: Icons.sanitizer_outlined,
-                title: 'Bioseguridad Certificada',
-                description: 'Desinfección de herramientas de grado profesional y estándares de higiene rigorosamente inspeccionados.',
-              ),
-              const SizedBox(height: 14),
-              _buildGuaranteeItem(
-                icon: Icons.lock_outline,
-                title: 'Pago Seguro en Custodia (Escrow)',
-                description: 'Tu dinero no se entrega al profesional hasta 24 horas después de completar el servicio a tu satisfacción.',
-              ),
-              const SizedBox(height: 14),
-              _buildGuaranteeItem(
-                icon: Icons.workspace_premium_outlined,
-                title: 'Garantía de Satisfacción 100%',
-                description: 'Si el servicio no cumple con lo ofrecido, nuestro equipo de soporte gestionará un retoque sin costo o reembolso.',
-              ),
-              const SizedBox(height: 14),
-              _buildGuaranteeItem(
-                icon: Icons.badge_outlined,
-                title: 'Profesionales Validados',
-                description: 'Identidad, certificaciones y antecedentes verificados previa publicación en la plataforma GlowApp.',
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1F1A15),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    elevation: 0,
-                  ),
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text(
-                    'Entendido',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildGuaranteeItem({
-    required IconData icon,
-    required String title,
-    required String description,
-  }) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: const Color(0xFFFAF6F0),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(icon, size: 18, color: const Color(0xFFC5A052)),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                  color: Color(0xFF1F1A15),
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                description,
-                style: const TextStyle(
-                  fontSize: 12.5,
-                  color: Color(0xFF6B5E55),
-                  height: 1.35,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTrustStatItem(IconData icon, String val, String label) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 14, color: const Color(0xFFC5A052)),
-            const SizedBox(width: 4),
-            Text(
-              val,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1F1A15)),
-            ),
-          ],
-        ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: const TextStyle(fontSize: 10, color: Color(0xFF6B5E55), fontWeight: FontWeight.w500),
-        ),
-      ],
-    );
-  }
-
   String _getSpecialty(Map<String, dynamic> p, List<Map<String, dynamic>> services) {
     if (p['specialty'] != null && p['specialty'].toString().isNotEmpty) {
       return p['specialty'].toString().toLowerCase();
@@ -660,27 +451,6 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Evidence-Backed Trust Stats Bar (Kaizen Cycle 5)
-                      Container(
-                        margin: const EdgeInsets.only(bottom: 16),
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFAF6F0),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFFE8DFD8)),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            _buildTrustStatItem(Icons.verified_sharp, '98%', 'Puntualidad'),
-                            Container(width: 1, height: 28, color: const Color(0xFFE8DFD8)),
-                            _buildTrustStatItem(Icons.event_available, '${p['completed_bookings_count'] ?? p['reviews_count'] ?? 150}+', 'Citas'),
-                            Container(width: 1, height: 28, color: const Color(0xFFE8DFD8)),
-                            _buildTrustStatItem(Icons.security, '100%', 'Garantía Glow'),
-                          ],
-                        ),
-                      ),
-
                       // Tarjeta de Horarios y Cobertura Profesional
                       Container(
                         padding: const EdgeInsets.all(16),
@@ -739,51 +509,42 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                               ],
                             ),
                             const Divider(height: 20, color: Color(0xFFF0EAE3)),
-                            InkWell(
-                              onTap: () => _showGuaranteeSheet(context),
-                              borderRadius: BorderRadius.circular(12),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 4),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFFAF6F0),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: const Icon(Icons.shield_outlined,
-                                          size: 18, color: Color(0xFFC5A052)),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            (p['guarantee_title'] ?? p['protocol_title'] ?? 'Garantía y Protocolo GlowApp').toString(),
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 13,
-                                              color: Color(0xFF1F1A15),
-                                            ),
-                                          ),
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            (p['guarantee_subtitle'] ?? p['protocol_subtitle'] ?? 'Bioseguridad certificada · Pago seguro en custodia').toString(),
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                              color: Color(0xFF6B5E55),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    const Icon(Icons.chevron_right,
-                                        size: 20, color: Color(0xFFC5A052)),
-                                  ],
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFAF6F0),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Icon(Icons.shield_outlined,
+                                      size: 18, color: Color(0xFFC5A052)),
                                 ),
-                              ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        (p['guarantee_title'] ?? p['protocol_title'] ?? 'Garantía y Protocolo GlowApp').toString(),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                          color: Color(0xFF1F1A15),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        (p['guarantee_subtitle'] ?? p['protocol_subtitle'] ?? 'Bioseguridad certificada · Pago seguro en custodia').toString(),
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Color(0xFF6B5E55),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
@@ -904,7 +665,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
-                                  color: const Color(0xFFE8DFD8).withValues(alpha: 0.6),
+                                  color: const Color(0xFFE8DFD8).withOpacity(0.6),
                                   width: 1,
                                 ),
                                 boxShadow: const [
@@ -986,7 +747,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                                       size: 15, color: Colors.grey),
                                                   const SizedBox(width: 4),
                                                   Text(
-                                                    _formatDuration(s['duration_minutes'] ?? s['duration']),
+                                                    '${s['duration_minutes'] ?? s['duration'] ?? 0} min',
                                                     style: TextStyle(
                                                         color: Colors.grey[600],
                                                         fontSize: 13,
@@ -1019,7 +780,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                             Container(
                                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                               decoration: BoxDecoration(
-                                                color: const Color(0xFFC5A052).withValues(alpha: 0.12),
+                                                color: const Color(0xFFC5A052).withOpacity(0.12),
                                                 borderRadius: BorderRadius.circular(12),
                                               ),
                                               child: const Row(
