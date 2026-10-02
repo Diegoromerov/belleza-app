@@ -19,7 +19,7 @@ const {
   switchContextSchema,
 } = require('../schemas/auth.schema');
 
-// ==========================================
+// ===================================
 // 🛡️ VALIDACIÓN ZOD (ADR-001, Checklist Item 3)
 // Toda entrada por req.body se valida antes de tocar la base de datos.
 // ==========================================
@@ -34,6 +34,8 @@ const validateBody = (schema, body, res) => {
   return parsed.data;
 };
 
+=======
+const { rolUsuarioSchema, ROLES_USUARIO } = require('../schemas/role.schema');
 
 
 // ==========================================
@@ -334,7 +336,7 @@ exports.onboarding = async (req, res) => {
       return res.status(400).json({ error: 'Debe aceptar la Política de Tratamiento de Datos Personales (Habeas Data) y los Términos y Condiciones para continuar.' });
     }
 
-    const mappedRol = rol.toUpperCase();
+    const mappedRol = rolParse.data;
     const clientIp = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
     if (mappedRol === 'PRESTADOR') {
