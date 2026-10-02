@@ -2191,6 +2191,9 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
     bool isMen = false,
   }) {
     final isSelected = _currentIndex == index;
+    final activeColor = const Color(0xFFC5A052);
+    final inactiveColor = isMen ? const Color(0xFFB0A89F) : const Color(0xFF8C7A6B);
+
     return Expanded(
       child: Material(
         color: Colors.transparent,
@@ -2203,26 +2206,30 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
           },
           borderRadius: BorderRadius.circular(20),
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            padding: const EdgeInsets.symmetric(vertical: 6.0),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                assetPath != null
-                    ? Image.asset(
-                        assetPath,
-                        width: 24,
-                        height: 24,
-                        fit: BoxFit.contain,
-                      )
-                    : GlowIcon.resolve(
-                        semanticName,
-                        size: 20,
-                        color: isSelected
-                            ? const Color(0xFFC5A052)
-                            : (isMen ? const Color(0xFFB0A89F) : const Color(0xFF8C7A6B)),
-                        semanticLabel: label,
-                      ),
+                Transform.scale(
+                  scale: isSelected ? 1.12 : 0.95,
+                  child: Opacity(
+                    opacity: isSelected ? 1.0 : 0.6,
+                    child: assetPath != null
+                        ? Image.asset(
+                            assetPath,
+                            width: 24,
+                            height: 24,
+                            fit: BoxFit.contain,
+                          )
+                        : GlowIcon.resolve(
+                            semanticName,
+                            size: 20,
+                            color: isSelected ? activeColor : inactiveColor,
+                            semanticLabel: label,
+                          ),
+                  ),
+                ),
                 const SizedBox(height: 3),
                 Text(
                   label,
@@ -2232,11 +2239,19 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                   style: TextStyle(
                     fontSize: 9.5,
                     fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                    color: isSelected
-                        ? const Color(0xFFC5A052)
-                        : (isMen ? const Color(0xFFB0A89F) : const Color(0xFF8C7A6B)),
+                    color: isSelected ? activeColor : inactiveColor,
                   ),
                 ),
+                if (isSelected)
+                  Container(
+                    margin: const EdgeInsets.only(top: 2),
+                    width: 4,
+                    height: 4,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFD4AF37),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
               ],
             ),
           ),
