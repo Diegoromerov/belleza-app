@@ -2282,27 +2282,21 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 50,
-                height: 50,
+                width: 52,
+                height: 52,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    colors: isMen
-                        ? const [Color(0xFF2A241E), Color(0xFFC5A052)]
-                        : const [Color(0xFFF4EFEA), Color(0xFFC5A052)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  color: isMen ? const Color(0xFF2A241E) : const Color(0xFFF5EFE6), // Quiet Luxury Beige background
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFC5A052).withValues(alpha: isMen ? 0.5 : 0.35),
+                      color: const Color(0xFFD4AF37).withValues(alpha: isMen ? 0.5 : 0.3),
                       blurRadius: 12,
-                      spreadRadius: 2,
+                      spreadRadius: 1,
                       offset: const Offset(0, 4),
                     ),
                   ],
                   border: Border.all(
-                    color: isSelected ? const Color(0xFFD4AF37) : Colors.white,
+                    color: isSelected ? const Color(0xFFD4AF37) : const Color(0xFFE8DFD8),
                     width: 2.5,
                   ),
                 ),
@@ -2317,7 +2311,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                       : GlowIcon.resolve(
                           semanticName,
                           size: 24,
-                          color: Colors.white,
+                          color: const Color(0xFFC5A052),
                           semanticLabel: label,
                         ),
                 ),
