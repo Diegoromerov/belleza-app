@@ -8,6 +8,7 @@ import '../services/api_service.dart';
 import '../services/auth_service.dart';
 import '../shared/theme.dart';
 import '../widgets/provider/provider_schedule_dialog.dart';
+import '../widgets/invitation_code_entry.dart';
 
 class ProviderProfileScreen extends StatefulWidget {
   final bool isEmbedded;
@@ -843,6 +844,21 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                   fillColor: Colors.grey[50],
                 ),
               ),
+                            const SizedBox(height: 16),
+              OutlinedButton.icon(
+                onPressed: () => pedirCodigoInvitacion(context),
+                icon: const Icon(Icons.group_add_outlined, color: Color(0xFFC5A052)),
+                label: const Text(
+                  'Unirme a un Salón (Ingresar Código)',
+                  style: TextStyle(color: Color(0xFF1F1A15), fontWeight: FontWeight.bold),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Color(0xFFC5A052)),
+                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+
               const SizedBox(height: 24),
 
               if (_error != null)

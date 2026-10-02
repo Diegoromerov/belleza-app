@@ -37,6 +37,7 @@ const portfolioRoutes = require('./src/routes/portfolioRoutes');
 const communityRoutes = require('./src/routes/communityRoutes');
 const mentorshipRoutes = require('./src/routes/mentorshipRoutes');
 const xpLogRoutes = require('./src/routes/xpLogRoutes');
+const membershipTierRoutes = require('./src/routes/membershipTierRoutes');
 const eventRoutes = require('./src/routes/eventRoutes');
 const eventRegistrationRoutes = require('./src/routes/eventRegistrationRoutes');
 const businessRoutes = require('./src/routes/businessRoutes');
@@ -425,6 +426,7 @@ app.use('/api/portfolio', portfolioRoutes);
 app.use('/api/community', communityRoutes);
 app.use('/api/mentorship', mentorshipRoutes);
 app.use('/api/xp-logs', xpLogRoutes);
+app.use('/api/membership-tier', membershipTierRoutes);
 app.use('/api/v1/business', businessRoutes);
 app.use('/api/v1/memberships', membershipRoutes);
 // Health check — NO escribe en la base de datos. Antes ejecutaba un `setval` sobre

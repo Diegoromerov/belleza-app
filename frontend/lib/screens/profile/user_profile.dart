@@ -12,6 +12,8 @@ import 'rewards_xp_screen.dart';
 import 'habeas_data_screen.dart';
 import 'faq_screen.dart';
 import '../../widgets/invitation_code_entry.dart';
+import 'package:image_picker/image_picker.dart';
+import '../../services/membership_service.dart';
 
 class UserProfileScreen extends StatefulWidget {
   final String userName;
@@ -32,6 +34,9 @@ class UserProfileScreen extends StatefulWidget {
 class _UserProfileScreenState extends State<UserProfileScreen> {
   late String _userName;
   late String _userEmail;
+  String? _userAvatarUrl;
+  String _membershipLevel = 'SOCIO CLUB GLOW';
+  int _userXp = 350;
 
   @override
   void initState() {
@@ -41,16 +46,46 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     _loadPersistedUserData();
   }
 
-  Future<void> _loadPersistedUserData() async {
+    Future<void> _loadPersistedUserData() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final name = prefs.getString('userName');
       final email = prefs.getString('userEmail');
+      final avatar = prefs.getString('userAvatarUrl');
+      final tierData = await MembershipService.fetchUserTierProfile();
+
       if (mounted) {
         setState(() {
           if (name != null && name.trim().isNotEmpty) _userName = name.trim();
           if (email != null && email.trim().isNotEmpty) _userEmail = email.trim();
+          if (avatar != null && avatar.trim().isNotEmpty) _userAvatarUrl = avatar.trim();
+          if (tierData != null) {
+            _membershipLevel = tierData['levelName'] ?? 'SOCIO CLUB GLOW';
+            _userXp = tierData['totalHistoricalXp'] ?? 350;
+          }
         });
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _pickAndSaveAvatar() async {
+    try {
+      final picker = ImagePicker();
+      final image = await picker.pickImage(source: ImageSource.gallery, maxWidth: 600, maxHeight: 600, imageQuality: 85);
+      if (image != null) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('userAvatarUrl', image.path);
+        if (mounted) {
+          setState(() {
+            _userAvatarUrl = image.path;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('✨ Foto de perfil actualizada con éxito'),
+              backgroundColor: Color(0xFFC5A052),
+            ),
+          );
+        }
       }
     } catch (_) {}
   }
@@ -148,7 +183,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   ProfileHeader(
                     userName: _userName,
                     userEmail: _userEmail,
-                    membershipLevel: 'SOCIO CLUB GLOW LUXE',
+                    avatarUrl: _userAvatarUrl,
+                    onEditAvatar: _pickAndSaveAvatar,
+                    membershipLevel: _membershipLevel,
+                    xpText: '$_userXp XP',
                   ),
 
                   const SizedBox(height: 18),
@@ -173,18 +211,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     ),
                     child: Column(
                       children: [
-                        LuxeProfileTile(
-                          icon: Icons.history_edu_outlined,
-                          title: 'Historial de Diagnósticos Biométricos',
-                          subtitle: 'Revisa tus escaneos faciales y análisis de piel',
-                          onTap: () {
-                            HapticFeedback.lightImpact();
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (_) => const BiometricHistoryScreen()),
-                            );
-                          },
-                        ),
+
                         LuxeProfileTile(
                           icon: Icons.shopping_bag_outlined,
                           title: 'Mis Pedidos GlowStore',
@@ -274,15 +301,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                             Navigator.pushNamed(context, '/support');
                           },
                         ),
-                        LuxeProfileTile(
-                          icon: Icons.group_add_outlined,
-                          title: 'Unirme a un salón',
-                          subtitle: 'Ingresar el código que te compartió el dueño',
-                          onTap: () {
-                            HapticFeedback.lightImpact();
-                            pedirCodigoInvitacion(context);
-                          },
-                        ),
+
                         LuxeProfileTile(
                           icon: Icons.description_outlined,
                           title: 'Términos y condiciones',

@@ -1,4 +1,5 @@
 // lib/widgets/profile/profile_header.dart
+import 'dart:io';
 import 'package:flutter/material.dart';
 
 class ProfileHeader extends StatelessWidget {
@@ -7,18 +8,38 @@ class ProfileHeader extends StatelessWidget {
   final String membershipLevel;
   final String? avatarUrl;
   final VoidCallback? onEditAvatar;
+  final String xpText;
+  final String auraScoreText;
 
   const ProfileHeader({
     super.key,
     required this.userName,
     required this.userEmail,
-    this.membershipLevel = 'SOCIO CLUB GLOW LUXE',
+    this.membershipLevel = 'SOCIO CLUB GLOW',
     this.avatarUrl,
     this.onEditAvatar,
+    this.xpText = '350 XP',
+    this.auraScoreText = '84 GlowScore',
   });
+
+  ImageProvider? _getImageProvider(String? url) {
+    if (url == null || url.trim().isEmpty) return null;
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return NetworkImage(url);
+    }
+    try {
+      final file = File(url);
+      if (file.existsSync()) {
+        return FileImage(file);
+      }
+    } catch (_) {}
+    return null;
+  }
 
   @override
   Widget build(BuildContext context) {
+    final avatarProvider = _getImageProvider(avatarUrl);
+
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -75,41 +96,38 @@ class ProfileHeader extends StatelessWidget {
                   child: CircleAvatar(
                     radius: 43,
                     backgroundColor: const Color(0xFFFAF6EE),
-                    backgroundImage: avatarUrl != null && avatarUrl!.isNotEmpty
-                        ? NetworkImage(avatarUrl!)
-                        : null,
-                    child: avatarUrl == null || avatarUrl!.isEmpty
+                    backgroundImage: avatarProvider,
+                    child: avatarProvider == null
                         ? const Icon(Icons.person_rounded, size: 48, color: Color(0xFFC5A052))
                         : null,
                   ),
                 ),
               ),
-              if (onEditAvatar != null)
-                Positioned(
-                  bottom: 2,
-                  right: 2,
-                  child: InkWell(
-                    onTap: onEditAvatar,
-                    borderRadius: BorderRadius.circular(16),
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFFF3D59B), Color(0xFFC5A052)],
-                        ),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.15),
-                            blurRadius: 6,
-                          ),
-                        ],
+              Positioned(
+                bottom: 2,
+                right: 2,
+                child: InkWell(
+                  onTap: onEditAvatar,
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFF3D59B), Color(0xFFC5A052)],
                       ),
-                      child: const Icon(Icons.camera_alt_rounded, size: 14, color: Color(0xFF1F1A15)),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.15),
+                          blurRadius: 6,
+                        ),
+                      ],
                     ),
+                    child: const Icon(Icons.camera_alt_rounded, size: 14, color: Color(0xFF1F1A15)),
                   ),
                 ),
+              ),
             ],
           ),
 
@@ -195,9 +213,9 @@ class ProfileHeader extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _buildStatItem('350 XP', 'Puntos Aura', Icons.diamond_outlined),
+              _buildStatItem(xpText, 'Puntos Estatus', Icons.diamond_outlined),
               Container(width: 1, height: 32, color: const Color(0xFFF0EBE4)),
-              _buildStatItem('Club Gold', 'Nivel Estatus', Icons.workspace_premium_outlined),
+              _buildStatItem(auraScoreText, 'Salud de Piel', Icons.auto_awesome_rounded),
               Container(width: 1, height: 32, color: const Color(0xFFF0EBE4)),
               _buildStatItem('100%', 'Verificado', Icons.shield_outlined),
             ],
