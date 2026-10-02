@@ -12,6 +12,10 @@ class ProfileHeader extends StatelessWidget {
   final String xpText;
   final String auraScoreText;
 
+  final VoidCallback? onTapXp;
+  final VoidCallback? onTapScore;
+  final VoidCallback? onTapVerified;
+
   const ProfileHeader({
     super.key,
     required this.userName,
@@ -21,9 +25,12 @@ class ProfileHeader extends StatelessWidget {
     this.onEditAvatar,
     this.xpText = '350 XP',
     this.auraScoreText = '84 GlowScore',
+    this.onTapXp,
+    this.onTapScore,
+    this.onTapVerified,
   });
 
-    ImageProvider? _getImageProvider(String? url) {
+  ImageProvider? _getImageProvider(String? url) {
     if (url == null || url.trim().isEmpty) return null;
     if (url.startsWith('data:image')) {
       try {
@@ -220,11 +227,11 @@ class ProfileHeader extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _buildStatItem(xpText, 'Puntos Estatus', Icons.diamond_outlined),
+              _buildStatItem(xpText, 'Puntos Estatus', Icons.diamond_outlined, onTapXp),
               Container(width: 1, height: 32, color: const Color(0xFFF0EBE4)),
-              _buildStatItem(auraScoreText, 'Salud de Piel', Icons.auto_awesome_rounded),
+              _buildStatItem(auraScoreText, 'Salud de Piel', Icons.auto_awesome_rounded, onTapScore),
               Container(width: 1, height: 32, color: const Color(0xFFF0EBE4)),
-              _buildStatItem('100%', 'Verificado', Icons.shield_outlined),
+              _buildStatItem('100%', 'Verificado', Icons.shield_outlined, onTapVerified),
             ],
           ),
         ],
@@ -232,36 +239,43 @@ class ProfileHeader extends StatelessWidget {
     );
   }
 
-  Widget _buildStatItem(String value, String label, IconData icon) {
-    return Column(
-      children: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
+  Widget _buildStatItem(String value, String label, IconData icon, VoidCallback? onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Column(
           children: [
-            Icon(icon, size: 14, color: const Color(0xFFC5A052)),
-            const SizedBox(width: 4),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 14, color: const Color(0xFFC5A052)),
+                const SizedBox(width: 4),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1F1A15),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 3),
             Text(
-              value,
+              label,
               style: const TextStyle(
                 fontFamily: 'Inter',
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF1F1A15),
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF8C7E74),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 3),
-        Text(
-          label,
-          style: const TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 11,
-            fontWeight: FontWeight.w500,
-            color: Color(0xFF8C7E74),
-          ),
-        ),
-      ],
+      ),
     );
   }
 }

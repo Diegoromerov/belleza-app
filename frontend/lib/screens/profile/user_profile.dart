@@ -201,6 +201,50 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     onEditAvatar: _pickAndSaveAvatar,
                     membershipLevel: _membershipLevel,
                     xpText: '$_userXp XP',
+                    onTapXp: () {
+                      HapticFeedback.lightImpact();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const RewardsXpScreen()),
+                      );
+                    },
+                    onTapScore: () {
+                      HapticFeedback.lightImpact();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const BiometricHistoryScreen()),
+                      );
+                    },
+                    onTapVerified: () {
+                      HapticFeedback.lightImpact();
+                      showDialog(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          backgroundColor: const Color(0xFFFDFBF7),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                          title: const Row(
+                            children: [
+                              Icon(Icons.shield_outlined, color: Color(0xFFC5A052)),
+                              SizedBox(width: 8),
+                              Text('Cuenta 100% Verificada', style: TextStyle(fontFamily: 'CormorantGaramond', fontWeight: FontWeight.bold, fontSize: 19)),
+                            ],
+                          ),
+                          content: const Text(
+                            'Tu perfil cumple con todos los estándares de seguridad GlowApp Haute Beauté:\n\n'
+                            '• Autenticación Segura y Cifrada\n'
+                            '• Custodia de Datos Biométricos Ley 1581\n'
+                            '• Protección de Métodos de Pago Wompi',
+                            style: TextStyle(fontFamily: 'Inter', fontSize: 13, height: 1.4, color: Color(0xFF55483E)),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx),
+                              child: const Text('Entendido', style: TextStyle(color: Color(0xFFC5A052), fontWeight: FontWeight.bold)),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
                   ),
 
                   const SizedBox(height: 18),
