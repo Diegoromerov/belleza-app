@@ -1944,18 +1944,26 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
         height: 150,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: Colors.grey[50],
+          color: const Color(0xFFFFFDF8),
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.grey[200]!),
+          border: Border.all(color: const Color(0xFFEFE8DE), width: 1.2),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFC5A052).withValues(alpha: 0.05),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: const Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.calendar_today_outlined, color: Colors.grey, size: 36),
+            Icon(Icons.calendar_today_outlined, color: Color(0xFFC5A052), size: 36),
             SizedBox(height: 12),
             Text(
               'No hay citas agendadas disponibles.',
-              style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w500),
+              style: TextStyle(
+                  color: Color(0xFF8C7E74), fontWeight: FontWeight.w600),
             ),
           ],
         ),
@@ -1981,14 +1989,14 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
               child: Container(
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: const Color(0xFFFFFDF8),
                   borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: const Color(0xFFF3EAE8), width: 1),
-                  boxShadow: const [
+                  border: Border.all(color: const Color(0xFFEFE8DE), width: 1.2),
+                  boxShadow: [
                     BoxShadow(
-                      color: Color(0x05000000),
-                      blurRadius: 10,
-                      offset: Offset(0, 4),
+                      color: const Color(0xFFC5A052).withValues(alpha: 0.06),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
                     ),
                   ],
                 ),
@@ -2001,11 +2009,11 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                         children: [
                           CircleAvatar(
                             radius: 20,
-                            backgroundColor: const Color(0xFFF5EBE6),
+                            backgroundColor: const Color(0xFFFAF4EB),
                             child: Text(
                               clientInitial,
                               style: const TextStyle(
-                                  color: AppTheme.primary,
+                                  color: Color(0xFFC5A052),
                                   fontWeight: FontWeight.bold),
                             ),
                           ),
@@ -2018,13 +2026,14 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                                   b['client_name'] ?? 'Cliente',
                                   style: const TextStyle(
                                       fontSize: 16,
-                                      fontWeight: FontWeight.bold),
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF1F1A15)),
                                 ),
                                 const Text(
                                   'Contacto seguro vía Chat',
                                   style: TextStyle(
                                       fontSize: 12,
-                                      color: AppTheme.primary,
+                                      color: Color(0xFFC5A052),
                                       fontWeight: FontWeight.w500),
                                 ),
                               ],
@@ -2049,17 +2058,17 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                           ),
                         ],
                       ),
-                      const Divider(height: 24, color: Color(0xFFF3F4F6)),
+                      const Divider(height: 24, color: Color(0xFFEFE8DE)),
                       Row(
                         children: [
                           const Icon(Icons.spa_outlined,
-                              size: 16, color: Colors.grey),
+                              size: 16, color: Color(0xFF8C7E74)),
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
                               'Servicio: ${b['service_name']}',
                               style: const TextStyle(
-                                  fontSize: 14, fontWeight: FontWeight.w500),
+                                  fontSize: 14, fontWeight: FontWeight.w500, color: Color(0xFF4A4036)),
                             ),
                           ),
                           Text(
@@ -2067,7 +2076,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                             style: const TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold,
-                                color: AppTheme.primary),
+                                color: Color(0xFF1F1A15)),
                           ),
                         ],
                       ),
@@ -2075,12 +2084,12 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                       Row(
                         children: [
                           const Icon(Icons.access_time_outlined,
-                              size: 16, color: Colors.grey),
+                              size: 16, color: Color(0xFF8C7E74)),
                           const SizedBox(width: 6),
                           Text(
                             '$dayStr a las $hourStr',
                             style: const TextStyle(
-                                fontSize: 14, color: Colors.black87),
+                                fontSize: 14, color: Color(0xFF1F1A15)),
                           ),
                         ],
                       ),
@@ -2088,7 +2097,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                       Row(
                         children: [
                           const Icon(Icons.location_on_outlined,
-                              size: 16, color: Colors.grey),
+                              size: 16, color: Color(0xFF8C7E74)),
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
@@ -2097,7 +2106,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                                   ? 'Dirección: ${b['service_address']}'
                                   : 'Dirección pendiente por confirmar',
                               style: const TextStyle(
-                                  fontSize: 13, color: Colors.grey),
+                                  fontSize: 13, color: Color(0xFF8C7E74)),
                             ),
                           ),
                           if ((b['service_address']?.toString().isNotEmpty ??
@@ -2124,7 +2133,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                               },
                               child: const Icon(
                                 Icons.map_outlined,
-                                color: AppTheme.primary,
+                                color: Color(0xFFC5A052),
                                 size: 20,
                               ),
                             ),
@@ -2749,19 +2758,35 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
       String label, double targetValue, IconData icon, Color color,
       {String? subtitle}) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: const [
+        border: Border.all(color: const Color(0xFFEFE8DE), width: 1),
+        boxShadow: [
           BoxShadow(
-              color: Color(0x05000000), blurRadius: 8, offset: Offset(0, 4)),
+            color: const Color(0xFFC5A052).withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: color, size: 22),
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFAF6EE),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: const Color(0xFFC5A052).withValues(alpha: 0.25),
+                width: 0.8,
+              ),
+            ),
+            child: const Icon(Icons.account_balance_wallet_outlined,
+                color: Color(0xFFC5A052), size: 18),
+          ),
           const SizedBox(height: 10),
           TweenAnimationBuilder<double>(
             tween: Tween<double>(begin: 0.0, end: targetValue),
@@ -2770,18 +2795,26 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
             builder: (context, value, child) {
               return Text(
                 '\$${value.toStringAsFixed(0)}',
-                style: TextStyle(
-                    fontSize: 15, fontWeight: FontWeight.bold, color: color),
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 17,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1F1A15),
+                ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               );
             },
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 3),
           Text(
             label,
-            style: TextStyle(
-                fontSize: 11, color: Colors.grey[750], fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 11,
+              color: Color(0xFF8C7E74),
+              fontWeight: FontWeight.w600,
+            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -2789,10 +2822,11 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
             const SizedBox(height: 2),
             Text(
               subtitle,
-              style: TextStyle(
-                  fontSize: 9,
-                  color: Colors.grey[600],
-                  fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 9.5,
+                color: Color(0xFFA8998C),
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
