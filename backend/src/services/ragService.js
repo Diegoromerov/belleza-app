@@ -36,7 +36,10 @@ const { ragPool, pool } = require('../config/db');
 const { generateEmbedding: generateQueryEmbedding } = require('./embeddingService');
 const { resolveCategory } = require('../config/knowledgeCategories');
 
-const EXPECTED_DIMS = 1024;
+// Dimensión del modelo de embeddings VIVO (nvidia/nemotron-3-embed-1b, 2048d).
+// Debe coincidir con embeddingService.expectedDimension y con el DDL de la columna
+// beauty_knowledge_embeddings.embedding (migración 073). Ver tests/rag.embedding-dimension.test.js.
+const EXPECTED_DIMS = 2048;
 
 /**
  * Filtros de ALCANCE: acotan de qué trata la respuesta (normativa vs belleza). NO se relajan

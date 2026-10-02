@@ -34,7 +34,6 @@ const validateBody = (schema, body, res) => {
   return parsed.data;
 };
 
-=======
 const { rolUsuarioSchema, ROLES_USUARIO } = require('../schemas/role.schema');
 
 

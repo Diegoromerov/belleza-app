@@ -1,6 +1,6 @@
 # Beauty Corpus - Documentación del Formato
 
-Este directorio contiene la base de conocimiento curada para el sistema RAG de GlowApp. Cada archivo markdown representa un documento de conocimiento de belleza/skincare que será procesado, chunkeado, enriquecido con metadata e indexado en la tabla `beauty_knowledge_embeddings` con embeddings vectoriales de 1024 dimensiones (NV-Embed-QA).
+Este directorio contiene la base de conocimiento curada para el sistema RAG de GlowApp. Cada archivo markdown representa un documento de conocimiento de belleza/skincare que será procesado, chunkeado, enriquecido con metadata e indexado en la tabla `beauty_knowledge_embeddings` con embeddings vectoriales de 2048 dimensiones (`nvidia/nemotron-3-embed-1b`).
 
 ## Estructura del Corpus
 
@@ -119,9 +119,9 @@ Al ejecutar `npm run ingest:rag -- --source=corpus`, el pipeline hace:
    - Opcional: LLM (DeepSeek) para chunks ambiguos (`USE_LLM_ENRICHMENT=true`)
 5. **Embeddings** (`embeddingService.generateEmbedding`):
    - Input type: `passage` para indexar
-   - Modelo: NV-Embed-QA-E5-v5 (1024 dims)
+   - Modelo: nvidia/nemotron-3-embed-1b (2048 dims)
    - Circuit breaker + retry con backoff exponencial
-   - Validación: exactamente 1024 dimensiones
+   - Validación: exactamente 2048 dimensiones
 6. **Upsert idempotente** en `beauty_knowledge_embeddings`:
    - `ON CONFLICT (title) DO UPDATE`
    - `content_hash` para detección de cambios
