@@ -129,11 +129,78 @@ function calcularRetenciones({
   };
 }
 
+// ---------------------------------------------------------------------------
+// N-16 — UNIÓN DE DOS money.js INDEPENDIENTES (resuelto en la integración Fase D).
+//
+// t_fix_backend_04 y t_fix_pagos_06 corrigieron el MISMO P0 (montos en float) creando
+// cada uno su propio `src/utils/money.js` con nombres distintos. Son semánticamente
+// equivalentes (misma fórmula, mismo redondeo half-up). Se conserva la implementación de
+// backend_04 como canónica (parseo decimal exacto para columnas `numeric` de pg) y se
+// exponen los nombres de pagos_06 como envoltorios, preservando su contrato LAXO
+// (coerciona y devuelve 0 ante valor no finito, en vez de lanzar TypeError).
+// Así ambos sitios de llamada y ambas suites de test siguen funcionando sin tocarlos.
+// ---------------------------------------------------------------------------
+
+/** Alias laxo de `toCents`: nunca lanza, devuelve 0 si el valor no es convertible. */
+function aCentavos(valor) {
+  try {
+    return toCents(valor);
+  } catch (_) {
+    return 0;
+  }
+}
+
+/** Alias laxo de `fromCents`: nunca lanza. */
+function aDecimal(centavos) {
+  const c = Number(centavos);
+  return Number.isFinite(c) ? Math.round(c) / CENTAVOS_POR_UNIDAD : 0;
+}
+
+/** Alias laxo de `pctOf`, con el nombre de pagos_06. */
+function porcentajeCentavos(centavos, pct) {
+  const c = Math.round(Number(centavos) || 0);
+  const p = Number(pct);
+  if (!Number.isFinite(p)) return 0;
+  return Math.round((c * p) / 100);
+}
+
+/**
+ * Adaptador de `calcularRetenciones` a la firma y los nombres de retorno de pagos_06.
+ * fuente/ica se aplican sobre el pago neto base; iva sobre la comisión de plataforma.
+ */
+function aplicarRetencionesCentavos({ baseCentavos, comisionCentavos, pctFuente, pctIca, pctIva }) {
+  const r = calcularRetenciones({
+    basePagoNetoCents: Math.round(Number(baseCentavos) || 0),
+    comisionPlataformaCents: Math.round(Number(comisionCentavos) || 0),
+    retefuentePct: pctFuente,
+    reteicaPct: pctIca,
+    reteivaPct: pctIva
+  });
+  return {
+    fuenteCentavos: r.retencionFuenteCents,
+    icaCentavos: r.retencionIcaCents,
+    ivaCentavos: r.retencionIvaCents,
+    totalCentavos: r.totalRetencionesCents,
+    netoCentavos: r.montoNetoCents
+  };
+}
+
+/** Suma montos decimales sin deriva de float (vía centavos enteros). */
+function sumarMontos(...montos) {
+  return aDecimal(montos.reduce((acc, x) => acc + aCentavos(x), 0));
+}
+
 module.exports = {
   CENTAVOS_POR_UNIDAD,
   toCents,
   fromCents,
   sumarCents,
   pctOf,
-  calcularRetenciones
+  calcularRetenciones,
+  // Nombres de pagos_06 (alias)
+  aCentavos,
+  aDecimal,
+  porcentajeCentavos,
+  aplicarRetencionesCentavos,
+  sumarMontos
 };
