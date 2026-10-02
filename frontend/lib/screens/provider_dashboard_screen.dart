@@ -2141,16 +2141,20 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
       if (filter == 'CANCELADAS') emptyMsg = 'No tienes citas canceladas o en disputa.';
 
       return Container(
-        height: 150,
+        height: 160,
         alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
         decoration: BoxDecoration(
           color: const Color(0xFFFFFDF8),
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: const Color(0xFFEFE8DE), width: 1.2),
+          border: Border.all(
+            color: const Color(0xFFD4AF37).withValues(alpha: 0.3),
+            width: 1.2,
+          ),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFC5A052).withValues(alpha: 0.05),
-              blurRadius: 12,
+              color: const Color(0xFFC5A052).withValues(alpha: 0.06),
+              blurRadius: 14,
               offset: const Offset(0, 4),
             ),
           ],
@@ -2158,12 +2162,29 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.calendar_today_outlined, color: Color(0xFFC5A052), size: 36),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFAF4EB),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: const Color(0xFFD4AF37).withValues(alpha: 0.4),
+                  width: 1,
+                ),
+              ),
+              child: const Icon(Icons.calendar_today_outlined,
+                  color: Color(0xFFC5A052), size: 28),
+            ),
             const SizedBox(height: 12),
             Text(
               emptyMsg,
+              textAlign: TextAlign.center,
               style: const TextStyle(
-                  color: Color(0xFF8C7E74), fontWeight: FontWeight.w600),
+                fontFamily: 'CormorantGaramond',
+                fontSize: 16,
+                color: Color(0xFF1F1A15),
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ],
         ),
@@ -3030,12 +3051,12 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
     switch (s) {
       case 'PENDING':
       case 'PENDIENTE_PAGO':
-        return const Color(0xFFD97706);
+        return const Color(0xFFC5A052);
       case 'CONFIRMED':
       case 'CONFIRMADA':
-        return const Color(0xFF2563EB);
+        return const Color(0xFF1F1A15);
       case 'EN_PROGRESO':
-        return const Color(0xFF8B5CF6);
+        return const Color(0xFFD4AF37);
       case 'FINALIZADA_PRESTADOR':
         return const Color(0xFF06B6D4);
       case 'COMPLETED':
@@ -3043,9 +3064,9 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
         return const Color(0xFF16A34A);
       case 'CANCELLED':
       case 'CANCELADA':
-        return const Color(0xFFDC2626);
+        return const Color(0xFF800A0A);
       default:
-        return Colors.grey;
+        return const Color(0xFF8C7E74);
     }
   }
 
@@ -3054,22 +3075,22 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
     switch (s) {
       case 'PENDING':
       case 'PENDIENTE_PAGO':
-        return const Color(0xFFFEF3C7);
+        return const Color(0xFFFAF4EB);
       case 'CONFIRMED':
       case 'CONFIRMADA':
-        return const Color(0xFFDBEAFE);
+        return const Color(0xFFF7F2EA);
       case 'EN_PROGRESO':
-        return const Color(0xFFEDE9FE);
+        return const Color(0xFF1F1A15);
       case 'FINALIZADA_PRESTADOR':
         return const Color(0xFFECFEFF);
       case 'COMPLETED':
       case 'COMPLETADA':
-        return const Color(0xFFDCFCE7);
+        return const Color(0xFFF0FDF4);
       case 'CANCELLED':
       case 'CANCELADA':
-        return const Color(0xFFFEE2E2);
+        return const Color(0xFFFDF2F2);
       default:
-        return const Color(0xFFF3F4F6);
+        return const Color(0xFFFAF6EE);
     }
   }
 
