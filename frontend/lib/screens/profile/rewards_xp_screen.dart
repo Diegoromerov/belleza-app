@@ -246,6 +246,61 @@ class _RewardsXpScreenState extends State<RewardsXpScreen> {
                           ),
                         ),
 
+                                                const SizedBox(height: LuxeSpacing.xxl),
+
+                        // BANNER INFORMATIVO CLARO Y EXPLICATIVO
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: const Color(0xFFC5A052).withValues(alpha: 0.5)),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.03),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: const Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(Icons.lightbulb_outline_rounded, color: Color(0xFFC5A052), size: 20),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    '¿Cómo funciona el Club Glow?',
+                                    style: TextStyle(
+                                      fontFamily: 'Didot',
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                      color: LuxeColors.nude900,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 10),
+                              Text(
+                                '💎 Puntos XP (Estatus): Se acumulan históricamente con cada cita y compra. NUNCA caducan ni se reducen al canjear descuentos; determinan tu nivel de membresía (Club ➔ Silver ➔ Gold ➔ Black).\n\n'
+                                '🪙 Aura Coins (Saldo Canjeable): Es el saldo de dinero virtual que ganas por cashback e interacciones. Puedes canjearlas en cualquier momento por cupones de descuento en COP.\n\n'
+                                '⚡ ¿Cómo ganar más Puntos?\n'
+                                '• 1 Cita completada = 50 XP (+10 XP por cada \$50k)\n'
+                                '• \$10.000 COP en GlowStore = 10 XP (+25 XP bonus Match Piel)\n'
+                                '• Publicar en Instagram/TikTok/FB = 150 XP (Glow Ambassador)\n'
+                                '• 1 Diagnóstico biométrico = 20 XP',
+                                style: TextStyle(
+                                  fontFamily: 'CormorantGaramond',
+                                  fontSize: 13,
+                                  color: LuxeColors.nude700,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
                         const SizedBox(height: LuxeSpacing.xxl),
 
                         const Text(

@@ -1,3 +1,4 @@
+import 'dart:convert';
 // lib/widgets/profile/profile_header.dart
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -22,8 +23,14 @@ class ProfileHeader extends StatelessWidget {
     this.auraScoreText = '84 GlowScore',
   });
 
-  ImageProvider? _getImageProvider(String? url) {
+    ImageProvider? _getImageProvider(String? url) {
     if (url == null || url.trim().isEmpty) return null;
+    if (url.startsWith('data:image')) {
+      try {
+        final base64Str = url.split(',').last;
+        return MemoryImage(base64Decode(base64Str));
+      } catch (_) {}
+    }
     if (url.startsWith('http://') || url.startsWith('https://')) {
       return NetworkImage(url);
     }

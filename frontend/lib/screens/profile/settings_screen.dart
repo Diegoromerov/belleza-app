@@ -36,7 +36,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _loadPreferences();
   }
 
-  Future<void> _loadPreferences() async {
+    Future<void> _loadPreferences() async {
     setState(() {
       _isLoadingPreferences = true;
       _errorMessage = null;
@@ -56,13 +56,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _anonymizedAnalytics = prefs['telemetry_enabled'] ?? true;
             _isLoadingPreferences = false;
           });
-          // Actualizar cache de AnalyticsService
           AnalyticsService().invalidateTelemetryCache();
         }
       } else {
         if (mounted) {
           setState(() {
-            _errorMessage = 'Error al cargar preferencias: ${response.statusCode}';
+            _pushNotifications = true;
+            _marketingEmails = false;
+            _anonymizedAnalytics = true;
             _isLoadingPreferences = false;
           });
         }
@@ -70,7 +71,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage = 'Error de conexión: $e';
+          _pushNotifications = true;
+          _marketingEmails = false;
+          _anonymizedAnalytics = true;
           _isLoadingPreferences = false;
         });
       }

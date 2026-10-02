@@ -1,5 +1,6 @@
 // lib/screens/profile/user_profile.dart
 import 'package:flutter/material.dart';
+import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../widgets/profile/profile_header.dart';
@@ -23,7 +24,7 @@ class UserProfileScreen extends StatefulWidget {
   const UserProfileScreen({
     super.key,
     this.userName = 'Valeria Gómez',
-    this.userEmail = 'valeria.gomez@glowapp.com',
+    this.userEmail = 'usuario.glow@glowapp.co',
     this.onLogout,
   });
 
@@ -68,16 +69,23 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     } catch (_) {}
   }
 
-  Future<void> _pickAndSaveAvatar() async {
+    Future<void> _pickAndSaveAvatar() async {
     try {
       final picker = ImagePicker();
-      final image = await picker.pickImage(source: ImageSource.gallery, maxWidth: 600, maxHeight: 600, imageQuality: 85);
-      if (image != null) {
+      final pickedFile = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 600,
+        maxHeight: 600,
+        imageQuality: 85,
+      );
+      if (pickedFile != null) {
+        final bytes = await pickedFile.readAsBytes();
+        final base64Image = 'data:image/png;base64,${base64Encode(bytes)}';
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('userAvatarUrl', image.path);
+        await prefs.setString('userAvatarUrl', base64Image);
         if (mounted) {
           setState(() {
-            _userAvatarUrl = image.path;
+            _userAvatarUrl = base64Image;
           });
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -87,7 +95,13 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           );
         }
       }
-    } catch (_) {}
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No se pudo acceder a la galería de fotos')),
+        );
+      }
+    }
   }
   @override
   Widget build(BuildContext context) {
