@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { sanitizePath, sanitizeText } from '@/lib/security';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { 
@@ -299,8 +300,8 @@ export default function AdminBusinessPage() {
                           </span>
                         </td>
                         <td className="p-4">
-                          <p className="text-xs font-mono text-slate-400 truncate max-w-xs">{item.file_path}</p>
-                          <p className="text-xs text-slate-500 italic mt-0.5">{item.reviewer_notes}</p>
+                          <p className="text-xs font-mono text-slate-400 truncate max-w-xs">{sanitizePath(item.file_path)}</p>
+                          <p className="text-xs text-slate-500 italic mt-0.5">{sanitizeText(item.reviewer_notes)}</p>
                         </td>
                         <td className="p-4 text-right space-x-2">
                           <button

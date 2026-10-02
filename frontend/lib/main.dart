@@ -11,6 +11,7 @@ import 'package:beauty_app/l10n/app_localizations.dart';
 
 import 'services/api_service.dart';
 import 'services/analytics_service.dart';
+import 'services/crash_reporting_service.dart';
 import 'services/auth_service.dart';
 import 'services/web_geolocation.dart';
 import 'package:geocoding/geocoding.dart' as geo;
@@ -24,6 +25,7 @@ import 'shared/mens_theme.dart';
 import 'shared/theme.dart';
 
 import 'services/notification_service.dart';
+import 'widgets/app_update_gate.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/auth/onboarding_screen.dart';
@@ -76,11 +78,9 @@ void main() async {
     if (kDebugMode) {
       print('🔴 [FLUTTER ERROR DETECTED]: ${details.exception}');
     }
-    AnalyticsService().logEvent(
-      eventType: 'APP_CRASH_FLUTTER',
-      screenName: 'global',
-      metadata: {'error': details.exceptionAsString(), 'stack': details.stack.toString()},
-    );
+    // FIX-FLUTTER-07: reporte correlacionable (X-Trace-Id) y entrega inmediata,
+    // sin depender del batching/opt-out de AnalyticsService.
+    CrashReportingService.instance.reportFlutterError(details);
   };
 
   ErrorWidget.builder = (FlutterErrorDetails details) {
@@ -113,6 +113,8 @@ void main() async {
       DeviceOrientation.portraitDown,
     ]);
     AnalyticsService().init();
+    // FIX-FLUTTER-07: reintenta los crashes de ejecuciones anteriores.
+    CrashReportingService.instance.init();
     await AppTheme.loadThemePreference();
     await AudienceService.init();
     GlowIconRegistryInit.initialize();
@@ -121,11 +123,7 @@ void main() async {
     if (kDebugMode) {
       print('🔴 [UNHANDLED ASYNC ERROR]: $error');
     }
-    AnalyticsService().logEvent(
-      eventType: 'APP_CRASH_ASYNC',
-      screenName: 'global',
-      metadata: {'error': error.toString(), 'stack': stack.toString()},
-    );
+    CrashReportingService.instance.reportAsyncError(error, stack);
   });
 }
 
@@ -157,37 +155,43 @@ class BeautyApp extends StatelessWidget {
               debugShowCheckedModeBanner: false,
               navigatorObservers: [AnalyticsRouteObserver(), ScreenVisibilityObserverSingleton.instance],
               builder: (context, child) {
-                return Stack(
-                  children: [
-                    if (child != null) child,
-                    if (GlowGuideService.instance.engine != null)
-                      GlowGuidePresenter(
-                        engine: GlowGuideService.instance.engine!,
-                        onAction: (action) {
-                          final engine = GlowGuideService.instance.engine!;
-                          switch (action) {
-                            case GlowGuidePresenterAction.next:
-                              engine.next();
-                              break;
-                            case GlowGuidePresenterAction.previous:
-                              engine.previous();
-                              break;
-                            case GlowGuidePresenterAction.dismiss:
-                              engine.dismiss();
-                              break;
-                            case GlowGuidePresenterAction.replay:
-                              engine.replay();
-                              break;
-                            case GlowGuidePresenterAction.pause:
-                              engine.pause();
-                              break;
-                            case GlowGuidePresenterAction.resume:
-                              engine.resume();
-                              break;
-                          }
-                        },
-                      ),
-                  ],
+                // FIX-FLUTTER-06: chequeo de versión mínima en arranque.
+                // El builder vive POR ENCIMA del Navigator, por eso el gate
+                // recibe la navigatorKey raíz para poder bloquear con el diálogo.
+                return AppUpdateGate(
+                  navigatorKey: GlowGuideService.instance.navigatorKey,
+                  child: Stack(
+                    children: [
+                      if (child != null) child,
+                      if (GlowGuideService.instance.engine != null)
+                        GlowGuidePresenter(
+                          engine: GlowGuideService.instance.engine!,
+                          onAction: (action) {
+                            final engine = GlowGuideService.instance.engine!;
+                            switch (action) {
+                              case GlowGuidePresenterAction.next:
+                                engine.next();
+                                break;
+                              case GlowGuidePresenterAction.previous:
+                                engine.previous();
+                                break;
+                              case GlowGuidePresenterAction.dismiss:
+                                engine.dismiss();
+                                break;
+                              case GlowGuidePresenterAction.replay:
+                                engine.replay();
+                                break;
+                              case GlowGuidePresenterAction.pause:
+                                engine.pause();
+                                break;
+                              case GlowGuidePresenterAction.resume:
+                                engine.resume();
+                                break;
+                            }
+                          },
+                        ),
+                    ],
+                  ),
                 );
               },
                           theme: ThemeData(

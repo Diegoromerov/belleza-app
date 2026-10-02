@@ -24,7 +24,12 @@ async function logEvent(req, res) {
         ...(item.metadata || {}),
         session_id: item.session_id,
         screen_name: item.screen_name,
-        element_id: item.element_id
+        element_id: item.element_id,
+        // FIX-FLUTTER-07: correlación con el cliente. El middleware global
+        // (src/middleware/traceId.js) toma el header X-Trace-Id que envía
+        // CrashReportingService y lo expone como req.traceId; lo persistimos
+        // para poder cruzar la fila con la línea de log del backend.
+        trace_id: req.traceId || null
       },
       occurred_at: item.creado_en || item.occurred_at || new Date()
     }));

@@ -4,6 +4,8 @@
  * A360-2026-09-22/C-02 — Falla si hay credenciales reales en archivos TRACKEADOS.
  * WO B-02 — Reglas extendidas para valores literales por defecto en vars sensibles y tokens en URL.
  * ORDEN A-06 — Normalización CRLF/LF, acotamiento de alcance (código ejecutable) y compuerta pura exportada.
+ * N-10 — Regla 8: literales de contraseña EN TEXTO PLANO versionados (`password: 'Demo123456'`,
+ *        `RAISE NOTICE 'Password: …'`, `console.log('   Password: …')`, `// password123`).
  *
  * Sin dependencias externas: usa `git grep` sobre el índice/árbol de trabajo.
  * Nunca imprime el valor del secreto, solo archivo:línea y el tipo de patrón.
@@ -16,11 +18,34 @@ const path = require('path');
 
 const REPO_ROOT = path.resolve(__dirname, '../..');
 
-const ALLOW_MARKERS = /(PLACEHOLDER|REPLACE_ME|YOUR_|TU_|REDACTED|\*\*\*|\.\.\.|xxxx|XXXX|dummy|example\.com|<[^>]+>)/;
+const ALLOW_MARKERS = /(PLACEHOLDER|REPLACE_ME|__SEED_PASSWORD_HASH__|YOUR_|TU_|REDACTED|\*\*\*|\.\.\.|xxxx|XXXX|dummy|example\.com|<[^>]+>)/;
 
 const NON_SECRET_SUFFIXES = /_(HEADER|NAME|FIELD|TYPE|ALGO|SCOPE|PARAM)$/i;
 const TECHNICAL_VOCAB = /^(authorization|bearer|x-api-key|hs256|rs256|es256|basic|password_hash|jwt_secret|glow_token)$/i;
 const WEAK_PASSWORDS = new Set(['postgres', 'admin', 'admin123', 'password', 'password123', '123456', 'demo', 'test1234', 'root']);
+
+// Regla 8 (N-10): nombres/tipos que NUNCA son una contraseña aunque aparezcan a la derecha de `clave:`.
+const NON_PASSWORD_VALUES = new Set([
+  'password', 'passwd', 'pwd', 'contrasena', 'contraseña', 'password_hash', 'hash',
+  'string', 'number', 'boolean', 'any', 'unknown', 'never', 'object', 'void',
+  'undefined', 'null', 'true', 'false', 'secret', 'token', 'credentials',
+]);
+
+// `bcryptjs` sólo se usa para verificar hashes débiles conocidos. Sin la dependencia instalada
+// (p. ej. un árbol sin `npm ci`) la verificación no puede afirmarse: la regla se saltea en vez de
+// tumbar la compuerta con un MODULE_NOT_FOUND.
+let bcryptCache;
+function cargarBcrypt() {
+  if (bcryptCache === undefined) {
+    try {
+      bcryptCache = require('bcryptjs');
+    } catch (_) {
+      bcryptCache = null;
+      console.warn('⚠️  bcryptjs ausente: la verificación de hashes de contraseña débil conocida queda desactivada (ejecutar `npm ci`).');
+    }
+  }
+  return bcryptCache;
+}
 
 const REGLAS = [
   {
@@ -121,6 +146,34 @@ const REGLAS = [
     }
   },
   {
+    // FASE C / P0 INFRA #2 — El `:-` de la interpolación de compose no lo veían las reglas
+    // anteriores: el `$` inicial hace que «valor por defecto literal» lo descarte como
+    // referencia, y `changeme…` estaba en la lista de marcadores benignos. Pero en un
+    // docker-compose de producción el `:-` NO es un marcador: pasa a ser la credencial
+    // viva del contenedor si la variable no llega. Aquí no se exime `changeme`.
+    nombre: 'valor por defecto literal en interpolación de compose',
+    buscar: '\\$\\{[A-Za-z0-9_]*(PASS|PASSWORD|SECRET|TOKEN|KEY|CLAVE|PWD)[A-Za-z0-9_]*:-',
+    validar: (linea, archivo) => {
+      if (!archivo) return false;
+      if (/\.(test|spec)\.[jt]sx?$/.test(archivo)) return false;
+      if (/scripts\/verify/.test(archivo)) return false;
+      if (/^\s*(\/\/|\/\*|\*|#)/.test(linea.trim())) return false;
+
+      const re = /\$\{([A-Za-z0-9_]*(?:PASS|PASSWORD|SECRET|TOKEN|KEY|CLAVE|PWD)[A-Za-z0-9_]*):-([^}]*)\}/g;
+      let m;
+      while ((m = re.exec(linea)) !== null) {
+        const varName = m[1];
+        const valorPorDefecto = m[2];
+        if (NON_SECRET_SUFFIXES.test(varName)) continue;
+        if (valorPorDefecto === '') continue; // `${X:-}` no aporta credencial
+        if (/^(\$|<)/.test(valorPorDefecto)) continue; // referencia a otra variable o marcador
+        if (/^(\*{2,}|REDACTED|\.\.\.|PLACEHOLDER|REPLACE_ME|dummy|xxx+)$/i.test(valorPorDefecto)) continue;
+        return true;
+      }
+      return false;
+    },
+  },
+  {
     nombre: 'token o JWT en parámetro de URL',
     buscar: '[?&]token=',
     validar: (linea, archivo) => {
@@ -156,27 +209,97 @@ const REGLAS = [
     }
   },
   {
-    nombre: 'hash de contraseña débil conocida',
-    buscar: '\\$2[aby]\\$\\d{2}\\$[A-Za-z0-9./]{53}',
+    // N-2 (t_fix_tenant_08) — Compuerta ENDURECIDA.
+    // Antes: el `buscar` usaba `\d`, que POSIX ERE (`git grep -E`) NO interpreta como dígito,
+    // así que la regla nunca seleccionaba una línea y era una compuerta muerta. Además exigía
+    // exactamente 53 caracteres y comparaba contra bcryptjs (dependencia de instalación) para
+    // decidir si la contraseña era "débil conocida".
+    // Ahora: detección ESTÁTICA (sin bcryptjs) de cualquier hash bcrypt versionado —$2a$/$2b$/$2y$—,
+    // que es el defecto real: versionar un hash permite crackearlo offline. Se admiten hashes
+    // recortados (>= 40 caracteres tras el prefijo) porque también son material de credencial.
+    nombre: 'hash bcrypt versionado',
+    buscar: '\\$2[aby]\\$[0-9]{2}\\$[A-Za-z0-9./]{40,}',
     validar: (linea, archivo) => {
       if (!archivo) return false;
       if (/\.(test|spec)\.[jt]sx?$/.test(archivo)) return false;
       if (/scripts\/verify/.test(archivo)) return false;
-      const bcrypt = require('bcryptjs');
-      const WEAK_PASSWORDS = ['password123', '123456', 'admin', 'admin123', 'demo', 'test1234', 'password', '12345678'];
-      const re = /\$2[aby]\$\d{2}\$[A-Za-z0-9./]{53}/g;
+      // N-15: resuelto en la integración Fase D. Se conserva la regla ESTÁTICA de
+      // t_fix_tenant_08 (`[0-9]`, >= 40 chars, sin bcryptjs). La variante de t_fix_tenant_10
+      // usaba `\d` + exactamente 53 chars + guard de bcryptjs: `\d` NO es dígito en POSIX ERE
+      // de `git grep -E`, así que esa versión volvía a dejar la regla ciega (0 líneas).
+      const re = /\$2[aby]\$[0-9]{2}\$[A-Za-z0-9./]{40,}/g;
       let m;
       while ((m = re.exec(linea)) !== null) {
-        const hashStr = m[0];
-        if (ALLOW_MARKERS.test(hashStr)) continue;
-        for (const pass of WEAK_PASSWORDS) {
-          try {
-            if (bcrypt.compareSync(pass, hashStr)) {
-              return true;
-            }
-          } catch (_) {}
-        }
+        if (ALLOW_MARKERS.test(m[0])) continue;
+        return true;
       }
+      return false;
+    }
+  },
+  {
+    /**
+     * N-10 — contraseñas EN TEXTO PLANO versionadas.
+     *
+     * El corpus traía literales de contraseña con forma `clave[:=]valor` y también anunciados en
+     * prosa/comentario, y ninguna regla los seleccionaba: Rule 7 exige nombres de variable en
+     * MAYÚSCULAS (`DB_PASSWORD=…`) y la regla de prosa exige `… es/is …` antes de los dos puntos.
+     *
+     * Alcance (para no inundar de falsos positivos): se acepta una línea solo si
+     *   (a) publica la contraseña en un comentario pegado a la palabra clave — `// password123`;
+     *   (b) o el valor a la derecha de `clave[:=]` es un LITERAL: entrecomillado (cualquiera), o
+     *       suelto pero con letra Y dígito (una referencia de código —`process.env.X`, `data.password`,
+     *       `string`, `await`, `fixtureAdminPassword`— no tiene esa forma).
+     * Sacrificio aceptado (documentado, como CI-52): `password: letmein` suelto sin dígito no se marca.
+     *
+     * Nota de implementación: la palabra clave usa la raíz `[Cc]ontrase` (no `[Cc]ontrase[ñn]a`)
+     * porque `git grep -E` es orientado a bytes: una clase con `ñ` no casa el carácter UTF-8 de
+     * «Contraseña» (verificado: `Contrase` sí, `[Cc]ontrase[ñn]a` no).
+     */
+    nombre: 'contraseña en texto plano (literal versionado)',
+    buscar: "([Cc]ontrase|[Pp]assword|[Pp]asswd|[Pp]wd)[^:=\"',;}]{0,40}[:=][[:space:]]*|(//|--|#)[[:space:]]*([Cc]ontrase|[Pp]assword|[Pp]asswd|[Pp]wd)[0-9]",
+    validar: (linea, archivo) => {
+      if (!archivo) return false;
+      if (/\.(test|spec)\.[jt]sx?$/.test(archivo)) return false;
+      if (/scripts\/verify/.test(archivo)) return false;
+
+      // (a) comentario que publica la contraseña en la misma línea: `// password123`
+      if (/(?:\/\/|--|#)\s*(?:[Cc]ontrase|[Pp]assword|[Pp]asswd|[Pp]wd)[0-9]/.test(linea)) return true;
+
+      // El hueco entre la palabra clave y el separador no puede cruzar `;`, comillas, comas ni
+      // llaves: sin esto, la clave de `$testPassword … ; role = "client"` engancha un `=` ajeno y
+      // marca «client» como contraseña.
+      const base = "(?:[Cc]ontrase|[Pp]assword|[Pp]asswd|[Pp]wd)[^:=\"',;}]{0,40}[:=][ \\t]*";
+
+      const sospechoso = (val, exigeDigito, esSuelto) => {
+        if (!val || val.length < 4) return false;
+        // Sólo una palabra suelta puede ser una contraseña literal: `process.env.X`, `data.password`,
+        // `params[2]`, `<...>`, `${...}` y cualquier expresión de código quedan fuera por construcción.
+        if (!/^[A-Za-z0-9_-]+$/.test(val)) return false;
+        if (!/[A-Za-z]/.test(val)) return false;
+        if (exigeDigito && !/[0-9]/.test(val)) return false;
+        // Un dígito seguido de letra delata un identificador técnico (`S4TextField`, `base64Encode`),
+        // no una contraseña. Sólo se aplica al valor suelto: `'admin123'` entrecomillado sigue siendo literal.
+        if (esSuelto && /[0-9][A-Za-z]/.test(val)) return false;
+        if (ALLOW_MARKERS.test(val)) return false;
+        if (TECHNICAL_VOCAB.test(val)) return false;
+        if (NON_PASSWORD_VALUES.has(val.toLowerCase())) return false;
+        return true;
+      };
+
+      // (b.1) literal entrecomillado inmediatamente después de `clave[:=]` (una sola palabra: un
+      // mensaje de UI con espacios no es una contraseña)
+      const reCitado = new RegExp(base + "(['\"`])([^'\"`\\s]{1,120})\\1", 'g');
+      let m;
+      while ((m = reCitado.exec(linea)) !== null) {
+        if (sospechoso(m[2], false, false)) return true;
+      }
+
+      // (b.2) valor suelto (prosa/SQL/log) que parece contraseña: letra + dígito
+      const reSuelto = new RegExp(base + "([^\\s'\"`(),;]+)", 'g');
+      while ((m = reSuelto.exec(linea)) !== null) {
+        if (sospechoso(m[1], true, true)) return true;
+      }
+
       return false;
     }
   }
@@ -293,7 +416,18 @@ function runScanner() {
     rawOutput += gitGrep(regla.buscar);
   }
 
-  const { hallazgos, exitCode } = analizarSalida(rawOutput);
+  // Una línea que casa el `buscar` de varias reglas llega una vez por regla (git grep por regla).
+  // Se deduplica por línea cruda (`archivo:linea:contenido`) para que el recuento del mensaje sea el
+  // real y no cuente dos veces la misma credencial. La etiqueta la sigue decidiendo `analizarSalida`.
+  const vistas = new Set();
+  const lineasUnicas = [];
+  for (const linea of (rawOutput || '').split('\n')) {
+    if (!linea || vistas.has(linea)) continue;
+    vistas.add(linea);
+    lineasUnicas.push(linea);
+  }
+
+  const { hallazgos, exitCode } = analizarSalida(lineasUnicas.join('\n'));
 
   if (exitCode === 0) {
     console.log('✅ Sin credenciales versionadas en archivos trackeados.');

@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { wrapRouterAsync } = require('../utils/expressAsync');
 const multer = require('multer');
 const { authMiddleware } = require('../middleware/auth');
 const { requireRol } = require('../middleware/roles');
@@ -29,5 +30,9 @@ router.get('/precios/export.csv', exportPreciosCsv);
 router.post('/precios/import.csv', upload.single('archivo'), importPreciosCsv);
 router.put('/precios/:productoId', updatePrecioProducto);
 router.patch('/precios/bulk', bulkUpdatePrecios);
+
+// Universal: envuelve TODOS los handlers async de este router (rutas y middleware)
+// para que un rechazo async llegue a next(err) en vez de tumbar el proceso.
+wrapRouterAsync(router);
 
 module.exports = router;

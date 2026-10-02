@@ -6,6 +6,30 @@ const { sequelize } = require('../config/database');
 const { Op } = require('sequelize');
 const crypto = require('crypto');
 
+// ── Anti-replay del webhook de Wompi (Fix P0 DINERO #4 / t_fix_pagos_04) ──────
+// La versión anterior solo firmaba el payload: un webhook válido capturado podía
+// reenviarse indefinidamente (replay). Ahora la firma HMAC cubre
+// `timestamp.nonce.rawBody`, el timestamp debe caer en una ventana de tolerancia
+// y el nonce es de un solo uso.
+const WOMPI_WEBHOOK_TOLERANCE_MS = (() => {
+  const raw = parseInt(process.env.WOMPI_WEBHOOK_TOLERANCE_MS, 10);
+  return Number.isFinite(raw) && raw > 0 ? raw : 5 * 60 * 1000; // 5 minutos por defecto
+})();
+
+// Caché de nonces ya procesados: nonce -> instante de expiración (ms).
+// LIMITE: es por proceso. En un despliegue multi-instancia debe respaldarse en
+// un almacén compartido (p.ej. Redis) para que el replay se bloquee entre nodos.
+const wompiUsedNonces = new Map();
+
+const pruneWompiNonces = (now) => {
+  for (const [nonce, expiresAt] of wompiUsedNonces) {
+    if (expiresAt <= now) wompiUsedNonces.delete(nonce);
+  }
+};
+
+// Solo para tests: limpia el registro de nonces entre casos.
+const resetWompiNonceStore = () => wompiUsedNonces.clear();
+
 const verifyWompiSignature = (req) => {
   const secret = process.env.WOMPI_WEBHOOK_SECRET;
   if (!secret) {
@@ -17,15 +41,42 @@ const verifyWompiSignature = (req) => {
   }
 
   const signature = req.header('x-wompi-signature') || req.header('x-signature');
+  const timestamp = req.header('x-wompi-timestamp');
+  const nonce = req.header('x-wompi-nonce');
+
   if (!signature) {
     console.warn(`🚨 [FINTECH SECURITY ALERT] Webhook recibido sin firma desde IP ${req.ip}`);
     return false;
   }
 
+  // Anti-replay: timestamp y nonce son obligatorios. Sin ellos no hay forma de
+  // distinguir un webhook fresco de una repetición de uno capturado.
+  if (!timestamp || !nonce) {
+    console.warn(`🚨 [FINTECH SECURITY ALERT] Webhook sin timestamp/nonce desde IP ${req.ip}. Rechazado (posible replay).`);
+    return false;
+  }
+
+  // Ventana de tolerancia: rechaza timestamps antiguos y futuros (desfase de reloj).
+  const timestampNumber = Number(timestamp);
+  if (!Number.isFinite(timestampNumber)) {
+    return false;
+  }
+  // Acepta epoch en segundos o milisegundos.
+  const timestampMs = timestampNumber < 1e12 ? timestampNumber * 1000 : timestampNumber;
+  const now = Date.now();
+  if (Math.abs(now - timestampMs) > WOMPI_WEBHOOK_TOLERANCE_MS) {
+    console.warn(`🚨 [FINTECH SECURITY ALERT] Webhook con timestamp fuera de ventana (${timestamp}) desde IP ${req.ip}.`);
+    return false;
+  }
+
   const payloadString = req.rawBody ? req.rawBody.toString('utf8') : JSON.stringify(req.body);
+
+  // La firma cubre timestamp y nonce: no basta con presentar una firma válida,
+  // hay que presentarla junto al timestamp/nonce exactos que se firmaron.
+  const signedContent = `${timestamp}.${nonce}.${payloadString}`;
   const expected = crypto
     .createHmac('sha256', secret)
-    .update(payloadString)
+    .update(signedContent)
     .digest('hex');
 
   const signatureBuffer = Buffer.from(signature, 'hex');
@@ -35,7 +86,19 @@ const verifyWompiSignature = (req) => {
     return false;
   }
 
-  return crypto.timingSafeEqual(signatureBuffer, expectedBuffer);
+  if (!crypto.timingSafeEqual(signatureBuffer, expectedBuffer)) {
+    return false;
+  }
+
+  // Anti-replay: un nonce firmado solo puede consumirse una vez dentro de la ventana.
+  pruneWompiNonces(now);
+  if (wompiUsedNonces.has(nonce)) {
+    console.warn(`🚨 [FINTECH SECURITY ALERT] Webhook con nonce reutilizado (${nonce}) desde IP ${req.ip}. Rechazado (replay).`);
+    return false;
+  }
+  wompiUsedNonces.set(nonce, now + WOMPI_WEBHOOK_TOLERANCE_MS);
+
+  return true;
 };
 
 // 🔹 CREAR RESERVA
@@ -414,8 +477,58 @@ exports.cancelBooking = async (req, res) => {
       return res.status(400).json({ error: 'No se puede cancelar una cita que ya ha sido completada' });
     }
 
-    booking.estado = 'CANCELADA';
-    await booking.save();
+    // P0 DINERO #2 — reversión de stock al cancelar.
+    // payBooking() y el webhook de Wompi descuentan el stock de los productos adicionales
+    // cuando la cita pasa a pagada. Si la cita se cancela y ese stock no se devuelve, las
+    // unidades quedan 'fantasma': descontadas de un pedido que ya no existe (inventario
+    // real > stock en base) mientras el pago sí se reversa. Sólo se revierte lo que se
+    // descontó: citas que nunca se pagaron (payment_status != 'paid') no tocaron stock.
+    // Todo dentro de la MISMA transacción que el cambio de estado: o se cancela y se
+    // devuelve el stock, o no ocurre ninguna de las dos cosas.
+    await sequelize.transaction(async (t) => {
+      const wasPaid = booking.payment_status === 'paid';
+
+      const productsList = Array.isArray(booking.productos_adicionales)
+        ? booking.productos_adicionales
+        : (booking.productos_adicionales && Array.isArray(booking.productos_adicionales.products)
+            ? booking.productos_adicionales.products
+            : []);
+
+      if (wasPaid && productsList.length > 0) {
+        for (const item of productsList) {
+          const qty = parseInt(item.cantidad) || 0;
+          if (qty <= 0) continue;
+
+          const prodRes = await sequelize.query(
+            'SELECT stock, nombre FROM productos WHERE id = :productId FOR UPDATE;',
+            {
+              replacements: { productId: item.id },
+              type: sequelize.QueryTypes.SELECT,
+              transaction: t
+            }
+          );
+
+          if (prodRes.length === 0) {
+            // El producto ya no existe: no se puede devolver su stock, pero eso no debe
+            // impedir la cancelación de la cita.
+            console.warn(`⚠️ [CANCEL] Producto ${item.id} no encontrado al revertir stock de la cita ${bookingId}`);
+            continue;
+          }
+
+          await sequelize.query(
+            'UPDATE productos SET stock = stock + :qty WHERE id = :productId;',
+            {
+              replacements: { qty, productId: item.id },
+              type: sequelize.QueryTypes.UPDATE,
+              transaction: t
+            }
+          );
+        }
+      }
+
+      booking.estado = 'CANCELADA';
+      await booking.save({ transaction: t });
+    });
 
     console.log(`❌ Cita ${bookingId} cancelada por el cliente ${clientId}`);
 
@@ -732,6 +845,11 @@ const procesarWebhookWompi = async (req, res) => {
  */
 exports.wompiWebhook = (req, res) =>
   runAsSystemContext(() => procesarWebhookWompi(req, res));
+
+// Expuestos para pruebas unitarias del contrato anti-replay.
+exports.verifyWompiSignature = verifyWompiSignature;
+exports.resetWompiNonceStore = resetWompiNonceStore;
+exports.WOMPI_WEBHOOK_TOLERANCE_MS = WOMPI_WEBHOOK_TOLERANCE_MS;
 
 // 🔹 Crear reseña para cita completada
 exports.createReview = async (req, res) => {

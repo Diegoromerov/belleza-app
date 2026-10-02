@@ -10,7 +10,7 @@
 -- Tabla principal de consentimientos biométricos
 CREATE TABLE IF NOT EXISTS biometric_consents (
   id SERIAL PRIMARY KEY,
-  user_id UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  user_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
   consent_type VARCHAR(50) NOT NULL,
   -- Tipos válidos: 'facial_analysis', 'skin_scan', 'hair_analysis', 
   --        'body_measurement', 'virtual_try_on', 'all_biometric'
@@ -75,7 +75,7 @@ ON biometric_consents (granted_at, revoked_at);
 -- Tabla de auditoría de acceso a datos biométricos
 CREATE TABLE IF NOT EXISTS biometric_access_log (
   id SERIAL PRIMARY KEY,
-  user_id UUID NOT NULL,
+  user_id INTEGER NOT NULL,
   accessed_by VARCHAR(50) NOT NULL,
   -- 'ATENA', 'AURA', 'admin', 'user_self'
   access_type VARCHAR(50) NOT NULL,

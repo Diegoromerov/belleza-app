@@ -298,46 +298,50 @@ async function getConsentHistory(userId) {
 async function deleteBiometricData(userId) {
   try {
     let recordsAffected = 0;
-    
+
     // 1. Eliminar datos de análisis facial
     const faceRes = await pool.query('DELETE FROM facial_analysis WHERE user_id = $1', [userId]);
     recordsAffected += faceRes.rowCount;
-    
+
     // 2. Eliminar análisis de piel
     const skinRes = await pool.query('DELETE FROM skin_analysis WHERE user_id = $1', [userId]);
     recordsAffected += skinRes.rowCount;
-    
+
     // 3. Eliminar análisis de cabello
     const hairRes = await pool.query('DELETE FROM hair_analysis WHERE user_id = $1', [userId]);
     recordsAffected += hairRes.rowCount;
-    
+
     // 4. Eliminar datos de prueba virtual
     const vtoRes = await pool.query('DELETE FROM virtual_try_on WHERE user_id = $1', [userId]);
     recordsAffected += vtoRes.rowCount;
-    
+
     // 5. Eliminar medidas corporales
     const bodyRes = await pool.query('DELETE FROM body_measurements WHERE user_id = $1', [userId]);
     recordsAffected += bodyRes.rowCount;
-    
+
     // 6. Eliminar embeddings faciales
     const embRes = await pool.query('DELETE FROM facial_embeddings WHERE user_id = $1', [userId]);
     recordsAffected += embRes.rowCount;
-    
+
     // 7. Eliminar fotos almacenadas
     const photosRes = await pool.query('DELETE FROM user_photos WHERE user_id = $1', [userId]);
     recordsAffected += photosRes.rowCount;
-    
-    // 8. Log en auditoría (NO eliminar consentimientos revocados - auditoría legal)
+
+    // 8. Eliminar historial biométrico (Ley 1581 Art.15 - supresión completa)
+    const historyRes = await pool.query('DELETE FROM biometric_history WHERE user_id = $1', [userId]);
+    recordsAffected += historyRes.rowCount;
+
+    // 9. Log en auditoría (NO eliminar consentimientos revocados - auditoría legal)
     await logAccess({
       userId,
       accessedBy: 'user_self',
       accessType: 'delete_data',
       ip: null,
-      details: { recordsAffected, tables: ['facial_analysis', 'skin_analysis', 'hair_analysis', 'virtual_try_on', 'body_measurements', 'facial_embeddings', 'user_photos'] }
+      details: { recordsAffected, tables: ['facial_analysis', 'skin_analysis', 'hair_analysis', 'virtual_try_on', 'body_measurements', 'facial_embeddings', 'user_photos', 'biometric_history'] }
     });
-    
+
     return { deleted: true, recordsAffected };
-    
+
   } catch (error) {
     console.error('❌ Error eliminando datos biométricos:', error.message);
     return { deleted: false, recordsAffected: 0, error: error.message };

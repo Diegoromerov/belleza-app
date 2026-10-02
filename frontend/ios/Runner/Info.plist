@@ -66,5 +66,13 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>La app usa la cámara para escaneos biométricos (rostro y manos) y para tomar fotos de perfil.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>La app accede a la galería para seleccionar fotos de perfil e imágenes de portafolio.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>La app usa tu ubicación para encontrar proveedores de belleza cercanos y calcular rutas.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>La app usa el micrófono para videollamadas con proveedores y notas de voz.</string>
 </dict>
 </plist>

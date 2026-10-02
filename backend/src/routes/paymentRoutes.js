@@ -10,6 +10,7 @@ const { paymentLimiter, otpLimiter } = require('../middleware/rateLimiter');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const wompiService = require('../services/wompiService');
+const { aCentavos, aDecimal, calcularRetenciones, sumarMontos } = require('../utils/money');
 
 // ─── UTILIDADES ──────────────────────────────────────────────────────────────
 
@@ -269,15 +270,29 @@ router.post('/bookings/:id/confirm-otp', authMiddleware, async (req, res) => {
     const reteicaPct = parseFloat(await getConfig('reteica_pct', '0.414'));
     const reteivaPct = parseFloat(await getConfig('reteiva_pct', '15.0'));
 
-    const basePagoNeto = parseFloat(otp.pago_neto_prestador);
-    const comisionPlataforma = parseFloat(otp.comision_plataforma);
+    // P0 dinero (t_fix_pagos_06): las retenciones y el neto se calculan en CENTAVOS
+    // ENTEROS. Con punto flotante, un IVA de 22,5 centavos (15% de una comisión de
+    // 1.50) se redondeaba a 22 (0.22) en vez de 23 (0.23): la dispersión perdía un
+    // centavo de forma silenciosa. Ver src/utils/money.js.
+    const basePagoNetoCentavos = aCentavos(otp.pago_neto_prestador);
+    const comisionPlataformaCentavos = aCentavos(otp.comision_plataforma);
 
-    const retencionFuente = Math.round(basePagoNeto * (retefuentePct / 100) * 100) / 100;
-    const retencionIca = Math.round(basePagoNeto * (reteicaPct / 100) * 100) / 100;
-    const retencionIva = Math.round(comisionPlataforma * (reteivaPct / 100) * 100) / 100;
+    const retenciones = calcularRetenciones({
+      basePagoNetoCents: basePagoNetoCentavos,
+      comisionPlataformaCents: comisionPlataformaCentavos,
+      retefuentePct,
+      reteicaPct,
+      reteivaPct
+    });
 
-    const totalRetenciones = retencionFuente + retencionIca + retencionIva;
-    const montoNeto = basePagoNeto - totalRetenciones;
+    const basePagoNeto = aDecimal(basePagoNetoCentavos);
+    const comisionPlataforma = aDecimal(comisionPlataformaCentavos);
+    const retencionFuente = aDecimal(retenciones.retencionFuenteCents);
+    const retencionIca = aDecimal(retenciones.retencionIcaCents);
+    const retencionIva = aDecimal(retenciones.retencionIvaCents);
+
+    const totalRetenciones = aDecimal(retenciones.totalRetencionesCents);
+    const montoNeto = aDecimal(retenciones.montoNetoCents);
 
     await client.query(
       `UPDATE otp_validaciones SET estado = 'USADO', usado_at = NOW() WHERE booking_id = $1`,
@@ -307,7 +322,7 @@ router.post('/bookings/:id/confirm-otp', authMiddleware, async (req, res) => {
        VALUES ($1, $2, 'CREDITO_SERVICIO', $3, $4, 'PENDIENTE', $5, $6)`,
       [
         otp.provider_id, id, montoNeto,
-        parseFloat(wallet.saldo_disponible) + parseFloat(wallet.saldo_pendiente),
+        sumarMontos(wallet.saldo_disponible, wallet.saldo_pendiente),
         `Servicio completado. Disponible en ${ventanaHoras}h.`,
         JSON.stringify({
           madura_at: maduraAt,
@@ -315,16 +330,10 @@ router.post('/bookings/:id/confirm-otp', authMiddleware, async (req, res) => {
           retencion_fuente: retencionFuente,
           retencion_ica: retencionIca,
           retencion_iva: retencionIva,
-          base_pago_neto: basePagoNeto
+          base_pago_neto: basePagoNeto,
+          total_retenciones: totalRetenciones
         })
       ]
-    );
-
-    await client.query(
-      `UPDATE wallet_transactions
-       SET metadata = metadata || $2::jsonb
-       WHERE booking_id = $1 AND tipo = 'CREDITO_SERVICIO'`,
-      [id, JSON.stringify({ madura_at: maduraAt.toISOString() })]
     );
 
     // ─── LIBERAR COMISIÓN DE GLOWSTORE SI APLICA ───
@@ -335,7 +344,8 @@ router.post('/bookings/:id/confirm-otp', authMiddleware, async (req, res) => {
 
     if (storeOrderRes.rows.length > 0) {
       const storeOrder = storeOrderRes.rows[0];
-      const comisionTienda = parseFloat(storeOrder.comision_total_prestador);
+      const comisionTiendaCentavos = aCentavos(storeOrder.comision_total_prestador);
+      const comisionTienda = aDecimal(comisionTiendaCentavos);
 
       if (comisionTienda > 0) {
         // Actualizar wallet sumando la comisión de la tienda al saldo pendiente
@@ -359,7 +369,7 @@ router.post('/bookings/:id/confirm-otp', authMiddleware, async (req, res) => {
             otp.provider_id, 
             id, 
             comisionTienda,
-            parseFloat(walletTienda.saldo_disponible) + parseFloat(walletTienda.saldo_pendiente),
+            sumarMontos(walletTienda.saldo_disponible, walletTienda.saldo_pendiente),
             `Comisión de productos en GlowStore - Pedido #${storeOrder.id}`,
             JSON.stringify({
               madura_at: maduraAt.toISOString(),
@@ -405,23 +415,19 @@ router.get('/wallet', authMiddleware, async (req, res) => {
   if (!await requirePrestador(req, res)) return;
 
   try {
-    await pool.query(
-      `UPDATE wallet_transactions
-       SET estado = 'COMPLETADO'
-       WHERE tipo IN ('CREDITO_SERVICIO', 'CREDITO_PRODUCTO')
-         AND estado = 'PENDIENTE'
-         AND (metadata->>'madura_at')::timestamptz <= NOW()
-         AND provider_id = $1`,
-      [req.user.id]
-    );
-
+    // Ledger append-only: la maduración NO muta el asiento; se deriva de
+    // metadata.madura_at y se registra la acreditación como evento.
     const madurados = await pool.query(
-      `SELECT COALESCE(SUM(monto), 0) as total
-       FROM wallet_transactions
-       WHERE tipo IN ('CREDITO_SERVICIO', 'CREDITO_PRODUCTO')
-         AND estado = 'COMPLETADO'
-         AND provider_id = $1
-         AND (metadata->>'acreditado') IS NULL`,
+      `SELECT COALESCE(SUM(wt.monto), 0) as total
+       FROM wallet_transactions wt
+       WHERE wt.tipo IN ('CREDITO_SERVICIO', 'CREDITO_PRODUCTO')
+         AND wt.estado <> 'REVERTIDO'
+         AND wt.provider_id = $1
+         AND (wt.metadata->>'madura_at')::timestamptz <= NOW()
+         AND NOT EXISTS (
+           SELECT 1 FROM wallet_ledger_events e
+           WHERE e.tx_id = wt.id AND e.evento = 'ACREDITADO'
+         )`,
       [req.user.id]
     );
 
@@ -435,12 +441,18 @@ router.get('/wallet', authMiddleware, async (req, res) => {
         [req.user.id, parseFloat(madurados.rows[0].total)]
       );
       await pool.query(
-        `UPDATE wallet_transactions
-         SET metadata = metadata || '{"acreditado": true}'::jsonb
-         WHERE tipo IN ('CREDITO_SERVICIO', 'CREDITO_PRODUCTO')
-           AND estado = 'COMPLETADO'
-           AND provider_id = $1
-           AND (metadata->>'acreditado') IS NULL`,
+        `INSERT INTO wallet_ledger_events (tx_id, provider_id, evento, detalle)
+         SELECT wt.id, wt.provider_id, 'ACREDITADO',
+                jsonb_build_object('monto', wt.monto, 'origen', 'wallet-consulta')
+         FROM wallet_transactions wt
+         WHERE wt.tipo IN ('CREDITO_SERVICIO', 'CREDITO_PRODUCTO')
+           AND wt.estado <> 'REVERTIDO'
+           AND wt.provider_id = $1
+           AND (wt.metadata->>'madura_at')::timestamptz <= NOW()
+           AND NOT EXISTS (
+             SELECT 1 FROM wallet_ledger_events e
+             WHERE e.tx_id = wt.id AND e.evento = 'ACREDITADO'
+           )`,
         [req.user.id]
       );
     }

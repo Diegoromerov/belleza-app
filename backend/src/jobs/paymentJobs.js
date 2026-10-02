@@ -53,9 +53,12 @@ async function madurarSaldosPendientes() {
       SELECT wt.provider_id, SUM(wt.monto) as total_a_madurar
       FROM wallet_transactions wt
       WHERE wt.tipo = 'CREDITO_SERVICIO'
-        AND wt.estado = 'PENDIENTE'
+        AND wt.estado <> 'REVERTIDO'
         AND (wt.metadata->>'madura_at')::timestamptz <= NOW()
-        AND (wt.metadata->>'acreditado') IS NULL
+        AND NOT EXISTS (
+          SELECT 1 FROM wallet_ledger_events e
+          WHERE e.tx_id = wt.id AND e.evento = 'ACREDITADO'
+        )
       GROUP BY wt.provider_id
     `);
 
@@ -70,16 +73,20 @@ async function madurarSaldosPendientes() {
         [row.provider_id, parseFloat(row.total_a_madurar)]
       );
 
-      // Marcar como completadas y acreditadas
+      // Registrar la acreditación como evento append-only (el ledger no se muta)
       await client.query(
-        `UPDATE wallet_transactions
-         SET estado  = 'COMPLETADO',
-             metadata = metadata || '{"acreditado": true}'::jsonb
-         WHERE tipo = 'CREDITO_SERVICIO'
-           AND estado = 'PENDIENTE'
-           AND provider_id = $1
-           AND (metadata->>'madura_at')::timestamptz <= NOW()
-           AND (metadata->>'acreditado') IS NULL`,
+        `INSERT INTO wallet_ledger_events (tx_id, provider_id, evento, detalle)
+         SELECT wt.id, wt.provider_id, 'ACREDITADO',
+                jsonb_build_object('monto', wt.monto, 'origen', 'job-maduracion')
+         FROM wallet_transactions wt
+         WHERE wt.tipo = 'CREDITO_SERVICIO'
+           AND wt.estado <> 'REVERTIDO'
+           AND wt.provider_id = $1
+           AND (wt.metadata->>'madura_at')::timestamptz <= NOW()
+           AND NOT EXISTS (
+             SELECT 1 FROM wallet_ledger_events e
+             WHERE e.tx_id = wt.id AND e.evento = 'ACREDITADO'
+           )`,
         [row.provider_id]
       );
 

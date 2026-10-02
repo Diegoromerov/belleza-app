@@ -11,8 +11,8 @@ const { ragPool } = require('../src/config/db');
 
 const NVIDIA_API_KEY = process.env.NVIDIA_API_KEY;
 const NVIDIA_API_URL = process.env.NVIDIA_API_URL || 'https://integrate.api.nvidia.com/v1/embeddings';
-const NVIDIA_EMBEDDING_MODEL = process.env.NVIDIA_EMBEDDING_MODEL || 'nvidia/nv-embedqa-e5-v5';
-const EXPECTED_DIMS = 1024;
+const NVIDIA_EMBEDDING_MODEL = process.env.NVIDIA_EMBEDDING_MODEL || 'nvidia/nemotron-3-embed-1b';
+const EXPECTED_DIMS = 2048;
 
 // ---------- Embedding ----------
 async function generateEmbedding(text) {

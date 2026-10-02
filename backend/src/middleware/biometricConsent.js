@@ -6,6 +6,7 @@
 
 const { pool } = require('../config/db');
 const { getRedisClient } = require('./rateLimiter');
+const consentService = require('../services/consentService');
 
 /**
  * Cache en memoria para consentimientos (TTL 5 min)
@@ -36,6 +37,46 @@ const VALID_ACCESS_TYPES = [
   'delete_data',
   'virtual_try_on'
 ];
+
+/**
+ * Criterio ÚNICO de consentimiento biométrico válido en TODO el backend
+ * (FASE C · t_fix_secapp_01, hallazgo P0 «granted vs active»).
+ *
+ * Un consentimiento autoriza SOLO si fue otorgado (granted = TRUE) y no fue
+ * revocado (revoked_at IS NULL). La columna legado de estado (migración 026)
+ * NO se usa para autorizar: su valor no cambia al revocar, por lo que autorizar
+ * con ella deja pasar consentimientos REVOCADOS (fuga de datos biométricos).
+ *
+ * Esta es la única condición de autorización del backend. La usan
+ * hasAnyValidConsent() y, por delegación, biometricConsentGuard.
+ */
+const VALID_CONSENT_SQL_PREDICATE = 'granted = TRUE AND revoked_at IS NULL';
+
+/**
+ * ¿Tiene el usuario ALGÚN consentimiento biométrico válido (otorgado y no revocado)?
+ * Fuente única de verdad para los guards que no exigen un consent_type concreto
+ * (p. ej. biometricConsentGuard aplicado a POST /api/biometric/analyze).
+ * @param {string} userId - Identificador del usuario (el mismo que llega en el JWT)
+ * @returns {Promise<Object|null>} Fila de consentimiento válido, o null si no hay
+ */
+async function hasAnyValidConsent(userId) {
+  try {
+    const query = `
+      SELECT id, consent_type, granted, granted_at, revoked_at, purpose, version_terms
+      FROM biometric_consents
+      WHERE user_id = $1
+        AND ${VALID_CONSENT_SQL_PREDICATE}
+      ORDER BY granted_at DESC NULLS LAST
+      LIMIT 1
+    `;
+    const res = await pool.query(query, [userId]);
+    return res.rows[0] || null;
+  } catch (error) {
+    console.error('❌ Error verificando consentimiento global:', error.message);
+    // Fail closed por seguridad legal
+    return null;
+  }
+}
 
 /**
  * Verifica si un usuario tiene consentimiento válido para un tipo específico
@@ -352,54 +393,30 @@ async function revokeConsent(userId, consentType) {
 }
 
 /**
- * Elimina datos biométricos tras revocación (derecho de supresión)
+ * Elimina datos biométricos del usuario (derecho de supresión, Art. 15 Ley 1581).
+ *
+ * SECAPP-04: esta función DELEGA en la implementación ÚNICA y real de
+ * `consentService.deleteBiometricData` (borrado efectivo sobre las 7 tablas
+ * biométricas). Antes existía aquí un SEGUNDO `deleteBiometricData` que era un
+ * stub con TODOS los `DELETE` comentados: devolvía `{ deleted: 0 }` y la ruta
+ * `DELETE /api/consent/biometric/:consentType/data` respondía `success: true`
+ * sin haber suprimido ni un registro.
+ *
+ * No se reimplementa el borrado: el servicio es la única fuente de verdad (y ya
+ * lo consume `routes/consentRoutes.js`), de modo que ambos endpoints tienen
+ * exactamente la misma semántica. El fallo de BD se propaga como
+ * `{ deleted: false, recordsAffected: 0 }` (fail-closed), nunca como éxito.
+ *
  * @param {string} userId - UUID del usuario
- * @param {string} consentType - Tipo de consentimiento revocado
- * @returns {Promise<{ deleted: number }>} Cantidad de registros eliminados
+ * @param {string} [consentType] - Tipo de consentimiento validado por la ruta
+ *   (la supresión es total sobre los datos biométricos del usuario)
+ * @returns {Promise<{ deleted: boolean, recordsAffected: number }>}
  */
 async function deleteBiometricData(userId, consentType) {
-  try {
-    // Solo eliminar si el consentimiento está revocado
-    const consentCheck = await pool.query(
-      'SELECT revoked_at FROM biometric_consents WHERE user_id = $1 AND consent_type = $2',
-      [userId, consentType]
-    );
-    
-    if (consentCheck.rows.length === 0 || !consentCheck.rows[0].revoked_at) {
-      throw new Error('No se puede eliminar: consentimiento no revocado');
-    }
-    
-    let deleted = 0;
-    
-    // Eliminar según tipo de consentimiento
-    // Nota: Ajustar tablas según tu schema real
-    if (consentType === 'facial_analysis' || consentType === 'all_biometric') {
-      // Eliminar embeddings faciales, fotos, etc.
-      // const res = await pool.query('DELETE FROM facial_biometrics WHERE user_id = $1', [userId]);
-      // deleted += res.rowCount;
-    }
-    
-    if (consentType === 'skin_scan' || consentType === 'all_biometric') {
-      // Eliminar análisis de piel, fotos, etc.
-    }
-    
-    if (consentType === 'hair_analysis' || consentType === 'all_biometric') {
-      // Eliminar análisis de cabello
-    }
-    
-    // Log de auditoría
-    await logBiometricAccess({
-      userId,
-      accessedBy: 'system',
-      accessType: 'delete_data',
-      details: { consentType, deleted }
-    });
-    
-    return { deleted };
-  } catch (error) {
-    console.error('❌ Error eliminando datos biométricos:', error.message);
-    throw error;
-  }
+  // consentType se mantiene en la firma por compatibilidad con la ruta que
+  // valida el tipo; la supresión efectiva es sobre todos los datos del usuario.
+  void consentType;
+  return consentService.deleteBiometricData(userId);
 }
 
 /**
@@ -446,6 +463,8 @@ async function getAccessLogs(filters = {}) {
 
 module.exports = {
   verifyConsent,
+  hasAnyValidConsent,
+  VALID_CONSENT_SQL_PREDICATE,
   requireBiometricConsent,
   logBiometricAccess,
   getUserConsents,

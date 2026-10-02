@@ -19,7 +19,7 @@ describe('embeddingService', () => {
     test('debe generar embedding determinístico de 1024 dimensiones', () => {
       const embedding = generateDummyEmbedding('texto de prueba');
       
-      expect(embedding).toHaveLength(1024);
+      expect(embedding).toHaveLength(2048);
       expect(Array.isArray(embedding)).toBe(true);
       
       // Verificar normalización (norma = 1)
@@ -43,21 +43,21 @@ describe('embeddingService', () => {
     
     test('debe manejar string vacío', () => {
       const embedding = generateDummyEmbedding('');
-      expect(embedding).toHaveLength(1024);
+      expect(embedding).toHaveLength(2048);
     });
   });
   
   describe('validateEmbeddingDimension', () => {
     test('debe validar embedding de 1024 dimensiones', () => {
-      const embedding = new Array(1024).fill(0.01);
-      expect(() => validateEmbeddingDimension(embedding, 1024)).not.toThrow();
+      const embedding = new Array(2048).fill(0.01);
+      expect(() => validateEmbeddingDimension(embedding, 2048)).not.toThrow();
     });
     
     test('debe rechazar embedding con dimensión incorrecta', () => {
       const embedding = new Array(768).fill(0.01);
       
-      expect(() => validateEmbeddingDimension(embedding, 1024))
-        .toThrow('Dimensión embedding incorrecta: esperado 1024, recibido 768');
+      expect(() => validateEmbeddingDimension(embedding, 2048))
+        .toThrow('Dimensión embedding incorrecta: esperado 2048, recibido 768');
     });
     
     test('debe rechazar embedding no array', () => {
@@ -67,9 +67,9 @@ describe('embeddingService', () => {
     
     test('debe advertir sobre embedding de ceros', () => {
       const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
-      const embedding = new Array(1024).fill(0);
+      const embedding = new Array(2048).fill(0);
       
-      validateEmbeddingDimension(embedding, 1024);
+      validateEmbeddingDimension(embedding, 2048);
       
       expect(consoleSpy).toHaveBeenCalledWith(
         expect.stringContaining('Embedding consiste solo de ceros')
@@ -80,7 +80,7 @@ describe('embeddingService', () => {
   
   describe('DEFAULT_CONFIG', () => {
     test('debe tener configuración por defecto correcta', () => {
-      expect(DEFAULT_CONFIG.expectedDimension).toBe(1024);
+      expect(DEFAULT_CONFIG.expectedDimension).toBe(2048);
       expect(DEFAULT_CONFIG.timeout).toBe(15000);
       expect(DEFAULT_CONFIG.maxRetries).toBe(3);
       expect(DEFAULT_CONFIG.baseDelayMs).toBe(1000);
@@ -129,7 +129,7 @@ describe('embeddingService', () => {
       delete process.env.NVIDIA_API_KEY;
 
       // El helper sigue existiendo (y es determinista) solo para tests:
-      expect(generateDummyEmbedding('texto')).toHaveLength(1024);
+      expect(generateDummyEmbedding('texto')).toHaveLength(2048);
       // pero el camino productivo no lo usa: sin API key hay error, no vector.
       await expect(generateEmbedding('texto')).rejects.toThrow();
 

@@ -1,6 +1,6 @@
 /**
  * backend/src/services/embeddingService.js
- * Wrapper reutilizable para NVIDIA NIM Embeddings (NV-Embed-QA-E5-v5, 1024 dimensiones)
+ * Wrapper reutilizable para NVIDIA NIM Embeddings (nvidia/nemotron-3-embed-1b, 2048 dimensiones)
  * Incluye circuit breaker, rate limiting, validación de dimensiones, backoff exponencial
  */
 
@@ -11,10 +11,12 @@ const { breakers } = require('./circuitBreakerService');
  * Configuración por defecto
  */
 const DEFAULT_CONFIG = {
-  model: process.env.NVIDIA_EMBEDDING_MODEL || 'nvidia/nv-embedqa-e5-v5',
+  // Modelo vivo por defecto (override: NVIDIA_EMBEDDING_MODEL). El valor anterior estaba
+  // retirado (EOL 2026-08-25 → HTTP 410 Gone).
+  model: process.env.NVIDIA_EMBEDDING_MODEL || 'nvidia/nemotron-3-embed-1b',
   baseUrl: (process.env.NVIDIA_EMBED_URL || 'https://integrate.api.nvidia.com/v1').replace(/\/embeddings$/, ''),
   apiKey: process.env.NVIDIA_API_KEY,
-  expectedDimension: 1024,
+  expectedDimension: 2048,
   timeout: 15000,
   maxRetries: 3,
   baseDelayMs: 1000,
@@ -24,10 +26,10 @@ const DEFAULT_CONFIG = {
 /**
  * Valida que el embedding tenga la dimensión esperada
  * @param {number[]} embedding - Vector de embedding
- * @param {number} expectedDimension - Dimensión esperada (default 1024)
+ * @param {number} expectedDimension - Dimensión esperada (default 2048)
  * @throws {Error} Si la dimensión no coincide
  */
-function validateEmbeddingDimension(embedding, expectedDimension = 1024) {
+function validateEmbeddingDimension(embedding, expectedDimension = 2048) {
   if (!Array.isArray(embedding)) {
     throw new Error('Embedding no es un array');
   }
@@ -50,7 +52,7 @@ function validateEmbeddingDimension(embedding, expectedDimension = 1024) {
  * @param {string} text - Texto a embeddizar
  * @param {'query'|'passage'} inputType - Tipo de entrada (asymmetric models)
  * @param {Object} options - Opciones de configuración
- * @returns {Promise<number[]>} Vector de embedding de 1024 dimensiones
+ * @returns {Promise<number[]>} Vector de embedding de 2048 dimensiones
  */
 async function generateNvidiaEmbedding(text, inputType = 'query', options = {}) {
   const config = { ...DEFAULT_CONFIG, ...options };
@@ -146,12 +148,12 @@ async function generateEmbedding(text, inputType = 'query', options = {}) {
 /**
  * Genera embedding dummy determinístico (fallback)
  * @param {string} text - Texto para generar embedding determinístico
- * @returns {number[]} Vector normalizado de 1024 dimensiones
+ * @returns {number[]} Vector normalizado de 2048 dimensiones
  */
 function generateDummyEmbedding(text) {
   const crypto = require('crypto');
   const hash = crypto.createHash('sha256').update(text).digest();
-  const embedding = new Array(1024).fill(0).map((_, i) => {
+  const embedding = new Array(2048).fill(0).map((_, i) => {
     return (hash[i % 32] / 255 - 0.5) * 0.01;
   });
   const norm = Math.sqrt(embedding.reduce((sum, v) => sum + v * v, 0));

@@ -42,6 +42,8 @@ const eventRegistrationRoutes = require('./src/routes/eventRegistrationRoutes');
 const businessRoutes = require('./src/routes/businessRoutes');
 const membershipRoutes = require('./src/routes/membershipRoutes');
 const { buildProjections } = require('./src/services/adminMetricsService');
+// FIX-FLUTTER-06: política de versión mínima publicada en GET /api/health.
+const { resolveAppVersionPolicy } = require('./src/services/appVersionPolicy');
 const adminMiddleware = async (req, res, next) => {
   try {
     if (!req.user || !req.user.id) {
@@ -224,6 +226,14 @@ app.use((req, res, next) => {
   next();
 });
 
+// P0 infra/observabilidad #4 (t_fix_infra_04): plano de métricas máquina-legible.
+// Se monta ANTES del candado de degradación para que TODA respuesta (incluidos los
+// 503 tempranos y los 404) quede contabilizada y sea alertable. `express-status-monitor`
+// (página humana en /status) no expone /metrics ni es consumible por Prometheus.
+const { metricsMiddleware, metricsHandler } = require('./src/metrics/prometheus');
+app.use(metricsMiddleware);
+app.get('/metrics', metricsHandler);
+
 const { degradedLockMiddleware, clasificarSalud, asegurarEstadoComprobado } = require('./src/middleware/degradedLock');
 app.use('/api', degradedLockMiddleware);
 
@@ -367,12 +377,18 @@ app.get(/^(?!\/api(?:\/|$))(?!\/uploads(?:\/|$))(?!\/admin(?:\/|$)).*/, (req, re
   res.sendFile(path.join(__dirname, 'public/index.html'));
 });
 
-const allowDebugRoutes = process.env.ALLOW_DEBUG_ROUTES === 'true' || process.env.NODE_ENV !== 'production';
+// Fail-closed (AUD-SECAPP-03, P0): /api/test-db y /api/debug-db NUNCA quedan abiertas
+// por defecto. El guard anterior era fail-OPEN: se servían SIN auth en cualquier entorno
+// donde NODE_ENV no fuese exactamente 'production' (incluido NODE_ENV ausente) y también
+// en producción si ALLOW_DEBUG_ROUTES='true'. Ahora exigen auth+admin SIEMPRE, salvo el
+// opt-in explícito ALLOW_DEBUG_ROUTES='true' Y sólo fuera de producción (depuración local).
+const allowDebugRoutes =
+  process.env.NODE_ENV !== 'production' && process.env.ALLOW_DEBUG_ROUTES === 'true';
 const debugRouteMiddleware = (req, res, next) => {
-  if (!allowDebugRoutes) {
-    return authMiddleware(req, res, () => adminMiddleware(req, res, next));
+  if (allowDebugRoutes) {
+    return next();
   }
-  return next();
+  return authMiddleware(req, res, () => adminMiddleware(req, res, next));
 };
 
 const { rateLimitByIP } = require('./src/middleware/rateLimiter');
@@ -445,6 +461,10 @@ app.get('/api/health', async (req, res) => {
     timestamp: new Date().toISOString(),
     env: process.env.NODE_ENV || 'development',
     database: dbStatus,
+    // FIX-FLUTTER-06: política de versión de la app (fuente: MINIMUM_APP_VERSION /
+    // LATEST_APP_VERSION). La app compara su versión instalada y bloquea si está
+    // por debajo de minimum_app_version.
+    ...resolveAppVersionPolicy(),
   });
 });
 
@@ -1351,13 +1371,13 @@ const initDatabase = async () => {
     if (hasTable) {
       console.log('✅ Base de datos ya inicializada. Omitiendo recreación de tablas.');
     } else {
-      const schemaPath = path.join(__dirname, 'schema.sql');
+      const schemaPath = path.join(__dirname, 'init.sql');
       if (fs.existsSync(schemaPath)) {
         const schemaSql = fs.readFileSync(schemaPath, 'utf8');
         await pool.query(schemaSql);
-        console.log('✅ Base de datos: Esquema inicializado/verificado desde schema.sql');
+        console.log('✅ Base de datos: Esquema inicializado/verificado desde init.sql (fuente canónica)');
       } else {
-        console.warn('⚠️ No se encontró schema.sql. Se omitió la creación automática de tablas.');
+        console.warn('⚠️ No se encontró init.sql. Se omitió la creación automática de tablas.');
       }
     }
   } catch (error) {

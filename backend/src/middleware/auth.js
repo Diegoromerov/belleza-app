@@ -15,13 +15,17 @@ const authMiddleware = async (req, res, next) => {
   if (!token) return res.status(401).json({ error: 'UNAUTHORIZED' });
 
   try {
-    // POLÍTICA DE SEGURIDAD: Token Blacklisting con Redis
-    // En producción (NODE_ENV === 'production'): Fail-Closed (503 si Redis no está disponible o falla).
-    // En desarrollo/test: Fail-Open con log de advertencia.
-    const isProduction = process.env.NODE_ENV === 'production';
+    // POLÍTICA DE SEGURIDAD: Token Blacklisting con Redis (AUD-INFRA-01 #14)
+    // FAIL-CLOSED POR DEFECTO: si el blacklist no está disponible o falla, se rechaza
+    // con 503 y NO se llama next(). Sólo se permite obviar la comprobación (fail-open
+    // con advertencia) cuando NODE_ENV es EXPLÍCITAMENTE 'development' o 'test'.
+    // Un NODE_ENV ausente, 'staging' o mal escrito NO habilita fail-open: un token
+    // revocado nunca debe seguir siendo aceptado por un guard de entorno implícito.
+    const entorno = String(process.env.NODE_ENV || '').trim().toLowerCase();
+    const failOpenPermitido = entorno === 'development' || entorno === 'test';
     if (!redisClient || !redisClient.isReady) {
-      if (isProduction) {
-        console.error('🚨 [AUTH FAIL-CLOSED] Redis no disponible en producción para verificar token blacklist');
+      if (!failOpenPermitido) {
+        console.error('🚨 [AUTH FAIL-CLOSED] Redis no disponible para verificar token blacklist — rechazando petición');
         return res.status(503).json({ error: 'Servicio de autenticación no disponible temporalmente.' });
       } else {
         console.warn('⚠️ [AUTH FAIL-OPEN] Redis deshabilitado en dev/test — omitiendo comprobación de blacklist');
@@ -34,7 +38,7 @@ const authMiddleware = async (req, res, next) => {
         }
       } catch (redisErr) {
         console.error('Error de Redis en authMiddleware:', redisErr.message);
-        if (isProduction) {
+        if (!failOpenPermitido) {
           return res.status(503).json({ error: 'Servicio de autenticación no disponible temporalmente.' });
         }
       }
@@ -43,19 +47,34 @@ const authMiddleware = async (req, res, next) => {
     const verified = jwt.verify(token, getJwtSecret());
 
     // Consultar el rol y tenant_id actual del usuario en la base de datos
-    const userRes = await pool.query('SELECT rol, tenant_id FROM usuarios WHERE id = $1', [verified.id]);
+    // Arranque de identidad ANTES de fijar contexto de inquilino: se resuelve con
+    // la función SECURITY DEFINER de 068 (la tabla usuarios ya tiene RLS + FORCE,
+    // así que una lectura directa sin contexto devolvería 0 filas -> 401 global).
+    const userRes = await pool.query('SELECT rol, tenant_id FROM app_usuario_identidad($1::integer)', [verified.id]);
     if (userRes.rows.length === 0) {
       return res.status(401).json({ error: 'Usuario no encontrado en el sistema.' });
     }
 
     const dbRole = userRes.rows[0].rol;
     const dbTenantId = userRes.rows[0].tenant_id;
-    
-    // Activar RLS para la conexión (NOTA: en pg-pool esto puede tener fugas si la conexión se reutiliza
-    // pero se aplica para satisfacer la recomendación de la auditoría)
-    if (dbTenantId) {
-      await pool.query('SELECT set_config($1, $2, false)', ['app.tenant_id', dbTenantId.toString()]);
-    }
+
+    // AISLAMIENTO DE TENANT (fix P0 — tarjeta t_fix_tenant_04)
+    // -------------------------------------------------------
+    // authMiddleware NO debe fijar `app.tenant_id` sobre la conexión del pool.
+    // El bloque anterior (`set_config($1, $2, false)`) era de alcance SESIÓN
+    // (is_local = false): el ajuste sobrevivía al fin de la petición y quedaba
+    // pegado a la conexión que volvía al pool. Cualquier petición posterior que
+    // reutilizara esa conexión —antes de fijar su propio contexto, o en un
+    // camino no autenticado— heredaba el tenant anterior: fuga cross-tenant.
+    //
+    // El contexto de tenant se establece de forma TRANSACCIONAL (is_local = true)
+    // sobre una conexión DEDICADA, por la capa de enrutado de tenant
+    // (config/tenantRouting.js + middleware/tenantContext.js), que además
+    // redirige las consultas hechas con este `pool` a ESA conexión. Aquí solo se
+    // publica el tenant en `req.user` para que esa capa lo aplique.
+    //
+    // NO reintroducir aquí un set_config de sesión. El test
+    // `src/tests/tenantAuthIsolation.test.js` falla si vuelve.
 
     req.user = {
       id: verified.id,
