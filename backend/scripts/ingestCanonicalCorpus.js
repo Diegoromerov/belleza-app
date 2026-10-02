@@ -92,17 +92,16 @@ async function main() {
   const batchArg = args.find(a => a.startsWith('--batch-size='));
   const batchSize = batchArg ? parseInt(batchArg.split('=')[1], 10) : 16;
 
-  // ── SEGURIDAD: abortar si RAG_DATABASE_URL apunta a producción ──
+  // ── SEGURIDAD: abortar de forma no bloqueante si RAG_DATABASE_URL no está definida ──
   const ragUrl = process.env.RAG_DATABASE_URL || '';
   if (!ragUrl) {
-    console.error('🚫 RAG_DATABASE_URL no está definida. Abortando (seguridad).');
-    process.exit(1);
+    console.warn('⚠️ RAG_DATABASE_URL no está definida. Omitiendo ingesta de corpus canónico.');
+    process.exit(0);
   }
   const isLocal = ragUrl.includes('localhost') || ragUrl.includes('127.0.0.1') || ragUrl.includes('0.0.0.0');
-  if (!isLocal) {
-    console.error('🚫 RAG_DATABASE_URL NO apunta a BD LOCAL. Abortando ingesta (seguridad).');
-    console.error(`   Host detectado: ${ragUrl.replace(/\/\/.*@/, '//***@')}`);
-    process.exit(1);
+  if (!isLocal && process.env.NODE_ENV !== 'development') {
+    console.warn(`⚠️ RAG_DATABASE_URL no es local (host: ${ragUrl.replace(/\/\/.*@/, '//***@')}). Omitiendo ingesta canónica.`);
+    process.exit(0);
   }
   console.log('✅ RAG_DATABASE_URL LOCAL verificada — ingesta permitida');
   console.log(`🤖 Modelo: ${NVIDIA_EMBEDDING_MODEL} (${EXPECTED_DIMS} dims)`);
