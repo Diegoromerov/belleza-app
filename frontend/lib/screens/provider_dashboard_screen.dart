@@ -37,9 +37,11 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
   double? _ratingAvg;
   int _ratingCount = 0;
 
-  // Sprint 2 Navigation State
+  // Sprint 2 Navigation & Innovation State
   int _currentIndex = 0;
   String _selectedAgendaFilter = 'TODAS';
+  String _agendaSearchQuery = '';
+  final TextEditingController _agendaSearchController = TextEditingController();
 
   // Localized loading states
   final Set<String> _loadingBookings = {};
@@ -971,6 +973,292 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
     }
   }
 
+  // ─── INNOVATION HELPERS (KAIZEN INNOVATIONS) ───────────────────────
+
+  Map<String, dynamic> _calculateSuggestedDeparture(String scheduledAtIso) {
+    try {
+      final DateTime serviceTime = DateTime.parse(scheduledAtIso).toLocal();
+      final DateTime departureTime =
+          serviceTime.subtract(const Duration(minutes: 40));
+      final DateTime now = DateTime.now();
+
+      final String hourStr =
+          '${departureTime.hour.toString().padLeft(2, '0')}:${departureTime.minute.toString().padLeft(2, '0')}';
+
+      final bool isUrgent =
+          now.isAfter(departureTime.subtract(const Duration(minutes: 15))) &&
+              now.isBefore(serviceTime);
+
+      return {
+        'timeStr': hourStr,
+        'isUrgent': isUrgent,
+        'text': isUrgent
+            ? '🚗 ¡Es momento de salir! (Salida sugerida: $hourStr)'
+            : '🚗 Salida sugerida: $hourStr',
+      };
+    } catch (_) {
+      return {'timeStr': '', 'isUrgent': false, 'text': ''};
+    }
+  }
+
+  Future<void> _showClientNotesDialog(
+      String clientId, String clientName) async {
+    final prefs = await SharedPreferences.getInstance();
+    final String key = 'glowpro_client_notes_$clientId';
+    final String existingNote = prefs.getString(key) ?? '';
+    final TextEditingController noteController =
+        TextEditingController(text: existingNote);
+
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFFFFFDF8),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+            side: BorderSide(
+              color: const Color(0xFFD4AF37).withValues(alpha: 0.4),
+              width: 1.5,
+            ),
+          ),
+          title: Row(
+            children: [
+              const Icon(Icons.note_alt_outlined, color: Color(0xFFC5A052)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Notas Privadas — $clientName',
+                  style: const TextStyle(
+                    fontFamily: 'CormorantGaramond',
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    color: Color(0xFF1F1A15),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Escribe notas confidenciales sobre este cliente (alergias, tono preferido, indicaciones del apto). Solo tú podrás verlas en futuras citas.',
+                style: TextStyle(
+                    fontSize: 12.5, color: Color(0xFF8C7E74), height: 1.4),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: noteController,
+                maxLines: 4,
+                style: const TextStyle(fontSize: 13, color: Color(0xFF1F1A15)),
+                decoration: InputDecoration(
+                  hintText:
+                      'Ej. Prefiere tono mate, piel sensible a cera caliente, timbre no funciona...',
+                  hintStyle: const TextStyle(
+                      color: Color(0xFFB0A89F), fontSize: 12.5),
+                  filled: true,
+                  fillColor: const Color(0xFFFAF6EE),
+                  contentPadding: const EdgeInsets.all(12),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: Color(0xFFEFE8DE)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(
+                        color: Color(0xFFD4AF37), width: 1.5),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancelar',
+                  style: TextStyle(
+                      color: Color(0xFF8C7E74), fontWeight: FontWeight.bold)),
+            ),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1F1A15),
+                foregroundColor: const Color(0xFFFFFDF8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  side: const BorderSide(color: Color(0xFFD4AF37), width: 1),
+                ),
+                elevation: 2,
+              ),
+              onPressed: () async {
+                await prefs.setString(key, noteController.text.trim());
+                if (dialogContext.mounted) {
+                  Navigator.pop(dialogContext);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('🔒 Nota guardada de forma segura.'),
+                      backgroundColor: Color(0xFF1F1A15),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }
+              },
+              icon: const Icon(Icons.save_outlined,
+                  size: 16, color: Color(0xFFD4AF37)),
+              label: const Text('Guardar Nota',
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold, color: Color(0xFFD4AF37))),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showAddToCalendarDialog(Map<String, dynamic> b) {
+    final String serviceName = b['service_name'] ?? 'Servicio GlowPro';
+    final String clientName = b['client_name'] ?? 'Cliente';
+    final String address = b['service_address'] ?? 'Dirección por confirmar';
+    final DateTime date = DateTime.parse(b['scheduled_at']).toLocal();
+    final DateTime endDate = date.add(const Duration(hours: 1));
+
+    final String dayStr =
+        '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')} a las ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+
+    String formatIso(DateTime dt) =>
+        '${dt.year}${dt.month.toString().padLeft(2, '0')}${dt.day.toString().padLeft(2, '0')}T${dt.hour.toString().padLeft(2, '0')}${dt.minute.toString().padLeft(2, '0')}00';
+
+    final String gCalUrl =
+        'https://calendar.google.com/calendar/render?action=TEMPLATE&text=${Uri.encodeComponent('GlowPro: $serviceName — $clientName')}&dates=${formatIso(date)}/${formatIso(endDate)}&details=${Uri.encodeComponent('Cita agendada vía GlowApp con $clientName.')}&location=${Uri.encodeComponent(address)}';
+
+    final String summaryText =
+        '📅 CITA GLOWPRO\n• Cliente: $clientName\n• Servicio: $serviceName\n• Fecha: $dayStr\n• Dirección: $address';
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFFFFFDF8),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+            side: BorderSide(
+              color: const Color(0xFFD4AF37).withValues(alpha: 0.4),
+              width: 1.5,
+            ),
+          ),
+          title: const Row(
+            children: [
+              Icon(Icons.calendar_month_outlined, color: Color(0xFFC5A052)),
+              SizedBox(width: 8),
+              Text(
+                'Sincronizar Calendario',
+                style: TextStyle(
+                  fontFamily: 'CormorantGaramond',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  color: Color(0xFF1F1A15),
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Sincroniza esta cita con tu calendario personal para recibir recordatorios y no cruzar horarios.',
+                style: TextStyle(
+                    fontSize: 13, color: Color(0xFF8C7E74), height: 1.4),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFAF4EB),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFEFE8DE)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '• Servicio: $serviceName',
+                      style: const TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1F1A15)),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '• Cliente: $clientName',
+                      style: const TextStyle(
+                          fontSize: 12, color: Color(0xFF4A4036)),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '• Fecha: $dayStr',
+                      style: const TextStyle(
+                          fontSize: 12, color: Color(0xFF4A4036)),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: summaryText));
+                Navigator.pop(dialogContext);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content:
+                        Text('📋 Resumen de cita copiado al portapapeles.'),
+                    backgroundColor: Color(0xFF1F1A15),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              },
+              child: const Text('Copiar Resumen',
+                  style: TextStyle(
+                      color: Color(0xFF8C7E74), fontWeight: FontWeight.bold)),
+            ),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1F1A15),
+                foregroundColor: const Color(0xFFFFFDF8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  side: const BorderSide(color: Color(0xFFD4AF37), width: 1),
+                ),
+                elevation: 2,
+              ),
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                Clipboard.setData(ClipboardData(text: gCalUrl));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                        '🔗 Enlace de Google Calendar copiado al portapapeles.'),
+                    backgroundColor: Color(0xFF1F1A15),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              },
+              icon: const Icon(Icons.open_in_new_rounded,
+                  size: 16, color: Color(0xFFD4AF37)),
+              label: const Text('Google Calendar',
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold, color: Color(0xFFD4AF37))),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _toggleStatus(bool value) async {
     setState(() {
       _isTogglingStatus = true;
@@ -1681,7 +1969,106 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
+
+                // ─── Innovation 2: Travel & Traffic Assistant ───────────
+                () {
+                  final departure = _calculateSuggestedDeparture(b['scheduled_at'] ?? '');
+                  if (departure['text'].isEmpty) return const SizedBox.shrink();
+                  final bool isUrgent = departure['isUrgent'] ?? false;
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isUrgent ? const Color(0xFFFFF7ED) : const Color(0xFFFAF6EE),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: isUrgent ? const Color(0xFFFED7AA) : const Color(0xFFEFE8DE),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          isUrgent ? Icons.directions_car_filled_rounded : Icons.access_time_rounded,
+                          size: 16,
+                          color: isUrgent ? const Color(0xFFEA580C) : const Color(0xFFC5A052),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            departure['text'],
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.bold,
+                              color: isUrgent ? const Color(0xFF9A3412) : const Color(0xFF4A4036),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }(),
+
+                // ─── Innovations 1 & 3: Notes & Calendar Quick Actions ─────
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    InkWell(
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        _showClientNotesDialog(
+                          b['client_id']?.toString() ?? '',
+                          b['client_name'] ?? 'Cliente',
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFAF4EB),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: const Color(0xFFD4AF37).withValues(alpha: 0.3)),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.note_alt_outlined, size: 14, color: Color(0xFFC5A052)),
+                            SizedBox(width: 4),
+                            Text('Notas VIP',
+                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1F1A15))),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    InkWell(
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        _showAddToCalendarDialog(b);
+                      },
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFAF4EB),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: const Color(0xFFD4AF37).withValues(alpha: 0.3)),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.calendar_month_outlined, size: 14, color: Color(0xFFC5A052)),
+                            SizedBox(width: 4),
+                            Text('Calendario',
+                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1F1A15))),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 12),
                 const Divider(color: Color(0xFFEFE8DE), height: 1),
                 const SizedBox(height: 16),
                 Container(
@@ -2065,6 +2452,53 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
     );
   }
 
+  Widget _buildAgendaSearchBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFDF8),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFEFE8DE), width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFC5A052).withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: TextField(
+        controller: _agendaSearchController,
+        onChanged: (val) {
+          setState(() {
+            _agendaSearchQuery = val.trim().toLowerCase();
+          });
+        },
+        style: const TextStyle(fontSize: 13, color: Color(0xFF1F1A15)),
+        decoration: InputDecoration(
+          hintText: 'Buscar por cliente, servicio o dirección...',
+          hintStyle: const TextStyle(color: Color(0xFF9E948A), fontSize: 12.5),
+          prefixIcon:
+              const Icon(Icons.search_rounded, color: Color(0xFFC5A052), size: 20),
+          suffixIcon: _agendaSearchQuery.isNotEmpty
+              ? IconButton(
+                  icon: const Icon(Icons.clear_rounded,
+                      size: 18, color: Color(0xFF8C7E74)),
+                  onPressed: () {
+                    _agendaSearchController.clear();
+                    setState(() {
+                      _agendaSearchQuery = '';
+                    });
+                  },
+                )
+              : null,
+          border: InputBorder.none,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        ),
+      ),
+    );
+  }
+
   Widget _buildAgendaFilterChips() {
     final filters = [
       {'id': 'TODAS', 'label': 'Todas'},
@@ -2151,6 +2585,18 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
       filtered = filtered.where((b) {
         final st = (b['status'] as String? ?? '').toUpperCase();
         return st == 'CANCELLED' || st == 'CANCELADA' || st == 'EN_DISPUTA';
+      }).toList();
+    }
+
+    // ─── Innovation 4: Real-time search query matching ───────────────
+    if (_agendaSearchQuery.isNotEmpty) {
+      filtered = filtered.where((b) {
+        final clientName = (b['client_name'] ?? '').toString().toLowerCase();
+        final serviceName = (b['service_name'] ?? '').toString().toLowerCase();
+        final address = (b['service_address'] ?? '').toString().toLowerCase();
+        return clientName.contains(_agendaSearchQuery) ||
+            serviceName.contains(_agendaSearchQuery) ||
+            address.contains(_agendaSearchQuery);
       }).toList();
     }
 
@@ -2414,7 +2860,65 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                           ],
                         ],
                       ),
-                      const SizedBox(height: 16),
+                       const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          InkWell(
+                            onTap: () {
+                              HapticFeedback.lightImpact();
+                              _showClientNotesDialog(
+                                b['client_id']?.toString() ?? '',
+                                b['client_name'] ?? 'Cliente',
+                              );
+                            },
+                            borderRadius: BorderRadius.circular(20),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFAF4EB),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: const Color(0xFFD4AF37).withValues(alpha: 0.3)),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.note_alt_outlined, size: 13, color: Color(0xFFC5A052)),
+                                  SizedBox(width: 4),
+                                  Text('Notas VIP',
+                                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1F1A15))),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          InkWell(
+                            onTap: () {
+                              HapticFeedback.lightImpact();
+                              _showAddToCalendarDialog(b);
+                            },
+                            borderRadius: BorderRadius.circular(20),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFAF4EB),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: const Color(0xFFD4AF37).withValues(alpha: 0.3)),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.calendar_month_outlined, size: 13, color: Color(0xFFC5A052)),
+                                  SizedBox(width: 4),
+                                  Text('Calendario',
+                                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1F1A15))),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
                       _buildCardActionButtons(b),
                     ],
                   ),
@@ -2713,7 +3217,9 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             children: [
               _buildAgendaHeroBanner(),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
+              _buildAgendaSearchBar(),
+              const SizedBox(height: 14),
               _buildAgendaFilterChips(),
               const SizedBox(height: 20),
               _buildAgendaList(limitToRecent: false, filter: _selectedAgendaFilter),
