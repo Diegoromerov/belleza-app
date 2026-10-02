@@ -2664,18 +2664,23 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
         child: FloatingActionButton(
           heroTag: 'sos_provider_fab',
           onPressed: _loadingSOS ? null : _showSOSConfirmationDialog,
-          backgroundColor: const Color(0xFFDC2626),
-          foregroundColor: Colors.white,
-          elevation: 4,
-          shape: const CircleBorder(),
+          backgroundColor: const Color(0xFF800A0A),
+          foregroundColor: const Color(0xFFFAF4EB),
+          elevation: 6,
+          shape: CircleBorder(
+            side: BorderSide(
+              color: const Color(0xFFD4AF37).withValues(alpha: 0.8),
+              width: 1.8,
+            ),
+          ),
           child: _loadingSOS
               ? const SizedBox(
                   width: 24,
                   height: 24,
                   child: CircularProgressIndicator(
-                      strokeWidth: 2.5, color: Colors.white),
+                      strokeWidth: 2.5, color: Color(0xFFD4AF37)),
                 )
-              : const Icon(Icons.emergency_outlined, size: 28),
+              : const Icon(Icons.emergency_outlined, size: 28, color: Color(0xFFFAF4EB)),
         ),
       ),
     );
@@ -2953,13 +2958,20 @@ class _PulsingStatusChipState extends State<PulsingStatusChip>
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: widget.isActive ? const Color(0xFFDCFCE7) : Colors.grey[200],
+          color: widget.isActive ? const Color(0xFFFAF4EB) : const Color(0xFFF0EBE6),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color:
-                widget.isActive ? const Color(0xFF86EFAC) : Colors.grey[300]!,
-            width: 1,
+                widget.isActive ? const Color(0xFFD4AF37) : const Color(0xFFD1C7BD),
+            width: 1.2,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFC5A052).withValues(alpha: 0.08),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -2969,7 +2981,7 @@ class _PulsingStatusChipState extends State<PulsingStatusChip>
                 width: 8,
                 height: 8,
                 child: CircularProgressIndicator(
-                    strokeWidth: 1.5, color: Color(0xFF16A34A)),
+                    strokeWidth: 1.5, color: Color(0xFFC5A052)),
               )
             else if (widget.isActive)
               ScaleTransition(
@@ -2989,9 +3001,9 @@ class _PulsingStatusChipState extends State<PulsingStatusChip>
               Container(
                 width: 8,
                 height: 8,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.grey[600],
+                  color: Color(0xFF9E948A),
                 ),
               ),
             const SizedBox(width: 6),
@@ -3001,8 +3013,8 @@ class _PulsingStatusChipState extends State<PulsingStatusChip>
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
                 color: widget.isActive
-                    ? const Color(0xFF15803D)
-                    : Colors.grey[700],
+                    ? const Color(0xFF1F1A15)
+                    : const Color(0xFF8C7E74),
               ),
             ),
           ],
@@ -3050,17 +3062,26 @@ class _OtpTimerWidgetState extends State<OtpTimerWidget> {
   Widget build(BuildContext context) {
     final minutes = (_secondsLeft ~/ 60).toString().padLeft(2, '0');
     final seconds = (_secondsLeft % 60).toString().padLeft(2, '0');
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        const Icon(Icons.timer_outlined, size: 14, color: Colors.orange),
-        const SizedBox(width: 6),
-        Text(
-          'Tiempo sugerido de confirmación: $minutes:$seconds',
-          style: const TextStyle(
-              fontSize: 12, color: Colors.orange, fontWeight: FontWeight.bold),
-        ),
-      ],
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFAF4EB),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFEFE8DE)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.timer_outlined, size: 14, color: Color(0xFFC5A052)),
+          const SizedBox(width: 6),
+          Text(
+            'Tiempo sugerido de confirmación: $minutes:$seconds',
+            style: const TextStyle(
+                fontSize: 11.5, color: Color(0xFF1F1A15), fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
     );
   }
 }
