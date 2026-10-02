@@ -9,6 +9,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import '../../services/auth_service.dart';
+import '../../services/permission_rationale_service.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../shared/theme.dart';
 import '../../shared/widgets/background_video_player.dart';
 import '../../data/colombia_municipalities.dart';
@@ -1109,7 +1111,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               try {
                                 LocationPermission permission = await Geolocator.checkPermission();
                                 if (permission == LocationPermission.denied) {
-                                  permission = await Geolocator.requestPermission();
+                                  // FIX-FLUTTER-02: rationale en UI antes del prompt del SO.
+                                  if (!mounted) return;
+                                  final accepted = await PermissionRationaleService
+                                      .showRationaleDialog(context, Permission.location);
+                                  if (accepted) {
+                                    permission = await Geolocator.requestPermission();
+                                  }
                                 }
                                 if (permission == LocationPermission.whileInUse ||
                                     permission == LocationPermission.always) {

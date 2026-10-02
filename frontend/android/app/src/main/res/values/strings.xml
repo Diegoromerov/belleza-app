@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- FIX-FLUTTER-02 — P1: Android Permisos Sin Description.
+     Justificación de uso para los permisos peligrosos declarados en el
+     AndroidManifest principal (android:description). -->
+<resources>
+    <string name="permission_location_rationale">GlowApp usa tu ubicación para mostrarte salones y profesionales de belleza cercanos. Solo se accede a la ubicación mientras usas la aplicación.</string>
+    <string name="permission_microphone_rationale">GlowApp usa el micrófono para que puedas dictar mensajes y realizar búsquedas por voz. El audio se procesa únicamente mientras activas el botón de voz.</string>
+</resources>

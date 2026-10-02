@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:permission_handler/permission_handler.dart';
 import '../../design/icons/glow_icon_adapter.dart';
+import '../../services/permission_rationale_service.dart';
 /// VoiceInput widget.
 /// Calls `onTranscript` with the final recognized text.
 /// No other callbacks are exposed.
@@ -33,6 +35,16 @@ class _VoiceInputState extends State<VoiceInput> {
 
   Future<void> _startListening() async {
     if (!_isListening) {
+      // FIX-FLUTTER-02: rationale en UI antes del prompt del SO.
+      final micStatus = await Permission.microphone.status;
+      if (micStatus.isDenied) {
+        if (!mounted) return;
+        final accepted = await PermissionRationaleService.showRationaleDialog(
+          context,
+          Permission.microphone,
+        );
+        if (!accepted) return;
+      }
       bool available = await _speech.initialize();
       if (!available) {
         setState(() {

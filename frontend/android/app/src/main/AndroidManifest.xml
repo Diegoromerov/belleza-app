@@ -1,9 +1,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.beauty_app">
     <uses-permission android:name="android.permission.INTERNET"/>
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
-    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <!-- N-17: resuelto en la integración Fase D — unión de flutter_01 (P0: permisos
+         faltantes) y flutter_02 (P1: rationale). Los tres permisos peligrosos se declaran
+         UNA sola vez, con la descripción de flutter_02; el resto son de flutter_01. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"
+        android:description="@string/permission_location_rationale"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"
+        android:description="@string/permission_location_rationale"/>
+    <uses-permission android:name="android.permission.RECORD_AUDIO"
+        android:description="@string/permission_microphone_rationale"/>
     <!-- PR-FIX P0: beauty-scan usa la camara (paquete `camera` + image_picker).
          Sin estas declaraciones la app no puede abrir la camara en Android. -->
     <uses-permission android:name="android.permission.CAMERA"/>
