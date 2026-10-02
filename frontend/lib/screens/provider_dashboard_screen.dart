@@ -3054,6 +3054,16 @@ class _SegmentedPinDialogState extends State<SegmentedPinDialog> {
   String? _error;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _focusNodes[0].requestFocus();
+      }
+    });
+  }
+
+  @override
   void dispose() {
     for (var c in _controllers) {
       c.dispose();
@@ -3121,13 +3131,27 @@ class _SegmentedPinDialogState extends State<SegmentedPinDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+        side: BorderSide(
+          color: const Color(0xFFD4AF37).withValues(alpha: 0.4),
+          width: 1.5,
+        ),
+      ),
+      backgroundColor: const Color(0xFFFFFDF8),
       title: const Row(
         children: [
-          Icon(Icons.verified_user_outlined, color: AppTheme.primary),
+          Icon(Icons.verified_user_outlined, color: Color(0xFFC5A052)),
           SizedBox(width: 8),
-          Text('Verificación Escrow',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+          Text(
+            'Verificación Escrow',
+            style: TextStyle(
+              fontFamily: 'CormorantGaramond',
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+              color: Color(0xFF1F1A15),
+            ),
+          ),
         ],
       ),
       content: Column(
@@ -3136,7 +3160,7 @@ class _SegmentedPinDialogState extends State<SegmentedPinDialog> {
         children: [
           const Text(
             'Pídele al cliente el PIN de 4 dígitos generado en su pantalla para liberar los fondos.',
-            style: TextStyle(fontSize: 13, color: Colors.black54),
+            style: TextStyle(fontSize: 13, color: Color(0xFF8C7E74)),
           ),
           const SizedBox(height: 20),
           Row(
@@ -3146,13 +3170,13 @@ class _SegmentedPinDialogState extends State<SegmentedPinDialog> {
                 width: 50,
                 height: 50,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF5EBE6),
-                  borderRadius: BorderRadius.circular(12),
+                  color: const Color(0xFFFAF4EB),
+                  borderRadius: BorderRadius.circular(14),
                   border: Border.all(
                     color: _focusNodes[index].hasFocus
-                        ? AppTheme.primary
-                        : Colors.transparent,
-                    width: 2,
+                        ? const Color(0xFFD4AF37)
+                        : const Color(0xFFE8DFD8),
+                    width: _focusNodes[index].hasFocus ? 2 : 1,
                   ),
                 ),
                 child: Semantics(
@@ -3169,12 +3193,13 @@ class _SegmentedPinDialogState extends State<SegmentedPinDialog> {
                     style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF881337)),
+                        color: Color(0xFFC5A052)),
                     decoration: const InputDecoration(
                       counterText: '',
                       border: InputBorder.none,
                     ),
                     onChanged: (val) {
+                      HapticFeedback.selectionClick();
                       if (val.length == 1) {
                         if (index < 3) {
                           _focusNodes[index + 1].requestFocus();
