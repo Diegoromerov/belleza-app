@@ -80,6 +80,15 @@ async function main() {
     );
     const baseVacia = estado.tablas === 0;
 
+    if (!baseVacia && estado.tablas > 30 && process.env.FORCE_PREPARE !== 'true') {
+      const roleCheck = await cliente.query("SELECT 1 FROM pg_roles WHERE rolname = 'app_rls_user';");
+      if (roleCheck.rows.length > 0) {
+        console.log(`✅ Base de datos ya preparada (${estado.tablas} tablas y rol app_rls_user presente). Omitiendo ejecuciones redundantes.`);
+        await cliente.end();
+        process.exit(0);
+      }
+    }
+
     console.log(
       baseVacia
         ? '📦 Base vacía: se aplica el esquema completo (init.sql incluido).'
