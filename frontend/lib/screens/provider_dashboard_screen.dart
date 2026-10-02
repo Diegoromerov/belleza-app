@@ -1684,25 +1684,49 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                 const SizedBox(height: 16),
                 const Divider(color: Color(0xFFEFE8DE), height: 1),
                 const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _buildStepIndicator(1, "Ruta", currentStep >= 1),
-                    _buildStepLine(currentStep >= 2),
-                    _buildStepIndicator(2, "Iniciar", currentStep >= 2),
-                    _buildStepLine(currentStep >= 3),
-                    _buildStepIndicator(3, "Terminar", currentStep >= 3),
-                    _buildStepLine(currentStep >= 4),
-                    _buildStepIndicator(4, "OTP", currentStep >= 4),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  _getStepDescription(currentStep),
-                  style: const TextStyle(
-                      fontSize: 13,
-                      fontStyle: FontStyle.italic,
-                      color: Color(0xFF4A4036)),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFAF6EE),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: const Color(0xFFD4AF37).withValues(alpha: 0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _buildStepIndicator(1, "Ruta", currentStep >= 1),
+                          _buildStepLine(currentStep >= 2),
+                          _buildStepIndicator(2, "Iniciar", currentStep >= 2),
+                          _buildStepLine(currentStep >= 3),
+                          _buildStepIndicator(3, "Terminar", currentStep >= 3),
+                          _buildStepLine(currentStep >= 4),
+                          _buildStepIndicator(4, "OTP", currentStep >= 4),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          const Icon(Icons.shield_outlined, size: 14, color: Color(0xFFC5A052)),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              _getStepDescription(currentStep),
+                              style: const TextStyle(
+                                  fontSize: 12,
+                                  fontStyle: FontStyle.italic,
+                                  color: Color(0xFF4A4036),
+                                  fontWeight: FontWeight.w500),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 16),
                 if (isLoading)
@@ -2228,38 +2252,67 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                     children: [
                       Row(
                         children: [
-                          CircleAvatar(
-                            radius: 20,
-                            backgroundColor: const Color(0xFFFAF4EB),
-                            child: Text(
-                              clientInitial,
-                              style: const TextStyle(
-                                  color: Color(0xFFC5A052),
-                                  fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  b['client_name'] ?? 'Cliente',
-                                  style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFF1F1A15)),
+                          InkWell(
+                            onTap: () {
+                              final clientId = b['client_id']?.toString();
+                              if (clientId == null) return;
+                              HapticFeedback.lightImpact();
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => ChatScreen(
+                                    partnerId: clientId,
+                                    partnerName: b['client_name'] ?? 'Cliente',
+                                    partnerRole: 'client',
+                                    partnerAvatar: '',
+                                  ),
                                 ),
-                                const Text(
-                                  'Contacto seguro vía Chat',
-                                  style: TextStyle(
-                                      fontSize: 12,
-                                      color: Color(0xFFC5A052),
-                                      fontWeight: FontWeight.w500),
+                              );
+                            },
+                            borderRadius: BorderRadius.circular(16),
+                            child: Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 20,
+                                  backgroundColor: const Color(0xFFFAF4EB),
+                                  child: Text(
+                                    clientInitial,
+                                    style: const TextStyle(
+                                        color: Color(0xFFC5A052),
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      b['client_name'] ?? 'Cliente',
+                                      style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF1F1A15)),
+                                    ),
+                                    const Row(
+                                      children: [
+                                        Icon(Icons.chat_bubble_outline_rounded,
+                                            size: 12, color: Color(0xFFC5A052)),
+                                        SizedBox(width: 4),
+                                        Text(
+                                          'Contacto seguro vía Chat',
+                                          style: TextStyle(
+                                              fontSize: 11.5,
+                                              color: Color(0xFFC5A052),
+                                              fontWeight: FontWeight.w600),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
                           ),
+                          const Spacer(),
                           Container(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 10, vertical: 6),
