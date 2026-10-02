@@ -705,12 +705,12 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
           Expanded(
             child: OutlinedButton.icon(
               onPressed: () => _showPayoutBreakdownDialog(b),
-              icon: const Icon(Icons.receipt_long_outlined, size: 16),
+              icon: const Icon(Icons.receipt_long_outlined, size: 16, color: Color(0xFFC5A052)),
               label: const Text('Ver Liquidación',
-                  style: TextStyle(fontSize: 12.5)),
+                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFF1F1A15))),
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppTheme.primary,
-                side: const BorderSide(color: AppTheme.primary, width: 1.5),
+                foregroundColor: const Color(0xFF1F1A15),
+                side: const BorderSide(color: Color(0xFFC5A052), width: 1.5),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30)),
                 padding: const EdgeInsets.symmetric(vertical: 10),
@@ -735,12 +735,13 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                   ),
                 );
               },
-              icon: const Icon(Icons.chat_bubble_outline_rounded, size: 16),
-              label: const Text('Chatear', style: TextStyle(fontSize: 12.5)),
+              icon: const Icon(Icons.chat_bubble_outline_rounded, size: 16, color: Color(0xFFD4AF37)),
+              label: const Text('Chatear', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFFFFFDF8))),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primary,
-                foregroundColor: Colors.white,
-                elevation: 0,
+                backgroundColor: const Color(0xFF1F1A15),
+                foregroundColor: const Color(0xFFFFFDF8),
+                elevation: 2,
+                shadowColor: const Color(0xFFC5A052).withValues(alpha: 0.2),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30)),
                 padding: const EdgeInsets.symmetric(vertical: 10),
@@ -769,11 +770,11 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                   ),
                 );
               },
-              icon: const Icon(Icons.chat_bubble_outline_rounded, size: 16),
-              label: const Text('Chat', style: TextStyle(fontSize: 12.5)),
+              icon: const Icon(Icons.chat_bubble_outline_rounded, size: 16, color: Color(0xFFC5A052)),
+              label: const Text('Chat', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFF1F1A15))),
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppTheme.primary,
-                side: const BorderSide(color: AppTheme.primary, width: 1.5),
+                foregroundColor: const Color(0xFF1F1A15),
+                side: const BorderSide(color: Color(0xFFC5A052), width: 1.5),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30)),
                 padding: const EdgeInsets.symmetric(vertical: 10),
@@ -792,32 +793,44 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          backgroundColor: const Color(0xFFFFFDF8),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+            side: BorderSide(
+              color: const Color(0xFFD4AF37).withValues(alpha: 0.4),
+              width: 1.5,
+            ),
+          ),
           title: const Row(
             children: [
-              Icon(Icons.support_agent_outlined, color: Colors.orange),
+              Icon(Icons.support_agent_outlined, color: Color(0xFFC5A052)),
               SizedBox(width: 8),
               Text('Asistencia / Soporte',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                  style: TextStyle(
+                      fontFamily: 'CormorantGaramond',
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                      color: Color(0xFF1F1A15))),
             ],
           ),
           content: const Text(
             'Si el cliente no tiene acceso a internet o no puede ver su código OTP en este momento, puedes solicitar la liberación manual del servicio reportando el caso a soporte o abriendo una disputa temporal.',
-            style: TextStyle(fontSize: 13.5, height: 1.4),
+            style: TextStyle(fontSize: 13.5, height: 1.4, color: Color(0xFF8C7E74)),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
               child:
-                  const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+                  const Text('Cancelar', style: TextStyle(color: Color(0xFF8C7E74), fontWeight: FontWeight.bold)),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0284C7),
-                foregroundColor: Colors.white,
+                backgroundColor: const Color(0xFF1F1A15),
+                foregroundColor: const Color(0xFFFFFDF8),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20)),
+                    borderRadius: BorderRadius.circular(20),
+                    side: const BorderSide(color: Color(0xFFC5A052), width: 1)),
+                elevation: 2,
               ),
               onPressed: () async {
                 navigator.pop(); // Cerrar
@@ -831,7 +844,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                       const SnackBar(
                         content: Text(
                             '⚠️ Se ha reportado el caso. El servicio se encuentra en revisión de soporte.'),
-                        backgroundColor: Colors.orange,
+                        backgroundColor: Color(0xFF1F1A15),
                       ),
                     );
                   }
@@ -850,7 +863,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                 }
               },
               child: const Text('Reportar Caso a Soporte',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
+                  style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFD4AF37))),
             ),
           ],
         );
@@ -862,37 +875,50 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: const Color(0xFFFFFDF8),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+          side: BorderSide(
+            color: const Color(0xFFD4AF37).withValues(alpha: 0.4),
+            width: 1.5,
+          ),
+        ),
         title: const Row(
           children: [
-            Icon(Icons.check_circle_outline, color: Color(0xFF16A34A)),
+            Icon(Icons.check_circle_outline, color: Color(0xFFC5A052)),
             SizedBox(width: 8),
             Text('¿Finalizar Servicio?',
-                style: TextStyle(fontWeight: FontWeight.bold)),
+                style: TextStyle(
+                    fontFamily: 'CormorantGaramond',
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                    color: Color(0xFF1F1A15))),
           ],
         ),
         content: const Text(
           '¿Estás seguro de que has terminado el servicio? Al confirmar, el cliente recibirá su código PIN de verificación en su app.',
+          style: TextStyle(fontSize: 13.5, height: 1.4, color: Color(0xFF8C7E74)),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Volver al servicio',
-                style: TextStyle(color: Colors.grey)),
+                style: TextStyle(color: Color(0xFF8C7E74), fontWeight: FontWeight.bold)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF16A34A),
-              foregroundColor: Colors.white,
+              backgroundColor: const Color(0xFF1F1A15),
+              foregroundColor: const Color(0xFFFFFDF8),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20)),
-              elevation: 0,
+                  borderRadius: BorderRadius.circular(20),
+                  side: const BorderSide(color: Color(0xFFD4AF37), width: 1)),
+              elevation: 2,
             ),
             onPressed: () {
               Navigator.pop(context);
               _handleCompleteService(bookingId);
             },
-            child: const Text('Sí, Finalizar'),
+            child: const Text('Sí, Finalizar', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFD4AF37))),
           ),
         ],
       ),
@@ -1093,17 +1119,26 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+          backgroundColor: const Color(0xFFFFFDF8),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(28),
+            side: BorderSide(
+              color: const Color(0xFFD4AF37).withValues(alpha: 0.5),
+              width: 1.5,
+            ),
+          ),
           title: const Row(
             children: [
               Icon(Icons.warning_amber_rounded,
-                  color: Color(0xFFDC2626), size: 28),
+                  color: Color(0xFF800A0A), size: 28),
               SizedBox(width: 8),
               Text(
                 '🚨 ALERTA SOS',
                 style: TextStyle(
-                    fontWeight: FontWeight.bold, color: Color(0xFFDC2626)),
+                    fontFamily: 'CormorantGaramond',
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF800A0A),
+                    fontSize: 22),
               ),
             ],
           ),
@@ -1116,13 +1151,13 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                 style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 15,
-                    color: Colors.black87),
+                    color: Color(0xFF1F1A15)),
               ),
               SizedBox(height: 12),
               Text(
                 'Al confirmar, se enviará una alerta silenciosa con tu ubicación actual a la central de seguridad de la plataforma y te daremos la opción de llamar directamente al número de emergencias (123).',
                 style: TextStyle(
-                    fontSize: 13.5, height: 1.4, color: Colors.black54),
+                    fontSize: 13.5, height: 1.4, color: Color(0xFF8C7E74)),
               ),
             ],
           ),
@@ -1135,16 +1170,17 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
               child: const Text(
                 'Cancelar',
                 style:
-                    TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
+                    TextStyle(color: Color(0xFF8C7E74), fontWeight: FontWeight.bold),
               ),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFDC2626),
-                foregroundColor: Colors.white,
+                backgroundColor: const Color(0xFF800A0A),
+                foregroundColor: const Color(0xFFFAF4EB),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20)),
-                elevation: 0,
+                    borderRadius: BorderRadius.circular(20),
+                    side: const BorderSide(color: Color(0xFFD4AF37), width: 1)),
+                elevation: 3,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               ),
@@ -1155,10 +1191,10 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
               child: const Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.security, size: 18),
+                  Icon(Icons.security, size: 18, color: Color(0xFFD4AF37)),
                   SizedBox(width: 6),
                   Text('SÍ, ENVIAR SOS',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
+                      style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFFAF4EB))),
                 ],
               ),
             ),
@@ -1240,12 +1276,13 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) {
         return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFFDF8),
+            borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(28),
               topRight: Radius.circular(28),
             ),
+            border: Border.all(color: const Color(0xFFD4AF37).withValues(alpha: 0.5), width: 1.5),
           ),
           padding: EdgeInsets.only(
             left: 24,
@@ -1258,30 +1295,32 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Icon(Icons.check_circle_outline,
-                    color: Colors.green, size: 52),
+                    color: Color(0xFFC5A052), size: 52),
                 const SizedBox(height: 12),
                 const Text(
                   'Alerta SOS Registrada',
                   style: TextStyle(
+                      fontFamily: 'CormorantGaramond',
                       fontWeight: FontWeight.bold,
-                      fontSize: 20,
-                      color: Colors.black87),
+                      fontSize: 22,
+                      color: Color(0xFF1F1A15)),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   message,
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                      color: Colors.grey[600], fontSize: 14, height: 1.4),
+                  style: const TextStyle(
+                      color: Color(0xFF8C7E74), fontSize: 14, height: 1.4),
                 ),
                 const SizedBox(height: 16),
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFDC2626),
-                    foregroundColor: Colors.white,
+                    backgroundColor: const Color(0xFF800A0A),
+                    foregroundColor: const Color(0xFFFAF4EB),
                     minimumSize: const Size(double.infinity, 48),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24)),
+                        borderRadius: BorderRadius.circular(24),
+                        side: const BorderSide(color: Color(0xFFD4AF37), width: 1)),
                     elevation: 2,
                   ),
                   onPressed: () {
@@ -1289,21 +1328,21 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('📞 Marcando al 123 (Emergencias)...'),
-                        backgroundColor: Color(0xFFDC2626),
+                        backgroundColor: Color(0xFF800A0A),
                       ),
                     );
                   },
-                  icon: const Icon(Icons.phone_in_talk_rounded),
+                  icon: const Icon(Icons.phone_in_talk_rounded, color: Color(0xFFD4AF37)),
                   label: const Text(
                     'LLAMAR A EMERGENCIAS (123)',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFFFAF4EB)),
                   ),
                 ),
                 const SizedBox(height: 8),
                 OutlinedButton(
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size(double.infinity, 44),
-                    side: const BorderSide(color: Color(0xFFE8D7D3), width: 1.5),
+                    side: const BorderSide(color: Color(0xFFC5A052), width: 1.5),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(22)),
                   ),
@@ -1311,7 +1350,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                   child: const Text(
                     'Entendido / Cerrar',
                     style: TextStyle(
-                        color: AppTheme.primary, fontWeight: FontWeight.bold),
+                        color: Color(0xFF1F1A15), fontWeight: FontWeight.bold),
                   ),
                 ),
               ],
