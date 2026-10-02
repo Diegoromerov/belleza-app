@@ -169,4 +169,46 @@ describe('verifyNoVersionedSecrets — Pipeline Pure Scanner Test (CRLF / LF Inv
     expect(evalCRLFNoNorm.val).toBe('Xk92LmQ7ppQzRt4VbN8wYs3Dd6Ff\r');
     expect(evalCRLFNoNorm.val).not.toBe(evalLFNoNorm.val);
   });
+
+  describe('Regla 8 (N-10): contraseñas EN TEXTO PLANO versionadas', () => {
+    const NOMBRE = 'contraseña en texto plano (literal versionado)';
+
+    test('Positivos: las formas del hallazgo N-10 se detectan (una por línea)', () => {
+      const casos = [
+        { archivo: 'seed/prestador-demo.sql', n: '7', linea: "-- Contraseña en texto plano: 'Demo123456'" },
+        { archivo: 'seed/prestador-demo.sql', n: '149', linea: "    RAISE NOTICE 'Password: Demo123456';" },
+        { archivo: 'src/db/seed_3years_saas_data.js', n: '26', linea: "        password_hash: '<HASH>', // password123" },
+        { archivo: 'src/db/seed_3years_saas_data.js', n: '230', linea: "    console.log('   Password: password123');" },
+        { archivo: 'scripts/beauty-app-start.ps1', n: '34', linea: '    client = @{ email = "a@b.com"; password = "password123"; role = "client" }' }
+      ];
+
+      for (const caso of casos) {
+        const res = analizarSalida(`${caso.archivo}:${caso.n}:${caso.linea}\n`);
+        expect(res.hallazgos).toHaveLength(1);
+        expect(res.hallazgos[0].nombre).toBe(NOMBRE);
+        expect(res.exitCode).toBe(1);
+      }
+    });
+
+    test('Negativos: referencias de código, tipos, actas y prosa de UI NO se marcan', () => {
+      const casos = [
+        '    password: process.env.DB_PASSWORD,',
+        '  login: (email: string, password: string) => Promise<AuthResponse>;',
+        '    const hashedPassword = await bcrypt.hash(password, 10);',
+        "    const password_hash = params[2] || '';",
+        '  "registerPasswordError": "Minimum 6 characters",',
+        '      "Login password: S4TextField",',
+        "        password_hash: '<HASH>', // hash bcrypt de la clave demo (REDACTED — se define con SEED_PASSWORD al sembrar)"
+      ];
+
+      for (const linea of casos) {
+        expect(analizarSalida(`src/config/app.js:10:${linea}\n`).hallazgos).toHaveLength(0);
+      }
+    });
+
+    test('El valor nunca se imprime: el hallazgo sólo trae archivo, línea y tipo', () => {
+      const res = analizarSalida("backend/seed/prestador-demo.sql:149:    RAISE NOTICE 'Password: Demo123456';\n");
+      expect(Object.keys(res.hallazgos[0]).sort()).toEqual(['archivo', 'nombre', 'numLinea']);
+    });
+  });
 });

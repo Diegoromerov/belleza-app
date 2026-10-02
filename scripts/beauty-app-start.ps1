@@ -9,9 +9,9 @@
 .NOTES
     - Ejecutar como Administrador en PowerShell
     - Requisitos: Docker Desktop, Node.js 18+, Flutter 3.44+, PostgreSQL con PostGIS
-    - Credenciales de prueba:
-        • Cliente: miusuario@correo.com / password123
-        • Provider: provider@beautyapp.com / password123
+    - Credenciales de prueba: NO versionadas (ver $env:GLOW_TEST_PASSWORD)
+        • Cliente: miusuario@correo.com
+        • Provider: provider@beautyapp.com
 #>
 
 # ==========================================
@@ -26,13 +26,15 @@ $redisContainer = "beauty-redis"
 $backendPort = 3000
 $frontendPort = 8081
 $adminEmail = "admin"
-$adminPassword = "admin123"
+# Clave de admin NO versionada: se toma del entorno.
+$adminPassword = $env:GLOW_ADMIN_PASSWORD
 $dbName = "beauty_db"
 
-# Credenciales de prueba
+# Credenciales de prueba (la clave NO se versiona: definir $env:GLOW_TEST_PASSWORD)
+$testPassword = $env:GLOW_TEST_PASSWORD
 $testUsers = @{
-    client = @{ email = "miusuario@correo.com"; password = "password123"; role = "client" }
-    provider = @{ email = "provider@beautyapp.com"; password = "password123"; role = "provider" }
+    client = @{ email = "miusuario@correo.com"; password = $testPassword; role = "client" }
+    provider = @{ email = "provider@beautyapp.com"; password = $testPassword; role = "provider" }
 }
 
 # ==========================================
