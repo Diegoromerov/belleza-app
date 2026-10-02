@@ -2187,6 +2187,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
     required int index,
     required String semanticName,
     required String label,
+    String? assetPath,
     bool isMen = false,
   }) {
     final isSelected = _currentIndex == index;
@@ -2207,14 +2208,21 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                GlowIcon.resolve(
-                  semanticName,
-                  size: 20,
-                  color: isSelected
-                      ? const Color(0xFFC5A052)
-                      : (isMen ? const Color(0xFFB0A89F) : const Color(0xFF8C7A6B)),
-                  semanticLabel: label,
-                ),
+                assetPath != null
+                    ? Image.asset(
+                        assetPath,
+                        width: 24,
+                        height: 24,
+                        fit: BoxFit.contain,
+                      )
+                    : GlowIcon.resolve(
+                        semanticName,
+                        size: 20,
+                        color: isSelected
+                            ? const Color(0xFFC5A052)
+                            : (isMen ? const Color(0xFFB0A89F) : const Color(0xFF8C7A6B)),
+                        semanticLabel: label,
+                      ),
                 const SizedBox(height: 3),
                 Text(
                   label,
@@ -2241,6 +2249,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
     required int index,
     required String semanticName,
     required String label,
+    String? assetPath,
     bool isMen = false,
   }) {
     final isSelected = _currentIndex == index;
@@ -2283,12 +2292,19 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                   ),
                 ),
                 child: Center(
-                  child: GlowIcon.resolve(
-                    semanticName,
-                    size: 24,
-                    color: Colors.white,
-                    semanticLabel: label,
-                  ),
+                  child: assetPath != null
+                      ? Image.asset(
+                          assetPath,
+                          width: 28,
+                          height: 28,
+                          fit: BoxFit.contain,
+                        )
+                      : GlowIcon.resolve(
+                          semanticName,
+                          size: 24,
+                          color: Colors.white,
+                          semanticLabel: label,
+                        ),
                 ),
               ),
               const SizedBox(height: 2),
@@ -2562,18 +2578,21 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                   _buildNavItem(
                     index: 0,
                     semanticName: 'home',
+                    assetPath: 'assets/icons/glow/nav_provider_home.png',
                     label: 'Inicio',
                     isMen: isMen,
                   ),
                   _buildNavItem(
                     index: 1,
                     semanticName: 'calendar',
+                    assetPath: 'assets/icons/glow/nav_citas.webp',
                     label: 'Agenda',
                     isMen: isMen,
                   ),
                   _buildNavItem(
                     index: 2,
                     semanticName: 'wallet',
+                    assetPath: 'assets/icons/glow/nav_provider_wallet.png',
                     label: 'Wallet',
                     isMen: isMen,
                   ),
@@ -2582,6 +2601,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                   _buildProminentCenterNavItem(
                     index: 3,
                     semanticName: 'bag',
+                    assetPath: 'assets/icons/glow/nav_glowshop.webp',
                     label: 'GlowShop',
                     isMen: isMen,
                   ),
@@ -2589,18 +2609,21 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                   _buildNavItem(
                     index: 4,
                     semanticName: 'school',
+                    assetPath: 'assets/icons/glow/nav_provider_academy.png',
                     label: 'Academia',
                     isMen: isMen,
                   ),
                   _buildNavItem(
                     index: 5,
                     semanticName: 'chat',
+                    assetPath: 'assets/icons/glow/nav_provider_chat.png',
                     label: 'Chat',
                     isMen: isMen,
                   ),
                   _buildNavItem(
                     index: 6,
                     semanticName: 'profile',
+                    assetPath: 'assets/icons/glow/nav_perfil.webp',
                     label: 'Perfil',
                     isMen: isMen,
                   ),
