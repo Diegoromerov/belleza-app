@@ -38,8 +38,11 @@ const buildTenantWhere = (req, extraWhere = {}) => {
 // GET /api/services/provider → Lista servicios del establecimiento/provider activo
 exports.getProviderServices = async (req, res) => {
   try {
-    const businessProfileId = req.user?.businessProfileId;
-    const providerId = req.user?.id;
+    const rawBusinessProfileId = req.user?.businessProfileId;
+    const businessProfileId = (rawBusinessProfileId && String(rawBusinessProfileId).trim() !== 'null' && String(rawBusinessProfileId).trim() !== 'undefined' && String(rawBusinessProfileId).trim() !== '')
+      ? String(rawBusinessProfileId).trim()
+      : null;
+    const providerId = req.user?.id ? (isNaN(parseInt(req.user.id)) ? req.user.id : parseInt(req.user.id)) : null;
 
     if (!businessProfileId && !providerId) {
       return res.status(403).json({ 
@@ -53,7 +56,7 @@ exports.getProviderServices = async (req, res) => {
       if (businessProfileId) {
         const queryRes = await pool.query(
           'SELECT id, provider_id, business_profile_id, name, description, price, duration_minutes, category, is_active FROM services WHERE business_profile_id = $1 OR provider_id = $2 ORDER BY name ASC',
-          [String(businessProfileId), providerId]
+          [businessProfileId, providerId]
         );
         services = queryRes.rows;
       } else {
