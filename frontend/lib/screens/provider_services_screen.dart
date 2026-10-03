@@ -319,7 +319,7 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
                             style: const TextStyle(fontFamily: 'Inter', fontSize: 12, color: Color(0xFF8C7E74)),
                           ),
                           value: isActive,
-                          activeColor: const Color(0xFFC5A052),
+                          activeThumbColor: const Color(0xFFC5A052),
                           onChanged: (v) => setModalState(() => isActive = v),
                           contentPadding: EdgeInsets.zero,
                         ),
