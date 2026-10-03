@@ -1127,56 +1127,6 @@ class _WalletScreenState extends State<WalletScreen>
 
 // ─── WIDGETS AUXILIARES ────────────────────────────────────────────────────────
 
-class _SaldoChip extends StatelessWidget {
-  final String label;
-  final double monto;
-  final Color color;
-  final IconData icon;
-
-  const _SaldoChip(
-      {required this.label,
-      required this.monto,
-      required this.color,
-      required this.icon});
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: color.withValues(alpha: 0.25)),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: color, size: 16),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(label, style: TextStyle(color: color, fontSize: 12)),
-                  Text(
-                    NumberFormat.currency(
-                            locale: 'es_CO', symbol: '\$', decimalDigits: 0)
-                        .format(monto),
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 class _TransaccionTile extends StatelessWidget {
   final Map<String, dynamic> tx;
