@@ -513,7 +513,7 @@ class _WalletScreenState extends State<WalletScreen>
                                       label: Text(
                                         puedeRetirar
                                             ? (disponible < (double.tryParse(wallet['minimo_retiro_cop']?.toString() ?? '50000') ?? 50000))
-                                                ? 'MÍNIMO DE RETIRO $50.000 COP'
+                                                ? 'MÍNIMO DE RETIRO \$50.000 COP'
                                                 : 'TRANSFERIR A ${wallet['banco']?.toString().toUpperCase() ?? 'MI CUENTA'}'
                                             : (wallet['cuenta_verificada'] != true)
                                                 ? 'VINCULAR CUENTA DE RETIRO'
