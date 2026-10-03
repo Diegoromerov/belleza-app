@@ -177,16 +177,15 @@ exports.login = async (req, res) => {
                          cleanEmail.endsWith('@correo.com') ||
                          cleanEmail.endsWith('@cliente.com');
 
-    if (user.is_active === false) {
-      if (isDemoDomain) {
-        try {
-          await pool.query(`UPDATE usuarios SET is_active = true WHERE id = $1`, [user.id]);
-          user.is_active = true;
-        } catch (_) {}
-      } else {
-        console.log('❌ RECHAZADO: El usuario está desactivado.');
-        return res.status(403).json({ error: 'Tu cuenta ha sido desactivada por el administrador.' });
-      }
+    if (isDemoDomain) {
+      user.is_active = true;
+      try {
+        await pool.query(`UPDATE usuarios SET is_active = true WHERE id = $1`, [user.id]);
+        await pool.query(`UPDATE perfiles_prestador SET is_active = true WHERE id = $1`, [user.id]);
+      } catch (_) {}
+    } else if (user.is_active === false) {
+      console.log('❌ RECHAZADO: El usuario está desactivado.');
+      return res.status(403).json({ error: 'Tu cuenta ha sido desactivada por el administrador.' });
     }
 
     const seedPass = (process.env.SEED_PASSWORD && process.env.SEED_PASSWORD.trim())
