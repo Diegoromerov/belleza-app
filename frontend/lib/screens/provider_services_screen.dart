@@ -134,17 +134,19 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: const Color(0xFFFAF8F5),
       shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
       builder: (context) {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setModalState) {
             return Padding(
               padding: EdgeInsets.only(
                 bottom: MediaQuery.of(context).viewInsets.bottom,
-                left: 20,
-                right: 20,
-                top: 24,
+                left: 22,
+                right: 22,
+                top: 20,
               ),
               child: SingleChildScrollView(
                 child: Form(
@@ -155,38 +157,38 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
                     children: [
                       Center(
                         child: Container(
-                          width: 40,
-                          height: 5,
+                          width: 44,
+                          height: 4,
                           decoration: BoxDecoration(
-                              color: Colors.grey[300],
-                              borderRadius: BorderRadius.circular(10)),
+                            color: const Color(0xFFE8DFD8),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 16),
                       Text(
                         service == null ? 'Nuevo Servicio' : 'Editar Servicio',
                         style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                            letterSpacing: -0.5),
+                          fontFamily: 'CormorantGaramond',
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1F1A15),
+                          letterSpacing: -0.3,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 20),
                       TextFormField(
                         controller: nameCtrl,
-                        decoration: _inputDecoration(
-                            'Nombre del servicio *', Icons.cut),
-                        style: const TextStyle(fontSize: 14),
-                        validator: (v) =>
-                            v == null || v.trim().isEmpty ? 'Requerido' : null,
+                        decoration: _inputDecoration('Nombre del servicio *', Icons.spa_outlined),
+                        style: const TextStyle(fontFamily: 'Inter', fontSize: 14, color: Color(0xFF1F1A15)),
+                        validator: (v) => v == null || v.trim().isEmpty ? 'Requerido' : null,
                       ),
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: descCtrl,
-                        decoration: _inputDecoration('Descripción (opcional)',
-                            Icons.description_outlined),
-                        style: const TextStyle(fontSize: 14),
+                        decoration: _inputDecoration('Descripción (opcional)', Icons.description_outlined),
+                        style: const TextStyle(fontFamily: 'Inter', fontSize: 14, color: Color(0xFF1F1A15)),
                         maxLines: 2,
                       ),
                       const SizedBox(height: 12),
@@ -195,21 +197,14 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
                           Expanded(
                             child: TextFormField(
                               controller: priceCtrl,
-                              decoration: _inputDecoration(
-                                  'Precio (\$) *', Icons.attach_money_outlined),
-                              style: const TextStyle(fontSize: 14),
-                              keyboardType:
-                                  const TextInputType.numberWithOptions(
-                                      decimal: true),
+                              decoration: _inputDecoration('Precio (\$) *', Icons.attach_money_rounded),
+                              style: const TextStyle(fontFamily: 'Inter', fontSize: 14, color: Color(0xFF1F1A15)),
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
                               validator: (v) {
-                                if (v == null || v.isEmpty) {
-                                  return 'Requerido';
-                                }
+                                if (v == null || v.isEmpty) return 'Requerido';
                                 final cleanVal = v.replaceAll(',', '.');
                                 final price = double.tryParse(cleanVal);
-                                if (price == null || price < 0) {
-                                  return 'Precio inválido';
-                                }
+                                if (price == null || price < 0) return 'Precio inválido';
                                 return null;
                               },
                             ),
@@ -218,66 +213,66 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
                           Expanded(
                             child: TextFormField(
                               controller: durationCtrl,
-                              decoration: _inputDecoration('Duración (min) *',
-                                  Icons.access_time_outlined),
-                              style: const TextStyle(fontSize: 14),
+                              decoration: _inputDecoration('Duración (min) *', Icons.access_time_rounded),
+                              style: const TextStyle(fontFamily: 'Inter', fontSize: 14, color: Color(0xFF1F1A15)),
                               keyboardType: TextInputType.number,
                               validator: (v) {
-                                if (v == null || v.isEmpty) {
-                                  return 'Requerido';
-                                }
+                                if (v == null || v.isEmpty) return 'Requerido';
                                 final dur = int.tryParse(v);
-                                if (dur == null || dur <= 0) {
-                                  return 'Duración inválida';
-                                }
+                                if (dur == null || dur <= 0) return 'Duración inválida';
                                 return null;
                               },
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 10),
                       const Text(
                         'Selección rápida de duración:',
                         style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey,
-                            fontWeight: FontWeight.w500),
+                          fontFamily: 'Inter',
+                          fontSize: 12,
+                          color: Color(0xFF8C7E74),
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                       const SizedBox(height: 6),
                       StatefulBuilder(builder: (context, setChipState) {
                         return Wrap(
                           spacing: 8,
-                          runSpacing: 4,
+                          runSpacing: 6,
                           children: [30, 45, 60, 90, 120].map((mins) {
                             final labelText = '$mins min';
-                            final isSelected =
-                                durationCtrl.text == mins.toString();
+                            final isSelected = durationCtrl.text == mins.toString();
                             return ChoiceChip(
                               label: Text(labelText),
                               selected: isSelected,
                               onSelected: (selected) {
                                 if (selected) {
-                                  setModalState(() {
-                                    durationCtrl.text = mins.toString();
-                                  });
+                                  setModalState(() => durationCtrl.text = mins.toString());
                                   setChipState(() {});
                                 }
                               },
-                              selectedColor: const Color(0xFFE5CECA),
-                              backgroundColor: const Color(0xFFF5EBE6),
+                              selectedColor: const Color(0xFFFFF7E6),
+                              backgroundColor: const Color(0xFFFAF6EE),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                side: BorderSide(
+                                  color: isSelected ? const Color(0xFFC5A052) : const Color(0xFFE8DFD8),
+                                  width: isSelected ? 1.5 : 1,
+                                ),
+                              ),
                               labelStyle: TextStyle(
-                                color: isSelected
-                                    ? AppTheme.primary
-                                    : Colors.black87,
+                                fontFamily: 'Inter',
+                                color: isSelected ? const Color(0xFF1F1A15) : const Color(0xFF8C7E74),
                                 fontSize: 12,
-                                fontWeight: FontWeight.bold,
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                               ),
                             );
                           }).toList(),
                         );
                       }),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 14),
                       DropdownButtonFormField<String>(
                         initialValue: categoryCtrl.text.trim().isEmpty
                             ? null
@@ -292,77 +287,91 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
                                 ? categoryCtrl.text.trim()
                                 : 'Otros'),
                         style: const TextStyle(
-                            color: Colors.black87,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500),
-                        decoration: _inputDecoration(
-                            'Categoría *', Icons.category_outlined),
-                        items: [
-                          'Cabello',
-                          'Uñas',
-                          'Maquillaje',
-                          'Cuidado de la piel',
-                          'Barbería',
-                          'Otros'
-                        ]
-                            .map((c) =>
-                                DropdownMenuItem(value: c, child: Text(c)))
+                          fontFamily: 'Inter',
+                          color: Color(0xFF1F1A15),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        decoration: _inputDecoration('Categoría *', Icons.category_outlined),
+                        items: ['Cabello', 'Uñas', 'Maquillaje', 'Cuidado de la piel', 'Barbería', 'Otros']
+                            .map((c) => DropdownMenuItem(value: c, child: Text(c)))
                             .toList(),
                         onChanged: (v) {
-                          if (v != null) {
-                            categoryCtrl.text = v;
-                          }
+                          if (v != null) categoryCtrl.text = v;
                         },
-                        validator: (v) =>
-                            v == null || v.isEmpty ? 'Requerido' : null,
+                        validator: (v) => v == null || v.isEmpty ? 'Requerido' : null,
                       ),
-                      const SizedBox(height: 16),
-                      SwitchListTile(
-                        title: const Text('Servicio activo'),
-                        subtitle: Text(isActive
-                            ? 'Visible para clientes'
-                            : 'Oculto para clientes'),
-                        value: isActive,
-                        activeThumbColor: Colors.green,
-                        activeTrackColor: const Color(0xFFDCFCE7),
-                        onChanged: (v) => setModalState(() => isActive = v),
-                        contentPadding: EdgeInsets.zero,
+                      const SizedBox(height: 14),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFAF6EE),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFE8DFD8), width: 1),
+                        ),
+                        child: SwitchListTile(
+                          title: const Text(
+                            'Servicio activo',
+                            style: TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1F1A15)),
+                          ),
+                          subtitle: Text(
+                            isActive ? 'Visible en el catálogo público' : 'Oculto en el catálogo público',
+                            style: const TextStyle(fontFamily: 'Inter', fontSize: 12, color: Color(0xFF8C7E74)),
+                          ),
+                          value: isActive,
+                          activeColor: const Color(0xFFC5A052),
+                          onChanged: (v) => setModalState(() => isActive = v),
+                          contentPadding: EdgeInsets.zero,
+                        ),
                       ),
                       const SizedBox(height: 24),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30)),
-                          elevation: 0,
+                      Container(
+                        height: 52,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFF3D59B), Color(0xFFC5A052)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFC5A052).withValues(alpha: 0.3),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
                         ),
-                        onPressed: () {
-                          if (formKey.currentState!.validate()) {
-                            Navigator.pop(context);
-                            _submitServiceHelper(
-                              service: service,
-                              name: nameCtrl.text.trim(),
-                              price: double.parse(
-                                  priceCtrl.text.replaceAll(',', '.')),
-                              duration: int.parse(durationCtrl.text),
-                              description: descCtrl.text.trim().isNotEmpty
-                                  ? descCtrl.text.trim()
-                                  : null,
-                              category: categoryCtrl.text.trim().isNotEmpty
-                                  ? categoryCtrl.text.trim()
-                                  : null,
-                              isActive: isActive,
-                            );
-                          }
-                        },
-                        child: Text(
-                            service == null
-                                ? 'Crear Servicio'
-                                : 'Guardar Cambios',
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          ),
+                          onPressed: () {
+                            if (formKey.currentState!.validate()) {
+                              Navigator.pop(context);
+                              _submitServiceHelper(
+                                service: service,
+                                name: nameCtrl.text.trim(),
+                                price: double.parse(priceCtrl.text.replaceAll(',', '.')),
+                                duration: int.parse(durationCtrl.text),
+                                description: descCtrl.text.trim().isNotEmpty ? descCtrl.text.trim() : null,
+                                category: categoryCtrl.text.trim().isNotEmpty ? categoryCtrl.text.trim() : null,
+                                isActive: isActive,
+                              );
+                            }
+                          },
+                          child: Text(
+                            service == null ? 'Crear Servicio' : 'Guardar Cambios',
                             style: const TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.bold)),
+                              fontFamily: 'Inter',
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1F1A15),
+                            ),
+                          ),
+                        ),
                       ),
                       const SizedBox(height: 24),
                     ],
