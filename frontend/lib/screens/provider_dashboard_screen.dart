@@ -308,10 +308,6 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                 '0.0') ??
         (gross - platformCut - stateTax);
 
-    // A360-2026-09-22/C-06: el backend sólo devuelve wompi_reference y
-    // payout_status (bookingController.js, /bookings/provider). Nunca devuelve
-    // numero_cuenta_nequi, así que antes se mostraba una cuenta inventada
-    // ('+573****2222') y una referencia inventada. Ahora: "No disponible".
     final String nequiAccount =
         booking['numero_cuenta_nequi']?.toString().trim().isNotEmpty == true
             ? booking['numero_cuenta_nequi'].toString()
@@ -331,6 +327,8 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
       builder: (context) {
         return AlertDialog(
           backgroundColor: const Color(0xFFFFFDF8),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          contentPadding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
             side: BorderSide(
@@ -340,11 +338,19 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
           ),
           title: Row(
             children: [
-              Icon(
-                immediate ? Icons.stars_rounded : Icons.receipt_long_outlined,
-                color: const Color(0xFFC5A052),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFAF4EB),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  immediate ? Icons.stars_rounded : Icons.receipt_long_outlined,
+                  color: const Color(0xFFC5A052),
+                  size: 20,
+                ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   immediate
@@ -359,106 +365,167 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
               ),
             ],
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (immediate) ...[
-                const Text(
-                  'El PIN ha sido verificado con éxito. Hemos liberado los fondos y la transferencia está en camino.',
-                  style: TextStyle(fontSize: 13, color: Color(0xFF8C7E74)),
+          content: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (immediate) ...[
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF0FDF4),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFDCFCE7)),
+                    ),
+                    child: const Text(
+                      'El PIN ha sido verificado con éxito. Hemos liberado los fondos y la transferencia está en camino.',
+                      style: TextStyle(fontSize: 12.5, color: Color(0xFF166534), height: 1.3),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                ],
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFAF6EE),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFEFE8DE)),
+                  ),
+                  child: Column(
+                    children: [
+                      _breakdownRow(
+                          'Liquidación Bruta', '\$${gross.toStringAsFixed(0)} COP',
+                          isBold: true),
+                      const SizedBox(height: 8),
+                      _breakdownRow('Descuento Plataforma (20% total)',
+                          '-\$${(platformCut + stateTax).toStringAsFixed(0)} COP',
+                          color: const Color(0xFF800A0A), isBold: true),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 8.0, top: 6.0),
+                        child: Column(
+                          children: [
+                            _breakdownRow('• Comisión Neta Plataforma (12%)',
+                                '-\$${platformCut.toStringAsFixed(0)} COP',
+                                color: const Color(0xFF8C7E74), fontSize: 11.5),
+                            const SizedBox(height: 4),
+                            _breakdownRow('• ReteFuente / Impuesto Estatal (8%)',
+                                '-\$${stateTax.toStringAsFixed(0)} COP',
+                                color: const Color(0xFF8C7E74), fontSize: 11.5),
+                          ],
+                        ),
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 10),
+                        child: Divider(height: 1, color: Color(0xFFEFE8DE)),
+                      ),
+                      _breakdownRow('Dispersión Nequi (Neto 80%)',
+                          '\$${netPayout.toStringAsFixed(0)} COP',
+                          color: const Color(0xFF1F1A15), isBold: true, fontSize: 14.5),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFAF4EB),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFEFE8DE)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Estado de Pago:',
+                            style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF1F1A15)),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFC5A052).withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              payoutStatus,
+                              style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFFC5A052)),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Cuenta Nequi: $nequiAccount',
+                        style: const TextStyle(fontSize: 12, color: Color(0xFF4A4036)),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Referencia Wompi:\n$wompiRef',
+                        style: const TextStyle(
+                            fontSize: 11,
+                            fontStyle: FontStyle.italic,
+                            color: Color(0xFF8C7E74)),
+                      ),
+                    ],
+                  ),
+                ),
               ],
-              _breakdownRow(
-                  'Liquidación Bruta', '\$${gross.toStringAsFixed(0)} COP',
-                  isBold: true),
-              const SizedBox(height: 8),
-              _breakdownRow('Descuento Plataforma (20% total)',
-                  '-\$${(platformCut + stateTax).toStringAsFixed(0)} COP',
-                  color: const Color(0xFF800A0A), isBold: true),
-              Padding(
-                padding: const EdgeInsets.only(left: 12.0, top: 4.0),
-                child: Column(
-                  children: [
-                    _breakdownRow('• Comisión Neta Plataforma (12%)',
-                        '-\$${platformCut.toStringAsFixed(0)} COP',
-                        color: const Color(0xFF9E948A)),
-                    const SizedBox(height: 4),
-                    _breakdownRow('• ReteFuente / Impuesto Estatal (8%)',
-                        '-\$${stateTax.toStringAsFixed(0)} COP',
-                        color: const Color(0xFF9E948A)),
-                  ],
-                ),
-              ),
-              const Divider(height: 24, color: Color(0xFFEFE8DE)),
-              _breakdownRow('Dispersión Nequi (Neto 80%)',
-                  '\$${netPayout.toStringAsFixed(0)} COP',
-                  color: const Color(0xFF1F1A15), isBold: true),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFAF4EB),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFEFE8DE)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Estado: $payoutStatus',
-                      style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1F1A15)),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Cuenta Nequi: $nequiAccount',
-                      style:
-                          const TextStyle(fontSize: 12, color: Color(0xFF4A4036)),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Referencia Wompi:\n$wompiRef',
-                      style: const TextStyle(
-                          fontSize: 11,
-                          fontStyle: FontStyle.italic,
-                          color: Color(0xFF8C7E74)),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton.icon(
-              onPressed: () {
-                Navigator.pop(context);
-                setState(() {
-                  _currentIndex = 2; // Wallet Tab
-                });
-              },
-              icon: const Icon(Icons.account_balance_wallet_outlined,
-                  size: 18, color: Color(0xFFC5A052)),
-              label: const Text(
-                'Ver Wallet',
-                style: TextStyle(
-                    fontWeight: FontWeight.bold, color: Color(0xFFC5A052)),
-              ),
             ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1F1A15),
-                foregroundColor: const Color(0xFFFFFDF8),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    side: const BorderSide(color: Color(0xFFD4AF37), width: 1)),
-                elevation: 2,
-              ),
-              child: const Text('Entendido', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFD4AF37))),
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          actions: [
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton.icon(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      setState(() {
+                        _currentIndex = 2; // Wallet Tab
+                      });
+                    },
+                    icon: const Icon(Icons.account_balance_wallet_outlined,
+                        size: 16, color: Color(0xFFC5A052)),
+                    label: const Text(
+                      'Ver Wallet',
+                      style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFC5A052)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1F1A15),
+                      foregroundColor: const Color(0xFFFFFDF8),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          side: const BorderSide(color: Color(0xFFD4AF37), width: 1)),
+                      elevation: 2,
+                    ),
+                    child: const Text('Entendido',
+                        style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFFD4AF37))),
+                  ),
+                ),
+              ],
             ),
           ],
         );
@@ -467,22 +534,25 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
   }
 
   Widget _breakdownRow(String label, String value,
-      {Color? color, bool isBold = false}) {
+      {Color? color, bool isBold = false, double fontSize = 13}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-            color: const Color(0xFF1F1A15),
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: fontSize,
+              fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+              color: const Color(0xFF1F1A15),
+            ),
           ),
         ),
+        const SizedBox(width: 8),
         Text(
           value,
           style: TextStyle(
-            fontSize: 14,
+            fontSize: fontSize,
             fontWeight: FontWeight.bold,
             color: color ?? const Color(0xFF1F1A15),
           ),
