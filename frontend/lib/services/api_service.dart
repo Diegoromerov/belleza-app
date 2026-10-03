@@ -32,6 +32,9 @@ class ApiService {
     if (_cachedBaseUrl != null) return _cachedBaseUrl!;
     if (kIsWeb) {
       final origin = Uri.base.origin;
+      if (origin.contains('glowapp-frontend') || origin.contains('frontend')) {
+        return stagingUrl;
+      }
       if (origin.isNotEmpty && !origin.contains('localhost') && !origin.contains('127.0.0.1')) {
         return origin;
       }
@@ -56,6 +59,10 @@ class ApiService {
     }
     if (kIsWeb) {
       final origin = Uri.base.origin;
+      if (origin.contains('glowapp-frontend') || origin.contains('frontend')) {
+        _cachedBaseUrl = stagingUrl;
+        return;
+      }
       if (origin.isNotEmpty && !origin.contains('localhost') && !origin.contains('127.0.0.1')) {
         _cachedBaseUrl = origin;
         return;
