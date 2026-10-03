@@ -660,66 +660,88 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                      // Ubicación y Verificación
+                      // Ubicación y Verificación Quiet Luxury (Kaizen 3)
                       Row(
                         children: [
                           if (p['is_verified'] == true ||
                               p['is_verified'] == 'true') ...[
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 4),
+                                  horizontal: 10, vertical: 5),
                               decoration: BoxDecoration(
-                                color: AppTheme.primary.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(6),
+                                color: const Color(0xFFF0FDF4),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: const Color(0xFFBBF7D0), width: 0.8),
                               ),
-                              child: Row(
+                              child: const Row(
                                 children: [
-                                  Icon(Icons.verified,
-                                      color: AppTheme.primary, size: 16),
-                                  const SizedBox(width: 4),
-                                  const Text(
-                                    'Verificado',
+                                  Icon(Icons.verified_rounded,
+                                      color: Color(0xFF15803D), size: 14),
+                                  SizedBox(width: 5),
+                                  Text(
+                                    'GlowPro Verificado',
                                     style: TextStyle(
-                                      color: AppTheme.primary,
+                                      fontFamily: 'Inter',
+                                      color: Color(0xFF15803D),
                                       fontWeight: FontWeight.bold,
-                                      fontSize: 12,
+                                      fontSize: 11.5,
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            const SizedBox(width: 10),
                           ],
-                          const Icon(Icons.location_on,
-                              color: Colors.grey, size: 16),
-                          const SizedBox(width: 4),
-                          Text(
-                            (p['ciudad'] ?? p['direccion'] ?? 'Fontibón').toString(),
-                            style: const TextStyle(
-                                color: Colors.grey,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFAF6EE),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: const Color(0xFFEFE8DE), width: 0.8),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.location_on_rounded,
+                                    color: Color(0xFFC5A052), size: 14),
+                                const SizedBox(width: 4),
+                                Text(
+                                  (p['ciudad'] ?? p['direccion'] ?? 'Bogotá, Colombia').toString(),
+                                  style: const TextStyle(
+                                      fontFamily: 'Inter',
+                                      color: Color(0xFF1F1A15),
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w600),
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 16),
 
-                      // Evidence-Backed Trust Stats Bar (Kaizen Cycle 5)
+                      // Evidence-Backed Trust Stats Bar Quiet Luxury (Kaizen 3)
                       Container(
                         margin: const EdgeInsets.only(bottom: 16),
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFAF6F0),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFFE8DFD8)),
+                          color: const Color(0xFFFAF6EE),
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(color: const Color(0xFFC5A052).withValues(alpha: 0.2), width: 1),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFC5A052).withValues(alpha: 0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
                             _buildTrustStatItem(Icons.verified_sharp, '98%', 'Puntualidad'),
-                            Container(width: 1, height: 28, color: const Color(0xFFE8DFD8)),
-                            _buildTrustStatItem(Icons.event_available, '${p['completed_bookings_count'] ?? p['reviews_count'] ?? 150}+', 'Citas'),
-                            Container(width: 1, height: 28, color: const Color(0xFFE8DFD8)),
+                            Container(width: 1, height: 28, color: const Color(0xFFEFE8DE)),
+                            _buildTrustStatItem(Icons.event_available, '${p['completed_bookings_count'] ?? p['reviews_count'] ?? 150}+', 'Citas Realizadas'),
+                            Container(width: 1, height: 28, color: const Color(0xFFEFE8DE)),
                             _buildTrustStatItem(Icons.security, '100%', 'Garantía Glow'),
                           ],
                         ),
