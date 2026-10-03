@@ -1,4 +1,5 @@
 // backend/src/controllers/serviceController.js
+const { pool } = require('../config/db');
 const { Op } = require('sequelize');
 const Service = require('../models/Service');
 
@@ -7,7 +8,7 @@ const Service = require('../models/Service');
  * Handles service CRUD with strict multi-tenant isolation (Anti-Tenant-Leakage / Anti-IDOR).
  */
 
-// Helper to build tenant isolation query condition
+// Helper to build tenant isolation query condition for Sequelize
 const buildTenantWhere = (req, extraWhere = {}) => {
   const businessProfileId = req.user?.businessProfileId;
   const providerId = req.user?.id;
@@ -49,21 +50,32 @@ exports.getProviderServices = async (req, res) => {
 
     let services = [];
     try {
-      const whereClause = businessProfileId
-        ? { [Op.or]: [{ business_profile_id: businessProfileId }, { provider_id: providerId }] }
-        : { provider_id: providerId };
-
-      services = await Service.findAll({
-        where: whereClause,
-        order: [['name', 'ASC']]
-      });
+      if (businessProfileId) {
+        const queryRes = await pool.query(
+          'SELECT id, provider_id, business_profile_id, name, description, price, duration_minutes, category, is_active FROM services WHERE business_profile_id = $1 OR provider_id = $2 ORDER BY name ASC',
+          [String(businessProfileId), providerId]
+        );
+        services = queryRes.rows;
+      } else {
+        const queryRes = await pool.query(
+          'SELECT id, provider_id, business_profile_id, name, description, price, duration_minutes, category, is_active FROM services WHERE provider_id = $1 ORDER BY name ASC',
+          [providerId]
+        );
+        services = queryRes.rows;
+      }
     } catch (dbErr) {
-      console.warn('⚠️ Fallback query in GET /api/services/provider:', dbErr.message);
+      console.warn('⚠️ Fallback pg pool query en GET /api/services/provider:', dbErr.message);
       if (providerId) {
-        services = await Service.findAll({
-          where: { provider_id: providerId },
-          order: [['name', 'ASC']]
-        });
+        try {
+          const queryRes = await pool.query(
+            'SELECT id, provider_id, business_profile_id, name, description, price, duration_minutes, category, is_active FROM services WHERE provider_id = $1 ORDER BY name ASC',
+            [providerId]
+          );
+          services = queryRes.rows;
+        } catch (err2) {
+          console.warn('⚠️ Final fallback 0 servicios:', err2.message);
+          services = [];
+        }
       }
     }
 
@@ -74,7 +86,7 @@ exports.getProviderServices = async (req, res) => {
       price: parseFloat(service.price) || 0.0,
       duration_minutes: parseInt(service.duration_minutes) || 30,
       category: service.category || '',
-      is_active: !!service.is_active,
+      is_active: service.is_active !== false,
       business_profile_id: service.business_profile_id
     }));
 
@@ -107,30 +119,52 @@ exports.createService = async (req, res) => {
       return res.status(400).json({ error: 'Duración inválida' });
     }
 
-    const service = await Service.create({
-      provider_id: providerId,
-      business_profile_id: businessProfileId || null,
-      name,
-      description: description || null,
-      price: parsedPrice,
-      duration_minutes: parsedDuration,
-      category: category || null,
-      is_active: isActiveVal
-    });
+    let serviceData = null;
+    try {
+      const insertQ = `
+        INSERT INTO services (provider_id, business_profile_id, name, description, price, duration_minutes, category, is_active)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        RETURNING id, provider_id, business_profile_id, name, description, price, duration_minutes, category, is_active;
+      `;
+      const insertRes = await pool.query(insertQ, [
+        providerId,
+        businessProfileId ? String(businessProfileId) : null,
+        name,
+        description || null,
+        parsedPrice,
+        parsedDuration,
+        category || null,
+        isActiveVal
+      ]);
+      serviceData = insertRes.rows[0];
+    } catch (dbErr) {
+      console.warn('⚠️ Fallback a Sequelize en createService:', dbErr.message);
+      const service = await Service.create({
+        provider_id: providerId,
+        business_profile_id: businessProfileId || null,
+        name,
+        description: description || null,
+        price: parsedPrice,
+        duration_minutes: parsedDuration,
+        category: category || null,
+        is_active: isActiveVal
+      });
+      serviceData = service.toJSON();
+    }
 
     res.status(201).json({
       success: true,
       message: 'Servicio creado exitosamente',
       data: {
-        id: service.id,
-        provider_id: service.provider_id,
-        business_profile_id: service.business_profile_id,
-        name: service.name,
-        description: service.description,
-        price: parseFloat(service.price),
-        duration_minutes: parseInt(service.duration_minutes),
-        category: service.category,
-        is_active: service.is_active
+        id: serviceData.id,
+        provider_id: serviceData.provider_id,
+        business_profile_id: serviceData.business_profile_id,
+        name: serviceData.name,
+        description: serviceData.description,
+        price: parseFloat(serviceData.price),
+        duration_minutes: parseInt(serviceData.duration_minutes),
+        category: serviceData.category,
+        is_active: serviceData.is_active
       }
     });
   } catch (error) {
@@ -143,18 +177,8 @@ exports.createService = async (req, res) => {
 exports.updateService = async (req, res) => {
   try {
     const serviceId = req.params.id;
+    const providerId = req.user?.id;
     const { name, description, price, duration_minutes, category, is_active } = req.body;
-
-    const whereClause = buildTenantWhere(req, { id: serviceId });
-
-    const service = await Service.findOne({ where: whereClause });
-
-    if (!service) {
-      return res.status(404).json({ 
-        error: 'SERVICE_NOT_FOUND', 
-        message: 'El servicio no existe o no tienes acceso a él.' 
-      });
-    }
 
     if (!name || price === undefined || !duration_minutes) {
       return res.status(400).json({ error: 'Faltan campos obligatorios (nombre, precio, duración)' });
@@ -170,30 +194,68 @@ exports.updateService = async (req, res) => {
       return res.status(400).json({ error: 'Duración inválida' });
     }
 
-    service.name = name;
-    service.description = description || null;
-    service.price = parsedPrice;
-    service.duration_minutes = parsedDuration;
-    service.category = category || null;
-    if (is_active !== undefined) {
-      service.is_active = is_active !== false;
-    }
+    let updatedService = null;
+    try {
+      const updateQ = `
+        UPDATE services 
+        SET name = $1, description = $2, price = $3, duration_minutes = $4, category = $5, is_active = $6
+        WHERE id = $7 AND (provider_id = $8 OR business_profile_id = $9)
+        RETURNING id, provider_id, business_profile_id, name, description, price, duration_minutes, category, is_active;
+      `;
+      const updateRes = await pool.query(updateQ, [
+        name,
+        description || null,
+        parsedPrice,
+        parsedDuration,
+        category || null,
+        is_active !== false,
+        serviceId,
+        providerId,
+        req.user?.businessProfileId ? String(req.user.businessProfileId) : '0'
+      ]);
 
-    await service.save();
+      if (updateRes.rows.length === 0) {
+        return res.status(404).json({ 
+          error: 'SERVICE_NOT_FOUND', 
+          message: 'El servicio no existe o no tienes acceso a él.' 
+        });
+      }
+      updatedService = updateRes.rows[0];
+    } catch (dbErr) {
+      console.warn('⚠️ Fallback a Sequelize en updateService:', dbErr.message);
+      const whereClause = buildTenantWhere(req, { id: serviceId });
+      const service = await Service.findOne({ where: whereClause });
+      if (!service) {
+        return res.status(404).json({ 
+          error: 'SERVICE_NOT_FOUND', 
+          message: 'El servicio no existe o no tienes acceso a él.' 
+        });
+      }
+      service.name = name;
+      service.description = description || null;
+      service.price = parsedPrice;
+      service.duration_minutes = parsedDuration;
+      service.category = category || null;
+      if (is_active !== undefined) {
+        service.is_active = is_active !== false;
+      }
+      await service.save();
+      updatedService = service.toJSON();
+    }
 
     res.json({
       success: true,
       message: 'Servicio actualizado exitosamente',
       data: {
-        id: service.id,
-        provider_id: service.provider_id,
-        business_profile_id: service.business_profile_id,
-        name: service.name,
-        description: service.description,
-        price: parseFloat(service.price),
-        duration_minutes: parseInt(service.duration_minutes),
-        category: service.category,
-        is_active: service.is_active
+        id: updatedService.id,
+        provider_id: updatedService.provider_id,
+        business_profile_id: updatedService.business_profile_id,
+        name: updatedService.name,
+        description: updatedService.description,
+        price: parseFloat(updatedService.price),
+        duration_minutes: parseInt(updatedService.duration_minutes),
+        category: updatedService.category,
+        is_active: updatedService.is_active
       }
     });
   } catch (error) {
@@ -206,32 +268,65 @@ exports.updateService = async (req, res) => {
 exports.deleteService = async (req, res) => {
   try {
     const serviceId = req.params.id;
+    const providerId = req.user?.id;
 
-    const whereClause = buildTenantWhere(req, { id: serviceId });
+    try {
+      const deleteQ = `
+        UPDATE services 
+        SET is_active = false
+        WHERE id = $1 AND (provider_id = $2 OR business_profile_id = $3)
+        RETURNING id, name, is_active;
+      `;
+      const deleteRes = await pool.query(deleteQ, [
+        serviceId,
+        providerId,
+        req.user?.businessProfileId ? String(req.user.businessProfileId) : '0'
+      ]);
 
-    const service = await Service.findOne({ where: whereClause });
+      if (deleteRes.rows.length === 0) {
+        return res.status(404).json({ 
+          error: 'SERVICE_NOT_FOUND', 
+          message: 'El servicio no existe o no tienes acceso a él.' 
+        });
+      }
 
-    if (!service) {
-      return res.status(404).json({ 
-        error: 'SERVICE_NOT_FOUND', 
-        message: 'El servicio no existe o no tienes acceso a él.' 
+      return res.json({
+        success: true,
+        message: 'Servicio desactivado exitosamente',
+        data: {
+          id: deleteRes.rows[0].id,
+          name: deleteRes.rows[0].name,
+          is_active: deleteRes.rows[0].is_active
+        }
+      });
+    } catch (dbErr) {
+      console.warn('⚠️ Fallback a Sequelize en deleteService:', dbErr.message);
+      const whereClause = buildTenantWhere(req, { id: serviceId });
+      const service = await Service.findOne({ where: whereClause });
+
+      if (!service) {
+        return res.status(404).json({ 
+          error: 'SERVICE_NOT_FOUND', 
+          message: 'El servicio no existe o no tienes acceso a él.' 
+        });
+      }
+
+      service.is_active = false;
+      await service.save();
+
+      return res.json({
+        success: true,
+        message: 'Servicio desactivado exitosamente',
+        data: {
+          id: service.id,
+          name: service.name,
+          is_active: service.is_active
+        }
       });
     }
-
-    service.is_active = false;
-    await service.save();
-
-    res.json({
-      success: true,
-      message: 'Servicio desactivado exitosamente',
-      data: {
-        id: service.id,
-        name: service.name,
-        is_active: service.is_active
-      }
-    });
   } catch (error) {
     console.error('❌ ERROR EN DELETE /api/services/:id:', { message: error.message });
     res.status(500).json({ error: 'Error interno al desactivar el servicio' });
   }
 };
+
