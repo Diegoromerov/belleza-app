@@ -402,7 +402,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                     ),
                     if (wompiRef != 'No disponible')
                       Text(
-                        'Ref: ${wompiRef.length > 18 ? wompiRef.substring(0, 18) + '...' : wompiRef}',
+                        'Ref: ${wompiRef.length > 18 ? '${wompiRef.substring(0, 18)}...' : wompiRef}',
                         style: const TextStyle(fontSize: 10.5, color: Color(0xFF8C7E74), fontStyle: FontStyle.italic),
                       ),
                   ],
@@ -601,7 +601,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                           children: [
                             Expanded(
                               child: Text(
-                                'Ref Wompi: ${wompiRef.length > 20 ? wompiRef.substring(0, 20) + '...' : wompiRef}',
+                        'Ref Wompi: ${wompiRef.length > 20 ? '${wompiRef.substring(0, 20)}...' : wompiRef}',
                                 style: const TextStyle(
                                     fontSize: 10.5,
                                     fontStyle: FontStyle.italic,
