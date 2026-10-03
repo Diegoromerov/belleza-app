@@ -1840,6 +1840,30 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
           Row(
             children: [
               Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => _showSegmentedPinDialog(b),
+                  icon: const Icon(Icons.pin_outlined,
+                      size: 16, color: Color(0xFFC5A052)),
+                  label: const Text(
+                    'Ingresar PIN del cliente',
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF1F1A15),
+                        fontWeight: FontWeight.bold),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFFC5A052)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              Expanded(
                 child: TextButton.icon(
                   onPressed: () => _showSupportEscapeDialog(b),
                   icon: const Icon(Icons.support_agent_outlined,
