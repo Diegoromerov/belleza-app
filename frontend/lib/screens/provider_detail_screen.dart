@@ -1,6 +1,7 @@
 // frontend/lib/screens/provider_detail_screen.dart
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
 import '../services/analytics_service.dart';
@@ -859,6 +860,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                 ),
                                 onSelected: (selected) {
                                   setState(() {
+                                    HapticFeedback.selectionClick();
                                     selectedCategory = cat;
                                   });
                                 },
@@ -924,10 +926,11 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                 child: InkWell(
                                   borderRadius: BorderRadius.circular(20),
                                   onTap: () {
+                                     HapticFeedback.lightImpact();
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (_) => BookingScreen(
+                                      builder: (_) => BookingScreen(
                                           providerId: widget.providerId,
                                           providerName: p['business_name'] ?? p['full_name'] ?? 'Prestador',
                                           services: services,
@@ -1104,6 +1107,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                 final item = portfolio[index];
                                 return GestureDetector(
                                   onTap: () {
+                                     HapticFeedback.lightImpact();
                                     showDialog(
                                       context: context,
                                       builder: (_) => Dialog(
@@ -1331,6 +1335,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                                   reviewPhotos[photoIdx];
                                               return GestureDetector(
                                                 onTap: () {
+                                     HapticFeedback.lightImpact();
                                                   showDialog(
                                                     context: context,
                                                     builder: (_) => Dialog(
@@ -1745,6 +1750,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                       children: quickChips.map((chip) {
                         return InkWell(
                           onTap: () {
+                                     HapticFeedback.lightImpact();
                             Navigator.pop(sheetCtx);
                             Navigator.push(
                               context,
