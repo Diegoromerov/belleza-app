@@ -53,9 +53,13 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
 
   String _formatDuration(dynamic rawMinutes) {
     int mins = 0;
-    if (rawMinutes is int) mins = rawMinutes;
-    else if (rawMinutes is String) mins = int.tryParse(rawMinutes) ?? 0;
-    else if (rawMinutes is double) mins = rawMinutes.toInt();
+    if (rawMinutes is int) {
+      mins = rawMinutes;
+    } else if (rawMinutes is String) {
+      mins = int.tryParse(rawMinutes) ?? 0;
+    } else if (rawMinutes is double) {
+      mins = rawMinutes.toInt();
+    }
 
     if (mins <= 0) return 'Tiempo variable';
     if (mins < 60) return '$mins min';
