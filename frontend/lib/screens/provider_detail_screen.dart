@@ -17,10 +17,14 @@ class ProviderDetailScreen extends StatefulWidget {
 }
 
 class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
+  static final Map<String, Map<String, dynamic>> _providerDetailsCache = {};
+
   Map<String, dynamic>? details;
   bool isLoading = true;
+  bool hasError = false;
 
   String selectedCategory = 'Todos';
+  Map<String, List<Map<String, dynamic>>> _categorizedServices = {};
 
   @override
   void initState() {
@@ -28,19 +32,131 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
     _loadDetails();
   }
 
-  Future<void> _loadDetails() async {
+  Future<void> _loadDetails({bool isSilent = false}) async {
+    if (!isSilent) {
+      if (_providerDetailsCache.containsKey(widget.providerId)) {
+        final cached = _providerDetailsCache[widget.providerId]!;
+        setState(() {
+          details = cached;
+          isLoading = false;
+          hasError = false;
+        });
+        _categorizeServices((cached['services'] as List<dynamic>? ?? []).cast<Map<String, dynamic>>());
+        isSilent = true;
+      } else {
+        setState(() {
+          isLoading = true;
+          hasError = false;
+        });
+      }
+    }
+
     try {
-      final data = await ApiService.fetchProviderDetails(widget.providerId);
-      setState(() {
-        details = data;
-        isLoading = false;
-      });
-      AnalyticsService().logViewProviderProfile(
-        providerId: widget.providerId,
-        businessName: data['business_name'] ?? data['full_name'] ?? 'Prestador',
-      );
+      final data = await ApiService.fetchProviderDetails(widget.providerId)
+          .timeout(const Duration(seconds: 10));
+      _providerDetailsCache[widget.providerId] = data;
+      if (mounted) {
+        setState(() {
+          details = data;
+          isLoading = false;
+          hasError = false;
+        });
+        _categorizeServices((data['services'] as List<dynamic>? ?? []).cast<Map<String, dynamic>>());
+        AnalyticsService().logViewProviderProfile(
+          providerId: widget.providerId,
+          businessName: data['business_name'] ?? data['full_name'] ?? 'Prestador',
+        );
+      }
     } catch (e) {
-      setState(() => isLoading = false);
+      if (mounted) {
+        if (details == null) {
+          setState(() {
+            isLoading = false;
+            hasError = true;
+          });
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Modo sin conexión. Mostrando datos locales.'),
+              duration: Duration(seconds: 3),
+              backgroundColor: Color(0xFF1F1A15),
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  void _categorizeServices(List<Map<String, dynamic>> services) {
+    final Map<String, List<Map<String, dynamic>>> map = {
+      'Todos': services,
+      'Cabello': [],
+      'Uñas': [],
+      'Maquillaje': [],
+      'Cuidado de la piel': [],
+      'Barbería': [],
+      'Otros': [],
+    };
+
+    for (final s in services) {
+      final cat = (s['category'] ?? '').toString().toLowerCase();
+      bool matchCabello = cat.contains('cabello') || cat.contains('pelo') || cat.contains('corte');
+      bool matchUnas = cat.contains('uña') || cat.contains('unas') || cat.contains('manicur') || cat.contains('pedicur');
+      bool matchMaquillaje = cat.contains('maquillaje') || cat.contains('makeup') || cat.contains('ceja') || cat.contains('pestaña');
+      bool matchPiel = cat.contains('piel') || cat.contains('facial') || cat.contains('skincare') || cat.contains('corporal');
+      bool matchBarberia = cat.contains('barber') || cat.contains('barba');
+
+      if (matchCabello) map['Cabello']!.add(s);
+      if (matchUnas) map['Uñas']!.add(s);
+      if (matchMaquillaje) map['Maquillaje']!.add(s);
+      if (matchPiel) map['Cuidado de la piel']!.add(s);
+      if (matchBarberia) map['Barbería']!.add(s);
+      if (!matchCabello && !matchUnas && !matchMaquillaje && !matchPiel && !matchBarberia) {
+        map['Otros']!.add(s);
+      }
+    }
+
+    _categorizedServices = map;
+  }
+
+  void _shareProfile() {
+    HapticFeedback.mediumImpact();
+    final p = details?['provider'];
+    final providerName = p?['business_name'] ?? p?['full_name'] ?? 'Profesional de Belleza';
+    final shareUrl = 'https://glowapp.co/p/${widget.providerId}';
+    Clipboard.setData(ClipboardData(text: '¡Mira el perfil de $providerName en GlowApp! $shareUrl'));
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle_outline_rounded, color: Color(0xFFC5A052), size: 20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                '¡Enlace de $providerName copiado! Listo para compartir en WhatsApp o Instagram.',
+                style: const TextStyle(color: Colors.white, fontSize: 13),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: const Color(0xFF1F1A15),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  String _getSmartNextSlot(Map<String, dynamic> p) {
+    if (p['next_available_slot'] != null && p['next_available_slot'].toString().isNotEmpty) {
+      return p['next_available_slot'].toString();
+    }
+    final now = DateTime.now();
+    if (now.hour < 14) {
+      return 'Hoy 4:00 PM';
+    } else {
+      return 'Mañana 9:00 AM';
     }
   }
 
@@ -334,15 +450,92 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading) {
+    if (isLoading && details == null) {
       return const Scaffold(
           body: Center(
               child: CircularProgressIndicator(color: Color(0xFFC5A052))));
     }
-    if (details == null) {
+    if (hasError && details == null) {
       return Scaffold(
-          appBar: AppBar(title: const Text('Error')),
-          body: const Center(child: Text('❌ No se pudieron cargar los datos')));
+        backgroundColor: const Color(0xFFFAF8F5),
+        appBar: AppBar(
+          backgroundColor: const Color(0xFF1F1A15),
+          foregroundColor: Colors.white,
+          elevation: 0,
+          title: const Text(
+            'GlowApp',
+            style: TextStyle(
+              fontFamily: 'CormorantGaramond',
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+            ),
+          ),
+          centerTitle: true,
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFAF6EE),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.wifi_off_rounded, size: 48, color: Color(0xFFC5A052)),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Sin Conexión a Internet',
+                  style: TextStyle(
+                    fontFamily: 'CormorantGaramond',
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1F1A15),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'No pudimos cargar la información del profesional. Verifica tu conexión e intenta de nuevo.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 13.5,
+                    color: Color(0xFF6B5E55),
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  height: 48,
+                  width: 200,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1F1A15),
+                      foregroundColor: const Color(0xFFC5A052),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      elevation: 0,
+                    ),
+                    onPressed: () {
+                      HapticFeedback.lightImpact();
+                      _loadDetails();
+                    },
+                    icon: const Icon(Icons.refresh_rounded, size: 18),
+                    label: const Text(
+                      'Reintentar',
+                      style: TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.bold, fontSize: 14),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
     }
 
     final p = details!['provider'];
@@ -361,83 +554,66 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
     final specColor = _getSpecialtyColor(specialty);
     final specIcon = _getSpecialtyIcon(specialty);
     final hasCover = p['cover_url'] != null && p['cover_url'].toString().isNotEmpty;
+    final smartSlot = _getSmartNextSlot(p);
 
-    final filteredServices = services.where((s) {
-      if (selectedCategory == 'Todos') return true;
-      final cat = (s['category'] ?? '').toString().toLowerCase();
-      bool matchCabello = cat.contains('cabello') ||
-          cat.contains('pelo') ||
-          cat.contains('corte');
-      bool matchUnas = cat.contains('uña') ||
-          cat.contains('unas') ||
-          cat.contains('manicur') ||
-          cat.contains('pedicur');
-      bool matchMaquillaje = cat.contains('maquillaje') ||
-          cat.contains('makeup') ||
-          cat.contains('cejas') ||
-          cat.contains('pestaña');
-      bool matchPiel = cat.contains('piel') ||
-          cat.contains('facial') ||
-          cat.contains('skincare') ||
-          cat.contains('corporal');
-      bool matchBarberia = cat.contains('barber') || cat.contains('barba');
-      switch (selectedCategory) {
-        case 'Cabello':
-          return matchCabello;
-        case 'Uñas':
-          return matchUnas;
-        case 'Maquillaje':
-          return matchMaquillaje;
-        case 'Cuidado de la piel':
-          return matchPiel;
-        case 'Barbería':
-          return matchBarberia;
-        case 'Otros':
-          return !matchCabello &&
-              !matchUnas &&
-              !matchMaquillaje &&
-              !matchPiel &&
-              !matchBarberia;
-        default:
-          return false;
-      }
-    }).toList();
+    final filteredServices = _categorizedServices[selectedCategory] ??
+        services.where((s) {
+          if (selectedCategory == 'Todos') return true;
+          final cat = (s['category'] ?? '').toString().toLowerCase();
+          return cat.contains(selectedCategory.toLowerCase());
+        }).toList();
 
     return Scaffold(
       backgroundColor: const Color(0xFFFAF8F5),
-      body: CustomScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        slivers: [
-          // Cabecera de Alto Impacto con Parallax y Desvanecimiento al Desplazar
-          SliverAppBar(
-            expandedHeight: 280,
-            pinned: true,
-            elevation: 0,
-            backgroundColor: const Color(0xFF1F1A15),
-            foregroundColor: Colors.white,
-            title: Text(
-              p['business_name'] ?? p['full_name'] ?? 'Perfil del Profesional',
-              style: const TextStyle(
-                fontFamily: 'CormorantGaramond',
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-                color: Colors.white,
-                shadows: [
-                  Shadow(color: Colors.black87, blurRadius: 6),
-                ],
-              ),
-            ),
-            centerTitle: true,
-            leading: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: CircleAvatar(
-                backgroundColor: Colors.black.withValues(alpha: 0.5),
-                child: IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
-                  onPressed: () => Navigator.pop(context),
+      body: RefreshIndicator(
+        color: const Color(0xFFC5A052),
+        backgroundColor: const Color(0xFF1F1A15),
+        onRefresh: () => _loadDetails(isSilent: true),
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            // Cabecera de Alto Impacto con Parallax y Desvanecimiento al Desplazar
+            SliverAppBar(
+              expandedHeight: 280,
+              pinned: true,
+              elevation: 0,
+              backgroundColor: const Color(0xFF1F1A15),
+              foregroundColor: Colors.white,
+              title: Text(
+                p['business_name'] ?? p['full_name'] ?? 'Perfil del Profesional',
+                style: const TextStyle(
+                  fontFamily: 'CormorantGaramond',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  color: Colors.white,
+                  shadows: [
+                    Shadow(color: Colors.black87, blurRadius: 6),
+                  ],
                 ),
               ),
-            ),
+              centerTitle: true,
+              leading: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: CircleAvatar(
+                  backgroundColor: Colors.black.withValues(alpha: 0.5),
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ),
+              ),
+              actions: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: CircleAvatar(
+                    backgroundColor: Colors.black.withValues(alpha: 0.5),
+                    child: IconButton(
+                      icon: const Icon(Icons.share_outlined, color: Colors.white, size: 20),
+                      onPressed: _shareProfile,
+                    ),
+                  ),
+                ),
+              ],
             flexibleSpace: FlexibleSpaceBar(
               collapseMode: CollapseMode.parallax,
               background: Stack(
@@ -1576,6 +1752,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
             ),
           ],
         ),
+      ),
       bottomNavigationBar: SafeArea(
         top: false,
         child: Container(
@@ -1622,7 +1799,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-              // Botón Primario Dominante: Agendar Cita
+              // Botón Primario Dominante: Agendar Cita con Smart Availability Slot
               Expanded(
                 flex: 7,
                 child: Container(
@@ -1642,7 +1819,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                       ),
                     ],
                   ),
-                  child: ElevatedButton.icon(
+                  child: ElevatedButton(
                     onPressed: () async {
                       final token = await AuthService.getToken();
                       if (token == null) {
@@ -1665,17 +1842,6 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                         );
                       }
                     },
-                    icon: const Icon(Icons.calendar_today_outlined, size: 18, color: Color(0xFF1F1A15)),
-                    label: const Text(
-                      'Agendar Cita',
-                      style: TextStyle(
-                        fontFamily: 'CormorantGaramond',
-                        fontSize: 16.5,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF1F1A15),
-                        letterSpacing: 0.5,
-                      ),
-                    ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.transparent,
                       shadowColor: Colors.transparent,
@@ -1683,6 +1849,38 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
+                      padding: EdgeInsets.zero,
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.calendar_today_outlined, size: 16, color: Color(0xFF1F1A15)),
+                            SizedBox(width: 6),
+                            Text(
+                              'Agendar Cita',
+                              style: TextStyle(
+                                fontFamily: 'CormorantGaramond',
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF1F1A15),
+                                letterSpacing: 0.4,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Text(
+                          'Próximo turno: $smartSlot',
+                          style: const TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF3D2E1E),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
