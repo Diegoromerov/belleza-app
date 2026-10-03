@@ -408,14 +408,17 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
 
     return Container(
       margin: const EdgeInsets.only(top: 16, bottom: 16),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFF5EBE6), width: 1.5),
-        boxShadow: const [
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFEFE8DE), width: 1.2),
+        boxShadow: [
           BoxShadow(
-              color: Color(0x06000000), blurRadius: 10, offset: Offset(0, 4)),
+            color: const Color(0xFFC5A052).withValues(alpha: 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: Column(
@@ -426,19 +429,22 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
             children: [
               const Row(
                 children: [
-                  Icon(Icons.calendar_month, color: AppTheme.primary, size: 20),
+                  Icon(Icons.calendar_today_rounded, color: Color(0xFFC5A052), size: 19),
                   SizedBox(width: 8),
                   Text(
                     'Horario de Disponibilidad Semanal',
                     style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                        color: Color(0xFF4A3E3D)),
+                      fontFamily: 'Inter',
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: Color(0xFF1F1A15),
+                      letterSpacing: 0.2,
+                    ),
                   ),
                 ],
               ),
               IconButton(
-                icon: const Icon(Icons.tune_rounded, color: AppTheme.primary, size: 20),
+                icon: const Icon(Icons.tune_rounded, color: Color(0xFFC5A052), size: 20),
                 tooltip: 'Editor rápido de horarios',
                 onPressed: () {
                   showDialog(
@@ -452,12 +458,12 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           const Text(
             'Configura las horas de inicio y fin para cada día, o apaga los días que no laboras.',
-            style: TextStyle(fontSize: 12, color: Colors.grey),
+            style: TextStyle(fontFamily: 'Inter', fontSize: 12, color: Color(0xFF8C7E74)),
           ),
-          const Divider(height: 24, color: Color(0xFFF5EBE6)),
+          const Divider(height: 24, color: Color(0xFFEFE8DE)),
           ...days.map((key) {
             final conf = _weeklySchedule[key] ??
                 {'activo': true, 'inicio': 6, 'fin': 20};
@@ -475,7 +481,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                       children: [
                         Checkbox(
                           value: isActive,
-                          activeColor: AppTheme.primary,
+                          activeColor: const Color(0xFFC5A052),
                           onChanged: (val) {
                             if (val != null) {
                               setState(() {
@@ -738,78 +744,110 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
 
                   // 1. Cabecera con Avatar Editable en Medallón de Alta Joyería
                   Center(
-                    child: Stack(
+                    child: Column(
                       children: [
-                        Container(
-                          width: 116,
-                          height: 116,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFFF3D59B), Color(0xFFC5A052), Color(0xFF96732B)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFFC5A052).withValues(alpha: 0.35),
-                                blurRadius: 18,
-                                offset: const Offset(0, 6),
-                              ),
-                            ],
-                          ),
-                          padding: const EdgeInsets.all(3),
-                          child: Container(
-                            decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Color(0xFFFDFBF7),
-                            ),
-                            child: CircleAvatar(
-                              radius: 52,
-                              backgroundColor: const Color(0xFFFAF6EE),
-                              backgroundImage: avatarProvider,
-                              child: avatarProvider == null
-                                  ? const Icon(Icons.person_rounded, size: 52, color: Color(0xFFC5A052))
-                                  : null,
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          bottom: 2,
-                          right: 2,
-                          child: GestureDetector(
-                            onTap: _isUploading ? null : _showPhotoSourceSheet,
-                            child: Container(
-                              padding: const EdgeInsets.all(7),
+                        Stack(
+                          children: [
+                            Container(
+                              width: 120,
+                              height: 120,
                               decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [Color(0xFFF3D59B), Color(0xFFC5A052)],
-                                ),
                                 shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white, width: 2),
-                                boxShadow: const [
+                                gradient: const LinearGradient(
+                                  colors: [Color(0xFFF3D59B), Color(0xFFC5A052), Color(0xFF96732B)],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black26,
-                                    blurRadius: 6,
+                                    color: const Color(0xFFC5A052).withValues(alpha: 0.35),
+                                    blurRadius: 20,
+                                    offset: const Offset(0, 6),
                                   ),
                                 ],
                               ),
-                              child: const Icon(Icons.camera_alt_rounded,
-                                  color: Color(0xFF1F1A15), size: 15),
+                              padding: const EdgeInsets.all(3.5),
+                              child: Container(
+                                decoration: const BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Color(0xFFFDFBF7),
+                                ),
+                                padding: const EdgeInsets.all(2),
+                                child: CircleAvatar(
+                                  radius: 54,
+                                  backgroundColor: const Color(0xFFFAF6EE),
+                                  backgroundImage: avatarProvider,
+                                  child: avatarProvider == null
+                                      ? const Icon(Icons.person_rounded, size: 54, color: Color(0xFFC5A052))
+                                      : null,
+                                ),
+                              ),
                             ),
+                            Positioned(
+                              bottom: 2,
+                              right: 2,
+                              child: GestureDetector(
+                                onTap: _isUploading ? null : _showPhotoSourceSheet,
+                                child: Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      colors: [Color(0xFFF3D59B), Color(0xFFC5A052)],
+                                    ),
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: Colors.white, width: 2.5),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(0xFFC5A052).withValues(alpha: 0.4),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 3),
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Icon(Icons.camera_alt_rounded,
+                                      color: Color(0xFF1F1A15), size: 16),
+                                ),
+                              ),
+                            ),
+                            if (_isUploading)
+                              const Positioned.fill(
+                                child: CircleAvatar(
+                                  backgroundColor: Colors.black26,
+                                  child: CircularProgressIndicator(color: Colors.white),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFAF6EE),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: const Color(0xFFC5A052).withValues(alpha: 0.3), width: 0.8),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.workspace_premium_rounded, size: 14, color: Color(0xFFC5A052)),
+                              SizedBox(width: 6),
+                              Text(
+                                'PRESTADOR PROFESIONAL GLOW',
+                                style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFFC5A052),
+                                  letterSpacing: 0.6,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        if (_isUploading)
-                          const Positioned.fill(
-                            child: CircleAvatar(
-                              backgroundColor: Colors.black26,
-                              child: CircularProgressIndicator(color: Colors.white),
-                            ),
-                          ),
                       ],
                     ),
                   ),
-              const SizedBox(height: 32),
+                  const SizedBox(height: 28),
 
               // 2. Formularios de edición
               TextFormField(
