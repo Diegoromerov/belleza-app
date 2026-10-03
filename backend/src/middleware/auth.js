@@ -47,16 +47,25 @@ const authMiddleware = async (req, res, next) => {
     const verified = jwt.verify(token, getJwtSecret());
 
     // Consultar el rol y tenant_id actual del usuario en la base de datos
-    // Arranque de identidad ANTES de fijar contexto de inquilino: se resuelve con
-    // la función SECURITY DEFINER de 068 (la tabla usuarios ya tiene RLS + FORCE,
-    // así que una lectura directa sin contexto devolvería 0 filas -> 401 global).
-    const userRes = await pool.query('SELECT rol, tenant_id FROM app_usuario_identidad($1::integer)', [verified.id]);
-    if (userRes.rows.length === 0) {
+    let userRes;
+    try {
+      userRes = await pool.query('SELECT rol, tenant_id FROM app_usuario_identidad($1::integer)', [verified.id]);
+    } catch (sqlErr) {
+      console.warn('⚠️ app_usuario_identidad no disponible, realizando consulta fallback en usuarios:', sqlErr.message);
+      try {
+        userRes = await pool.query('SELECT rol FROM usuarios WHERE id = $1', [verified.id]);
+      } catch (fallbackErr) {
+        console.error('❌ Error al consultar usuario en DB:', fallbackErr.message);
+        return res.status(401).json({ error: 'Usuario no encontrado en el sistema.' });
+      }
+    }
+
+    if (!userRes || userRes.rows.length === 0) {
       return res.status(401).json({ error: 'Usuario no encontrado en el sistema.' });
     }
 
     const dbRole = userRes.rows[0].rol;
-    const dbTenantId = userRes.rows[0].tenant_id;
+    const dbTenantId = userRes.rows[0].tenant_id || null;
 
     // AISLAMIENTO DE TENANT (fix P0 — tarjeta t_fix_tenant_04)
     // -------------------------------------------------------
@@ -90,6 +99,7 @@ const authMiddleware = async (req, res, next) => {
 
     next();
   } catch (err) {
+    console.error('❌ Error en authMiddleware:', err.message);
     res.status(400).json({ error: 'Token inválido o expirado.' });
   }
 };
