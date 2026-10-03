@@ -569,13 +569,20 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
 
                   const SizedBox(height: 10),
 
-                  // 💳 DATOS DE CUENTA & ACCIONES 1-TAP 💳
+                  // 💳 COMPROBANTE DE TRANSACCIÓN & DATOS DE CUENTA QUIET LUXURY 💳
                   Container(
-                    padding: const EdgeInsets.all(10),
+                    padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFAF4EB),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: const Color(0xFFEFE8DE)),
+                      color: const Color(0xFFFAF6EE),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFC5A052).withValues(alpha: 0.25), width: 1.2),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFC5A052).withValues(alpha: 0.04),
+                          blurRadius: 10,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -583,72 +590,141 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text(
-                              'Estado de Pago:',
-                              style: TextStyle(
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF1F1A15)),
+                            const Row(
+                              children: [
+                                Icon(Icons.shield_outlined, size: 14, color: Color(0xFFC5A052)),
+                                SizedBox(width: 6),
+                                Text(
+                                  'Estado del Pago:',
+                                  style: TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF1F1A15),
+                                  ),
+                                ),
+                              ],
                             ),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                               decoration: BoxDecoration(
                                 color: currentPayoutStep == 3
-                                    ? const Color(0xFFDCFCE7)
-                                    : const Color(0xFFC5A052).withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(10),
+                                    ? const Color(0xFFF0FDF4)
+                                    : const Color(0xFFFEFCE8),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: currentPayoutStep == 3
+                                      ? const Color(0xFFBBF7D0)
+                                      : const Color(0xFFFEF08A),
+                                  width: 0.8,
+                                ),
                               ),
                               child: Text(
                                 payoutStatus,
                                 style: TextStyle(
-                                    fontSize: 10.5,
-                                    fontWeight: FontWeight.bold,
-                                    color: currentPayoutStep == 3
-                                        ? const Color(0xFF166534)
-                                        : const Color(0xFFC5A052)),
+                                  fontFamily: 'Inter',
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: currentPayoutStep == 3
+                                      ? const Color(0xFF15803D)
+                                      : const Color(0xFFA16207),
+                                ),
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 10),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Expanded(
-                              child: Text(
-                                'Cuenta Nequi: $nequiAccount',
-                                style: const TextStyle(fontSize: 11.5, color: Color(0xFF4A4036)),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.phone_android_rounded, size: 14, color: Color(0xFF8C7E74)),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      'Cuenta Nequi: $nequiAccount',
+                                      style: const TextStyle(
+                                        fontFamily: 'Inter',
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF1F1A15),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                             if (nequiAccount != 'No disponible')
                               InkWell(
                                 onTap: () => copyText(nequiAccount, 'Cuenta Nequi'),
-                                child: const Padding(
-                                  padding: EdgeInsets.only(left: 4.0),
-                                  child: Icon(Icons.copy_rounded, size: 14, color: Color(0xFFC5A052)),
+                                borderRadius: BorderRadius.circular(8),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: const Color(0xFFEFE8DE)),
+                                  ),
+                                  child: const Row(
+                                    children: [
+                                      Icon(Icons.copy_rounded, size: 12, color: Color(0xFFC5A052)),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        'Copiar',
+                                        style: TextStyle(fontFamily: 'Inter', fontSize: 10.5, fontWeight: FontWeight.bold, color: Color(0xFFC5A052)),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                           ],
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 8),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Expanded(
-                              child: Text(
-                        'Ref Wompi: ${wompiRef.length > 20 ? '${wompiRef.substring(0, 20)}...' : wompiRef}',
-                                style: const TextStyle(
-                                    fontSize: 10.5,
-                                    fontStyle: FontStyle.italic,
-                                    color: Color(0xFF8C7E74)),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.receipt_rounded, size: 14, color: Color(0xFF8C7E74)),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      'Ref Wompi: ${wompiRef.length > 18 ? '${wompiRef.substring(0, 18)}...' : wompiRef}',
+                                      style: const TextStyle(
+                                        fontFamily: 'Inter',
+                                        fontSize: 11,
+                                        fontStyle: FontStyle.italic,
+                                        color: Color(0xFF8C7E74),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                             if (wompiRef != 'No disponible')
                               InkWell(
                                 onTap: () => copyText(wompiRef, 'Referencia Wompi'),
-                                child: const Padding(
-                                  padding: EdgeInsets.only(left: 4.0),
-                                  child: Icon(Icons.copy_rounded, size: 14, color: Color(0xFFC5A052)),
+                                borderRadius: BorderRadius.circular(8),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: const Color(0xFFEFE8DE)),
+                                  ),
+                                  child: const Row(
+                                    children: [
+                                      Icon(Icons.copy_rounded, size: 12, color: Color(0xFFC5A052)),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        'Copiar',
+                                        style: TextStyle(fontFamily: 'Inter', fontSize: 10.5, fontWeight: FontWeight.bold, color: Color(0xFFC5A052)),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                           ],
