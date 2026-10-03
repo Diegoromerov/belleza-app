@@ -302,11 +302,16 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                 booking['state_tax']?.toString() ??
                 '0.0') ??
         (gross * 0.08);
+    final double tipAmount = double.tryParse(
+            booking['propina']?.toString() ??
+                booking['tip_amount']?.toString() ??
+                '0.0') ??
+        0.0;
     final double netPayout = double.tryParse(
             booking['pago_neto_prestador']?.toString() ??
                 booking['provider_net_amount']?.toString() ??
                 '0.0') ??
-        (gross - platformCut - stateTax);
+        (gross - platformCut - stateTax + tipAmount);
 
     final String nequiAccount =
         booking['numero_cuenta_nequi']?.toString().trim().isNotEmpty == true
@@ -319,8 +324,38 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
     final String? rawPayoutStatus = booking['payout_status']?.toString();
     final String payoutStatus =
         (rawPayoutStatus == null || rawPayoutStatus.trim().isEmpty)
-            ? 'No disponible'
+            ? 'PROCESANDO'
             : rawPayoutStatus.toUpperCase();
+
+    int currentPayoutStep = 2;
+    if (payoutStatus == 'PAGADO' || payoutStatus == 'COMPLETADO' || payoutStatus == 'ACREDITADO') {
+      currentPayoutStep = 3;
+    } else if (payoutStatus == 'PENDIENTE' || payoutStatus == 'ESPERANDO_OTP') {
+      currentPayoutStep = 1;
+    }
+
+    void copyText(String text, String title) {
+      if (text.isEmpty || text == 'No disponible') return;
+      Clipboard.setData(ClipboardData(text: text));
+      HapticFeedback.lightImpact();
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle_outline, color: Color(0xFFC5A052), size: 18),
+              const SizedBox(width: 8),
+              Text('$title copiado al portapapeles',
+                  style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFFFFFDF8))),
+            ],
+          ),
+          backgroundColor: const Color(0xFF1F1A15),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+    }
 
     showDialog(
       context: context,
@@ -330,13 +365,13 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
           insetPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
           contentPadding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(22),
             side: BorderSide(
               color: const Color(0xFFD4AF37).withValues(alpha: 0.4),
               width: 1.5,
             ),
           ),
-          titlePadding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          titlePadding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
           title: Row(
             children: [
               Container(
@@ -344,6 +379,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                 decoration: BoxDecoration(
                   color: const Color(0xFFFAF4EB),
                   borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFFD4AF37).withValues(alpha: 0.3)),
                 ),
                 child: Icon(
                   immediate ? Icons.stars_rounded : Icons.receipt_long_outlined,
@@ -353,15 +389,23 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: Text(
-                  immediate
-                      ? '¡Servicio Completado!'
-                      : 'Detalle de Liquidación',
-                  style: const TextStyle(
-                      fontFamily: 'CormorantGaramond',
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                      color: Color(0xFF1F1A15)),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      immediate ? '¡Servicio Completado!' : 'Detalle de Liquidación',
+                      style: const TextStyle(
+                          fontFamily: 'CormorantGaramond',
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                          color: Color(0xFF1F1A15)),
+                    ),
+                    if (wompiRef != 'No disponible')
+                      Text(
+                        'Ref: ${wompiRef.length > 18 ? wompiRef.substring(0, 18) + '...' : wompiRef}',
+                        style: const TextStyle(fontSize: 10.5, color: Color(0xFF8C7E74), fontStyle: FontStyle.italic),
+                      ),
+                  ],
                 ),
               ),
             ],
@@ -382,13 +426,66 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: const Color(0xFFDCFCE7)),
                       ),
-                      child: const Text(
-                        'El PIN ha sido verificado con éxito. Hemos liberado los fondos y la transferencia está en camino.',
-                        style: TextStyle(fontSize: 11.5, color: Color(0xFF166534), height: 1.25),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.verified, color: Color(0xFF166534), size: 16),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'PIN verificado. Los fondos han sido aprobados y la transferencia a tu cuenta está en proceso.',
+                              style: TextStyle(fontSize: 11, color: Color(0xFF166534), height: 1.25),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 10),
                   ],
+
+                  // ✦ STEPPER VISUAL DE DISPERSIÓN REAL ✦
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFAF4EB),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFD4AF37).withValues(alpha: 0.3)),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _buildPayoutStepDot('1. PIN', currentPayoutStep >= 0),
+                            _buildPayoutStepLine(currentPayoutStep >= 1),
+                            _buildPayoutStepDot('2. Wompi', currentPayoutStep >= 1),
+                            _buildPayoutStepLine(currentPayoutStep >= 2),
+                            _buildPayoutStepDot('3. Proceso', currentPayoutStep >= 2),
+                            _buildPayoutStepLine(currentPayoutStep >= 3),
+                            _buildPayoutStepDot('4. En Nequi', currentPayoutStep >= 3),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            const Icon(Icons.bolt, color: Color(0xFFC5A052), size: 13),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                currentPayoutStep == 3
+                                    ? 'Acreditado exitosamente en tu cuenta Nequi.'
+                                    : 'Acreditación estimada: En menos de 2 horas.',
+                                style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: Color(0xFF4A4036)),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  // 🧾 DESGLOSE FINANCIERO QUIET LUXURY 🧾
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
@@ -401,6 +498,11 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                         _breakdownRow(
                             'Liquidación Bruta', '\$${gross.toStringAsFixed(0)} COP',
                             isBold: true, fontSize: 12.5),
+                        if (tipAmount > 0) ...[
+                          const SizedBox(height: 4),
+                          _breakdownRow('Propina Cliente (100% tuya)', '+\$${tipAmount.toStringAsFixed(0)} COP',
+                              color: const Color(0xFF16A34A), isBold: true, fontSize: 12),
+                        ],
                         const SizedBox(height: 6),
                         _breakdownRow('Descuento Plataforma (20%)',
                             '-\$${(platformCut + stateTax).toStringAsFixed(0)} COP',
@@ -425,11 +527,14 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                         ),
                         _breakdownRow('Dispersión Nequi (Neto 80%)',
                             '\$${netPayout.toStringAsFixed(0)} COP',
-                            color: const Color(0xFF1F1A15), isBold: true, fontSize: 13.0),
+                            color: const Color(0xFF1F1A15), isBold: true, fontSize: 13.5),
                       ],
                     ),
                   ),
+
                   const SizedBox(height: 10),
+
+                  // 💳 DATOS DE CUENTA & ACCIONES 1-TAP 💳
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
@@ -453,31 +558,65 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFC5A052).withValues(alpha: 0.15),
+                                color: currentPayoutStep == 3
+                                    ? const Color(0xFFDCFCE7)
+                                    : const Color(0xFFC5A052).withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: Text(
                                 payoutStatus,
-                                style: const TextStyle(
+                                style: TextStyle(
                                     fontSize: 10.5,
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFFC5A052)),
+                                    color: currentPayoutStep == 3
+                                        ? const Color(0xFF166534)
+                                        : const Color(0xFFC5A052)),
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Cuenta Nequi: $nequiAccount',
-                          style: const TextStyle(fontSize: 11.5, color: Color(0xFF4A4036)),
+                        const SizedBox(height: 6),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                'Cuenta Nequi: $nequiAccount',
+                                style: const TextStyle(fontSize: 11.5, color: Color(0xFF4A4036)),
+                              ),
+                            ),
+                            if (nequiAccount != 'No disponible')
+                              InkWell(
+                                onTap: () => copyText(nequiAccount, 'Cuenta Nequi'),
+                                child: const Padding(
+                                  padding: EdgeInsets.only(left: 4.0),
+                                  child: Icon(Icons.copy_rounded, size: 14, color: Color(0xFFC5A052)),
+                                ),
+                              ),
+                          ],
                         ),
                         const SizedBox(height: 4),
-                        Text(
-                          'Referencia Wompi:\n$wompiRef',
-                          style: const TextStyle(
-                              fontSize: 10.5,
-                              fontStyle: FontStyle.italic,
-                              color: Color(0xFF8C7E74)),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                'Ref Wompi: ${wompiRef.length > 20 ? wompiRef.substring(0, 20) + '...' : wompiRef}',
+                                style: const TextStyle(
+                                    fontSize: 10.5,
+                                    fontStyle: FontStyle.italic,
+                                    color: Color(0xFF8C7E74)),
+                              ),
+                            ),
+                            if (wompiRef != 'No disponible')
+                              InkWell(
+                                onTap: () => copyText(wompiRef, 'Referencia Wompi'),
+                                child: const Padding(
+                                  padding: EdgeInsets.only(left: 4.0),
+                                  child: Icon(Icons.copy_rounded, size: 14, color: Color(0xFFC5A052)),
+                                ),
+                              ),
+                          ],
                         ),
                       ],
                     ),
@@ -534,6 +673,37 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
           ],
         );
       },
+    );
+  }
+
+  Widget _buildPayoutStepDot(String label, bool isActive) {
+    return Column(
+      children: [
+        Icon(
+          isActive ? Icons.check_circle : Icons.circle_outlined,
+          size: 13,
+          color: isActive ? const Color(0xFFC5A052) : const Color(0xFFD4CEB8),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 9.5,
+            fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+            color: isActive ? const Color(0xFF1F1A15) : const Color(0xFF8C7E74),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPayoutStepLine(bool isActive) {
+    return Expanded(
+      child: Container(
+        height: 2,
+        margin: const EdgeInsets.symmetric(horizontal: 2),
+        color: isActive ? const Color(0xFFC5A052) : const Color(0xFFEFE8DE),
+      ),
     );
   }
 
