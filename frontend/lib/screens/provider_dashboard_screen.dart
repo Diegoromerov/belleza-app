@@ -442,13 +442,20 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                     const SizedBox(height: 10),
                   ],
 
-                  // ✦ STEPPER VISUAL DE DISPERSIÓN REAL ✦
+                  // ✦ STEPPER VISUAL DE DISPERSIÓN REAL QUIET LUXURY ✦
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFAF4EB),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFD4AF37).withValues(alpha: 0.3)),
+                      color: const Color(0xFFFAF6EE),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFC5A052).withValues(alpha: 0.25), width: 1.2),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFC5A052).withValues(alpha: 0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
                     ),
                     child: Column(
                       children: [
@@ -464,51 +471,71 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                             _buildPayoutStepDot('4. En Nequi', currentPayoutStep >= 3),
                           ],
                         ),
-                        const SizedBox(height: 6),
-                        Row(
-                          children: [
-                            const Icon(Icons.bolt, color: Color(0xFFC5A052), size: 13),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                currentPayoutStep == 3
-                                    ? 'Acreditado exitosamente en tu cuenta Nequi.'
-                                    : 'Acreditación estimada: En menos de 2 horas.',
-                                style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: Color(0xFF4A4036)),
+                        const SizedBox(height: 10),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: const Color(0xFFEFE8DE), width: 0.8),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.bolt_rounded, color: Color(0xFFC5A052), size: 15),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  currentPayoutStep == 3
+                                      ? 'Acreditado exitosamente en tu cuenta Nequi.'
+                                      : 'Acreditación estimada: En menos de 2 horas vía Wompi/Nequi.',
+                                  style: const TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF1F1A15),
+                                  ),
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ],
                     ),
                   ),
 
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
 
                   // 🧾 DESGLOSE FINANCIERO QUIET LUXURY 🧾
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFAF6EE),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: const Color(0xFFEFE8DE)),
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFEFE8DE), width: 1.2),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.03),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
                     child: Column(
                       children: [
                         _breakdownRow(
                             'Liquidación Bruta', '\$${gross.toStringAsFixed(0)} COP',
-                            isBold: true, fontSize: 12.5),
+                            isBold: true, fontSize: 13.0),
                         if (tipAmount > 0) ...[
                           const SizedBox(height: 4),
                           _breakdownRow('Propina Cliente (100% tuya)', '+\$${tipAmount.toStringAsFixed(0)} COP',
-                              color: const Color(0xFF16A34A), isBold: true, fontSize: 12),
+                              color: const Color(0xFF15803D), isBold: true, fontSize: 12.5),
                         ],
                         const SizedBox(height: 6),
                         _breakdownRow('Descuento Plataforma (20%)',
                             '-\$${(platformCut + stateTax).toStringAsFixed(0)} COP',
-                            color: const Color(0xFF800A0A), isBold: true, fontSize: 12.5),
+                            color: const Color(0xFFB91C1C), isBold: true, fontSize: 12.5),
                         Padding(
-                          padding: const EdgeInsets.only(left: 6.0, top: 4.0),
+                          padding: const EdgeInsets.only(left: 10.0, top: 4.0),
                           child: Column(
                             children: [
                               _breakdownRow('• Comisión Neta (12%)',
@@ -522,12 +549,20 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                           ),
                         ),
                         const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 8),
+                          padding: EdgeInsets.symmetric(vertical: 10),
                           child: Divider(height: 1, color: Color(0xFFEFE8DE)),
                         ),
-                        _breakdownRow('Dispersión Nequi (Neto 80%)',
-                            '\$${netPayout.toStringAsFixed(0)} COP',
-                            color: const Color(0xFF1F1A15), isBold: true, fontSize: 13.5),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFAF6EE),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: const Color(0xFFC5A052).withValues(alpha: 0.3), width: 0.8),
+                          ),
+                          child: _breakdownRow('Dispersión Nequi (Neto 80%)',
+                              '\$${netPayout.toStringAsFixed(0)} COP',
+                              color: const Color(0xFFC5A052), isBold: true, fontSize: 14.0),
+                        ),
                       ],
                     ),
                   ),
