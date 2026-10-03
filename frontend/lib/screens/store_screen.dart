@@ -8,7 +8,6 @@ import 'package:shimmer/shimmer.dart';
 import '../widgets/store_product_card.dart';
 import '../widgets/product_quick_view_dialog.dart';
 import '../widgets/wompi_payment_sheet.dart';
-import '../widgets/audience_toggle.dart';
 import '../services/audience_service.dart';
 import '../shared/mens_theme.dart';
 
@@ -226,7 +225,6 @@ class _StoreScreenState extends State<StoreScreen> {
     if (_cart.isEmpty) return;
 
     final double subtotal = _getCartSubtotal();
-    final double envio = 0.0;
     final double iva = subtotal * 0.19;
     final double total = subtotal + iva;
 
@@ -693,7 +691,6 @@ class _StoreScreenState extends State<StoreScreen> {
       valueListenable: AudienceService.currentAudience,
       builder: (context, audienceMode, child) {
         final isMen = audienceMode == AudienceMode.men;
-        final isDark = isMen || MapSettings.isDark;
 
         final bgColor = isMen
             ? MensTheme.obsidianBg
@@ -963,15 +960,6 @@ class _StoreScreenState extends State<StoreScreen> {
     );
   }
 
-  Widget _buildPlaceholderImage(double height) {
-    return Container(
-      height: height,
-      color: Colors.grey.shade100,
-      width: double.infinity,
-      child: const Icon(Icons.image, size: 50, color: Colors.grey),
-    );
-  }
-
   Widget _buildCartDrawer() {
     final subtotal = _getCartSubtotal();
     final double screenWidth = MediaQuery.of(context).size.width;
@@ -1173,7 +1161,7 @@ class _StoreScreenState extends State<StoreScreen> {
                 left: 20.0,
                 right: 20.0,
                 top: 16.0,
-                bottom: 20.0 + MediaQuery.of(context).padding.bottom,
+                bottom: 110.0 + MediaQuery.of(context).padding.bottom,
               ),
               child: Column(
                 children: [
