@@ -252,11 +252,19 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
     final displayPercent = (percent * 100).toInt();
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5EBE6),
-        borderRadius: BorderRadius.circular(20),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFEFE8DE), width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFC5A052).withValues(alpha: 0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -264,30 +272,48 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Progreso del Perfil',
-                style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                    fontSize: 13),
+              const Row(
+                children: [
+                  Icon(Icons.auto_awesome_rounded, size: 16, color: Color(0xFFC5A052)),
+                  SizedBox(width: 8),
+                  Text(
+                    'Progreso del Perfil',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1F1A15),
+                      fontSize: 13.5,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                ],
               ),
-              Text(
-                '$displayPercent%',
-                style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.primary,
-                    fontSize: 13),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFAF6EE),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFC5A052).withValues(alpha: 0.3), width: 0.8),
+                ),
+                child: Text(
+                  '$displayPercent%',
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFFC5A052),
+                    fontSize: 12.5,
+                  ),
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
             child: LinearProgressIndicator(
               value: percent,
-              backgroundColor: Colors.white,
-              valueColor:
-                  const AlwaysStoppedAnimation<Color>(AppTheme.primary),
+              backgroundColor: const Color(0xFFF3EFE9),
+              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFC5A052)),
               minHeight: 8,
             ),
           ),
@@ -299,44 +325,61 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
   Widget _buildVerificationBadge() {
     final status = _verificationStatus?.toUpperCase() ?? 'PENDIENTE';
     Color badgeColor;
+    Color borderColor;
     Color textColor;
     IconData icon;
     String text;
 
     if (status == 'APROBADO') {
-      badgeColor = const Color(0xFFDCFCE7);
-      textColor = const Color(0xFF16A34A);
-      icon = Icons.verified_user_rounded;
-      text = 'Verificado / Aprobado';
+      badgeColor = const Color(0xFFF0FDF4);
+      borderColor = const Color(0xFFBBF7D0);
+      textColor = const Color(0xFF15803D);
+      icon = Icons.verified_rounded;
+      text = 'GlowPro Verificado / Aprobado';
     } else if (status == 'RECHAZADO') {
-      badgeColor = const Color(0xFFFEE2E2);
-      textColor = const Color(0xFFDC2626);
+      badgeColor = const Color(0xFFFEF2F2);
+      borderColor = const Color(0xFFFECACA);
+      textColor = const Color(0xFFB91C1C);
       icon = Icons.gpp_bad_rounded;
-      text = 'Rechazado';
+      text = 'Verificación Rechazada';
     } else {
-      badgeColor = const Color(0xFFFEF9C3);
-      textColor = const Color(0xFFCA8A04);
+      badgeColor = const Color(0xFFFEFCE8);
+      borderColor = const Color(0xFFFEF08A);
+      textColor = const Color(0xFFA16207);
       icon = Icons.pending_actions_rounded;
       text = 'Verificación Pendiente';
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
         color: badgeColor,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: borderColor, width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: textColor.withValues(alpha: 0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, color: textColor, size: 20),
+          Icon(icon, color: textColor, size: 18),
           const SizedBox(width: 8),
           Text(
             text,
             style: TextStyle(
-                fontWeight: FontWeight.bold, color: textColor, fontSize: 13),
+              fontFamily: 'Inter',
+              fontWeight: FontWeight.bold,
+              color: textColor,
+              fontSize: 13,
+              letterSpacing: 0.2,
+            ),
           ),
         ],
       ),
@@ -983,7 +1026,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
               ),
-              const SizedBox(height: 40),
+              SizedBox(height: 120.0 + MediaQuery.of(context).padding.bottom),
             ],
           ),
         ),
