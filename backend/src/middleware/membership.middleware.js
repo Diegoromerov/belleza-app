@@ -41,6 +41,7 @@ const membershipMiddleware = async (req, res, next) => {
       if (activeMemberships.length === 0) {
         if (isProviderOrAdmin) {
           req.user.businessProfileId = req.user.businessProfileId || null;
+          req.user.membershipRole = req.user.membershipRole || 'OWNER';
           return next();
         }
         return res.status(403).json({
@@ -92,6 +93,7 @@ const membershipMiddleware = async (req, res, next) => {
     if (!membership) {
       if (isProviderOrAdmin) {
         req.user.businessProfileId = targetBusinessProfileId;
+        req.user.membershipRole = req.user.membershipRole || 'OWNER';
         return next();
       }
       return res.status(403).json({
@@ -107,6 +109,7 @@ const membershipMiddleware = async (req, res, next) => {
   } catch (err) {
     console.error('❌ Error en membershipMiddleware:', err.message);
     if (isProviderOrAdmin) {
+      req.user.membershipRole = req.user.membershipRole || 'OWNER';
       return next();
     }
     res.status(500).json({ error: 'INTERNAL_SERVER_ERROR', message: 'Error verificando membresía de usuario.' });
