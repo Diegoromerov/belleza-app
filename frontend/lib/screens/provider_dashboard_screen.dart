@@ -307,6 +307,11 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                 booking['tip_amount']?.toString() ??
                 '0.0') ??
         0.0;
+    final double productsAmount = double.tryParse(
+            booking['monto_productos']?.toString() ??
+                booking['products_amount']?.toString() ??
+                '0.0') ??
+        0.0;
     final double netPayout = double.tryParse(
             booking['pago_neto_prestador']?.toString() ??
                 booking['provider_net_amount']?.toString() ??
@@ -530,6 +535,11 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                           _breakdownRow('Propina Cliente (100% tuya)', '+\$${tipAmount.toStringAsFixed(0)} COP',
                               color: const Color(0xFF15803D), isBold: true, fontSize: 12.5),
                         ],
+                        if (productsAmount > 0) ...[
+                          const SizedBox(height: 4),
+                          _breakdownRow('Ganancia Venta Productos', '+\$${productsAmount.toStringAsFixed(0)} COP',
+                              color: const Color(0xFF15803D), isBold: true, fontSize: 12.5),
+                        ],
                         const SizedBox(height: 6),
                         _breakdownRow('Descuento Plataforma (20%)',
                             '-\$${(platformCut + stateTax).toStringAsFixed(0)} COP',
@@ -563,11 +573,33 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                               '\$${netPayout.toStringAsFixed(0)} COP',
                               color: const Color(0xFFC5A052), isBold: true, fontSize: 14.0),
                         ),
+                        const SizedBox(height: 10),
+                        // ⚖️ TRANSPARENCIA FISCAL COLOMBIA (CK3) ⚖️
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFAF8F5),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: const Color(0xFFEFE8DE), width: 0.8),
+                          ),
+                          child: const Row(
+                            children: [
+                              Icon(Icons.gavel_rounded, size: 12, color: Color(0xFF8C7E74)),
+                              SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  'Cumplimiento tributario DIAN Colombia: 12% servicio + 8% retención ReteFuente/ICA.',
+                                  style: TextStyle(fontFamily: 'Inter', fontSize: 9.5, color: Color(0xFF8C7E74), height: 1.25),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                   ),
 
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
 
                   // 💳 COMPROBANTE DE TRANSACCIÓN & DATOS DE CUENTA QUIET LUXURY 💳
                   Container(
@@ -736,47 +768,56 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
               ),
             ),
           ),
-          actionsPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+          actionsPadding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
           actions: [
             Row(
               children: [
                 Expanded(
-                  child: TextButton.icon(
+                  child: OutlinedButton.icon(
                     onPressed: () {
-                      Navigator.pop(context);
-                      setState(() {
-                        _currentIndex = 2; // Wallet Tab
-                      });
+                      final summary = 'Liquidación GlowApp:\nBruta: \$${gross.toStringAsFixed(0)} COP\nNeto Nequi: \$${netPayout.toStringAsFixed(0)} COP\nRef Wompi: $wompiRef';
+                      copyText(summary, 'Resumen de Liquidación');
                     },
-                    icon: const Icon(Icons.account_balance_wallet_outlined,
-                        size: 15, color: Color(0xFFC5A052)),
+                    icon: const Icon(Icons.share_outlined, size: 14, color: Color(0xFFC5A052)),
                     label: const Text(
-                      'Ver Wallet',
+                      'Compartir',
                       style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFFC5A052)),
+                        fontFamily: 'Inter',
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFFC5A052),
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFFC5A052), width: 1),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     ),
                   ),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: 8),
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () => Navigator.pop(context),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF1F1A15),
-                      foregroundColor: const Color(0xFFFFFDF8),
-                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      foregroundColor: const Color(0xFFC5A052),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          side: const BorderSide(color: Color(0xFFD4AF37), width: 1)),
-                      elevation: 1,
+                        borderRadius: BorderRadius.circular(14),
+                        side: const BorderSide(color: Color(0xFFC5A052), width: 1),
+                      ),
+                      elevation: 0,
                     ),
-                    child: const Text('Entendido',
-                        style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFFD4AF37))),
+                    child: const Text(
+                      'Entendido',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFFC5A052),
+                      ),
+                    ),
                   ),
                 ),
               ],
