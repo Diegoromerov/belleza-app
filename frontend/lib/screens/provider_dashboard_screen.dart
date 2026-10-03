@@ -164,9 +164,19 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
         });
       }
     } catch (e) {
+      final String errStr = e.toString();
+      if (errStr.contains('Token inválido') ||
+          errStr.contains('expirado') ||
+          errStr.contains('401')) {
+        await AuthService.logout();
+        if (mounted) {
+          Navigator.pushReplacementNamed(context, '/login');
+          return;
+        }
+      }
       if (mounted) {
         setState(() {
-          _error = e.toString();
+          _error = errStr;
           _loading = false;
         });
       }
