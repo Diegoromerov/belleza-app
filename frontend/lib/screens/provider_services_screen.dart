@@ -123,13 +123,107 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
   Future<void> _showServiceForm({ServiceModel? service}) async {
     final nameCtrl = TextEditingController(text: service?.name ?? '');
     final descCtrl = TextEditingController(text: service?.description ?? '');
-    final priceCtrl =
-        TextEditingController(text: service?.price.toString() ?? '');
+    final priceCtrl = TextEditingController(
+        text: service != null ? service.price.toInt().toString() : '');
     final durationCtrl =
         TextEditingController(text: service?.durationMinutes.toString() ?? '');
-    final categoryCtrl = TextEditingController(text: service?.category ?? '');
+    final categoryCtrl = TextEditingController(text: service?.category ?? 'Cabello');
     final formKey = GlobalKey<FormState>();
     bool isActive = service?.isActive ?? true;
+
+    // 💡 Propuesta A: Plantillas Rápidas según Categoría
+    final Map<String, List<Map<String, dynamic>>> serviceTemplates = {
+      'Cabello': [
+        {
+          'name': 'Balayage Cenizo + Hidratación',
+          'price': 320000,
+          'duration': 180,
+          'desc': 'Técnica de iluminación capilar con cuidado protector.'
+        },
+        {
+          'name': 'Corte Tendencia + Cepillado',
+          'price': 65000,
+          'duration': 60,
+          'desc': 'Corte moderno personalizado con lavado y cepillado.'
+        },
+        {
+          'name': 'Tratamiento de Keratina',
+          'price': 180000,
+          'duration': 120,
+          'desc': 'Alisado e hidratación profunda con sellado de cutícula.'
+        },
+      ],
+      'Uñas': [
+        {
+          'name': 'Manicura Semipermanente',
+          'price': 55000,
+          'duration': 60,
+          'desc': 'Limpieza, limado y esmaltado semipermanente de alta duración.'
+        },
+        {
+          'name': 'Extensiones Gel-X',
+          'price': 120000,
+          'duration': 100,
+          'desc': 'Extensión de uñas elegantes con acabado natural.'
+        },
+        {
+          'name': 'Pedicura Spa Profunda',
+          'price': 60000,
+          'duration': 60,
+          'desc': 'Exfoliación, masaje e hidratación profunda para pies.'
+        },
+      ],
+      'Maquillaje': [
+        {
+          'name': 'Maquillaje Social Premium',
+          'price': 140000,
+          'duration': 75,
+          'desc': 'Maquillaje elegante de larga duración para eventos.'
+        },
+        {
+          'name': 'Maquillaje de Novia con Prueba',
+          'price': 280000,
+          'duration': 120,
+          'desc': 'Maquillaje especializado con prueba previa incluida.'
+        },
+      ],
+      'Cuidado de la piel': [
+        {
+          'name': 'Limpieza Facial Profunda',
+          'price': 95000,
+          'duration': 75,
+          'desc': 'Higienización facial con extracción de impurezas.'
+        },
+        {
+          'name': 'Hidratación Ácido Hialurónico',
+          'price': 120000,
+          'duration': 60,
+          'desc': 'Tratamiento intensivo de nutrición y rejuvenecimiento.'
+        },
+      ],
+      'Barbería': [
+        {
+          'name': 'Corte Premium + Perfilado de Barba',
+          'price': 45000,
+          'duration': 50,
+          'desc': 'Corte masculino con toalla caliente y perfilado de barba.'
+        },
+        {
+          'name': 'Camuflaje de Canas',
+          'price': 50000,
+          'duration': 40,
+          'desc': 'Coloración rápida y natural de barba y cabello.'
+        },
+      ],
+      'Otros': [
+        {
+          'name': 'Diseño de Cejas + Henna',
+          'price': 40000,
+          'duration': 45,
+          'desc': 'Perfilado de cejas con pigmentación temporal natural.'
+        },
+      ],
+    };
 
     await showModalBottomSheet(
       context: context,
@@ -141,6 +235,11 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
       builder: (context) {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setModalState) {
+            final activeCat = categoryCtrl.text.trim().isNotEmpty
+                ? categoryCtrl.text.trim()
+                : 'Cabello';
+            final currentTemplates = serviceTemplates[activeCat] ?? serviceTemplates['Otros']!;
+
             return Padding(
               padding: EdgeInsets.only(
                 bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -177,7 +276,63 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
                         ),
                         textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 16),
+                      // 🚀 Propuesta A: Fila de Plantillas Rápidas AutoFill
+                      if (service == null) ...[
+                        Row(
+                          children: [
+                            const Icon(Icons.auto_awesome_rounded,
+                                size: 14, color: Color(0xFFC5A052)),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Plantillas rápidas ($activeCat):',
+                              style: const TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 12,
+                                color: Color(0xFF8C7E74),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: currentTemplates.map((t) {
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: ActionChip(
+                                  avatar: const Icon(Icons.flash_on_rounded,
+                                      size: 13, color: Color(0xFFC5A052)),
+                                  label: Text(t['name'] as String),
+                                  backgroundColor: const Color(0xFFFFF7E6),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                    side: const BorderSide(
+                                        color: Color(0xFFC5A052), width: 1),
+                                  ),
+                                  labelStyle: const TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF1F1A15),
+                                  ),
+                                  onPressed: () {
+                                    setModalState(() {
+                                      nameCtrl.text = t['name'] as String;
+                                      priceCtrl.text = (t['price'] as int).toString();
+                                      durationCtrl.text = (t['duration'] as int).toString();
+                                      descCtrl.text = t['desc'] as String;
+                                    });
+                                  },
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                      ],
                       TextFormField(
                         controller: nameCtrl,
                         decoration: _inputDecoration('Nombre del servicio *', Icons.spa_outlined),
@@ -197,13 +352,14 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
                           Expanded(
                             child: TextFormField(
                               controller: priceCtrl,
-                              decoration: _inputDecoration('Precio (\$) *', Icons.attach_money_rounded),
+                              decoration: _inputDecoration('Precio (COP) *', Icons.attach_money_rounded),
                               style: const TextStyle(fontFamily: 'Inter', fontSize: 14, color: Color(0xFF1F1A15)),
                               keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              // 🔢 Propuesta C: Validador y Sanitizador de Moneda COP
                               validator: (v) {
-                                if (v == null || v.isEmpty) return 'Requerido';
-                                final cleanVal = v.replaceAll(',', '.');
-                                final price = double.tryParse(cleanVal);
+                                if (v == null || v.trim().isEmpty) return 'Requerido';
+                                final clean = v.replaceAll('.', '').replaceAll(',', '.').replaceAll(RegExp(r'[^\d.]'), '');
+                                final price = double.tryParse(clean);
                                 if (price == null || price < 0) return 'Precio inválido';
                                 return null;
                               },
@@ -275,7 +431,7 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
                       const SizedBox(height: 14),
                       DropdownButtonFormField<String>(
                         initialValue: categoryCtrl.text.trim().isEmpty
-                            ? null
+                            ? 'Cabello'
                             : ([
                                 'Cabello',
                                 'Uñas',
@@ -297,7 +453,9 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
                             .map((c) => DropdownMenuItem(value: c, child: Text(c)))
                             .toList(),
                         onChanged: (v) {
-                          if (v != null) categoryCtrl.text = v;
+                          if (v != null) {
+                            setModalState(() => categoryCtrl.text = v);
+                          }
                         },
                         validator: (v) => v == null || v.isEmpty ? 'Requerido' : null,
                       ),
@@ -351,10 +509,15 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
                           onPressed: () {
                             if (formKey.currentState!.validate()) {
                               Navigator.pop(context);
+                              // 🔢 Propuesta C: Sanitización de precio antes del envío
+                              final cleanPriceStr = priceCtrl.text
+                                  .replaceAll('.', '')
+                                  .replaceAll(',', '.')
+                                  .replaceAll(RegExp(r'[^\d.]'), '');
                               _submitServiceHelper(
                                 service: service,
                                 name: nameCtrl.text.trim(),
-                                price: double.parse(priceCtrl.text.replaceAll(',', '.')),
+                                price: double.parse(cleanPriceStr),
                                 duration: int.parse(durationCtrl.text),
                                 description: descCtrl.text.trim().isNotEmpty ? descCtrl.text.trim() : null,
                                 category: categoryCtrl.text.trim().isNotEmpty ? categoryCtrl.text.trim() : null,
