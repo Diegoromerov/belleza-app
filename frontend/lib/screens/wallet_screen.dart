@@ -25,7 +25,8 @@ class _WalletScreenState extends State<WalletScreen>
   bool _loadingTx = false;
   String? _error;
 
-  // Pagination fields
+  // Pagination & Filter fields
+  String _filtroTipo = 'TODOS';
   int _currentPage = 1;
   bool _hasMore = true;
   bool _loadingMore = false;
@@ -683,6 +684,172 @@ class _WalletScreenState extends State<WalletScreen>
 );
   }
 
+  void _mostrarDetalleTransaccion(BuildContext context, Map<String, dynamic> tx) {
+    HapticFeedback.lightImpact();
+    final tipo = (tx['tipo'] ?? '').toString();
+    final esCredito = tipo.startsWith('CREDITO') ||
+        tipo == 'LIBERACION_DISPUTA' ||
+        tipo == 'BONO_CANCELACION';
+    final monto = double.tryParse(tx['monto'].toString()) ?? 0;
+    final fecha = tx['created_at'] != null
+        ? DateFormat('dd MMMM yyyy, hh:mm a', 'es')
+            .format(DateTime.parse(tx['created_at']))
+        : 'Reciente';
+    final refId = tx['referencia'] ?? tx['id']?.toString() ?? 'GLOW-TX-${(tx.hashCode % 900000) + 100000}';
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+        decoration: const BoxDecoration(
+          color: Color(0xFF1F1A15),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: const Color(0xFFC5A052).withValues(alpha: 0.4),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: esCredito ? const Color(0xFF10B981).withValues(alpha: 0.15) : const Color(0xFFC5A052).withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    esCredito ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded,
+                    color: esCredito ? const Color(0xFF10B981) : const Color(0xFFC5A052),
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        esCredito ? 'Ingreso Acreditado' : 'Débito / Retiro',
+                        style: const TextStyle(
+                          fontFamily: 'CormorantGaramond',
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFFFFDF8),
+                        ),
+                      ),
+                      Text(
+                        fecha,
+                        style: const TextStyle(
+                          color: Color(0xFFC5B8A8),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: const Color(0xFF261E17),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFC5A052).withValues(alpha: 0.3)),
+              ),
+              child: Column(
+                children: [
+                  const Text(
+                    'Monto Total de Operación',
+                    style: TextStyle(color: Color(0xFFC5B8A8), fontSize: 12),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${esCredito ? '+' : '-'}${_formatCOP.format(monto)}',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: esCredito ? const Color(0xFF10B981) : const Color(0xFFFFFDF8),
+                    ),
+                  ),
+                  if (tx['servicio_nombre'] != null) ...[
+                    const SizedBox(height: 12),
+                    const Divider(color: Color(0xFF382E25)),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Servicio', style: TextStyle(color: Color(0xFFC5B8A8), fontSize: 13)),
+                        Text(
+                          tx['servicio_nombre'].toString(),
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            InkWell(
+              onTap: () {
+                HapticFeedback.lightImpact();
+                Clipboard.setData(ClipboardData(text: refId.toString()));
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('📋 ID de Referencia copiado al portapapeles'),
+                    backgroundColor: Color(0xFFC5A052),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              },
+              borderRadius: BorderRadius.circular(14),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFC5A052).withValues(alpha: 0.2)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.tag, size: 18, color: Color(0xFFC5A052)),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('ID DE REFERENCIA', style: TextStyle(color: Color(0xFFC5B8A8), fontSize: 10, letterSpacing: 0.8)),
+                          Text(
+                            refId.toString(),
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.copy_rounded, size: 18, color: Color(0xFFC5A052)),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildMovimientos() {
     if (_loadingTx) {
       return const Center(
@@ -695,40 +862,120 @@ class _WalletScreenState extends State<WalletScreen>
       );
     }
 
-    int itemCount = _transacciones.length;
-    if (_hasMore || _loadingMore) {
+    final filtrados = _transacciones.where((tx) {
+      final tipo = (tx['tipo'] ?? '').toString();
+      final esCredito = tipo.startsWith('CREDITO') ||
+          tipo == 'LIBERACION_DISPUTA' ||
+          tipo == 'BONO_CANCELACION';
+      if (_filtroTipo == 'INGRESOS') return esCredito;
+      if (_filtroTipo == 'DEBITOS') return !esCredito;
+      return true;
+    }).toList();
+
+    int itemCount = filtrados.length;
+    if (_filtroTipo == 'TODOS' && (_hasMore || _loadingMore)) {
       itemCount++;
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: itemCount,
-      itemBuilder: (ctx, i) {
-        if (i == _transacciones.length) {
-          if (_loadingMore) {
-            return const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Center(
-                  child: CircularProgressIndicator(color: AppTheme.primary)),
-            );
-          }
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: OutlinedButton(
-              onPressed: () => _cargarTransacciones(loadMore: true),
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: AppTheme.primary),
-                foregroundColor: AppTheme.primary,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-              ),
-              child: const Text('Cargar más movimientos',
-                  style: TextStyle(fontSize: 14)),
-            ),
-          );
-        }
-        return _TransaccionTile(tx: _transacciones[i]);
+    return Column(
+      children: [
+        // ─── Filter Pills ─────────────────────────────────────────────
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+          child: Row(
+            children: [
+              _buildFilterChip('TODOS', 'Todos'),
+              const SizedBox(width: 8),
+              _buildFilterChip('INGRESOS', 'Ingresos (+)'),
+              const SizedBox(width: 8),
+              _buildFilterChip('DEBITOS', 'Retiros (-)'),
+            ],
+          ),
+        ),
+        Expanded(
+          child: filtrados.isEmpty
+              ? const Center(
+                  child: Text('No hay movimientos en esta categoría',
+                      style: TextStyle(color: Color(0xFF8E7D7A), fontSize: 13)),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: itemCount,
+                  itemBuilder: (ctx, i) {
+                    if (i == filtrados.length) {
+                      if (_loadingMore) {
+                        return const Padding(
+                          padding: EdgeInsets.all(16.0),
+                          child: Center(
+                              child: CircularProgressIndicator(color: AppTheme.primary)),
+                        );
+                      }
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: OutlinedButton(
+                          onPressed: () => _cargarTransacciones(loadMore: true),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: AppTheme.primary),
+                            foregroundColor: AppTheme.primary,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: const Text('Cargar más movimientos',
+                              style: TextStyle(fontSize: 14)),
+                        ),
+                      );
+                    }
+                    final tx = filtrados[i];
+                    return _TransaccionTile(
+                      tx: tx,
+                      onTap: () => _mostrarDetalleTransaccion(context, tx),
+                    );
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFilterChip(String key, String label) {
+    final selected = _filtroTipo == key;
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        setState(() {
+          _filtroTipo = key;
+        });
       },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFFC5A052) : const Color(0xFFFAF6EE),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: selected ? const Color(0xFFC5A052) : const Color(0xFFE8DFD8),
+            width: 1,
+          ),
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFFC5A052).withValues(alpha: 0.25),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 12,
+            fontWeight: selected ? FontWeight.bold : FontWeight.w500,
+            color: selected ? const Color(0xFF1F1A15) : const Color(0xFF8E7D7A),
+          ),
+        ),
+      ),
     );
   }
 
@@ -759,96 +1006,155 @@ class _WalletScreenState extends State<WalletScreen>
             : '';
         final estadoRaw = (tx['estado'] ?? '').toString().toUpperCase();
 
+        int currentStep = 1; // 1: Solicitado, 2: Procesando, 3: Acreditado
         String estadoTexto = 'Solicitado';
-        Color estadoColor = Colors.orange;
+        Color estadoColor = const Color(0xFFC5A052);
         if (estadoRaw == 'COMPLETADO' || estadoRaw == 'ACREDITADO') {
           estadoTexto = 'Acreditado';
           estadoColor = const Color(0xFF10B981);
-        } else if (estadoRaw == 'PENDIENTE') {
-          estadoTexto = 'Procesando';
+          currentStep = 3;
+        } else if (estadoRaw == 'PENDIENTE' || estadoRaw == 'PROCESANDO') {
+          estadoTexto = 'En Proceso Bancario';
           estadoColor = Colors.blue;
+          currentStep = 2;
         }
 
         return Container(
-          margin: const EdgeInsets.only(bottom: 10),
-          padding: const EdgeInsets.all(14),
+          margin: const EdgeInsets.only(bottom: 14),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
               ),
             ],
             border: Border.all(color: const Color(0xFFF7ECE9)),
           ),
-          child: Row(
+          child: Column(
             children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: AppTheme.primary.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.account_balance_wallet,
-                    color: AppTheme.primary, size: 20),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Retiro solicitado',
-                      style: TextStyle(
-                          color: Color(0xFF4A3E3D),
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(fecha,
-                        style: const TextStyle(
-                            color: Color(0xFF8E7D7A), fontSize: 12)),
-                  ],
-                ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
+              Row(
                 children: [
-                  Text(
-                    '-${_formatCOP.format(monto)}',
-                    style: const TextStyle(
-                      color: Color(0xFF4A3E3D),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    width: 40,
+                    height: 40,
                     decoration: BoxDecoration(
-                      color: estadoColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(6),
+                      color: estadoColor.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Text(
-                      estadoTexto,
-                      style: TextStyle(
-                        color: estadoColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
+                    child: Icon(Icons.account_balance_wallet_outlined,
+                        color: estadoColor, size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Solicitud de Retiro',
+                          style: TextStyle(
+                              color: Color(0xFF1F1A15),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(fecha,
+                            style: const TextStyle(
+                                color: Color(0xFF8E7D7A), fontSize: 12)),
+                      ],
                     ),
                   ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        '-${_formatCOP.format(monto)}',
+                        style: const TextStyle(
+                          color: Color(0xFF1F1A15),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Container(
+                        padding:
+                            const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: estadoColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          estadoTexto,
+                          style: TextStyle(
+                            color: estadoColor,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              // ─── Visual Mini Stepper (Solicitado -> Procesando -> Acreditado) ───
+              Row(
+                children: [
+                  _buildStepperNode(1, 'Solicitado', currentStep >= 1),
+                  _buildStepperLine(currentStep >= 2),
+                  _buildStepperNode(2, 'Procesando', currentStep >= 2),
+                  _buildStepperLine(currentStep >= 3),
+                  _buildStepperNode(3, 'Acreditado', currentStep >= 3),
                 ],
               ),
             ],
           ),
         );
       },
+    );
+  }
+
+  Widget _buildStepperNode(int step, String label, bool active) {
+    final color = active ? const Color(0xFF10B981) : const Color(0xFFD4C7BC);
+    return Expanded(
+      child: Column(
+        children: [
+          Container(
+            width: 20,
+            height: 20,
+            decoration: BoxDecoration(
+              color: active ? color : Colors.white,
+              shape: BoxShape.circle,
+              border: Border.all(color: color, width: 2),
+            ),
+            child: active
+                ? const Icon(Icons.check, size: 12, color: Colors.white)
+                : null,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: active ? FontWeight.bold : FontWeight.w400,
+              color: active ? const Color(0xFF1F1A15) : const Color(0xFF8E7D7A),
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStepperLine(bool active) {
+    return Container(
+      width: 24,
+      height: 2,
+      margin: const EdgeInsets.only(bottom: 16),
+      color: active ? const Color(0xFF10B981) : const Color(0xFFE8DFD8),
     );
   }
 
@@ -859,18 +1165,95 @@ class _WalletScreenState extends State<WalletScreen>
         double.tryParse(wallet['total_retirado'].toString()) ?? 0;
     final modelo = wallet['modelo_retiro'] ?? 'DEMANDA';
 
+    final ratioRetiro = totalGanado > 0 ? (totalRetirado / totalGanado).clamp(0.0, 1.0) : 0.0;
+    final porcentajeRetiroStr = (ratioRetiro * 100).toStringAsFixed(0);
+
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
+        // ─── Tarjeta Ratio de Liquidez Concierge ──────────────────────
+        Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF261E17), Color(0xFF15100C)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFC5A052).withValues(alpha: 0.4)),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFC5A052).withValues(alpha: 0.12),
+                blurRadius: 14,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.analytics_outlined, color: Color(0xFFC5A052), size: 20),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Ratio de Liquidez Concierge',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      color: Color(0xFFFFFDF8),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    '$porcentajeRetiroStr% Retirado',
+                    style: const TextStyle(
+                      color: Color(0xFFC5A052),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: LinearProgressIndicator(
+                  value: ratioRetiro,
+                  minHeight: 8,
+                  backgroundColor: const Color(0xFF382E25),
+                  color: const Color(0xFFC5A052),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Retirado: ${_formatCOP.format(totalRetirado)}',
+                    style: const TextStyle(color: Color(0xFFC5B8A8), fontSize: 11),
+                  ),
+                  Text(
+                    'Total: ${_formatCOP.format(totalGanado)}',
+                    style: const TextStyle(color: Color(0xFFC5B8A8), fontSize: 11),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
         _ResumenCard(
-          titulo: 'Total ganado',
+          titulo: 'Total ganado historico',
           monto: totalGanado,
           icon: Icons.trending_up,
           color: const Color(0xFF10B981),
         ),
         const SizedBox(height: 12),
         _ResumenCard(
-          titulo: 'Total retirado',
+          titulo: 'Total retirado efectivo',
           monto: totalRetirado,
           icon: Icons.arrow_upward,
           color: AppTheme.primary,
@@ -1130,7 +1513,8 @@ class _WalletScreenState extends State<WalletScreen>
 
 class _TransaccionTile extends StatelessWidget {
   final Map<String, dynamic> tx;
-  const _TransaccionTile({required this.tx});
+  final VoidCallback? onTap;
+  const _TransaccionTile({required this.tx, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -1168,60 +1552,69 @@ class _TransaccionTile extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
+      child: Material(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-        border: Border.all(color: const Color(0xFFF7ECE9)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+              border: Border.all(color: const Color(0xFFF7ECE9)),
             ),
-            child: Icon(icono, color: color, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: [
-                Text(titulo,
-                    style: const TextStyle(
-                        color: Color(0xFF4A3E3D),
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14)),
-                if (tx['servicio_nombre'] != null)
-                  Text(tx['servicio_nombre'],
-                      style: const TextStyle(
-                          color: Color(0xFF8E7D7A), fontSize: 12)),
-                Text(fecha,
-                    style: const TextStyle(
-                        color: Color(0xFF8E7D7A), fontSize: 12)),
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(icono, color: color, size: 20),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(titulo,
+                          style: const TextStyle(
+                              color: Color(0xFF4A3E3D),
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14)),
+                      if (tx['servicio_nombre'] != null)
+                        Text(tx['servicio_nombre'],
+                            style: const TextStyle(
+                                color: Color(0xFF8E7D7A), fontSize: 12)),
+                      Text(fecha,
+                          style: const TextStyle(
+                              color: Color(0xFF8E7D7A), fontSize: 12)),
+                    ],
+                  ),
+                ),
+                Text(
+                  '${esCredito ? '+' : '-'}${NumberFormat.currency(locale: 'es_CO', symbol: '\$', decimalDigits: 0).format(monto)}',
+                  style: TextStyle(
+                    color:
+                        esCredito ? const Color(0xFF10B981) : AppTheme.primary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                  ),
+                ),
               ],
             ),
           ),
-          Text(
-            '${esCredito ? '+' : '-'}${NumberFormat.currency(locale: 'es_CO', symbol: '\$', decimalDigits: 0).format(monto)}',
-            style: TextStyle(
-              color:
-                  esCredito ? const Color(0xFF10B981) : AppTheme.primary,
-              fontWeight: FontWeight.bold,
-              fontSize: 15,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
