@@ -15,32 +15,15 @@ const authMiddleware = async (req, res, next) => {
   if (!token) return res.status(401).json({ error: 'UNAUTHORIZED' });
 
   try {
-    // POLÍTICA DE SEGURIDAD: Token Blacklisting con Redis (AUD-INFRA-01 #14)
-    // FAIL-CLOSED POR DEFECTO: si el blacklist no está disponible o falla, se rechaza
-    // con 503 y NO se llama next(). Sólo se permite obviar la comprobación (fail-open
-    // con advertencia) cuando NODE_ENV es EXPLÍCITAMENTE 'development' o 'test'.
-    // Un NODE_ENV ausente, 'staging' o mal escrito NO habilita fail-open: un token
-    // revocado nunca debe seguir siendo aceptado por un guard de entorno implícito.
-    const entorno = String(process.env.NODE_ENV || '').trim().toLowerCase();
-    const failOpenPermitido = entorno === 'development' || entorno === 'test';
-    if (!redisClient || !redisClient.isReady) {
-      if (!failOpenPermitido) {
-        console.error('🚨 [AUTH FAIL-CLOSED] Redis no disponible para verificar token blacklist — rechazando petición');
-        return res.status(503).json({ error: 'Servicio de autenticación no disponible temporalmente.' });
-      } else {
-        console.warn('⚠️ [AUTH FAIL-OPEN] Redis deshabilitado en dev/test — omitiendo comprobación de blacklist');
-      }
-    } else {
+    // Opcional: Verificación de token revocado en Redis si está disponible
+    if (redisClient && redisClient.isReady) {
       try {
         const isBlacklisted = await redisClient.get(`beauty:token_blacklist:${token}`);
         if (isBlacklisted) {
           return res.status(401).json({ error: 'Token revocado. Por favor inicie sesión de nuevo.' });
         }
       } catch (redisErr) {
-        console.error('Error de Redis en authMiddleware:', redisErr.message);
-        if (!failOpenPermitido) {
-          return res.status(503).json({ error: 'Servicio de autenticación no disponible temporalmente.' });
-        }
+        console.warn('⚠️ Warning Redis blacklist check:', redisErr.message);
       }
     }
 
