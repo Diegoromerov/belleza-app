@@ -69,7 +69,16 @@ const checkRateLimit = async (userId, tier = 'free') => {
 
 const resetRateLimit = async (userId, tier = 'all') => {};
 
-const isRedisAvailable = () => false;
+const redisClient = require('../config/redis');
+
+const isRedisAvailable = () => redisClient && (redisClient.isOpen || redisClient.isReady);
+
+const getRedisClient = async () => {
+  if (redisClient && (redisClient.isOpen || redisClient.isReady)) {
+    return redisClient;
+  }
+  return null;
+};
 
 module.exports = {
   authLimiter,
@@ -83,4 +92,5 @@ module.exports = {
   checkRateLimit,
   resetRateLimit,
   isRedisAvailable,
+  getRedisClient,
 };

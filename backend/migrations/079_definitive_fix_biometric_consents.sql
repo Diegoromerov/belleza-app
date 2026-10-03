@@ -138,17 +138,22 @@ ON biometric_consents (user_id, consent_type, granted);
 CREATE INDEX IF NOT EXISTS idx_consents_audit 
 ON biometric_consents (granted_at, revoked_at);
 
--- 9. ENSURE BIOMETRIC_ACCESS_LOG TABLE EXISTS
+-- 9. ENSURE BIOMETRIC_ACCESS_LOG TABLE EXISTS AND HAS ALL REQUIRED COLUMNS
 CREATE TABLE IF NOT EXISTS biometric_access_log (
   id SERIAL PRIMARY KEY,
   user_id INTEGER NOT NULL,
-  accessed_by VARCHAR(50) NOT NULL,
-  access_type VARCHAR(50) NOT NULL,
-  consent_id INTEGER REFERENCES biometric_consents(id),
+  accessed_by VARCHAR(50),
+  access_type VARCHAR(50),
+  consent_id UUID,
   ip_address INET,
   accessed_at TIMESTAMP DEFAULT NOW(),
   details JSONB
 );
+
+ALTER TABLE biometric_access_log ADD COLUMN IF NOT EXISTS accessed_by VARCHAR(50);
+ALTER TABLE biometric_access_log ADD COLUMN IF NOT EXISTS access_type VARCHAR(50);
+ALTER TABLE biometric_access_log ADD COLUMN IF NOT EXISTS consent_id UUID;
+ALTER TABLE biometric_access_log ADD COLUMN IF NOT EXISTS details JSONB;
 
 CREATE INDEX IF NOT EXISTS idx_access_log_user 
 ON biometric_access_log (user_id, accessed_at);
