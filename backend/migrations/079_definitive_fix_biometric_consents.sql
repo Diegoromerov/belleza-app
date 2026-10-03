@@ -27,7 +27,11 @@ DO $$
 BEGIN
     IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'biometric_consents' AND column_name = 'ip')
        AND EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'biometric_consents' AND column_name = 'ip_address') THEN
-        UPDATE biometric_consents SET ip_address = ip WHERE ip_address IS NULL AND ip IS NOT NULL;
+        BEGIN
+            UPDATE biometric_consents SET ip_address = NULLIF(ip, '')::inet WHERE ip_address IS NULL AND ip IS NOT NULL AND ip ~ '^[0-9a-fA-F:\.]+$';
+        EXCEPTION WHEN OTHERS THEN
+            NULL;
+        END;
         ALTER TABLE biometric_consents DROP COLUMN ip;
         RAISE NOTICE 'Dropped legacy column "ip", data copied to "ip_address"';
     ELSIF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'biometric_consents' AND column_name = 'ip')
@@ -64,6 +68,15 @@ BEGIN
        AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'biometric_consents' AND column_name = 'created_at') THEN
         ALTER TABLE biometric_consents RENAME COLUMN accepted_at TO created_at;
         RAISE NOTICE 'Renamed "accepted_at" to "created_at"';
+    END IF;
+END $$;
+
+-- 4.5. ACTIVE COLUMN REMOVAL
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'biometric_consents' AND column_name = 'active') THEN
+        ALTER TABLE biometric_consents DROP COLUMN active;
+        RAISE NOTICE 'Dropped legacy column "active"';
     END IF;
 END $$;
 
