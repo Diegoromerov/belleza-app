@@ -17,6 +17,8 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
   List<ServiceModel> _services = [];
   bool _isLoading = true;
   String? _error;
+  String _searchQuery = '';
+  String _selectedCategoryFilter = 'Todos';
 
   @override
   void initState() {
@@ -377,22 +379,24 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
   InputDecoration _inputDecoration(String label, IconData icon) {
     return InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(color: Colors.grey, fontSize: 13),
-      prefixIcon: Icon(icon, color: AppTheme.primary),
+      labelStyle: const TextStyle(color: Color(0xFF8C7E74), fontSize: 13, fontFamily: 'Inter'),
+      prefixIcon: Icon(icon, color: const Color(0xFFC5A052)),
       floatingLabelBehavior: FloatingLabelBehavior.auto,
       filled: true,
-      fillColor: const Color(0xFFF5EBE6),
+      fillColor: const Color(0xFFFAF6EE),
       border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: Color(0xFFE8DFD8), width: 1),
+      ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(30),
-        borderSide: BorderSide.none,
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: Color(0xFFE8DFD8), width: 1),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(30),
-        borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: Color(0xFFC5A052), width: 1.5),
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 15),
     );
   }
 
@@ -503,6 +507,95 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
         }
       }
     }
+  }
+
+  List<ServiceModel> _applyFilters(List<ServiceModel> list) {
+    return list.where((s) {
+      final matchesSearch = _searchQuery.isEmpty ||
+          s.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          s.description.toLowerCase().contains(_searchQuery.toLowerCase());
+      final matchesCategory = _selectedCategoryFilter == 'Todos' ||
+          s.category.toLowerCase().trim() == _selectedCategoryFilter.toLowerCase().trim();
+      return matchesSearch && matchesCategory;
+    }).toList();
+  }
+
+  Widget _buildFilterAndSearchHeader() {
+    final categories = ['Todos', 'Cabello', 'Uñas', 'Maquillaje', 'Cuidado de la piel', 'Barbería', 'Otros'];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: TextField(
+            onChanged: (val) => setState(() => _searchQuery = val),
+            style: const TextStyle(fontFamily: 'Inter', fontSize: 13.5, color: Color(0xFF1F1A15)),
+            decoration: InputDecoration(
+              hintText: 'Buscar servicio por nombre...',
+              hintStyle: const TextStyle(color: Color(0xFF8C7E74), fontSize: 13),
+              prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFFC5A052), size: 18),
+              suffixIcon: _searchQuery.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear_rounded, size: 16, color: Color(0xFF8C7E74)),
+                      onPressed: () => setState(() => _searchQuery = ''),
+                    )
+                  : null,
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(color: Color(0xFFEFE8DE), width: 1),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(color: Color(0xFFEFE8DE), width: 1),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(color: Color(0xFFC5A052), width: 1.5),
+              ),
+            ),
+          ),
+        ),
+        SizedBox(
+          height: 38,
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            scrollDirection: Axis.horizontal,
+            itemCount: categories.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            itemBuilder: (context, index) {
+              final cat = categories[index];
+              final isSelected = _selectedCategoryFilter == cat;
+              return ChoiceChip(
+                label: Text(cat),
+                selected: isSelected,
+                onSelected: (selected) {
+                  if (selected) setState(() => _selectedCategoryFilter = cat);
+                },
+                selectedColor: const Color(0xFFFFF7E6),
+                backgroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: BorderSide(
+                    color: isSelected ? const Color(0xFFC5A052) : const Color(0xFFEFE8DE),
+                    width: isSelected ? 1.5 : 1,
+                  ),
+                ),
+                labelStyle: TextStyle(
+                  fontFamily: 'Inter',
+                  color: isSelected ? const Color(0xFF1F1A15) : const Color(0xFF8C7E74),
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 8),
+      ],
+    );
   }
 
   Widget _buildEmptyState(String message) {
@@ -827,6 +920,8 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
 
     final active = _services.where((s) => s.isActive).toList();
     final inactive = _services.where((s) => !s.isActive).toList();
+    final filteredActive = _applyFilters(active);
+    final filteredInactive = _applyFilters(inactive);
 
     return Scaffold(
       backgroundColor: const Color(0xFFFAF8F5),
@@ -944,46 +1039,58 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
           constraints: const BoxConstraints(maxWidth: 680),
           child: Stack(
             children: [
-              TabBarView(
-                controller: _tabController,
+              Column(
                 children: [
-                  RefreshIndicator(
-                    color: const Color(0xFFC5A052),
-                    onRefresh: _loadServices,
-                    child: active.isEmpty
-                        ? _buildEmptyState(
-                            'No tienes servicios activos.\nToca el botón + para agregar uno.')
-                        : ListView.builder(
-                            padding: const EdgeInsets.all(16),
-                            itemCount: active.length,
-                            itemBuilder: (context, index) =>
-                                _buildServiceCard(active[index]),
-                          ),
-                  ),
-                  RefreshIndicator(
-                    color: const Color(0xFFC5A052),
-                    onRefresh: _loadServices,
-                    child: inactive.isEmpty
-                        ? const Center(
-                            child: Padding(
-                              padding: EdgeInsets.all(24.0),
-                              child: Text(
-                                'No tienes servicios inactivos.',
-                                style: TextStyle(
-                                    fontFamily: 'Inter',
-                                    fontSize: 15,
-                                    color: Color(0xFF8C7E74),
-                                    fontWeight: FontWeight.w500),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                          )
-                        : ListView.builder(
-                            padding: const EdgeInsets.all(16),
-                            itemCount: inactive.length,
-                            itemBuilder: (context, index) =>
-                                _buildServiceCard(inactive[index]),
-                          ),
+                  const SizedBox(height: 8),
+                  _buildFilterAndSearchHeader(),
+                  Expanded(
+                    child: TabBarView(
+                      controller: _tabController,
+                      children: [
+                        RefreshIndicator(
+                          color: const Color(0xFFC5A052),
+                          onRefresh: _loadServices,
+                          child: filteredActive.isEmpty
+                              ? _buildEmptyState(
+                                  _searchQuery.isNotEmpty || _selectedCategoryFilter != 'Todos'
+                                      ? 'No se encontraron servicios que coincidan con la búsqueda.'
+                                      : 'No tienes servicios activos.\nToca el botón + para agregar uno.')
+                              : ListView.builder(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  itemCount: filteredActive.length,
+                                  itemBuilder: (context, index) =>
+                                      _buildServiceCard(filteredActive[index]),
+                                ),
+                        ),
+                        RefreshIndicator(
+                          color: const Color(0xFFC5A052),
+                          onRefresh: _loadServices,
+                          child: filteredInactive.isEmpty
+                              ? Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(24.0),
+                                    child: Text(
+                                      _searchQuery.isNotEmpty || _selectedCategoryFilter != 'Todos'
+                                          ? 'No se encontraron servicios inactivos que coincidan.'
+                                          : 'No tienes servicios inactivos.',
+                                      style: const TextStyle(
+                                          fontFamily: 'Inter',
+                                          fontSize: 15,
+                                          color: Color(0xFF8C7E74),
+                                          fontWeight: FontWeight.w500),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                )
+                              : ListView.builder(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  itemCount: filteredInactive.length,
+                                  itemBuilder: (context, index) =>
+                                      _buildServiceCard(filteredInactive[index]),
+                                ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
