@@ -887,7 +887,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                       ),
                       const SizedBox(height: 12),
 
-                      // Category Horizontal List Chips Filters
+                      // Category Horizontal List Chips Filters Quiet Luxury (Kaizen 4)
                       SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
                         physics: const BouncingScrollPhysics(),
@@ -908,16 +908,17 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                               child: ChoiceChip(
                                 label: Text(cat),
                                 selected: isSelected,
-                                selectedColor: AppTheme.primary,
-                                backgroundColor:
-                                    AppTheme.accent.withValues(alpha: 0.2),
+                                selectedColor: const Color(0xFF1F1A15),
+                                backgroundColor: const Color(0xFFFAF6EE),
                                 labelStyle: TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 12.5,
                                   color: isSelected
-                                      ? Colors.white
-                                      : Colors.black87,
+                                      ? const Color(0xFFC5A052)
+                                      : const Color(0xFF8C7E74),
                                   fontWeight: isSelected
                                       ? FontWeight.bold
-                                      : FontWeight.normal,
+                                      : FontWeight.w500,
                                 ),
                                 onSelected: (selected) {
                                   setState(() {
@@ -929,8 +930,9 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                   borderRadius: BorderRadius.circular(20),
                                   side: BorderSide(
                                     color: isSelected
-                                        ? AppTheme.primary
-                                        : Colors.transparent,
+                                        ? const Color(0xFFC5A052)
+                                        : const Color(0xFFEFE8DE),
+                                    width: isSelected ? 1.2 : 0.8,
                                   ),
                                 ),
                               ),
@@ -946,20 +948,24 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                           alignment: Alignment.center,
                           width: double.infinity,
                           decoration: BoxDecoration(
-                            color: Colors.grey[50],
+                            color: const Color(0xFFFAF6EE),
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: Colors.grey[200]!),
+                            border: Border.all(color: const Color(0xFFEFE8DE), width: 1),
                           ),
                           child: const Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(Icons.style_outlined,
-                                  color: Colors.grey, size: 30),
+                                  color: Color(0xFFC5A052), size: 30),
                               SizedBox(height: 8),
                               Text(
-                                'No hay servicios en esta categoría.',
-                                style:
-                                    TextStyle(color: Colors.grey, fontSize: 13),
+                                'No hay servicios disponibles en esta categoría.',
+                                style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  color: Color(0xFF8C7E74),
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ],
                           ),
@@ -971,14 +977,14 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
-                                  color: const Color(0xFFE8DFD8).withValues(alpha: 0.6),
+                                  color: const Color(0xFFEFE8DE),
                                   width: 1,
                                 ),
                                 boxShadow: const [
                                   BoxShadow(
-                                    color: Color(0x0A000000),
+                                    color: Color(0x06000000),
                                     blurRadius: 12,
-                                    offset: Offset(0, 2),
+                                    offset: Offset(0, 3),
                                   ),
                                 ],
                               ),
@@ -987,11 +993,11 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                 child: InkWell(
                                   borderRadius: BorderRadius.circular(20),
                                   onTap: () {
-                                     HapticFeedback.lightImpact();
+                                    HapticFeedback.lightImpact();
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                      builder: (_) => BookingScreen(
+                                        builder: (_) => BookingScreen(
                                           providerId: widget.providerId,
                                           providerName: p['business_name'] ?? p['full_name'] ?? 'Prestador',
                                           services: services,
@@ -1014,8 +1020,9 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                               child: Text(
                                                 s['name'] ?? '',
                                                 style: const TextStyle(
+                                                    fontFamily: 'CormorantGaramond',
                                                     fontWeight: FontWeight.bold,
-                                                    fontSize: 16,
+                                                    fontSize: 17.5,
                                                     color: Color(0xFF1F1A15)),
                                               ),
                                             ),
@@ -1023,8 +1030,9 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                             Text(
                                               '\$${_num(s['price']).toStringAsFixed(0)}',
                                               style: const TextStyle(
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.bold,
+                                                  fontFamily: 'Inter',
+                                                  fontSize: 16.5,
+                                                  fontWeight: FontWeight.w800,
                                                   color: Color(0xFFC5A052)),
                                             ),
                                           ],
@@ -1037,8 +1045,9 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                           const SizedBox(height: 6),
                                           Text(
                                             s['description'],
-                                            style: TextStyle(
-                                                color: Colors.grey[600],
+                                            style: const TextStyle(
+                                                fontFamily: 'Inter',
+                                                color: Color(0xFF6B5E55),
                                                 fontSize: 13,
                                                 height: 1.4),
                                           ),
@@ -1050,15 +1059,16 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                             Expanded(
                                               child: Row(
                                                 children: [
-                                                  const Icon(Icons.access_time,
-                                                      size: 15, color: Colors.grey),
-                                                  const SizedBox(width: 4),
+                                                  const Icon(Icons.access_time_rounded,
+                                                      size: 15, color: Color(0xFFC5A052)),
+                                                  const SizedBox(width: 5),
                                                   Text(
                                                     _formatDuration(s['duration_minutes'] ?? s['duration']),
-                                                    style: TextStyle(
-                                                        color: Colors.grey[600],
-                                                        fontSize: 13,
-                                                        fontWeight: FontWeight.w500),
+                                                    style: const TextStyle(
+                                                        fontFamily: 'Inter',
+                                                        color: Color(0xFF6B5E55),
+                                                        fontSize: 12.5,
+                                                        fontWeight: FontWeight.w600),
                                                   ),
                                                   if (s['category'] != null &&
                                                       s['category']
@@ -1067,15 +1077,16 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                                           .isNotEmpty) ...[
                                                     const SizedBox(width: 12),
                                                     const Icon(Icons.style_outlined,
-                                                        size: 15, color: Colors.grey),
+                                                        size: 15, color: Color(0xFFC5A052)),
                                                     const SizedBox(width: 4),
                                                     Flexible(
                                                       child: Text(
                                                         s['category'],
-                                                        style: TextStyle(
-                                                            color: Colors.grey[600],
-                                                            fontSize: 13,
-                                                            fontWeight: FontWeight.w500),
+                                                        style: const TextStyle(
+                                                            fontFamily: 'Inter',
+                                                            color: Color(0xFF6B5E55),
+                                                            fontSize: 12.5,
+                                                            fontWeight: FontWeight.w600),
                                                         overflow: TextOverflow.ellipsis,
                                                       ),
                                                     ),
@@ -1085,10 +1096,17 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                             ),
                                             const SizedBox(width: 8),
                                             Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                               decoration: BoxDecoration(
-                                                color: const Color(0xFFC5A052).withValues(alpha: 0.12),
-                                                borderRadius: BorderRadius.circular(12),
+                                                color: const Color(0xFF1F1A15),
+                                                borderRadius: BorderRadius.circular(14),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: Colors.black.withValues(alpha: 0.1),
+                                                    blurRadius: 4,
+                                                    offset: const Offset(0, 2),
+                                                  ),
+                                                ],
                                               ),
                                               child: const Row(
                                                 mainAxisSize: MainAxisSize.min,
@@ -1096,13 +1114,15 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                                   Text(
                                                     'Agendar',
                                                     style: TextStyle(
+                                                      fontFamily: 'Inter',
                                                       fontSize: 11.5,
                                                       fontWeight: FontWeight.bold,
-                                                      color: Color(0xFF9E7C33),
+                                                      color: Color(0xFFC5A052),
+                                                      letterSpacing: 0.3,
                                                     ),
                                                   ),
-                                                  SizedBox(width: 2),
-                                                  Icon(Icons.arrow_forward_ios_rounded, size: 10, color: Color(0xFF9E7C33)),
+                                                  SizedBox(width: 3),
+                                                  Icon(Icons.arrow_forward_ios_rounded, size: 9, color: Color(0xFFC5A052)),
                                                 ],
                                               ),
                                             ),
@@ -1126,9 +1146,11 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                       const Text(
                         'Portafolio de Trabajo',
                         style: TextStyle(
-                            fontSize: 18,
+                            fontFamily: 'CormorantGaramond',
+                            fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            letterSpacing: -0.5),
+                            color: Color(0xFF1F1A15),
+                            letterSpacing: -0.3),
                       ),
                       const SizedBox(height: 12),
                       portfolio.isEmpty
@@ -1136,20 +1158,23 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                               height: 120,
                               alignment: Alignment.center,
                               decoration: BoxDecoration(
-                                color: Colors.grey[50],
+                                color: const Color(0xFFFAF6EE),
                                 borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: Colors.grey[200]!),
+                                border: Border.all(color: const Color(0xFFEFE8DE), width: 1),
                               ),
                               child: const Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(Icons.photo_outlined,
-                                      color: Colors.grey, size: 30),
+                                      color: Color(0xFFC5A052), size: 30),
                                   SizedBox(height: 8),
                                   Text(
                                     'Sin imágenes en el portafolio por ahora.',
                                     style: TextStyle(
-                                        color: Colors.grey, fontSize: 13),
+                                        fontFamily: 'Inter',
+                                        color: Color(0xFF8C7E74),
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500),
                                   ),
                                 ],
                               ),
@@ -1232,23 +1257,39 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                       ),
                                     );
                                   },
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(16),
-                                     child: Image.network(
-                                       item['image_url'],
-                                       fit: BoxFit.cover,
-                                       cacheWidth: 400,
-                                       loadingBuilder: (context, child, loadingProgress) {
-                                         if (loadingProgress == null) return child;
-                                         return Container(
-                                           color: AppTheme.surface,
-                                           child: const Center(
-                                             child: CircularProgressIndicator(
-                                                 strokeWidth: 2, color: AppTheme.primary),
-                                           ),
-                                         );
-                                       },
-                                     ),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(
+                                        color: const Color(0xFFEFE8DE),
+                                        width: 1,
+                                      ),
+                                      boxShadow: const [
+                                        BoxShadow(
+                                          color: Color(0x06000000),
+                                          blurRadius: 6,
+                                          offset: Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(15),
+                                      child: Image.network(
+                                        item['image_url'],
+                                        fit: BoxFit.cover,
+                                        cacheWidth: 400,
+                                        loadingBuilder: (context, child, loadingProgress) {
+                                          if (loadingProgress == null) return child;
+                                          return Container(
+                                            color: const Color(0xFFFAF6EE),
+                                            child: const Center(
+                                              child: CircularProgressIndicator(
+                                                  strokeWidth: 2, color: Color(0xFFC5A052)),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
                                   ),
                                 );
                               },
@@ -1259,9 +1300,11 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                       const Text(
                         'Opiniones Recientes',
                         style: TextStyle(
-                            fontSize: 18,
+                            fontFamily: 'CormorantGaramond',
+                            fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            letterSpacing: -0.5),
+                            color: Color(0xFF1F1A15),
+                            letterSpacing: -0.3),
                       ),
                       const SizedBox(height: 12),
                       reviews.isEmpty
@@ -1269,20 +1312,23 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                               height: 120,
                               alignment: Alignment.center,
                               decoration: BoxDecoration(
-                                color: Colors.grey[50],
+                                color: const Color(0xFFFAF6EE),
                                 borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: Colors.grey[200]!),
+                                border: Border.all(color: const Color(0xFFEFE8DE), width: 1),
                               ),
                               child: const Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(Icons.rate_review_outlined,
-                                      color: Colors.grey, size: 30),
+                                      color: Color(0xFFC5A052), size: 30),
                                   SizedBox(height: 8),
                                   Text(
                                     'Aún sin reseñas.',
                                     style: TextStyle(
-                                        color: Colors.grey, fontSize: 13),
+                                        fontFamily: 'Inter',
+                                        color: Color(0xFF8C7E74),
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500),
                                   ),
                                 ],
                               ),
@@ -1314,9 +1360,15 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                   decoration: BoxDecoration(
                                     color: Colors.white,
                                     borderRadius: BorderRadius.circular(20),
-                                    boxShadow: AppTheme.softShadow,
+                                    boxShadow: const [
+                                      BoxShadow(
+                                        color: Color(0x06000000),
+                                        blurRadius: 10,
+                                        offset: Offset(0, 3),
+                                      ),
+                                    ],
                                     border: Border.all(
-                                        color: AppTheme.accent.withValues(alpha: 0.3), width: 1),
+                                        color: const Color(0xFFEFE8DE), width: 1),
                                   ),
                                   child: Column(
                                     crossAxisAlignment:
@@ -1327,7 +1379,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                           CircleAvatar(
                                             radius: 20,
                                             backgroundColor:
-                                                AppTheme.accent.withValues(alpha: 0.2),
+                                                const Color(0xFFFAF6EE),
                                             backgroundImage: hasClientAvatar
                                                 ? NetworkImage(clientAvatar)
                                                 : null,
@@ -1335,10 +1387,11 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                                 ? Text(
                                                     clientInitial,
                                                     style: const TextStyle(
+                                                      fontFamily: 'CormorantGaramond',
                                                       fontWeight:
                                                           FontWeight.bold,
-                                                      fontSize: 14,
-                                                      color: AppTheme.primary,
+                                                      fontSize: 16,
+                                                      color: Color(0xFFC5A052),
                                                     ),
                                                   )
                                                 : null,
@@ -1352,9 +1405,11 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                                 Text(
                                                   clientName,
                                                   style: const TextStyle(
+                                                      fontFamily: 'CormorantGaramond',
                                                       fontWeight:
                                                           FontWeight.bold,
-                                                      fontSize: 14),
+                                                      fontSize: 16,
+                                                      color: Color(0xFF1F1A15)),
                                                 ),
                                                 const SizedBox(height: 2),
                                                 Row(
@@ -1364,8 +1419,8 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                                       Icons.star_rounded,
                                                       size: 16,
                                                       color: starIdx < rating
-                                                          ? AppTheme.primary
-                                                          : Colors.grey[200],
+                                                          ? const Color(0xFFFBBF24)
+                                                          : const Color(0xFFEFE8DE),
                                                     ),
                                                   ),
                                                 ),
@@ -1379,9 +1434,10 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                         Text(
                                           comment,
                                           style: const TextStyle(
+                                              fontFamily: 'Inter',
                                               fontSize: 13,
-                                              height: 1.4,
-                                              color: Colors.black87),
+                                              height: 1.45,
+                                              color: Color(0xFF4A4036)),
                                         ),
                                       ],
                                       if (reviewPhotos.isNotEmpty) ...[
@@ -1396,7 +1452,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                                   reviewPhotos[photoIdx];
                                               return GestureDetector(
                                                 onTap: () {
-                                     HapticFeedback.lightImpact();
+                                                  HapticFeedback.lightImpact();
                                                   showDialog(
                                                     context: context,
                                                     builder: (_) => Dialog(
@@ -1492,7 +1548,10 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                                   decoration: BoxDecoration(
                                                     borderRadius:
                                                         BorderRadius.circular(
-                                                            8),
+                                                            10),
+                                                    border: Border.all(
+                                                        color: const Color(0xFFEFE8DE),
+                                                        width: 1),
                                                     image: DecorationImage(
                                                       image: NetworkImage(
                                                           photoUrl),
@@ -2053,17 +2112,17 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFFFFF8F0), Color(0xFFF5E4E0)],
+          colors: [Color(0xFFFAF6EE), Color(0xFFF3EBE0)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-            color: AppTheme.primary.withValues(alpha: 0.3), width: 1.5),
+            color: const Color(0xFFC5A052).withValues(alpha: 0.35), width: 1.2),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x05000000),
-            blurRadius: 8,
+            color: Color(0x06000000),
+            blurRadius: 10,
             offset: Offset(0, 4),
           ),
         ],
@@ -2074,15 +2133,16 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
           Row(
             children: [
               const Icon(Icons.auto_awesome,
-                  color: AppTheme.primary, size: 20),
+                  color: Color(0xFFC5A052), size: 20),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   '¿Te interesa el trabajo de $providerName?',
                   style: const TextStyle(
+                      fontFamily: 'CormorantGaramond',
                       fontWeight: FontWeight.bold,
-                      fontSize: 14.5,
-                      color: Colors.black87),
+                      fontSize: 16.5,
+                      color: Color(0xFF1F1A15)),
                 ),
               ),
             ],
@@ -2091,28 +2151,35 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
           const Text(
             'Pregúntale a nuestra IA si sus estilos van con tu rostro y facciones.',
             style: TextStyle(
-                fontSize: 12.5, color: Colors.black87, height: 1.35),
+                fontFamily: 'Inter',
+                fontSize: 12.5,
+                color: Color(0xFF6B5E55),
+                height: 1.35),
           ),
           const SizedBox(height: 14),
           SizedBox(
             width: double.infinity,
+            height: 44,
             child: ElevatedButton.icon(
               onPressed: () {
+                HapticFeedback.lightImpact();
                 Navigator.of(context).pushNamed('/ideas');
               },
-              icon: const Icon(Icons.lightbulb_outline, size: 16),
+              icon: const Icon(Icons.lightbulb_outline, size: 16, color: Color(0xFFC5A052)),
               label: const Text(
                 'Ver Ideas y Visajismo IA',
                 style: TextStyle(
-                    fontSize: 12.5, fontWeight: FontWeight.bold),
+                    fontFamily: 'Inter',
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFFC5A052)),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primary,
-                foregroundColor: Colors.white,
+                backgroundColor: const Color(0xFF1F1A15),
+                foregroundColor: const Color(0xFFC5A052),
                 elevation: 0,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20)),
-                padding: const EdgeInsets.symmetric(vertical: 10),
+                    borderRadius: BorderRadius.circular(16)),
               ),
             ),
           ),
