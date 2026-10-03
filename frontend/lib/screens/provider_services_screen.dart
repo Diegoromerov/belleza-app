@@ -746,34 +746,80 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
 
     if (_error != null && _services.isEmpty) {
       return Scaffold(
+        backgroundColor: const Color(0xFFFAF8F5),
         appBar: AppBar(
-          title: const Text('Mis Servicios',
-              style:
-                  TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5)),
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black,
+          title: const Text(
+            'Mis Servicios',
+            style: TextStyle(
+              fontFamily: 'CormorantGaramond',
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+              color: Color(0xFF1F1A15),
+            ),
+          ),
+          backgroundColor: const Color(0xFFFAF8F5),
+          foregroundColor: const Color(0xFF1F1A15),
           elevation: 0,
+          centerTitle: true,
         ),
         body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.wifi_off_rounded,
-                  color: Colors.redAccent, size: 48),
-              const SizedBox(height: 16),
-              Text('Error de conexión:\n$_error',
+          child: Padding(
+            padding: const EdgeInsets.all(32.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFAF6EE),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.wifi_off_rounded, size: 48, color: Color(0xFFC5A052)),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Error de Conexión',
+                  style: TextStyle(
+                    fontFamily: 'CormorantGaramond',
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1F1A15),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'No pudimos cargar tu catálogo de servicios. Por favor verifica tu red e intenta de nuevo.',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.grey)),
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: _loadServices,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Reintentar'),
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primary,
-                    foregroundColor: Colors.white),
-              ),
-            ],
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 13.5,
+                    color: Color(0xFF6B5E55),
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  height: 48,
+                  width: 200,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1F1A15),
+                      foregroundColor: const Color(0xFFC5A052),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      elevation: 0,
+                    ),
+                    onPressed: _loadServices,
+                    icon: const Icon(Icons.refresh_rounded, size: 18),
+                    label: const Text(
+                      'Reintentar',
+                      style: TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.bold, fontSize: 14),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       );

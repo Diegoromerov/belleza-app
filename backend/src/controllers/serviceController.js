@@ -47,14 +47,25 @@ exports.getProviderServices = async (req, res) => {
       });
     }
 
-    const whereClause = businessProfileId
-      ? { [Op.or]: [{ business_profile_id: businessProfileId }, { provider_id: providerId }] }
-      : { provider_id: providerId };
+    let services = [];
+    try {
+      const whereClause = businessProfileId
+        ? { [Op.or]: [{ business_profile_id: businessProfileId }, { provider_id: providerId }] }
+        : { provider_id: providerId };
 
-    const services = await Service.findAll({
-      where: whereClause,
-      order: [['name', 'ASC']]
-    });
+      services = await Service.findAll({
+        where: whereClause,
+        order: [['name', 'ASC']]
+      });
+    } catch (dbErr) {
+      console.warn('⚠️ Fallback query in GET /api/services/provider:', dbErr.message);
+      if (providerId) {
+        services = await Service.findAll({
+          where: { provider_id: providerId },
+          order: [['name', 'ASC']]
+        });
+      }
+    }
 
     const formattedServices = services.map(service => ({
       id: service.id,
