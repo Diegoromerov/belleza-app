@@ -486,33 +486,47 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        // Avatar con radio 45
+                        // Avatar en Medallón de Alta Joyería (Kaizen 1)
                         Container(
+                          width: 94,
+                          height: 94,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 3),
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFF3D59B), Color(0xFFC5A052), Color(0xFF96732B)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.3),
-                                blurRadius: 8,
+                                color: Colors.black.withValues(alpha: 0.4),
+                                blurRadius: 12,
                                 offset: const Offset(0, 4),
                               ),
                             ],
                           ),
-                          child: CircleAvatar(
-                            radius: 45,
-                            backgroundColor: Colors.white,
-                            backgroundImage:
-                                hasAvatar ? NetworkImage(p['avatar_url']) : null,
-                            child: !hasAvatar
-                                ? Text(
-                                    initialLetter,
-                                    style: TextStyle(
-                                        fontSize: 36,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppTheme.primary),
-                                  )
-                                : null,
+                          padding: const EdgeInsets.all(3),
+                          child: Container(
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Color(0xFFFDFBF7),
+                            ),
+                            padding: const EdgeInsets.all(2),
+                            child: CircleAvatar(
+                              radius: 42,
+                              backgroundColor: const Color(0xFFFAF6EE),
+                              backgroundImage:
+                                  hasAvatar ? NetworkImage(p['avatar_url']) : null,
+                              child: !hasAvatar
+                                  ? Text(
+                                      initialLetter,
+                                      style: const TextStyle(
+                                          fontSize: 32,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFFC5A052)),
+                                    )
+                                  : null,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 16),
