@@ -536,30 +536,42 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              // Especialidad con su respectivo tag estético con icono
+                              // Especialidad con tag Quiet Luxury de Alta Definición
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 4),
+                                    horizontal: 10, vertical: 4),
                                 decoration: BoxDecoration(
                                   color: specColor.withValues(alpha: 0.95),
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.3),
+                                    width: 0.8,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.2),
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Icon(
                                       specIcon,
-                                      size: 14,
+                                      size: 13,
                                       color: Colors.white,
                                     ),
-                                    const SizedBox(width: 4),
+                                    const SizedBox(width: 5),
                                     Text(
                                       specialty.toUpperCase(),
                                       style: const TextStyle(
+                                        fontFamily: 'Inter',
                                         color: Colors.white,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
-                                        letterSpacing: 0.5,
+                                        fontSize: 10.5,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: 0.6,
                                       ),
                                     ),
                                   ],
@@ -584,35 +596,48 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              const SizedBox(height: 4),
-                              // Rating y valoraciones con Semantics
+                              const SizedBox(height: 6),
+                              // Rating y valoraciones con Semantics y Medalla Quiet Luxury
                               Semantics(
                                 label:
                                     'Calificación ${_num(p['rating_avg'] ?? p['rating']).toStringAsFixed(1)} de 5 estrellas, ${p['rating_count'] ?? p['reviews_count'] ?? 0} valoraciones',
-                                child: Row(
-                                  children: [
-                                    const Icon(Icons.star_rounded,
-                                        color: Color(0xFFFBBF24), size: 18),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      _num(p['rating_avg'] ?? p['rating']).toStringAsFixed(1),
-                                      style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 14),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.45),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: const Color(0xFFC5A052).withValues(alpha: 0.4),
+                                      width: 0.8,
                                     ),
-                                    const SizedBox(width: 6),
-                                    Flexible(
-                                      child: Text(
-                                        '(${p['rating_count'] ?? p['reviews_count'] ?? 0} valoraciones)',
-                                        style: TextStyle(
-                                            color: Colors.white
-                                                .withValues(alpha: 0.85),
-                                            fontSize: 12),
-                                        overflow: TextOverflow.ellipsis,
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.star_rounded,
+                                          color: Color(0xFFFBBF24), size: 16),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        _num(p['rating_avg'] ?? p['rating']).toStringAsFixed(1),
+                                        style: const TextStyle(
+                                            fontFamily: 'Inter',
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13),
                                       ),
-                                    ),
-                                  ],
+                                      const SizedBox(width: 6),
+                                      Flexible(
+                                        child: Text(
+                                          '(${p['rating_count'] ?? p['reviews_count'] ?? 0} opiniones)',
+                                          style: TextStyle(
+                                              fontFamily: 'Inter',
+                                              color: Colors.white.withValues(alpha: 0.9),
+                                              fontSize: 11.5),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ],
