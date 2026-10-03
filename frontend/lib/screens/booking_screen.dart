@@ -458,22 +458,73 @@ class _BookingScreenState extends State<BookingScreen> {
   }
 
   Widget _buildProgressBar() {
-    final stepNames = ['Cuándo y Dónde', 'Productos', 'Confirmación y Pago'];
+    final stepNames = ['Cuándo y Dónde', 'Productos', 'Confirmación'];
     return Semantics(
       label: 'Paso ${_currentStep + 1} de 3: ${stepNames[_currentStep]}',
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+        padding: const EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 12.0),
         child: Row(
           children: List.generate(3, (index) {
             bool isCompleted = index < _currentStep;
             bool isActive = index == _currentStep;
+            final color = (isCompleted || isActive) ? const Color(0xFFC5A052) : const Color(0xFFE8DFD8);
+
             return Expanded(
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 4.0),
-                height: 6,
-                decoration: BoxDecoration(
-                  color: isCompleted || isActive ? AppTheme.primary : Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(3),
+              child: GestureDetector(
+                onTap: () {
+                  if (index < _currentStep) {
+                    HapticFeedback.selectionClick();
+                    _prevStep();
+                  }
+                },
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 22,
+                          height: 22,
+                          decoration: BoxDecoration(
+                            color: isActive || isCompleted ? const Color(0xFFC5A052) : Colors.white,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: color, width: 1.5),
+                          ),
+                          alignment: Alignment.center,
+                          child: isCompleted
+                              ? const Icon(Icons.check, size: 13, color: Colors.white)
+                              : Text(
+                                  '${index + 1}',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: isActive ? const Color(0xFF1F1A15) : const Color(0xFF8E7D7A),
+                                  ),
+                                ),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            stepNames[index],
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 11,
+                              fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
+                              color: isActive ? const Color(0xFF1F1A15) : const Color(0xFF8E7D7A),
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: color,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             );
@@ -500,7 +551,40 @@ class _BookingScreenState extends State<BookingScreen> {
         _buildTimeSelector(),
         const SizedBox(height: 24),
         _buildSectionTitle('4. Dirección del servicio'),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            GestureDetector(
+              onTap: () {
+                HapticFeedback.lightImpact();
+                setState(() {
+                  _addressController.text = 'Calle 127 # 19-45, Apt 502, Bogotá';
+                  serviceAddress = _addressController.text;
+                });
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFC5A052).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFC5A052).withValues(alpha: 0.3)),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.home_outlined, size: 14, color: Color(0xFFC5A052)),
+                    SizedBox(width: 4),
+                    Text(
+                      '📍 Usar dirección habitual (Casa)',
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1F1A15)),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
         TextField(
           controller: _addressController,
           maxLines: 2,
@@ -817,6 +901,55 @@ class _BookingScreenState extends State<BookingScreen> {
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16),
       children: [
+        // ─── Bundle Offer Gold Banner ──────────────────────────────────
+        Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF261E17), Color(0xFF15100C)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFFC5A052).withValues(alpha: 0.5)),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFC5A052).withValues(alpha: 0.15),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: const Row(
+            children: [
+              Icon(Icons.card_giftcard, color: Color(0xFFC5A052), size: 26),
+              SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '🎁 BUNDLE CONCIERGE: 15% OFF AUTOMÁTICO',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFFC5A052),
+                        letterSpacing: 0.6,
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'Añade 2 o más productos al carrito y recibe 15% de descuento directo en tus productos.',
+                      style: TextStyle(fontSize: 11, color: Color(0xFFFFFDF8)),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
