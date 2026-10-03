@@ -270,25 +270,13 @@ class _GlowStepVideoPlayerState extends State<GlowStepVideoPlayer> {
   }
 
   void _startPlayback() {
+    if (!_isInitialized) return;
     setState(() {
       _hasUserStarted = true;
       _isMuted = false;
     });
-    if (_isInitialized && _controller.value.isInitialized) {
-      _controller.setVolume(1.0);
-      _controller.play().catchError((err) {
-        debugPrint('⚠️ Web autoplay error: $err');
-        if (mounted) {
-          setState(() {
-            _isMuted = true;
-          });
-          _controller.setVolume(0.0);
-          _controller.play();
-        }
-      });
-    } else {
-      _tryLoadVideoAsset(widget.videoAssetPath);
-    }
+    _controller.setVolume(1.0);
+    _controller.play();
   }
 
   void _onVideoStateChanged() async {

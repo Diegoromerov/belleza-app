@@ -152,3 +152,21 @@ antes de mergear, no ampliar el baseline.
 | El guard no es vacuo | sembrar `077_control_a.sql` + `077_control_b.sql` y correr el guard | **ROJO** · exit 1 · 5/7 casos, falla «0 duplicados fuera del baseline» y el baseline |
 | Origen común | `git merge-base <rama> 9cb3fb077` × 4 | `9cb3fb077` en las 4 |
 | Contenido intacto | `git show <rama>:<ruta-original> \| diff - <ruta-nueva>` × 6 | solo el número |
+
+---
+
+## 6. Migración 077 — Fix biometric_consents schema (Post-Fase D)
+
+**Problema:** Migración 026 renombró columnas que el código usa (`consent_type`→`version`, `ip_address`→`ip`, etc.). Migración 037 añadió columnas con `IF NOT EXISTS` sobre el esquema renombrado, creando duplicados/conflictos. El código INSERTa en columnas que no existen o tienen nombres distintos → error 500 en consent grant.
+
+**Solución (077):**
+1. Renombra columnas de vuelta a lo que el código espera (`version`→`consent_type`, `ip`→`ip_address`, `user_agent`→`device_info`, `accepted_at`→`created_at`)
+2. Asegura columnas faltantes (`granted`, `granted_at`, `revoked_at`, `purpose`, `version_terms`, `updated_at`)
+3. Crea constraint UNIQUE `(user_id, consent_type, version_terms)` para ON CONFLICT
+4. Elimina índice legacy `unique_active_consent` (usa columna `active` no usada por código)
+5. Asegura tabla `biometric_access_log` y trigger `updated_at`
+
+**Archivo:** `077_fix_biometric_consents_schema.sql`
+**Rollback:** `rollback/077_fix_biometric_consents_schema.down.sql`
+
+**Validación:** Script verifica columnas esperadas, constraint UNIQUE, tabla access_log.

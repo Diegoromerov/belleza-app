@@ -554,12 +554,75 @@ app.get('/api/debug-db', debugRouteMiddleware, async (req, res) => {
     }
 
     res.json(reports);
-  } catch (err) {
+    } catch (err) {
     res.status(500).json({ error: err.message, reports });
-  }
-});
+    }
+    });
 
-// 🔹 LISTA DE PRESTADORES Y DETALLE (Refactorizados a providerRoutes.js y providerController.js)
+    // Schema verification endpoint for biometric_consents
+    app.get('/api/debug-schema', debugRouteMiddleware, async (req, res) => {
+    try {
+    const reports = {};
+
+    // Check biometric_consents columns
+    try {
+    const cols = await pool.query(`
+    SELECT column_name, data_type, is_nullable 
+    FROM information_schema.columns 
+    WHERE table_name = 'biometric_consents' 
+    ORDER BY ordinal_position
+    `);
+    reports.biometric_consents_columns = cols.rows;
+    } catch (e) {
+    reports.biometric_consents_columns_error = e.message;
+    }
+
+    // Check constraints
+    try {
+    const constraints = await pool.query(`
+    SELECT conname, pg_get_constraintdef(oid) as definition
+    FROM pg_constraint 
+    WHERE conrelid = 'biometric_consents'::regclass
+    `);
+    reports.biometric_consents_constraints = constraints.rows;
+    } catch (e) {
+    reports.biometric_consents_constraints_error = e.message;
+    }
+
+    // Check biometric_access_log
+    try {
+    const logCols = await pool.query(`
+    SELECT column_name, data_type 
+    FROM information_schema.columns 
+    WHERE table_name = 'biometric_access_log' 
+    ORDER BY ordinal_position
+    `);
+    reports.biometric_access_log_columns = logCols.rows;
+    } catch (e) {
+    reports.biometric_access_log_error = e.message;
+    }
+
+    // Check schema_migrations for recent migrations
+    try {
+    const migrations = await pool.query(`
+    SELECT filename, checksum, applied_at 
+    FROM schema_migrations 
+    WHERE filename LIKE '07%' OR filename LIKE '08%'
+    ORDER BY applied_at DESC
+    LIMIT 10
+    `);
+    reports.recent_migrations = migrations.rows;
+    } catch (e) {
+    reports.migrations_error = e.message;
+    }
+
+    res.json(reports);
+    } catch (err) {
+    res.status(500).json({ error: err.message });
+    }
+    });
+
+    // 🔹 LISTA DE PRESTADORES Y DETALLE (Refactorizados a providerRoutes.js y providerController.js)
 
 // NOTE: Todas las rutas de la API han sido consolidadas en el bloque único de montajes arriba (líneas 385+).
 

@@ -1,6 +1,5 @@
 // lib/screens/profile/user_profile.dart
 import 'package:flutter/material.dart';
-import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../widgets/profile/profile_header.dart';
@@ -13,8 +12,6 @@ import 'rewards_xp_screen.dart';
 import 'habeas_data_screen.dart';
 import 'faq_screen.dart';
 import '../../widgets/invitation_code_entry.dart';
-import 'package:image_picker/image_picker.dart';
-import '../../services/membership_service.dart';
 
 class UserProfileScreen extends StatefulWidget {
   final String userName;
@@ -24,7 +21,7 @@ class UserProfileScreen extends StatefulWidget {
   const UserProfileScreen({
     super.key,
     this.userName = 'Valeria Gómez',
-    this.userEmail = 'usuario.glow@glowapp.co',
+    this.userEmail = 'valeria.gomez@glowapp.com',
     this.onLogout,
   });
 
@@ -35,9 +32,6 @@ class UserProfileScreen extends StatefulWidget {
 class _UserProfileScreenState extends State<UserProfileScreen> {
   late String _userName;
   late String _userEmail;
-  String? _userAvatarUrl;
-  String _membershipLevel = 'SOCIO CLUB GLOW';
-  int _userXp = 350;
 
   @override
   void initState() {
@@ -47,61 +41,18 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     _loadPersistedUserData();
   }
 
-    Future<void> _loadPersistedUserData() async {
+  Future<void> _loadPersistedUserData() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final name = prefs.getString('userName');
       final email = prefs.getString('userEmail');
-      final avatar = prefs.getString('userAvatarUrl');
-      final tierData = await MembershipService.fetchUserTierProfile();
-
       if (mounted) {
         setState(() {
           if (name != null && name.trim().isNotEmpty) _userName = name.trim();
           if (email != null && email.trim().isNotEmpty) _userEmail = email.trim();
-          if (avatar != null && avatar.trim().isNotEmpty) _userAvatarUrl = avatar.trim();
-          if (tierData != null) {
-            _membershipLevel = tierData['levelName'] ?? 'SOCIO CLUB GLOW';
-            _userXp = tierData['totalHistoricalXp'] ?? 350;
-          }
         });
       }
     } catch (_) {}
-  }
-
-    Future<void> _pickAndSaveAvatar() async {
-    try {
-      final picker = ImagePicker();
-      final pickedFile = await picker.pickImage(
-        source: ImageSource.gallery,
-        maxWidth: 600,
-        maxHeight: 600,
-        imageQuality: 85,
-      );
-      if (pickedFile != null) {
-        final bytes = await pickedFile.readAsBytes();
-        final base64Image = 'data:image/png;base64,${base64Encode(bytes)}';
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('userAvatarUrl', base64Image);
-        if (mounted) {
-          setState(() {
-            _userAvatarUrl = base64Image;
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('✨ Foto de perfil actualizada con éxito'),
-              backgroundColor: Color(0xFFC5A052),
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No se pudo acceder a la galería de fotos')),
-        );
-      }
-    }
   }
   @override
   Widget build(BuildContext context) {
@@ -197,54 +148,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   ProfileHeader(
                     userName: _userName,
                     userEmail: _userEmail,
-                    avatarUrl: _userAvatarUrl,
-                    onEditAvatar: _pickAndSaveAvatar,
-                    membershipLevel: _membershipLevel,
-                    xpText: '$_userXp XP',
-                    onTapXp: () {
-                      HapticFeedback.lightImpact();
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const RewardsXpScreen()),
-                      );
-                    },
-                    onTapScore: () {
-                      HapticFeedback.lightImpact();
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const BiometricHistoryScreen()),
-                      );
-                    },
-                    onTapVerified: () {
-                      HapticFeedback.lightImpact();
-                      showDialog(
-                        context: context,
-                        builder: (ctx) => AlertDialog(
-                          backgroundColor: const Color(0xFFFDFBF7),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                          title: const Row(
-                            children: [
-                              Icon(Icons.shield_outlined, color: Color(0xFFC5A052)),
-                              SizedBox(width: 8),
-                              Text('Cuenta 100% Verificada', style: TextStyle(fontFamily: 'CormorantGaramond', fontWeight: FontWeight.bold, fontSize: 19)),
-                            ],
-                          ),
-                          content: const Text(
-                            'Tu perfil cumple con todos los estándares de seguridad GlowApp Haute Beauté:\n\n'
-                            '• Autenticación Segura y Cifrada\n'
-                            '• Custodia de Datos Biométricos Ley 1581\n'
-                            '• Protección de Métodos de Pago Wompi',
-                            style: TextStyle(fontFamily: 'Inter', fontSize: 13, height: 1.4, color: Color(0xFF55483E)),
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(ctx),
-                              child: const Text('Entendido', style: TextStyle(color: Color(0xFFC5A052), fontWeight: FontWeight.bold)),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
+                    membershipLevel: 'SOCIO CLUB GLOW LUXE',
                   ),
 
                   const SizedBox(height: 18),
@@ -269,7 +173,18 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     ),
                     child: Column(
                       children: [
-
+                        LuxeProfileTile(
+                          icon: Icons.history_edu_outlined,
+                          title: 'Historial de Diagnósticos Biométricos',
+                          subtitle: 'Revisa tus escaneos faciales y análisis de piel',
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const BiometricHistoryScreen()),
+                            );
+                          },
+                        ),
                         LuxeProfileTile(
                           icon: Icons.shopping_bag_outlined,
                           title: 'Mis Pedidos GlowStore',
@@ -359,7 +274,15 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                             Navigator.pushNamed(context, '/support');
                           },
                         ),
-
+                        LuxeProfileTile(
+                          icon: Icons.group_add_outlined,
+                          title: 'Unirme a un salón',
+                          subtitle: 'Ingresar el código que te compartió el dueño',
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            pedirCodigoInvitacion(context);
+                          },
+                        ),
                         LuxeProfileTile(
                           icon: Icons.description_outlined,
                           title: 'Términos y condiciones',

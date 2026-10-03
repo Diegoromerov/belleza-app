@@ -1,6 +1,4 @@
-import 'dart:convert';
 // lib/widgets/profile/profile_header.dart
-import 'dart:io';
 import 'package:flutter/material.dart';
 
 class ProfileHeader extends StatelessWidget {
@@ -9,51 +7,18 @@ class ProfileHeader extends StatelessWidget {
   final String membershipLevel;
   final String? avatarUrl;
   final VoidCallback? onEditAvatar;
-  final String xpText;
-  final String auraScoreText;
-
-  final VoidCallback? onTapXp;
-  final VoidCallback? onTapScore;
-  final VoidCallback? onTapVerified;
 
   const ProfileHeader({
     super.key,
     required this.userName,
     required this.userEmail,
-    this.membershipLevel = 'SOCIO CLUB GLOW',
+    this.membershipLevel = 'SOCIO CLUB GLOW LUXE',
     this.avatarUrl,
     this.onEditAvatar,
-    this.xpText = '350 XP',
-    this.auraScoreText = '84 GlowScore',
-    this.onTapXp,
-    this.onTapScore,
-    this.onTapVerified,
   });
-
-  ImageProvider? _getImageProvider(String? url) {
-    if (url == null || url.trim().isEmpty) return null;
-    if (url.startsWith('data:image')) {
-      try {
-        final base64Str = url.split(',').last;
-        return MemoryImage(base64Decode(base64Str));
-      } catch (_) {}
-    }
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      return NetworkImage(url);
-    }
-    try {
-      final file = File(url);
-      if (file.existsSync()) {
-        return FileImage(file);
-      }
-    } catch (_) {}
-    return null;
-  }
 
   @override
   Widget build(BuildContext context) {
-    final avatarProvider = _getImageProvider(avatarUrl);
-
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -110,38 +75,41 @@ class ProfileHeader extends StatelessWidget {
                   child: CircleAvatar(
                     radius: 43,
                     backgroundColor: const Color(0xFFFAF6EE),
-                    backgroundImage: avatarProvider,
-                    child: avatarProvider == null
+                    backgroundImage: avatarUrl != null && avatarUrl!.isNotEmpty
+                        ? NetworkImage(avatarUrl!)
+                        : null,
+                    child: avatarUrl == null || avatarUrl!.isEmpty
                         ? const Icon(Icons.person_rounded, size: 48, color: Color(0xFFC5A052))
                         : null,
                   ),
                 ),
               ),
-              Positioned(
-                bottom: 2,
-                right: 2,
-                child: InkWell(
-                  onTap: onEditAvatar,
-                  borderRadius: BorderRadius.circular(16),
-                  child: Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFF3D59B), Color(0xFFC5A052)],
-                      ),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.15),
-                          blurRadius: 6,
+              if (onEditAvatar != null)
+                Positioned(
+                  bottom: 2,
+                  right: 2,
+                  child: InkWell(
+                    onTap: onEditAvatar,
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFF3D59B), Color(0xFFC5A052)],
                         ),
-                      ],
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.15),
+                            blurRadius: 6,
+                          ),
+                        ],
+                      ),
+                      child: const Icon(Icons.camera_alt_rounded, size: 14, color: Color(0xFF1F1A15)),
                     ),
-                    child: const Icon(Icons.camera_alt_rounded, size: 14, color: Color(0xFF1F1A15)),
                   ),
                 ),
-              ),
             ],
           ),
 
@@ -227,11 +195,11 @@ class ProfileHeader extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _buildStatItem(xpText, 'Puntos Estatus', Icons.diamond_outlined, onTapXp),
+              _buildStatItem('350 XP', 'Puntos Aura', Icons.diamond_outlined),
               Container(width: 1, height: 32, color: const Color(0xFFF0EBE4)),
-              _buildStatItem(auraScoreText, 'Salud de Piel', Icons.auto_awesome_rounded, onTapScore),
+              _buildStatItem('Club Gold', 'Nivel Estatus', Icons.workspace_premium_outlined),
               Container(width: 1, height: 32, color: const Color(0xFFF0EBE4)),
-              _buildStatItem('100%', 'Verificado', Icons.shield_outlined, onTapVerified),
+              _buildStatItem('100%', 'Verificado', Icons.shield_outlined),
             ],
           ),
         ],
@@ -239,43 +207,36 @@ class ProfileHeader extends StatelessWidget {
     );
   }
 
-  Widget _buildStatItem(String value, String label, IconData icon, VoidCallback? onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        child: Column(
+  Widget _buildStatItem(String value, String label, IconData icon) {
+    return Column(
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(icon, size: 14, color: const Color(0xFFC5A052)),
-                const SizedBox(width: 4),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF1F1A15),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 3),
+            Icon(icon, size: 14, color: const Color(0xFFC5A052)),
+            const SizedBox(width: 4),
             Text(
-              label,
+              value,
               style: const TextStyle(
                 fontFamily: 'Inter',
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF8C7E74),
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1F1A15),
               ),
             ),
           ],
         ),
-      ),
+        const SizedBox(height: 3),
+        Text(
+          label,
+          style: const TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF8C7E74),
+          ),
+        ),
+      ],
     );
   }
 }
