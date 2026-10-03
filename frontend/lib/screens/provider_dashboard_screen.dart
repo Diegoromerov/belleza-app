@@ -327,30 +327,31 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
       builder: (context) {
         return AlertDialog(
           backgroundColor: const Color(0xFFFFFDF8),
-          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-          contentPadding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+          contentPadding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(20),
             side: BorderSide(
               color: const Color(0xFFD4AF37).withValues(alpha: 0.4),
               width: 1.5,
             ),
           ),
+          titlePadding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
           title: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFAF4EB),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
                   immediate ? Icons.stars_rounded : Icons.receipt_long_outlined,
                   color: const Color(0xFFC5A052),
-                  size: 20,
+                  size: 18,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   immediate
@@ -359,130 +360,133 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                   style: const TextStyle(
                       fontFamily: 'CormorantGaramond',
                       fontWeight: FontWeight.bold,
-                      fontSize: 20,
+                      fontSize: 18,
                       color: Color(0xFF1F1A15)),
                 ),
               ),
             ],
           ),
-          content: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (immediate) ...[
+          content: SizedBox(
+            width: MediaQuery.of(context).size.width * 0.92,
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (immediate) ...[
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF0FDF4),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFDCFCE7)),
+                      ),
+                      child: const Text(
+                        'El PIN ha sido verificado con éxito. Hemos liberado los fondos y la transferencia está en camino.',
+                        style: TextStyle(fontSize: 11.5, color: Color(0xFF166534), height: 1.25),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                  ],
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF0FDF4),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFDCFCE7)),
+                      color: const Color(0xFFFAF6EE),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFFEFE8DE)),
                     ),
-                    child: const Text(
-                      'El PIN ha sido verificado con éxito. Hemos liberado los fondos y la transferencia está en camino.',
-                      style: TextStyle(fontSize: 12.5, color: Color(0xFF166534), height: 1.3),
+                    child: Column(
+                      children: [
+                        _breakdownRow(
+                            'Liquidación Bruta', '\$${gross.toStringAsFixed(0)} COP',
+                            isBold: true, fontSize: 12.5),
+                        const SizedBox(height: 6),
+                        _breakdownRow('Descuento Plataforma (20%)',
+                            '-\$${(platformCut + stateTax).toStringAsFixed(0)} COP',
+                            color: const Color(0xFF800A0A), isBold: true, fontSize: 12.5),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 6.0, top: 4.0),
+                          child: Column(
+                            children: [
+                              _breakdownRow('• Comisión Neta (12%)',
+                                  '-\$${platformCut.toStringAsFixed(0)} COP',
+                                  color: const Color(0xFF8C7E74), fontSize: 11.0),
+                              const SizedBox(height: 2),
+                              _breakdownRow('• Impuesto Estatal (8%)',
+                                  '-\$${stateTax.toStringAsFixed(0)} COP',
+                                  color: const Color(0xFF8C7E74), fontSize: 11.0),
+                            ],
+                          ),
+                        ),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 8),
+                          child: Divider(height: 1, color: Color(0xFFEFE8DE)),
+                        ),
+                        _breakdownRow('Dispersión Nequi (Neto 80%)',
+                            '\$${netPayout.toStringAsFixed(0)} COP',
+                            color: const Color(0xFF1F1A15), isBold: true, fontSize: 13.0),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 14),
-                ],
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFAF6EE),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFEFE8DE)),
-                  ),
-                  child: Column(
-                    children: [
-                      _breakdownRow(
-                          'Liquidación Bruta', '\$${gross.toStringAsFixed(0)} COP',
-                          isBold: true),
-                      const SizedBox(height: 8),
-                      _breakdownRow('Descuento Plataforma (20% total)',
-                          '-\$${(platformCut + stateTax).toStringAsFixed(0)} COP',
-                          color: const Color(0xFF800A0A), isBold: true),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 8.0, top: 6.0),
-                        child: Column(
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFAF4EB),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFFEFE8DE)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            _breakdownRow('• Comisión Neta Plataforma (12%)',
-                                '-\$${platformCut.toStringAsFixed(0)} COP',
-                                color: const Color(0xFF8C7E74), fontSize: 11.5),
-                            const SizedBox(height: 4),
-                            _breakdownRow('• ReteFuente / Impuesto Estatal (8%)',
-                                '-\$${stateTax.toStringAsFixed(0)} COP',
-                                color: const Color(0xFF8C7E74), fontSize: 11.5),
+                            const Text(
+                              'Estado de Pago:',
+                              style: TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF1F1A15)),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFC5A052).withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                payoutStatus,
+                                style: const TextStyle(
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFFC5A052)),
+                              ),
+                            ),
                           ],
                         ),
-                      ),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 10),
-                        child: Divider(height: 1, color: Color(0xFFEFE8DE)),
-                      ),
-                      _breakdownRow('Dispersión Nequi (Neto 80%)',
-                          '\$${netPayout.toStringAsFixed(0)} COP',
-                          color: const Color(0xFF1F1A15), isBold: true, fontSize: 14.5),
-                    ],
+                        const SizedBox(height: 4),
+                        Text(
+                          'Cuenta Nequi: $nequiAccount',
+                          style: const TextStyle(fontSize: 11.5, color: Color(0xFF4A4036)),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Referencia Wompi:\n$wompiRef',
+                          style: const TextStyle(
+                              fontSize: 10.5,
+                              fontStyle: FontStyle.italic,
+                              color: Color(0xFF8C7E74)),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFAF4EB),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFEFE8DE)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            'Estado de Pago:',
-                            style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF1F1A15)),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFC5A052).withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              payoutStatus,
-                              style: const TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFFC5A052)),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        'Cuenta Nequi: $nequiAccount',
-                        style: const TextStyle(fontSize: 12, color: Color(0xFF4A4036)),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Referencia Wompi:\n$wompiRef',
-                        style: const TextStyle(
-                            fontSize: 11,
-                            fontStyle: FontStyle.italic,
-                            color: Color(0xFF8C7E74)),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          actionsPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
           actions: [
             Row(
               children: [
@@ -495,32 +499,32 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                       });
                     },
                     icon: const Icon(Icons.account_balance_wallet_outlined,
-                        size: 16, color: Color(0xFFC5A052)),
+                        size: 15, color: Color(0xFFC5A052)),
                     label: const Text(
                       'Ver Wallet',
                       style: TextStyle(
-                          fontSize: 12.5,
+                          fontSize: 12,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFFC5A052)),
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () => Navigator.pop(context),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF1F1A15),
                       foregroundColor: const Color(0xFFFFFDF8),
-                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(16),
                           side: const BorderSide(color: Color(0xFFD4AF37), width: 1)),
-                      elevation: 2,
+                      elevation: 1,
                     ),
                     child: const Text('Entendido',
                         style: TextStyle(
-                            fontSize: 12.5,
+                            fontSize: 12,
                             fontWeight: FontWeight.bold,
                             color: Color(0xFFD4AF37))),
                   ),
@@ -534,30 +538,34 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
   }
 
   Widget _breakdownRow(String label, String value,
-      {Color? color, bool isBold = false, double fontSize = 13}) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: fontSize,
-              fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-              color: const Color(0xFF1F1A15),
+      {Color? color, bool isBold = false, double fontSize = 12}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 1.5),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: fontSize,
+                fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+                color: const Color(0xFF1F1A15),
+              ),
             ),
           ),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: fontSize,
-            fontWeight: FontWeight.bold,
-            color: color ?? const Color(0xFF1F1A15),
+          const SizedBox(width: 6),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: fontSize,
+              fontWeight: FontWeight.bold,
+              color: color ?? const Color(0xFF1F1A15),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
