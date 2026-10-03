@@ -512,7 +512,9 @@ class _WalletScreenState extends State<WalletScreen>
                                       ),
                                       label: Text(
                                         puedeRetirar
-                                            ? 'TRANSFERIR A ${wallet['banco']?.toString().toUpperCase() ?? 'MI CUENTA'}'
+                                            ? (disponible < (double.tryParse(wallet['minimo_retiro_cop']?.toString() ?? '50000') ?? 50000))
+                                                ? 'MÍNIMO DE RETIRO $50.000 COP'
+                                                : 'TRANSFERIR A ${wallet['banco']?.toString().toUpperCase() ?? 'MI CUENTA'}'
                                             : (wallet['cuenta_verificada'] != true)
                                                 ? 'VINCULAR CUENTA DE RETIRO'
                                                 : razonBloqueo ?? 'RETIRO NO DISPONIBLE',
@@ -1342,6 +1344,7 @@ class _RetiroBottomSheet extends StatefulWidget {
 
 class _RetiroBottomSheetState extends State<_RetiroBottomSheet> {
   void _setPercent(double percent) {
+    HapticFeedback.lightImpact();
     final amount = (widget.disponible * percent).floor();
     setState(() {
       widget.montoCtrl.text = amount.toString();
