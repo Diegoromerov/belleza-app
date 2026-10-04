@@ -6,73 +6,130 @@
  *
  * Por defecto corre en modo DRY-RUN: no escribe nada, solo mide.
  *
- *   node backend/scripts/reencryptBiometricData.js            # dry-run (seguro)
- *   node backend/scripts/reencryptBiometricData.js --apply    # escribe los cambios
+ *   node scripts/reencryptBiometricData.js                      # dry-run (seguro)
+ *   node scripts/reencryptBiometricData.js --apply              # re-cifra filas legadas
+ *   node scripts/reencryptBiometricData.js --apply --encrypt-plain  # re-cifra también objetos en claro
  *
- * ORDEN CORRECTO DE DESPLIEGUE (importante):
- *   1) provisionar BIOMETRIC_ENCRYPTION_KEY en el entorno
- *   2) desplegar el código (fail-closed)
- *   3) ejecutar este script con --apply
- * Al revés, el arranque falla; y si se ejecuta el paso 3 antes que el 1, se re-cifra
- * con la misma clave legada y no sirve de nada.
- *
- * NO ejecutar contra producción sin copia de seguridad previa.
+ * OBJETIVOS VERIFICADOS CONTRA ESQUEMA Y MIGRACIONES:
+ *   1. beauty_profiles.face_scores (JSONB)
+ *   2. beauty_profiles.hands_diagnosis (JSONB)
+ *   3. biometric_history.face_scores (JSONB)
+ *   4. biometric_history.hands_diagnosis (JSONB)
+ *   5. glow_cycle_measurements.encrypted_scores (TEXT)
  */
 const path = require('path');
 const { pool, testConnection } = require(path.join(__dirname, '../src/config/db'));
 const crypto = require('../src/services/biometricCryptoService');
 
 const APLICAR = process.argv.includes('--apply');
+const REENCRYPT_PLAIN = process.argv.includes('--encrypt-plain');
 
-// tabla, columna
 const OBJETIVOS = [
-  ['biometric_profiles', 'face_scores'],
-  ['biometric_profiles', 'hands_diagnosis'],
-  ['glow_cycles', 'encrypted_scores'],
+  { tabla: 'beauty_profiles', columna: 'face_scores', isJsonb: true },
+  { tabla: 'beauty_profiles', columna: 'hands_diagnosis', isJsonb: true },
+  { tabla: 'biometric_history', columna: 'face_scores', isJsonb: true },
+  { tabla: 'biometric_history', columna: 'hands_diagnosis', isJsonb: true },
+  { tabla: 'glow_cycle_measurements', columna: 'encrypted_scores', isJsonb: false },
 ];
 
-async function procesar(tabla, columna) {
-  let filas;
+async function procesar(target, aplicarOverride = null, reencryptPlainOverride = null) {
+  const aplicar = aplicarOverride !== null ? aplicarOverride : APLICAR;
+  const reencryptPlain = reencryptPlainOverride !== null ? reencryptPlainOverride : REENCRYPT_PLAIN;
+  const { tabla, columna, isJsonb } = target;
+  let res;
   try {
-    const res = await pool.query(
-      `SELECT id, ${columna} AS cifrado FROM ${tabla} WHERE ${columna} IS NOT NULL AND ${columna} <> ''`
+    res = await pool.query(
+      `SELECT id, ${columna}::text AS cifrado FROM ${tabla} WHERE ${columna} IS NOT NULL`
     );
-    filas = res.rows;
   } catch (err) {
-    console.log(`   ⏭️  ${tabla}.${columna}: no se pudo leer (${err.message})`);
-    return { tabla, columna, total: 0, legados: 0, migrados: 0, ilegibles: 0 };
+    throw new Error(`Error al leer ${tabla}.${columna}: ${err.message}`);
   }
 
-  let legados = 0, migrados = 0, ilegibles = 0;
+  const filas = res.rows;
+  let legados = 0, migrados = 0, ilegibles = 0, sinCifrar = 0;
+
   for (const fila of filas) {
-    // 1) ¿lo descifra la clave ACTUAL? Entonces no hay nada que migrar.
+    let strCifrado = typeof fila.cifrado === 'string' ? fila.cifrado.trim() : '';
+    if (!strCifrado || strCifrado === 'null' || strCifrado === '""') continue;
+
+    // Detectar si la columna almacena un objeto o array JSON sin cifrar (jsonb_typeof = 'object' / 'array')
+    let parsedObj = null;
+    let isPlainObject = false;
+    try {
+      parsedObj = JSON.parse(strCifrado);
+      if (parsedObj !== null && typeof parsedObj === 'object') {
+        isPlainObject = true;
+      }
+    } catch (_) {}
+
+    if (isPlainObject) {
+      sinCifrar++;
+      if (aplicar && reencryptPlain) {
+        const nuevoCipher = crypto.encrypt(parsedObj);
+        if (isJsonb) {
+          await pool.query(
+            `UPDATE ${tabla} SET ${columna} = to_jsonb($1::text) WHERE id = $2`,
+            [nuevoCipher, fila.id]
+          );
+        } else {
+          await pool.query(
+            `UPDATE ${tabla} SET ${columna} = $1 WHERE id = $2`,
+            [nuevoCipher, fila.id]
+          );
+        }
+        migrados++;
+      }
+      continue;
+    }
+
+    // Des-envolver comillas de JSON string si vienen del cast ::text en columnas JSONB
+    if (strCifrado.startsWith('"') && strCifrado.endsWith('"')) {
+      try {
+        strCifrado = JSON.parse(strCifrado);
+      } catch (_) {}
+    }
+
     let claro = null;
     let esLegado = false;
+
+    // 1) ¿Lo descifra la clave ACTUAL? No requiere re-cifrado.
     try {
-      claro = crypto.decrypt(fila.cifrado);
+      claro = crypto.decrypt(strCifrado);
     } catch (_) {
       esLegado = true;
+      // 2) Intentar descifrar con la clave LEGADA
       try {
-        claro = crypto.decryptWithLegacyKey(fila.cifrado);
+        claro = crypto.decryptWithLegacyKey(strCifrado);
       } catch (legacyErr) {
         ilegibles++;
         continue;
       }
     }
-    if (!esLegado) continue;
+
+    if (!esLegado || claro === null) continue;
 
     legados++;
-    if (APLICAR) {
-      const nuevo = crypto.encrypt(claro);
-      await pool.query(`UPDATE ${tabla} SET ${columna} = $1 WHERE id = $2`, [nuevo, fila.id]);
+    if (aplicar) {
+      const nuevoCipher = crypto.encrypt(claro);
+      if (isJsonb) {
+        await pool.query(
+          `UPDATE ${tabla} SET ${columna} = to_jsonb($1::text) WHERE id = $2`,
+          [nuevoCipher, fila.id]
+        );
+      } else {
+        await pool.query(
+          `UPDATE ${tabla} SET ${columna} = $1 WHERE id = $2`,
+          [nuevoCipher, fila.id]
+        );
+      }
       migrados++;
     }
   }
 
-  return { tabla, columna, total: filas.length, legados, migrados, ilegibles };
+  return { tabla, columna, total: filas.length, legados, migrados, ilegibles, sinCifrar };
 }
 
-(async () => {
+async function main() {
   console.log(`\n🔐 Re-cifrado de datos biométricos — modo ${APLICAR ? 'APPLY (escribe)' : 'DRY-RUN (no escribe)'}`);
   console.log(`   Huella de la clave activa: ${crypto.keyFingerprint()}\n`);
 
@@ -82,22 +139,42 @@ async function procesar(tabla, columna) {
     process.exit(1);
   }
 
-  let totalLegados = 0, totalIlegibles = 0;
-  for (const [tabla, columna] of OBJETIVOS) {
-    const r = await procesar(tabla, columna);
-    totalLegados += r.legados;
-    totalIlegibles += r.ilegibles;
-    console.log(`   ${r.tabla}.${r.columna}: ${r.total} filas · cifradas con la clave legada: ${r.legados} · migradas: ${r.migrados} · ilegibles: ${r.ilegibles}`);
+  let totalLegados = 0, totalIlegibles = 0, totalMigrados = 0, totalSinCifrar = 0;
+  let errores = [];
+
+  for (const target of OBJETIVOS) {
+    try {
+      const r = await procesar(target);
+      totalLegados += r.legados;
+      totalIlegibles += r.ilegibles;
+      totalMigrados += r.migrados;
+      totalSinCifrar += r.sinCifrar;
+      console.log(`   ${r.tabla}.${r.columna}: ${r.total} filas · clave legada: ${r.legados} · sin cifrar (JSON object): ${r.sinCifrar} · migradas: ${r.migrados} · ilegibles: ${r.ilegibles}`);
+    } catch (err) {
+      console.error(`   ❌ FAIL-CLOSED en ${target.tabla}.${target.columna}: ${err.message}`);
+      errores.push(err.message);
+    }
   }
 
-  console.log(`\n   TOTAL: ${totalLegados} registros con clave legada, ${totalIlegibles} ilegibles.`);
+  if (errores.length > 0) {
+    console.error(`\n❌ SCRIPT ABORTADO CON ERROR (${errores.length} objetivos ilegibles/fallidos).`);
+    process.exit(1);
+  }
+
+  console.log(`\n   TOTAL: ${totalLegados} clave legada, ${totalSinCifrar} sin cifrar (JSON object), ${totalIlegibles} ilegibles, ${totalMigrados} migrados.`);
   if (!APLICAR) {
-    console.log('   (dry-run) Repite con --apply para escribir los cambios.\n');
+    console.log('   (dry-run) Repite con --apply para escribir los cambios de clave legada.\n');
   } else {
     console.log('   ✅ Re-cifrado aplicado. Verifica con el mismo comando en dry-run: debe dar 0 legados.\n');
   }
   process.exit(0);
-})().catch((err) => {
-  console.error('❌ Error en el re-cifrado:', err);
-  process.exit(1);
-});
+}
+
+if (require.main === module) {
+  main().catch((err) => {
+    console.error('❌ Error no controlado en el re-cifrado:', err);
+    process.exit(1);
+  });
+}
+
+module.exports = { procesar, OBJETIVOS, main };
