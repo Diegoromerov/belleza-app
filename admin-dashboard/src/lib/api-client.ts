@@ -1,8 +1,5 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
 
-// IMPORTANTE: Tu backend está en puerto 3000
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-
 export interface GetBookingsFilters {
   rol?: 'cliente' | 'prestador' | 'ADMIN';
   [key: string]: unknown;
@@ -23,14 +20,10 @@ export interface UpdateProfilePayload {
   [key: string]: unknown;
 }
 
-/** Limpia la sesión del cliente (localStorage + cookies que lee el middleware). */
+/** Limpia la sesión del cliente enviando orden de logout al BFF y redirigiendo a login. */
 function clearClientSession() {
   if (typeof window === 'undefined') return;
-  localStorage.removeItem('glow_token');
-  localStorage.removeItem('glow_user');
-  localStorage.removeItem('adminToken');
-  document.cookie = 'glow_token=; path=/; max-age=0; SameSite=Lax';
-  document.cookie = 'adminToken=; path=/; max-age=0; SameSite=Lax';
+  axios.post('/api/admin/auth/logout', {}, { headers: { 'X-Requested-With': 'XMLHttpRequest' } }).catch(() => {});
 }
 
 class ApiClient {
@@ -38,23 +31,21 @@ class ApiClient {
 
   constructor() {
     this.client = axios.create({
-      baseURL: API_URL,
+      baseURL: '',
       timeout: 10000,
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
     });
 
-    // Interceptor para agregar token
+    // Interceptor para adjuntar encabezado CSRF X-Requested-With
     this.client.interceptors.request.use((config) => {
-      if (typeof window !== 'undefined') {
-        const token = localStorage.getItem('glow_token');
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
-      }
+      config.headers['X-Requested-With'] = 'XMLHttpRequest';
       return config;
     });
 
-    // Interceptor para errores
+    // Interceptor para manejar 401 Unauthorized
     this.client.interceptors.response.use(
       (response) => response,
       (error: AxiosError) => {
@@ -69,7 +60,6 @@ class ApiClient {
 
   // Bookings
   // El backend NO expone GET /api/bookings: solo /bookings/provider y /bookings/client
-  // (ver backend/src/routes/bookingRoutes.js).
   async getBookings(filters?: GetBookingsFilters) {
     const { rol, ...params } = filters || {};
     const path = rol === 'prestador' ? '/api/bookings/provider' : '/api/bookings/client';
@@ -91,7 +81,7 @@ class ApiClient {
     return response.data;
   }
 
-  // Chats — rutas reales: backend/src/routes/chatRoutes.js
+  // Chats
   async getChats() {
     const response = await this.client.get('/api/chat/conversations');
     return response.data;
@@ -110,7 +100,7 @@ class ApiClient {
     return response.data;
   }
 
-  // Profile — el backend expone PATCH /api/users/profile (backend/index.js), no PUT.
+  // Profile
   async updateProfile(data: UpdateProfilePayload) {
     const response = await this.client.patch('/api/users/profile', data);
     return response.data;
