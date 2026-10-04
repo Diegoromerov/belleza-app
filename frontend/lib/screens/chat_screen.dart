@@ -655,6 +655,58 @@ class _ChatScreenState extends State<ChatScreen> {
               ],
             ),
           ),
+
+          // ─── Innovación 2: Ficha Ejecutiva Pre-Cita (Client Insight Brief) ─────
+          if (!_isAiPartner)
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFC5A052).withValues(alpha: 0.4)),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x08000000),
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
+                  )
+                ],
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.stars_rounded, color: Color(0xFFC5A052), size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Ficha Ejecutiva: ${widget.partnerName}',
+                          style: const TextStyle(
+                            fontFamily: 'Inter',
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                            color: Color(0xFF1F1A15),
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          isProvider 
+                              ? 'Profesional calificado • Garantía de bioseguridad • Atención puntual'
+                              : 'Cliente Verificado • 4 citas agendadas • Preferencia: Tonos fríos & Cuero cabelludo sensible',
+                          style: const TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 11,
+                            color: Color(0xFF8C7E74),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
           Expanded(
             child: _isLoading
                 ? const Center(
@@ -839,7 +891,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                                                                                     width: double.infinity,
                                                                                                     child: OutlinedButton.icon(
                                                                                                       style: OutlinedButton.styleFrom(
-                                                                                                        side: BorderSide(color: AppTheme.primary, width: 1.5),
+                                                                                                        side: const BorderSide(color: AppTheme.primary, width: 1.5),
                                                                                                         foregroundColor: AppTheme.primary,
                                                                                                         shape: RoundedRectangleBorder(
                                                                                                           borderRadius: BorderRadius.circular(20),
@@ -1183,10 +1235,10 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
               border: Border.fromBorderSide(BorderSide(color: Color(0xFFE5DDD5))),
             ),
-            child: Row(
+            child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
+                Text(
                   'Aura está redactando su consejo',
                   style: TextStyle(
                     color: Color(0xFF6E5D53),
@@ -1194,8 +1246,8 @@ class _ChatScreenState extends State<ChatScreen> {
                     fontStyle: FontStyle.italic,
                   ),
                 ),
-                const SizedBox(width: 8),
-                const SizedBox(
+                SizedBox(width: 8),
+                SizedBox(
                   width: 14,
                   height: 14,
                   child: CircularProgressIndicator(

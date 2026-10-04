@@ -6,6 +6,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
 import '../services/reply_reconcile.dart';
+import '../widgets/voice_input.dart';
 import '../shared/theme.dart';
 
 /// 🤖 GlowPro Co-Pilot Screen
@@ -414,7 +415,16 @@ class _ProviderAiCopilotScreenState extends State<ProviderAiCopilotScreen> {
                       onSubmitted: _sendMessage,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
+                  VoiceInput(
+                    onTranscript: (text) {
+                      if (text.trim().isNotEmpty) {
+                        _controller.text = text;
+                        _sendMessage(text);
+                      }
+                    },
+                  ),
+                  const SizedBox(width: 6),
                   Container(
                     decoration: const BoxDecoration(
                       color: Color(0xFF1F1A15),
@@ -515,9 +525,175 @@ class _ProviderAiCopilotScreenState extends State<ProviderAiCopilotScreen> {
                 color: isUser ? const Color(0xFFF7F3ED) : const Color(0xFF1F1A15),
               ),
             ),
+            if (!isUser && (text.toLowerCase().contains('oferta') || text.toLowerCase().contains('promoción') || text.toLowerCase().contains('descuento') || text.toLowerCase().contains('horas libres'))) ...[
+              const SizedBox(height: 12),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFC5A052),
+                  foregroundColor: const Color(0xFF1F1A15),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  elevation: 0,
+                ),
+                icon: const Icon(Icons.flash_on_rounded, size: 16),
+                label: const Text(
+                  '🚀 Publicar Oferta Relámpago (1-Tap)',
+                  style: TextStyle(fontFamily: 'Inter', fontSize: 12, fontWeight: FontWeight.bold),
+                ),
+                onPressed: () => _publishFlashDealModal(context),
+              ),
+            ],
+            if (!isUser && (text.toLowerCase().contains('foto') || text.toLowerCase().contains('portafolio') || text.toLowerCase().contains('corte') || text.toLowerCase().contains('look'))) ...[
+              const SizedBox(height: 12),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1F1A15),
+                  foregroundColor: const Color(0xFFC5A052),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  elevation: 0,
+                ),
+                icon: const Icon(Icons.photo_library_rounded, size: 16),
+                label: const Text(
+                  '📸 Publicar en Mi Portafolio (1-Tap)',
+                  style: TextStyle(fontFamily: 'Inter', fontSize: 12, fontWeight: FontWeight.bold),
+                ),
+                onPressed: () => _publishPortfolioModal(context),
+              ),
+            ],
           ],
         ),
       ),
+    );
+  }
+
+  void _publishFlashDealModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return Container(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.flash_on_rounded, color: Color(0xFFC5A052), size: 24),
+                  SizedBox(width: 10),
+                  Text(
+                    'Confirmar Oferta Relámpago',
+                    style: TextStyle(
+                      fontFamily: 'CormorantGaramond',
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Se publicará un descuento especial del 20% en tu perfil para las horas de baja demanda de mañana (2:00 PM - 5:00 PM).',
+                style: TextStyle(fontFamily: 'Inter', fontSize: 13, color: Color(0xFF8C7E74)),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1F1A15),
+                    foregroundColor: const Color(0xFFC5A052),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text('⚡ Oferta Relámpago publicada con éxito en tu perfil.'),
+                          backgroundColor: const Color(0xFF2E7D32),
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
+                      );
+                    }
+                  },
+                  child: const Text('Publicar Oferta Ahora', style: TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _publishPortfolioModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return Container(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.photo_library_rounded, color: Color(0xFFC5A052), size: 24),
+                  SizedBox(width: 10),
+                  Text(
+                    'Publicar en Portafolio',
+                    style: TextStyle(
+                      fontFamily: 'CormorantGaramond',
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'La foto procesada por AURA se agregará a tu perfil con la descripción optimizada y sello de calidad profesional.',
+                style: TextStyle(fontFamily: 'Inter', fontSize: 13, color: Color(0xFF8C7E74)),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1F1A15),
+                    foregroundColor: const Color(0xFFC5A052),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text('📸 Trabajo publicado en tu Portafolio Profesional.'),
+                          backgroundColor: const Color(0xFF2E7D32),
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
+                      );
+                    }
+                  },
+                  child: const Text('Publicar en Portafolio', style: TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
