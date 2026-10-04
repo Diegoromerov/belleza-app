@@ -3,6 +3,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+// ignore: depend_on_referenced_packages
 import 'package:http_parser/http_parser.dart' as http_parser;
 import '../models/provider_model.dart';
 import '../models/service_model.dart';
@@ -456,8 +457,9 @@ class ApiService {
           }),
         )
         .timeout(requestTimeout);
-    if (response.statusCode == 200 || response.statusCode == 201)
+    if (response.statusCode == 200 || response.statusCode == 201) {
       return json.decode(response.body);
+    }
     throw Exception(
         json.decode(response.body)['error'] ?? 'Error ${response.statusCode}');
   }
@@ -504,8 +506,9 @@ class ApiService {
           }),
         )
         .timeout(requestTimeout);
-    if (response.statusCode == 200 || response.statusCode == 201)
+    if (response.statusCode == 200 || response.statusCode == 201) {
       return json.decode(response.body);
+    }
     throw Exception(
         json.decode(response.body)['error'] ?? 'Error ${response.statusCode}');
   }
@@ -717,8 +720,9 @@ class ApiService {
           }),
         )
         .timeout(requestTimeout);
-    if (response.statusCode == 200 || response.statusCode == 201)
+    if (response.statusCode == 200 || response.statusCode == 201) {
       return json.decode(response.body);
+    }
     throw Exception(
         json.decode(response.body)['error'] ?? 'Error ${response.statusCode}');
   }
