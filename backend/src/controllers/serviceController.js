@@ -8,10 +8,19 @@ const Service = require('../models/Service');
  * Handles service CRUD with strict multi-tenant isolation (Anti-Tenant-Leakage / Anti-IDOR).
  */
 
+// Helper to sanitize req.user context
+const getSanitizedAuthContext = (req) => {
+  const rawBpId = req.user?.businessProfileId;
+  const businessProfileId = (rawBpId && String(rawBpId).trim() !== 'null' && String(rawBpId).trim() !== 'undefined' && String(rawBpId).trim() !== '')
+    ? String(rawBpId).trim()
+    : null;
+  const providerId = req.user?.id ? (isNaN(parseInt(req.user.id)) ? req.user.id : parseInt(req.user.id)) : null;
+  return { businessProfileId, providerId };
+};
+
 // Helper to build tenant isolation query condition for Sequelize
 const buildTenantWhere = (req, extraWhere = {}) => {
-  const businessProfileId = req.user?.businessProfileId;
-  const providerId = req.user?.id;
+  const { businessProfileId, providerId } = getSanitizedAuthContext(req);
 
   if (businessProfileId) {
     return {
@@ -38,11 +47,7 @@ const buildTenantWhere = (req, extraWhere = {}) => {
 // GET /api/services/provider → Lista servicios del establecimiento/provider activo
 exports.getProviderServices = async (req, res) => {
   try {
-    const rawBusinessProfileId = req.user?.businessProfileId;
-    const businessProfileId = (rawBusinessProfileId && String(rawBusinessProfileId).trim() !== 'null' && String(rawBusinessProfileId).trim() !== 'undefined' && String(rawBusinessProfileId).trim() !== '')
-      ? String(rawBusinessProfileId).trim()
-      : null;
-    const providerId = req.user?.id ? (isNaN(parseInt(req.user.id)) ? req.user.id : parseInt(req.user.id)) : null;
+    const { businessProfileId, providerId } = getSanitizedAuthContext(req);
 
     if (!businessProfileId && !providerId) {
       return res.status(403).json({ 
@@ -103,8 +108,7 @@ exports.getProviderServices = async (req, res) => {
 // POST /api/services → Crea servicio asociado al establecimiento activo
 exports.createService = async (req, res) => {
   try {
-    const businessProfileId = req.user?.businessProfileId;
-    const providerId = req.user?.id;
+    const { businessProfileId, providerId } = getSanitizedAuthContext(req);
 
     const { name, description, price, duration_minutes, category, is_active } = req.body;
     if (!name || price === undefined || !duration_minutes) {
@@ -131,7 +135,7 @@ exports.createService = async (req, res) => {
       `;
       const insertRes = await pool.query(insertQ, [
         providerId,
-        businessProfileId ? String(businessProfileId) : null,
+        businessProfileId,
         name,
         description || null,
         parsedPrice,
@@ -142,17 +146,22 @@ exports.createService = async (req, res) => {
       serviceData = insertRes.rows[0];
     } catch (dbErr) {
       console.warn('⚠️ Fallback a Sequelize en createService:', dbErr.message);
-      const service = await Service.create({
-        provider_id: providerId,
-        business_profile_id: businessProfileId || null,
-        name,
-        description: description || null,
-        price: parsedPrice,
-        duration_minutes: parsedDuration,
-        category: category || null,
-        is_active: isActiveVal
-      });
-      serviceData = service.toJSON();
+      try {
+        const service = await Service.create({
+          provider_id: providerId,
+          business_profile_id: businessProfileId,
+          name,
+          description: description || null,
+          price: parsedPrice,
+          duration_minutes: parsedDuration,
+          category: category || null,
+          is_active: isActiveVal
+        });
+        serviceData = service.toJSON();
+      } catch (seqErr) {
+        console.error('❌ Fallback Sequelize falló en createService:', seqErr.message);
+        throw dbErr;
+      }
     }
 
     res.status(201).json({
@@ -180,7 +189,7 @@ exports.createService = async (req, res) => {
 exports.updateService = async (req, res) => {
   try {
     const serviceId = req.params.id;
-    const providerId = req.user?.id;
+    const { businessProfileId, providerId } = getSanitizedAuthContext(req);
     const { name, description, price, duration_minutes, category, is_active } = req.body;
 
     if (!name || price === undefined || !duration_minutes) {
@@ -199,23 +208,25 @@ exports.updateService = async (req, res) => {
 
     let updatedService = null;
     try {
-      const updateQ = `
-        UPDATE services 
-        SET name = $1, description = $2, price = $3, duration_minutes = $4, category = $5, is_active = $6
-        WHERE id = $7 AND (provider_id = $8 OR business_profile_id = $9)
-        RETURNING id, provider_id, business_profile_id, name, description, price, duration_minutes, category, is_active;
-      `;
-      const updateRes = await pool.query(updateQ, [
-        name,
-        description || null,
-        parsedPrice,
-        parsedDuration,
-        category || null,
-        is_active !== false,
-        serviceId,
-        providerId,
-        req.user?.businessProfileId ? String(req.user.businessProfileId) : '0'
-      ]);
+      let updateQ, params;
+      if (businessProfileId) {
+        updateQ = `
+          UPDATE services 
+          SET name = $1, description = $2, price = $3, duration_minutes = $4, category = $5, is_active = $6
+          WHERE id = $7 AND (provider_id = $8 OR business_profile_id = $9)
+          RETURNING id, provider_id, business_profile_id, name, description, price, duration_minutes, category, is_active;
+        `;
+        params = [name, description || null, parsedPrice, parsedDuration, category || null, is_active !== false, serviceId, providerId, businessProfileId];
+      } else {
+        updateQ = `
+          UPDATE services 
+          SET name = $1, description = $2, price = $3, duration_minutes = $4, category = $5, is_active = $6
+          WHERE id = $7 AND provider_id = $8
+          RETURNING id, provider_id, business_profile_id, name, description, price, duration_minutes, category, is_active;
+        `;
+        params = [name, description || null, parsedPrice, parsedDuration, category || null, is_active !== false, serviceId, providerId];
+      }
+      const updateRes = await pool.query(updateQ, params);
 
       if (updateRes.rows.length === 0) {
         return res.status(404).json({ 
@@ -271,20 +282,28 @@ exports.updateService = async (req, res) => {
 exports.deleteService = async (req, res) => {
   try {
     const serviceId = req.params.id;
-    const providerId = req.user?.id;
+    const { businessProfileId, providerId } = getSanitizedAuthContext(req);
 
     try {
-      const deleteQ = `
-        UPDATE services 
-        SET is_active = false
-        WHERE id = $1 AND (provider_id = $2 OR business_profile_id = $3)
-        RETURNING id, name, is_active;
-      `;
-      const deleteRes = await pool.query(deleteQ, [
-        serviceId,
-        providerId,
-        req.user?.businessProfileId ? String(req.user.businessProfileId) : '0'
-      ]);
+      let deleteQ, params;
+      if (businessProfileId) {
+        deleteQ = `
+          UPDATE services 
+          SET is_active = false
+          WHERE id = $1 AND (provider_id = $2 OR business_profile_id = $3)
+          RETURNING id, name, is_active;
+        `;
+        params = [serviceId, providerId, businessProfileId];
+      } else {
+        deleteQ = `
+          UPDATE services 
+          SET is_active = false
+          WHERE id = $1 AND provider_id = $2
+          RETURNING id, name, is_active;
+        `;
+        params = [serviceId, providerId];
+      }
+      const deleteRes = await pool.query(deleteQ, params);
 
       if (deleteRes.rows.length === 0) {
         return res.status(404).json({ 

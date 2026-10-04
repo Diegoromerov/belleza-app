@@ -68,6 +68,11 @@ const authMiddleware = async (req, res, next) => {
     // NO reintroducir aquí un set_config de sesión. El test
     // `src/tests/tenantAuthIsolation.test.js` falla si vuelve.
 
+    const rawBpId = verified.businessProfileId;
+    const sanitizedBpId = (rawBpId && String(rawBpId).trim() !== 'null' && String(rawBpId).trim() !== 'undefined' && String(rawBpId).trim() !== '')
+      ? String(rawBpId).trim()
+      : null;
+
     req.user = {
       id: verified.id,
       email: verified.email,
@@ -76,7 +81,7 @@ const authMiddleware = async (req, res, next) => {
       // de consentimiento biométrico nunca pasaba (A360-2026-09-22/A-01).
       rol: dbRole,
       tenant_id: dbTenantId,
-      businessProfileId: verified.businessProfileId || null,
+      businessProfileId: sanitizedBpId,
       token
     };
 
