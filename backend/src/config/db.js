@@ -722,6 +722,10 @@ const pool = {
     if (isStrictEnvironment() && dbMode === 'memoria') {
       throw new Error('CRITICAL DB ERROR: Database memory fallback is strictly prohibited in production/staging.');
     }
+    if ((pgMemory.isMemoryMode || dbMode === 'memoria') && pgMemory.enabled && pgMemory.pool) {
+      servingFabricatedData = true;
+      return pgMemory.pool.connect();
+    }
     if (dbMode === 'memoria' && (memoriaForzada || !tocaReintentar())) {
       servingFabricatedData = true;
       return clienteEnMemoria();
@@ -736,6 +740,9 @@ const pool = {
     } catch (err) {
       if (!esErrorDeEnlace(err)) throw err;
       pasarAMemoria(err);
+      if (pgMemory.enabled && pgMemory.pool) {
+        return pgMemory.pool.connect();
+      }
       return clienteEnMemoria();
     }
   },
@@ -825,3 +832,4 @@ const getDbStatus = () => ({
 const dbEnMemoria = () => dbMode === 'memoria';
 
 module.exports = { pool, testConnection, getDbStatus, ragPool, testRagConnection, dbEnMemoria, memoryFallbackAllowed };
+
