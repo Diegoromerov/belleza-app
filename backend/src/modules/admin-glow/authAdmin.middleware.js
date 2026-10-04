@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const { getJwtSecret } = require('../../config/jwt');
 const { pool } = require('../../config/db');
+const redisClient = require('../../config/redis');
 
 /**
  * Middleware para proteger rutas administrativas.
@@ -18,6 +19,19 @@ async function authAdmin(req, res, next) {
     }
 
     const token = authHeader.split(' ')[1].trim();
+
+    // Verificación de token revocado en la lista negra de Redis con Fail-Closed
+    if (redisClient && (redisClient.isReady || redisClient.isOpen)) {
+      try {
+        const isBlacklisted = await redisClient.get(`beauty:token_blacklist:${token}`);
+        if (isBlacklisted) {
+          return res.status(401).json({ error: 'Token revocado. Por favor inicie sesión de nuevo.' });
+        }
+      } catch (redisErr) {
+        console.error('❌ Error Redis blacklist check (authAdmin):', redisErr.message);
+        return res.status(503).json({ error: 'Servicio de autenticación no disponible (Redis).' });
+      }
+    }
 
     // Verificar firma y expiración del JWT
     let decoded;
