@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'chat_screen.dart';
 import 'provider_route_screen.dart';
 import 'wallet_screen.dart';
+import 'provider_ai_copilot_screen.dart';
 import 'chat_list_screen.dart';
 import 'provider_profile_screen.dart';
 import 'store_screen.dart';
@@ -2721,7 +2722,104 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: 20),
+
+          // ─── GlowPro Co-Pilot IA Card ──────────────────────────
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const ProviderAiCopilotScreen(),
+                ),
+              );
+            },
+            child: Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(24),
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF1F1A15), Color(0xFF2D241C)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x1A000000),
+                    blurRadius: 12,
+                    offset: Offset(0, 4),
+                  )
+                ],
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: const Color(0xFFC5A052), width: 1.5),
+                      image: const DecorationImage(
+                        image: AssetImage('images/avatar_aura.webp'),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text(
+                          'GlowPro Co-Pilot IA',
+                          style: TextStyle(
+                            fontFamily: 'CormorantGaramond',
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            color: Color(0xFFF7F3ED),
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'Asistente de inteligencia para ingresos, agenda y promociones.',
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 12,
+                            color: Color(0xFFB8AAA0),
+                            height: 1.3,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFC5A052),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Icon(Icons.auto_awesome_rounded, size: 14, color: Color(0xFF1F1A15)),
+                        SizedBox(width: 4),
+                        Text(
+                          'Consultar',
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                            color: Color(0xFF1F1A15),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
 
           // ─── Prominent Next Booking Card ────────────────────────
           if (next != null) ...[
@@ -3859,26 +3957,53 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
       ),
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 80.0), // push above floating navigation bar
-        child: FloatingActionButton(
-          heroTag: 'sos_provider_fab',
-          onPressed: _loadingSOS ? null : _showSOSConfirmationDialog,
-          backgroundColor: const Color(0xFF800A0A),
-          foregroundColor: const Color(0xFFFAF4EB),
-          elevation: 6,
-          shape: CircleBorder(
-            side: BorderSide(
-              color: const Color(0xFFD4AF37).withValues(alpha: 0.8),
-              width: 1.8,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            FloatingActionButton(
+              heroTag: 'aura_copilot_fab',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const ProviderAiCopilotScreen(),
+                  ),
+                );
+              },
+              backgroundColor: const Color(0xFF1F1A15),
+              foregroundColor: const Color(0xFFC5A052),
+              elevation: 6,
+              shape: CircleBorder(
+                side: BorderSide(
+                  color: const Color(0xFFC5A052).withValues(alpha: 0.8),
+                  width: 1.8,
+                ),
+              ),
+              child: const Icon(Icons.auto_awesome_rounded, size: 24, color: Color(0xFFC5A052)),
             ),
-          ),
-          child: _loadingSOS
-              ? const SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
-                      strokeWidth: 2.5, color: Color(0xFFD4AF37)),
-                )
-              : const Icon(Icons.emergency_outlined, size: 28, color: Color(0xFFFAF4EB)),
+            const SizedBox(height: 12),
+            FloatingActionButton(
+              heroTag: 'sos_provider_fab',
+              onPressed: _loadingSOS ? null : _showSOSConfirmationDialog,
+              backgroundColor: const Color(0xFF800A0A),
+              foregroundColor: const Color(0xFFFAF4EB),
+              elevation: 6,
+              shape: CircleBorder(
+                side: BorderSide(
+                  color: const Color(0xFFD4AF37).withValues(alpha: 0.8),
+                  width: 1.8,
+                ),
+              ),
+              child: _loadingSOS
+                  ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2.5, color: Color(0xFFD4AF37)),
+                    )
+                  : const Icon(Icons.emergency_outlined, size: 28, color: Color(0xFFFAF4EB)),
+            ),
+          ],
         ),
       ),
     );

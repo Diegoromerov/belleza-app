@@ -108,7 +108,14 @@ class _ChatListScreenState extends State<ChatListScreen> {
       });
     }
     try {
-      final conversations = await ApiService.fetchChatConversations();
+      var conversations = await ApiService.fetchChatConversations();
+      final roleLower = (_currentUserRole ?? '').toLowerCase();
+      if (roleLower == 'provider' || roleLower == 'salon') {
+        conversations = conversations.where((c) {
+          final pid = c['conversation_partner_id']?.toString();
+          return pid != '0' && pid != '00000000-0000-0000-0000-000000000000';
+        }).toList();
+      }
       if (mounted) {
         setState(() {
           _conversations = conversations;
@@ -198,80 +205,79 @@ class _ChatListScreenState extends State<ChatListScreen> {
                   onRefresh: () => _fetchConversations(showLoading: false),
                   child: Column(
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 8),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(24),
-                            gradient: const LinearGradient(
-                              colors: [AppTheme.primary, Color(0xFFE5CECA)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Color(0x0A000000),
-                                blurRadius: 12,
-                                offset: Offset(0, 4),
-                              )
-                            ],
-                          ),
-                           child: ListTile(
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 12),
-                            leading: Container(
-                              width: 58,
-                              height: 58,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(color: const Color(0xFFD4AF37), width: 2.5),
-                                image: const DecorationImage(
-                                  image: AssetImage('images/avatar_aura.webp'),
-                                  fit: BoxFit.cover,
-                                ),
+                      if (_currentUserRole?.toLowerCase() != 'provider' && _currentUserRole?.toLowerCase() != 'salon')
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(24),
+                              gradient: const LinearGradient(
+                                colors: [AppTheme.primary, Color(0xFFE5CECA)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
                               ),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Color(0x0A000000),
+                                  blurRadius: 12,
+                                  offset: Offset(0, 4),
+                                )
+                              ],
                             ),
-                            title: const Text(
-                              'Aura - Asistente de IA',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                                letterSpacing: -0.3,
-                              ),
-                            ),
-                            subtitle: const Text(
-                              'Pregúntame sobre estilos de cabello, agendamiento seguro, garantías o activa el botón SOS.',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 12.5,
-                                height: 1.3,
-                              ),
-                            ),
-                            trailing: const Icon(
-                              Icons.arrow_forward_ios,
-                              color: Colors.white,
-                              size: 14,
-                            ),
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const ChatScreen(
-                                    partnerId:
-                                        '0',
-                                    partnerName:
-                                        'Aura - Asistente de IA',
-                                    partnerRole: 'admin',
-                                    partnerAvatar: 'images/avatar_aura.webp',
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 20, vertical: 12),
+                              leading: Container(
+                                width: 58,
+                                height: 58,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: const Color(0xFFD4AF37), width: 2.5),
+                                  image: const DecorationImage(
+                                    image: AssetImage('images/avatar_aura.webp'),
+                                    fit: BoxFit.cover,
                                   ),
                                 ),
-                              );
-                            },
+                              ),
+                              title: const Text(
+                                'Aura - Asistente de IA',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  letterSpacing: -0.3,
+                                ),
+                              ),
+                              subtitle: const Text(
+                                'Pregúntame sobre estilos de cabello, agendamiento seguro, garantías o activa el botón SOS.',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 12.5,
+                                  height: 1.3,
+                                ),
+                              ),
+                              trailing: const Icon(
+                                Icons.arrow_forward_ios,
+                                color: Colors.white,
+                                size: 14,
+                              ),
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const ChatScreen(
+                                      partnerId: '0',
+                                      partnerName: 'Aura - Asistente de IA',
+                                      partnerRole: 'admin',
+                                      partnerAvatar: 'images/avatar_aura.webp',
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
                           ),
                         ),
-                      ),
                       const SizedBox(height: 8),
                       Expanded(
                         child: _conversations
