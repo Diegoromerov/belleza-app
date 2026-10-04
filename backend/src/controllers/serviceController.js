@@ -180,8 +180,8 @@ exports.createService = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('❌ ERROR EN POST /api/services:', { message: error.message });
-    res.status(500).json({ error: 'Error interno al crear el servicio' });
+    console.error('❌ ERROR EN POST /api/services:', { message: error.message, detail: error.detail, hint: error.hint });
+    res.status(500).json({ error: 'Error interno al crear el servicio', details: error.message, detail: error.detail, hint: error.hint });
   }
 };
 
