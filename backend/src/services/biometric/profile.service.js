@@ -23,51 +23,73 @@ class ProfileService {
     // Cifrar datos biométricos sensibles antes de almacenar en BD
     const encryptedFaceScores = biometricCryptoService.encrypt(faceScores);
     const encryptedHandsDiagnosis = biometricCryptoService.encrypt(handsDiagnosis);
+    
+    // Para columnas de tipo JSONB, se envuelve la cadena cifrada en un literal de cadena JSON validado por PostgreSQL (evita error 22P02)
+    const jsonFaceScores = encryptedFaceScores ? JSON.stringify(encryptedFaceScores) : null;
+    const jsonHandsDiagnosis = encryptedHandsDiagnosis ? JSON.stringify(encryptedHandsDiagnosis) : null;
     const recommendedProductsStr = JSON.stringify(recommendedProducts);
 
-    // Upsert en PostgreSQL
-    const upsertQuery = `
-      INSERT INTO beauty_profiles (user_id, face_scores, hands_diagnosis, recommendation, recommended_products, entry_point, updated_at)
-      VALUES ($1, $2, $3, $4, $5, $6, NOW())
-      ON CONFLICT (user_id)
-      DO UPDATE SET
-        face_scores = EXCLUDED.face_scores,
-        hands_diagnosis = EXCLUDED.hands_diagnosis,
-        recommendation = EXCLUDED.recommendation,
-        recommended_products = EXCLUDED.recommended_products,
-        entry_point = EXCLUDED.entry_point,
-        updated_at = NOW()
-      RETURNING *;
-    `;
+    // Transacción atómica en PostgreSQL (perfil e historial)
+    const client = await pool.connect();
+    let profile;
 
-    const upsertRes = await pool.query(upsertQuery, [
-      userId,
-      encryptedFaceScores,
-      encryptedHandsDiagnosis,
-      recommendation,
-      recommendedProductsStr,
-      entryPoint,
-    ]);
-
-    const profile = upsertRes.rows[0];
-
-    // Guardar en historial biométrico
     try {
+      await client.query('BEGIN');
+
+      const upsertQuery = `
+        INSERT INTO beauty_profiles (user_id, face_scores, hands_diagnosis, recommendation, recommended_products, entry_point, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, NOW())
+        ON CONFLICT (user_id)
+        DO UPDATE SET
+          face_scores = EXCLUDED.face_scores,
+          hands_diagnosis = EXCLUDED.hands_diagnosis,
+          recommendation = EXCLUDED.recommendation,
+          recommended_products = EXCLUDED.recommended_products,
+          entry_point = EXCLUDED.entry_point,
+          updated_at = NOW()
+        RETURNING *;
+      `;
+
+      const upsertRes = await client.query(upsertQuery, [
+        userId,
+        jsonFaceScores,
+        jsonHandsDiagnosis,
+        recommendation,
+        recommendedProductsStr,
+        entryPoint,
+      ]);
+
+      profile = upsertRes.rows[0];
       const validProfileId = profile && profile.id ? profile.id.toString() : null;
 
       const historyQuery = `
         INSERT INTO biometric_history (user_id, profile_id, face_scores, hands_diagnosis, recommendation)
         VALUES ($1, $2, $3, $4, $5);
       `;
-      await pool.query(historyQuery, [
+      await client.query(historyQuery, [
         userId,
         validProfileId,
-        encryptedFaceScores,
-        encryptedHandsDiagnosis,
+        jsonFaceScores,
+        jsonHandsDiagnosis,
         recommendation,
       ]);
-    } catch (historyErr) {
-      console.warn('⚠️ No se pudo registrar entrada en biometric_history:', historyErr.message);
+
+      await client.query('COMMIT');
+    } catch (txErr) {
+      let rollbackErr = null;
+      try {
+        await client.query('ROLLBACK');
+      } catch (rbErr) {
+        rollbackErr = rbErr;
+        console.error('🚨 [CRITICAL AUDIT ERROR] Fallo al ejecutar ROLLBACK en PostgreSQL:', rbErr.message);
+      }
+      console.error('🚨 [CRITICAL AUDIT ERROR] No se pudo guardar perfil/historial biométrico:', txErr.message);
+      if (rollbackErr && typeof client.release === 'function') {
+        try { client.release(rollbackErr); } catch (_) {}
+      }
+      throw new Error(`Fallo crítico al registrar historial biométrico: ${txErr.message}`);
+    } finally {
+      try { client.release(); } catch (_) {}
     }
 
     // Cachear objeto des-cifrado en Redis

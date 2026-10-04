@@ -83,8 +83,24 @@ class BiometricCryptoService {
   }
 
   decrypt(encryptedString) {
-    if (!encryptedString || typeof encryptedString !== 'string') {
+    if (!encryptedString) {
       return null;
+    }
+    // TODO (B-01): Limpieza de filas legadas no cifradas. Una vez ejecutada la migración/re-cifrado, rechazar objetos planos en claro.
+    if (typeof encryptedString === 'object') {
+      console.warn('⚠️ [BIOMETRIC_DECRYPT_PLAIN_FALLBACK] Se recibió un objeto/array en claro sin cifrar. Retornando objeto plano.');
+      return encryptedString;
+    }
+    if (typeof encryptedString !== 'string') {
+      return null;
+    }
+    // Si viene como una cadena JSON en claro (filas antiguas sin cifrar)
+    if (encryptedString.startsWith('{') || encryptedString.startsWith('[')) {
+      try {
+        const plainObj = JSON.parse(encryptedString);
+        console.warn('⚠️ [BIOMETRIC_DECRYPT_PLAIN_FALLBACK] Se recibió JSON string en claro sin cifrar. Retornando objeto plano.');
+        return plainObj;
+      } catch (_) {}
     }
     const parts = encryptedString.split(':');
     if (parts.length !== 3) {
