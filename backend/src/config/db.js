@@ -701,6 +701,10 @@ const pool = {
     }
   },
   connect: async () => {
+    if ((pgMemory.isMemoryMode || dbMode === 'memoria') && pgMemory.enabled && pgMemory.pool) {
+      servingFabricatedData = true;
+      return pgMemory.pool.connect();
+    }
     if (dbMode === 'memoria' && (memoriaForzada || !tocaReintentar())) {
       servingFabricatedData = true;
       return clienteEnMemoria();
@@ -715,6 +719,9 @@ const pool = {
     } catch (err) {
       if (!esErrorDeEnlace(err)) throw err;
       pasarAMemoria(err);
+      if (pgMemory.enabled && pgMemory.pool) {
+        return pgMemory.pool.connect();
+      }
       return clienteEnMemoria();
     }
   },

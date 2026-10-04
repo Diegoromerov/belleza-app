@@ -22,10 +22,17 @@
 // `USE_PG_MEM=false` es una salida explícita: permite que una suite E2E hable con el PostgreSQL
 // real configurado en DATABASE_URL en lugar de quedar desviada al arnés. Es opt-in, así que sin
 // esa variable el comportamiento es exactamente el de siempre.
+const esProduccion = () =>
+  process.env.NODE_ENV === 'production' || Boolean(process.env.RAILWAY_ENVIRONMENT);
+
 const pideBaseReal = () => process.env.USE_PG_MEM === 'false';
-const enModoMemoria = () =>
-  !pideBaseReal() &&
-  (process.env.NODE_ENV === 'test' || process.env.USE_PG_MEM === 'true' || process.env.JEST_WORKER_ID !== undefined);
+const enModoMemoria = () => {
+  if (esProduccion()) return false;
+  return (
+    !pideBaseReal() &&
+    (process.env.NODE_ENV === 'test' || process.env.USE_PG_MEM === 'true' || process.env.JEST_WORKER_ID !== undefined)
+  );
+};
 
 // Esquema del harness. Es permisivo a propósito (sin FK ni CHECK): el objetivo es que las suites de
 // integración ejerciten el SQL y las queries reales, no re-validar las restricciones de las
@@ -285,6 +292,40 @@ const SCHEMA_SQL = `
     creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     tenant_id INTEGER
   );
+
+  CREATE TABLE IF NOT EXISTS beauty_profiles (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL UNIQUE,
+    face_scores JSONB,
+    hands_diagnosis JSONB,
+    recommendation TEXT,
+    recommended_products JSONB,
+    entry_point VARCHAR(50) DEFAULT 'ideas',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS biometric_history (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    profile_id VARCHAR(36),
+    face_scores JSONB,
+    hands_diagnosis JSONB,
+    recommendation TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS glow_cycle_measurements (
+    id SERIAL PRIMARY KEY,
+    cycle_id VARCHAR(36),
+    user_id INTEGER NOT NULL,
+    measurement_type VARCHAR(30) NOT NULL,
+    day_number INTEGER NOT NULL DEFAULT 1,
+    encrypted_scores TEXT NOT NULL,
+    score_delta JSONB DEFAULT '{}'::jsonb,
+    ai_evaluation_notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );
 `;
 
 const lit = (value) => (value === null || value === undefined ? 'NULL' : `'${String(value).replace(/'/g, "''")}'`);
@@ -337,7 +378,31 @@ function seedReferenceData(pgMem) {
 }
 
 let adapter = null;
+let poolInstance = null;
+let pgMemInstance = null;
 let enabled = false;
+
+function wrapClientWithTxBackup(client) {
+  const origQuery = client.query;
+  let txBackup = null;
+  client.query = function (text, params, callback) {
+    if (typeof text === 'string') {
+      const q = text.trim().toUpperCase();
+      if (q === 'BEGIN' || q.startsWith('BEGIN;')) {
+        if (pgMemInstance) txBackup = pgMemInstance.backup();
+      } else if (q === 'ROLLBACK' || q.startsWith('ROLLBACK;')) {
+        if (txBackup) {
+          txBackup.restore();
+          txBackup = null;
+        }
+      } else if (q === 'COMMIT' || q.startsWith('COMMIT;')) {
+        txBackup = null;
+      }
+    }
+    return origQuery.call(client, text, params, callback);
+  };
+  return client;
+}
 
 function initMemoryIfNeeded() {
   const isMem = enModoMemoria();
@@ -345,11 +410,11 @@ function initMemoryIfNeeded() {
     try {
       // eslint-disable-next-line global-require
       const { newDb } = require('pg-mem');
-      const pgMem = newDb();
-      pgMem.public.none(SCHEMA_SQL);
-      seedReferenceData(pgMem);
-      adapter = pgMem.adapters.createPg();
-      const poolInstance = new adapter.Pool();
+      pgMemInstance = newDb();
+      pgMemInstance.public.none(SCHEMA_SQL);
+      seedReferenceData(pgMemInstance);
+      adapter = pgMemInstance.adapters.createPg();
+      poolInstance = new adapter.Pool();
       adapter.query = (text, params) => poolInstance.query(text, params);
       enabled = true;
     } catch (err) {
@@ -374,5 +439,17 @@ module.exports = {
   get adapter() {
     initMemoryIfNeeded();
     return adapter;
+  },
+  get pool() {
+    initMemoryIfNeeded();
+    if (!poolInstance) return null;
+    return {
+      query: (text, params) => poolInstance.query(text, params),
+      connect: async () => {
+        const client = await poolInstance.connect();
+        return wrapClientWithTxBackup(client);
+      },
+      on: (...args) => poolInstance.on(...args)
+    };
   }
 };
