@@ -1567,8 +1567,9 @@ const initDatabase = async () => {
       CREATE INDEX IF NOT EXISTS idx_bookings_scheduled ON bookings(scheduled_at DESC);
       CREATE INDEX IF NOT EXISTS idx_reviews_provider ON reviews(provider_id);
       CREATE INDEX IF NOT EXISTS idx_services_provider ON services(provider_id);
+      ALTER TABLE services ADD COLUMN IF NOT EXISTS business_profile_id UUID;
     `);
-    console.log('✅ Índices de rendimiento generales verificados.');
+    console.log('✅ Índices de rendimiento generales y columna business_profile_id verificados.');
   } catch (e) {
     console.warn('⚠️ Error al inicializar índices de rendimiento generales:', e.message);
     dbErrors.push({ stage: 'performance-indexes', message: e.message });

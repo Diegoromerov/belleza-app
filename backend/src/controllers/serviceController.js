@@ -145,22 +145,26 @@ exports.createService = async (req, res) => {
       ]);
       serviceData = insertRes.rows[0];
     } catch (dbErr) {
-      console.warn('⚠️ Fallback a Sequelize en createService:', dbErr.message);
+      console.warn('⚠️ Standard insert in createService failed, attempting resilient fallback insert:', dbErr.message);
       try {
-        const service = await Service.create({
-          provider_id: providerId,
-          business_profile_id: businessProfileId,
+        const fallbackInsertQ = `
+          INSERT INTO services (provider_id, name, description, price, duration_minutes, category, is_active)
+          VALUES ($1, $2, $3, $4, $5, $6, $7)
+          RETURNING id, provider_id, name, description, price, duration_minutes, category, is_active;
+        `;
+        const insertRes = await pool.query(fallbackInsertQ, [
+          providerId,
           name,
-          description: description || null,
-          price: parsedPrice,
-          duration_minutes: parsedDuration,
-          category: category || null,
-          is_active: isActiveVal
-        });
-        serviceData = service.toJSON();
-      } catch (seqErr) {
-        console.error('❌ Fallback Sequelize falló en createService:', seqErr.message);
-        throw dbErr;
+          description || null,
+          parsedPrice,
+          parsedDuration,
+          category || null,
+          isActiveVal
+        ]);
+        serviceData = { ...insertRes.rows[0], business_profile_id: null };
+      } catch (dbErr2) {
+        console.error('❌ Resilient fallback insert in createService failed:', dbErr2.message);
+        throw dbErr2;
       }
     }
 
@@ -170,7 +174,7 @@ exports.createService = async (req, res) => {
       data: {
         id: serviceData.id,
         provider_id: serviceData.provider_id,
-        business_profile_id: serviceData.business_profile_id,
+        business_profile_id: serviceData.business_profile_id || null,
         name: serviceData.name,
         description: serviceData.description,
         price: parseFloat(serviceData.price),
@@ -180,8 +184,8 @@ exports.createService = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('❌ ERROR EN POST /api/services:', { message: error.message, detail: error.detail, hint: error.hint });
-    res.status(500).json({ error: 'Error interno al crear el servicio', details: error.message, detail: error.detail, hint: error.hint });
+    console.error('❌ ERROR EN POST /api/services:', { message: error.message });
+    res.status(500).json({ error: 'Error interno al crear el servicio' });
   }
 };
 
