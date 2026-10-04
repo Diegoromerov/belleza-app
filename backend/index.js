@@ -9,6 +9,11 @@ const multer = require('multer');
 require('dotenv').config();
 
 // ⚠️ IMPORTANTE: Imports al inicio para evitar ReferenceError
+const { getJwtSecret } = require('./src/config/jwt');
+
+// 🔒 Fail-Fast al arranque: validar que JWT_SECRET exista y cumpla longitud >= 32 en producción
+getJwtSecret();
+
 const authRoutes = require('./src/routes/authRoutes');
 const salonRoutes = require('./src/routes/salonRoutes');
 const biometricConsentRoutes = require('./src/routes/biometricConsentRoutes');

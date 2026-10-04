@@ -1,9 +1,14 @@
 const jwt = require('jsonwebtoken');
 const { getJwtSecret } = require('../../config/jwt');
+const { pool } = require('../../config/db');
 
 /**
  * Middleware para proteger rutas administrativas.
- * Valida la existencia de un JWT válido y comprueba que el rol del usuario sea estrictamente 'ADMIN'.
+ * Valida la existencia de un JWT válido y comprueba en base de datos que el rol
+ * del usuario sea strictly 'ADMIN'.
+ *
+ * Utiliza la función RLS-safe app_usuario_identidad($1::integer) con fallback
+ * a la tabla usuarios para evitar violaciones de aislamiento multi-tenant.
  */
 async function authAdmin(req, res, next) {
   try {
@@ -12,8 +17,8 @@ async function authAdmin(req, res, next) {
       return res.status(401).json({ error: 'Acceso no autorizado. Se requiere token Bearer.' });
     }
 
-    const token = authHeader.split(' ')[1];
-    
+    const token = authHeader.split(' ')[1].trim();
+
     // Verificar firma y expiración del JWT
     let decoded;
     try {
@@ -25,22 +30,47 @@ async function authAdmin(req, res, next) {
       return res.status(401).json({ error: 'Token de acceso inválido.' });
     }
 
-    // Verificar que el payload del token contenga la información requerida
-    const tokenRole = decoded.rol || decoded.role;
-    if (!decoded || !decoded.id || !tokenRole) {
+    if (!decoded || !decoded.id) {
       return res.status(401).json({ error: 'Token de acceso malformado o incompleto.' });
     }
 
-    // Validar rol estrictamente 'ADMIN'
-    if (tokenRole.toUpperCase() !== 'ADMIN') {
+    // Límite absoluto de sesión de 12 horas desde la autenticación inicial
+    const nowSec = Math.floor(Date.now() / 1000);
+    if (decoded.session_start_at && (nowSec - decoded.session_start_at > 12 * 3600)) {
+      return res.status(401).json({ error: 'Sesión expirada (límite máximo 12 horas alcanzado).' });
+    }
+
+    // Consulta RLS-safe del rol en la base de datos
+    let userRes;
+    try {
+      userRes = await pool.query('SELECT rol, tenant_id FROM app_usuario_identidad($1::integer)', [decoded.id]);
+    } catch (sqlErr) {
+      try {
+        userRes = await pool.query('SELECT rol, tenant_id FROM usuarios WHERE id = $1', [decoded.id]);
+      } catch (fallbackErr) {
+        console.error('❌ Error al consultar usuario en DB (authAdmin):', fallbackErr.message);
+        return res.status(401).json({ error: 'Usuario no encontrado en el sistema.' });
+      }
+    }
+
+    if (!userRes || userRes.rows.length === 0) {
+      return res.status(401).json({ error: 'Usuario no encontrado en el sistema.' });
+    }
+
+    const dbRole = userRes.rows[0].rol;
+    const dbTenantId = userRes.rows[0].tenant_id || null;
+
+    // Validar que el rol devuelto por la base de datos sea estrictamente 'ADMIN'
+    if (dbRole !== 'ADMIN') {
       return res.status(403).json({ error: 'Acceso denegado. Se requieren permisos de administrador.' });
     }
 
-    // Guardar los datos decodificados en el objeto de la petición (req)
     req.admin = {
       id: decoded.id,
       email: decoded.email,
-      rol: 'ADMIN'
+      rol: 'ADMIN',
+      role: 'admin',
+      tenant_id: dbTenantId
     };
 
     next();

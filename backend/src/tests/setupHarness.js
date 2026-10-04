@@ -5,6 +5,9 @@
  * con estructuras circulares en objetos Error con mensajes serializables por Jest.
  */
 
+// Fijar JWT_SECRET por defecto para pruebas de Jest si no está definido en el entorno
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'test_jwt_secret_must_be_at_least_32_characters_long_super_secure';
+
 process.on('unhandledRejection', (reason) => {
   const message = reason && reason.message ? reason.message : String(reason);
   const cleanError = new Error(`[UnhandledRejection] ${message}`);
@@ -19,3 +22,4 @@ process.on('uncaughtException', (err) => {
   const cleanError = new Error(`[UncaughtException] ${message}`);
   console.error('⚠️ [Harness CI-37] Uncaught Exception sanitizada:', cleanError.message);
 });
+
