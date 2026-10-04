@@ -574,9 +574,15 @@ class ApiService {
           }),
         )
         .timeout(requestTimeout);
-    if (response.statusCode == 201) {
+    if (response.statusCode == 201 || response.statusCode == 200) {
       final data = json.decode(response.body);
-      return ServiceModel.fromJson(data['service']);
+      final rawService = (data['data'] ?? data['service']) as Map<String, dynamic>?;
+      if (rawService != null) {
+        return ServiceModel.fromJson(rawService);
+      }
+      if (data is Map<String, dynamic>) {
+        return ServiceModel.fromJson(data);
+      }
     }
     throw Exception(
         json.decode(response.body)['error'] ?? 'Error ${response.statusCode}');
@@ -606,9 +612,15 @@ class ApiService {
           }),
         )
         .timeout(requestTimeout);
-    if (response.statusCode == 200) {
+    if (response.statusCode == 200 || response.statusCode == 201) {
       final data = json.decode(response.body);
-      return ServiceModel.fromJson(data['service']);
+      final rawService = (data['data'] ?? data['service']) as Map<String, dynamic>?;
+      if (rawService != null) {
+        return ServiceModel.fromJson(rawService);
+      }
+      if (data is Map<String, dynamic>) {
+        return ServiceModel.fromJson(data);
+      }
     }
     throw Exception(
         json.decode(response.body)['error'] ?? 'Error ${response.statusCode}');

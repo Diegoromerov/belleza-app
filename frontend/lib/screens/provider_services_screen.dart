@@ -238,7 +238,7 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen>
             final activeCat = categoryCtrl.text.trim().isNotEmpty
                 ? categoryCtrl.text.trim()
                 : 'Cabello';
-            final currentTemplates = serviceTemplates[activeCat] ?? serviceTemplates['Otros']!;
+            final currentTemplates = serviceTemplates[activeCat] ?? serviceTemplates['Otros'] ?? [];
 
             return Padding(
               padding: EdgeInsets.only(
