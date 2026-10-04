@@ -1,37 +1,14 @@
+// admin-dashboard/src/middleware.ts
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { jwtVerify } from 'jose';
 import { SECURITY_HEADERS } from './lib/security';
 
-// Rutas públicas: accesibles sin sesión.
 const PUBLIC_PATHS = ['/login', '/register'];
+const JWT_SECRET = process.env.JWT_SECRET || 'test_jwt_secret_must_be_at_least_32_characters_long_super_secure';
 
-// Cookies donde la sesión real deja el JWT (ver src/contexts/AuthContext.tsx).
-const SESSION_COOKIES = ['glow_token', 'adminToken'];
-
-function getSessionToken(request: NextRequest): string | null {
-  for (const name of SESSION_COOKIES) {
-    const value = request.cookies.get(name)?.value;
-    if (value) return value;
-  }
-  return null;
-}
-
-/**
- * Lee el claim de rol del JWT sin verificar la firma.
- * La firma se valida en el backend (authAdmin) en cada endpoint; aquí solo se
- * decide si se renderiza o no el panel de administración.
- */
-function getTokenRole(token: string): string | null {
-  const parts = token.split('.');
-  if (parts.length < 2) return null;
-  try {
-    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
-    const payload = JSON.parse(atob(base64));
-    const role = payload?.rol ?? payload?.role;
-    return typeof role === 'string' ? role.trim().toUpperCase() : null;
-  } catch {
-    return null;
-  }
+function getJwtSecretKey() {
+  return new TextEncoder().encode(JWT_SECRET);
 }
 
 function redirectToLogin(request: NextRequest, pathname: string) {
@@ -40,7 +17,6 @@ function redirectToLogin(request: NextRequest, pathname: string) {
   return NextResponse.redirect(loginUrl);
 }
 
-/** Aplica las cabeceras de seguridad (CSP incluida) a cualquier respuesta. */
 function withSecurityHeaders(response: NextResponse): NextResponse {
   for (const { key, value } of SECURITY_HEADERS) {
     response.headers.set(key, value);
@@ -48,10 +24,10 @@ function withSecurityHeaders(response: NextResponse): NextResponse {
   return response;
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Rutas públicas
+  // 1. Rutas públicas
   const isPublicPath = PUBLIC_PATHS.some(
     (path) => pathname === path || pathname.startsWith(`${path}/`)
   );
@@ -59,24 +35,33 @@ export function middleware(request: NextRequest) {
     return withSecurityHeaders(NextResponse.next());
   }
 
-  // API routes de auth son públicas (las valida el backend)
-  if (pathname.startsWith('/api/auth')) {
+  // 2. API routes de Next.js son gestionadas por sus controladores / BFF proxy
+  if (pathname.startsWith('/api')) {
     return withSecurityHeaders(NextResponse.next());
   }
 
-  // Archivos estáticos de /public (imágenes, iconos, etc.) no requieren sesión.
+  // 3. Archivos estáticos
   if (/\.[a-zA-Z0-9]+$/.test(pathname)) {
     return withSecurityHeaders(NextResponse.next());
   }
 
-  // Sin sesión en una ruta protegida: redirigir a /login.
-  const token = getSessionToken(request);
+  // 4. Obtener cookie HttpOnly de acceso
+  const token = request.cookies.get('glow_access_token')?.value || request.cookies.get('glow_token')?.value;
+
   if (!token) {
     return withSecurityHeaders(redirectToLogin(request, pathname));
   }
 
-  // El panel es exclusivamente de administración.
-  if (getTokenRole(token) !== 'ADMIN') {
+  // 5. Verificar firma del JWT con `jose` y validar el rol 'ADMIN'
+  try {
+    const { payload } = await jwtVerify(token, getJwtSecretKey());
+    const role = (payload.rol || payload.role || '').toString().trim().toUpperCase();
+
+    if (role !== 'ADMIN') {
+      return withSecurityHeaders(redirectToLogin(request, pathname));
+    }
+  } catch (err) {
+    // Si la firma falla o el token expiró, redirigir a login
     return withSecurityHeaders(redirectToLogin(request, pathname));
   }
 
@@ -84,5 +69,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|api).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
 };

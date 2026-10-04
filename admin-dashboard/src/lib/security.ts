@@ -114,7 +114,7 @@ export const CONTENT_SECURITY_POLICY = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  "connect-src 'self' https:",
+  "connect-src 'self'",
 ].join('; ');
 
 /** Cabeceras de seguridad aplicadas por next.config.ts y middleware.ts. */
