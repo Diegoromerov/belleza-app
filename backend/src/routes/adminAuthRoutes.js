@@ -3,11 +3,11 @@ const express = require('express');
 const router = express.Router();
 const { wrapRouterAsync } = require('../utils/expressAsync');
 const adminAuthController = require('../controllers/adminAuthController');
-const { authLimiter } = require('../middleware/rateLimiter');
+const { adminLoginIpLimiter, adminLoginAccountLimiter } = require('../middleware/rateLimiter');
 const authAdmin = require('../modules/admin-glow/authAdmin.middleware');
 
-// POST /api/admin/auth/login -> Inicio de sesión administrativo con rate limiter
-router.post('/login', authLimiter, adminAuthController.login);
+// POST /api/admin/auth/login -> Inicio de sesión administrativo con doble rate limiter (IP + Email)
+router.post('/login', adminLoginIpLimiter, adminLoginAccountLimiter, adminAuthController.login);
 
 // POST /api/admin/auth/refresh -> Renovación de tokens (Access 15m, Refresh 8h)
 router.post('/refresh', adminAuthController.refresh);

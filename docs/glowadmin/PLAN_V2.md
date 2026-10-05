@@ -89,9 +89,12 @@ flowchart TD
 3. **Protección Anti-CSRF:**
    * Verificación de `Origin` / `Referer` en operaciones de mutación (`POST`, `PUT`, `PATCH`, `DELETE`).
    * Encabezado custom obligatorio `X-Requested-With` en mutaciones (excepto login).
-4. **Análisis de Trade-Off y Costos: Verificación de Firma `jose` en Edge vs Backend Session Check:**
-   - **Verificación Edge con `jose` (`middleware.ts`):** Rápida y de ultra baja latencia (<1ms). Valida firma criptográfica y expiración sin tocar la base de datos.
-     * *Costo/Limitación:* No consulta la lista negra en Redis en tiempo real para navegaciones de páginas estáticas. Si un token fue revocado en los últimos 15 min, la cáscara del panel carga pero la primera llamada a la API falla.
+4. **Análisis de Trade-Off, Acoplamiento y Costos: Verificación de Firma `jose` en Edge vs Backend Session Check:**
+   - **Verificación Simétrica con `jose` (`middleware.ts`):** Rápida y de ultra baja latencia (<1ms). Exige que el servicio `admin-dashboard` reciba las variables `BACKEND_URL` y `JWT_SECRET` (exactamente el mismo secreto simétrico del backend).
+     * *Acoplamiento / Riesgo:* Acopla las rotaciones de claves entre backend y frontend (si se rota `JWT_SECRET` en el backend sin actualizar el dashboard simultáneamente, el borde rechaza sesiones válidas).
+   - **Alternativa Asimétrica (RS256 / ES256 - Recomendada para desacoplamiento completo):**
+     * *Mecanismo:* El backend firma los tokens usando la clave privada (`JWT_PRIVATE_KEY`), mientras que `admin-dashboard` únicamente posee la clave pública (`JWT_PUBLIC_KEY`) para verificar la firma con `jose`.
+     * *Costo/Complejidad:* Requiere aprovisionar y gestionar par de llaves criptográficas (RSA 2048-bit o ECDSA P-256) en Railway. Firma ligeramente más costosa en CPU en el backend (~0.5ms adicionales), pero desacopla totalmente la seguridad (el frontend jamás posee la clave para firmar o falsificar tokens). El Dueño decide cuál esquema activar.
    - **Verificación Real-Time en Backend (`/api/admin/auth/session` y BFF Proxy):** Consulta Redis y PostgreSQL para validar revocación y estado del usuario en la BD.
      * *Costo:* Añade 1 consulta a la BD por petición de API.
    - **Arquitectura Recomendada Híbrida (Implementada):** Protección Dual. `middleware.ts` usa `jose` para validar firma y expiración en el borde antes de renderizar vistas HTML, mientras que el proxy BFF y el backend validan revocación en Redis blacklist y estado en BD para toda petición de datos.

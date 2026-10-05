@@ -1,4 +1,7 @@
 // backend/src/tests/e2eSmoke.test.js
+process.env.NODE_ENV = 'test';
+process.env.JWT_SECRET = 'secreto_super_seguro_para_pruebas_unitarias_32chars';
+
 const request = require('supertest');
 const express = require('express');
 const jwt = require('jsonwebtoken');
@@ -6,14 +9,25 @@ const bcrypt = require('bcryptjs');
 
 const redisClient = require('../config/redis');
 const { pool } = require('../config/db');
+
+const mockBlacklistSet = new Set();
+
+// Configurar el arnés mock directamente con funciones nativas
+redisClient.isReady = true;
+redisClient.isOpen = true;
+
+redisClient.get = async (key) => {
+  const isRev = mockBlacklistSet.has(key);
+  return isRev ? 'revoked' : null;
+};
+
+redisClient.setEx = async (key, ttl, value) => {
+  mockBlacklistSet.add(key);
+  return 'OK';
+};
+
 const authAdmin = require('../modules/admin-glow/authAdmin.middleware');
 const adminAuthRoutes = require('../routes/adminAuthRoutes');
-
-const mockInMemoryBlacklist = new Set();
-const origRedisIsReady = redisClient.isReady;
-const origRedisIsOpen = redisClient.isOpen;
-const origRedisGet = redisClient.get;
-const origRedisSetEx = redisClient.setEx;
 
 const validSecret = 'secreto_super_seguro_para_pruebas_unitarias_32chars';
 
@@ -21,9 +35,6 @@ describe('T-A1 E2E Smoke Test: Flujo Completo de Autenticación, Acceso a Rutas 
   let app;
 
   beforeAll(() => {
-    process.env.NODE_ENV = 'test';
-    process.env.JWT_SECRET = validSecret;
-
     app = express();
     app.use(express.json());
     app.use(express.text({ type: 'text/csv' }));
@@ -54,18 +65,7 @@ describe('T-A1 E2E Smoke Test: Flujo Completo de Autenticación, Acceso a Rutas 
   });
 
   beforeEach(() => {
-    mockInMemoryBlacklist.clear();
-    jest.clearAllMocks();
-
-    redisClient.isReady = true;
-    redisClient.get = jest.fn(async (key) => {
-      const isRev = mockInMemoryBlacklist.has(key);
-      return isRev ? 'revoked' : null;
-    });
-    redisClient.setEx = jest.fn(async (key, ttl, value) => {
-      mockInMemoryBlacklist.add(key);
-      return 'OK';
-    });
+    mockBlacklistSet.clear();
   });
 
   test('E2E Smoke: Login -> Listar Academia -> Cargar CSV -> Logout -> Verificar 401 en Access y Refresh Tokens Revocados', async () => {
