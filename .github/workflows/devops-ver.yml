@@ -1,0 +1,84 @@
+name: DevOps Verificador Independiente
+
+on:
+  workflow_dispatch:
+    inputs:
+      hallazgo_id:
+        description: "ID del hallazgo a verificar (ej: SEC-01)"
+        required: true
+      pr_number:
+        description: "Número de PR del FIX (opcional, para verificar fix)"
+        required: false
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  ver:
+    name: VER - Verificador Independiente
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Checkout PR del FIX (si se proporciona)
+        if: github.event.inputs.pr_number != ''
+        run: |
+          gh pr checkout ${{ github.event.inputs.pr_number }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Leer hallazgo
+        id: hallazgo
+        run: |
+          HALL_ID="${{ github.event.inputs.hallazgo_id }}"
+          FILE=".hermes/devops/HALLAZGO-${HALL_ID}.json"
+          cat "$FILE"
+
+      - name: Ejecutar comando evidencia EXACTO
+        id: evidence
+        run: |
+          HALL_ID="${{ github.event.inputs.hallazgo_id }}"
+          FILE=".hermes/devops/HALLAZGO-${HALL_ID}.json"
+          EVIDENCE_CMD=$(jq -r '.evidence_cmd' "$FILE")
+          echo "Ejecutando: $EVIDENCE_CMD"
+          eval "$EVIDENCE_CMD" 2>&1 | tee evidence-output.txt
+          echo "exit_code=$?" >> $GITHUB_OUTPUT
+
+      - name: Evaluar veredicto
+        run: |
+          HALL_ID="${{ github.event.inputs.hallazgo_id }}"
+          FILE=".hermes/devops/HALLAZGO-${HALL_ID}.json"
+          IMPACT=$(jq -r '.impact' "$FILE")
+          
+          if [ "${{ steps.evidence.outputs.exit_code }}" = "0" ]; then
+            if grep -q "$(echo "$IMPACT" | head -c 50)" evidence-output.txt; then
+              VERDICT="PASS"
+              DIFF="Comando reproduce hallazgo exactamente"
+            else
+              VERDICT="FAIL"
+              DIFF="Comando ejecuta pero salida no coincide con impact descrito"
+            fi
+          else
+            VERDICT="FAIL"
+            DIFF="Comando de evidencia fallo - hallazgo posiblemente corregido"
+          fi
+
+          cat > ".hermes/devops/VEREDICTO-VER-${HALL_ID}.json" << 'EOF'
+          {
+            "veredicto": "$VERDICT",
+            "evidencia_reproduccion": "$(cat evidence-output.txt | head -c 2000 | sed 's/"/\\"/g')",
+            "diferencias": "$DIFF"
+          }
+          EOF
+          cat ".hermes/devops/VEREDICTO-VER-${HALL_ID}.json"
+
+      - name: Subir veredicto
+        uses: actions/upload-artifact@v4
+        with:
+          name: veredicto-ver
+          path: .hermes/devops/VEREDICTO-VER-*.json
