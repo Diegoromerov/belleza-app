@@ -130,7 +130,16 @@ function normalizarEstadoDependencias(dbStatus) {
   for (const id of DEPENDENCIAS_CONOCIDAS) estado[id] = false;
   if (!dbStatus || typeof dbStatus !== 'object') return estado;
 
-  if (dbStatus.pgAvailable === false || dbStatus.servingFabricatedData === true) {
+  const isStrict =
+    process.env.NODE_ENV === 'production' ||
+    process.env.NODE_ENV === 'staging' ||
+    Boolean(process.env.RAILWAY_ENVIRONMENT);
+
+  const databaseBlocked =
+    (dbStatus.pgAvailable === false || dbStatus.servingFabricatedData === true) &&
+    (!dbStatus.memoryFallbackAllowed || isStrict);
+
+  if (databaseBlocked) {
     estado.database = true;
   }
 
