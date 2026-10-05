@@ -12,4 +12,4 @@
     "a1b2c3d4.*",
     "ci_secret_key_.*"
   ]
-  paths = ["*test*.js", "*Test*.js", "*.md", "docs/**", "scratch/**"]
+  paths = [".*test.*\\.js", ".*Test.*\\.js", ".*\\.md", "docs/.*", "scratch/.*"]
