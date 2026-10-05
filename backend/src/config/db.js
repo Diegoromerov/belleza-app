@@ -639,12 +639,26 @@ function clienteEnMemoria() {
   };
 }
 
+function isStrictEnvironment() {
+  return (
+    process.env.NODE_ENV === 'production' ||
+    process.env.NODE_ENV === 'staging' ||
+    Boolean(process.env.RAILWAY_ENVIRONMENT) ||
+    Boolean(process.env.RAILWAY_SERVICE_NAME) ||
+    Boolean(process.env.RAILWAY_PROJECT_ID)
+  );
+}
+
 /** Marca el modo memoria y deja constancia del motivo real. */
 function pasarAMemoria(err) {
+  if (isStrictEnvironment()) {
+    console.error(`🚨 [CRITICAL DB ERROR] Fallo de enlace con PostgreSQL en entorno protegido (${err?.code || 'sin código'}: ${err?.message}) — SE PROHÍBE EL MODO MEMORIA EN PRODUCCIÓN/STAGING.`);
+    throw err;
+  }
   dbMode = 'memoria';
   servingFabricatedData = true;
   ultimoIntentoFallidoEn = Date.now();
-  console.warn(`⚠️ [DB] Sin enlace con PostgreSQL (${err.code || 'sin código'}: ${err.message}) — se sirve memoria local.`);
+  console.warn(`⚠️ [DB] Sin enlace con PostgreSQL (${err?.code || 'sin código'}: ${err?.message}) — se sirve memoria local.`);
 }
 
 const pool = {
@@ -657,6 +671,10 @@ const pool = {
     const activeClient = tenantRouting.getActiveClient();
     if (activeClient) {
       return activeClient.query(text, params);
+    }
+
+    if (isStrictEnvironment() && dbMode === 'memoria') {
+      throw new Error('CRITICAL DB ERROR: Database memory fallback is strictly prohibited in production/staging.');
     }
 
     if ((pgMemory.isMemoryMode || dbMode === 'memoria') && pgMemory.enabled && pgMemory.adapter && typeof pgMemory.adapter.query === 'function') {
@@ -701,6 +719,9 @@ const pool = {
     }
   },
   connect: async () => {
+    if (isStrictEnvironment() && dbMode === 'memoria') {
+      throw new Error('CRITICAL DB ERROR: Database memory fallback is strictly prohibited in production/staging.');
+    }
     if (dbMode === 'memoria' && (memoriaForzada || !tocaReintentar())) {
       servingFabricatedData = true;
       return clienteEnMemoria();
@@ -731,14 +752,14 @@ const testConnection = async () => {
     console.log(`✅ Conexión exitosa a PostgreSQL [DB: ${res.rows[0].current_database}, Entorno: ${process.env.NODE_ENV || 'development'}]`);
     return true;
   } catch (err) {
-    dbMode = 'memoria';
-    servingFabricatedData = true;
-    ultimoIntentoFallidoEn = Date.now();
-    if (isProduction || isStaging) {
+    if (isStrictEnvironment()) {
       console.error('❌ PostgreSQL no disponible:', err.message);
       console.error('❌ CRITICAL DB ERROR: Fallo de conexión a PostgreSQL en producción/staging:', err.message);
       throw err;
     }
+    dbMode = 'memoria';
+    servingFabricatedData = true;
+    ultimoIntentoFallidoEn = Date.now();
     // Se imprime el MOTIVO. Antes solo decía "no disponible", así que una
     // credencial incorrecta o una base inexistente eran indistinguibles de un
     // servidor apagado, y el fallo real se perdía.
@@ -781,7 +802,7 @@ let isPgAvailable = null;
 let servingFabricatedData = false;
 
 const memoryFallbackAllowed = () => {
-  if (process.env.NODE_ENV === 'production') return false;
+  if (isStrictEnvironment()) return false;
   return (
     pgMemory.enabled ||
     process.env.NODE_ENV === 'test' ||
@@ -803,4 +824,4 @@ const getDbStatus = () => ({
  *  cualquier error de SQL en datos inventados y la API parecía funcionar. */
 const dbEnMemoria = () => dbMode === 'memoria';
 
-module.exports = { pool, testConnection, getDbStatus, ragPool, testRagConnection, dbEnMemoria };
+module.exports = { pool, testConnection, getDbStatus, ragPool, testRagConnection, dbEnMemoria, memoryFallbackAllowed };
