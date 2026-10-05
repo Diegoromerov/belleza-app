@@ -252,6 +252,9 @@ function decidirBloqueo(dbStatus) {
 
   const isDegraded = dbStatus.servingFabricatedData === true || dbStatus.pgAvailable === false;
   if (isDegraded) {
+    if (dbStatus.memoryFallbackAllowed && process.env.NODE_ENV !== 'production') {
+      return { shouldBlock: false, reason: 'MEMORY_FALLBACK_ALLOWED' };
+    }
     return { shouldBlock: true, reason: 'DEGRADED_DB', httpStatus: 503, header: 'memory-fallback' };
   }
 
