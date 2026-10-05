@@ -1,9 +1,31 @@
 const { wrapRouterAsync } = require('../utils/expressAsync');
 const express = require('express');
 const router = express.Router();
-// CORRECCIÓN: Se agregó la comilla de cierre y el nombre del archivo 'db'
 const { pool } = require('../config/db'); 
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
+const { adminAuditLog } = require('../middleware/adminAuditLog');
+const adminAuditRepository = require('../repositories/adminAuditRepository');
+
+// 🔹 GET /api/admin/audit-logs — Obtener traza de auditoría append-only
+router.get('/audit-logs', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const { userId, action, resource, resourceId, limit } = req.query;
+    const logs = await adminAuditRepository.listAdminAuditLogs({
+      userId,
+      action,
+      resource,
+      resourceId,
+      limit
+    });
+    res.json({
+      success: true,
+      data: logs
+    });
+  } catch (error) {
+    console.error('❌ ERROR EN GET /api/admin/audit-logs:', error);
+    res.status(500).json({ error: 'Error al obtener registros de auditoría.' });
+  }
+});
 
 // 🔹 Obtenes lista completa de disputas para panel administrativo
 router.get('/disputes', authMiddleware, adminMiddleware, async (req, res) => {
@@ -31,7 +53,7 @@ router.get('/disputes', authMiddleware, adminMiddleware, async (req, res) => {
 });
 
 // 🔹 Resolver disputa y dictaminar porcentaje de fondos
-router.patch('/disputes/:id/resolve', authMiddleware, adminMiddleware, async (req, res) => {
+router.patch('/disputes/:id/resolve', authMiddleware, adminMiddleware, adminAuditLog({ action: 'dispute.resolve', resource: 'dispute' }), async (req, res) => {
   try {
     const disputeId = req.params.id;
     const adminId = req.user.id;
