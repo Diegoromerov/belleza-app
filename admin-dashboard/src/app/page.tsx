@@ -366,18 +366,18 @@ export default function Dashboard() {
   const formatCOP = (val: number | null | undefined) => formatCOPSafe(val);
 
   return (
-    <div className="flex h-screen w-full bg-[#0b0f19] text-slate-100 font-sans overflow-hidden">
+    <div className="flex h-screen w-full bg-[#FCF8F6] text-[#2B2420] font-sans overflow-hidden">
       {/* Sidebar Menu */}
-      <aside className="w-64 bg-slate-900/60 backdrop-blur-xl border-r border-slate-800 flex flex-col justify-between p-6">
+      <aside className="w-64 bg-[#FAF8F5] border-r border-[#C5A052]/25 flex flex-col justify-between p-6">
         <div>
           {/* Logo */}
           <div className="flex items-center gap-3 mb-10">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-rose-500 to-pink-500 flex items-center justify-center font-bold text-white shadow-lg shadow-pink-500/20">
+            <div className="w-10 h-10 rounded-xl bg-[#2B2420] text-[#C5A052] border border-[#C5A052]/40 flex items-center justify-center font-bold font-serif text-lg shadow-md shadow-[#2B2420]/10">
               G
             </div>
             <div>
-              <h1 className="font-extrabold text-lg tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">GlowAdmin</h1>
-              <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-widest">Enterprise Panel</span>
+              <h1 className="font-extrabold text-lg tracking-tight text-[#2B2420] font-serif">GlowAdmin</h1>
+              <span className="text-[10px] text-[#C5A052] font-semibold uppercase tracking-widest font-mono">Día Luxe Edition</span>
             </div>
           </div>
 
@@ -397,19 +397,19 @@ export default function Dashboard() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-300 font-medium ${
                     isActive 
-                      ? 'bg-gradient-to-r from-rose-500/10 to-pink-500/10 border border-pink-500/20 text-rose-400 shadow-lg shadow-rose-500/5' 
-                      : 'text-slate-400 hover:text-white hover:bg-slate-800/40 border border-transparent'
+                      ? 'bg-[#2B2420] border border-[#C5A052]/40 text-[#FCF8F6] shadow-md shadow-[#2B2420]/10' 
+                      : 'text-[#8C6F65] hover:text-[#2B2420] hover:bg-[#FCF8F6] border border-transparent'
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <Icon className={`w-5 h-5 ${isActive ? 'text-rose-400' : 'text-slate-400'}`} />
+                    <Icon className={`w-5 h-5 ${isActive ? 'text-[#C5A052]' : 'text-[#8C6F65]'}`} />
                     <span>{tab.label}</span>
                   </div>
                   {tab.badge !== undefined && tab.badge > 0 && (
                     <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
                       tab.isAlert 
-                        ? 'bg-rose-500 text-white animate-pulse' 
-                        : 'bg-slate-800 text-slate-300'
+                        ? 'bg-[#881337] text-white animate-pulse' 
+                        : 'bg-[#C5A052]/20 text-[#2B2420]'
                     }`}>
                       {tab.badge}
                     </span>
@@ -421,12 +421,12 @@ export default function Dashboard() {
         </div>
 
         {/* Footer info */}
-        <div className="bg-slate-800/40 border border-slate-850 p-4 rounded-2xl flex flex-col gap-1.5">
+        <div className="bg-[#FCF8F6] border border-[#C5A052]/25 p-4 rounded-2xl flex flex-col gap-1.5 shadow-sm">
           <div className="flex items-center gap-2">
-            <span className={`w-2 h-2 rounded-full ${backendStatus.includes('Conectado') ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-            <span className="text-xs font-medium text-slate-300">{backendStatus}</span>
+            <span className={`w-2 h-2 rounded-full ${backendStatus.includes('Conectado') ? 'bg-[#4A5D4E]' : 'bg-[#C5A052]'}`} />
+            <span className="text-xs font-medium text-[#2B2420]">{backendStatus}</span>
           </div>
-          <p className="text-[10px] text-slate-500">v1.2.0 • SSL Activado</p>
+          <p className="text-[10px] text-[#8C6F65] font-mono">v1.2.0 • Day Mode SSL</p>
         </div>
       </aside>
 
