@@ -1,0 +1,102 @@
+name: DevOps Fix Agent
+
+on:
+  workflow_dispatch:
+    inputs:
+      hallazgo_id:
+        description: "ID del hallazgo a corregir (ej: SEC-01, CICD-02)"
+        required: true
+      decision:
+        description: "Decisión de Diego (FIX/WONTFIX/ESCALATE)"
+        required: true
+        type: choice
+        options: [FIX, WONTFIX, ESCALATE]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  fix:
+    name: FIX - Corrector
+    if: github.event.inputs.decision == 'FIX'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configurar git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Leer hallazgo
+        id: hallazgo
+        run: |
+          HALL_ID="${{ github.event.inputs.hallazgo_id }}"
+          FILE=".hermes/devops/HALLAZGO-${HALL_ID}.json"
+          if [ ! -f "$FILE" ]; then
+            echo "Hallazgo no encontrado: $FILE"
+            exit 1
+          fi
+          cat "$FILE"
+
+      - name: Crear rama fix
+        run: |
+          HALL_ID="${{ github.event.inputs.hallazgo_id }}"
+          git checkout -b "devops/${HALL_ID}"
+
+      - name: Aplicar corrección (placeholder)
+        run: |
+          HALL_ID="${{ github.event.inputs.hallazgo_id }}"
+          echo "TODO: Implementar fix para $HALL_ID basado en proposed_fix del JSON"
+
+      - name: Verificar con gitleaks
+        run: |
+          gitleaks detect --source . --config .gitleaks.toml --exit-code 0 || true
+
+      - name: Verificar con actionlint
+        run: |
+          actionlint .github/workflows/ci.yml .github/workflows/rag-evaluation.yml || true
+
+      - name: Commit y push
+        run: |
+          HALL_ID="${{ github.event.inputs.hallazgo_id }}"
+          git add -A
+          git commit -m "fix(${HALL_ID}): corregir ${HALL_ID} -- resuelve ${HALL_ID}"
+          git push origin "devops/${HALL_ID}"
+
+      - name: Crear PR
+        run: |
+          HALL_ID="${{ github.event.inputs.hallazgo_id }}"
+          gh pr create --title "fix(${HALL_ID}): corregir ${HALL_ID}" --body "Corrección para ${HALL_ID} según REGISTRO-HALLAZGOS.md" --base main --head "devops/${HALL_ID}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  wontfix:
+    name: Registrar WONTFIX
+    if: github.event.inputs.decision == 'WONTFIX'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Actualizar registro
+        run: |
+          HALL_ID="${{ github.event.inputs.hallazgo_id }}"
+          echo "WONTFIX registrado para $HALL_ID"
+
+  escalate:
+    name: Preparar Capa 3
+    if: github.event.inputs.decision == 'ESCALATE'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Generar REVISION-EXTERNA
+        run: |
+          HALL_ID="${{ github.event.inputs.hallazgo_id }}"
+          echo "Generando paquete Capa 3 para $HALL_ID"

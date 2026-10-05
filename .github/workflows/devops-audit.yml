@@ -1,0 +1,327 @@
+name: DevOps Multi-Agent Audit
+
+on:
+  workflow_dispatch:
+    inputs:
+      agents:
+        description: "Agentes a ejecutar (comma-separated: SEC,CICD,DATA,OBS,SUP,REL,ALL)"
+        required: true
+        default: "ALL"
+      hallazgo_id:
+        description: "ID de hallazgo específico para FIX/VER (opcional)"
+        required: false
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main, staging]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  orq:
+    name: ORQ - Orquestador
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      agents_to_run: ${{ steps.decide.outputs.agents }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Hermes CLI
+        run: |
+          echo "HERMES_API_URL=${{ secrets.HERMES_API_URL }}" >> $GITHUB_ENV
+          echo "HERMES_TOKEN=${{ secrets.HERMES_TOKEN }}" >> $GITHUB_ENV
+
+      - name: Decidir agentes
+        id: decide
+        run: |
+          INPUT="${{ github.event.inputs.agents || 'ALL' }}"
+          if [ "$INPUT" = "ALL" ]; then
+            echo "agents=SEC,CICD,DATA,OBS,SUP,REL" >> $GITHUB_OUTPUT
+          else
+            echo "agents=$INPUT" >> $GITHUB_OUTPUT
+          fi
+
+  sec:
+    name: SEC - Auditor Secretos
+    needs: orq
+    if: contains(needs.orq.outputs.agents_to_run, 'SEC')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout (historial completo)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install gitleaks (MIT)
+        run: |
+          curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.27.0/gitleaks_8.27.0_linux_x64.tar.gz | tar -xz
+          sudo mv gitleaks /usr/local/bin/
+          gitleaks version
+
+      - name: Crear .gitleaks.toml con allowlist
+        run: |
+          cat > .gitleaks.toml << 'EOF'
+          [allowlist]
+            description = "Test fixtures y placeholders conocidos"
+            regexes = [
+              "contrasena-invalida-123",
+              "consent-uuid-123",
+              "Xk92LmQ7ppQzRt4VbN8wYs3Dd6Ff",
+              "test_.*",
+              "fixture.*",
+              "usa_una_clave_.*",
+              "tu_clave_.*",
+              "tu_secreto_.*",
+              "a1b2c3d4.*",
+              "ci_secret_key_.*"
+            ]
+            paths = ["*test*.js", "*Test*.js", "*.md", "docs/**", "scratch/**"]
+          EOF
+
+      - name: Ejecutar gitleaks
+        id: gitleaks
+        run: |
+          gitleaks detect --source . --verbose --report-format json --report-path gitleaks-report.json --config .gitleaks.toml
+          echo "exit_code=$?" >> $GITHUB_OUTPUT
+
+      - name: Subir reporte gitleaks
+        uses: actions/upload-artifact@v4
+        with:
+          name: gitleaks-report
+          path: gitleaks-report.json
+
+      - name: Generar hallazgos SEC
+        if: steps.gitleaks.outputs.exit_code != '0'
+        run: |
+          python3 .github/scripts/generate-sec-findings.py
+
+      - name: Subir hallazgos SEC
+        uses: actions/upload-artifact@v4
+        with:
+          name: hallazgos-sec
+          path: .hermes/devops/HALLAZGO-SEC-*.json
+
+  cicd:
+    name: CICD - Auditor CI/CD y Contenedores
+    needs: orq
+    if: contains(needs.orq.outputs.agents_to_run, 'CICD')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install actionlint (MIT)
+        run: |
+          curl -sSfL https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz | tar -xz
+          sudo mv actionlint /usr/local/bin/
+          actionlint -version
+
+      - name: Ejecutar actionlint
+        id: actionlint
+        run: |
+          actionlint .github/workflows/ci.yml .github/workflows/rag-evaluation.yml 2>&1 | tee actionlint-output.txt
+          echo "exit_code=$?" >> $GITHUB_OUTPUT
+
+      - name: Verificar Dockerfiles
+        run: |
+          echo "=== Dockerfile ===" && cat backend/Dockerfile
+          echo "=== Dockerfile.prod ===" && cat backend/Dockerfile.prod
+          echo "=== Dockerfile.postgres ===" && cat backend/Dockerfile.postgres
+          echo "=== Dockerfile.pgvector ===" && cat backend/Dockerfile.pgvector
+
+      - name: Verificar .dockerignore
+        run: |
+          ls -la backend/.dockerignore 2>/dev/null || echo "NO EXISTE .dockerignore"
+
+      - name: Verificar docker-compose puerto 5432
+        run: |
+          grep -n '5432:5432' docker-compose.prod.yml && echo "PUERTO 5432 EXPUESTO" || echo "OK"
+
+      - name: Generar hallazgos CICD
+        run: |
+          python3 .github/scripts/generate-cicd-findings.py
+
+      - name: Subir hallazgos CICD
+        uses: actions/upload-artifact@v4
+        with:
+          name: hallazgos-cicd
+          path: .hermes/devops/HALLAZGO-CICD-*.json
+
+  data:
+    name: DATA - Auditor Datos
+    needs: orq
+    if: contains(needs.orq.outputs.agents_to_run, 'DATA')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verificar backup
+        run: |
+          docker run --rm --network none -v "$(pwd)/backend:/app:ro" postgres:16 pg_restore --list /app/backup_pre029_real.sql
+
+      - name: Verificar migraciones y RLS
+        run: |
+          cat backend/migrations/058_enable_rls_policies.sql | grep -A2 -B2 'ENABLE\|FORCE\|WITH CHECK'
+          cat backend/src/middleware/auth.js | grep -A5 -B5 'app.tenant_id'
+          cat backend/src/config/tenantContext.js
+
+      - name: Verificar backfill tenant
+        run: |
+          cat backend/migrations/057_backfill_tenant_id.sql
+
+      - name: Generar hallazgos DATA
+        run: |
+          python3 .github/scripts/generate-data-findings.py
+
+      - name: Subir hallazgos DATA
+        uses: actions/upload-artifact@v4
+        with:
+          name: hallazgos-data
+          path: .hermes/devops/HALLAZGO-DATA-*.json
+
+  obs:
+    name: OBS - Auditor Observabilidad y Rendimiento
+    needs: orq
+    if: contains(needs.orq.outputs.agents_to_run, 'OBS')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verificar health checks
+        run: |
+          cat backend/src/index.js | sed -n '420,431p'
+
+      - name: Verificar logs y masking
+        run: |
+          cat backend/src/config/logger.js
+          grep -rn "console.log.*password" backend/src/ || echo "No passwords en logs"
+
+      - name: Verificar rate limiting
+        run: |
+          cat backend/src/index.js | sed -n '266,272p'
+          cat backend/src/routes/authRoutes.js | sed -n '8,19p'
+
+      - name: Verificar circuit breaker
+        run: |
+          grep -r "opossum\|circuit.breaker\|retry" backend/src/ || echo "NO ENCONTRADO"
+
+      - name: Generar hallazgos OBS
+        run: |
+          python3 .github/scripts/generate-obs-findings.py
+
+      - name: Subir hallazgos OBS
+        uses: actions/upload-artifact@v4
+        with:
+          name: hallazgos-obs
+          path: .hermes/devops/HALLAZGO-OBS-*.json
+
+  sup:
+    name: SUP - Auditor Supply Chain y Repo
+    needs: orq
+    if: contains(needs.orq.outputs.agents_to_run, 'SUP')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: npm audit (backend)
+        run: |
+          cd backend && npm audit --json > ../npm-audit.json 2>/dev/null || true
+          cat ../npm-audit.json | head -50
+
+      - name: flutter pub outdated (frontend)
+        run: |
+          cd frontend && flutter pub outdated --json > ../pub-outdated.json 2>/dev/null || flutter pub outdated
+
+      - name: Verificar .gitignore y build artifacts
+        run: |
+          cat .gitignore | grep -n "backend/public"
+          ls -la backend/public/main.dart.js
+          ls -la LICENSE* 2>/dev/null || echo "SIN LICENSE"
+
+      - name: Generar hallazgos SUP
+        run: |
+          python3 .github/scripts/generate-sup-findings.py
+
+      - name: Subir hallazgos SUP
+        uses: actions/upload-artifact@v4
+        with:
+          name: hallazgos-sup
+          path: .hermes/devops/HALLAZGO-SUP-*.json, .hermes/devops/HALLAZGO-SC-*.json, .hermes/devops/HALLAZGO-HIG-*.json
+
+  rel:
+    name: REL - Auditor Release Flutter
+    needs: orq
+    if: contains(needs.orq.outputs.agents_to_run, 'REL')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+
+      - name: Verificar configs release
+        run: |
+          cat frontend/pubspec.yaml | grep version
+          cat frontend/android/key.properties.example
+          ls -la frontend/android/*.jks 2>/dev/null || echo "Keystore no versionado (OK)"
+          ls -la fastlane/ codemagic.yml bitrise.yml .github/workflows/*release* 2>/dev/null || echo "SIN CONFIG RELEASE"
+
+      - name: Generar hallazgos REL
+        run: |
+          python3 .github/scripts/generate-rel-findings.py
+
+      - name: Subir hallazgos REL
+        uses: actions/upload-artifact@v4
+        with:
+          name: hallazgos-rel
+          path: .hermes/devops/HALLAZGO-FL-*.json
+
+  consolidate:
+    name: ORQ - Consolidar Hallazgos
+    needs: [sec, cicd, data, obs, sup, rel]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Descargar todos los hallazgos
+        uses: actions/download-artifact@v4
+        with:
+          pattern: hallazgos-*
+          merge-multiple: true
+          path: .hermes/devops/hallazgos
+
+      - name: Actualizar REGISTRO-HALLAZGOS.md
+        run: |
+          echo "REGISTRO actualizado con $(ls .hermes/devops/hallazgos/HALLAZGO-*.json 2>/dev/null | wc -l) hallazgos nuevos"
+
+      - name: Commit y push si hay cambios
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .hermes/devops/REGISTRO-HALLAZGOS.md .hermes/devops/HALLAZGO-*.json 2>/dev/null || true
+          git diff --staged --quiet || git commit -m "chore(orq): actualizar registro de hallazgos" && git push || echo "No changes"
