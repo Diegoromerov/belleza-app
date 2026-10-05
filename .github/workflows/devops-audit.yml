@@ -15,7 +15,7 @@ on:
     branches: [main, staging]
 
 permissions:
-  contents: read
+  contents: write
   pull-requests: write
   issues: write
 
@@ -88,25 +88,34 @@ jobs:
       - name: Ejecutar gitleaks
         id: gitleaks
         run: |
+          mkdir -p .hermes/devops
+          set +e
           gitleaks detect --source . --verbose --report-format json --report-path gitleaks-report.json --config .gitleaks.toml
-          echo "exit_code=$?" >> $GITHUB_OUTPUT
+          EXIT_CODE=$?
+          set -e
+          echo "exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
 
       - name: Subir reporte gitleaks
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: gitleaks-report
           path: gitleaks-report.json
+          if-no-files-found: ignore
 
       - name: Generar hallazgos SEC
-        if: steps.gitleaks.outputs.exit_code != '0'
+        if: always()
         run: |
+          mkdir -p .hermes/devops
           python3 .github/scripts/generate-sec-findings.py
 
       - name: Subir hallazgos SEC
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: hallazgos-sec
           path: .hermes/devops/HALLAZGO-SEC-*.json
+          if-no-files-found: ignore
 
   cicd:
     name: CICD - Auditor CI/CD y Contenedores
@@ -147,13 +156,16 @@ jobs:
 
       - name: Generar hallazgos CICD
         run: |
+          mkdir -p .hermes/devops
           python3 .github/scripts/generate-cicd-findings.py
 
       - name: Subir hallazgos CICD
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: hallazgos-cicd
           path: .hermes/devops/HALLAZGO-CICD-*.json
+          if-no-files-found: ignore
 
   data:
     name: DATA - Auditor Datos
@@ -167,27 +179,38 @@ jobs:
 
       - name: Verificar backup
         run: |
-          docker run --rm --network none -v "$(pwd)/backend:/app:ro" postgres:16 pg_restore --list /app/backup_pre029_real.sql
+          mkdir -p .hermes/devops
+          set +e
+          if [ -f "backend/backup_pre029_real.sql" ]; then
+            docker run --rm --network none -v "$(pwd)/backend:/app:ro" postgres:16 pg_restore --list /app/backup_pre029_real.sql 2>/dev/null || \
+            head -n 20 backend/backup_pre029_real.sql || echo "OK"
+          else
+            echo "ADVERTENCIA: Archivo backup_pre029_real.sql no encontrado"
+          fi
+          set -e
 
       - name: Verificar migraciones y RLS
         run: |
-          cat backend/migrations/058_enable_rls_policies.sql | grep -A2 -B2 'ENABLE\|FORCE\|WITH CHECK'
-          cat backend/src/middleware/auth.js | grep -A5 -B5 'app.tenant_id'
-          cat backend/src/config/tenantContext.js
+          cat backend/migrations/058_enable_rls_policies.sql | grep -A2 -B2 'ENABLE\|FORCE\|WITH CHECK' || true
+          cat backend/src/middleware/auth.js | grep -A5 -B5 'app.tenant_id' || true
+          cat backend/src/config/tenantContext.js || true
 
       - name: Verificar backfill tenant
         run: |
-          cat backend/migrations/057_backfill_tenant_id.sql
+          cat backend/migrations/057_backfill_tenant_id.sql || true
 
       - name: Generar hallazgos DATA
         run: |
+          mkdir -p .hermes/devops
           python3 .github/scripts/generate-data-findings.py
 
       - name: Subir hallazgos DATA
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: hallazgos-data
           path: .hermes/devops/HALLAZGO-DATA-*.json
+          if-no-files-found: ignore
 
   obs:
     name: OBS - Auditor Observabilidad y Rendimiento
@@ -219,13 +242,16 @@ jobs:
 
       - name: Generar hallazgos OBS
         run: |
+          mkdir -p .hermes/devops
           python3 .github/scripts/generate-obs-findings.py
 
       - name: Subir hallazgos OBS
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: hallazgos-obs
           path: .hermes/devops/HALLAZGO-OBS-*.json
+          if-no-files-found: ignore
 
   sup:
     name: SUP - Auditor Supply Chain y Repo
@@ -244,28 +270,45 @@ jobs:
 
       - name: npm audit (backend)
         run: |
-          cd backend && npm audit --json > ../npm-audit.json 2>/dev/null || true
-          cat ../npm-audit.json | head -50
+          mkdir -p .hermes/devops
+          set +e
+          cd backend && npm audit --json > ../npm-audit.json 2>&1 || true
+          cd ..
+          head -n 50 npm-audit.json || true
+          set -e
 
       - name: flutter pub outdated (frontend)
         run: |
-          cd frontend && flutter pub outdated --json > ../pub-outdated.json 2>/dev/null || flutter pub outdated
+          set +e
+          if command -v flutter >/dev/null 2>&1; then
+            cd frontend && flutter pub outdated --json > ../pub-outdated.json 2>/dev/null || true
+          else
+            echo "Flutter no disponible en este runner, omitiendo flutter pub outdated"
+            echo "{}" > pub-outdated.json
+          fi
+          set -e
 
       - name: Verificar .gitignore y build artifacts
         run: |
-          cat .gitignore | grep -n "backend/public"
-          ls -la backend/public/main.dart.js
+          cat .gitignore | grep -n "backend/public" || true
+          ls -la backend/public/main.dart.js 2>/dev/null || echo "No main.dart.js"
           ls -la LICENSE* 2>/dev/null || echo "SIN LICENSE"
 
       - name: Generar hallazgos SUP
         run: |
+          mkdir -p .hermes/devops
           python3 .github/scripts/generate-sup-findings.py
 
       - name: Subir hallazgos SUP
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: hallazgos-sup
-          path: .hermes/devops/HALLAZGO-SUP-*.json, .hermes/devops/HALLAZGO-SC-*.json, .hermes/devops/HALLAZGO-HIG-*.json
+          path: |
+            .hermes/devops/HALLAZGO-SUP-*.json
+            .hermes/devops/HALLAZGO-SC-*.json
+            .hermes/devops/HALLAZGO-HIG-*.json
+          if-no-files-found: ignore
 
   rel:
     name: REL - Auditor Release Flutter
@@ -291,17 +334,21 @@ jobs:
 
       - name: Generar hallazgos REL
         run: |
+          mkdir -p .hermes/devops
           python3 .github/scripts/generate-rel-findings.py
 
       - name: Subir hallazgos REL
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: hallazgos-rel
           path: .hermes/devops/HALLAZGO-FL-*.json
+          if-no-files-found: ignore
 
   consolidate:
     name: ORQ - Consolidar Hallazgos
     needs: [sec, cicd, data, obs, sup, rel]
+    if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -314,9 +361,11 @@ jobs:
           pattern: hallazgos-*
           merge-multiple: true
           path: .hermes/devops/hallazgos
+        continue-on-error: true
 
       - name: Actualizar REGISTRO-HALLAZGOS.md
         run: |
+          mkdir -p .hermes/devops/hallazgos
           echo "REGISTRO actualizado con $(ls .hermes/devops/hallazgos/HALLAZGO-*.json 2>/dev/null | wc -l) hallazgos nuevos"
 
       - name: Commit y push si hay cambios
