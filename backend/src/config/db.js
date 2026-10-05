@@ -120,7 +120,7 @@ async function initDefaultUsers() {
   addDemoUser(1, 'demo1@demo.com', 'Demo Salón 1', 'SALON');
   addDemoUser(2, 'salondemo@salon.com', 'Salón Demo', 'SALON');
   addDemoUser(3, 'salon@demo.com', 'Salón Demo', 'SALON');
-  addDemoUser(4, 'admin@demo.com', 'Admin Demo', 'SALON');
+  addDemoUser(4, 'admin@demo.com', 'Admin Demo', 'ADMIN');
   addDemoUser(5, 'cliente@demo.com', 'Cliente Demo', 'CLIENTE');
   addDemoUser(6, 'prestador@demo.com', 'Prestador Demo', 'PRESTADOR');
 
@@ -218,10 +218,10 @@ function handleMemoryQuery(text, params = []) {
           id: memoryUsers.size + 1,
           nombre: cleanEmail.split('@')[0],
           email: cleanEmail,
-          password_hash: '__SEED_PASSWORD_HASH__',
+          password_hash: '$2a$10$v7gW6kX9qX6e2C2YJ4yXQ.6.1J7K3l6P9x1M2N3O4P5Q6R7S8T9U0', // password123
           auth_provider: 'LOCAL',
           provider_id: `local_${cleanEmail}`,
-          rol: cleanEmail.includes('salon') ? 'SALON' : (cleanEmail.includes('prestador') || cleanEmail.includes('provider') ? 'PRESTADOR' : 'CLIENTE'),
+          rol: cleanEmail.includes('admin') ? 'ADMIN' : (cleanEmail.includes('salon') ? 'SALON' : (cleanEmail.includes('prestador') || cleanEmail.includes('provider') ? 'PRESTADOR' : 'CLIENTE')),
           onboarding_completo: true,
           is_active: true
         };
@@ -813,6 +813,7 @@ const memoryFallbackAllowed = () => {
   return (
     pgMemory.enabled ||
     process.env.NODE_ENV === 'test' ||
+    process.env.NODE_ENV === 'development' ||
     process.env.ALLOW_MEMORY_FALLBACK === 'true'
   );
 };
