@@ -43,18 +43,18 @@ export default function AcademiaAdminPage() {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [showOnlyActive, setShowOnlyActive] = useState(false);
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-
   const fetchCourses = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('glow_token');
-      const response = await fetch(`${API_URL}/api/admin/academy/courses`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const token = typeof window !== 'undefined' ? localStorage.getItem('glow_token') : null;
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const response = await fetch('/api/admin/academy/courses', { headers });
       
       if (!response.ok) {
         throw new Error('Error al cargar cursos');
@@ -78,13 +78,17 @@ export default function AcademiaAdminPage() {
     if (!window.confirm('¿Estás seguro de eliminar este curso? Esta acción no se puede deshacer.')) return;
     
     try {
-      const token = localStorage.getItem('glow_token');
-      const response = await fetch(`${API_URL}/api/admin/academy/courses/${courseId}`, {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('glow_token') : null;
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const response = await fetch(`/api/admin/academy/courses/${courseId}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
+        headers,
       });
       
       if (!response.ok) throw new Error('Error al eliminar');
