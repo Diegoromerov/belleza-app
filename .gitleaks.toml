@@ -1,0 +1,15 @@
+[allowlist]
+  description = "Test fixtures y placeholders conocidos"
+  regexes = [
+    "contrasena-invalida-123",
+    "consent-uuid-123",
+    "Xk92LmQ7ppQzRt4VbN8wYs3Dd6Ff",
+    "test_.*",
+    "fixture.*",
+    "usa_una_clave_.*",
+    "tu_clave_.*",
+    "tu_secreto_.*",
+    "a1b2c3d4.*",
+    "ci_secret_key_.*"
+  ]
+  paths = ["*test*.js", "*Test*.js", "*.md", "docs/**", "scratch/**"]
