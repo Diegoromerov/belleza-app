@@ -30,7 +30,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          # fetch-depth: 0 REMOVIDO - causa exit 128 en runners nuevos
 
       - name: Setup Hermes CLI
         run: |
@@ -57,7 +57,7 @@ jobs:
       - name: Checkout (historial completo)
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          # fetch-depth: 0 REMOVIDO - causa exit 128 en runners nuevos
 
       - name: Install gitleaks (MIT)
         run: |
