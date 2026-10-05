@@ -13,11 +13,9 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
     branches: [main, staging]
-  schedule:
-    - cron: '0 9 * * 1'  # Lunes 9:00 UTC (4:00 AM Colombia, 5:00 AM Chile)
 
 permissions:
-  contents: write
+  contents: read
   pull-requests: write
   issues: write
 
@@ -31,6 +29,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Hermes CLI
         run: |
@@ -56,6 +56,8 @@ jobs:
     steps:
       - name: Checkout (historial completo)
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Install gitleaks (MIT)
         run: |
@@ -80,40 +82,31 @@ jobs:
               "a1b2c3d4.*",
               "ci_secret_key_.*"
             ]
-            paths = [".*test.*\\.js", ".*Test.*\\.js", ".*\\.md", "docs/.*", "scratch/.*"]
+            paths = ["*test*.js", "*Test*.js", "*.md", "docs/**", "scratch/**"]
           EOF
 
       - name: Ejecutar gitleaks
         id: gitleaks
         run: |
-          mkdir -p .hermes/devops
-          set +e
           gitleaks detect --source . --verbose --report-format json --report-path gitleaks-report.json --config .gitleaks.toml
-          EXIT_CODE=$?
-          set -e
-          echo "exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
+          echo "exit_code=$?" >> $GITHUB_OUTPUT
 
       - name: Subir reporte gitleaks
-        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: gitleaks-report
           path: gitleaks-report.json
-          if-no-files-found: ignore
 
       - name: Generar hallazgos SEC
-        if: always()
+        if: steps.gitleaks.outputs.exit_code != '0'
         run: |
-          mkdir -p .hermes/devops
           python3 .github/scripts/generate-sec-findings.py
 
       - name: Subir hallazgos SEC
-        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: hallazgos-sec
           path: .hermes/devops/HALLAZGO-SEC-*.json
-          if-no-files-found: ignore
 
   cicd:
     name: CICD - Auditor CI/CD y Contenedores
@@ -154,16 +147,13 @@ jobs:
 
       - name: Generar hallazgos CICD
         run: |
-          mkdir -p .hermes/devops
           python3 .github/scripts/generate-cicd-findings.py
 
       - name: Subir hallazgos CICD
-        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: hallazgos-cicd
           path: .hermes/devops/HALLAZGO-CICD-*.json
-          if-no-files-found: ignore
 
   data:
     name: DATA - Auditor Datos
@@ -177,38 +167,27 @@ jobs:
 
       - name: Verificar backup
         run: |
-          mkdir -p .hermes/devops
-          set +e
-          if [ -f "backend/backup_pre029_real.sql" ]; then
-            docker run --rm --network none -v "$(pwd)/backend:/app:ro" postgres:16 pg_restore --list /app/backup_pre029_real.sql 2>/dev/null || \
-            head -n 20 backend/backup_pre029_real.sql || echo "OK"
-          else
-            echo "ADVERTENCIA: Archivo backup_pre029_real.sql no encontrado"
-          fi
-          set -e
+          docker run --rm --network none -v "$(pwd)/backend:/app:ro" postgres:16 pg_restore --list /app/backup_pre029_real.sql
 
       - name: Verificar migraciones y RLS
         run: |
-          cat backend/migrations/058_enable_rls_policies.sql | grep -A2 -B2 'ENABLE\|FORCE\|WITH CHECK' || true
-          cat backend/src/middleware/auth.js | grep -A5 -B5 'app.tenant_id' || true
-          cat backend/src/config/tenantContext.js || true
+          cat backend/migrations/058_enable_rls_policies.sql | grep -A2 -B2 'ENABLE\|FORCE\|WITH CHECK'
+          cat backend/src/middleware/auth.js | grep -A5 -B5 'app.tenant_id'
+          cat backend/src/config/tenantContext.js
 
       - name: Verificar backfill tenant
         run: |
-          cat backend/migrations/057_backfill_tenant_id.sql || true
+          cat backend/migrations/057_backfill_tenant_id.sql
 
       - name: Generar hallazgos DATA
         run: |
-          mkdir -p .hermes/devops
           python3 .github/scripts/generate-data-findings.py
 
       - name: Subir hallazgos DATA
-        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: hallazgos-data
           path: .hermes/devops/HALLAZGO-DATA-*.json
-          if-no-files-found: ignore
 
   obs:
     name: OBS - Auditor Observabilidad y Rendimiento
@@ -240,16 +219,13 @@ jobs:
 
       - name: Generar hallazgos OBS
         run: |
-          mkdir -p .hermes/devops
           python3 .github/scripts/generate-obs-findings.py
 
       - name: Subir hallazgos OBS
-        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: hallazgos-obs
           path: .hermes/devops/HALLAZGO-OBS-*.json
-          if-no-files-found: ignore
 
   sup:
     name: SUP - Auditor Supply Chain y Repo
@@ -268,45 +244,28 @@ jobs:
 
       - name: npm audit (backend)
         run: |
-          mkdir -p .hermes/devops
-          set +e
-          cd backend && npm audit --json > ../npm-audit.json 2>&1 || true
-          cd ..
-          head -n 50 npm-audit.json || true
-          set -e
+          cd backend && npm audit --json > ../npm-audit.json 2>/dev/null || true
+          cat ../npm-audit.json | head -50
 
       - name: flutter pub outdated (frontend)
         run: |
-          set +e
-          if command -v flutter >/dev/null 2>&1; then
-            cd frontend && flutter pub outdated --json > ../pub-outdated.json 2>/dev/null || true
-          else
-            echo "Flutter no disponible en este runner, omitiendo flutter pub outdated"
-            echo "{}" > pub-outdated.json
-          fi
-          set -e
+          cd frontend && flutter pub outdated --json > ../pub-outdated.json 2>/dev/null || flutter pub outdated
 
       - name: Verificar .gitignore y build artifacts
         run: |
-          cat .gitignore | grep -n "backend/public" || true
-          ls -la backend/public/main.dart.js 2>/dev/null || echo "No main.dart.js"
+          cat .gitignore | grep -n "backend/public"
+          ls -la backend/public/main.dart.js
           ls -la LICENSE* 2>/dev/null || echo "SIN LICENSE"
 
       - name: Generar hallazgos SUP
         run: |
-          mkdir -p .hermes/devops
           python3 .github/scripts/generate-sup-findings.py
 
       - name: Subir hallazgos SUP
-        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: hallazgos-sup
-          path: |
-            .hermes/devops/HALLAZGO-SUP-*.json
-            .hermes/devops/HALLAZGO-SC-*.json
-            .hermes/devops/HALLAZGO-HIG-*.json
-          if-no-files-found: ignore
+          path: .hermes/devops/HALLAZGO-SUP-*.json, .hermes/devops/HALLAZGO-SC-*.json, .hermes/devops/HALLAZGO-HIG-*.json
 
   rel:
     name: REL - Auditor Release Flutter
@@ -332,23 +291,19 @@ jobs:
 
       - name: Generar hallazgos REL
         run: |
-          mkdir -p .hermes/devops
           python3 .github/scripts/generate-rel-findings.py
 
       - name: Subir hallazgos REL
-        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: hallazgos-rel
           path: .hermes/devops/HALLAZGO-FL-*.json
-          if-no-files-found: ignore
 
   consolidate:
     name: ORQ - Consolidar Hallazgos
     needs: [sec, cicd, data, obs, sup, rel]
-    if: always()
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -359,78 +314,14 @@ jobs:
           pattern: hallazgos-*
           merge-multiple: true
           path: .hermes/devops/hallazgos
-        continue-on-error: true
 
-      - name: Generar reporte resumen
-        id: summary
-        run: |
-          mkdir -p .hermes/devops/hallazgos
-          TOTAL=$(ls .hermes/devops/hallazgos/HALLAZGO-*.json 2>/dev/null | wc -l)
-          P0=$(grep -r '"severidad": "P0"' .hermes/devops/hallazgos/ 2>/dev/null | wc -l)
-          P1=$(grep -r '"severidad": "P1"' .hermes/devops/hallazgos/ 2>/dev/null | wc -l)
-          P2=$(grep -r '"severidad": "P2"' .hermes/devops/hallazgos/ 2>/dev/null | wc -l)
-          
-          cat > .hermes/devops/summary.md << EOF
-          # DevOps Multi-Agent Audit — Reporte Semanal
-          
-          **Fecha:** $(date -u +"%Y-%m-%d %H:%M UTC")
-          **Run:** #${{ github.run_number }} (${{ github.run_id }})
-          **Commit:** ${{ github.sha }}
-          **Branch:** ${{ github.ref_name }}
-          
-          ## Resumen de Hallazgos
-          - **Total:** $TOTAL
-          - **P0 (Crítico):** $P0
-          - **P1 (Alto):** $P1
-          - **P2 (Medio):** $P2
-          
-          ## Agentes Ejecutados
-          - SEC - Auditor Secretos (gitleaks MIT)
-          - CICD - Auditor CI/CD y Contenedores (actionlint MIT)
-          - DATA - Auditor Datos (backup, migraciones, RLS)
-          - OBS - Auditor Observabilidad (health, logs, rate limit, circuit breaker)
-          - SUP - Auditor Supply Chain (npm audit, flutter outdated, .gitignore)
-          - REL - Auditor Release Flutter (configs, signing, publishing)
-          
-          ## Enlaces
-          - **Workflow Run:** https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          - **Registro Completo:** https://github.com/${{ github.repository }}/blob/main/.hermes/devops/REGISTRO-HALLAZGOS.md
-          - **Repositorio:** https://github.com/${{ github.repository }}
-          
-          ---
-          *Generado automáticamente por DevOps Multi-Agent Audit*
-          EOF
-          
-          echo "summary<<EOF" >> $GITHUB_OUTPUT
-          cat .hermes/devops/summary.md >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-          
-          echo "total=$TOTAL" >> $GITHUB_OUTPUT
-          echo "p0=$P0" >> $GITHUB_OUTPUT
-          echo "p1=$P1" >> $GITHUB_OUTPUT
-          echo "p2=$P2" >> $GITHUB_OUTPUT
-          
       - name: Actualizar REGISTRO-HALLAZGOS.md
         run: |
-          mkdir -p .hermes/devops/hallazgos
           echo "REGISTRO actualizado con $(ls .hermes/devops/hallazgos/HALLAZGO-*.json 2>/dev/null | wc -l) hallazgos nuevos"
-          
+
       - name: Commit y push si hay cambios
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add .hermes/devops/REGISTRO-HALLAZGOS.md .hermes/devops/HALLAZGO-*.json 2>/dev/null || true
           git diff --staged --quiet || git commit -m "chore(orq): actualizar registro de hallazgos" && git push || echo "No changes"
-          
-      - name: Enviar reporte por email
-        if: always()
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.gmail.com
-          server_port: 465
-          username: ${{ secrets.EMAIL_USERNAME }}
-          password: ${{ secrets.EMAIL_PASSWORD }}
-          subject: "[DevOps Audit] Semana ${{ github.run_number }} - ${{ github.repository }} - P0: ${{ steps.summary.outputs.p0 }} P1: ${{ steps.summary.outputs.p1 }} P2: ${{ steps.summary.outputs.p2 }}"
-          to: ${{ secrets.EMAIL_TO }}
-          from: DevOps Audit Bot
-          body: file://.hermes/devops/summary.md

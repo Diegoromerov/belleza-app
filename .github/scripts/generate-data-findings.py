@@ -1,7 +1,4 @@
 import json
-import os
-
-os.makedirs('.hermes/devops', exist_ok=True)
 
 hallazgos = [
     {'id': 'DATA-01', 'severity': 'P1', 'area': 'Datos/RLS', 'file': 'backend/migrations/058_enable_rls_policies.sql', 'line': '30,61-63', 'evidence_cmd': "cat backend/migrations/058_enable_rls_policies.sql | grep -A2 -B2 'ENABLE|FORCE|WITH CHECK'", 'impact': 'RLS inerte: ENABLE sin FORCE, sin WITH CHECK', 'proposed_fix': 'FORCE ROW LEVEL SECURITY; WITH CHECK; montar tenantContext', 'effort_h': 4},
