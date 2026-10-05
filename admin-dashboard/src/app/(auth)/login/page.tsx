@@ -42,10 +42,10 @@ function roleFromToken(token: unknown): AppRole | null {
 /** El rol se decide por la respuesta real de login(), nunca por el email. */
 function resolveLoginRole(res: unknown): AppRole | null {
   const data = res as
-    | { user?: Record<string, unknown>; usuario?: Record<string, unknown>; token?: string }
+    | { admin?: Record<string, unknown>; user?: Record<string, unknown>; usuario?: Record<string, unknown>; token?: string }
     | null
     | undefined;
-  const apiUser = data?.user ?? data?.usuario;
+  const apiUser = data?.admin ?? data?.user ?? data?.usuario;
   return normalizeRole(apiUser?.rol ?? apiUser?.role) ?? roleFromToken(data?.token);
 }
 
