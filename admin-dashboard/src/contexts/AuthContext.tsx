@@ -3,13 +3,14 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
-/** Usuario de sesión tal como lo persiste el panel (subconjunto estable de la respuesta del backend). */
+/** Usuario de sesión tal como lo mantiene el panel en memoria (subconjunto de respuesta del BFF). */
 export interface SessionUser {
   id: number;
   email: string;
   nombre: string;
   rol: 'CLIENTE' | 'PRESTADOR' | 'ADMIN' | 'SALON';
   onboarding_completo?: boolean;
+  tenant_id?: string | number | null;
 }
 
 interface ApiUser {
@@ -19,11 +20,13 @@ interface ApiUser {
   full_name?: string;
   rol?: string;
   role?: string;
+  tenant_id?: string | number | null;
   onboarding_completo?: boolean;
 }
 
 export interface AuthResponse {
-  token?: string;
+  success?: boolean;
+  admin?: ApiUser;
   user?: ApiUser;
   usuario?: ApiUser;
   [key: string]: unknown;
@@ -34,30 +37,10 @@ interface AuthContextType {
   loading: boolean;
   login: (email: string, password: string) => Promise<AuthResponse>;
   register: (data: { email: string; nombre: string; phone?: string; rol: 'CLIENTE' | 'PRESTADOR'; password: string }) => Promise<AuthResponse>;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' && window.location.hostname.includes('railway.app') ? 'https://beauty-app-production-bfd4.up.railway.app' : 'http://localhost:3000');
-
-// La sesión se guarda en localStorage (la usa el cliente) y se refleja en cookies
-// para que el middleware del servidor pueda decidir si renderiza el panel.
-// El backend (authAdmin) es quien valida la firma del JWT en cada endpoint.
-const SESSION_COOKIE = 'glow_token';
-const ADMIN_COOKIE = 'adminToken';
-const COOKIE_MAX_AGE = 60 * 60 * 24 * 7; // 7 días
-
-export function setSessionCookie(name: string, value: string) {
-  if (typeof document === 'undefined') return;
-  document.cookie = `${name}=${value}; path=/; max-age=${COOKIE_MAX_AGE}; SameSite=Lax`;
-}
-
-export function clearSessionCookies() {
-  if (typeof document === 'undefined') return;
-  document.cookie = `${SESSION_COOKIE}=; path=/; max-age=0; SameSite=Lax`;
-  document.cookie = `${ADMIN_COOKIE}=; path=/; max-age=0; SameSite=Lax`;
-}
 
 function normalizeRole(raw?: string, fallbackRole?: string): SessionUser['rol'] {
   const value = (raw || '').toUpperCase();
@@ -71,8 +54,9 @@ function buildSessionUser(apiUser: ApiUser): SessionUser {
   return {
     id: typeof apiUser.id === 'number' ? apiUser.id : parseInt(String(apiUser.id), 10) || 0,
     email: apiUser.email || '',
-    nombre: apiUser.full_name || apiUser.nombre || '',
+    nombre: apiUser.full_name || apiUser.nombre || 'Administrador',
     rol: normalizeRole(apiUser.rol, apiUser.role),
+    tenant_id: apiUser.tenant_id || null,
     onboarding_completo: apiUser.onboarding_completo,
   };
 }
@@ -82,53 +66,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Cargar sesión del localStorage
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('glow_token');
-      const storedUser = localStorage.getItem('glow_user');
-      if (token && storedUser) {
-        try {
-          const parsed = JSON.parse(storedUser) as SessionUser;
-          setUser(parsed);
-          // Mantener sincronizada la cookie que consume el middleware.
-          setSessionCookie(SESSION_COOKIE, token);
-          if (parsed.rol === 'ADMIN') setSessionCookie(ADMIN_COOKIE, token);
-        } catch {
-          localStorage.removeItem('glow_token');
-          localStorage.removeItem('glow_user');
-          localStorage.removeItem('adminToken');
-          clearSessionCookies();
+    // Consultar sesión activa contra el proxy BFF
+    let isMounted = true;
+    async function checkSession() {
+      try {
+        const response = await axios.get('/api/admin/auth/session', {
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        if (isMounted && response.data && response.data.admin) {
+          setUser(buildSessionUser(response.data.admin));
         }
+      } catch (_) {
+        if (isMounted) setUser(null);
+      } finally {
+        if (isMounted) setLoading(false);
       }
-      setLoading(false);
     }
+    checkSession();
+    return () => {
+      isMounted = false;
+    };
   }, []);
-
-  const persistSession = (token: string, sessionUser: SessionUser) => {
-    localStorage.setItem('glow_token', token);
-    localStorage.setItem('glow_user', JSON.stringify(sessionUser));
-    setSessionCookie(SESSION_COOKIE, token);
-    if (sessionUser.rol === 'ADMIN') {
-      localStorage.setItem('adminToken', token);
-      setSessionCookie(ADMIN_COOKIE, token);
-    } else {
-      localStorage.removeItem('adminToken');
-    }
-    setUser(sessionUser);
-  };
 
   const login = async (email: string, password: string): Promise<AuthResponse> => {
     setLoading(true);
     try {
-      const response = await axios.post(`${API_URL}/api/auth/login`, {
-        email,
-        password,
-      });
+      const response = await axios.post(
+        '/api/admin/auth/login',
+        { email, password },
+        { headers: { 'X-Requested-With': 'XMLHttpRequest' } }
+      );
 
       const data = response.data as AuthResponse;
-      const apiUser = data.user || data.usuario;
-      if (data.token && apiUser) {
-        persistSession(data.token, buildSessionUser(apiUser));
+      const apiAdmin = data.admin || data.user || data.usuario;
+      if (apiAdmin) {
+        setUser(buildSessionUser(apiAdmin));
       }
       setLoading(false);
       return data;
@@ -150,11 +122,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         role: data.rol,
         rol: data.rol
       };
-      const response = await axios.post(`${API_URL}/api/auth/register`, payload);
+      const response = await axios.post('/api/auth/register', payload, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      });
       const body = response.data as AuthResponse;
       const apiUser = body.user || body.usuario;
-      if (body.token && apiUser) {
-        persistSession(body.token, buildSessionUser(apiUser));
+      if (apiUser) {
+        setUser(buildSessionUser(apiUser));
       }
       setLoading(false);
       return body;
@@ -164,11 +138,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('glow_token');
-    localStorage.removeItem('glow_user');
-    localStorage.removeItem('adminToken');
-    clearSessionCookies();
+  const logout = async () => {
+    try {
+      await axios.post(
+        '/api/admin/auth/logout',
+        {},
+        { headers: { 'X-Requested-With': 'XMLHttpRequest' } }
+      );
+    } catch (_) {}
     setUser(null);
     if (typeof window !== 'undefined') {
       window.location.href = '/login';

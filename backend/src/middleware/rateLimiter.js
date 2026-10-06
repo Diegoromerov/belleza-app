@@ -45,12 +45,36 @@ const rateLimitByUser = (options = {}) => {
 const rateLimitByIP = (options = {}) => {
   return rateLimit({
     windowMs: options.windowMs || 15 * 60 * 1000,
-    max: (process.env.NODE_ENV === 'test') ? 1000 : (options.limit || options.max || 100),
+    max: (process.env.NODE_ENV === 'test' && process.env.TEST_RATE_LIMIT !== 'true') ? 1000 : (options.limit || options.max || 100),
     message: { error: 'Demasiadas solicitudes desde esta IP.' },
     standardHeaders: true,
     legacyHeaders: false,
   });
 };
+
+// 6. Limitador DEDICADO por IP para Login de Administradores (máx 5 en 15 min)
+const adminLoginIpLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: (process.env.NODE_ENV === 'test' && process.env.TEST_RATE_LIMIT !== 'true') ? 1000 : 5,
+  message: { error: 'Demasiados intentos de acceso administrativo desde esta dirección IP. Intente de nuevo en 15 minutos.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  validate: { xForwardedForHeader: false, default: false },
+});
+
+// 7. Limitador DEDICADO por Cuenta (Email) para Login de Administradores (máx 5 en 15 min por email)
+const adminLoginAccountLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: (process.env.NODE_ENV === 'test' && process.env.TEST_RATE_LIMIT !== 'true') ? 1000 : 5,
+  message: { error: 'Demasiados intentos de acceso fallidos para esta cuenta. Intente de nuevo en 15 minutos.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  validate: { xForwardedForHeader: false, default: false },
+  keyGenerator: (req) => {
+    const email = req.body && req.body.email ? String(req.body.email).toLowerCase().trim() : '';
+    return email ? `admin_account_${email}` : (req.ip || '127.0.0.1');
+  }
+});
 
 const TIER_LIMITS = {
   free: { requests: 30, windowMs: 60000 },
@@ -84,6 +108,8 @@ module.exports = {
   authLimiter,
   otpLimiter,
   paymentLimiter,
+  adminLoginIpLimiter,
+  adminLoginAccountLimiter,
   rateLimitByUser,
   rateLimitByIP,
   TIER_LIMITS,

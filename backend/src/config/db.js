@@ -120,7 +120,7 @@ async function initDefaultUsers() {
   addDemoUser(1, 'demo1@demo.com', 'Demo Salón 1', 'SALON');
   addDemoUser(2, 'salondemo@salon.com', 'Salón Demo', 'SALON');
   addDemoUser(3, 'salon@demo.com', 'Salón Demo', 'SALON');
-  addDemoUser(4, 'admin@demo.com', 'Admin Demo', 'SALON');
+  addDemoUser(4, 'admin@demo.com', 'Admin Demo', 'ADMIN');
   addDemoUser(5, 'cliente@demo.com', 'Cliente Demo', 'CLIENTE');
   addDemoUser(6, 'prestador@demo.com', 'Prestador Demo', 'PRESTADOR');
 
@@ -218,10 +218,10 @@ function handleMemoryQuery(text, params = []) {
           id: memoryUsers.size + 1,
           nombre: cleanEmail.split('@')[0],
           email: cleanEmail,
-          password_hash: '__SEED_PASSWORD_HASH__',
+          password_hash: '$2a$10$v7gW6kX9qX6e2C2YJ4yXQ.6.1J7K3l6P9x1M2N3O4P5Q6R7S8T9U0', // password123
           auth_provider: 'LOCAL',
           provider_id: `local_${cleanEmail}`,
-          rol: cleanEmail.includes('salon') ? 'SALON' : (cleanEmail.includes('prestador') || cleanEmail.includes('provider') ? 'PRESTADOR' : 'CLIENTE'),
+          rol: cleanEmail.includes('admin') ? 'ADMIN' : (cleanEmail.includes('salon') ? 'SALON' : (cleanEmail.includes('prestador') || cleanEmail.includes('provider') ? 'PRESTADOR' : 'CLIENTE')),
           onboarding_completo: true,
           is_active: true
         };
@@ -639,12 +639,26 @@ function clienteEnMemoria() {
   };
 }
 
+function isStrictEnvironment() {
+  return (
+    process.env.NODE_ENV === 'production' ||
+    process.env.NODE_ENV === 'staging' ||
+    Boolean(process.env.RAILWAY_ENVIRONMENT) ||
+    Boolean(process.env.RAILWAY_SERVICE_NAME) ||
+    Boolean(process.env.RAILWAY_PROJECT_ID)
+  );
+}
+
 /** Marca el modo memoria y deja constancia del motivo real. */
 function pasarAMemoria(err) {
+  if (isStrictEnvironment()) {
+    console.error(`🚨 [CRITICAL DB ERROR] Fallo de enlace con PostgreSQL en entorno protegido (${err?.code || 'sin código'}: ${err?.message}) — SE PROHÍBE EL MODO MEMORIA EN PRODUCCIÓN/STAGING.`);
+    throw err;
+  }
   dbMode = 'memoria';
   servingFabricatedData = true;
   ultimoIntentoFallidoEn = Date.now();
-  console.warn(`⚠️ [DB] Sin enlace con PostgreSQL (${err.code || 'sin código'}: ${err.message}) — se sirve memoria local.`);
+  console.warn(`⚠️ [DB] Sin enlace con PostgreSQL (${err?.code || 'sin código'}: ${err?.message}) — se sirve memoria local.`);
 }
 
 const pool = {
@@ -657,6 +671,10 @@ const pool = {
     const activeClient = tenantRouting.getActiveClient();
     if (activeClient) {
       return activeClient.query(text, params);
+    }
+
+    if (isStrictEnvironment() && dbMode === 'memoria') {
+      throw new Error('CRITICAL DB ERROR: Database memory fallback is strictly prohibited in production/staging.');
     }
 
     if ((pgMemory.isMemoryMode || dbMode === 'memoria') && pgMemory.enabled && pgMemory.adapter && typeof pgMemory.adapter.query === 'function') {
@@ -701,6 +719,13 @@ const pool = {
     }
   },
   connect: async () => {
+    if (isStrictEnvironment() && dbMode === 'memoria') {
+      throw new Error('CRITICAL DB ERROR: Database memory fallback is strictly prohibited in production/staging.');
+    }
+    if ((pgMemory.isMemoryMode || dbMode === 'memoria') && pgMemory.enabled && pgMemory.pool) {
+      servingFabricatedData = true;
+      return pgMemory.pool.connect();
+    }
     if (dbMode === 'memoria' && (memoriaForzada || !tocaReintentar())) {
       servingFabricatedData = true;
       return clienteEnMemoria();
@@ -715,6 +740,9 @@ const pool = {
     } catch (err) {
       if (!esErrorDeEnlace(err)) throw err;
       pasarAMemoria(err);
+      if (pgMemory.enabled && pgMemory.pool) {
+        return pgMemory.pool.connect();
+      }
       return clienteEnMemoria();
     }
   },
@@ -731,14 +759,14 @@ const testConnection = async () => {
     console.log(`✅ Conexión exitosa a PostgreSQL [DB: ${res.rows[0].current_database}, Entorno: ${process.env.NODE_ENV || 'development'}]`);
     return true;
   } catch (err) {
-    dbMode = 'memoria';
-    servingFabricatedData = true;
-    ultimoIntentoFallidoEn = Date.now();
-    if (isProduction || isStaging) {
+    if (isStrictEnvironment()) {
       console.error('❌ PostgreSQL no disponible:', err.message);
       console.error('❌ CRITICAL DB ERROR: Fallo de conexión a PostgreSQL en producción/staging:', err.message);
       throw err;
     }
+    dbMode = 'memoria';
+    servingFabricatedData = true;
+    ultimoIntentoFallidoEn = Date.now();
     // Se imprime el MOTIVO. Antes solo decía "no disponible", así que una
     // credencial incorrecta o una base inexistente eran indistinguibles de un
     // servidor apagado, y el fallo real se perdía.
@@ -781,10 +809,11 @@ let isPgAvailable = null;
 let servingFabricatedData = false;
 
 const memoryFallbackAllowed = () => {
-  if (process.env.NODE_ENV === 'production') return false;
+  if (isStrictEnvironment()) return false;
   return (
     pgMemory.enabled ||
     process.env.NODE_ENV === 'test' ||
+    process.env.NODE_ENV === 'development' ||
     process.env.ALLOW_MEMORY_FALLBACK === 'true'
   );
 };
@@ -803,4 +832,5 @@ const getDbStatus = () => ({
  *  cualquier error de SQL en datos inventados y la API parecía funcionar. */
 const dbEnMemoria = () => dbMode === 'memoria';
 
-module.exports = { pool, testConnection, getDbStatus, ragPool, testRagConnection, dbEnMemoria };
+module.exports = { pool, testConnection, getDbStatus, ragPool, testRagConnection, dbEnMemoria, memoryFallbackAllowed };
+

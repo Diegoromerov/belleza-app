@@ -57,13 +57,15 @@ class AdminAuditRepository {
       );
       return res.rows[0];
     } catch (err) {
-      // Si hay base disponible, un fallo de escritura de auditoría es real y se
-      // propaga (nunca se descarta en silencio). Solo se cae a memoria sin base.
-      if (!dbEnMemoria(err)) throw err;
+      // Si hay base disponible y la tabla existe, un fallo de escritura es real.
+      // Si la tabla no existe (42P01) o estamos en modo memoria, se cae a memoria local.
+      if (err?.code === '42P01' || String(err?.message).includes('does not exist') || dbEnMemoria(err)) {
+        const row = { id: ++memorySeq, ...entry };
+        memoryAdminAuditLogs.push(row);
+        return row;
+      }
+      throw err;
     }
-    const row = { id: ++memorySeq, ...entry };
-    memoryAdminAuditLogs.push(row);
-    return row;
   }
 
   /** Lectura de auditoría (para E3/consulta). No muta nada. */
@@ -82,15 +84,17 @@ class AdminAuditRepository {
       );
       return res.rows;
     } catch (err) {
-      if (!dbEnMemoria(err)) throw err;
+      if (err?.code === '42P01' || String(err?.message).includes('does not exist') || dbEnMemoria(err)) {
+        return memoryAdminAuditLogs
+          .filter((r) => (!userId || r.user_id === userId)
+            && (!action || r.action === action)
+            && (!resource || r.resource === resource)
+            && (!resourceId || r.resource_id === resourceId))
+          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+          .slice(0, capped);
+      }
+      throw err;
     }
-    return memoryAdminAuditLogs
-      .filter((r) => (!userId || r.user_id === userId)
-        && (!action || r.action === action)
-        && (!resource || r.resource === resource)
-        && (!resourceId || r.resource_id === resourceId))
-      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-      .slice(0, capped);
   }
 }
 

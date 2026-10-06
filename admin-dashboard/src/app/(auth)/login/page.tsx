@@ -42,10 +42,10 @@ function roleFromToken(token: unknown): AppRole | null {
 /** El rol se decide por la respuesta real de login(), nunca por el email. */
 function resolveLoginRole(res: unknown): AppRole | null {
   const data = res as
-    | { user?: Record<string, unknown>; usuario?: Record<string, unknown>; token?: string }
+    | { admin?: Record<string, unknown>; user?: Record<string, unknown>; usuario?: Record<string, unknown>; token?: string }
     | null
     | undefined;
-  const apiUser = data?.user ?? data?.usuario;
+  const apiUser = data?.admin ?? data?.user ?? data?.usuario;
   return normalizeRole(apiUser?.rol ?? apiUser?.role) ?? roleFromToken(data?.token);
 }
 
@@ -84,24 +84,24 @@ export default function LoginPage() {
   return (
     <div className="w-full">
       <div className="flex flex-col items-center mb-8">
-        <div className="bg-rose-500 text-white p-3 rounded-2xl mb-4 shadow-lg shadow-rose-500/20">
+        <div className="bg-[#2B2420] text-[#C5A052] p-3 rounded-2xl mb-4 shadow-lg shadow-[#2B2420]/20 border border-[#C5A052]/40">
           <Scissors size={28} />
         </div>
-        <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">¡Hola de nuevo!</h2>
-        <p className="text-sm text-gray-500 mt-1">Inicia sesión en tu cuenta de GlowApp</p>
+        <h2 className="text-3xl font-extrabold text-[#2B2420] tracking-tight font-serif">GlowAdmin Portal</h2>
+        <p className="text-sm text-[#8C6F65] mt-1 font-sans">Gestión Directiva & Operaciones de Belleza</p>
       </div>
 
       {error && (
-        <div className="bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm border border-red-100 mb-6 text-center">
+        <div className="bg-[#FDF2F4] text-[#881337] px-4 py-3 rounded-xl text-sm border border-[#C89D93]/40 mb-6 text-center">
           {error}
         </div>
       )}
 
       <form className="space-y-5" onSubmit={handleSubmit}>
         <div>
-          <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Correo Electrónico</label>
+          <label className="block text-xs font-semibold text-[#2B2420]/80 uppercase tracking-wider mb-2">Correo Electrónico</label>
           <div className="relative">
-            <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+            <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-[#8C6F65]">
               <Mail size={18} />
             </span>
             <input
@@ -109,16 +109,16 @@ export default function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="pl-10 pr-4 py-3 w-full border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 text-sm transition-all duration-200 text-gray-900"
-              placeholder="nombre@ejemplo.com"
+              className="pl-10 pr-4 py-3 w-full border border-[#C5A052]/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C5A052]/30 focus:border-[#C5A052] text-sm transition-all duration-200 text-[#2B2420] bg-white"
+              placeholder="admin@demo.com"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Contraseña</label>
+          <label className="block text-xs font-semibold text-[#2B2420]/80 uppercase tracking-wider mb-2">Contraseña</label>
           <div className="relative">
-            <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+            <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-[#8C6F65]">
               <Lock size={18} />
             </span>
             <input
@@ -126,7 +126,7 @@ export default function LoginPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="pl-10 pr-4 py-3 w-full border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 text-sm transition-all duration-200 text-gray-900"
+              className="pl-10 pr-4 py-3 w-full border border-[#C5A052]/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C5A052]/30 focus:border-[#C5A052] text-sm transition-all duration-200 text-[#2B2420] bg-white"
               placeholder="••••••••"
             />
           </div>
@@ -135,17 +135,17 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={submitting}
-          className="w-full bg-rose-500 text-white py-3 rounded-xl font-semibold shadow-lg shadow-rose-500/20 hover:bg-rose-600 hover:shadow-rose-600/30 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none transition-all duration-200"
+          className="w-full bg-[#2B2420] text-[#FCF8F6] py-3 rounded-xl font-semibold shadow-lg shadow-[#2B2420]/15 hover:bg-[#3D332D] hover:shadow-[#2B2420]/25 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none transition-all duration-200 border border-[#C5A052]/40"
         >
           {submitting ? 'Iniciando sesión...' : 'Iniciar Sesión'}
         </button>
       </form>
 
-      <div className="mt-8 text-center border-t border-gray-100 pt-6">
-        <p className="text-sm text-gray-500">
-          ¿No tienes una cuenta?{' '}
-          <Link href="/register" className="font-semibold text-rose-500 hover:text-rose-600 transition-colors">
-            Regístrate aquí
+      <div className="mt-8 text-center border-t border-[#C5A052]/20 pt-6">
+        <p className="text-sm text-[#8C6F65]">
+          ¿Acceso no autorizado?{' '}
+          <Link href="/" className="font-semibold text-[#C5A052] hover:underline transition-colors">
+            Volver al Inicio
           </Link>
         </p>
       </div>
