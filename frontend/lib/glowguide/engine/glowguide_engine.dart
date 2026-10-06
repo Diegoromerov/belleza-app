@@ -22,6 +22,7 @@ typedef GlowGuideStateListener = void Function(GlowGuideState state);
 /// Delega a: NavigationDelegate, AudioController, PersistenceAdapter.
 class GlowGuideEngine {
   final List<GlowGuideStep> _steps;
+  final String guideId;
   final NavigationDelegate _navigationDelegate;
   final AudioController _audioController;
   final PersistenceAdapter _persistenceAdapter;
@@ -67,6 +68,7 @@ class GlowGuideEngine {
 
   GlowGuideEngine({
     required List<GlowGuideStep> steps,
+    this.guideId = GlowWelcomeGuide.guideId,
     required NavigationDelegate navigationDelegate,
     required AudioController audioController,
     required PersistenceAdapter persistenceAdapter,
@@ -113,7 +115,7 @@ class GlowGuideEngine {
     }
 
     // Verificar persistencia antes de iniciar
-    final completed = await _persistenceAdapter.isGuideCompleted(GlowWelcomeGuide.guideId);
+    final completed = await _persistenceAdapter.isGuideCompleted(guideId);
     if (completed) {
       _updateState(_state.copyWith(
         status: GlowGuideStatus.dismissed,
@@ -227,7 +229,7 @@ class GlowGuideEngine {
     await _audioController.stop();
     _currentPlayback = null;
 
-    await _persistenceAdapter.markGuideCompleted(GlowWelcomeGuide.guideId);
+    await _persistenceAdapter.markGuideCompleted(guideId);
 
     _updateState(_state.copyWith(
       status: GlowGuideStatus.completed,
@@ -318,9 +320,11 @@ class GlowGuideEngine {
         case GlowGuideActionType.close:
         case GlowGuideActionType.focus:
         case GlowGuideActionType.wait:
-        case GlowGuideActionType.custom:
           // No implementados en I1 - solo simular duración
           await Future.delayed(Duration(milliseconds: action.estimatedDurationMs));
+          break;
+        case GlowGuideActionType.custom:
+          // Provider uses the presenter completion callback to select each tab.
           break;
       }
     } catch (e) {

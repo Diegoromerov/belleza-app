@@ -26,12 +26,14 @@ class GlowGuidePresenter extends StatefulWidget {
   final GlowGuideEngine engine;
   final GlowGuidePresenterCallback? onAction;
   final Widget? child;
+  final bool allowVideoTapToAdvance;
 
   const GlowGuidePresenter({
     super.key,
     required this.engine,
     this.onAction,
     this.child,
+    this.allowVideoTapToAdvance = true,
   });
 
   @override
@@ -119,6 +121,7 @@ class _GlowGuidePresenterState extends State<GlowGuidePresenter> with WidgetsBin
                   key: ValueKey<String>(videoPath),
                   videoAssetPath: videoPath,
                   isFirstStep: _currentStep!.order == 0,
+                  allowTapToAdvance: widget.allowVideoTapToAdvance,
                   onVideoEnded: () {
                     // Avance automático al terminar el video
                     widget.onAction?.call(GlowGuidePresenterAction.next);
@@ -176,12 +179,14 @@ class _GlowGuidePresenterState extends State<GlowGuidePresenter> with WidgetsBin
 class GlowStepVideoPlayer extends StatefulWidget {
   final String videoAssetPath;
   final bool isFirstStep;
+  final bool allowTapToAdvance;
   final VoidCallback? onVideoEnded;
 
   const GlowStepVideoPlayer({
     super.key,
     required this.videoAssetPath,
     this.isFirstStep = false,
+    this.allowTapToAdvance = true,
     this.onVideoEnded,
   });
 
@@ -315,7 +320,7 @@ class _GlowStepVideoPlayerState extends State<GlowStepVideoPlayer> {
       if (!_controller.value.isPlaying) {
         _controller.play();
       }
-    } else {
+    } else if (widget.allowTapToAdvance) {
       widget.onVideoEnded?.call();
     }
   }

@@ -21,6 +21,13 @@ import '../services/audio_player.dart';
 import '../services/audience_service.dart';
 import '../shared/theme.dart';
 import '../design/icons/glow_icon.dart';
+import '../glowguide/config/provider_guide.dart';
+import '../glowguide/contracts/navigation_delegate.dart';
+import '../glowguide/engine/glowguide_engine.dart';
+import '../glowguide/audio/audio_engine.dart';
+import '../glowguide/persistence/persistence_engine.dart';
+import '../glowguide/observer/screen_visibility_observer.dart';
+import '../glowguide/presenter/glowguide_presenter.dart';
 
 class ProviderDashboardScreen extends StatefulWidget {
   const ProviderDashboardScreen({super.key});
@@ -40,6 +47,10 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
 
   // Sprint 2 Navigation & Innovation State
   int _currentIndex = 0;
+  late final GlowGuideEngine _providerGuideEngine;
+  late final AudioEngine _providerGuideAudioEngine;
+  late final PersistenceEngine _providerGuidePersistence;
+  bool _providerGuideStartScheduled = false;
   String _selectedAgendaFilter = 'TODAS';
   String _agendaSearchQuery = '';
   final TextEditingController _agendaSearchController = TextEditingController();
@@ -60,6 +71,33 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
     _fetchBookings();
     _fetchProfile();
     _initWebSocket();
+    _initializeProviderGuide();
+  }
+
+  void _initializeProviderGuide() {
+    _providerGuideAudioEngine = AudioEngine();
+    _providerGuidePersistence = PersistenceEngine();
+    _providerGuideEngine = GlowGuideEngine(
+      steps: ProviderGuide.steps,
+      guideId: ProviderGuide.guideId,
+      navigationDelegate: ProviderGuideNavigationDelegate(),
+      audioController: _providerGuideAudioEngine,
+      persistenceAdapter: _providerGuidePersistence,
+      screenVisibilityObserver: ScreenVisibilityObserverSingleton.instance,
+    );
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _providerGuideStartScheduled) return;
+      _providerGuideStartScheduled = true;
+      _startProviderGuideIfEligible();
+    });
+  }
+
+  Future<void> _startProviderGuideIfEligible() async {
+    final prefs = await SharedPreferences.getInstance();
+    final role = (prefs.getString('userRole') ?? '').toLowerCase();
+    if (!mounted || role == 'salon') return;
+    await _providerGuideEngine.start();
   }
 
   Future<void> _loadUserRole() async {
@@ -74,7 +112,39 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
   @override
   void dispose() {
     _webSocketChannel?.sink.close();
+    _providerGuideEngine.dispose();
     super.dispose();
+  }
+
+  void _handleProviderGuideAction(GlowGuidePresenterAction action) {
+    switch (action) {
+      case GlowGuidePresenterAction.next:
+        final nextIndex = _providerGuideEngine.state.currentStepIndex + 1;
+        if (nextIndex < ProviderGuide.steps.length && mounted) {
+          setState(() => _currentIndex = nextIndex);
+        }
+        _providerGuideEngine.next();
+        break;
+      case GlowGuidePresenterAction.previous:
+        final previousIndex = _providerGuideEngine.state.currentStepIndex - 1;
+        if (previousIndex >= 0 && mounted) {
+          setState(() => _currentIndex = previousIndex);
+        }
+        _providerGuideEngine.previous();
+        break;
+      case GlowGuidePresenterAction.dismiss:
+        _providerGuideEngine.dismiss();
+        break;
+      case GlowGuidePresenterAction.replay:
+        _providerGuideEngine.replay();
+        break;
+      case GlowGuidePresenterAction.pause:
+        _providerGuideEngine.pause();
+        break;
+      case GlowGuidePresenterAction.resume:
+        _providerGuideEngine.resume();
+        break;
+    }
   }
 
   void _initWebSocket() async {
@@ -3866,6 +3936,12 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
             ),
           ),
           
+          GlowGuidePresenter(
+            engine: _providerGuideEngine,
+            onAction: _handleProviderGuideAction,
+            allowVideoTapToAdvance: false,
+          ),
+
           // Luxury Navigation Dock (Haute Horlogerie & Quiet Luxury)
           Positioned(
             bottom: MediaQuery.of(context).padding.bottom + 16,
@@ -4235,6 +4311,23 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
         return status?.toString() ?? '';
     }
   }
+}
+
+/// Provider's tour changes tabs inside the existing dashboard rather than routes.
+class ProviderGuideNavigationDelegate implements NavigationDelegate {
+  @override
+  Future<NavigationResult> navigate({
+    required String routeName,
+    Map<String, dynamic>? arguments,
+    required Duration timeout,
+  }) async => NavigationResult.failure(routeName, 'No route navigation required');
+
+  @override
+  Future<NavigationResult> returnToHome({required Duration timeout}) async =>
+      NavigationResult.success('/provider');
+
+  @override
+  void cancelPending() {}
 }
 
 // Pulsing chip state widget
