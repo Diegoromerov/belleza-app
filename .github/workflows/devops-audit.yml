@@ -13,6 +13,8 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
     branches: [main, staging]
+  schedule:
+    - cron: '0 9 * * 1'  # Lunes 9:00 UTC (4:00 AM Colombia, 5:00 AM Chile)
 
 permissions:
   contents: write
@@ -346,7 +348,7 @@ jobs:
     needs: [sec, cicd, data, obs, sup, rel]
     if: always()
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -359,6 +361,55 @@ jobs:
           path: .hermes/devops/hallazgos
         continue-on-error: true
 
+      - name: Generar reporte resumen
+        id: summary
+        run: |
+          mkdir -p .hermes/devops/hallazgos
+          TOTAL=$(ls .hermes/devops/hallazgos/HALLAZGO-*.json 2>/dev/null | wc -l)
+          P0=$(grep -r '"severidad": "P0"' .hermes/devops/hallazgos/ 2>/dev/null | wc -l)
+          P1=$(grep -r '"severidad": "P1"' .hermes/devops/hallazgos/ 2>/dev/null | wc -l)
+          P2=$(grep -r '"severidad": "P2"' .hermes/devops/hallazgos/ 2>/dev/null | wc -l)
+          
+          cat > .hermes/devops/summary.md << EOF
+          # DevOps Multi-Agent Audit — Reporte Semanal
+          
+          **Fecha:** $(date -u +"%Y-%m-%d %H:%M UTC")
+          **Run:** #${{ github.run_number }} (${{ github.run_id }})
+          **Commit:** ${{ github.sha }}
+          **Branch:** ${{ github.ref_name }}
+          
+          ## Resumen de Hallazgos
+          - **Total:** $TOTAL
+          - **P0 (Crítico):** $P0
+          - **P1 (Alto):** $P1
+          - **P2 (Medio):** $P2
+          
+          ## Agentes Ejecutados
+          - SEC - Auditor Secretos (gitleaks MIT)
+          - CICD - Auditor CI/CD y Contenedores (actionlint MIT)
+          - DATA - Auditor Datos (backup, migraciones, RLS)
+          - OBS - Auditor Observabilidad (health, logs, rate limit, circuit breaker)
+          - SUP - Auditor Supply Chain (npm audit, flutter outdated, .gitignore)
+          - REL - Auditor Release Flutter (configs, signing, publishing)
+          
+          ## Enlaces
+          - **Workflow Run:** https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          - **Registro Completo:** https://github.com/${{ github.repository }}/blob/main/.hermes/devops/REGISTRO-HALLAZGOS.md
+          - **Repositorio:** https://github.com/${{ github.repository }}
+          
+          ---
+          *Generado automáticamente por DevOps Multi-Agent Audit*
+          EOF
+          
+          echo "summary<<EOF" >> $GITHUB_OUTPUT
+          cat .hermes/devops/summary.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          echo "total=$TOTAL" >> $GITHUB_OUTPUT
+          echo "p0=$P0" >> $GITHUB_OUTPUT
+          echo "p1=$P1" >> $GITHUB_OUTPUT
+          echo "p2=$P2" >> $GITHUB_OUTPUT
+
       - name: Actualizar REGISTRO-HALLAZGOS.md
         run: |
           mkdir -p .hermes/devops/hallazgos
@@ -370,3 +421,16 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add .hermes/devops/REGISTRO-HALLAZGOS.md .hermes/devops/HALLAZGO-*.json 2>/dev/null || true
           git diff --staged --quiet || git commit -m "chore(orq): actualizar registro de hallazgos" && git push || echo "No changes"
+
+      - name: Enviar reporte por email
+        if: always()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "[DevOps Audit] Semana ${{ github.run_number }} - ${{ github.repository }} - P0: ${{ steps.summary.outputs.p0 }} P1: ${{ steps.summary.outputs.p1 }} P2: ${{ steps.summary.outputs.p2 }}"
+          to: ${{ secrets.EMAIL_TO }}
+          from: DevOps Audit Bot
+          body: file://.hermes/devops/summary.md
