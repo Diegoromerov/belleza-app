@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { 
   TrendingUp, 
   Users, 
@@ -21,7 +23,13 @@ import {
   Zap,
   CheckSquare,
   ClipboardList,
-  PlusCircle
+  PlusCircle,
+  LayoutDashboard,
+  Building2,
+  GraduationCap,
+  Tag,
+  Menu,
+  X
 } from 'lucide-react';
 import {
   AreaChart,
@@ -106,6 +114,7 @@ function formatCOPSafe(val: number | null | undefined) {
 }
 
 export default function Dashboard() {
+  const pathname = usePathname();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [loading, setLoading] = useState(true);
   const [backendStatus, setBackendStatus] = useState('Comprobando conexión...');
@@ -365,10 +374,27 @@ export default function Dashboard() {
 
   const formatCOP = (val: number | null | undefined) => formatCOPSafe(val);
 
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const adminNavLinks = [
+    { href: '/admin/business', label: 'Cumplimiento Business', icon: Building2 },
+    { href: '/admin/precios', label: 'Gestión de Precios', icon: Tag },
+    { href: '/admin/academia', label: 'Academia Glow', icon: GraduationCap },
+    { href: '/admin/vto', label: 'VTO', icon: LayoutDashboard },
+  ];
+
   return (
-    <div className="flex h-screen w-full bg-[#FCF8F6] text-[#2B2420] font-sans overflow-hidden">
+    <div className="flex min-h-screen w-full bg-[#FCF8F6] text-[#2B2420] font-sans overflow-x-hidden">
+      {/* Mobile sidebar overlay */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar Menu */}
-      <aside className="w-64 bg-[#FAF8F5] border-r border-[#C5A052]/25 flex flex-col justify-between p-6">
+      <aside className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-[#FAF8F5] border-r border-[#C5A052]/25 flex flex-col justify-between p-6 transform transition-transform duration-300 lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div>
           {/* Logo */}
           <div className="flex items-center gap-3 mb-10">
@@ -381,8 +407,9 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Menú Links */}
-          <nav className="space-y-2">
+          {/* Dashboard Tabs */}
+          <nav className="space-y-2 mb-8">
+            <h3 className="text-[10px] font-bold text-[#C5A052] uppercase tracking-wider px-2 mb-3">Dashboard</h3>
             {[
               { id: 'dashboard', label: 'Métricas Financieras', icon: TrendingUp },
               { id: 'board', label: 'Reunión Directiva', icon: ClipboardList },
@@ -394,7 +421,7 @@ export default function Dashboard() {
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => { setActiveTab(tab.id); setSidebarOpen(false); }}
                   className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-300 font-medium ${
                     isActive 
                       ? 'bg-[#2B2420] border border-[#C5A052]/40 text-[#FCF8F6] shadow-md shadow-[#2B2420]/10' 
@@ -418,6 +445,30 @@ export default function Dashboard() {
               );
             })}
           </nav>
+
+          {/* Admin Navigation */}
+          <nav className="space-y-2">
+            <h3 className="text-[10px] font-bold text-[#C5A052] uppercase tracking-wider px-2 mb-3">Administración</h3>
+            {adminNavLinks.map(link => {
+              const Icon = link.icon;
+              const isActive = pathname === link.href;
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setSidebarOpen(false)}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 font-medium ${
+                    isActive
+                      ? 'bg-[#2B2420] border border-[#C5A052]/40 text-[#FCF8F6] shadow-md shadow-[#2B2420]/10'
+                      : 'text-[#8C6F65] hover:text-[#2B2420] hover:bg-[#FCF8F6] border border-transparent'
+                  }`}
+                >
+                  <Icon className={`w-5 h-5 ${isActive ? 'text-[#C5A052]' : 'text-[#8C6F65]'}`} />
+                  <span>{link.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
         </div>
 
         {/* Footer info */}
@@ -431,14 +482,23 @@ export default function Dashboard() {
       </aside>
 
       {/* Main Panel Area */}
-      <main className="flex-1 flex flex-col overflow-y-auto bg-slate-950/40">
-        {/* Header bar */}
-        <header className="h-20 border-b border-slate-900 flex items-center justify-between px-8 bg-slate-950/20 backdrop-blur-md sticky top-0 z-50">
-          <div>
-            <h2 className="text-xl font-bold text-white capitalize">
-              {activeTab === 'dashboard' ? 'Resumen de Negocio' : activeTab === 'board' ? 'Reunión Directiva' : activeTab}
-            </h2>
-            <p className="text-xs text-slate-400">Monitoreo operativo y financiero en tiempo real</p>
+      <main className="flex-1 flex flex-col overflow-y-auto bg-slate-950/40 lg:ml-0">
+        {/* Header bar with mobile menu toggle */}
+        <header className="h-20 border-b border-slate-900 flex items-center justify-between px-4 lg:px-8 bg-slate-950/20 backdrop-blur-md sticky top-0 z-30">
+          <div className="flex items-center gap-4">
+            <button
+              className="lg:hidden w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-white hover:border-slate-700 transition-all duration-300"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              aria-label="Toggle menu"
+            >
+              {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+            <div>
+              <h2 className="text-xl font-bold text-white capitalize">
+                {activeTab === 'dashboard' ? 'Resumen de Negocio' : activeTab === 'board' ? 'Reunión Directiva' : activeTab}
+              </h2>
+              <p className="text-xs text-slate-400">Monitoreo operativo y financiero en tiempo real</p>
+            </div>
           </div>
 
           <div className="flex items-center gap-4">

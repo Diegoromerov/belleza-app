@@ -1,17 +1,22 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Bell, Search, Menu } from 'lucide-react';
+import { Bell, Search, Menu, X } from 'lucide-react';
 
 export default function Header() {
   const { user } = useAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <header className="bg-white/90 backdrop-blur-md border-b border-[#C5A052]/20 h-16 flex items-center justify-between px-8 shadow-sm shadow-[#2B2420]/5 sticky top-0 z-10">
+    <header className="bg-white/90 backdrop-blur-md border-b border-[#C5A052]/20 h-16 flex items-center justify-between px-4 md:px-8 shadow-sm shadow-[#2B2420]/5 sticky top-0 z-10">
       <div className="flex items-center gap-4 flex-1">
-        <button className="md:hidden text-[#2B2420] hover:text-[#C5A052]">
-          <Menu size={20} />
+        <button 
+          className="md:hidden text-[#2B2420] hover:text-[#C5A052]" 
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          aria-label="Toggle menu"
+        >
+          {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
         <div className="relative max-w-md w-full hidden md:block">
           <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-[#8C6F65]">
@@ -31,11 +36,11 @@ export default function Header() {
           <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#C5A052] rounded-full"></span>
         </button>
         
-        <div className="h-8 w-px bg-[#C5A052]/20"></div>
+        <div className="h-8 w-px bg-[#C5A052]/20 hidden md:block"></div>
 
         {user && (
           <div className="flex items-center gap-3">
-            <div className="text-right">
+            <div className="text-right hidden sm:block">
               <p className="text-sm font-semibold text-[#2B2420] font-sans">{user.nombre}</p>
               <p className="text-xs text-[#C5A052] font-semibold uppercase tracking-wide font-mono">{user.rol}</p>
             </div>

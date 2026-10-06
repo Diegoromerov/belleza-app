@@ -2,10 +2,14 @@
 import { NextRequest, NextResponse } from 'next/server.js';
 import { jwtVerify } from 'jose';
 
+// The local backend's .env.example uses port 3000; keep deployment overrides first.
 const BACKEND_URL = process.env.BACKEND_INTERNAL_URL || process.env.BACKEND_URL || 'http://localhost:3000';
-const JWT_SECRET = process.env.JWT_SECRET || 'test_jwt_secret_must_be_at_least_32_characters_long_super_secure';
+const JWT_SECRET = process.env.JWT_SECRET;
 
 function getJwtSecretKey() {
+  if (!JWT_SECRET || JWT_SECRET.trim().length < 32) {
+    throw new Error('JWT_SECRET debe configurarse en el servidor del dashboard y coincidir con el backend (mínimo 32 caracteres).');
+  }
   return new TextEncoder().encode(JWT_SECRET);
 }
 
@@ -122,7 +126,13 @@ async function handleProxyRequest(req: NextRequest, { params }: { params: Promis
 
       return res;
     } catch (err: any) {
-      return NextResponse.json({ error: 'Error interno en proxy login BFF: ' + err.message }, { status: 500 });
+      const cause = err?.cause as { code?: string } | undefined;
+      const unavailable = cause?.code === 'ECONNREFUSED' || cause?.code === 'ENOTFOUND' || cause?.code === 'ETIMEDOUT';
+      return NextResponse.json({
+        error: unavailable
+          ? 'No se pudo conectar con el backend de GlowApp. Verifica que esté activo en BACKEND_INTERNAL_URL/BACKEND_URL (por defecto http://localhost:3000).'
+          : 'Error interno en proxy login BFF: ' + (err?.message || 'error desconocido')
+      }, { status: unavailable ? 502 : 500 });
     }
   }
 
