@@ -18,46 +18,6 @@ class YouCamClient {
     this.pollTimeoutMs = 60000; // 60 segundos máximo esperando el resultado
   }
 
-  // Fallback functions for each step
-  _requestUploadSlotFallback = async () => {
-    return {
-      fileId: 'test-file-id',
-      uploadUrl: 'https://example.com/upload',
-      uploadHeaders: {}
-    };
-  };
-
-  _uploadToS3Fallback = async () => {
-    // Resolve immediately, no action needed
-    return undefined;
-  };
-
-  _createAnalysisTaskFallback = async () => {
-    return {
-      data: {
-        result: {
-          task_id: 'test-task-id'
-        }
-      }
-    };
-  };
-
-  _pollTaskResultFallback = async () => {
-    return {
-      data: {
-        task_status: 'success',
-        results: [
-          { type: 'hd_moisture', ui_score: 75 },
-          { type: 'hd_wrinkle', ui_score: 15 },
-          { type: 'hd_age_spot', ui_score: 12 },
-          { type: 'hd_pore', ui_score: 25 },
-          { type: 'skin_type', value: 'cálido' },
-          { type: 'skin_age', ui_score: 28 }
-        ]
-      }
-    };
-  };
-
   get authHeaders() {
     return {
       'Authorization': `Bearer ${this.apiKey}`,
@@ -90,7 +50,6 @@ class YouCamClient {
       // Use default policy timeout (5000ms) for resilience, not the axios timeout
       circuitBreakerName: 'youcam',
       traceId: traceId,
-      fallback: this._requestUploadSlotFallback
     });
   }
 
@@ -114,7 +73,6 @@ class YouCamClient {
       // Use default policy timeout (5000ms) for resilience
       circuitBreakerName: 'youcam',
       traceId: traceId,
-      fallback: this._uploadToS3Fallback
     });
   }
 
@@ -142,7 +100,6 @@ class YouCamClient {
       // Use default policy timeout (5000ms) for resilience
       circuitBreakerName: 'youcam',
       traceId: traceId,
-      fallback: this._createAnalysisTaskFallback
     });
 
     logger.debug('YouCam create task response', { data: response.data });
@@ -169,7 +126,6 @@ class YouCamClient {
         // Use default policy timeout (5000ms) for resilience
         circuitBreakerName: 'youcam',
         traceId: traceId,
-        fallback: this._pollTaskResultFallback
       });
 
       const body = response.data;
@@ -198,17 +154,27 @@ class YouCamClient {
       byType[item.type] = item;
     }
 
-    const scoreOf = (type, fallback) => {
-      return byType[type]?.ui_score !== undefined ? byType[type].ui_score : fallback;
+    const scoreOf = (type) => {
+      const value = byType[type]?.ui_score;
+      if (typeof value !== 'number' || !Number.isFinite(value)) {
+        throw new Error(`YouCam no devolvió una métrica válida para ${type}.`);
+      }
+      return value;
     };
 
+    const skinAge = byType['skin_age']?.ui_score;
+    const undertone = byType['skin_type']?.value;
+    if (typeof skinAge !== 'number' || !Number.isFinite(skinAge) || typeof undertone !== 'string' || !undertone.trim()) {
+      throw new Error('YouCam no devolvió edad dérmica o subtono válidos.');
+    }
+
     return {
-      hydration: scoreOf('hd_moisture', 75),
-      wrinkles: scoreOf('hd_wrinkle', 15),
-      spots: scoreOf('hd_age_spot', 12),
-      pores: scoreOf('hd_pore', 25),
-      subtono: byType['skin_type']?.value || 'cálido',
-      bioAge: byType['skin_age']?.ui_score || 28,
+      hydration: scoreOf('hd_moisture'),
+      wrinkles: scoreOf('hd_wrinkle'),
+      spots: scoreOf('hd_age_spot'),
+      pores: scoreOf('hd_pore'),
+      subtono: undertone,
+      bioAge: skinAge,
       raw: results,
     };
   }

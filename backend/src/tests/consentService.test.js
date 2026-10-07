@@ -220,21 +220,19 @@ describe('consentService', () => {
     });
 
   describe('deleteBiometricData', () => {
-        test('debe eliminar datos biométricos y retornar conteo (8 tablas incl. biometric_history)', async () => {
+        test('debe eliminar datos biométricos y retornar conteo de las tablas persistidas', async () => {
           mockPool.query
-            .mockResolvedValueOnce({ rowCount: 5 })  // facial_analysis
-            .mockResolvedValueOnce({ rowCount: 3 })  // skin_analysis
-            .mockResolvedValueOnce({ rowCount: 2 })  // hair_analysis
-            .mockResolvedValueOnce({ rowCount: 1 })  // virtual_try_on
-            .mockResolvedValueOnce({ rowCount: 0 })  // body_measurements
-            .mockResolvedValueOnce({ rowCount: 4 })  // facial_embeddings
             .mockResolvedValueOnce({ rowCount: 2 })  // user_photos
-            .mockResolvedValueOnce({ rowCount: 7 }); // biometric_history
+            .mockResolvedValueOnce({ rowCount: 7 })  // biometric_history
+            .mockResolvedValueOnce({ rowCount: 5 })  // beauty_profiles
+            .mockResolvedValueOnce({ rowCount: 1 })  // user_biometrics
+            .mockResolvedValueOnce({ rowCount: 3 })  // ai_diagnostics
+            .mockResolvedValueOnce({ rowCount: 6 }); // skin_profiles
       
           const result = await deleteBiometricData('user-123');
       
           expect(result.deleted).toBe(true);
-          expect(result.recordsAffected).toBe(24); // 5+3+2+1+0+4+2+7
+          expect(result.recordsAffected).toBe(24); // 2+7+5+1+3+6
           // Verificar que se hizo DELETE en biometric_history
           expect(mockPool.query).toHaveBeenCalledWith(
             expect.stringContaining('DELETE FROM biometric_history'),

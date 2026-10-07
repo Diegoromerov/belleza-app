@@ -8,6 +8,7 @@ const { wrapRouterAsync } = require('../utils/expressAsync');
 const express = require('express');
 const router = express.Router();
 const { authMiddleware } = require('../middleware/auth');
+const { pool } = require('../config/db');
 const { 
   checkConsent,
   grantConsent,
@@ -162,6 +163,35 @@ router.get('/history', authMiddleware, async (req, res) => {
       error: 'internal_error', 
       message: 'Error obteniendo historial de consentimientos' 
     });
+  }
+});
+
+/** Exporta los datos biométricos propios del usuario autenticado. */
+router.get('/export', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const [consents, profiles, diagnostics, userBiometrics, history, skinProfiles] = await Promise.all([
+      pool.query('SELECT consent_type, granted, granted_at, revoked_at, purpose, version_terms, created_at FROM biometric_consents WHERE user_id = $1 ORDER BY created_at', [userId]),
+      pool.query('SELECT id, face_scores, hands_diagnosis, recommendation, recommended_products, entry_point, created_at, updated_at FROM beauty_profiles WHERE user_id = $1', [userId]),
+      pool.query('SELECT id, tool_type, result_data, score_hidratacion, score_impurezas, score_luminosidad, track, created_at FROM ai_diagnostics WHERE user_id = $1 ORDER BY created_at', [userId]),
+      pool.query('SELECT id, subtono, estacion, paleta, hidratacion, sebo, mensaje_aura, created_at FROM user_biometrics WHERE user_id = $1 ORDER BY created_at', [String(userId)]),
+      pool.query('SELECT id, profile_id, face_scores, hands_diagnosis, recommendation, created_at FROM biometric_history WHERE user_id = $1 ORDER BY created_at', [userId]),
+      pool.query('SELECT id, tipo_piel, hidratacion_promedio, tendencia_acne, sensibilidad_score, diagnosticos_count, ultimo_diagnostico_at, created_at, updated_at FROM skin_profiles WHERE user_id = $1', [userId]),
+    ]);
+
+    res.json({
+      exported_at: new Date().toISOString(),
+      user_id: userId,
+      consents: consents.rows,
+      beauty_profiles: profiles.rows,
+      ai_diagnostics: diagnostics.rows,
+      user_biometrics: userBiometrics.rows,
+      biometric_history: history.rows,
+      skin_profiles: skinProfiles.rows,
+    });
+  } catch (error) {
+    console.error('❌ Error exportando datos biométricos:', error.message);
+    res.status(500).json({ error: 'export_failed', message: 'No se pudieron exportar los datos biométricos.' });
   }
 });
 
