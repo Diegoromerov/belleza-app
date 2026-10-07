@@ -43,6 +43,20 @@ router.get('/biometric', authMiddleware, async (req, res) => {
   }
 });
 
+// Compatibilidad con clientes legacy: el recurso solo se consulta contra el ID del JWT.
+router.get('/status/:userId', authMiddleware, async (req, res) => {
+  if (String(req.params.userId) !== String(req.user.id)) {
+    return res.status(403).json({ error: 'FORBIDDEN', message: 'Solo puedes consultar tu propio consentimiento.' });
+  }
+  try {
+    const consents = await getUserConsents(req.user.id);
+    const hasActiveConsent = consents.some((item) => item.granted === true && !item.revoked_at);
+    return res.json({ success: true, hasActiveConsent, consents });
+  } catch (error) {
+    return res.status(500).json({ error: 'internal_error', message: 'Error verificando consentimiento.' });
+  }
+});
+
 /**
  * @route GET /api/consent/biometric/:consentType
  * @description Verifica si el usuario tiene consentimiento especifico

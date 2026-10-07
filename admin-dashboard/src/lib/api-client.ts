@@ -84,12 +84,12 @@ class ApiClient {
   // Chats
   async getChats() {
     const response = await this.client.get('/api/chat/conversations');
-    return response.data;
+    return response.data?.data ?? [];
   }
 
   async getMessages(partnerId: number | string) {
     const response = await this.client.get(`/api/chat/messages/${partnerId}`);
-    return response.data;
+    return response.data?.data ?? [];
   }
 
   async sendMessage(partnerId: number | string, data: SendMessagePayload) {
@@ -97,7 +97,7 @@ class ApiClient {
       receiver_id: partnerId,
       ...data,
     });
-    return response.data;
+    return response.data?.data;
   }
 
   // Profile

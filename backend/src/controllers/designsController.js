@@ -80,50 +80,6 @@ const updateSkinProfile = async (userId, tipoPiel) => {
   }
 };
 
-const MOCK_NAIL_IMAGES = [
-  {
-    title: 'Uñas Rojas Elegantes',
-    image_url: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?q=80&w=600&auto=format&fit=crop',
-    link: 'https://pinterest.com/pin/mock_red_nails'
-  },
-  {
-    title: 'Diseño Rosa Pastel con Brillos',
-    image_url: 'https://images.unsplash.com/photo-1632345031435-8797b2d58045?q=80&w=600&auto=format&fit=crop',
-    link: 'https://pinterest.com/pin/mock_pink_nails'
-  },
-  {
-    title: 'Manicura Nude Minimalista',
-    image_url: 'https://images.unsplash.com/photo-1607779097040-26e80aa78e66?q=80&w=600&auto=format&fit=crop',
-    link: 'https://pinterest.com/pin/mock_nude_nails'
-  },
-  {
-    title: 'Uñas Esculpidas Glamour',
-    image_url: 'https://images.unsplash.com/photo-1519014816548-bf5fe059798b?q=80&w=600&auto=format&fit=crop',
-    link: 'https://pinterest.com/pin/mock_glam_nails'
-  },
-  {
-    title: 'Uñas Decoradas Tendencia',
-    image_url: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=600&auto=format&fit=crop',
-    link: 'https://pinterest.com/pin/mock_decorated_nails'
-  },
-  {
-    title: 'Nail Art Francés Moderno',
-    image_url: 'https://images.unsplash.com/photo-1629732047847-50b7ef46c3bb?q=80&w=600&auto=format&fit=crop',
-    link: 'https://pinterest.com/pin/mock_french_nails'
-  }
-];
-
-const MOCK_FACE_ANALYSIS = {
-  face_shape: 'Ovalado',
-  explanation: 'El rostro ovalado es considerado la forma más simétrica y versátil. Le beneficia casi cualquier tipo de corte, especialmente los que despejan las facciones y añaden movimiento lateral.',
-  recommended_cuts: [
-    { name: 'Corte Shag Capas Suaves', reason: 'Añade textura y volumen natural sin alterar la simetría.' },
-    { name: 'Bob Clásico Desfilado', reason: 'Enmarca perfectamente la mandíbula y define los pómulos.' },
-    { name: 'Flequillo Abierto (Curtain Bangs)', reason: 'Aporta frescura y resalta la mirada de forma sofisticada.' }
-  ],
-  pinterest_query: 'cortes de cabello rostro ovalado mujer'
-};
-
 // Inicializar el cliente de la API de Gemini
 const apiKey = process.env.GEMINI_API_KEY;
 const ai = apiKey ? new GoogleGenerativeAI(apiKey) : null;
@@ -339,31 +295,10 @@ Devuelve ÚNICAMENTE la consulta de búsqueda optimizada final de 3 a 6 palabras
         });
       }
 
-      console.log('⚠️ Búsqueda alternativa falló o fue bloqueada. Usando datos de prueba.');
-      const queryLower = q.toLowerCase();
-      let filteredMocks = MOCK_NAIL_IMAGES;
-      
-      if (queryLower.includes('rojo') || queryLower.includes('roja')) {
-        filteredMocks = [
-          MOCK_NAIL_IMAGES[0],
-          ...MOCK_NAIL_IMAGES.slice(1, 6)
-        ];
-      } else if (queryLower.includes('rosa') || queryLower.includes('past')) {
-        filteredMocks = [
-          MOCK_NAIL_IMAGES[1],
-          ...MOCK_NAIL_IMAGES.slice(0, 1),
-          ...MOCK_NAIL_IMAGES.slice(2, 6)
-        ];
-      }
-      
-      let finalData = filteredMocks.slice(0, 6);
-      if (personalize === 'true') {
-        finalData = await personalizeSearchResults(finalData, req.user.id, category);
-      }
       return res.status(200).json({
         success: true,
-        source: 'mock',
-        data: finalData
+        source: 'unavailable',
+        data: []
       });
     }
 
@@ -429,17 +364,10 @@ exports.analyzeFaceShape = async (req, res) => {
       return res.status(400).json({ error: 'Es obligatorio subir una foto de rostro en el campo "image".' });
     }
 
-    // Si no hay API Key de Gemini, devolvemos el Mock inmediato
+    // No presentar resultados estáticos como análisis de una imagen real.
     if (!ai) {
-      console.warn('⚠️ GEMINI_API_KEY no configurada. Retornando análisis de rostro simulado.');
-      if (req.user && req.user.id) {
-        await saveAnalysisToDb(req.user.id, 'eyebrow-visagism', MOCK_FACE_ANALYSIS);
-      }
-      return res.status(200).json({
-        success: true,
-        source: 'mock',
-        analysis: MOCK_FACE_ANALYSIS
-      });
+      if (req.file?.buffer) req.file.buffer.fill(0);
+      return res.status(503).json({ error: 'AI_UNAVAILABLE', message: 'El análisis de rostro no está disponible en este momento.' });
     }
 
     const fileBuffer = req.file.buffer;
@@ -555,132 +483,14 @@ exports.analyzeDesign = async (req, res) => {
     }
 
     const userId = req.user.id;
-    const userRes = await pool.query('SELECT glowai_plan, email FROM usuarios WHERE id = $1', [userId]);
+    const userRes = await pool.query('SELECT glowai_plan FROM usuarios WHERE id = $1', [userId]);
     const userPlan = userRes.rows[0]?.glowai_plan || 'free';
-    const userEmail = userRes.rows[0]?.email || '';
     const isPremium = userPlan === 'premium';
 
-    // Mock responses in case Gemini API is not configured
+    // No generar ni guardar diagnósticos inventados cuando el proveedor de IA falta.
     if (!ai) {
-      console.warn(`⚠️ GEMINI_API_KEY no configurada. Retornando análisis simulado para "${type}".`);
-      let mockResult = {};
-      if (type === 'skin-tone') {
-        mockResult = {
-          undertone: "Frío",
-          skin_tone: "Medio Claro",
-          explanation: "Tu subtono de piel es frío, lo que significa que los colores con base azul o rosa resaltan tu luminosidad natural de forma espectacular.",
-          recommended_colors: ["Rosa Pastel", "Azul Marino", "Gris Perla", "Rojo Cereza"],
-          pinterest_query: "paleta de colores invierno frio ropa maquillaje"
-        };
-        if (isPremium) {
-          mockResult.paleta_completa = {
-            ropa: [
-              { nombre: "Rosa Pastel", hex: "#FFD1DC" },
-              { nombre: "Azul Marino", hex: "#000080" },
-              { nombre: "Gris Perla", hex: "#E5E4E2" },
-              { nombre: "Rojo Cereza", hex: "#D23B51" },
-              { nombre: "Blanco Puro", hex: "#FFFFFF" },
-              { nombre: "Verde Esmeralda", hex: "#50C878" }
-            ],
-            maquillaje: [
-              { nombre: "Rosa Fucsia", hex: "#FF007F" },
-              { nombre: "Nude Frío", hex: "#D9A0A0" },
-              { nombre: "Sombras Plata", hex: "#C0C0C0" },
-              { nombre: "Boca Fresa", hex: "#E63946" },
-              { nombre: "Rubor Malva", hex: "#C8A2C8" }
-            ],
-            tinte_cabello: [
-              { nombre: "Negro Azulado", hex: "#000814" },
-              { nombre: "Rubio Platino", hex: "#E5E5E5" },
-              { nombre: "Castaño Oscuro Frío", hex: "#2B1B17" },
-              { nombre: "Rubio Cenizo", hex: "#B7A896" }
-            ]
-          };
-        }
-      } else if (type === 'hair-diagnostic') {
-        mockResult = {
-          damage_level: "Medio",
-          scalp_status: "Seco",
-          explanation: "Se observa cierta deshidratación en la hebra capilar con puntas abiertas leves, lo que sugiere una pérdida moderada de humedad y lípidos naturales.",
-          recommended_treatments: ["Mascarilla ultra-hidratante de argán", "Cauterización capilar con queratina", "Uso de sérum reparador de puntas"],
-          pinterest_query: "tratamiento hidratacion cabello antes y despues"
-        };
-      } else if (type === 'skin-texture') {
-        mockResult = {
-          skin_type: "Mixta",
-          pore_status: "Dilatado en zona T",
-          explanation: "Tu piel muestra una ligera acumulación de sebo en la frente y nariz (Zona T) con poros algo más visibles, mientras que las mejillas tienden a estar normales o secas.",
-          recommended_routine: ["Limpiador facial espumoso con ácido salicílico", "Tónico equilibrante sin alcohol", "Sérum con Niacinamida para control de poros"],
-          pinterest_query: "rutina skincare poros dilatados zona t"
-        };
-      } else if (type === 'eyebrow-visagism') {
-        mockResult = {
-          face_proportions: "Rostro Ovalado / Equilibrado",
-          eyebrow_shape: "Arqueada Suave",
-          explanation: "Dadas las proporciones equilibradas de tu rostro, una ceja con arco suave y grosor natural ayuda a enmarcar tus ojos sin endurecer tu mirada.",
-          recommended_designs: ["Depilación con hilo para definición limpia", "Sombreado temporal con Henna", "Laminado de cejas orgánicas"],
-          pinterest_query: "diseno cejas naturales rostro ovalado"
-        };
-      } else if (type === 'nails-style') {
-        mockResult = {
-          finger_proportion: "Dedos alargados y estilizados",
-          skin_undertone: "Cálido",
-          recommended_shapes: ["Almendra", "Ovalada", "Semi-cuadrada"],
-          recommended_colors: ["Nude beige", "Rojo terracota", "Glitter dorado"],
-          pinterest_query: "unas almendradas color nude beige"
-        };
-      } else if (type === 'care-routine') {
-        const concernLabel = concern ? ` (Enfocado en ${concern})` : '';
-        if (track === 'capilar') {
-          mockResult = {
-            skin_type: "Cabello seco con hebras deshidratadas",
-            scalp_status: "Seco con frizz leve",
-            explanation: `Tu cabello muestra deshidratación moderada con puntas abiertas. Requiere una rutina de nutrición y sellado térmico${concernLabel}.`,
-            recommended_routine: [
-              "Paso 1: Champú nutritivo sin sal con extracto de Argán",
-              `Paso 2: Mascarilla ultra-hidratante${concern ? ' enfocada en ' + concern : ' de Queratina'}`,
-              "Paso 3: Sérum sellador de cutícula y protector térmico"
-            ],
-            pinterest_query: "tratamiento hidratacion cabello antes y despues"
-          };
-        } else {
-          mockResult = {
-            skin_type: "Mixta con tendencia a deshidratación",
-            scalp_status: "Normal",
-            explanation: `Tu piel muestra brillo leve en la zona T con mejillas deshidratadas. Requiere una rutina que equilibre la producción de grasa e hidrate a profundidad${concernLabel}.`,
-            recommended_routine: [
-              `Paso 1: Limpiador suave hidratante${concern ? ' especializado para ' + concern : ''}`,
-              `Paso 2: Sérum activo${concern ? ' enfocado en ' + concern : ' de Ácido Hialurónico'}`,
-              "Paso 3: Crema gel ligera selladora con FPS"
-            ],
-            pinterest_query: "rutina skincare semanal piel mixta"
-          };
-        }
-      } else if (type === 'hair-color') {
-        mockResult = {
-          skin_undertone: "Cálido (Otoño Suave)",
-          face_shape: "Ovalado",
-          recommended_shades: ["Castaño Miel / Avellana", "Balayage Cobrizo sutil", "Chocolate dorado"],
-          explanation: "Los tonos cálidos con reflejos cobrizos o dorados aportan luz a tu piel y suavizan los rasgos de tu rostro ovalado de forma excepcional.",
-          recommended_colors: ["Miel", "Avellana", "Cobrizo", "Chocolate Dorado"],
-          pinterest_query: "tinte de cabello balayage miel castano"
-        };
-      } else {
-        return res.status(400).json({ error: `Tipo de análisis "${type}" no reconocido.` });
-      }
-
-      let dbId = null;
-      if (req.user && req.user.id) {
-        const mockTrack = (type === 'care-routine' && track) ? track : 'piel';
-        dbId = await saveAnalysisToDb(req.user.id, type, mockResult, mockTrack, null);
-      }
-      mockResult.id = dbId;
-
-      return res.status(200).json({
-        success: true,
-        source: 'mock',
-        analysis: mockResult
-      });
+      if (req.file?.buffer) req.file.buffer.fill(0);
+      return res.status(503).json({ error: 'AI_UNAVAILABLE', message: 'Los análisis de Glow IA+ no están disponibles en este momento.' });
     }
 
     const fileBuffer = req.file.buffer;
@@ -960,8 +770,8 @@ ${jsonTemplate}`;
 
     let dbId = null;
     if (req.user && req.user.id) {
-      const base64Image = req.file ? `data:${mimeType};base64,${fileBuffer.toString('base64')}` : null;
-      dbId = await saveAnalysisToDb(req.user.id, type, analysisJson, track, base64Image);
+      // Las imágenes originales se procesan en memoria y no se guardan en el historial.
+      dbId = await saveAnalysisToDb(req.user.id, type, analysisJson, track, null);
     }
     analysisJson.id = dbId;
 
@@ -1074,14 +884,9 @@ exports.compareDesigns = async (req, res) => {
     let comparisonResult = {};
 
     if (!ai) {
-      console.warn('⚠️ GEMINI_API_KEY no configurada. Retornando comparación simulada.');
-      comparisonResult = {
-        delta_hidratacion: 15,
-        delta_impurezas: -10,
-        delta_luminosidad: 20,
-        resumen: "Se observa una notable mejora en la textura y el brillo general de la piel. Las zonas deshidratadas lucen más uniformes.",
-        recomendacion: "Mantener la rutina actual y considerar un sellador ligero adicional por las noches."
-      };
+      if (fileBefore.buffer) fileBefore.buffer.fill(0);
+      if (fileAfter.buffer) fileAfter.buffer.fill(0);
+      return res.status(503).json({ error: 'AI_UNAVAILABLE', message: 'La comparación no está disponible en este momento.' });
     } else {
       const prompt = `Eres un especialista en análisis de piel. Se te proporcionan DOS fotografías del mismo usuario tomadas en momentos diferentes (foto A = antes, foto B = después). Analiza ambas y genera un JSON con esta estructura exacta:
 {
@@ -1130,10 +935,13 @@ Responde SOLO con el JSON. Sin texto adicional, sin backticks, sin explicación.
     if (diagnostic_id) {
       const updateQuery = `
         UPDATE ai_diagnostics
-        SET comparison_photo_url = $1, comparison_delta = $2
-        WHERE id = $3;
+        SET comparison_delta = $1
+        WHERE id = $2 AND user_id = $3;
       `;
-      await pool.query(updateQuery, ['http://dummy-url.com/comparison.jpg', JSON.stringify(comparisonResult), diagnostic_id]);
+      const updated = await pool.query(updateQuery, [JSON.stringify(comparisonResult), diagnostic_id, req.user.id]);
+      if (updated.rowCount === 0) {
+        return res.status(404).json({ error: 'DIAGNOSTIC_NOT_FOUND', message: 'No se encontró un diagnóstico propio con ese identificador.' });
+      }
     }
 
     res.json({
@@ -1189,12 +997,7 @@ exports.checkGlowAIQuota = async (req, res, next) => {
       return res.status(404).json({ error: 'Usuario no encontrado.' });
     }
 
-    let { email, glowai_plan, glowai_diagnosticos_mes, glowai_ciclo_reset_at } = result.rows[0];
-    
-    // Bypass quota for testing account
-    if (email === 'usuario_pruebas@gmail.com') {
-      return next();
-    }
+    let { glowai_plan, glowai_diagnosticos_mes, glowai_ciclo_reset_at } = result.rows[0];
 
     const ahora = new Date();
     const resetDate = new Date(glowai_ciclo_reset_at || ahora);
@@ -1234,22 +1037,7 @@ exports.checkGlowAIQuota = async (req, res, next) => {
 };
 
 exports.subscribePremium = async (req, res) => {
-  try {
-    const userId = req.user.id;
-    await pool.query(
-      `UPDATE usuarios 
-       SET glowai_plan = 'premium', glowai_ciclo_reset_at = NOW() 
-       WHERE id = $1;`,
-      [userId]
-    );
-    res.json({
-      success: true,
-      message: 'Suscripción a GlowAI Premium activada con éxito.'
-    });
-  } catch (error) {
-    console.error('❌ ERROR AL SUSCRIBIR A PREMIUM:', error);
-    res.status(500).json({ error: 'Error al procesar el pago de la suscripción' });
-  }
+  return res.status(503).json({ error: 'PAYMENT_GATEWAY_NOT_INTEGRATED', message: 'La suscripción Premium no está disponible hasta integrar y verificar el pago.' });
 };
 
 exports.checkInStreak = async (req, res) => {
@@ -1298,25 +1086,18 @@ exports.checkInStreak = async (req, res) => {
 
     const nuevoMaximo = Math.max(streak_maximo || 0, nuevoStreak);
     
-    let rewardUnlocked = false;
-    let updatePlanQuery = '';
-    if (nuevoStreak >= 7) {
-      updatePlanQuery = `, glowai_plan = 'premium'`;
-      rewardUnlocked = true;
-    }
+    const rewardUnlocked = false;
 
     const updateQuery = `
       UPDATE usuarios
-      SET streak_actual = $1, streak_maximo = $2, streak_ultimo_registro = $3 ${updatePlanQuery}
+      SET streak_actual = $1, streak_maximo = $2, streak_ultimo_registro = $3
       WHERE id = $4;
     `;
     await pool.query(updateQuery, [nuevoStreak, nuevoMaximo, hoy, userId]);
 
     res.json({
       success: true,
-      message: rewardUnlocked 
-        ? '¡Racha registrada! Has completado 7 días seguidos y desbloqueado GlowAI Premium Gratis por esta semana. 🎉' 
-        : '¡Rutina diaria registrada con éxito! Sigue así.',
+      message: '¡Rutina diaria registrada con éxito! Sigue así.',
       streak_actual: nuevoStreak,
       streak_maximo: nuevoMaximo,
       reward_unlocked: rewardUnlocked
@@ -1793,7 +1574,7 @@ exports.checkColorimetriaQuota = async (req, res, next) => {
     }
 
     const userQuery = `
-      SELECT email, glowai_plan, colorimetria_diagnosticos_mes, colorimetria_mes_referencia
+      SELECT glowai_plan, colorimetria_diagnosticos_mes, colorimetria_mes_referencia
       FROM usuarios
       WHERE id = $1;
     `;
@@ -1802,12 +1583,7 @@ exports.checkColorimetriaQuota = async (req, res, next) => {
       return res.status(404).json({ error: 'Usuario no encontrado.' });
     }
 
-    let { email, glowai_plan, colorimetria_diagnosticos_mes, colorimetria_mes_referencia } = result.rows[0];
-    
-    // Bypass de pruebas
-    if (email === 'usuario_pruebas@gmail.com') {
-      return next();
-    }
+    let { glowai_plan, colorimetria_diagnosticos_mes, colorimetria_mes_referencia } = result.rows[0];
 
     // Reset mensual
     const ahora = new Date();
@@ -1899,7 +1675,7 @@ exports.checkOutfitQuota = async (req, res, next) => {
     const userId = req.user.id;
 
     const userQuery = `
-      SELECT email, glowai_plan, glowstyle_outfits_mes, glowstyle_mes_referencia
+      SELECT glowai_plan, glowstyle_outfits_mes, glowstyle_mes_referencia
       FROM usuarios
       WHERE id = $1;
     `;
@@ -1908,12 +1684,7 @@ exports.checkOutfitQuota = async (req, res, next) => {
       return res.status(404).json({ error: 'Usuario no encontrado.' });
     }
 
-    let { email, glowai_plan, glowstyle_outfits_mes, glowstyle_mes_referencia } = result.rows[0];
-
-    // Bypass de pruebas
-    if (email === 'usuario_pruebas@gmail.com') {
-      return next();
-    }
+    let { glowai_plan, glowstyle_outfits_mes, glowstyle_mes_referencia } = result.rows[0];
 
     // Reset mensual para Premium
     const ahora = new Date();

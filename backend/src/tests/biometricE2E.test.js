@@ -50,8 +50,8 @@ describe('Sprint 3.2 — Flujo Completo E2E Hub Biométrico', () => {
         entryPoint: 'ideas',
       });
 
-    // En ambiente de test sin DB real orquestador retornará respuesta o fallback controlado
-    expect([201, 500]).toContain(scanRes.statusCode);
+    // Sin consentimiento persistido en la DB de prueba, el guard debe bloquear el análisis.
+    expect([201, 403, 500]).toContain(scanRes.statusCode);
   });
 
 });

@@ -141,19 +141,22 @@ class _BiometricWelcomeScreenState extends State<BiometricWelcomeScreen> {
       // Registrar consentimiento auditable en el Backend de PostgreSQL/Dashboard B2B
       await BiometricService.saveConsent();
     } catch (e) {
-      debugPrint('⚠️ Consentimiento guardado localmente en sesión: $e');
-    } finally {
+      debugPrint('⚠️ No se pudo registrar el consentimiento: $e');
       if (mounted) {
-        setState(() {
-          _isRegisteringConsent = false;
-        });
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const CaptureScreen(),
-          ),
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No se pudo guardar tu consentimiento. Revisa tu conexión e inténtalo de nuevo.')),
         );
       }
+      if (mounted) setState(() => _isRegisteringConsent = false);
+      return;
+    }
+
+    if (mounted) {
+      setState(() => _isRegisteringConsent = false);
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const CaptureScreen()),
+      );
     }
   }
 

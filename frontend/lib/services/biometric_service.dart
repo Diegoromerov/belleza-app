@@ -1,5 +1,7 @@
 // frontend/lib/services/biometric_service.dart
 import 'dart:convert';
+import 'biometric_export_stub.dart'
+    if (dart.library.html) 'biometric_export_web.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -18,21 +20,20 @@ class BiometricService {
   static Future<void> saveConsent() async {
     final baseUrl = await getBaseUrl();
     final token = await AuthService.getToken();
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId') ?? 'test-user';
-    final idempotencyKey = 'consent_${DateTime.now().millisecondsSinceEpoch}_$userId';
+    if (token == null || token.isEmpty) {
+      throw Exception('Inicia sesión para registrar el consentimiento biométrico.');
+    }
 
     final response = await http.post(
-      Uri.parse('$baseUrl/api/consent'),
+      Uri.parse('$baseUrl/api/consent/biometric'),
       headers: {
         'Content-Type': 'application/json',
-        'Idempotency-Key': idempotencyKey,
-        if (token != null) 'Authorization': 'Bearer $token',
+        'Authorization': 'Bearer $token',
       },
       body: jsonEncode({
-        'userId': userId,
-        'version': '1.0',
-        'accepted': true,
+        'consent_type': 'facial_analysis',
+        'purpose': 'Análisis facial y recomendaciones personalizadas de cuidado de piel.',
+        'version_terms': '1.0',
       }),
     );
 
@@ -44,27 +45,70 @@ class BiometricService {
   static Future<bool> hasConsent() async {
     final baseUrl = await getBaseUrl();
     final token = await AuthService.getToken();
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
-    if (userId == null) return false;
+    if (token == null || token.isEmpty) return false;
 
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/api/consent/status/$userId'),
+        Uri.parse('$baseUrl/api/consent/biometric/facial_analysis'),
         headers: {
-          if (token != null) 'Authorization': 'Bearer $token',
+          'Authorization': 'Bearer $token',
         },
       );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        return data['hasActiveConsent'] ?? false;
+        return data['data']?['allowed'] == true;
       }
     } catch (e) {
       // Retornar falso si hay error de red o no autenticado
       return false;
     }
     return false;
+  }
+
+  static Future<void> revokeConsent() async {
+    final baseUrl = await getBaseUrl();
+    final token = await AuthService.getToken();
+    if (token == null || token.isEmpty) {
+      throw Exception('Inicia sesión para administrar el consentimiento biométrico.');
+    }
+
+    final response = await http.delete(
+      Uri.parse('$baseUrl/api/consent/biometric/facial_analysis'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode != 200) {
+      throw Exception('No se pudo revocar el consentimiento biométrico.');
+    }
+
+    final deletion = await http.delete(
+      Uri.parse('$baseUrl/api/consent/biometric/facial_analysis/data'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (deletion.statusCode != 200) {
+      throw Exception('Consentimiento revocado, pero no se pudo confirmar la eliminación de los datos biométricos.');
+    }
+  }
+
+  static Future<Map<String, dynamic>> exportBiometricData() async {
+    final baseUrl = await getBaseUrl();
+    final token = await AuthService.getToken();
+    if (token == null || token.isEmpty) {
+      throw Exception('Inicia sesión para exportar tus datos biométricos.');
+    }
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/api/consent/export'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode != 200) {
+      throw Exception('No se pudieron exportar tus datos biométricos.');
+    }
+    final payload = response.body;
+    if (kIsWeb) {
+      downloadBiometricExport(payload);
+    }
+    return jsonDecode(payload) as Map<String, dynamic>;
   }
 
   static Future<Map<String, dynamic>> analyze({
@@ -76,9 +120,8 @@ class BiometricService {
     final baseUrl = await getBaseUrl();
     final token = await AuthService.getToken();
     final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId') ?? '7';
-    final idempotencyKey = 'scan_${DateTime.now().millisecondsSinceEpoch}_$userId';
-
+    final userId = prefs.getString('userId') ?? 'user';
+    final idempotencyKey = 'biometric_${userId}_${DateTime.now().microsecondsSinceEpoch}';
     final compressionResults = await Future.wait([
       compute(_compressImageIsolate, Uint8List.fromList(faceImageBytes)),
       compute(_compressImageIsolate, Uint8List.fromList(handsImageBytes)),
@@ -96,7 +139,6 @@ class BiometricService {
               if (token != null) 'Authorization': 'Bearer $token',
             },
             body: jsonEncode({
-              'userId': userId,
               'faceImage': base64Encode(compressedFace),
               'handsImage': base64Encode(compressedHands),
               'lat': lat,

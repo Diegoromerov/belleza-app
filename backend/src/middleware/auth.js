@@ -12,7 +12,7 @@ const authMiddleware = async (req, res, next) => {
   }
   const authHeader = req.header('Authorization') || '';
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : null;
-  if (!token) return res.status(401).json({ error: 'UNAUTHORIZED' });
+  if (!token) return res.status(401).json({ error: 'UNAUTHORIZED', message: 'Se requiere autenticación.' });
 
   try {
     // Opcional: Verificación de token revocado en Redis si está disponible
