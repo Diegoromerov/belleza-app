@@ -163,6 +163,8 @@ jobs:
       - name: Run Backend Integration & Unit Tests
         env:
           DATABASE_URL: postgres://app_rls_user:ci_only_password@localhost:5432/glowtest
+          JWT_SECRET: ci_secret_key_glowapp_2026_super_secure
+          RLS_ROLE_PASSWORD: ci_only_password
         run: |
           cd backend
           set -o pipefail

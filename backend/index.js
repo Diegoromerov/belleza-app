@@ -440,6 +440,7 @@ app.use('/api/academy', academyRoutes);
 app.use('/api/admin/auth', adminAuthRoutes);
 app.use('/api/admin/academy', academyAdminRoutes);
 app.use('/api/admin', adminPreciosRoutes);
+app.use('/api/admin', require('./src/routes/adminUploadRoutes'));
 app.use('/api/glow-pro', glowProRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/analytics', analyticsRoutes);

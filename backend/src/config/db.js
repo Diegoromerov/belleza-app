@@ -218,7 +218,7 @@ function handleMemoryQuery(text, params = []) {
           id: memoryUsers.size + 1,
           nombre: cleanEmail.split('@')[0],
           email: cleanEmail,
-          password_hash: '$2a$10$v7gW6kX9qX6e2C2YJ4yXQ.6.1J7K3l6P9x1M2N3O4P5Q6R7S8T9U0', // password123
+          password_hash: 'PLACEHOLDER_bcrypt_hash_set_via_env', // bcrypt hash placeholder
           auth_provider: 'LOCAL',
           provider_id: `local_${cleanEmail}`,
           rol: cleanEmail.includes('admin') ? 'ADMIN' : (cleanEmail.includes('salon') ? 'SALON' : (cleanEmail.includes('prestador') || cleanEmail.includes('provider') ? 'PRESTADOR' : 'CLIENTE')),

@@ -39,7 +39,11 @@ const { Client } = require('pg');
 
 const RAIZ = path.join(__dirname, '..');
 const ADMIN_URL = process.env.DATABASE_URL_ADMIN || process.env.DATABASE_URL;
-const PASSWORD = process.env.RLS_ROLE_PASSWORD || 'app_rls_default_pass_2026';
+const PASSWORD = process.env.RLS_ROLE_PASSWORD;
+if (!PASSWORD) {
+  console.error('❌ RLS_ROLE_PASSWORD environment variable is required but not set');
+  process.exit(2);
+}
 
 const MIGRACIONES = [
   'init.sql',
