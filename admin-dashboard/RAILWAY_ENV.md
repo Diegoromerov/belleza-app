@@ -6,8 +6,8 @@ Configura estas variables en el dashboard de Railway para el servicio **admin-da
 
 | Variable | Valor | Descripción |
 |----------|-------|-------------|
-| `BACKEND_INTERNAL_URL` | `http://backend.railway.internal:3000` | URL interna del backend (DNS privado Railway) |
-| `JWT_SECRET` | `glowapp_jwt_secret_key_32_chars_minimum` | **Debe ser idéntica a la del backend** (mínimo 32 chars) |
+| `BACKEND_INTERNAL_URL` | `http://belleza-app.railway.internal:3000` | URL interna del servicio backend `belleza-app` en Railway |
+| `JWT_SECRET` | Configura el mismo secreto de al menos 32 caracteres usado por el backend; consúltalo desde Railway Variables sin copiarlo al repositorio. | **No uses una clave de ejemplo** |
 | `NODE_ENV` | `production` | Entorno de producción |
 
 ## Opcionales (para features específicas)
@@ -31,26 +31,17 @@ Después del deploy, verifica en logs del servicio:
 ```
 🚀 Servidor en http://localhost:3001
 📦 Entorno: production
-✅ Backend conectado en http://backend.railway.internal:3000
+✅ Backend conectado en http://belleza-app.railway.internal:3000
 ```
 
 ## Importante: JWT_SECRET
 
 **El JWT_SECRET debe ser EXACTAMENTE IGUAL en ambos servicios:**
 
-```bash
-# En backend (ya configurado)
-JWT_SECRET=glowapp_jwt_secret_key_32_chars_minimum
-
-# En admin-dashboard (configurar igual)
-JWT_SECRET=glowapp_jwt_secret_key_32_chars_minimum
-```
+Consulta el valor configurado en el servicio `belleza-app` de Railway y asígnalo al servicio `admin-dashboard` sin copiarlo al repositorio ni a logs. No uses una clave de ejemplo en producción.
 
 Si difieren, el login fallará con "Token inválido o expirado".
 
 ## Preview Deployments
 
-Al abrir PR, Railway crea automáticamente:
-- URL: `https://admin-dashboard-preview-<PR_NUMBER>.up.railway.app`
-- Variables de entorno: **heredadas del servicio principal**
-- Cada push al PR actualiza el preview automáticamente
+Los PR environments nativos de Railway están habilitados en `grateful-harmony`. Railway crea un entorno temporal al abrir un PR contra la rama conectada y lo elimina al fusionar o cerrar el PR. El servicio `admin-dashboard` tiene como root directory `/admin-dashboard` y el proyecto usa PR environments enfocados, para evitar desplegar servicios sin cambios. Railway publica la URL del preview en el PR cuando el entorno queda listo.
