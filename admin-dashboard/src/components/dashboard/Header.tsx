@@ -1,52 +1,127 @@
+import Link from 'next/link';
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Bell, Search, Menu, X } from 'lucide-react';
+import { Bell, Search, Menu, X, ChevronDown, LogOut, User as UserIcon } from 'lucide-react';
 
 export default function Header() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+  const notificationsRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdowns on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setUserMenuOpen(false);
+      }
+      if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
+        setNotificationsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
-    <header className="bg-white/90 backdrop-blur-md border-b border-[#C5A052]/20 h-16 flex items-center justify-between px-4 md:px-8 shadow-sm shadow-[#2B2420]/5 sticky top-0 z-10">
-      <div className="flex items-center gap-4 flex-1">
+    <header className="header" role="banner">
+      <div className="header-left">
         <button 
-          className="md:hidden text-[#2B2420] hover:text-[#C5A052]" 
+          className="mobile-menu-btn"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          aria-label="Toggle menu"
+          aria-label={mobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
+          aria-expanded={mobileMenuOpen}
         >
           {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
+        
         <div className="relative max-w-md w-full hidden md:block">
-          <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-[#8C6F65]">
+          <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-muted">
             <Search size={18} />
           </span>
           <input
             type="text"
             placeholder="Buscar servicios, precios, auditoría..."
-            className="w-full pl-10 pr-4 py-2 border border-[#C5A052]/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C5A052]/20 focus:border-[#C5A052] text-sm transition-all duration-200 text-[#2B2420] bg-[#FAF8F5]"
+            className="form-input pl-10 pr-4"
+            aria-label="Buscar"
           />
         </div>
       </div>
 
-      <div className="flex items-center gap-4">
-        <button className="relative p-2 text-[#2B2420] hover:text-[#C5A052] hover:bg-[#FAF8F5] rounded-xl transition-all duration-200">
-          <Bell size={20} />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#C5A052] rounded-full"></span>
-        </button>
-        
-        <div className="h-8 w-px bg-[#C5A052]/20 hidden md:block"></div>
+      <div className="header-right">
+        {/* Notifications */}
+        <div className="dropdown" ref={notificationsRef}>
+          <button
+            className="btn-icon relative"
+            onClick={() => { setNotificationsOpen(!notificationsOpen); setUserMenuOpen(false); }}
+            aria-label="Notificaciones"
+            aria-expanded={notificationsOpen}
+          >
+            <Bell size={20} />
+            <span className="dot" aria-hidden="true" />
+          </button>
+          
+          {notificationsOpen && (
+            <div className="dropdown-menu" role="menu">
+              <div className="p-3 border-b border-subtle">
+                <h3 className="caption text-primary">Notificaciones</h3>
+              </div>
+              <button className="dropdown-item" role="menuitem">
+                <span>No hay notificaciones nuevas</span>
+              </button>
+            </div>
+          )}
+        </div>
 
+        {/* User Menu */}
         {user && (
-          <div className="flex items-center gap-3">
-            <div className="text-right hidden sm:block">
-              <p className="text-sm font-semibold text-[#2B2420] font-sans">{user.nombre}</p>
-              <p className="text-xs text-[#C5A052] font-semibold uppercase tracking-wide font-mono">{user.rol}</p>
-            </div>
-            <div className="w-9 h-9 rounded-full bg-[#2B2420] text-[#C5A052] border border-[#C5A052]/40 flex items-center justify-center font-bold text-sm shadow-sm font-serif">
-              {user.nombre[0].toUpperCase()}
-            </div>
+          <div className="dropdown" ref={userMenuRef}>
+            <button
+              className="user-menu"
+              onClick={() => { setUserMenuOpen(!userMenuOpen); setNotificationsOpen(false); }}
+              aria-label="Menú de usuario"
+              aria-expanded={userMenuOpen}
+            >
+              <div className="user-avatar">
+                {user.nombre[0].toUpperCase()}
+              </div>
+              <div className="user-info">
+                <p className="user-name">{user.nombre}</p>
+                <p className="user-role">{user.rol}</p>
+              </div>
+              <ChevronDown size={16} className={`transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
+            </button>
+            
+            {userMenuOpen && (
+              <div className="dropdown-menu" role="menu">
+                <div className="p-3 border-b border-subtle">
+                  <p className="body-sm text-primary">{user.nombre}</p>
+                  <p className="caption text-gold">{user.rol}</p>
+                </div>
+                <Link href="/perfil" className="dropdown-item" role="menuitem">
+                  <UserIcon size={16} />
+                  <span>Mi Perfil</span>
+                </Link>
+                <Link href="/settings" className="dropdown-item" role="menuitem">
+                  <Search size={16} />
+                  <span>Configuración</span>
+                </Link>
+                <div className="dropdown-divider" />
+                <button 
+                  onClick={logout}
+                  className="dropdown-item danger" 
+                  role="menuitem"
+                >
+                  <LogOut size={16} />
+                  <span>Cerrar Sesión</span>
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>

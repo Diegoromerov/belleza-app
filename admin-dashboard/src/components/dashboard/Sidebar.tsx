@@ -62,64 +62,61 @@ export default function Sidebar() {
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          className="sidebar-overlay visible"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar */}
-      <aside className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-[#FAF8F5] text-[#2B2420] min-h-screen flex flex-col justify-between border-r border-[#C5A052]/25 transform transition-transform duration-300 lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="p-6">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="bg-[#2B2420] p-2.5 rounded-xl text-[#C5A052] border border-[#C5A052]/40 shadow-sm">
+      <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
+        <div className="sidebar-brand">
+          <Link href="/" className="sidebar-logo" aria-label="GlowAdmin Home">
+            <div className="sidebar-logo-icon">
               <Scissors size={22} />
             </div>
             <div>
-              <h1 className="font-bold text-xl tracking-tight text-[#2B2420] font-serif">GlowAdmin</h1>
-              <p className="text-xs text-[#8C6F65] font-sans">Panel de Control Día</p>
+              <h1 className="sidebar-logo-text">GlowAdmin</h1>
+              <p className="caption">Panel de Control</p>
             </div>
-          </div>
-
-          <nav className="space-y-1">
-            {links.map((link) => {
-              const Icon = link.icon;
-              const isActive = pathname === link.href;
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
-                    isActive
-                      ? 'bg-[#2B2420] text-[#FCF8F6] shadow-md shadow-[#2B2420]/10 border border-[#C5A052]/40 font-medium'
-                      : 'text-[#8C6F65] hover:bg-[#FCF8F6] hover:text-[#2B2420] hover:border hover:border-[#C5A052]/20'
-                  }`}
-                >
-                  <Icon size={20} className={isActive ? 'text-[#C5A052]' : 'text-[#8C6F65]'} />
-                  <span>{link.label}</span>
-                </Link>
-              );
-            })}
-          </nav>
+          </Link>
         </div>
 
-        <div className="p-6 border-t border-[#C5A052]/20">
+        <nav className="sidebar-nav" role="navigation" aria-label="Navegación principal">
+          {links.map((link) => {
+            const Icon = link.icon;
+            const isActive = pathname === link.href;
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setSidebarOpen(false)}
+                className={`nav-link ${isActive ? 'active' : ''}`}
+                aria-current={isActive ? 'page' : undefined}
+              >
+                <Icon className="icon" size={20} aria-hidden="true" />
+                <span>{link.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="p-4 border-t border-subtle mt-auto">
           {user && (
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-full bg-[#2B2420] text-[#C5A052] border border-[#C5A052]/40 flex items-center justify-center font-bold font-serif">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="user-avatar">
                 {user.nombre[0].toUpperCase()}
               </div>
-              <div className="overflow-hidden">
-                <p className="text-sm font-semibold truncate text-[#2B2420]">{user.nombre}</p>
-                <p className="text-xs text-[#8C6F65] truncate font-mono">{user.rol}</p>
+              <div className="overflow-hidden min-w-0">
+                <p className="body-sm text-primary truncate">{user.nombre}</p>
+                <p className="micro text-gold font-medium uppercase tracking-wide">{user.rol}</p>
               </div>
             </div>
           )}
           <button
             onClick={logout}
-            className="flex items-center gap-3 px-4 py-3 rounded-xl w-full text-[#8C6F65] hover:bg-[#FDF2F4] hover:text-[#881337] transition-all duration-200"
+            className="btn btn-secondary w-full justify-start"
           >
-            <LogOut size={20} />
+            <LogOut size={20} className="icon" aria-hidden="true" />
             <span>Cerrar Sesión</span>
           </button>
         </div>
