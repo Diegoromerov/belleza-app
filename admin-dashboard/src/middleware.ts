@@ -5,7 +5,10 @@ import { jwtVerify } from 'jose';
 import { SECURITY_HEADERS } from './lib/security';
 
 const PUBLIC_PATHS = ['/login', '/register'];
-const JWT_SECRET = process.env.JWT_SECRET || 'test_jwt_secret_must_be_at_least_32_characters_long_super_secure';
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  throw new Error('JWT_SECRET environment variable is required but not set');
+}
 
 function getJwtSecretKey() {
   return new TextEncoder().encode(JWT_SECRET);

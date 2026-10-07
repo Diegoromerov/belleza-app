@@ -72,7 +72,7 @@ try {
 Write-Host "`n=== ACCESO WEB ===" -ForegroundColor Cyan
 Write-Host "URL: http://localhost:3001/login" -ForegroundColor Green
 Write-Host "Email: admin@demo.com" -ForegroundColor Gray
-Write-Host "Password: password123" -ForegroundColor Gray
+Write-Host "Password: <configurar_en_.env_local>" -ForegroundColor Gray
 Write-Host "`n=== RUTAS ADMIN DISPONIBLES ===" -ForegroundColor Cyan
 Write-Host "  http://localhost:3001/admin/business   - Cumplimiento Business" -ForegroundColor Gray
 Write-Host "  http://localhost:3001/admin/precios    - Gestión de Precios" -ForegroundColor Gray

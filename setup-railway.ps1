@@ -89,7 +89,7 @@ Write-Host ""
 
 Write-Host "3. ⚙️ Configura Variables de Entorno (servicio admin-dashboard):" -ForegroundColor White
 Write-Host "   BACKEND_INTERNAL_URL=http://backend.railway.internal:3000" -ForegroundColor Gray
-Write-Host "   JWT_SECRET=glowapp_jwt_secret_key_32_chars_minimum" -ForegroundColor Gray
+Write-Host "   JWT_SECRET=<tu_jwt_secret_de_al_menos_32_caracteres>" -ForegroundColor Gray
 Write-Host "   NODE_ENV=production" -ForegroundColor Gray
 Write-Host ""
 
