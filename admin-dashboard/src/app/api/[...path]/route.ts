@@ -21,6 +21,7 @@ const ALLOWED_PATH_PREFIXES = [
   'portfolio/',
   'users/',
   'precios/',
+  'productos/',
   'vto/',
   'business/',
   'academia/'
