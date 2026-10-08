@@ -172,15 +172,24 @@ Dos problemas distintos, no uno:
 
 ---
 
-### 2.C — El esquema tiene tres dueños (deuda estructural)
+### 2.C — El esquema tiene CUATRO dueños (deuda estructural)
+
+> **Corrección:** la primera versión de este plan decía "tres dueños". Al investigar SOS apareció el
+> cuarto, que es además **el canónico**: `backend/init.sql`.
 
 **Hecho.** Las tablas no las define un solo sitio:
 
 | Dueño | Qué crea | Evidencia |
 |---|---|---|
+| **`backend/init.sql`** *(canónico)* | 10 tablas base: `usuarios`, `perfiles_prestador`, `services`, `bookings`, `reviews`, `portfolio_items`, `messages`, `transactions`, `nail_tryon_jobs` | `index.js:1337` lo ejecuta al arrancar: `Esquema inicializado/verificado desde init.sql (fuente canónica)` |
 | `backend/migrations/*.sql` | 107 tablas | runner en `src/config/migrationRunner.js` |
-| **DDL en runtime** | 27 tablas: `usuarios`, `productos`, `precios_producto`, `listas_precios`, `bookings`, `sos_alerts`, `disputas`, `admin_actions`, `tenants`, `services`… | `grep -E "CREATE TABLE" backend/index.js` → 50 sentencias |
+| **DDL en runtime** | 27 tablas: `usuarios`, `productos`, `sos_alerts`, `disputas`, `admin_actions`, `tenants`… | `grep -E "CREATE TABLE" backend/index.js` → 50 sentencias |
 | Servicios | más DDL | `src/config/pgMemory.js`, `src/services/corpusAutoIngest.js` |
+
+`migrations/068_force_rls_strict_isolation.sql:115` lo confirma por escrito: *"la fuente única de
+verdad del esquema es `init.sql` + ..."*. Es decir, el proyecto **ya decidió** cuál es el dueño, pero
+los otros tres siguen escribiendo. `bookings` y `perfiles_prestador` — las dos tablas de las que
+depende medio backend — **no están en migraciones**: solo existen en `init.sql`.
 
 Consecuencias observadas:
 - `admin_actions` se crea **solo en runtime**, no en migraciones → si el arranque falla, la tabla no existe.
@@ -203,6 +212,48 @@ Consecuencias observadas:
 | 4 | El Sidebar declara 14 enlaces en 4 grupos de rol, con duplicados (`/chat` y `/perfil` aparecen 3 veces) | `components/dashboard/Sidebar.tsx` | Baja |
 | 5 | 4 suites de test del backend en rojo (12 fallos), **preexistentes** | confirmado con `git stash` | Media |
 | 6 | Crash `Cannot read properties of undefined (reading 'length')` sin localizar | 57 accesos a `.length` auditados; recharts descartado por reproducción con jsdom; traza ya instrumentada (`8c443f7b0`) | Alta hasta que aparezca la traza |
+
+---
+
+### 2.E — La superficie `admin-glow` NO tiene interfaz (SOS, prestadores, payouts) ⛔
+
+**Hecho.** El módulo expone 9 endpoints. El panel usa **3**, y solo como contadores del dashboard.
+Los otros **6 no tienen ninguna pantalla**:
+
+| Endpoint | UI en el panel |
+|---|---|
+| `GET /sos/active` | Solo un contador (`page.tsx:360-362`: "Alertas SOS — N activas") |
+| `PATCH /sos/resolve/:id` | **ninguna** |
+| `GET /provider/pending` | Solo alimenta una lista del dashboard |
+| `POST /provider/approve` · `/reject` · `/verify` · `/verify-auto` | **ninguna** |
+| `POST /payout/approve` | **ninguna** |
+
+**Evidencia de que SOS no tiene ruta:** `admin-dashboard/src/app/(dashboard)/admin/` contiene solo
+`academia`, `business`, `precios`, `productos`, `vto` — no hay `sos`. Y el Sidebar
+(`components/dashboard/Sidebar.tsx:54-59`) ofrece: Cumplimiento Business, Gestión de Precios,
+Catálogo Productos, Academia Glow, Mensajes, Mi Perfil. **Nunca hubo enlace a SOS**: no es una
+regresión de la Fase 1.
+
+**Consecuencia:** un administrador puede ver *cuántas* alertas SOS hay activas, pero **no puede ver
+ninguna ni atenderla**. Igual con la verificación de prestadores y los retiros.
+
+**Defecto adicional encontrado en el camino** — `admin.model.js:44`:
+
+```sql
+UPDATE sos_alerts SET estado = $1, creado_en = NOW() WHERE id = $2;
+```
+
+Resolver una alerta **sobrescribe su fecha de creación**. Como `sos_alerts` no tiene columna
+`resuelto_en` (DDL en `index.js:1401-1409`), el momento en que ocurrió el SOS se pierde al
+atenderlo — justo el dato que se audita después.
+
+**DECISIÓN REQUERIDA:**
+- **E1** — Crear `/admin/sos`: listado de alertas activas (con cliente, prestador, coordenadas y
+  antigüedad) + acción de resolver. Es lo mínimo para "poder explorarlo".
+- **E2** — Añadir además `/admin/prestadores` (cola de verificación con aprobar/rechazar/verificar) y
+  `/admin/payouts` (aprobar retiro). Completa la superficie del módulo.
+- **E3** — Arreglar el `creado_en` de `updateSOSAlertStatus` (columna `resuelto_en` nueva, o no tocar
+  `creado_en`). Independiente de E1/E2; conviene hacerlo con lo que se elija.
 
 ---
 
