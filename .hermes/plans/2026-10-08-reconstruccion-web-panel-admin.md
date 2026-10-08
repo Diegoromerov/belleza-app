@@ -263,6 +263,25 @@ atenderlo — justo el dato que se audita después.
 - **E2 ⏳ PENDIENTE** — `/admin/prestadores` (cola de verificación con aprobar/rechazar/verificar) y
   `/admin/payouts` (aprobar retiro). Completa la superficie del módulo: 6 endpoints siguen sin UI.
 
+**SQL del módulo validado contra el esquema real (2026-10-08).** Se comprobó cada tabla, columna y
+literal de enum que usa `admin.model.js`, porque un enum inválido no da 404 sino error en runtime:
+
+| Consulta | Comprobación | Resultado |
+|---|---|---|
+| `getActiveSOSAlerts` | `usuarios.nombre`/`phone`, `bookings.provider_id`, `sos_alerts` | ✅ |
+| `getPendingProviders` | `perfiles_prestador.estatus_verificacion = 'PENDIENTE'` ⊂ enum | ✅ |
+| `getConsolidatedFinancialMetrics` | `estado_cita` incluye `COMPLETADA` y `FINALIZADA_PRESTADOR` | ✅ |
+| `getDailyFinancialHistory` | idem + `bookings.scheduled_at` | ✅ |
+| `getCategoryPopularity` | `services.category` | ✅ |
+| `setProviderVerifiedStatus` | `'APROBADO'`/`'RECHAZADO'` ⊂ `estado_verificacion` | ✅ |
+| `getProviderWalletBalance` | `provider_wallet.saldo_disponible` | ✅ |
+| `processWalletWithdrawal` | `tipo_wallet_tx` incluye `DEBITO_RETIRO`; `estado` admite `COMPLETADO` | ✅ |
+| `hasActiveDisputes` | `estado_disputa` incluye `ABIERTA` y `EN_REVISION` | ✅ |
+| `logKYCEvidence` | `kyc_audit_logs` existe (`migrations/073`) | ✅ |
+
+Conclusión: el módulo no solo está montado, **su SQL es correcto**, así que E2 se puede construir
+sobre un backend sano. Riesgo de E2 = solo el de escribir la UI.
+
 **Defecto colateral detectado en `src/middleware.ts` (severidad baja, latente):** la línea 47
 (`if (/\.[a-zA-Z0-9]+$/.test(pathname)) return NextResponse.next()`) **esquiva la autenticación** para
 cualquier ruta que termine en `.ext`. Demostrado en producción: `/admin/zzz-noexiste.txt` → **404**
