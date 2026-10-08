@@ -468,6 +468,10 @@ app.get('/api/health', async (req, res) => {
     message: salud.message,
     timestamp: new Date().toISOString(),
     env: process.env.NODE_ENV || 'development',
+    // Build desplegado: permite comprobar desde fuera que la version que corre
+    // en produccion es la del commit esperado (Railway lo inyecta).
+    commit: process.env.RAILWAY_GIT_COMMIT_SHA || process.env.GIT_COMMIT || null,
+    service: process.env.RAILWAY_SERVICE_NAME || null,
     database: dbStatus,
     // FIX-FLUTTER-06: política de versión de la app (fuente: MINIMUM_APP_VERSION /
     // LATEST_APP_VERSION). La app compara su versión instalada y bloquea si está
