@@ -79,6 +79,24 @@ jobs:
         run: |
           cd backend
           node tests/migrationsNoDuplicateNumbers.test.js
+      # Guardas escritas para el runner nativo `node:test`. Se llaman `*.nodetest.js`
+      # A PROPÓSITO: jest sólo colecciona `*.test.js`, y mientras se llamaron
+      # `*.test.js` pasaban dos cosas malas a la vez: jest las recogía, veía 0 tests
+      # y las marcaba rojas con «must contain at least one test» (rojo fantasma), y
+      # ese mensaje tapaba la aserción real que sí fallaba dentro
+      # (auth.js leyendo `usuarios` por id). Esta compuerta las ejecuta de verdad
+      # con su runner y es BLOQUEANTE.
+      - name: Guardas node:test (bloqueante)
+        run: |
+          cd backend
+          set -o pipefail
+          npm run test:node 2>&1 | tee /tmp/node-tests.log
+          rc=$?
+          if [ $rc -ne 0 ]; then
+            echo "::error::Guardas node:test en rojo (exit $rc)"
+            tail -25 /tmp/node-tests.log | while IFS= read -r l; do echo "::error::$l"; done
+          fi
+          exit $rc
       # FIX-FLUTTER-09 — Contract testing OpenAPI (bloqueante).
       # El contrato (backend/openapi/openapi.json) se regenera desde el app real y
       # se compara con el artefacto versionado. Un endpoint nuevo, una ruta

@@ -37,6 +37,13 @@ const enModoMemoria = () => {
 // Esquema del harness. Es permisivo a propósito (sin FK ni CHECK): el objetivo es que las suites de
 // integración ejerciten el SQL y las queries reales, no re-validar las restricciones de las
 // migraciones de producción (ver backend/src/db/migrations/012_business_engine.sql y 013_memberships.sql).
+//
+// ⚠️ REGLA QUE NO SE PUEDE ROMPER: se omiten FK y CHECK, pero NUNCA los TIPOS. Un tipo distinto aquí
+// hace que el emulador mienta y produzca fallos que en producción NO existen. Caso real que costó
+// 4 suites rojas: `business_documents.provider_id` estaba como VARCHAR(36) mientras la migración 012
+// lo declara INTEGER; el servicio compara `doc.provider_id !== req.user.id` de forma estricta, así que
+// en el emulador llegaba "101" (string) y daba 403 al dueño de su propio documento. Al añadir o tocar
+// una columna, copia el tipo exacto de su migración en backend/migrations/.
 const SCHEMA_SQL = `
   CREATE TABLE IF NOT EXISTS usuarios (
     id SERIAL PRIMARY KEY,
@@ -146,7 +153,7 @@ const SCHEMA_SQL = `
     id VARCHAR(36) PRIMARY KEY,
     template_code VARCHAR(50),
     business_profile_id VARCHAR(36),
-    provider_id VARCHAR(36),
+    provider_id INTEGER,
     tenant_id VARCHAR(36),
     title VARCHAR(150),
     category VARCHAR(50),
@@ -155,7 +162,7 @@ const SCHEMA_SQL = `
     disclaimer TEXT,
     version INTEGER DEFAULT 1,
     status VARCHAR(30) DEFAULT 'DRAFT',
-    signed_by VARCHAR(36),
+    signed_by INTEGER,
     signature_hash VARCHAR(128),
     signed_at TIMESTAMP,
     supersedes_id VARCHAR(36),
@@ -167,8 +174,8 @@ const SCHEMA_SQL = `
     id VARCHAR(36) PRIMARY KEY,
     document_id VARCHAR(36),
     tenant_id VARCHAR(36),
-    provider_id VARCHAR(36),
-    actor_id VARCHAR(36),
+    provider_id VARCHAR(64) DEFAULT 'system',
+    actor_id VARCHAR(64),
     action VARCHAR(50),
     metadata JSONB,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

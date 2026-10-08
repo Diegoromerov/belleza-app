@@ -1333,6 +1333,20 @@
       }
     },
     "/api/admin/products": {
+      "get": {
+        "operationId": "getapi_admin_products",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "GET /api/admin/products (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "admin"
+        ],
+        "x-glowapp-documented": false
+      },
       "post": {
         "operationId": "postapi_admin_products",
         "parameters": [],
@@ -5564,8 +5578,8 @@
   ],
   "x-glowapp-contract": {
     "generator": "backend/src/openapi/buildOpenApi.js",
-    "operationsDiscovered": 244,
+    "operationsDiscovered": 245,
     "operationsDocumented": 16,
-    "routesMounted": 260
+    "routesMounted": 261
   }
 }

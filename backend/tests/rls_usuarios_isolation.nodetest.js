@@ -1,4 +1,4 @@
-// backend/tests/rls_usuarios_isolation.test.js
+// backend/tests/rls_usuarios_isolation.nodetest.js
 //
 // Regresión estática del hallazgo P0 t_fix_tenant_07 (tenant #7):
 // `usuarios` estaba EXCLUIDA de RLS (migración 068 ejecutaba
@@ -9,7 +9,7 @@
 // haya node_modules: sólo inspecciona el texto de las migraciones y del código
 // de arranque de identidad, que es donde vive la regresión.
 //
-// Ejecutar:  node --test backend/tests/rls_usuarios_isolation.test.js
+// Ejecutar:  node --test backend/tests/rls_usuarios_isolation.nodetest.js
 //
 // Debe fallar (ROJO) contra la versión base, que desactivaba RLS en `usuarios`.
 
