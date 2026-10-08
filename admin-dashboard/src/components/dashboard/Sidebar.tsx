@@ -17,7 +17,8 @@ import {
   Tag,
   Menu,
   X,
-  Building2
+  Building2,
+  Package
 } from 'lucide-react';
 
 export default function Sidebar() {
@@ -40,6 +41,7 @@ export default function Sidebar() {
       return [
         { href: '/admin/business', label: 'Cumplimiento Business', icon: Building2 },
         { href: '/admin/precios', label: 'Gestión de Precios', icon: Tag },
+        { href: '/admin/productos', label: 'Catálogo Productos', icon: Package },
         { href: '/admin/academia', label: 'Academia Glow', icon: GraduationCap },
         { href: '/chat', label: 'Mensajes', icon: MessageSquare },
         { href: '/perfil', label: 'Mi Perfil', icon: UserIcon },
