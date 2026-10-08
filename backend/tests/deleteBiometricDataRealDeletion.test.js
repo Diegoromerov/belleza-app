@@ -195,9 +195,32 @@ function montarRuta({ fallarEnDelete = false } = {}) {
 }
 
 // Tablas que la implementación canónica (consentService) borra de verdad.
+//
+// Se derivan de la lista `tables` del propio código, NO de un escaneo de literales
+// `DELETE FROM <tabla>`: el refactor 94b199b45 pasó de 7 sentencias sueltas a un bucle
+// parametrizado sobre un array, y el escaneo textual devolvía [] — lo que rompía B3/E4
+// por la razón equivocada mientras el borrado funcionaba.
+//
+// Y se exige además que cada tabla exista en las migraciones: la versión anterior
+// borraba de 6 tablas FANTASMA (facial_analysis, skin_analysis, hair_analysis,
+// virtual_try_on, body_measurements, facial_embeddings) que ninguna migración crea,
+// mientras las 6 reales del servicio no se tocaban. Eso es lo que hay que vigilar.
 const TABLAS_CANONICAS = [
-  ...SVC_SRC.matchAll(/\bDELETE\s+FROM\s+([A-Za-z_][A-Za-z0-9_]*)/gi),
+  ...(SVC_SRC.match(/const\s+tables\s*=\s*\[([\s\S]*?)\]/) || [, ''])[1].matchAll(
+    /'([A-Za-z_][A-Za-z0-9_]*)'/g
+  ),
 ].map((m) => m[1].toLowerCase());
+
+// Esquema real: toda tabla de la lista de supresión debe estar creada por alguna migración.
+const MIGRACIONES_SRC = fs
+  .readdirSync(path.join(__dirname, '..', 'migrations'))
+  .filter((f) => f.endsWith('.sql'))
+  .map((f) => fs.readFileSync(path.join(__dirname, '..', 'migrations', f), 'utf8'))
+  .join('\n');
+const tablasReales = (tabla) =>
+  new RegExp(`CREATE\\s+TABLE\\s+(IF\\s+NOT\\s+EXISTS\\s+)?(public\\.)?${tabla}\\b`, 'i').test(
+    MIGRACIONES_SRC
+  );
 
 function tablasBorradas(sentencias) {
   const set = new Set();
@@ -220,7 +243,7 @@ const CHECKS = [
   { id: 'E1', nombre: 'el middleware ya no contiene DELETEs comentados (stub muerto eliminado)' },
   { id: 'E2', nombre: 'el fuente del middleware delega explícitamente en consentService' },
   { id: 'E3', nombre: 'la ruta de exposición (DELETE /biometric/:consentType/data) usa esa única implementación' },
-  { id: 'E4', nombre: 'la implementación canónica conserva >= 7 DELETE FROM (no se debilitó)' },
+  { id: 'E4', nombre: 'toda tabla de la supresión existe en las migraciones (sin tablas fantasma)' },
 ];
 
 async function evaluarTodo() {
@@ -248,8 +271,11 @@ async function evaluarTodo() {
   put('B2', deletes.length >= 1, `sentencias DELETE ejecutadas = ${deletes.length}`);
   put(
     'B3',
-    TABLAS_CANONICAS.length >= 7 && TABLAS_CANONICAS.every((t) => borradas.has(t)),
-    `tablas canónicas borradas = [${[...borradas].join(', ') || 'ninguna'}] de [${TABLAS_CANONICAS.join(', ')}]`
+    TABLAS_CANONICAS.length > 0 &&
+      TABLAS_CANONICAS.every((t) => borradas.has(t)) &&
+      TABLAS_CANONICAS.every(tablasReales),
+    `tablas canónicas borradas = [${[...borradas].join(', ') || 'ninguna'}] de [${TABLAS_CANONICAS.join(', ')}]` +
+      ` · todas existen en migraciones = ${TABLAS_CANONICAS.every(tablasReales)}`
   );
   put(
     'B4',
@@ -324,10 +350,12 @@ async function evaluarTodo() {
     'la ruta invoca deleteBiometricData(userId, consentType) del middleware'
   );
 
+  const fantasmas = TABLAS_CANONICAS.filter((t) => !tablasReales(t));
   put(
     'E4',
-    TABLAS_CANONICAS.length >= 7,
-    `DELETE FROM en consentService = ${TABLAS_CANONICAS.length}`
+    TABLAS_CANONICAS.length > 0 && fantasmas.length === 0,
+    `tablas de supresión en consentService = ${TABLAS_CANONICAS.length} · sin tablas fantasma = ${fantasmas.length === 0}` +
+      (fantasmas.length ? ` (fantasma: ${fantasmas.join(', ')})` : '')
   );
 
   return res;

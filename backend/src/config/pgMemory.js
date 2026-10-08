@@ -44,6 +44,8 @@ const enModoMemoria = () => {
 // lo declara INTEGER; el servicio compara `doc.provider_id !== req.user.id` de forma estricta, así que
 // en el emulador llegaba "101" (string) y daba 403 al dueño de su propio documento. Al añadir o tocar
 // una columna, copia el tipo exacto de su migración en backend/migrations/.
+// Nota: para `business_documents.signed_by` el tipo vigente es VARCHAR(150) por la migración
+// 080 (que corrige el INTEGER de 012, porque el código guarda el NOMBRE del firmante).
 const SCHEMA_SQL = `
   CREATE TABLE IF NOT EXISTS usuarios (
     id SERIAL PRIMARY KEY,
@@ -162,7 +164,7 @@ const SCHEMA_SQL = `
     disclaimer TEXT,
     version INTEGER DEFAULT 1,
     status VARCHAR(30) DEFAULT 'DRAFT',
-    signed_by INTEGER,
+    signed_by VARCHAR(150),
     signature_hash VARCHAR(128),
     signed_at TIMESTAMP,
     supersedes_id VARCHAR(36),
