@@ -66,10 +66,16 @@ test('las rutas /api son gestionadas por sus controladores / BFF proxy', () => {
 test('el atajo por extensión NO existe: lo público es una lista explícita', () => {
   // Este caso antes afirmaba el atajo (`/\.[a-zA-Z0-9]+$/.test(pathname)`) como si fuera una
   // propiedad deseada, con lo que el defecto estaba blindado por una prueba. Ahora afirma lo
-  // contrario: nada puede volver a decidir por la extensión del camino.
+  // contrario. Se quitan los comentarios antes de mirar, porque la documentación de portero.ts
+  // cita el atajo a propósito; y se busca un token sin barras invertidas, porque la versión
+  // anterior quedó sobre-escapeada y no podía coincidir con nada: pasaba siempre, incluso con
+  // el defecto dentro.
+  const sinComentarios = por
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/^[ \t]*\/\/.*$/gm, '');
   assert.ok(
-    !/\\\.[a-zA-Z0-9]+\$\/\.test\(/.test(por),
-    'reapareció un atajo por extensión en la decisión del portero'
+    !sinComentarios.includes('.test('),
+    'hay una expresión regular decidiendo quién pasa por el portero: volvió el atajo por extensión'
   );
   assert.match(por, /export const ASSETS_PUBLICOS = new Set\(\[/);
   assert.match(por, /if \(ASSETS_PUBLICOS\.has\(pathname\)\)/);
