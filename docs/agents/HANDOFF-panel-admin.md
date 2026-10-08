@@ -1,6 +1,7 @@
 # Handoff — panel admin de Belleza App: estado de `main` y reglas para continuar
 
-Fecha: 2026-10-08 · describe el estado tal como quedó en `9494e5027` (el commit de este documento).
+Fecha: 2026-10-08 · describe el estado de `main` en esa fecha. Los commits del §1 y del §2 son
+la referencia; ninguno de ellos es «el tip».
 
 Este documento **no fija el SHA de la punta de `main`**: hacerlo garantiza que quede desactualizado
 en cuanto se commitea cualquier cosa — pasó con la primera versión. Cite los commits por lo que
