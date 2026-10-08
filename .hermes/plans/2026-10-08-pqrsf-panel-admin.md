@@ -99,7 +99,14 @@ Cada fase es desplegable por sí sola y no deja el sistema a medias.
   que un fallo revierte el conjunto (no deja esquema a medias).
 - Todo debe ser **idempotente** (`IF NOT EXISTS`) porque el modo sin registro re-aplica todo.
 
-### Fase 1 — Cimiento: tiempo de respuesta explícito
+### Fase 1 — Cimiento: tiempo de respuesta explícito · **HECHA** (`b08951417`)
+
+**Verificación de cierre:** backend en producción sirviendo `b08951417` y el arranque
+registró `✅ Base de datos: Migración 081_pqrsf_sla_y_autor.sql aplicada exitosamente.`
+Guards: `backend/tests/pqrsfSla.test.js` 19/19 con 5 mutaciones probadas, guard de
+numeración de migraciones 7/7, panel 66/66. La migración se ejecutó además contra un
+Postgres 16 real (esquema `007`+`045` + datos sintéticos): backfill correcto, idempotente
+(re-aplicar no cambia ningún dato) y rollback que no toca la conversación.
 
 Añadir a `tickets` (migración `08x`, idempotente) las columnas que hoy hay que deducir, y poblarlas **al
 escribir** (no calculadas al leer, para que el reporte sea una consulta trivial y no un `JOIN` frágil):
