@@ -124,13 +124,51 @@ Así que arreglar solo el frontend no basta: el proxy lo bloquearía igual.
 - No existe tabla `categorias` en `migrations/` ni en el DDL de runtime.
 - No existe columna `categoria_id` en `productos`.
 
-**Impacto.** El `<select>` de categorías en alta/edición de producto nunca se poblará, y la columna "Categoría" de la tabla siempre estará vacía. Es una función **imposible de cumplir** con el esquema actual, no un bug de cableado.
+**Causa raíz (inspección de campo, no hipótesis).** `categoria_id` es un **campo fantasma en 5
+sitios** del panel:
 
-**DECISIÓN REQUERIDA:**
-- **B1.** Derivar categorías de `productos.tag_especialidad` (ya existe) y quitar el selector libre → cero cambios de esquema. *Recomendada si `tag_especialidad` ya es el vocabulario de categorías.*
-- **B2.** Crear tabla `categorias` + FK `productos.categoria_id` (migración nueva) + CRUD + endpoint. *Correcta si se necesita taxonomía editable y jerárquica.*
+| Línea | Qué hace |
+|---|---|
+| `:72`, `:145`, `:167` | `categoria_id: ''` en el estado del formulario (alta, reset, edición) |
+| `:303` | Lo envía en el payload: `categoria_id: formData.categoria_id ? parseInt(...) : null` |
+| `:502` | **La columna Categoría de la tabla lo lee por fila:** `categorias.find(c => c.id === parseInt(formData.categoria_id \|\| '0'))?.nombre \|\| 'N/A'` |
+| `:625-633` | `<select name="categoria_id">` alimentado por el `categorias` que nunca llega |
 
-> Antes de decidir: confirmar con negocio si `tag_especialidad` es realmente la categoría del producto. Marca **HIPÓTESIS** hasta entonces.
+Dos problemas distintos, no uno:
+1. El `<select>` (625-633) se alimenta de `categorias`, que viene del endpoint inexistente → sin
+   opciones.
+2. La columna de la tabla (502) usa `formData.categoria_id` — el estado del **formulario**, no del
+   producto — para **cada fila**. Y `interface Producto` (`:27-36`) **no tiene** `categoria_id`.
+   Aunque el endpoint existiera, la columna mostraría siempre 'N/A' (o la categoría del formulario
+   repetida en todas las filas).
+3. El backend **descarta** `categoria_id` en silencio: el `INSERT` de
+   `productController.js:156` no incluye esa columna.
+
+**`tag_especialidad` sí es la categoría real, y ya está en producción:**
+
+| Evidencia | Detalle |
+|---|---|
+| `migrations/009_create_productos_table.sql:9` | `tag_especialidad VARCHAR(50) NOT NULL` |
+| `migrations/032_fix_011_insert.sql` | Valores sembrados: `Barba & Bigote`, `Corte & Capilar`, `Skincare Masculino`, `Grooming` |
+| `productController.js:25` | Ya es filtro del servidor: `AND p.tag_especialidad = $2` |
+| `page.tsx:32` | Ya está en `interface Producto` |
+| `page.tsx:497` | Ya se pinta por fila: `Tag: {prod.tag_especialidad}` |
+| `page.tsx:616-617` | Ya hay input funcional de `tag_especialidad` |
+
+**Impacto.** La columna Categoría muestra 'N/A' en todas las filas y el selector está vacío. Es
+**imposible de cumplir** con el esquema actual, no un bug de cableado.
+
+**DECISIÓN REQUERIDA — la evidencia decide:**
+- **B1 ✅** — `tag_especialidad` es la taxonomía real (NOT NULL, sembrada, filtrable, ya pintada).
+  B2 implicaría **construir una taxonomía paralela** a la que ya está en producción. Queda
+  **confirmado con evidencia**, ya no es HIPÓTESIS.
+  - B1a: borrar el fantasma `categoria_id` y dejar `tag_especialidad` como campo de texto (el
+    `<select>` desaparece).
+  - B1b *(recomendada)*: además, `GET /api/admin/categorias` → `SELECT DISTINCT tag_especialidad
+    FROM productos ORDER BY 1`, para que el `<select>` tenga opciones reales. Bajo `/api/admin`,
+    que el BFF ya permite, reutilizando `authMiddleware + requireRol('admin')`.
+- **B2 ❌** — crear tabla `categorias` + FK `productos.categoria_id`. Descartada salvo que negocio
+  pida taxonomía jerárquica y editable; hoy no hay evidencia de eso.
 
 ---
 
