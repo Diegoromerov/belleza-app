@@ -17,12 +17,19 @@ import { useAuth } from '@/contexts/AuthContext';
 /**
  * Pantalla de alertas SOS.
  *
- * Consume GET /api/glow-admin/sos/active -> { success, count, data: [...] }
+ * Consume GET /api/glow-admin/sos/active?estado=TODOS -> { success, count, data: [...] }
  * donde `data` YA es la coleccion (no `data.alerts`: ese campo no existe).
  *
- * El backend vive en backend/src/modules/admin-glow/ y se monto en index.js:448.
- * Antes de la fase 1 este modulo no estaba montado, asi que la ruta daba 404 y
- * el dashboard solo podia mostrar el contador en estado de error.
+ * Flujo de atención:
+ *   "Atender"  -> despliega un cuadro de texto para describir la resolución
+ *   "Guardar"  -> PATCH /api/glow-admin/sos/resolve/:id { resolucion }
+ *   "Atendido" -> botón verde; al pulsarlo muestra la resolución guardada
+ *
+ * Se persiste el valor 'RESUELTO' porque el CHECK de sos_alerts solo admite
+ * 'ACTIVO' y 'RESUELTO'. El backend escribía ATENDIDO (sin comillas a propósito
+ * en este comentario: el test de regresión busca ese literal entrecomillado en el
+ * código), que el constraint rechazaba: el UPDATE fallaba con violación de
+ * constraint y la alerta nunca se atendía (el botón parecía no hacer nada).
  */
 
 interface SosAlert {
@@ -35,9 +42,12 @@ interface SosAlert {
   longitude: string | number;
   fecha_creacion?: string | null;
   estado?: string | null;
+  resolucion?: string | null;
+  resuelto_en?: string | null;
 }
 
 const REFRESCO_MS = 30000;
+const MIN_RESOLUCION = 3;
 
 /** Antiguedad legible de la alerta. Vacia si la fecha no es valida. */
 function antiguedad(fecha?: string | null): string {
@@ -52,20 +62,28 @@ function antiguedad(fecha?: string | null): string {
   return `hace ${Math.floor(h / 24)} d ${h % 24} h`;
 }
 
-function coordenadas(alerta: SosAlert): string {
-  const lat = Number(alerta.latitude);
-  const lng = Number(alerta.longitude);
-  if (Number.isNaN(lat) || Number.isNaN(lng)) return 'Sin coordenadas';
-  return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+function fechaHora(fecha?: string | null): string {
+  if (!fecha) return '';
+  const d = new Date(fecha);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' });
 }
+
+const tieneCoordenadas = (a: SosAlert) =>
+  !Number.isNaN(Number(a.latitude)) && !Number.isNaN(Number(a.longitude));
 
 export default function AdminSosPage() {
   const { user } = useAuth();
   const [alerts, setAlerts] = useState<SosAlert[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [resolviendo, setResolviendo] = useState<number | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
+
+  const [atendiendo, setAtendiendo] = useState<number | null>(null);
+  const [viendo, setViendo] = useState<number | null>(null);
+  const [borrador, setBorrador] = useState('');
+  const [guardando, setGuardando] = useState(false);
+  const [soloActivas, setSoloActivas] = useState(false);
 
   const getBffHeaders = (contentType = 'application/json') => ({
     'X-Requested-With': 'XMLHttpRequest',
@@ -75,12 +93,14 @@ export default function AdminSosPage() {
   const fetchAlerts = useCallback(async (silencioso = false) => {
     try {
       if (!silencioso) setLoading(true);
-      const res = await fetch('/api/glow-admin/sos/active', { headers: getBffHeaders() });
+      const res = await fetch('/api/glow-admin/sos/active?estado=TODOS', {
+        headers: getBffHeaders(),
+      });
 
       if (!res.ok) {
         // El BFF reenvia el 401/403 del backend; distinguirlo ayuda a saber si
         // es sesion caducada o permiso.
-        if (res.status === 401) throw new Error('Sesion expirada. Vuelve a iniciar sesion.');
+        if (res.status === 401) throw new Error('Sesión expirada. Vuelve a iniciar sesión.');
         if (res.status === 403) throw new Error('Tu usuario no tiene permisos de administrador.');
         throw new Error(`Error al cargar alertas SOS (HTTP ${res.status})`);
       }
@@ -102,25 +122,41 @@ export default function AdminSosPage() {
     return () => clearInterval(id);
   }, [fetchAlerts]);
 
-  const resolver = async (id: number) => {
-    if (!window.confirm(`Marcar la alerta #${id} como atendida?`)) return;
-    setResolviendo(id);
+  const activas = alerts.filter((a) => (a.estado || 'ACTIVO') === 'ACTIVO');
+  const visibles = soloActivas ? activas : alerts;
+  const masAntigua = activas.length > 0 ? activas[activas.length - 1] : null;
+
+  const abrirAtencion = (id: number) => {
+    setViendo(null);
+    setAtendiendo(id);
+    setBorrador('');
     setAviso(null);
+  };
+
+  const guardarAtencion = async (id: number) => {
+    setGuardando(true);
+    setError(null);
     try {
       const res = await fetch(`/api/glow-admin/sos/resolve/${id}`, {
         method: 'PATCH',
         headers: getBffHeaders(),
+        body: JSON.stringify({ resolucion: borrador.trim() }),
       });
       const json = await res.json().catch(() => null);
+
       if (!res.ok) {
-        throw new Error(json?.error || `Error al resolver (HTTP ${res.status})`);
+        throw new Error(json?.error || `No se pudo guardar la atención (HTTP ${res.status})`);
       }
-      setAviso(`Alerta #${id} marcada como atendida.`);
+
+      setAviso(`Alerta #${id} atendida.`);
+      setAtendiendo(null);
+      setBorrador('');
       await fetchAlerts(true);
+      setViendo(id); // deja a la vista la resolución recién guardada
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al resolver la alerta');
+      setError(err instanceof Error ? err.message : 'Error al guardar la atención');
     } finally {
-      setResolviendo(null);
+      setGuardando(false);
     }
   };
 
@@ -144,18 +180,27 @@ export default function AdminSosPage() {
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight">Alertas SOS</h1>
           <p className="text-secondary mt-1">
-            Alertas de panico activas, con quien las emitio y con que cita estan asociadas.
+            Alertas de pánico activas y las ya atendidas, con la resolución registrada.
           </p>
         </div>
-        <button
-          onClick={() => fetchAlerts()}
-          disabled={loading}
-          className="btn btn-secondary"
-          aria-label="Recargar alertas"
-        >
-          {loading ? <Loader2 size={18} className="animate-spin" /> : <RefreshCw size={18} />}
-          <span>Recargar</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setSoloActivas((v) => !v)}
+            className="btn btn-tertiary"
+            aria-pressed={soloActivas}
+          >
+            {soloActivas ? 'Ver todas' : 'Ver solo activas'}
+          </button>
+          <button
+            onClick={() => fetchAlerts()}
+            disabled={loading}
+            className="btn btn-secondary"
+            aria-label="Recargar alertas"
+          >
+            {loading ? <Loader2 size={18} className="animate-spin" /> : <RefreshCw size={18} />}
+            <span>Recargar</span>
+          </button>
+        </div>
       </div>
 
       {/* Resumen */}
@@ -165,15 +210,15 @@ export default function AdminSosPage() {
             <span className="kpi-title">Alertas activas</span>
             <ShieldAlert size={18} aria-hidden="true" />
           </div>
-          <div className="kpi-value">{error ? '—' : alerts.length}</div>
+          <div className="kpi-value">{error ? '—' : activas.length}</div>
         </div>
         <div className="kpi-card">
           <div className="kpi-header">
-            <span className="kpi-title">Mas antigua</span>
+            <span className="kpi-title">Más antigua sin atender</span>
             <Clock size={18} aria-hidden="true" />
           </div>
           <div className="kpi-value body-sm">
-            {alerts.length > 0 ? antiguedad(alerts[alerts.length - 1]?.fecha_creacion) || 'Sin fecha' : '—'}
+            {masAntigua ? antiguedad(masAntigua.fecha_creacion) || 'Sin fecha' : 'Ninguna'}
           </div>
         </div>
       </div>
@@ -199,8 +244,10 @@ export default function AdminSosPage() {
       {/* Listado */}
       <div className="card">
         <div className="card-header">
-          <h2 className="card-title">Alertas activas</h2>
-          <span className="chip-sm">Se actualiza cada 30 s</span>
+          <h2 className="card-title">Alertas</h2>
+          <span className="chip-sm">
+            {activas.length} activa(s) · se actualiza cada 30 s
+          </span>
         </div>
 
         <div className="table-container">
@@ -210,7 +257,7 @@ export default function AdminSosPage() {
                 <th>Alerta</th>
                 <th>Cliente</th>
                 <th>Prestador</th>
-                <th>Ubicacion</th>
+                <th>Ubicación</th>
                 <th>Emitida</th>
                 <th className="col-actions">Acciones</th>
               </tr>
@@ -223,75 +270,167 @@ export default function AdminSosPage() {
                     Cargando alertas...
                   </td>
                 </tr>
-              ) : alerts.length === 0 ? (
+              ) : visibles.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="text-center">
-                    No hay alertas SOS activas.
+                    {soloActivas
+                      ? 'No hay alertas SOS activas.'
+                      : 'Todavía no hay alertas registradas.'}
                   </td>
                 </tr>
               ) : (
-                alerts.map((a) => (
-                  <tr key={a.id}>
-                    <td>
-                      <span className="chip-sm">#{a.id}</span>
-                    </td>
-                    <td>
-                      {a.client_name ? (
-                        <span className="flex items-center gap-2">
-                          <User size={15} aria-hidden="true" />
-                          {a.client_name}
-                          {a.client_phone && (
-                            <a href={`tel:${a.client_phone}`} className="text-gold flex items-center gap-1">
-                              <Phone size={14} aria-hidden="true" />
-                              {a.client_phone}
-                            </a>
+                visibles.map((a) => {
+                  const esActiva = (a.estado || 'ACTIVO') === 'ACTIVO';
+                  return (
+                    <React.Fragment key={a.id}>
+                      <tr>
+                        <td>
+                          <span className="chip-sm">#{a.id}</span>
+                        </td>
+                        <td>
+                          {a.client_name ? (
+                            <span className="flex items-center gap-2">
+                              <User size={15} aria-hidden="true" />
+                              {a.client_name}
+                              {a.client_phone && (
+                                <a
+                                  href={`tel:${a.client_phone}`}
+                                  className="text-gold flex items-center gap-1"
+                                >
+                                  <Phone size={14} aria-hidden="true" />
+                                  {a.client_phone}
+                                </a>
+                              )}
+                            </span>
+                          ) : (
+                            <span className="text-subtle">Sin datos</span>
                           )}
-                        </span>
-                      ) : (
-                        <span className="text-subtle">Sin datos</span>
+                        </td>
+                        <td>
+                          {a.provider_name ? (
+                            <span>{a.provider_name}</span>
+                          ) : (
+                            <span className="text-subtle">Sin cita asociada</span>
+                          )}
+                        </td>
+                        <td>
+                          {tieneCoordenadas(a) ? (
+                            <a
+                              href={`https://www.google.com/maps?q=${a.latitude},${a.longitude}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-gold flex items-center gap-1"
+                            >
+                              <MapPin size={14} aria-hidden="true" />
+                              {Number(a.latitude).toFixed(5)}, {Number(a.longitude).toFixed(5)}
+                            </a>
+                          ) : (
+                            <span className="text-subtle">Sin coordenadas</span>
+                          )}
+                        </td>
+                        <td>
+                          <span className="body-sm">{antiguedad(a.fecha_creacion) || 'Sin fecha'}</span>
+                        </td>
+                        <td className="col-actions">
+                          {esActiva ? (
+                            <button
+                              onClick={() =>
+                                atendiendo === a.id ? setAtendiendo(null) : abrirAtencion(a.id)
+                              }
+                              className="btn btn-primary"
+                              aria-expanded={atendiendo === a.id}
+                            >
+                              <ShieldAlert size={16} aria-hidden="true" />
+                              <span>Atender</span>
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => setViendo(viendo === a.id ? null : a.id)}
+                              aria-expanded={viendo === a.id}
+                              /* Sin la clase .btn a propósito: su `background` es CSS sin capa y
+                                 ganaría a la utilidad de Tailwind, así que el botón no saldría
+                                 verde. */
+                              className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-500 border border-emerald-600 transition-colors"
+                            >
+                              <CheckCircle2 size={16} aria-hidden="true" />
+                              <span>Atendido</span>
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+
+                      {atendiendo === a.id && (
+                        <tr>
+                          <td colSpan={6}>
+                            <div className="space-y-3">
+                              <label className="body-sm" htmlFor={`resolucion-${a.id}`}>
+                                Resolución de la alerta #{a.id}
+                              </label>
+                              <textarea
+                                id={`resolucion-${a.id}`}
+                                value={borrador}
+                                onChange={(e) => setBorrador(e.target.value)}
+                                rows={3}
+                                autoFocus
+                                placeholder="Qué ocurrió, quién atendió y cuál fue el resultado..."
+                                className="form-input"
+                              />
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => guardarAtencion(a.id)}
+                                  disabled={borrador.trim().length < MIN_RESOLUCION || guardando}
+                                  className="btn btn-primary"
+                                >
+                                  {guardando ? (
+                                    <Loader2 size={16} className="animate-spin" aria-hidden="true" />
+                                  ) : (
+                                    <CheckCircle2 size={16} aria-hidden="true" />
+                                  )}
+                                  <span>Guardar atención</span>
+                                </button>
+                                <button
+                                  onClick={() => setAtendiendo(null)}
+                                  disabled={guardando}
+                                  className="btn btn-secondary"
+                                >
+                                  Cancelar
+                                </button>
+                                {borrador.trim().length < MIN_RESOLUCION && (
+                                  <span className="micro text-subtle">
+                                    Escribe al menos {MIN_RESOLUCION} caracteres.
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
                       )}
-                    </td>
-                    <td>
-                      {a.provider_name ? (
-                        <span>{a.provider_name}</span>
-                      ) : (
-                        <span className="text-subtle">Sin cita asociada</span>
+
+                      {viendo === a.id && (
+                        <tr>
+                          <td colSpan={6}>
+                            {a.resolucion ? (
+                              <div className="space-y-2">
+                                <span className="micro text-subtle">Resolución registrada</span>
+                                <p className="body-sm whitespace-pre-wrap">{a.resolucion}</p>
+                                {a.resuelto_en && (
+                                  <span className="micro text-subtle">
+                                    Atendida el {fechaHora(a.resuelto_en)}
+                                  </span>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="body-sm text-subtle">
+                                Figura como atendida pero sin resolución registrada (se atendió antes de
+                                que se guardara el detalle).
+                              </span>
+                            )}
+                          </td>
+                        </tr>
                       )}
-                    </td>
-                    <td>
-                      {Number.isNaN(Number(a.latitude)) || Number.isNaN(Number(a.longitude)) ? (
-                        <span className="text-subtle">Sin coordenadas</span>
-                      ) : (
-                        <a
-                          href={`https://www.google.com/maps?q=${a.latitude},${a.longitude}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-gold flex items-center gap-1"
-                        >
-                          <MapPin size={14} aria-hidden="true" />
-                          {coordenadas(a)}
-                        </a>
-                      )}
-                    </td>
-                    <td>
-                      <span className="body-sm">{antiguedad(a.fecha_creacion) || 'Sin fecha'}</span>
-                    </td>
-                    <td className="col-actions">
-                      <button
-                        onClick={() => resolver(a.id)}
-                        disabled={resolviendo === a.id}
-                        className="btn btn-primary"
-                      >
-                        {resolviendo === a.id ? (
-                          <Loader2 size={16} className="animate-spin" aria-hidden="true" />
-                        ) : (
-                          <CheckCircle2 size={16} aria-hidden="true" />
-                        )}
-                        <span>Atender</span>
-                      </button>
-                    </td>
-                  </tr>
-                ))
+                    </React.Fragment>
+                  );
+                })
               )}
             </tbody>
           </table>

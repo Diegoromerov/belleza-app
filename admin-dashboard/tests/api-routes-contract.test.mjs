@@ -226,3 +226,74 @@ test('deuda conocida (fase 2): /api/categorias sigue sin endpoint ni tabla', () 
     'la tabla categorias ya existe: cerrar la fase 2 del plan'
   );
 });
+
+test('regresion: el estado que escribe resolveSOSAlert lo permite el CHECK de sos_alerts', () => {
+  // Causa raiz del boton "Atender" que parecia no hacer nada: el controlador
+  // escribia 'ATENDIDO', pero el CHECK de la tabla solo admite 'ACTIVO' y
+  // 'RESUELTO'. Postgres abortaba el UPDATE por violacion de constraint y la
+  // alerta nunca se atendia. Un valor de enum invalido NO da 404: da error en
+  // runtime dentro del catch, que lo disfraza de fallo interno generico.
+  const ddl = readFileSync(backendIndex, 'utf8');
+  const bloque = ddl.match(/CREATE TABLE IF NOT EXISTS sos_alerts[\s\S]*?\);/);
+  assert.ok(bloque, 'no se encontro el DDL de sos_alerts en index.js');
+
+  const check = bloque[0].match(/CHECK \(estado IN \(([^)]*)\)\)/);
+  assert.ok(check, 'sos_alerts no declara CHECK sobre estado');
+  const permitidos = [...check[1].matchAll(/'([^']+)'/g)].map((m) => m[1]);
+  assert.ok(permitidos.length > 0, 'no se extrajeron valores permitidos del CHECK');
+
+  const ctrl = readFileSync(
+    join(backendDir, 'src', 'modules', 'admin-glow', 'admin.controller.js'),
+    'utf8'
+  );
+  const usados = [...ctrl.matchAll(/updateSOSAlertStatus\([^)]*?'([^']+)'/g)].map((m) => m[1]);
+  assert.ok(usados.length > 0, 'no hay ninguna llamada a updateSOSAlertStatus con estado literal');
+
+  for (const valor of usados) {
+    assert.ok(
+      permitidos.includes(valor),
+      `el controlador escribe '${valor}', que el CHECK de sos_alerts no permite (${permitidos.join(', ')})`
+    );
+  }
+});
+
+test('regresion: la pantalla de SOS muestra la resolucion sin campos fantasma', () => {
+  const page = readFileSync(join(appDir, '(dashboard)', 'admin', 'sos', 'page.tsx'), 'utf8');
+
+  // Pide tambien las atendidas: sin eso no puede mostrar ninguna resolucion.
+  assert.match(page, /sos\/active\?estado=TODOS/, 'la pantalla no pide las alertas atendidas');
+  assert.match(page, /resolucion/, 'la pantalla no lee la resolucion');
+  assert.match(page, /resuelto_en/, 'la pantalla no lee cuando se atendio');
+
+  // El backend persiste 'RESUELTO' (unico valor admitido ademas de 'ACTIVO').
+  assert.doesNotMatch(page, /'ATENDIDO'/, "la pantalla usa 'ATENDIDO', que no es un estado valido");
+});
+
+test('regresion: el modelo persiste la resolucion y su fecha', () => {
+  const model = readFileSync(
+    join(backendDir, 'src', 'modules', 'admin-glow', 'admin.model.js'),
+    'utf8'
+  );
+
+  // Guardar la atencion debe escribir los tres campos, no solo el estado.
+  assert.match(model, /resolucion = \$3/, 'updateSOSAlertStatus no guarda la resolucion');
+  assert.match(model, /resuelto_en = NOW\(\)/, 'updateSOSAlertStatus no registra cuando se atendio');
+  assert.match(model, /resuelto_por = \$4/, 'updateSOSAlertStatus no registra quien atendio');
+
+  // Y no debe volver a pisar creado_en (la fecha de emision del SOS).
+  const actualizacion = model.match(/async function updateSOSAlertStatus[\s\S]*?`;/);
+  assert.ok(actualizacion, 'no se encontro updateSOSAlertStatus');
+  assert.doesNotMatch(
+    actualizacion[0],
+    /creado_en\s*=/,
+    'updateSOSAlertStatus vuelve a sobrescribir creado_en (destruye la fecha de emision)'
+  );
+
+  // El listado debe devolver los campos que la pantalla pinta.
+  const listado = model.match(/async function getActiveSOSAlerts[\s\S]*?`;/);
+  assert.ok(listado, 'no se encontro getActiveSOSAlerts');
+  for (const campo of ['s.resolucion', 's.resuelto_en']) {
+    assert.ok(listado[0].includes(campo), `getActiveSOSAlerts no devuelve ${campo}`);
+  }
+  assert.match(listado[0], /'TODOS'/, 'getActiveSOSAlerts no soporta el filtro TODOS');
+});

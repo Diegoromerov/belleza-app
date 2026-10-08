@@ -19,35 +19,45 @@ async function executeQuery(query, params = []) {
 /**
  * Obtener alertas SOS activas con información unida de cliente y prestador.
  */
-async function getActiveSOSAlerts() {
+async function getActiveSOSAlerts(estado = 'ACTIVO') {
+  // 'TODOS' devuelve activas y atendidas: la pantalla /admin/sos necesita ver
+  // la resolución de las que ya se atendieron. El dashboard usa el valor por
+  // defecto ('ACTIVO') para su contador, así que no cambia de comportamiento.
   const query = `
     SELECT 
       s.id, s.latitude, s.longitude, s.estado, s.creado_en as fecha_creacion,
+      s.resolucion, s.resuelto_en,
       u_client.nombre AS client_name, u_client.phone AS client_phone,
       u_prov.nombre AS provider_name, u_prov.phone AS provider_phone
     FROM sos_alerts s
     LEFT JOIN usuarios u_client ON s.user_id = u_client.id
     LEFT JOIN bookings b ON s.booking_id = b.id
     LEFT JOIN usuarios u_prov ON b.provider_id = u_prov.id
-    WHERE s.estado = 'ACTIVO'
-    ORDER BY s.creado_en DESC;
+    WHERE ($1 = 'TODOS' OR s.estado = $1)
+    ORDER BY CASE WHEN s.estado = 'ACTIVO' THEN 0 ELSE 1 END, s.creado_en DESC
+    LIMIT 200;
   `;
-  return await executeQuery(query);
+  return await executeQuery(query, [estado]);
 }
 
 /**
  * Actualiza el estado de una alerta SOS.
  */
-async function updateSOSAlertStatus(alertId, newStatus) {
+async function updateSOSAlertStatus(alertId, newStatus, resolucion = null, adminId = null) {
+  // No se toca creado_en: es la fecha en que se EMITIO el SOS. El momento y el
+  // autor de la atención van a resuelto_en / resuelto_por, y el texto a resolucion.
+  // `AND estado = 'ACTIVO'` evita atender dos veces la misma alerta: si ya estaba
+  // atendida no devuelve filas y el controlador responde 404.
   const query = `
-    -- No se toca creado_en: es la fecha en que se EMITIO el SOS y sobrescribirla
-    -- destruia justo el dato que se audita despues. Falta una columna resuelto_en
-    -- para registrar el momento de la atencion (ver 2.E del plan de reconstruccion).
-    UPDATE sos_alerts 
-    SET estado = $1
-    WHERE id = $2;
+    UPDATE sos_alerts
+    SET estado = $1,
+        resolucion = $3,
+        resuelto_en = NOW(),
+        resuelto_por = $4
+    WHERE id = $2 AND estado = 'ACTIVO'
+    RETURNING id, estado, resolucion, resuelto_en;
   `;
-  return await executeQuery(query, [newStatus, alertId]);
+  return await executeQuery(query, [newStatus, alertId, resolucion, adminId]);
 }
 
 /**

@@ -1418,6 +1418,22 @@ const initDatabase = async () => {
     dbErrors.push({ stage: 'create-sos-alerts', message: e.message });
   }
 
+  // 4b. Columnas de resolución de SOS (idempotente).
+  // sos_alerts.estado solo admite 'ACTIVO' y 'RESUELTO'. La resolución se guarda
+  // aparte para no reutilizar creado_en y no perder la fecha de emisión.
+  try {
+    await pool.query(`
+      ALTER TABLE sos_alerts
+        ADD COLUMN IF NOT EXISTS resolucion TEXT,
+        ADD COLUMN IF NOT EXISTS resuelto_en TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS resuelto_por INTEGER REFERENCES usuarios(id) ON DELETE SET NULL;
+    `);
+    console.log('✅ Columnas de resolución de sos_alerts verificadas.');
+  } catch (e) {
+    console.warn('⚠️ Error al añadir columnas de resolución a sos_alerts:', e.message);
+    dbErrors.push({ stage: 'alter-sos-alerts-resolution', message: e.message });
+  }
+
   // 5. Aislamiento de creación de tabla 'user_activity_logs' (Analíticas) e índices
   try {
     await pool.query(`
