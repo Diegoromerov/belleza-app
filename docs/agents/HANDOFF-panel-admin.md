@@ -121,3 +121,82 @@ Cada cambio se entrega con el defecto **reproducido antes** de tocar nada, el ar
 comprobación **en vivo** (no solo en local) y una **mutación** que pruebe que el guardián lo caza:
 volver a introducir el defecto y exigir rojo. Todo con evidencia `archivo:línea` o salida de
 comando. Un verde no prueba nada si el guardián no puede fallar.
+
+## 7. Protocolo para trabajar en paralelo sin pisarse
+
+Dos agentes trabajan sobre el mismo repositorio. Estas reglas son para el que continúa; el otro
+lado cumple las mismas. No son cortesía: cada una evita un daño concreto que ya ocurrió o que está
+a un comando de distancia.
+
+### Antes de escribir una línea
+
+```bash
+cd C:/beauty-app
+git fetch origin
+git status --short        # si hay algo sucio que no es tuyo, PARA y avisa
+git log --oneline -1 origin/main
+```
+
+- Si sigues tu rama: **`git rebase origin/main`**, nunca `merge`.
+- Si vas a tocar `main`: mira qué commits hay encima antes de commitear.
+
+### Trabaja en tu propio worktree, no en el árbol compartido
+
+```bash
+git worktree add --detach "C:/tu-work" origin/main
+```
+
+`C:/beauty-app` es de los dos: ahí se LEE el estado, no se trabaja. En tu worktree no hay forma de
+pisar a nadie.
+
+### Al commitear
+
+- `git status --short` **primero**, y `git add` con **rutas explícitas**: nunca `-A`. Un barrido se
+  lleva el trabajo sin commitear del otro a un commit con tu mensaje.
+- Prefijo por área (`fix(backend):`, `test(backend):`, `docs(agents):`) para que el log diga de
+  quién es cada cosa.
+- **Push a tu rama, no a `main`.** Si algo tiene que llegar a `main`: cherry-pick o PR, y avisa en
+  el mismo mensaje.
+
+### Nunca
+
+- `git push --force` a `main`, `rebase`/`amend` de commits ya publicados, ni borrar la rama remota:
+  es la única forma real de destruir trabajo ajeno.
+- `git reset --hard` ni `checkout -f` en el árbol compartido.
+- Merge de las ramas `agent/*` (hay ~336, a ~335 commits por detrás): rebase.
+- Dejar worktrees registrados apuntando a directorios temporales: `git worktree remove`.
+
+### Tu rama `fix/quality-debt-p0`, al integrarla
+
+1. **`git rebase origin/main` primero**: está 12 commits por detrás.
+2. Dos de sus 9 commits **ya están en `main`** — `a15bcacd4` (crash `toLocaleString`) y `20bc1d1f0`
+   (precios/catálogo): **descártalos**, o haz cherry-pick solo de los otros siete. Mergear la rama
+   entera los reintroduce como commits distintos y conflictúa en los mismos archivos.
+3. Después del rebase, el gate entero (panel `npm test` y la suite del backend) con **0 fallos**.
+
+### El documento de coordinación
+
+`docs/agents/HANDOFF-panel-admin.md` lo leen los dos. **`git fetch` antes de editarlo**, y las
+correcciones de §2 y §5 ya están aplicadas: no las repitas.
+
+### Tus pendientes del backend, con las trampas ya pagadas
+
+- **T-A0**: importar `index.js` con `NODE_ENV=production` **sin** `JWT_SECRET` no lanza; debe lanzar `/FATAL SECURITY ERROR/i`.
+- **C6**: `/api/products` con la capa de datos degradada responde **500**; debe ser **503** + `X-GlowApp-Degraded`.
+- **prometheus**: en aislamiento **pasa**. Si lo ves rojo es orden de ejecución (registro o breaker sin `reset()` entre suites), no la métrica: reprodúcelo con la suite completa y anota el orden **antes** de tocar nada.
+- **El arnés exige `JWT_SECRET`** aunque la suite hable de su ausencia: sin un valor de prueba las suites ni arrancan, y el rojo que se ve es del arnés, no del defecto.
+- **No existe `fix/t-a0-jwt-hardening`** en `origin`: hoy nada cubre ese rojo.
+
+```bash
+cd backend
+NODE_ENV=test JWT_SECRET='<valor de prueba, no una credencial>' \
+  npx jest src/tests/degradedLockBehavior.test.js src/tests/jwtProductionGuard.test.js \
+           tests/infra.observability.prometheus.test.js --runInBand --forceExit
+```
+
+### Cómo se entrega aquí
+
+Defecto **reproducido antes** de tocar nada, verificado **en vivo** (no solo en local) y una
+**mutación** que pruebe que el guardián lo caza: se vuelve a introducir el defecto y el guardián
+tiene que ponerse rojo. Evidencia `archivo:línea` o salida de comando. Un verde no prueba nada si el
+guardián no puede fallar.
