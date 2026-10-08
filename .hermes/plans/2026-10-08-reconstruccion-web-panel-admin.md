@@ -248,12 +248,29 @@ Resolver una alerta **sobrescribe su fecha de creación**. Como `sos_alerts` no 
 atenderlo — justo el dato que se audita después.
 
 **DECISIÓN REQUERIDA:**
-- **E1** — Crear `/admin/sos`: listado de alertas activas (con cliente, prestador, coordenadas y
-  antigüedad) + acción de resolver. Es lo mínimo para "poder explorarlo".
-- **E2** — Añadir además `/admin/prestadores` (cola de verificación con aprobar/rechazar/verificar) y
-  `/admin/payouts` (aprobar retiro). Completa la superficie del módulo.
-- **E3** — Arreglar el `creado_en` de `updateSOSAlertStatus` (columna `resuelto_en` nueva, o no tocar
-  `creado_en`). Independiente de E1/E2; conviene hacerlo con lo que se elija.
+- **E1 ✅ HECHO** (commit `abb26231c`) — `/admin/sos` creado: lista alertas activas (cliente, teléfono,
+  prestador, coordenadas con enlace a mapas, antigüedad) + acción "Atender"
+  (`PATCH /api/glow-admin/sos/resolve/:id`), refresco cada 30 s, y enlace "Alertas SOS" en el Sidebar
+  (primero del grupo ADMIN). Usa las clases del sistema de diseño, no colores sueltos.
+  Verificado: `tsc` limpio, `npm test` 52/52 (el test de contrato cubre las 2 llamadas nuevas),
+  build con la ruta `/admin/sos` (4.2 kB).
+  **No verificado desde fuera:** el middleware redirige a `/login` toda ruta de página sin sesión,
+  así que la existencia de la ruta solo se confirma entrando con un ADMIN. Requiere confirmación
+  visual del usuario.
+- **E3 ✅ HECHO** en el mismo commit — `updateSOSAlertStatus` ya no sobrescribe `creado_en`. Queda
+  pendiente *decidir* si añadir columna `resuelto_en` para registrar el momento de la atención
+  (requiere migración, y el esquema tiene 4 dueños: ver 2.C).
+- **E2 ⏳ PENDIENTE** — `/admin/prestadores` (cola de verificación con aprobar/rechazar/verificar) y
+  `/admin/payouts` (aprobar retiro). Completa la superficie del módulo: 6 endpoints siguen sin UI.
+
+**Defecto colateral detectado en `src/middleware.ts` (severidad baja, latente):** la línea 47
+(`if (/\.[a-zA-Z0-9]+$/.test(pathname)) return NextResponse.next()`) **esquiva la autenticación** para
+cualquier ruta que termine en `.ext`. Demostrado en producción: `/admin/zzz-noexiste.txt` → **404**
+(pasa el middleware), mientras `/admin/zzz-noexiste` → **307** (redirige a login). Hoy no es
+explotable porque ninguna ruta de página termina en extensión, pero es una primitiva de bypass: si
+algún día se añade una ruta con punto (p. ej. un informe en `/reportes/octubre.csv`), quedaría
+pública. La línea existe para dejar pasar los estáticos de `public/`; el arreglo correcto es
+restringirla a una lista de extensiones de assets en vez de a cualquiera.
 
 ---
 
