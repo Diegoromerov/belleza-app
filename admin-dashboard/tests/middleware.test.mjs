@@ -1,5 +1,9 @@
 /**
- * Contratos estáticos de src/middleware.ts (guardia de sesión del panel admin T-A1).
+ * Contratos estáticos del portero del panel (guardia de sesión del panel admin T-A1).
+ *
+ * Desde el arreglo del atajo por extensión, la DECISIÓN vive en src/lib/portero.ts (sin
+ * dependencias, para poder ejercerla de verdad en middleware-behavior.test.mjs) y
+ * src/middleware.ts es el adaptador que la usa. Estos contratos comprueban las dos piezas.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -9,6 +13,8 @@ import { join } from 'node:path';
 const src = join(import.meta.dirname, '..', 'src');
 const mwPath = join(src, 'middleware.ts');
 const mw = readFileSync(mwPath, 'utf8').replace(/\r\n/g, '\n');
+const porPath = join(src, 'lib', 'portero.ts');
+const por = readFileSync(porPath, 'utf8').replace(/\r\n/g, '\n');
 
 test('existe src/middleware.ts y exporta middleware + config', () => {
   assert.ok(existsSync(mwPath));
@@ -16,8 +22,13 @@ test('existe src/middleware.ts y exporta middleware + config', () => {
   assert.match(mw, /export const config = \{/);
 });
 
+test('el middleware usa la decisión de portero.ts (no la reimplementa)', () => {
+  assert.match(mw, /import \{ clasificarCamino \} from '\.\/lib\/portero'/);
+  assert.match(mw, /clasificarCamino\(pathname\) !== 'protegido'/);
+});
+
 test('/login y /register son rutas públicas', () => {
-  assert.match(mw, /const PUBLIC_PATHS = \['\/login', '\/register'\]/);
+  assert.match(por, /export const CAMINOS_PUBLICOS = \['\/login', '\/register'\]/);
 });
 
 test('las cookies de sesión reconocidas incluyen glow_access_token', () => {
@@ -49,8 +60,19 @@ test('redirectToLogin conserva la ruta original en el parámetro redirect', () =
 });
 
 test('las rutas /api son gestionadas por sus controladores / BFF proxy', () => {
-  assert.match(mw, /pathname\.startsWith\('\/api'\)/);
-  assert.match(mw, /\/\\\.\[a-zA-Z0-9\]\+\$\/\.test\(pathname\)/);
+  assert.match(por, /pathname\.startsWith\('\/api'\)/);
+});
+
+test('el atajo por extensión NO existe: lo público es una lista explícita', () => {
+  // Este caso antes afirmaba el atajo (`/\.[a-zA-Z0-9]+$/.test(pathname)`) como si fuera una
+  // propiedad deseada, con lo que el defecto estaba blindado por una prueba. Ahora afirma lo
+  // contrario: nada puede volver a decidir por la extensión del camino.
+  assert.ok(
+    !/\\\.[a-zA-Z0-9]+\$\/\.test\(/.test(por),
+    'reapareció un atajo por extensión en la decisión del portero'
+  );
+  assert.match(por, /export const ASSETS_PUBLICOS = new Set\(\[/);
+  assert.match(por, /if \(ASSETS_PUBLICOS\.has\(pathname\)\)/);
 });
 
 test('el matcher excluye _next/static, _next/image, favicon.ico', () => {

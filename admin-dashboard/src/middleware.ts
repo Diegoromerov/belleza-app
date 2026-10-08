@@ -3,8 +3,8 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
 import { SECURITY_HEADERS } from './lib/security';
+import { clasificarCamino } from './lib/portero';
 
-const PUBLIC_PATHS = ['/login', '/register'];
 const JWT_SECRET = process.env.JWT_SECRET;
 
 function getJwtSecretKey() {
@@ -30,32 +30,21 @@ function withSecurityHeaders(response: NextResponse): NextResponse {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // 1. Rutas públicas
-  const isPublicPath = PUBLIC_PATHS.some(
-    (path) => pathname === path || pathname.startsWith(`${path}/`)
-  );
-  if (isPublicPath) {
+  // Qué exige sesión y qué no lo decide `clasificarCamino`, que vive aparte y sin
+  // dependencias para poder probarse de verdad (ver src/lib/portero.ts). Es la única puerta:
+  // lo que no esté declarado ahí, exige sesión.
+  if (clasificarCamino(pathname) !== 'protegido') {
     return withSecurityHeaders(NextResponse.next());
   }
 
-  // 2. API routes de Next.js son gestionadas por sus controladores / BFF proxy
-  if (pathname.startsWith('/api')) {
-    return withSecurityHeaders(NextResponse.next());
-  }
-
-  // 3. Archivos estáticos
-  if (/\.[a-zA-Z0-9]+$/.test(pathname)) {
-    return withSecurityHeaders(NextResponse.next());
-  }
-
-  // 4. Obtener cookie HttpOnly de acceso
+  // Obtener cookie HttpOnly de acceso
   const token = request.cookies.get('glow_access_token')?.value || request.cookies.get('glow_token')?.value;
 
   if (!token) {
     return withSecurityHeaders(redirectToLogin(request, pathname));
   }
 
-  // 5. Verificar firma del JWT con `jose` y validar el rol 'ADMIN'
+  // Verificar firma del JWT con `jose` y validar el rol 'ADMIN'
   const secretKey = getJwtSecretKey();
   if (!secretKey) {
     // JWT_SECRET no configurado: no podemos validar la sesión de forma segura.
