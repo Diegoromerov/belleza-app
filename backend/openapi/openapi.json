@@ -4055,29 +4055,6 @@
           "portfolio"
         ],
         "x-glowapp-documented": false
-      },
-      "put": {
-        "operationId": "putapi_portfolio_id",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "default": {
-            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
-          }
-        },
-        "summary": "PUT /api/portfolio/{id} (autodescubierto, sin contrato declarado)",
-        "tags": [
-          "portfolio"
-        ],
-        "x-glowapp-documented": false
       }
     },
     "/api/products": {
@@ -5587,8 +5564,8 @@
   ],
   "x-glowapp-contract": {
     "generator": "backend/src/openapi/buildOpenApi.js",
-    "operationsDiscovered": 248,
+    "operationsDiscovered": 244,
     "operationsDocumented": 16,
-    "routesMounted": 264
+    "routesMounted": 260
   }
 }
