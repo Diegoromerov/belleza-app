@@ -1,20 +1,36 @@
 // backend/src/controllers/ticketController.js
 const { sequelize } = require('../config/database');
 const { QueryTypes } = require('sequelize');
+const { motivoInvalido } = require('../utils/ticketEsquema');
 
 // POST /api/tickets -> Crear un nuevo ticket
 exports.createTicket = async (req, res) => {
   try {
     const usuario_id = req.user.id;
-    const { booking_id, tipo, categoria, asunto, descripcion, evidencia_urls } = req.body;
+    const { booking_id, tipo, categoria, asunto, descripcion, evidencia_urls, prioridad } = req.body;
 
     if (!tipo || !categoria || !asunto || !descripcion) {
       return res.status(400).json({ error: 'tipo, categoria, asunto y descripcion son campos obligatorios.' });
     }
 
+    // Los valores admisibles se leen del CHECK real de la tabla. Antes no se validaba
+    // nada aquí: un `tipo` que el esquema no admitía (o el 'ARCO_SUPRESION' que añadió la
+    // migración 045) moría en un 500 genérico y parecía un fallo del servidor en vez de un
+    // dato mal enviado.
+    for (const [columna, valor] of [['tipo', tipo], ['categoria', categoria], ['prioridad', prioridad]]) {
+      if (valor === undefined || valor === null) continue;
+      const motivo = await motivoInvalido('tickets', columna, valor);
+      if (motivo) return res.status(400).json({ error: 'VALOR_NO_ADMITIDO', message: motivo });
+    }
+
+    // La prioridad es opcional: sin ella vale el DEFAULT de la tabla ('MEDIA'). Antes no
+    // había forma de nacer un ticket como EMERGENCIA, así que la prioridad más urgente
+    // solo se podía alcanzar después (y antes de la fase 2, de ninguna manera).
+    const conPrioridad = prioridad !== undefined && prioridad !== null;
+
     const query = `
-      INSERT INTO tickets (usuario_id, booking_id, tipo, categoria, asunto, descripcion, evidencia_urls)
-      VALUES (:usuario_id, :booking_id, :tipo, :categoria, :asunto, :descripcion, :evidencia_urls)
+      INSERT INTO tickets (usuario_id, booking_id, tipo, categoria, asunto, descripcion, evidencia_urls${conPrioridad ? ', prioridad' : ''})
+      VALUES (:usuario_id, :booking_id, :tipo, :categoria, :asunto, :descripcion, :evidencia_urls${conPrioridad ? ', :prioridad' : ''})
       RETURNING id, usuario_id, booking_id, tipo, categoria, asunto, descripcion, estado, prioridad, evidencia_urls, fecha_creacion;
     `;
 
@@ -26,7 +42,8 @@ exports.createTicket = async (req, res) => {
         categoria,
         asunto,
         descripcion,
-        evidencia_urls: evidencia_urls || []
+        evidencia_urls: evidencia_urls || [],
+        ...(conPrioridad ? { prioridad } : {})
       },
       type: QueryTypes.INSERT
     });
@@ -38,6 +55,12 @@ exports.createTicket = async (req, res) => {
       data: ticket
     });
   } catch (error) {
+    if (error && error.code === '23514') {
+      return res.status(400).json({
+        error: 'VALOR_NO_ADMITIDO',
+        message: `El esquema rechazó el ticket: ${error.message}`,
+      });
+    }
     console.error('❌ ERROR EN POST /api/tickets:', error);
     res.status(500).json({ error: 'Error al crear el ticket.' });
   }

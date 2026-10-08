@@ -126,6 +126,63 @@ function sumarDiasHabiles(desde, dias, festivos = []) {
   return desdeColombia(d);
 }
 
+/**
+ * Días hábiles en el intervalo semiabierto entre dos fechas (positivo si `hasta` es
+ * posterior). Es lo que hace útil una fecha límite: "quedan 6 días hábiles", no una
+ * fecha que hay que restar mentalmente. Misma limitación declarada que `sumarDiasHabiles`:
+ * sin `festivos` no conoce los festivos colombianos.
+ */
+function diasHabilesEntre(desde, hasta, festivos = []) {
+  const noLaborables = new Set(festivos);
+
+  // Se compara por DÍA, no por instante. Comparar marcas de tiempo mientras se avanza de
+  // día en día daba dos errores: dos horas del mismo día contaban como 1, y el último día
+  // del intervalo se quedaba fuera. Para "quedan N días hábiles" el día es la unidad.
+  const dia = (fecha) => {
+    const c = aColombia(fecha);
+    return Date.UTC(c.getUTCFullYear(), c.getUTCMonth(), c.getUTCDate());
+  };
+  const habil = (ms) => {
+    const f = new Date(ms);
+    const dow = f.getUTCDay();
+    return dow !== 0 && dow !== 6 && !noLaborables.has(f.toISOString().slice(0, 10));
+  };
+
+  const inicio = dia(desde);
+  const fin = dia(hasta);
+
+  // Se recorre SIEMPRE del día menor al mayor y el signo se aplica al final. Recorrer en
+  // la dirección de la consulta confundía los extremos en el caso hacia atrás (devolvía
+  // -0 en vez de -5), y negar un cero da -0, que no es lo mismo que 0.
+  const menor = Math.min(inicio, fin);
+  const mayor = Math.max(inicio, fin);
+
+  let cuenta = 0;
+  // El intervalo es semiabierto: el día de partida no cuenta y el de llegada sí.
+  for (let cursor = menor + DIA_MS; cursor <= mayor; cursor += DIA_MS) {
+    if (habil(cursor)) cuenta += 1;
+  }
+
+  if (cuenta === 0) return 0;
+  return fin > inicio ? cuenta : -cuenta;
+}
+
+/**
+ * Los plazos como expresión SQL (`CASE prioridad WHEN 'ALTA' THEN 120 ...`).
+ *
+ * Vive aquí, junto a `PLAZOS_MINUTOS`, por una razón concreta: si la métrica escribiera
+ * los números otra vez en su propia consulta, cambiar un plazo en el helper dejaría las
+ * métricas midiendo contra el plazo viejo — la misma clase de defecto que la fórmula de
+ * `porcentaje` de precios, que estaba mal en un sitio y nadie lo veía. Es puro (no toca
+ * la base), así que se puede probar directamente.
+ */
+function casePlazoMinutos(columna = 'prioridad') {
+  const ramas = Object.entries(PLAZOS_MINUTOS)
+    .map(([prioridad, minutos]) => `WHEN '${prioridad}' THEN ${Number(minutos)}`)
+    .join(' ');
+  return `CASE ${columna} ${ramas} ELSE ${Number(PLAZOS_MINUTOS[PRIORIDAD_POR_DEFECTO])} END`;
+}
+
 /** Fecha límite legal de una solicitud ARCO (Ley 1581/2012). */
 function fechaLimiteArco(desde, festivos = []) {
   return sumarDiasHabiles(desde, DIAS_HABILES_ARCO, festivos);
@@ -143,6 +200,8 @@ module.exports = {
   minutosDeRespuesta,
   promedioMinutos,
   sumarDiasHabiles,
+  diasHabilesEntre,
+  casePlazoMinutos,
   fechaLimiteArco,
   claveDia,
   // exportado para las pruebas: es la frontera entre "día colombiano" y UTC

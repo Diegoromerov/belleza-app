@@ -122,7 +122,24 @@ escribir** (no calculadas al leer, para que el reporte sea una consulta trivial 
 
 Tests: helper de SLA puro (probado con valores), y aserción de que el backfill cuadra contra los datos reales.
 
-### Fase 2 — Endpoints de gestión (gateados con `requireRol('admin')`)
+### Fase 2 — Endpoints de gestión (gateados con `requireRol('admin')`) · **HECHA** (`b08951417`+)
+
+**Verificación de cierre:** 23/23 casos de integración **contra PostgreSQL 16 real**
+ejecutando el controlador de verdad (`backend/tests/integracion/pqrsfF2.integracion.js`,
+reproducible con su README); guardián `backend/tests/adminTickets.test.js` 27/27 con
+**7 mutaciones cazadas, 0 escapadas**; guardián de F1 19/19; gate del panel 66/66.
+
+**Cierra los huecos que F1 dejó abiertos:** `resuelto_en`/`cerrado_en` ya tienen escritor
+(el `PATCH`), y el borrado al reabrir evita que un ticket reabierto siga contando como
+resuelto. `ticketSla.js` deja de estar sin consumidor: lo usan el filtro de vencidos, el
+semáforo del detalle y las métricas. Defecto **E** de la auditoría cerrado (`prioridad` al
+crear) y defecto **D** también (`tipo`/`categoria` validados contra el esquema, no un 500
+genérico).
+
+**Decisión de alcance declarada:** el correo al implicado NO entra aquí aunque el plan lo
+mencionara en este endpoint. Enviar sin arreglar antes el contrato de `email.service.js`
+—que devuelve `success:true` cuando simula— registraría notificaciones que nunca salieron.
+Es la Fase 3, y la respuesta ya declara `correo_enviado: false` para no mentir mientras.
 
 - `GET /api/admin/tickets` — bandeja: filtros `estado`, `tipo`, `categoria`, `prioridad`, `sin_respuesta`,
   `vencidos`; paginación con `{success,page,limit,total,data}` (convención de casa); orden por antigüedad.
