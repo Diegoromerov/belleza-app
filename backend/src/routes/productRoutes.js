@@ -27,6 +27,9 @@ router.get('/products', productController.getProducts);
 // Obtener un producto por ID
 router.get('/products/:id', productController.getProductById);
 
+// Listar el catálogo completo para el panel admin (paginado)
+router.get('/admin/products', authMiddleware, requireRol('admin'), productController.getAdminProducts);
+
 // Cargar un producto (Administrador de catálogo)
 // Extensión futura: admin || (provider && tenant propietario), gestionado por RLS.
 router.post('/admin/products', authMiddleware, requireRol('admin'), productController.createProduct);
