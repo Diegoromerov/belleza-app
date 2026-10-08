@@ -64,6 +64,36 @@ export default function GlobalError({
             {error?.digest ? `\n\ndigest: ${error.digest}` : ''}
           </pre>
 
+          <details style={{ marginTop: '0.75rem' }}>
+            <summary
+              style={{ cursor: 'pointer', color: '#b8bcc3', fontSize: '0.8125rem', marginBottom: '0.5rem' }}
+            >
+              Traza tecnica (desplegar y copiar para diagnosticar)
+            </summary>
+            <pre
+              style={{
+                margin: 0,
+                padding: '0.75rem',
+                borderRadius: '8px',
+                background: '#121517',
+                border: '1px solid rgba(255,255,255,0.08)',
+                color: '#b8bcc3',
+                fontSize: '0.75rem',
+                whiteSpace: 'pre-wrap',
+                overflowWrap: 'anywhere',
+                maxHeight: '22rem',
+                overflow: 'auto',
+              }}
+            >
+              {[
+                `url: ${typeof window !== 'undefined' ? window.location.href : '(ssr)'}`,
+                `digest: ${error?.digest ?? '-'}`,
+                '',
+                error?.stack ?? '(sin stack)',
+              ].join('\n')}
+            </pre>
+          </details>
+
           <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
             <button
               onClick={() => reset()}

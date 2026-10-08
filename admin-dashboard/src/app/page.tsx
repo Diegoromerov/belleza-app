@@ -158,8 +158,8 @@ export default function DashboardPage() {
 
       if (sosRes.ok) {
         const resJson = await sosRes.json();
-        const alerts = resJson?.data?.alerts ?? [];
-        setSosAlerts(alerts);
+        const alerts = resJson?.data?.alerts;
+        setSosAlerts(Array.isArray(alerts) ? alerts : []);
       } else {
         failures.push('sos');
       }

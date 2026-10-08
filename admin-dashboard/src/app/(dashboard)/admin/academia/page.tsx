@@ -60,7 +60,9 @@ export default function AcademiaAdminPage() {
       }
       
       const data = await response.json();
-      setCourses(data);
+      // El backend devuelve un array plano; si alguna vez devuelve otra cosa
+      // (p. ej. {error}), degradamos a lista vacia en vez de romper el render.
+      setCourses(Array.isArray(data) ? data : []);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error desconocido');
