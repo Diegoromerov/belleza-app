@@ -21,7 +21,7 @@ const {
   diasHabilesEntre,
   fechaLimiteArco,
 } = require('../utils/ticketSla');
-const { motivoInvalido } = require('../utils/ticketEsquema');
+const { motivoInvalido, valoresValidos } = require('../utils/ticketEsquema');
 
 const TIPO_ARCO = 'ARCO_SUPRESION';
 const PAGINA_POR_DEFECTO = 1;
@@ -121,7 +121,11 @@ exports.listarTickets = async (req, res) => {
               t.fecha_creacion, t.fecha_actualizacion, t.primera_respuesta_en,
               t.resuelto_en, t.cerrado_en,
               u.nombre AS usuario_nombre, u.email AS usuario_email,
-              (SELECT count(*)::int FROM ticket_mensajes m WHERE m.ticket_id = t.id) AS mensajes,
+              -- mensajes_total, NO mensajes: en el detalle mensajes es el ARRAY del hilo.
+              -- La misma clave con dos tipos (numero aqui, coleccion alli) es una trampa
+              -- para el panel: un tipo que herede de la fila y se reuse en el detalle
+              -- declararia numero donde llega una lista.
+              (SELECT count(*)::int FROM ticket_mensajes m WHERE m.ticket_id = t.id) AS mensajes_total,
               (SELECT count(*)::int FROM ticket_mensajes m
                 WHERE m.ticket_id = t.id AND m.autor_tipo IN ('OPERADOR','AGENTE')
                   AND m.es_borrador = FALSE) AS respuestas_operador
@@ -219,6 +223,41 @@ exports.metricasTickets = async (req, res) => {
     });
   } catch (error) {
     return responderErrorDeBase(error, res, 'GET /api/admin/tickets/metricas');
+  }
+};
+
+// ── GET /api/admin/tickets/esquema ─────────────────────────────────────────────
+// Las opciones del panel (estados, prioridades, tipos, categorías) y los plazos.
+//
+// POR QUÉ EXISTE: son justo los valores que el panel tiende a copiar en una lista, y una
+// lista copiada se desincroniza en cuanto una migración añade un valor — la 045 añadió
+// ARCO_SUPRESION a `tickets.tipo` y el código no se enteró. Aquí se sirven desde la misma
+// derivación que usa la validación, así que no pueden divergir.
+//
+// `null` en una columna significa que la base no expone un CHECK derivable para ella: el
+// panel debe entonces NO ofrecer desplegable y dejar el campo libre, en vez de inventarse
+// las opciones.
+exports.esquemaTickets = async (req, res) => {
+  try {
+    const [estado, prioridad, tipo, categoria] = await Promise.all([
+      valoresValidos('tickets', 'estado'),
+      valoresValidos('tickets', 'prioridad'),
+      valoresValidos('tickets', 'tipo'),
+      valoresValidos('tickets', 'categoria'),
+    ]);
+
+    return res.json({
+      success: true,
+      data: {
+        valores: { estado, prioridad, tipo, categoria },
+        // Los plazos tampoco se copian en el panel: cambiar uno aquí actualizaría la
+        // leyenda sin tocar el frontend.
+        sla: { plazos_minutos: PLAZOS_MINUTOS },
+        legal: { plazo_dias_habiles: DIAS_HABILES_ARCO, festivos_incluidos: false },
+      },
+    });
+  } catch (error) {
+    return responderErrorDeBase(error, res, 'GET /api/admin/tickets/esquema');
   }
 };
 

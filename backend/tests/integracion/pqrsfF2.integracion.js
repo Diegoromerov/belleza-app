@@ -17,8 +17,24 @@
  * COMO CORRERLO  (ver README.md de esta carpeta)
  *   node backend/tests/integracion/pqrsfF2.integracion.js
  */
-process.env.DATABASE_URL = process.env.PQRSF_TEST_DATABASE_URL
-  || 'postgres://f2test:f2test@localhost:5432/f2test';
+// SIN credenciales en el archivo a proposito: el repositorio tiene escaneres de
+// credenciales en CI y una URL con usuario:clave se parece demasiado a un secreto real.
+// El rol y su clave son de una base desechable creada a mano (ver README.md de esta
+// carpeta), y se pasan por entorno.
+const CLAVE_LOCAL = process.env.PQRSF_TEST_DB_PASSWORD;
+const URL_PRUEBA =
+  process.env.PQRSF_TEST_DATABASE_URL
+  || (CLAVE_LOCAL
+    ? `postgres://f2test:${encodeURIComponent(CLAVE_LOCAL)}@localhost:5432/f2test`
+    : null);
+if (!URL_PRUEBA) {
+  console.error(
+    'Falta PQRSF_TEST_DB_PASSWORD (o PQRSF_TEST_DATABASE_URL).\n' +
+      'Ver backend/tests/integracion/README.md para preparar la base de prueba.'
+  );
+  process.exit(3);
+}
+process.env.DATABASE_URL = URL_PRUEBA;
 // OJO: el backend trae un harness en memoria (pg-mem) que se activa con NODE_ENV=test o
 // JEST_WORKER_ID, y su esquema es PERMISIVO (sin FK ni CHECK). Ahí toda prueba de
 // restricciones es vacua, así que aquí se exige la base real con la bandera de casa.
@@ -154,6 +170,47 @@ const fila = (sql, replacements = {}) => sequelize.query(sql, { replacements, ty
   });
 
   // ── Detalle ─────────────────────────────────────────────────────────────────
+  await caso('la bandeja devuelve un CONTEO, no la clave del hilo', async () => {
+    const res = resFalso();
+    await ctrl.listarTickets(peticion(), res);
+    afirmar(res.statusCode === 200, `status ${res.statusCode}`);
+    const fila = res.cuerpo.data[0];
+    afirmar(
+      typeof fila.mensajes_total === 'number',
+      `mensajes_total debería ser número, es ${typeof fila.mensajes_total}`
+    );
+    afirmar(
+      !('mensajes' in fila),
+      'la bandeja no debe traer `mensajes`: esa clave es el array del hilo en el detalle'
+    );
+  });
+
+  await caso('esquema: los valores salen del CHECK real, incluido el que una lista perdería', async () => {
+    const res = resFalso();
+    await ctrl.esquemaTickets(peticion(), res);
+    afirmar(res.statusCode === 200, `status ${res.statusCode}`);
+    const v = res.cuerpo.data.valores;
+    afirmar(Array.isArray(v.estado) && v.estado.includes('ABIERTO'), `estado: ${JSON.stringify(v.estado)}`);
+    afirmar(
+      Array.isArray(v.prioridad) && v.prioridad.includes('EMERGENCIA'),
+      `prioridad: ${JSON.stringify(v.prioridad)}`
+    );
+    // La 045 añadió este valor a `tickets.tipo`; una lista escrita en el código no lo tendría.
+    afirmar(
+      Array.isArray(v.tipo) && v.tipo.includes('ARCO_SUPRESION'),
+      `tipo sin ARCO_SUPRESION: ${JSON.stringify(v.tipo)}`
+    );
+    afirmar(
+      v.categoria === null || Array.isArray(v.categoria),
+      `categoria debe ser lista o null, nunca inventada: ${JSON.stringify(v.categoria)}`
+    );
+    afirmar(
+      res.cuerpo.data.sla.plazos_minutos.EMERGENCIA === 30,
+      `plazos: ${JSON.stringify(res.cuerpo.data.sla.plazos_minutos)}`
+    );
+    afirmar(res.cuerpo.data.legal.plazo_dias_habiles === 15, 'el plazo legal ARCO debe declararse');
+  });
+
   await caso('detalle: hilo con autor y SLA respondido', async () => {
     const res = resFalso();
     await ctrl.detalleTicket(peticion({ params: { id: T2 } }), res);

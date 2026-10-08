@@ -17,8 +17,10 @@ const adminTicketController = require('../controllers/adminTicketController');
 router.use(authMiddleware);
 router.use(requireRol('admin'));
 
-// `/tickets/metricas` ANTES que `/tickets/:id`: si no, 'metricas' se interpreta como id.
+// `/tickets/metricas` y `/tickets/esquema` ANTES que `/tickets/:id`: si no, esos nombres
+// se interpretan como un id y la petición muere en el guardia de formato.
 router.get('/tickets/metricas', adminTicketController.metricasTickets);
+router.get('/tickets/esquema', adminTicketController.esquemaTickets);
 router.get('/tickets', adminTicketController.listarTickets);
 router.get('/tickets/:id', adminTicketController.detalleTicket);
 

@@ -257,17 +257,57 @@ grupo('PQRSF · rutas, guardias y auditoría', () => {
     assert.ok(/router\.use\(authMiddleware\);/.test(RUTAS_CODIGO), 'falta authMiddleware a nivel de router');
     assert.ok(/router\.use\(requireRol\('admin'\)\);/.test(RUTAS_CODIGO), 'falta requireRol(admin) a nivel de router');
     const rutas = RUTAS_CODIGO.match(/router\.(get|post|patch|put|delete)\(/g) || [];
-    assert.strictEqual(rutas.length, 5, `esperaba 5 rutas, hay ${rutas.length}`);
+    assert.strictEqual(rutas.length, 6, `esperaba 6 rutas, hay ${rutas.length}`);
   });
 
-  caso('/tickets/metricas se declara ANTES de /tickets/:id', () => {
-    const iMetricas = RUTAS_CODIGO.indexOf("'/tickets/metricas'");
+  caso('ningún camino con nombre propio queda DETRÁS de /tickets/:id', () => {
+    // Si '/tickets/:id' va primero, 'metricas' y 'esquema' se leen como un id y mueren en
+    // el guardia de formato: la petición falla con 400 y el síntoma es "el panel no carga
+    // las opciones", no un 404 que delate el orden.
     const iDetalle = RUTAS_CODIGO.indexOf("'/tickets/:id'");
-    assert.ok(iMetricas !== -1, 'no existe la ruta de métricas');
     assert.ok(iDetalle !== -1, 'no existe la ruta de detalle');
+    for (const camino of ['/tickets/metricas', '/tickets/esquema']) {
+      const i = RUTAS_CODIGO.indexOf(`'${camino}'`);
+      assert.ok(i !== -1, `no existe la ruta ${camino}`);
+      assert.ok(i < iDetalle, `'${camino}' debe declararse antes que '/tickets/:id'`);
+    }
+  });
+
+  caso('la bandeja no reutiliza la clave del hilo para un conteo', () => {
+    // `mensajes` es el ARRAY del hilo en el detalle. Que la bandeja devolviera un NÚMERO
+    // bajo la misma clave daba dos tipos para una clave: el panel que herede la fila y
+    // reuse el tipo en el detalle declara número donde llega una lista.
+    const bandeja = cuerpoDe(CTRL_CODIGO, 'listarTickets') || '';
     assert.ok(
-      iMetricas < iDetalle,
-      "si '/tickets/:id' va primero, 'metricas' se interpreta como un id"
+      /AS mensajes_total\b/.test(bandeja),
+      'el conteo de la bandeja debe llamarse mensajes_total'
+    );
+    assert.ok(
+      !/AS mensajes\b(?!_total)/.test(bandeja),
+      'un `AS mensajes` en la bandeja choca con el array del detalle'
+    );
+    assert.ok(
+      /ORDER BY m\.fecha_envio ASC/.test(cuerpoDe(CTRL_CODIGO, 'detalleTicket') || ''),
+      'en el detalle, `mensajes` debe seguir siendo la colección del hilo'
+    );
+  });
+
+  caso('las opciones del panel salen del esquema, no de una lista del controlador', () => {
+    const cuerpo = cuerpoDe(CTRL_CODIGO, 'esquemaTickets') || '';
+    assert.ok(cuerpo, 'no existe el handler de esquema');
+    for (const columna of ['estado', 'prioridad', 'tipo', 'categoria']) {
+      assert.ok(
+        new RegExp(`valoresValidos\\(\\s*'tickets',\\s*'${columna}'`).test(cuerpo),
+        `los valores de ${columna} deben derivarse del esquema`
+      );
+    }
+    assert.ok(
+      !/\[\s*'ABIERTO'|\[\s*'EMERGENCIA'|\[\s*'PETICION'/.test(cuerpo),
+      'el handler de esquema no debe llevar una lista literal de valores'
+    );
+    assert.ok(
+      /plazos_minutos: PLAZOS_MINUTOS/.test(cuerpo),
+      'los plazos también se sirven desde el helper, no copiados en el panel'
     );
   });
 

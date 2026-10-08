@@ -20,14 +20,20 @@ PostgreSQL**, en lugar de dar un verde que no significa nada.
 
 ## PQRSF Fase 2 — endpoints de gestión desde el panel
 
-Ejercita los cinco endpoints del controlador de verdad y comprueba lo escrito en la base:
-bandeja con filtros, métricas con plazos de SLA, detalle con hilo, cambio de estado y
-prioridad, y respuesta del operador. 23 casos.
+Ejercita los seis endpoints del controlador de verdad (bandeja con filtros, métricas,
+esquema, detalle con hilo, cambio de estado y prioridad, y respuesta del operador) y
+comprueba lo escrito en la base, no solo lo que devolvió la respuesta. 26 casos.
 
-Preparar (el contenedor `glow-ci-pg` sirve; requiere superusuario):
+### Preparar
+
+El contenedor `glow-ci-pg` sirve (requiere superusuario). **No hay credenciales en este
+repositorio**: elegí vos la clave del rol desechable y pasala por entorno.
 
 ```bash
-docker exec -i glow-ci-pg psql -U postgres -c "CREATE ROLE f2test LOGIN PASSWORD 'f2test';"
+export PQRSF_TEST_DB_PASSWORD='<clave-que-elijas>'
+
+docker exec -i glow-ci-pg psql -U postgres -c \
+  "CREATE ROLE f2test LOGIN PASSWORD '$PQRSF_TEST_DB_PASSWORD';"
 docker exec -i glow-ci-pg psql -U postgres -c "CREATE DATABASE f2test OWNER f2test;"
 
 M=backend/migrations
@@ -40,12 +46,24 @@ docker exec -i glow-ci-pg psql -U postgres -d f2test \
   -c "GRANT ALL ON SCHEMA public TO f2test; GRANT ALL ON ALL TABLES IN SCHEMA public TO f2test;"
 ```
 
-Correr:
+### Correr
 
 ```bash
-node backend/tests/integracion/pqrsfF2.integracion.js
-# o con otra base:
-PQRSF_TEST_DATABASE_URL=postgres://usuario:clave@host:5432/base node ...
+PQRSF_TEST_DB_PASSWORD='<clave-que-elijas>' \
+  node backend/tests/integracion/pqrsfF2.integracion.js
+
+# o con una URL completa, si preferís otra base:
+PQRSF_TEST_DATABASE_URL='postgres://usuario:clave@host:5432/base' \
+  node backend/tests/integracion/pqrsfF2.integracion.js
 ```
 
-Limpieza: `DROP DATABASE f2test; DROP ROLE f2test;`
+Los casos **mutan** el estado (cierran tickets, responden), así que una segunda corrida
+sobre la misma base falla por datos y no por código: volvé a aplicar el esquema y la semilla
+antes de repetir.
+
+### Limpiar
+
+```bash
+docker exec -i glow-ci-pg psql -U postgres -c "DROP DATABASE f2test;"
+docker exec -i glow-ci-pg psql -U postgres -c "DROP ROLE f2test;"
+```
