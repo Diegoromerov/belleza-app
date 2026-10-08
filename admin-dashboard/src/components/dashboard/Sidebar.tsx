@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { ThemeSelector } from '@/components/ui/theme-selector';
 import { 
   Home, 
   Calendar, 
@@ -18,13 +19,16 @@ import {
   Menu,
   X,
   Building2,
-  Package
+  Package,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 
 export default function Sidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
 
   // Links based on role
   const getLinks = () => {
@@ -70,17 +74,24 @@ export default function Sidebar() {
       )}
 
       {/* Sidebar */}
-      <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
+      <aside className={`sidebar ${sidebarOpen ? 'open' : ''} ${collapsed ? 'collapsed' : ''}`} style={{ width: collapsed ? '72px' : '260px' }}>
         <div className="sidebar-brand">
           <Link href="/" className="sidebar-logo" aria-label="GlowAdmin Home">
             <div className="sidebar-logo-icon">
               <Scissors size={22} />
             </div>
-            <div>
-              <h1 className="sidebar-logo-text">GlowAdmin</h1>
-              <p className="caption">Panel de Control</p>
-            </div>
+            {!collapsed && (
+              <div>
+                <h1 className="sidebar-logo-text">GlowAdmin</h1>
+                <p className="caption">Panel de Control</p>
+              </div>
+            )}
           </Link>
+          {!collapsed && (
+            <div className="flex justify-center mt-4">
+              <ThemeSelector />
+            </div>
+          )}
         </div>
 
         <nav className="sidebar-nav" role="navigation" aria-label="Navegación principal">
@@ -94,33 +105,44 @@ export default function Sidebar() {
                 onClick={() => setSidebarOpen(false)}
                 className={`nav-link ${isActive ? 'active' : ''}`}
                 aria-current={isActive ? 'page' : undefined}
+                title={collapsed ? link.label : undefined}
               >
                 <Icon className="icon" size={20} aria-hidden="true" />
-                <span>{link.label}</span>
+                {!collapsed && <span>{link.label}</span>}
               </Link>
             );
           })}
         </nav>
 
-        <div className="p-4 border-t border-subtle mt-auto">
-          {user && (
+        <div className="p-4 border-t border-border mt-auto">
+          {!collapsed && user && (
             <div className="flex items-center gap-3 mb-4">
               <div className="user-avatar">
                 {user.nombre[0].toUpperCase()}
               </div>
               <div className="overflow-hidden min-w-0">
                 <p className="body-sm text-primary truncate">{user.nombre}</p>
-                <p className="micro text-gold font-medium uppercase tracking-wide">{user.rol}</p>
+                <p className="micro text-primary font-medium uppercase tracking-wide">{user.rol}</p>
               </div>
             </div>
           )}
-          <button
-            onClick={logout}
-            className="btn btn-secondary w-full justify-start"
-          >
-            <LogOut size={20} className="icon" aria-hidden="true" />
-            <span>Cerrar Sesión</span>
-          </button>
+          <div className="flex items-center justify-between">
+            <button
+              onClick={logout}
+              className="btn btn-secondary w-full justify-start"
+              title={collapsed ? 'Cerrar Sesión' : undefined}
+            >
+              <LogOut size={20} className="icon" aria-hidden="true" />
+              {!collapsed && <span>Cerrar Sesión</span>}
+            </button>
+            <button
+              onClick={() => setCollapsed(!collapsed)}
+              className="btn btn-tertiary p-2"
+              aria-label={collapsed ? 'Expandir sidebar' : 'Colapsar sidebar'}
+            >
+              {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+            </button>
+          </div>
         </div>
       </aside>
     </>

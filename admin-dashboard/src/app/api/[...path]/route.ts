@@ -4,11 +4,11 @@ import { jwtVerify } from 'jose';
 
 // The local backend's .env.example uses port 3000; keep deployment overrides first.
 const BACKEND_URL = process.env.BACKEND_INTERNAL_URL || process.env.BACKEND_URL || 'http://localhost:3000';
-const JWT_SECRET = process.env.JWT_SECRET;
 
 function getJwtSecretKey() {
+  const JWT_SECRET = process.env.JWT_SECRET;
   if (!JWT_SECRET || JWT_SECRET.trim().length < 32) {
-    throw new Error('JWT_SECRET debe configurarse en el servidor del dashboard y coincidir con el backend (mínimo 32 caracteres).');
+    return null;
   }
   return new TextEncoder().encode(JWT_SECRET);
 }
@@ -169,8 +169,12 @@ async function handleProxyRequest(req: NextRequest, { params }: { params: Promis
     if (!accessToken) {
       return NextResponse.json({ error: 'No hay sesión activa.' }, { status: 401 });
     }
+    const secretKey = getJwtSecretKey();
+    if (!secretKey) {
+      return NextResponse.json({ error: 'Configuración de autenticación incompleta en el servidor (JWT_SECRET faltante o inválido).' }, { status: 500 });
+    }
     try {
-      const { payload } = await jwtVerify(accessToken, getJwtSecretKey());
+      const { payload } = await jwtVerify(accessToken, secretKey);
       if (payload.rol !== 'ADMIN') {
         return NextResponse.json({ error: 'Acceso denegado.' }, { status: 403 });
       }
@@ -293,7 +297,13 @@ async function handleProxyRequest(req: NextRequest, { params }: { params: Promis
 
     return clientRes;
   } catch (err: any) {
-    return NextResponse.json({ error: 'Error al conectar con backend desde BFF: ' + err.message }, { status: 502 });
+    const cause = err?.cause as { code?: string } | undefined;
+    const unavailable = cause?.code === 'ECONNREFUSED' || cause?.code === 'ENOTFOUND' || cause?.code === 'ETIMEDOUT';
+    return NextResponse.json({
+      error: unavailable
+        ? 'No se pudo conectar con el backend. Verifica BACKEND_INTERNAL_URL/BACKEND_URL.'
+        : 'Error interno en proxy BFF: ' + (err?.message || 'error desconocido')
+    }, { status: unavailable ? 502 : 500 });
   }
 }
 

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { ThemeSelector } from '@/components/ui/theme-selector';
 import { Bell, Search, Menu, X, ChevronDown, LogOut, User as UserIcon } from 'lucide-react';
 
 interface HeaderProps {
@@ -43,7 +44,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
         </button>
         
         <div className="relative max-w-md w-full hidden md:block">
-          <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-muted">
+          <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-muted-foreground">
             <Search size={18} />
           </span>
           <input
@@ -56,6 +57,9 @@ export default function Header({ onMenuClick }: HeaderProps) {
       </div>
 
       <div className="header-right">
+        {/* Theme Selector */}
+        <ThemeSelector />
+        
         {/* Notifications */}
         <div className="dropdown" ref={notificationsRef}>
           <button
@@ -69,8 +73,8 @@ export default function Header({ onMenuClick }: HeaderProps) {
           </button>
           {notificationsOpen && (
             <div className="dropdown-menu" role="menu">
-              <div className="p-3 border-b border-subtle">
-                <h3 className="caption text-primary">Notificaciones</h3>
+              <div className="p-3 border-b border-border">
+                <h3 className="caption text-foreground">Notificaciones</h3>
               </div>
               <button className="dropdown-item" role="menuitem">
                 <span>No hay notificaciones nuevas</span>
@@ -99,9 +103,9 @@ export default function Header({ onMenuClick }: HeaderProps) {
             </button>
             {userMenuOpen && (
               <div className="dropdown-menu" role="menu">
-                <div className="p-3 border-b border-subtle">
-                  <p className="body-sm text-primary">{user.nombre}</p>
-                  <p className="caption text-gold">{user.rol}</p>
+                <div className="p-3 border-b border-border">
+                  <p className="body-sm text-foreground">{user.nombre}</p>
+                  <p className="caption text-primary">{user.rol}</p>
                 </div>
                 <Link href="/perfil" className="dropdown-item" role="menuitem">
                   <UserIcon size={16} />

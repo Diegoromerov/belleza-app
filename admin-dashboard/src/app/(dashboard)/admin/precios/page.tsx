@@ -114,23 +114,20 @@ export default function AdminPreciosPage() {
     errores?: string[];
   } | null>(null);
 
-  const getApiUrl = () => process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-
-  const getAuthToken = () => {
-    if (typeof window === 'undefined') return '';
-    return localStorage.getItem('glow_token') || localStorage.getItem('adminToken') || '';
-  };
+  // Helper para headers con CSRF token via BFF proxy
+  const getBffHeaders = () => ({
+    'X-Requested-With': 'XMLHttpRequest'
+  });
 
   const fetchPreciosData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const token = getAuthToken();
-      const headers = { 'Authorization': `Bearer ${token}` };
+      const headers = getBffHeaders();
 
       const [resPrecios, resCoherencia] = await Promise.all([
-        fetch(`${getApiUrl()}/api/admin/precios`, { headers }),
-        fetch(`${getApiUrl()}/api/admin/precios/coherencia`, { headers })
+        fetch('/api/admin/precios', { headers }),
+        fetch('/api/admin/precios/coherencia', { headers })
       ]);
 
       if (!resPrecios.ok) {
@@ -159,10 +156,8 @@ export default function AdminPreciosPage() {
   const fetchHistorialData = useCallback(async () => {
     setLoadingHistorial(true);
     try {
-      const token = getAuthToken();
-      const res = await fetch(`${getApiUrl()}/api/admin/precios/historial`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const headers = getBffHeaders();
+      const res = await fetch('/api/admin/precios/historial', { headers });
       if (res.ok) {
         const data = await res.json();
         setHistorialItems(data.filas || []);
@@ -200,123 +195,121 @@ export default function AdminPreciosPage() {
   };
 
   const handleSaveManualEdit = async () => {
-    if (!editingProduct) return;
-    try {
-      const token = getAuthToken();
-      const preciosArray: Array<{ lista: 'cliente' | 'profesional' | 'negocio'; precio: number | null; unidad_minima?: number }> = [];
+      if (!editingProduct) return;
+      try {
+        const headers = getBffHeaders();
+        const preciosArray: Array<{ lista: 'cliente' | 'profesional' | 'negocio'; precio: number | null; unidad_minima?: number }> = [];
 
-      if (editPrecioCliente !== '') preciosArray.push({ lista: 'cliente', precio: parseFloat(editPrecioCliente) });
-      if (editPrecioProf !== '') preciosArray.push({ lista: 'profesional', precio: parseFloat(editPrecioProf) });
-      if (editPrecioNegocio !== '') {
-        preciosArray.push({
-          lista: 'negocio',
-          precio: parseFloat(editPrecioNegocio),
-          unidad_minima: parseInt(editUnidadMinimaNegocio, 10) || 6
+        if (editPrecioCliente !== '') preciosArray.push({ lista: 'cliente', precio: parseFloat(editPrecioCliente) });
+        if (editPrecioProf !== '') preciosArray.push({ lista: 'profesional', precio: parseFloat(editPrecioProf) });
+        if (editPrecioNegocio !== '') {
+          preciosArray.push({
+            lista: 'negocio',
+            precio: parseFloat(editPrecioNegocio),
+            unidad_minima: parseInt(editUnidadMinimaNegocio, 10) || 6
+          });
+        }
+
+        const payload = {
+          costo: editCosto !== '' ? parseFloat(editCosto) : null,
+          precios: preciosArray,
+          motivo: editMotivo
+        };
+
+        const res = await fetch(`/api/admin/precios/${editingProduct.producto_id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            ...headers
+          },
+          body: JSON.stringify(payload)
         });
+
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.message || `Error al guardar: HTTP ${res.status}`);
+        }
+
+        setSuccessMsg(`Precio del producto "${editingProduct.nombre}" actualizado correctamente.`);
+        setEditingProduct(null);
+        fetchPreciosData();
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Error al guardar cambios';
+        setError(message);
+      }
+    };
+
+    // Generar Vista Previa Masiva (Bulk Preview)
+    const handleGenerateBulkPreview = () => {
+      const val = parseFloat(bulkValor);
+      if (isNaN(val)) {
+        setError('Ingrese un valor numérico válido para el ajuste masivo.');
+        return;
       }
 
-      const payload = {
-        costo: editCosto !== '' ? parseFloat(editCosto) : null,
-        precios: preciosArray,
-        motivo: editMotivo
-      };
+      const preview = productos.map(p => {
+        const pActual = p.precios[bulkLista]?.precio ?? null;
+        let pNuevo = pActual ?? (p.costo ? p.costo * 1.3 : 10000);
 
-      const res = await fetch(`${getApiUrl()}/api/admin/precios/${editingProduct.producto_id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(payload)
+        if (bulkOperacion === 'porcentaje') {
+          pNuevo = pNuevo * (1 + val / 100);
+        } else {
+          pNuevo = pNuevo + val;
+        }
+
+        return {
+          producto_id: p.producto_id,
+          nombre: p.nombre,
+          precio_actual: pActual,
+          precio_nuevo: Math.max(0, Math.round(pNuevo))
+        };
       });
 
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.message || `Error al guardar: HTTP ${res.status}`);
+      setBulkPreviewRows(preview);
+    };
+
+    // Aplicar Cambios Masivos Confirmados
+    const handleApplyBulkChanges = async () => {
+      try {
+        const headers = getBffHeaders();
+        const payload = {
+          lista: bulkLista,
+          cambios: bulkPreviewRows.map(r => ({
+            producto_id: r.producto_id,
+            precio: r.precio_nuevo
+          })),
+          motivo: `Ajuste masivo ${bulkOperacion} (${bulkValor})`
+        };
+
+        const res = await fetch('/api/admin/precios/bulk', {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            ...headers
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.message || `Error en actualización masiva: HTTP ${res.status}`);
+        }
+
+        setSuccessMsg(`Ajuste masivo de precios aplicado exitosamente.`);
+        setShowBulkModal(false);
+        setBulkPreviewRows([]);
+        fetchPreciosData();
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Error al aplicar cambios masivos';
+        setError(message);
       }
-
-      setSuccessMsg(`Precio del producto "${editingProduct.nombre}" actualizado correctamente.`);
-      setEditingProduct(null);
-      fetchPreciosData();
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Error al guardar cambios';
-      setError(message);
-    }
-  };
-
-  // Generar Vista Previa Masiva (Bulk Preview)
-  const handleGenerateBulkPreview = () => {
-    const val = parseFloat(bulkValor);
-    if (isNaN(val)) {
-      setError('Ingrese un valor numérico válido para el ajuste masivo.');
-      return;
-    }
-
-    const preview = productos.map(p => {
-      const pActual = p.precios[bulkLista]?.precio ?? null;
-      let pNuevo = pActual ?? (p.costo ? p.costo * 1.3 : 10000);
-
-      if (bulkOperacion === 'porcentaje') {
-        pNuevo = pNuevo * (1 + val / 100);
-      } else {
-        pNuevo = pNuevo + val;
-      }
-
-      return {
-        producto_id: p.producto_id,
-        nombre: p.nombre,
-        precio_actual: pActual,
-        precio_nuevo: Math.max(0, Math.round(pNuevo))
-      };
-    });
-
-    setBulkPreviewRows(preview);
-  };
-
-  // Aplicar Cambios Masivos Confirmados
-  const handleApplyBulkChanges = async () => {
-    try {
-      const token = getAuthToken();
-      const payload = {
-        lista: bulkLista,
-        cambios: bulkPreviewRows.map(r => ({
-          producto_id: r.producto_id,
-          precio: r.precio_nuevo
-        })),
-        motivo: `Ajuste masivo ${bulkOperacion} (${bulkValor})`
-      };
-
-      const res = await fetch(`${getApiUrl()}/api/admin/precios/bulk`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(payload)
-      });
-
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.message || `Error en actualización masiva: HTTP ${res.status}`);
-      }
-
-      setSuccessMsg(`Ajuste masivo de precios aplicado exitosamente.`);
-      setShowBulkModal(false);
-      setBulkPreviewRows([]);
-      fetchPreciosData();
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Error al aplicar cambios masivos';
-      setError(message);
-    }
-  };
+    };
 
   // Exportar CSV
   const handleExportCsv = async () => {
     try {
-      const token = getAuthToken();
-      const res = await fetch(`${getApiUrl()}/api/admin/precios/export.csv`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const headers = getBffHeaders();
+      const res = await fetch('/api/admin/precios/export.csv', { headers });
       if (!res.ok) {
         throw new Error(`Exportación falló: HTTP ${res.status}`);
       }
@@ -343,16 +336,14 @@ export default function AdminPreciosPage() {
     }
 
     try {
-      const token = getAuthToken();
+      const headers = getBffHeaders();
       const formData = new FormData();
       formData.append('archivo', importFile);
       formData.append('dryRun', importDryRun ? 'true' : 'false');
 
-      const res = await fetch(`${getApiUrl()}/api/admin/precios/import.csv`, {
+      const res = await fetch('/api/admin/precios/import.csv', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
+        headers,
         body: formData
       });
 

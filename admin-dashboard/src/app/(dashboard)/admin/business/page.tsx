@@ -53,7 +53,11 @@ export default function AdminBusinessPage() {
   const [notes, setNotes] = useState<string>('');
   const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null);
 
-  const getToken = () => (typeof window !== 'undefined' ? localStorage.getItem('glow_token') || localStorage.getItem('adminToken') : null);
+  // Helper para headers con CSRF token via BFF proxy
+  const getBffHeaders = (contentType = 'application/json') => ({
+    'X-Requested-With': 'XMLHttpRequest',
+    ...(contentType ? { 'Content-Type': contentType } : {}),
+  });
 
   // RBAC Direct URL Protection
   useEffect(() => {
@@ -62,15 +66,11 @@ export default function AdminBusinessPage() {
     }
   }, [user, loading, router]);
 
-  // Fetch real data from backend APIs
+  // Fetch real data from backend APIs via BFF proxy
   const fetchData = async () => {
     setLoading(true);
     try {
-      const token = getToken();
-      const headers = {
-        'Authorization': `Bearer ${token || 'admin-token'}`,
-        'Content-Type': 'application/json'
-      };
+      const headers = getBffHeaders();
 
       // 1. Fetch Queue
       const queueRes = await fetch('/api/v1/business/admin/queue', { headers });
@@ -100,13 +100,10 @@ export default function AdminBusinessPage() {
   const handleReview = async (evidenceId: string, action: 'APPROVED' | 'REJECTED') => {
     setActionLoading(evidenceId);
     try {
-      const token = getToken();
+      const headers = getBffHeaders();
       const res = await fetch(`/api/v1/business/admin/evidence/${evidenceId}`, {
         method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token || 'admin-token'}`,
-          'Content-Type': 'application/json'
-        },
+        headers,
         body: JSON.stringify({
           action,
           notes: notes || (action === 'APPROVED' ? 'Aprobado por administración.' : 'Rechazado por inconsistencias.')
@@ -132,13 +129,10 @@ export default function AdminBusinessPage() {
   const handleGenerateDocument = async () => {
     setLoading(true);
     try {
-      const token = getToken();
+      const headers = getBffHeaders();
       const res = await fetch('/api/v1/business/documents/generate', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token || 'admin-token'}`,
-          'Content-Type': 'application/json'
-        },
+        headers,
         body: JSON.stringify({
           template_code: selectedTemplate,
           variables: {

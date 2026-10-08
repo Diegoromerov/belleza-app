@@ -29,7 +29,9 @@ test('obtiene token de cookies HttpOnly', () => {
 });
 
 test('la firma JWT se verifica con jose jwtVerify', () => {
-  assert.match(mw, /jwtVerify\(token, getJwtSecretKey\(\)\)/);
+  assert.match(mw, /const secretKey = getJwtSecretKey\(\)/);
+  assert.match(mw, /if \(!secretKey\) \{/);
+  assert.match(mw, /jwtVerify\(token, secretKey\)/);
 });
 
 test('el panel es exclusivo de ADMIN: cualquier otro rol o token inválido se rechaza', () => {

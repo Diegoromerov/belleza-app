@@ -82,22 +82,19 @@ export default function AdminProductosPage() {
   // Pagination
   const [totalCount, setTotalCount] = useState(0);
 
-  const getApiUrl = () => process.env.NEXT_PUBLIC_API_URL || 'https://belleza-app-production.up.railway.app';
-
-  const getAuthToken = () => {
-    if (typeof window === 'undefined') return '';
-    return localStorage.getItem('glow_token') || localStorage.getItem('adminToken') || '';
-  };
+  // Helper para headers con CSRF token via BFF proxy
+  const getBffHeaders = (contentType = 'application/json') => ({
+    'X-Requested-With': 'XMLHttpRequest',
+    ...(contentType ? { 'Content-Type': contentType } : {}),
+  });
 
   const fetchProductos = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const token = getAuthToken();
-      const headers = { 'Authorization': `Bearer ${token}` };
+      const headers = getBffHeaders();
+      const res = await fetch(`/api/admin/products?page=${currentPage}&limit=${pageSize}`, { headers });
 
-      const res = await fetch(`${getApiUrl()}/api/admin/products?page=${currentPage}&limit=${pageSize}`, { headers });
-      
       if (!res.ok) {
         const errData = await res.json();
         throw new Error(errData.error || `Error HTTP ${res.status}`);
@@ -117,10 +114,8 @@ export default function AdminProductosPage() {
 
   const fetchCategorias = useCallback(async () => {
     try {
-      const token = getAuthToken();
-      const res = await fetch(`${getApiUrl()}/api/categorias`, { 
-        headers: { 'Authorization': `Bearer ${token}` } 
-      });
+      const headers = getBffHeaders();
+      const res = await fetch('/api/categorias', { headers });
       if (res.ok) {
         const data = await res.json();
         setCategorias(data.data || data.categorias || []);
@@ -179,10 +174,8 @@ export default function AdminProductosPage() {
 
   const fetchPrecios = async (productoId: number) => {
     try {
-      const token = getAuthToken();
-      const res = await fetch(`${getApiUrl()}/api/admin/precios/${productoId}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const headers = getBffHeaders();
+      const res = await fetch(`/api/admin/precios/${productoId}`, { headers });
       if (res.ok) {
         const data = await res.json();
         const nuevosPrecios: PrecioItem[] = [
@@ -219,15 +212,12 @@ export default function AdminProductosPage() {
     setError(null);
 
     try {
-      const token = getAuthToken();
-      
-      // 1. Get presigned URL
-      const presignedRes = await fetch(`${getApiUrl()}/api/admin/upload/presigned`, {
+      const headers = getBffHeaders();
+
+      // 1. Get presigned URL via BFF proxy
+      const presignedRes = await fetch('/api/admin/upload/presigned', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers,
         body: JSON.stringify({
           filename: file.name,
           contentType: file.type,
@@ -243,7 +233,7 @@ export default function AdminProductosPage() {
       const presignedData = await presignedRes.json();
       const { uploadUrl, key, fileUrl, cdnUrl } = presignedData.data;
 
-      // 2. Upload directly to R2
+      // 2. Upload directly to R2 (not via proxy)
       const uploadRes = await fetch(uploadUrl, {
         method: 'PUT',
         headers: { 'Content-Type': file.type },
@@ -254,13 +244,10 @@ export default function AdminProductosPage() {
         throw new Error('Error subiendo imagen a R2');
       }
 
-      // 3. Confirm upload
-      const confirmRes = await fetch(`${getApiUrl()}/api/admin/upload/confirm`, {
+      // 3. Confirm upload via BFF proxy
+      const confirmRes = await fetch('/api/admin/upload/confirm', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers,
         body: JSON.stringify({ key })
       });
 
@@ -298,11 +285,10 @@ export default function AdminProductosPage() {
     setError(null);
 
     try {
-      const token = getAuthToken();
       const isEdit = !!editingProduct;
       const url = isEdit 
-        ? `${getApiUrl()}/api/admin/products/${editingProduct.id}`
-        : `${getApiUrl()}/api/admin/products`;
+        ? `/api/admin/products/${editingProduct.id}`
+        : `/api/admin/products`;
       const method = isEdit ? 'PUT' : 'POST';
 
       const payload = {
@@ -319,10 +305,7 @@ export default function AdminProductosPage() {
 
       const res = await fetch(url, {
         method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers: getBffHeaders(),
         body: JSON.stringify(payload)
       });
 
@@ -337,12 +320,9 @@ export default function AdminProductosPage() {
       // Save precios
       for (const p of precios) {
         if (p.precio > 0) {
-          await fetch(`${getApiUrl()}/api/admin/precios/${productId}`, {
+          await fetch(`/api/admin/precios/${productId}`, {
             method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
+            headers: getBffHeaders(),
             body: JSON.stringify({
               precios: [{
                 lista: p.lista,
@@ -369,10 +349,10 @@ export default function AdminProductosPage() {
     if (!confirm('¿Eliminar este producto? Esta acción no se puede deshacer.')) return;
 
     try {
-      const token = getAuthToken();
-      const res = await fetch(`${getApiUrl()}/api/admin/products/${id}`, {
+      const headers = getBffHeaders();
+      const res = await fetch(`/api/admin/products/${id}`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers
       });
 
       if (!res.ok) {

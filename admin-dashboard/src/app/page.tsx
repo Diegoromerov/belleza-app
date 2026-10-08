@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   TrendingUp, 
   Users, 
@@ -28,6 +28,7 @@ import {
   Bar,
   Cell
 } from 'recharts';
+import { useAdminSession } from '@/hooks/useAdminSession';
 
 interface FinancialMetrics {
   gmv: number;
@@ -74,14 +75,7 @@ interface PendingProvider {
   estatus_verificacion?: string | null;
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
-
 const CATEGORY_COLORS = ['#f43f5e', '#ec4899', '#a855f7', '#6366f1', '#0ea5e9', '#f59e0b'];
-
-function getAdminSessionToken(): string | null {
-  if (typeof window === 'undefined') return null;
-  return window.localStorage.getItem('adminToken') || window.localStorage.getItem('glow_token');
-}
 
 function formatCOPSafe(val: number | null | undefined) {
   if (val === null || val === undefined || Number.isNaN(Number(val))) return 'Sin datos';
@@ -93,6 +87,7 @@ function formatCOPSafe(val: number | null | undefined) {
 }
 
 export default function DashboardPage() {
+  const { user, loading: sessionLoading, error: sessionError, refetch: refetchSession } = useAdminSession();
   const [loading, setLoading] = useState(true);
   const [backendStatus, setBackendStatus] = useState('Comprobando conexión...');
   const [metrics, setMetrics] = useState<FinancialMetrics | null>(null);
@@ -102,11 +97,19 @@ export default function DashboardPage() {
   const [pendingProviders, setPendingProviders] = useState<PendingProvider[]>([]);
   const [dataError, setDataError] = useState<string | null>(null);
   const [failedSections, setFailedSections] = useState<string[]>([]);
+  
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  const fetchDashboardData = async () => {
-    const adminToken = getAdminSessionToken();
+  const fetchDashboardData = useCallback(async () => {
+    // Cancel any in-flight request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
 
-    if (!adminToken) {
+    if (!user) {
       setBackendStatus('Sin sesión de administrador');
       setDataError('No hay sesión de administrador activa. Inicia sesión con una cuenta ADMIN para ver datos reales.');
       setMetrics(null);
@@ -122,15 +125,17 @@ export default function DashboardPage() {
     setLoading(true);
     setDataError(null);
     try {
-      const headers = { Authorization: `Bearer ${adminToken}` };
+      // Usar el proxy BFF en lugar de API_BASE_URL directo
       const [summaryRes, sosRes, providersRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/api/glow-admin/dashboard/financial-summary`, { headers }),
-        fetch(`${API_BASE_URL}/api/glow-admin/sos/active`, { headers }),
-        fetch(`${API_BASE_URL}/api/glow-admin/provider/pending`, { headers })
+        fetch('/api/admin/dashboard/financial-summary', { signal, headers: { 'X-Requested-With': 'XMLHttpRequest' } }),
+        fetch('/api/admin/sos/active', { signal, headers: { 'X-Requested-With': 'XMLHttpRequest' } }),
+        fetch('/api/admin/provider/pending', { signal, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
       ]);
 
+      // Check if aborted
+      if (signal.aborted) return;
+
       const failures: string[] = [];
-      const failed: string[] = [];
 
       if (summaryRes.ok) {
         const resJson = await summaryRes.json();
@@ -149,6 +154,8 @@ export default function DashboardPage() {
         failures.push('financial');
       }
 
+      if (signal.aborted) return;
+
       if (sosRes.ok) {
         const resJson = await sosRes.json();
         const alerts = resJson?.data?.alerts ?? [];
@@ -157,6 +164,8 @@ export default function DashboardPage() {
         failures.push('sos');
       }
 
+      if (signal.aborted) return;
+
       if (providersRes.ok) {
         const resJson = await providersRes.json();
         setPendingProviders(resJson?.data?.pending ?? []);
@@ -164,23 +173,56 @@ export default function DashboardPage() {
         failures.push('kyc');
       }
 
+      if (signal.aborted) return;
+
       setFailedSections(failures);
       setBackendStatus(failures.length ? `Parcial: ${failures.join(', ')} fallaron` : 'Conectado');
     } catch (err) {
+      if (signal.aborted) return;
       console.error('[Dashboard] error:', err);
-      setDataError('Error de red o CORS al contactar el backend.');
+      setDataError('Error de red al contactar el backend.');
       setBackendStatus('Error de conexión');
       setFailedSections(['financial', 'sos', 'kyc']);
     } finally {
-      setLoading(false);
+      if (!signal.aborted) {
+        setLoading(false);
+      }
     }
-  };
+  }, [user]);
+
+  // Retry handler for session errors
+  const handleRetry = useCallback(async () => {
+    await refetchSession();
+    if (!sessionLoading) {
+      fetchDashboardData();
+    }
+  }, [refetchSession, sessionLoading, fetchDashboardData]);
 
   useEffect(() => {
-    fetchDashboardData();
-    const interval = setInterval(fetchDashboardData, 60000);
-    return () => clearInterval(interval);
-  }, []);
+    if (!sessionLoading && user) {
+      fetchDashboardData();
+    }
+    
+    if (!sessionLoading && !user) {
+      // Session check complete, no user - don't start polling
+      setLoading(false);
+      return;
+    }
+
+    // Start polling only when we have a valid session
+    if (user) {
+      intervalRef.current = setInterval(fetchDashboardData, 60000);
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, [user, sessionLoading, fetchDashboardData]);
 
   // KPI cards
   const kpis = [
@@ -201,11 +243,11 @@ export default function DashboardPage() {
               <span className="body-sm text-danger">{dataError || backendStatus}</span>
             </div>
             <button
-              onClick={fetchDashboardData}
-              className="btn btn-secondary btn-sm shrink-0"
-            >
-              Reintentar
-            </button>
+                          onClick={handleRetry}
+                          className="btn btn-secondary btn-sm shrink-0"
+                        >
+                          Reintentar
+                        </button>
           </div>
         </div>
       )}

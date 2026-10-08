@@ -41,19 +41,18 @@ export default function AcademiaAdminPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
-  const [showOnlyActive, setShowOnlyActive] = useState(false);
+  // const [showOnlyActive, setShowOnlyActive] = useState(false); // unused
+
+  // Helper para headers con CSRF token via BFF proxy
+  const getBffHeaders = (contentType = 'application/json') => ({
+    'X-Requested-With': 'XMLHttpRequest',
+    ...(contentType ? { 'Content-Type': contentType } : {}),
+  });
 
   const fetchCourses = async () => {
     try {
       setLoading(true);
-      const token = typeof window !== 'undefined' ? localStorage.getItem('glow_token') : null;
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest',
-      };
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
+      const headers = getBffHeaders();
       const response = await fetch('/api/admin/academy/courses', { headers });
       
       if (!response.ok) {
@@ -78,14 +77,7 @@ export default function AcademiaAdminPage() {
     if (!window.confirm('¿Estás seguro de eliminar este curso? Esta acción no se puede deshacer.')) return;
     
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('glow_token') : null;
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest',
-      };
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
+      const headers = getBffHeaders();
       const response = await fetch(`/api/admin/academy/courses/${courseId}`, {
         method: 'DELETE',
         headers,
