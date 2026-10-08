@@ -131,9 +131,17 @@ exports.createTicketMessage = async (req, res) => {
     const { mensaje } = req.body;
     const is_admin = req.user.role === 'admin';
 
-    if (!mensaje || mensaje.trim().isEmpty) {
+    // Esta guarda usaba una propiedad de JavaScript que NO EXISTE (viene de otros
+    // lenguajes, no de JS): evaluaba `undefined` —falsy—, así que nunca rechazó nada y
+    // se podían guardar respuestas en blanco en el hilo. Es justo la ruta por la que
+    // responde el operador desde el panel.
+    if (typeof mensaje !== 'string' || mensaje.trim().length === 0) {
       return res.status(400).json({ error: 'El mensaje no puede estar vacío.' });
     }
+    const texto = mensaje.trim();
+    // Autor del mensaje: es la costura que separa al usuario del operador humano (y, en
+    // el futuro, del agente). Sin esto no se puede medir el tiempo de respuesta.
+    const autor_tipo = is_admin ? 'OPERADOR' : 'USUARIO';
 
     // Verificar pertenencia/existencia
     const checkTicketQuery = `SELECT usuario_id FROM tickets WHERE id = :ticketId;`;
@@ -151,13 +159,13 @@ exports.createTicketMessage = async (req, res) => {
     }
 
     const insertQuery = `
-      INSERT INTO ticket_mensajes (ticket_id, remitente_id, mensaje)
-      VALUES (:ticketId, :sender_id, :mensaje)
-      RETURNING id, ticket_id, remitente_id, mensaje, fecha_envio;
+      INSERT INTO ticket_mensajes (ticket_id, remitente_id, mensaje, autor_tipo)
+      VALUES (:ticketId, :sender_id, :texto, :autor_tipo)
+      RETURNING id, ticket_id, remitente_id, mensaje, autor_tipo, fecha_envio;
     `;
 
     const results = await sequelize.query(insertQuery, {
-      replacements: { ticketId, sender_id, mensaje },
+      replacements: { ticketId, sender_id, texto, autor_tipo },
       type: QueryTypes.INSERT
     });
 
@@ -166,9 +174,14 @@ exports.createTicketMessage = async (req, res) => {
     // Actualizar fecha_actualizacion del ticket y alternar estado si corresponde
     // Si responde el admin, cambiamos a ESPERANDO_RESPUESTA_USUARIO. Si responde el cliente, cambiamos a ABIERTO/EN_PROCESO.
     const nuevoEstado = is_admin ? 'ESPERANDO_RESPUESTA_USUARIO' : 'EN_PROCESO';
+    // La PRIMERA respuesta de un operador es la que fija el tiempo de respuesta del
+    // ticket. COALESCE lo hace idempotente: una segunda respuesta no la sobrescribe.
+    const setPrimeraRespuesta = is_admin
+      ? ', primera_respuesta_en = COALESCE(primera_respuesta_en, NOW())'
+      : '';
     const updateTicketQuery = `
       UPDATE tickets 
-      SET estado = :nuevoEstado, fecha_actualizacion = NOW() 
+      SET estado = :nuevoEstado, fecha_actualizacion = NOW()${setPrimeraRespuesta} 
       WHERE id = :ticketId;
     `;
     await sequelize.query(updateTicketQuery, {

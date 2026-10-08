@@ -170,3 +170,41 @@ antes de mergear, no ampliar el baseline.
 **Rollback:** `rollback/077_fix_biometric_consents_schema.down.sql`
 
 **Validación:** Script verifica columnas esperadas, constraint UNIQUE, tabla access_log.
+
+---
+
+## 7. Migración 081 — PQRSF: tiempos de respuesta y autor del mensaje (F1)
+
+**Problema.** `007_soporte_y_pqrsf.sql` dejó el hilo en `ticket_mensajes` con un único dato
+de tiempo (`fecha_envio`) y sin autor. Consecuencias medidas: el "tiempo de primera
+respuesta" solo existía como `MIN(fecha_envio)` cruzado contra `usuarios.rol` (consulta
+frágil, reescrita en cada métrica), no se registraba **cuándo** un ticket pasó a
+`RESUELTO`/`CERRADO` (solo cuándo se tocó por última vez), y no había forma de distinguir
+a un operador humano de un agente — justo la costura que hace falta para automatizar
+respuestas.
+
+**Solución (081).** Añade `tickets.primera_respuesta_en | resuelto_en | cerrado_en` y
+`ticket_mensajes.autor_tipo (USUARIO|OPERADOR|AGENTE) | es_borrador`, con backfill del
+histórico (el autor se deduce del rol del remitente; un `PRESTADOR` **no** es operador, y
+los mensajes sin remitente resoluble se asumen `USUARIO` para no inflar las métricas).
+
+**Archivo:** `081_pqrsf_sla_y_autor.sql`
+**Rollback:** `rollback/081_pqrsf_sla_y_autor.down.sql` (dropea columnas; **no** toca los
+mensajes: la conversación es intocable)
+
+**Por qué 081 y no 077 — corrige la regla 1 de este documento.** La regla decía «hoy el
+máximo es 076 ⇒ el siguiente libre es 077», y **ya era falsa**: `077` está ocupado y en el
+directorio convive `080_business_documents_signed_by_text.sql`. El guard compara contra el
+**directorio real** (`fs.readdirSync`), no contra este documento, así que el número se elige
+mirando el disco y **las ramas en vuelo**, nunca la cifra escrita aquí. Un documento que
+dice cuál es el "siguiente libre" caduca cada vez que alguien añade una migración; por eso
+no se deja una cifra como fuente de verdad.
+
+**Verificación — no lectura del SQL, sino ejecución contra Postgres 16 real** (contenedor
+`glow-ci-pg`, base desechable `pqrsf_f1`), aplicando el esquema REAL (`007` + `045`) y datos
+sintéticos con fechas fijas: columnas creadas; `autor_tipo` con 2 `OPERADOR` (los del rol
+`ADMIN`) y 4 `USUARIO`; `primera_respuesta_en` exacta y `NULL` donde nunca respondió un
+operador; `resuelto_en`/`cerrado_en` solo donde corresponde; el `CHECK` **acepta `AGENTE` y
+rechaza** cualquier otro valor; **re-aplicar la migración no cambia ningún dato** (hash
+idéntico: el runner re-aplica lo que no esté registrado en `schema_migrations`); y el
+rollback deja las columnas fuera con los 7 mensajes intactos.
