@@ -172,7 +172,23 @@ Consecuencias observadas:
 
 Cada fase es **verificable de forma independiente** y deja la web en un estado funcional mejor que el anterior. No se abre la siguiente sin cerrar la anterior.
 
-### Fase 1 — Desbloquear el dashboard raíz (§2.A) 🔴
+### Fase 1 — Desbloquear el dashboard raíz (§2.A) ✅ CERRADA — commit `93f0f6eff`
+
+> **Cerrada el 2026-10-08.** Montado `/api/glow-admin` (`index.js:448`), añadidos `glow-admin/` y
+> `v1/business/` al allowlist del BFF, reescritas las 3 URLs de `app/page.tsx:130-132`, y
+> corregida la **forma** de la respuesta (el panel leía `data.alerts`/`data.pending`; el backend
+> devuelve `data` como la colección, así que habrían salido listas vacías en silencio).
+> Nuevo `tests/api-routes-contract.test.mjs`. Verificado: `npm test` 52/52, `tsc` limpio, build 21
+> rutas, y en producción `/api/glow-admin/sos/active` **404 → 401** (backend y a través del BFF).
+>
+> **Hallazgo extra durante la fase:** el test destapó que `/admin/business` también estaba roto —
+> llama a `/api/v1/business/*` y el BFF solo permitía `business/`. Corregido en el mismo commit.
+>
+> **Pendiente de confirmación visual:** los 401 prueban que la ruta vive y exige auth; la
+> verificación con datos reales exige sesión de administrador (no se usó). La forma de la respuesta
+> se comprobó ejecutando los controladores con el modelo stubeado: `data` es array en SOS y
+> prestadores, y `data.{consolidated,dailyHistory,categoryPopularity}` en el resumen.
+
 **Objetivo:** que `/` muestre datos reales de SOS, prestadores pendientes y resumen financiero.
 
 1. Montar el router huérfano (decisión A1/A2/A3).
