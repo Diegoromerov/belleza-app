@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { formatPrecio } from '@/lib/format';
 import {
   Package,
   Plus,
@@ -26,7 +27,8 @@ interface Producto {
   id: number;
   nombre: string;
   descripcion: string;
-  costo: string;
+  // NULL-able en la base: la migracion 071 anade la columna sin NOT NULL
+  costo: string | null;
   stock: number;
   imagen_url: string;
   tag_especialidad: string;
@@ -158,7 +160,7 @@ export default function AdminProductosPage() {
     setFormData({
       nombre: prod.nombre,
       descripcion: prod.descripcion,
-      costo: prod.costo,
+      costo: prod.costo !== null ? String(prod.costo) : '',
       stock: String(prod.stock),
       imagen_url: prod.imagen_url,
       tag_especialidad: prod.tag_especialidad,
@@ -373,11 +375,6 @@ export default function AdminProductosPage() {
     (p.sku && p.sku.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  const formatPrice = (price: string | number) => {
-    const num = typeof price === 'string' ? parseFloat(price) : price;
-    return isNaN(num) ? '-' : `$${num.toLocaleString('es-CO')}`;
-  };
-
   return (
     <div className="p-8 space-y-8 bg-slate-950 min-h-screen text-slate-100">
       {/* Header */}
@@ -503,7 +500,7 @@ export default function AdminProductosPage() {
                       </span>
                     </td>
                     <td className="py-4 px-4 text-right font-mono text-slate-300">
-                      {formatPrice(prod.costo)}
+                      {formatPrecio(prod.costo)}
                     </td>
                     <td className="py-4 px-4 text-center font-mono">
                       {prod.stock}

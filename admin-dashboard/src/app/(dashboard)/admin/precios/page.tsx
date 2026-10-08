@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { formatPrecio } from '@/lib/format';
 import { 
   DollarSign, 
   Search, 
@@ -592,14 +593,14 @@ export default function AdminPreciosPage() {
                       </td>
 
                       <td className="py-4 px-4 text-right font-mono text-slate-300">
-                        {prod.costo !== null ? `$${parseFloat(String(prod.costo)).toLocaleString('es-CO')}` : <span className="text-slate-600">-</span>}
+                        {prod.costo !== null ? formatPrecio(prod.costo) : <span className="text-slate-600">-</span>}
                       </td>
 
                       {/* Nivel Consumidor */}
                       <td className="py-4 px-4 text-center">
                         {pCliente !== undefined && pCliente !== null ? (
                           <span className="font-mono font-medium text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-lg border border-emerald-500/20">
-                            ${parseFloat(String(pCliente)).toLocaleString('es-CO')}
+                            ${formatPrecio(pCliente)}
                           </span>
                         ) : (
                           <span className="text-xs text-rose-400/80 bg-rose-500/10 px-2.5 py-1 rounded-lg border border-rose-500/20 font-medium">
@@ -612,7 +613,7 @@ export default function AdminPreciosPage() {
                       <td className="py-4 px-4 text-center">
                         {pProf !== undefined && pProf !== null ? (
                           <span className="font-mono font-medium text-sky-400 bg-sky-500/10 px-3 py-1 rounded-lg border border-sky-500/20">
-                            ${parseFloat(String(pProf)).toLocaleString('es-CO')}
+                            ${formatPrecio(pProf)}
                           </span>
                         ) : (
                           <span className="text-xs text-slate-500 bg-slate-800/80 px-2.5 py-1 rounded-lg border border-slate-700">
@@ -626,7 +627,7 @@ export default function AdminPreciosPage() {
                         {pNegocio !== undefined && pNegocio !== null ? (
                           <div className="inline-flex flex-col items-center">
                             <span className="font-mono font-medium text-purple-400 bg-purple-500/10 px-3 py-1 rounded-lg border border-purple-500/20">
-                              ${parseFloat(String(pNegocio)).toLocaleString('es-CO')}
+                              ${formatPrecio(pNegocio)}
                             </span>
                             <span className="text-[10px] text-purple-300/70 mt-1">Min: {uMinNegocio} unid.</span>
                           </div>
@@ -844,10 +845,10 @@ export default function AdminPreciosPage() {
                         <tr key={r.producto_id}>
                           <td className="py-2 px-3">{r.nombre}</td>
                           <td className="py-2 px-3 text-right font-mono text-slate-400">
-                            {r.precio_actual !== null ? `$${r.precio_actual.toLocaleString('es-CO')}` : '-'}
+                            {formatPrecio(r.precio_actual)}
                           </td>
                           <td className="py-2 px-3 text-right font-mono text-emerald-400 font-bold">
-                            ${r.precio_nuevo.toLocaleString('es-CO')}
+                            ${formatPrecio(r.precio_nuevo)}
                           </td>
                         </tr>
                       ))}
@@ -998,10 +999,10 @@ export default function AdminPreciosPage() {
                         <td className="py-2.5 px-4 font-medium text-slate-200">{item.producto_nombre}</td>
                         <td className="py-2.5 px-4 uppercase font-semibold text-purple-300">{item.lista_codigo}</td>
                         <td className="py-2.5 px-4 text-right font-mono text-slate-400">
-                          {item.precio_anterior !== null ? `$${item.precio_anterior.toLocaleString('es-CO')}` : '-'}
+                          {formatPrecio(item.precio_anterior)}
                         </td>
                         <td className="py-2.5 px-4 text-right font-mono font-bold text-emerald-400">
-                          ${item.precio_nuevo.toLocaleString('es-CO')}
+                          ${formatPrecio(item.precio_nuevo)}
                         </td>
                         <td className="py-2.5 px-4 text-slate-400">
                           <div>{item.origen}</div>
