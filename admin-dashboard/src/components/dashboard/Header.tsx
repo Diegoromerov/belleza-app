@@ -1,13 +1,16 @@
-import Link from 'next/link';
 'use client';
 
+import Link from 'next/link';
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Bell, Search, Menu, X, ChevronDown, LogOut, User as UserIcon } from 'lucide-react';
 
-export default function Header() {
+interface HeaderProps {
+  onMenuClick: () => void;
+}
+
+export default function Header({ onMenuClick }: HeaderProps) {
   const { user, logout } = useAuth();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -33,11 +36,10 @@ export default function Header() {
       <div className="header-left">
         <button 
           className="mobile-menu-btn"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          aria-label={mobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
-          aria-expanded={mobileMenuOpen}
+          onClick={onMenuClick}
+          aria-label="Abrir menú"
         >
-          {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+          <Menu size={20} />
         </button>
         
         <div className="relative max-w-md w-full hidden md:block">
@@ -65,7 +67,6 @@ export default function Header() {
             <Bell size={20} />
             <span className="dot" aria-hidden="true" />
           </button>
-          
           {notificationsOpen && (
             <div className="dropdown-menu" role="menu">
               <div className="p-3 border-b border-subtle">
@@ -96,7 +97,6 @@ export default function Header() {
               </div>
               <ChevronDown size={16} className={`transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
             </button>
-            
             {userMenuOpen && (
               <div className="dropdown-menu" role="menu">
                 <div className="p-3 border-b border-subtle">
