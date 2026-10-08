@@ -20,6 +20,7 @@ import {
   X,
   Building2,
   Package,
+  ShieldAlert,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
@@ -51,6 +52,7 @@ export default function Sidebar() {
     
     if (user?.rol === 'ADMIN') {
       return [
+        { href: '/admin/sos', label: 'Alertas SOS', icon: ShieldAlert },
         { href: '/admin/business', label: 'Cumplimiento Business', icon: Building2 },
         { href: '/admin/precios', label: 'Gestión de Precios', icon: Tag },
         { href: '/admin/productos', label: 'Catálogo Productos', icon: Package },

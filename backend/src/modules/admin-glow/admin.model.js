@@ -40,8 +40,11 @@ async function getActiveSOSAlerts() {
  */
 async function updateSOSAlertStatus(alertId, newStatus) {
   const query = `
+    -- No se toca creado_en: es la fecha en que se EMITIO el SOS y sobrescribirla
+    -- destruia justo el dato que se audita despues. Falta una columna resuelto_en
+    -- para registrar el momento de la atencion (ver 2.E del plan de reconstruccion).
     UPDATE sos_alerts 
-    SET estado = $1, creado_en = NOW() 
+    SET estado = $1
     WHERE id = $2;
   `;
   return await executeQuery(query, [newStatus, alertId]);
