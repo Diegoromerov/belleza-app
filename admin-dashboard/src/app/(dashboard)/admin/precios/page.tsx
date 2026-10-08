@@ -40,15 +40,50 @@ interface ProductoPrecioRow {
   avisos?: string[];
 }
 
+/**
+ * Contrato REAL de GET /api/admin/precios/coherencia
+ * (backend/src/controllers/adminPreciosController.js:545-551).
+ * Devuelve 5 arrays, no contadores. Antes se declaraba otra forma
+ * (campos sin_precio_* e incoherencias) que el backend nunca envio: al pasar
+ * la peticion por el proxy BFF empezo a responder OK y leer
+ * `incoherencias.length` reventaba la pagina con
+ * "Cannot read properties of undefined (reading 'length')".
+ */
 interface CoherenciaReport {
-  sin_precio_cliente: number;
-  sin_precio_profesional: number;
-  sin_precio_negocio: number;
-  incoherencias: Array<{
-    producto_id: number;
-    nombre: string;
-    mensaje: string;
-  }>;
+  profesional_mayor_o_igual_que_cliente: Array<{ producto_id: number; profesional: number; cliente: number }>;
+  negocio_mayor_que_profesional: Array<{ producto_id: number; negocio: number; profesional: number }>;
+  precio_bajo_costo: Array<{ producto_id: number; costo: number; cliente: number | null; profesional: number | null; negocio: number | null }>;
+  sin_costo_cargado: Array<{ producto_id: number; nombre: string }>;
+  producto_sin_precio_en_lista: Array<{ producto_id: number; cliente: number | null; profesional: number | null; negocio: number | null }>;
+}
+
+function asArrayField<T>(value: unknown): T[] {
+  return Array.isArray(value) ? (value as T[]) : [];
+}
+
+/**
+ * Normaliza la respuesta del endpoint. Una forma inesperada degrada a listas
+ * vacias en vez de tumbar el render.
+ */
+function normalizarCoherencia(raw: unknown): CoherenciaReport {
+  const r = (raw ?? {}) as Record<string, unknown>;
+  return {
+    profesional_mayor_o_igual_que_cliente: asArrayField(r.profesional_mayor_o_igual_que_cliente),
+    negocio_mayor_que_profesional: asArrayField(r.negocio_mayor_que_profesional),
+    precio_bajo_costo: asArrayField(r.precio_bajo_costo),
+    sin_costo_cargado: asArrayField(r.sin_costo_cargado),
+    producto_sin_precio_en_lista: asArrayField(r.producto_sin_precio_en_lista),
+  };
+}
+
+function tieneAvisosCoherencia(c: CoherenciaReport): boolean {
+  return (
+    c.producto_sin_precio_en_lista.length > 0 ||
+    c.precio_bajo_costo.length > 0 ||
+    c.profesional_mayor_o_igual_que_cliente.length > 0 ||
+    c.negocio_mayor_que_profesional.length > 0 ||
+    c.sin_costo_cargado.length > 0
+  );
 }
 
 interface HistorialItem {
@@ -139,7 +174,7 @@ export default function AdminPreciosPage() {
 
       if (resCoherencia.ok) {
         const dataCoherencia = await resCoherencia.json();
-        setCoherencia(dataCoherencia);
+        setCoherencia(normalizarCoherencia(dataCoherencia));
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Error desconocido de red';
@@ -453,22 +488,28 @@ export default function AdminPreciosPage() {
         </div>
       )}
 
-      {/* Reporte de Coherencia e Inconsistencias (Informativo, No Bloqueante) */}
-      {coherencia && (coherencia.sin_precio_cliente > 0 || coherencia.sin_precio_profesional > 0 || coherencia.sin_precio_negocio > 0 || coherencia.incoherencias.length > 0) && (
+      {/* Reporte de Coherencia Comercial (Informativo, No Bloqueante) */}
+      {coherencia && tieneAvisosCoherencia(coherencia) && (
         <div className="p-5 bg-amber-500/10 border border-amber-500/30 rounded-2xl space-y-3">
           <div className="flex items-center gap-3 text-amber-400 font-semibold text-sm">
             <Info size={18} />
             <span>Avisos de Coherencia Comercial (Informativos)</span>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-amber-200/80">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 text-xs text-amber-200/80">
             <div className="bg-amber-950/40 p-3 rounded-xl border border-amber-500/20">
-              <span className="font-semibold text-amber-300">{coherencia.sin_precio_cliente}</span> productos sin tarifa Consumidor
+              <span className="font-semibold text-amber-300">{coherencia.producto_sin_precio_en_lista.length}</span> sin tarifa en alguna lista
             </div>
             <div className="bg-amber-950/40 p-3 rounded-xl border border-amber-500/20">
-              <span className="font-semibold text-amber-300">{coherencia.sin_precio_profesional}</span> productos sin tarifa Profesional B2B
+              <span className="font-semibold text-amber-300">{coherencia.precio_bajo_costo.length}</span> por debajo del costo
             </div>
             <div className="bg-amber-950/40 p-3 rounded-xl border border-amber-500/20">
-              <span className="font-semibold text-amber-300">{coherencia.sin_precio_negocio}</span> productos sin tarifa Salón B2B
+              <span className="font-semibold text-amber-300">{coherencia.profesional_mayor_o_igual_que_cliente.length}</span> donde Profesional ≥ Consumidor
+            </div>
+            <div className="bg-amber-950/40 p-3 rounded-xl border border-amber-500/20">
+              <span className="font-semibold text-amber-300">{coherencia.negocio_mayor_que_profesional.length}</span> donde Salón &gt; Profesional
+            </div>
+            <div className="bg-amber-950/40 p-3 rounded-xl border border-amber-500/20">
+              <span className="font-semibold text-amber-300">{coherencia.sin_costo_cargado.length}</span> sin costo cargado
             </div>
           </div>
         </div>
