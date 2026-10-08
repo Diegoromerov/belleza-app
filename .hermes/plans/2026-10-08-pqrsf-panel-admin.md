@@ -122,7 +122,7 @@ escribir** (no calculadas al leer, para que el reporte sea una consulta trivial 
 
 Tests: helper de SLA puro (probado con valores), y aserción de que el backfill cuadra contra los datos reales.
 
-### Fase 2 — Endpoints de gestión (gateados con `requireRol('admin')`) · **HECHA** (`b08951417`+)
+### Fase 2 — Endpoints de gestión (gateados con `requireRol('admin')`) · **HECHA** (`def5cb58d`)
 
 **Verificación de cierre:** 23/23 casos de integración **contra PostgreSQL 16 real**
 ejecutando el controlador de verdad (`backend/tests/integracion/pqrsfF2.integracion.js`,
@@ -169,7 +169,36 @@ cualquier `fetch` del panel sin contraparte real salga rojo.
 - Arreglo del defecto **B** (el `require` de `nodemailer`): o se declara la dependencia, o ese servicio se
   reescribe sobre `email.service.js`. Recomendación: **eliminar el servicio duplicado** y unificar en uno.
 
-### Fase 4 — UI del panel
+**Antes de escribir una línea, un paso que no es código.** Ni `RESEND_API_KEY` ni `SENDGRID_API_KEY` están en
+el `.env` (comprobado: sólo la presencia, sin leer valores), y en los logs de Railway los marcadores del
+servicio —simulación y envío real— aparecen **0 veces cada uno**, así que **desde el repositorio no se puede
+saber si el correo sale o si finge salir**. Lo primero es leer esa variable en el entorno del servicio
+`belleza-app`: si no está, todo el correo del sistema está simulado.
+
+**El alcance del defecto C es mayor que PQRSF, y por eso conviene decidir dónde vive el arreglo.**
+`email.service.js` lo usa también la autenticación: en modo simulación, **el código de recuperación de
+contraseña nunca llega al usuario y la API responde igual que si hubiera salido**. Quien no pueda entrar a su
+cuenta se queda sin salida y sin error visible. Arreglar el contrato del servicio —que devuelve `success:true`
+cuando simula— es requisito de las dos cosas; puede que ese arreglo no pertenezca a la fase de PQRSF sino que
+sea un incidente con vida propia.
+
+### Fase 4 — UI del panel · **HECHA** (`a9b42413d`)
+
+**Verificación de cierre:** guardián propio de la pantalla (`admin-dashboard/tests/pqrsf-panel.test.mjs`)
+13/13 con **10 mutaciones probadas y 0 escapadas**; `tsc` limpio; suite del panel **74/74** más los dos
+runners propios; build con `/admin/pqrsf` en la tabla de rutas.
+
+**Lo que la UI exigió del backend, no lo que el plan suponía:** el conteo de la bandeja se llamaba `mensajes`
+y en el detalle `mensajes` es el **array** del hilo — misma clave con dos tipos, así que pasó a
+`mensajes_total`; y se añadió `GET /api/admin/tickets/esquema` para que los desplegables **no lleven ninguna
+lista escrita en la pantalla**. El texto del usuario NO pasa por `sanitizeText()` (esa función termina en
+`escapeHtml()` y JSX ya escapa: daría doble escape y se perderían los "<" del relato), y la interfaz declara
+que **el correo al implicado todavía no se envía** en vez de dar por notificado a nadie.
+
+**Lo que esta fase deja a la vista y NO resuelve:** la fecha límite de ARCO se calcula **sin festivos
+colombianos** y ya se muestra en la bandeja, así que la decisión D3 —calendario de festivos, o declararlo como
+limitación— pasa a ser visible para el usuario final y conviene cerrarla antes de que la pantalla se use de
+verdad.
 
 - `/admin/pqrsf` — bandeja con: contadores por estado y prioridad, semáforo de SLA (vencido / por vencer),
   filtros, y paginación (la de `/admin/precios` ya enseña el patrón).
