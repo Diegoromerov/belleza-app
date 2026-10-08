@@ -1,6 +1,10 @@
 # Handoff — panel admin de Belleza App: estado de `main` y reglas para continuar
 
-Fecha: 2026-10-08 · `origin/main` = `e23ae4483`
+Fecha: 2026-10-08 · describe el estado tal como quedó en `9494e5027` (el commit de este documento).
+
+Este documento **no fija el SHA de la punta de `main`**: hacerlo garantiza que quede desactualizado
+en cuanto se commitea cualquier cosa — pasó con la primera versión. Cite los commits por lo que
+cierran, no por «el tip», o actualice el SHA en el mismo commit que lo mueve.
 
 Para el agente que continúa el trabajo. Dice lo que YA está hecho y desplegado, el estado exacto
 del repositorio, las operaciones que destruirían trabajo, y las trampas del entorno que ya
@@ -18,17 +22,44 @@ costaron rondas. No hace falta redescubrir nada de esto.
 
 ## 2. Estado verificado del repositorio
 
-- `origin/main` = `e23ae4483`; cadena `def5cb58d` → `a9b42413d` → `4d8c4f397` → `dcd53d62f` → `e23ae4483`.
+- Cadena en `main`: `def5cb58d` → `a9b42413d` → `4d8c4f397` → `dcd53d62f` → `e23ae4483` → `9494e5027` (este documento).
 - El árbol compartido (`C:/beauty-app`) está en `main` y **limpio**: `git status` vacío, sin trabajo sin commitear que un barrido pueda llevarse.
 - Producción: backend y panel desplegados; el arreglo del portero comprobado en vivo.
 - Suites: panel `npm test` 89/89 (0 fallos); backend `adminTickets.test.js` 29/29, `pqrsfSla.test.js` 19/19, guardián de numeración 7/7; integración contra PostgreSQL real 25/25.
 - Respaldo fuera del repositorio: `C:/Users/Compu casa/beauty-app-archive/belleza-app-main.bundle` (autocontenido y verificado).
 
+### Trabajo publicado FUERA de `main` — existe y hay que saberlo
+
+`origin/fix/quality-debt-p0` tiene **9 commits publicados** que `main` no incluye, y está **12
+commits por detrás** de `main`. No es trabajo perdido ni ajeno: es deuda de backend resuelta en
+otra rama. Quien continúe tiene que conocer que existe antes de tocar el backend.
+
+| Commit | Qué cierra |
+|---|---|
+| `a8bc11ab7` | Deuda P0 de calidad: fail-closed, RLS, RBAC y arnés de tests |
+| `17a676683` | Documenta la causa raíz del botón Atender (valor de enum inválido) |
+| `a15bcacd4` | Crash `Cannot read properties of null (reading 'toLocaleString')` en `/productos` |
+| `20bc1d1f0` | La página de precios y el catálogo eran el mismo dato desconectado |
+| `082aac9e6` | Violación de supresión biométrica, arnés de consent y firma documental |
+| `d3755c960` | C7 — los tests de youcam/gemini congelaban datos clínicos simulados |
+| `c587f51b8` | C6 — fixtures de embedding de la era 1024 dims (modelo NVIDIA retirado) |
+| `d932df4c4` | Los tests anti-IDOR de aislamiento no comprobaban nada (mock ciego) |
+| `00253ba9c` | membership-flow asertaba el contrato de validación previo a Zod |
+
+**Dos peligros concretos al integrarla** (medidos, no supuestos):
+
+- **`a15bcacd4` y `20bc1d1f0` ya están hechos en `main`**: el crash de `toLocaleString` y la
+  unificación precios/catálogo se arreglaron aquí en commits propios. Mergear la rama entera los
+  reintroduce como commits distintos → conflicto garantizado en los mismos archivos.
+  **Integrar por cherry-pick selectivo (o descartar esos dos), nunca con un merge de la rama.**
+- Está 12 commits por detrás: **rebasarla sobre `main` primero**. Un merge no pierde commits, pero
+  reintroduce versiones viejas de archivos.
+
 ## 3. Lo que NO hay que hacer
 
 1. **Nunca `git push --force` a `main`**, ni `rebase`/`amend` de commits ya publicados, ni borrar la rama remota. Es la única forma real de destruir lo hecho; todo lo demás lo rechaza git solo.
 2. **No `git add -A` sin leer antes `git status`.** El árbol es compartido: un barrido se lleva trabajo ajeno a un commit con tu mensaje.
-3. **No mergear las ramas `agent/*`** (hay ~336, a ~335 commits por detrás de `main`): rebase, no merge. Un merge no pierde commits, pero puede reintroducir versiones viejas de archivos.
+3. **No mergear las ramas `agent/*`** (hay ~336, a ~335 commits por detrás de `main`): rebase, no merge.
 4. **No reintroducir el atajo por extensión** en el portero ni volver a decidir "lo público" por la extensión del camino. Lo público es LISTA explícita: si hay que servir un archivo nuevo de `public/`, se declara en `ASSETS_PUBLICOS` (hay un test que compara la lista con el directorio real).
 5. **No cambiar el vínculo** middleware → `clasificarCamino`: `tests/middleware.test.mjs` lo fija por texto y `tests/middleware-behavior.test.mjs` ejerce la decisión.
 6. **No usar credenciales de producción** para reproducir nada.
@@ -40,11 +71,42 @@ costaron rondas. No hace falta redescubrir nada de esto.
 - **Backticks en bash/MSYS son sustitución de comandos**: nunca dentro de `git commit -m` (usar `-F archivo`), ni al escribir código con template literals (cierran la cadena). Verificar con `node --check`.
 - **La suite del panel se corre con `npm test`**, que es `node --test "tests/*.test.mjs"`. `node --test tests/` NO corre la suite.
 - **No se puede importar `src/middleware.ts` desde una prueba**: importa `next/server` sin extensión y el resolutor de Node no lo carga (el empaquetador de Next sí). Por eso la decisión vive en `src/lib/portero.ts`, sin dependencias.
+- **El arnés de jest del backend exige `JWT_SECRET`** (`src/tests/setupHarness.js:12`) aunque la suite que falla hable justo de su ausencia: sin un valor de prueba, las suites ni arrancan y el rojo que se ve es del arnés, no del defecto.
 - **`taskkill //F` no funciona** en este MSYS: usar `taskkill /F /PID <pid>`.
 - **`git bundle create f base..tip` y `f tip --not base`** fallan con "Refusing to create empty bundle" aunque el rango no esté vacío; funcionan `^base tip` o un solo ref.
 - **No reportar números que no se puedan reproducir.** Un "66/66" circuló y no se pudo reproducir después: exigir 0 fallos y decir con qué orden se corre.
 
 ## 5. Qué queda pendiente
+
+### Los rojos del backend, con su reproducción (verificados de primera mano el 2026-10-08)
+
+Son previos a los arreglos de `fix/quality-debt-p0` y siguen rojos en `main`:
+
+| Suite | Qué falla | Debe ser |
+|---|---|---|
+| `src/tests/jwtProductionGuard.test.js` (T-A0) | Importar `backend/index.js` con `NODE_ENV=production` **sin** `JWT_SECRET` no lanza nada («Received function did not throw») | Lanzar `/FATAL SECURITY ERROR/i` |
+| `src/tests/degradedLockBehavior.test.js` (C6) | `/api/products` con la capa de datos degradada responde **500** | **503** + `X-GlowApp-Degraded: memory-fallback` |
+| `tests/infra.observability.prometheus.test.js` | Reportado como rojo | **En aislamiento pasa.** El rojo no se reprodujo con estas tres suites, ni en ese orden |
+
+```bash
+cd backend
+NODE_ENV=test JWT_SECRET='<valor de prueba, no una credencial>' \
+  npx jest src/tests/degradedLockBehavior.test.js src/tests/jwtProductionGuard.test.js \
+           tests/infra.observability.prometheus.test.js --runInBand --forceExit
+```
+
+Corrida real de ese comando: `Tests: 2 failed, 18 passed, 20 total` — los dos fallos son las dos
+primeras filas de la tabla, y **`prometheus` pasó**.
+
+Sobre `prometheus`, al no reproducirse en aislamiento la hipótesis razonable es **fuga de estado
+según el orden de ejecución** (registro o breaker sin `reset()` entre suites), no un valor
+equivocado de la métrica. Antes de tocar la métrica hay que reproducirlo con la suite completa y
+**anotar el orden**; si depende del orden, eso va escrito junto al comando.
+
+**No existe ninguna rama `fix/t-a0-jwt-hardening` en `origin`** (comprobado con `ls-remote`): hoy
+nada cubre ese rojo. `fix/quality-debt-p0` tampoco lo toca (sus 9 commits no lo mencionan).
+
+### El resto
 
 - **F3 — correo.** Bloqueado por un dato que solo se ve fuera del repositorio: hay que comprobar si el servicio `belleza-app` tiene proveedor de correo en su entorno. Sin proveedor, `email.service.js` simula y devuelve `success:true` — y eso afecta también la **recuperación de contraseña**, no solo PQRSF, así que el arreglo puede no pertenecer a la fase de PQRSF.
 - **D3 — festivos.** La fecha límite de ARCO se calcula en días hábiles **sin festivos colombianos** y ya se muestra en la bandeja.
