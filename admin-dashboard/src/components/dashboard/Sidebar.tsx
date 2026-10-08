@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
@@ -29,6 +29,14 @@ export default function Sidebar() {
   const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+
+  // El botón hamburguesa del Header emite este evento (el estado del drawer
+  // vive aquí, no en el layout).
+  useEffect(() => {
+    const toggle = () => setSidebarOpen((v) => !v);
+    window.addEventListener('glow:toggle-sidebar', toggle);
+    return () => window.removeEventListener('glow:toggle-sidebar', toggle);
+  }, []);
 
   // Links based on role
   const getLinks = () => {
