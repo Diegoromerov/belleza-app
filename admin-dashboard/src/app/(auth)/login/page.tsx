@@ -84,24 +84,24 @@ export default function LoginPage() {
   return (
     <div className="w-full">
       <div className="flex flex-col items-center mb-8">
-        <div className="bg-[#2B2420] text-[#C5A052] p-3 rounded-2xl mb-4 shadow-lg shadow-[#2B2420]/20 border border-[#C5A052]/40">
+        <div className="bg-primary text-primary-foreground p-3 rounded-2xl mb-4 shadow-lg border border-border">
           <Scissors size={28} />
         </div>
-        <h2 className="text-3xl font-extrabold text-[#2B2420] tracking-tight font-serif">GlowAdmin Portal</h2>
-        <p className="text-sm text-[#8C6F65] mt-1 font-sans">Gestión Directiva & Operaciones de Belleza</p>
+        <h2 className="text-3xl font-extrabold text-foreground tracking-tight font-serif">GlowAdmin Portal</h2>
+        <p className="text-sm text-muted-foreground mt-1 font-sans">Gestión Directiva &amp; Operaciones de Belleza</p>
       </div>
 
       {error && (
-        <div className="bg-[#FDF2F4] text-[#881337] px-4 py-3 rounded-xl text-sm border border-[#C89D93]/40 mb-6 text-center">
+        <div className="bg-destructive/10 text-destructive px-4 py-3 rounded-xl text-sm border border-destructive/30 mb-6 text-center">
           {error}
         </div>
       )}
 
       <form className="space-y-5" onSubmit={handleSubmit}>
         <div>
-          <label className="block text-xs font-semibold text-[#2B2420]/80 uppercase tracking-wider mb-2">Correo Electrónico</label>
+          <label className="block text-xs font-semibold text-foreground/80 uppercase tracking-wider mb-2">Correo Electrónico</label>
           <div className="relative">
-            <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-[#8C6F65]">
+            <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-muted-foreground">
               <Mail size={18} />
             </span>
             <input
@@ -109,16 +109,16 @@ export default function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="pl-10 pr-4 py-3 w-full border border-[#C5A052]/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C5A052]/30 focus:border-[#C5A052] text-sm transition-all duration-200 text-[#2B2420] bg-white"
+              className="pl-10 pr-4 py-3 w-full border border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-ring/30 focus:border-ring text-sm transition-all duration-200 text-foreground bg-muted placeholder:text-muted-foreground"
               placeholder="admin@demo.com"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-[#2B2420]/80 uppercase tracking-wider mb-2">Contraseña</label>
+          <label className="block text-xs font-semibold text-foreground/80 uppercase tracking-wider mb-2">Contraseña</label>
           <div className="relative">
-            <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-[#8C6F65]">
+            <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-muted-foreground">
               <Lock size={18} />
             </span>
             <input
@@ -126,7 +126,7 @@ export default function LoginPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="pl-10 pr-4 py-3 w-full border border-[#C5A052]/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C5A052]/30 focus:border-[#C5A052] text-sm transition-all duration-200 text-[#2B2420] bg-white"
+              className="pl-10 pr-4 py-3 w-full border border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-ring/30 focus:border-ring text-sm transition-all duration-200 text-foreground bg-muted placeholder:text-muted-foreground"
               placeholder="••••••••"
             />
           </div>
@@ -135,16 +135,16 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={submitting}
-          className="w-full bg-[#2B2420] text-[#FCF8F6] py-3 rounded-xl font-semibold shadow-lg shadow-[#2B2420]/15 hover:bg-[#3D332D] hover:shadow-[#2B2420]/25 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none transition-all duration-200 border border-[#C5A052]/40"
+          className="w-full bg-primary text-primary-foreground py-3 rounded-xl font-semibold shadow-lg hover:opacity-90 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none transition-all duration-200 border border-border"
         >
           {submitting ? 'Iniciando sesión...' : 'Iniciar Sesión'}
         </button>
       </form>
 
-      <div className="mt-8 text-center border-t border-[#C5A052]/20 pt-6">
-        <p className="text-sm text-[#8C6F65]">
+      <div className="mt-8 text-center border-t border-border pt-6">
+        <p className="text-sm text-muted-foreground">
           ¿Acceso no autorizado?{' '}
-          <Link href="/" className="font-semibold text-[#C5A052] hover:underline transition-colors">
+          <Link href="/" className="font-semibold text-gold hover:underline transition-colors">
             Volver al Inicio
           </Link>
         </p>
