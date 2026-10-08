@@ -175,20 +175,29 @@ export default function AdminProductosPage() {
   };
 
   const fetchPrecios = async (productoId: number) => {
+    // Se vacia ANTES de pedir: si la peticion fallara, el estado no puede quedarse con
+    // los precios del producto ANTERIOR. El guardado solo envia precios > 0, asi que
+    // heredar valores ajenos los escribiria encima de ESTE producto.
+    setPrecios([
+      { lista: 'cliente', precio: 0, unidad_minima: 1 },
+      { lista: 'profesional', precio: 0, unidad_minima: 1 },
+      { lista: 'negocio', precio: 0, unidad_minima: 6 },
+    ]);
     try {
       const headers = getBffHeaders();
       const res = await fetch(`/api/admin/precios/${productoId}`, { headers });
-      if (res.ok) {
-        const data = await res.json();
-        const nuevosPrecios: PrecioItem[] = [
-          { lista: 'cliente', precio: data.precios?.cliente || 0, unidad_minima: data.unidad_minima?.cliente || 1 },
-          { lista: 'profesional', precio: data.precios?.profesional || 0, unidad_minima: data.unidad_minima?.profesional || 1 },
-          { lista: 'negocio', precio: data.precios?.negocio || 0, unidad_minima: data.unidad_minima?.negocio || 6 },
-        ];
-        setPrecios(nuevosPrecios);
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
       }
+      const data = await res.json();
+      setPrecios([
+        { lista: 'cliente', precio: data.precios?.cliente || 0, unidad_minima: data.unidad_minima?.cliente || 1 },
+        { lista: 'profesional', precio: data.precios?.profesional || 0, unidad_minima: data.unidad_minima?.profesional || 1 },
+        { lista: 'negocio', precio: data.precios?.negocio || 0, unidad_minima: data.unidad_minima?.negocio || 6 },
+      ]);
     } catch (err) {
       console.error('Error fetching precios:', err);
+      setError('No se pudieron cargar los precios por perfil de este producto. Se muestran vacíos: revisá antes de guardar.');
     }
   };
 

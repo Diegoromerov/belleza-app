@@ -56,6 +56,20 @@ function resolverRequire(rel) {
   return null;
 }
 
+/**
+ * Forma canonica de un camino, para que panel y backend se comparen igual:
+ * `${expr}` (panel) y `:param` (backend) son el mismo comodin.
+ */
+function canon(p) {
+  return p
+    .split('?')[0]
+    .replace(/\$\{[^}]*\}/g, '*')
+    .split('/')
+    .filter(Boolean)
+    .map((s) => (s.startsWith(':') ? '*' : s))
+    .join('/');
+}
+
 function rutasDelBackend() {
   const rutas = new Set();
   if (!existsSync(backendIndex)) return rutas;
@@ -82,7 +96,11 @@ function rutasDelBackend() {
     const src = readFileSync(f, 'utf8');
     for (const m of src.matchAll(/router\.(get|post|put|patch|delete)\(\s*['"]([^'"]+)['"]/g)) {
       const ruta = `${mount.replace(/\/$/, '')}/${m[2].replace(/^\//, '')}`.replace(/\/{2,}/g, '/');
-      rutas.add(ruta.replace(/\/$/, '') || '/');
+      // Se registra el PAR (metodo, camino). Guardar solo el camino hacia que un GET
+      // sin ruta propia pasara por cubierto por el PUT del mismo camino: asi se colo
+      // GET /api/admin/precios/:productoId, que NO existe y dejaba el modal del
+      // catalogo sin los precios reales (una pagina si, la otra no).
+      rutas.add(`${m[1].toUpperCase()} ${canon(ruta.replace(/\/$/, '') || '/')}`);
     }
   }
   return rutas;
@@ -101,48 +119,47 @@ function llamadasDelPanel() {
       }
       if (!e.endsWith('.tsx') && !e.endsWith('.ts')) continue;
       const src = readFileSync(p, 'utf8').replace(/\r\n/g, '\n');
-      for (const m of src.matchAll(/fetch\(\s*[`'"]([^`'"]*)[`'"]/g)) {
-        if (!m[1].startsWith('/api/')) continue;
+      const llamadas = [...src.matchAll(/fetch\(\s*[`'"]([^`'"]*)[`'"]/g)];
+      llamadas.forEach((m, i) => {
+        if (!m[1].startsWith('/api/')) return;
+        // El metodo vive en el objeto de opciones, que suele ocupar varias lineas:
+        // se busca hasta el siguiente fetch. Si no hay literal (`{ method }` con una
+        // variable) se asume GET, que es el valor por defecto de fetch.
+        const fin = i + 1 < llamadas.length ? llamadas[i + 1].index : src.length;
+        const opciones = src.slice(m.index, fin);
+        const mm = opciones.match(/method:\s*['"](\w+)['"]/);
         const linea = src.slice(0, m.index).split('\n').length;
-        out.push({ ruta: m[1], donde: `${p.slice(root.length + 1)}:${linea}` });
-      }
+        out.push({
+          ruta: m[1],
+          metodo: mm ? mm[1].toUpperCase() : 'GET',
+          donde: `${p.slice(root.length + 1)}:${linea}`,
+        });
+      });
     }
   };
   recorrer(appDir);
   return out;
 }
 
-/** Normaliza a segmentos, tratando :param y ${expr} como comodin. */
-function segmentos(p) {
-  return p
-    .split('?')[0]
-    .replace(/\$\{[^}]*\}/g, ':p')
-    .split('/')
-    .filter(Boolean)
-    .map((s) => (s.startsWith(':') ? '*' : s));
-}
-
-function coincide(a, b) {
-  if (a.length !== b.length) return false;
-  return a.every((s, i) => s === '*' || b[i] === '*' || s === b[i]);
-}
-
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
-test('toda llamada del panel tiene una ruta real en el backend', () => {
-  const backend = [...rutasDelBackend()].map(segmentos);
-  assert.ok(backend.length > 0, 'no se extrajo ninguna ruta del backend');
+test('toda llamada del panel tiene una ruta real en el backend (metodo + camino)', () => {
+  const backend = rutasDelBackend();
+  assert.ok(backend.size > 0, 'no se extrajo ninguna ruta del backend');
 
+  // Se compara el PAR completo. Comparar solo el camino deja pasar un GET sin
+  // ruta propia si el mismo camino existe con otro metodo (paso con
+  // GET /api/admin/precios/:productoId, que solo existia como PUT).
   const huerfanas = llamadasDelPanel()
     .filter((c) => !IGNORAR.has(c.ruta))
-    .filter((c) => !backend.some((b) => coincide(segmentos(c.ruta), b)));
+    .filter((c) => !backend.has(`${c.metodo} ${canon(c.ruta)}`));
 
   assert.deepEqual(
-    huerfanas.map((c) => `${c.ruta}  (${c.donde})`),
+    huerfanas.map((c) => `${c.metodo} ${c.ruta}  (${c.donde})`),
     [],
-    'hay llamadas del panel sin ruta correspondiente en el backend'
+    'hay llamadas del panel sin ruta correspondiente (mismo metodo) en el backend'
   );
 });
 

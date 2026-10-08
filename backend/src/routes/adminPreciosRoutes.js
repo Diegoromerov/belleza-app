@@ -6,6 +6,7 @@ const { authMiddleware } = require('../middleware/auth');
 const { requireRol } = require('../middleware/roles');
 const {
   getPrecios,
+  getPrecioProducto,
   updatePrecioProducto,
   bulkUpdatePrecios,
   getCoherenciaReport,
@@ -29,6 +30,9 @@ router.get('/precios', getPrecios);
 router.get('/precios/coherencia', getCoherenciaReport);
 router.get('/precios/historial', getHistorialPrecios);
 router.get('/precios/export.csv', exportPreciosCsv);
+// Ojo con el orden: va DESPUES de coherencia/historial/export.csv para que esas
+// rutas literales no caigan en el :productoId.
+router.get('/precios/:productoId', getPrecioProducto);
 router.post('/precios/import.csv', upload.single('archivo'), adminAuditLog({ action: 'precios.import_csv', resource: 'precios' }), importPreciosCsv);
 router.put('/precios/:productoId', adminAuditLog({ action: 'precios.update', resource: 'precios' }), updatePrecioProducto);
 router.patch('/precios/bulk', adminAuditLog({ action: 'precios.bulk_update', resource: 'precios' }), bulkUpdatePrecios);

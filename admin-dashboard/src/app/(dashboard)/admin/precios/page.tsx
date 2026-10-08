@@ -130,8 +130,14 @@ export default function AdminPreciosPage() {
   // Estado para Edición Masiva (Bulk) con Vista Previa
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [bulkLista, setBulkLista] = useState<'cliente' | 'profesional' | 'negocio'>('cliente');
-  const [bulkOperacion, setBulkOperacion] = useState<'porcentaje' | 'monto_fijo'>('porcentaje');
+  // Los valores son EXACTAMENTE los `tipo` que acepta el backend
+  // (adminPreciosController.bulkUpdatePrecios): porcentaje | fijar | delta. La pagina
+  // usaba 'monto_fijo', que el endpoint rechaza con 400, y calculaba el precio en el
+  // navegador en vez de pedirle la vista previa al servidor (el mismo codigo que luego
+  // escribe), de modo que el preview podia no coincidir con el efecto real.
+  const [bulkOperacion, setBulkOperacion] = useState<'porcentaje' | 'fijar' | 'delta'>('porcentaje');
   const [bulkValor, setBulkValor] = useState<string>('10');
+  const [bulkLoading, setBulkLoading] = useState(false);
   const [bulkPreviewRows, setBulkPreviewRows] = useState<Array<{
     producto_id: number;
     nombre: string;
@@ -150,6 +156,14 @@ export default function AdminPreciosPage() {
     errores?: string[];
   } | null>(null);
 
+  // Paginacion del listado. El backend YA devolvia { total, pagina, filas }, pero la
+  // pagina pedia sin parametros: se quedaba en la pagina 1 con el tope de por_pagina
+  // (50) y ORDER BY id ASC, asi que todo producto a partir del 51 era invisible —y
+  // parecia que Gestion de Precios no tuviera productos que si estaban en el catalogo.
+  const [pagina, setPagina] = useState(1);
+  const [totalProductos, setTotalProductos] = useState(0);
+  const POR_PAGINA = 50;
+
   // Helper para headers con CSRF token via BFF proxy
   const getBffHeaders = () => ({
     'X-Requested-With': 'XMLHttpRequest'
@@ -162,7 +176,7 @@ export default function AdminPreciosPage() {
       const headers = getBffHeaders();
 
       const [resPrecios, resCoherencia] = await Promise.all([
-        fetch('/api/admin/precios', { headers }),
+        fetch(`/api/admin/precios?page=${pagina}&por_pagina=${POR_PAGINA}`, { headers }),
         fetch('/api/admin/precios/coherencia', { headers })
       ]);
 
@@ -172,6 +186,7 @@ export default function AdminPreciosPage() {
 
       const dataPrecios = await resPrecios.json();
       setProductos(dataPrecios.filas || dataPrecios.data || []);
+      setTotalProductos(Number(dataPrecios.total) || 0);
 
       if (resCoherencia.ok) {
         const dataCoherencia = await resCoherencia.json();
@@ -183,7 +198,7 @@ export default function AdminPreciosPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [pagina]);
 
   useEffect(() => {
     fetchPreciosData();
@@ -276,44 +291,70 @@ export default function AdminPreciosPage() {
     };
 
     // Generar Vista Previa Masiva (Bulk Preview)
-    const handleGenerateBulkPreview = () => {
+    const handleGenerateBulkPreview = async () => {
       const val = parseFloat(bulkValor);
       if (isNaN(val)) {
         setError('Ingrese un valor numérico válido para el ajuste masivo.');
         return;
       }
 
-      const preview = productos.map(p => {
-        const pActual = p.precios[bulkLista]?.precio ?? null;
-        let pNuevo = pActual ?? (p.costo ? p.costo * 1.3 : 10000);
+      // La vista previa la calcula el SERVIDOR, no el navegador: `preview: true` es un
+      // dry-run del mismo codigo que luego escribe, asi que el preview no puede mentir
+      // sobre el efecto ni sobre a que productos alcanza. Antes la pagina recalculaba
+      // los precios por su cuenta y enviaba otro formato, que el endpoint rechazaba.
+      try {
+        setError(null);
+        setBulkLoading(true);
 
-        if (bulkOperacion === 'porcentaje') {
-          pNuevo = pNuevo * (1 + val / 100);
-        } else {
-          pNuevo = pNuevo + val;
+        const res = await fetch('/api/admin/precios/bulk', {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            ...getBffHeaders()
+          },
+          body: JSON.stringify({
+            lista: bulkLista,
+            producto_ids: productos.map(p => p.producto_id),
+            operacion: { tipo: bulkOperacion, valor: val },
+            preview: true
+          })
+        });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.message || `Error generando la vista previa: HTTP ${res.status}`);
         }
 
-        return {
-          producto_id: p.producto_id,
-          nombre: p.nombre,
-          precio_actual: pActual,
-          precio_nuevo: Math.max(0, Math.round(pNuevo))
-        };
-      });
+        const data = await res.json();
+        const nombres = new Map(productos.map(p => [p.producto_id, p.nombre]));
+        const detalle = Array.isArray(data.detalle) ? data.detalle : [];
 
-      setBulkPreviewRows(preview);
+        setBulkPreviewRows(detalle.map((d: { producto_id: number; antes: number | null; despues: number }) => ({
+          producto_id: d.producto_id,
+          nombre: nombres.get(d.producto_id) || `#${d.producto_id}`,
+          precio_actual: d.antes,
+          precio_nuevo: d.despues
+        })));
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Error generando la vista previa del ajuste masivo');
+      } finally {
+        setBulkLoading(false);
+      }
     };
 
     // Aplicar Cambios Masivos Confirmados
     const handleApplyBulkChanges = async () => {
       try {
         const headers = getBffHeaders();
+        // Formato que adminPreciosController.bulkUpdatePrecios realmente acepta:
+        // { lista, producto_ids, operacion: { tipo, valor }, motivo }. La version
+        // anterior mandaba un arreglo llamado "cambios" con el precio ya calculado
+        // en el navegador, formato que el endpoint rechaza con 400: por eso el
+        // ajuste masivo NUNCA funciono.
         const payload = {
           lista: bulkLista,
-          cambios: bulkPreviewRows.map(r => ({
-            producto_id: r.producto_id,
-            precio: r.precio_nuevo
-          })),
+          producto_ids: bulkPreviewRows.map(r => r.producto_id),
+          operacion: { tipo: bulkOperacion, valor: parseFloat(bulkValor) },
           motivo: `Ajuste masivo ${bulkOperacion} (${bulkValor})`
         };
 
@@ -654,6 +695,35 @@ export default function AdminPreciosPage() {
             </tbody>
           </table>
         </div>
+
+        {/* Paginacion: sin esto solo se veian los primeros 50 productos y el resto
+            era inalcanzable, aunque el backend ya devolvia el total. */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-6 py-4 border-t border-slate-800">
+          <p className="text-sm text-slate-400">
+            Mostrando {productos.length === 0 ? 0 : ((pagina - 1) * POR_PAGINA) + 1} - {Math.min(pagina * POR_PAGINA, totalProductos)} de {totalProductos} productos
+          </p>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setPagina(p => Math.max(1, p - 1))}
+              disabled={pagina <= 1 || loading}
+              className="btn btn-secondary disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Anterior
+            </button>
+            <span className="text-sm text-slate-400">
+              Página {pagina} de {Math.max(1, Math.ceil(totalProductos / POR_PAGINA))}
+            </span>
+            <button
+              type="button"
+              onClick={() => setPagina(p => p + 1)}
+              disabled={pagina >= Math.ceil(totalProductos / POR_PAGINA) || loading}
+              className="btn btn-secondary disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Siguiente
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* MODAL DE EDICIÓN MANUAL DE PRECIO */}
@@ -799,11 +869,12 @@ export default function AdminPreciosPage() {
                 <label className="text-xs text-slate-400 block mb-1">Tipo de Ajuste</label>
                 <select
                   value={bulkOperacion}
-                  onChange={(e) => setBulkOperacion(e.target.value as 'porcentaje' | 'monto_fijo')}
+                  onChange={(e) => setBulkOperacion(e.target.value as 'porcentaje' | 'fijar' | 'delta')}
                   className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-slate-100"
                 >
-                  <option value="porcentaje">Porcentaje (%)</option>
-                  <option value="monto_fijo">Monto Fijo ($)</option>
+                  <option value="porcentaje">Porcentaje (%) — varía el precio en ese %</option>
+                  <option value="fijar">Fijar precio ($) — pone ese precio a todos</option>
+                  <option value="delta">Sumar / restar monto ($)</option>
                 </select>
               </div>
 
@@ -820,16 +891,17 @@ export default function AdminPreciosPage() {
 
             <button
               onClick={handleGenerateBulkPreview}
-              className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-rose-400 border border-rose-500/20 rounded-xl text-sm font-semibold transition-all"
+              disabled={bulkLoading}
+              className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-rose-400 border border-rose-500/20 rounded-xl text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              Generar Vista Previa de Cambios
+              {bulkLoading ? 'Calculando en el servidor…' : 'Generar Vista Previa de Cambios'}
             </button>
 
             {/* TABLA DE VISTA PREVIA PROPUESTA */}
             {bulkPreviewRows.length > 0 && (
               <div className="space-y-3">
                 <p className="text-xs font-semibold text-slate-300">
-                  Tabla de Cambios Propuestos ({bulkPreviewRows.length} productos afectados):
+                  Vista previa del servidor · {bulkPreviewRows.length} de {productos.length} productos de esta página ({totalProductos} en el catálogo):
                 </p>
                 <div className="max-h-60 overflow-y-auto border border-slate-800 rounded-xl">
                   <table className="w-full text-left text-xs text-slate-300">
