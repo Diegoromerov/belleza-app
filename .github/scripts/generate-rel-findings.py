@@ -1,7 +1,4 @@
 import json
-import os
-
-os.makedirs('.hermes/devops', exist_ok=True)
 
 hallazgos = [
     {'id': 'FL-01', 'severity': 'P1', 'area': 'Flutter Release', 'file': '.github/workflows/ci.yml', 'line': 'N/A', 'evidence_cmd': "grep -n 'flutter build' .github/workflows/ci.yml || echo SIN_BUILD", 'impact': 'Sin pipeline build Android/iOS/web', 'proposed_fix': 'GitHub Actions + subosito/flutter-action + keystore via secrets', 'effort_h': 6},
