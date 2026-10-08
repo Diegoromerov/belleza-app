@@ -10,6 +10,11 @@
  * del chunk en el SELECT, sin similitud inventada en el fallback y traza completa.
  */
 
+// El fixture de embedding usa 2048 dimensiones: es la dimension del unico modelo NVIDIA vivo
+// (`nvidia/nemotron-3-embed-1b`). El antecesor de 1024 (`nvidia/nv-embedqa-e5-v5`) murio el
+// 2026-08-25 con HTTP 410 Gone. Un mock de 1024 hace que ragService rechace el embedding por
+// dimension (EXPECTED_DIMS = 2048) y degrade a full-text, dejando la ruta vectorial sin
+// ejercitar. Ver tests/rag.embedding-dimension.test.js.
 process.env.NVIDIA_API_KEY = 'test-mock-nvidia-key';
 
 jest.mock('../config/db', () => ({
@@ -32,7 +37,7 @@ describe('ragService retrieval', () => {
   });
 
   test('uses a NVIDIA query embedding for pgvector retrieval', async () => {
-    generateEmbedding.mockResolvedValue(new Array(1024).fill(0.1));
+    generateEmbedding.mockResolvedValue(new Array(2048).fill(0.1));
     ragPool.query.mockResolvedValue({
       rows: [
         { id: 1, title: 'Niacinamida', content: 'Info niacinamida', similarity: '0.83', metadata: {} },
@@ -71,7 +76,7 @@ describe('ragService retrieval', () => {
 
   test('binds tenantId as a query parameter and never interpolates it (BUS-RAG-001)', async () => {
     const maliciousTenantId = "10') OR TRUE --";
-    generateEmbedding.mockResolvedValue(new Array(1024).fill(0.1));
+    generateEmbedding.mockResolvedValue(new Array(2048).fill(0.1));
     ragPool.query.mockResolvedValue({ rows: [] });
 
     await searchBeautyKnowledge('consulta', { tenantId: maliciousTenantId });
@@ -90,7 +95,7 @@ describe('ragService retrieval', () => {
   });
 
   test('without tenantId only GLOBAL knowledge is searched (tenant_id IS NULL)', async () => {
-    generateEmbedding.mockResolvedValue(new Array(1024).fill(0.1));
+    generateEmbedding.mockResolvedValue(new Array(2048).fill(0.1));
     ragPool.query.mockResolvedValue({ rows: [] });
 
     await searchBeautyKnowledge('consulta');
@@ -127,7 +132,7 @@ describe('ragService retrieval', () => {
 describe('ragService · filtros contra los campos reales (Fase 1)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    generateEmbedding.mockResolvedValue(new Array(1024).fill(0.1));
+    generateEmbedding.mockResolvedValue(new Array(2048).fill(0.1));
   });
 
   test('una categoría fuera del vocabulario NO se aplica (fail-open) y se registra en la traza', async () => {
