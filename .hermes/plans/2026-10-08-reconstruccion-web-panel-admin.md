@@ -257,9 +257,28 @@ atenderlo — justo el dato que se audita después.
   **No verificado desde fuera:** el middleware redirige a `/login` toda ruta de página sin sesión,
   así que la existencia de la ruta solo se confirma entrando con un ADMIN. Requiere confirmación
   visual del usuario.
-- **E3 ✅ HECHO** en el mismo commit — `updateSOSAlertStatus` ya no sobrescribe `creado_en`. Queda
-  pendiente *decidir* si añadir columna `resuelto_en` para registrar el momento de la atención
-  (requiere migración, y el esquema tiene 4 dueños: ver 2.C).
+- **E3 ✅ HECHO** (commits `abb26231c` y `18406189a`) — `updateSOSAlertStatus` ya no sobrescribe
+  `creado_en`, y ahora persiste `resolucion`, `resuelto_en` y `resuelto_por`.
+
+**CAUSA RAÍZ del botón "Atender" que no hacía nada (resuelta en `18406189a`).** No era que no
+estuviera construido: estaba construido contra un valor que la tabla rechaza.
+
+```
+index.js (DDL de sos_alerts)   estado VARCHAR(20) CHECK (estado IN ('ACTIVO','RESUELTO'))
+admin.controller.js:44         updateSOSAlertStatus(id, 'ATENDIDO')
+```
+
+`'ATENDIDO'` no existe en el `CHECK`, así que Postgres **abortaba el `UPDATE` con violación de
+constraint**. El `catch` del controlador lo convertía en un 500 genérico y la alerta nunca se
+atendía. Clase de bug idéntica a las anteriores: **un valor inválido de enum no da 404, da error en
+runtime**, y el mensaje genérico lo disfraza. Hay test de regresión que lo detecta (probado por
+mutación: reintroducir `'ATENDIDO'` lo hace fallar) y el arranque en producción confirma las
+columnas nuevas:
+
+```
+✅ Tabla e índices sos_alerts inicializados/verificados.
+✅ Columnas de resolución de sos_alerts verificadas.
+```
 - **E2 ⏳ PENDIENTE** — `/admin/prestadores` (cola de verificación con aprobar/rechazar/verificar) y
   `/admin/payouts` (aprobar retiro). Completa la superficie del módulo: 6 endpoints siguen sin UI.
 
