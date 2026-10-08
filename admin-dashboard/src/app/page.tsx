@@ -127,9 +127,9 @@ export default function DashboardPage() {
     try {
       // Usar el proxy BFF en lugar de API_BASE_URL directo
       const [summaryRes, sosRes, providersRes] = await Promise.all([
-        fetch('/api/admin/dashboard/financial-summary', { signal, headers: { 'X-Requested-With': 'XMLHttpRequest' } }),
-        fetch('/api/admin/sos/active', { signal, headers: { 'X-Requested-With': 'XMLHttpRequest' } }),
-        fetch('/api/admin/provider/pending', { signal, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        fetch('/api/glow-admin/dashboard/financial-summary', { signal, headers: { 'X-Requested-With': 'XMLHttpRequest' } }),
+        fetch('/api/glow-admin/sos/active', { signal, headers: { 'X-Requested-With': 'XMLHttpRequest' } }),
+        fetch('/api/glow-admin/provider/pending', { signal, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
       ]);
 
       // Check if aborted
@@ -158,7 +158,7 @@ export default function DashboardPage() {
 
       if (sosRes.ok) {
         const resJson = await sosRes.json();
-        const alerts = resJson?.data?.alerts;
+        const alerts = resJson?.data;
         setSosAlerts(Array.isArray(alerts) ? alerts : []);
       } else {
         failures.push('sos');
@@ -168,7 +168,7 @@ export default function DashboardPage() {
 
       if (providersRes.ok) {
         const resJson = await providersRes.json();
-        setPendingProviders(resJson?.data?.pending ?? []);
+        setPendingProviders(Array.isArray(resJson?.data) ? resJson.data : []);
       } else {
         failures.push('kyc');
       }

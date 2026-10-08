@@ -16,6 +16,7 @@ function getJwtSecretKey() {
 // Prefijos de rutas permitidos en el proxy BFF para el dashboard administrativo
 const ALLOWED_PATH_PREFIXES = [
   'admin/',
+  'glow-admin/',
   'metrics/',
   'services/',
   'portfolio/',
@@ -24,6 +25,10 @@ const ALLOWED_PATH_PREFIXES = [
   'productos/',
   'vto/',
   'business/',
+  // El panel llama a /api/v1/business/* (cola de cumplimiento, plantillas,
+  // evidencias, generacion de documentos). Sin este prefijo el proxy los
+  // rechazaba con 404 y /admin/business no cargaba ningun dato.
+  'v1/business/',
   'academia/'
 ];
 

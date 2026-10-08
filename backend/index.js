@@ -442,6 +442,10 @@ app.use('/api/admin/academy', academyAdminRoutes);
 app.use('/api/admin', adminPreciosRoutes);
 app.use('/api/admin', require('./src/routes/adminUploadRoutes'));
 app.use('/api/glow-pro', glowProRoutes);
+// Módulo admin-glow: SOS, verificación de prestadores, payouts y resumen financiero.
+// El router aplica authAdmin a nivel de router (admin.routes.js:8), por lo que
+// montarlo no expone ninguna ruta sin autenticación.
+app.use('/api/glow-admin', require('./src/modules/admin-glow/admin.routes'));
 app.use('/api/events', eventRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/metrics', metricsRoutes);
