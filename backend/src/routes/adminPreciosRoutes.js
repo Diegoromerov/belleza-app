@@ -32,9 +32,12 @@ router.get('/precios/historial', getHistorialPrecios);
 router.get('/precios/export.csv', exportPreciosCsv);
 // Ojo con el orden: va DESPUES de coherencia/historial/export.csv para que esas
 // rutas literales no caigan en el :productoId.
-router.get('/precios/:productoId', getPrecioProducto);
+// DECISION 2026-10-09 (Diego): el id va acotado a digitos. Un segmento no numerico
+// (/api/admin/precios/precios) no es una peticion mal formada ni un id valido: ninguna
+// ruta la sirve, asi que debe caer a 404, no a 400.
+router.get('/precios/:productoId(\\d+)', getPrecioProducto);
 router.post('/precios/import.csv', upload.single('archivo'), adminAuditLog({ action: 'precios.import_csv', resource: 'precios' }), importPreciosCsv);
-router.put('/precios/:productoId', adminAuditLog({ action: 'precios.update', resource: 'precios' }), updatePrecioProducto);
+router.put('/precios/:productoId(\\d+)', adminAuditLog({ action: 'precios.update', resource: 'precios' }), updatePrecioProducto);
 router.patch('/precios/bulk', adminAuditLog({ action: 'precios.bulk_update', resource: 'precios' }), bulkUpdatePrecios);
 
 // Universal: envuelve TODOS los handlers async de este router (rutas y middleware)

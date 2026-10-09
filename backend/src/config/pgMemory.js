@@ -37,6 +37,15 @@ const enModoMemoria = () => {
 // Esquema del harness. Es permisivo a propósito (sin FK ni CHECK): el objetivo es que las suites de
 // integración ejerciten el SQL y las queries reales, no re-validar las restricciones de las
 // migraciones de producción (ver backend/src/db/migrations/012_business_engine.sql y 013_memberships.sql).
+//
+// ⚠️ REGLA QUE NO SE PUEDE ROMPER: se omiten FK y CHECK, pero NUNCA los TIPOS. Un tipo distinto aquí
+// hace que el emulador mienta y produzca fallos que en producción NO existen. Caso real que costó
+// 4 suites rojas: `business_documents.provider_id` estaba como VARCHAR(36) mientras la migración 012
+// lo declara INTEGER; el servicio compara `doc.provider_id !== req.user.id` de forma estricta, así que
+// en el emulador llegaba "101" (string) y daba 403 al dueño de su propio documento. Al añadir o tocar
+// una columna, copia el tipo exacto de su migración en backend/migrations/.
+// Nota: para `business_documents.signed_by` el tipo vigente es VARCHAR(150) por la migración
+// 080 (que corrige el INTEGER de 012, porque el código guarda el NOMBRE del firmante).
 const SCHEMA_SQL = `
   CREATE TABLE IF NOT EXISTS usuarios (
     id SERIAL PRIMARY KEY,
@@ -65,8 +74,15 @@ const SCHEMA_SQL = `
 
   CREATE TABLE IF NOT EXISTS business_profiles (
     id VARCHAR(36) PRIMARY KEY,
-    provider_id VARCHAR(36),
-    tenant_id VARCHAR(36),
+    -- provider_id INTEGER y tenant_id VARCHAR(64): tipos de la migracion 012
+    -- (CREATE TABLE business_profiles), no VARCHAR(36). La 012 documenta la autoridad:
+    -- businessController escribe req.user.id (usuarios.id es INTEGER) y
+    -- ownerController.js:185 filtra provider_id = ANY($1::int[]). Con VARCHAR(36) el
+    -- emulador miente: compara "5" !== 5 y da 403/404 donde produccion funciona. Misma
+    -- clase que el caso business_documents documentado en la cabecera de este fichero.
+    -- El id de negocio (business_profiles.id) SI sigue siendo VARCHAR(36) (nota 2 de la 012).
+    provider_id INTEGER,
+    tenant_id VARCHAR(64),
     vertical_id VARCHAR(36),
     user_id INTEGER,
     name VARCHAR(150) NOT NULL,
@@ -146,7 +162,7 @@ const SCHEMA_SQL = `
     id VARCHAR(36) PRIMARY KEY,
     template_code VARCHAR(50),
     business_profile_id VARCHAR(36),
-    provider_id VARCHAR(36),
+    provider_id INTEGER,
     tenant_id VARCHAR(36),
     title VARCHAR(150),
     category VARCHAR(50),
@@ -155,7 +171,7 @@ const SCHEMA_SQL = `
     disclaimer TEXT,
     version INTEGER DEFAULT 1,
     status VARCHAR(30) DEFAULT 'DRAFT',
-    signed_by VARCHAR(36),
+    signed_by VARCHAR(150),
     signature_hash VARCHAR(128),
     signed_at TIMESTAMP,
     supersedes_id VARCHAR(36),
@@ -167,8 +183,8 @@ const SCHEMA_SQL = `
     id VARCHAR(36) PRIMARY KEY,
     document_id VARCHAR(36),
     tenant_id VARCHAR(36),
-    provider_id VARCHAR(36),
-    actor_id VARCHAR(36),
+    provider_id VARCHAR(64) DEFAULT 'system',
+    actor_id VARCHAR(64),
     action VARCHAR(50),
     metadata JSONB,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -248,13 +264,22 @@ const SCHEMA_SQL = `
     es_plataforma BOOLEAN DEFAULT false
   );
 
+  -- Columnas alineadas con las migraciones REALES (009_create_productos_table.sql,
+  -- 010_implement_glowstore_schema.sql, 032): sin descripcion/imagen_url/tag_especialidad/
+  -- tipo_visibilidad la consulta de productController reventaba, y ese 500 se confundia con
+  -- un defecto del candado. Nullables a proposito: el emulador imita COLUMNAS, no
+  -- constraints; un NOT NULL aqui solo romperia inserts de otras suites.
   CREATE TABLE IF NOT EXISTS productos (
     id SERIAL PRIMARY KEY,
     nombre VARCHAR(255),
     sku VARCHAR(40),
     costo NUMERIC(10,2),
     stock INTEGER DEFAULT 0,
-    tenant_id INTEGER
+    tenant_id INTEGER,
+    descripcion TEXT,
+    imagen_url TEXT,
+    tag_especialidad VARCHAR(50),
+    tipo_visibilidad VARCHAR(50)
   );
 
   CREATE TABLE IF NOT EXISTS listas_precios (

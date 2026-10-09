@@ -25,70 +25,54 @@ describe('YouCamClient Resilience Integration', () => {
     jest.resetAllMocks();
   });
 
-  test('_requestUploadSlot should retry on network error and return fallback value', async () => {
-    // Simulate network error on axios.post
+  test('_requestUploadSlot reintenta y falla en cerrado (sin datos simulados)', async () => {
     axiosMock.post.mockRejectedValue(new Error('Network Error'));
 
     const buffer = Buffer.from('test image');
 
-    // The function should return the fallback value after retries are exhausted
-    const result = await youcamClient._requestUploadSlot(buffer);
+    // El fallback que devolvia { fileId: 'test-file-id', ... } se elimino a proposito en
+    // 94b199b45 ("remove simulated results"): inventar un fileId inexistente escondia la
+    // caida de YouCam y dejaba continuar el flujo con datos falsos.
+    await expect(youcamClient._requestUploadSlot(buffer)).rejects.toThrow();
 
-    // Expect the result to match the fallback value
-    expect(result).toEqual({
-      fileId: 'test-file-id',
-      uploadUrl: 'https://example.com/upload',
-      uploadHeaders: {}
-    });
-
-    // Initial attempt + 3 retries = 4 calls
+    // 1 intento + 3 reintentos = 4 llamadas: la resiliencia sigue vigente
     expect(axiosMock.post).toHaveBeenCalledTimes(4);
   });
 
-  test('_uploadToS3 should retry on network error and return fallback value', async () => {
+  test('_uploadToS3 reintenta y falla en cerrado (sin datos simulados)', async () => {
     axiosMock.put.mockRejectedValue(new Error('Network Error'));
 
     const uploadUrl = 'https://s3.example.com/upload';
     const uploadHeaders = {};
     const buffer = Buffer.from('test image');
 
-    const result = await youcamClient._uploadToS3(uploadUrl, uploadHeaders, buffer);
-
-    // The fallback function returns undefined
-    expect(result).toBeUndefined();
+    // Devolver `undefined` simulaba una subida correcta: el pipeline continuaba con un
+    // file_id que nunca llego a subirse.
+    await expect(youcamClient._uploadToS3(uploadUrl, uploadHeaders, buffer)).rejects.toThrow();
 
     expect(axiosMock.put).toHaveBeenCalledTimes(4);
   });
 
-  test('_createAnalysisTask should retry on network error and return fallback value', async () => {
+  test('_createAnalysisTask reintenta y falla en cerrado (sin datos simulados)', async () => {
     axiosMock.post.mockRejectedValue(new Error('Network Error'));
 
     const fileId = 'test-file-id';
 
-    const result = await youcamClient._createAnalysisTask(fileId);
-
-    // The fallback function returns an object with task_id in data.result.task_id, but the function returns the taskId string
-    expect(result).toEqual('test-task-id');
+    // Devolver 'test-task-id' inventaba una tarea de analisis que nunca existio en YouCam.
+    await expect(youcamClient._createAnalysisTask(fileId)).rejects.toThrow();
 
     expect(axiosMock.post).toHaveBeenCalledTimes(4);
   });
 
-  test('_pollTaskResult should retry on network error and return fallback value', async () => {
+  test('_pollTaskResult reintenta y falla en cerrado (sin puntuaciones simuladas)', async () => {
     axiosMock.get.mockRejectedValue(new Error('Network Error'));
 
     const taskId = 'test-task-id';
 
-    const result = await youcamClient._pollTaskResult(taskId);
-
-    // The fallback function returns an object with data.results, but the function returns the results array
-    expect(result).toEqual([
-      { type: 'hd_moisture', ui_score: 75 },
-      { type: 'hd_wrinkle', ui_score: 15 },
-      { type: 'hd_age_spot', ui_score: 12 },
-      { type: 'hd_pore', ui_score: 25 },
-      { type: 'skin_type', value: 'cálido' },
-      { type: 'skin_age', ui_score: 28 }
-    ]);
+    // El fallback devolvia una piel inventada (hidratacion 75, arrugas 15, manchas 12,
+    // poros 25, edad 28). Presentar eso como analisis real del usuario es el peor
+    // resultado posible: debe fallar, no inventar.
+    await expect(youcamClient._pollTaskResult(taskId)).rejects.toThrow();
 
     expect(axiosMock.get).toHaveBeenCalledTimes(4);
   }, 10000);

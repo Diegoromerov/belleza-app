@@ -161,7 +161,10 @@ describe('ragService · Evidence Layer — integración con retrieval', () => {
   beforeEach(() => jest.clearAllMocks());
 
   test('retrieval vectorial → packet SUPPORTED', async () => {
-    generateEmbedding.mockResolvedValue(new Array(1024).fill(0.1));
+    // 2048 dims (modelo NVIDIA vivo). Con 1024 el servicio rechaza el embedding por
+    // dimension y degrada a full-text: el test decia probar la ruta vectorial pero
+    // ejercitaba la de fallback, y la asercion laxa ['hnsw','fts'] lo ocultaba.
+    generateEmbedding.mockResolvedValue(new Array(2048).fill(0.1));
     ragPool.query.mockResolvedValue({ rows: [strongChunk({ similarity: '0.82' })] });
 
     const packet = await searchWithEvidence(QUERY, { filters: {} });
@@ -169,7 +172,9 @@ describe('ragService · Evidence Layer — integración con retrieval', () => {
     expect(packet.state).toBe(EVIDENCE_STATES.SUPPORTED);
     expect(packet.evidence).toHaveLength(1);
     expect(packet.evidence[0].retrieval_score).toBe(0.82);
-    expect(['hnsw','fts']).toContain(packet.provenance.retrieval_mode); // HNSW requiere re-ingesta de 5.6k chunks
+    // Debe ser vectorial de verdad: con el embedding mockeado y el pool mockeado
+    // no hay razon para caer al fallback.
+    expect(packet.provenance.retrieval_mode).toBe('hnsw');
   });
 
   test('fallback FTS (NVIDIA caído) → packet RETRIEVAL_UNCERTAIN, sin inventar similitud', async () => {

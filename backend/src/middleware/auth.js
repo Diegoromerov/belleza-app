@@ -4,6 +4,16 @@ const { pool } = require('../config/db');
 const { getJwtSecret, toApiRole } = require('../config/jwt');
 const redisClient = require('../config/redis');
 
+// Fail-closed POR DEFECTO (AUD-INFRA-01 #14): la comprobación del blacklist de
+// tokens sólo puede obviarse cuando NODE_ENV es EXPLÍCITAMENTE 'development' o
+// 'test'. Cualquier otro valor —ausente, 'staging', un typo— cierra con 503.
+// Antes el guard exigía `NODE_ENV === 'production'`, así que un despliegue mal
+// configurado quedaba fail-open y los tokens revocados seguían funcionando.
+const FAIL_OPEN_ENVS = new Set(['development', 'test']);
+const isFailOpenEnv = () => FAIL_OPEN_ENVS.has(process.env.NODE_ENV);
+const REDIS_UNAVAILABLE_MSG =
+  'Servicio de autenticación no disponible: no se puede verificar la revocación de tokens. Intente de nuevo en unos segundos.';
+
 // 1. Middleware para verificar autenticación
 const authMiddleware = async (req, res, next) => {
   // If req.user is already set (e.g., by test mock), skip verification
@@ -15,32 +25,50 @@ const authMiddleware = async (req, res, next) => {
   if (!token) return res.status(401).json({ error: 'UNAUTHORIZED', message: 'Se requiere autenticación.' });
 
   try {
-    // Opcional: Verificación de token revocado en Redis si está disponible
-    if (redisClient && redisClient.isReady) {
+    // Verificación de token revocado (blacklist en Redis).
+    // Fail-closed por defecto: si no se puede CONSULTAR la blacklist, se rechaza
+    // la petición en vez de dejar pasar un token potencialmente revocado.
+    const redisUp = Boolean(redisClient && redisClient.isReady);
+    if (!redisUp) {
+      if (isFailOpenEnv()) {
+        console.warn('⚠️ Redis deshabilitado en dev/test: se omite la verificación de tokens revocados (fail-open explícito).');
+      } else {
+        return res.status(503).json({ error: REDIS_UNAVAILABLE_MSG });
+      }
+    } else {
       try {
         const isBlacklisted = await redisClient.get(`beauty:token_blacklist:${token}`);
         if (isBlacklisted) {
           return res.status(401).json({ error: 'Token revocado. Por favor inicie sesión de nuevo.' });
         }
       } catch (redisErr) {
-        console.warn('⚠️ Warning Redis blacklist check:', redisErr.message);
+        if (isFailOpenEnv()) {
+          console.warn('⚠️ Redis deshabilitado en dev/test: blacklist no consultable:', redisErr.message);
+        } else {
+          return res.status(503).json({ error: REDIS_UNAVAILABLE_MSG });
+        }
       }
     }
 
     const verified = jwt.verify(token, getJwtSecret());
 
-    // Consultar el rol y tenant_id actual del usuario en la base de datos
+    // Resolver la identidad SÓLO por la función SECURITY DEFINER
+    // `app_usuario_identidad` (migración 068).
+    //
+    // NO reintroducir una lectura directa de `usuarios` filtrando por `id`
+    // (SELECT rol FROM usuarios WHERE id = ...): con RLS+FORCE esa consulta corre
+    // sin contexto de inquilino, devuelve 0 filas y convierte el arranque de
+    // identidad en un 401 global para TODOS los usuarios.
+    // Lo fija `tests/rls_usuarios_isolation.nodetest.js`. Si la función no está
+    // disponible, se falla CERRADO (503) en vez de degradar a una lectura rota.
     let userRes;
     try {
       userRes = await pool.query('SELECT rol, tenant_id FROM app_usuario_identidad($1::integer)', [verified.id]);
     } catch (sqlErr) {
-      console.warn('⚠️ app_usuario_identidad no disponible, realizando consulta fallback en usuarios:', sqlErr.message);
-      try {
-        userRes = await pool.query('SELECT rol FROM usuarios WHERE id = $1', [verified.id]);
-      } catch (fallbackErr) {
-        console.error('❌ Error al consultar usuario en DB:', fallbackErr.message);
-        return res.status(401).json({ error: 'Usuario no encontrado en el sistema.' });
-      }
+      console.error('❌ app_usuario_identidad no disponible — no se puede resolver la identidad:', sqlErr.message);
+      return res.status(503).json({
+        error: 'Servicio de autenticación no disponible: no se pudo resolver la identidad del usuario.',
+      });
     }
 
     if (!userRes || userRes.rows.length === 0) {

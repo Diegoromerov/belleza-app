@@ -51,10 +51,12 @@ function initializeKey() {
   } else if (Buffer.byteLength(keyEnv, 'utf8') === 32) {
     keyBuffer = Buffer.from(keyEnv, 'utf8');
   } else {
-    if (process.env.NODE_ENV === 'test') {
-      throw new Error('La clave biométrica debe ser de 32 bytes');
-    }
-    keyBuffer = crypto.createHash('sha256').update(keyEnv).digest();
+    // DECISION 2026-10-09 (Diego): fail-CLOSED en todos los entornos.
+    // Antes, fuera de test la clave mal formada se hasheaba y se ACEPTABA en silencio: una
+    // clave de cifrado invalida degradaba a un hash en vez de impedir el arranque. Eso es
+    // fail-open, lo contrario de isStrictEnvironment() en config/db.js y del endurecimiento
+    // T-A0. Una clave mal formada no se arregla sola: se rechaza.
+    throw new Error('La clave biométrica debe ser de 32 bytes');
   }
 
   if (keyBuffer.length !== 32) {

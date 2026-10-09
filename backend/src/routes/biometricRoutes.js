@@ -17,7 +17,25 @@ const { biometricAnalyzeSchema, biometricProfileParamSchema } = require('../sche
  * - Checklist Item 4: Eliminación de userId || 'guest' (Exigencia de JWT válido).
  * - Checklist Item 5: Header Idempotency-Key obligatorio.
  */
-router.post('/analyze', authMiddleware, idempotencyMiddleware, biometricConsentGuard, async (req, res) => {
+// DECISION 2026-10-09 (Diego): la validacion Zod va ANTES del veto de consentimiento.
+// Antes el guard corria primero y respondia 403 a un cuerpo mal formado: se evaluaba
+// autorizacion sobre una peticion que ni siquiera era valida. Un cuerpo invalido es un error
+// del cliente (400) y debe reportarse antes de mirar permisos; el 403 queda para el caso
+// bien formado y sin consentimiento valido.
+const validateBiometricAnalyze = (req, res, next) => {
+  const parsed = biometricAnalyzeSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({
+      error: 'VALIDATION_ERROR',
+      message: 'Datos de analisis biometrico invalidos',
+      details: parsed.error.issues,
+    });
+  }
+  req.body = parsed.data;
+  next();
+};
+
+router.post('/analyze', authMiddleware, idempotencyMiddleware, validateBiometricAnalyze, biometricConsentGuard, async (req, res) => {
   const userId = req.user?.id;
   if (!userId) {
     return res.status(401).json({

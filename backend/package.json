@@ -7,6 +7,7 @@
     "dev": "nodemon index.js",
     "start": "node index.js",
     "test": "jest",
+    "test:node": "node --test \"src/tests/**/*.nodetest.js\" \"tests/**/*.nodetest.js\" src/tests/adminAuditLog.test.mjs",
     "test:audit-log": "node src/tests/adminAuditLog.test.mjs",
     "migrate": "node -e \"require('./src/models').sequelize.sync({force:true});\"",
     "ingest:rag": "node scripts/ingestBeautyKnowledge.js",
