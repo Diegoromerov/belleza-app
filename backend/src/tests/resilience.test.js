@@ -16,6 +16,13 @@ describe('Resilience Service', () => {
     jest.clearAllMocks();
   });
 
+  afterEach(() => {
+    // Los fake timers DEBEN revertirse aunque el test falle. Si no, se filtran al resto del
+    // fichero: el backoff real ya no se dispara y los tests siguientes mueren por timeout.
+    // Era el caso aqui: un test roto convertia 4 en rojos y 121 s de suite.
+    jest.useRealTimers();
+  });
+
   test('should execute successful function without retries', async () => {
     // Set up the breaker state for this test
     mockedCBS.breakers = {
@@ -74,9 +81,9 @@ describe('Resilience Service', () => {
       .mockResolvedValue('success');
     const promise = executeWithResilience(fn, { retry: 2, retryDelay: 100, circuitBreakerName: 'test' });
     // advance timers by 100 (first delay)
-    await jest.advanceTimersByTime(100);
+    await jest.advanceTimersByTimeAsync(100);
     // advance by 200 (second delay)
-    await jest.advanceTimersByTime(200);
+    await jest.advanceTimersByTimeAsync(200);
     const result = await promise;
     expect(fn).toHaveBeenCalledTimes(3);
     expect(result).toBe('success');
@@ -142,9 +149,13 @@ describe('Resilience Service', () => {
     };
     const { executeWithResilience } = require('../services/resilienceService');
     const fn = jest.fn().mockImplementation(() => new Promise(resolve => setTimeout(() => resolve('late'), 300)));
-    await expect(
-      executeWithResilience(fn, { retry: 1, timeout: 100, circuitBreakerName: 'test' })
-    ).rejects.toMatch(/Operation timeout/);
+    const limite = executeWithResilience(fn, { retry: 1, timeout: 100, circuitBreakerName: 'test' });
+    // Enganchar el handler ANTES de avanzar los timers: si se avanza primero, la promesa
+    // rechaza mientras nadie la observa y jest lo reporta como rechazo sin manejar.
+    const esperado = expect(limite).rejects.toThrow(/Operation timeout/);  // toMatch exige string, y lo que rechaza es un Error: no podia pasar nunca
+    // El timeout por intento es un setTimeout falseado: hay que avanzarlos o nunca se asienta.
+    await jest.advanceTimersByTimeAsync(1000);
+    await esperado;
     // With retry:1, total attempts = 2 (initial + 1 retry)
     expect(fn).toHaveBeenCalledTimes(2);
     expect(mockedCBS.breakers.test.onFailure).toHaveBeenCalledTimes(2);
