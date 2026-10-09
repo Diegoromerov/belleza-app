@@ -183,10 +183,14 @@ pisar a nadie.
 
 ### Tu rama `fix/quality-debt-p0`, al integrarla
 
-1. **`git rebase origin/main` primero**: está 12 commits por detrás.
-2. Dos de sus 9 commits **ya están en `main`** — `a15bcacd4` (crash `toLocaleString`) y `20bc1d1f0`
-   (precios/catálogo): **descártalos**, o haz cherry-pick solo de los otros siete. Mergear la rama
-   entera los reintroduce como commits distintos y conflictúa en los mismos archivos.
+1. **`git rebase origin/main` primero**, y **medí vos mismo la distancia**
+   (`git rev-list --count origin/fix/quality-debt-p0..origin/main`): un número escrito en un
+   documento queda viejo con el siguiente commit.
+2. **`20bc1d1f0` y `a15bcacd4` son duplicados** de trabajo ya en `main`, comprobado archivo por
+   archivo — `20bc1d1f0` con 7/7 idénticos, y los dos `page.tsx` de `a15bcacd4` idénticos al commit
+   `ed451d275` de `main`. **Antes de declarar duplicado un commit, comparad contenido y no asunto**:
+   `git diff --quiet origin/main <sha> -- <archivo>` y, si difiere, `git log origin/main -- <archivo>`.
+   «Difiere de `main`» no es «no está en `main`»: `a15bcacd4` difería y su contenido ya estaba.
 3. Después del rebase, el gate entero (panel `npm test` y la suite del backend) con **0 fallos**.
 
 ### El documento de coordinación
@@ -198,7 +202,10 @@ correcciones de §2 y §5 ya están aplicadas: no las repitas.
 
 - **T-A0**: importar `index.js` con `NODE_ENV=production` **sin** `JWT_SECRET` no lanza; debe lanzar `/FATAL SECURITY ERROR/i`.
 - **C6**: `/api/products` con la capa de datos degradada responde **500**; debe ser **503** + `X-GlowApp-Degraded`.
-- **prometheus**: en aislamiento **pasa**. Si lo ves rojo es orden de ejecución (registro o breaker sin `reset()` entre suites), no la métrica: reprodúcelo con la suite completa y anota el orden **antes** de tocar nada.
+- **prometheus**: en `main` **pasa 6/6**, con y sin `NODE_ENV=test` (dos corridas). Si lo ves rojo,
+  el dato que falta es **en qué árbol y commit lo mediste y qué variables de entorno tenías puestas**
+  (nombres, no valores). No concluyas que la métrica está mal —ni que está bien— sin eso.
+
 - **El arnés exige `JWT_SECRET`** aunque la suite hable de su ausencia: sin un valor de prueba las suites ni arrancan, y el rojo que se ve es del arnés, no del defecto.
 - **Hay trabajo sobre T-A0**: rama **local** `fix/t-a0-jwt-hardening` (commit `5becf6798`,
   «implement T-A0 JWT hardening, fail-fast startup…») y, en el remoto `upstream`,
