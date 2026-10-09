@@ -173,6 +173,13 @@ comando. Un verde no prueba nada si el guardián no puede fallar.
 
 El gate del backend tiene **dos runners**: jest para los `*.test.js` y `node --test` para los `*.nodetest.js` (la rama añade el script `test:node` para el segundo). Mientras ese script no esté en `main`, cada número tiene que decir **con cuál de los dos y con qué patrón** se midió.
 
+**El gate del backend son tres pasos de la CI, no uno** (`.github/workflows/ci.yml`): (1) el gate con cobertura, `npm test -- --coverage --testPathIgnorePatterns="geminiService|geminiFallback|auraToolExecutor|contract|biometric|resilience|contextCompressor|fase5|api.cors"` (línea 171); (2) el conjunto complementario, `npm test -- --forceExit --testPathPattern="<las mismas 9>"` (línea 203); (3) los dos de contrato, aparte y con `--runInBand` (línea 108). Las nueve familias **no son una invención de nadie**: son las de la línea 171, y por eso son citables.
+
+Medido hoy en `main` con `npx jest --listTests`: **148 suites coleccionadas** — el propio comentario de la CI (línea 158) dice 92 y quedó viejo —, **127 en el gate** y **24 en el complementario**. No son complementarios exactos: **3 suites corren en los dos pasos** (`reencryptBiometricData.test.js`, `deleteBiometricDataHttpStatus.test.js`, `deleteBiometricDataRealDeletion.test.js`) porque el patrón de exclusión distingue mayúsculas y esas tres llevan «Biometric» con mayúscula, mientras que `--testPathPattern` no las distingue. Comprobado: 21 coincidencias sensibles a mayúsculas contra 24 insensibles, y 127 + 24 − 3 = 148.
+
+Consecuencia práctica: cualquier número del backend tiene que decir **cuál de los tres pasos**, con qué patrón y en qué árbol; y nadie debería sumar los dos pasos como si fueran disjuntos.
+
+
 ## 7. Protocolo para trabajar en paralelo sin pisarse
 
 Dos agentes trabajan sobre el mismo repositorio. Estas reglas son para el que continúa; el otro
