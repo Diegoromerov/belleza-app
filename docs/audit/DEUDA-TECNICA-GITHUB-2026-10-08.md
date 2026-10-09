@@ -101,11 +101,19 @@
 > arnés conectando a una base alcanzable en vez de usar su camino canónico.
 
 **Configuración exacta de la medición** (sin esto, los números no son comparables):
-worktree propio `C:/beauty-app-work`, rama `fix/quality-debt-p0`, tip **`4b1e933b4`**,
+worktree propio `C:/beauty-app-work`, rama `fix/quality-debt-p0`, tip **`384022490`** (*incluye
+`main` fusionado: 0 commits por detrás de `origin/main = ed32d436a`, 27 por delante*),
 `NODE_ENV=test`, **`DATABASE_URL` SIN exportar** (arnés canónico), `JWT_SECRET` de test,
 `DEEPSEEK_API_KEY`/`GEMINI_API_KEY` **fuera del shell** (los fija cada test),
 **jest 29.7.0** del lock vía `npm test` / `./node_modules/.bin/jest` — **nunca `npx jest`**
 (resuelve un 30.5.2 de caché y da "0 tests"), `node_modules` propio del worktree.
+
+**Los tres pasos se midieron dos veces: en `4b1e933b4` (rama sola) y en `384022490` (rama +
+`main` fusionados). Idénticos en ambos: los 8 commits nuevos de `main` no rompen nada de esto.**
+El merge de `main` conflictuaba en `backend/openapi/openapi.json` (artefacto **generado** que
+ambos lados tocaron): resuelto con `npm run openapi:generate` sobre el árbol ya fusionado, de modo
+que el merge del PR a `main` queda **sin conflictos** (verificado con `git merge-tree --write-tree`
+antes de empujar).
 
 | Paso del CI | Antes (`main`) | Ahora | Rojos |
 |---|---|---|---|
