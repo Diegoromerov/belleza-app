@@ -6,6 +6,11 @@
 
 **Estado de sincronización (2026-10-08 13:2x):** `git fetch origin --prune` ejecutado. `main` local = `origin/main` = `b520803cc` (0 ahead / 0 behind). Se podaron **231 refs locales de ramas ya borradas en GitHub**. GitHub se toma como punto de verdad. Nota: `main` avanzó 2 commits (`8c443f7b0`, `b520803cc`) por trabajo de Antigravity **durante** este análisis, ya pusheados.
 
+> ⚠️ **LEER PRIMERO §0.c (ESTADO REAL DEL GATE, 2026-10-09): manda sobre §0, §0.b y §1.1.** Los
+> números de las secciones §0/§1.1 se midieron **con `DATABASE_URL` exportado** y ya no reflejan
+> el estado de la rama `fix/quality-debt-p0`. §0.c trae la medición canónica (sin `DATABASE_URL`)
+> y marca qué puntos de este informe quedaron cerrados.
+>
 > Criterio de evidencia: cada hallazgo lleva archivo:línea o salida de comando reproducible.
 > Lo que NO pude verificar con herramienta queda marcado como *(no verificado)*.
 
@@ -86,6 +91,74 @@
 - **Progresión medida (misma máquina, mismo runner):** `19 suites / 53 tests rojos` (línea base) → **`15 suites / 36 tests rojos`** tras FIX 3-6. **−32 % de tests rojos, cero regresiones** (comparado suite-a-suite contra la línea base).
 - **Las 15 suites que siguen rojas** son las que requieren decisiones de diseño, no arreglos mecánicos: `adminDisputasNoEntraPorEmail` (mock de la consulta vieja) y el resto de §1.1.c/§1.1.d.
 - **Lo que NO he tocado:** `railway.yml` ai-worker (`context: ../ai-worker` → el real es `ai_worker/`) — es un fallo objetivo de ruta, pero arreglarlo **cambia el deploy**. Decisión tuya: corregir la ruta o borrar el servicio.
+
+---
+
+## 0.c ESTADO REAL DEL GATE — MEDIDO (2026-10-09)
+
+> **Esta sección manda sobre §0, §0.b y §1.1.** Los números de §0 y §1.1 se midieron **con
+> `DATABASE_URL` exportado**, y eso cambia el resultado: buena parte de aquellos rojos eran el
+> arnés conectando a una base alcanzable en vez de usar su camino canónico.
+
+**Configuración exacta de la medición** (sin esto, los números no son comparables):
+worktree propio `C:/beauty-app-work`, rama `fix/quality-debt-p0`, tip **`4b1e933b4`**,
+`NODE_ENV=test`, **`DATABASE_URL` SIN exportar** (arnés canónico), `JWT_SECRET` de test,
+`DEEPSEEK_API_KEY`/`GEMINI_API_KEY` **fuera del shell** (los fija cada test),
+**jest 29.7.0** del lock vía `npm test` / `./node_modules/.bin/jest` — **nunca `npx jest`**
+(resuelve un 30.5.2 de caché y da "0 tests"), `node_modules` propio del worktree.
+
+| Paso del CI | Antes (`main`) | Ahora | Rojos |
+|---|---|---|---|
+| Paso 1 (`ci.yml:171`) | 17 suites / 58 tests | **127 suites / 127 ✓** — 976 passed, 5 skipped | 0 |
+| Paso 2 (`ci.yml:203`) | 15 suites / 31 tests | **24 suites ✓** — 160 passed, 1 skipped | 0 |
+| Paso 3 (`ci.yml:108`) | 2 suites (0 tests, no cargan) | **2 suites / 23 tests ✓** | 0 |
+| Guardas `node:test` | sin runner | **21 / 21 ✓** | 0 |
+| **Total** | **34 suites / 89 tests rojos** | **0** | **0** |
+
+`biometric-scan.contract.test.js` falla de forma intermitente **solo bajo la carga de la corrida
+completa**: pasa 3/3 en aislamiento, con y sin los cambios de la rama. Familia
+`inestables_conocidos`, no es rojo de la rama.
+
+### Lo que cambió de sentido respecto a las secciones anteriores
+
+| Sección | Decía | Realidad medida |
+|---|---|---|
+| §1.2 | «fail-closed especificado pero NO implementado» (fail-open) | **Cerrado** — FIX 1 lo implementa; verificado con las suites `tokenBlacklistFailClosed*` |
+| §7 | «Token blacklist fail-open — **Abierto**» | **Cerrado**, mismo punto |
+| §1.1.e | `degradedLockBehavior` «espera 503, recibe 500» | **Cerrado.** Eran **dos causas apiladas**: (a) el emulador `productos` no tenía `descripcion`/`imagen_url`/`tag_especialidad`/`tipo_visibilidad`, que **sí existen en las migraciones reales** → `ColumnNotFound` → 500; (b) el fixture del test pasaba `memoryFallbackAllowed: true` y exigía bloqueo, cuando la regla (`degradedLock.js:141-143`) no bloquea en ese estado. Se completó el emulador y se corrigió el fixture; **cero cambio de producción** |
+| §0.b FIX 6 (nota final) | `business_profiles.provider_id` «divergencia pendiente documentada» (alinearlo rompía `businessRAG.integration` y `businessRatingDebugging`) | **Resuelto** (`c6860a702`): `provider_id INTEGER` y `tenant_id VARCHAR(64)` según la migración 012. La regresión que se documentó **ya no se reproduce** — verificado: `businessRAG.integration` + `businessRatingDebugging` **17/17 con y sin el cambio** (los fixtures se corrigieron después) |
+| §1.1.f | «9 familias excluidas — TAMBIÉN rojas: 25 tests rojos» | **Cerrado**: esas familias son el paso 2, hoy 0 rojos |
+| — | `geminiFallback.test.js` tenía el único `test.skip` del repo («bug scope `parsedUserId`») | **Cerrado** (`4b1e933b4`). El bug **ya no existe** (`parsedUserId` no está en `geminiService.js`); el skip ocultaba una garantía real — que con todos los proveedores caídos se persiste igualmente una respuesta segura. Restaurado y verde. **Quedan 0 `test.skip` en el repo** |
+
+### Lo que de verdad estaba roto en producción (2 de 89)
+
+De los **89 rojos cerrados, sólo 2 eran defectos reales de producción**; los otros 87 eran el
+instrumento midiendo mal (Redis sin mockear, guards de entorno, mocks que respondían vacío a
+todo, aserciones imposibles, un 500 satisfaciendo un `not.toBe(503)`, un fixture que se
+contradecía):
+
+1. **`biometricCryptoService.js:53-58` — fail-open en la clave biométrica** (`4decdf1e6`). Fuera
+   de `NODE_ENV==='test'`, una clave de longitud inválida se **hasheaba y aceptaba en silencio**.
+   Ahora falla cerrado en todos los entornos.
+2. **`geminiService.js` — 105 líneas duplicadas a mano de las herramientas AURA** (`a4305d574`).
+   La ruta Gemini declaraba 8 herramientas copiadas mientras la fuente (`AURA_TOOLS_DEFINITIONS`)
+   tiene **11**, con **nombres de parámetros divergentes** (`user_id`/STRING en Gemini vs
+   `userId`/number en la fuente). Ahora se derivan de la fuente única: +32/−108.
+
+**Y un tercero de clase distinta, todavía abierto** (§0.b, sigue vigente): `business_documents.signed_by`
+es `INTEGER` en la migración 012 pero el código escribe el **nombre** del firmante → firmar un
+documento daría 500 en producción. Requiere una decisión tuya (nueva migración `VARCHAR(150)`
+o cambiar el código).
+
+### Lo que NO está hecho
+
+- `backend/public/` sigue sirviendo el bundle Flutter desde git (§2.2) — decisión de arquitectura.
+- `railway.yml` ai-worker (`context: ../ai-worker` → real `ai_worker/`) — sin tocar, decisión tuya.
+- Higiene de repo (§2.1 672 `.md` raíz, §2.3 basura trackeada, §2.4 ramas solo-locales) — intacto.
+- `admin-dashboard` sigue sin puerta de calidad en CI (§5.1).
+- **Donde el 100 % NO aplica**: el gate está al 100 % de sus tres pasos, pero eso **no** es el
+  100 % de la deuda auditada. Los 89 rojos eran el termómetro; de la deuda del informe siguen
+  abiertos §2 (higiene), §3.1-3.5 (backend), §4 (frontend), §5 (panel) y §6 (config).
 
 ---
 
