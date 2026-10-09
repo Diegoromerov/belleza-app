@@ -65,6 +65,20 @@ otra rama. Quien continúe tiene que conocer que existe antes de tocar el backen
   versiones viejas de archivos). El rebase, además, resuelve solo la pregunta de los duplicados:
   lo que ya está aplicado se cae o conflictúa de forma trivial.
 
+### El gate del backend, paso 1 de 3, medido el 2026-10-09 (medición independiente)
+
+Mismo comando (el de `ci.yml:171`), misma configuración (`NODE_ENV=test`, `JWT_SECRET` de prueba, **sin** `DATABASE_URL`, con `--forceExit`; sin `--coverage`, que no cambia el conteo), mismo código (los commits posteriores de `main` son solo de documentación) y **el mismo denominador: 981 tests**. Eso es el control: la diferencia es el código, no el entorno.
+
+| Árbol | Suites | Tests |
+|---|---|---|
+| `main` (`bd7412f97`) | 17 rojas / 110 verdes / 127 | **58 rojas** / 5 saltados / 918 verdes / 981 |
+| `fix/quality-debt-p0` (`ee89b434c`) | 1 roja / 126 verdes / 127 | **1 roja** / 5 saltados / 975 verdes / 981 |
+
+De las 58 rojas de `main`, **56 son de código** y las arregla la rama (`ragService`, `tenant-isolation`, `membership-flow`, `youcam.client.integration`, `gemini.client.integration`, `deleteBiometricData*`, `adminDisputasNoEntraPorEmail`, `e2e-saas-verification`, `tokenBlacklistFailClosed*` vía `src/middleware/auth.js`, y las cuatro `business*.integration`, cuyo vínculo pasa por `services/authorizationService.js`: plausible, no probado). Las otras **2 no son de código**: `jwtProductionGuard` (T-A0, la del `.env`) y `degradedLockBehavior` (C6, decisión de producto).
+
+**Aviso para quien repita el número:** la rama reporta **1** roja, pero en un árbol **con** `.env` son **2**, porque T-A0 pasa en el worktree solo por no tener `.env` (`C:/beauty-app-work/backend/.env` no existe, y la rama no toca `jwt.js`, `index.js`, `setupHarness.js` ni esa prueba). Mismo test, mismo commit, distinto veredicto según el árbol: por eso el número va **con su árbol**, no solo con sus variables.
+
+
 ## 3. Lo que NO hay que hacer
 
 1. **Nunca `git push --force` a `main`**, ni `rebase`/`amend` de commits ya publicados, ni borrar la rama remota. Es la única forma real de destruir lo hecho; todo lo demás lo rechaza git solo.
