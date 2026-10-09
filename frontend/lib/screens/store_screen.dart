@@ -1,4 +1,6 @@
 // frontend/lib/screens/store_screen.dart
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../shared/theme.dart';
@@ -10,6 +12,7 @@ import '../widgets/product_quick_view_dialog.dart';
 import '../widgets/wompi_payment_sheet.dart';
 import '../services/audience_service.dart';
 import '../shared/mens_theme.dart';
+import '../widgets/profile/colombian_address_builder.dart';
 
 class StoreScreen extends StatefulWidget {
   final String? bookingId;
@@ -232,6 +235,229 @@ class _StoreScreenState extends State<StoreScreen> {
     final TextEditingController addressCtrl = TextEditingController();
     final formKey = GlobalKey<FormState>();
     bool processing = false;
+    bool _loadingAddress = true;
+    Map<String, dynamic>? _defaultAddress;
+
+    // Cargar dirección por defecto al abrir el dialog
+    Future<void> _loadDefaultAddress() async {
+      try {
+        final headers = await ApiService.getAuthHeaders();
+        final uri = Uri.parse('${ApiService.baseUrl}/api/users/delivery-addresses/default');
+        final response = await http.get(uri, headers: headers).timeout(const Duration(seconds: 8));
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+          if (data['data'] != null) {
+            _defaultAddress = data['data'];
+            addressCtrl.text = _defaultAddress!['direccion_formateada'] ?? '';
+          }
+        }
+      } catch (_) {}
+      finally {
+        if (mounted) setState(() => _loadingAddress = false);
+      }
+    }
+
+    // Llamar al cargar
+    _loadDefaultAddress();
+
+    // Selector de direcciones guardadas
+    Future<Map<String, dynamic>?> _showAddressSelector(BuildContext dialogContext) async {
+      try {
+        final headers = await ApiService.getAuthHeaders();
+        final uri = Uri.parse('${ApiService.baseUrl}/api/users/delivery-addresses');
+        final response = await http.get(uri, headers: headers).timeout(const Duration(seconds: 8));
+        
+        if (response.statusCode != 200) {
+          throw Exception('Error al cargar direcciones');
+        }
+        
+        final data = json.decode(response.body);
+        final addresses = (data['data'] ?? []) as List<dynamic>;
+        
+        if (addresses.isEmpty) {
+          // No hay direcciones, ofrecer crear una
+          final createNew = await showDialog<bool>(
+            context: dialogContext,
+            builder: (ctx) => AlertDialog(
+              title: const Text('Sin direcciones guardadas'),
+              content: const Text('¿Quieres crear una dirección de entrega ahora?'),
+              actions: [
+                TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('No')),
+                TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Sí, crear')),
+              ],
+            ),
+          );
+          
+          if (createNew == true) {
+            // Abrir el builder de direcciones
+            Map<String, dynamic>? newAddress;
+            await showColombianAddressBuilder(
+              context: dialogContext,
+              onSave: (addr) => newAddress = addr,
+            );
+            return newAddress;
+          }
+          return null;
+        }
+        
+        // Mostrar selector de direcciones
+        Map<String, dynamic>? selectedAddress;
+        
+        await showDialog<Map<String, dynamic>>(
+          context: dialogContext,
+          builder: (ctx) => Dialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 500, maxHeight: 500),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.location_on_outlined, color: AppTheme.primary, size: 24),
+                        const SizedBox(width: 12),
+                        const Text(
+                          'Seleccionar dirección de entrega',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.text,
+                          ),
+                        ),
+                        const Spacer(),
+                        IconButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          icon: const Icon(Icons.close),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1),
+                  Flexible(
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      padding: const EdgeInsets.all(16),
+                      itemCount: addresses.length + 1, // +1 para "Nueva dirección"
+                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      itemBuilder: (_, index) {
+                        if (index == addresses.length) {
+                          // Botón "Nueva dirección"
+                          return ListTile(
+                            leading: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primary.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(Icons.add_location_alt_outlined, color: AppTheme.primary),
+                            ),
+                            title: const Text('Agregar nueva dirección', style: TextStyle(fontWeight: FontWeight.w600)),
+                            subtitle: const Text('Crear una dirección diferente para este envío'),
+                            onTap: () async {
+                              Map<String, dynamic>? newAddress;
+                              await showColombianAddressBuilder(
+                                context: dialogContext,
+                                onSave: (addr) => newAddress = addr,
+                              );
+                              if (newAddress != null && dialogContext.mounted) {
+                                Navigator.pop(ctx, newAddress);
+                              }
+                            },
+                          );
+                        }
+                        
+                        final addr = addresses[index];
+                        final isDefault = addr['es_default'] == true;
+                        final formatted = addr['direccion_formateada'] ?? '';
+                        final alias = addr['alias'];
+                        
+                        return Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: isDefault ? AppTheme.primary : Colors.grey.shade200,
+                              width: isDefault ? 2 : 1,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: RadioListTile<Map<String, dynamic>>(
+                            value: addr,
+                            groupValue: selectedAddress,
+                            onChanged: (val) {
+                              selectedAddress = val;
+                              (ctx as Element).markNeedsBuild();
+                            },
+                            title: Row(
+                              children: [
+                                if (alias != null && alias.isNotEmpty)
+                                  Text(alias, style: const TextStyle(fontWeight: FontWeight.bold)),
+                                else
+                                  const Text('Dirección de entrega', style: TextStyle(fontWeight: FontWeight.bold)),
+                                if (isDefault) ...[
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.primary,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: const Text(
+                                      'DEFAULT',
+                                      style: TextStyle(fontSize: 9, color: Colors.white, fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                            subtitle: Text(formatted, maxLines: 2, overflow: TextOverflow.ellipsis),
+                            secondary: isDefault
+                                ? const Icon(Icons.check_circle, color: AppTheme.primary)
+                                : null,
+                            activeColor: AppTheme.primary,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            child: const Text('Cancelar'),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: selectedAddress != null
+                                ? () => Navigator.pop(ctx, selectedAddress)
+                                : null,
+                            child: const Text('Usar esta dirección'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+        
+        return selectedAddress;
+      } catch (e) {
+        if (dialogContext.mounted) {
+          ScaffoldMessenger.of(dialogContext).showSnackBar(
+            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          );
+        }
+        return null;
+      }
+    }
 
     showDialog(
       context: context,
@@ -315,14 +541,42 @@ class _StoreScreenState extends State<StoreScreen> {
                       validator: (v) => (v == null || v.isEmpty) ? 'Campo obligatorio' : null,
                     ),
                     const SizedBox(height: 12),
-                    TextFormField(
-                      controller: addressCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'Dirección de Entrega',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.location_on_outlined),
-                      ),
-                      validator: (v) => (v == null || v.isEmpty) ? 'Campo obligatorio' : null,
+                    // Dirección de Entrega con botón editar
+                    Stack(
+                      children: [
+                        TextFormField(
+                          controller: addressCtrl,
+                          decoration: InputDecoration(
+                            labelText: 'Dirección de Entrega',
+                            border: OutlineInputBorder(),
+                            prefixIcon: Icon(Icons.location_on_outlined),
+                            suffixIcon: _loadingAddress
+                                ? const Padding(
+                                    padding: EdgeInsets.all(12),
+                                    child: SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                    ),
+                                  )
+                                : IconButton(
+                                    icon: const Icon(Icons.edit_outlined, size: 20, color: Colors.grey),
+                                    onPressed: () async {
+                                      // Abrir selector/editor de direcciones
+                                      final result = await _showAddressSelector(context);
+                                      if (result != null && mounted) {
+                                        setState(() {
+                                          _defaultAddress = result;
+                                          addressCtrl.text = result['direccion_formateada'] ?? '';
+                                        });
+                                      }
+                                    },
+                                    tooltip: 'Cambiar dirección',
+                                  ),
+                          ),
+                          validator: (v) => (v == null || v.isEmpty) ? 'Campo obligatorio' : null,
+                        ),
+                      ],
                     ),
                     Container(
                       padding: const EdgeInsets.all(12),

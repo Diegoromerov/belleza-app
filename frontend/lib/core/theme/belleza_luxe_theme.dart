@@ -9,16 +9,22 @@ class LuxeColors {
   static const Color nude100 = Color(0xFFF4EFEA);
   static const Color nude200 = Color(0xFFE8E0D5);
   static const Color nude300 = Color(0xFFD6C8B8);
+  static const Color nude400 = Color(0xFFB8A894);
   static const Color nude500 = Color(0xFF9E8C78);
   static const Color nude600 = Color(0xFF857360);
   static const Color nude700 = Color(0xFF6B5A48);
   static const Color nude800 = Color(0xFF453A2E);
   static const Color nude900 = Color(0xFF1F1A15);
 
-  // Acentos de Lujo (Oro Champán 871)
+  // Acentos de Lujo (Oro Champán 871) - escalas completas
+  static const Color gold50 = Color(0xFFFDF8F0);
+  static const Color gold100 = Color(0xFFF8EED9);
+  static const Color gold200 = Color(0xFFF0DDAD);
+  static const Color gold300 = Color(0xFFE8CC81);
   static const Color gold871 = Color(0xFFC5A052);
+  static const Color gold700 = Color(0xFF96732B);
+  static const Color goldDark = Color(0xFF7A5C1F);
   static const Color goldLight = Color(0xFFE8D49E);
-  static const Color goldDark = Color(0xFF96732B);
 
   // Sombras y Transparencias
   static final Color shadowGold = gold871.withOpacity(0.25);
