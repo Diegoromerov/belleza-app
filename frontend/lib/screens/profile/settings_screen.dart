@@ -871,6 +871,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ],
               ),
+            ),
 
               // Acciones
               Padding(

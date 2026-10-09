@@ -391,7 +391,7 @@ class _StoreScreenState extends State<StoreScreen> {
                             title: Row(
                               children: [
                                 if (alias != null && alias.isNotEmpty)
-                                  Text(alias, style: const TextStyle(fontWeight: FontWeight.bold)),
+                                  Text(alias, style: const TextStyle(fontWeight: FontWeight.bold))
                                 else
                                   const Text('Dirección de entrega', style: TextStyle(fontWeight: FontWeight.bold)),
                                 if (isDefault) ...[
