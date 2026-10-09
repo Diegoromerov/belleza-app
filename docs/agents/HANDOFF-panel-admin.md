@@ -65,6 +65,20 @@ otra rama. Quien continúe tiene que conocer que existe antes de tocar el backen
   versiones viejas de archivos). El rebase, además, resuelve solo la pregunta de los duplicados:
   lo que ya está aplicado se cae o conflictúa de forma trivial.
 
+### El gate del backend, paso 1 de 3, medido el 2026-10-09 (medición independiente)
+
+Mismo comando (el de `ci.yml:171`), misma configuración (`NODE_ENV=test`, `JWT_SECRET` de prueba, **sin** `DATABASE_URL`, con `--forceExit`; sin `--coverage`, que no cambia el conteo), mismo código (los commits posteriores de `main` son solo de documentación) y **el mismo denominador: 981 tests**. Eso es el control: la diferencia es el código, no el entorno.
+
+| Árbol | Suites | Tests |
+|---|---|---|
+| `main` (`bd7412f97`) | 17 rojas / 110 verdes / 127 | **58 rojas** / 5 saltados / 918 verdes / 981 |
+| `fix/quality-debt-p0` (`ee89b434c`) | 1 roja / 126 verdes / 127 | **1 roja** / 5 saltados / 975 verdes / 981 |
+
+De las 58 rojas de `main`, **56 son de código** y las arregla la rama (`ragService`, `tenant-isolation`, `membership-flow`, `youcam.client.integration`, `gemini.client.integration`, `deleteBiometricData*`, `adminDisputasNoEntraPorEmail`, `e2e-saas-verification`, `tokenBlacklistFailClosed*` vía `src/middleware/auth.js`, y las cuatro `business*.integration`, cuyo vínculo pasa por `services/authorizationService.js`: plausible, no probado). Las otras **2 no son de código**: `jwtProductionGuard` (T-A0, la del `.env`) y `degradedLockBehavior` (C6, decisión de producto).
+
+**Aviso para quien repita el número:** la rama reporta **1** roja, pero en un árbol **con** `.env` son **2**, porque T-A0 pasa en el worktree solo por no tener `.env` (`C:/beauty-app-work/backend/.env` no existe, y la rama no toca `jwt.js`, `index.js`, `setupHarness.js` ni esa prueba). Mismo test, mismo commit, distinto veredicto según el árbol: por eso el número va **con su árbol**, no solo con sus variables.
+
+
 ## 3. Lo que NO hay que hacer
 
 1. **Nunca `git push --force` a `main`**, ni `rebase`/`amend` de commits ya publicados, ni borrar la rama remota. Es la única forma real de destruir lo hecho; todo lo demás lo rechaza git solo.
@@ -84,7 +98,10 @@ otra rama. Quien continúe tiene que conocer que existe antes de tocar el backen
 - **El arnés de jest del backend exige `JWT_SECRET`** (`src/tests/setupHarness.js:12`) aunque la suite que falla hable justo de su ausencia: sin un valor de prueba, las suites ni arrancan y el rojo que se ve es del arnés, no del defecto.
 - **El entorno del espacio de trabajo cambia el veredicto del gate.** Tres casos medidos: el arnés exige `JWT_SECRET`; la suite de observabilidad pasa 6/6 sin `DATABASE_URL` y publica 1 contra un Postgres alcanzable (con la variable presente pero **inalcanzable** también pasa: el disparador es una conexión real, no la variable); y `jwtProductionGuard` pasa donde no hay `.env` y falla donde `dotenv` lo encuentra. Regla: **todo número va con su configuración**, y un test que afirma la *ausencia* de una variable de entorno tiene que aislarse del `.env` (mockear `dotenv`) o no prueba nada estable.
 - **`taskkill //F` no funciona** en este MSYS: usar `taskkill /F /PID <pid>`.
+- **`node_modules` por junction entre árboles**: el worktree `C:/beauty-app-work` tiene `backend/node_modules` como *junction* a `C:\beauty-app\backend\node_modules` (comprobado: `LinkType: Junction`). Un `npm ci` —o un `npm install` con poda— ahí dentro **borra y reinstala el `node_modules` del árbol compartido** a través del enlace, y la caché de jest pasa a ser la misma para los dos árboles. Si hace falta un árbol de dependencias propio, instaladlo dentro del worktree en vez de enlazarlo.
 - **`git bundle create f base..tip` y `f tip --not base`** fallan con "Refusing to create empty bundle" aunque el rango no esté vacío; funcionan `^base tip` o un solo ref.
+- **Borrar recursivamente un directorio que contiene un junction vacía el destino.** `git worktree remove --force` —o cualquier `rm -rf`— sobre un árbol cuyo `node_modules` es un junction **atraviesa el enlace**. Pasó el 2026-10-08 a las 19:45: al retirar un worktree de prueba cuyo `backend/node_modules` era un junction al del árbol compartido, el `backend/node_modules` compartido quedó con **0 entradas** (fecha de modificación del directorio, 19:45:01). Coste: el árbol compartido y el worktree del otro agente no pueden correr pruebas del backend hasta reinstalar. Si hay que borrar un árbol así, quitad **primero el enlace** (`Remove-Item` sin `-Recurse`, o `rmdir` sobre el enlace) y después el directorio. Mejor todavía: **no enlacéis dependencias entre árboles** — instaladlas dentro de cada worktree.
+- **Para el gate, `npm test` (el jest del proyecto), no `npx jest`.** `npx` puede resolver un jest de su propia caché: el 2026-10-08 midió **30.5.2** mientras `package-lock.json` fija **29.7.0**, y ese runner de caché no resolvía `@babel/plugin-transform-runtime` del proyecto, así que las dos suites de contrato fallaban con **0 tests ejecutados**. Un «0 tests» casi siempre es herramienta, no código.
 - **No reportar números que no se puedan reproducir.** Un "66/66" circuló y no se pudo reproducir después: exigir 0 fallos y decir con qué orden se corre.
 
 ## 5. Qué queda pendiente
@@ -128,6 +145,32 @@ El fail-fast existe y hace lo suyo (`index.js:15` → `src/config/jwt.js:19-20`)
 
 Y cuidado con el atajo: **`fix/t-a0-jwt-hardening` (`5becf6798`) ya es ancestro de `main`** (0 commits fuera de `main`, `git merge-base --is-ancestor` lo confirma), así que ese trabajo ya está integrado y no hay nada que rescatar de ahí. La lección original sigue en pie —mirar ramas locales y todos los remotos antes de declarar que algo no existe— pero en este caso lo que faltaba no era lo que parecía.
 
+### Hay dos «C6», y una rama que conviene leer antes de escribir
+
+El rojo que este documento llama **C6** es `src/tests/degradedLockBehavior.test.js`: `/api/products` con la capa de datos degradada responde **500** y debe responder **503 + `X-GlowApp-Degraded`**. El commit `401f6a146` de la rama se llama igual («C6 — fixtures de embedding de la era 1024 dims») pero arregla otra cosa: fixtures de RAG en `ragService*.test.js`. Su tip **no toca** `degradedLockBehavior.test.js` ni `degradedLock.js`, así que ese rojo sigue en pie. **Al dar un rojo por cerrado, nombrad el archivo de la suite, no la etiqueta.**
+
+Antes de escribir el arreglo de C6, mirad `fix/d01-db-fallback-security-audit` (`1ebab7791`, worktree `C:/d01-work`): toca `backend/src/config/db.js` (+35/−7) y añade `src/tests/dbMemorySecurityGuard.test.js`. Es el mismo asunto —la política de fallo de la base—, está 1 commit adelante de `main` y **82 atrás**, o sea que necesita rebase. Por el asunto no se puede saber si coincide con lo que pide C6 o si lo contradice: hay que leerlo antes de escribir nada nuevo.
+
+### El 500 de `/api/products`, medido (C6): no es de `db.js` ni del candado
+
+Capturado de primera mano en `main`, configuración canónica (`NODE_ENV=test`, `JWT_SECRET` de prueba, **sin** `DATABASE_URL`): de los 4 casos de `src/tests/degradedLockBehavior.test.js` falla **uno**, la línea 19.
+
+```
+expect(res.status).toBe(503)   →   Expected: 503   Received: 500
+```
+
+El 500 sale de `src/controllers/productController.js:59` (`res.status(500).json({ error: 'Error al obtener productos' })`), disparado por **pg-mem**: `ColumnNotFound: column "p.descripcion" does not exist`. La consulta de `productController.js:13` pide `p.descripcion, p.imagen_url, p.tag_especialidad, p.tipo_visibilidad`, y **la tabla `productos` del esquema en memoria (`src/config/pgMemory.js:251-258`) no tiene ninguna de esas cuatro** — solo `id, nombre, sku, costo, stock, tenant_id`. En el esquema real existen (`migrations/009_create_productos_table.sql:5`). Es decir: **hay tres definiciones distintas de `productos`** (migraciones reales, `init.sql:202`, `pgMemory.js:251`) y la que usan las pruebas es la más desviada.
+
+El candado **no lo bloqueó porque su propia regla lo libera**: con `memoryFallbackAllowed: true` y `NODE_ENV !== 'production'`, `decidirBloqueo` devuelve `shouldBlock: false` (`degradedLock.js:264`) y `normalizarEstadoDependencias` no marca la base como degradada (`degradedLock.js:138-144`). Los otros tres casos pasan porque `/api/health` y `/api/providers` están en la allowlist (`degradedLock.js:60-64`) y **declaran la degradación por su cuenta**.
+
+Consecuencias, en orden:
+
+1. **El arreglo no pertenece a `fix/d01-db-fallback-security-audit`** (no es `config/db.js`) ni es un mapeo de error a 503. Cualquiera que “arregle” `productController.js` para contentar al test estaría adaptando código de producción a un esquema que no existe: eso no se hace.
+2. **Es una decisión de producto, no un parche.** El test declara que una superficie de datos debe dar 503 aunque la política permita memoria; el candado dice lo contrario en test/dev. O la superficie se endurece (`/api/products` declara la degradación como health y providers), o se quita `memoryFallbackAllowed` de la condición que libera, o se acepta que el test mide una condición que el código no tiene.
+3. **Aparte, y mecánico:** sincronizar el esquema en memoria con el real —o derivarlo de las migraciones—. Mientras `pgMemory.js` sea una copia a mano, toda prueba que toque `productos` está midiendo un esquema que no existe.
+
+
+
 
 ### El resto
 
@@ -143,6 +186,15 @@ Cada cambio se entrega con el defecto **reproducido antes** de tocar nada, el ar
 comprobación **en vivo** (no solo en local) y una **mutación** que pruebe que el guardián lo caza:
 volver a introducir el defecto y exigir rojo. Todo con evidencia `archivo:línea` o salida de
 comando. Un verde no prueba nada si el guardián no puede fallar.
+
+El gate del backend tiene **dos runners**: jest para los `*.test.js` y `node --test` para los `*.nodetest.js` (la rama añade el script `test:node` para el segundo). Mientras ese script no esté en `main`, cada número tiene que decir **con cuál de los dos y con qué patrón** se midió.
+
+**El gate del backend son tres pasos de la CI, no uno** (`.github/workflows/ci.yml`): (1) el gate con cobertura, `npm test -- --coverage --testPathIgnorePatterns="geminiService|geminiFallback|auraToolExecutor|contract|biometric|resilience|contextCompressor|fase5|api.cors"` (línea 171); (2) el conjunto complementario, `npm test -- --forceExit --testPathPattern="<las mismas 9>"` (línea 203); (3) los dos de contrato, aparte y con `--runInBand` (línea 108). Las nueve familias **no son una invención de nadie**: son las de la línea 171, y por eso son citables.
+
+Medido hoy en `main` con `npx jest --listTests`: **148 suites coleccionadas** — el propio comentario de la CI (línea 158) dice 92 y quedó viejo —, **127 en el gate** y **24 en el complementario**. No son complementarios exactos: **3 suites corren en los dos pasos** (`reencryptBiometricData.test.js`, `deleteBiometricDataHttpStatus.test.js`, `deleteBiometricDataRealDeletion.test.js`) porque el patrón de exclusión distingue mayúsculas y esas tres llevan «Biometric» con mayúscula, mientras que `--testPathPattern` no las distingue. Comprobado: 21 coincidencias sensibles a mayúsculas contra 24 insensibles, y 127 + 24 − 3 = 148.
+
+Consecuencia práctica: cualquier número del backend tiene que decir **cuál de los tres pasos**, con qué patrón y en qué árbol; y nadie debería sumar los dos pasos como si fueran disjuntos.
+
 
 ## 7. Protocolo para trabajar en paralelo sin pisarse
 

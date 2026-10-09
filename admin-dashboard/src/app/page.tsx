@@ -29,6 +29,7 @@ import {
   Cell
 } from 'recharts';
 import { useAdminSession } from '@/hooks/useAdminSession';
+import { formatMinutos, prioridadesPorRiesgo, type PqrsfMetricas } from '@/lib/metricasPqrsf';
 
 interface FinancialMetrics {
   gmv: number;
@@ -95,6 +96,7 @@ export default function DashboardPage() {
   const [categoryData, setCategoryData] = useState<CategoryPoint[]>([]);
   const [sosAlerts, setSosAlerts] = useState<SosAlert[]>([]);
   const [pendingProviders, setPendingProviders] = useState<PendingProvider[]>([]);
+  const [pqrsfMetricas, setPqrsfMetricas] = useState<PqrsfMetricas | null>(null);
   const [dataError, setDataError] = useState<string | null>(null);
   const [failedSections, setFailedSections] = useState<string[]>([]);
   
@@ -117,7 +119,8 @@ export default function DashboardPage() {
       setCategoryData([]);
       setSosAlerts([]);
       setPendingProviders([]);
-      setFailedSections(['financial', 'sos', 'kyc']);
+      setPqrsfMetricas(null);
+      setFailedSections(['financial', 'sos', 'kyc', 'pqrsf']);
       setLoading(false);
       return;
     }
@@ -126,10 +129,12 @@ export default function DashboardPage() {
     setDataError(null);
     try {
       // Usar el proxy BFF en lugar de API_BASE_URL directo
-      const [summaryRes, sosRes, providersRes] = await Promise.all([
+      const [summaryRes, sosRes, providersRes, pqrsfRes] = await Promise.all([
         fetch('/api/glow-admin/dashboard/financial-summary', { signal, headers: { 'X-Requested-With': 'XMLHttpRequest' } }),
         fetch('/api/glow-admin/sos/active', { signal, headers: { 'X-Requested-With': 'XMLHttpRequest' } }),
-        fetch('/api/glow-admin/provider/pending', { signal, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        fetch('/api/glow-admin/provider/pending', { signal, headers: { 'X-Requested-With': 'XMLHttpRequest' } }),
+        // PQRSF (F5): las métricas las calcula el backend; el BFF ya permite el prefijo admin/.
+        fetch('/api/admin/tickets/metricas', { signal, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
       ]);
 
       // Check if aborted
@@ -175,6 +180,15 @@ export default function DashboardPage() {
 
       if (signal.aborted) return;
 
+      if (pqrsfRes.ok) {
+        const resJson = await pqrsfRes.json();
+        setPqrsfMetricas(resJson?.data ?? null);
+      } else {
+        failures.push('pqrsf');
+      }
+
+      if (signal.aborted) return;
+
       setFailedSections(failures);
       setBackendStatus(failures.length ? `Parcial: ${failures.join(', ')} fallaron` : 'Conectado');
     } catch (err) {
@@ -182,7 +196,7 @@ export default function DashboardPage() {
       console.error('[Dashboard] error:', err);
       setDataError('Error de red al contactar el backend.');
       setBackendStatus('Error de conexión');
-      setFailedSections(['financial', 'sos', 'kyc']);
+      setFailedSections(['financial', 'sos', 'kyc', 'pqrsf']);
     } finally {
       if (!signal.aborted) {
         setLoading(false);
@@ -230,6 +244,14 @@ export default function DashboardPage() {
     { title: 'Comisión Plataforma (12%)', value: loading ? 'Cargando...' : formatCOPSafe(metrics?.total_commission), sub: 'Neto de GlowApp', icon: Percent, color: 'rose' },
     { title: 'Impuesto Recaudado (8%)', value: loading ? 'Cargando...' : formatCOPSafe(metrics?.total_taxes), sub: 'Retenciones tributarias', icon: Activity, color: 'warning' },
     { title: 'Dispersión Prestadores', value: loading ? 'Cargando...' : formatCOPSafe(metrics?.total_provider_payouts), sub: 'Transferido a profesionales', icon: Users, color: 'info' },
+  ];
+
+  // PQRSF (F5): las cifras del módulo de atención al usuario.
+  const pqrsfKpis = [
+    { title: 'PQRSF Totales', value: loading ? 'Cargando...' : String(pqrsfMetricas?.total ?? 0), sub: 'Solicitudes históricas', icon: FileText, color: 'gold' },
+    { title: 'PQRSF Abiertos', value: loading ? 'Cargando...' : String(pqrsfMetricas?.abiertos ?? 0), sub: 'Sin resolver ni cerrar', icon: Activity, color: 'info' },
+    { title: 'Fuera de plazo', value: loading ? 'Cargando...' : String(pqrsfMetricas?.vencidos ?? 0), sub: 'Sin primera respuesta a tiempo', icon: Clock, color: 'warning' },
+    { title: 'Sin primera respuesta', value: loading ? 'Cargando...' : String(pqrsfMetricas?.sin_respuesta ?? 0), sub: 'Nadie los ha contestado', icon: Bell, color: 'rose' },
   ];
 
   return (
@@ -343,6 +365,117 @@ export default function DashboardPage() {
         </div>
       </section>
 
+      {/* PQRSF (F5): métricas del módulo de atención al usuario */}
+      <section className="kpi-grid">
+        {pqrsfKpis.map((kpi, idx) => {
+          const Icon = kpi.icon;
+          return (
+            <div key={idx} className="kpi-card">
+              <div className="kpi-header">
+                <span className="kpi-title">{kpi.title}</span>
+                <div className={`kpi-icon ${kpi.color}`}>
+                  <Icon size={22} />
+                </div>
+              </div>
+              <p className="kpi-value">{kpi.value}</p>
+              <span className="kpi-label">{kpi.sub}</span>
+            </div>
+          );
+        })}
+      </section>
+
+      <section className="card-grid">
+        <div className="card">
+          <div className="card-header">
+            <div>
+              <h3 className="card-title">PQRSF por prioridad</h3>
+              <p className="card-subtitle">Lo que reporta el backend, ordenado por riesgo real</p>
+            </div>
+          </div>
+          <div className="card-content">
+            {!pqrsfMetricas || pqrsfMetricas.por_prioridad.length === 0 ? (
+              <div className="flex items-center justify-center h-24 text-muted">Sin PQRSF registrados.</div>
+            ) : (
+              <table className="w-full body-sm">
+                <thead>
+                  <tr className="text-muted text-left">
+                    <th className="py-2">Prioridad</th>
+                    <th className="py-2 text-right">Abiertos</th>
+                    <th className="py-2 text-right">Sin 1ª respuesta</th>
+                    <th className="py-2 text-right">Fuera de plazo</th>
+                    <th className="py-2 text-right">1ª respuesta media</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {prioridadesPorRiesgo(pqrsfMetricas.por_prioridad).map((fila) => (
+                    <tr key={fila.prioridad} className="border-t border-border-subtle">
+                      <td className="py-2 text-primary">{fila.prioridad}</td>
+                      <td className="py-2 text-right">{fila.abiertos}</td>
+                      <td className="py-2 text-right">{fila.sin_respuesta}</td>
+                      <td className={`py-2 text-right ${fila.vencidos > 0 ? 'text-danger' : ''}`}>{fila.vencidos}</td>
+                      <td className="py-2 text-right">{formatMinutos(fila.minutos_medio_respuesta)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+
+        <div className="card">
+          <div className="card-header">
+            <div>
+              <h3 className="card-title">Solicitudes ARCO (plazo legal)</h3>
+              <p className="card-subtitle">
+                {pqrsfMetricas
+                  ? `Plazo de ${pqrsfMetricas.arco.plazo_dias_habiles} días hábiles` +
+                    (pqrsfMetricas.arco.festivos_incluidos ? '' : ' — sin festivos en el cálculo')
+                  : 'Plazo legal de respuesta'}
+              </p>
+            </div>
+          </div>
+          <div className="card-content space-y-3">
+            {!pqrsfMetricas || pqrsfMetricas.arco.abiertas.length === 0 ? (
+              <div className="flex items-center justify-center h-24 text-muted">Sin solicitudes ARCO abiertas.</div>
+            ) : (
+              pqrsfMetricas.arco.abiertas.map((solicitud) => (
+                <div key={solicitud.id} className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="body-sm text-primary truncate">#{solicitud.id} · {solicitud.asunto || 'Sin asunto'}</p>
+                    <p className="micro text-muted">
+                      {solicitud.estado} · límite {new Date(solicitud.limite_legal).toLocaleDateString('es-CO')}
+                    </p>
+                  </div>
+                  <span className={`chip chip-sm ${solicitud.vencido_legal ? 'danger' : 'info'} shrink-0`}>
+                    {solicitud.vencido_legal ? 'Plazo vencido' : `${solicitud.dias_habiles_restantes} días hábiles`}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+        <div className="card">
+          <div className="card-header">
+            <div>
+              <h3 className="card-title">PQRSF por estado</h3>
+              <p className="card-subtitle">Reparto real de la bandeja</p>
+            </div>
+          </div>
+          <div className="card-content space-y-3">
+            {!pqrsfMetricas || pqrsfMetricas.por_estado.length === 0 ? (
+              <div className="flex items-center justify-center h-24 text-muted">Sin PQRSF registrados.</div>
+            ) : (
+              pqrsfMetricas.por_estado.map((fila) => (
+                <div key={fila.estado} className="flex items-center justify-between">
+                  <span className="body-sm text-secondary">{fila.estado}</span>
+                  <span className="chip chip-sm info">{fila.total}</span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </section>
+
       {/* Quick Stats */}
       <section className="card-grid">
         <div className="card">
@@ -366,6 +499,12 @@ export default function DashboardPage() {
               <span className="body-sm text-secondary">KYC Pendientes</span>
               <span className={`chip chip-sm ${failedSections.includes('kyc') ? 'danger' : 'success'}`}>
                 {failedSections.includes('kyc') ? 'Error' : `${pendingProviders.length} pendientes`}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="body-sm text-secondary">PQRSF</span>
+              <span className={`chip chip-sm ${failedSections.includes('pqrsf') ? 'danger' : 'success'}`}>
+                {failedSections.includes('pqrsf') ? 'Error' : `${pqrsfMetricas?.abiertos ?? 0} abiertos`}
               </span>
             </div>
             <div className="flex items-center justify-between">
