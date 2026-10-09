@@ -1,11 +1,11 @@
 ﻿# Etapa de construccin (Builder)
-FROM node:20-alpine AS builder
+FROM public.ecr.aws/docker/library/node:20-alpine AS builder
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci --only=production --legacy-peer-deps
 
 # Etapa de produccin
-FROM node:20-alpine
+FROM public.ecr.aws/docker/library/node:20-alpine
 ENV TZ=America/Bogota
 ENV NODE_ENV=production
 WORKDIR /app
