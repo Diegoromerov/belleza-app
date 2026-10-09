@@ -1308,6 +1308,29 @@
       }
     },
     "/api/admin/precios/{productoId}": {
+      "get": {
+        "operationId": "getapi_admin_precios_productoId",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "productoId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "GET /api/admin/precios/{productoId} (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "admin"
+        ],
+        "x-glowapp-documented": false
+      },
       "put": {
         "operationId": "putapi_admin_precios_productoId",
         "parameters": [
@@ -1333,6 +1356,20 @@
       }
     },
     "/api/admin/products": {
+      "get": {
+        "operationId": "getapi_admin_products",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "GET /api/admin/products (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "admin"
+        ],
+        "x-glowapp-documented": false
+      },
       "post": {
         "operationId": "postapi_admin_products",
         "parameters": [],
@@ -1415,6 +1452,127 @@
           }
         },
         "summary": "PATCH /api/admin/sos/resolve/{id} (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "admin"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/admin/tickets": {
+      "get": {
+        "operationId": "getapi_admin_tickets",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "GET /api/admin/tickets (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "admin"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/admin/tickets/esquema": {
+      "get": {
+        "operationId": "getapi_admin_tickets_esquema",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "GET /api/admin/tickets/esquema (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "admin"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/admin/tickets/metricas": {
+      "get": {
+        "operationId": "getapi_admin_tickets_metricas",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "GET /api/admin/tickets/metricas (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "admin"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/admin/tickets/{id}": {
+      "get": {
+        "operationId": "getapi_admin_tickets_id",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "GET /api/admin/tickets/{id} (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "admin"
+        ],
+        "x-glowapp-documented": false
+      },
+      "patch": {
+        "operationId": "patchapi_admin_tickets_id",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "PATCH /api/admin/tickets/{id} (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "admin"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/admin/tickets/{id}/respuesta": {
+      "post": {
+        "operationId": "postapi_admin_tickets_id_respuesta",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "POST /api/admin/tickets/{id}/respuesta (autodescubierto, sin contrato declarado)",
         "tags": [
           "admin"
         ],
@@ -3548,6 +3706,159 @@
         "x-glowapp-documented": false
       }
     },
+    "/api/glow-admin/dashboard/financial-summary": {
+      "get": {
+        "operationId": "getapi_glow_admin_dashboard_financial_summary",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "GET /api/glow-admin/dashboard/financial-summary (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "glow-admin"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/glow-admin/payout/approve": {
+      "post": {
+        "operationId": "postapi_glow_admin_payout_approve",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "POST /api/glow-admin/payout/approve (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "glow-admin"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/glow-admin/provider/approve": {
+      "post": {
+        "operationId": "postapi_glow_admin_provider_approve",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "POST /api/glow-admin/provider/approve (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "glow-admin"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/glow-admin/provider/pending": {
+      "get": {
+        "operationId": "getapi_glow_admin_provider_pending",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "GET /api/glow-admin/provider/pending (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "glow-admin"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/glow-admin/provider/reject": {
+      "post": {
+        "operationId": "postapi_glow_admin_provider_reject",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "POST /api/glow-admin/provider/reject (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "glow-admin"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/glow-admin/provider/verify": {
+      "post": {
+        "operationId": "postapi_glow_admin_provider_verify",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "POST /api/glow-admin/provider/verify (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "glow-admin"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/glow-admin/provider/verify-auto": {
+      "post": {
+        "operationId": "postapi_glow_admin_provider_verify_auto",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "POST /api/glow-admin/provider/verify-auto (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "glow-admin"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/glow-admin/sos/active": {
+      "get": {
+        "operationId": "getapi_glow_admin_sos_active",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "GET /api/glow-admin/sos/active (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "glow-admin"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/glow-admin/sos/resolve/{id}": {
+      "patch": {
+        "operationId": "patchapi_glow_admin_sos_resolve_id",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "PATCH /api/glow-admin/sos/resolve/{id} (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "glow-admin"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
     "/api/glow-cycle/active": {
       "get": {
         "operationId": "getapi_glow_cycle_active",
@@ -5564,8 +5875,8 @@
   ],
   "x-glowapp-contract": {
     "generator": "backend/src/openapi/buildOpenApi.js",
-    "operationsDiscovered": 244,
+    "operationsDiscovered": 261,
     "operationsDocumented": 16,
-    "routesMounted": 260
+    "routesMounted": 277
   }
 }
