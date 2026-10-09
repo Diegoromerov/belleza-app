@@ -14,6 +14,25 @@ jest.mock('../services/websocketService', () => ({
   notifyUserAuraStatus: jest.fn()
 }));
 
+// Redis: abuseDetection y consentService abren conexion real y cuelgan la suite 30 s por
+// timeout. No es un defecto del codigo: es arnes que falta. geminiFallback.test.js ya los
+// mockea por esta misma razon (comentario "to avoid Redis connection").
+jest.mock('../services/abuseDetection', () => ({
+  trackAbuse: jest.fn().mockResolvedValue(undefined),
+  isBlocked: jest.fn().mockResolvedValue({ blocked: false }),
+}));
+
+jest.mock('../services/consentService', () => ({
+  checkConsent: jest.fn().mockResolvedValue({ granted: true, grantedAt: new Date(), version: '1.0' }),
+  logAccess: jest.fn().mockResolvedValue(undefined),
+}));
+
+jest.mock('../services/ragService', () => ({
+  searchBeautyKnowledge: jest.fn().mockResolvedValue([]),
+  formatKnowledgeContext: jest.fn().mockReturnValue(''),
+}));
+
+
 // Mockear axios para las llamadas a DeepSeek
 const axios = require('axios');
 jest.mock('axios');
@@ -35,6 +54,13 @@ const { processAssistantMessage, sanitizeAiResponseText, parseDsmlToolCalls, AI_
 describe('Pruebas unitarias de Asistente de IA (geminiService.js)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Re-fijar implementaciones DESPUES de clearAllMocks: jest.clearAllMocks() borra los
+    // mockResolvedValue definidos a nivel de modulo, asi que sin esto isBlocked() devuelve
+    // undefined y el codigo revienta antes de llegar al LLM. Es exactamente lo que hace
+    // geminiFallback.test.js en su beforeEach.
+    require('../services/abuseDetection').isBlocked.mockResolvedValue({ blocked: false });
+    require('../services/consentService').checkConsent.mockResolvedValue({ granted: true, grantedAt: new Date(), version: '1.0' });
+    require('../services/abuseDetection').trackAbuse.mockResolvedValue(undefined);
   });
 
   test('Debería agrupar mensajes consecutivos del mismo emisor e impedir roles consecutivos', async () => {
