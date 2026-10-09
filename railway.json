@@ -10,9 +10,8 @@
     "admin-dashboard": {
       "source": "admin-dashboard",
       "build": {
-        "builder": "nixpacks"
+        "dockerfilePath": "Dockerfile"
       },
-      "startCommand": "npm start",
       "healthcheckPath": "/",
       "healthcheckTimeout": 100
     }
