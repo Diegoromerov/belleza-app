@@ -74,8 +74,15 @@ const SCHEMA_SQL = `
 
   CREATE TABLE IF NOT EXISTS business_profiles (
     id VARCHAR(36) PRIMARY KEY,
-    provider_id VARCHAR(36),
-    tenant_id VARCHAR(36),
+    -- provider_id INTEGER y tenant_id VARCHAR(64): tipos de la migracion 012
+    -- (CREATE TABLE business_profiles), no VARCHAR(36). La 012 documenta la autoridad:
+    -- businessController escribe req.user.id (usuarios.id es INTEGER) y
+    -- ownerController.js:185 filtra provider_id = ANY($1::int[]). Con VARCHAR(36) el
+    -- emulador miente: compara "5" !== 5 y da 403/404 donde produccion funciona. Misma
+    -- clase que el caso business_documents documentado en la cabecera de este fichero.
+    -- El id de negocio (business_profiles.id) SI sigue siendo VARCHAR(36) (nota 2 de la 012).
+    provider_id INTEGER,
+    tenant_id VARCHAR(64),
     vertical_id VARCHAR(36),
     user_id INTEGER,
     name VARCHAR(150) NOT NULL,
