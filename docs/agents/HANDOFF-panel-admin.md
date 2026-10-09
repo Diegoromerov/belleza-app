@@ -31,8 +31,9 @@ costaron rondas. No hace falta redescubrir nada de esto.
 
 ### Trabajo publicado FUERA de `main` — existe y hay que saberlo
 
-`origin/fix/quality-debt-p0` tiene **9 commits publicados** que `main` no incluye, y está **12
-commits por detrás** de `main`. No es trabajo perdido ni ajeno: es deuda de backend resuelta en
+`origin/fix/quality-debt-p0` tiene **9 commits publicados** que `main` no incluye y va por detrás de
+`main` (**medí la distancia vos mismo**: `git rev-list --count origin/fix/quality-debt-p0..origin/main`).
+Cualquier número escrito aquí queda viejo en cuanto alguien commitea — pasó con «12», que ya era 15. No es trabajo perdido ni ajeno: es deuda de backend resuelta en
 otra rama. Quien continúe tiene que conocer que existe antes de tocar el backend.
 
 | Commit | Qué cierra |
@@ -49,12 +50,20 @@ otra rama. Quien continúe tiene que conocer que existe antes de tocar el backen
 
 **Dos peligros concretos al integrarla** (medidos, no supuestos):
 
-- **`a15bcacd4` y `20bc1d1f0` ya están hechos en `main`**: el crash de `toLocaleString` y la
-  unificación precios/catálogo se arreglaron aquí en commits propios. Mergear la rama entera los
-  reintroduce como commits distintos → conflicto garantizado en los mismos archivos.
-  **Integrar por cherry-pick selectivo (o descartar esos dos), nunca con un merge de la rama.**
-- Está 12 commits por detrás: **rebasarla sobre `main` primero**. Un merge no pierde commits, pero
-  reintroduce versiones viejas de archivos.
+- **`20bc1d1f0` y `a15bcacd4` son duplicados de trabajo ya en `main`** — comprobado **archivo por
+  archivo**, no por el asunto del commit:
+  - `20bc1d1f0` (precios/catálogo): **7/7 archivos idénticos** a `origin/main`.
+  - `a15bcacd4` (crash `toLocaleString`): sus dos `page.tsx` son **idénticos al commit `ed451d275`
+    de `main`** y solo difieren de `origin/main` porque `main` siguió después (`91f36d9ef`, la
+    unificación). Su contenido está en `main`.
+  Se descartan los dos sin perder nada. **Regla antes de declarar duplicado un commit:** comparar
+  contenido, no asunto — `git diff --quiet origin/main <sha> -- <archivo>` por archivo, y si un
+  archivo difiere, `git log origin/main -- <archivo>` para ver si `main` ya lo resolvió en otro
+  commit. «Difiere de `main`» **no** significa «no está en `main»: `a15bcacd4` difería y su
+  contenido ya estaba.
+- **Integrarla con rebase, nunca con merge** (un merge no pierde commits, pero reintroduce
+  versiones viejas de archivos). El rebase, además, resuelve solo la pregunta de los duplicados:
+  lo que ya está aplicado se cae o conflictúa de forma trivial.
 
 ## 3. Lo que NO hay que hacer
 
@@ -87,7 +96,7 @@ Son previos a los arreglos de `fix/quality-debt-p0` y siguen rojos en `main`:
 |---|---|---|
 | `src/tests/jwtProductionGuard.test.js` (T-A0) | Importar `backend/index.js` con `NODE_ENV=production` **sin** `JWT_SECRET` no lanza nada («Received function did not throw») | Lanzar `/FATAL SECURITY ERROR/i` |
 | `src/tests/degradedLockBehavior.test.js` (C6) | `/api/products` con la capa de datos degradada responde **500** | **503** + `X-GlowApp-Degraded: memory-fallback` |
-| `tests/infra.observability.prometheus.test.js` | Reportado como rojo | **En aislamiento pasa.** El rojo no se reprodujo con estas tres suites, ni en ese orden |
+| `tests/infra.observability.prometheus.test.js` | Reportado como rojo desde la rama (1 failed / 5 passed) | **En `main` pasa 6/6**, con y sin `NODE_ENV=test` (dos corridas). El rojo **no se reproduce** acá |
 
 ```bash
 cd backend
@@ -99,13 +108,19 @@ NODE_ENV=test JWT_SECRET='<valor de prueba, no una credencial>' \
 Corrida real de ese comando: `Tests: 2 failed, 18 passed, 20 total` — los dos fallos son las dos
 primeras filas de la tabla, y **`prometheus` pasó**.
 
-Sobre `prometheus`, al no reproducirse en aislamiento la hipótesis razonable es **fuga de estado
-según el orden de ejecución** (registro o breaker sin `reset()` entre suites), no un valor
-equivocado de la métrica. Antes de tocar la métrica hay que reproducirlo con la suite completa y
-**anotar el orden**; si depende del orden, eso va escrito junto al comando.
+Sobre `prometheus`: en `main` **pasa las 6 pruebas**, medido dos veces, con y sin `NODE_ENV=test`,
+así que el rojo reportado desde `fix/quality-debt-p0` **no se reproduce en `main`**. No hay base
+para decir «es la métrica» ni «es el orden de ejecución»: para cerrarlo falta el dato que no trae
+esa reproducción — **en qué árbol y en qué commit se midió, y qué variables de entorno estaban
+puestas** (los nombres, no los valores). Mientras tanto, en `main` está verde.
 
-**No existe ninguna rama `fix/t-a0-jwt-hardening` en `origin`** (comprobado con `ls-remote`): hoy
-nada cubre ese rojo. `fix/quality-debt-p0` tampoco lo toca (sus 9 commits no lo mencionan).
+**Sí hay trabajo sobre ese rojo, y la primera versión de este documento lo negó** porque solo miró
+`origin`: existe una rama **local** `fix/t-a0-jwt-hardening` cuyo commit `5becf6798` se llama
+literalmente «implement T-A0 JWT hardening, fail-fast startup and DB role check for authAdmin», y
+en el remoto `upstream` hay `fix/jwt-sin-respaldo` con 5 commits fuera de `main` sobre secretos de
+JWT (aunque su `index.js` no lleva aún el mensaje `FATAL SECURITY ERROR`). **Antes de declarar que
+nada cubre un rojo, mirad también las ramas locales y los demás remotos** (`git branch -a`,
+`git remote -v`), no solo `origin`.
 
 ### El resto
 
@@ -185,7 +200,9 @@ correcciones de §2 y §5 ya están aplicadas: no las repitas.
 - **C6**: `/api/products` con la capa de datos degradada responde **500**; debe ser **503** + `X-GlowApp-Degraded`.
 - **prometheus**: en aislamiento **pasa**. Si lo ves rojo es orden de ejecución (registro o breaker sin `reset()` entre suites), no la métrica: reprodúcelo con la suite completa y anota el orden **antes** de tocar nada.
 - **El arnés exige `JWT_SECRET`** aunque la suite hable de su ausencia: sin un valor de prueba las suites ni arrancan, y el rojo que se ve es del arnés, no del defecto.
-- **No existe `fix/t-a0-jwt-hardening`** en `origin`: hoy nada cubre ese rojo.
+- **Hay trabajo sobre T-A0**: rama **local** `fix/t-a0-jwt-hardening` (commit `5becf6798`,
+  «implement T-A0 JWT hardening, fail-fast startup…») y, en el remoto `upstream`,
+  `fix/jwt-sin-respaldo`. **Mirá ramas locales y otros remotos, no solo `origin`.**
 
 ```bash
 cd backend
