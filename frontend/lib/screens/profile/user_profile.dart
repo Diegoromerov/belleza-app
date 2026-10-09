@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../widgets/profile/profile_header.dart';
 import '../../widgets/profile/luxe_list_tile.dart';
+import '../../widgets/profile/delivery_addresses_section.dart';
 import '../../services/auth_service.dart';
 import 'settings_screen.dart';
 import 'biometric_history_screen.dart';
@@ -212,6 +213,17 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                         ),
                       ],
                     ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // GRUPO 1.b: DIRECCIONES DE ENTREGA (estructura colombiana)
+                  _buildSectionHeader('DIRECCIONES DE ENTREGA'),
+                  const SizedBox(height: 10),
+
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: DeliveryAddressesSection(),
                   ),
 
                   const SizedBox(height: 24),
