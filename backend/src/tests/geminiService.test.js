@@ -49,6 +49,12 @@ axios.post.mockResolvedValue({
 });
 
 // Importar después de configurar mocks
+// geminiService.js lee DEEPSEEK_API_KEY al importarse (linea 20) y el bloque del LLM vive
+// dentro de if (DEEPSEEK_API_KEY) (linea 545). Sin clave la suite no llega al codigo que
+// dice medir. Valor de PRUEBA, no credencial, y ANTES del require: despues ya es tarde.
+process.env.DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || 'test-key-no-real';
+process.env.GEMINI_API_KEY = process.env.GEMINI_API_KEY || 'test-key-no-real';
+
 const { processAssistantMessage, sanitizeAiResponseText, parseDsmlToolCalls, AI_USER_ID } = require('../services/geminiService');
 
 describe('Pruebas unitarias de Asistente de IA (geminiService.js)', () => {
