@@ -29,8 +29,12 @@ jest.mock('../services/websocketService', () => ({
   notifyUserAuraStatus: jest.fn(),
 }));
 
+// AURA_TOOLS_DEFINITIONS con las definiciones REALES (requireActual): antes este mock las
+// vaciaba con [] y eso tapaba la deriva, porque la ruta Gemini usaba una copia hardcodeada
+// propia. Ahora que las declaraciones se DERIVAN de esta lista, un mock vacio daria 0
+// herramientas y el test lo detecta. Solo se sustituye executeAuraTool.
 jest.mock('../services/auraToolExecutor', () => ({
-  AURA_TOOLS_DEFINITIONS: [],
+  ...jest.requireActual('../services/auraToolExecutor'),
   executeAuraTool: jest.fn(),
 }));
 
@@ -250,7 +254,7 @@ describe('geminiFallback', () => {
       // Verificar que se pasaron 8 herramientas
       expect(capturedTools).toBeDefined();
       const declarations = capturedTools[0]?.functionDeclarations || [];
-      expect(declarations.length).toBe(8);
+      expect(declarations.length).toBe(11);
 
       const toolNames = declarations.map(d => d.name);
       expect(toolNames).toContain('query_user_biometric_profile');

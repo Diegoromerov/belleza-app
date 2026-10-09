@@ -4,6 +4,24 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { pool } = require('../config/db');
 const { notifyUserChatMessage, notifyUserAuraStatus } = require('./websocketService');
 const { AURA_TOOLS_DEFINITIONS, executeAuraTool } = require('./auraToolExecutor');
+
+// Convierte un esquema JSON Schema (tipos en minuscula) al formato de Google Generative AI
+// (tipos en MAYUSCULA). Existe para DERIVAR las declaraciones de herramientas de la ruta
+// Gemini desde la fuente unica AURA_TOOLS_DEFINITIONS, en vez de mantener una copia a mano
+// que ya derivo una vez (8 frente a 11 herramientas) y renombro parametros.
+const GEMINI_TYPES = { string: 'STRING', number: 'NUMBER', integer: 'INTEGER', boolean: 'BOOLEAN', object: 'OBJECT', array: 'ARRAY' };
+function toGeminiSchema(schema, depth = 0) {
+  if (!schema || typeof schema !== 'object' || depth > 6) return schema;
+  const out = { ...schema };
+  if (typeof out.type === 'string') out.type = GEMINI_TYPES[out.type.toLowerCase()] || 'STRING';
+  if (out.properties) {
+    out.properties = Object.fromEntries(
+      Object.entries(out.properties).map(([k, v]) => [k, toGeminiSchema(v, depth + 1)])
+    );
+  }
+  if (out.items) out.items = toGeminiSchema(out.items, depth + 1);
+  return out;
+}
 const { searchBeautyKnowledge, formatKnowledgeContext, generateEmbedding } = require('./ragService');
 const { breakers } = require('./circuitBreakerService');
 const { sanitizeForLog, hashIdForLog } = require('../utils/piiSanitizer');
@@ -724,111 +742,13 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
 
                     // Definición de herramientas compatible con Google Generative AI SDK v1beta
                     // Las 8 herramientas AURA replicadas para Gemini Function Calling
-                    const geminiTools = [
-              {
-                functionDeclarations: [
-                  {
-                    name: 'query_user_biometric_profile',
-                    description: 'Consulta el perfil biométrico del usuario (tipo de piel, subtono, alergias, historial de tratamientos).',
-                    parameters: {
-                      type: 'OBJECT',
-                      properties: {
-                        user_id: { type: 'STRING', description: 'ID numérico del usuario' }
-                      },
-                      required: ['user_id']
-                    }
-                  },
-                  {
-                    name: 'search_nearby_services',
-                    description: 'Busca servicios de belleza cercanos a la ubicación geográfica usando PostGIS.',
-                    parameters: {
-                      type: 'OBJECT',
-                      properties: {
-                        latitude: { type: 'NUMBER', description: 'Latitud (ej. 4.6097 en Bogotá)' },
-                        longitude: { type: 'NUMBER', description: 'Longitud (ej. -74.0817 en Bogotá)' },
-                        category: { type: 'STRING', description: 'Categoría opcional (ej. Uñas, Cabello, Piel, Cejas)' },
-                        radius_km: { type: 'NUMBER', description: 'Radio máximo en kilómetros (por defecto 5)' }
-                      },
-                      required: ['latitude', 'longitude']
-                    }
-                  },
-                  {
-                    name: 'check_provider_availability',
-                    description: 'Verifica la disponibilidad de agenda de un prestador evitando colisiones.',
-                    parameters: {
-                      type: 'OBJECT',
-                      properties: {
-                        provider_id: { type: 'STRING', description: 'ID del prestador' },
-                        service_id: { type: 'STRING', description: 'ID o UUID del servicio' },
-                        date: { type: 'STRING', description: 'Fecha sugerida en formato YYYY-MM-DD' }
-                      },
-                      required: ['provider_id']
-                    }
-                  },
-                  {
-                    name: 'evaluate_user_rebooking',
-                    description: 'Evalúa si el usuario tiene tratamientos que vencieron o requieren agendamiento de mantenimiento.',
-                    parameters: {
-                      type: 'OBJECT',
-                      properties: {
-                        user_id: { type: 'STRING', description: 'ID numérico del usuario' }
-                      },
-                      required: ['user_id']
-                    }
-                  },
-                  {
-                    name: 'recommend_glowstore_products',
-                    description: 'Recomienda productos de la tienda GlowStore compatibles con la piel o necesidad del usuario.',
-                    parameters: {
-                      type: 'OBJECT',
-                      properties: {
-                        user_id: { type: 'STRING', description: 'ID opcional del usuario para personalización' },
-                        queryText: { type: 'STRING', description: 'Término de búsqueda de producto' },
-                        category: { type: 'STRING', description: 'Categoría del producto (ej. Piel, Uñas, Cabello)' }
-                      }
-                    }
-                  },
-                  {
-                    name: 'get_provider_b2b_insights',
-                    description: 'Genera inteligencia de negocios, ocupación de horas muertas y descuentos dinámicos para un prestador.',
-                    parameters: {
-                      type: 'OBJECT',
-                      properties: {
-                        provider_id: { type: 'STRING', description: 'ID numérico del prestador' }
-                      },
-                      required: ['provider_id']
-                    }
-                  },
-                  {
-                    name: 'search_beauty_knowledge_rag',
-                    description: 'Busca información técnica sobre rutinas cosméticas, ingredientes, compatibilidad de piel y cuidado en casa en la base de conocimiento.',
-                    parameters: {
-                      type: 'OBJECT',
-                      properties: {
-                        queryText: { type: 'STRING', description: 'Consulta del usuario sobre rutina o producto' },
-                        category: { type: 'STRING', description: 'Categoría cosmética (ej. piel, cabello, uñas)' }
-                      },
-                      required: ['queryText']
-                    }
-                  },
-                  {
-                    name: 'trigger_ui_redirection',
-                    description: 'Genera una redirección visual en la aplicación Flutter al Módulo de Ideas o herramientas específicas de visajismo.',
-                    parameters: {
-                      type: 'OBJECT',
-                      properties: {
-                        moduleKey: {
-                          type: 'STRING',
-                          enum: ['nails-classic', 'skin-tone', 'hair-diagnostic', 'skin-texture', 'eyebrow-visagism', 'nails-style'],
-                          description: 'Clave del módulo gráfico al cual redirigir'
-                        }
-                      },
-                      required: ['moduleKey']
-                    }
-                  }
-                ]
-              }
-            ];
+const geminiTools = [{
+              functionDeclarations: AURA_TOOLS_DEFINITIONS.map(({ function: fn }) => ({
+                name: fn.name,
+                description: fn.description,
+                parameters: toGeminiSchema(fn.parameters),
+              })),
+            }];
             
             // Sanitizar contents para Gemini
             const sanitizedContents = contents.map(c => ({
