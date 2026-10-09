@@ -101,7 +101,7 @@ describe('Pruebas unitarias de AURA Tool Executor (auraToolExecutor.js)', () => 
     // Ensure no further processing (consent check, agent call, DB query)
     expect(consentService.checkConsent).not.toHaveBeenCalled();
     expect(atenaAgent.getBiometricDiagnosis).not.toHaveBeenCalled();
-    expect(dbPool.query).not.toHaveBeenCalled();
+    expect(dbPool.pool.query).not.toHaveBeenCalled();
   });
 
   test('Debería ejecutar search_nearby_services delegando en HERMES con PostGIS', async () => {
