@@ -82,6 +82,7 @@ otra rama. Quien continúe tiene que conocer que existe antes de tocar el backen
 - **La suite del panel se corre con `npm test`**, que es `node --test "tests/*.test.mjs"`. `node --test tests/` NO corre la suite.
 - **No se puede importar `src/middleware.ts` desde una prueba**: importa `next/server` sin extensión y el resolutor de Node no lo carga (el empaquetador de Next sí). Por eso la decisión vive en `src/lib/portero.ts`, sin dependencias.
 - **El arnés de jest del backend exige `JWT_SECRET`** (`src/tests/setupHarness.js:12`) aunque la suite que falla hable justo de su ausencia: sin un valor de prueba, las suites ni arrancan y el rojo que se ve es del arnés, no del defecto.
+- **El entorno del espacio de trabajo cambia el veredicto del gate.** Tres casos medidos: el arnés exige `JWT_SECRET`; la suite de observabilidad pasa 6/6 sin `DATABASE_URL` y publica 1 contra un Postgres alcanzable (con la variable presente pero **inalcanzable** también pasa: el disparador es una conexión real, no la variable); y `jwtProductionGuard` pasa donde no hay `.env` y falla donde `dotenv` lo encuentra. Regla: **todo número va con su configuración**, y un test que afirma la *ausencia* de una variable de entorno tiene que aislarse del `.env` (mockear `dotenv`) o no prueba nada estable.
 - **`taskkill //F` no funciona** en este MSYS: usar `taskkill /F /PID <pid>`.
 - **`git bundle create f base..tip` y `f tip --not base`** fallan con "Refusing to create empty bundle" aunque el rango no esté vacío; funcionan `^base tip` o un solo ref.
 - **No reportar números que no se puedan reproducir.** Un "66/66" circuló y no se pudo reproducir después: exigir 0 fallos y decir con qué orden se corre.
@@ -90,13 +91,15 @@ otra rama. Quien continúe tiene que conocer que existe antes de tocar el backen
 
 ### Los rojos del backend, con su reproducción (verificados de primera mano el 2026-10-08)
 
-Son previos a los arreglos de `fix/quality-debt-p0` y siguen rojos en `main`:
+Siguen rojos en `main` dos de ellos; el tercero no se reproduce acá. **Uno de los dos rojos no es del código** (ver T-A0 abajo):
 
 | Suite | Qué falla | Debe ser |
 |---|---|---|
-| `src/tests/jwtProductionGuard.test.js` (T-A0) | Importar `backend/index.js` con `NODE_ENV=production` **sin** `JWT_SECRET` no lanza nada («Received function did not throw») | Lanzar `/FATAL SECURITY ERROR/i` |
+| `src/tests/jwtProductionGuard.test.js` (T-A0) | El import de `index.js` en producción no lanza **cuando existe `backend/.env`**: `dotenv` reintroduce el secreto y deshace el `delete process.env.JWT_SECRET` del test | El test aislado del `.env`. **El fail-fast ya está en `main` y funciona** (prueba A/B abajo) |
 | `src/tests/degradedLockBehavior.test.js` (C6) | `/api/products` con la capa de datos degradada responde **500** | **503** + `X-GlowApp-Degraded: memory-fallback` |
 | `tests/infra.observability.prometheus.test.js` | Reportado como rojo desde la rama (1 failed / 5 passed) | **En `main` pasa 6/6**, con y sin `NODE_ENV=test` (dos corridas). El rojo **no se reproduce** acá |
+
+Antes de correrlo: **sin `DATABASE_URL` en el entorno** — con una base alcanzable la suite de observabilidad cambia de veredicto.
 
 ```bash
 cd backend
@@ -114,13 +117,17 @@ para decir «es la métrica» ni «es el orden de ejecución»: para cerrarlo fa
 esa reproducción — **en qué árbol y en qué commit se midió, y qué variables de entorno estaban
 puestas** (los nombres, no los valores). Mientras tanto, en `main` está verde.
 
-**Sí hay trabajo sobre ese rojo, y la primera versión de este documento lo negó** porque solo miró
-`origin`: existe una rama **local** `fix/t-a0-jwt-hardening` cuyo commit `5becf6798` se llama
-literalmente «implement T-A0 JWT hardening, fail-fast startup and DB role check for authAdmin», y
-en el remoto `upstream` hay `fix/jwt-sin-respaldo` con 5 commits fuera de `main` sobre secretos de
-JWT (aunque su `index.js` no lleva aún el mensaje `FATAL SECURITY ERROR`). **Antes de declarar que
-nada cubre un rojo, mirad también las ramas locales y los demás remotos** (`git branch -a`,
-`git remote -v`), no solo `origin`.
+**T-A0 no es un rojo del código: es un rojo del test.** Medido de primera mano el 2026-10-09, mismo `require`, mismo `NODE_ENV=production`, sin `JWT_SECRET`:
+
+| Dónde se corre | Resultado |
+|---|---|
+| cwd `backend/` (ahí vive el `.env`) | **No lanza**: `dotenv` (línea 9 de `index.js`) reintroduce el secreto de 53 caracteres del `.env` antes de que `getJwtSecret()` valide |
+| cwd `backend/src/tests/` (sin `.env` a la vista) | **Lanza** `[FATAL SECURITY ERROR] … JWT_SECRET es obligatoria` |
+
+El fail-fast existe y hace lo suyo (`index.js:15` → `src/config/jwt.js:19-20`); en producción real —sin `.env`, con las variables del proveedor— se comporta bien. Lo que no sirve es el guardián: en un espacio de trabajo con `.env` no puede pasar, así que no protege nada. **El arreglo es aislar ese test del `.env`** (mockear `dotenv` o apuntar su `config()` a una ruta inexistente), no tocar `index.js`.
+
+Y cuidado con el atajo: **`fix/t-a0-jwt-hardening` (`5becf6798`) ya es ancestro de `main`** (0 commits fuera de `main`, `git merge-base --is-ancestor` lo confirma), así que ese trabajo ya está integrado y no hay nada que rescatar de ahí. La lección original sigue en pie —mirar ramas locales y todos los remotos antes de declarar que algo no existe— pero en este caso lo que faltaba no era lo que parecía.
+
 
 ### El resto
 
