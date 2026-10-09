@@ -135,6 +135,25 @@ El rojo que este documento llama **C6** es `src/tests/degradedLockBehavior.test.
 
 Antes de escribir el arreglo de C6, mirad `fix/d01-db-fallback-security-audit` (`1ebab7791`, worktree `C:/d01-work`): toca `backend/src/config/db.js` (+35/−7) y añade `src/tests/dbMemorySecurityGuard.test.js`. Es el mismo asunto —la política de fallo de la base—, está 1 commit adelante de `main` y **82 atrás**, o sea que necesita rebase. Por el asunto no se puede saber si coincide con lo que pide C6 o si lo contradice: hay que leerlo antes de escribir nada nuevo.
 
+### El 500 de `/api/products`, medido (C6): no es de `db.js` ni del candado
+
+Capturado de primera mano en `main`, configuración canónica (`NODE_ENV=test`, `JWT_SECRET` de prueba, **sin** `DATABASE_URL`): de los 4 casos de `src/tests/degradedLockBehavior.test.js` falla **uno**, la línea 19.
+
+```
+expect(res.status).toBe(503)   →   Expected: 503   Received: 500
+```
+
+El 500 sale de `src/controllers/productController.js:59` (`res.status(500).json({ error: 'Error al obtener productos' })`), disparado por **pg-mem**: `ColumnNotFound: column "p.descripcion" does not exist`. La consulta de `productController.js:13` pide `p.descripcion, p.imagen_url, p.tag_especialidad, p.tipo_visibilidad`, y **la tabla `productos` del esquema en memoria (`src/config/pgMemory.js:251-258`) no tiene ninguna de esas cuatro** — solo `id, nombre, sku, costo, stock, tenant_id`. En el esquema real existen (`migrations/009_create_productos_table.sql:5`). Es decir: **hay tres definiciones distintas de `productos`** (migraciones reales, `init.sql:202`, `pgMemory.js:251`) y la que usan las pruebas es la más desviada.
+
+El candado **no lo bloqueó porque su propia regla lo libera**: con `memoryFallbackAllowed: true` y `NODE_ENV !== 'production'`, `decidirBloqueo` devuelve `shouldBlock: false` (`degradedLock.js:264`) y `normalizarEstadoDependencias` no marca la base como degradada (`degradedLock.js:138-144`). Los otros tres casos pasan porque `/api/health` y `/api/providers` están en la allowlist (`degradedLock.js:60-64`) y **declaran la degradación por su cuenta**.
+
+Consecuencias, en orden:
+
+1. **El arreglo no pertenece a `fix/d01-db-fallback-security-audit`** (no es `config/db.js`) ni es un mapeo de error a 503. Cualquiera que “arregle” `productController.js` para contentar al test estaría adaptando código de producción a un esquema que no existe: eso no se hace.
+2. **Es una decisión de producto, no un parche.** El test declara que una superficie de datos debe dar 503 aunque la política permita memoria; el candado dice lo contrario en test/dev. O la superficie se endurece (`/api/products` declara la degradación como health y providers), o se quita `memoryFallbackAllowed` de la condición que libera, o se acepta que el test mide una condición que el código no tiene.
+3. **Aparte, y mecánico:** sincronizar el esquema en memoria con el real —o derivarlo de las migraciones—. Mientras `pgMemory.js` sea una copia a mano, toda prueba que toque `productos` está midiendo un esquema que no existe.
+
+
 
 
 ### El resto
