@@ -52,6 +52,8 @@ describe('Pruebas E2E de Fase 5 - Integración Completa del Ecosistema Multi-Age
     require('../services/abuseDetection').isBlocked.mockResolvedValue({ blocked: false });
     require('../services/consentService').checkConsent.mockResolvedValue({ granted: true, grantedAt: new Date(), version: '1.0' });
     require('../services/abuseDetection').trackAbuse.mockResolvedValue(undefined);
+    require('../services/ragService').searchBeautyKnowledge.mockResolvedValue([]);
+    require('../services/ragService').formatKnowledgeContext.mockReturnValue('');
   });
 
   test('Debería orquestar correctamente el flujo completo: Mensaje del usuario → DeepSeek Tool Call → Ejecución de Agente → Notificación WebSocket', async () => {

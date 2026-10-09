@@ -61,6 +61,8 @@ describe('Pruebas unitarias de Asistente de IA (geminiService.js)', () => {
     require('../services/abuseDetection').isBlocked.mockResolvedValue({ blocked: false });
     require('../services/consentService').checkConsent.mockResolvedValue({ granted: true, grantedAt: new Date(), version: '1.0' });
     require('../services/abuseDetection').trackAbuse.mockResolvedValue(undefined);
+    require('../services/ragService').searchBeautyKnowledge.mockResolvedValue([]);
+    require('../services/ragService').formatKnowledgeContext.mockReturnValue('');
   });
 
   test('Debería agrupar mensajes consecutivos del mismo emisor e impedir roles consecutivos', async () => {
