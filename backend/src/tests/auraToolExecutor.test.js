@@ -67,11 +67,18 @@ describe('Pruebas unitarias de AURA Tool Executor (auraToolExecutor.js)', () => 
     consentService.checkConsent.mockResolvedValue({ granted: true, grantedAt: new Date(), version: '1.0' });
     consentService.logAccess.mockResolvedValue(undefined);
 
+    // Forma REAL del retorno de atenaAgent.getBiometricDiagnosis (atenaAgent.js:105-116): el
+    // agente ya mapea rawProfile.recommendation -> recommendationText y anade status.
+    // El mock anterior devolvia el PERFIL CRUDO ({ recommendation }), que no es lo que el
+    // agente entrega: el executor hace pass-through del resultado del agente, asi que el
+    // test estaba midiendo contra una forma que ningun agente produce.
     const mockProfile = {
-      id: 'prof-123',
-      user_id: 1,
-      face_scores: { hydration: 80 },
-      recommendation: 'Usar hidratante facial'
+      status: 'success',
+      profileId: 'prof-123',
+      userId: 1,
+      faceScores: { hydration: 80 },
+      recommendationText: 'Usar hidratante facial',
+      createdAt: new Date('2026-01-01T00:00:00Z')
     };
     atenaAgent.getBiometricDiagnosis.mockResolvedValue(mockProfile);
 
@@ -158,9 +165,16 @@ describe('Pruebas unitarias de AURA Tool Executor (auraToolExecutor.js)', () => 
     // Expect success: the result is the array of products (as returned by hestiaAgent)
     expect(result).toEqual(recommendedProducts);
 
-    // Verify internal calls: 
-    // 1. Ownership check passed, so we proceeded to call atenaAgent.getBiometricDiagnosis with the userId (1)
-    expect(atenaAgent.getBiometricDiagnosis).toHaveBeenCalledWith(1);
+    // El ejecutor delega DIRECTO en HESTIA (auraToolExecutor.js:268):
+    //   return await hestiaAgent.recommendProducts({ userId: args.userId || userId, queryText, category });
+    // La cadena atena -> hestia ocurre DENTRO de hestiaAgent, pero aqui hestiaAgent esta
+    // mockeado (jest.mock en la cabecera), asi que su cuerpo real no corre y ATENA nunca se
+    // invoca: asertar getBiometricDiagnosis en este test no podia pasar nunca, midiera el
+    // codigo lo que midiera. Se aserta lo que el ejecutor SI es responsable de hacer: pasar
+    // a HESTIA el userId del contexto de autenticacion.
+    expect(hestiaAgent.recommendProducts).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: 1 })
+    );
     // 2. Then hestiaAgent.recommendProducts was called with the result from atenaAgent (which includes userId? 
     //    Actually, in auraToolExecutor.js we do:
     //      const biometricProfile = await atenaAgent.getBiometricDiagnosis(userId);
