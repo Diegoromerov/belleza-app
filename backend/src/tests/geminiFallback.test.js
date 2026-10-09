@@ -3,6 +3,14 @@
  * Tests unitarios para el fallback de Gemini en geminiService.js
  */
 
+// geminiService.js lee DEEPSEEK_API_KEY EN EL MOMENTO DE IMPORTARSE (linea 20) y el bloque
+// del LLM vive dentro de `if (DEEPSEEK_API_KEY)` (linea 545). Sin clave, la seccion 5 no se
+// ejecuta, el codigo salta a la respuesta por defecto y la suite NUNCA llega al codigo que
+// dice medir: de ahi axios.post = 0 y el modelo de Gemini sin construir. Es valor de PRUEBA,
+// no una credencial. Tiene que ir ANTES del require: despues ya es tarde.
+process.env.DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || 'test-key-no-real';
+process.env.GEMINI_API_KEY = process.env.GEMINI_API_KEY || 'test-key-no-real';
+
 const { processAssistantMessage } = require('../services/geminiService');
 const { breakers } = require('../services/circuitBreakerService');
 
@@ -58,8 +66,27 @@ describe('geminiFallback', () => {
     const { isBlocked } = require('../services/abuseDetection');
     isBlocked.mockResolvedValue({ blocked: false });
 
-    // Default mock for pool.query (history)
-    pool.query.mockResolvedValue({ rows: [] });
+    // Despachador por sentencia, no un mock ciego.
+    // Un { rows: [] } para TODO hace que el INSERT ... RETURNING de geminiService.js:1000
+    // devuelva cero filas y el codigo muera en :1005 leyendo row.sender_id: una sola
+    // excepcion arrastraba los 4 rojos de la suite. Postgres SIEMPRE devuelve fila en un
+    // INSERT ... RETURNING, asi que el mock debe imitarlo; responder vacio a todo no es
+    // neutral, es una mentira del arnes.
+    pool.query.mockImplementation(async (sql, params) => {
+      if (/INSERT\s+INTO\s+messages/i.test(sql)) {
+        return {
+          rows: [{
+            id: 'msg-test-1',
+            sender_id: String(params?.[0] ?? 0),
+            receiver_id: String(params?.[1] ?? 0),
+            message: params?.[2] ?? '',
+            is_read: false,
+            created_at: new Date(),
+          }],
+        };
+      }
+      return { rows: [] }; // historial y demas SELECT: sin filas
+    });
 
     // Default mock for axios (DeepSeek success)
     axios.post.mockResolvedValue({
@@ -120,8 +147,14 @@ describe('geminiFallback', () => {
       expect(axios.post).toHaveBeenCalledTimes(1);
 
       // El breaker debería contar el fallo
-      expect(breakers.deepseek.failures).toBeGreaterThanOrEqual(1);
-      expect(breakers.deepseek.state).toBe('OPEN');
+      expect(breakers.deepseek.failureCount).toBeGreaterThanOrEqual(1);
+      // El breaker NO se abre con un solo fallo: failureThreshold = 3
+      // (circuitBreakerService.js:9). Este caso mide que el fallo SE CUENTA y que hay
+      // fallback, no que se abra el circuito -- pedir 'OPEN' aqui contradecia el umbral
+      // y el propio nombre del test. Se fija el contrato real, que ademas caza un
+      // off-by-one en el umbral.
+      expect(breakers.deepseek.failureCount).toBe(1);
+      expect(breakers.deepseek.state).toBe('CLOSED');
     });
   });
 
@@ -129,7 +162,7 @@ describe('geminiFallback', () => {
     test('debe saltar directo a fallback sin llamar a DeepSeek', async () => {
       // Forzar breaker OPEN
       breakers.deepseek.state = 'OPEN';
-      breakers.deepseek.failures = 3;
+      breakers.deepseek.failureCount = 3;
 
       // Mock para que falle y vaya a fallback
       axios.post
