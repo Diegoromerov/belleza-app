@@ -1307,9 +1307,9 @@
         "x-glowapp-documented": false
       }
     },
-    "/api/admin/precios/{productoId}": {
+    "/api/admin/precios/{productoId}(\\d+)": {
       "get": {
-        "operationId": "getapi_admin_precios_productoId",
+        "operationId": "getapi_admin_precios_productoId_d",
         "parameters": [
           {
             "in": "path",
@@ -1325,14 +1325,14 @@
             "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
           }
         },
-        "summary": "GET /api/admin/precios/{productoId} (autodescubierto, sin contrato declarado)",
+        "summary": "GET /api/admin/precios/{productoId}(\\d+) (autodescubierto, sin contrato declarado)",
         "tags": [
           "admin"
         ],
         "x-glowapp-documented": false
       },
       "put": {
-        "operationId": "putapi_admin_precios_productoId",
+        "operationId": "putapi_admin_precios_productoId_d",
         "parameters": [
           {
             "in": "path",
@@ -1348,7 +1348,7 @@
             "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
           }
         },
-        "summary": "PUT /api/admin/precios/{productoId} (autodescubierto, sin contrato declarado)",
+        "summary": "PUT /api/admin/precios/{productoId}(\\d+) (autodescubierto, sin contrato declarado)",
         "tags": [
           "admin"
         ],
