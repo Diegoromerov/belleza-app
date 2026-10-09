@@ -10,7 +10,7 @@ COPY . .
 RUN flutter pub get && flutter build web --release --dart-define=GOOGLE_WEB_CLIENT_ID=${GOOGLE_WEB_CLIENT_ID}
 
 # Etapa 2: Servidor web con Nginx (Non-Root)
-FROM nginxinc/nginx-unprivileged:alpine
+FROM public.ecr.aws/nginx/nginx-unprivileged:alpine
 
 # Copiar archivos construidos
 COPY --from=builder /app/build/web /usr/share/nginx/html
