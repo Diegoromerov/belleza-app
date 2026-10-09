@@ -257,13 +257,22 @@ const SCHEMA_SQL = `
     es_plataforma BOOLEAN DEFAULT false
   );
 
+  -- Columnas alineadas con las migraciones REALES (009_create_productos_table.sql,
+  -- 010_implement_glowstore_schema.sql, 032): sin descripcion/imagen_url/tag_especialidad/
+  -- tipo_visibilidad la consulta de productController reventaba, y ese 500 se confundia con
+  -- un defecto del candado. Nullables a proposito: el emulador imita COLUMNAS, no
+  -- constraints; un NOT NULL aqui solo romperia inserts de otras suites.
   CREATE TABLE IF NOT EXISTS productos (
     id SERIAL PRIMARY KEY,
     nombre VARCHAR(255),
     sku VARCHAR(40),
     costo NUMERIC(10,2),
     stock INTEGER DEFAULT 0,
-    tenant_id INTEGER
+    tenant_id INTEGER,
+    descripcion TEXT,
+    imagen_url TEXT,
+    tag_especialidad VARCHAR(50),
+    tipo_visibilidad VARCHAR(50)
   );
 
   CREATE TABLE IF NOT EXISTS listas_precios (
