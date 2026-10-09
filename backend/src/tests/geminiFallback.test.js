@@ -188,7 +188,7 @@ describe('geminiFallback', () => {
   });
 
   describe('Ambos breakers OPEN', () => {
-    test.skip('debe retornar respuesta segura por defecto - SKIP: bug en geminiService.js scope parsedUserId', async () => {
+    test('debe retornar respuesta segura por defecto', async () => {
       // Properly set OPEN state with cooldown already passed
       breakers.deepseek.state = 'OPEN';
       breakers.deepseek.nextAttempt = Date.now() - 1000; // Cooldown passed
@@ -219,8 +219,8 @@ describe('geminiFallback', () => {
     }, 15000);
   });
 
-  describe('Gemini Fallback expone 8 herramientas', () => {
-    test('debe incluir las 8 herramientas AURA en functionDeclarations', async () => {
+  describe('Gemini Fallback expone las 11 herramientas AURA de la fuente unica', () => {
+    test('debe incluir las 11 herramientas AURA en functionDeclarations (asertaba 11 con el nombre en 8)', async () => {
       // Forzar error en DeepSeek para activar fallback
       axios.post
         .mockRejectedValueOnce(new Error('DeepSeek fail'))
