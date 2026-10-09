@@ -13,6 +13,7 @@ import '../widgets/wompi_payment_sheet.dart';
 import '../services/audience_service.dart';
 import '../shared/mens_theme.dart';
 import '../widgets/profile/colombian_address_builder.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class StoreScreen extends StatefulWidget {
   final String? bookingId;
@@ -238,8 +239,18 @@ class _StoreScreenState extends State<StoreScreen> {
     bool _loadingAddress = true;
     Map<String, dynamic>? _defaultAddress;
 
-    // Cargar dirección por defecto al abrir el dialog
-    Future<void> _loadDefaultAddress() async {
+    // Precarga de los datos del comprador al abrir el dialog
+    Future<void> _prefillCheckoutData() async {
+      // 1. Nombre: misma fuente que "Mi Perfil Concierge" (se guarda al iniciar sesión)
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final savedName = prefs.getString('userName');
+        if (savedName != null && savedName.trim().isNotEmpty) {
+          nameCtrl.text = savedName.trim();
+        }
+      } catch (_) {}
+
+      // 2. Dirección de entrega por defecto
       try {
         final headers = await ApiService.getAuthHeaders();
         final uri = Uri.parse('${ApiService.baseUrl}/api/users/delivery-addresses/default');
@@ -258,7 +269,7 @@ class _StoreScreenState extends State<StoreScreen> {
     }
 
     // Llamar al cargar
-    _loadDefaultAddress();
+    _prefillCheckoutData();
 
     // Selector de direcciones guardadas
     Future<Map<String, dynamic>?> _showAddressSelector(BuildContext dialogContext) async {
