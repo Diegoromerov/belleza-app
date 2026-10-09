@@ -84,6 +84,7 @@ otra rama. Quien continúe tiene que conocer que existe antes de tocar el backen
 - **El arnés de jest del backend exige `JWT_SECRET`** (`src/tests/setupHarness.js:12`) aunque la suite que falla hable justo de su ausencia: sin un valor de prueba, las suites ni arrancan y el rojo que se ve es del arnés, no del defecto.
 - **El entorno del espacio de trabajo cambia el veredicto del gate.** Tres casos medidos: el arnés exige `JWT_SECRET`; la suite de observabilidad pasa 6/6 sin `DATABASE_URL` y publica 1 contra un Postgres alcanzable (con la variable presente pero **inalcanzable** también pasa: el disparador es una conexión real, no la variable); y `jwtProductionGuard` pasa donde no hay `.env` y falla donde `dotenv` lo encuentra. Regla: **todo número va con su configuración**, y un test que afirma la *ausencia* de una variable de entorno tiene que aislarse del `.env` (mockear `dotenv`) o no prueba nada estable.
 - **`taskkill //F` no funciona** en este MSYS: usar `taskkill /F /PID <pid>`.
+- **`node_modules` por junction entre árboles**: el worktree `C:/beauty-app-work` tiene `backend/node_modules` como *junction* a `C:\beauty-app\backend\node_modules` (comprobado: `LinkType: Junction`). Un `npm ci` —o un `npm install` con poda— ahí dentro **borra y reinstala el `node_modules` del árbol compartido** a través del enlace, y la caché de jest pasa a ser la misma para los dos árboles. Si hace falta un árbol de dependencias propio, instaladlo dentro del worktree en vez de enlazarlo.
 - **`git bundle create f base..tip` y `f tip --not base`** fallan con "Refusing to create empty bundle" aunque el rango no esté vacío; funcionan `^base tip` o un solo ref.
 - **No reportar números que no se puedan reproducir.** Un "66/66" circuló y no se pudo reproducir después: exigir 0 fallos y decir con qué orden se corre.
 
@@ -128,6 +129,13 @@ El fail-fast existe y hace lo suyo (`index.js:15` → `src/config/jwt.js:19-20`)
 
 Y cuidado con el atajo: **`fix/t-a0-jwt-hardening` (`5becf6798`) ya es ancestro de `main`** (0 commits fuera de `main`, `git merge-base --is-ancestor` lo confirma), así que ese trabajo ya está integrado y no hay nada que rescatar de ahí. La lección original sigue en pie —mirar ramas locales y todos los remotos antes de declarar que algo no existe— pero en este caso lo que faltaba no era lo que parecía.
 
+### Hay dos «C6», y una rama que conviene leer antes de escribir
+
+El rojo que este documento llama **C6** es `src/tests/degradedLockBehavior.test.js`: `/api/products` con la capa de datos degradada responde **500** y debe responder **503 + `X-GlowApp-Degraded`**. El commit `401f6a146` de la rama se llama igual («C6 — fixtures de embedding de la era 1024 dims») pero arregla otra cosa: fixtures de RAG en `ragService*.test.js`. Su tip **no toca** `degradedLockBehavior.test.js` ni `degradedLock.js`, así que ese rojo sigue en pie. **Al dar un rojo por cerrado, nombrad el archivo de la suite, no la etiqueta.**
+
+Antes de escribir el arreglo de C6, mirad `fix/d01-db-fallback-security-audit` (`1ebab7791`, worktree `C:/d01-work`): toca `backend/src/config/db.js` (+35/−7) y añade `src/tests/dbMemorySecurityGuard.test.js`. Es el mismo asunto —la política de fallo de la base—, está 1 commit adelante de `main` y **82 atrás**, o sea que necesita rebase. Por el asunto no se puede saber si coincide con lo que pide C6 o si lo contradice: hay que leerlo antes de escribir nada nuevo.
+
+
 
 ### El resto
 
@@ -143,6 +151,8 @@ Cada cambio se entrega con el defecto **reproducido antes** de tocar nada, el ar
 comprobación **en vivo** (no solo en local) y una **mutación** que pruebe que el guardián lo caza:
 volver a introducir el defecto y exigir rojo. Todo con evidencia `archivo:línea` o salida de
 comando. Un verde no prueba nada si el guardián no puede fallar.
+
+El gate del backend tiene **dos runners**: jest para los `*.test.js` y `node --test` para los `*.nodetest.js` (la rama añade el script `test:node` para el segundo). Mientras ese script no esté en `main`, cada número tiene que decir **con cuál de los dos y con qué patrón** se midió.
 
 ## 7. Protocolo para trabajar en paralelo sin pisarse
 
