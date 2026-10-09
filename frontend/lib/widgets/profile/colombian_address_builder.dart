@@ -1,8 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import '../../services/api_service.dart';
-import '../../services/auth_service.dart';
 import '../../shared/theme.dart';
 
 // Tipos de vía colombianos
