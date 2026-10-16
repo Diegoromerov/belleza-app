@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Color para notificaciones FCM (Oro Champán GlowApp) -->
+    <color name="notification_color">#C5A052</color>
+</resources>

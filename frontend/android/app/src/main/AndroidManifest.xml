@@ -1,6 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.beauty_app">
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Permisos para notificaciones push (FCM) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE"/>
     <!-- N-17: resuelto en la integración Fase D — unión de flutter_01 (P0: permisos
          faltantes) y flutter_02 (P1: rationale). Los tres permisos peligrosos se declaran
          UNA sola vez, con la descripción de flutter_02; el resto son de flutter_01. -->
@@ -52,6 +55,26 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- FCM Service para mensajes en background/killed -->
+        <service
+            android:name="com.google.firebase.messaging.FirebaseMessagingService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT"/>
+            </intent-filter>
+        </service>
+        <!-- Icono por defecto para notificaciones -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@mipmap/ic_launcher" />
+        <!-- Color por defecto para notificaciones -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/notification_color" />
+        <!-- Canal de notificación por defecto -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="glowapp_default" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
