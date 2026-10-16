@@ -27,10 +27,10 @@ const wompiClient = require('../services/wompiClient');
 const { discriminarIva } = require('../utils/iva');
 
 const verifyWompiSignature = (req) => {
-  if (!process.env.WOMPI_EVENTS_SECRET && process.env.NODE_ENV === 'test') {
-    return true;
-  }
-
+  // Sin secreto de eventos no hay nada que verificar: se falla en CERRADO.
+  // El atajo que aceptaba cualquier evento en NODE_ENV=test contradecía el
+  // contrato (401 a una firma no verificable) y hacía que la compuerta mintiera:
+  // en CI, sin secreto, el webhook acusaba recibo (200) de eventos sin firma.
   const headerChecksum = req.header('x-event-checksum');
   const resultado = wompiClient.verifyEventChecksum(req.body, headerChecksum);
 
