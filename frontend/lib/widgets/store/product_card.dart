@@ -81,7 +81,7 @@ class ProductCard extends StatelessWidget {
                   right: 6,
                   child: CircleAvatar(
                     radius: 14,
-                    backgroundColor: LuxeColors.nude100.withOpacity(0.85),
+                    backgroundColor: LuxeColors.nude100.withValues(alpha: 0.85),
                     child: IconButton(
                       padding: EdgeInsets.zero,
                       icon: const Icon(Icons.visibility_outlined, size: 16, color: LuxeColors.nude900),

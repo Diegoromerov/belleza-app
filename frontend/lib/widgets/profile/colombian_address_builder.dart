@@ -627,7 +627,7 @@ class _ColombianAddressBuilderState extends State<ColombianAddressBuilder> {
             ),
           ),
         DropdownButtonFormField<String>(
-          value: controller.text.isEmpty ? null : controller.text,
+          initialValue: controller.text.isEmpty ? null : controller.text,
           items: items.map((item) => DropdownMenuItem(
             value: item,
             child: Text(item, style: const TextStyle(fontSize: 13)),

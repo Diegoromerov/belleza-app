@@ -236,11 +236,11 @@ class _StoreScreenState extends State<StoreScreen> {
     final TextEditingController addressCtrl = TextEditingController();
     final formKey = GlobalKey<FormState>();
     bool processing = false;
-    bool _loadingAddress = true;
-    Map<String, dynamic>? _defaultAddress;
+    bool loadingAddress = true;
+    Map<String, dynamic>? defaultAddress;
 
     // Precarga de los datos del comprador al abrir el dialog
-    Future<void> _prefillCheckoutData() async {
+    Future<void> prefillCheckoutData() async {
       // 1. Nombre: misma fuente que "Mi Perfil Concierge" (se guarda al iniciar sesión)
       try {
         final prefs = await SharedPreferences.getInstance();
@@ -258,21 +258,21 @@ class _StoreScreenState extends State<StoreScreen> {
         if (response.statusCode == 200) {
           final data = json.decode(response.body);
           if (data['data'] != null) {
-            _defaultAddress = data['data'];
-            addressCtrl.text = _defaultAddress!['direccion_formateada'] ?? '';
+            defaultAddress = data['data'];
+            addressCtrl.text = defaultAddress!['direccion_formateada'] ?? '';
           }
         }
       } catch (_) {}
       finally {
-        if (mounted) setState(() => _loadingAddress = false);
+        if (mounted) setState(() => loadingAddress = false);
       }
     }
 
     // Llamar al cargar
-    _prefillCheckoutData();
+    prefillCheckoutData();
 
     // Selector de direcciones guardadas
-    Future<Map<String, dynamic>?> _showAddressSelector(BuildContext dialogContext) async {
+    Future<Map<String, dynamic>?> showAddressSelector(BuildContext dialogContext) async {
       try {
         final headers = await ApiService.getAuthHeaders();
         final uri = Uri.parse('${ApiService.baseUrl}/api/users/delivery-addresses');
@@ -559,9 +559,9 @@ class _StoreScreenState extends State<StoreScreen> {
                           controller: addressCtrl,
                           decoration: InputDecoration(
                             labelText: 'Dirección de Entrega',
-                            border: OutlineInputBorder(),
-                            prefixIcon: Icon(Icons.location_on_outlined),
-                            suffixIcon: _loadingAddress
+                            border: const OutlineInputBorder(),
+                            prefixIcon: const Icon(Icons.location_on_outlined),
+                            suffixIcon: loadingAddress
                                 ? const Padding(
                                     padding: EdgeInsets.all(12),
                                     child: SizedBox(
@@ -574,10 +574,10 @@ class _StoreScreenState extends State<StoreScreen> {
                                     icon: const Icon(Icons.edit_outlined, size: 20, color: Colors.grey),
                                     onPressed: () async {
                                       // Abrir selector/editor de direcciones
-                                      final result = await _showAddressSelector(context);
+                                      final result = await showAddressSelector(context);
                                       if (result != null && mounted) {
                                         setState(() {
-                                          _defaultAddress = result;
+                                          defaultAddress = result;
                                           addressCtrl.text = result['direccion_formateada'] ?? '';
                                         });
                                       }
@@ -642,20 +642,69 @@ class _StoreScreenState extends State<StoreScreen> {
                                   };
                                 }).toList();
 
-                                final checkoutData = {
-                                  'nombre_entrega': nameCtrl.text,
-                                  'direccion_entrega': addressCtrl.text,
-                                  'items': itemsList,
-                                  if (widget.bookingId != null) 'booking_id': widget.bookingId,
-                                };
+                                // Preparar datos del checkout (incluir dirección estructurada si hay dirección seleccionada)
+                                Map<String, dynamic> checkoutData;
+                                if (defaultAddress != null) {
+                                  checkoutData = {
+                                    'nombre_entrega': nameCtrl.text,
+                                    'direccion_entrega': addressCtrl.text,
+                                    'tipo_via': defaultAddress!['tipo_via'],
+                                    'numero_principal': defaultAddress!['numero_principal'],
+                                    'letra_principal': defaultAddress!['letra_principal'],
+                                    'numero_secundario': defaultAddress!['numero_secundario'],
+                                    'letra_secundaria': defaultAddress!['letra_secundaria'],
+                                    'complemento': defaultAddress!['complemento'],
+                                    'barrio': defaultAddress!['barrio'],
+                                    'ciudad': defaultAddress!['ciudad'],
+                                    'departamento': defaultAddress!['departamento'],
+                                    'codigo_postal': defaultAddress!['codigo_postal'],
+                                    'referencia': defaultAddress!['referencia'],
+                                    'direccion_entrega_id': defaultAddress!['id'],
+                                    'items': itemsList,
+                                    if (widget.bookingId != null) 'booking_id': widget.bookingId,
+                                  };
+                                } else {
+                                  checkoutData = {
+                                    'nombre_entrega': nameCtrl.text,
+                                    'direccion_entrega': addressCtrl.text,
+                                    'items': itemsList,
+                                    if (widget.bookingId != null) 'booking_id': widget.bookingId,
+                                  };
+                                }
 
-                                // A360-2026-09-22/C-03: antes se fabricaba aquí un id
-                                // 'STORE_<epoch>' y se usaba como referencia de pago.
-                                // Si no hay reserva real no hay identificador de pago:
-                                // se pasa vacío y el checkout responde "no integrado".
+                                // 1. Crear el pedido primero (POST /api/store/checkout)
+                                setCheckoutState(() {
+                                  processing = true;
+                                });
+                                Map<String, dynamic>? orderResponse;
+                                try {
+                                  orderResponse = await ApiService.post('/api/store/checkout', checkoutData);
+                                  if (orderResponse == null || orderResponse['success'] != true) {
+                                    throw Exception(orderResponse?['error'] ?? 'Error creando pedido');
+                                  }
+                                } catch (e) {
+                                  setCheckoutState(() {
+                                    processing = false;
+                                  });
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Error creando pedido: $e')),
+                                  );
+                                  return;
+                                }
+
+                                final orderId = orderResponse['data']?['order']?['id'] ?? orderResponse['order']?['id'];
+                                if (orderId == null) {
+                                  setCheckoutState(() { processing = false; });
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Error: no se recibió ID del pedido')),
+                                  );
+                                  return;
+                                }
+
+                                // 2. Cobrar el pedido usando el orderId real
                                 final paymentResult = await showWompiCheckoutSheet(
                                   context: context,
-                                  bookingId: widget.bookingId ?? '',
+                                  bookingId: orderId, // Ahora pasamos el orderId real
                                   serviceName: 'Compra GlowShop (${_cart.length} productos)',
                                   price: total,
                                   providerName: 'GlowShop Oficial',
@@ -663,29 +712,20 @@ class _StoreScreenState extends State<StoreScreen> {
                                 );
 
                                 if (paymentResult == true) {
-                                  setCheckoutState(() {
-                                    processing = true;
+                                  // El webhook confirmará el pago y marcará el pedido como PAGADO
+                                  Navigator.pop(ctx);
+                                  setState(() {
+                                    _cart.clear();
+                                    _isCartOpen = false;
                                   });
-                                  try {
-                                    final response = await ApiService.post('/api/store/checkout', checkoutData);
-                                    if (response != null && response['success'] == true) {
-                                      Navigator.pop(ctx);
-                                      setState(() {
-                                        _cart.clear();
-                                        _isCartOpen = false;
-                                      });
-                                      _showOrderSuccessDialog();
-                                    } else {
-                                      throw Exception(response?['error'] ?? 'Error registrando pedido');
-                                    }
-                                  } catch (e) {
-                                    setCheckoutState(() {
-                                      processing = false;
-                                    });
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text('Error registrando pedido: $e')),
-                                    );
-                                  }
+                                  _showOrderSuccessDialog();
+                                } else {
+                                  // Pago cancelado o fallido: el pedido queda en PENDIENTE_PAGO
+                                  // El usuario puede reintentar desde la pantalla de pedidos
+                                  setCheckoutState(() { processing = false; });
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Pago cancelado. El pedido queda pendiente de pago.')),
+                                  );
                                 }
                               }
                             },
@@ -1049,9 +1089,9 @@ class _StoreScreenState extends State<StoreScreen> {
                                   children: [
                                     Expanded(
                                       child: Container(
-                                        decoration: BoxDecoration(
+                                        decoration: const BoxDecoration(
                                           color: Colors.white,
-                                          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                                          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
                                         ),
                                       ),
                                     ),

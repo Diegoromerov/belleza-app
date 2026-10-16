@@ -1,8 +1,10 @@
-// backend/src/sockets/trackingHandler.js
+// backend/src/sockets/serviceLocationHandler.js
+// GPS en tiempo real del PRESTADOR acercándose a la CITA ("Concierge en Camino")
+// NO es tracking de envío/paquete (eso está en tabla `envios` + endpoints admin)
 const { pool } = require('../config/db');
 
 module.exports = (io, socket) => {
-  console.log(`🔌 Cliente conectado al socket de tracking: ${socket.id}`);
+  console.log(`🔌 Cliente conectado al socket de ubicación de servicio: ${socket.id}`);
 
   // El cliente o prestador se une a una sala de reserva específica
   socket.on('join_booking_room', ({ bookingId, role }) => {
@@ -37,6 +39,6 @@ module.exports = (io, socket) => {
   });
 
   socket.on('disconnect', () => {
-    console.log(`🔌 Cliente desconectado del socket de tracking: ${socket.id}`);
+    console.log(`🔌 Cliente desconectado del socket de ubicación de servicio: ${socket.id}`);
   });
 };

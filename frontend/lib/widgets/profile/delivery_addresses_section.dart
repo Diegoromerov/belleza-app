@@ -143,7 +143,7 @@ class _DeliveryAddressesSectionState extends State<DeliveryAddressesSection> {
         backgroundColor: LuxeColors.nude100,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: LuxeColors.nude200),
+          side: const BorderSide(color: LuxeColors.nude200),
         ),
         title: const Text('Eliminar dirección',
             style: TextStyle(fontFamily: 'Didot', color: LuxeColors.nude900)),
@@ -318,7 +318,7 @@ class _DeliveryAddressesSectionState extends State<DeliveryAddressesSection> {
                       label: const Text('Establecer por defecto'),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: LuxeColors.gold700,
-                        side: BorderSide(color: LuxeColors.gold300),
+                        side: const BorderSide(color: LuxeColors.gold300),
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       ),
@@ -334,7 +334,7 @@ class _DeliveryAddressesSectionState extends State<DeliveryAddressesSection> {
                     label: const Text('Editar'),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: LuxeColors.nude700,
-                      side: BorderSide(color: LuxeColors.nude300),
+                      side: const BorderSide(color: LuxeColors.nude300),
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
@@ -462,7 +462,7 @@ class _DeliveryAddressesSectionState extends State<DeliveryAddressesSection> {
               ),
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
-                side: BorderSide(color: LuxeColors.nude300),
+                side: const BorderSide(color: LuxeColors.nude300),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),
