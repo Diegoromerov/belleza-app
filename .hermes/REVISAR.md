@@ -242,15 +242,30 @@ real de sandbox; fijado por `backend/src/tests/payBooking.test.js`) — **no es 
 - **Verificación:** `src/tests/payBooking.test.js` (+4 casos: PSE devuelve la URL, NEQUI devuelve `null`,
   PSE sin `redirect_url` 400, PSE sin `customer_data` 400) y `src/tests/wompiClient.test.js`
   (+4 casos, incluido el parseo de la forma documentada). OpenAPI 296/296 en sincronía.
-- **Pendiente REAL (no cerrado por esta entrada):**
-  - **UI Flutter.** `frontend/lib/widgets/wompi_payment_sheet.dart` sigue con 2 pestañas (Nequi, Tarjeta).
-    Los métodos de redirección no se pueden elegir desde la app: el backend ya los cobra, pero el
-    cliente no tiene cómo llegar a ellos.
-  - **Cómo abrir la URL de redirección.** El proyecto **no** tiene `url_launcher` ni `webview_flutter`
-    (es una omisión deliberada: `forced_update_dialog.dart` usa el portapapeles "porque no es
-    dependencia del proyecto"). Abrir la URL de pago exige decidir: añadir `url_launcher`, un WebView
-    interno, o quedarse en el patrón de portapapeles + instrucción. **Decisión de producto pendiente.**
-  - Sandbox E2E real con `pub_test_`/`prv_test_` (ver nota siguiente).
+- **UI Flutter — HECHA (2026-10-16).** `frontend/lib/widgets/wompi_payment_sheet.dart`:
+  - El estado pasó de `_selectedTab` (índice de pestaña 0=Nequi/1=Tarjeta) a `_metodo` (nombre exacto
+    de Wompi). Con más de dos métodos el índice dejaba de mapear 1:1 y cada rama duplicaba el mapa.
+  - Selector de método (`Wrap` de chips) con `NEQUI`, `CARD`, `PSE`, `BANCOLOMBIA_TRANSFER`, `DAVIPLATA`.
+    Las demás transferencias bancarias se añaden con una línea: la rama de redirección ya es común.
+  - `_buildRedirectForm()`: recoge `full_name`, `email`, `phone_number` y, sólo para PSE,
+    `financial_institution_code` — exactamente lo que el backend exige antes de llamar a Wompi.
+  - Si el backend devuelve la URL, se muestra `_buildRedireccionView()`: deja explícito que el cobro
+    **NO está pagado** y entrega el enlace. Si el backend NO la devuelve, se lanza excepción (nunca un
+    "éxito" falso).
+  - `ApiService.payBooking()` acepta `redirectUrl` y `customerData`.
+  - `flutter analyze lib/widgets/wompi_payment_sheet.dart lib/services/api_service.dart`: 0 errores,
+    0 warnings (2 `info` pre-existentes de `_showCardForm(context)`).
+- **Decisión pendiente (arquitectura, no bug):** el proyecto **no** tiene `url_launcher` ni
+  `webview_flutter` (omisión deliberada: `forced_update_dialog.dart` usa el portapapeles "porque no es
+  dependencia del proyecto"). Se siguió ese patrón: la URL se copia al portapapeles y se pide abrirla.
+  Funciona y no añade dependencias, pero para un pago es UX pobre. Si producto aprueba `url_launcher`,
+  el cambio es sustituir `Clipboard.setData` por `launchUrl` en `_mostrarRedireccion()` (un solo punto).
+- **Segunda decisión pendiente:** `redirect_url` se fijó a `https://glowapp.co/pago/resultado`
+  (`_redirectUrlPago`), apoyado en el dominio público ya usado en
+  `provider_detail_screen.dart` (`https://glowapp.co/p/<id>`) y en `FRONTEND_URL` de `backend/.env.example`.
+  Requiere una ruta real que reciba el retorno de Wompi; hoy es destino declarado, no una página verificada.
+- **Falta:** correr el flujo de redirección contra el sandbox real (`pub_test_`/`prv_test_`) — es lo único
+  que prueba que la URL que devuelve Wompi es la que el usuario necesita.
 
 ### Nota: ya hay datos de prueba de Sandbox para una corrida E2E real
 
@@ -390,19 +405,35 @@ real de sandbox; fijado por `backend/src/tests/payBooking.test.js`) — **no es 
 
 - **Detectado:** 2026-10-10 al correr la suite completa (1174/1181). Son **preexistentes**: no las
   tocó el cambio de IVA (`git status` limpio sobre ambas) y fallan también en aislamiento.
-- **`src/tests/jwtProductionGuard.test.js`** — el test hace `delete process.env.JWT_SECRET` y luego
-  `require('../../index')` esperando que reviente con `FATAL SECURITY ERROR`. Pero `backend/.env`
-  **define** `JWT_SECRET` y el `dotenv` de `index.js` la vuelve a cargar al importar → no lanza.
-  El test mide el entorno, no el código. Arreglo: importar con el `.env` neutralizado
-  (`dotenv_config_path` a un archivo vacío) o probar `getJwtSecret()` en vez de `index.js`.
-- **`src/tests/estadoKBFreshness.test.js`** — el caso (b) espera que con un «parte» reciente la
-  regla R4 **no** se active, pero `docs/agents/partes/` está **vacío** → R4 se activa y falla.
-  Depende de un fixture del repo real. Arreglo: que el test cree su propio parte reciente en un
-  directorio temporal.
+- **`src/tests/jwtProductionGuard.test.js`** — **RESUELTO (2026-10-16)**. Diagnóstico confirmado tal
+  como quedó anotado: el test hace `delete process.env.JWT_SECRET` y luego `require('../../index')`
+  esperando `FATAL SECURITY ERROR`, pero `index.js:9` ejecuta `require('dotenv').config()` y
+  `backend/.env:13` **define** `JWT_SECRET` → la vuelve a cargar → no lanza. El guard es correcto
+  (`index.js:15` llama a `getJwtSecret()`; `src/config/jwt.js` lanza en `production` sin secreto o
+  con menos de 32 caracteres): lo que estaba mal era el test, que medía el disco y no el código.
+  Pasaba en CI (sin `.env`, gitignoreado) y fallaba en local: un verde dependiente del entorno.
+  **Arreglo aplicado:** `jest.mock('dotenv', () => ({ config: jest.fn(() => ({ parsed: {} })) }))`
+  al inicio del archivo. Verificado **10/10 en verde**, y con JWT_SECRET exportado (el escenario de
+  CI) igual.
+  **Corrección al procedimiento que quedó escrito aquí:** la vía propuesta
+  (`dotenv_config_path` a un archivo vacío) **no sirve** en esta suite — se probó con
+  `DOTENV_CONFIG_PATH=/nonexistent/.env` y la suite entera no llega a correr: `src/tests/setupHarness.js:12`
+  lanza `"JWT_SECRET environment variable is required but not set"`, porque los `setupFiles` de jest se
+  ejecutan **antes** de que nada cargue `.env`. El mock de dotenv sí funciona porque `setupFiles` corre
+  antes del archivo de test, así que no le afecta.
+- **`src/tests/estadoKBFreshness.test.js`** — no figura en rojo en las corridas completas de
+  2026-10-16; se da por resuelto o por fixture ya presente. Re-verificar sólo si reaparece.
 - **Ruido aparte:** `biometric-scan.contract.test.js` (SLA <300 ms) y `resilience.service.test.js`
-  (backoff) **fallan de forma intermitente bajo carga** y pasan en aislamiento (comprobado: en una
-  corrida fallaron, en la siguiente no). No son defectos; conviene subir el umbral o marcarlos
-  como no deterministas.
+  (backoff) **fallan de forma intermitente bajo carga** y pasan en aislamiento. Comprobado otra vez el
+  2026-10-16: en la corrida con `flutter analyze` en paralelo aparecieron rojos; en la corrida limpia,
+  no. Son de tiempo, no defectos: conviene subir el umbral o marcarlos como no deterministas.
+- **Hallazgo asociado — `setupHarness.js` miente en su comentario (BAJA).** La cabecera dice
+  «Fijar JWT_SECRET por defecto para pruebas de Jest si no está definido en el entorno», pero el código
+  hace lo contrario: **lanza** si falta. Consecuencia real: `npm test` a secas **no arranca** (0 tests)
+  aunque `backend/.env` tenga el secreto, con un mensaje que suena a que hay que configurarlo cuando en
+  realidad ya está configurado. **No se cambió**: hacer que el harness cargue `.env` inyectaría
+  variables (llaves de Wompi, etc.) en TODAS las suites y podría volver verdes o rojas pruebas que hoy
+  dependen de que una variable esté ausente. Es una decisión de política de CI, no un arreglo mecánico.
 
 ### W12. `tarifa_reserva` se escribe pero NO se lee en ningún flujo — MEDIA (dato muerto)
 
