@@ -16,6 +16,21 @@
  * Este test ejerce el handler real POST /bookings/:id/confirm-otp contra el arnés
  * pg-mem y comprueba el MONTO PERSISTIDO en centavos enteros. Falla (rojo) mientras
  * el cálculo siga en float y pasa (verde) cuando se hace en centavos enteros.
+ *
+ * DOS REGLAS DEL ARNÉS QUE ESTE TEST RESPETA (ver src/config/pgMemory.js):
+ *
+ *  1. No re-declarar lo que el arnés ya declara. `provider_wallet`,
+ *     `wallet_transactions` y `pedidos_tienda` ya existen con los TIPOS de sus
+ *     migraciones. Un `CREATE TABLE IF NOT EXISTS` local con otra forma NO es un
+ *     no-op silencioso en pg-mem: el planner procesa el AST y aborta con
+ *     "Not supported ... parts have not been read" por las constraints no leídas.
+ *  2. Los tipos importan. Antes este test declaraba `wallet_transactions.metadata`
+ *     como TEXT y `bookings.id` como VARCHAR(36); el arnés documenta que un tipo
+ *     distinto "hace que el emulador mienta" y produce verdes en falso. Aquí se
+ *     usan los tipos reales: `metadata JSONB` y `booking_id UUID`.
+ *
+ * Los `booking_id` son UUID REALES: `bookings.id` es `uuid` (modelo Booking +
+ * migración 001), así que una cadena tipo `bk_cents_700` es un cast inválido.
  */
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -27,27 +42,21 @@ const paymentRoutes = require('../src/routes/paymentRoutes');
 
 const CODIGO = '123456';
 
-// Tablas que el harness pg-mem no declara pero que el handler de dispersión usa.
-// (ver glowapp-verification/references/pgmem-harness-integration-testing.md)
+/** UUID determinista y válido a partir de un entero, para no inventar ids por caso. */
+const uuidDe = (n) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
+
+// Solo lo que el arnés pg-mem NO declara. Tipos copiados de
+// backend/migrations/001_payment_system.sql.
 const SETUP_SQL = [
-  `CREATE TABLE IF NOT EXISTS platform_config (key VARCHAR(100) PRIMARY KEY, value TEXT)`,
+  `CREATE TABLE IF NOT EXISTS platform_config (
+     key VARCHAR(100) PRIMARY KEY, value TEXT NOT NULL,
+     descripcion TEXT, updated_at TIMESTAMP DEFAULT NOW())`,
   `CREATE TABLE IF NOT EXISTS otp_validaciones (
-     id SERIAL PRIMARY KEY, booking_id VARCHAR(36) UNIQUE, codigo_hash VARCHAR(255),
-     estado VARCHAR(20), expira_at TIMESTAMP, intentos_fallidos INTEGER DEFAULT 0,
-     usado_at TIMESTAMP, ip_generacion VARCHAR(45))`,
-  `CREATE TABLE IF NOT EXISTS provider_wallet (
-     provider_id INTEGER PRIMARY KEY, saldo_disponible NUMERIC(12,2) DEFAULT 0,
-     saldo_pendiente NUMERIC(12,2) DEFAULT 0, total_ganado NUMERIC(12,2) DEFAULT 0,
-     updated_at TIMESTAMP DEFAULT NOW())`,
-  // metadata como TEXT: pg-mem no implementa el operador `jsonb || jsonb` y el
-  // handler lo usa; el tipo de la columna es irrelevante para lo que aquí se mide.
-  `CREATE TABLE IF NOT EXISTS wallet_transactions (
-     id SERIAL PRIMARY KEY, provider_id INTEGER, booking_id VARCHAR(36), tipo VARCHAR(30),
-     monto NUMERIC(12,2), saldo_resultante NUMERIC(12,2), estado VARCHAR(20),
-     descripcion TEXT, metadata TEXT DEFAULT '{}')`,
-  `CREATE TABLE IF NOT EXISTS pedidos_tienda (
-     id SERIAL PRIMARY KEY, booking_id VARCHAR(36), comision_total_prestador NUMERIC(12,2),
-     prestador_comisionado_id INTEGER)`,
+     id UUID PRIMARY KEY DEFAULT gen_random_uuid(), booking_id UUID NOT NULL UNIQUE,
+     codigo_hash VARCHAR(255) NOT NULL, generado_at TIMESTAMP DEFAULT NOW(),
+     expira_at TIMESTAMP NOT NULL, usado_at TIMESTAMP,
+     intentos_fallidos INTEGER NOT NULL DEFAULT 0,
+     estado VARCHAR(20) NOT NULL DEFAULT 'ACTIVO', ip_generacion VARCHAR(45))`,
   `CREATE TABLE IF NOT EXISTS audit_log (
      id SERIAL PRIMARY KEY, actor_id INTEGER, accion VARCHAR(50), tabla VARCHAR(50),
      registro_id VARCHAR(36), datos_antes JSONB, datos_despues JSONB, ip VARCHAR(45),
@@ -79,7 +88,7 @@ function construirApp(clientId) {
 }
 
 async function confirmar({ base, comision, providerId, clientId }) {
-  const bookingId = `bk_cents_${providerId}`;
+  const bookingId = uuidDe(providerId);
   const hash = await bcrypt.hash(CODIGO, 10);
 
   await pool.query(

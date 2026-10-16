@@ -61,7 +61,15 @@ const SCHEMA_SQL = `
     onboarding_completo BOOLEAN DEFAULT false,
     is_active BOOLEAN DEFAULT true,
     habeas_data_accepted_at TIMESTAMP,
-    habeas_data_ip VARCHAR(45)
+    habeas_data_ip VARCHAR(45),
+    responsable_iva BOOLEAN NOT NULL DEFAULT true,
+    tarifa_iva NUMERIC(5,4) NOT NULL DEFAULT 0.1900,
+    rut_numero VARCHAR(20),
+    rut_responsabilidad_codigo SMALLINT,
+    responsable_iva_override BOOLEAN,
+    responsabilidad_iva_fuente VARCHAR(10),
+    responsabilidad_iva_actualizada_at TIMESTAMP,
+    responsabilidad_iva_cambiada_por INTEGER
   );
 
   CREATE TABLE IF NOT EXISTS business_verticals (
@@ -216,7 +224,7 @@ const SCHEMA_SQL = `
   );
 
   CREATE TABLE IF NOT EXISTS bookings (
-    id VARCHAR(36) PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     client_id INTEGER,
     provider_id INTEGER,
     service_id VARCHAR(36),
@@ -229,16 +237,23 @@ const SCHEMA_SQL = `
     impuestos_estado NUMERIC(10,2),
     pago_neto_prestador NUMERIC(10,2),
     tarifa_reserva NUMERIC(10,2),
+    subtotal_base NUMERIC(12,2),
+    iva_valor NUMERIC(12,2),
+    tarifa_iva_aplicada NUMERIC(5,4),
     service_address TEXT,
     notes TEXT,
     estado VARCHAR(50),
     productos_adicionales JSONB,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    cufe VARCHAR(96),
+    qr_factura TEXT,
+    factura_emitida BOOLEAN DEFAULT FALSE,
+    factura_fecha TIMESTAMPTZ
   );
 
   CREATE TABLE IF NOT EXISTS transactions (
-    id VARCHAR(36) PRIMARY KEY,
-    booking_id VARCHAR(36),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    booking_id UUID REFERENCES bookings(id) ON DELETE SET NULL,
     client_id INTEGER,
     provider_id INTEGER,
     amount NUMERIC(10,2),
@@ -351,6 +366,96 @@ const SCHEMA_SQL = `
     ai_evaluation_notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   );
+
+  CREATE TABLE IF NOT EXISTS pedidos_tienda (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    comprador_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE RESTRICT,
+    rol_comprador VARCHAR(20) NOT NULL,
+    booking_id UUID REFERENCES bookings(id) ON DELETE SET NULL,
+    prestador_comisionado_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+    comision_total_prestador NUMERIC(10,2) DEFAULT 0.00 CHECK (comision_total_prestador >= 0),
+    subtotal NUMERIC(10,2) NOT NULL CHECK (subtotal >= 0),
+    envio NUMERIC(10,2) DEFAULT 0.00 CHECK (envio >= 0),
+    iva NUMERIC(10,2) DEFAULT 0.00 CHECK (iva >= 0),
+    total NUMERIC(10,2) NOT NULL CHECK (total >= 0),
+    estado VARCHAR(20) DEFAULT 'PENDIENTE_PAGO' CHECK (estado IN ('PENDIENTE_PAGO', 'PAGADO', 'DESPACHADO', 'ENTREGADO', 'CANCELADO')),
+    nombre_entrega VARCHAR(255) NOT NULL,
+    direccion_entrega TEXT NOT NULL,
+    metadata JSONB DEFAULT '{}'::jsonb,
+    creado_en TIMESTAMPTZ DEFAULT NOW(),
+    cufe VARCHAR(96),
+    qr_factura TEXT,
+    factura_emitida BOOLEAN DEFAULT FALSE,
+    factura_fecha TIMESTAMPTZ
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_pedidos_tienda_comprador ON pedidos_tienda(comprador_id);
+  CREATE INDEX IF NOT EXISTS idx_pedidos_tienda_booking ON pedidos_tienda(booking_id);
+  CREATE INDEX IF NOT EXISTS idx_pedidos_tienda_comisionado ON pedidos_tienda(prestador_comisionado_id);
+  CREATE TABLE IF NOT EXISTS provider_wallet (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    provider_id INTEGER NOT NULL UNIQUE,
+    saldo_disponible NUMERIC(12,2) NOT NULL DEFAULT 0.00,
+    saldo_pendiente NUMERIC(12,2) NOT NULL DEFAULT 0.00,
+    saldo_en_disputa NUMERIC(12,2) NOT NULL DEFAULT 0.00,
+    total_ganado NUMERIC(12,2) NOT NULL DEFAULT 0.00,
+    total_retirado NUMERIC(12,2) NOT NULL DEFAULT 0.00,
+    modelo_retiro VARCHAR(20) NOT NULL DEFAULT 'DEMANDA',
+    ultimo_retiro_at TIMESTAMP,
+    proximo_retiro_auto TIMESTAMP,
+    risk_score INTEGER NOT NULL DEFAULT 0,
+    retiros_pausados BOOLEAN NOT NULL DEFAULT FALSE,
+    tipo_cuenta VARCHAR(20),
+    banco VARCHAR(100),
+    numero_cuenta VARCHAR(30),
+    tipo_cuenta_bancaria VARCHAR(20),
+    cuenta_verificada BOOLEAN NOT NULL DEFAULT FALSE,
+    titular_nombre TEXT,
+    titular_documento_tipo TEXT,
+    titular_documento_num TEXT,
+    wompi_beneficiary_id VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS wallet_transactions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    provider_id INTEGER NOT NULL,
+    booking_id UUID,
+    tipo VARCHAR(30) NOT NULL,
+    monto NUMERIC(12,2) NOT NULL,
+    saldo_resultante NUMERIC(12,2) NOT NULL,
+    estado VARCHAR(20) NOT NULL DEFAULT 'COMPLETADO',
+    referencia_wompi VARCHAR(255),
+    descripcion TEXT,
+    metadata JSONB DEFAULT '{}'::jsonb,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS retiros (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    provider_id INTEGER NOT NULL,
+    wallet_id UUID NOT NULL,
+    monto NUMERIC(12,2) NOT NULL,
+    estado VARCHAR(20) NOT NULL DEFAULT 'PENDIENTE',
+    tipo_origen VARCHAR(20) NOT NULL DEFAULT 'DEMANDA',
+    referencia_wompi VARCHAR(255),
+    error_wompi TEXT,
+    numero_cuenta VARCHAR(30),
+    banco VARCHAR(100),
+    solicitado_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    procesado_at TIMESTAMP,
+    metadata JSONB DEFAULT '{}'::jsonb
+  );
+
+  CREATE TABLE IF NOT EXISTS wallet_ledger_events (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tx_id UUID NOT NULL,
+    provider_id INTEGER NOT NULL,
+    evento VARCHAR(40) NOT NULL,
+    detalle JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+  );
 `;
 
 const lit = (value) => (value === null || value === undefined ? 'NULL' : `'${String(value).replace(/'/g, "''")}'`);
@@ -436,6 +541,15 @@ function initMemoryIfNeeded() {
       // eslint-disable-next-line global-require
       const { newDb } = require('pg-mem');
       pgMemInstance = newDb();
+      
+      // Registrar funciones nativas que usa el schema (gen_random_uuid para UUIDs)
+      pgMemInstance.public.registerFunction({
+        name: 'gen_random_uuid',
+        returns: 'uuid',
+        implementation: () => require('crypto').randomUUID(),
+        impure: true
+      });
+      
       pgMemInstance.public.none(SCHEMA_SQL);
       seedReferenceData(pgMemInstance);
       adapter = pgMemInstance.adapters.createPg();
