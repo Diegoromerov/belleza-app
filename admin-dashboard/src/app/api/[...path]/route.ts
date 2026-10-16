@@ -29,7 +29,9 @@ const ALLOWED_PATH_PREFIXES = [
   // evidencias, generacion de documentos). Sin este prefijo el proxy los
   // rechazaba con 404 y /admin/business no cargaba ningun dato.
   'v1/business/',
-  'academia/'
+  'academia/',
+  'store/orders',
+  'envios'
 ];
 
 /**

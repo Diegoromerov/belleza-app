@@ -23,7 +23,9 @@ import {
   ShieldAlert,
   ChevronLeft,
   ChevronRight,
-  Inbox
+  Inbox,
+  Receipt,
+  ShoppingCart
 } from 'lucide-react';
 
 export default function Sidebar() {
@@ -56,8 +58,10 @@ export default function Sidebar() {
         { href: '/admin/sos', label: 'Alertas SOS', icon: ShieldAlert },
         { href: '/admin/pqrsf', label: 'PQRSF / Soporte', icon: Inbox },
         { href: '/admin/business', label: 'Cumplimiento Business', icon: Building2 },
+        { href: '/admin/prestadores', label: 'Prestadores · IVA', icon: Receipt },
         { href: '/admin/precios', label: 'Gestión de Precios', icon: Tag },
         { href: '/admin/productos', label: 'Catálogo Productos', icon: Package },
+        { href: '/admin/store/orders', label: 'Pedidos GlowStore', icon: ShoppingCart },
         { href: '/admin/academia', label: 'Academia Glow', icon: GraduationCap },
         { href: '/chat', label: 'Mensajes', icon: MessageSquare },
         { href: '/perfil', label: 'Mi Perfil', icon: UserIcon },
