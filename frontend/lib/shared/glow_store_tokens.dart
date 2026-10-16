@@ -318,7 +318,7 @@ class GlowStoreTokens {
   // 7. MAPPING DINÁMICO POR AUDIENCIA (S1 Expression-aware)
   // ===========================================================================
   static Color textColor({required bool isMen, bool isDark = false}) {
-    if (isMen) return isDark ? MensTheme.textPrimary : Color(0xFF2B2420);
+    if (isMen) return isDark ? MensTheme.textPrimary : const Color(0xFF2B2420);
     if (isDark) return Colors.white;
     return nude900;
   }

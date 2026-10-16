@@ -23,7 +23,7 @@ class S4TextField extends StatelessWidget {
   final TextStyle? style; // Optional text style to merge with default
 
   const S4TextField({
-    Key? key,
+    super.key,
     this.label,
     this.hint,
     this.controller,
@@ -40,7 +40,7 @@ class S4TextField extends StatelessWidget {
     this.decoration,
     this.textCapitalization = TextCapitalization.none,
     this.style,
-  }) : super(key: key);
+  });
 
   InputDecoration _buildDefaultDecoration(Token token) {
     return InputDecoration(
@@ -53,7 +53,7 @@ class S4TextField extends StatelessWidget {
       suffixIcon: suffixIcon,
       filled: true,
       fillColor: token.surfaceLevel0,
-      contentPadding: EdgeInsets.symmetric(
+      contentPadding: const EdgeInsets.symmetric(
         horizontal: Spacing.md,
         vertical: Spacing.sm,
       ),
@@ -96,7 +96,7 @@ class S4TextField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Determine colors based on state and enabled
-      final Token token = Token.light; // TODO: make this responsive to brightness
+      const Token token = Token.light; // TODO: make this responsive to brightness
 
     // If we have a validator and there's an error, we need to override the decoration to show error state.
     bool showError = false;
@@ -146,14 +146,14 @@ class S4TextField extends StatelessWidget {
     if (label != null && label!.isNotEmpty) {
       children.add(
         Padding(
-          padding: EdgeInsets.only(bottom: Spacing.xs),
+          padding: const EdgeInsets.only(bottom: Spacing.xs),
           child: Text(
             label!,
             style: (TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w500,
               color: showError ? token.status['error']! : token.textPrimary,
-            )).merge(style ?? TextStyle()).copyWith(
+            )).merge(style ?? const TextStyle()).copyWith(
               color: showError ? token.status['error']! : token.textPrimary,
             ),
           ),
@@ -172,7 +172,7 @@ class S4TextField extends StatelessWidget {
         style: (TextStyle(
           fontSize: 14,
           color: showError ? token.status['error']! : token.textPrimary,
-        )).merge(style ?? TextStyle()).copyWith(
+        )).merge(style ?? const TextStyle()).copyWith(
           color: showError ? token.status['error']! : token.textPrimary,
         ),
         decoration: effectiveDecoration.copyWith(

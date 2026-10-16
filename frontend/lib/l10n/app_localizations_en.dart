@@ -9,56 +9,81 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get registerConciergeTitle => 'REGISTER CONCIERGE';
+  String get bookingTitle => 'Booking';
 
   @override
-  String get registerConciergeSubtitle =>
-      'Join the high beauty and wellness community';
+  String get step1Title => '1. Select a Service';
 
   @override
-  String get registerUserType => 'USER TYPE';
+  String get step2Title => '2. Choose a Date';
 
   @override
-  String get registerClientInfo =>
-      '✨ Access to AI Aura diagnostics, GlowStore, and concierge service booking.';
+  String get step3Title => '3. Available Times';
 
   @override
-  String get registerProviderInfo =>
-      '💼 Offer your services, manage your schedule, and receive payments with preferential commission.';
+  String get step4Title => '4. Service Address';
+
+  @override
+  String get addressButtonLabel => '📍 Use Home Address';
+
+  @override
+  String get addressFieldHint =>
+      'e.g., 24th St #95-32, Tower 2, Apt 402, Fontibón';
+
+  @override
+  String get addressFieldLabel => 'Service Address';
+
+  @override
+  String get notesLabel => 'Additional Notes';
+
+  @override
+  String get backButton => 'Back';
+
+  @override
+  String get continueButton => 'Continue';
+
+  @override
+  String get skipAndViewSummary => 'Skip and View Summary';
+
+  @override
+  String get confirmAndPay => 'Confirm and Pay';
+
+  @override
+  String get registerUserType => 'Account Type';
 
   @override
   String get registerFullNameLabel => 'Full Name';
 
   @override
-  String get registerFullNameHint => 'Full Name';
+  String get registerFullNameHint => 'Enter your full name';
 
   @override
-  String get registerFullNameError => 'Please enter your full name';
+  String get registerFullNameError => 'Full name is required';
 
   @override
   String get registerEmailLabel => 'Email';
 
   @override
-  String get registerEmailHint => 'Email';
+  String get registerEmailHint => 'Enter your email';
 
   @override
-  String get registerEmailError => 'Please enter your email';
+  String get registerEmailError => 'Valid email is required';
 
   @override
   String get registerPasswordLabel => 'Password';
 
   @override
-  String get registerPasswordHint => 'Password';
+  String get registerPasswordHint => 'At least 6 characters';
 
   @override
-  String get registerPasswordError => 'Minimum 6 characters';
+  String get registerPasswordError => 'Password must be at least 6 characters';
 
   @override
-  String get registerPhoneLabel => 'Phone (optional)';
+  String get registerPhoneLabel => 'Phone Number';
 
   @override
-  String get registerPhoneHint => 'Phone (optional)';
+  String get registerPhoneHint => 'Enter your phone number';
 
   @override
-  String get registerCreateAccount => 'CREATE MY ACCOUNT';
+  String get registerCreateAccount => 'Create Account';
 }

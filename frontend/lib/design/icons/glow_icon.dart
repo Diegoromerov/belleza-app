@@ -12,7 +12,6 @@ library glow_icon;
 import 'package:flutter/material.dart';
 import '../../core/theme/tokens.dart';
 import 'glow_icon_registry.dart';
-import 'package:beauty_app/services/audience_service.dart';
 
 /// Semantic icon sizes aligned with design system.
 class GlowIconSize {

@@ -98,35 +98,89 @@ abstract class AppLocalizations {
     Locale('es')
   ];
 
-  /// No description provided for @registerConciergeTitle.
+  /// No description provided for @bookingTitle.
   ///
   /// In en, this message translates to:
-  /// **'REGISTER CONCIERGE'**
-  String get registerConciergeTitle;
+  /// **'Booking'**
+  String get bookingTitle;
 
-  /// No description provided for @registerConciergeSubtitle.
+  /// No description provided for @step1Title.
   ///
   /// In en, this message translates to:
-  /// **'Join the high beauty and wellness community'**
-  String get registerConciergeSubtitle;
+  /// **'1. Select a Service'**
+  String get step1Title;
+
+  /// No description provided for @step2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'2. Choose a Date'**
+  String get step2Title;
+
+  /// No description provided for @step3Title.
+  ///
+  /// In en, this message translates to:
+  /// **'3. Available Times'**
+  String get step3Title;
+
+  /// No description provided for @step4Title.
+  ///
+  /// In en, this message translates to:
+  /// **'4. Service Address'**
+  String get step4Title;
+
+  /// No description provided for @addressButtonLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'📍 Use Home Address'**
+  String get addressButtonLabel;
+
+  /// No description provided for @addressFieldHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g., 24th St #95-32, Tower 2, Apt 402, Fontibón'**
+  String get addressFieldHint;
+
+  /// No description provided for @addressFieldLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Service Address'**
+  String get addressFieldLabel;
+
+  /// No description provided for @notesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Additional Notes'**
+  String get notesLabel;
+
+  /// No description provided for @backButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get backButton;
+
+  /// No description provided for @continueButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get continueButton;
+
+  /// No description provided for @skipAndViewSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip and View Summary'**
+  String get skipAndViewSummary;
+
+  /// No description provided for @confirmAndPay.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm and Pay'**
+  String get confirmAndPay;
 
   /// No description provided for @registerUserType.
   ///
   /// In en, this message translates to:
-  /// **'USER TYPE'**
+  /// **'Account Type'**
   String get registerUserType;
-
-  /// No description provided for @registerClientInfo.
-  ///
-  /// In en, this message translates to:
-  /// **'✨ Access to AI Aura diagnostics, GlowStore, and concierge service booking.'**
-  String get registerClientInfo;
-
-  /// No description provided for @registerProviderInfo.
-  ///
-  /// In en, this message translates to:
-  /// **'💼 Offer your services, manage your schedule, and receive payments with preferential commission.'**
-  String get registerProviderInfo;
 
   /// No description provided for @registerFullNameLabel.
   ///
@@ -137,13 +191,13 @@ abstract class AppLocalizations {
   /// No description provided for @registerFullNameHint.
   ///
   /// In en, this message translates to:
-  /// **'Full Name'**
+  /// **'Enter your full name'**
   String get registerFullNameHint;
 
   /// No description provided for @registerFullNameError.
   ///
   /// In en, this message translates to:
-  /// **'Please enter your full name'**
+  /// **'Full name is required'**
   String get registerFullNameError;
 
   /// No description provided for @registerEmailLabel.
@@ -155,13 +209,13 @@ abstract class AppLocalizations {
   /// No description provided for @registerEmailHint.
   ///
   /// In en, this message translates to:
-  /// **'Email'**
+  /// **'Enter your email'**
   String get registerEmailHint;
 
   /// No description provided for @registerEmailError.
   ///
   /// In en, this message translates to:
-  /// **'Please enter your email'**
+  /// **'Valid email is required'**
   String get registerEmailError;
 
   /// No description provided for @registerPasswordLabel.
@@ -173,31 +227,31 @@ abstract class AppLocalizations {
   /// No description provided for @registerPasswordHint.
   ///
   /// In en, this message translates to:
-  /// **'Password'**
+  /// **'At least 6 characters'**
   String get registerPasswordHint;
 
   /// No description provided for @registerPasswordError.
   ///
   /// In en, this message translates to:
-  /// **'Minimum 6 characters'**
+  /// **'Password must be at least 6 characters'**
   String get registerPasswordError;
 
   /// No description provided for @registerPhoneLabel.
   ///
   /// In en, this message translates to:
-  /// **'Phone (optional)'**
+  /// **'Phone Number'**
   String get registerPhoneLabel;
 
   /// No description provided for @registerPhoneHint.
   ///
   /// In en, this message translates to:
-  /// **'Phone (optional)'**
+  /// **'Enter your phone number'**
   String get registerPhoneHint;
 
   /// No description provided for @registerCreateAccount.
   ///
   /// In en, this message translates to:
-  /// **'CREATE MY ACCOUNT'**
+  /// **'Create Account'**
   String get registerCreateAccount;
 }
 

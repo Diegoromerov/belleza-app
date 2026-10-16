@@ -267,19 +267,19 @@ class _GlowIconDemoScreenState extends State<GlowIconDemoScreen> {
   }
 
   Widget _sizeComparison() {
-    return Row(
+    return const Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         _SizeDemo(size: GlowIconSize.xs, label: '16px'),
-        const SizedBox(width: 24),
+        SizedBox(width: 24),
         _SizeDemo(size: GlowIconSize.sm, label: '20px'),
-        const SizedBox(width: 24),
+        SizedBox(width: 24),
         _SizeDemo(size: GlowIconSize.md, label: '24px'),
-        const SizedBox(width: 24),
+        SizedBox(width: 24),
         _SizeDemo(size: GlowIconSize.lg, label: '28px'),
-        const SizedBox(width: 24),
+        SizedBox(width: 24),
         _SizeDemo(size: GlowIconSize.xl, label: '32px'),
-        const SizedBox(width: 24),
+        SizedBox(width: 24),
         _SizeDemo(size: GlowIconSize.xxl, label: '40px'),
       ],
     );

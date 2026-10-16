@@ -12,9 +12,9 @@ class VoiceInput extends StatefulWidget {
 
 
   const VoiceInput({
-    Key? key,
+    super.key,
     required this.onTranscript,
-  }) : super(key: key);
+  });
 
   @override
   _VoiceInputState createState() => _VoiceInputState();
@@ -25,8 +25,8 @@ class _VoiceInputState extends State<VoiceInput> {
   bool _isListening = false;
   bool _isError = false;
   String _errorMessage = '';
-  double _iconSize = 24.0;
-  String _semanticLabel = 'Voice Input';
+  final double _iconSize = 24.0;
+  final String _semanticLabel = 'Voice Input';
 
   @override
   void initState() {
