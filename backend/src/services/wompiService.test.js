@@ -1,193 +1,148 @@
 /**
  * wompiService.test.js
- * Tests for idempotent reference token generation in Wompi service.
- * FASE C - Fix P0 DINERO: Referencias Wompi con Math.random() no son idempotentes.
+ *
+ * El archivo anterior probaba `disbursePayout` y observaba efectos colaterales de
+ * un `setTimeout` simulador (esperaba 1.1-1.6 s para leer las llamadas a
+ * pool.query). Ese código ya no existe: ahora `crearPayout` dispersa de verdad
+ * contra la API de Pagos a Terceros.
+ *
+ * Aquí se fijan: la referencia idempotente, el contenido del lote que se envía a
+ * Wompi (montos en centavos, legalId/name/email, bankId resuelto), el mapeo de
+ * estados y el comportamiento ante error (FALLIDO + ledger + rethrow).
  */
 
-const wompiService = require('./wompiService');
-
-// Mock the pool to avoid DB connections
-jest.mock('../config/db', () => ({
-  pool: {
-    query: jest.fn().mockResolvedValue({ rows: [] })
-  }
+jest.mock('../config/db', () => ({ pool: { query: jest.fn() } }));
+jest.mock('./wompiPayoutsClient', () => ({
+  isConfigured: jest.fn(),
+  resolveBankId: jest.fn(),
+  createPayoutBatch: jest.fn()
 }));
 
-describe('FASE C - Fix P0 DINERO: Idempotent reference token generation', () => {
-  
-  beforeEach(() => {
-    jest.clearAllMocks();
-    // Allow simulator in test environment
-    process.env.NODE_ENV = 'test';
-    process.env.ALLOW_PAYMENT_SIMULATOR = 'true';
+const { pool } = require('../config/db');
+const wompiPayoutsClient = require('./wompiPayoutsClient');
+const wompiService = require('./wompiService');
+
+const WALLET_ROW = {
+  titular_nombre: 'Ana Perez',
+  titular_documento_tipo: 'CC',
+  titular_documento_num: '1098765432',
+  tipo_cuenta_bancaria: 'AHORROS',
+  numero_cuenta: '1234567890',
+  banco: 'Bancolombia',
+  usuario_nombre: 'Ana Perez',
+  usuario_email: 'ana@example.com'
+};
+
+const PARAMS = {
+  retiroId: 'retiro-123',
+  providerId: 'prov-456',
+  amount: 100000,
+  numeroCuenta: '1234567890',
+  banco: 'Bancolombia',
+  automatico: false
+};
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  wompiPayoutsClient.isConfigured.mockReturnValue(true);
+  wompiPayoutsClient.resolveBankId.mockResolvedValue('uuid-bancolombia');
+  wompiPayoutsClient.createPayoutBatch.mockResolvedValue({ id: 'lote-1', status: 'PENDING', reference: 'ref' });
+  pool.query.mockResolvedValue({ rows: [WALLET_ROW] });
+});
+
+describe('referencia idempotente', () => {
+  test('misma operación -> misma referencia', () => {
+    const a = wompiService._generarReferenciaIdempotente('wompi_ret', 'retiro-123', 'prov-456', 100000);
+    const b = wompiService._generarReferenciaIdempotente('wompi_ret', 'retiro-123', 'prov-456', 100000);
+    expect(a).toBe(b);
+    expect(a).toMatch(/^wompi_ret_[0-9A-F]{16}$/);
   });
 
-  afterEach(() => {
-    delete process.env.ALLOW_PAYMENT_SIMULATOR;
-    delete process.env.NODE_ENV;
+  test('operaciones distintas -> referencias distintas', () => {
+    const a = wompiService._generarReferenciaIdempotente('wompi_ret', 'retiro-1', 'prov-456', 100000);
+    const b = wompiService._generarReferenciaIdempotente('wompi_ret', 'retiro-2', 'prov-456', 100000);
+    const c = wompiService._generarReferenciaIdempotente('wompi_ret', 'retiro-1', 'prov-456', 75000);
+    expect(a).not.toBe(b);
+    expect(a).not.toBe(c);
+  });
+});
+
+describe('mapeo de estados de Wompi a `retiros.estado`', () => {
+  test.each([
+    ['TOTAL_PAYMENT', 'COMPLETADO'],
+    ['APPROVED', 'COMPLETADO'],
+    ['FAILED', 'FALLIDO'],
+    ['REJECTED', 'FALLIDO'],
+    ['PENDING', 'PROCESANDO'],
+    [null, 'PROCESANDO']
+  ])('%s -> %s', (entrada, esperado) => {
+    expect(wompiService._mapearEstadoRetiro(entrada)).toBe(esperado);
+  });
+});
+
+describe('crearPayout', () => {
+  test('sin credenciales NO llama a Wompi y no simula nada', async () => {
+    wompiPayoutsClient.isConfigured.mockReturnValue(false);
+    await expect(wompiService.crearPayout(PARAMS)).rejects.toThrow(/No se simula el pago/);
+    expect(wompiPayoutsClient.createPayoutBatch).not.toHaveBeenCalled();
+    expect(pool.query).not.toHaveBeenCalled();
   });
 
-  describe('disbursePayout - idempotent reference tokens', () => {
-    const testParams = {
-      bookingId: 'booking-123',
-      amount: 50000,
-      nequiNumber: '3001234567',
-      documentId: '1234567890'
-    };
+  test('envía el lote con monto en CENTAVOS y los datos del titular', async () => {
+    await wompiService.crearPayout(PARAMS);
 
-    test('should generate deterministic referenceToken for same inputs (TEST ROJO - expects Math.random issue)', async () => {
-      // Call the function twice with same inputs
-      await wompiService.disbursePayout(testParams.bookingId, testParams.amount, testParams.nequiNumber, testParams.documentId);
-      await wompiService.disbursePayout(testParams.bookingId, testParams.amount, testParams.nequiNumber, testParams.documentId);
+    expect(wompiPayoutsClient.createPayoutBatch).toHaveBeenCalledTimes(1);
+    const lote = wompiPayoutsClient.createPayoutBatch.mock.calls[0][0];
 
-      // Wait for async operations to complete
-      await new Promise(resolve => setTimeout(resolve, 1600));
+    expect(lote.paymentType).toBe('PROVIDERS');
+    expect(lote.reference).toMatch(/^wompi_ret_[0-9A-F]{16}$/);
+    // la idempotency-key se deriva de la misma referencia
+    expect(lote.idempotencyKey).toBe(lote.reference);
 
-      // Get the calls made to pool.query
-      const calls = require('../config/db').pool.query.mock.calls;
-      
-      // Find INSERT calls with reference tokens
-      const insertCalls = calls.filter(call => 
-        call[0].includes('INSERT INTO transactions')
-      );
-
-      expect(insertCalls.length).toBeGreaterThanOrEqual(2);
-      
-      // Check if reference tokens are the same (idempotent)
-      // pool.query(text, values) -> external_id es values[2]
-      const ref1 = insertCalls[0][1][2];
-      const ref2 = insertCalls[1][1][2];
-
-      expect(typeof ref1).toBe('string');
-      expect(ref1).toBeTruthy();
-      
-      // TEST ROJO: This will FAIL with Math.random() - tokens are different
-      expect(ref1).toBe(ref2);
-    });
-
-    test('should generate different referenceTokens for different bookingIds', async () => {
-      await wompiService.disbursePayout('booking-111', 50000, '3001234567', '1234567890');
-      await wompiService.disbursePayout('booking-222', 50000, '3001234567', '1234567890');
-
-      await new Promise(resolve => setTimeout(resolve, 1600));
-
-      const calls = require('../config/db').pool.query.mock.calls;
-      const insertCalls = calls.filter(call => 
-        call[0].includes('INSERT INTO transactions')
-      );
-
-      expect(insertCalls.length).toBeGreaterThanOrEqual(2);
-      
-      const ref1 = insertCalls[0][1][2];
-      const ref2 = insertCalls[1][1][2];
-      
-      // Different bookingIds should produce different reference tokens
-      expect(typeof ref1).toBe('string');
-      expect(typeof ref2).toBe('string');
-      expect(ref1).not.toBe(ref2);
-    });
-
-    test('should generate different referenceTokens for different amounts', async () => {
-      await wompiService.disbursePayout('booking-123', 50000, '3001234567', '1234567890');
-      await wompiService.disbursePayout('booking-123', 75000, '3001234567', '1234567890');
-
-      await new Promise(resolve => setTimeout(resolve, 1600));
-
-      const calls = require('../config/db').pool.query.mock.calls;
-      const insertCalls = calls.filter(call => 
-        call[0].includes('INSERT INTO transactions')
-      );
-
-      expect(insertCalls.length).toBeGreaterThanOrEqual(2);
-      
-      const ref1 = insertCalls[0][1][2];
-      const ref2 = insertCalls[1][1][2];
-      
-      // Different amounts should produce different reference tokens
-      expect(typeof ref1).toBe('string');
-      expect(typeof ref2).toBe('string');
-      expect(ref1).not.toBe(ref2);
-    });
+    const t = lote.transactions[0];
+    expect(t.amount).toBe(10000000); // 100.000 COP -> 10.000.000 centavos
+    expect(t.legalIdType).toBe('CC');
+    expect(t.legalId).toBe('1098765432');
+    expect(t.name).toBe('Ana Perez');
+    expect(t.email).toBe('ana@example.com');
+    expect(t.bankId).toBe('uuid-bancolombia');
+    expect(t.accountType).toBe('AHORROS');
+    expect(t.accountNumber).toBe('1234567890');
+    expect(wompiPayoutsClient.resolveBankId).toHaveBeenCalledWith('Bancolombia');
   });
 
-  describe('crearPayout - idempotent reference tokens', () => {
-    const testParams = {
-      retiroId: 'retiro-123',
-      providerId: 'prov-456',
-      amount: 100000,
-      numeroCuenta: '123456789',
-      banco: 'NEQUI',
-      automatico: true
-    };
+  test('guarda la referencia REAL del lote (no una inventada) y el estado traducido', async () => {
+    wompiPayoutsClient.createPayoutBatch.mockResolvedValue({ id: 'lote-xyz', status: 'TOTAL_PAYMENT' });
+    await wompiService.crearPayout(PARAMS);
 
-    test('should generate deterministic referenceToken for same inputs (TEST ROJO - expects Math.random issue)', async () => {
-      await wompiService.crearPayout(testParams);
-      await wompiService.crearPayout(testParams);
+    const update = pool.query.mock.calls.find((c) => String(c[0]).includes('UPDATE retiros'));
+    expect(update[1][0]).toBe('retiro-123');
+    expect(update[1][1]).toBe('COMPLETADO');
+    expect(update[1][2]).toBe('lote-xyz');
+  });
 
-      await new Promise(resolve => setTimeout(resolve, 1100));
+  test('con PENDING deja el retiro en PROCESANDO (la confirmación es asíncrona)', async () => {
+    await wompiService.crearPayout(PARAMS);
+    const update = pool.query.mock.calls.find((c) => String(c[0]).includes('UPDATE retiros'));
+    expect(update[1][1]).toBe('PROCESANDO');
+  });
 
-      const calls = require('../config/db').pool.query.mock.calls;
-      
-      // Find UPDATE calls with reference tokens
-      const updateCalls = calls.filter(call => 
-        call[0].includes('UPDATE retiros') && call[0].includes('referencia_wompi')
-      );
+  test('si Wompi falla: marca FALLIDO, escribe el ledger y relanza', async () => {
+    wompiPayoutsClient.createPayoutBatch.mockRejectedValue(new Error('Wompi Payouts POST /payouts falló (422)'));
 
-      expect(updateCalls.length).toBeGreaterThanOrEqual(2);
-      
-      // pool.query(text, values) -> referencia_wompi es values[1]
-      const ref1 = updateCalls[0][1][1];
-      const ref2 = updateCalls[1][1][1];
+    await expect(wompiService.crearPayout(PARAMS)).rejects.toThrow(/422/);
 
-      expect(typeof ref1).toBe('string');
-      expect(ref1).toBeTruthy();
-      
-      // TEST ROJO: This will FAIL with Math.random() - tokens are different
-      expect(ref1).toBe(ref2);
-    });
+    const update = pool.query.mock.calls.find((c) => String(c[0]).includes("SET estado = 'FALLIDO'"));
+    expect(update).toBeDefined();
+    expect(update[1][0]).toBe('retiro-123');
 
-    test('should generate different referenceTokens for different retiroIds', async () => {
-      await wompiService.crearPayout({ ...testParams, retiroId: 'retiro-111' });
-      await wompiService.crearPayout({ ...testParams, retiroId: 'retiro-222' });
+    const ledger = pool.query.mock.calls.find((c) => String(c[0]).includes('RETIRO_FALLIDO'));
+    expect(ledger).toBeDefined();
+  });
 
-      await new Promise(resolve => setTimeout(resolve, 1100));
-
-      const calls = require('../config/db').pool.query.mock.calls;
-      const updateCalls = calls.filter(call => 
-        call[0].includes('UPDATE retiros') && call[0].includes('referencia_wompi')
-      );
-
-      expect(updateCalls.length).toBeGreaterThanOrEqual(2);
-      
-      const ref1 = updateCalls[0][1][1];
-      const ref2 = updateCalls[1][1][1];
-      
-      // Different retiroIds should produce different reference tokens
-      expect(typeof ref1).toBe('string');
-      expect(typeof ref2).toBe('string');
-      expect(ref1).not.toBe(ref2);
-    });
-
-    test('should generate different referenceTokens for different amounts', async () => {
-      await wompiService.crearPayout({ ...testParams, amount: 50000 });
-      await wompiService.crearPayout({ ...testParams, amount: 75000 });
-
-      await new Promise(resolve => setTimeout(resolve, 1100));
-
-      const calls = require('../config/db').pool.query.mock.calls;
-      const updateCalls = calls.filter(call => 
-        call[0].includes('UPDATE retiros') && call[0].includes('referencia_wompi')
-      );
-
-      expect(updateCalls.length).toBeGreaterThanOrEqual(2);
-      
-      const ref1 = updateCalls[0][1][1];
-      const ref2 = updateCalls[1][1][1];
-      
-      // Different amounts should produce different reference tokens
-      expect(typeof ref1).toBe('string');
-      expect(typeof ref2).toBe('string');
-      expect(ref1).not.toBe(ref2);
-    });
+  test('si faltan datos del titular, NO llama a Wompi y falla con motivo explícito', async () => {
+    pool.query.mockResolvedValue({ rows: [{ ...WALLET_ROW, titular_documento_num: null }] });
+    await expect(wompiService.crearPayout(PARAMS)).rejects.toThrow(/titular_documento_num/);
+    expect(wompiPayoutsClient.createPayoutBatch).not.toHaveBeenCalled();
   });
 });

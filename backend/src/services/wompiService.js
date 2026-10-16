@@ -1,5 +1,6 @@
 const { pool } = require('../config/db');
 const crypto = require('crypto');
+const wompiPayoutsClient = require('./wompiPayoutsClient');
 
 /**
  * Genera una referencia Wompi DETERMINISTA (idempotente) a partir de la clave de
@@ -24,77 +25,21 @@ const generarReferenciaIdempotente = (prefijo, ...claves) => {
 };
 
 /**
- * El simulador de dispersión NO puede marcar dinero como pagado en producción sin
- * pasarela real: estas funciones generaban una referencia aleatoria y escribían
- * `transactions.status='paid'` / `retiros.estado='COMPLETADO'` sin llamar a Wompi
- * (A360-2026-09-22/C-05). El dinero "salía del sistema" sin salir.
+ * Mapea el estado del lote de Wompi al estado interno de `retiros`.
+ * Wompi crea el lote como pendiente y lo resuelve asincrónicamente; el job de
+ * conciliación corrige el estado final cuando Wompi notifica/actualiza.
  */
-const simuladorPermitido = () =>
-  process.env.NODE_ENV !== 'production' || process.env.ALLOW_PAYMENT_SIMULATOR === 'true';
-
-const rechazarSimulacion = (etiqueta, id) => {
-  throw new Error(
-    `[WOMPI] Dispersión simulada de ${etiqueta} (${id}) rechazada: la pasarela real no está integrada ` +
-    `y ALLOW_PAYMENT_SIMULATOR no está activo en producción.`
-  );
+const mapearEstadoRetiro = (estadoWompi) => {
+  const estado = String(estadoWompi || '').toUpperCase();
+  if (['TOTAL_PAYMENT', 'APPROVED', 'COMPLETED', 'PAID', 'SUCCESS'].includes(estado)) return 'COMPLETADO';
+  if (['FAILED', 'REJECTED', 'ERROR', 'PARTIAL_PAYMENT'].includes(estado)) return 'FALLIDO';
+  return 'PROCESANDO';
 };
 
-/**
- * Realiza la dispersión de fondos simulada de forma asíncrona usando Nequi a través de Wompi.
- * @param {string} bookingId ID de la cita.
- * @param {number} amount Monto neto a transferir al prestador.
- * @param {string} nequiNumber Número telefónico / Nequi del prestador.
- * @param {string} documentId Cédula / Identidad del titular.
- */
-exports.disbursePayout = async (bookingId, amount, nequiNumber, documentId) => {
-  if (!simuladorPermitido()) rechazarSimulacion('pago al prestador', bookingId);
-  // Desacoplado: Ejecutar en segundo plano simulando la latencia de red de la API de Wompi (1.5s)
-  setTimeout(async () => {
-    try {
-      console.log(`\n💸 [WOMPI PAYOUT] Iniciando dispersión automática:`);
-      console.log(`   - Cita ID: ${bookingId}`);
-      console.log(`   - Monto Neto: $${amount} COP`);
-      console.log(`   - Cuenta Nequi: ${nequiNumber}`);
-      console.log(`   - Cédula Titular: ${documentId}`);
-
-      if (!nequiNumber) {
-        throw new Error('El prestador no tiene configurado un número de cuenta Nequi.');
-      }
-
-      // Referencia idempotente: misma cita + mismo monto => misma referencia Wompi
-      const referenceToken = generarReferenciaIdempotente('wompi_ref', bookingId, amount);
-
-      // Guardar registro de la transferencia en la tabla transactions
-      const query = `
-        INSERT INTO transactions (booking_id, amount, status, payment_method, external_id)
-        VALUES ($1, $2, 'paid', 'NEQUI', $3)
-        ON CONFLICT (booking_id) 
-        DO UPDATE SET 
-          amount = EXCLUDED.amount,
-          status = 'paid', 
-          payment_method = 'NEQUI',
-          external_id = EXCLUDED.external_id;
-      `;
-      await pool.query(query, [bookingId, amount, referenceToken]);
-
-      console.log(`✅ [WOMPI PAYOUT] Dispersión completada con éxito. Referencia: ${referenceToken} guardada en BD.`);
-    } catch (err) {
-      console.error(`❌ [WOMPI PAYOUT ERROR] Error al realizar el pago para la cita ${bookingId}:`, err.message);
-      
-      // Intentar guardar la transacción como fallida para auditoría
-      try {
-        const queryFailed = `
-          INSERT INTO transactions (booking_id, amount, status, payment_method)
-          VALUES ($1, $2, 'failed', 'NEQUI')
-          ON CONFLICT (booking_id) 
-          DO UPDATE SET status = 'failed';
-        `;
-        await pool.query(queryFailed, [bookingId, amount]);
-      } catch (dbErr) {
-        console.error(`❌ [WOMPI PAYOUT ERROR] No se pudo guardar estado de fallo en la BD:`, dbErr.message);
-      }
-    }
-  }, 1500);
+/** Tipo de cuenta tal como lo exige Wompi. */
+const mapearTipoCuenta = (tipoCuentaBancaria) => {
+  const tipo = String(tipoCuentaBancaria || '').toUpperCase();
+  return tipo === 'CORRIENTE' ? 'CORRIENTE' : 'AHORROS';
 };
 
 /**
@@ -102,65 +47,128 @@ exports.disbursePayout = async (bookingId, amount, nequiNumber, documentId) => {
  * @param {object} params Datos del retiro
  */
 exports.crearPayout = async ({ retiroId, providerId, amount, numeroCuenta, banco, automatico = false }) => {
-  if (!simuladorPermitido()) rechazarSimulacion('retiro', retiroId);
-  // Simular la llamada de Wompi con latencia
-  setTimeout(async () => {
-    try {
-      console.log(`\n💸 [WOMPI PAYOUT RETIRO] Procesando dispersión de retiro (${automatico ? 'AUTOMÁTICO' : 'DEMANDA'}):`);
-      console.log(`   - Retiro ID: ${retiroId}`);
-      console.log(`   - Prestador ID: ${providerId}`);
-      console.log(`   - Monto: $${amount} COP`);
-      console.log(`   - Banco/Método: ${banco}`);
-      console.log(`   - Cuenta: ${numeroCuenta}`);
+  // Compuerta: sin credenciales reales no se intenta dispersar. No se simula.
+  if (!wompiPayoutsClient.isConfigured()) {
+    throw new Error(
+      '[WOMPI PAYOUTS] Dispersión imposible: faltan credenciales (WOMPI_PAYOUTS_API_KEY / ' +
+      'WOMPI_PAYOUTS_USER_PRINCIPAL_ID / WOMPI_PAYOUTS_ACCOUNT_ID). No se simula el pago.'
+    );
+  }
 
-      // Referencia idempotente: mismo retiro + prestador + monto => misma referencia
-      const referenceToken = generarReferenciaIdempotente('wompi_ret', retiroId, providerId, amount);
+  const referenciaLote = generarReferenciaIdempotente('wompi_ret', retiroId, providerId, amount);
 
-      // Actualizar el estado del retiro a COMPLETADO y guardar el ID externo
-      await pool.query(
-        `UPDATE retiros 
-         SET estado = 'COMPLETADO', 
-             referencia_wompi = $2,
-             procesado_at = NOW() 
-         WHERE id = $1`,
-        [retiroId, referenceToken]
-      );
+  try {
+    console.log(`\n💸 [WOMPI PAYOUT] Procesando dispersión (${automatico ? 'AUTOMÁTICO' : 'DEMANDA'}): retiro=${retiroId} monto=$${amount} COP`);
 
-      // Registrar el desenlace del retiro como evento append-only (el ledger es inmutable)
-      await pool.query(
-        `INSERT INTO wallet_ledger_events (tx_id, provider_id, evento, detalle)
-         SELECT wt.id, wt.provider_id, 'RETIRO_COMPLETADO',
-                jsonb_build_object('referencia_wompi', $2::text)
-         FROM wallet_transactions wt
-         WHERE wt.provider_id = $1
-           AND wt.tipo = 'DEBITO_RETIRO'
-           AND (wt.metadata->>'retiro_id')::uuid = $3`,
-        [providerId, referenceToken, retiroId]
-      );
+    // 1. Datos del beneficiario exigidos por Wompi (name, legalId, legalIdType).
+    const { rows } = await pool.query(
+      `SELECT w.titular_nombre, w.titular_documento_tipo, w.titular_documento_num,
+              w.tipo_cuenta_bancaria, w.numero_cuenta, w.banco,
+              u.nombre AS usuario_nombre, u.email AS usuario_email
+       FROM provider_wallet w
+       JOIN usuarios u ON u.id = w.provider_id
+       WHERE w.provider_id = $1`,
+      [providerId]
+    );
 
-      console.log(`✅ [WOMPI PAYOUT RETIRO] Retiro ${retiroId} dispersado con éxito. Ref: ${referenceToken}`);
-    } catch (err) {
-      console.error(`❌ [WOMPI PAYOUT RETIRO ERROR] Fallo al dispersar retiro ${retiroId}:`, err.message);
-      await pool.query(
-        `UPDATE retiros 
-         SET estado = 'FALLIDO', 
-             error_wompi = $2,
-             procesado_at = NOW() 
-         WHERE id = $1`,
-        [retiroId, err.message]
-      );
-      // Registrar el desenlace fallido como evento append-only
-      await pool.query(
-        `INSERT INTO wallet_ledger_events (tx_id, provider_id, evento, detalle)
-         SELECT wt.id, wt.provider_id, 'RETIRO_FALLIDO',
-                jsonb_build_object('error', $3::text)
-         FROM wallet_transactions wt
-         WHERE wt.provider_id = $1
-           AND wt.tipo = 'DEBITO_RETIRO'
-           AND (wt.metadata->>'retiro_id')::uuid = $2`,
-        [providerId, retiroId, err.message]
+    if (!rows.length) throw new Error(`No existe wallet para el prestador ${providerId}.`);
+    const w = rows[0];
+
+    const nombreBeneficiario = (w.titular_nombre || w.usuario_nombre || '').trim();
+    const legalIdType = (w.titular_documento_tipo || 'CC').toUpperCase();
+    const legalId = (w.titular_documento_num || '').trim();
+    const email = (w.usuario_email || '').trim();
+    const cuentaDestino = String(numeroCuenta || w.numero_cuenta || '').trim();
+
+    const faltantes = [];
+    if (!nombreBeneficiario) faltantes.push('titular_nombre');
+    if (!legalId) faltantes.push('titular_documento_num');
+    if (!email) faltantes.push('email del prestador');
+    if (!cuentaDestino) faltantes.push('numero_cuenta');
+    if (faltantes.length) {
+      throw new Error(
+        `El prestador no tiene los datos que Wompi exige para dispersar: falta ${faltantes.join(', ')}.`
       );
     }
-  }, 1000);
+
+    // 2. bankId real (UUID) desde el catálogo de Wompi. Nunca se inventa.
+    const bankId = await wompiPayoutsClient.resolveBankId(banco || w.banco);
+
+    // 3. Lote de dispersión (amount en CENTAVOS).
+    const lote = await wompiPayoutsClient.createPayoutBatch({
+      reference: referenciaLote,
+      idempotencyKey: referenciaLote,
+      paymentType: 'PROVIDERS',
+      transactions: [
+        {
+          legalIdType,
+          legalId,
+          bankId,
+          accountType: mapearTipoCuenta(w.tipo_cuenta_bancaria),
+          accountNumber: cuentaDestino,
+          name: nombreBeneficiario,
+          email,
+          amount: Math.round(Number(amount) * 100),
+          reference: referenciaLote
+        }
+      ]
+    });
+
+    const estadoInterno = mapearEstadoRetiro(lote.status);
+
+    // 4. Guardar la referencia REAL de la pasarela y el estado traducido.
+    await pool.query(
+      `UPDATE retiros
+          SET estado = $2,
+              referencia_wompi = $3,
+              procesado_at = NOW()
+        WHERE id = $1`,
+      [retiroId, estadoInterno, lote.id]
+    );
+
+    // 5. Registrar el desenlace como evento append-only (ledger inmutable).
+    await pool.query(
+      `INSERT INTO wallet_ledger_events (tx_id, provider_id, evento, detalle)
+       SELECT wt.id, wt.provider_id, 'RETIRO_COMPLETADO',
+              jsonb_build_object('referencia_wompi', $2::text, 'estado_wompi', $3::text)
+       FROM wallet_transactions wt
+       WHERE wt.provider_id = $1
+         AND wt.tipo = 'DEBITO_RETIRO'
+         AND (wt.metadata->>'retiro_id')::uuid = $4`,
+      [providerId, lote.id, lote.status || 'PENDING', retiroId]
+    );
+
+    console.log(`✅ [WOMPI PAYOUT] Retiro ${retiroId} enviado. Lote Wompi: ${lote.id} (${lote.status}).`);
+    return { retiroId, referenciaWompi: lote.id, estadoWompi: lote.status, estado: estadoInterno };
+  } catch (err) {
+    console.error(`❌ [WOMPI PAYOUT ERROR] Fallo al dispersar el retiro ${retiroId}:`, err.message);
+
+    await pool.query(
+      `UPDATE retiros
+          SET estado = 'FALLIDO',
+              error_wompi = $2,
+              procesado_at = NOW()
+        WHERE id = $1`,
+      [retiroId, String(err.message).slice(0, 500)]
+    );
+
+    await pool.query(
+      `INSERT INTO wallet_ledger_events (tx_id, provider_id, evento, detalle)
+       SELECT wt.id, wt.provider_id, 'RETIRO_FALLIDO',
+              jsonb_build_object('error', $3::text)
+       FROM wallet_transactions wt
+       WHERE wt.provider_id = $1
+         AND wt.tipo = 'DEBITO_RETIRO'
+         AND (wt.metadata->>'retiro_id')::uuid = $2`,
+      [providerId, retiroId, String(err.message).slice(0, 500)]
+    );
+
+    throw err;
+  }
 };
+
+// Expuesto para pruebas de formato y mapeo.
+exports._generarReferenciaIdempotente = generarReferenciaIdempotente;
+exports._mapearEstadoRetiro = mapearEstadoRetiro;
+exports._mapearTipoCuenta = mapearTipoCuenta;
 

@@ -513,17 +513,157 @@ class ApiService {
         json.decode(response.body)['error'] ?? 'Error ${response.statusCode}');
   }
 
-  static Future<Map<String, dynamic>> payBooking(
-      String bookingId, String paymentMethod) async {
+  /// Token de aceptación de Wompi (Habeas Data), obligatorio al crear una
+  /// transacción. La app NO conoce la llave pública del comercio: se lo pide al
+  /// backend, que la guarda, junto con el permalink de los términos.
+  static Future<Map<String, dynamic>> fetchWompiAcceptanceToken() async {
     final headers = await _getAuthHeaders();
+    final response = await http
+        .get(
+          Uri.parse('$_baseUrl$_apiPath/payments/wompi/acceptance-token'),
+          headers: headers,
+        )
+        .timeout(requestTimeout);
+    if (response.statusCode == 200) return json.decode(response.body);
+    throw Exception(
+        json.decode(response.body)['error'] ?? 'Error ${response.statusCode}');
+  }
+
+  /// Llave pública de Wompi (pub_test_* / pub_prod_*) para tokenizar tarjeta
+  /// en el cliente (POST /tokens/cards). La app no la guarda: la pide al
+  /// backend cada vez que abre el checkout.
+  static Future<String> fetchWompiPublicKey() async {
+    final headers = await _getAuthHeaders();
+    final response = await http
+        .get(
+          Uri.parse('$_baseUrl$_apiPath/payments/wompi/public-key'),
+          headers: headers,
+        )
+        .timeout(requestTimeout);
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return data['public_key'] as String;
+    }
+    throw Exception(
+        json.decode(response.body)['error'] ?? 'Error ${response.statusCode}');
+  }
+
+  /// Inicia el cobro de un pedido de tienda (GlowStore).
+  ///
+  /// Mismo contrato que `payBooking` pero para pedidos de productos:
+  /// - `NEQUI` exige `phoneNumber`
+  /// - `CARD` exige `paymentMethodToken` o `paymentSourceId`
+  /// El backend responde 202 (transacción creada, estado PENDING); el webhook confirma.
+  static Future<Map<String, dynamic>> payOrder(
+      String orderId,
+      String paymentMethod, {
+      String? phoneNumber,
+      String? paymentMethodToken,
+      int? installments,
+      String? paymentSourceId,
+      String? acceptanceToken,
+    }) async {
+      final headers = await _getAuthHeaders();
+      final body = <String, dynamic>{
+        'payment_method': paymentMethod,
+        if (phoneNumber != null) 'phone_number': phoneNumber,
+        if (paymentMethodToken != null) 'payment_method_token': paymentMethodToken,
+        if (installments != null) 'installments': installments,
+        if (paymentSourceId != null) 'payment_source_id': paymentSourceId,
+        if (acceptanceToken != null) 'acceptance_token': acceptanceToken,
+      };
+
+      final response = await http
+          .post(
+            Uri.parse('$_baseUrl$_apiPath/store/orders/$orderId/pay'),
+            headers: headers,
+            body: json.encode(body),
+          )
+          .timeout(requestTimeout);
+      if (response.statusCode == 200 || response.statusCode == 202) {
+        return json.decode(response.body);
+      }
+      throw Exception(
+          json.decode(response.body)['error'] ?? 'Error ${response.statusCode}');
+    }
+
+    /// Obtiene la lista de pedidos del usuario (GlowStore).
+    static Future<List<Map<String, dynamic>>> fetchStoreOrders() async {
+      final headers = await _getAuthHeaders();
+      final response = await http
+          .get(
+            Uri.parse('$_baseUrl$_apiPath/store/orders'),
+            headers: headers,
+          )
+          .timeout(requestTimeout);
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return (data['data'] as List<dynamic>).cast<Map<String, dynamic>>();
+      }
+      throw Exception(
+          json.decode(response.body)['error'] ?? 'Error ${response.statusCode}');
+    }
+
+    /// Obtiene el detalle de un pedido específico (GlowStore).
+    static Future<Map<String, dynamic>> fetchStoreOrderById(String orderId) async {
+      final headers = await _getAuthHeaders();
+      final response = await http
+          .get(
+            Uri.parse('$_baseUrl$_apiPath/store/orders/$orderId'),
+            headers: headers,
+          )
+          .timeout(requestTimeout);
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      }
+      throw Exception(
+          json.decode(response.body)['error'] ?? 'Error ${response.statusCode}');
+    }
+
+    /// El instrumento NO es simétrico entre métodos (contrato Wompi):
+  /// - `NEQUI` exige `phoneNumber`; Wompi rechaza `token` en este método.
+  /// - `CARD` exige `paymentMethodToken` (tokenizado en Wompi) o
+  ///   `paymentSourceId` (fuente de pago guardada).
+  ///
+  /// El backend responde **202** cuando la transacción quedó creada pero aún en
+  /// estado PENDING: quien confirma el pago es el webhook de Wompi, no esta
+  /// llamada. Tratar el 202 como error dejaría al usuario con un fallo visible
+  /// en un cobro que sí se inició.
+  static Future<Map<String, dynamic>> payBooking(
+    String bookingId,
+    String paymentMethod, {
+    String? phoneNumber,
+    String? paymentMethodToken,
+    int? installments,
+    String? paymentSourceId,
+    String? acceptanceToken,
+    String? redirectUrl,
+    Map<String, dynamic>? customerData,
+  }) async {
+    final headers = await _getAuthHeaders();
+    final body = <String, dynamic>{
+      'payment_method': paymentMethod,
+      if (phoneNumber != null) 'phone_number': phoneNumber,
+      if (paymentMethodToken != null) 'payment_method_token': paymentMethodToken,
+      if (installments != null) 'installments': installments,
+      if (paymentSourceId != null) 'payment_source_id': paymentSourceId,
+      if (acceptanceToken != null) 'acceptance_token': acceptanceToken,
+      // PSE / Bancolombia / Daviplata: Wompi exige a dónde volver y quién paga.
+      // El backend los rechaza con 400 si faltan, así que no se envían vacíos.
+      if (redirectUrl != null && redirectUrl.isNotEmpty) 'redirect_url': redirectUrl,
+      if (customerData != null) 'customer_data': customerData,
+    };
+
     final response = await http
         .post(
           Uri.parse('$_baseUrl$_apiPath/bookings/$bookingId/pay'),
           headers: headers,
-          body: json.encode({'payment_method': paymentMethod}),
+          body: json.encode(body),
         )
         .timeout(requestTimeout);
-    if (response.statusCode == 200) return json.decode(response.body);
+    if (response.statusCode == 200 || response.statusCode == 202) {
+      return json.decode(response.body);
+    }
     throw Exception(
         json.decode(response.body)['error'] ?? 'Error ${response.statusCode}');
   }
@@ -832,6 +972,80 @@ class ApiService {
       'active_start_hour': activeStartHour,
       'active_end_hour': activeEndHour,
     });
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // 🔹 DATOS FISCALES DEL PRESTADOR (RESPONSABILIDAD DE IVA) — REQUIEREN TOKEN
+  // ─────────────────────────────────────────────────────────────
+
+  /// GET /api/provider/fiscal — estado de la responsabilidad de IVA del
+  /// prestador.
+  ///
+  /// Devuelve `estado` ('DECLARADA' / 'SIN_DECLARAR'), `rut_numero`,
+  /// `rut_responsabilidad_codigo`, `responsable_iva`, `fuente` ('RUT' /
+  /// 'MANUAL') y `actualizada_at`. El estado NO lo deduce el cliente: lo
+  /// devuelve el servidor de forma explícita.
+  static Future<Map<String, dynamic>> fetchProviderFiscal() async {
+    final headers = await _getAuthHeaders();
+    final response = await http
+        .get(
+          Uri.parse('$_baseUrl$_apiPath/provider/fiscal'),
+          headers: headers,
+        )
+        .timeout(requestTimeout);
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(json.decode(response.body));
+    }
+    throw _fiscalError(response);
+  }
+
+  /// PATCH /api/provider/fiscal — declara la responsabilidad de IVA a partir de
+  /// la casilla de responsabilidades del RUT (48 = responsable de IVA,
+  /// 49 = no responsable de IVA). El número de RUT es obligatorio para declarar.
+  ///
+  /// El valor se DERIVA del código en el servidor; el cliente no lo calcula.
+  /// Ante un 400 lanza [FiscalApiException] conservando `error` y `detalle` tal
+  /// como los devuelve la API, para que la pantalla pueda mostrarlos literales.
+  static Future<Map<String, dynamic>> updateProviderFiscal({
+    required String rutNumero,
+    required int rutResponsabilidadCodigo,
+  }) async {
+    final headers = await _getAuthHeaders();
+    final response = await http
+        .patch(
+          Uri.parse('$_baseUrl$_apiPath/provider/fiscal'),
+          headers: headers,
+          body: json.encode({
+            'rut_numero': rutNumero,
+            'rut_responsabilidad_codigo': rutResponsabilidadCodigo,
+          }),
+        )
+        .timeout(requestTimeout);
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(json.decode(response.body));
+    }
+    throw _fiscalError(response);
+  }
+
+  /// Normaliza la respuesta de error fiscal en una [FiscalApiException] que
+  /// conserva `error` y `detalle` del cuerpo (p. ej. `RUT_INVALIDO`).
+  static FiscalApiException _fiscalError(http.Response response) {
+    String? error;
+    String? detalle;
+    try {
+      final data = json.decode(response.body);
+      if (data is Map) {
+        error = data['error']?.toString();
+        detalle = data['detalle']?.toString();
+      }
+    } catch (_) {
+      // Cuerpo no-JSON: se usa el mensaje genérico de abajo.
+    }
+    return FiscalApiException(
+      statusCode: response.statusCode,
+      error: error ?? 'Error ${response.statusCode}',
+      detalle: detalle,
+    );
   }
 
   static Future<List<Map<String, dynamic>>> fetchAvailableSlots({
@@ -1788,4 +2002,25 @@ class ApiService {
 
 class MapSettings {
   static bool isDark = false;
+}
+
+/// Error de la declaración fiscal del prestador (`/api/provider/fiscal`).
+///
+/// Conserva `error` (código, p. ej. `RUT_INVALIDO`) y `detalle` (mensaje legible)
+/// tal como los devuelve la API, para mostrarlos en la pantalla sin reconstruir
+/// el texto.
+class FiscalApiException implements Exception {
+  final int statusCode;
+  final String error;
+  final String? detalle;
+
+  const FiscalApiException({
+    required this.statusCode,
+    required this.error,
+    this.detalle,
+  });
+
+  @override
+  String toString() =>
+      (detalle != null && detalle!.isNotEmpty) ? '$error: $detalle' : error;
 }

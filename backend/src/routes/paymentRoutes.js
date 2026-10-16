@@ -10,6 +10,8 @@ const { paymentLimiter, otpLimiter } = require('../middleware/rateLimiter');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const wompiService = require('../services/wompiService');
+const wompiClient = require('../services/wompiClient');
+const wompiPayoutsClient = require('../services/wompiPayoutsClient');
 const { aCentavos, aDecimal, calcularRetenciones, sumarMontos } = require('../utils/money');
 
 // ─── UTILIDADES ──────────────────────────────────────────────────────────────
@@ -59,6 +61,88 @@ async function requireAdmin(req, res) {
 }
 
 // ─── CHECK-IN GPS ────────────────────────────────────────────────────────────
+
+// ─── Aceite de términos de Wompi (Habeas Data) ───────────────────────────────
+/**
+ * `GET /api/payments/wompi/acceptance-token`
+ *
+ * El token de aceptación es obligatorio al crear una transacción en Wompi y es
+ * la evidencia del Habeas Data. La app NO puede fabricarlo ni conocer la llave
+ * pública del comercio, así que lo pide aquí, muestra el `permalink` de
+ * términos y lo devuelve en `POST /bookings/:id/pay`.
+ *
+ * Sin la llave pública configurada se responde 503 (cerrado en falso), nunca un
+ * token inventado: un token falso solo movería el fallo a Wompi.
+ */
+router.get(
+  '/payments/wompi/acceptance-token',
+  authMiddleware,
+  paymentLimiter,
+  wrapRouterAsync(async (req, res) => {
+    if (!wompiClient.isConfigured()) {
+      return res.status(503).json({
+        success: false,
+        error: 'PAYMENT_GATEWAY_NOT_CONFIGURED',
+        message: 'La pasarela de pagos no está configurada en este entorno.'
+      });
+    }
+
+    try {
+      const { acceptanceToken, personalDataAuthToken, permalink } =
+        await wompiClient.getAcceptanceTokens();
+
+      return res.json({
+        success: true,
+        acceptance_token: acceptanceToken,
+        personal_data_auth_token: personalDataAuthToken,
+        permalink
+      });
+    } catch (err) {
+      console.error(
+        '⚠️  No se pudo obtener el token de aceptación de Wompi:',
+        err && err.message ? err.message : err
+      );
+      return res.status(502).json({
+        success: false,
+        error: 'PAYMENT_GATEWAY_UNAVAILABLE',
+        message: 'No se pudo obtener el token de aceptación de Wompi.'
+      });
+    }
+  })
+);
+
+// GET /api/payments/wompi/public-key
+// Entrega la llave pública del comercio (pub_test_* / pub_prod_*) para
+// tokenización de tarjeta en el cliente (POST /tokens/cards).
+// La llave pública está diseñada para vivir en el cliente (no es secreto).
+router.get(
+  '/payments/wompi/public-key',
+  authMiddleware,
+  paymentLimiter,
+  wrapRouterAsync(async (req, res) => {
+    if (!wompiClient.isConfigured()) {
+      return res.status(503).json({
+        success: false,
+        error: 'PAYMENT_GATEWAY_NOT_CONFIGURED',
+        message: 'La pasarela de pagos no está configurada en este entorno.'
+      });
+    }
+
+    const publicKey = wompiClient.publicKey;
+    if (!publicKey) {
+      return res.status(503).json({
+        success: false,
+        error: 'WOMPI_PUBLIC_KEY_MISSING',
+        message: 'La llave pública de Wompi no está configurada.'
+      });
+    }
+
+    return res.json({
+      success: true,
+      public_key: publicKey
+    });
+  })
+);
 
 router.post('/bookings/:id/checkin', authMiddleware, async (req, res) => {
   if (!await requirePrestador(req, res)) return;
@@ -638,18 +722,35 @@ const handleSaveBankAccount = async (req, res) => {
     );
     const datosAntes = datosAntesRes.rows[0];
 
-    // Actualizar datos bancarios y marcar verificada
+    // Actualizar datos bancarios y marcar verificada.
+    // Los campos del titular se PERSISTEN: la API de Pagos a Terceros de Wompi los
+    // exige (name / legalIdType / legalId) y antes solo iban al audit_log, así que
+    // la dispersión real era imposible.
     const { rows } = await client.query(
       `UPDATE provider_wallet
        SET tipo_cuenta = $2,
            banco = $3,
            numero_cuenta = $4,
            tipo_cuenta_bancaria = $5,
+           titular_nombre = COALESCE($6, titular_nombre),
+           titular_documento_tipo = COALESCE($7, titular_documento_tipo),
+           titular_documento_num = COALESCE($8, titular_documento_num),
            cuenta_verificada = TRUE,
            updated_at = NOW()
        WHERE provider_id = $1
-       RETURNING tipo_cuenta, banco, numero_cuenta, tipo_cuenta_bancaria, cuenta_verificada`,
-      [req.user.id, tipoCuentaFinal, bancoNormalizado, numero_cuenta.trim(), tipoBancariaFinal]
+       RETURNING tipo_cuenta, banco, numero_cuenta, tipo_cuenta_bancaria,
+                 titular_nombre, titular_documento_tipo, titular_documento_num,
+                 cuenta_verificada`,
+      [
+        req.user.id,
+        tipoCuentaFinal,
+        bancoNormalizado,
+        numero_cuenta.trim(),
+        tipoBancariaFinal,
+        titular_nombre ? String(titular_nombre).trim() : null,
+        titular_documento_tipo ? String(titular_documento_tipo).trim().toUpperCase() : null,
+        titular_documento_num ? String(titular_documento_num).trim() : null
+      ]
     );
 
     const cuentaActualizada = rows[0];
@@ -705,6 +806,16 @@ router.put('/wallet/bank-account', authMiddleware, handleSaveBankAccount);
 
 router.post('/wallet/withdraw', authMiddleware, async (req, res) => {
   if (!await requirePrestador(req, res)) return;
+
+  // Fallar ANTES de debitar: si la pasarela de dispersión no está configurada, el
+  // retiro no tendría forma de salir y el saldo ya habría bajado. Antes se
+  // debitaba primero y la dispersión fallaba en silencio en un .catch().
+  if (!wompiPayoutsClient.isConfigured()) {
+    return res.status(503).json({
+      error: 'PAYOUTS_NOT_CONFIGURED',
+      message: 'Los retiros no están disponibles: falta configurar la dispersión con Wompi. No se debitó tu saldo.'
+    });
+  }
 
   const { monto } = req.body;
   const montoSolicitado = parseFloat(monto);
