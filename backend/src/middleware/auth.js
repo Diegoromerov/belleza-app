@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const { pool } = require('../config/db');
 const { getJwtSecret, toApiRole } = require('../config/jwt');
 const redisClient = require('../config/redis');
+const tenantContext = require('./tenantContext');
 
 // Fail-closed POR DEFECTO (AUD-INFRA-01 #14): la comprobación del blacklist de
 // tokens sólo puede obviarse cuando NODE_ENV es EXPLÍCITAMENTE 'development' o
@@ -112,6 +113,24 @@ const authMiddleware = async (req, res, next) => {
       businessProfileId: sanitizedBpId,
       token
     };
+
+    // El contexto de inquilino se establece AQUÍ, que es el único punto donde se
+    // conoce: tenantContext abre la conexión DEDICADA, ejecuta BEGIN y fija
+    // app.tenant_id dentro de la transacción; a partir de ahí config/db.js enruta
+    // las consultas de la petición a esa conexión. Toda ruta que use authMiddleware
+    // queda cubierta sin tocar 44 routers.
+    //
+    // Sin esto el middleware nunca se ejecutaba y las políticas de 068 evaluaban
+    // `tenant_id = app_current_tenant_id()` con el ajuste ausente, es decir
+    // `tenant_id = NULL`: 0 filas en toda tabla con tenant_id para cualquier rol
+    // sin BYPASSRLS (el caso del rol de la aplicación en CI y en cualquier
+    // despliegue que no use el superusuario).
+    //
+    // Nunca se fija aquí un set_config de SESIÓN: eso es una fuga cross-tenant y
+    // `src/tests/tenantAuthIsolation.test.js` falla si se reintroduce.
+    if (req.user.tenant_id) {
+      return tenantContext(req, res, next);
+    }
 
     next();
   } catch (err) {
