@@ -14,7 +14,7 @@ void main() {
 
   testWidgets('AuraWelcomeScreen initializes without MissingPluginException', (WidgetTester tester) async {
     await tester.pumpWidget(
-      MaterialApp(
+      const MaterialApp(
         home: AuraWelcomeScreen(onStartRitual: null),
       ),
     );
