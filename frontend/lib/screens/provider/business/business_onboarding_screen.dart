@@ -3,11 +3,12 @@ import 'package:flutter/services.dart';
 import '../../../../core/theme/tokens.dart';
 import '../../../../data/colombia_municipalities.dart';
 import '../../../../services/business_api_service.dart';
+import '../../../../widgets/provider/fiscal_iva_section.dart';
 
 /// GLOWAPP BUSINESS ONBOARDING SCREEN (Flutter Expert Refactored)
 /// Door 1 (New Business) vs Door 2 (Existing Business) onboarding setup.
 class BusinessOnboardingScreen extends StatefulWidget {
-  const BusinessOnboardingScreen({Key? key}) : super(key: key);
+  const BusinessOnboardingScreen({super.key});
 
   @override
   State<BusinessOnboardingScreen> createState() => _BusinessOnboardingScreenState();
@@ -145,7 +146,7 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
             const Text('Tipo de Negocio (Vertical)', style: TextStyle(fontWeight: FontWeight.bold, color: obsidianBg)),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
-              value: _selectedVertical,
+              initialValue: _selectedVertical,
               decoration: InputDecoration(
                 fillColor: Colors.white,
                 filled: true,
@@ -196,6 +197,12 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
               },
             ),
             const SizedBox(height: 32),
+
+            // Captura de la responsabilidad de IVA (datos fiscales del RUT).
+            // No bloquea el alta: declarar es opcional para publicar y obligatorio
+            // para recibir pagos con IVA desglosado.
+            const FiscalIvaSection(showStatus: false),
+            const SizedBox(height: 16),
 
             // Submit Button
             SizedBox(
@@ -253,7 +260,7 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
             boxShadow: [
               if (isSelected)
                 BoxShadow(
-                  color: obsidianBg.withOpacity(0.15),
+                  color: obsidianBg.withValues(alpha: 0.15),
                   blurRadius: 8,
                   offset: const Offset(0, 4),
                 ),

@@ -30,7 +30,7 @@ class BusinessTaskDetailScreen extends StatefulWidget {
   /// pasa ninguna, lo dice, en lugar de enseñar un trámite que no existe.
   final BusinessTaskModel? task;
 
-  const BusinessTaskDetailScreen({Key? key, this.task}) : super(key: key);
+  const BusinessTaskDetailScreen({super.key, this.task});
 
   @override
   State<BusinessTaskDetailScreen> createState() => _BusinessTaskDetailScreenState();

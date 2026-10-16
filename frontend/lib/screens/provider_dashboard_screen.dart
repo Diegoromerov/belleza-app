@@ -2728,12 +2728,12 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
+                const Row(
                   children: [
-                    const Icon(Icons.stars_rounded,
+                    Icon(Icons.stars_rounded,
                         size: 20, color: Color(0xFFC5A052)),
-                    const SizedBox(width: 8),
-                    const Text(
+                    SizedBox(width: 8),
+                    Text(
                       'Tu Resumen GlowPro',
                       style: TextStyle(
                         fontFamily: 'CormorantGaramond',
@@ -2836,10 +2836,10 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                     ),
                   ),
                   const SizedBox(width: 14),
-                  Expanded(
+                  const Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
+                      children: [
                         Text(
                           'GlowPro Co-Pilot IA',
                           style: TextStyle(
@@ -2868,9 +2868,9 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                       color: const Color(0xFFC5A052),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: Row(
+                    child: const Row(
                       mainAxisSize: MainAxisSize.min,
-                      children: const [
+                      children: [
                         Icon(Icons.auto_awesome_rounded, size: 14, color: Color(0xFF1F1A15)),
                         SizedBox(width: 4),
                         Text(
@@ -3588,7 +3588,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
     bool isMen = false,
   }) {
     final isSelected = _currentIndex == index;
-    final activeColor = const Color(0xFFC5A052);
+    const activeColor = Color(0xFFC5A052);
     final inactiveColor = isMen ? const Color(0xFFB0A89F) : const Color(0xFF8C7A6B);
 
     return Expanded(

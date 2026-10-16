@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
 import '../shared/theme.dart';
+import '../widgets/provider/fiscal_iva_section.dart';
 import '../widgets/provider/provider_schedule_dialog.dart';
 
 class ProviderProfileScreen extends StatefulWidget {
@@ -914,6 +915,9 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                 ],
               ),
               _buildWeeklyScheduleEditor(),
+              // Datos fiscales: consulta y cambio de la responsabilidad de IVA
+              // declarada a partir del RUT (estado, RUT y origen vienen del servidor).
+              const FiscalIvaSection(),
               TextFormField(
                 initialValue: _email,
                 enabled: false,

@@ -92,12 +92,12 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             ),
           ),
         ),
-        title: Row(
+        title: const Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.auto_awesome, size: 15, color: Color(0xFFC5A052)),
-            const SizedBox(width: 8),
-            const Text(
+            Icon(Icons.auto_awesome, size: 15, color: Color(0xFFC5A052)),
+            SizedBox(width: 8),
+            Text(
               'Mi Perfil Concierge',
               style: TextStyle(
                 fontFamily: 'CormorantGaramond',
@@ -312,7 +312,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                             HapticFeedback.lightImpact();
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (_) => FaqScreen()),
+                              MaterialPageRoute(builder: (_) => const FaqScreen()),
                             );
                           },
                         ),

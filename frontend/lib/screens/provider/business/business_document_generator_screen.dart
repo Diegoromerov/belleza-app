@@ -6,7 +6,7 @@ import '../../../../services/business_api_service.dart';
 /// GLOWAPP BUSINESS DOCUMENT GENERATOR SCREEN (Flutter Expert Refactored)
 /// Select templates, fill variables, preview draft with watermark, electronic signature & audit log integration.
 class BusinessDocumentGeneratorScreen extends StatefulWidget {
-  const BusinessDocumentGeneratorScreen({Key? key}) : super(key: key);
+  const BusinessDocumentGeneratorScreen({super.key});
 
   @override
   State<BusinessDocumentGeneratorScreen> createState() => _BusinessDocumentGeneratorScreenState();
@@ -134,7 +134,7 @@ class _BusinessDocumentGeneratorScreenState extends State<BusinessDocumentGenera
             const Text('Selecciona una Plantilla Preforma', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: obsidianBg)),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
-              value: _selectedTemplate,
+              initialValue: _selectedTemplate,
               decoration: InputDecoration(
                 fillColor: Colors.white,
                 filled: true,
@@ -223,7 +223,7 @@ class _BusinessDocumentGeneratorScreenState extends State<BusinessDocumentGenera
                   borderRadius: BorderRadius.circular(14),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.06),
+                      color: Colors.black.withValues(alpha: 0.06),
                       blurRadius: 8,
                       offset: const Offset(0, 4),
                     ),
