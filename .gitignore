@@ -87,3 +87,19 @@ frontend/android/gradle/wrapper/
 *.pkl
 analyze_rows.pkl
 audit_lib.pkl
+
+# --- Artefactos locales del árbol de trabajo: nunca versionar ---
+# Zip de respaldo del propio repositorio
+belleza-app.zip
+belleza2.zip
+# Repo git anidado accidental: contiene solo un .git, ningún código
+belleza-app2/
+# Copias parciales de edición
+*.partial
+# google-services.json contiene una clave tipo Google API y hace fallar el paso
+# BLOQUEANTE verifyNoVersionedSecrets.js del CI. Debe inyectarse por variable de
+# entorno; su lugar en el repo es google-services.json.template.
+frontend/android/app/google-services.json
+# Salida que flutter_test escribe en cada corrida de golden fallida: artefacto
+# generado, ningún código lo lee.
+frontend/test/golden/failures/
