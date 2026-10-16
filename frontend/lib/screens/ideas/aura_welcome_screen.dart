@@ -47,10 +47,10 @@ class AuraWelcomeScreen extends StatelessWidget {
                           size: 200.0,
                         ),
                         const SizedBox(height: 24),
-                        GlowGlassCard(
+                        const GlowGlassCard(
                           child: Column(
                             children: [
-                              const Text(
+                              Text(
                                 'Hola, soy Aura',
                                 style: TextStyle(
                                   fontFamily: 'CormorantGaramond',
@@ -60,8 +60,8 @@ class AuraWelcomeScreen extends StatelessWidget {
                                 ),
                                 textAlign: TextAlign.center,
                               ),
-                              const SizedBox(height: 10),
-                              const Text(
+                              SizedBox(height: 10),
+                              Text(
                                 'Tu asesora de belleza y bienestar con Inteligencia Artificial. Diagnosticaré tu tipo de piel, rostro e higiene capilar para sugerirte el ritual perfecto.',
                                 style: TextStyle(
                                   fontFamily: 'Inter',

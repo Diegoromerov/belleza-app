@@ -1,5 +1,4 @@
 // frontend/lib/screens/ideas/widgets/nail_vto_painter.dart
-import 'dart:ui';
 import 'package:flutter/material.dart';
 
 class NailVtoPainter extends CustomPainter {
@@ -33,7 +32,7 @@ class NailVtoPainter extends CustomPainter {
     ];
 
     final paint = Paint()
-      ..color = nailColor.withOpacity(opacity.clamp(0.0, 1.0))
+      ..color = nailColor.withValues(alpha: opacity.clamp(0.0, 1.0))
       ..style = PaintingStyle.fill;
 
     if (finish == 'Satinado') {
@@ -43,7 +42,7 @@ class NailVtoPainter extends CustomPainter {
     }
 
     final shinePaint = Paint()
-      ..color = Colors.white.withOpacity(finish == 'Brillante' ? 0.35 : 0.15)
+      ..color = Colors.white.withValues(alpha: finish == 'Brillante' ? 0.35 : 0.15)
       ..style = PaintingStyle.fill;
 
     for (int i = 0; i < 5; i++) {

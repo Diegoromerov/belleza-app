@@ -1,6 +1,5 @@
 // frontend/lib/screens/ideas/widgets/vto_painter.dart
 import 'dart:math';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 
@@ -64,7 +63,7 @@ class VtoPainter extends CustomPainter {
     path.close();
 
     final paint = Paint()
-      ..color = lipstickColor!.withOpacity(lipstickOpacity.clamp(0.0, 1.0))
+      ..color = lipstickColor!.withValues(alpha: lipstickOpacity.clamp(0.0, 1.0))
       ..style = PaintingStyle.fill;
 
     if (finish == 'Satinado') {

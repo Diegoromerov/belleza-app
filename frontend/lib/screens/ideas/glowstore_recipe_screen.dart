@@ -93,12 +93,12 @@ class _GlowstoreRecipeScreenState extends State<GlowstoreRecipeScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 12),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 20.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Tu Receta de Belleza',
                         style: TextStyle(
                           fontFamily: 'CormorantGaramond',
@@ -107,8 +107,8 @@ class _GlowstoreRecipeScreenState extends State<GlowstoreRecipeScreen> {
                           color: Color(0xFF1F1A15),
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      const Text(
+                      SizedBox(height: 4),
+                      Text(
                         'Selección exclusiva formulada para potenciar tu subtono cálido.',
                         style: TextStyle(
                           fontFamily: 'Inter',

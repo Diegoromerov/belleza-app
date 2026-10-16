@@ -43,7 +43,7 @@ class _BiometricWelcomeScreenState extends State<BiometricWelcomeScreen> {
           color: isMen ? MensTheme.obsidianCard : GlowTokens.creamSilk,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
           border: Border.all(
-            color: isMen ? MensTheme.champagneGold.withOpacity(0.3) : GlowTokens.terracota.withOpacity(0.3),
+            color: isMen ? MensTheme.champagneGold.withValues(alpha: 0.3) : GlowTokens.terracota.withValues(alpha: 0.3),
           ),
         ),
         padding: const EdgeInsets.all(24.0),
@@ -55,7 +55,7 @@ class _BiometricWelcomeScreenState extends State<BiometricWelcomeScreen> {
                 width: 45,
                 height: 5,
                 decoration: BoxDecoration(
-                  color: Colors.grey.withOpacity(0.4),
+                  color: Colors.grey.withValues(alpha: 0.4),
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
@@ -97,7 +97,7 @@ class _BiometricWelcomeScreenState extends State<BiometricWelcomeScreen> {
                   style: TextStyle(
                     fontSize: 13,
                     height: 1.6,
-                    color: isMen ? MensTheme.textSecondary : GlowTokens.nightAndean.withOpacity(0.85),
+                    color: isMen ? MensTheme.textSecondary : GlowTokens.nightAndean.withValues(alpha: 0.85),
                   ),
                 ),
               ),
@@ -175,7 +175,7 @@ class _BiometricWelcomeScreenState extends State<BiometricWelcomeScreen> {
               Positioned.fill(
                 child: isMen
                     ? Container(
-                        decoration: BoxDecoration(
+                        decoration: const BoxDecoration(
                           gradient: LinearGradient(
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
