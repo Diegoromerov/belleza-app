@@ -217,17 +217,40 @@ real de sandbox; fijado por `backend/src/tests/payBooking.test.js`) — **no es 
 - **Tests:** 5/5 en `wompiAcceptanceTokenEndpoint.test.js` + 130/130 suites críticas + OpenAPI 289/289 (100%).
 - **PCI:** Los datos de tarjeta viajan **directamente del cliente a Wompi** (llave pública). El backend nunca ve PAN/CVC.
 
-### W10. Sólo se soportan 2 de los 10 métodos de pago de Wompi — **RESUELTO** (2026-10-15)
+### W10. Sólo se soportan 2 de los 10 métodos de pago de Wompi — **RESUELTO** (2026-10-16)
 
-- **Qué se hizo:**
-  1. `orderController.js` (`payOrder` y `payBooking`): validación extendida a 6 métodos: `NEQUI`, `CARD`, `PSE`, `BANCOLOMBIA_TRANSFER`, `DAVIPLATA`, `BANCOLOMBIA_COLLECT`.
-  2. Reglas por método:
-     - `NEQUI`: `phone_number` obligatorio
-     - `CARD`: `payment_source_id` obligatorio (tarjeta tokenizada)
-     - `PSE`, `BANCOLOMBIA_TRANSFER`, `DAVIPLATA`, `BANCOLOMBIA_COLLECT`: `redirect_url` + `customer_data` (email, full_name, phone_number) obligatorios
-  3. Llamada real a `wompiClient.createTransaction()` con `payment_method` específico para cada tipo (incluye redirección).
-  4. Backend y tests siguen verdes (135/135).
-- **Resultado:** 6/10 métodos Wompi operativos. Quedan `BANCOLOMBIA_QR`, `CORRESPONSAL_BANCARIO`, `PCOL`, `BNPL_BANCOLOMBIA`, `SU_PLUS_PAY` (decisión de producto).
+- **Cierre previo era falso (2026-10-15).** Se marcó resuelto al extender la *validación* a 6 métodos,
+  pero los métodos de redirección eran **incompletables**: `wompiClient.createTransaction()` devolvía
+  sólo `{id, status, reference, amountInCents, paymentMethodType, statusMessage}` y **descartaba**
+  `payment_method.extra.async_payment_url`, que es donde Wompi publica la URL que el usuario debe abrir
+  para autorizar. El controlador tampoco la reenviaba. Resultado: PSE/Bancolombia/Daviplata creaban una
+  transacción `PENDING` sin ninguna vía para pagarla — el cliente se quedaba en un callejón sin salida.
+  Aceptar un método ≠ poder cobrarlo.
+- **Causa raíz corregida:**
+  1. `src/services/wompiClient.js`: `createTransaction()` y `getTransaction()` exponen
+     `asyncPaymentUrl`, extraído por `_extraerAsyncPaymentUrl()` de `payment_method.extra.async_payment_url`
+     (con tolerancia a la forma aplanada). Devuelve `null` cuando Wompi no la manda — nunca se inventa una URL.
+  2. `src/controllers/bookingController.js` (`payBooking`): la respuesta 202 incluye `async_payment_url`,
+     y el `message` distingue redirección de cobro directo.
+  3. `src/controllers/orderController.js` (`payOrder`): igual, dentro de `data`.
+  4. Validación de `redirect_url` + `customer_data` (email, full_name, phone_number) — y
+     `customer_data.financial_institution_code` en GlowStore — previa a llamar a Wompi.
+- **Métodos operativos en backend:** `NEQUI`, `CARD` (directos) y `PSE`, `BANCOLOMBIA_TRANSFER`,
+  `DAVIPLATA`, `BANCO_DE_BOGOTA_TRANSFER`, `BANCO_DE_OCCIDENTE_TRANSFER`, `BANCO_AV_VILLAS_TRANSFER`,
+  `BANCO_POPULAR_TRANSFER`, `BANCO_PICHINCHA_TRANSFER` (redirección). Sin `async_payment_url` ninguno
+  de los de redirección sirve.
+- **Verificación:** `src/tests/payBooking.test.js` (+4 casos: PSE devuelve la URL, NEQUI devuelve `null`,
+  PSE sin `redirect_url` 400, PSE sin `customer_data` 400) y `src/tests/wompiClient.test.js`
+  (+4 casos, incluido el parseo de la forma documentada). OpenAPI 296/296 en sincronía.
+- **Pendiente REAL (no cerrado por esta entrada):**
+  - **UI Flutter.** `frontend/lib/widgets/wompi_payment_sheet.dart` sigue con 2 pestañas (Nequi, Tarjeta).
+    Los métodos de redirección no se pueden elegir desde la app: el backend ya los cobra, pero el
+    cliente no tiene cómo llegar a ellos.
+  - **Cómo abrir la URL de redirección.** El proyecto **no** tiene `url_launcher` ni `webview_flutter`
+    (es una omisión deliberada: `forced_update_dialog.dart` usa el portapapeles "porque no es
+    dependencia del proyecto"). Abrir la URL de pago exige decidir: añadir `url_launcher`, un WebView
+    interno, o quedarse en el patrón de portapapeles + instrucción. **Decisión de producto pendiente.**
+  - Sandbox E2E real con `pub_test_`/`prv_test_` (ver nota siguiente).
 
 ### Nota: ya hay datos de prueba de Sandbox para una corrida E2E real
 
@@ -468,6 +491,40 @@ real de sandbox; fijado por `backend/src/tests/payBooking.test.js`) — **no es 
   superusuario en prod, toda ruta sin contexto pasa a devolver 0 filas — hay que inventariar
   antes qué consultas dependen de él. Orden seguro: (1) montar el middleware, (2) validar en CI
   (que ya usa `app_rls_user`), (3) recién entonces cambiar el rol en producción.
-- **No verificado empíricamente:** el 403 no se reprodujo en local — no hay PostgreSQL ni
-  clientes `psql`/`pg_ctl` en PATH y el daemon de Docker está caído. La conclusión se sostiene
-  sobre la diferencia de rol prod-vs-CI, la política 068 y la ausencia del middleware.
+- **Verificación empírica:** ⚠️ en la primera pasada quedó sin reproducir en local (no había
+  PostgreSQL ni clientes `psql`/`pg_ctl`, y el daemon de Docker estaba caído), así que la
+  conclusión salía de la diferencia de rol prod-vs-CI y de la política 068. **Ya está reproducida
+  y medida con Docker — ver `R1-bis` más abajo.**
+
+### R1-bis. VERIFICADO (2026-10-16, con Docker) — y el arreglo queda validado
+
+Reproducido en local con la misma receta que el CI
+(`docker run postgis/postgis:16-3.4` + `scripts/prepareRlsDatabase.js`, 13 tablas con FORCE)
+y los mismos tres roles:
+
+- **El fallo se reproduce** exactamente igual que en CI:
+  `tests/ownerMultiSalonDashboard.test.js` → `Test Suites: 1 failed` · `Tests: 3 failed, 7 passed`,
+  los mismos 3 casos con `Expected: 200 / Received: 403`.
+- **Política vigente sobre `salones`:**
+  `tenant_isolation: (tenant_id IS NOT NULL) AND (tenant_id = app_current_tenant_id())`.
+- **Sondas sobre la consulta exacta del guard** (`ownerGuard.js:206-215`):
+
+  | Sonda | Rol (rolbypassrls) | `app.tenant_id` | Filas | Efecto |
+  |---|---|---|---|---|
+  | A | `app_rls_user` (f) | sin fijar | **0** | el 403 de CI |
+  | B | `app_rls_user` (f) | fijado en transacción | **1** | 200 |
+  | C | `postgres` (t) | sin fijar | **1** | prod hoy |
+
+  La sonda B sólo devuelve filas **dentro de una transacción real**: con `set_config(..., true)`
+  en autocommit el ajuste se evapora con la sentencia — que es justo el defecto #2 descrito en la
+  cabecera de `tenantContext.js`.
+- **Arreglo validado end-to-end:** añadir `tenantContext` tras `authMiddleware` en las cadenas de
+  `src/routes/ownerRoutes.js` (`authMiddleware, tenantContext, requireAnyOwnerSede`) deja el suite
+  en **`Test Suites: 1 passed` · `Tests: 10 passed, 10 total`**. El cambio se revirtió después de
+  medirlo: `ownerRoutes.js` queda sin tocar.
+- **Por qué NO se aplicó:** montarlo sólo en `ownerRoutes` arregla el suite pero deja el resto de
+  rutas con `tenant_id` sin contexto — estado a medias. Y en producción abre una transacción por
+  petición autenticada esperando el evento `finish` (limitación conocida declarada en la cabecera
+  del propio middleware), con efecto real sobre el pool. **Es una decisión de cableado global, no
+  un parche de router:** o se monta el contexto en toda la app (y entonces sí tiene sentido quitar
+  el superusuario de producción), o se asume que la aplicación no gobierna el aislamiento.
