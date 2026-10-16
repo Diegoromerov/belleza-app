@@ -1,7 +1,6 @@
 // frontend/lib/screens/academy/glow_color_screen.dart
 // Pantalla de detalle para el curso "Colorimetría Capilar" en GlowAcademy
 import 'package:flutter/material.dart';
-import '../../shared/theme.dart';
 import 'course_detail_screen.dart';
 
 class GlowColorScreen extends StatelessWidget {

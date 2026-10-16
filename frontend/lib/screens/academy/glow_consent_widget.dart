@@ -72,20 +72,20 @@ class _GlowConsentWidgetState extends State<GlowConsentWidget> {
   @override
     Widget build(BuildContext context) {
       if (_isChecking) {
-        return Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation(AppTheme.primary)));
+        return const Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation(AppTheme.primary)));
       }
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.primary.withOpacity(0.04),
+        color: AppTheme.primary.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.primary.withOpacity(0.2), width: 1),
+        border: Border.all(color: AppTheme.primary.withValues(alpha: 0.2), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          const Row(
                       children: [
                         Icon(Icons.gavel_outlined, color: AppTheme.primary, size: 24),
                         SizedBox(width: 8),
