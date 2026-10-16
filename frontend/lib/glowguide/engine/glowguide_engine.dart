@@ -343,7 +343,7 @@ class GlowGuideEngine {
   /// Ejecuta navegación real con confirmación de visibilidad
   Future<void> _executeNavigation(GlowGuideAction action) async {
     final routeName = action.target;
-    final timeout = FailurePolicy.navigationTimeout;
+    const timeout = FailurePolicy.navigationTimeout;
 
     // Retornar primeramente a /home para garantizar la secuencia perfil -> home -> secundaria -> home
     await _navigationDelegate.returnToHome(timeout: timeout);

@@ -24,7 +24,7 @@ class ProviderGuide {
         id: 'provider_step_${order.toString().padLeft(2, '0')}',
         order: index,
         estimatedDurationMs: 7000,
-        auraContent: GlowGuideAuraContent(
+        auraContent: const GlowGuideAuraContent(
           // The supplied clips provide their own narration and visuals.
           text: '',
           position: AuraPosition.center,
