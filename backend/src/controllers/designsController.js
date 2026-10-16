@@ -1352,17 +1352,19 @@ exports.requestMedicalValidation = async (req, res) => {
 };
 
 exports.payMedicalValidation = async (req, res) => {
-  try {
-    // Igual que payBooking: generaba 'wompi_val_ref_<random>' y respondía
-    // "Pago de $15.000 COP verificado por Wompi" SIN verificar ningún pago
-    // (A360-2026-09-22/C-05). Sin pasarela real, 501.
-    if (process.env.NODE_ENV === 'production' && process.env.ALLOW_PAYMENT_SIMULATOR !== 'true') {
-      return res.status(501).json({
-        error: 'PAYMENT_GATEWAY_NOT_INTEGRATED',
-        message: 'La pasarela de pagos real no está integrada en este entorno. No se procesan pagos simulados.'
-      });
-    }
+  // Sin pasarela real de pagos para validación médica: 501 en todo entorno
+  // salvo opt-in explícito para tests locales (ALLOW_PAYMENT_SIMULATOR=true).
+  if (process.env.ALLOW_PAYMENT_SIMULATOR !== 'true') {
+    return res.status(501).json({
+      error: 'PAYMENT_GATEWAY_NOT_INTEGRATED',
+      message: 'La pasarela de pagos real no está integrada. No se procesan pagos simulados.'
+    });
+  }
 
+  // ----- MODO TEST LOCAL ONLY (ALLOW_PAYMENT_SIMULATOR=true) -----
+  // Código heredado mantenido SOLO para tests de integración que lo requieran.
+  // NO debe usarse en staging/producción.
+  try {
     const userId = req.user.id;
     const { ai_diagnostic_id, profesional_id } = req.body;
 
@@ -1380,12 +1382,12 @@ exports.payMedicalValidation = async (req, res) => {
     const dbRes = await pool.query(insertQuery, [userId, ai_diagnostic_id || null, profesional_id, refToken]);
     const reqId = dbRes.rows[0].id;
 
-    simulateDoctorReview(reqId);
+    // simulateDoctorReview ELIMINADA (código muerto: solo logueaba y no resolvía nada).
+    // En tests que necesiten el flujo completo, mockear la respuesta del profesional.
 
     res.status(201).json({
       success: true,
-      // No se afirma que un proveedor verificó el pago: en este camino es una referencia local.
-      message: 'Solicitud registrada. Pago SIMULADO (entorno no productivo): la referencia no proviene de la pasarela.',
+      message: 'Solicitud registrada. Pago SIMULADO (solo tests locales): la referencia no proviene de la pasarela.',
       payment_reference: refToken,
       simulated: true,
       data: dbRes.rows[0]
@@ -1448,12 +1450,6 @@ exports.getValidationById = async (req, res) => {
 // firmaba como si la hubiera emitido un dermatólogo (A360-2026-09-22/C-08).
 // Una revisión profesional no se puede fabricar: la solicitud queda 'pendiente'
 // hasta que la responda una persona real.
-const simulateDoctorReview = (requestId) => {
-  console.warn(
-    `⚠️ [REVISIÓN MÉDICA] La solicitud ${requestId} queda PENDIENTE: ` +
-    'no existe revisión automática. Requiere un profesional (A360-2026-09-22/C-08).'
-  );
-};
 
 // 🔹 NUEVO: Colecciones Curadas Editoriales
 exports.getCuratedCollections = async (req, res) => {

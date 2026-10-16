@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../shared/theme.dart';
 
 class TermsConditionsScreen extends StatelessWidget {
   const TermsConditionsScreen({super.key});

@@ -336,7 +336,7 @@ class _EvolutionDashboardScreenState extends State<EvolutionDashboardScreen> {
                       child: Row(
                                               crossAxisAlignment: CrossAxisAlignment.start,
                                               children: [
-                                                Icon(Icons.auto_awesome_outlined, color: AppTheme.primary, size: 20),
+                                                const Icon(Icons.auto_awesome_outlined, color: AppTheme.primary, size: 20),
                                                 const SizedBox(width: 12),
                           Expanded(
                             child: Column(

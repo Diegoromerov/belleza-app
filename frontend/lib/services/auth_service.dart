@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
 import 'secure_storage_service.dart';
+import 'fcm_service.dart';
 
 class AuthService {
   static Future<String> getBaseUrl() async {
@@ -49,6 +50,10 @@ class AuthService {
       if (data['user']['role'] != null) {
         await prefs.setString('userRole', data['user']['role']);
       }
+
+      // 🔔 Registrar token FCM tras login exitoso
+      await FcmService.instance.registerToken();
+
       return data;
     }
     return null;
@@ -74,19 +79,23 @@ class AuthService {
       }),
     );
     if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      final prefs = await SharedPreferences.getInstance();
-      
-      // 🛡️ PARCHE DE SEGURIDAD (GLOW-SEC-02): Guardar el token en almacenamiento cifrado
-      await SecureStorageService().write('token', data['token']);
-      
-      await prefs.setString('userId', data['user']['id'].toString());
-      await prefs.setString('userName', data['user']['full_name']);
-      if (data['user']['role'] != null) {
-        await prefs.setString('userRole', data['user']['role']);
-      }
-      return data;
-    }
+          final data = json.decode(response.body);
+          final prefs = await SharedPreferences.getInstance();
+
+          // 🛡️ PARCHE DE SEGURIDAD (GLOW-SEC-02): Guardar el token en almacenamiento cifrado
+          await SecureStorageService().write('token', data['token']);
+
+          await prefs.setString('userId', data['user']['id'].toString());
+          await prefs.setString('userName', data['user']['full_name']);
+          if (data['user']['role'] != null) {
+            await prefs.setString('userRole', data['user']['role']);
+          }
+
+          // 🔔 Registrar token FCM tras login OAuth exitoso
+          await FcmService.instance.registerToken();
+
+          return data;
+        }
     return null;
   }
 
@@ -161,6 +170,9 @@ class AuthService {
     // 🛡️ PARCHE DE SEGURIDAD (GLOW-SEC-02): Limpiar almacenamiento cifrado
     await SecureStorageService().clearAll();
     ApiService.resetCachedBaseUrl();
+
+    // 🔔 Limpiar token FCM en logout
+    await FcmService.instance.clearTokenOnLogout();
   }
 
   static Future<Map<String, dynamic>> forgotPassword(String email) async {
@@ -215,6 +227,10 @@ class AuthService {
             await prefs.setString('userRole', data['user']['role']);
           }
         }
+
+        // 🔔 Registrar token FCM tras login con Google exitoso
+        await FcmService.instance.registerToken();
+
         return data;
       }
       if (data is Map<String, dynamic>) return data;
@@ -245,6 +261,10 @@ class AuthService {
             await prefs.setString('userRole', data['user']['role']);
           }
         }
+
+        // 🔔 Registrar token FCM tras login con Google (access token) exitoso
+        await FcmService.instance.registerToken();
+
         return data;
       }
       if (data is Map<String, dynamic>) return data;

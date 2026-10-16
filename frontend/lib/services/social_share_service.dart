@@ -35,14 +35,14 @@ class SocialShareService {
       builder: (context) {
         return AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: Row(
+          title: const Row(
             children: [
-              const Icon(Icons.security, color: Color(0xFFC5A052)),
-              const SizedBox(width: 10),
+              Icon(Icons.security, color: Color(0xFFC5A052)),
+              SizedBox(width: 10),
               Expanded(
                 child: Text(
                   'Consentimiento Ley 1581',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),
             ],

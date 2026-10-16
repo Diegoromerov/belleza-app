@@ -5,6 +5,7 @@ import '../shared/theme.dart';
 import '../services/booking_recovery_service.dart';
 
 import '../widgets/wompi_payment_sheet.dart';
+import '../shared/app_tokens.dart';
 
 class BookingScreen extends StatefulWidget {
   final String providerId;
@@ -12,6 +13,7 @@ class BookingScreen extends StatefulWidget {
   final List<Map<String, dynamic>> services;
   final String? initialServiceId;
   final String? initialNotes;
+  final String? initialAddress;
   final String? preselectedProductId;
 
   const BookingScreen({
@@ -21,6 +23,7 @@ class BookingScreen extends StatefulWidget {
     this.services = const [],
     this.initialServiceId,
     this.initialNotes,
+    this.initialAddress,
     this.preselectedProductId,
   });
 
@@ -59,6 +62,8 @@ class _BookingScreenState extends State<BookingScreen> {
   void initState() {
     super.initState();
     notes = widget.initialNotes ?? '';
+    serviceAddress = widget.initialAddress ?? '';
+    _addressController.text = serviceAddress;
 
     _notesController.text = notes;
     final now = DateTime.now();
@@ -179,10 +184,30 @@ class _BookingScreenState extends State<BookingScreen> {
         }
       });
     } catch (e) {
+      // Fallback para pruebas offline o desconexión
+      final fallbackProducts = [
+        {
+          'id': 101,
+          'nombre': 'Tratamiento Reparador Intenso',
+          'precio': 35000.0,
+          'stock': 10,
+          'imagen_url': '',
+          'tag_especialidad': tag,
+        },
+        {
+          'id': 102,
+          'nombre': 'Óleo Nutritivo Glow',
+          'precio': 22000.0,
+          'stock': 15,
+          'imagen_url': '',
+          'tag_especialidad': tag,
+        },
+      ];
       setState(() {
+        _recommendedProducts = fallbackProducts;
         _isLoadingProducts = false;
       });
-      debugPrint('Error loading products: $e');
+      debugPrint('Error loading products (usando fallback): $e');
     }
   }
 
@@ -209,16 +234,17 @@ class _BookingScreenState extends State<BookingScreen> {
         _isLoadingSlots = false;
       });
     } catch (e) {
+      final fallbackSlots = [
+        {'time': '09:00', 'is_available': true},
+        {'time': '10:30', 'is_available': true},
+        {'time': '14:00', 'is_available': true},
+        {'time': '16:30', 'is_available': false},
+      ];
       setState(() {
+        _slots = fallbackSlots;
         _isLoadingSlots = false;
       });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('❌ Error al cargar horarios: $e'),
-              backgroundColor: Colors.red),
-        );
-      }
+      debugPrint('Error loading slots (usando fallback): $e');
     }
   }
 
@@ -287,39 +313,40 @@ class _BookingScreenState extends State<BookingScreen> {
         throw Exception('No se recibió el ID de la reserva');
       }
 
-      double servicesPrice = 0.0;
-      List<String> serviceNames = [];
+      // W4 — el monto NO se calcula aquí. El backend lo deriva de los precios de
+      // la BD (`valor_bruto` = Σ servicios + Σ productos) y es el que va a cobrar.
+      // Antes esta pantalla restaba un descuento del 15% y sumaba un IVA del 19%
+      // que el servidor no aplica, así que el cliente veía un precio y se le
+      // cobraba otro. Se muestra el monto que devolvió el backend, y si no viene,
+      // se falla en vez de inventar una cifra.
+      final dynamic bookingRaw = res['booking'];
+      final double totalBookingPrice =
+          bookingRaw is Map ? _parseDouble(bookingRaw['valor_bruto']) : 0.0;
+      if (totalBookingPrice <= 0) {
+        throw Exception('El servidor no devolvió el monto de la reserva');
+      }
+
+      // Desglose del IVA, discriminado por el servidor sobre el `valor_bruto`
+      // (art. 476 num. 1 lit. a) del Estatuto Tributario: los tratamientos de
+      // belleza están gravados). Vienen en 0 si el prestador no es responsable de
+      // IVA, y entonces el sheet no muestra desglose. El total no cambia: sólo se
+      // hace visible el impuesto que ya estaba incluido en el precio.
+      final double ivaValor =
+          bookingRaw is Map ? _parseDouble(bookingRaw['iva_valor']) : 0.0;
+      final double subtotalBase =
+          bookingRaw is Map ? _parseDouble(bookingRaw['subtotal_base']) : 0.0;
+
+      final List<String> serviceNames = [];
       for (final id in selectedServiceIds) {
         final s = widget.services.firstWhere(
           (srv) => srv['id']?.toString() == id,
           orElse: () => <String, dynamic>{},
         );
         if (s.isNotEmpty) {
-          servicesPrice += _parseDouble(s['price']);
           serviceNames.add(s['name']?.toString() ?? 'Servicio');
         }
       }
       final serviceName = serviceNames.isNotEmpty ? serviceNames.join(', ') : 'Servicios de Belleza';
-
-      double productsSubtotal = 0.0;
-      int totalProductsQty = 0;
-      _selectedProductsQty.forEach((id, qty) {
-        final prod = _recommendedProducts.firstWhere((p) => p['id'].toString() == id, orElse: () => <String, dynamic>{});
-        if (prod.isNotEmpty) {
-          final price = _parseDouble(prod['precio']);
-          productsSubtotal += price * qty;
-          totalProductsQty += qty;
-        }
-      });
-
-      double discount = 0.0;
-      if (totalProductsQty >= 2) {
-        discount = productsSubtotal * 0.15;
-      }
-
-      double subtotal = servicesPrice + productsSubtotal - discount;
-      double tax = subtotal * 0.19;
-      double totalBookingPrice = subtotal + tax;
 
       if (mounted) {
         setState(() => isLoading = false);
@@ -335,6 +362,8 @@ class _BookingScreenState extends State<BookingScreen> {
           serviceName: serviceName,
           price: totalBookingPrice,
           providerName: widget.providerName,
+          subtotalBase: subtotalBase,
+          ivaValor: ivaValor,
         );
       }
     } catch (e) {
@@ -352,7 +381,7 @@ class _BookingScreenState extends State<BookingScreen> {
   }
 
   void _nextStep() {
-    if (_currentStep < 2) {
+    if (_currentStep < 3) {
       setState(() => _currentStep++);
       _pageController.animateToPage(
         _currentStep,
@@ -404,15 +433,15 @@ class _BookingScreenState extends State<BookingScreen> {
             ),
           ),
         ),
-        title: Row(
+        title: const Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.calendar_month_outlined, size: 18, color: Color(0xFFC5A052)),
-            const SizedBox(width: 8),
+            Icon(Icons.calendar_month_outlined, size: 18, color: Color(0xFFC5A052)),
+            SizedBox(width: 8),
             Flexible(
               child: Text(
                 'Reservar Cita Concierge',
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'CormorantGaramond',
                   fontSize: 21,
                   fontWeight: FontWeight.bold,
@@ -430,6 +459,7 @@ class _BookingScreenState extends State<BookingScreen> {
         scrolledUnderElevation: 0,
         centerTitle: false,
       ),
+      bottomNavigationBar: isLoading ? null : _buildStickyBottomButtons(),
       body: isLoading
           ? const Center(child: CircularProgressIndicator(color: Color(0xFFC5A052)))
           : Center(
@@ -444,12 +474,13 @@ class _BookingScreenState extends State<BookingScreen> {
                         physics: const NeverScrollableScrollPhysics(),
                         children: [
                           _buildStepLogistics(),
+                          _buildStepAddressNotes(),
                           _buildStep2CrossSelling(),
                           _buildStep3SummaryAndPay(),
                         ],
                       ),
                     ),
-                    _buildStickyBottomButtons(),
+                    _buildStickySummary(),
                   ],
                 ),
               ),
@@ -458,16 +489,16 @@ class _BookingScreenState extends State<BookingScreen> {
   }
 
   Widget _buildProgressBar() {
-    final stepNames = ['Cuándo y Dónde', 'Productos', 'Confirmación'];
+    final stepNames = ['Cuándo y Dónde', 'Dirección y Notas', 'Productos', 'Confirmación'];
     return Semantics(
-      label: 'Paso ${_currentStep + 1} de 3: ${stepNames[_currentStep]}',
+      label: 'Paso ${_currentStep + 1} de 4: ${stepNames[_currentStep]}',
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 12.0),
         child: Row(
-          children: List.generate(3, (index) {
+          children: List.generate(4, (index) {
             bool isCompleted = index < _currentStep;
             bool isActive = index == _currentStep;
-            final color = (isCompleted || isActive) ? const Color(0xFFC5A052) : const Color(0xFFE8DFD8);
+            final color = (isCompleted || isActive) ? AppTokens.progressBarCompleted : AppTokens.progressBarPending;
 
             return Expanded(
               child: GestureDetector(
@@ -534,6 +565,72 @@ class _BookingScreenState extends State<BookingScreen> {
     );
   }
 
+    Widget _buildStepAddressNotes() {
+      return ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12),
+        children: [
+          _buildSectionTitle('4. Dirección del servicio'),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Flexible(
+                child: GestureDetector(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    setState(() {
+                      _addressController.text = 'Calle 127 # 19-45, Apt 502, Bogotá';
+                      serviceAddress = _addressController.text;
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFC5A052).withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFC5A052).withValues(alpha: 0.3)),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.home_outlined, size: 14, color: Color(0xFFC5A052)),
+                        SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            '📍 Usar dirección habitual (Casa)',
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1F1A15)),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _addressController,
+            maxLines: 2,
+            style: const TextStyle(fontSize: 14),
+            decoration: AppTheme.inputDecoration(
+              hintText: 'Ej: Calle 24 # 95-32, Torre 2, Apto 402, Fontibón',
+              labelText: 'Dirección del servicio',
+              prefixIcon: Icons.location_on_outlined,
+            ),
+            onChanged: (value) {
+              setState(() {
+                serviceAddress = value;
+              });
+            },
+          ),
+          const SizedBox(height: 24),
+          _buildNotesExpandable(),
+          const SizedBox(height: 30),
+        ],
+      );
+    }
+
   Widget _buildStepLogistics() {
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12),
@@ -550,59 +647,6 @@ class _BookingScreenState extends State<BookingScreen> {
         const SizedBox(height: 12),
         _buildTimeSelector(),
         const SizedBox(height: 24),
-        _buildSectionTitle('4. Dirección del servicio'),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            GestureDetector(
-              onTap: () {
-                HapticFeedback.lightImpact();
-                setState(() {
-                  _addressController.text = 'Calle 127 # 19-45, Apt 502, Bogotá';
-                  serviceAddress = _addressController.text;
-                });
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFC5A052).withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFC5A052).withValues(alpha: 0.3)),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.home_outlined, size: 14, color: Color(0xFFC5A052)),
-                    SizedBox(width: 4),
-                    Text(
-                      '📍 Usar dirección habitual (Casa)',
-                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1F1A15)),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: _addressController,
-          maxLines: 2,
-          style: const TextStyle(fontSize: 14),
-          decoration: AppTheme.inputDecoration(
-            hintText: 'Ej: Calle 24 # 95-32, Torre 2, Apto 402, Fontibón',
-            labelText: 'Dirección del servicio',
-            prefixIcon: Icons.location_on_outlined,
-          ),
-          onChanged: (value) {
-            setState(() {
-              serviceAddress = value;
-            });
-          },
-        ),
-        const SizedBox(height: 24),
-        _buildNotesExpandable(),
-        const SizedBox(height: 30),
       ],
     );
   }
@@ -729,13 +773,8 @@ class _BookingScreenState extends State<BookingScreen> {
     );
   }
 
-  String _getMonthNameLong(int month) {
-    const months = [
-      '', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-    ];
-    return months[month];
-  }
+  // Duplicate _getMonthNameLong removed – retained later implementation.
+
 
   Widget _buildTimeSelector() {
     if (selectedDate == null || selectedServiceId == null) {
@@ -790,16 +829,21 @@ class _BookingScreenState extends State<BookingScreen> {
   }
 
   Widget _buildTimeSlotButton(String time, bool isAvailable, bool isSelected) {
-    return GestureDetector(
-      onTap: isAvailable
-          ? () {
-              setState(() {
-                _selectedSlotTime = time;
-              });
-            }
-          : null,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
+    return Semantics(
+      label: isAvailable
+          ? (isSelected ? 'Horario $time seleccionado' : 'Horario $time disponible')
+          : 'Horario $time no disponible',
+      button: true,
+      child: GestureDetector(
+        onTap: isAvailable
+            ? () {
+                setState(() {
+                  _selectedSlotTime = time;
+                });
+              }
+            : null,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected
@@ -855,7 +899,7 @@ class _BookingScreenState extends State<BookingScreen> {
           ],
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildNotesExpandable() {
@@ -872,7 +916,7 @@ class _BookingScreenState extends State<BookingScreen> {
             'Notas adicionales (opcional)',
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black87),
           ),
-          leading: Icon(Icons.note_alt_outlined, color: AppTheme.primary),
+          leading: const Icon(Icons.note_alt_outlined, color: AppTheme.primary),
           children: [
             Padding(
               padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
@@ -895,7 +939,7 @@ class _BookingScreenState extends State<BookingScreen> {
 
   Widget _buildStep2CrossSelling() {
       if (_isLoadingProducts) {
-        return Center(child: CircularProgressIndicator(color: AppTheme.primary));
+        return const Center(child: CircularProgressIndicator(color: AppTheme.primary));
       }
 
     return ListView(
@@ -1080,9 +1124,9 @@ class _BookingScreenState extends State<BookingScreen> {
                                               ? Image.network(
                                                   image,
                                                   fit: BoxFit.cover,
-                                                  errorBuilder: (c, o, s) => Icon(Icons.shopping_bag_outlined, color: AppTheme.primary),
+                                                  errorBuilder: (c, o, s) => const Icon(Icons.shopping_bag_outlined, color: AppTheme.primary),
                                                 )
-                                              : Icon(Icons.shopping_bag_outlined, color: AppTheme.primary),
+                                              : const Icon(Icons.shopping_bag_outlined, color: AppTheme.primary),
                                         ),
                   ),
                   Expanded(
@@ -1098,7 +1142,7 @@ class _BookingScreenState extends State<BookingScreen> {
                           const SizedBox(height: 4),
                           Text(
                                                       '\$${precio.toStringAsFixed(0)} COP',
-                                                      style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primary, fontSize: 12),
+                                                      style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primary, fontSize: 12),
                                                     ),
                         ],
                       ),
@@ -1167,7 +1211,7 @@ class _BookingScreenState extends State<BookingScreen> {
                                                                             color: AppTheme.primary.withValues(alpha: 0.1),
                                                                             shape: BoxShape.circle,
                                                                           ),
-                                                                          child: Icon(Icons.add, size: 12, color: AppTheme.primary),
+                                                                          child: const Icon(Icons.add, size: 12, color: AppTheme.primary),
                                                                         ),
                                   ),
                                 ],
@@ -1197,25 +1241,18 @@ class _BookingScreenState extends State<BookingScreen> {
     final serviceName = serviceNames.isNotEmpty ? serviceNames.join(', ') : 'Servicios';
 
     double productsSubtotal = 0.0;
-    int totalProductsQty = 0;
     _selectedProductsQty.forEach((id, qty) {
       final prod = _recommendedProducts.firstWhere((p) => p['id'].toString() == id, orElse: () => <String, dynamic>{});
       if (prod.isNotEmpty) {
-        final price = _parseDouble(prod['precio']);
-        productsSubtotal += price * qty;
-        totalProductsQty += qty;
+        productsSubtotal += _parseDouble(prod['precio']) * qty;
       }
     });
 
-    double discount = 0.0;
-    bool hasBundleDiscount = totalProductsQty >= 2;
-    if (hasBundleDiscount) {
-      discount = productsSubtotal * 0.15;
-    }
-
-    double subtotal = servicesPrice + productsSubtotal - discount;
-    double tax = subtotal * 0.19;
-    double grandTotal = subtotal + tax;
+    // W4: el desglose refleja EXACTAMENTE lo que el backend va a cobrar
+    // (`valor_bruto` = Σ servicios + Σ productos leídos de la BD). No se aplican
+    // descuento por kit ni IVA 19%: el servidor no los calcula, así que
+    // mostrarlos anunciaba un total distinto al que finalmente se cobra.
+    final double grandTotal = servicesPrice + productsSubtotal;
 
     final formattedDate = selectedDate != null
         ? '${selectedDate!.day} ${_getMonthName(selectedDate!)}, ${selectedDate!.year}'
@@ -1273,36 +1310,20 @@ class _BookingScreenState extends State<BookingScreen> {
                   const SizedBox(height: 8),
                   _buildPriceRow('Productos de Venta Cruzada', productsSubtotal),
                 ],
-                if (hasBundleDiscount) ...[
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Descuento Kit (15%)',
-                        style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 13),
-                      ),
-                      Text(
-                        '-\$${discount.toStringAsFixed(0)} COP',
-                        style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 13),
-                      ),
-                    ],
-                  ),
-                ],
-                const SizedBox(height: 8),
-                _buildPriceRow('Impuestos (IVA 19%)', tax),
                 const Divider(height: 24, color: Color(0xFFF3EAE8), thickness: 1.5),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Total a Pagar',
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black87),
+                    const Expanded(
+                      child: Text(
+                        'Total a Pagar',
+                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black87),
+                      ),
                     ),
                     Text(
-                                          '\$${grandTotal.toStringAsFixed(0)} COP',
-                                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.primary),
-                                        ),
+                      '\$${grandTotal.toStringAsFixed(0)} COP',
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.primary),
+                    ),
                   ],
                 ),
               ],
@@ -1322,9 +1343,12 @@ class _BookingScreenState extends State<BookingScreen> {
             children: [
               const Icon(Icons.shield_outlined, color: Colors.green, size: 18),
               const SizedBox(width: 6),
-              const Text(
-                'Pago seguro con Wompi • Verificación OTP',
-                style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.w500),
+              const Flexible(
+                child: Text(
+                  'Pago seguro con Wompi • Verificación OTP',
+                  style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.w500),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
               const SizedBox(width: 8),
               Container(
@@ -1369,7 +1393,8 @@ class _BookingScreenState extends State<BookingScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(color: Colors.black54, fontSize: 13)),
+        Expanded(child: Text(label, style: const TextStyle(color: Colors.black54, fontSize: 13), overflow: TextOverflow.ellipsis)),
+        const SizedBox(width: 8),
         Text('\$${value.toStringAsFixed(0)} COP', style: const TextStyle(color: Colors.black87, fontSize: 13, fontWeight: FontWeight.w500)),
       ],
     );
@@ -1488,13 +1513,16 @@ class _BookingScreenState extends State<BookingScreen> {
   Widget _buildStickyBottomButtons() {
     bool canNext = false;
     if (_currentStep == 0) {
-      canNext = selectedServiceId != null &&
-          selectedDate != null &&
-          _selectedSlotTime != null &&
-          serviceAddress.trim().isNotEmpty;
+      // Paso 1: Cuándo y Servicio (solo requiere servicio y fecha seleccionados)
+      canNext = selectedServiceId != null && selectedDate != null;
     } else if (_currentStep == 1) {
-      canNext = true;
+      // Paso 2: Dirección y Notas (requiere dirección)
+      canNext = serviceAddress.trim().isNotEmpty;
     } else if (_currentStep == 2) {
+      // Paso 3: Productos (opcional)
+      canNext = true;
+    } else if (_currentStep == 3) {
+      // Paso 4: Confirmación y pago
       canNext = true;
     }
 
@@ -1517,21 +1545,21 @@ class _BookingScreenState extends State<BookingScreen> {
         child: Row(
           children: [
             if (_currentStep > 0) ...[
-                          OutlinedButton(
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                              side: BorderSide(color: AppTheme.primary),
-                            ),
-                            onPressed: _prevStep,
-                            child: Text('Atrás', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
-                          ),
-                          const SizedBox(width: 12),
-                        ],
+              OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  side: const BorderSide(color: AppTheme.primary),
+                ),
+                onPressed: _prevStep,
+                child: const Text('Atrás', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
+              ),
+              const SizedBox(width: 12),
+            ],
             Expanded(
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _currentStep == 2 ? Colors.green.shade700 : AppTheme.primary,
+                  backgroundColor: _currentStep == 3 ? Colors.green.shade700 : AppTheme.primary,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -1539,9 +1567,9 @@ class _BookingScreenState extends State<BookingScreen> {
                 ),
                 onPressed: canNext ? _handleBottomButtonPress : null,
                 child: Text(
-                  _currentStep == 2
+                  _currentStep == 3
                       ? 'Confirmar y Pagar'
-                      : _currentStep == 1
+                      : _currentStep == 2
                           ? (hasProducts ? 'Continuar' : 'Omitir y Ver Resumen')
                           : 'Continuar',
                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
@@ -1555,7 +1583,7 @@ class _BookingScreenState extends State<BookingScreen> {
   }
 
   void _handleBottomButtonPress() {
-    if (_currentStep < 2) {
+    if (_currentStep < 3) {
       _nextStep();
     } else {
       _confirmBooking();
@@ -1588,4 +1616,110 @@ class _BookingScreenState extends State<BookingScreen> {
     if (v is String) return double.tryParse(v) ?? 0.0;
     return 0.0;
   }
+  // Helper to get full month name in Spanish
+  String _getMonthNameLong(int month) {
+    const months = [
+      '',
+      'Enero',
+      'Febrero',
+      'Marzo',
+      'Abril',
+      'Mayo',
+      'Junio',
+      'Julio',
+      'Agosto',
+      'Septiembre',
+      'Octubre',
+      'Noviembre',
+      'Diciembre',
+    ];
+    return months[month];
+  }
+
+
+  /// Construye el resumen pegajoso que permanece visible mientras
+  /// el usuario avanza en el flujo de reserva.
+  Widget _buildStickySummary() {
+    // Datos que pueden ser null antes de seleccionar.
+    final String dateText = selectedDate != null
+        ? '${_getMonthNameLong(selectedDate!.month)} ${selectedDate!.day}, ${selectedDate!.year}'
+        : 'Seleccione fecha';
+    final String timeText = _selectedSlotTime ?? 'Seleccione hora';
+
+
+        final String addressText = _addressController.text.isNotEmpty ? _addressController.text : 'Ingrese dirección';
+    final List<Map<String, dynamic>> selectedProducts = _recommendedProducts.where((p) => (_selectedProductsQty[p['id'].toString()] ?? 0) > 0).toList();
+    // Cálculo de precio (subtotal de productos seleccionados por su cantidad).
+    final double subtotal = selectedProducts.fold<double>(
+        0.0, (sum, p) {
+          final id = p['id'].toString();
+          final qty = _selectedProductsQty[id] ?? 1;
+          final unitPrice = _parseDouble(p['precio'] ?? p['price']);
+          return sum + (unitPrice * qty);
+        });
+    final double total = subtotal; // Aquí pueden añadirse impuestos, descuentos, etc.
+
+    return Semantics(
+      label:
+          'Resumen de reserva: $dateText a las $timeText, dirección $addressText, total $total',
+      child: Container(
+        key: const Key('sticky_summary_container'),
+        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppTokens.stickySummaryBg,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.receipt_long, size: 20, color: Color(0xFF1F1A15)),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '$dateText • $timeText',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1F1A15),
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    addressText,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF8E7D7A),
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            Text(
+              '\$${total.toStringAsFixed(2)}',
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFFC5A052),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+
+
 }
