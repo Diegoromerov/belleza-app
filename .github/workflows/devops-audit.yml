@@ -82,7 +82,7 @@ jobs:
               "a1b2c3d4.*",
               "ci_secret_key_.*"
             ]
-            paths = ["*test*.js", "*Test*.js", "*.md", "docs/**", "scratch/**"]
+            paths = ["test*.js", "*Test*.js", "*.md", "docs/**", "scratch/**"]
           EOF
 
       - name: Ejecutar gitleaks
@@ -167,7 +167,8 @@ jobs:
 
       - name: Verificar backup
         run: |
-          docker run --rm --network none -v "$(pwd)/backend:/app:ro" postgres:16 pg_restore --list /app/backup_pre029_real.sql
+          # El backup es un archivo SQL plano, verificar que es válido
+          head -20 backend/backup_pre029_real.sql | grep -q "PostgreSQL database dump" && echo "Backup SQL válido" || (echo "Backup inválido" && exit 1)
 
       - name: Verificar migraciones y RLS
         run: |

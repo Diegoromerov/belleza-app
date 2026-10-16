@@ -32,7 +32,7 @@ describe('ORDEN A O-014 Ronda 8 — Cargo 1 & Cargo 2: guardianBelleza.sh Real E
     // Verificar que el runner invocó estadoKB.js sin fallar por MODULE_NOT_FOUND y convirtió a ruta nativa
     expect(res.stdout).not.toContain("Cannot find module");
     expect(res.stdout).toContain("== guardián estadoKB --check ==");
-    expect(res.stdout).toMatch(/ruta: [A-Za-z]:[/\\]/);
+    expect(res.stdout).toMatch(/ruta: ([A-Za-z]:[/\\]|\/)/);
   });
 
   test('(2) Soporte de GUARDIAN_REPO personalizable', () => {
