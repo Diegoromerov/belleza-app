@@ -361,12 +361,26 @@ real de sandbox; fijado por `backend/src/tests/payBooking.test.js`) — **no es 
 - **Acción:** con credenciales sandbox, cotejar los bancos que ofrece la app contra `/banks` y
   guardar el UUID por banco.
 
-### W6. El atajo `NODE_ENV=test` en la verificación de webhooks — BAJA
+### W6. El atajo `NODE_ENV=test` en la verificación de webhooks — **RESUELTO** (2026-10-16)
 
-- **Dónde:** `backend/src/controllers/bookingController.js` (`verifyWompiSignature`).
-- **Qué:** sin `WOMPI_EVENTS_SECRET` y con `NODE_ENV=test` la verificación devuelve `true` para
-  no romper suites heredadas. Es un fail-OPEN acotado a test, pero es un fail-open.
-- **Arreglo:** exigir el secreto en los tests y quitar el atajo.
+- **Dónde:** `backend/src/controllers/bookingController.js` y `orderController.js`
+  (`verifyWompiSignature`).
+- **Qué era:** sin `WOMPI_EVENTS_SECRET` y con `NODE_ENV=test` la verificación devolvía `true`
+  para no romper suites heredadas. Fail-OPEN acotado a test, pero fail-open.
+- **Arreglo aplicado:** el atajo se eliminó en los DOS controladores. Sin secreto no hay nada que
+  verificar y se falla en CERRADO (`wompiClient.verifyEventChecksum` → inválido → 401).
+- **Por qué era más que «BAJA»:** el atajo contradecía la sonda de contrato
+  (`src/openapi/criticalContract.js`, `POST /api/payments/wompi-webhook` ⇒ 401). En CI —sin
+  secreto— el webhook acusaba recibo (200) de eventos sin firma, así que **la compuerta de
+  contrato fallaba y abortaba el job ANTES de llegar a la suite completa**. No se veía en local
+  porque `.env` define `WOMPI_EVENTS_SECRET` y dotenv no pisa una variable ya presente: mismo
+  código, veredicto distinto según el entorno.
+- **Verificación:** reproducido con `WOMPI_EVENTS_SECRET=""` (dotenv respeta la variable presente
+  aunque esté vacía) → `Expected: 401 / Received: 200`. Tras el arreglo, **49/49 en las dos
+  condiciones**, suite completa 160/160, y en CI el paso de contrato ya no falla: el job avanza
+  hasta la compuerta completa (138 suites, 1103 tests).
+- **Nota:** `src/tests/wompiWebhookSecurity.test.js:148-159` ya esquivaba el atajo cambiando
+  `NODE_ENV` a `production` para probar el camino real; ese rodeo queda innecesario.
 
 ### W7. Riesgo de colisión del número de migración — BAJA
 
@@ -559,3 +573,21 @@ y los mismos tres roles:
   del propio middleware), con efecto real sobre el pool. **Es una decisión de cableado global, no
   un parche de router:** o se monta el contexto en toda la app (y entonces sí tiene sentido quitar
   el superusuario de producción), o se asume que la aplicación no gobierna el aislamiento.
+
+### R1 — estado del pipeline (2026-10-16)
+
+Tras cerrar **W6**, R1 es **el único rojo que queda** en `GlowApp CI / CD Pipeline`
+(`Backend Tests & Lint`): los 3 casos de `tests/ownerMultiSalonDashboard.test.js`
+(`Expected: 200 / Received: 403`). Antes fallaba también el paso de contrato, que **abortaba el job
+antes de llegar aquí** — al arreglarlo, la compuerta completa ya corre (138 suites, 1103 tests) y
+expone sólo este fallo.
+
+- **Evidencia de que es preexistente:** el run del commit base `13b45332a` (dos pushes **antes** de
+  este bloque de trabajo, ambos sólo de documentación) ya fallaba los mismos 3 casos con los mismos
+  números: `1 failed, 126 passed, 127 total` · `3 failed, 978 passed, 981 total`.
+- **Trabajo en curso:** PR **#34 `fix/rls-tenant-context`** («montar tenantContext donde se conoce el
+  inquilino (authMiddleware)») está **abierto** sobre esta misma área, con su CI también en rojo.
+  **No conviene tocarlo desde otro frente:** el arreglo ya está validado en R1-bis y lo que falta es
+  una decisión de cableado, no código.
+- **⚠️ Consecuencia operativa:** con la compuerta en rojo, **ningún push a `main` despliega**. La
+  producción no se está actualizando; los 16 commits de este bloque están en `main` pero no en EKS.
