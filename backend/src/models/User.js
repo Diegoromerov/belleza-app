@@ -69,6 +69,38 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING(45),
     allowNull: true,
     field: 'habeas_data_ip'
+  },
+  // Responsabilidad de IVA derivada del RUT (migración 087). Declarar estas
+  // columnas es OBLIGATORIO: Sequelize descarta en silencio lo que no declara.
+  rut_numero: {
+    type: DataTypes.STRING(20),
+    allowNull: true,
+    field: 'rut_numero'
+  },
+  rut_responsabilidad_codigo: {
+    type: DataTypes.SMALLINT,
+    allowNull: true,
+    field: 'rut_responsabilidad_codigo'
+  },
+  responsable_iva_override: {
+    type: DataTypes.BOOLEAN,
+    allowNull: true,
+    field: 'responsable_iva_override'
+  },
+  responsabilidad_iva_fuente: {
+    type: DataTypes.STRING(10),
+    allowNull: true,
+    field: 'responsabilidad_iva_fuente'
+  },
+  responsabilidad_iva_actualizada_at: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    field: 'responsabilidad_iva_actualizada_at'
+  },
+  responsabilidad_iva_cambiada_por: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    field: 'responsabilidad_iva_cambiada_por'
   }
 }, {
   tableName: 'usuarios',
