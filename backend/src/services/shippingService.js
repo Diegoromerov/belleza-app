@@ -13,48 +13,76 @@ const { pool } = require('../config/db');
  * @param {number} [params.valor_pedido=0] - Valor total del pedido (para envío gratis por monto)
  * @returns {Promise<Object>} { costo, transportadora, dias_estimados, gratis, zona, tarifa_base, tarifa_por_kg }
  */
+/**
+ * Normaliza un texto para compararlo: sin acentos, sin mayusculas, sin espacios de mas.
+ * En SQL `lower()` no alcanza: "bogota" nunca iguala a "Bogota con tilde", y una direccion
+ * guardada sin tildes caia al fallback global "OTRO" (la tarifa mas cara).
+ */
+function normalizar(valor) {
+  return String(valor || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, ' ');
+}
+
+/**
+ * Cotiza el costo de envío para una dirección y valor de pedido.
+ *
+ * @param {Object} params
+ * @param {string} params.ciudad - Ciudad de destino
+ * @param {string} params.departamento - Departamento de destino
+ * @param {string} [params.codigo_postal] - Código postal (opcional, para match por prefijo)
+ * @param {number} [params.peso_total_kg=0.5] - Peso estimado del paquete en kg
+ * @param {number} [params.valor_pedido=0] - Valor total del pedido (para envío gratis por monto)
+ * @returns {Promise<Object>} { costo, transportadora, dias_estimados, gratis, zona, tarifa_base, tarifa_por_kg }
+ */
 async function cotizarEnvio({ ciudad, departamento, codigo_postal, peso_total_kg = 0.5, valor_pedido = 0 }) {
   if (!ciudad || !departamento) {
     throw new Error('ciudad y departamento son obligatorios para cotizar envío');
   }
 
-  const cp = codigo_postal || '';
+  const cp = String(codigo_postal || '');
+  const nCiudad = normalizar(ciudad);
+  const nDepartamento = normalizar(departamento);
 
-  // 1. Buscar zona exacta: ciudad + departamento + prefijo CP (el más específico primero)
-  let zonaRes = await pool.query(
-    `SELECT * FROM zonas_envio 
-     WHERE activa 
-       AND lower(ciudad) = lower($1) 
-       AND lower(departamento) = lower($2)
-       AND (codigo_postal_prefijo IS NULL OR $3 LIKE codigo_postal_prefijo || '%')
-     ORDER BY 
-       CASE WHEN codigo_postal_prefijo IS NULL THEN 0 ELSE 1 END DESC,
-       LENGTH(codigo_postal_prefijo) DESC
-     LIMIT 1`,
-    [ciudad, departamento, cp]
+  // Una sola consulta: el catalogo de zonas es pequeno y el emparejamiento se hace en
+  // memoria, que es donde se puede ignorar tildes y mayusculas de verdad.
+  const zonasRes = await pool.query('SELECT * FROM zonas_envio WHERE activa ORDER BY ciudad, departamento');
+  const zonas = zonasRes.rows || [];
+
+  // 1. Ciudad + departamento (normalizados).
+  const candidatas = zonas.filter(
+    (z) => normalizar(z.ciudad) === nCiudad && normalizar(z.departamento) === nDepartamento
   );
 
-  // 2. Fallback: solo ciudad + departamento (sin prefijo CP)
-  if (zonaRes.rows.length === 0) {
-    zonaRes = await pool.query(
-      `SELECT * FROM zonas_envio 
-       WHERE activa 
-         AND lower(ciudad) = lower($1) 
-         AND lower(departamento) = lower($2)
-       LIMIT 1`,
-      [ciudad, departamento]
-    );
+  let zona = null;
+  if (candidatas.length > 0) {
+    // 1a. Con codigo postal: gana el prefijo mas largo que coincida.
+    const porPrefijo = candidatas
+      .filter((z) => z.codigo_postal_prefijo && cp.startsWith(String(z.codigo_postal_prefijo)))
+      .sort(
+        (a, b) =>
+          String(b.codigo_postal_prefijo).length - String(a.codigo_postal_prefijo).length
+      )[0];
+    // 1b. Sin prefijo declarado: comodin de la ciudad.
+    const sinPrefijo = candidatas.find((z) => !z.codigo_postal_prefijo);
+    zona = porPrefijo || sinPrefijo || candidatas[0];
   }
 
-  // 3. Fallback global "OTRO"
-  if (zonaRes.rows.length === 0) {
-    zonaRes = await pool.query(
-      `SELECT * FROM zonas_envio WHERE activa AND ciudad = 'OTRO' LIMIT 1`
-    );
+  // 2. La ciudad coincide pero el departamento viene escrito distinto.
+  if (!zona) {
+    zona = zonas.find((z) => normalizar(z.ciudad) === nCiudad) || null;
   }
 
-  if (zonaRes.rows.length === 0) {
-    // Hardcoded fallback extremo (no debería ocurrir si seed tiene OTRO)
+  // 3. Fallback global "OTRO".
+  if (!zona) {
+    zona = zonas.find((z) => normalizar(z.ciudad) === 'otro') || null;
+  }
+
+  if (!zona) {
+    // Hardcoded fallback extremo (no deberia ocurrir si el seed tiene OTRO)
     return {
       costo: 15000,
       transportadora: 'Coordinadora',
@@ -66,13 +94,12 @@ async function cotizarEnvio({ ciudad, departamento, codigo_postal, peso_total_kg
     };
   }
 
-  const z = zonaRes.rows[0];
-  const tarifaBase = parseFloat(z.tarifa_base);
-  const tarifaPorKg = parseFloat(z.tarifa_por_kg || 0);
-  const gratisDesde = z.gratis_desde_monto ? parseFloat(z.gratis_desde_monto) : null;
+  const tarifaBase = parseFloat(zona.tarifa_base);
+  const tarifaPorKg = parseFloat(zona.tarifa_por_kg || 0);
+  const gratisDesde = zona.gratis_desde_monto ? parseFloat(zona.gratis_desde_monto) : null;
 
   // Calcular costo: base + peso
-  let costo = tarifaBase + (tarifaPorKg * peso_total_kg);
+  let costo = tarifaBase + tarifaPorKg * peso_total_kg;
 
   // Envío gratis por monto
   const gratis = gratisDesde !== null && valor_pedido >= gratisDesde;
@@ -80,10 +107,10 @@ async function cotizarEnvio({ ciudad, departamento, codigo_postal, peso_total_kg
 
   return {
     costo: Math.round(costo),
-    transportadora: z.transportadora_default || 'Coordinadora',
-    dias_estimados: `${z.dias_estimados_min}-${z.dias_estimados_max} días hábiles`,
+    transportadora: zona.transportadora_default || 'Coordinadora',
+    dias_estimados: `${zona.dias_estimados_min}-${zona.dias_estimados_max} días hábiles`,
     gratis,
-    zona: `${z.ciudad}, ${z.departamento}`,
+    zona: `${zona.ciudad}, ${zona.departamento}`,
     tarifa_base: tarifaBase,
     tarifa_por_kg: tarifaPorKg,
     gratis_desde_monto: gratisDesde

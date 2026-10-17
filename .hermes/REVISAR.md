@@ -844,6 +844,33 @@ sobre el **pool**: cada llamada puede ir por una conexión distinta, así que el
 a mitad queda estado parcial. Hay que tomarlo con `pool.connect()` y usar ese cliente para las tres sentencias.
 No se tocó porque excede el alcance de F6 y el camino feliz funciona.
 
+### F9. Cierre del E2E de tienda: tres defectos de la última captura — RESUELTO (2026-10-17)
+
+Tras cerrar el circuito con una transacción aprobada, la captura del intento real mostró
+«Pago en proceso». La causa y lo corregido:
+
+1. **El número de prueba estaba mal.** `3111111111` **no es** número de sandbox: Wompi
+   respondió `ERROR — Número no válido en Sandbox`. Los válidos son **`3991111111`**
+   (aprobado) y `3992222222` (rechazado), Daviplata OTP `574829`/`932015`, tarjeta
+   `4242…`/`4111…`. No es un defecto de código, pero costó dos intentos.
+2. **`getOrderById` no exponía el estado del cobro.** El pedido sigue `PENDIENTE_PAGO`
+   tanto si el pago fue rechazado como si el webhook aún no llegó, así que la app no
+   podía distinguirlos. Ahora devuelve `pago: { status, estado_pago }`.
+3. **La hoja leía `data['estado']`** y el endpoint responde `{data: {order, items}}`:
+   el estado llegaba `undefined` y **siempre** caía en «pago en proceso», incluso con un
+   rechazo. Ahora lee `data.order` + `data.pago` y muestra «El pago fue rechazado».
+4. **El modal mostraba el total sin envío.** Pasaba el total del carrito ($40.317)
+   mientras `createOrder` cobraba $55.717,20 (subtotal 33.880 + envío 15.400 + IVA
+   6.437,20): el cliente iba a pagar $15.400 más de lo que veía. Ahora usa el `total`
+   del pedido que devuelve el servidor.
+5. **`cotizarEnvio` no toleraba tildes.** Comparaba con `lower()` en SQL ("bogota" ≠
+   "Bogotá") y caía al fallback `OTRO` (15.400 en vez de 9.000). Ahora lee el catálogo
+   en una consulta y empareja normalizando (NFD sin marcas combinantes). Verificado
+   contra el catálogo real: `bogota` → Bogotá, **9.200**.
+
+Cubierto por `tests/storeOrderDetail.contract.test.js` (3) y `tests/shippingService.test.js`
+(8, probados por mutación). Suite: 164/164, 1281 passed.
+
 ### F8. La factura electrónica DIAN no se emite en ninguna venta — ABIERTO (2026-10-17)
 
 Al cerrarse el primer pago completo de tienda (pedido `5dc47fe3…`, E2E en sandbox), el log mostró:
