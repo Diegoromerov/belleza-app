@@ -715,6 +715,28 @@ caído por esta causa conocida — pero conviene auditar el resto.
 sitio correcto **por casualidad**: cambiar la variable de Railway no hace nada y apuntar el frontend a otro
 backend requiere tocar código.
 
+### F4. La pasarela NO está configurada en producción — ABIERTO (2026-10-17)
+
+El checkout ya crea el pedido (F2 resuelto, verificado: `pedidos_tienda` pasó de 11 a **14** filas, todas con
+`tenant_id`), pero el paso de pago responde **`PAYMENT_GATEWAY_NOT_CONFIGURED`**:
+
+- `wompiClient.isConfigured()` exige **cuatro** variables (`wompiClient.js:82-84`):
+  `WOMPI_PRIVATE_KEY`, `WOMPI_PUBLIC_KEY`, `WOMPI_INTEGRITY_SECRET`, `WOMPI_EVENTS_SECRET`.
+- El servicio `belleza-app` de Railway **no tiene ninguna `WOMPI_*`** (comprobado por nombre). Por eso el
+  `GET /api/payments/wompi/public-key` y el de acceptance-token responden 503 (`paymentRoutes.js:82-88, 123-129`).
+- Las llaves **sí existen** en `backend/.env` local (no versionado) y **siguen vivas**: `npm run verify:wompi
+  -- --live` obtuvo token de aceptación de Wompi. Son de **sandbox** (`pub_test_`/`prv_test_`).
+- Falta `WOMPI_PAYOUTS_ACCOUNT_ID` (sólo afecta a dispersiones, no a cobrar).
+
+**⚠️ Trampa de configuración:** `wompiClient.js:73-76` deriva el host de `NODE_ENV`, no de la llave. Producción
+corre con `NODE_ENV=production` → sin `WOMPI_BASE_URL` el cliente pega contra `production.wompi.co` con llaves
+de **prueba** y devuelve un **422 opaco** (el propio `verify:wompi` detecta ese desajuste). Para validar el
+sandbox en el servicio de producción hay que definir además `WOMPI_BASE_URL=https://sandbox.wompi.co/v1`.
+
+**Decisión pendiente (de Diego, no de código):** configurar sandbox en producción para cerrar el E2E — con el
+efecto de que los pedidos "pagados" serían de prueba — o esperar las llaves `pub_prod_` del dashboard. Mientras
+tanto la tienda **toma pedidos que no puede cobrar**: 14 pedidos, todos en `PENDIENTE_PAGO`.
+
 ### Nota operativa: `railway variables` volcó credenciales en la sesión
 
 Durante este diagnóstico, `railway variables --service belleza-app --kv` imprimió valores en claro
