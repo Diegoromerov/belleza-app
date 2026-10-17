@@ -143,10 +143,21 @@ void main() async {
   runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
     
-    // 🔥 Inicializar Firebase Core con opciones por plataforma
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
+    // 🔥 Inicializar Firebase Core con opciones por plataforma.
+    // Si el build NO recibio la configuracion, no se inicializa con valores
+    // falsos: se avisa y la app sigue sin push. Antes arrancaba en silencio con
+    // un apiKey invalido y el fallo solo se notaba mucho despues, en el service
+    // worker de FCM. Ver lib/firebase_options.dart.
+    if (DefaultFirebaseOptions.estaConfigurado) {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    } else {
+      debugPrint(
+        '❌ Firebase NO configurado en este build: faltan '
+        '${DefaultFirebaseOptions.faltantes.join(', ')}. Push deshabilitado.',
+      );
+    }
     
     await initializeDateFormatting('es', null);
     await SystemChrome.setPreferredOrientations([

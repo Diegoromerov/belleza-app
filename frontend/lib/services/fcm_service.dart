@@ -14,6 +14,7 @@ import 'package:flutter/foundation.dart'
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import 'api_service.dart';
+import '../firebase_options.dart';
 import 'secure_storage_service.dart';
 
 /// Claves de notificación local (Android/iOS)
@@ -58,6 +59,16 @@ class FcmService {
 
     _onPayloadTap = onPayloadTap;
 
+    // Sin configuracion de Firebase no hay nada que inicializar. Antes se seguia
+    // adelante y el unico sintoma era un error opaco en la consola.
+    if (!DefaultFirebaseOptions.estaConfigurado) {
+      debugPrint(
+        '❌ FCM deshabilitado: Firebase no esta configurado en este build. '
+        'Faltan: ${DefaultFirebaseOptions.faltantes.join(', ')}.',
+      );
+      return;
+    }
+
     // 1. Inicializar Firebase Core (no-op si ya se hizo)
     try {
       await Firebase.initializeApp();
@@ -72,7 +83,7 @@ class FcmService {
     await _requestPermissions();
 
     // 4. Obtener y registrar token FCM
-    await _registerToken();
+    final tokenRegistrado = await _registerToken();
 
     // 5. Listener de mensajes en foreground
     _messageSub = FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
@@ -90,7 +101,10 @@ class FcmService {
     _messaging.onTokenRefresh.listen(_onTokenRefresh);
 
     _initialized = true;
-    debugPrint('✅ FCM Service inicializado');
+    // El mensaje debe decir la verdad: si el token no se registro, no hay push.
+    debugPrint(tokenRegistrado
+        ? '✅ FCM Service inicializado (token registrado)'
+        : '⚠️ FCM Service inicializado SIN token: no llegaran notificaciones');
   }
 
   /// Solicita permisos de notificación (iOS, Web)
@@ -147,13 +161,22 @@ class FcmService {
   }
 
   /// Obtiene token FCM y lo envía al backend
-  Future<void> _registerToken() async {
+  /// Devuelve true SOLO si el token quedo registrado: quien llame no debe
+  /// cantar exito si esto devuelve false.
+  Future<bool> _registerToken() async {
     try {
       String? token;
       if (kIsWeb) {
-        // Web requiere VAPID key en Firebase Console → Cloud Messaging → Web configuration
-        const vapidKey = String.fromEnvironment('FCM_VAPID_KEY', defaultValue: '');
-        token = await _messaging.getToken(vapidKey: vapidKey.isNotEmpty ? vapidKey : null);
+        // Web SIEMPRE exige VAPID key (Firebase Console -> Cloud Messaging ->
+        // Web configuration). Sin ella getToken() falla con un error opaco de
+        // service worker, asi que se comprueba antes y se dice que falta.
+        const vapidKey = String.fromEnvironment('FCM_VAPID_KEY');
+        if (vapidKey.isEmpty) {
+          debugPrint('❌ FCM web sin FCM_VAPID_KEY: no se puede obtener token. '
+              'Definela en el servicio y pasala al build por --dart-define.');
+          return false;
+        }
+        token = await _messaging.getToken(vapidKey: vapidKey);
       } else {
         token = await _messaging.getToken();
       }
@@ -161,11 +184,14 @@ class FcmService {
       if (token != null && token.isNotEmpty) {
         await _sendTokenToBackend(token);
         debugPrint('📱 FCM Token registrado: ${token.substring(0, 20)}...');
-      } else {
-        debugPrint('⚠️ FCM Token vacío');
+        return true;
       }
+
+      debugPrint('⚠️ FCM Token vacío');
+      return false;
     } catch (e) {
       debugPrint('❌ Error obteniendo/registrando FCM token: $e');
+      return false;
     }
   }
 

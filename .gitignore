@@ -103,3 +103,6 @@ frontend/android/app/google-services.json
 # Salida que flutter_test escribe en cada corrida de golden fallida: artefacto
 # generado, ningún código lo lee.
 frontend/test/golden/failures/
+# El service worker de FCM se GENERA en el build (tool/generate_firebase_sw.dart):
+# lleva la configuracion de Firebase, que no se versiona (lib/firebase_options.dart).
+frontend/web/firebase-messaging-sw.js
