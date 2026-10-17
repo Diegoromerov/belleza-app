@@ -472,9 +472,19 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
   }
 
   Widget _buildSuccessView() {
-    final ref = _successData!['reference'] ?? 'N/A';
-    final amount = _successData!['amount'] ?? widget.price;
-    final method = _successData!['payment_method'] ?? _metodo;
+    // `payOrder` responde 202 con {data: {external_id, amount, payment_method}}.
+    // Antes se leia `reference` en la raiz, asi que el recibo mostraba "N/A".
+    final Map<String, dynamic> datos = (_successData!['data'] is Map)
+        ? Map<String, dynamic>.from(_successData!['data'] as Map)
+        : _successData!;
+    final refBruta = datos['external_id'] ?? datos['reference'] ?? _successData!['reference'];
+    final ref = (refBruta == null || refBruta.toString().trim().isEmpty)
+        ? null
+        : refBruta.toString();
+    final amount = (datos['amount'] is num) ? (datos['amount'] as num).toDouble() : widget.price;
+    final method = datos['payment_method'] ?? _metodo;
+    // La hoja es compartida con reservas: en una compra de tienda no hay "cita".
+    final esCompra = widget.itemType == 'product';
 
     return Column(
       children: [
@@ -487,7 +497,9 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
         ),
         const SizedBox(height: 8),
         Text(
-          'Tu cita con ${widget.providerName} ha sido confirmada.',
+          esCompra
+              ? 'Tu compra en ${widget.providerName} ha sido confirmada.'
+              : 'Tu cita con ${widget.providerName} ha sido confirmada.',
           textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 14, color: Colors.black54),
         ),
@@ -501,13 +513,15 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
           ),
           child: Column(
             children: [
-              _buildReceiptRow('Servicio', widget.serviceName),
+              _buildReceiptRow(esCompra ? 'Compra' : 'Servicio', widget.serviceName),
               const SizedBox(height: 8),
               _buildReceiptRow('Valor Pagado', '\$${amount.toStringAsFixed(0)} COP'),
               const SizedBox(height: 8),
               _buildReceiptRow('Medio de Pago', method),
-              const SizedBox(height: 8),
-              _buildReceiptRow('Ref. Wompi', ref),
+              if (ref != null) ...[
+                const SizedBox(height: 8),
+                _buildReceiptRow('Ref. Wompi', ref),
+              ],
             ],
           ),
         ),
