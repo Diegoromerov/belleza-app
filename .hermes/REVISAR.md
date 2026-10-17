@@ -828,6 +828,14 @@ contra un esquema imaginario. Corregido con `migrations/095_extend_transactions_
 idempotente: 10 columnas + `booking_id` nullable + índice por `external_id`). Validada contra producción dentro de
 una transacción y revertida (8 → 18 → 8 columnas).
 
+**Defecto 12:** el `UPDATE` de `metadata` usaba `to_jsonb($2)` con el parámetro sin tipo. `to_jsonb()` es
+**polimórfica**, así que Postgres respondía `could not determine polymorphic type because input has type unknown`
+→ 500 en el pago. Estaba en el código original; sólo se hizo alcanzable al arreglar los anteriores. Corregido con
+`to_jsonb($2::text)` y `to_jsonb($3::text)`. Se probó **la secuencia completa de `payOrder`** (INSERT en
+`transactions` + UPDATE de metadata) contra producción en una transacción: 22 → 22 filas y metadata restaurada.
+Nota de método: la primera sonda probó el INSERT y el UPDATE del webhook pero **no** esta sentencia; por eso el
+fallo llegó a producción. La sonda ahora cubre la secuencia entera.
+
 ### F7. `storeWebhook` usa `pool.query('BEGIN'/'COMMIT')` — ABIERTO (2026-10-17)
 
 `orderController.storeWebhook` abre la transacción con `pool.query('BEGIN')` y la cierra con `pool.query('COMMIT')`

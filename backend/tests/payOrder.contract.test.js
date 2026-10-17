@@ -227,6 +227,12 @@ describe('payOrder — contrato con Wompi', () => {
     expect(update).toBeDefined();
     expect(update[1][1]).toBe(WOMPI_TX_ID);
     expect(String(update[1][2])).toMatch(/^wompi_order_/);
+
+    // to_jsonb() es POLIMORFICA: con un parametro sin tipo Postgres responde
+    // "could not determine polymorphic type because input has type unknown".
+    // Paso en produccion y un mock no lo habria cazado; el cast se fija aqui.
+    expect(update[0]).toContain('to_jsonb($2::text)');
+    expect(update[0]).toContain('to_jsonb($3::text)');
   });
 
   test('sin acceptance_token responde 400', async () => {

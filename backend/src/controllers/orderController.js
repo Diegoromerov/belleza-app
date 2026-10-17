@@ -570,10 +570,13 @@ exports.payOrder = async (req, res) => {
     // El webhook localiza el pedido con `metadata->>'wompi_external_id' = <data.id de Wompi>`,
     // asi que ahi va el id de la transaccion; la referencia se guarda aparte para trazabilidad.
     await pool.query(
+      // to_jsonb() es POLIMORFICA: con un parametro sin tipo Postgres responde
+      // "could not determine polymorphic type because input has type unknown".
+      // El cast ::text fija el tipo de entrada.
       `UPDATE pedidos_tienda
           SET metadata = jsonb_set(
-                jsonb_set(COALESCE(metadata, '{}'::jsonb), '{wompi_external_id}', to_jsonb($2)),
-                '{wompi_reference}', to_jsonb($3))
+                jsonb_set(COALESCE(metadata, '{}'::jsonb), '{wompi_external_id}', to_jsonb($2::text)),
+                '{wompi_reference}', to_jsonb($3::text))
         WHERE id = $1;`,
       [orderId, wompiTx.id, externalId]
     );
