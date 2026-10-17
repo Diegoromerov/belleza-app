@@ -408,11 +408,27 @@ exports.getOrderById = async (req, res) => {
       [orderId]
     );
 
+    // Estado del cobro. Sin esto la app solo ve el estado del PEDIDO, que sigue en
+    // PENDIENTE_PAGO tanto si el pago fue rechazado como si aun no ha llegado el
+    // webhook: no puede distinguir "espera" de "fallo", y el cliente no se entera.
+    const wompiExternalId = order.metadata && order.metadata.wompi_external_id
+      ? order.metadata.wompi_external_id
+      : null;
+    let pago = null;
+    if (wompiExternalId) {
+      const txRes = await pool.query(
+        'SELECT status, estado_pago, external_id FROM transactions WHERE external_id = $1 ORDER BY id DESC LIMIT 1;',
+        [wompiExternalId]
+      );
+      if (txRes.rows.length > 0) pago = txRes.rows[0];
+    }
+
     res.json({
       success: true,
       data: {
         order,
-        items: detailsRes.rows
+        items: detailsRes.rows,
+        pago
       }
     });
   } catch (error) {

@@ -701,12 +701,20 @@ class _StoreScreenState extends State<StoreScreen> {
                                   return;
                                 }
 
+                                // El importe que se cobra es el que calculo el SERVIDOR
+                                // (incluye envio e IVA). Usar el total del carrito hacia que
+                                // el modal mostrara 40.317 y el cobro fuera 55.717,20.
+                                final totalServidor =
+                                    (orderResponse['data']?['order']?['total'] as num?)?.toDouble() ??
+                                        (orderResponse['order']?['total'] as num?)?.toDouble() ??
+                                        total;
+
                                 // 2. Cobrar el pedido usando el orderId real
                                 final paymentResult = await showWompiCheckoutSheet(
                                   context: context,
                                   bookingId: orderId, // Ahora pasamos el orderId real
                                   serviceName: 'Compra GlowShop (${_cart.length} productos)',
-                                  price: total,
+                                  price: totalServidor,
                                   providerName: 'GlowShop Oficial',
                                   itemType: 'product',
                                 );

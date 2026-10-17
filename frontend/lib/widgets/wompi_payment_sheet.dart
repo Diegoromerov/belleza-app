@@ -322,9 +322,15 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
         // En un pedido de tienda la transaccion nace PENDING: la confirma el webhook
         // de Wompi. Se consulta el pedido en vez de asumir que ya pago.
         if (widget.itemType == 'product') {
-          final pagado = await _esperarConfirmacionPedido();
-          if (pagado) {
+          final resultado = await _esperarConfirmacionPedido();
+          if (resultado == 'pagado') {
             await _onPaymentSuccess(res);
+          } else if (resultado == 'rechazado' && mounted) {
+            setState(() {
+              _isProcessing = false;
+              _errorMsg = 'El pago fue rechazado por Wompi. No se cobro: '
+                  'intenta con otro medio.';
+            });
           }
         }
         return;
@@ -348,15 +354,17 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
       }
       
       if (widget.itemType == 'product') {
-        final pagado = await _esperarConfirmacionPedido(intentos: 10);
-        if (!pagado) {
-          // No se declara exito ni error: la transaccion existe y el webhook la
-          // confirmara. Se avisa para que no se pague dos veces.
+        final resultado = await _esperarConfirmacionPedido(intentos: 10);
+        if (resultado != 'pagado') {
           if (mounted) {
             setState(() {
               _isProcessing = false;
-              _errorMsg = 'Pago en proceso. Wompi confirmara la transaccion y el pedido '
-                  'pasara a PAGADO; no vuelvas a pagar.';
+              // Un rechazo NO es un pago en proceso: decirle al cliente que espere
+              // lo dejaria intentando con el mismo medio y sin saber que fallo.
+              _errorMsg = resultado == 'rechazado'
+                  ? 'El pago fue rechazado por Wompi. No se cobro: intenta con otro medio.'
+                  : 'Pago en proceso. Wompi confirmara la transaccion y el pedido '
+                      'pasara a PAGADO; no vuelvas a pagar.';
             });
           }
           return;
@@ -1303,25 +1311,36 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
   }
 
   /// El pedido solo pasa a PAGADO cuando el webhook de Wompi lo confirma. Se
-  /// consulta hasta que cambie de estado: ni se declara exito antes de tiempo ni
-  /// se deja al cliente creyendo que perdio el dinero.
-  Future<bool> _esperarConfirmacionPedido({int intentos = 20}) async {
+  /// consulta hasta saber el desenlace: 'pagado', 'rechazado', 'cancelado' o
+  /// 'pendiente'. Antes devolvia bool y leia `data['estado']`, pero el endpoint
+  /// responde {data: {order, items, pago}}: el estado siempre llegaba undefined y
+  /// el cliente veia "pago en proceso" incluso cuando Wompi lo habia rechazado.
+  Future<String> _esperarConfirmacionPedido({int intentos = 20}) async {
     for (var i = 0; i < intentos; i++) {
       await Future<void>.delayed(const Duration(seconds: 3));
-      if (!mounted) return false;
+      if (!mounted) return 'pendiente';
       try {
         final res = await ApiService.fetchStoreOrderById(widget.bookingId);
-        final pedido = (res['data'] is Map) ? res['data'] as Map : res;
+        final data = (res['data'] is Map) ? res['data'] as Map : res;
+        final pedido = (data['order'] is Map) ? data['order'] as Map : data;
+
         final estado = (pedido['estado'] ?? '').toString().toUpperCase();
         if (estado == 'PAGADO' || estado == 'DESPACHADO' || estado == 'ENTREGADO') {
-          return true;
+          return 'pagado';
         }
-        if (estado == 'CANCELADO') return false;
+        if (estado == 'CANCELADO') return 'cancelado';
+
+        final pago = (data['pago'] is Map) ? data['pago'] as Map : const <String, dynamic>{};
+        final estadoPago =
+            (pago['status'] ?? pago['estado_pago'] ?? '').toString().toUpperCase();
+        if (['FAILED', 'DECLINED', 'ERROR', 'VOIDED'].contains(estadoPago)) {
+          return 'rechazado';
+        }
       } catch (_) {
         // La red puede fallar mientras el usuario esta en el banco: se reintenta.
       }
     }
-    return false;
+    return 'pendiente';
   }
 
   Future<void> _mostrarRedireccion(String url) async {
