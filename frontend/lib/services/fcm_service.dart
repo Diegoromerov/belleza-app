@@ -44,7 +44,14 @@ class FcmService {
   FcmService._internal();
   static final FcmService instance = FcmService._internal();
 
-  final FirebaseMessaging _messaging = FirebaseMessaging.instance;
+  // PEREZOSO a proposito. `FirebaseMessaging.instance` busca la app '[DEFAULT]' de
+  // Firebase y lanza [core/no-app] si no existe. Evaluado como inicializador de campo
+  // estalla al CONSTRUIR el singleton -- o sea al pedir FcmService.instance en main(),
+  // antes de runApp -- con lo que la app entera quedaba en pantalla en blanco en un
+  // build sin configuracion. Con `??=` no se toca Firebase hasta que de verdad se usa.
+  FirebaseMessaging? _messagingPerezoso;
+  FirebaseMessaging get _messaging =>
+      _messagingPerezoso ??= FirebaseMessaging.instance;
   final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
 
   bool _initialized = false;

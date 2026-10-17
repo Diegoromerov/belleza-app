@@ -655,6 +655,14 @@ de roto en silencio. Nada de esto se versiona: `verifyNoVersionedSecrets.js` (ba
 rechaza claves `AIza...` en archivos trackeados — de hecho `google-services.json` **ya** es rechazado
 por esa compuerta, y por eso no está en el repositorio.
 
+**REGRESIÓN de `2e80cd9a4`, corregida en el commit siguiente — la web quedó en PANTALLA EN BLANCO.** Al
+dejar de llamar a `Firebase.initializeApp` en un build sin configuración, `FcmService` reventaba al
+**construirse**: su campo `final FirebaseMessaging _messaging = FirebaseMessaging.instance;` busca la
+app `'[DEFAULT]'` y lanza `[core/no-app]` si no existe. `main()` pide `FcmService.instance` **antes de
+`runApp`**, así que la excepción escapaba del `runZonedGuarded` y la app nunca se dibujaba. El campo
+pasa a ser perezoso (`??=`). **Lección:** una guarda en un método no protege si el fallo ocurre en el
+**inicializador de campo** del objeto, que se evalúa al acceder al singleton — antes que el método.
+
 **No confundir con dos hallazgos vecinos que quedan ABIERTOS:**
 
 - **Meta Pixel:** `web/index.html` llama a `fbq('init','GLOWAPP_PIXEL_ID')` y el navegador responde
