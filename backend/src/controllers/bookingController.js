@@ -26,6 +26,17 @@ const dianInvoiceClient = require('../services/dianInvoiceClient');
 const wompiClient = require('../services/wompiClient');
 const { discriminarIva } = require('../utils/iva');
 
+/** URL http(s) utilizable como redirect_url (no vacia, no de otro esquema). */
+function esUrlHttpValida(valor) {
+  if (!valor || typeof valor !== 'string' || valor.trim().length === 0) return false;
+  try {
+    const url = new URL(valor.trim());
+    return url.protocol === 'https:' || url.protocol === 'http:';
+  } catch {
+    return false;
+  }
+}
+
 const verifyWompiSignature = (req) => {
   // Sin secreto de eventos no hay nada que verificar: se falla en CERRADO.
   // El atajo que aceptaba cualquier evento en NODE_ENV=test contradecía el
@@ -592,8 +603,9 @@ exports.payBooking = async (req, res) => {
         });
       }
       if (redirectMethods.includes(method)) {
-        if (!redirect_url || redirect_url.trim().isEmpty) {
-          return res.status(400).json({ error: 'redirect_url es obligatorio para pagos con redirección (PSE, Bancolombia, Daviplata).' });
+        // `.trim().isEmpty` es Dart, no JS: una URL de solo espacios pasaba.
+        if (!esUrlHttpValida(redirect_url)) {
+          return res.status(400).json({ error: 'redirect_url debe ser una URL http(s) válida para pagos con redirección (PSE, Bancolombia, Daviplata).' });
         }
         if (!customer_data || !customer_data.email || !customer_data.full_name || !customer_data.phone_number) {
           return res.status(400).json({ error: 'customer_data (email, full_name, phone_number) es obligatorio para pagos con redirección.' });

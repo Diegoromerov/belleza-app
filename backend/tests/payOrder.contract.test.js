@@ -316,3 +316,53 @@ describe('payOrder — un pedido no se cobra dos veces', () => {
     expect(res.status).toHaveBeenCalledWith(202);
   });
 });
+
+describe('payOrder — redirect_url validada de verdad (A10: .isEmpty era Dart)', () => {
+  test('una URL de solo espacios responde 400 y no llega a Wompi', async () => {
+    const res = resMock();
+    await orderController.payOrder(
+      reqPago({
+        payment_method: 'PSE',
+        acceptance_token: 'acc',
+        redirect_url: '   ',
+        customer_data: customerDataValido
+      }),
+      res
+    );
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(wompiClient.createTransaction).not.toHaveBeenCalled();
+  });
+
+  test('un esquema que no es http(s) responde 400', async () => {
+    const res = resMock();
+    await orderController.payOrder(
+      reqPago({
+        payment_method: 'PSE',
+        acceptance_token: 'acc',
+        redirect_url: 'javascript:alert(1)',
+        customer_data: customerDataValido
+      }),
+      res
+    );
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(wompiClient.createTransaction).not.toHaveBeenCalled();
+  });
+
+  test('una URL https valida sigue cobrando (202)', async () => {
+    const res = resMock();
+    await orderController.payOrder(
+      reqPago({
+        payment_method: 'PSE',
+        acceptance_token: 'acc',
+        redirect_url: 'https://glowapp-frontend-production.up.railway.app/#/pago/resultado',
+        customer_data: customerDataValido
+      }),
+      res
+    );
+
+    expect(res.status).toHaveBeenCalledWith(202);
+    expect(wompiClient.createTransaction).toHaveBeenCalledTimes(1);
+  });
+});

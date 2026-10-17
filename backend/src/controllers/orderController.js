@@ -6,6 +6,17 @@ const { discriminarIva } = require('../utils/iva');
 // Tarifa general de IVA. `listas_precios.incluye_iva` decide si el precio de la
 // lista ya la contiene (lista `cliente`) o si hay que sumarla (negocio/profesional).
 const TARIFA_IVA = 0.19;
+
+/** URL http(s) utilizable como redirect_url (no vacia, no de otro esquema). */
+function esUrlHttpValida(valor) {
+  if (!valor || typeof valor !== 'string' || valor.trim().length === 0) return false;
+  try {
+    const url = new URL(valor.trim());
+    return url.protocol === 'https:' || url.protocol === 'http:';
+  } catch {
+    return false;
+  }
+}
 const dianInvoiceClient = require('../services/dianInvoiceClient');
 const { cotizarEnvio } = require('../services/shippingService');
 
@@ -547,8 +558,10 @@ exports.payOrder = async (req, res) => {
     ];
     if (redirectMethods.includes(method)) {
       // Para métodos redirect, se necesita redirect_url y customer_data
-      if (!redirect_url || redirect_url.trim().isEmpty) {
-        return res.status(400).json({ error: 'redirect_url es obligatorio para métodos de redirección (PSE, transferencias).' });
+      // `.trim().isEmpty` es sintaxis DART: en JS `.isEmpty` es undefined, asi que
+      // una URL de solo espacios pasaba y Wompi respondia 402. Se valida de verdad.
+      if (!esUrlHttpValida(redirect_url)) {
+        return res.status(400).json({ error: 'redirect_url debe ser una URL http(s) válida para métodos de redirección (PSE, transferencias).' });
       }
       if (!customer_data || !customer_data.email || !customer_data.full_name || !customer_data.phone_number) {
         return res.status(400).json({ error: 'customer_data (email, full_name, phone_number) es obligatorio para métodos de redirección.' });
