@@ -844,6 +844,23 @@ sobre el **pool**: cada llamada puede ir por una conexión distinta, así que el
 a mitad queda estado parcial. Hay que tomarlo con `pool.connect()` y usar ese cliente para las tres sentencias.
 No se tocó porque excede el alcance de F6 y el camino feliz funciona.
 
+### F8. La factura electrónica DIAN no se emite en ninguna venta — ABIERTO (2026-10-17)
+
+Al cerrarse el primer pago completo de tienda (pedido `5dc47fe3…`, E2E en sandbox), el log mostró:
+
+```
+[DIAN INVOICE] Cliente no configurado (falta certificado/NIT). Saltando factura para pedido 5dc47fe3-…
+```
+
+`dianInvoiceClient.isConfigured()` es falso en producción, así que **toda venta pagada se queda sin factura electrónica** y
+el webhook la salta en silencio (por diseño: no rompe el pago). En Colombia la facturación electrónica es obligatoria
+para ventas; esto no bloquea el cobro pero sí la operación real. Falta cargar certificado, NIT y resolución en el
+servicio `belleza-app`, o decidir explícitamente que se factura por fuera. **No confundir con un fallo de pago.**
+
+**Estado del E2E de tienda tras F6:** cerrado y verificado en producción. Pedido → transacción en Wompi (sandbox,
+Nequi `3991111111`) → evento → `pedidos_tienda.estado = PAGADO` y `transactions.status = 'paid'` en 10 s. Requiere la
+URL de eventos de cobros configurada en el dashboard (Sandbox): las de «Pagos a Terceros» son otra cosa.
+
 ### Nota operativa: `railway variables` volcó credenciales en la sesión
 
 Durante este diagnóstico, `railway variables --service belleza-app --kv` imprimió valores en claro
@@ -851,3 +868,32 @@ Durante este diagnóstico, `railway variables --service belleza-app --kv` imprim
 `.env.production.txt`). El archivo **no está versionado** (`.gitignore:7` → `.env.*`), así que **no hay fuga
 en el repo**; el riesgo es el historial de la sesión. **No volver a invocar `railway variables` sin filtrar
 por nombre** y rotar los valores expuestos.
+
+## Acceso al panel admin — censo de credenciales (2026-10-17)
+
+### S1. Seis cuentas ADMIN activas en producción con contraseña de diccionario — ALTA
+
+Censo medido **autenticando**, no comparando hashes (bcrypt lleva sal; ver `docs/knowledge/TRAMPAS.md:510`):
+`POST https://admin-dashboard-production-4183.up.railway.app/api/admin/auth/login` (con `Origin`/`Referer`,
+el BFF rechaza mutaciones sin ellos: 403 CSRF).
+
+- `admin@glow.app` (id 999, "Administrador Glow", `is_active=true`) → **HTTP 200**. Contraseña de diccionario
+  (`admin123`). Es la cuenta que sostiene el panel: rotarla antes de cualquier otra cosa.
+- Cinco cuentas de prueba `*@glowapp.test` (ids 1020-1024: `spike-img-…`, `spike-admin-…`, `spike-preview-…` ×2,
+  `test-…`) con rol **ADMIN** y `is_active=true`, contraseña `Password123!` → **HTTP 200** cada una. Son residuos de
+  los spikes de octubre: ninguna debería existir en producción, menos con rol ADMIN.
+- `admin@beautyapp.com` (id 1) sí quedó `is_active=false` tras CI-48: el cierre de puerta se sostuvo.
+- `diegomartinromero@gmail.com` (id 7) y `escuela@glow.app` (id 998) son ADMIN activos cuya contraseña **no** está en
+  la lista de débiles: sanas por ahora, pero no hay registro de cuándo se rotaron.
+
+Arreglo: desactivar (no borrar) las cinco `@glowapp.test`, rotar `admin@glow.app`, y añadir al gate de despliegue un
+chequeo de "cuentas ADMIN activas" — hoy nadie vigila cuántas hay. No se tocó nada: es producción y la orden era
+leer.
+
+### S2. Nota operativa: `PGPASSWORD` de Postgres volvió a quedar en el historial de sesión (2026-10-17)
+
+Para este censo se invocó `railway variables --service postgres --json` **sin filtrar por nombre**, que imprimió
+`PGPASSWORD` en claro (misma falta que la nota de más arriba con `belleza-app`). El valor permite conexión externa
+(`crossover.proxy.rlwy.net:51506`, usuario `postgres`, DB `railway`): es acceso total a producción, no un secreto de
+servicio. **Rotarla** y, de aquí en adelante, `railway variables --service <svc> --json | jq 'keys'` (sólo nombres)
+o `jq -r '.DATABASE_URL'` acotado. Las credenciales del censo NO se escribieron en este archivo.
