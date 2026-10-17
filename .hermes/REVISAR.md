@@ -753,7 +753,7 @@ en el repo. Esto es material para R1: explica por qué un test puede pasar en lo
 `pedidos_tienda.tenant_id` acabó NOT NULL sin que el código lo supiera (F2). **No se toca aquí**: hay que decidir si se
 regulariza el checksum o se escribe una migración de reconciliación con el estado realmente aplicado.
 
-### F6. `payOrder`: NINGÚN método de pago puede completarse — ABIERTO (2026-10-17)
+### F6. `payOrder`: NINGÚN método de pago podía completarse — **RESUELTO** (2026-10-17)
 
 Auditoría del camino completo del pago de tienda. El pedido ya se crea (F2) y la pasarela ya está configurada
 (F4), pero **pulsar «Pagar» falla con los cinco métodos que ofrece la hoja**. Evidencia:
@@ -783,6 +783,42 @@ el pedido se queda en `PENDIENTE_PAGO` para siempre (hoy hay 14 así).
 3. `api_service.payOrder` + la hoja: enviar `redirect_url` y `customer_data`; mostrar el estado de la transacción
    mientras el usuario autoriza en su banco (polling contra el pedido) en vez de asumir éxito.
 4. Tests: los 5 métodos con el contrato esperado + webhook despachando ambos tipos.
+
+**Dos defectos más, encontrados al arreglarlo (ambos bloqueaban el cierre):**
+
+8. `payOrder` guardaba la **referencia** (`wompi_order_…`) en `transactions.external_id`, pero
+   `storeWebhook` busca por el **id de Wompi** (`SELECT … WHERE external_id = $1` con `data.id`). Tampoco
+   `pedidos_tienda.metadata->>'wompi_external_id'` tenía el id. Resultado: aunque el evento llegara, no
+   encontraba ni la transacción ni el pedido → **el pedido no podía pasar a `PAGADO` por ninguna vía**.
+9. La hoja de pago (`wompi_payment_sheet.dart`) llamaba **siempre** a `ApiService.payBooking`: la tienda
+   (`store_screen.dart:705-712`, que pasa `bookingId: orderId` + `itemType: 'product'`) pegaba contra
+   `/bookings/<orderId>/pay`, donde ese id no existe.
+
+**Arreglo aplicado (4 fases):**
+1. `payOrder`: destructura `redirect_url`/`customer_data`/`payment_method_token`; arma el `paymentMethod` con
+   el contrato documentado de `payBooking` (NEQUI objeto, CARD token, redirección string) garantizando la
+   exclusividad con `payment_source_id`; `financial_institution_code` sólo para PSE; `.isEmpty` → `.length === 0`;
+   `transactions.external_id` = id de Wompi y `metadata.wompi_external_id` = id de Wompi (referencia aparte);
+   errores mapeados 402/502 en vez de 500 opaco.
+2. Webhooks: `bookingController.wompiWebhook` despacha por prefijo (`wompi_order_` → `orderController.storeWebhook`),
+   así una sola URL de eventos cubre reservas y pedidos.
+3. Frontend: `ApiService.payOrder` acepta `redirect_url`/`customer_data`; la hoja elige endpoint según
+   `itemType` (`_crearTransaccion`) y **espera la confirmación** consultando el pedido (`_esperarConfirmacionPedido`)
+   en vez de declarar éxito al crear la transacción.
+4. Tests: `tests/payOrder.contract.test.js` (12 casos: los seis métodos, exclusividad, `external_id`, 402/500,
+   idempotencia) + 2 casos de despacho de webhook. Comprobados por mutación: revertir la destructuración rompe
+   6 casos y volver a guardar la referencia rompe el del `external_id`.
+
+**Verificado:** 12/12 y 28/28 en los archivos tocados; suite completa y `flutter analyze lib` sin cambios
+respecto de la línea base.
+
+### F7. `storeWebhook` usa `pool.query('BEGIN'/'COMMIT')` — ABIERTO (2026-10-17)
+
+`orderController.storeWebhook` abre la transacción con `pool.query('BEGIN')` y la cierra con `pool.query('COMMIT')`
+sobre el **pool**: cada llamada puede ir por una conexión distinta, así que el `BEGIN` no envuelve nada y el
+`ROLLBACK` no deshace lo ya escrito. En el camino feliz el `UPDATE` persiste igual (autocommit), pero ante un fallo
+a mitad queda estado parcial. Hay que tomarlo con `pool.connect()` y usar ese cliente para las tres sentencias.
+No se tocó porque excede el alcance de F6 y el camino feliz funciona.
 
 ### Nota operativa: `railway variables` volcó credenciales en la sesión
 

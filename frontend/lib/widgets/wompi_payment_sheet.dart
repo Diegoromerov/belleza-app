@@ -273,9 +273,8 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
         }
         
         // Crear transacción con el token
-        final res = await ApiService.payBooking(
-          widget.bookingId,
-          method,
+        final res = await _crearTransaccion(
+          method: method,
           paymentMethodToken: paymentMethodToken,
           acceptanceToken: acceptanceToken,
         );
@@ -293,9 +292,8 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
       // que el usuario debe abrir en su banco. El backend la reenvía como
       // `async_payment_url`. Sin esa URL el cobro queda PENDING para siempre.
       if (_esRedireccion) {
-        final res = await ApiService.payBooking(
-          widget.bookingId,
-          method,
+        final res = await _crearTransaccion(
+          method: method,
           acceptanceToken: acceptanceToken,
           redirectUrl: _redirectUrlPago,
           customerData: {
@@ -320,6 +318,15 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
         }
 
         await _mostrarRedireccion(url);
+
+        // En un pedido de tienda la transaccion nace PENDING: la confirma el webhook
+        // de Wompi. Se consulta el pedido en vez de asumir que ya pago.
+        if (widget.itemType == 'product') {
+          final pagado = await _esperarConfirmacionPedido();
+          if (pagado) {
+            await _onPaymentSuccess(res);
+          }
+        }
         return;
       }
 
@@ -330,9 +337,8 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
       }
 
       // Única fuente de verdad del resultado: la respuesta HTTP del backend.
-      final res = await ApiService.payBooking(
-        widget.bookingId,
-        method,
+      final res = await _crearTransaccion(
+        method: method,
         phoneNumber: telefono,
         acceptanceToken: acceptanceToken,
       );
@@ -341,6 +347,22 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
         throw Exception(res['error']?.toString() ?? 'La pasarela no confirmó el pago.');
       }
       
+      if (widget.itemType == 'product') {
+        final pagado = await _esperarConfirmacionPedido(intentos: 10);
+        if (!pagado) {
+          // No se declara exito ni error: la transaccion existe y el webhook la
+          // confirmara. Se avisa para que no se pague dos veces.
+          if (mounted) {
+            setState(() {
+              _isProcessing = false;
+              _errorMsg = 'Pago en proceso. Wompi confirmara la transaccion y el pedido '
+                  'pasara a PAGADO; no vuelvas a pagar.';
+            });
+          }
+          return;
+        }
+      }
+
       await _onPaymentSuccess(res);
     } catch (e) {
       // Respuesta táctil háptica en caso de error
@@ -1246,6 +1268,62 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
   /// portapapeles "porque no es dependencia del proyecto"). Se sigue ese patrón:
   /// se copia el enlace y se indica abrirlo. Si producto acepta añadir
   /// `url_launcher`, aquí se sustituye `Clipboard.setData` por `launchUrl`.
+  /// Un solo punto de salida para crear la transaccion. Reservas y pedidos de
+  /// tienda usan endpoints distintos (`/bookings/:id/pay` vs `/store/orders/:id/pay`).
+  /// Antes la hoja llamaba SIEMPRE a payBooking: el checkout de la tienda pegaba
+  /// contra `/bookings/<orderId>/pay`, donde ese id no existe.
+  Future<Map<String, dynamic>> _crearTransaccion({
+    required String method,
+    String? phoneNumber,
+    String? paymentMethodToken,
+    required String acceptanceToken,
+    String? redirectUrl,
+    Map<String, dynamic>? customerData,
+  }) {
+    if (widget.itemType == 'product') {
+      return ApiService.payOrder(
+        widget.bookingId,
+        method,
+        phoneNumber: phoneNumber,
+        paymentMethodToken: paymentMethodToken,
+        acceptanceToken: acceptanceToken,
+        redirectUrl: redirectUrl,
+        customerData: customerData,
+      );
+    }
+    return ApiService.payBooking(
+      widget.bookingId,
+      method,
+      phoneNumber: phoneNumber,
+      paymentMethodToken: paymentMethodToken,
+      acceptanceToken: acceptanceToken,
+      redirectUrl: redirectUrl,
+      customerData: customerData,
+    );
+  }
+
+  /// El pedido solo pasa a PAGADO cuando el webhook de Wompi lo confirma. Se
+  /// consulta hasta que cambie de estado: ni se declara exito antes de tiempo ni
+  /// se deja al cliente creyendo que perdio el dinero.
+  Future<bool> _esperarConfirmacionPedido({int intentos = 20}) async {
+    for (var i = 0; i < intentos; i++) {
+      await Future<void>.delayed(const Duration(seconds: 3));
+      if (!mounted) return false;
+      try {
+        final res = await ApiService.fetchStoreOrderById(widget.bookingId);
+        final pedido = (res['data'] is Map) ? res['data'] as Map : res;
+        final estado = (pedido['estado'] ?? '').toString().toUpperCase();
+        if (estado == 'PAGADO' || estado == 'DESPACHADO' || estado == 'ENTREGADO') {
+          return true;
+        }
+        if (estado == 'CANCELADO') return false;
+      } catch (_) {
+        // La red puede fallar mientras el usuario esta en el banco: se reintenta.
+      }
+    }
+    return false;
+  }
+
   Future<void> _mostrarRedireccion(String url) async {
     await Clipboard.setData(ClipboardData(text: url));
     await HapticFeedback.mediumImpact();

@@ -562,6 +562,8 @@ class ApiService {
       int? installments,
       String? paymentSourceId,
       String? acceptanceToken,
+      String? redirectUrl,
+      Map<String, dynamic>? customerData,
     }) async {
       final headers = await _getAuthHeaders();
       final body = <String, dynamic>{
@@ -571,6 +573,9 @@ class ApiService {
         if (installments != null) 'installments': installments,
         if (paymentSourceId != null) 'payment_source_id': paymentSourceId,
         if (acceptanceToken != null) 'acceptance_token': acceptanceToken,
+        // PSE / Daviplata / Bancolombia: sin estos dos el backend responde 400.
+        if (redirectUrl != null) 'redirect_url': redirectUrl,
+        if (customerData != null) 'customer_data': customerData,
       };
 
       final response = await http

@@ -186,3 +186,42 @@ describe('Wompi webhook — validación del checksum real de eventos', () => {
     });
   });
 });
+
+// ---------------------------------------------------------------------------
+// Wompi entrega TODOS los eventos a una sola URL. La de reservas recibia tambien
+// los de pedidos de tienda, no encontraba la reserva y Wompi reintentaba: el
+// pedido no se cerraba nunca. Estos casos fijan el despacho por prefijo.
+// ---------------------------------------------------------------------------
+describe('Wompi webhook — despacho por tipo de referencia', () => {
+  const orderController = require('../controllers/orderController');
+  let storeSpy;
+
+  beforeEach(() => {
+    process.env.WOMPI_EVENTS_SECRET = SECRET;
+    storeSpy = jest
+      .spyOn(orderController, 'storeWebhook')
+      .mockImplementation((req, res) => res.json({ delegado: 'store' }));
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+    delete process.env.WOMPI_EVENTS_SECRET;
+  });
+
+  test('una referencia wompi_order_ se despacha al webhook de tienda', async () => {
+    const evento = eventoTransaccion();
+    evento.data.transaction.reference =
+      'wompi_order_8f14e45f-ceea-467f-a1c0-000000000001_1750000000000';
+    evento.signature.checksum = checksumDe(evento);
+
+    const res = await request(buildApp()).post('/api/payments/wompi-webhook').send(evento);
+
+    expect(storeSpy).toHaveBeenCalledTimes(1);
+    expect(res.status).toBe(200);
+  });
+
+  test('una referencia de reserva NO se desvia al webhook de tienda', async () => {
+    await request(buildApp()).post('/api/payments/wompi-webhook').send(eventoTransaccion());
+    expect(storeSpy).not.toHaveBeenCalled();
+  });
+});

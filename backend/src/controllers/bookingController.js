@@ -904,8 +904,24 @@ const procesarWebhookWompi = async (req, res) => {
  *
  * El contrato de la API no cambia: misma ruta, misma respuesta, mismos códigos.
  */
-exports.wompiWebhook = (req, res) =>
-  runAsSystemContext(() => procesarWebhookWompi(req, res));
+exports.wompiWebhook = (req, res) => {
+  // Wompi entrega TODOS los eventos a UNA sola URL, la que se configura en el
+  // dashboard del comercio. Hay dos clases de transacciones: reservas (referencia
+  // = <bookingId> o <bookingId>-rN) y pedidos de tienda (referencia
+  // `wompi_order_<id>_<ts>`, ver orderController.payOrder). Sin este despacho el
+  // evento de un pedido entraba al flujo de reservas, no encontraba la reserva y
+  // Wompi reintentaba para siempre: el pedido no se cerraba nunca.
+  // El `require` es perezoso para no crear un ciclo de imports entre controllers.
+  const referencia = String(
+    req.body?.data?.transaction?.reference
+      ?? req.body?.data?.reference
+      ?? ''
+  );
+  if (referencia.startsWith('wompi_order_')) {
+    return require('./orderController').storeWebhook(req, res);
+  }
+  return runAsSystemContext(() => procesarWebhookWompi(req, res));
+};
 
 // Expuesto para pruebas unitarias del contrato de verificación de eventos.
 exports.verifyWompiSignature = verifyWompiSignature;

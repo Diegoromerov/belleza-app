@@ -427,7 +427,10 @@ exports.payOrder = async (req, res) => {
   try {
     const userId = req.user.id;
     const orderId = req.params.id;
-    const { payment_method, phone_number, payment_source_id, acceptance_token } = req.body;
+    const {
+      payment_method, phone_number, payment_source_id, payment_method_token,
+      installments, acceptance_token, redirect_url, customer_data
+    } = req.body;
 
     // Validar pedido
     const orderRes = await pool.query('SELECT * FROM pedidos_tienda WHERE id = $1;', [orderId]);
@@ -456,19 +459,21 @@ exports.payOrder = async (req, res) => {
         error: `Método de pago inválido. Válidos: ${validPaymentMethods.join(', ')}` 
       });
     }
-    if (!acceptance_token || acceptance_token.trim().isEmpty) {
+    if (!acceptance_token || String(acceptance_token).trim().length === 0) {
       return res.status(400).json({ error: 'acceptance_token es obligatorio (Habeas Data).' });
     }
     
     const method = payment_method.toUpperCase();
     
-    // NEQUI requiere phone_number
-    if (method === 'NEQUI' && (!phone_number || phone_number.trim().isEmpty)) {
+    // NEQUI: o una fuente de pago (payment_source_id) o el telefono
+    if (method === 'NEQUI' && !payment_source_id
+        && (!phone_number || String(phone_number).trim().length === 0)) {
       return res.status(400).json({ error: 'phone_number es obligatorio para pagos Nequi.' });
     }
     
-    // CARD requiere payment_source_id (token de tarjeta)
-    if (method === 'CARD' && (!payment_source_id || payment_source_id.trim().isEmpty)) {
+    // CARD: o una fuente de pago o un token de POST /tokens/cards
+    if (method === 'CARD' && !payment_method_token
+        && (!payment_source_id || String(payment_source_id).trim().length === 0)) {
       return res.status(400).json({ error: 'payment_source_id es obligatorio para pagos con tarjeta (fuente tokenizada).' });
     }
     
@@ -486,7 +491,7 @@ exports.payOrder = async (req, res) => {
       if (!customer_data || !customer_data.email || !customer_data.full_name || !customer_data.phone_number) {
         return res.status(400).json({ error: 'customer_data (email, full_name, phone_number) es obligatorio para métodos de redirección.' });
       }
-      if (!customer_data.financial_institution_code) {
+      if (method === 'PSE' && !customer_data.financial_institution_code) {
         return res.status(400).json({ error: 'customer_data.financial_institution_code es obligatorio para métodos de redirección.' });
       }
     }
@@ -501,24 +506,47 @@ exports.payOrder = async (req, res) => {
     const externalId = 'wompi_order_' + orderId + '_' + Date.now();
 
     // Preparar datos para Wompi según el método
+    // Contrato de Wompi, identico al de payBooking (bookingController.js:84-96):
+    //  - NEQUI con fuente de pago -> payment_source_id
+    //  - NEQUI con telefono      -> payment_method = { type:'NEQUI', phone_number }
+    //  - CARD con fuente de pago -> payment_source_id
+    //  - CARD con token          -> payment_method = { type:'CARD', token, installments }
+    //  - PSE / transferencias    -> payment_method = <string del metodo> + customer_data + redirect_url
+    // Wompi exige EXACTAMENTE uno de payment_source_id o payment_method.
+    let paymentSourceId = null;
+    let paymentMethodPayload = null;
+
+    if (method === 'NEQUI') {
+      if (payment_source_id) paymentSourceId = payment_source_id;
+      else paymentMethodPayload = { type: 'NEQUI', phone_number };
+    } else if (method === 'CARD') {
+      if (payment_source_id) paymentSourceId = payment_source_id;
+      else paymentMethodPayload = {
+        type: 'CARD',
+        token: payment_method_token,
+        installments: installments || 1
+      };
+    } else if (redirectMethods.includes(method)) {
+      paymentMethodPayload = method;
+    }
+
     const wompiTransactionData = {
       amountInCents: Math.round(expectedAmount * 100),
       currency: 'COP',
       reference: externalId,
       customerEmail: req.user.email || 'cliente@glowapp.co',
       acceptanceToken: acceptance_token,
-      paymentSourceId: method === 'CARD' ? payment_source_id : null,
-      paymentMethod: ['NEQUI', 'CARD'].includes(method) ? method : null,
+      paymentSourceId,
       customerData: redirectMethods.includes(method) ? customer_data : null,
       redirectUrl: redirectMethods.includes(method) ? redirect_url : null,
       ip: req.ip || null,
       auth: 'private'
     };
-
-    // Para métodos de redirección, Wompi espera payment_method con el tipo específico
-    if (redirectMethods.includes(method)) {
-      wompiTransactionData.paymentMethod = method;
-      wompiTransactionData.paymentSourceId = null; // no se usa payment_source_id para redirección
+    if (paymentMethodPayload) {
+      wompiTransactionData.paymentMethod = paymentMethodPayload;
+    }
+    if (redirectMethods.includes(method) && !wompiTransactionData.customerEmail) {
+      wompiTransactionData.customerEmail = customer_data.email;
     }
 
     const wompiClient = require('../services/wompiClient');
@@ -530,16 +558,24 @@ exports.payOrder = async (req, res) => {
          (booking_id, client_id, provider_id, amount, monto_total, comision_plataforma,
           monto_neto_prestador, impuestos_retencion, status, payment_method, external_id,
           pasarela_pago, referencia_pasarela, estado_pago, liberado_al_prestador)
-       VALUES (NULL, $1, NULL, $2, $2, 0, $2, 0, 'pending', $3, $4, 'wompi', $4, 'pending', false)
+       VALUES (NULL, $1, NULL, $2, $2, 0, $2, 0, 'pending', $3, $4, 'wompi', $5, 'pending', false)
        RETURNING *;`,
-      [userId, expectedAmount, method, externalId]
+      // external_id = id de la transaccion en WOMPI: storeWebhook busca por `data.id`
+      // (`orderController.js` storeWebhook: SELECT ... WHERE external_id = $1). Guardar
+      // aqui la referencia dejaba el pedido sin poder cerrarse NUNCA.
+      [userId, expectedAmount, method, wompiTx.id, externalId]
     );
     const transaction = transactionRes.rows[0];
 
-    // Actualizar pedido a PENDIENTE_PAGO (ya lo está) y guardar external_id de la transacción
+    // El webhook localiza el pedido con `metadata->>'wompi_external_id' = <data.id de Wompi>`,
+    // asi que ahi va el id de la transaccion; la referencia se guarda aparte para trazabilidad.
     await pool.query(
-      `UPDATE pedidos_tienda SET metadata = jsonb_set(COALESCE(metadata, '{}'::jsonb), '{wompi_external_id}', to_jsonb($2)) WHERE id = $1;`,
-      [orderId, externalId]
+      `UPDATE pedidos_tienda
+          SET metadata = jsonb_set(
+                jsonb_set(COALESCE(metadata, '{}'::jsonb), '{wompi_external_id}', to_jsonb($2)),
+                '{wompi_reference}', to_jsonb($3))
+        WHERE id = $1;`,
+      [orderId, wompiTx.id, externalId]
     );
 
     // Responder 202: la transacción se inició, el webhook confirma
@@ -561,7 +597,20 @@ exports.payOrder = async (req, res) => {
 
   } catch (error) {
     console.error('❌ ERROR EN POST /api/store/orders/:id/pay:', error);
-    res.status(500).json({ error: 'Error al iniciar el pago del pedido' });
+    // Mismo mapeo que payBooking: un 4xx de Wompi no es culpa del servidor (402)
+    // y una caida de red tampoco (502). El 500 se reserva para fallos propios.
+    const detalle = error?.body?.error?.messages || error?.message || 'error desconocido';
+    const esRed = ['ECONNRESET', 'ETIMEDOUT', 'ENOTFOUND'].includes(error?.cause?.code)
+      || ['ECONNRESET', 'ETIMEDOUT', 'ENOTFOUND'].includes(error?.code);
+    const status = esRed ? 502
+      : (error?.status && error.status >= 400 && error.status < 500 ? 402 : 500);
+    res.status(status).json({
+      error: status === 402 ? 'WOMPI_TRANSACTION_FAILED' : 'Error al iniciar el pago del pedido',
+      message: status === 402
+        ? 'Wompi rechazo la creacion de la transaccion. No se realizo ningun cobro.'
+        : 'Error al iniciar el pago del pedido',
+      detalle
+    });
   }
 };
 
