@@ -871,6 +871,39 @@ Tras cerrar el circuito con una transacción aprobada, la captura del intento re
 Cubierto por `tests/storeOrderDetail.contract.test.js` (3) y `tests/shippingService.test.js`
 (8, probados por mutación). Suite: 164/164, 1281 passed.
 
+### F11. El checkout se quedaba colgado en «Procesando tu pago seguro…» — RESUELTO (2026-10-17)
+
+Síntoma: spinner eterno, pedido creado en `PENDIENTE_PAGO` y **ninguna transacción** en
+`transactions` (el intento nunca llegaba a Wompi). Reproducido con el pedido `e4c178d8`
+(08:00 UTC).
+
+Causa raíz: `GET /api/store/checkout` devuelve `order.total` como **String** (`"27350.00"`,
+porque Postgres devuelve `numeric` así) y `store_screen` hacía `as num?` sobre ese valor →
+`TypeError` → el `await` no continuaba y el diálogo no se cerraba. El pedido ya estaba creado,
+así que quedaba en el limbo y consumiendo stock.
+
+Arreglo: `lib/utils/json_num.dart` (`toDoubleOrNull`/`toDoubleOr`) y su uso en `store_screen`
+(además del `try/catch` al abrir la pasarela: si falla, se cierra el diálogo y se avisa).
+El mismo cast se sustituyó en `client_bookings_screen` y `disputes_list_screen`.
+Tests: `test/utils/json_num_test.dart` (5). `flutter analyze`: 90 avisos (línea base).
+
+### F12. `listas_precios.cliente.incluye_iva` estaba mal — corregido en DATOS (2026-10-17)
+
+Contradicción detectada al revisar los importes: la lista `cliente` tenía
+`incluye_iva = true` (precios brutos) pero **todos** los precios de la vitrina se generan
+como lista × 1,19 (21.599 = 18.150×1,19; 64.796 = 54.450×1,19; 50.397 = 42.350×1,19) y el
+checkout, antes de B1, también sumaba 19 %.
+
+Consecuencia: el arreglo B1 (respetar el flag) dejó la tienda **cobrando 19 % de menos**
+(hasta 6.437 por unidad del Jabón). Corregido `UPDATE listas_precios SET incluye_iva = false
+WHERE codigo = 'cliente'`, lo que restaura el precio que la vitrina muestra:
+Aceite 21.598,50 · Jabón 40.317,20. Verificado creando un pedido real (18.150 + 3.448,50 +
+9.200 = 30.798,50) y cancelándolo después.
+
+**Regla:** `incluye_iva` es la única fuente de verdad del IVA por lista. Si mañana se quieren
+precios brutos en la lista `cliente`, se marca `true` y **se quita el ×1,19** de
+`store_product_card.dart:202`, `product_quick_dialog.dart:250` y `store_screen.dart:233`.
+
 ### F10. Auditoría externa del checkout (2026-10-17) — qué se arregló y qué queda
 
 Una auditoría independiente sobre `64d8bec` confirmó 11 hallazgos (A1–A11). Ejecutado:
