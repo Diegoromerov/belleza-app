@@ -737,6 +737,22 @@ sandbox en el servicio de producción hay que definir además `WOMPI_BASE_URL=ht
 efecto de que los pedidos "pagados" serían de prueba — o esperar las llaves `pub_prod_` del dashboard. Mientras
 tanto la tienda **toma pedidos que no puede cobrar**: 14 pedidos, todos en `PENDIENTE_PAGO`.
 
+### F5. Deriva de migraciones en producción: 056, 058 y 068 — ABIERTO (2026-10-17)
+
+El arranque del backend lo reporta en cada despliegue:
+
+```
+⚠️ Deriva de migración: 058_enable_rls_policies.sql cambió después de aplicarse (5cb56386ca7a8fb3 → c0b43346ec89f915)
+⚠️ Deriva de migración: 056_add_tenant_id_to_core_tables.sql cambió después de aplicarse (a2238fa4010f0b0b → cf44b160cd776072)
+⚠️ Deriva de migración: 068_force_rls_strict_isolation.sql cambió después de aplicarse (8153d2d27c3e1fa0 → 097783117f40b4d3)
+```
+
+Son **las tres migraciones del aislamiento multi-inquilino** (056 añade `tenant_id`, 058 activa políticas, 068 fuerza RLS
+estricto). El runner las detecta por checksum y **no las re-aplica**, así que la base tiene una versión que ya no existe
+en el repo. Esto es material para R1: explica por qué un test puede pasar en local y fallar en CI/producción, y por qué
+`pedidos_tienda.tenant_id` acabó NOT NULL sin que el código lo supiera (F2). **No se toca aquí**: hay que decidir si se
+regulariza el checksum o se escribe una migración de reconciliación con el estado realmente aplicado.
+
 ### Nota operativa: `railway variables` volcó credenciales en la sesión
 
 Durante este diagnóstico, `railway variables --service belleza-app --kv` imprimió valores en claro
