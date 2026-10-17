@@ -671,3 +671,54 @@ pasa a ser perezoso (`??=`). **Lección:** una guarda en un método no protege s
   llega al navegador) pero necesita el ID real, que tampoco está en el repositorio.
 - **`google_sign_in`:** el plugin usa `signIn()` en web, deprecado; de ahí los avisos
   `Cross-Origin-Opener-Policy`.
+
+### F2. El checkout no declaraba `tenant_id`: 500 en TODA la tienda — **RESUELTO** (2026-10-17)
+
+**Síntoma:** `Error creando pedido: Exception: 500 Error al procesar el checkout` en la UI, con el carrito
+lleno. El log del servidor lo decía sin ambigüedad:
+
+```
+❌ ERROR EN CHECKOUT DE TIENDA: error: null value in column "tenant_id"
+   of relation "pedidos_tienda" violates not-null constraint
+```
+
+**Cadena causal (verificada archivo:línea):** `065_multi_tenant_hardening.sql:52` define
+`app_current_tenant_id()` como `current_setting('app.tenant_id')` → NULL sin contexto de sesión;
+`068_force_rls_strict_isolation.sql:103` hace que `app_assign_tenant_id()` copie **eso** → NULL;
+`071_glowshop_niveles_a0.sql:236-268` deja `pedidos_tienda.tenant_id` y `detalles_pedido_tienda.tenant_id`
+en **NOT NULL** con ese trigger; y `createOrder` **nunca declaraba `tenant_id`**. Las rutas `/store/*` sólo
+llevan `authMiddleware`, sin `tenantContext`. Es **R1 cobrándose una víctima concreta**: no es teoría, es
+una caída de producción. La cabecera de 065 ya lo pedía: *«el 100% de los INSERT declaran tenant_id»*.
+
+**Arreglo (commit `0a9f287e`):** el tenant se resuelve del **comprador** — la misma regla del relleno de 071
+(`pedidos_tienda.tenant_id = usuarios.tenant_id`) — con caída al tenant de plataforma que 071 define. Se
+declara `tenant_id` en **los dos** inserts y, sin tenant resoluble, responde 409 con mensaje propio.
+
+**Comprobado contra la base real** (sólo lectura): `tenant_id` es NOT NULL en ambas tablas,
+`app_platform_tenant_id()` = 4, y el trigger `trg_assign_tenant_id` está presente. **Y el dato que justificó
+la caída:** `usuarios.tenant_id IS NULL` → **3 compradores**; sin ella esos 3 seguirían sin poder pagar.
+
+**Línea base para verificar el arreglo:** `pedidos_tienda` = 11 filas, la última del **2026-08-19**. Un
+checkout correcto debe producir la fila 12 con `tenant_id` no nulo.
+
+**Pendiente derivado:** decidir si a esos **3 usuarios sin `tenant_id`** se les asigna uno propio (encaja en
+la decisión de cableado de R1: son los que caen al tenant de plataforma). Y `065` decía que 87 de 89 INSERT
+no declaraban `tenant_id`: las otras tablas de 071 (`booking_productos`, `scan_product_matches`,
+`inventario_consignacion_prestador`) **no tienen ningún INSERT en `src/`**, así que hoy no hay otro camino
+caído por esta causa conocida — pero conviene auditar el resto.
+
+### F3. El frontend lee `API_URL`, pero el servicio define `API_BASE_URL` — ABIERTO (2026-10-17)
+
+`frontend/lib/services/api_service.dart:30` hace `String.fromEnvironment('API_URL')`, mientras el servicio
+`glowapp-frontend` de Railway define **`API_BASE_URL`**. La variable se ignora en silencio y la app cae en
+`stagingUrl`, la constante fija `https://belleza-app-production.up.railway.app` (línea 17). Hoy apunta al
+sitio correcto **por casualidad**: cambiar la variable de Railway no hace nada y apuntar el frontend a otro
+backend requiere tocar código.
+
+### Nota operativa: `railway variables` volcó credenciales en la sesión
+
+Durante este diagnóstico, `railway variables --service belleza-app --kv` imprimió valores en claro
+(`DATABASE_URL`, `PGPASSWORD`, y antes `GEMINI_API_KEY`, `JWT_SECRET`, `ENCRYPTION_KEY` de
+`.env.production.txt`). El archivo **no está versionado** (`.gitignore:7` → `.env.*`), así que **no hay fuga
+en el repo**; el riesgo es el historial de la sesión. **No volver a invocar `railway variables` sin filtrar
+por nombre** y rotar los valores expuestos.
