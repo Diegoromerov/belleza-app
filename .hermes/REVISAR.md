@@ -812,6 +812,13 @@ el pedido se queda en `PENDIENTE_PAGO` para siempre (hoy hay 14 así).
 **Verificado:** 12/12 y 28/28 en los archivos tocados; suite completa y `flutter analyze lib` sin cambios
 respecto de la línea base.
 
+**Defecto 10 (encontrado probando el endpoint desplegado, no leyendo el código):** `storeWebhook` leía el tipo
+de evento como `event.event.type`, pero Wompi manda `"event": "transaction.updated"` como **string**
+(docs.wompi.co → Eventos → Cuerpo de un evento). `eventType` quedaba `undefined` y el handler respondía **400 a
+todo evento real**: Wompi reintentaba 3 veces (30 min, 3 h, 24 h) y el pedido no se cerraba nunca. Corregido en
+`orderController.js` (acepta string y, por compatibilidad, `{type}`) y fijado en
+`tests/storeWebhook.contract.test.js` (6 casos, comprobado por mutación: el parseo viejo rompe 3).
+
 ### F7. `storeWebhook` usa `pool.query('BEGIN'/'COMMIT')` — ABIERTO (2026-10-17)
 
 `orderController.storeWebhook` abre la transacción con `pool.query('BEGIN')` y la cierra con `pool.query('COMMIT')`

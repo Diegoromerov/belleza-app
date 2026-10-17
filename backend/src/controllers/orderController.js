@@ -622,7 +622,13 @@ exports.storeWebhook = async (req, res) => {
     }
 
     const event = req.body;
-    const eventType = event?.event?.type || event?.type;
+    // Wompi manda `event` como STRING ("transaction.updated"), no como objeto
+    // (docs.wompi.co -> Eventos -> Cuerpo de un evento). Leer `event.event.type`
+    // daba undefined y este handler respondia 400 a TODO evento real: Wompi
+    // reintentaba 3 veces y el pedido no se cerraba nunca.
+    const eventType = typeof event?.event === 'string'
+      ? event.event
+      : (event?.event?.type || event?.type);
     const data = event?.data?.transaction || event?.data || event;
 
     if (!eventType || !data) {
