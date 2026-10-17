@@ -200,6 +200,37 @@ exports.createOrder = async (req, res) => {
     const iva = subtotal * 0.19; // 19% IVA
     const total = subtotal + iva + costoEnvio;
 
+    // ---------------------------------------------------------------------
+    // tenant_id del pedido (migracion 071)
+    //
+    // `pedidos_tienda.tenant_id` y `detalles_pedido_tienda.tenant_id` son NOT
+    // NULL desde 071 (lineas 236-268). Existe el trigger `trg_assign_tenant_id`,
+    // pero solo copia `app.tenant_id` -- el contexto de sesion -- que estas rutas
+    // no fijan: llegaba NULL y TODO checkout caia con 500 "null value in column
+    // tenant_id of relation pedidos_tienda violates not-null constraint".
+    //
+    // La cabecera de 065 lo pide explicitamente: "el 100% de los INSERT declaran
+    // tenant_id". Se toma del COMPRADOR, que es la MISMA regla del relleno de 071
+    // (pedidos_tienda.tenant_id = usuarios.tenant_id, lineas 243-246). Un usuario
+    // recien registrado puede tener el suyo NULL (056 lo creo nullable y el trigger
+    // de 068 tampoco lo rellena sin contexto), asi que se cae al tenant de
+    // plataforma que define 071 (app_platform_tenant_id).
+    const tenantRes = await client.query(
+      `SELECT COALESCE(u.tenant_id, app_platform_tenant_id()) AS tenant_id
+         FROM usuarios u
+        WHERE u.id = $1`,
+      [compradorId]
+    );
+    const tenantId = tenantRes.rows[0] ? tenantRes.rows[0].tenant_id : null;
+
+    if (tenantId === null) {
+      // Sin tenant no se puede satisfacer el NOT NULL. Falla con nombre y codigo
+      // propio en vez del 500 generico que no decia nada.
+      const err = new Error('No se pudo determinar el tenant del comprador: usuarios.tenant_id y tenant de plataforma vacios');
+      err.statusCode = 409;
+      throw err;
+    }
+
     // El estado NO se escribe aquí: lo pone el DEFAULT del esquema, que ya es
     // el correcto ('PENDIENTE_PAGO' en
     // migrations/010_implement_glowstore_schema.sql:66). Antes se metía el
@@ -210,9 +241,9 @@ exports.createOrder = async (req, res) => {
     const orderInsertRes = await client.query(
       `INSERT INTO pedidos_tienda 
         (comprador_id, rol_comprador, booking_id, prestador_comisionado_id, comision_total_prestador, subtotal, envio, iva, total, nombre_entrega, direccion_entrega,
-         tipo_via, numero_principal, letra_principal, numero_secundario, letra_secundaria, complemento, barrio, ciudad, departamento, codigo_postal, referencia, direccion_entrega_id)
+         tipo_via, numero_principal, letra_principal, numero_secundario, letra_secundaria, complemento, barrio, ciudad, departamento, codigo_postal, referencia, direccion_entrega_id, tenant_id)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11,
-               $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
+               $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)
        RETURNING *;`,
       [
         compradorId,
@@ -237,7 +268,8 @@ exports.createOrder = async (req, res) => {
         departamento || null,
         codigo_postal || null,
         referencia || null,
-        direccion_entrega_id || null
+        direccion_entrega_id || null,
+        tenantId
       ]
     );
 
@@ -247,14 +279,15 @@ exports.createOrder = async (req, res) => {
     for (const pItem of processedItems) {
       await client.query(
         `INSERT INTO detalles_pedido_tienda 
-          (pedido_id, producto_id, cantidad, precio_unitario_pagado, comision_unitaria_prestador)
-         VALUES ($1, $2, $3, $4, $5);`,
+          (pedido_id, producto_id, cantidad, precio_unitario_pagado, comision_unitaria_prestador, tenant_id)
+         VALUES ($1, $2, $3, $4, $5, $6);`,
         [
           order.id,
           pItem.producto_id,
           pItem.cantidad,
           pItem.precio_unitario_pagado,
-          pItem.comision_unitaria_prestador
+          pItem.comision_unitaria_prestador,
+          tenantId
         ]
       );
     }
@@ -272,6 +305,9 @@ exports.createOrder = async (req, res) => {
   } catch (error) {
     await client.query('ROLLBACK');
     console.error('❌ ERROR EN CHECKOUT DE TIENDA:', error);
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({ error: error.message });
+    }
     res.status(500).json({ error: 'Error al procesar el checkout' });
   } finally {
     client.release();

@@ -77,6 +77,7 @@ describe('OrderController - createOrder (t_fix_pagos_01)', () => {
         }]
       })
       .mockResolvedValueOnce({ rows: [] }) // UPDATE stock
+      .mockResolvedValueOnce({ rows: [{ tenant_id: 7 }] }) // tenant del comprador (migracion 071)
       .mockResolvedValueOnce({ // order insert - should NOT include estado (uses DEFAULT PENDIENTE_PAGO)
         rows: [{
           id: 'order-123',
@@ -189,5 +190,83 @@ describe('OrderController - createOrder (t_fix_pagos_01)', () => {
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({ error: 'Un prestador no puede asociar compras a una reserva' })
     );
+  });
+
+  // ---------------------------------------------------------------------------
+  // tenant_id del checkout (regresion del 500 en produccion)
+  //
+  // Produccion devolvia: 500 "null value in column tenant_id of relation
+  // pedidos_tienda violates not-null constraint". El INSERT no declaraba
+  // tenant_id y el trigger de 071 solo lo copia de `app.tenant_id` (el contexto
+  // de sesion), que estas rutas no fijan. La cabecera de 065 pide que el 100% de
+  // los INSERT lo declaren. Ver migrations/071 lineas 236-268.
+  // ---------------------------------------------------------------------------
+
+  function encadenarHastaElInsert(tenantDelComprador) {
+    return mockClient.query
+      .mockResolvedValueOnce({ rows: [] })                                                    // BEGIN
+      .mockResolvedValueOnce({ rows: [{ id: validBookingId, provider_id: 2, client_id: 1 }] }) // reserva
+      .mockResolvedValueOnce({ rows: [{ id: 1, nombre: 'P', stock: 10, precio: 50000 }] })     // producto
+      .mockResolvedValueOnce({ rows: [] })                                                    // UPDATE stock
+      .mockResolvedValueOnce({ rows: tenantDelComprador })                                    // tenant (071)
+      .mockResolvedValueOnce({ rows: [{ id: 'order-1', comprador_id: 1, subtotal: 100000 }] })  // INSERT pedido
+      .mockResolvedValueOnce({ rows: [] })                                                    // INSERT detalle
+      .mockResolvedValueOnce({ rows: [] });                                                   // COMMIT
+  }
+
+  const ultimoParametro = (llamada) => llamada[1][llamada[1].length - 1];
+
+  test('el INSERT del pedido declara tenant_id y le llega el valor del comprador', async () => {
+    encadenarHastaElInsert([{ tenant_id: 7 }]);
+    const res = createMockRes();
+
+    await createOrder(createMockReq(validUser, validBody), res);
+
+    const insert = mockClient.query.mock.calls.find(c => c[0].includes('INSERT INTO pedidos_tienda'));
+    expect(insert).toBeDefined();
+    expect(insert[0]).toContain('tenant_id');
+    expect(ultimoParametro(insert)).toBe(7);
+    expect(res.status).toHaveBeenCalledWith(201);
+  });
+
+  test('el INSERT de los detalles tambien declara tenant_id', async () => {
+    encadenarHastaElInsert([{ tenant_id: 7 }]);
+
+    await createOrder(createMockReq(validUser, validBody), createMockRes());
+
+    const detalle = mockClient.query.mock.calls.find(c => c[0].includes('INSERT INTO detalles_pedido_tienda'));
+    expect(detalle).toBeDefined();
+    expect(detalle[0]).toContain('tenant_id');
+    expect(ultimoParametro(detalle)).toBe(7);
+  });
+
+  test('el tenant sale del comprador con caida al tenant de plataforma', async () => {
+    encadenarHastaElInsert([{ tenant_id: 7 }]);
+
+    await createOrder(createMockReq(validUser, validBody), createMockRes());
+
+    const consulta = mockClient.query.mock.calls.find(c => c[0].includes('app_platform_tenant_id'));
+    expect(consulta).toBeDefined();
+    expect(consulta[0]).toMatch(/COALESCE/i);
+    expect(consulta[1]).toEqual([validUser.id]);
+  });
+
+  test('sin tenant resoluble falla 409 con mensaje propio, no un 500 opaco', async () => {
+    mockClient.query
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ id: validBookingId, provider_id: 2, client_id: 1 }] })
+      .mockResolvedValueOnce({ rows: [{ id: 1, nombre: 'P', stock: 10, precio: 50000 }] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ tenant_id: null }] }); // sin tenant en ninguna parte
+
+    const res = createMockRes();
+
+    await createOrder(createMockReq(validUser, validBody), res);
+
+    expect(res.status).toHaveBeenCalledWith(409);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ error: expect.stringContaining('tenant del comprador') })
+    );
+    expect(mockClient.query).toHaveBeenCalledWith('ROLLBACK');
   });
 });
