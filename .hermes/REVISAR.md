@@ -819,6 +819,15 @@ todo evento real**: Wompi reintentaba 3 veces (30 min, 3 h, 24 h) y el pedido no
 `orderController.js` (acepta string y, por compatibilidad, `{type}`) y fijado en
 `tests/storeWebhook.contract.test.js` (6 casos, comprobado por mutación: el parseo viejo rompe 3).
 
+**Defecto 11 (destapado al arreglar el 1):** `payOrder` insertaba en `transactions` con 15 columnas, pero en
+producción la tabla tenía **8** (`id`, `booking_id`, `amount`, `status`, `payment_method`, `external_id`,
+`created_en`, `tenant_id`) y `booking_id` era **NOT NULL**: una venta de tienda no cabía. Síntoma real:
+`error: column "client_id" of relation "transactions" does not exist` → 500 después de crear el pedido. Ninguna
+migración ni el modelo Sequelize (`src/models/Transaction.js`) declaraban esas columnas: el INSERT se escribió
+contra un esquema imaginario. Corregido con `migrations/095_extend_transactions_for_store_orders.sql` (aditiva e
+idempotente: 10 columnas + `booking_id` nullable + índice por `external_id`). Validada contra producción dentro de
+una transacción y revertida (8 → 18 → 8 columnas).
+
 ### F7. `storeWebhook` usa `pool.query('BEGIN'/'COMMIT')` — ABIERTO (2026-10-17)
 
 `orderController.storeWebhook` abre la transacción con `pool.query('BEGIN')` y la cierra con `pool.query('COMMIT')`
