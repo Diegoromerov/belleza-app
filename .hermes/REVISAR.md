@@ -589,5 +589,77 @@ expone sólo este fallo.
   inquilino (authMiddleware)») está **abierto** sobre esta misma área, con su CI también en rojo.
   **No conviene tocarlo desde otro frente:** el arreglo ya está validado en R1-bis y lo que falta es
   una decisión de cableado, no código.
-- **⚠️ Consecuencia operativa:** con la compuerta en rojo, **ningún push a `main` despliega**. La
-  producción no se está actualizando; los 16 commits de este bloque están en `main` pero no en EKS.
+- **⚠️ Consecuencia operativa (corregida el 2026-10-16):** con la compuerta en rojo **no despliega el
+  backend** — `Backend Tests & Lint` precede al despliegue a EKS, así que los commits de este bloque
+  están en `main` pero no en EKS. **Pero el frontend sí:** el servicio `glowapp-frontend` de Railway
+  despliega en cada push a `main` sin mirar esta compuerta, y hay evidencia directa: el `main.dart.js`
+  servido en producción contiene los marcadores `YOUR_*` de `lib/firebase_options.dart`, un archivo
+  que **introdujo este bloque de commits** (no existe en `13b45332a`). El bloque llegó a producción
+  por la vía web aunque el pipeline esté rojo. Importa antes de empujar.
+
+---
+
+## Push web (FCM) — auditoría 2026-10-16
+
+### F1. La web desplegada inicializa Firebase con la plantilla del CLI — CÓDIGO RESUELTO, faltan variables (2026-10-16)
+
+**Síntoma** (consola del navegador en `glowapp-frontend-production.up.railway.app`):
+
+```
+❌ Error obteniendo/registrando FCM token: [firebase_messaging/failed-service-worker-registration]
+   Failed to register a ServiceWorker for scope (.../firebase-cloud-messaging-push-scope)
+   with script (.../firebase-messaging-sw.js): The script has an unsupported MIME type ('text/html')
+✅ FCM Service inicializado          <-- mentira: se imprime aunque el token falle
+```
+
+**Diagnóstico verificado contra producción** (comprobado, no inferido):
+
+| Comprobación | Resultado |
+|---|---|
+| `curl -I .../firebase-messaging-sw.js` | `200` con `content-type: text/html` → **es el `index.html` del SPA**: el archivo no existe |
+| `frontend/web/` | no contiene ningún `firebase-messaging-sw*` |
+| `main.dart.js` desplegado | `YOUR_WEB_API_KEY`, `YOUR_PROJECT_ID`×3, `YOUR_MESSAGING_SENDER_ID`, `YOUR_WEB_APP_ID`; **0** claves `AIza` reales |
+| `lib/firebase_options.dart` | 27 marcadores de la plantilla del FlutterFire CLI, sin rellenar |
+| Variables del servicio `glowapp-frontend` | sólo `API_BASE_URL` y `GOOGLE_MAPS_API_KEY`; **ninguna** de Firebase |
+
+**Causa raíz:** el build no inyectaba configuración. `lib/main.dart` llamaba a
+`Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform)` con la plantilla tal cual y
+**sin guarda**: la app se desplegaba inicializando Firebase con un `apiKey` inválido en silencio, y el
+único síntoma aparecía dos pasos después, como un error de service worker.
+
+> El `✅ FCM Service inicializado` no es un problema de orden: se imprime **después** de
+> `_registerToken()`, pero ese método **se tragaba su propia excepción**, así que el flujo continuaba
+> como si hubiera funcionado.
+
+**Arreglo (commit `2e80cd9a4`):** la configuración entra por `--dart-define`;
+`estaConfigurado`/`faltantes` hacen **detectable** un build sin configurar; `main.dart` no inicializa
+con valores falsos; `fcm_service` sale temprano si falta configuración, exige `FCM_VAPID_KEY` en web
+(antes pasaba `null` y el fallo salía opaco) y deja de imprimir el éxito cuando el token no se
+registró; `tool/generate_firebase_sw.dart` genera el service worker **durante** el build (es JS plano:
+no puede leer `--dart-define`); los dos Dockerfile declaran los `ARG` y pasan las dart-defines.
+
+**Verificado con build real** (`flutter build web --release` con dart-defines de prueba): **0**
+apariciones de `YOUR_` en el bundle, los valores inyectados llegan a `main.dart.js`,
+`build/web/firebase-messaging-sw.js` con `node --check` válido, `flutter analyze lib` **0 errores**,
+**5/5** en `test/firebase_options_test.dart`.
+
+**PENDIENTE — sólo se cierra con la consola de Firebase y Railway.** Quedan dos valores que **no** se
+pueden deducir del repositorio: de `frontend/android/app/google-services.json` salen el proyecto
+(`belleza-app-6605f`), el sender (`501450148142`) y un api key, pero **no** salen el **appId web** ni
+la **VAPID key**. Hay que definirlos en el servicio `glowapp-frontend`:
+
+`FIREBASE_API_KEY` · `FIREBASE_PROJECT_ID` · `FIREBASE_MESSAGING_SENDER_ID` · `FIREBASE_WEB_APP_ID` · `FCM_VAPID_KEY`
+
+Sin ellas el build sigue funcionando, pero el push queda **deshabilitado y avisado en consola** en vez
+de roto en silencio. Nada de esto se versiona: `verifyNoVersionedSecrets.js` (basada en `git grep`)
+rechaza claves `AIza...` en archivos trackeados — de hecho `google-services.json` **ya** es rechazado
+por esa compuerta, y por eso no está en el repositorio.
+
+**No confundir con dos hallazgos vecinos que quedan ABIERTOS:**
+
+- **Meta Pixel:** `web/index.html` llama a `fbq('init','GLOWAPP_PIXEL_ID')` y el navegador responde
+  `Invalid PixelID: a non-numeric string`. Es **preexistente** (desde `526faaf5d`, 2026-09-22), no de
+  este bloque, y **no se tocó**: es la misma clase de defecto (marcador literal en el artefacto que
+  llega al navegador) pero necesita el ID real, que tampoco está en el repositorio.
+- **`google_sign_in`:** el plugin usa `signIn()` en web, deprecado; de ahí los avisos
+  `Cross-Origin-Opener-Policy`.
