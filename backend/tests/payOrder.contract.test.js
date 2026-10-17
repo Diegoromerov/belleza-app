@@ -276,3 +276,43 @@ describe('payOrder — contrato con Wompi', () => {
     expect(wompiClient.createTransaction).not.toHaveBeenCalled();
   });
 });
+
+describe('payOrder — un pedido no se cobra dos veces', () => {
+  test('con una transaccion pendiente reciente responde 409 y NO llama a Wompi', async () => {
+    pool.query.mockImplementation((sql) => {
+      if (/SELECT \* FROM pedidos_tienda WHERE id = \$1/i.test(sql)) {
+        return Promise.resolve({ rows: [ordenPendiente] });
+      }
+      if (/starts_with\(referencia_pasarela/i.test(sql)) {
+        return Promise.resolve({ rows: [{ id: 'tx-en-curso' }] });
+      }
+      return Promise.resolve({ rows: [] });
+    });
+
+    const res = resMock();
+    await orderController.payOrder(
+      reqPago({ payment_method: 'NEQUI', phone_number: '3991111111', acceptance_token: 'acc' }),
+      res
+    );
+
+    expect(res.status).toHaveBeenCalledWith(409);
+    expect(wompiClient.createTransaction).not.toHaveBeenCalled();
+  });
+
+  test('la guarda mira estado pendiente, la referencia del pedido y una ventana de 15 min', async () => {
+    const res = resMock();
+    await orderController.payOrder(
+      reqPago({ payment_method: 'NEQUI', phone_number: '3991111111', acceptance_token: 'acc' }),
+      res
+    );
+
+    const q = pool.query.mock.calls.find(([sql]) => /starts_with\(referencia_pasarela/i.test(sql));
+    expect(q).toBeDefined();
+    expect(q[0]).toMatch(/status = 'pending'/);
+    expect(q[0]).toMatch(/INTERVAL '15 minutes'/);
+    expect(q[1]).toEqual([ORDER_ID]);
+    // sin pendientes: el pago sigue su curso normal
+    expect(wompiClient.createTransaction).toHaveBeenCalledTimes(1);
+    expect(res.status).toHaveBeenCalledWith(202);
+  });
+});

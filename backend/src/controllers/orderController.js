@@ -2,6 +2,10 @@ const { pool } = require('../config/db');
 const { resolverPrecio } = require('../services/precioService');
 const wompiClient = require('../services/wompiClient');
 const { discriminarIva } = require('../utils/iva');
+
+// Tarifa general de IVA. `listas_precios.incluye_iva` decide si el precio de la
+// lista ya la contiene (lista `cliente`) o si hay que sumarla (negocio/profesional).
+const TARIFA_IVA = 0.19;
 const dianInvoiceClient = require('../services/dianInvoiceClient');
 const { cotizarEnvio } = require('../services/shippingService');
 
@@ -85,7 +89,13 @@ exports.createOrder = async (req, res) => {
       tieneDescuentoReserva = true;
     }
 
-    let subtotal = 0;
+    // Base neta e IVA en CENTAVOS. El precio de lista puede venir CON IVA
+    // (listas_precios.incluye_iva; la lista `cliente` lo incluye). Sumarle 19 % a un
+    // precio que ya lo trae cobraba de mas sobre el precio exhibido (33.880 ->
+    // 40.317) y descuadraba la factura, que siempre asumio base + impuesto + envio
+    // = total (generarFacturaDianPedido).
+    let subtotalBaseCent = 0;
+    let ivaCent = 0;
     let comisionTotal = 0;
     const processedItems = [];
 
@@ -150,7 +160,17 @@ exports.createOrder = async (req, res) => {
         [cantidad, producto_id]
       );
 
-      subtotal += precioUnitario * cantidad;
+      // Desglose por linea: si la lista incluye IVA, el precio es el final al
+      // consumidor y el impuesto se discrimina; si no, se suma sobre la base.
+      const totalLineaCent = Math.round(precioUnitario * cantidad * 100);
+      if (resPrecio.incluye_iva === true) {
+        const { subtotalBase, ivaValor } = discriminarIva(totalLineaCent / 100, TARIFA_IVA);
+        subtotalBaseCent += Math.round(subtotalBase * 100);
+        ivaCent += Math.round(ivaValor * 100);
+      } else {
+        subtotalBaseCent += totalLineaCent;
+        ivaCent += Math.round(totalLineaCent * TARIFA_IVA);
+      }
       comisionTotal += comisionUnitaria * cantidad;
 
       processedItems.push({
@@ -161,6 +181,13 @@ exports.createOrder = async (req, res) => {
         nombre: product.nombre
       });
     }
+
+    // Base neta e IVA del carrito. Se calculan ANTES de cotizar el envio porque el
+    // umbral de envio gratis se mide contra lo que el cliente paga por los
+    // productos (base + IVA), no contra la base neta.
+    const subtotal = subtotalBaseCent / 100;
+    const iva = ivaCent / 100;
+    const totalProductos = subtotal + iva;
 
     // Calcular envío e IVA usando el motor de cotización por zonas (L5)
     // Si tiene descuento por reserva (entrega en cita), envío gratis
@@ -182,7 +209,7 @@ exports.createOrder = async (req, res) => {
             departamento,
             codigo_postal,
             peso_total_kg: pesoEstimadoKg,
-            valor_pedido: subtotal
+            valor_pedido: totalProductos
           });
           costoEnvio = cotizacion.costo;
           transportadoraSugerida = cotizacion.transportadora;
@@ -197,8 +224,7 @@ exports.createOrder = async (req, res) => {
       }
     }
 
-    const iva = subtotal * 0.19; // 19% IVA
-    const total = subtotal + iva + costoEnvio;
+    const total = totalProductos + costoEnvio;
 
     // ---------------------------------------------------------------------
     // tenant_id del pedido (migracion 071)
@@ -464,6 +490,26 @@ exports.payOrder = async (req, res) => {
       return res.status(400).json({ error: `El pedido ya está en estado ${order.estado}` });
     }
 
+    // Un pedido no se cobra dos veces. Si ya hay una transaccion pendiente de este
+    // pedido (doble clic, reintento con red lenta), se rechaza aqui en vez de crear
+    // una segunda transaccion en Wompi: el cliente podia acabar con dos cobros, y el
+    // metadata (que guarda un solo external_id) dejaba el pedido sin cerrar.
+    // La ventana de 15 min evita que un intento abandonado bloquee el pedido.
+    const pendienteRes = await pool.query(
+      `SELECT id FROM transactions
+        WHERE starts_with(referencia_pasarela, 'wompi_order_' || $1::text || '_')
+          AND status = 'pending'
+          AND created_en > NOW() - INTERVAL '15 minutes'
+        LIMIT 1;`,
+      [orderId]
+    );
+    if (pendienteRes.rows.length > 0) {
+      return res.status(409).json({
+        error: 'Ya hay un pago en curso para este pedido: espera la confirmación antes de reintentar.',
+        data: { transaction_id: pendienteRes.rows[0].id }
+      });
+    }
+
     // Validar instrumento de pago
     const validPaymentMethods = [
       'NEQUI', 'CARD', 'PSE', 'BANCOLOMBIA_TRANSFER', 'DAVIPLATA',
@@ -660,6 +706,7 @@ exports.storeWebhook = async (req, res) => {
     }
 
     const externalId = data.id || data.external_id;
+    const reference = data.reference || null;
     const status = data.status;
     const amount = data.amount_in_cents ? data.amount_in_cents / 100 : data.amount;
 
@@ -668,72 +715,121 @@ exports.storeWebhook = async (req, res) => {
       return res.json({ success: true });
     }
 
-    // Buscar transacción
-    const txRes = await pool.query('SELECT * FROM transactions WHERE external_id = $1;', [externalId]);
-    if (txRes.rows.length === 0) {
-      console.warn(`⚠️ Transacción no encontrada para external_id ${externalId}`);
-      return res.json({ success: true });
-    }
-    const tx = txRes.rows[0];
+    // Todo el trabajo va en UNA conexion con BEGIN/COMMIT. Antes se hacia
+    // pool.query('BEGIN') sobre el POOL: cada query puede salir por una conexion
+    // distinta, asi que la transaccion no envolvia nada y un fallo a mitad dejaba
+    // la transaccion en 'paid' con el pedido sin cerrar (F7).
+    const client = await pool.connect();
+    let pedidoPagadoId = null;
+    try {
+      await client.query('BEGIN');
 
-    if (status === 'APPROVED') {
-      // Idempotencia
-      if (tx.status === 'paid') {
+      // FOR UPDATE: dos entregas concurrentes del mismo evento se serializan; la
+      // segunda ya ve el estado final y no repite trabajo (ni factura).
+      const txRes = await client.query(
+        'SELECT * FROM transactions WHERE external_id = $1 OR referencia_pasarela = $1 FOR UPDATE;',
+        [externalId]
+      );
+
+      if (txRes.rows.length === 0) {
+        await client.query('ROLLBACK');
+        console.warn(`⚠️ Transacción no encontrada para external_id ${externalId}`);
+        // Si la referencia es de un pedido NUESTRO, el cobro puede existir sin
+        // registro local: hay que pedirle a Wompi que reintente. Para el resto
+        // (eventos ajenos, sondas) un 200 evita 24 h de reintentos inutiles.
+        const esPedidoPropio = /^wompi_order_/.test(String(reference || ''));
+        if (esPedidoPropio) {
+          return res.status(500).json({ error: 'Transacción de pedido no registrada; reintentar' });
+        }
         return res.json({ success: true });
       }
 
-      await pool.query('BEGIN');
-      try {
-        // Verificar monto
-        if (parseFloat(amount) < parseFloat(tx.monto_total)) {
-          throw new Error(`Monto pagado (${amount}) menor al esperado (${tx.monto_total})`);
+      const tx = txRes.rows[0];
+
+      if (status === 'APPROVED') {
+        // Idempotencia: se evalua DENTRO de la transaccion y con la fila bloqueada.
+        if (tx.status === 'paid') {
+          await client.query('COMMIT');
+          return res.json({ success: true });
         }
 
-        // Marcar transacción pagada
-        await pool.query(
-          `UPDATE transactions SET status = 'paid', estado_pago = 'paid', monto_total = $2 WHERE id = $1;`,
-          [tx.id, amount]
+        // Monto: igualdad exacta en centavos y moneda COP. Antes bastaba con que
+        // fuera MAYOR al esperado, y ademas se sobrescribia monto_total con lo
+        // pagado, borrando el valor esperado del pedido.
+        const moneda = data.currency || tx.currency || 'COP';
+        if (moneda !== 'COP') {
+          throw new Error(`Moneda del pago (${moneda}) distinta de COP`);
+        }
+        if (Math.round(parseFloat(amount) * 100) !== Math.round(parseFloat(tx.monto_total) * 100)) {
+          throw new Error(`Monto pagado (${amount}) distinto al esperado (${tx.monto_total})`);
+        }
+
+        await client.query(
+          `UPDATE transactions SET status = 'paid', estado_pago = 'paid' WHERE id = $1;`,
+          [tx.id]
         );
 
-        // Buscar pedido asociado via external_id en metadata
-        const orderRes = await pool.query(
-          `SELECT * FROM pedidos_tienda WHERE metadata->>'wompi_external_id' = $1;`,
+        const orderRes = await client.query(
+          `SELECT * FROM pedidos_tienda WHERE metadata->>'wompi_external_id' = $1 FOR UPDATE;`,
           [externalId]
         );
-        if (orderRes.rows.length > 0) {
-          const order = orderRes.rows[0];
-          await pool.query(
-            `UPDATE pedidos_tienda SET estado = 'PAGADO' WHERE id = $1;`,
-            [order.id]
-          );
-          console.log(`✅ [STORE WEBHOOK] Pedido ${order.id} marcado PAGADO`);
+
+        // Dinero cobrado sin pedido: no se puede cerrar en silencio. Se revierte
+        // todo y se responde 500 para que Wompi reintente y quede la alerta.
+        if (orderRes.rows.length === 0) {
+          throw new Error(`Pago aprobado sin pedido asociado (external_id ${externalId}); requiere revisión`);
         }
 
-        await pool.query('COMMIT');
+        const order = orderRes.rows[0];
+        // Solo un pedido PENDIENTE_PAGO pasa a PAGADO. Si el admin lo cancelo
+        // mientras el pago viajaba, el cobro existe: se alerta para reembolso en
+        // vez de revivir un pedido cancelado.
+        const actualizado = await client.query(
+          `UPDATE pedidos_tienda SET estado = 'PAGADO' WHERE id = $1 AND estado = 'PENDIENTE_PAGO';`,
+          [order.id]
+        );
 
-          // 🔹 Generar factura electrónica DIAN para el pedido pagado
-          if (orderRes.rows.length > 0) {
-            const order = orderRes.rows[0];
-            try {
-              await generarFacturaDianPedido(order.id);
-            } catch (invoiceError) {
-              console.error(`❌ [DIAN INVOICE] Error generando factura para pedido ${order.id}:`, invoiceError.message);
-              // No falla el webhook: la factura se puede reintentar manualmente
-            }
-          }
-      } catch (err) {
-        await pool.query('ROLLBACK');
-        throw err;
+        if (actualizado.rowCount === 0) {
+          console.error(
+            `🚨 [STORE WEBHOOK] Pago APROBADO sobre pedido ${order.id} en estado ${order.estado}: NO se marco PAGADO. Reembolso manual requerido (external_id ${externalId}).`
+          );
+        } else {
+          pedidoPagadoId = order.id;
+        }
+
+        await client.query('COMMIT');
+        if (pedidoPagadoId) {
+          console.log(`✅ [STORE WEBHOOK] Pedido ${pedidoPagadoId} marcado PAGADO`);
+        }
+      } else if (['DECLINED', 'VOIDED', 'ERROR'].includes(status)) {
+        // Un evento fuera de orden no puede degradar un pago ya confirmado.
+        await client.query(
+          `UPDATE transactions SET status = 'failed', estado_pago = 'failed' WHERE id = $1 AND status <> 'paid';`,
+          [tx.id]
+        );
+        await client.query('COMMIT');
+        console.log(`⚠️ [STORE WEBHOOK] Transacción ${externalId} en ${status}`);
+      } else {
+        await client.query('COMMIT');
       }
-    } else if (['DECLINED', 'VOIDED', 'ERROR'].includes(status)) {
-      await pool.query(
-        `UPDATE transactions SET status = 'failed', estado_pago = 'failed' WHERE id = $1;`,
-        [tx.id]
-      );
-      console.log(`⚠️ [STORE WEBHOOK] Transacción ${externalId} en ${status}`);
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
     }
 
-    res.json({ success: true });
+    // La factura va FUERA de la transaccion: si falla, el cobro ya esta confirmado
+    // y la factura se puede reintentar sin deshacer el pago.
+    if (pedidoPagadoId) {
+      try {
+        await generarFacturaDianPedido(pedidoPagadoId);
+      } catch (invoiceError) {
+        console.error(`❌ [DIAN INVOICE] Error generando factura para pedido ${pedidoPagadoId}:`, invoiceError.message);
+      }
+    }
+
+    return res.json({ success: true });
   } catch (error) {
     console.error('❌ ERROR EN /api/payments/store-webhook:', error);
     res.status(500).json({ error: 'Error al procesar webhook' });

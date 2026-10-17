@@ -871,6 +871,34 @@ Tras cerrar el circuito con una transacción aprobada, la captura del intento re
 Cubierto por `tests/storeOrderDetail.contract.test.js` (3) y `tests/shippingService.test.js`
 (8, probados por mutación). Suite: 164/164, 1281 passed.
 
+### F10. Auditoría externa del checkout (2026-10-17) — qué se arregló y qué queda
+
+Una auditoría independiente sobre `64d8bec` confirmó 11 hallazgos (A1–A11). Ejecutado:
+
+- **B1 / A11 — sobrecargo del 19 % (RESUELTO).** `listas_precios.cliente` tiene
+  `incluye_iva = true` y `createOrder` sumaba 19 % igual: un carrito de 33.880 se cobraba
+  a 40.317. Ahora el IVA se discrimina por línea con `utils/iva` (estaba importada y sin
+  usar) y `pedidos_tienda.subtotal` es base neta, como ya asumía `generarFacturaDianPedido`.
+- **A6 / F7 (RESUELTO).** `storeWebhook` usa una conexión con BEGIN/COMMIT + `FOR UPDATE`.
+- **A3 (RESUELTO).** Pago aprobado sin pedido: revierte y responde 500 con alerta.
+- **A5 (RESUELTO).** `PAGADO` solo desde `PENDIENTE_PAGO`; un DECLINED tardío no degrada
+  una transacción pagada.
+- **A9 (RESUELTO).** Monto por igualdad en centavos; ya no reescribe `monto_total`.
+- **A2 (RESUELTO, sin migración).** `payOrder` responde 409 si hay una transacción
+  pendiente del mismo pedido en los últimos 15 min.
+- **A1 (PARCIAL).** El webhook busca por `external_id` O `referencia_pasarela` y responde
+  5xx si la referencia es de un pedido propio sin transacción local. **Falta** el orden:
+  hoy se cobra en Wompi (`:569`) y luego se inserta (`:572`); lo correcto es insertar
+  antes con la referencia y completar el id después (diseño ya validado, requiere rehacer
+  los tests de `payOrder`).
+
+Pendientes de la auditoría: **A4** (el stock se descuenta al crear y nunca se repone; no
+hay `liberarStock` ni cron de expiración de `pedidos_tienda`), **A7** (peso y ciudad vienen
+del body: `orderController:176`), **A8** (envío gratis con cualquier reserva propia),
+**A10** (`redirect_url.trim().isEmpty` en `orderController:504` y `bookingController:595`),
+y las líneas de factura DIAN usan `item.precio_unitario` cuando la columna es
+`precio_unitario_pagado` (`:797`) — no verificable hasta configurar DIAN.
+
 ### F8. La factura electrónica DIAN no se emite en ninguna venta — ABIERTO (2026-10-17)
 
 Al cerrarse el primer pago completo de tienda (pedido `5dc47fe3…`, E2E en sandbox), el log mostró:
