@@ -753,6 +753,37 @@ en el repo. Esto es material para R1: explica por qué un test puede pasar en lo
 `pedidos_tienda.tenant_id` acabó NOT NULL sin que el código lo supiera (F2). **No se toca aquí**: hay que decidir si se
 regulariza el checksum o se escribe una migración de reconciliación con el estado realmente aplicado.
 
+### F6. `payOrder`: NINGÚN método de pago puede completarse — ABIERTO (2026-10-17)
+
+Auditoría del camino completo del pago de tienda. El pedido ya se crea (F2) y la pasarela ya está configurada
+(F4), pero **pulsar «Pagar» falla con los cinco métodos que ofrece la hoja**. Evidencia:
+
+| # | Defecto | Evidencia |
+|---|---|---|
+| 1 | `payOrder` usa `redirect_url` y `customer_data` **sin declararlos** → `ReferenceError` → 500 | `orderController.js:430` (no los destructura) vs `:483, :486, :489, :512, :513`. `payBooking` sí los destructura (`bookingController.js:15`) |
+| 2 | Con tarjeta manda `payment_source_id` **y** `payment_method='CARD'` → el cliente lanza la exclusión mutua | `orderController.js:510-511` vs `wompiClient.js:331-333` |
+| 3 | Con Nequi manda `payment_method: 'NEQUI'` (string) en vez de `{ type:'NEQUI', phone_number }` | `orderController.js:511`; el contrato correcto está documentado en `bookingController.js:84-96` |
+| 4 | Exige `customer_data.financial_institution_code` a **todos** los métodos de redirección (Daviplata no lo usa) | `orderController.js:489-491` |
+| 5 | El frontend **no puede** enviar `redirect_url` ni `customer_data`: `ApiService.payOrder` no tiene esos parámetros | `api_service.dart:557-565`. (W10 los añadió a `payBooking`, no a `payOrder`) |
+| 6 | `payment_method_token` lo envía el frontend pero `payOrder` no lo lee (solo `payment_source_id`) | `api_service.dart:570` vs `orderController.js:430` |
+| 7 | `.trim().isEmpty` — idioma **Dart**, en JS `.isEmpty` es `undefined` → los guards nunca disparan | 6 sitios: `bookingController:55`, `orderController` ×3, `workforceController` |
+
+**Cierre del pedido (independiente de lo anterior).** Hay dos webhooks: `POST /api/payments/wompi-webhook`
+(solo reservas, `bookingRoutes.js:28`) y `POST /api/payments/store-webhook` (solo pedidos, `productRoutes.js:48`).
+Wompi entrega los eventos a **una sola URL** configurada en el dashboard, así que sólo uno de los dos puede
+confirmarse. Además el de reservas, ante una referencia `wompi_order_…`, cae en «Reserva no encontrada»
+(`bookingController.js:786`) y Wompi reintenta. No existe polling del estado para pedidos, así que sin ese webhook
+el pedido se queda en `PENDIENTE_PAGO` para siempre (hoy hay 14 así).
+
+**Plan propuesto (pendiente de aprobación):**
+1. `payOrder`: destructurar `redirect_url`/`customer_data`/`payment_method_token`; armar el `paymentMethod` con el
+   mismo contrato documentado de `payBooking`; exigir `financial_institution_code` sólo a PSE; `.isEmpty` → `.length === 0`.
+2. Unificar los webhooks en **un** endpoint que despache por prefijo de referencia (`wompi_order_` → tienda, resto →
+   reserva) y apuntar ahí la URL de eventos de Wompi. Es la única forma de que ambos caminos se confirmen.
+3. `api_service.payOrder` + la hoja: enviar `redirect_url` y `customer_data`; mostrar el estado de la transacción
+   mientras el usuario autoriza en su banco (polling contra el pedido) en vez de asumir éxito.
+4. Tests: los 5 métodos con el contrato esperado + webhook despachando ambos tipos.
+
 ### Nota operativa: `railway variables` volcó credenciales en la sesión
 
 Durante este diagnóstico, `railway variables --service belleza-app --kv` imprimió valores en claro
