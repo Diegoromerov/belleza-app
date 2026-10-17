@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../services/dispute_service.dart';
 import '../../shared/theme.dart';
 import 'open_dispute_screen.dart';
+import '../../utils/json_num.dart';
 
 class DisputesListScreen extends StatefulWidget {
   const DisputesListScreen({super.key});
@@ -141,7 +142,7 @@ class _DisputesListScreenState extends State<DisputesListScreen> {
                           final tipo = dispute['tipo']?.toString() ?? 'Falla de Servicio';
                           final estado = dispute['estado']?.toString() ?? 'ABIERTA';
                           final desc = dispute['descripcion']?.toString() ?? '';
-                          final monto = (dispute['monto_disputado'] as num?)?.toDouble() ?? 0.0;
+                          final monto = toDoubleOr(dispute['monto_disputado'], 0.0);
                           final resolucion = dispute['resolucion']?.toString();
                           final notaRes = dispute['nota_resolucion']?.toString() ?? '';
                           final servicio = dispute['servicio_nombre']?.toString() ?? 'Servicio';

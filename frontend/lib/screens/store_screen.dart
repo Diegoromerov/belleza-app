@@ -10,6 +10,7 @@ import 'package:shimmer/shimmer.dart';
 import '../widgets/store_product_card.dart';
 import '../widgets/product_quick_view_dialog.dart';
 import '../widgets/wompi_payment_sheet.dart';
+import '../utils/json_num.dart';
 import '../services/audience_service.dart';
 import '../shared/mens_theme.dart';
 import '../widgets/profile/colombian_address_builder.dart';
@@ -673,6 +674,10 @@ class _StoreScreenState extends State<StoreScreen> {
                                 }
 
                                 // 1. Crear el pedido primero (POST /api/store/checkout)
+                                // El messenger se captura ANTES del primer await: usarlo
+                                // despues es "BuildContext across async gaps", y si la
+                                // pasarela fallaba el dialogo se quedaba colgado sin aviso.
+                                final messenger = ScaffoldMessenger.of(context);
                                 setCheckoutState(() {
                                   processing = true;
                                 });
@@ -704,20 +709,45 @@ class _StoreScreenState extends State<StoreScreen> {
                                 // El importe que se cobra es el que calculo el SERVIDOR
                                 // (incluye envio e IVA). Usar el total del carrito hacia que
                                 // el modal mostrara 40.317 y el cobro fuera 55.717,20.
+                                // Los `numeric` de Postgres llegan como String
+                                // ("27350.00"): un `as num?` lanzaba TypeError, el await
+                                // no continuaba y "Procesando tu pago..." se quedaba
+                                // colgado sin abrir la pasarela.
                                 final totalServidor =
-                                    (orderResponse['data']?['order']?['total'] as num?)?.toDouble() ??
-                                        (orderResponse['order']?['total'] as num?)?.toDouble() ??
+                                    toDoubleOrNull(orderResponse['data']?['order']?['total']) ??
+                                        toDoubleOrNull(orderResponse['order']?['total']) ??
                                         total;
 
                                 // 2. Cobrar el pedido usando el orderId real
-                                final paymentResult = await showWompiCheckoutSheet(
-                                  context: context,
-                                  bookingId: orderId, // Ahora pasamos el orderId real
-                                  serviceName: 'Compra GlowShop (${_cart.length} productos)',
-                                  price: totalServidor,
-                                  providerName: 'GlowShop Oficial',
-                                  itemType: 'product',
-                                );
+                                // Si abrir la pasarela falla, se cierra el dialogo y se
+                                // avisa: antes cualquier excepcion dejaba el spinner y el
+                                // pedido creado sin forma de continuar.
+                                bool? paymentResult;
+                                try {
+                                  paymentResult = await showWompiCheckoutSheet(
+                                    context: context,
+                                    bookingId: orderId, // Ahora pasamos el orderId real
+                                    serviceName: 'Compra GlowShop (${_cart.length} productos)',
+                                    price: totalServidor,
+                                    providerName: 'GlowShop Oficial',
+                                    itemType: 'product',
+                                  );
+                                } catch (e) {
+                                  if (mounted) {
+                                    setCheckoutState(() {
+                                      processing = false;
+                                    });
+                                    messenger.showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'No se pudo abrir la pasarela de pago: $e. '
+                                          'El pedido quedó pendiente, no se te cobró nada.',
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                  return;
+                                }
 
                                 if (paymentResult == true) {
                                   // El webhook confirmará el pago y marcará el pedido como PAGADO
