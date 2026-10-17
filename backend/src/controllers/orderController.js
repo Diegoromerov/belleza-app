@@ -726,9 +726,13 @@ exports.storeWebhook = async (req, res) => {
 
       // FOR UPDATE: dos entregas concurrentes del mismo evento se serializan; la
       // segunda ya ve el estado final y no repite trabajo (ni factura).
+      // external_id guarda el id de Wompi; referencia_pasarela, la referencia
+      // (wompi_order_<pedido>_<ts>). Son valores DISTINTOS: el cobro puede estar
+      // registrado solo con la referencia si se inserto antes de crear la
+      // transaccion, y el evento trae ambos.
       const txRes = await client.query(
-        'SELECT * FROM transactions WHERE external_id = $1 OR referencia_pasarela = $1 FOR UPDATE;',
-        [externalId]
+        'SELECT * FROM transactions WHERE external_id = $1 OR referencia_pasarela = $2 FOR UPDATE;',
+        [externalId, reference]
       );
 
       if (txRes.rows.length === 0) {

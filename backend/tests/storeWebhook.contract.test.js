@@ -107,9 +107,11 @@ describe('storeWebhook — formato real de los eventos de Wompi', () => {
     expect(res.body).toEqual({ success: true });
     const select = llamadas(/SELECT \* FROM transactions/i);
     expect(select.length).toBe(1);
-    expect(select[0][1]).toEqual(['TX-1']);
-    // busca tambien por la referencia guardada (cobro registrado antes de tener id de Wompi)
-    expect(String(select[0][0])).toMatch(/referencia_pasarela/);
+    // Se busca por el id de Wompi Y por la referencia del pedido: el cobro puede
+    // estar registrado solo con la referencia si se inserto antes de crear la
+    // transaccion (son valores distintos, no el mismo parametro repetido).
+    expect(select[0][1]).toEqual(['TX-1', 'referencia_externa_1']);
+    expect(String(select[0][0])).toMatch(/referencia_pasarela = \$2/);
   });
 
   test('tolera tambien el objeto {type} (compatibilidad)', async () => {
