@@ -5,6 +5,8 @@ const profileService = require('./profile.service');
 const scanSessionService = require('./scanSession.service');
 const captureQuality = require('./captureQuality.service');
 const undertoneService = require('./undertone.service');
+const deltaService = require('./delta.service');
+const scanComparisonService = require('./scanComparison.service');
 const openUV = require('../openUV');
 const logger = require('../../config/logger');
 const { breakers } = require('../circuitBreakerService');
@@ -131,10 +133,57 @@ class BiometricOrchestrator {
       });
     }
 
+    // Y-F3: comparación contra el escaneo anterior del mismo usuario. Si es el primero,
+    // no hay baseline y se dice; no se fabrica una mejora del 100%.
+    let delta = null;
+    if (scanSession.persisted && scanSession.id) {
+      try {
+        const previous = await scanSessionService.getPrevious(parsedUserId, scanSession.id);
+        if (previous) {
+          const comparacion = deltaService.compareScans({
+            previous: previous.payload,
+            current: { metrics: faceScores.metrics, capturedAt: scanSession.capturedAt },
+            glowScoreBefore: this.calculateGlowScore(previous.payload?.legacy || {}),
+            glowScoreAfter: glowScore,
+          });
+
+          const saved = await scanComparisonService.save({
+            userId: parsedUserId,
+            baselineScanId: previous.id,
+            currentScanId: scanSession.id,
+            result: comparacion,
+          });
+
+          delta = {
+            ...comparacion,
+            baselineScanId: previous.id,
+            comparisonId: saved.id || null,
+            persisted: saved.persisted,
+          };
+        } else {
+          delta = {
+            verdict: 'SIN_BASELINE',
+            threshold: deltaService.DEFAULT_THRESHOLD,
+            compared: 0,
+            significant: 0,
+            notes: ['Primer escaneo con métricas completas: todavía no hay con qué comparar.'],
+          };
+        }
+      } catch (error) {
+        logger.warn('No se pudo calcular la comparación con el baseline', {
+          userId: parsedUserId,
+          scanSessionId: scanSession.id,
+          error: error.message,
+        });
+        delta = { verdict: 'NO_DISPONIBLE', notes: [error.message] };
+      }
+    }
+
     return {
       profileId: profile.id,
       scanSessionId: scanSession.id || null,
       metricsCount: scanSession.metricsCount,
+      delta,
       face: faceScores,
       glowScore,
       dermoFamilies,

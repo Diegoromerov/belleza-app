@@ -243,3 +243,17 @@ numeración se ejecutó después y siguió en verde.
 con `consent_version '1.0'` devuelve `consent_outdated = true`, otro sin versión deja
 `NULL`, y re-aplicarla no falla (`ADD COLUMN IF NOT EXISTS`). Pendiente: base real, en
 el siguiente arranque del runner.
+
+---
+
+## 4. Y-F3 usa `102`: comparaciones guardadas, no recalculadas
+
+**Archivo:** `102_create_biometric_scan_comparisons.sql`
+**Qué crea:** `biometric_scan_comparisons` — una fila por escaneo comparado, con el
+detalle cifrado, el veredicto y los contadores en claro. `UNIQUE (current_scan_id)`
+impide recalcular la misma comparación y `CHECK (baseline_scan_id <> current_scan_id)`
+impide que un escaneo se compare consigo mismo (daría Δ = 0 y un «sin cambio» falso).
+**Por qué 102:** `100` y `101` quedaron ocupados en las fases anteriores de esta rama.
+**Verificación:** aplicadas 100 → 101 → 102 sobre Postgres en memoria; un `INSERT` con
+`threshold 2.00` devuelve `MEJORO` con `compared_count 29`, y ambos rechazos (mismo
+escaneo, duplicado de `current_scan_id`) saltan. Guard de numeración en verde (7 pruebas).

@@ -159,6 +159,28 @@ class ScanSessionService {
       payload: biometricCryptoService.decrypt(row.metrics_encrypted),
     };
   }
+
+  /**
+   * Escaneo inmediatamente anterior del usuario (Y-F3). Devuelve null si es el primero.
+   */
+  async getPrevious(userId, currentScanId) {
+    const result = await pool.query(
+      `SELECT id, metrics_encrypted, captured_at
+         FROM biometric_scan_sessions
+        WHERE user_id = $1 AND id < $2
+        ORDER BY captured_at DESC, id DESC
+        LIMIT 1`,
+      [userId, currentScanId]
+    );
+    if (result.rows.length === 0) return null;
+
+    const row = result.rows[0];
+    return {
+      id: row.id,
+      capturedAt: row.captured_at,
+      payload: biometricCryptoService.decrypt(row.metrics_encrypted),
+    };
+  }
 }
 
 module.exports = new ScanSessionService();
