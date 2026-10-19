@@ -89,7 +89,7 @@ const idDe = (r) => r.body?.booking_id || r.body?.data?.id || r.body?.id;
 // ─── Estado de la corrida ───────────────────────────────────────────────────
 
 let pg;
-const creado = { usuarios: [], perfil: null, servicios: [], reservas: [], pedidos: [] };
+const creado = { usuarios: [], perfil: null, servicios: [], reservas: [], pedidos: [], stock: {} };
 
 async function preparar() {
   const hash = hashPassword(PASSWORD);
@@ -168,6 +168,9 @@ async function limpiar() {
     // Los ids son uuid en producción e integer en las bases que crea
     // `index.js`. Comparar como texto evita el "uuid = integer".
     for (const p of creado.pedidos) await pg.query('DELETE FROM pedidos_tienda WHERE id::text = $1::text', [String(p)]);
+    for (const [productoId, unidades] of Object.entries(creado.stock)) {
+      await pg.query('UPDATE productos SET stock = $1 WHERE id::text = $2::text', [unidades, String(productoId)]);
+    }
     if (creado.servicios.length) await pg.query('DELETE FROM services WHERE id::text = ANY($1::text[])', [creado.servicios.map(String)]);
     if (creado.perfil) await pg.query('DELETE FROM perfiles_prestador WHERE id::text = $1::text', [String(creado.perfil)]);
     if (creado.usuarios.length) await pg.query('DELETE FROM usuarios WHERE id::text = ANY($1::text[])', [creado.usuarios.map(String)]);
@@ -322,6 +325,9 @@ async function checkout(tc) {
   }
 
   const pedir = async (prod, cantidad, ciudad, departamento) => {
+    // El checkout descuenta stock y el cleanup borra el pedido, pero no devuelve
+    // las unidades: se guarda el stock inicial para restaurarlo.
+    if (!creado.stock[prod.id]) creado.stock[prod.id] = Number(prod.stock);
     const r = await llamar('POST', '/api/store/checkout', {
       nombre_entrega: 'E2E Cliente', direccion_entrega: 'Calle 100 #15-20', ciudad,
       departamento, codigo_postal: '110111', items: [{ producto_id: prod.id, cantidad }]

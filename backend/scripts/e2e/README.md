@@ -48,3 +48,5 @@ Sale con **código 2** si alguna verificación falla, así que sirve en CI.
   en él.
 - Si el catálogo no alcanza los umbrales con el stock disponible, los casos de
   envío salen **SKIP**, no PASS: un omitido no es una regla verificada.
+- El checkout **descuenta stock**. El cleanup borra el pedido y restaura las
+  unidades; aun así el arnés se niega a correr contra producción sin pedirlo.
