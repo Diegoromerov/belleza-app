@@ -39,6 +39,9 @@ const path = require('path');
 const vm = require('vm');
 
 const SRC_DIR = path.join(__dirname, '..', 'src');
+// config/consentConfig.js es configuración pura (versión vigente y encargados del
+// tratamiento). El sandbox la inyecta para no depender del allowlist de requires.
+const CONSENT_CONFIG = require(path.join(SRC_DIR, 'config', 'consentConfig.js'));
 const MW_PATH = path.join(SRC_DIR, 'middleware', 'biometricConsent.js');
 const SVC_PATH = path.join(SRC_DIR, 'services', 'consentService.js');
 const ROUTE_PATH = path.join(SRC_DIR, 'routes', 'biometricConsentRoutes.js');
@@ -111,6 +114,7 @@ function montar({ fallarEnDelete = false } = {}) {
 
   const svc = cargarModulo(SVC_PATH, {
     '../config/db': { pool },
+    '../config/consentConfig': CONSENT_CONFIG,
     '../middleware/rateLimiter': { getRedisClient: async () => null },
   });
 
@@ -125,6 +129,7 @@ function montar({ fallarEnDelete = false } = {}) {
 
   const mw = cargarModulo(MW_PATH, {
     '../config/db': { pool },
+    '../config/consentConfig': CONSENT_CONFIG,
     './rateLimiter': { getRedisClient: async () => null },
     '../services/consentService': svc,
   });
@@ -141,10 +146,12 @@ function montarRuta({ fallarEnDelete = false } = {}) {
 
   const svc = cargarModulo(SVC_PATH, {
     '../config/db': { pool },
+    '../config/consentConfig': CONSENT_CONFIG,
     '../middleware/rateLimiter': { getRedisClient: async () => null },
   });
   const mw = cargarModulo(MW_PATH, {
     '../config/db': { pool },
+    '../config/consentConfig': CONSENT_CONFIG,
     './rateLimiter': { getRedisClient: async () => null },
     '../services/consentService': svc,
   });
@@ -165,6 +172,7 @@ function montarRuta({ fallarEnDelete = false } = {}) {
     '../utils/expressAsync': { wrapRouterAsync: () => {} },
     '../middleware/auth': { authMiddleware: (req, res, next) => next() },
     '../middleware/biometricConsent': mw,
+    '../config/consentConfig': CONSENT_CONFIG,
   });
 
   const ruta = registro.find(

@@ -826,29 +826,12 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
   }
 
   Widget _buildNequiForm() {
-    if (widget.itemType == 'service') {
-      return Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFFF8E1),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFFFE082)),
-        ),
-        child: const Row(
-          children: [
-            Icon(Icons.info_outline, color: Color(0xFFF57F17), size: 20),
-            SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'El cobro en línea para citas de servicio no requiere ingresar número de celular. El pago se procesa directamente en el establecimiento.',
-                style: TextStyle(fontSize: 13, color: Color(0xFF5D4037)),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
+    // D-GL-023 (regla 18): el anticipo es del 100% al reservar, también para
+    // servicios. Aquí se pedía el celular en `_handlePayment` pero el campo solo
+    // se dibujaba para productos: con un servicio, `_nequiCtrl` siempre estaba
+    // vacío y el pago lanzaba "Ingresa el número de celular" sin que existiera
+    // dónde escribirlo. La nota que decía "el pago se procesa en el
+    // establecimiento" era falsa: la transacción se crea contra Wompi.
     return TextFormField(
       controller: _nequiCtrl,
       keyboardType: TextInputType.phone,

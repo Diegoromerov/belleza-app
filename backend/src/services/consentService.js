@@ -6,6 +6,7 @@
 
 const { pool } = require('../config/db');
 const { getRedisClient } = require('../middleware/rateLimiter');
+const { BIOMETRIC_CONSENT_VERSION, isSupportedConsentVersion } = require('../config/consentConfig');
 
 /**
  * Tipos de consentimiento válidos
@@ -114,11 +115,16 @@ async function checkConsent(userId, consentType) {
  * @param {Object} params - { userId, consentType, purpose, ipAddress, userAgent, versionTerms }
  * @returns {Promise<Object>} Registro de consentimiento creado/actualizado
  */
-async function grantConsent({ userId, consentType, purpose, ipAddress, userAgent, versionTerms = '1.0' }) {
+async function grantConsent({ userId, consentType, purpose, ipAddress, userAgent, versionTerms = BIOMETRIC_CONSENT_VERSION }) {
   try {
     // Validar tipo
     if (!VALID_CONSENT_TYPES.includes(consentType)) {
       throw new Error(`Tipo de consentimiento inválido: ${consentType}`);
+    }
+
+    // Y-F1b: solo se registra una versión del texto que el backend conozca.
+    if (!isSupportedConsentVersion(versionTerms)) {
+      throw new Error(`Versión de consentimiento no soportada: ${versionTerms}`);
     }
     
     // Validar purpose (requerido por Ley 1581 Art. 12)

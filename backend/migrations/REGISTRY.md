@@ -208,3 +208,38 @@ operador; `resuelto_en`/`cerrado_en` solo donde corresponde; el `CHECK` **acepta
 rechaza** cualquier otro valor; **re-aplicar la migración no cambia ningún dato** (hash
 idéntico: el runner re-aplica lo que no esté registrado en `schema_migrations`); y el
 rollback deja las columnas fuera con los 7 mensajes intactos.
+
+---
+
+## 2. Y-F1 usa `100`: el siguiente libre se lee del disco, no de este documento
+
+**Archivo:** `100_create_biometric_scan_sessions.sql`
+**Qué crea:** serie temporal del escaneo facial (`biometric_scan_sessions`) con las
+métricas cifradas, el `provider_task_id` de YouCam y los contadores de auditoría
+(`requested_actions`, `missing_metrics`, `metrics_count`). No toca ninguna tabla
+existente: `beauty_profiles` sigue siendo el último perfil y `biometric_history` el
+registro que exige el consentimiento.
+**Por qué 100:** el máximo numérico real del directorio era `099` (las posteriores son
+`2026…` con timestamp). El guard `migrationsNoDuplicateNumbers` se ejecutó después de
+crear el archivo y quedó en verde.
+**Verificación:** no lectura del SQL, sino aplicación sobre un Postgres en memoria
+(`pg-mem`): la migración aplica, acepta un `INSERT` con `metrics_count = 29`,
+`requested_actions`/`missing_metrics` en `JSONB` y rechaza `metrics_encrypted NULL`.
+Pendiente: aplicación en la base real, que ocurre sola en el siguiente arranque del
+runner (`schema_migrations` la registra por nombre de archivo).
+
+---
+
+## 3. Y-F1b usa `101`: versión del consentimiento en el escaneo
+
+**Archivo:** `101_add_consent_version_to_scan_sessions.sql`
+**Qué crea:** dos columnas en `biometric_scan_sessions` — `consent_version`
+(`version_terms` vigente al escanear) y `consent_outdated` (el escaneo se autorizó con
+un texto anterior). No toca `biometric_consents`: esa tabla ya tenía `version_terms`
+desde la `037`, lo que faltaba era usarlo.
+**Por qué 101:** `100` quedó ocupado por Y-F1 en esta misma rama; el guard de
+numeración se ejecutó después y siguió en verde.
+**Verificación:** aplicada sobre Postgres en memoria después de la `100`; un `INSERT`
+con `consent_version '1.0'` devuelve `consent_outdated = true`, otro sin versión deja
+`NULL`, y re-aplicarla no falla (`ADD COLUMN IF NOT EXISTS`). Pendiente: base real, en
+el siguiente arranque del runner.

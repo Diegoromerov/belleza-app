@@ -113,6 +113,16 @@ router.post('/analyze', authMiddleware, idempotencyMiddleware, validateBiometric
     if (error.code === 'BIOMETRIC_ANALYSIS_UNAVAILABLE' || error.statusCode === 503) {
       return res.status(503).json({ success: false, error: 'AI_UNAVAILABLE', message: error.message });
     }
+    // Y-F2: la foto no sirve para medir. Se responde 422 con el motivo medido y no se
+    // gastó ninguna unidad del proveedor.
+    if (error.code === 'CAPTURE_REJECTED' || error.statusCode === 422) {
+      return res.status(422).json({
+        success: false,
+        error: 'CAPTURE_REJECTED',
+        message: error.message,
+        capture: error.details || null,
+      });
+    }
     res.status(500).json({
       success: false,
       error: 'INTERNAL_ERROR',

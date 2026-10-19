@@ -88,11 +88,13 @@ class _BiometricWelcomeScreenState extends State<BiometricWelcomeScreen> {
                   'De conformidad con la Ley Estatutaria 1581 de 2012 de Habeas Data de Colombia y el Decreto 1377 de 2013, te informamos que la captura de tu imagen facial y/o manos se considera un DATO SENSIBLE BIOMÉTRICO.\n\n'
                   '1. FINALIDAD DEL PROCESAMIENTO:\n'
                   'Tus fotos serán procesadas mediante algoritmos de Visión Computacional (MLKit/YouCam/ai_worker) y LLMs (DeepSeek/Gemini) con la única finalidad de determinar tu subtono de piel, estación cromática, métricas cutáneas y sugerirte productos de cuidado personal.\n\n'
-                  '2. ALMACENAMIENTO VOLÁTIL & PRIVACIDAD:\n'
-                  'Las imágenes no se guardan de forma permanente en servidores de terceros sin tu autorización expresa. Son procesadas en memoria de sesión.\n\n'
-                  '3. REGISTRO AUDITABLE:\n'
+                  '2. ALMACENAMIENTO:\n'
+                  'GlowApp no conserva la imagen original: se envía al encargado del tratamiento para el análisis y solo se guardan las métricas resultantes, cifradas con AES-256-GCM.\n\n'
+                  '3. ENCARGADOS DEL TRATAMIENTO Y TRANSFERENCIA INTERNACIONAL (Ley 1581, art. 26):\n'
+                  'Tu fotografía facial se procesa con Perfect Corp. (YouCam AI Skin Analysis), con sede en Taiwán. La fotografía de manos se procesa con Google (Gemini, Estados Unidos). El texto de tu consulta se vectoriza con NVIDIA (Nemotron vía NIM, Estados Unidos) y las métricas numéricas, sin imagen, se envían a DeepSeek (China) para redactar la recomendación. Esto implica transferencia internacional de tus datos, amparada en esta autorización expresa.\n\n'
+                  '4. REGISTRO AUDITABLE:\n'
                   'Al marcar la casilla de autorización, aceptaste registrar un token auditable con tu ID de usuario, IP de conexión, User-Agent y timestamp en nuestro panel de control B2B / Dashboard Administrativo.\n\n'
-                  '4. CANALES DE ATENCIÓN Y REVOCATORIA (DERECHOS ARCO):\n'
+                  '5. CANALES DE ATENCIÓN Y REVOCATORIA (DERECHOS ARCO):\n'
                   'Puedes solicitar el acceso, actualización, rectificación o supresión de tus datos en cualquier momento escribiendo al correo oficial: habeasdata@glowapp.com o desde la sección de Ajustes de tu perfil.',
                   style: TextStyle(
                     fontSize: 13,

@@ -5,8 +5,29 @@ const geminiClient = require('../services/biometric/gemini.client');
 const deepseekClient = require('../services/biometric/deepseek.client');
 const profileService = require('../services/biometric/profile.service');
 const { breakers } = require('../services/circuitBreakerService');
+const sharp = require('sharp');
 
 jest.mock('../services/biometric/profile.service');
+
+/**
+ * Y-F2: el orquestador pasó a exigir una imagen real (puerta de calidad antes de
+ * gastar unidades). Un Buffer con texto ya no llega al proveedor, así que las pruebas
+ * de resiliencia fabrican un patrón nítido de 1200×1600.
+ */
+async function imagenValida(width = 1200, height = 1600) {
+  const channels = 3;
+  const raw = Buffer.alloc(width * height * channels);
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const value = (Math.floor(x / 8) + Math.floor(y / 8)) % 2 === 0 ? 0 : 255;
+      const idx = (y * width + x) * channels;
+      raw[idx] = value;
+      raw[idx + 1] = value;
+      raw[idx + 2] = value;
+    }
+  }
+  return sharp(raw, { raw: { width, height, channels } }).png().toBuffer();
+}
 
 describe('Biometric Orchestrator - Resilience & TraceId Propagation', () => {
   beforeEach(() => {
@@ -36,9 +57,10 @@ describe('Biometric Orchestrator - Resilience & TraceId Propagation', () => {
       lipsticks: [], nails: []
     });
 
+    const faceImage = await imagenValida();
     const result = await orchestrator.analyze(
       1,
-      Buffer.from('fake-face'),
+      faceImage,
       Buffer.from('fake-hands'),
       'ideas',
       null,
@@ -68,8 +90,9 @@ describe('Biometric Orchestrator - Resilience & TraceId Propagation', () => {
     const analyzeFaceSpy = jest.spyOn(youcamClient, 'analyzeFace').mockRejectedValue(new Error('YouCam Down'));
     const analyzeHandsSpy = jest.spyOn(geminiClient, 'analyzeHands').mockRejectedValue(new Error('Gemini Down'));
 
+    const faceImage = await imagenValida();
     await expect(
-      orchestrator.analyze(1, Buffer.from('fake-face'), Buffer.from('fake-hands'))
+      orchestrator.analyze(1, faceImage, Buffer.from('fake-hands'))
     ).rejects.toMatchObject({
       code: 'BIOMETRIC_ANALYSIS_UNAVAILABLE',
       statusCode: 503,
