@@ -19,7 +19,8 @@
     "e2e:wompi:sandbox": "node scripts/sandboxWompiE2E.js",
     "openapi:generate": "node scripts/generateOpenApiSpec.js",
     "openapi:check": "node scripts/checkOpenApiSpec.js",
-    "test:contract": "jest src/tests/contract/openapi.contract.test.js src/tests/contract/critical-endpoints.contract.test.js --runInBand --forceExit"
+    "test:contract": "jest src/tests/contract/openapi.contract.test.js src/tests/contract/critical-endpoints.contract.test.js --runInBand --forceExit",
+    "e2e": "node scripts/e2e/reglas.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1147.0",
