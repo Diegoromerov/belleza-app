@@ -2,6 +2,7 @@ const youcamClient = require('./youcam.client');
 const geminiClient = require('./gemini.client');
 const deepseekClient = require('./deepseek.client');
 const profileService = require('./profile.service');
+const scanSessionService = require('./scanSession.service');
 const openUV = require('../openUV');
 const logger = require('../../config/logger');
 const { breakers } = require('../circuitBreakerService');
@@ -88,8 +89,30 @@ class BiometricOrchestrator {
 
     logger.info('Perfil biométrico guardado exitosamente con resiliencia', { userId: parsedUserId, profileId: profile.id });
 
+    // Y-F1: persistir la llamada completa (16 acciones HD, raw_score, máscaras) en su
+    // propia serie temporal. Si la escritura falla no se rompe la respuesta: el análisis
+    // ya se pagó y el perfil quedó guardado; se devuelve `scanSession.persisted = false`
+    // para que quede rastro en logs y en la respuesta interna.
+    const scanSession = await scanSessionService.saveScan({
+      userId: parsedUserId,
+      faceScores,
+      geometry: null,  // Y-F2: geometría de captura (distancia, ángulo, luminancia)
+      quality: null,   // Y-F2: score de calidad y motivo de rechazo
+      tolerante: true,
+    });
+
+    if (!scanSession.persisted) {
+      logger.warn('Sesión de escaneo no persistida', {
+        userId: parsedUserId,
+        reason: scanSession.reason,
+        metricsCount: scanSession.metricsCount,
+      });
+    }
+
     return {
       profileId: profile.id,
+      scanSessionId: scanSession.id || null,
+      metricsCount: scanSession.metricsCount,
       face: faceScores,
       glowScore,
       dermoFamilies,

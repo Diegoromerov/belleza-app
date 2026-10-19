@@ -208,3 +208,22 @@ operador; `resuelto_en`/`cerrado_en` solo donde corresponde; el `CHECK` **acepta
 rechaza** cualquier otro valor; **re-aplicar la migración no cambia ningún dato** (hash
 idéntico: el runner re-aplica lo que no esté registrado en `schema_migrations`); y el
 rollback deja las columnas fuera con los 7 mensajes intactos.
+
+---
+
+## 2. Y-F1 usa `100`: el siguiente libre se lee del disco, no de este documento
+
+**Archivo:** `100_create_biometric_scan_sessions.sql`
+**Qué crea:** serie temporal del escaneo facial (`biometric_scan_sessions`) con las
+métricas cifradas, el `provider_task_id` de YouCam y los contadores de auditoría
+(`requested_actions`, `missing_metrics`, `metrics_count`). No toca ninguna tabla
+existente: `beauty_profiles` sigue siendo el último perfil y `biometric_history` el
+registro que exige el consentimiento.
+**Por qué 100:** el máximo numérico real del directorio era `099` (las posteriores son
+`2026…` con timestamp). El guard `migrationsNoDuplicateNumbers` se ejecutó después de
+crear el archivo y quedó en verde.
+**Verificación:** no lectura del SQL, sino aplicación sobre un Postgres en memoria
+(`pg-mem`): la migración aplica, acepta un `INSERT` con `metrics_count = 29`,
+`requested_actions`/`missing_metrics` en `JSONB` y rechaza `metrics_encrypted NULL`.
+Pendiente: aplicación en la base real, que ocurre sola en el siguiente arranque del
+runner (`schema_migrations` la registra por nombre de archivo).
