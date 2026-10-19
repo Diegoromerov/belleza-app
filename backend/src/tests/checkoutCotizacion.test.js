@@ -51,6 +51,11 @@ function clienteFalso() {
       }
       if (q.includes('UPDATE productos SET stock')) return { rows: [] };
       if (q.includes('FROM zonas_envio')) return { rows: ZONAS };
+      // Main resolvió el NOT NULL de pedidos_tienda.tenant_id leyendo el tenant del
+      // comprador (o el de plataforma). Sin fila, el checkout responde 409.
+      if (q.includes('app_platform_tenant_id()')) {
+        return { rows: [{ tenant_id: '00000000-0000-0000-0000-0000000000aa' }] };
+      }
       if (q.includes('INSERT INTO pedidos_tienda')) {
         insertsPedido.push(params);
         return {
@@ -112,7 +117,7 @@ describe('IVA discriminado y paridad cotización ↔ pedido', () => {
     });
   });
 
-  test('cotización: subtotal 30.000 → iva 4.790 (contenido) y total 40.200 con envío 10.200', async () => {
+  test('cotización: 30.000 de vitrina → base 25.210, iva 4.790 y total 40.200 con envío 10.200', async () => {
     const req = { user: { id: 5, role: 'client' }, body: BODY };
     const res = respuestaFalsa();
 
@@ -121,7 +126,9 @@ describe('IVA discriminado y paridad cotización ↔ pedido', () => {
     expect(res.statusCode).toBeNull();
     expect(res.body.success).toBe(true);
     expect(res.body.data).toMatchObject({
-      subtotal: 30000,
+      // El pedido guarda la base neta; la vitrina cobra 30.000 con IVA dentro.
+      subtotal: 25210,
+      subtotal_con_iva: 30000,
       iva: 4790,
       envio: 10200,
       total: 40200

@@ -64,15 +64,16 @@ const SETUP_SQL = [
 ];
 
 // `base` es el pago_neto_prestador que deja el trigger de comisión.
-// `esperado` es el neto tras retenciones, calculado a mano en CENTAVOS ENTEROS:
-//   neto = round(base*100) - [round(b*4.0/100) + round(b*0.414/100) + round(c*15.0/100)]
+// D-GL-023: no hay retenciones (retefuente, reteICA y reteIVA se eliminaron), así
+// que `esperado` es exactamente la base. Lo que este test protege —que el monto se
+// persista en centavos enteros, sin deriva de float— sigue igual de válido.
 const CASOS = [
-  { caso: 'IVA de medio centavo (1.50 * 15%)', providerId: 700, base: 10.00, comision: 1.50, esperado: 9.33 },
-  { caso: 'IVA de medio centavo (12.50)', providerId: 701, base: 12.50, comision: 1.50, esperado: 11.72 },
-  { caso: 'comisión 4.10', providerId: 702, base: 20.50, comision: 4.10, esperado: 18.98 },
-  { caso: 'comisión 3.30', providerId: 703, base: 21.97, comision: 3.30, esperado: 20.50 },
-  { caso: 'control exacto (sin deriva de float)', providerId: 704, base: 100.00, comision: 20.00, esperado: 92.59 },
-  { caso: 'control monto grande', providerId: 705, base: 33333.33, comision: 6666.67, esperado: 30862.00 },
+  { caso: 'base con centavos (10.00)', providerId: 700, base: 10.00, comision: 1.50, esperado: 10.00 },
+  { caso: 'base con medio centavo (12.50)', providerId: 701, base: 12.50, comision: 1.50, esperado: 12.50 },
+  { caso: 'comisión 4.10', providerId: 702, base: 20.50, comision: 4.10, esperado: 20.50 },
+  { caso: 'comisión 3.30', providerId: 703, base: 21.97, comision: 3.30, esperado: 21.97 },
+  { caso: 'control exacto (sin deriva de float)', providerId: 704, base: 100.00, comision: 20.00, esperado: 100.00 },
+  { caso: 'control monto grande', providerId: 705, base: 33333.33, comision: 6666.67, esperado: 33333.33 },
 ];
 
 function construirApp(clientId) {
@@ -146,14 +147,14 @@ describe('P0 dinero — dispersión en centavos enteros (confirm-otp)', () => {
     expect(Math.abs(centavos - Math.round(centavos))).toBeLessThan(1e-6);
   });
 
-  test('un centavo no se pierde: neto == base - retenciones exactas (caso 10.00 / 1.50)', async () => {
-    const { res } = await confirmar({ base: 10.00, comision: 1.50, providerId: 799, clientId: 5 });
+  test('un centavo no se pierde: el neto es exactamente la base (caso 10.00 / 1.50)', async () => {
+      const { res } = await confirmar({ base: 10.00, comision: 1.50, providerId: 799, clientId: 5 });
 
-    // En centavos enteros: 1000 - (40 + 4 + 23) = 933  =>  9.33
-    expect(res.body.monto_neto_prestador).toBe(9.33);
-    // El bug de float devolvía 9.34 (23 se redondeaba a 22 -> menos retención).
-    expect(res.body.monto_neto_prestador).not.toBe(9.34);
-  });
+      // Sin retenciones: el prestador recibe los 10.00 completos, en centavos exactos.
+      expect(res.body.monto_neto_prestador).toBe(10.00);
+      // Cualquier deriva de float habría dejado 9.99 o 10.01.
+      expect(res.body.monto_neto_prestador).not.toBe(9.99);
+    });
 
   test('utilidad money: aritmética de centavos sin deriva de float', () => {
     // La utilidad solo existe tras el fix; el require va dentro del test para que

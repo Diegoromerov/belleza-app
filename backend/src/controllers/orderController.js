@@ -424,13 +424,19 @@ exports.cotizarEnvio = async (req, res) => {
     });
 
     // Misma convención que createOrder: el precio de lista incluye IVA.
+    // `subtotal` sale como base neta (lo que se guarda en pedidos_tienda.subtotal)
+    // y `subtotal_con_iva` como el valor de vitrina. Antes la cotización devolvía el
+    // bruto en `subtotal` y el pedido guardaba la base: la pantalla mostraba 30.000
+    // y la fila decía 25.210, que es el descuadre que esta prueba vigila.
     const iva = Math.round(subtotal - subtotal / 1.19);
+    const baseNeta = subtotal - iva;
     const total = subtotal + envioDetalle.envio;
 
     res.json({
       success: true,
       data: {
-        subtotal,
+        subtotal: baseNeta,
+        subtotal_con_iva: subtotal,
         iva,
         envio: envioDetalle.envio,
         total,
