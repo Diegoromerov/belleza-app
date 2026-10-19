@@ -115,8 +115,9 @@ class _WalletScreenState extends State<WalletScreen>
     final wallet = _wallet!;
     final disponible =
         double.tryParse(wallet['saldo_disponible'].toString()) ?? 0;
-    final minimo =
-        double.tryParse(wallet['minimo_retiro_cop'].toString()) ?? 50000;
+    // El ciclo semanal no tiene mínimo; el mínimo de 100.000 es solo para el
+    // adelanto (D-GL-024), así que aquí no se bloquea por monto.
+    const minimo = 0.0;
 
     final TextEditingController montoCtrl = TextEditingController(
       text: disponible.toStringAsFixed(0),
@@ -216,7 +217,10 @@ class _WalletScreenState extends State<WalletScreen>
       if (verificado == true) {
         if (!mounted) return;
         try {
-          await ApiService.post('/api/wallet/withdraw', {'monto': montoFinal});
+          await ApiService.post('/api/wallet/withdraw', {
+            'monto': montoFinal,
+            'tipo_origen': 'SEMANAL',
+          });
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
@@ -448,10 +452,10 @@ class _WalletScreenState extends State<WalletScreen>
                                       child: const Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Icon(Icons.diamond_outlined, size: 12, color: Color(0xFF1F1A15)),
+                                          Icon(Icons.account_balance_wallet_outlined, size: 12, color: Color(0xFF1F1A15)),
                                           SizedBox(width: 4),
                                           Text(
-                                            'GLOW BLACK VIP',
+                                            'BILLETERA',
                                             style: TextStyle(
                                               fontFamily: 'Inter',
                                               fontSize: 10,
@@ -468,7 +472,7 @@ class _WalletScreenState extends State<WalletScreen>
                                 ),
                                 const SizedBox(height: 18),
                                 const Text(
-                                  'Saldo disponible',
+                                  'Disponible para retirar',
                                   style: TextStyle(
                                     fontFamily: 'Inter',
                                     color: Color(0xFFC5B8A8),
@@ -513,8 +517,8 @@ class _WalletScreenState extends State<WalletScreen>
                                       ),
                                       label: Text(
                                         puedeRetirar
-                                            ? (disponible < (double.tryParse(wallet['minimo_retiro_cop']?.toString() ?? '50000') ?? 50000))
-                                                ? 'MÍNIMO DE RETIRO \$50.000 COP'
+                                            ? (disponible < (double.tryParse(wallet['minimo_retiro_cop']?.toString() ?? '100000') ?? 100000))
+                                                ? 'ADELANTO DISPONIBLE DESDE \$${_formatCOP.format(double.tryParse(wallet['minimo_retiro_cop']?.toString() ?? '100000') ?? 100000)}'
                                                 : 'TRANSFERIR A ${wallet['banco']?.toString().toUpperCase() ?? 'MI CUENTA'}'
                                             : (wallet['cuenta_verificada'] != true)
                                                 ? 'VINCULAR CUENTA DE RETIRO'
@@ -584,7 +588,7 @@ class _WalletScreenState extends State<WalletScreen>
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text('En camino', style: TextStyle(color: Colors.white70, fontSize: 11)),
+                                    const Text('En custodia', style: TextStyle(color: Colors.white70, fontSize: 11)),
                                     const SizedBox(height: 2),
                                     Text(
                                       _formatCOP.format(pendiente),
@@ -1163,10 +1167,13 @@ class _WalletScreenState extends State<WalletScreen>
     final totalGanado = double.tryParse(wallet['total_ganado'].toString()) ?? 0;
     final totalRetirado =
         double.tryParse(wallet['total_retirado'].toString()) ?? 0;
-    final modelo = wallet['modelo_retiro'] ?? 'DEMANDA';
+    final modelo = wallet['modelo_retiro'] ?? 'SEMANAL';
 
     final ratioRetiro = totalGanado > 0 ? (totalRetirado / totalGanado).clamp(0.0, 1.0) : 0.0;
-    final porcentajeRetiroStr = (ratioRetiro * 100).toStringAsFixed(0);
+    // Sin ganancias no hay ratio: mostrar 0% sugeriría que retiró cero de algo
+    // que no existe (división por cero disfrazada).
+    final porcentajeRetiroStr =
+        totalGanado > 0 ? '${(ratioRetiro * 100).toStringAsFixed(0)}%' : 'Sin retiros';
 
     return ListView(
       padding: const EdgeInsets.all(24),
@@ -1198,7 +1205,7 @@ class _WalletScreenState extends State<WalletScreen>
                   const Icon(Icons.analytics_outlined, color: Color(0xFFC5A052), size: 20),
                   const SizedBox(width: 8),
                   const Text(
-                    'Ratio de Liquidez Concierge',
+                    'Retirado sobre ganado',
                     style: TextStyle(
                       fontFamily: 'Inter',
                       color: Color(0xFFFFFDF8),
@@ -1208,7 +1215,7 @@ class _WalletScreenState extends State<WalletScreen>
                   ),
                   const Spacer(),
                   Text(
-                    '$porcentajeRetiroStr% Retirado',
+                    porcentajeRetiroStr,
                     style: const TextStyle(
                       color: Color(0xFFC5A052),
                       fontWeight: FontWeight.bold,
@@ -1253,7 +1260,7 @@ class _WalletScreenState extends State<WalletScreen>
         ),
         const SizedBox(height: 12),
         _ResumenCard(
-          titulo: 'Total retirado efectivo',
+          titulo: 'Total retirado',
           monto: totalRetirado,
           icon: Icons.arrow_upward,
           color: AppTheme.primary,
@@ -1395,23 +1402,31 @@ class _WalletScreenState extends State<WalletScreen>
 
   String _nombreModelo(String modelo) {
     switch (modelo) {
+      case 'SEMANAL':
+        return 'Semanal';
       case 'QUINCENA':
         return 'Automático cada 15 días';
       case 'MENSUAL':
         return 'Automático mensual';
+      case 'DEMANDA':
+        return 'Adelanto inmediato';
       default:
-        return 'Por demanda';
+        return 'Semanal';
     }
   }
 
   String _descripcionModelo(String modelo) {
     switch (modelo) {
+      case 'SEMANAL':
+        return 'Retira cada lunes, sin costo';
       case 'QUINCENA':
         return 'Retiro automático los días 15 y último del mes';
       case 'MENSUAL':
         return 'Retiro automático el último día de cada mes';
+      case 'DEMANDA':
+        return 'Adelanta tu saldo maduro: cuesta 1.849 + 0,4%';
       default:
-        return 'Retira cuando quieras, mín. \$50.000 cada 3 días';
+        return 'Retira cada lunes, sin costo';
     }
   }
 
@@ -1419,7 +1434,7 @@ class _WalletScreenState extends State<WalletScreen>
     final wallet = _wallet;
     if (wallet == null) return;
 
-    String modeloSeleccionado = wallet['modelo_retiro'] ?? 'DEMANDA';
+    String modeloSeleccionado = wallet['modelo_retiro'] ?? 'SEMANAL';
 
     await showModalBottomSheet(
       context: context,
@@ -1441,13 +1456,14 @@ class _WalletScreenState extends State<WalletScreen>
                       fontWeight: FontWeight.bold)),
               const SizedBox(height: 20),
               ...[
-                ('DEMANDA', 'Por demanda', 'Cada 3 días, mín. \$50.000'),
+                ('SEMANAL', 'Semanal', 'Cada lunes, sin costo'),
                 (
                   'QUINCENA',
                   'Cada 15 días',
                   'Automático los días 15 y último del mes'
                 ),
                 ('MENSUAL', 'Mensual', 'Automático el último día del mes'),
+                ('DEMANDA', 'Adelanto inmediato', 'Desde \$100.000, cuesta 1.849 + 0,4%'),
               ].map((m) => RadioListTile<String>(
                     value: m.$1,
                     groupValue: modeloSeleccionado,
@@ -1768,8 +1784,10 @@ class _RetiroBottomSheetState extends State<_RetiroBottomSheet> {
                   color: AppTheme.primary,
                   fontSize: 24,
                   fontWeight: FontWeight.bold),
-              helperText:
-                  'Mínimo: ${NumberFormat.currency(locale: 'es_CO', symbol: '\$', decimalDigits: 0).format(widget.minimo)}',
+              // El ciclo semanal no tiene mínimo; solo el adelanto lo tiene.
+              helperText: widget.minimo > 0
+                  ? 'Mínimo: ${NumberFormat.currency(locale: 'es_CO', symbol: '\$', decimalDigits: 0).format(widget.minimo)}'
+                  : 'Sin mínimo. Retiras lo que tengas madurado.',
               helperStyle:
                   const TextStyle(color: Color(0xFF8E7D7A), fontSize: 12),
               filled: true,

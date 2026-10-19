@@ -1050,16 +1050,21 @@ router.put('/wallet/model', authMiddleware, async (req, res) => {
   if (!await requirePrestador(req, res)) return;
 
   const { modelo } = req.body;
-  const modelosValidos = ['DEMANDA', 'QUINCENA', 'MENSUAL'];
+  // SEMANAL es el ciclo estándar (D-GL-024); DEMANDA es el adelanto con costo.
+  const modelosValidos = ['SEMANAL', 'DEMANDA', 'QUINCENA', 'MENSUAL'];
 
   if (!modelosValidos.includes(modelo)) {
-    return res.status(400).json({ error: 'Modelo inválido. Use: DEMANDA, QUINCENA o MENSUAL.' });
+    return res.status(400).json({ error: 'Modelo inválido. Use: SEMANAL, DEMANDA, QUINCENA o MENSUAL.' });
   }
 
   try {
     let proximoRetiro = null;
     const ahora = new Date();
-    if (modelo === 'QUINCENA') {
+    if (modelo === 'SEMANAL') {
+      // Próximo lunes.
+      const delta = (1 - ahora.getDay() + 7) % 7 || 7;
+      proximoRetiro = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate() + delta);
+    } else if (modelo === 'QUINCENA') {
       const dia = ahora.getDate();
       if (dia < 15) {
         proximoRetiro = new Date(ahora.getFullYear(), ahora.getMonth(), 15);
