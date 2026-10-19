@@ -25,6 +25,7 @@ ALTER TABLE bookings ADD COLUMN IF NOT EXISTS completed_at      TIMESTAMPTZ;
 ALTER TABLE bookings ADD COLUMN IF NOT EXISTS reschedule_count  INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE bookings ADD COLUMN IF NOT EXISTS propina           NUMERIC(10,2) NOT NULL DEFAULT 0;
 ALTER TABLE bookings ADD COLUMN IF NOT EXISTS cancelado_por     VARCHAR(20);
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS credito_aplicado  NUMERIC(10,2) NOT NULL DEFAULT 0;
 
 -- ─── F4 · Reembolsos ────────────────────────────────────────────────────────
 

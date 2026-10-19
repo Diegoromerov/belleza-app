@@ -193,35 +193,30 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
     }
   }
 
-  // A360-2026-09-22/C-02: no existe endpoint de propinas en el backend
-  // (verificado con grep en backend/src/routes y backend/src/controllers: sin
-  // rutas ni controladores de propina). Antes se "simulaba" la pasarela con un
-  // Future.delayed(2500) que daba el pago por exitoso sin cobrar nada. Ahora se
-  // informa que el pago no está disponible y NO se fabrica ningún cobro.
-  Future<void> _showTipUnavailableDialog(double amount) async {
+  // D-GL-023 — la propina es 100% del prestador y no paga comisión.
+  // El endpoint ya existe: POST /api/bookings/:id/tip. Si el entorno no tiene
+  // pasarela, el backend deja la propina PENDIENTE y lo informa; nunca simula
+  // un cobro que no ocurrió.
+  Future<void> _submitTip(String bookingId, double amount) async {
     if (!mounted) return;
-    await showDialog<void>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: const Text(
-          'Pago de propina no disponible',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+    try {
+      final res = await ApiService.submitTip(bookingId, amount);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(res['mensaje']?.toString() ?? 'Propina enviada'),
+          backgroundColor: AppTheme.primary,
         ),
-        content: Text(
-          'No se puede cobrar la propina de \$${amount.toStringAsFixed(0)} COP: '
-          'la pasarela de pagos aún no está integrada. Tu reseña se registrará '
-          'sin propina.',
-          style: const TextStyle(fontSize: 13),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('No se pudo registrar la propina: $e'),
+          backgroundColor: AppTheme.error,
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Entendido'),
-          ),
-        ],
-      ),
-    );
+      );
+    }
   }
 
   void _showRatingSheet(Map<String, dynamic> booking) {
@@ -524,8 +519,8 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
                       onPressed: () async {
                         Navigator.pop(context); // Cerrar rating sheet
                         if (tipAmount > 0.0) {
-                          // Sin pasarela integrada: se avisa y no se cobra nada.
-                          await _showTipUnavailableDialog(tipAmount);
+                          await _submitTip(
+                              booking['id'].toString(), tipAmount);
                         }
                         _submitReviewHelper(
                             booking['id'], ratingSelected, reviewComment);
