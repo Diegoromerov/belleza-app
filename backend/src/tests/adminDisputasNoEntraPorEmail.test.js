@@ -29,6 +29,14 @@ const tokenPara = (email) => jwt.sign({ id: 1, email, role: 'prestador' }, getJw
 function responderConUsuario(rol, email) {
   pool.query.mockImplementation((queryText) => {
     const q = String(queryText);
+    // El middleware resuelve la identidad con la función SECURITY DEFINER
+    // `app_usuario_identidad($1)` (migración 068), NO con una lectura directa de
+    // `usuarios` (esa ruta provoca 401 global bajo RLS+FORCE). Sin esta rama el
+    // mock no matcheaba, auth no obtenía usuario y el endpoint devolvía 401 en vez
+    // del 403 que este test verifica.
+    if (q.includes('app_usuario_identidad')) {
+      return Promise.resolve({ rows: [{ rol, tenant_id: 1 }] });
+    }
     if (q.includes('SELECT rol, tenant_id FROM usuarios')) {
       return Promise.resolve({ rows: [{ rol, tenant_id: 1 }] });
     }

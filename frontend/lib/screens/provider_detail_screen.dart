@@ -596,9 +596,14 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                 padding: const EdgeInsets.all(8.0),
                 child: CircleAvatar(
                   backgroundColor: Colors.black.withValues(alpha: 0.5),
-                  child: IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    onPressed: () => Navigator.pop(context),
+                  child: Semantics(
+                    label: 'Regresar',
+                    button: true,
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+                      tooltip: 'Regresar',
+                      onPressed: () => Navigator.pop(context),
+                    ),
                   ),
                 ),
               ),
@@ -607,9 +612,14 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                   padding: const EdgeInsets.only(right: 8.0),
                   child: CircleAvatar(
                     backgroundColor: Colors.black.withValues(alpha: 0.5),
-                    child: IconButton(
-                      icon: const Icon(Icons.share_outlined, color: Colors.white, size: 20),
-                      onPressed: _shareProfile,
+                    child: Semantics(
+                      label: 'Compartir perfil',
+                      button: true,
+                      child: IconButton(
+                        icon: const Icon(Icons.share_outlined, color: Colors.white, size: 20),
+                        tooltip: 'Compartir perfil',
+                        onPressed: _shareProfile,
+                      ),
                     ),
                   ),
                 ),
@@ -643,12 +653,9 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          Colors.black.withValues(alpha: 0.4),
-                          Colors.black.withValues(alpha: 0.2),
-                          Colors.black.withValues(alpha: 0.7),
-                          Colors.black.withValues(alpha: 0.92),
+                          Colors.black.withValues(alpha: 0.6),
+                          Colors.black.withValues(alpha: 0.8),
                         ],
-                        stops: const [0.0, 0.3, 0.65, 1.0],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                       ),

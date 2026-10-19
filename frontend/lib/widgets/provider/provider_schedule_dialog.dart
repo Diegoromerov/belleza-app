@@ -18,8 +18,8 @@ class ProviderScheduleDialog extends StatefulWidget {
 }
 
 class _ProviderScheduleDialogState extends State<ProviderScheduleDialog> {
-  int _activeStartHour = 8;
-  int _activeEndHour = 19;
+  final int _activeStartHour = 8;
+  final int _activeEndHour = 19;
 
   final Map<String, Map<String, dynamic>> _daysSchedule = {
     'lunes': {'activo': true, 'inicio': 8, 'fin': 19},

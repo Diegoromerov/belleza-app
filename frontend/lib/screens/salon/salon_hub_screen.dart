@@ -1,10 +1,10 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/theme/tokens.dart';
 import '../provider/business/business_onboarding_screen.dart';
 
 class SalonHubScreen extends StatelessWidget {
-  const SalonHubScreen({Key? key}) : super(key: key);
+  const SalonHubScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -25,9 +25,9 @@ class SalonHubScreen extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: gold871.withOpacity(0.15),
+                          color: gold871.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: gold871.withOpacity(0.4)),
+                          border: Border.all(color: gold871.withValues(alpha: 0.4)),
                         ),
                         child: const Icon(Icons.spa, color: gold871, size: 24),
                       ),
@@ -147,12 +147,12 @@ class SalonHubScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.04),
+                  color: Colors.white.withValues(alpha: 0.04),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white.withOpacity(0.08)),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
                 ),
-                child: Row(
-                  children: const [
+                child: const Row(
+                  children: [
                     Icon(Icons.sync_alt_rounded, color: gold871, size: 24),
                     SizedBox(width: 14),
                     Expanded(
@@ -201,13 +201,13 @@ class SalonHubScreen extends StatelessWidget {
             border: Border.all(
               color: isPrimaryGold
                   ? gold871
-                  : Colors.white.withOpacity(0.12),
+                  : Colors.white.withValues(alpha: 0.12),
               width: isPrimaryGold ? 1.5 : 1.0,
             ),
             boxShadow: isPrimaryGold
                 ? [
                     BoxShadow(
-                      color: gold871.withOpacity(0.18),
+                      color: gold871.withValues(alpha: 0.18),
                       blurRadius: 18,
                       offset: const Offset(0, 4),
                     ),
@@ -223,9 +223,9 @@ class SalonHubScreen extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: badgeColor.withOpacity(0.15),
+                      color: badgeColor.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: badgeColor.withOpacity(0.4)),
+                      border: Border.all(color: badgeColor.withValues(alpha: 0.4)),
                     ),
                     child: Text(
                       badgeText,

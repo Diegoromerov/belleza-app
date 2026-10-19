@@ -6,7 +6,9 @@
  */
 
 // Fijar JWT_SECRET por defecto para pruebas de Jest si no está definido en el entorno
-process.env.JWT_SECRET = process.env.JWT_SECRET || 'test_jwt_secret_must_be_at_least_32_characters_long_super_secure';
+if (!process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET environment variable is required but not set');
+}
 
 process.on('unhandledRejection', (reason) => {
   const message = reason && reason.message ? reason.message : String(reason);

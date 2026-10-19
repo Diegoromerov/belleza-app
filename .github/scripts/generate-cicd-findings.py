@@ -1,7 +1,4 @@
 import json
-import os
-
-os.makedirs('.hermes/devops', exist_ok=True)
 
 hallazgos = [
     {'id': 'CICD-01', 'severity': 'P0', 'area': 'CI/CD', 'file': '.github/workflows/rag-evaluation.yml', 'line': '27', 'evidence_cmd': "grep -n 'RAILWAY_DATABASE_URL' .github/workflows/rag-evaluation.yml", 'impact': 'Workflow escribe en BD prod', 'proposed_fix': 'Usar service container efimero', 'effort_h': 2},

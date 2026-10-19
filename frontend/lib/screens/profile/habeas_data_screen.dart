@@ -1,6 +1,7 @@
 // lib/screens/profile/habeas_data_screen.dart
 import 'package:flutter/material.dart';
 import '../../core/theme/belleza_luxe_theme.dart';
+import '../../services/biometric_service.dart';
 
 class HabeasDataScreen extends StatefulWidget {
   const HabeasDataScreen({super.key});
@@ -10,7 +11,70 @@ class HabeasDataScreen extends StatefulWidget {
 }
 
 class _HabeasDataScreenState extends State<HabeasDataScreen> {
-  bool _biometricConsent = true;
+  bool _biometricConsent = false;
+  bool _isLoading = true;
+  bool _isBusy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadConsent();
+  }
+
+  Future<void> _loadConsent() async {
+    try {
+      final allowed = await BiometricService.hasConsent();
+      if (mounted) setState(() { _biometricConsent = allowed; _isLoading = false; });
+    } catch (_) {
+      if (mounted) setState(() { _biometricConsent = false; _isLoading = false; });
+    }
+  }
+
+  Future<void> _setConsent(bool value) async {
+    setState(() => _isBusy = true);
+    try {
+      if (value) {
+        await BiometricService.saveConsent();
+      } else {
+        final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Revocar y eliminar datos'),
+            content: const Text('Se revocará el consentimiento y se solicitará borrar los datos biométricos guardados. Esta acción no se puede deshacer.'),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+              FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Revocar y eliminar')),
+            ],
+          ),
+        );
+        if (confirmed != true) {
+          if (mounted) setState(() => _isBusy = false);
+          return;
+        }
+        await BiometricService.revokeConsent();
+      }
+      if (mounted) {
+        setState(() => _biometricConsent = value);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(value ? 'Consentimiento biométrico otorgado.' : 'Consentimiento biométrico revocado.')));
+      }
+    } catch (error) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.toString().replaceFirst('Exception: ', ''))));
+    } finally {
+      if (mounted) setState(() => _isBusy = false);
+    }
+  }
+
+  Future<void> _exportData() async {
+    setState(() => _isBusy = true);
+    try {
+      await BiometricService.exportBiometricData();
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Expediente generado. Consulta el archivo JSON en las descargas.')));
+    } catch (error) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.toString().replaceFirst('Exception: ', ''))));
+    } finally {
+      if (mounted) setState(() => _isBusy = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -73,7 +137,7 @@ class _HabeasDataScreenState extends State<HabeasDataScreen> {
                     ),
                     SizedBox(height: 12),
                     Text(
-                      'De conformidad con la Ley Statutory 1581 de 2012 y el GDPR, tus vectores faciales y mapas biométricos recopilados por Aura AI se almacenan con cifrado AES-256 en servidores aislados.',
+                      'Tus análisis y perfiles biométricos se guardan en GlowApp mientras mantengas el consentimiento. Puedes revocarlo y solicitar la eliminación de estos datos desde esta pantalla.',
                       style: TextStyle(
                         fontFamily: 'CormorantGaramond',
                         fontSize: 14,
@@ -124,7 +188,7 @@ class _HabeasDataScreenState extends State<HabeasDataScreen> {
                           ),
                           SizedBox(height: 2),
                           Text(
-                            'Permite a Aura AI escanear la salud de tu piel',
+                            'Permite el análisis facial y las recomendaciones de cuidado de piel',
                             style: TextStyle(
                               fontFamily: 'CormorantGaramond',
                               fontSize: 13,
@@ -134,20 +198,12 @@ class _HabeasDataScreenState extends State<HabeasDataScreen> {
                         ],
                       ),
                     ),
-                    Switch.adaptive(
+                    _isLoading
+                        ? const SizedBox(width: 48, height: 32, child: Center(child: CircularProgressIndicator(strokeWidth: 2)))
+                        : Switch.adaptive(
                       value: _biometricConsent,
                       activeColor: const Color(0xFFC5A052),
-                      onChanged: (val) {
-                        setState(() => _biometricConsent = val);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(val
-                                ? 'Consentimiento biométrico otorgado.'
-                                : 'Consentimiento revocado. Los datos serán anonimizados.'),
-                            backgroundColor: LuxeColors.nude900,
-                          ),
-                        );
-                      },
+                      onChanged: _isBusy ? null : _setConsent,
                     ),
                   ],
                 ),
@@ -159,17 +215,10 @@ class _HabeasDataScreenState extends State<HabeasDataScreen> {
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Generando paquete JSON cifrado de tus datos biométricos...'),
-                        backgroundColor: LuxeColors.nude900,
-                      ),
-                    );
-                  },
+                  onPressed: _isBusy ? null : _exportData,
                   icon: const Icon(Icons.download_outlined, color: LuxeColors.nude900, size: 18),
                   label: const Text(
-                    'Exportar Mi Expediente Biométrico (JSON)',
+                    'Descargar Mi Expediente Biométrico (JSON)',
                     style: TextStyle(
                       fontFamily: 'CormorantGaramond',
                       fontSize: 15,

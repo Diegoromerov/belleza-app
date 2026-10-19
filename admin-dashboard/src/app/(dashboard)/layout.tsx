@@ -1,16 +1,24 @@
-import Sidebar from '@/components/dashboard/Sidebar';
-import Header from '@/components/dashboard/Header';
+'use client';
+
+import React from 'react';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import Header from '@/components/dashboard/Header';
+import Sidebar from '@/components/dashboard/Sidebar';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <ProtectedRoute allowedRoles={['ADMIN']}>
-      <div className="flex min-h-screen bg-gray-50">
+      <div className="dashboard-layout">
         <Sidebar />
-        <div className="flex-1 flex flex-col min-w-0">
-          <Header />
-          <main className="flex-1 p-8 overflow-y-auto">{children}</main>
-        </div>
+        {/* Main Content */}
+        <main className="main-content">
+          <Header
+            onMenuClick={() => window.dispatchEvent(new Event('glow:toggle-sidebar'))}
+          />
+          <div className="content-area">
+            {children}
+          </div>
+        </main>
       </div>
     </ProtectedRoute>
   );

@@ -2,6 +2,8 @@
 const { pool } = require('../../config/db');
 const redisClient = require('../../config/redis');
 
+const biometricCryptoService = require('../biometricCryptoService');
+
 /**
  * AGENTE ATENA: Especialista en Biometría, Visajismo, Diagnóstico Cutáneo/Capilar y Colorimetría
  */
@@ -49,7 +51,18 @@ class AtenaAgent {
     }
 
     const rawProfile = res.rows[0];
-    const diagnosis = this.enrichDiagnosis(rawProfile);
+
+    // Descifrar campos biométricos antes de enriquecer el diagnóstico
+    const faceScores = biometricCryptoService.decrypt(rawProfile.face_scores);
+    const handsDiagnosis = biometricCryptoService.decrypt(rawProfile.hands_diagnosis);
+
+    const decryptedProfile = {
+      ...rawProfile,
+      face_scores: faceScores,
+      hands_diagnosis: handsDiagnosis
+    };
+
+    const diagnosis = this.enrichDiagnosis(decryptedProfile);
 
     // 3. Poblar el caché de Redis
     try {

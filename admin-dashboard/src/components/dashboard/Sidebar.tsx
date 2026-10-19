@@ -1,9 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { ThemeSelector } from '@/components/ui/theme-selector';
 import { 
   Home, 
   Calendar, 
@@ -14,12 +15,32 @@ import {
   Scissors,
   GraduationCap,
   LayoutDashboard,
-  Tag
+  Tag,
+  Menu,
+  X,
+  Building2,
+  Package,
+  ShieldAlert,
+  ChevronLeft,
+  ChevronRight,
+  Inbox,
+  Receipt,
+  ShoppingCart
 } from 'lucide-react';
 
 export default function Sidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+
+  // El botón hamburguesa del Header emite este evento (el estado del drawer
+  // vive aquí, no en el layout).
+  useEffect(() => {
+    const toggle = () => setSidebarOpen((v) => !v);
+    window.addEventListener('glow:toggle-sidebar', toggle);
+    return () => window.removeEventListener('glow:toggle-sidebar', toggle);
+  }, []);
 
   // Links based on role
   const getLinks = () => {
@@ -34,8 +55,13 @@ export default function Sidebar() {
     
     if (user?.rol === 'ADMIN') {
       return [
-        { href: '/admin/business', label: 'Cumplimiento Business', icon: Scissors },
+        { href: '/admin/sos', label: 'Alertas SOS', icon: ShieldAlert },
+        { href: '/admin/pqrsf', label: 'PQRSF / Soporte', icon: Inbox },
+        { href: '/admin/business', label: 'Cumplimiento Business', icon: Building2 },
+        { href: '/admin/prestadores', label: 'Prestadores · IVA', icon: Receipt },
         { href: '/admin/precios', label: 'Gestión de Precios', icon: Tag },
+        { href: '/admin/productos', label: 'Catálogo Productos', icon: Package },
+        { href: '/admin/store/orders', label: 'Pedidos GlowStore', icon: ShoppingCart },
         { href: '/admin/academia', label: 'Academia Glow', icon: GraduationCap },
         { href: '/chat', label: 'Mensajes', icon: MessageSquare },
         { href: '/perfil', label: 'Mi Perfil', icon: UserIcon },
@@ -54,19 +80,37 @@ export default function Sidebar() {
   const links = getLinks();
 
   return (
-    <aside className="w-64 bg-slate-900 text-white min-h-screen flex flex-col justify-between border-r border-slate-800">
-      <div className="p-6">
-        <div className="flex items-center gap-3 mb-8">
-          <div className="bg-rose-500 p-2 rounded-xl text-white">
-            <Scissors size={24} />
-          </div>
-          <div>
-            <h1 className="font-bold text-xl tracking-wide bg-gradient-to-r from-rose-400 to-pink-500 bg-clip-text text-transparent">GlowApp</h1>
-            <p className="text-xs text-slate-400">Portal de Belleza</p>
-          </div>
+    <>
+      {/* Mobile sidebar overlay */}
+      {sidebarOpen && (
+        <div 
+          className="sidebar-overlay visible"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside className={`sidebar ${sidebarOpen ? 'open' : ''} ${collapsed ? 'collapsed' : ''}`} style={{ width: collapsed ? '72px' : '260px' }}>
+        <div className="sidebar-brand">
+          <Link href="/" className="sidebar-logo" aria-label="GlowAdmin Home">
+            <div className="sidebar-logo-icon">
+              <Scissors size={22} />
+            </div>
+            {!collapsed && (
+              <div>
+                <h1 className="sidebar-logo-text">GlowAdmin</h1>
+                <p className="caption">Panel de Control</p>
+              </div>
+            )}
+          </Link>
+          {!collapsed && (
+            <div className="flex justify-center mt-4">
+              <ThemeSelector />
+            </div>
+          )}
         </div>
 
-        <nav className="space-y-1">
+        <nav className="sidebar-nav" role="navigation" aria-label="Navegación principal">
           {links.map((link) => {
             const Icon = link.icon;
             const isActive = pathname === link.href;
@@ -74,40 +118,49 @@ export default function Sidebar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
-                  isActive
-                    ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/20 font-medium'
-                    : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-                }`}
+                onClick={() => setSidebarOpen(false)}
+                className={`nav-link ${isActive ? 'active' : ''}`}
+                aria-current={isActive ? 'page' : undefined}
+                title={collapsed ? link.label : undefined}
               >
-                <Icon size={20} />
-                <span>{link.label}</span>
+                <Icon className="icon" size={20} aria-hidden="true" />
+                {!collapsed && <span>{link.label}</span>}
               </Link>
             );
           })}
         </nav>
-      </div>
 
-      <div className="p-6 border-t border-slate-800">
-        {user && (
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center font-bold text-rose-400">
-              {user.nombre[0].toUpperCase()}
+        <div className="p-4 border-t border-border mt-auto">
+          {!collapsed && user && (
+            <div className="flex items-center gap-3 mb-4">
+              <div className="user-avatar">
+                {user.nombre[0].toUpperCase()}
+              </div>
+              <div className="overflow-hidden min-w-0">
+                <p className="body-sm text-primary truncate">{user.nombre}</p>
+                <p className="micro text-primary font-medium uppercase tracking-wide">{user.rol}</p>
+              </div>
             </div>
-            <div className="overflow-hidden">
-              <p className="text-sm font-semibold truncate">{user.nombre}</p>
-              <p className="text-xs text-slate-400 truncate">{user.rol}</p>
-            </div>
+          )}
+          <div className="flex items-center justify-between">
+            <button
+              onClick={logout}
+              className="btn btn-secondary w-full justify-start"
+              title={collapsed ? 'Cerrar Sesión' : undefined}
+            >
+              <LogOut size={20} className="icon" aria-hidden="true" />
+              {!collapsed && <span>Cerrar Sesión</span>}
+            </button>
+            <button
+              onClick={() => setCollapsed(!collapsed)}
+              className="btn btn-tertiary p-2"
+              aria-label={collapsed ? 'Expandir sidebar' : 'Colapsar sidebar'}
+            >
+              {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+            </button>
           </div>
-        )}
-        <button
-          onClick={logout}
-          className="flex items-center gap-3 px-4 py-3 rounded-xl w-full text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-all duration-200"
-        >
-          <LogOut size={20} />
-          <span>Cerrar Sesión</span>
-        </button>
-      </div>
-    </aside>
+        </div>
+      </aside>
+    </>
   );
 }

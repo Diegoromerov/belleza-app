@@ -19,7 +19,10 @@ async function processBiometricScan(imageBase64) {
       throw new Error('El análisis IA está tomando más tiempo del esperado.');
     }
     console.error('❌ Error comunicándose con AI Worker:', error.message);
-    throw new Error('No se pudo completar el análisis de piel.');
+    const unavailable = new Error('No se pudo completar el análisis de piel.');
+    unavailable.statusCode = 503;
+    unavailable.code = 'BIOMETRIC_ANALYSIS_UNAVAILABLE';
+    throw unavailable;
   }
 }
 

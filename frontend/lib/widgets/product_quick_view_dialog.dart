@@ -33,7 +33,7 @@ class _ProductQuickViewDialogState extends State<ProductQuickViewDialog> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.3),
+          color: color.withValues(alpha: 0.3),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected ? AppTheme.primary : Colors.transparent,
@@ -274,7 +274,7 @@ class _ProductQuickViewDialogState extends State<ProductQuickViewDialog> {
                       widget.product['descripcion']?.toString() ?? 'Sin descripción disponible.',
                       style: TextStyle(
                         fontSize: 13,
-                        color: AppTheme.text.withOpacity(0.8),
+                        color: AppTheme.text.withValues(alpha: 0.8),
                         height: 1.4,
                       ),
                     ),

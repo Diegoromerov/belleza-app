@@ -1,6 +1,18 @@
 // backend/src/tests/jwtProductionGuard.test.js
 const jwt = require('jsonwebtoken');
 
+// POR QUÉ SE NEUTRALIZA DOTENV AQUÍ
+//   `index.js:9` cierra la carga del entorno con `require('dotenv').config()`. Si existe
+//   `backend/.env` (el caso local), ese `config()` RE-INYECTA JWT_SECRET *después* de que el
+//   test lo borre con `delete process.env.JWT_SECRET`: el fail-fast de arranque nunca se
+//   ejercita y la prueba termina midiendo el contenido de `.env` en vez del guard.
+//   Síntoma exacto: "Received function did not throw".
+//   En CI no hay `.env` (está gitignoreado) y el test sí pasaba — un verde que dependía del
+//   disco, no del código. Con dotenv neutralizado el escenario "sin secreto configurado" es
+//   real en ambos entornos. Va con `jest.mock` (hoisted) y NO afecta a `src/tests/setupHarness.js`,
+//   que corre en `setupFiles` antes de este archivo y obtiene JWT_SECRET del entorno real.
+jest.mock('dotenv', () => ({ config: jest.fn(() => ({ parsed: {} })) }));
+
 describe('T-A0: Hardening del Secreto JWT, Fail-Fast de Arranque y Consumidores', () => {
   const originalEnv = process.env;
 

@@ -18,6 +18,7 @@ const authRoutes = require('./src/routes/authRoutes');
 const salonRoutes = require('./src/routes/salonRoutes');
 const biometricConsentRoutes = require('./src/routes/biometricConsentRoutes');
 const userPreferencesRoutes = require('./src/routes/userPreferencesRoutes');
+const userDeliveryAddressRoutes = require('./src/routes/userDeliveryAddressRoutes');
 const biometricRoutes = require('./src/routes/biometricRoutes');
 const vtoRoutes = require('./src/routes/vtoRoutes');
 const colorRoutes = require('./src/routes/colorRoutes');
@@ -33,6 +34,7 @@ const disputeRoutes = require('./src/routes/disputeRoutes');
 const academyRoutes = require('./src/routes/academyRoutes');
 const academyAdminRoutes = require('./src/routes/academyAdminRoutes');
 const adminPreciosRoutes = require('./src/routes/adminPreciosRoutes');
+const adminAuthRoutes = require('./src/routes/adminAuthRoutes');
 const { authMiddleware } = require('./src/middleware/auth');
 const traceIdMiddleware = require('./src/middleware/traceId');
 const glowProRoutes = require('./src/routes/glowProRoutes');
@@ -422,6 +424,7 @@ app.use('/api', disputeRoutes);
 app.use('/api', eventRegistrationRoutes);
 app.use('/api/salon', salonRoutes);
 app.use('/api/users', userPreferencesRoutes);
+app.use('/api/users', userDeliveryAddressRoutes);
 app.use('/api/designs', designsRoutes);
 const niaBeautyRoutes = require('./src/routes/niaBeautyRoutes');
 app.use('/api/nia-beauty', niaBeautyRoutes);
@@ -436,9 +439,18 @@ app.use('/api/v1/workforce', require('./src/routes/v1/workforceRoutes'));
 app.use('/api/vto', vtoRoutes);
 app.use('/api/color', colorRoutes);
 app.use('/api/academy', academyRoutes);
+app.use('/api/admin/auth', adminAuthRoutes);
 app.use('/api/admin/academy', academyAdminRoutes);
 app.use('/api/admin', adminPreciosRoutes);
+// Gestión de PQRSF desde el panel (`/api/admin/tickets...`). Router con authMiddleware y
+// requireRol('admin') propios.
+app.use('/api/admin', require('./src/routes/adminTicketRoutes'));
+app.use('/api/admin', require('./src/routes/adminUploadRoutes'));
 app.use('/api/glow-pro', glowProRoutes);
+// Módulo admin-glow: SOS, verificación de prestadores, payouts y resumen financiero.
+// El router aplica authAdmin a nivel de router (admin.routes.js:8), por lo que
+// montarlo no expone ninguna ruta sin autenticación.
+app.use('/api/glow-admin', require('./src/modules/admin-glow/admin.routes'));
 app.use('/api/events', eventRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/metrics', metricsRoutes);
@@ -465,6 +477,10 @@ app.get('/api/health', async (req, res) => {
     message: salud.message,
     timestamp: new Date().toISOString(),
     env: process.env.NODE_ENV || 'development',
+    // Build desplegado: permite comprobar desde fuera que la version que corre
+    // en produccion es la del commit esperado (Railway lo inyecta).
+    commit: process.env.RAILWAY_GIT_COMMIT_SHA || process.env.GIT_COMMIT || null,
+    service: process.env.RAILWAY_SERVICE_NAME || null,
     database: dbStatus,
     // FIX-FLUTTER-06: política de versión de la app (fuente: MINIMUM_APP_VERSION /
     // LATEST_APP_VERSION). La app compara su versión instalada y bloquea si está
@@ -1296,123 +1312,7 @@ app.patch('/api/users/profile', authMiddleware, async (req, res) => {
 });
 
 
-// 🔹 NUEVO: Agregar una imagen al portafolio (Proveedor)
-app.post('/api/portfolio', authMiddleware, async (req, res) => {
-  try {
-    if (req.user.role !== 'provider' && req.user.role !== 'PRESTADOR') {
-      return res.status(403).json({ error: 'Acceso denegado: solo para proveedores' });
-    }
-    const { image_url, title, category } = req.body;
-    if (!image_url) {
-      return res.status(400).json({ error: 'image_url es obligatorio' });
-    }
-    const query = `
-      INSERT INTO portfolio_items (provider_id, image_url, title, category)
-      VALUES ($1, $2, $3, $4)
-      RETURNING id, provider_id, image_url, title, category, created_at;
-    `;
-    const result = await pool.query(query, [
-      req.user.id,
-      image_url,
-      title || null,
-      category || null
-    ]);
-    res.status(201).json({
-      success: true,
-      message: 'Imagen agregada al portafolio',
-      portfolio_item: result.rows[0]
-    });
-  } catch (error) {
-    console.error('❌ ERROR EN POST /api/portfolio:', { message: error.message });
-    res.status(500).json({ error: 'Error interno al agregar al portafolio' });
-  }
-});
 
-// 🔹 NUEVO: Obtener portafolio de un proveedor autenticado
-app.get('/api/portfolio/provider', authMiddleware, async (req, res) => {
-  try {
-    if (req.user.role !== 'provider' && req.user.role !== 'PRESTADOR') {
-      return res.status(403).json({ error: 'Acceso denegado: solo para proveedores' });
-    }
-    const query = `
-      SELECT id, image_url, title, category, likes_count, created_at
-      FROM portfolio_items
-      WHERE provider_id = $1
-      ORDER BY created_at DESC;
-    `;
-    const result = await pool.query(query, [req.user.id]);
-    res.json({
-      success: true,
-      count: result.rows.length,
-      data: result.rows
-    });
-  } catch (error) {
-    console.error('❌ ERROR EN GET /api/portfolio/provider:', { message: error.message });
-    res.status(500).json({ error: 'Error interno al obtener el portafolio' });
-  }
-});
-
-// 🔹 NUEVO: Eliminar imagen del portafolio (Proveedor)
-app.delete('/api/portfolio/:id', authMiddleware, async (req, res) => {
-  try {
-    if (req.user.role !== 'provider' && req.user.role !== 'PRESTADOR') {
-      return res.status(403).json({ error: 'Acceso denegado: solo para proveedores' });
-    }
-    const itemId = req.params.id;
-    const providerId = req.user.id;
-
-    // Verificar propiedad antes de borrar
-    const checkQuery = 'SELECT id FROM portfolio_items WHERE id = $1 AND provider_id = $2;';
-    const checkRes = await pool.query(checkQuery, [itemId, providerId]);
-    if (checkRes.rows.length === 0) {
-      return res.status(404).json({ error: 'Elemento del portafolio no encontrado o no te pertenece' });
-    }
-
-    const query = 'DELETE FROM portfolio_items WHERE id = $1 AND provider_id = $2 RETURNING id;';
-    await pool.query(query, [itemId, providerId]);
-
-    res.json({
-      success: true,
-      message: 'Imagen eliminada del portafolio'
-    });
-  } catch (error) {
-    console.error('❌ ERROR EN DELETE /api/portfolio/:id:', { message: error.message });
-    res.status(500).json({ error: 'Error interno al eliminar del portafolio' });
-  }
-});
-
-// 🔹 NUEVO: Actualizar título y categoría de un elemento del portafolio (Proveedor)
-app.put('/api/portfolio/:id', authMiddleware, async (req, res) => {
-  try {
-    if (req.user.role !== 'provider' && req.user.role !== 'PRESTADOR') {
-      return res.status(403).json({ error: 'Acceso denegado: solo para proveedores' });
-    }
-    const itemId = req.params.id;
-    const providerId = req.user.id;
-    const { title, category } = req.body;
-
-    const query = `
-      UPDATE portfolio_items
-      SET title = $1, category = $2
-      WHERE id = $3 AND provider_id = $4
-      RETURNING id, title, category;
-    `;
-    const result = await pool.query(query, [title || null, category || null, itemId, providerId]);
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Elemento del portafolio no encontrado o no te pertenece' });
-    }
-
-    res.json({
-      success: true,
-      message: 'Elemento del portafolio actualizado con éxito',
-      portfolio_item: result.rows[0]
-    });
-  } catch (error) {
-    console.error('❌ ERROR EN PUT /api/portfolio/:id:', { message: error.message });
-    res.status(500).json({ error: 'Error interno al actualizar el portafolio' });
-  }
-});
 
 // ==========================================
 // 🔹 NUEVOS ENDPOINTS: Sistema de Chat y Mensajería
@@ -1521,6 +1421,22 @@ const initDatabase = async () => {
   } catch (e) {
     console.warn('⚠️ Error al inicializar sos_alerts:', e.message);
     dbErrors.push({ stage: 'create-sos-alerts', message: e.message });
+  }
+
+  // 4b. Columnas de resolución de SOS (idempotente).
+  // sos_alerts.estado solo admite 'ACTIVO' y 'RESUELTO'. La resolución se guarda
+  // aparte para no reutilizar creado_en y no perder la fecha de emisión.
+  try {
+    await pool.query(`
+      ALTER TABLE sos_alerts
+        ADD COLUMN IF NOT EXISTS resolucion TEXT,
+        ADD COLUMN IF NOT EXISTS resuelto_en TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS resuelto_por INTEGER REFERENCES usuarios(id) ON DELETE SET NULL;
+    `);
+    console.log('✅ Columnas de resolución de sos_alerts verificadas.');
+  } catch (e) {
+    console.warn('⚠️ Error al añadir columnas de resolución a sos_alerts:', e.message);
+    dbErrors.push({ stage: 'alter-sos-alerts-resolution', message: e.message });
   }
 
   // 5. Aislamiento de creación de tabla 'user_activity_logs' (Analíticas) e índices

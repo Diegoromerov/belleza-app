@@ -86,26 +86,32 @@ describe('BiometricCryptoService - Hardening', () => {
       }).toThrow(/BIOMETRIC_ENCRYPTION_KEY no está configurada/);
     });
 
+    // HALLAZGO ABIERTO (no arnes): este caso espera que produccion RECHACE una clave de
+    // longitud invalida, y hoy NO lo hace. biometricCryptoService.js:53-58, en produccion,
+    // hashea la clave y la acepta en silencio; solo lanza si NODE_ENV === 'test'. Es
+    // fail-OPEN, lo contrario de isStrictEnvironment() en config/db.js y del endurecimiento
+    // T-A0. Se deja la asercion como esta a proposito: el fallo documenta el defecto real y
+    // NO se adapta el test al comportamiento actual. Requiere decision de producto/seguridad.
     test('should throw when BIOMETRIC_ENCRYPTION_KEY is invalid length in production', () => {
       process.env.BIOMETRIC_ENCRYPTION_KEY = 'short_key';
       process.env.NODE_ENV = 'production';
       expect(() => {
         require(path.join(__dirname, 'biometricCryptoService.js'));
-      }).toThrow(/32 bytes long/);
+      }).toThrow(/debe ser de 32 bytes/);
     });
 
     test('should throw when BIOMETRIC_ENCRYPTION_KEY is not 32 bytes', () => {
       process.env.BIOMETRIC_ENCRYPTION_KEY = 'short'; // 5 bytes
       expect(() => {
         require(path.join(__dirname, 'biometricCryptoService.js'));
-      }).toThrow(/32 bytes long/);
+      }).toThrow(/debe ser de 32 bytes/);
     });
 
     test('should throw when BIOMETRIC_ENCRYPTION_KEY is too long', () => {
       process.env.BIOMETRIC_ENCRYPTION_KEY = 'a'.repeat(33); // 33 bytes
       expect(() => {
         require(path.join(__dirname, 'biometricCryptoService.js'));
-      }).toThrow(/32 bytes long/);
+      }).toThrow(/debe ser de 32 bytes/);
     });
   });
 

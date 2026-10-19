@@ -326,18 +326,27 @@ void main() {
     });
 
     Future<void> completeStep1(WidgetTester tester) async {
+      // Paso 1: Seleccionar horario si está presente
       final slotChip = find.text('09:00');
       if (slotChip.evaluate().isNotEmpty) {
         await tester.ensureVisible(slotChip);
         await tester.tap(slotChip);
-        await tester.pump(const Duration(milliseconds: 500));
+        await tester.pump(const Duration(milliseconds: 300));
       }
 
+      // Avanzar al Paso 2: Dirección y Notas
+      final nextBtn1 = find.byType(ElevatedButton);
+      if (nextBtn1.evaluate().isNotEmpty) {
+        await tester.tap(nextBtn1.last);
+        await tester.pump(const Duration(milliseconds: 300));
+      }
+
+      // Ingresar dirección en el Paso 2
       final fields = find.byType(TextField);
       if (fields.evaluate().isNotEmpty) {
         await tester.ensureVisible(fields.first);
         await tester.enterText(fields.first, 'Calle 100 # 15-20, Bogotá');
-        await tester.pump(const Duration(milliseconds: 500));
+        await tester.pump(const Duration(milliseconds: 300));
       }
     }
 
@@ -348,10 +357,10 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
 
       await tester.pumpWidget(createTestableWidget(
-        BookingScreen(
+        const BookingScreen(
           providerId: 'prov-123',
           providerName: 'Studio Valeria Gómez',
-          services: const [
+          services: [
             {
               'id': 'srv-1',
               'name': 'Balayage Premium',
@@ -378,10 +387,10 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
 
       await tester.pumpWidget(createTestableWidget(
-        BookingScreen(
+        const BookingScreen(
           providerId: 'prov-123',
           providerName: 'Studio Valeria Gómez',
-          services: const [
+          services: [
             {
               'id': 'srv-1',
               'name': 'Balayage Premium',
@@ -423,10 +432,10 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
 
       await tester.pumpWidget(createTestableWidget(
-        BookingScreen(
+        const BookingScreen(
           providerId: 'prov-123',
           providerName: 'Studio Valeria Gómez',
-          services: const [
+          services: [
             {
               'id': 'srv-1',
               'name': 'Balayage Premium',
@@ -458,6 +467,69 @@ void main() {
       await expectLater(
         find.byType(BookingScreen),
         matchesGoldenFile('$goldenFolder/booking_step3_checkout.png'),
+      );
+    });
+
+    testWidgets('Sticky Summary - Empty State Golden', (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(createTestableWidget(
+        const BookingScreen(
+          providerId: 'prov-123',
+          services: [
+            {
+              'id': 'srv-1',
+              'name': 'Balayage Premium',
+              'price': 250000,
+              'duration': 180,
+              'category': 'Cabello'
+            }
+          ],
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      final summaryFinder = find.byKey(const Key('sticky_summary_container'));
+      expect(summaryFinder, findsOneWidget);
+
+      await expectLater(
+        summaryFinder,
+        matchesGoldenFile('$goldenFolder/sticky_summary_empty.png'),
+      );
+    });
+
+    testWidgets('Sticky Summary - With Product Added Golden', (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(createTestableWidget(
+        const BookingScreen(
+          providerId: 'prov-123',
+          preselectedProductId: '1',
+          services: [
+            {
+              'id': 'srv-1',
+              'name': 'Balayage Premium',
+              'price': 250000,
+              'duration': 180,
+              'category': 'Cabello'
+            }
+          ],
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      final summaryFinder = find.byKey(const Key('sticky_summary_container'));
+      expect(summaryFinder, findsOneWidget);
+
+      await expectLater(
+        summaryFinder,
+        matchesGoldenFile('$goldenFolder/sticky_summary_with_product.png'),
       );
     });
   });

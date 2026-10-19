@@ -3,6 +3,8 @@ const { pool } = require('../config/db');
 /**
  * Helper para construir avisos de coherencia por producto
  */
+const { calcularPrecioBulk } = require('../utils/precioBulk');
+
 function calcularAvisosProducto({ costo, precios }) {
   const avisos = [];
 
@@ -188,6 +190,95 @@ async function getPrecios(req, res) {
  * PUT /api/admin/precios/:productoId
  * Edición manual de costo y/o precios por lista de un producto.
  */
+/**
+ * Lee un producto y sus precios por lista, en la forma exacta que consume el panel:
+ *   { producto_id, nombre, sku, costo, stock,
+ *     precios: { cliente, profesional, negocio },
+ *     unidad_minima: { cliente, profesional, negocio }, avisos }
+ *
+ * La lectura y la forma viven en UN solo sitio a proposito: el GET y el PUT de
+ * /precios/:productoId devuelven lo mismo, y el panel lee la respuesta de los dos
+ * con el mismo codigo (productos/page.tsx -> fetchPrecios). Tener la forma
+ * duplicada/supuesta es justo lo que dejo el GET sin implementar mientras el panel
+ * ya lo llamaba.
+ *
+ * Devuelve null si el producto no existe.
+ */
+async function leerProductoConPrecios(productoId) {
+  const prodRes = await pool.query(
+    `SELECT id AS producto_id, nombre, sku, costo, stock FROM productos WHERE id = $1`,
+    [productoId]
+  );
+  const prod = prodRes.rows[0];
+  if (!prod) return null;
+
+  const preciosRes = await pool.query(`
+    SELECT pp.precio, pp.unidad_minima, lp.codigo AS lista_codigo
+    FROM precios_producto pp
+    JOIN listas_precios lp ON lp.id = pp.lista_id
+    WHERE pp.producto_id = $1;
+  `, [productoId]);
+
+  const pData = {};
+  preciosRes.rows.forEach(r => {
+    pData[r.lista_codigo] = { precio: parseFloat(r.precio), unidad_minima: parseInt(r.unidad_minima, 10) };
+  });
+
+  const precios = {
+    cliente: pData.cliente ? pData.cliente.precio : null,
+    profesional: pData.profesional ? pData.profesional.precio : null,
+    negocio: pData.negocio ? pData.negocio.precio : null
+  };
+
+  const unidad_minima = {
+    cliente: pData.cliente ? pData.cliente.unidad_minima : 1,
+    profesional: pData.profesional ? pData.profesional.unidad_minima : 1,
+    negocio: pData.negocio ? pData.negocio.unidad_minima : 6
+  };
+
+  const numCosto = prod.costo !== null && prod.costo !== undefined ? parseFloat(prod.costo) : null;
+
+  return {
+    producto_id: prod.producto_id,
+    nombre: prod.nombre,
+    sku: prod.sku || null,
+    costo: numCosto,
+    stock: prod.stock !== null && prod.stock !== undefined ? parseInt(prod.stock, 10) : 0,
+    precios,
+    unidad_minima,
+    avisos: calcularAvisosProducto({ costo: numCosto, precios })
+  };
+}
+
+/**
+ * GET /api/admin/precios/:productoId
+ *
+ * Faltaba por completo: solo existia el PUT del mismo camino. El panel lo llama
+ * desde /admin/productos para pintar los precios por perfil al editar un producto;
+ * al responder 404 y estar el consumo dentro de un `if (res.ok)`, no fallaba en voz
+ * alta: el modal se quedaba con los precios en 0 —o con los del producto anterior,
+ * que ademas se podian guardar encima del producto equivocado— y Gestion de Precios
+ * parecia un sistema aparte del catalogo. Era la misma tabla y la misma data.
+ */
+async function getPrecioProducto(req, res) {
+  try {
+    const productoId = parseInt(req.params.productoId, 10);
+    if (!Number.isInteger(productoId) || productoId <= 0) {
+      return res.status(400).json({ error: 'INVALID_ARGUMENT', message: 'ID de producto inválido' });
+    }
+
+    const data = await leerProductoConPrecios(productoId);
+    if (!data) {
+      return res.status(404).json({ error: 'NOT_FOUND', message: 'Producto no encontrado' });
+    }
+
+    return res.json(data);
+  } catch (error) {
+    console.error('Error en GET /api/admin/precios/:productoId:', error);
+    return res.status(500).json({ error: 'INTERNAL_SERVER_ERROR', message: error.message });
+  }
+}
+
 async function updatePrecioProducto(req, res) {
   try {
     const productoId = parseInt(req.params.productoId, 10);
@@ -284,47 +375,10 @@ async function updatePrecioProducto(req, res) {
       }
     }
 
-    // 6. Consultar y retornar la fila actualizada
-    const updatedProdRes = await pool.query(`SELECT id AS producto_id, nombre, sku, costo, stock FROM productos WHERE id = $1`, [productoId]);
-    const updatedProd = updatedProdRes.rows[0];
-
-    const preciosRes = await pool.query(`
-      SELECT pp.precio, pp.unidad_minima, lp.codigo AS lista_codigo
-      FROM precios_producto pp
-      JOIN listas_precios lp ON lp.id = pp.lista_id
-      WHERE pp.producto_id = $1;
-    `, [productoId]);
-
-    const pData = {};
-    preciosRes.rows.forEach(r => {
-      pData[r.lista_codigo] = { precio: parseFloat(r.precio), unidad_minima: parseInt(r.unidad_minima, 10) };
-    });
-
-    const resPrecios = {
-      cliente: pData.cliente ? pData.cliente.precio : null,
-      profesional: pData.profesional ? pData.profesional.precio : null,
-      negocio: pData.negocio ? pData.negocio.precio : null
-    };
-
-    const resUnidadMinima = {
-      cliente: pData.cliente ? pData.cliente.unidad_minima : 1,
-      profesional: pData.profesional ? pData.profesional.unidad_minima : 1,
-      negocio: pData.negocio ? pData.negocio.unidad_minima : 6
-    };
-
-    const numCosto = updatedProd.costo !== null && updatedProd.costo !== undefined ? parseFloat(updatedProd.costo) : null;
-    const avisos = calcularAvisosProducto({ costo: numCosto, precios: resPrecios });
-
-    return res.json({
-      producto_id: updatedProd.producto_id,
-      nombre: updatedProd.nombre,
-      sku: updatedProd.sku || null,
-      costo: numCosto,
-      stock: updatedProd.stock !== null && updatedProd.stock !== undefined ? parseInt(updatedProd.stock, 10) : 0,
-      precios: resPrecios,
-      unidad_minima: resUnidadMinima,
-      avisos
-    });
+    // 6. Devolver el producto actualizado. La lectura y la forma de la respuesta
+    //    viven en leerProductoConPrecios() para que el PUT y el GET no puedan
+    //    divergir: el panel consume las dos con el mismo codigo.
+    return res.json(await leerProductoConPrecios(productoId));
   } catch (error) {
     console.error('Error en PUT /api/admin/precios/:productoId:', error);
     return res.status(500).json({ error: 'INTERNAL_SERVER_ERROR', message: error.message });
@@ -401,14 +455,8 @@ async function bulkUpdatePrecios(req, res) {
       const antes = r.precio_target !== null && r.precio_target !== undefined ? parseFloat(r.precio_target) : null;
       const baseCalc = antes !== null ? antes : (r.precio_cliente !== null && r.precio_cliente !== undefined ? parseFloat(r.precio_cliente) : 0);
 
-      let despues = 0;
-      if (tipo === 'porcentaje') {
-        despues = Math.round(baseCalc * (numValor / 100) * 100) / 100;
-      } else if (tipo === 'fijar') {
-        despues = Math.round(numValor * 100) / 100;
-      } else if (tipo === 'delta') {
-        despues = Math.max(0, Math.round((baseCalc + numValor) * 100) / 100);
-      }
+      // El calculo vive en utils/precioBulk para poder probarlo con valores reales.
+      const despues = calcularPrecioBulk(baseCalc, tipo, numValor);
 
       let deltaPct = 0;
       if (antes !== null && antes > 0) {
@@ -719,6 +767,7 @@ async function getHistorialPrecios(req, res) {
 
 module.exports = {
   getPrecios,
+  getPrecioProducto,
   updatePrecioProducto,
   bulkUpdatePrecios,
   getCoherenciaReport,

@@ -165,7 +165,7 @@ class _GlowNBackScreenState extends State<GlowNBackScreen>
                   ),
                   child: Center(
                     child: Text(
-                      '${level}‑Back',
+                      '$level‑Back',
                       style: TextStyle(
                         color: _difficultyLevel == level
                             ? Colors.white

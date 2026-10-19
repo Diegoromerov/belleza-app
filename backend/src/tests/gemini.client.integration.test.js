@@ -24,36 +24,30 @@ describe('GeminiClient Resilience Integration', () => {
     jest.resetAllMocks();
   });
 
-  test('analyzeHands should retry on network error and return fallback', async () => {
-    // Simulate network error on axios.post
+  test('analyzeHands reintenta y falla en cerrado (sin diagnostico simulado)', async () => {
     axiosMock.post.mockRejectedValue(new Error('Network Error'));
 
     const imageBase64 = 'base64image';
 
-    // The method should return the fallback because the resilience service will exhaust retries and throw,
-    // and the client catches the error and returns the fallback.
-    const result = await geminiClient.analyzeHands(imageBase64);
-    expect(result).toEqual({
-      manchasSolares: 'leve',
-      sequedad: 'moderada',
-      cuticulas: 'sanas',
-      unas: 'sanas',
-      edadAparente: 35,
-    });
+    // El fallback (manchasSolares:'leve', edadAparente:35, ...) se elimino en 94b199b45
+    // junto con `getFallbackHandsDiagnosis`: un diagnostico inventado sobre las manos de
+    // una persona no puede presentarse como resultado.
+    await expect(geminiClient.analyzeHands(imageBase64)).rejects.toThrow();
 
-    // Initial attempt + 3 retries = 4 calls
+    // 1 intento + 3 reintentos = 4 llamadas
     expect(axiosMock.post).toHaveBeenCalledTimes(4);
   });
 
-  test('generateRecommendation should retry on network error and return fallback', async () => {
+  test('generateRecommendation reintenta y falla en cerrado (sin receta simulada)', async () => {
     axiosMock.post.mockRejectedValue(new Error('Network Error'));
 
     const faceScores = { hydration: 50, wrinkles: 30, spots: 20, pores: 40, subtono: 'cálido', bioAge: 25 };
     const handsDiagnosis = { manchasSolares: 'leve', sequedad: 'moderada', cuticulas: 'sanas', unas: 'sanas', edadAparente: 30 };
 
-    const result = await geminiClient.generateRecommendation(faceScores, handsDiagnosis);
-    expect(result).toContain('**Diagnóstico general**');
-    expect(result).toContain('¡La constancia es el secreto de una piel saludable!');
+    // El fallback servia una recomendacion dermatologica escrita a mano y la presentaba
+    // como generada por el modelo. Se elimino en 94b199b45 junto con
+    // `getFallbackRecommendation`.
+    await expect(geminiClient.generateRecommendation(faceScores, handsDiagnosis)).rejects.toThrow();
 
     expect(axiosMock.post).toHaveBeenCalledTimes(4);
   });

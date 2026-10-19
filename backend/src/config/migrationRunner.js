@@ -23,6 +23,14 @@ async function runMigrations() {
     return;
   }
 
+  // Ensure pgvector extension is available before running vector-dependent migrations
+  try {
+    await pool.query('CREATE EXTENSION IF NOT EXISTS vector;');
+    console.log('✅ Extensión pgvector verificada/disponible');
+  } catch (extErr) {
+    console.warn('⚠️ No se pudo crear extensión pgvector (requiere superusuario):', extErr.message);
+  }
+
   const files = fs.readdirSync(migrationsDir).filter(esMigracionAplicable).sort();
   console.log(`🔍 Encontradas ${files.length} migraciones SQL aplicables en ${migrationsDir}`);
 

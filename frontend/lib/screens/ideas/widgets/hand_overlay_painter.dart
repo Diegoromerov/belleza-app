@@ -25,7 +25,7 @@ class HandOverlayPainter extends CustomPainter {
 
     // 1. Fondo translúcido
     final bgPaint = Paint()
-      ..color = Colors.black.withOpacity(0.40)
+      ..color = Colors.black.withValues(alpha: 0.40)
       ..style = PaintingStyle.fill;
     canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), bgPaint);
 
@@ -56,7 +56,7 @@ class HandOverlayPainter extends CustomPainter {
       final fingerPaint = Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2.5
-        ..color = mainColor.withOpacity(0.85);
+        ..color = mainColor.withValues(alpha: 0.85);
 
       canvas.drawRRect(
         RRect.fromRectAndRadius(fingerRect, const Radius.circular(12)),
@@ -77,7 +77,7 @@ class HandOverlayPainter extends CustomPainter {
     final pulsePaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5
-      ..color = mainColor.withOpacity(0.5);
+      ..color = mainColor.withValues(alpha: 0.5);
 
     final radiusPulse = (handWidth / 2) + (sin(animationValue * 2 * pi) * 6);
     canvas.drawCircle(center, radiusPulse, pulsePaint);

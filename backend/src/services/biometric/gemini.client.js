@@ -22,7 +22,7 @@ class GeminiClient {
       const base64Image = typeof image === 'string' ? image : image.toString('base64');
 
       if (!this.apiKey || this.apiKey.includes('tu_api_key_aqui')) {
-        return this.getFallbackHandsDiagnosis();
+        throw new Error('Gemini API key no configurada.');
       }
 
       // Consulta directa a Gemini 3.1 Flash-Lite
@@ -58,7 +58,6 @@ class GeminiClient {
         // Use default policy timeout (5000ms) for resilience
         circuitBreakerName: 'gemini',
         traceId: traceId,
-        fallback: this.getFallbackHandsDiagnosis
       });
 
       const text = response.data.candidates[0].content.parts[0].text;
@@ -77,7 +76,7 @@ class GeminiClient {
       };
     } catch (error) {
       console.error('Gemini 3.1 Flash-Lite Vision error:', error.response?.data || error.message);
-      return this.getFallbackHandsDiagnosis();
+      throw error;
     }
   }
 
@@ -112,7 +111,7 @@ class GeminiClient {
         .replace('{nails}', handsDiagnosis.unas || handsDiagnosis.uñas || 'sanas');
 
       if (!this.apiKey || this.apiKey.includes('tu_api_key_aqui')) {
-        return this.getFallbackRecommendation();
+        throw new Error('Gemini API key no configurada.');
       }
 
       // Configurado globalmente con Gemini 3.1 Flash-Lite para máxima eficiencia de costos en toda la app
@@ -142,13 +141,12 @@ class GeminiClient {
         // Use default policy timeout (5000ms) for resilience
         circuitBreakerName: 'gemini',
         traceId: traceId,
-        fallback: this.getFallbackRecommendation
       });
 
       return response.data.candidates[0].content.parts[0].text;
     } catch (error) {
       console.error('Gemini Text error:', error.response?.data || error.message);
-      return this.getFallbackRecommendation();
+      throw error;
     }
   }
 

@@ -1,7 +1,4 @@
 import json
-import os
-
-os.makedirs('.hermes/devops', exist_ok=True)
 
 hallazgos = [
     {'id': 'SUP-01', 'severity': 'P2', 'area': 'Supply Chain/Deps', 'file': 'backend/package.json', 'line': 'N/A', 'evidence_cmd': 'cd backend && npm audit --json', 'impact': 'Sin automatizacion actualizaciones npm/pub/pip', 'proposed_fix': 'dependabot.yml + buddy-bot (MIT) + syft (MIT) SBOM', 'effort_h': 2},

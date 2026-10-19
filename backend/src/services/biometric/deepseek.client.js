@@ -31,8 +31,7 @@ class DeepSeekClient {
         .replace('{nails}', handsDiagnosis.unas || handsDiagnosis.uñas || 'sanas');
 
       if (!this.apiKey || this.apiKey.includes('tu_api_key')) {
-        console.warn('⚠️ [DEEPSEEK] API Key no configurada. Usando recomendación local de respaldo.');
-        return this.getFallbackRecommendation();
+        throw new Error('DeepSeek API key no configurada.');
       }
 
       const response = await axios.post(
@@ -69,7 +68,7 @@ class DeepSeekClient {
       return content;
     } catch (error) {
       console.error('❌ [DEEPSEEK API ERROR]:', error.response?.data || error.message);
-      return this.getFallbackRecommendation();
+      throw error;
     }
   }
 
@@ -81,7 +80,7 @@ class DeepSeekClient {
   async getVtoToneMatching(subtono) {
     try {
       if (!this.apiKey || this.apiKey.includes('tu_api_key')) {
-        return this.getFallbackVtoTones(subtono);
+        throw new Error('DeepSeek API key no configurada.');
       }
 
       const prompt = `Analiza el subtono cutáneo "${subtono}" y responde EXCLUSIVAMENTE en JSON válido con el siguiente formato:
@@ -121,7 +120,7 @@ class DeepSeekClient {
       return JSON.parse(text);
     } catch (error) {
       console.error('❌ [DEEPSEEK VTO MATCHING ERROR]:', error.message);
-      return this.getFallbackVtoTones(subtono);
+      throw error;
     }
   }
 

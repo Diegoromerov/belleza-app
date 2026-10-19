@@ -1026,8 +1026,8 @@ extension GlowColorSchemeContext on BuildContext {
   
   // AURA
   Color get glowAura => _auraTeal;
-  Color get glowAuraSurface => Color(0x15164C46);
-  Color get glowAuraSubtle => Color(0x0D164C46);
+  Color get glowAuraSurface => const Color(0x15164C46);
+  Color get glowAuraSubtle => const Color(0x0D164C46);
 }
 
 /// ============================================================================
@@ -1741,7 +1741,7 @@ class AppTheme {
     String? labelText,
     Widget? suffixIcon,
   }) {
-    final t = Token.light;
+    const t = Token.light;
     return InputDecoration(
       hintText: hintText,
       labelText: labelText,

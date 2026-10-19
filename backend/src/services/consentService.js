@@ -218,11 +218,11 @@ async function revokeConsent(userId, consentType) {
     }
     
     const res = await pool.query(query, params);
-    
+
     if (res.rows.length === 0) {
       return false;
     }
-    
+
     // Invalidar cache
     const redis = await getRedisClient();
     if (redis) {
@@ -241,7 +241,25 @@ async function revokeConsent(userId, consentType) {
         console.warn('⚠️ Error invalidando cache:', error.message);
       }
     }
-    
+
+    if (consentType === 'all_biometric') {
+      const redisClient = await getRedisClient();
+      if (redisClient) await redisClient.del(`beauty:profile:${userId}`);
+    }
+
+    if (redis) {
+      try {
+        if (consentType === 'all_biometric') {
+          const keys = await redis.keys(`consent:${userId}:*`);
+          if (keys.length) await redis.del(...keys);
+        } else {
+          await redis.del(getCacheKey(userId, consentType));
+        }
+      } catch (error) {
+        console.warn('⚠️ Error invalidando caché de consentimiento:', error.message);
+      }
+    }
+
     // Log en auditoría
     await logAccess({
       userId,
@@ -298,46 +316,35 @@ async function getConsentHistory(userId) {
 async function deleteBiometricData(userId) {
   try {
     let recordsAffected = 0;
+    const tables = [
+      'user_photos', 'biometric_history', 'beauty_profiles',
+      'user_biometrics', 'ai_diagnostics', 'skin_profiles',
+    ];
+    const client = typeof pool.connect === 'function' ? await pool.connect() : null;
+    const queryable = client || pool;
+    if (client) await client.query('BEGIN');
+    try {
+    for (const table of tables) {
+      const result = await queryable.query(`DELETE FROM ${table} WHERE user_id = $1`, [table === 'user_biometrics' ? String(userId) : userId]);
+      recordsAffected += result.rowCount;
+    }
+      if (client) await client.query('COMMIT');
+    } catch (error) {
+      if (client) await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      if (client) client.release();
+    }
 
-    // 1. Eliminar datos de análisis facial
-    const faceRes = await pool.query('DELETE FROM facial_analysis WHERE user_id = $1', [userId]);
-    recordsAffected += faceRes.rowCount;
-
-    // 2. Eliminar análisis de piel
-    const skinRes = await pool.query('DELETE FROM skin_analysis WHERE user_id = $1', [userId]);
-    recordsAffected += skinRes.rowCount;
-
-    // 3. Eliminar análisis de cabello
-    const hairRes = await pool.query('DELETE FROM hair_analysis WHERE user_id = $1', [userId]);
-    recordsAffected += hairRes.rowCount;
-
-    // 4. Eliminar datos de prueba virtual
-    const vtoRes = await pool.query('DELETE FROM virtual_try_on WHERE user_id = $1', [userId]);
-    recordsAffected += vtoRes.rowCount;
-
-    // 5. Eliminar medidas corporales
-    const bodyRes = await pool.query('DELETE FROM body_measurements WHERE user_id = $1', [userId]);
-    recordsAffected += bodyRes.rowCount;
-
-    // 6. Eliminar embeddings faciales
-    const embRes = await pool.query('DELETE FROM facial_embeddings WHERE user_id = $1', [userId]);
-    recordsAffected += embRes.rowCount;
-
-    // 7. Eliminar fotos almacenadas
-    const photosRes = await pool.query('DELETE FROM user_photos WHERE user_id = $1', [userId]);
-    recordsAffected += photosRes.rowCount;
-
-    // 8. Eliminar historial biométrico (Ley 1581 Art.15 - supresión completa)
-    const historyRes = await pool.query('DELETE FROM biometric_history WHERE user_id = $1', [userId]);
-    recordsAffected += historyRes.rowCount;
-
+    const redis = await getRedisClient();
+    if (redis) await redis.del(`beauty:profile:${userId}`);
     // 9. Log en auditoría (NO eliminar consentimientos revocados - auditoría legal)
     await logAccess({
       userId,
       accessedBy: 'user_self',
       accessType: 'delete_data',
       ip: null,
-      details: { recordsAffected, tables: ['facial_analysis', 'skin_analysis', 'hair_analysis', 'virtual_try_on', 'body_measurements', 'facial_embeddings', 'user_photos', 'biometric_history'] }
+      details: { recordsAffected, tables: ['user_photos', 'biometric_history', 'beauty_profiles', 'user_biometrics', 'ai_diagnostics', 'skin_profiles'] }
     });
 
     return { deleted: true, recordsAffected };

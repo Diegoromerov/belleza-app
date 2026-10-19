@@ -99,7 +99,7 @@ class AcademyScreen extends StatelessWidget {
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (_) => GlowNBackScreen()),
+                      builder: (_) => const GlowNBackScreen()),
                 ),
               ),
 
@@ -117,7 +117,7 @@ class AcademyScreen extends StatelessWidget {
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (_) => GlowBeautyScreen()),
+                      builder: (_) => const GlowBeautyScreen()),
                 ),
               ),
 
@@ -135,7 +135,7 @@ class AcademyScreen extends StatelessWidget {
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (_) => GlowColorScreen()),
+                      builder: (_) => const GlowColorScreen()),
                 ),
               ),
 
@@ -170,7 +170,7 @@ class _ModuleCard extends StatelessWidget {
   final String description;
   final VoidCallback onTap;
 
-  _ModuleCard({
+  const _ModuleCard({
     required this.icon,
     required this.gradient,
     required this.tag,
@@ -218,7 +218,7 @@ class _ModuleCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: AppTheme.primary.withOpacity(0.12),
+                        color: AppTheme.primary.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
@@ -258,7 +258,7 @@ class _ModuleCard extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(right: 14),
               child: Icon(Icons.arrow_forward_ios,
-                  color: AppTheme.primary.withOpacity(0.5),
+                  color: AppTheme.primary.withValues(alpha: 0.5),
                   size: 13),
             ),
           ],

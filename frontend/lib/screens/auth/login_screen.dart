@@ -1,7 +1,6 @@
 // frontend/lib/screens/auth/login_screen.dart
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
-import 'role_selection_modal.dart';
 import 'package:flutter/foundation.dart';
 import '../../services/api_service.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -484,7 +483,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               children: [
                                 Expanded(child: Divider(color: t.borderDefault)),
                                 Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 16),
+                                  padding: const EdgeInsets.symmetric(horizontal: 16),
                                   child: Text(
                                     'o accede con',
                                     style: TextStyle(

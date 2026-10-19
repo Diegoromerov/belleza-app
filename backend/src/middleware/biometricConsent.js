@@ -15,6 +15,15 @@ const consentService = require('../services/consentService');
 const consentCache = new Map();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
 
+function clearUserConsentCache(userId, consentType) {
+  const prefix = `${userId}:`;
+  for (const key of consentCache.keys()) {
+    if (key.startsWith(prefix) && (!consentType || key === `${userId}:${consentType}`)) {
+      consentCache.delete(key);
+    }
+  }
+}
+
 /**
  * Tipos de consentimiento válidos
  */
@@ -117,7 +126,6 @@ async function verifyConsent(userId, consentType) {
         console.warn('⚠️ Redis cache error, usando DB:', e.message);
       }
     }
-    
     // Consultar base de datos
     const query = `
       SELECT id, granted, granted_at, revoked_at, purpose, version_terms
@@ -176,7 +184,6 @@ async function verifyConsent(userId, consentType) {
         // Ignorar errores de Redis
       }
     }
-    
     return result;
     
   } catch (error) {
@@ -232,6 +239,13 @@ function requireBiometricConsent(consentType) {
       
       // Adjuntar consentimiento al request para uso posterior
       req.biometricConsent = consent;
+      if (req.method === 'POST' && req.path === '/analyze' && !req.headers['idempotency-key'] && !req.headers['x-idempotency-key']) {
+        return res.status(400).json({
+          error: 'VALIDATION_ERROR',
+          code: 'MISSING_IDEMPOTENCY_KEY',
+          message: 'El encabezado Idempotency-Key es obligatorio para el análisis biométrico.',
+        });
+      }
       next();
       
     } catch (error) {
@@ -333,8 +347,7 @@ async function grantConsent({ userId, consentType, purpose, ip, userAgent, versi
     ]);
     
     // Invalidar cache
-    const cacheKey = `${userId}:${consentType}`;
-    consentCache.delete(cacheKey);
+    clearUserConsentCache(userId, consentType);
     
     // Log de auditoría
     await logBiometricAccess({
@@ -372,10 +385,14 @@ async function revokeConsent(userId, consentType) {
     if (res.rows.length === 0) {
       throw new Error('Consentimiento no encontrado');
     }
+
+    if (consentType === 'all_biometric' || consentType === 'facial_analysis') {
+      const redis = await getRedisClient();
+      if (redis) await redis.del(`beauty:profile:${userId}`);
+    }
     
     // Invalidar cache
-    const cacheKey = `${userId}:${consentType}`;
-    consentCache.delete(cacheKey);
+    clearUserConsentCache(userId, consentType);
     
     // Log de auditoría
     await logBiometricAccess({

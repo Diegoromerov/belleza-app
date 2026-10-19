@@ -36,6 +36,7 @@ test('existen las pantallas administrativas', () => {
     'app/(dashboard)/admin/business/page.tsx',
     'app/(dashboard)/admin/precios/page.tsx',
     'app/(dashboard)/admin/vto/page.tsx',
+    'app/(dashboard)/admin/pqrsf/page.tsx',
   ];
   for (const rel of screens) {
     assert.ok(existsSync(join(src, rel)), `falta src/${rel}`);

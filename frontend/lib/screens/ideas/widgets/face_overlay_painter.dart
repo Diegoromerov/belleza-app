@@ -30,7 +30,7 @@ class FaceOverlayPainter extends CustomPainter {
       ..addOval(ovalRect);
     
     final bgPaint = Paint()
-      ..color = Colors.black.withOpacity(0.45)
+      ..color = Colors.black.withValues(alpha: 0.45)
       ..style = PaintingStyle.fill;
     canvas.drawPath(bgPath, bgPaint);
 
@@ -43,7 +43,7 @@ class FaceOverlayPainter extends CustomPainter {
     final outerGlowPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 5.0
-      ..color = mainColor.withOpacity(0.85)
+      ..color = mainColor.withValues(alpha: 0.85)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
     canvas.drawOval(ovalRect, outerGlowPaint);
 
@@ -51,7 +51,7 @@ class FaceOverlayPainter extends CustomPainter {
     final innerPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.0
-      ..color = isValid ? Colors.white : mainColor.withOpacity(0.9);
+      ..color = isValid ? Colors.white : mainColor.withValues(alpha: 0.9);
     canvas.drawOval(ovalRect, innerPaint);
 
     // 5. Corchetes Angulares de Enfoque Cyber-Champán en las 4 Esquinas
@@ -81,7 +81,7 @@ class FaceOverlayPainter extends CustomPainter {
     // 6. Micro-partículas doradas orbitando a 30 FPS
     final particlePaint = Paint()
       ..style = PaintingStyle.fill
-      ..color = mainColor.withOpacity(0.9);
+      ..color = mainColor.withValues(alpha: 0.9);
 
     const particleCount = 8;
     for (int i = 0; i < particleCount; i++) {

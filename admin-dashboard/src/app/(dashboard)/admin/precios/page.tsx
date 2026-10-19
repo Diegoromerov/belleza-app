@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { formatPrecio } from '@/lib/format';
 import { 
   DollarSign, 
   Search, 
@@ -40,15 +41,50 @@ interface ProductoPrecioRow {
   avisos?: string[];
 }
 
+/**
+ * Contrato REAL de GET /api/admin/precios/coherencia
+ * (backend/src/controllers/adminPreciosController.js:545-551).
+ * Devuelve 5 arrays, no contadores. Antes se declaraba otra forma
+ * (campos sin_precio_* e incoherencias) que el backend nunca envio: al pasar
+ * la peticion por el proxy BFF empezo a responder OK y leer
+ * `incoherencias.length` reventaba la pagina con
+ * "Cannot read properties of undefined (reading 'length')".
+ */
 interface CoherenciaReport {
-  sin_precio_cliente: number;
-  sin_precio_profesional: number;
-  sin_precio_negocio: number;
-  incoherencias: Array<{
-    producto_id: number;
-    nombre: string;
-    mensaje: string;
-  }>;
+  profesional_mayor_o_igual_que_cliente: Array<{ producto_id: number; profesional: number; cliente: number }>;
+  negocio_mayor_que_profesional: Array<{ producto_id: number; negocio: number; profesional: number }>;
+  precio_bajo_costo: Array<{ producto_id: number; costo: number; cliente: number | null; profesional: number | null; negocio: number | null }>;
+  sin_costo_cargado: Array<{ producto_id: number; nombre: string }>;
+  producto_sin_precio_en_lista: Array<{ producto_id: number; cliente: number | null; profesional: number | null; negocio: number | null }>;
+}
+
+function asArrayField<T>(value: unknown): T[] {
+  return Array.isArray(value) ? (value as T[]) : [];
+}
+
+/**
+ * Normaliza la respuesta del endpoint. Una forma inesperada degrada a listas
+ * vacias en vez de tumbar el render.
+ */
+function normalizarCoherencia(raw: unknown): CoherenciaReport {
+  const r = (raw ?? {}) as Record<string, unknown>;
+  return {
+    profesional_mayor_o_igual_que_cliente: asArrayField(r.profesional_mayor_o_igual_que_cliente),
+    negocio_mayor_que_profesional: asArrayField(r.negocio_mayor_que_profesional),
+    precio_bajo_costo: asArrayField(r.precio_bajo_costo),
+    sin_costo_cargado: asArrayField(r.sin_costo_cargado),
+    producto_sin_precio_en_lista: asArrayField(r.producto_sin_precio_en_lista),
+  };
+}
+
+function tieneAvisosCoherencia(c: CoherenciaReport): boolean {
+  return (
+    c.producto_sin_precio_en_lista.length > 0 ||
+    c.precio_bajo_costo.length > 0 ||
+    c.profesional_mayor_o_igual_que_cliente.length > 0 ||
+    c.negocio_mayor_que_profesional.length > 0 ||
+    c.sin_costo_cargado.length > 0
+  );
 }
 
 interface HistorialItem {
@@ -94,8 +130,14 @@ export default function AdminPreciosPage() {
   // Estado para Edición Masiva (Bulk) con Vista Previa
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [bulkLista, setBulkLista] = useState<'cliente' | 'profesional' | 'negocio'>('cliente');
-  const [bulkOperacion, setBulkOperacion] = useState<'porcentaje' | 'monto_fijo'>('porcentaje');
+  // Los valores son EXACTAMENTE los `tipo` que acepta el backend
+  // (adminPreciosController.bulkUpdatePrecios): porcentaje | fijar | delta. La pagina
+  // usaba 'monto_fijo', que el endpoint rechaza con 400, y calculaba el precio en el
+  // navegador en vez de pedirle la vista previa al servidor (el mismo codigo que luego
+  // escribe), de modo que el preview podia no coincidir con el efecto real.
+  const [bulkOperacion, setBulkOperacion] = useState<'porcentaje' | 'fijar' | 'delta'>('porcentaje');
   const [bulkValor, setBulkValor] = useState<string>('10');
+  const [bulkLoading, setBulkLoading] = useState(false);
   const [bulkPreviewRows, setBulkPreviewRows] = useState<Array<{
     producto_id: number;
     nombre: string;
@@ -114,23 +156,28 @@ export default function AdminPreciosPage() {
     errores?: string[];
   } | null>(null);
 
-  const getApiUrl = () => process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+  // Paginacion del listado. El backend YA devolvia { total, pagina, filas }, pero la
+  // pagina pedia sin parametros: se quedaba en la pagina 1 con el tope de por_pagina
+  // (50) y ORDER BY id ASC, asi que todo producto a partir del 51 era invisible —y
+  // parecia que Gestion de Precios no tuviera productos que si estaban en el catalogo.
+  const [pagina, setPagina] = useState(1);
+  const [totalProductos, setTotalProductos] = useState(0);
+  const POR_PAGINA = 50;
 
-  const getAuthToken = () => {
-    if (typeof window === 'undefined') return '';
-    return localStorage.getItem('glow_token') || localStorage.getItem('adminToken') || '';
-  };
+  // Helper para headers con CSRF token via BFF proxy
+  const getBffHeaders = () => ({
+    'X-Requested-With': 'XMLHttpRequest'
+  });
 
   const fetchPreciosData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const token = getAuthToken();
-      const headers = { 'Authorization': `Bearer ${token}` };
+      const headers = getBffHeaders();
 
       const [resPrecios, resCoherencia] = await Promise.all([
-        fetch(`${getApiUrl()}/api/admin/precios`, { headers }),
-        fetch(`${getApiUrl()}/api/admin/precios/coherencia`, { headers })
+        fetch(`/api/admin/precios?page=${pagina}&por_pagina=${POR_PAGINA}`, { headers }),
+        fetch('/api/admin/precios/coherencia', { headers })
       ]);
 
       if (!resPrecios.ok) {
@@ -139,10 +186,11 @@ export default function AdminPreciosPage() {
 
       const dataPrecios = await resPrecios.json();
       setProductos(dataPrecios.filas || dataPrecios.data || []);
+      setTotalProductos(Number(dataPrecios.total) || 0);
 
       if (resCoherencia.ok) {
         const dataCoherencia = await resCoherencia.json();
-        setCoherencia(dataCoherencia);
+        setCoherencia(normalizarCoherencia(dataCoherencia));
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Error desconocido de red';
@@ -150,7 +198,7 @@ export default function AdminPreciosPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [pagina]);
 
   useEffect(() => {
     fetchPreciosData();
@@ -159,10 +207,8 @@ export default function AdminPreciosPage() {
   const fetchHistorialData = useCallback(async () => {
     setLoadingHistorial(true);
     try {
-      const token = getAuthToken();
-      const res = await fetch(`${getApiUrl()}/api/admin/precios/historial`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const headers = getBffHeaders();
+      const res = await fetch('/api/admin/precios/historial', { headers });
       if (res.ok) {
         const data = await res.json();
         setHistorialItems(data.filas || []);
@@ -200,123 +246,147 @@ export default function AdminPreciosPage() {
   };
 
   const handleSaveManualEdit = async () => {
-    if (!editingProduct) return;
-    try {
-      const token = getAuthToken();
-      const preciosArray: Array<{ lista: 'cliente' | 'profesional' | 'negocio'; precio: number | null; unidad_minima?: number }> = [];
+      if (!editingProduct) return;
+      try {
+        const headers = getBffHeaders();
+        const preciosArray: Array<{ lista: 'cliente' | 'profesional' | 'negocio'; precio: number | null; unidad_minima?: number }> = [];
 
-      if (editPrecioCliente !== '') preciosArray.push({ lista: 'cliente', precio: parseFloat(editPrecioCliente) });
-      if (editPrecioProf !== '') preciosArray.push({ lista: 'profesional', precio: parseFloat(editPrecioProf) });
-      if (editPrecioNegocio !== '') {
-        preciosArray.push({
-          lista: 'negocio',
-          precio: parseFloat(editPrecioNegocio),
-          unidad_minima: parseInt(editUnidadMinimaNegocio, 10) || 6
+        if (editPrecioCliente !== '') preciosArray.push({ lista: 'cliente', precio: parseFloat(editPrecioCliente) });
+        if (editPrecioProf !== '') preciosArray.push({ lista: 'profesional', precio: parseFloat(editPrecioProf) });
+        if (editPrecioNegocio !== '') {
+          preciosArray.push({
+            lista: 'negocio',
+            precio: parseFloat(editPrecioNegocio),
+            unidad_minima: parseInt(editUnidadMinimaNegocio, 10) || 6
+          });
+        }
+
+        const payload = {
+          costo: editCosto !== '' ? parseFloat(editCosto) : null,
+          precios: preciosArray,
+          motivo: editMotivo
+        };
+
+        const res = await fetch(`/api/admin/precios/${editingProduct.producto_id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            ...headers
+          },
+          body: JSON.stringify(payload)
         });
+
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.message || `Error al guardar: HTTP ${res.status}`);
+        }
+
+        setSuccessMsg(`Precio del producto "${editingProduct.nombre}" actualizado correctamente.`);
+        setEditingProduct(null);
+        fetchPreciosData();
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Error al guardar cambios';
+        setError(message);
+      }
+    };
+
+    // Generar Vista Previa Masiva (Bulk Preview)
+    const handleGenerateBulkPreview = async () => {
+      const val = parseFloat(bulkValor);
+      if (isNaN(val)) {
+        setError('Ingrese un valor numérico válido para el ajuste masivo.');
+        return;
       }
 
-      const payload = {
-        costo: editCosto !== '' ? parseFloat(editCosto) : null,
-        precios: preciosArray,
-        motivo: editMotivo
-      };
+      // La vista previa la calcula el SERVIDOR, no el navegador: `preview: true` es un
+      // dry-run del mismo codigo que luego escribe, asi que el preview no puede mentir
+      // sobre el efecto ni sobre a que productos alcanza. Antes la pagina recalculaba
+      // los precios por su cuenta y enviaba otro formato, que el endpoint rechazaba.
+      try {
+        setError(null);
+        setBulkLoading(true);
 
-      const res = await fetch(`${getApiUrl()}/api/admin/precios/${editingProduct.producto_id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(payload)
-      });
+        const res = await fetch('/api/admin/precios/bulk', {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            ...getBffHeaders()
+          },
+          body: JSON.stringify({
+            lista: bulkLista,
+            producto_ids: productos.map(p => p.producto_id),
+            operacion: { tipo: bulkOperacion, valor: val },
+            preview: true
+          })
+        });
 
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.message || `Error al guardar: HTTP ${res.status}`);
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.message || `Error generando la vista previa: HTTP ${res.status}`);
+        }
+
+        const data = await res.json();
+        const nombres = new Map(productos.map(p => [p.producto_id, p.nombre]));
+        const detalle = Array.isArray(data.detalle) ? data.detalle : [];
+
+        setBulkPreviewRows(detalle.map((d: { producto_id: number; antes: number | null; despues: number }) => ({
+          producto_id: d.producto_id,
+          nombre: nombres.get(d.producto_id) || `#${d.producto_id}`,
+          precio_actual: d.antes,
+          precio_nuevo: d.despues
+        })));
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Error generando la vista previa del ajuste masivo');
+      } finally {
+        setBulkLoading(false);
       }
+    };
 
-      setSuccessMsg(`Precio del producto "${editingProduct.nombre}" actualizado correctamente.`);
-      setEditingProduct(null);
-      fetchPreciosData();
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Error al guardar cambios';
-      setError(message);
-    }
-  };
+    // Aplicar Cambios Masivos Confirmados
+    const handleApplyBulkChanges = async () => {
+      try {
+        const headers = getBffHeaders();
+        // Formato que adminPreciosController.bulkUpdatePrecios realmente acepta:
+        // { lista, producto_ids, operacion: { tipo, valor }, motivo }. La version
+        // anterior mandaba un arreglo llamado "cambios" con el precio ya calculado
+        // en el navegador, formato que el endpoint rechaza con 400: por eso el
+        // ajuste masivo NUNCA funciono.
+        const payload = {
+          lista: bulkLista,
+          producto_ids: bulkPreviewRows.map(r => r.producto_id),
+          operacion: { tipo: bulkOperacion, valor: parseFloat(bulkValor) },
+          motivo: `Ajuste masivo ${bulkOperacion} (${bulkValor})`
+        };
 
-  // Generar Vista Previa Masiva (Bulk Preview)
-  const handleGenerateBulkPreview = () => {
-    const val = parseFloat(bulkValor);
-    if (isNaN(val)) {
-      setError('Ingrese un valor numérico válido para el ajuste masivo.');
-      return;
-    }
+        const res = await fetch('/api/admin/precios/bulk', {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            ...headers
+          },
+          body: JSON.stringify(payload)
+        });
 
-    const preview = productos.map(p => {
-      const pActual = p.precios[bulkLista]?.precio ?? null;
-      let pNuevo = pActual ?? (p.costo ? p.costo * 1.3 : 10000);
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.message || `Error en actualización masiva: HTTP ${res.status}`);
+        }
 
-      if (bulkOperacion === 'porcentaje') {
-        pNuevo = pNuevo * (1 + val / 100);
-      } else {
-        pNuevo = pNuevo + val;
+        setSuccessMsg(`Ajuste masivo de precios aplicado exitosamente.`);
+        setShowBulkModal(false);
+        setBulkPreviewRows([]);
+        fetchPreciosData();
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Error al aplicar cambios masivos';
+        setError(message);
       }
-
-      return {
-        producto_id: p.producto_id,
-        nombre: p.nombre,
-        precio_actual: pActual,
-        precio_nuevo: Math.max(0, Math.round(pNuevo))
-      };
-    });
-
-    setBulkPreviewRows(preview);
-  };
-
-  // Aplicar Cambios Masivos Confirmados
-  const handleApplyBulkChanges = async () => {
-    try {
-      const token = getAuthToken();
-      const payload = {
-        lista: bulkLista,
-        cambios: bulkPreviewRows.map(r => ({
-          producto_id: r.producto_id,
-          precio: r.precio_nuevo
-        })),
-        motivo: `Ajuste masivo ${bulkOperacion} (${bulkValor})`
-      };
-
-      const res = await fetch(`${getApiUrl()}/api/admin/precios/bulk`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(payload)
-      });
-
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.message || `Error en actualización masiva: HTTP ${res.status}`);
-      }
-
-      setSuccessMsg(`Ajuste masivo de precios aplicado exitosamente.`);
-      setShowBulkModal(false);
-      setBulkPreviewRows([]);
-      fetchPreciosData();
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Error al aplicar cambios masivos';
-      setError(message);
-    }
-  };
+    };
 
   // Exportar CSV
   const handleExportCsv = async () => {
     try {
-      const token = getAuthToken();
-      const res = await fetch(`${getApiUrl()}/api/admin/precios/export.csv`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const headers = getBffHeaders();
+      const res = await fetch('/api/admin/precios/export.csv', { headers });
       if (!res.ok) {
         throw new Error(`Exportación falló: HTTP ${res.status}`);
       }
@@ -343,16 +413,14 @@ export default function AdminPreciosPage() {
     }
 
     try {
-      const token = getAuthToken();
+      const headers = getBffHeaders();
       const formData = new FormData();
       formData.append('archivo', importFile);
       formData.append('dryRun', importDryRun ? 'true' : 'false');
 
-      const res = await fetch(`${getApiUrl()}/api/admin/precios/import.csv`, {
+      const res = await fetch('/api/admin/precios/import.csv', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
+        headers,
         body: formData
       });
 
@@ -462,22 +530,28 @@ export default function AdminPreciosPage() {
         </div>
       )}
 
-      {/* Reporte de Coherencia e Inconsistencias (Informativo, No Bloqueante) */}
-      {coherencia && (coherencia.sin_precio_cliente > 0 || coherencia.sin_precio_profesional > 0 || coherencia.sin_precio_negocio > 0 || coherencia.incoherencias.length > 0) && (
+      {/* Reporte de Coherencia Comercial (Informativo, No Bloqueante) */}
+      {coherencia && tieneAvisosCoherencia(coherencia) && (
         <div className="p-5 bg-amber-500/10 border border-amber-500/30 rounded-2xl space-y-3">
           <div className="flex items-center gap-3 text-amber-400 font-semibold text-sm">
             <Info size={18} />
             <span>Avisos de Coherencia Comercial (Informativos)</span>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-amber-200/80">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 text-xs text-amber-200/80">
             <div className="bg-amber-950/40 p-3 rounded-xl border border-amber-500/20">
-              <span className="font-semibold text-amber-300">{coherencia.sin_precio_cliente}</span> productos sin tarifa Consumidor
+              <span className="font-semibold text-amber-300">{coherencia.producto_sin_precio_en_lista.length}</span> sin tarifa en alguna lista
             </div>
             <div className="bg-amber-950/40 p-3 rounded-xl border border-amber-500/20">
-              <span className="font-semibold text-amber-300">{coherencia.sin_precio_profesional}</span> productos sin tarifa Profesional B2B
+              <span className="font-semibold text-amber-300">{coherencia.precio_bajo_costo.length}</span> por debajo del costo
             </div>
             <div className="bg-amber-950/40 p-3 rounded-xl border border-amber-500/20">
-              <span className="font-semibold text-amber-300">{coherencia.sin_precio_negocio}</span> productos sin tarifa Salón B2B
+              <span className="font-semibold text-amber-300">{coherencia.profesional_mayor_o_igual_que_cliente.length}</span> donde Profesional ≥ Consumidor
+            </div>
+            <div className="bg-amber-950/40 p-3 rounded-xl border border-amber-500/20">
+              <span className="font-semibold text-amber-300">{coherencia.negocio_mayor_que_profesional.length}</span> donde Salón &gt; Profesional
+            </div>
+            <div className="bg-amber-950/40 p-3 rounded-xl border border-amber-500/20">
+              <span className="font-semibold text-amber-300">{coherencia.sin_costo_cargado.length}</span> sin costo cargado
             </div>
           </div>
         </div>
@@ -560,14 +634,14 @@ export default function AdminPreciosPage() {
                       </td>
 
                       <td className="py-4 px-4 text-right font-mono text-slate-300">
-                        {prod.costo !== null ? `$${parseFloat(String(prod.costo)).toLocaleString('es-CO')}` : <span className="text-slate-600">-</span>}
+                        {prod.costo !== null ? formatPrecio(prod.costo) : <span className="text-slate-600">-</span>}
                       </td>
 
                       {/* Nivel Consumidor */}
                       <td className="py-4 px-4 text-center">
                         {pCliente !== undefined && pCliente !== null ? (
                           <span className="font-mono font-medium text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-lg border border-emerald-500/20">
-                            ${parseFloat(String(pCliente)).toLocaleString('es-CO')}
+                            ${formatPrecio(pCliente)}
                           </span>
                         ) : (
                           <span className="text-xs text-rose-400/80 bg-rose-500/10 px-2.5 py-1 rounded-lg border border-rose-500/20 font-medium">
@@ -580,7 +654,7 @@ export default function AdminPreciosPage() {
                       <td className="py-4 px-4 text-center">
                         {pProf !== undefined && pProf !== null ? (
                           <span className="font-mono font-medium text-sky-400 bg-sky-500/10 px-3 py-1 rounded-lg border border-sky-500/20">
-                            ${parseFloat(String(pProf)).toLocaleString('es-CO')}
+                            ${formatPrecio(pProf)}
                           </span>
                         ) : (
                           <span className="text-xs text-slate-500 bg-slate-800/80 px-2.5 py-1 rounded-lg border border-slate-700">
@@ -594,7 +668,7 @@ export default function AdminPreciosPage() {
                         {pNegocio !== undefined && pNegocio !== null ? (
                           <div className="inline-flex flex-col items-center">
                             <span className="font-mono font-medium text-purple-400 bg-purple-500/10 px-3 py-1 rounded-lg border border-purple-500/20">
-                              ${parseFloat(String(pNegocio)).toLocaleString('es-CO')}
+                              ${formatPrecio(pNegocio)}
                             </span>
                             <span className="text-[10px] text-purple-300/70 mt-1">Min: {uMinNegocio} unid.</span>
                           </div>
@@ -620,6 +694,35 @@ export default function AdminPreciosPage() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Paginacion: sin esto solo se veian los primeros 50 productos y el resto
+            era inalcanzable, aunque el backend ya devolvia el total. */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-6 py-4 border-t border-slate-800">
+          <p className="text-sm text-slate-400">
+            Mostrando {productos.length === 0 ? 0 : ((pagina - 1) * POR_PAGINA) + 1} - {Math.min(pagina * POR_PAGINA, totalProductos)} de {totalProductos} productos
+          </p>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setPagina(p => Math.max(1, p - 1))}
+              disabled={pagina <= 1 || loading}
+              className="btn btn-secondary disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Anterior
+            </button>
+            <span className="text-sm text-slate-400">
+              Página {pagina} de {Math.max(1, Math.ceil(totalProductos / POR_PAGINA))}
+            </span>
+            <button
+              type="button"
+              onClick={() => setPagina(p => p + 1)}
+              disabled={pagina >= Math.ceil(totalProductos / POR_PAGINA) || loading}
+              className="btn btn-secondary disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Siguiente
+            </button>
+          </div>
         </div>
       </div>
 
@@ -766,11 +869,12 @@ export default function AdminPreciosPage() {
                 <label className="text-xs text-slate-400 block mb-1">Tipo de Ajuste</label>
                 <select
                   value={bulkOperacion}
-                  onChange={(e) => setBulkOperacion(e.target.value as 'porcentaje' | 'monto_fijo')}
+                  onChange={(e) => setBulkOperacion(e.target.value as 'porcentaje' | 'fijar' | 'delta')}
                   className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-slate-100"
                 >
-                  <option value="porcentaje">Porcentaje (%)</option>
-                  <option value="monto_fijo">Monto Fijo ($)</option>
+                  <option value="porcentaje">Porcentaje (%) — varía el precio en ese %</option>
+                  <option value="fijar">Fijar precio ($) — pone ese precio a todos</option>
+                  <option value="delta">Sumar / restar monto ($)</option>
                 </select>
               </div>
 
@@ -787,16 +891,17 @@ export default function AdminPreciosPage() {
 
             <button
               onClick={handleGenerateBulkPreview}
-              className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-rose-400 border border-rose-500/20 rounded-xl text-sm font-semibold transition-all"
+              disabled={bulkLoading}
+              className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-rose-400 border border-rose-500/20 rounded-xl text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              Generar Vista Previa de Cambios
+              {bulkLoading ? 'Calculando en el servidor…' : 'Generar Vista Previa de Cambios'}
             </button>
 
             {/* TABLA DE VISTA PREVIA PROPUESTA */}
             {bulkPreviewRows.length > 0 && (
               <div className="space-y-3">
                 <p className="text-xs font-semibold text-slate-300">
-                  Tabla de Cambios Propuestos ({bulkPreviewRows.length} productos afectados):
+                  Vista previa del servidor · {bulkPreviewRows.length} de {productos.length} productos de esta página ({totalProductos} en el catálogo):
                 </p>
                 <div className="max-h-60 overflow-y-auto border border-slate-800 rounded-xl">
                   <table className="w-full text-left text-xs text-slate-300">
@@ -812,10 +917,10 @@ export default function AdminPreciosPage() {
                         <tr key={r.producto_id}>
                           <td className="py-2 px-3">{r.nombre}</td>
                           <td className="py-2 px-3 text-right font-mono text-slate-400">
-                            {r.precio_actual !== null ? `$${r.precio_actual.toLocaleString('es-CO')}` : '-'}
+                            {formatPrecio(r.precio_actual)}
                           </td>
                           <td className="py-2 px-3 text-right font-mono text-emerald-400 font-bold">
-                            ${r.precio_nuevo.toLocaleString('es-CO')}
+                            ${formatPrecio(r.precio_nuevo)}
                           </td>
                         </tr>
                       ))}
@@ -966,10 +1071,10 @@ export default function AdminPreciosPage() {
                         <td className="py-2.5 px-4 font-medium text-slate-200">{item.producto_nombre}</td>
                         <td className="py-2.5 px-4 uppercase font-semibold text-purple-300">{item.lista_codigo}</td>
                         <td className="py-2.5 px-4 text-right font-mono text-slate-400">
-                          {item.precio_anterior !== null ? `$${item.precio_anterior.toLocaleString('es-CO')}` : '-'}
+                          {formatPrecio(item.precio_anterior)}
                         </td>
                         <td className="py-2.5 px-4 text-right font-mono font-bold text-emerald-400">
-                          ${item.precio_nuevo.toLocaleString('es-CO')}
+                          ${formatPrecio(item.precio_nuevo)}
                         </td>
                         <td className="py-2.5 px-4 text-slate-400">
                           <div>{item.origen}</div>

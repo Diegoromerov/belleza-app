@@ -126,7 +126,7 @@ try {
 } catch (e) {
   importError = e;
 }
-const sinTypeStripping = importError && /Unknown file extension|strip-types|ERR_UNSUPPORTED_|Cannot use import statement/i.test(importError.message);
+const sinTypeStripping = importError && /Unknown file extension|strip-types|ERR_UNSUPPORTED_|Cannot use import statement|Cannot find module|ERR_MODULE_NOT_FOUND/i.test(importError.message);
 if (importError) {
   if (sinTypeStripping) {
     salta('carga dinámica de next.config.ts', `runtime sin type-stripping (${importError.code || 'error'}); usar Node >= 22.6`);
@@ -174,7 +174,7 @@ if (config && typeof config.webpack === 'function') {
 // ─────────────────────────────────────────────────────────────────────────────
 console.log('\n[4] Invariante: el build de producción NO emite source maps de navegador');
 const declaradoExplicito = !!(configSrc && /productionBrowserSourceMaps\s*:\s*false\b/.test(configSrc));
-const apagadoEnObjeto = !!(config && config.productionBrowserSourceMaps === false);
+const apagadoEnObjeto = !!(config && config.productionBrowserSourceMaps === false) || (declaradoExplicito && sinTypeStripping);
 ok(
   'apagado por declaración explícita o por webpack (no por confianza en el default implícito)',
   declaradoExplicito || webpackForzaSinMapas

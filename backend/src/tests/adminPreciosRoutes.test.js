@@ -43,7 +43,7 @@ describe('Admin Precios Routes', () => {
   test('GET /api/admin/precios funciona correctamente para rol admin', async () => {
     pool.query.mockImplementation((queryText) => {
       const q = String(queryText);
-      if (q.includes('SELECT rol, tenant_id FROM usuarios')) {
+      if (q.includes('app_usuario_identidad') || q.includes('FROM usuarios')) {
         return Promise.resolve({ rows: [{ rol: 'ADMIN', tenant_id: 1 }] });
       }
       if (q.includes('set_config')) {
@@ -92,7 +92,7 @@ describe('Admin Precios Routes', () => {
   test('GET /api/admin/precios/export.csv devuelve CSV con headers correctos', async () => {
     pool.query.mockImplementation((queryText) => {
       const q = String(queryText);
-      if (q.includes('SELECT rol, tenant_id FROM usuarios')) {
+      if (q.includes('app_usuario_identidad') || q.includes('FROM usuarios')) {
         return Promise.resolve({ rows: [{ rol: 'ADMIN', tenant_id: 1 }] });
       }
       if (q.includes('FROM listas_precios')) {
@@ -127,7 +127,7 @@ describe('Admin Precios Routes', () => {
   test('POST /api/admin/precios/import.csv procesa archivo CSV en dry_run', async () => {
     pool.query.mockImplementation((queryText) => {
       const q = String(queryText);
-      if (q.includes('SELECT rol, tenant_id FROM usuarios')) {
+      if (q.includes('app_usuario_identidad') || q.includes('FROM usuarios')) {
         return Promise.resolve({ rows: [{ rol: 'ADMIN', tenant_id: 1 }] });
       }
       if (q.includes('FROM listas_precios')) {

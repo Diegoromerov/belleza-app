@@ -21,7 +21,7 @@ class GlowWelcomeGuide {
   /// Pasos declarativos de la guía
   static final List<GlowGuideStep> steps = [
     // PASO 01 — Welcome
-    GlowGuideStep(
+    const GlowGuideStep(
       id: 'step_01_welcome',
       order: 0,
       estimatedDurationMs: 5000,
@@ -45,7 +45,7 @@ class GlowWelcomeGuide {
       id: 'step_02_citas',
       order: 1,
       estimatedDurationMs: 6000,
-      auraContent: GlowGuideAuraContent(
+      auraContent: const GlowGuideAuraContent(
         text: 'En Citas podrás consultar y gestionar tus citas de manera sencilla.',
         position: AuraPosition.defaultBottom,
         visualState: AuraVisualState.speaking,
@@ -69,7 +69,7 @@ class GlowWelcomeGuide {
       id: 'step_03_glowshop',
       order: 2,
       estimatedDurationMs: 6000,
-      auraContent: GlowGuideAuraContent(
+      auraContent: const GlowGuideAuraContent(
         text: 'En GlowShop encontrarás los productos y servicios disponibles.',
         position: AuraPosition.defaultBottom,
         visualState: AuraVisualState.speaking,
@@ -93,7 +93,7 @@ class GlowWelcomeGuide {
       id: 'step_04_glowia',
       order: 3,
       estimatedDurationMs: 7000,
-      auraContent: GlowGuideAuraContent(
+      auraContent: const GlowGuideAuraContent(
         text: 'Con Glow IA+ tendrás asistencia inteligente dentro de GlowApp.',
         position: AuraPosition.defaultBottom,
         visualState: AuraVisualState.speaking,
@@ -117,7 +117,7 @@ class GlowWelcomeGuide {
       id: 'step_05_perfil',
       order: 4,
       estimatedDurationMs: 6000,
-      auraContent: GlowGuideAuraContent(
+      auraContent: const GlowGuideAuraContent(
         text: 'Desde tu Perfil puedes gestionar tu información y tus preferencias.',
         position: AuraPosition.defaultBottom,
         visualState: AuraVisualState.speaking,
@@ -141,7 +141,7 @@ class GlowWelcomeGuide {
       id: 'step_06_aurachat',
       order: 5,
       estimatedDurationMs: 7000,
-      auraContent: GlowGuideAuraContent(
+      auraContent: const GlowGuideAuraContent(
         text: 'Abre y despliega la barra de búsqueda en la parte superior de Home para consultar servicios y prestadores.',
         position: AuraPosition.center,
         visualState: AuraVisualState.speaking,
@@ -165,7 +165,7 @@ class GlowWelcomeGuide {
       id: 'step_07_mapa',
       order: 6,
       estimatedDurationMs: 8000,
-      auraContent: GlowGuideAuraContent(
+      auraContent: const GlowGuideAuraContent(
         text: 'Toca cualquier globo de proveedor en el mapa para ver sus detalles y acceder a su perfil.',
         position: AuraPosition.defaultBottom,
         visualState: AuraVisualState.speaking,
@@ -189,7 +189,7 @@ class GlowWelcomeGuide {
       id: 'step_08_despedida',
       order: 7,
       estimatedDurationMs: 8000,
-      auraContent: GlowGuideAuraContent(
+      auraContent: const GlowGuideAuraContent(
         text: 'Despliega el menú lateral por capas y explora las funciones. ¡Disfruta tu experiencia en GlowApp!',
         position: AuraPosition.center,
         visualState: AuraVisualState.speaking,

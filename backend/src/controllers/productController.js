@@ -265,3 +265,45 @@ exports.deleteProduct = async (req, res) => {
     return res.status(500).json({ error: 'Error al eliminar producto' });
   }
 };
+
+// GET /api/admin/products → Listado paginado del catálogo para el panel admin.
+//
+// El panel (admin-dashboard/src/app/(dashboard)/admin/productos/page.tsx) pide
+// `/api/admin/products?page=N&limit=M` y lee `data.data || data.filas` y
+// `data.total || data.count`. Antes de este handler la ruta solo existía para
+// POST/PUT/DELETE, así que el listado caía en el 404 genérico del backend
+// ("Ruta API no encontrada: GET /api/admin/products").
+exports.getAdminProducts = async (req, res) => {
+  try {
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limitSolicitado = parseInt(req.query.limit, 10) || 20;
+    // Tope duro: evita volcar el catálogo completo en una sola petición.
+    const limit = Math.min(Math.max(limitSolicitado, 1), 100);
+    const offset = (page - 1) * limit;
+
+    const busqueda = typeof req.query.search === 'string' ? req.query.search.trim() : '';
+    const filtro = busqueda ? 'WHERE (p.nombre ILIKE $1 OR p.sku ILIKE $1)' : '';
+    const paramsFiltro = busqueda ? [`%${busqueda}%`] : [];
+
+    const countRes = await pool.query(
+      `SELECT COUNT(*)::int AS total FROM productos p ${filtro};`,
+      paramsFiltro
+    );
+    const total = countRes.rows[0]?.total || 0;
+
+    const { rows } = await pool.query(
+      `SELECT p.id, p.nombre, p.descripcion, p.costo, p.stock, p.imagen_url,
+              p.tag_especialidad, p.tipo_visibilidad, p.sku, p.tenant_id
+         FROM productos p
+         ${filtro}
+        ORDER BY p.id ASC
+        LIMIT $${paramsFiltro.length + 1} OFFSET $${paramsFiltro.length + 2};`,
+      [...paramsFiltro, limit, offset]
+    );
+
+    return res.json({ success: true, page, limit, total, data: rows });
+  } catch (error) {
+    console.error('❌ ERROR EN GET /api/admin/products:', error);
+    return res.status(500).json({ error: 'Error al listar productos', message: error.message });
+  }
+};

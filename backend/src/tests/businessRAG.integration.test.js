@@ -8,11 +8,16 @@ const { executeAuraTool, AURA_TOOLS_DEFINITIONS } = require('../services/auraToo
 
 const businessDiagnosticService = require('../services/businessDiagnosticService');
 
+// business_profiles.provider_id es INTEGER (ver migracion 012 y src/config/pgMemory.js).
+// Un id de texto hace fallar el INSERT con "invalid input syntax for integer", lo que
+// revienta el beforeAll y arrastra los 15 casos de esta suite.
+const AURA_TEST_PROVIDER_ID = 900003;
+
 describe('GlowApp Business Engine — GOAL 05 Aura + RAG Security & Quality Suite', () => {
 
   beforeAll(async () => {
     await businessDiagnosticService.runDiagnostic({
-      provider_id: 'provider-user-a',
+      provider_id: AURA_TEST_PROVIDER_ID,
       tenant_id: 'tenant-alpha',
       name: 'Spa Alpha Test',
       onboarding_mode: 'EXISTING_BUSINESS',
@@ -81,20 +86,20 @@ describe('GlowApp Business Engine — GOAL 05 Aura + RAG Security & Quality Suit
     });
 
     test('Q2 — Business Contextual Retrieval: Consulta de resumen de expediente de negocio', async () => {
-      const res = await executeAuraTool('get_business_profile_summary', {}, 'provider-user-a', 'provider', 'tenant-alpha');
+      const res = await executeAuraTool('get_business_profile_summary', {}, AURA_TEST_PROVIDER_ID, 'provider', 'tenant-alpha');
       expect(res.status).toBe('success');
       expect(res.summary).toHaveProperty('profile');
       expect(res.summary.profile).toHaveProperty('compliance_score');
     });
 
     test('Q3 — Tenant Private Retrieval: Tareas privadas del prestador autenticado', async () => {
-      const res = await executeAuraTool('get_business_tasks', {}, 'provider-user-a', 'provider', 'tenant-alpha');
+      const res = await executeAuraTool('get_business_tasks', {}, AURA_TEST_PROVIDER_ID, 'provider', 'tenant-alpha');
       expect(res.status).toBe('success');
       expect(Array.isArray(res.tasks)).toBe(true);
     });
 
     test('Q4 — Regulatory Retrieval: Recuperación de normatividad regulatoria nacional', async () => {
-      const res = await executeAuraTool('search_regulatory_knowledge_rag', { queryText: 'Resolución 2827 bioseguridad' }, 'provider-user-a', 'provider', 'tenant-alpha');
+      const res = await executeAuraTool('search_regulatory_knowledge_rag', { queryText: 'Resolución 2827 bioseguridad' }, AURA_TEST_PROVIDER_ID, 'provider', 'tenant-alpha');
       expect(res.status).toBe('success');
       expect(res.domain).toBe('REGULATORY');
     });

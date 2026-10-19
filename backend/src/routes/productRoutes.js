@@ -27,6 +27,9 @@ router.get('/products', productController.getProducts);
 // Obtener un producto por ID
 router.get('/products/:id', productController.getProductById);
 
+// Listar el catálogo completo para el panel admin (paginado)
+router.get('/admin/products', authMiddleware, requireRol('admin'), productController.getAdminProducts);
+
 // Cargar un producto (Administrador de catálogo)
 // Extensión futura: admin || (provider && tenant propietario), gestionado por RLS.
 router.post('/admin/products', authMiddleware, requireRol('admin'), productController.createProduct);
@@ -42,6 +45,19 @@ router.post('/store/envio/cotizacion', authMiddleware, orderController.cotizarEn
 router.post('/store/checkout', authMiddleware, orderController.createOrder);
 router.get('/store/orders', authMiddleware, orderController.getOrders);
 router.get('/store/orders/:id', authMiddleware, orderController.getOrderById);
+router.post('/store/orders/:id/pay', authMiddleware, orderController.payOrder);
+router.post('/payments/store-webhook', orderController.storeWebhook);
+
+// --- Rutas públicas de cotización de envío (L5) ---
+router.get('/store/shipping/quote', orderController.cotizarEnvioPublic);
+
+// --- Rutas Admin para Gestión de Pedidos GlowStore ---
+router.get('/admin/store/orders', authMiddleware, requireRol('admin'), orderController.getAllStoreOrdersAdmin);
+router.post('/admin/store/orders/:id/dispatch', authMiddleware, requireRol('admin'), orderController.dispatchOrder);
+router.post('/admin/store/orders/:id/deliver', authMiddleware, requireRol('admin'), orderController.deliverOrder);
+router.post('/admin/store/orders/:id/cancel', authMiddleware, requireRol('admin'), orderController.cancelOrder);
+router.get('/admin/envios/:guia', authMiddleware, requireRol('admin'), orderController.getEnvioByGuia);
+router.patch('/admin/envios/:guia/status', authMiddleware, requireRol('admin'), orderController.updateEnvioStatus);
 
 // POST /api/biometric/check
 router.post('/biometric/check', authMiddleware, async (req, res) => {

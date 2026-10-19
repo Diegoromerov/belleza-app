@@ -41,27 +41,28 @@ export default function AcademiaAdminPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
-  const [showOnlyActive, setShowOnlyActive] = useState(false);
+  // const [showOnlyActive, setShowOnlyActive] = useState(false); // unused
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+  // Helper para headers con CSRF token via BFF proxy
+  const getBffHeaders = (contentType = 'application/json') => ({
+    'X-Requested-With': 'XMLHttpRequest',
+    ...(contentType ? { 'Content-Type': contentType } : {}),
+  });
 
   const fetchCourses = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('glow_token');
-      const response = await fetch(`${API_URL}/api/admin/academy/courses`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const headers = getBffHeaders();
+      const response = await fetch('/api/admin/academy/courses', { headers });
       
       if (!response.ok) {
         throw new Error('Error al cargar cursos');
       }
       
       const data = await response.json();
-      setCourses(data);
+      // El backend devuelve un array plano; si alguna vez devuelve otra cosa
+      // (p. ej. {error}), degradamos a lista vacia en vez de romper el render.
+      setCourses(Array.isArray(data) ? data : []);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error desconocido');
@@ -78,13 +79,10 @@ export default function AcademiaAdminPage() {
     if (!window.confirm('¿Estás seguro de eliminar este curso? Esta acción no se puede deshacer.')) return;
     
     try {
-      const token = localStorage.getItem('glow_token');
-      const response = await fetch(`${API_URL}/api/admin/academy/courses/${courseId}`, {
+      const headers = getBffHeaders();
+      const response = await fetch(`/api/admin/academy/courses/${courseId}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
+        headers,
       });
       
       if (!response.ok) throw new Error('Error al eliminar');

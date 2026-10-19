@@ -8,10 +8,20 @@ describe('Cargo 1 / C6 — Comportamiento de Bloqueo por Degradación en la Capa
   });
 
   test('C6: Superficie de datos (/api/products) responde 503 + X-GlowApp-Degraded cuando la base está degradada', async () => {
+    // memoryFallbackAllowed: false es lo que DEFINE el bloqueo. La regla del candado
+    // (degradedLock.js:141-143) es:
+    //   blocked = (pgAvailable === false || servingFabricatedData === true) &&
+    //             (!memoryFallbackAllowed || isStrict)
+    // El fixture anterior declaraba memoryFallbackAllowed: true -> blocked = false por diseño
+    // (y es correcto: con el fallback permitido la app sirve desde el emulador, que es lo que
+    // hacen todas las demas suites). Declarar el fallback permitido y exigir el bloqueo era
+    // contradecir en el fixture el escenario que el nombre del test anuncia.
+    // Decision de Diego: el candado tiene razon, sirve desde memoria; el fixture declara el
+    // estado que bloquea para ejercer de verdad la superficie de datos.
     jest.spyOn(db, 'getDbStatus').mockReturnValue({
       pgAvailable: false,
       servingFabricatedData: true,
-      memoryFallbackAllowed: true
+      memoryFallbackAllowed: false
     });
 
     const res = await request(app).get('/api/products');
@@ -56,9 +66,11 @@ describe('Cargo 1 / C6 — Comportamiento de Bloqueo por Degradación en la Capa
 
     const res = await request(app).get('/api/products');
 
-    expect(res.status).not.toBe(503);
-    if (res.body) {
-      expect(res.body.error).not.toBe('DATA_LAYER_DEGRADED');
-    }
+    // Antes esta aserción se satisfacía con CUALQUIER cosa que no fuera 503: mientras el
+    // emulador estuvo incompleto el controlador devolvía 500 y el test pasaba igual, sin medir
+    // nada. La respuesta real medida es 200 + { success, count, data }.
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.data)).toBe(true);
   });
 });

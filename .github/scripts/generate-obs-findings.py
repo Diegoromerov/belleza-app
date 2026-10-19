@@ -1,7 +1,4 @@
 import json
-import os
-
-os.makedirs('.hermes/devops', exist_ok=True)
 
 hallazgos = [
     {'id': 'OBS-01', 'severity': 'P1', 'area': 'Observabilidad/Health', 'file': 'backend/src/index.js', 'line': '420-431', 'evidence_cmd': "cat backend/src/index.js | sed -n '420,431p'", 'impact': '/api/health hace setval (write) y miente 200 OK', 'proposed_fix': 'Separar /healthz y /ready; proteger /status, /api-docs', 'effort_h': 1},

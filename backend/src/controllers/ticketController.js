@@ -1,20 +1,36 @@
 // backend/src/controllers/ticketController.js
 const { sequelize } = require('../config/database');
 const { QueryTypes } = require('sequelize');
+const { motivoInvalido } = require('../utils/ticketEsquema');
 
 // POST /api/tickets -> Crear un nuevo ticket
 exports.createTicket = async (req, res) => {
   try {
     const usuario_id = req.user.id;
-    const { booking_id, tipo, categoria, asunto, descripcion, evidencia_urls } = req.body;
+    const { booking_id, tipo, categoria, asunto, descripcion, evidencia_urls, prioridad } = req.body;
 
     if (!tipo || !categoria || !asunto || !descripcion) {
       return res.status(400).json({ error: 'tipo, categoria, asunto y descripcion son campos obligatorios.' });
     }
 
+    // Los valores admisibles se leen del CHECK real de la tabla. Antes no se validaba
+    // nada aquí: un `tipo` que el esquema no admitía (o el 'ARCO_SUPRESION' que añadió la
+    // migración 045) moría en un 500 genérico y parecía un fallo del servidor en vez de un
+    // dato mal enviado.
+    for (const [columna, valor] of [['tipo', tipo], ['categoria', categoria], ['prioridad', prioridad]]) {
+      if (valor === undefined || valor === null) continue;
+      const motivo = await motivoInvalido('tickets', columna, valor);
+      if (motivo) return res.status(400).json({ error: 'VALOR_NO_ADMITIDO', message: motivo });
+    }
+
+    // La prioridad es opcional: sin ella vale el DEFAULT de la tabla ('MEDIA'). Antes no
+    // había forma de nacer un ticket como EMERGENCIA, así que la prioridad más urgente
+    // solo se podía alcanzar después (y antes de la fase 2, de ninguna manera).
+    const conPrioridad = prioridad !== undefined && prioridad !== null;
+
     const query = `
-      INSERT INTO tickets (usuario_id, booking_id, tipo, categoria, asunto, descripcion, evidencia_urls)
-      VALUES (:usuario_id, :booking_id, :tipo, :categoria, :asunto, :descripcion, :evidencia_urls)
+      INSERT INTO tickets (usuario_id, booking_id, tipo, categoria, asunto, descripcion, evidencia_urls${conPrioridad ? ', prioridad' : ''})
+      VALUES (:usuario_id, :booking_id, :tipo, :categoria, :asunto, :descripcion, :evidencia_urls${conPrioridad ? ', :prioridad' : ''})
       RETURNING id, usuario_id, booking_id, tipo, categoria, asunto, descripcion, estado, prioridad, evidencia_urls, fecha_creacion;
     `;
 
@@ -26,7 +42,8 @@ exports.createTicket = async (req, res) => {
         categoria,
         asunto,
         descripcion,
-        evidencia_urls: evidencia_urls || []
+        evidencia_urls: evidencia_urls || [],
+        ...(conPrioridad ? { prioridad } : {})
       },
       type: QueryTypes.INSERT
     });
@@ -38,6 +55,12 @@ exports.createTicket = async (req, res) => {
       data: ticket
     });
   } catch (error) {
+    if (error && error.code === '23514') {
+      return res.status(400).json({
+        error: 'VALOR_NO_ADMITIDO',
+        message: `El esquema rechazó el ticket: ${error.message}`,
+      });
+    }
     console.error('❌ ERROR EN POST /api/tickets:', error);
     res.status(500).json({ error: 'Error al crear el ticket.' });
   }
@@ -131,9 +154,17 @@ exports.createTicketMessage = async (req, res) => {
     const { mensaje } = req.body;
     const is_admin = req.user.role === 'admin';
 
-    if (!mensaje || mensaje.trim().isEmpty) {
+    // Esta guarda usaba una propiedad de JavaScript que NO EXISTE (viene de otros
+    // lenguajes, no de JS): evaluaba `undefined` —falsy—, así que nunca rechazó nada y
+    // se podían guardar respuestas en blanco en el hilo. Es justo la ruta por la que
+    // responde el operador desde el panel.
+    if (typeof mensaje !== 'string' || mensaje.trim().length === 0) {
       return res.status(400).json({ error: 'El mensaje no puede estar vacío.' });
     }
+    const texto = mensaje.trim();
+    // Autor del mensaje: es la costura que separa al usuario del operador humano (y, en
+    // el futuro, del agente). Sin esto no se puede medir el tiempo de respuesta.
+    const autor_tipo = is_admin ? 'OPERADOR' : 'USUARIO';
 
     // Verificar pertenencia/existencia
     const checkTicketQuery = `SELECT usuario_id FROM tickets WHERE id = :ticketId;`;
@@ -151,13 +182,13 @@ exports.createTicketMessage = async (req, res) => {
     }
 
     const insertQuery = `
-      INSERT INTO ticket_mensajes (ticket_id, remitente_id, mensaje)
-      VALUES (:ticketId, :sender_id, :mensaje)
-      RETURNING id, ticket_id, remitente_id, mensaje, fecha_envio;
+      INSERT INTO ticket_mensajes (ticket_id, remitente_id, mensaje, autor_tipo)
+      VALUES (:ticketId, :sender_id, :texto, :autor_tipo)
+      RETURNING id, ticket_id, remitente_id, mensaje, autor_tipo, fecha_envio;
     `;
 
     const results = await sequelize.query(insertQuery, {
-      replacements: { ticketId, sender_id, mensaje },
+      replacements: { ticketId, sender_id, texto, autor_tipo },
       type: QueryTypes.INSERT
     });
 
@@ -166,9 +197,14 @@ exports.createTicketMessage = async (req, res) => {
     // Actualizar fecha_actualizacion del ticket y alternar estado si corresponde
     // Si responde el admin, cambiamos a ESPERANDO_RESPUESTA_USUARIO. Si responde el cliente, cambiamos a ABIERTO/EN_PROCESO.
     const nuevoEstado = is_admin ? 'ESPERANDO_RESPUESTA_USUARIO' : 'EN_PROCESO';
+    // La PRIMERA respuesta de un operador es la que fija el tiempo de respuesta del
+    // ticket. COALESCE lo hace idempotente: una segunda respuesta no la sobrescribe.
+    const setPrimeraRespuesta = is_admin
+      ? ', primera_respuesta_en = COALESCE(primera_respuesta_en, NOW())'
+      : '';
     const updateTicketQuery = `
       UPDATE tickets 
-      SET estado = :nuevoEstado, fecha_actualizacion = NOW() 
+      SET estado = :nuevoEstado, fecha_actualizacion = NOW()${setPrimeraRespuesta} 
       WHERE id = :ticketId;
     `;
     await sequelize.query(updateTicketQuery, {

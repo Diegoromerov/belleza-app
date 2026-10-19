@@ -596,7 +596,7 @@ exports.deleteAccount = async (req, res) => {
 
     // 2. Revocar consentimientos biométricos activos si la tabla existe
     await pool.query(
-      `UPDATE biometric_consents SET active = false, revoked_at = NOW() WHERE user_id = $1`,
+      `UPDATE biometric_consents SET granted = FALSE, revoked_at = NOW(), updated_at = NOW() WHERE user_id = $1`,
       [userId]
     ).catch(() => {});
 

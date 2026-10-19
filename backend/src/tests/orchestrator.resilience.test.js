@@ -56,21 +56,26 @@ describe('Biometric Orchestrator - Resilience & TraceId Propagation', () => {
     toneMatchingSpy.mockRestore();
   });
 
-  test('should gracefully handle YouCam and Gemini circuit breaker fallbacks', async () => {
+  // El test esperaba "valores por defecto" (hydration 60, manchas 'leve') cuando los dos
+  // proveedores caian: DATOS CLINICOS INVENTADOS. Es justo lo que 94b199b45 ("remove
+  // simulated results") elimino a proposito. Hoy el orquestador NO fabrica un diagnostico:
+  // lanza BIOMETRIC_ANALYSIS_UNAVAILABLE con statusCode 503 (orchestrator.js:28/49/61), que
+  // las rutas ya mapean (biometricRoutes.js:95, niaBeautyRoutes.js:47). Devolver una hidratacion
+  // de 60 inventada es peor que decir que el analisis no esta disponible.
+  // Decision de Diego: ejecutar en su nombre conservando el mejor uso del codigo. Alinear el
+  // test al contrato endurecido es lo correcto y no toca produccion.
+  test('debe rechazar con BIOMETRIC_ANALYSIS_UNAVAILABLE cuando los dos proveedores caen', async () => {
     const analyzeFaceSpy = jest.spyOn(youcamClient, 'analyzeFace').mockRejectedValue(new Error('YouCam Down'));
     const analyzeHandsSpy = jest.spyOn(geminiClient, 'analyzeHands').mockRejectedValue(new Error('Gemini Down'));
-    const generateRecSpy = jest.spyOn(deepseekClient, 'generateRecommendation').mockResolvedValue('Recomendación base con ceramidas.');
-    const toneMatchingSpy = jest.spyOn(deepseekClient, 'getVtoToneMatching').mockResolvedValue({ lipsticks: [], nails: [] });
 
-    const result = await orchestrator.analyze(1, Buffer.from('fake-face'), Buffer.from('fake-hands'));
-
-    expect(result.profileId).toBe(999);
-    expect(result.face.hydration).toBe(60); // Default fallback value
-    expect(result.hands.manchasSolares).toBe('leve'); // Default fallback value
+    await expect(
+      orchestrator.analyze(1, Buffer.from('fake-face'), Buffer.from('fake-hands'))
+    ).rejects.toMatchObject({
+      code: 'BIOMETRIC_ANALYSIS_UNAVAILABLE',
+      statusCode: 503,
+    });
 
     analyzeFaceSpy.mockRestore();
     analyzeHandsSpy.mockRestore();
-    generateRecSpy.mockRestore();
-    toneMatchingSpy.mockRestore();
   });
 });

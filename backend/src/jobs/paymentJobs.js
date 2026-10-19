@@ -3,6 +3,8 @@
 
 const { pool } = require('../config/db');
 const wompiService = require('../services/wompiService');
+const wompiPayoutsClient = require('../services/wompiPayoutsClient');
+const { _mapearEstadoRetiro: mapearEstadoRetiro } = require('../services/wompiService');
 const { aplicarPricingDinamico } = require('./dynamicPricing');
 const { enviarNotificacionesRetencion } = require('./retentionNotification');
 const { runAsSystem } = require('../config/tenantRouting');
@@ -269,7 +271,122 @@ async function conciliacionDiaria() {
   }
 }
 
-// ─── INICIALIZAR JOBS CON setInterval ─────────────────────────────────────────
+// ─── JOB 4: CONCILIACIÓN DE PAYOUTS (RECONCILIACIÓN W2) ───────────────────────
+/**
+ * Consulta Wompi el estado de los retiros en PROCESANDO y actualiza al estado real.
+ * - Si Wompi dice TOTAL_PAYMENT/APPROVED/COMPLETED → COMPLETADO (ya está OK en ledger por crearPayout).
+ * - Si Wompi dice FAILED/REJECTED/ERROR/PARTIAL_PAYMENT → FALLIDO + RE-ABONAR saldo_disponible (W3).
+ * Ejecutar cada 10 minutos.
+ */
+async function conciliarPayouts() {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // Retiros en PROCESANDO que ya tienen referencia_wompi (lote enviado)
+    const { rows: retirosProcesando } = await client.query(`
+      SELECT r.id, r.provider_id, r.monto, r.referencia_wompi, r.numero_cuenta, r.banco,
+             pw.saldo_disponible
+      FROM retiros r
+      JOIN provider_wallet pw ON pw.id = r.wallet_id
+      WHERE r.estado = 'PROCESANDO'
+        AND r.referencia_wompi IS NOT NULL
+    `);
+
+    if (retirosProcesando.length === 0) {
+      await client.query('COMMIT');
+      return;
+    }
+
+    console.log(`🔄 Conciliando ${retirosProcesando.length} retiro(s) en PROCESANDO...`);
+
+    for (const retiro of retirosProcesando) {
+      try {
+        const lote = await wompiPayoutsClient.getPayout(retiro.referencia_wompi);
+        const estadoWompi = lote.status || 'PENDING';
+        const estadoInterno = mapearEstadoRetiro(estadoWompi);
+
+        if (estadoInterno === 'PROCESANDO') {
+          // Wompi aún no resuelve; esperar próximo ciclo
+          continue;
+        }
+
+        // Actualizar retiro al estado real
+        await client.query(
+          `UPDATE retiros
+              SET estado = $2,
+                  error_wompi = CASE WHEN $2 = 'FALLIDO' THEN $3 ELSE NULL END,
+                  procesado_at = NOW()
+            WHERE id = $1`,
+          [retiro.id, estadoInterno, estadoInterno === 'FALLIDO' ? `Wompi: ${estadoWompi}` : null]
+        );
+
+        if (estadoInterno === 'FALLIDO') {
+          // W3: RE-ABONAR saldo_disponible al wallet (el débito se hizo al crear el retiro)
+          await client.query(
+            `UPDATE provider_wallet
+                SET saldo_disponible = saldo_disponible + $2,
+                    updated_at       = NOW()
+              WHERE provider_id = $1`,
+            [retiro.provider_id, parseFloat(retiro.monto)]
+          );
+
+          // Ledger: evento de retiro fallido (si no existe ya)
+          // Buscar el tx_id del DEBITO_RETIRO asociado
+          const { rows: txRows } = await client.query(`
+            SELECT id FROM wallet_transactions
+            WHERE provider_id = $1
+              AND tipo = 'DEBITO_RETIRO'
+              AND (metadata->>'retiro_id')::uuid = $2
+            LIMIT 1
+          `, [retiro.provider_id, retiro.id]);
+
+          if (txRows.length > 0) {
+            await client.query(
+              `INSERT INTO wallet_ledger_events (tx_id, provider_id, evento, detalle)
+               VALUES ($1, $2, 'RETIRO_FALLIDO', $3)
+               ON CONFLICT DO NOTHING`,
+              [txRows[0].id, retiro.provider_id, JSON.stringify({ referencia_wompi: lote.id, estado_wompi: estadoWompi, reabonado: true })]
+            );
+          }
+
+          console.log(`💸 Retiro ${retiro.id} FALLIDO en Wompi (${estadoWompi}). Saldo RE-ABONADO: $${retiro.monto}`);
+        } else {
+          // COMPLETADO: asegurar que el ledger tenga el evento
+          const { rows: txRows } = await client.query(`
+            SELECT id FROM wallet_transactions
+            WHERE provider_id = $1
+              AND tipo = 'DEBITO_RETIRO'
+              AND (metadata->>'retiro_id')::uuid = $2
+            LIMIT 1
+          `, [retiro.provider_id, retiro.id]);
+
+          if (txRows.length > 0) {
+            await client.query(
+              `INSERT INTO wallet_ledger_events (tx_id, provider_id, evento, detalle)
+               VALUES ($1, $2, 'RETIRO_COMPLETADO', $3)
+               ON CONFLICT DO NOTHING`,
+              [txRows[0].id, retiro.provider_id, JSON.stringify({ referencia_wompi: lote.id, estado_wompi: estadoWompi })]
+            );
+          }
+
+          console.log(`✅ Retiro ${retiro.id} CONFIRMADO en Wompi (${estadoWompi}).`);
+        }
+      } catch (err) {
+        console.error(`❌ Error conciliando retiro ${retiro.id}:`, err.message);
+        // No hacemos rollback del ciclo: seguimos con los demás retiros
+      }
+    }
+
+    await client.query('COMMIT');
+    console.log('✅ Conciliación de payouts completada.');
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('❌ Error en conciliación de payouts:', err);
+  } finally {
+    client.release();
+  }
+}
 /**
  * Configura los jobs periódicos usando setInterval (simple y sin dependencias).
  * Para producción, usar node-cron o un worker separado.
@@ -291,6 +408,9 @@ function inicializarJobs() {
     const hora = new Date().getHours();
     if (hora === 2) await comoSistema(conciliacionDiaria)();
   }, 60 * 60 * 1000);
+
+  // Conciliación de payouts (W2): cada 10 minutos
+  setInterval(comoSistema(conciliarPayouts), 10 * 60 * 1000);
 
   // Pricing dinámico: cada día a las 3 AM
   setInterval(async () => {
@@ -317,5 +437,6 @@ module.exports = {
   // llamador debe recibir el mismo contexto de sistema.
   madurarSaldosPendientes: comoSistema(madurarSaldosPendientes),
   ejecutarRetirosAutomaticos: comoSistema(ejecutarRetirosAutomaticos),
-  conciliacionDiaria: comoSistema(conciliacionDiaria)
+  conciliacionDiaria: comoSistema(conciliacionDiaria),
+  conciliarPayouts: comoSistema(conciliarPayouts)
 };

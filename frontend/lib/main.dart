@@ -19,12 +19,15 @@ import 'services/secure_storage_service.dart';
 import 'services/audience_service.dart';
 import 'design/icons/glow_icon_registry_init.dart';
 import 'design/icons/glow_icon.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'widgets/audience_toggle.dart';
 import 'shared/mens_theme.dart';
 import 'shared/theme.dart';
 
-import 'services/notification_service.dart';
+import 'services/fcm_service.dart';
+// `Firebase.initializeApp` en este archivo necesita firebase_core; el import de
+// las opciones por plataforma no lo trae por sí solo.
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'widgets/app_update_gate.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
@@ -60,17 +63,49 @@ import 'screens/store_screen.dart';
 import 'screens/designs/evolution_dashboard_screen.dart';
 import 'screens/ideas/makeup_lookbook_screen.dart';
 import 'models/provider_model.dart';
-import 'shared/theme.dart';
 import 'glowguide/glowguide.dart';
-import 'glowguide/contracts/navigation_delegate.dart';
-import 'glowguide/contracts/screen_visibility.dart';
-import 'glowguide/audio/audio_engine.dart';
-import 'glowguide/persistence/persistence_engine.dart';
-import 'glowguide/observer/screen_visibility_observer.dart';
 
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:intl/date_symbol_data_local.dart';
+
+/// Maneja navegación profunda (deep-link) desde payload FCM
+Future<void> _handleFcmPayload(FcmPayload payload) async {
+  final navigatorKey = GlowGuideService.instance.navigatorKey;
+  final context = navigatorKey.currentContext;
+  if (context == null) return;
+
+  debugPrint('🧭 FCM Deep-link: ${payload.type} — ${payload.data}');
+
+  switch (payload.type) {
+    case 'BOOKING_UPDATE':
+      final bookingId = payload.data['bookingId']?.toString();
+      if (bookingId != null) {
+        navigatorKey.currentState?.pushNamed('/client-bookings');
+        // Opcional: navegar directo al detalle de la reserva
+      }
+      break;
+    case 'CONSIGNMENT_STOCK_ALERT':
+      // Navegar a pantalla de inventario/insumos si existe
+      break;
+    case 'PAYOUT_STATUS_UPDATE':
+      navigatorKey.currentState?.pushNamed('/wallet');
+      break;
+    case 'CHAT_MESSAGE':
+      final partnerId = payload.data['partnerId']?.toString();
+      final partnerName = payload.data['partnerName']?.toString() ?? 'Chat';
+      if (partnerId != null) {
+        navigatorKey.currentState?.pushNamed('/chat', arguments: {
+          'partnerId': partnerId,
+          'partnerName': partnerName,
+        });
+      }
+      break;
+    default:
+      // Fallback: abrir app en home
+      break;
+  }
+}
 
 void main() async {
   FlutterError.onError = (FlutterErrorDetails details) {
@@ -84,17 +119,17 @@ void main() async {
   };
 
   ErrorWidget.builder = (FlutterErrorDetails details) {
-    return Material(
+    return const Material(
       color: Colors.transparent,
       child: Center(
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: EdgeInsets.all(16.0),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.warning_amber_rounded, color: Color(0xFFE91E63), size: 36),
-              const SizedBox(height: 8),
-              const Text(
+              Icon(Icons.warning_amber_rounded, color: Color(0xFFE91E63), size: 36),
+              SizedBox(height: 8),
+              Text(
                 'Elemento no disponible temporalmente',
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
               ),
@@ -107,6 +142,23 @@ void main() async {
 
   runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
+    
+    // 🔥 Inicializar Firebase Core con opciones por plataforma.
+    // Si el build NO recibio la configuracion, no se inicializa con valores
+    // falsos: se avisa y la app sigue sin push. Antes arrancaba en silencio con
+    // un apiKey invalido y el fallo solo se notaba mucho despues, en el service
+    // worker de FCM. Ver lib/firebase_options.dart.
+    if (DefaultFirebaseOptions.estaConfigurado) {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    } else {
+      debugPrint(
+        '❌ Firebase NO configurado en este build: faltan '
+        '${DefaultFirebaseOptions.faltantes.join(', ')}. Push deshabilitado.',
+      );
+    }
+    
     await initializeDateFormatting('es', null);
     await SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
@@ -118,6 +170,10 @@ void main() async {
     await AppTheme.loadThemePreference();
     await AudienceService.init();
     GlowIconRegistryInit.initialize();
+
+    // 🔔 Inicializar FCM Service (push notifications)
+    await FcmService.instance.initialize(onPayloadTap: _handleFcmPayload);
+
     runApp(const BeautyApp());
   }, (Object error, StackTrace stack) {
     if (kDebugMode) {
@@ -617,7 +673,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
           builder: (context, setStateModal) {
             return AlertDialog(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-              title: Row(
+              title: const Row(
                 children: [
                   Icon(Icons.location_off, color: AppTheme.primary, size: 28),
                   SizedBox(width: 8),
@@ -631,11 +687,11 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  const Text(
                     'No pudimos acceder a tu GPS. Por favor escribe tu dirección, barrio o ciudad:',
                     style: TextStyle(fontSize: 14, color: Colors.black54),
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   TextField(
                     controller: addressController,
                     decoration: const InputDecoration(
@@ -646,8 +702,8 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                     enabled: !resolving,
                   ),
                   if (resolving) ...[
-                    SizedBox(height: 16),
-                    Center(
+                    const SizedBox(height: 16),
+                    const Center(
                       child: CircularProgressIndicator(color: AppTheme.primary),
                     )
                   ]
@@ -662,7 +718,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                     });
                     _loadProviders();
                   },
-                  child: Text('Usar Bogotá (Defecto)', style: TextStyle(color: Colors.grey)),
+                  child: const Text('Usar Bogotá (Defecto)', style: TextStyle(color: Colors.grey)),
                 ),
                 ElevatedButton(
                                   style: ElevatedButton.styleFrom(
@@ -701,7 +757,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                       );
                     }
                   },
-                  child: Text('Buscar', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: const Text('Buscar', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ],
             );
@@ -1210,18 +1266,18 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
             filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
             child: Container(
               decoration: BoxDecoration(
-                color: const Color(0xFFFAF8F5).withOpacity(0.92), // Nude Seda Satinado
+                color: const Color(0xFFFAF8F5).withValues(alpha: 0.92), // Nude Seda Satinado
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(32),
                   topRight: Radius.circular(32),
                 ),
                 border: Border.all(
-                  color: const Color(0xFFC5A052).withOpacity(0.35), // Oro Champán 871
+                  color: const Color(0xFFC5A052).withValues(alpha: 0.35), // Oro Champán 871
                   width: 1.2,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFFC5A052).withOpacity(0.15),
+                    color: const Color(0xFFC5A052).withValues(alpha: 0.15),
                     blurRadius: 24,
                     offset: const Offset(0, -8),
                   ),
@@ -1237,7 +1293,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                       width: 44,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFC5A052).withOpacity(0.4),
+                        color: const Color(0xFFC5A052).withValues(alpha: 0.4),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -1320,7 +1376,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                           color: const Color(0xFFF4EFEA),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: const Color(0xFFC5A052).withOpacity(0.3),
+                            color: const Color(0xFFC5A052).withValues(alpha: 0.3),
                             width: 1,
                           ),
                         ),
@@ -1437,7 +1493,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
-                                    color: const Color(0xFFC5A052).withOpacity(0.3),
+                                    color: const Color(0xFFC5A052).withValues(alpha: 0.3),
                                     width: 1,
                                   ),
                                   image: imgUrl.isNotEmpty
@@ -1626,7 +1682,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                                           : Colors.grey.shade600,
                                     ),
                                   ),
-                                  SizedBox(height: 6),
+                                  const SizedBox(height: 6),
                                   Text(
                                     cat['name'] as String,
                                     style: TextStyle(
@@ -1731,7 +1787,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: shadow.withOpacity(0.4),
+                      color: shadow.withValues(alpha: 0.4),
                       blurRadius: 10,
                       spreadRadius: 2,
                       offset: const Offset(0, 4),
@@ -1743,9 +1799,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                   ),
                 ),
                 child: ClipOval(
-                  child: iconWidget != null
-                    ? iconWidget
-                    : assetPath != null
+                  child: iconWidget ?? (assetPath != null
                       ? Image.asset(
                           assetPath,
                           fit: BoxFit.cover,
@@ -1754,7 +1808,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                           icon ?? Icons.auto_awesome,
                           color: Colors.white,
                           size: 26,
-                      ),
+                      )),
                 ),
               ),
               const SizedBox(height: 2),
@@ -1882,79 +1936,81 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
               curve: Curves.easeOutCubic,
               child: Transform.translate(
                 offset: const Offset(0, -18),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 62,
-                      height: 62,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: RadialGradient(
-                          center: const Alignment(0.0, -0.25),
-                          radius: 0.85,
-                          colors: isMen
-                              ? const [
-                                  Color(0xFF3D3228),
-                                  Color(0xFF2A211A),
-                                  Color(0xFF1E1712),
-                                  Color(0xFF14100C),
-                                ]
-                              : const [
-                                  Color(0xFFFFFFFF),
-                                  Color(0xFFFDFBF7),
-                                  Color(0xFFF5EBE1),
-                                  Color(0xFFEADCCF),
-                                ],
-                          stops: const [0.0, 0.35, 0.75, 1.0],
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFFD4AF37).withValues(alpha: isMen ? 0.45 : 0.35),
-                            blurRadius: 16,
-                            spreadRadius: 2,
-                            offset: const Offset(0, 6),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 62,
+                        height: 62,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            center: const Alignment(0.0, -0.25),
+                            radius: 0.85,
+                            colors: isMen
+                                ? const [
+                                    Color(0xFF3D3228),
+                                    Color(0xFF2A211A),
+                                    Color(0xFF1E1712),
+                                    Color(0xFF14100C),
+                                  ]
+                                : const [
+                                    Color(0xFFFFFFFF),
+                                    Color(0xFFFDFBF7),
+                                    Color(0xFFF5EBE1),
+                                    Color(0xFFEADCCF),
+                                  ],
+                            stops: const [0.0, 0.35, 0.75, 1.0],
                           ),
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.08),
-                            blurRadius: 8,
-                            offset: const Offset(0, 3),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFD4AF37).withValues(alpha: isMen ? 0.45 : 0.35),
+                              blurRadius: 16,
+                              spreadRadius: 2,
+                              offset: const Offset(0, 6),
+                            ),
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.08),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                          border: Border.all(
+                            color: const Color(0xFFD4AF37),
+                            width: 2.2,
                           ),
-                        ],
-                        border: Border.all(
-                          color: const Color(0xFFD4AF37),
-                          width: 2.2,
                         ),
-                      ),
-                      child: Center(
-                        child: Container(
-                          width: 52,
-                          height: 52,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: const Color(0xFFD4AF37).withValues(alpha: 0.35),
-                              width: 1.0,
+                        child: Center(
+                          child: Container(
+                            width: 52,
+                            height: 52,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: const Color(0xFFD4AF37).withValues(alpha: 0.35),
+                                width: 1.0,
+                              ),
+                            ),
+                            child: Center(
+                              child: iconWidget,
                             ),
                           ),
-                          child: Center(
-                            child: iconWidget,
-                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      label,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.6,
-                        color: isMen ? const Color(0xFFE5C158) : const Color(0xFFB8860B),
+                      const SizedBox(height: 4),
+                      Text(
+                        label,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.6,
+                          color: isMen ? const Color(0xFFE5C158) : const Color(0xFFB8860B),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                )
               ),
             ),
           );
@@ -2348,7 +2404,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                         ),
                       ),
                     );
-                  }).toList(),
+                  }),
                 ],
               ),
             ],
@@ -2794,8 +2850,8 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                   padding: const EdgeInsets.all(12),
                   child: Row(
                     children: [
-                      Icon(Icons.error_outline, color: Colors.red),
-                      SizedBox(width: 10),
+                      const Icon(Icons.error_outline, color: Colors.red),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           'No se pudo conectar: $_errorMessage',
@@ -2804,7 +2860,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                         ),
                       ),
                       IconButton(
-                        icon: Icon(Icons.refresh, color: Colors.red),
+                        icon: const Icon(Icons.refresh, color: Colors.red),
                         onPressed: _loadProviders,
                       ),
                     ],
@@ -2830,7 +2886,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
     String stepTitle = '';
     String stepDescription = '';
     Widget? highlightWidget;
-    Widget centerGraphic = SizedBox.shrink();
+    Widget centerGraphic = const SizedBox.shrink();
 
     if (_tutorialStep == 0) {
       stepTitle = '¡Te doy la bienvenida! 🌸';
@@ -2862,13 +2918,13 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
               border: Border.all(color: const Color(0xFFD4AF37), width: 3),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFD4AF37).withOpacity(0.6),
+                  color: const Color(0xFFD4AF37).withValues(alpha: 0.6),
                   blurRadius: 20,
                   spreadRadius: 6,
                 ),
               ],
             ),
-            child: Icon(Icons.touch_app, color: Color(0xFFD4AF37), size: 36),
+            child: const Icon(Icons.touch_app, color: Color(0xFFD4AF37), size: 36),
           ),
         ),
       );
@@ -2890,7 +2946,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
             children: [
               Container(
                 height: 90,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   image: DecorationImage(
                     image: AssetImage('images/logo_maestro_v5.webp'),
                     fit: BoxFit.cover,
@@ -2904,7 +2960,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                     Container(
                       width: 44,
                       height: 44,
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         shape: BoxShape.circle,
                         image: DecorationImage(
                           image: AssetImage('images/logo_maestro_v3.webp'),
@@ -2912,8 +2968,8 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                         ),
                       ),
                     ),
-                    SizedBox(width: 10),
-                    Column(
+                    const SizedBox(width: 10),
+                    const Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('Ana Silva', style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.text)),
@@ -2924,7 +2980,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                 ),
               ),
               const Divider(height: 1),
-              Padding(
+              const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 child: Text(
                   'Servicios Disponibles:',
@@ -2954,7 +3010,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
           borderRadius: BorderRadius.circular(24),
           border: Border.all(color: const Color(0xFF4A5D4E), width: 2),
         ),
-        child: Column(
+        child: const Column(
           children: [
             Icon(Icons.security, color: Color(0xFF4A5D4E), size: 48),
             SizedBox(height: 8),
@@ -2979,7 +3035,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
         GestureDetector(
           onTap: () {}, 
           child: Container(
-            color: Colors.black.withOpacity(0.7),
+            color: Colors.black.withValues(alpha: 0.7),
           ),
         ),
         
@@ -2993,7 +3049,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
           child: FloatingActionButton.small(
             heroTag: 'tutorial_skip_fab',
             onPressed: _completeTutorial,
-            backgroundColor: Colors.white.withOpacity(0.9),
+            backgroundColor: Colors.white.withValues(alpha: 0.9),
             foregroundColor: AppTheme.text,
             child: const Icon(Icons.close, size: 20),
           ),
@@ -3013,7 +3069,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(28),
-              border: Border.all(color: AppTheme.accent.withOpacity(0.4), width: 1.5),
+              border: Border.all(color: AppTheme.accent.withValues(alpha: 0.4), width: 1.5),
               boxShadow: AppTheme.glassShadow,
             ),
             child: AnimatedSize(
@@ -3030,7 +3086,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                             margin: const EdgeInsets.only(bottom: 20),
                             child: centerGraphic,
                           )
-                        : SizedBox.shrink(),
+                        : const SizedBox.shrink(),
                   ),
                   AnimatedSwitcher(
                     duration: const Duration(milliseconds: 250),
@@ -3051,7 +3107,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                               ),
                             ),
                           ),
-                          SizedBox(width: 16),
+                          const SizedBox(width: 16),
                         ],
                         Expanded(
                           child: Column(
@@ -3059,14 +3115,14 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                             children: [
                               Text(
                                 stepTitle,
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                   color: AppTheme.text,
                                   letterSpacing: -0.5,
                                 ),
                               ),
-                              SizedBox(height: 8),
+                              const SizedBox(height: 8),
                               Text(
                                 stepDescription,
                                 style: TextStyle(
@@ -3081,7 +3137,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                       ],
                     ),
                   ),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   
                   // Indicador de progreso con 4 puntos interactivos
                   Row(
@@ -3094,13 +3150,13 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                         width: isActive ? 12 : 8,
                         height: 8,
                         decoration: BoxDecoration(
-                          color: isActive ? AppTheme.primary :  Color(0xFFE5CECA),
+                          color: isActive ? AppTheme.primary :  const Color(0xFFE5CECA),
                           borderRadius: BorderRadius.circular(4),
                         ),
                       );
                     }),
                   ),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
 
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -3122,13 +3178,13 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                               padding: const EdgeInsets.only(right: 8),
                               child: OutlinedButton(
                                 style: OutlinedButton.styleFrom(
-                                  side: BorderSide(color: AppTheme.accent),
+                                  side: const BorderSide(color: AppTheme.accent),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(20),
                                   ),
                                 ),
                                 onPressed: () => _handleTutorialStepChange(_tutorialStep - 1),
-                                child: Text(
+                                child: const Text(
                                   'Atrás',
                                   style: TextStyle(color: AppTheme.text),
                                 ),
@@ -3152,7 +3208,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                             },
                             child: Text(
                               _tutorialStep == 3 ? 'Finalizar' : 'Siguiente',
-                              style: TextStyle(fontWeight: FontWeight.bold),
+                              style: const TextStyle(fontWeight: FontWeight.bold),
                             ),
                           ),
                         ],
@@ -3182,8 +3238,8 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(title, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
-            Text(price, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.primary)),
+            Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+            Text(price, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.primary)),
           ],
         ),
       ),

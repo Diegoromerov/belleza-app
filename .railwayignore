@@ -1,0 +1,79 @@
+# Railway ignore - exclude large/unnecessary files from deploy upload
+node_modules/
+.git/
+.gitignore
+*.log
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Frontend build artifacts
+frontend/build/
+frontend/.dart_tool/
+frontend/.packages
+frontend/.flutter-plugins
+frontend/.flutter-plugins-dependencies
+frontend/ios/
+frontend/android/
+frontend/web/
+frontend/linux/
+frontend/macOS/
+frontend/windows/
+
+# Backend
+backend/node_modules/
+backend/.env
+backend/.env.*
+backend/logs/
+backend/*.log
+
+# Documentation and large assets
+docs/
+*.md
+!README.md
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+*.svg
+*.ico
+
+# Test files
+*.test.js
+*.test.ts
+*.spec.js
+*.spec.ts
+coverage/
+.nyc_output/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Large data files
+*.csv
+*.sql
+*.dump
+*.bak
+
+# Local development
+*.local
+*.local.*
+.local/
+
+# Cache
+.cache/
+.turbo/
+dist/
+build/

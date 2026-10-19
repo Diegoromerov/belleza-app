@@ -28,10 +28,10 @@ void main() {
           fontFamily: 'Manrope',
           colorScheme: ColorScheme.fromSeed(seedColor: AppTheme.primary),
         ),
-        home: Scaffold(
+        home: const Scaffold(
           body: BookingScreen(
             providerId: 'prov-123',
-            services: const [
+            services: [
               {
                 'id': 'srv-1',
                 'name': 'Corte y Cepillado Profesional',

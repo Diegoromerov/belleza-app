@@ -7,9 +7,17 @@ const kycProvider = new CertifiedKYCProvider();
 /**
  * Obtener todas las alertas SOS en estado 'ACTIVO'.
  */
+// Estados aceptados por el listado de alertas.
+const ESTADOS_SOS = new Set(['ACTIVO', 'RESUELTO', 'TODOS']);
+
 async function getAllActiveAlerts(req, res) {
   try {
-    const alerts = await adminModel.getActiveSOSAlerts();
+    // ?estado=ACTIVO (por defecto: es lo que usa el contador del dashboard),
+    // RESUELTO o TODOS (lo que usa /admin/sos para poder mostrar la resolución).
+    const pedido = String(req.query?.estado || 'ACTIVO').toUpperCase();
+    const estado = ESTADOS_SOS.has(pedido) ? pedido : 'ACTIVO';
+
+    const alerts = await adminModel.getActiveSOSAlerts(estado);
     
     return res.status(200).json({
       success: true,
@@ -32,6 +40,7 @@ async function resolveSOSAlert(req, res) {
   try {
     const { id } = req.params;
     const adminId = req.admin.id; // Obtenido del middleware authAdmin
+    const resolucion = String(req.body?.resolucion || '').trim();
 
     if (!id) {
       return res.status(400).json({
@@ -40,19 +49,42 @@ async function resolveSOSAlert(req, res) {
       });
     }
 
-    // 1. Actualizar el estado de la alerta en sos_alerts
-    await adminModel.updateSOSAlertStatus(id, 'ATENDIDO');
+    if (resolucion.length < 3) {
+      return res.status(400).json({
+        success: false,
+        error: 'Describe la resolución de la alerta (mínimo 3 caracteres).'
+      });
+    }
+
+    // 1. Actualizar el estado en sos_alerts.
+    //    OJO: el CHECK de la tabla solo admite 'ACTIVO' y 'RESUELTO' (index.js, DDL
+    //    de sos_alerts). Aquí se escribía 'ATENDIDO', que Postgres rechazaba con
+    //    violación de constraint: el UPDATE fallaba siempre y la alerta nunca se
+    //    atendía. Ver test de regresión del estado permitido.
+    const actualizadas = await adminModel.updateSOSAlertStatus(id, 'RESUELTO', resolucion, adminId);
+
+    if (!actualizadas || actualizadas.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: `La alerta #${id} no existe o ya estaba atendida.`
+      });
+    }
 
     // 2. Registrar la acción en la bitácora admin_actions
     await adminModel.logAdminAction(
       adminId,
       'RESOLVER_SOS',
-      `Alerta SOS ID ${id} marcada como ATENDIDA por operador`
+      `Alerta SOS ID ${id} atendida. Resolución: ${resolucion}`
     );
 
     return res.status(200).json({
       success: true,
-      message: `Alerta SOS #${id} resuelta exitosamente.`
+      message: `Alerta SOS #${id} atendida.`,
+      data: {
+        id: Number(id),
+        estado: 'RESUELTO',
+        resolucion
+      }
     });
   } catch (error) {
     console.error('Error al resolver alerta SOS:', error);

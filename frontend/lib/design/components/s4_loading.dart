@@ -10,15 +10,15 @@ class S4SkeletonLoader extends StatelessWidget {
   final double borderRadius;
 
   const S4SkeletonLoader({
-    Key? key,
+    super.key,
     required this.child,
     this.borderRadius = 0.0,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     // Use Token.light for simplicity; in production, make responsive to brightness.
-    final Token token = Token.light;
+    const Token token = Token.light;
     return Shimmer.fromColors(
       baseColor: token.surfaceLevel0,
       highlightColor: token.surfaceLevel2,
@@ -41,11 +41,11 @@ class S4SkeletonCard extends StatelessWidget {
   final double borderRadius;
 
   const S4SkeletonCard({
-    Key? key,
+    super.key,
     this.width = double.infinity,
     this.height = 100.0,
     this.borderRadius = 12.0,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -161,7 +161,7 @@ const LoggerHelper = require('../../helpers/logger');
  * POST /v1/beauty/analyze
  * Version 1.0 endpoint for biometric analysis with JSON Schema validation
  */
-router.post('/analyze', authMiddleware, biometricConsentGuard, idempotencyMiddleware, async (req, res) => {
+router.post('/analyze', authMiddleware, idempotencyMiddleware, biometricConsentGuard, async (req, res) => {
   const traceId = uuidv4();
   const userId = req.user?.id;
   
@@ -205,9 +205,9 @@ router.post('/analyze', authMiddleware, biometricConsentGuard, idempotencyMiddle
     });
   }
 
+  const faceBuffer = Buffer.from(faceImage, 'base64');
+  const handsBuffer = handsImage ? Buffer.from(handsImage, 'base64') : null;
   try {
-    const faceBuffer = Buffer.from(faceImage, 'base64');
-    const handsBuffer = handsImage ? Buffer.from(handsImage, 'base64') : null;
 
     const result = await orchestrator.analyze(
       userId,
@@ -218,6 +218,8 @@ router.post('/analyze', authMiddleware, biometricConsentGuard, idempotencyMiddle
       lng
     );
 
+    faceBuffer.fill(0);
+    if (handsBuffer) handsBuffer.fill(0);
     res.status(201).json({
       success: true,
       traceId,
@@ -233,10 +235,12 @@ router.post('/analyze', authMiddleware, biometricConsentGuard, idempotencyMiddle
     });
   } catch (error) {
     console.error('❌ Error en el orquestador biométrico:', error.message);
-    res.status(500).json({
+    faceBuffer.fill(0);
+    if (handsBuffer) handsBuffer.fill(0);
+    res.status(error.statusCode === 503 ? 503 : 500).json({
       success: false,
       traceId,
-      error: 'INTERNAL_ERROR',
+      error: error.statusCode === 503 ? 'AI_UNAVAILABLE' : 'INTERNAL_ERROR',
       message: 'Error al procesar el análisis biométrico. Por favor intenta nuevamente.',
     });
   }

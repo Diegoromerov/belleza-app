@@ -53,6 +53,11 @@ const PERMISSIONS_MATRIX = {
   [ROLES.OWNER]: new Set([
     // BusinessProfile & Settings
     `${RESOURCES.BUSINESS_PROFILE}:${ACTIONS.READ}`,
+    // CREATE cubre el Generador Documental (`POST /business/documents/generate`,
+    // businessRoutes.js:75). Sin esta entrada el OWNER recibía 403 al generar
+    // cualquier documento, y como eso deja `createdDocId` en null, arrastraba en
+    // cascada download/sign/version/audit (4 suites rojas ~28 tests).
+    `${RESOURCES.BUSINESS_PROFILE}:${ACTIONS.CREATE}`,
     `${RESOURCES.BUSINESS_PROFILE}:${ACTIONS.UPDATE}`,
     `${RESOURCES.BUSINESS_PROFILE}:${ACTIONS.DELETE_BUSINESS}`,
     `${RESOURCES.BUSINESS_PROFILE}:${ACTIONS.TRANSFER_OWNERSHIP}`,

@@ -57,6 +57,25 @@ const Booking = sequelize.define('Booking', {
     allowNull: true,
     field: 'tarifa_reserva'
   },
+  // Desglose del IVA (migración 086). Declararlas aquí es OBLIGATORIO: Sequelize
+  // sólo persiste los atributos declarados en el modelo, así que sin esto
+  // `Booking.create` descartaría estos campos en silencio y el desglose nunca
+  // llegaría a la base de datos.
+  subtotal_base: {
+    type: DataTypes.DECIMAL(12, 2),
+    allowNull: true,
+    field: 'subtotal_base'
+  },
+  iva_valor: {
+    type: DataTypes.DECIMAL(12, 2),
+    allowNull: true,
+    field: 'iva_valor'
+  },
+  tarifa_iva_aplicada: {
+    type: DataTypes.DECIMAL(5, 4),
+    allowNull: true,
+    field: 'tarifa_iva_aplicada'
+  },
   service_address: {
     type: DataTypes.TEXT,
     allowNull: true,

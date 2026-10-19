@@ -181,7 +181,9 @@ const CRITICAL_OPERATIONS = {
       summary: 'Webhook de Wompi (confirmación asíncrona de pago)',
       description:
         'Endpoint público por diseño: se autentica con la firma del proveedor (checksum), ' +
-        'no con el token del usuario. Responde 200 de forma idempotente para que Wompi no reintente.',
+        'no con el token del usuario. Un evento válido responde 200 de forma idempotente ' +
+        'para que Wompi no reintente; un evento cuya firma no se puede verificar responde 401, ' +
+        'de modo que un fallo transitorio de configuración no haga perder la confirmación.',
       operationId: 'post_api_payments_wompi_webhook',
       tags: ['payments'],
       security: [],
@@ -325,8 +327,12 @@ const CRITICAL_PROBES = [
     key: 'POST /api/payments/wompi-webhook',
     mount: 'core',
     request: { method: 'post', path: '/api/payments/wompi-webhook', body: {} },
-    expectStatus: 200,
-    expectBodyKeys: ['success'],
+    // Un evento sin firma verificable NO se acusa como recibido: responder 200
+    // le diría a Wompi "deja de reintentar" una confirmación de pago que nunca
+    // procesamos (y una firma que falla por configuración se perdería para
+    // siempre). El 200 idempotente es para eventos VÁLIDOS.
+    expectStatus: 401,
+    expectBodyKeys: ['error'],
   },
   {
     key: 'GET /api/admin/dashboard',

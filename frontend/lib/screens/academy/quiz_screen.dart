@@ -111,12 +111,12 @@ class _QuizScreenState extends State<QuizScreen> {
 
   @override
     Widget build(BuildContext context) {
-      final themeColor = AppTheme.primary;
+      const themeColor = AppTheme.primary;
 
       if (_isLoading) {
         return Scaffold(
           appBar: AppBar(title: const Text('Examen de Certificación')),
-          body: Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation(AppTheme.primary))),
+          body: const Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation(AppTheme.primary))),
         );
       }
 
@@ -148,9 +148,9 @@ class _QuizScreenState extends State<QuizScreen> {
           title: const Text('Resultados del Examen'),
           automaticallyImplyLeading: false,
           flexibleSpace: Container(
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [themeColor, const Color(0xFFE2C4BC)],
+                colors: [themeColor, Color(0xFFE2C4BC)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -322,7 +322,7 @@ class _QuizScreenState extends State<QuizScreen> {
                             children: [
                               Text(
                                 'Pregunta ${qIndex + 1} de ${_questions.length}',
-                                style: TextStyle(color: themeColor, fontWeight: FontWeight.bold, fontSize: 12),
+                                style: const TextStyle(color: themeColor, fontWeight: FontWeight.bold, fontSize: 12),
                               ),
                               const SizedBox(height: 8),
                               Text(

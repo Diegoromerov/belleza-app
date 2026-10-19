@@ -1,6 +1,6 @@
 // frontend/lib/screens/store_screen.dart
-import 'dart:async';
-
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../shared/theme.dart';
@@ -10,8 +10,11 @@ import 'package:shimmer/shimmer.dart';
 import '../widgets/store_product_card.dart';
 import '../widgets/product_quick_view_dialog.dart';
 import '../widgets/wompi_payment_sheet.dart';
+import '../utils/json_num.dart';
 import '../services/audience_service.dart';
 import '../shared/mens_theme.dart';
+import '../widgets/profile/colombian_address_builder.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class StoreScreen extends StatefulWidget {
   final String? bookingId;
@@ -226,62 +229,247 @@ class _StoreScreenState extends State<StoreScreen> {
   void _showCheckoutDialog() {
     if (_cart.isEmpty) return;
 
-    // D3: el transporte y el total se piden al servidor antes de abrir la
-    // pasarela. El cliente no calcula dinero: solo muestra lo que devuelve
-    // /api/store/envio/cotizacion.
-    Map<String, dynamic>? cotizacion;
-    bool cotizando = false;
-    String? errorCotizacion;
-    Timer? debounceDireccion;
-    StateSetter? actualizarDialogo;
-    bool dialogoCerrado = false;
-    bool cotizacionInicialPedida = false;
-
-    void actualizar(VoidCallback fn) {
-      if (dialogoCerrado) return;
-      actualizarDialogo?.call(fn);
-    }
-
-    Future<void> cotizar(String direccion) async {
-      final itemsList = _cart.values.map((item) {
-        final prod = item['product'] as Map<String, dynamic>;
-        return {
-          'producto_id': prod['id'],
-          'cantidad': item['quantity'] as int,
-        };
-      }).toList();
-      if (itemsList.isEmpty) return;
-
-      actualizar(() {
-        cotizando = true;
-        errorCotizacion = null;
-      });
-
-      try {
-        final response = await ApiService.post('/api/store/envio/cotizacion', {
-          'items': itemsList,
-          'direccion_entrega': direccion,
-          if (widget.bookingId != null) 'booking_id': widget.bookingId,
-        });
-        final dynamic data = (response is Map) ? response['data'] : null;
-        if (response is Map && response['success'] == true && data is Map) {
-          cotizacion = Map<String, dynamic>.from(data);
-        } else {
-          cotizacion = null;
-          errorCotizacion = 'No se pudo cotizar el envío.';
-        }
-      } catch (e) {
-        cotizacion = null;
-        errorCotizacion = 'No se pudo cotizar el envío: $e';
-      } finally {
-        actualizar(() => cotizando = false);
-      }
-    }
+    final double subtotal = _getCartSubtotal();
+    final double iva = subtotal * 0.19;
+    final double total = subtotal + iva;
 
     final TextEditingController nameCtrl = TextEditingController();
     final TextEditingController addressCtrl = TextEditingController();
     final formKey = GlobalKey<FormState>();
     bool processing = false;
+    bool loadingAddress = true;
+    Map<String, dynamic>? defaultAddress;
+
+    // Precarga de los datos del comprador al abrir el dialog
+    Future<void> prefillCheckoutData() async {
+      // 1. Nombre: misma fuente que "Mi Perfil Concierge" (se guarda al iniciar sesión)
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final savedName = prefs.getString('userName');
+        if (savedName != null && savedName.trim().isNotEmpty) {
+          nameCtrl.text = savedName.trim();
+        }
+      } catch (_) {}
+
+      // 2. Dirección de entrega por defecto
+      try {
+        final headers = await ApiService.getAuthHeaders();
+        final uri = Uri.parse('${ApiService.baseUrl}/api/users/delivery-addresses/default');
+        final response = await http.get(uri, headers: headers).timeout(const Duration(seconds: 8));
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+          if (data['data'] != null) {
+            defaultAddress = data['data'];
+            addressCtrl.text = defaultAddress!['direccion_formateada'] ?? '';
+          }
+        }
+      } catch (_) {}
+      finally {
+        if (mounted) setState(() => loadingAddress = false);
+      }
+    }
+
+    // Llamar al cargar
+    prefillCheckoutData();
+
+    // Selector de direcciones guardadas
+    Future<Map<String, dynamic>?> showAddressSelector(BuildContext dialogContext) async {
+      try {
+        final headers = await ApiService.getAuthHeaders();
+        final uri = Uri.parse('${ApiService.baseUrl}/api/users/delivery-addresses');
+        final response = await http.get(uri, headers: headers).timeout(const Duration(seconds: 8));
+        
+        if (response.statusCode != 200) {
+          throw Exception('Error al cargar direcciones');
+        }
+        
+        final data = json.decode(response.body);
+        final addresses = (data['data'] ?? []) as List<dynamic>;
+        
+        if (addresses.isEmpty) {
+          // No hay direcciones, ofrecer crear una
+          final createNew = await showDialog<bool>(
+            context: dialogContext,
+            builder: (ctx) => AlertDialog(
+              title: const Text('Sin direcciones guardadas'),
+              content: const Text('¿Quieres crear una dirección de entrega ahora?'),
+              actions: [
+                TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('No')),
+                TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Sí, crear')),
+              ],
+            ),
+          );
+          
+          if (createNew == true) {
+            // Abrir el builder de direcciones
+            Map<String, dynamic>? newAddress;
+            await showColombianAddressBuilder(
+              context: dialogContext,
+              onSave: (addr) => newAddress = addr,
+            );
+            return newAddress;
+          }
+          return null;
+        }
+        
+        // Mostrar selector de direcciones
+        Map<String, dynamic>? selectedAddress;
+        
+        await showDialog<Map<String, dynamic>>(
+          context: dialogContext,
+          builder: (ctx) => Dialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 500, maxHeight: 500),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.location_on_outlined, color: AppTheme.primary, size: 24),
+                        const SizedBox(width: 12),
+                        const Text(
+                          'Seleccionar dirección de entrega',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.text,
+                          ),
+                        ),
+                        const Spacer(),
+                        IconButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          icon: const Icon(Icons.close),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1),
+                  Flexible(
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      padding: const EdgeInsets.all(16),
+                      itemCount: addresses.length + 1, // +1 para "Nueva dirección"
+                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      itemBuilder: (_, index) {
+                        if (index == addresses.length) {
+                          // Botón "Nueva dirección"
+                          return ListTile(
+                            leading: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primary.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(Icons.add_location_alt_outlined, color: AppTheme.primary),
+                            ),
+                            title: const Text('Agregar nueva dirección', style: TextStyle(fontWeight: FontWeight.w600)),
+                            subtitle: const Text('Crear una dirección diferente para este envío'),
+                            onTap: () async {
+                              Map<String, dynamic>? newAddress;
+                              await showColombianAddressBuilder(
+                                context: dialogContext,
+                                onSave: (addr) => newAddress = addr,
+                              );
+                              if (newAddress != null && dialogContext.mounted) {
+                                Navigator.pop(ctx, newAddress);
+                              }
+                            },
+                          );
+                        }
+                        
+                        final addr = addresses[index];
+                        final isDefault = addr['es_default'] == true;
+                        final formatted = addr['direccion_formateada'] ?? '';
+                        final alias = addr['alias'];
+                        
+                        return Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: isDefault ? AppTheme.primary : Colors.grey.shade200,
+                              width: isDefault ? 2 : 1,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: RadioListTile<Map<String, dynamic>>(
+                            value: addr,
+                            groupValue: selectedAddress,
+                            onChanged: (val) {
+                              selectedAddress = val;
+                              (ctx as Element).markNeedsBuild();
+                            },
+                            title: Row(
+                              children: [
+                                if (alias != null && alias.isNotEmpty)
+                                  Text(alias, style: const TextStyle(fontWeight: FontWeight.bold))
+                                else
+                                  const Text('Dirección de entrega', style: TextStyle(fontWeight: FontWeight.bold)),
+                                if (isDefault) ...[
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.primary,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: const Text(
+                                      'DEFAULT',
+                                      style: TextStyle(fontSize: 9, color: Colors.white, fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                            subtitle: Text(formatted, maxLines: 2, overflow: TextOverflow.ellipsis),
+                            secondary: isDefault
+                                ? const Icon(Icons.check_circle, color: AppTheme.primary)
+                                : null,
+                            activeColor: AppTheme.primary,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            child: const Text('Cancelar'),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: selectedAddress != null
+                                ? () => Navigator.pop(ctx, selectedAddress)
+                                : null,
+                            child: const Text('Usar esta dirección'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+        
+        return selectedAddress;
+      } catch (e) {
+        if (dialogContext.mounted) {
+          ScaffoldMessenger.of(dialogContext).showSnackBar(
+            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          );
+        }
+        return null;
+      }
+    }
 
     showDialog(
       context: context,
@@ -289,13 +477,6 @@ class _StoreScreenState extends State<StoreScreen> {
       builder: (ctx) {
         return StatefulBuilder(
           builder: (context, setCheckoutState) {
-            actualizarDialogo = setCheckoutState;
-
-            if (!cotizacionInicialPedida) {
-              cotizacionInicialPedida = true;
-              Future.microtask(() => cotizar(addressCtrl.text));
-            }
-
             if (processing) {
               return Dialog(
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -330,21 +511,6 @@ class _StoreScreenState extends State<StoreScreen> {
 
             final double screenWidth = MediaQuery.of(context).size.width;
             final bool isMobile = screenWidth < 680;
-
-            // Valores mostrados y cobrados: salen de la cotización del
-            // servidor. Sin cotización válida no se habilita el pago.
-            final Map<String, dynamic>? cot = cotizacion;
-            final Map<String, dynamic> envioDetalle =
-                (cot?['envio_detalle'] as Map?)?.cast<String, dynamic>() ??
-                    const {};
-            final double subtotalMostrado =
-                (cot?['subtotal'] as num?)?.toDouble() ?? _getCartSubtotal();
-            final double ivaMostrado = (cot?['iva'] as num?)?.toDouble() ??
-                (subtotalMostrado - subtotalMostrado / 1.19).roundToDouble();
-            final double envioMostrado =
-                (cot?['envio'] as num?)?.toDouble() ?? 0.0;
-            final double totalMostrado =
-                (cot?['total'] as num?)?.toDouble() ?? subtotalMostrado;
 
             final Widget formColumn = Padding(
               padding: const EdgeInsets.all(24.0),
@@ -387,27 +553,42 @@ class _StoreScreenState extends State<StoreScreen> {
                       validator: (v) => (v == null || v.isEmpty) ? 'Campo obligatorio' : null,
                     ),
                     const SizedBox(height: 12),
-                    TextFormField(
-                      controller: addressCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'Dirección de Entrega',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.location_on_outlined),
-                      ),
-                      // Recalcula el envío al cambiar la dirección, con debounce:
-                      // una sola cotización 600 ms después de la última tecla.
-                      onChanged: (value) {
-                        debounceDireccion?.cancel();
-                        setCheckoutState(() {
-                          cotizando = true;
-                          errorCotizacion = null;
-                        });
-                        debounceDireccion =
-                            Timer(const Duration(milliseconds: 600), () {
-                          cotizar(value);
-                        });
-                      },
-                      validator: (v) => (v == null || v.isEmpty) ? 'Campo obligatorio' : null,
+                    // Dirección de Entrega con botón editar
+                    Stack(
+                      children: [
+                        TextFormField(
+                          controller: addressCtrl,
+                          decoration: InputDecoration(
+                            labelText: 'Dirección de Entrega',
+                            border: const OutlineInputBorder(),
+                            prefixIcon: const Icon(Icons.location_on_outlined),
+                            suffixIcon: loadingAddress
+                                ? const Padding(
+                                    padding: EdgeInsets.all(12),
+                                    child: SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                    ),
+                                  )
+                                : IconButton(
+                                    icon: const Icon(Icons.edit_outlined, size: 20, color: Colors.grey),
+                                    onPressed: () async {
+                                      // Abrir selector/editor de direcciones
+                                      final result = await showAddressSelector(context);
+                                      if (result != null && mounted) {
+                                        setState(() {
+                                          defaultAddress = result;
+                                          addressCtrl.text = result['direccion_formateada'] ?? '';
+                                        });
+                                      }
+                                    },
+                                    tooltip: 'Cambiar dirección',
+                                  ),
+                          ),
+                          validator: (v) => (v == null || v.isEmpty) ? 'Campo obligatorio' : null,
+                        ),
+                      ],
                     ),
                     Container(
                       padding: const EdgeInsets.all(12),
@@ -451,9 +632,7 @@ class _StoreScreenState extends State<StoreScreen> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: ElevatedButton(
-                            onPressed: (cot == null || cotizando)
-                                ? null
-                                : () async {
+                            onPressed: () async {
                               if (formKey.currentState!.validate()) {
                                 final itemsList = _cart.values.map((item) {
                                   final prod = item['product'] as Map<String, dynamic>;
@@ -464,50 +643,127 @@ class _StoreScreenState extends State<StoreScreen> {
                                   };
                                 }).toList();
 
-                                final checkoutData = {
-                                  'nombre_entrega': nameCtrl.text,
-                                  'direccion_entrega': addressCtrl.text,
-                                  'items': itemsList,
-                                  if (widget.bookingId != null) 'booking_id': widget.bookingId,
-                                };
+                                // Preparar datos del checkout (incluir dirección estructurada si hay dirección seleccionada)
+                                Map<String, dynamic> checkoutData;
+                                if (defaultAddress != null) {
+                                  checkoutData = {
+                                    'nombre_entrega': nameCtrl.text,
+                                    'direccion_entrega': addressCtrl.text,
+                                    'tipo_via': defaultAddress!['tipo_via'],
+                                    'numero_principal': defaultAddress!['numero_principal'],
+                                    'letra_principal': defaultAddress!['letra_principal'],
+                                    'numero_secundario': defaultAddress!['numero_secundario'],
+                                    'letra_secundaria': defaultAddress!['letra_secundaria'],
+                                    'complemento': defaultAddress!['complemento'],
+                                    'barrio': defaultAddress!['barrio'],
+                                    'ciudad': defaultAddress!['ciudad'],
+                                    'departamento': defaultAddress!['departamento'],
+                                    'codigo_postal': defaultAddress!['codigo_postal'],
+                                    'referencia': defaultAddress!['referencia'],
+                                    'direccion_entrega_id': defaultAddress!['id'],
+                                    'items': itemsList,
+                                    if (widget.bookingId != null) 'booking_id': widget.bookingId,
+                                  };
+                                } else {
+                                  checkoutData = {
+                                    'nombre_entrega': nameCtrl.text,
+                                    'direccion_entrega': addressCtrl.text,
+                                    'items': itemsList,
+                                    if (widget.bookingId != null) 'booking_id': widget.bookingId,
+                                  };
+                                }
 
-                                // A360-2026-09-22/C-03: antes se fabricaba aquí un id
-                                // 'STORE_<epoch>' y se usaba como referencia de pago.
-                                // Si no hay reserva real no hay identificador de pago:
-                                // se pasa vacío y el checkout responde "no integrado".
-                                final paymentResult = await showWompiCheckoutSheet(
-                                  context: context,
-                                  bookingId: widget.bookingId ?? '',
-                                  serviceName: 'Compra GlowShop (${_cart.length} productos)',
-                                  price: (cot['total'] as num).toDouble(),
-                                  providerName: 'GlowShop Oficial',
-                                  itemType: 'product',
-                                );
-
-                                if (paymentResult == true) {
+                                // 1. Crear el pedido primero (POST /api/store/checkout)
+                                // El messenger se captura ANTES del primer await: usarlo
+                                // despues es "BuildContext across async gaps", y si la
+                                // pasarela fallaba el dialogo se quedaba colgado sin aviso.
+                                final messenger = ScaffoldMessenger.of(context);
+                                setCheckoutState(() {
+                                  processing = true;
+                                });
+                                Map<String, dynamic>? orderResponse;
+                                try {
+                                  orderResponse = await ApiService.post('/api/store/checkout', checkoutData);
+                                  if (orderResponse == null || orderResponse['success'] != true) {
+                                    throw Exception(orderResponse?['error'] ?? 'Error creando pedido');
+                                  }
+                                } catch (e) {
                                   setCheckoutState(() {
-                                    processing = true;
+                                    processing = false;
                                   });
-                                  try {
-                                    final response = await ApiService.post('/api/store/checkout', checkoutData);
-                                    if (response != null && response['success'] == true) {
-                                      Navigator.pop(ctx);
-                                      setState(() {
-                                        _cart.clear();
-                                        _isCartOpen = false;
-                                      });
-                                      _showOrderSuccessDialog();
-                                    } else {
-                                      throw Exception(response?['error'] ?? 'Error registrando pedido');
-                                    }
-                                  } catch (e) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Error creando pedido: $e')),
+                                  );
+                                  return;
+                                }
+
+                                final orderId = orderResponse['data']?['order']?['id'] ?? orderResponse['order']?['id'];
+                                if (orderId == null) {
+                                  setCheckoutState(() { processing = false; });
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Error: no se recibió ID del pedido')),
+                                  );
+                                  return;
+                                }
+
+                                // El importe que se cobra es el que calculo el SERVIDOR
+                                // (incluye envio e IVA). Usar el total del carrito hacia que
+                                // el modal mostrara 40.317 y el cobro fuera 55.717,20.
+                                // Los `numeric` de Postgres llegan como String
+                                // ("27350.00"): un `as num?` lanzaba TypeError, el await
+                                // no continuaba y "Procesando tu pago..." se quedaba
+                                // colgado sin abrir la pasarela.
+                                final totalServidor =
+                                    toDoubleOrNull(orderResponse['data']?['order']?['total']) ??
+                                        toDoubleOrNull(orderResponse['order']?['total']) ??
+                                        total;
+
+                                // 2. Cobrar el pedido usando el orderId real
+                                // Si abrir la pasarela falla, se cierra el dialogo y se
+                                // avisa: antes cualquier excepcion dejaba el spinner y el
+                                // pedido creado sin forma de continuar.
+                                bool? paymentResult;
+                                try {
+                                  paymentResult = await showWompiCheckoutSheet(
+                                    context: context,
+                                    bookingId: orderId, // Ahora pasamos el orderId real
+                                    serviceName: 'Compra GlowShop (${_cart.length} productos)',
+                                    price: totalServidor,
+                                    providerName: 'GlowShop Oficial',
+                                    itemType: 'product',
+                                  );
+                                } catch (e) {
+                                  if (mounted) {
                                     setCheckoutState(() {
                                       processing = false;
                                     });
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text('Error registrando pedido: $e')),
+                                    messenger.showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'No se pudo abrir la pasarela de pago: $e. '
+                                          'El pedido quedó pendiente, no se te cobró nada.',
+                                        ),
+                                      ),
                                     );
                                   }
+                                  return;
+                                }
+
+                                if (paymentResult == true) {
+                                  // El webhook confirmará el pago y marcará el pedido como PAGADO
+                                  Navigator.pop(ctx);
+                                  setState(() {
+                                    _cart.clear();
+                                    _isCartOpen = false;
+                                  });
+                                  _showOrderSuccessDialog();
+                                } else {
+                                  // Pago cancelado o fallido: el pedido queda en PENDIENTE_PAGO
+                                  // El usuario puede reintentar desde la pantalla de pedidos
+                                  setCheckoutState(() { processing = false; });
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Pago cancelado. El pedido queda pendiente de pago.')),
+                                  );
                                 }
                               }
                             },
@@ -623,46 +879,9 @@ class _StoreScreenState extends State<StoreScreen> {
                 const SizedBox(height: 20),
                   const Divider(),
                   const SizedBox(height: 10),
-                  _buildSummaryRow('Subtotal', _formatCOP(subtotalMostrado)),
+                  _buildSummaryRow('Subtotal', _formatCOP(subtotal)),
                   const SizedBox(height: 6),
-                  _buildSummaryRow('IVA incluido (19%)', _formatCOP(ivaMostrado)),
-                  const SizedBox(height: 6),
-                  if (cotizando)
-                    _buildSummaryRow('Envío', 'Calculando...')
-                  else if (cot != null && envioMostrado == 0)
-                    _buildSummaryRow(
-                      'Envío gratis',
-                      envioDetalle['motivo'] == 'entrega_en_cita'
-                          ? 'Entrega en la cita'
-                          : 'Superaste el umbral',
-                    )
-                  else
-                    _buildSummaryRow(
-                      envioDetalle['motivo'] == 'zona_comodin'
-                          ? 'Envío estimado'
-                          : 'Envío',
-                      _formatCOP(envioMostrado),
-                    ),
-                  if (errorCotizacion != null) ...[
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            errorCotizacion!,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Colors.red,
-                            ),
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: () => cotizar(addressCtrl.text),
-                          child: const Text('Reintentar'),
-                        ),
-                      ],
-                    ),
-                  ],
+                  _buildSummaryRow('IVA (19%)', _formatCOP(iva)),
                   const SizedBox(height: 10),
                   const Divider(),
                   const SizedBox(height: 10),
@@ -678,7 +897,7 @@ class _StoreScreenState extends State<StoreScreen> {
                         ),
                       ),
                       Text(
-                        cot != null ? _formatCOP(totalMostrado) : '—',
+                        _formatCOP(total),
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
@@ -724,11 +943,7 @@ class _StoreScreenState extends State<StoreScreen> {
           },
         );
       },
-    ).then((_) {
-      // El diálogo se cerró: no dejar timers ni setState pendientes.
-      dialogoCerrado = true;
-      debounceDireccion?.cancel();
-    });
+    );
   }
 
   void _showOrderSuccessDialog() {
@@ -912,9 +1127,9 @@ class _StoreScreenState extends State<StoreScreen> {
                                   children: [
                                     Expanded(
                                       child: Container(
-                                        decoration: BoxDecoration(
+                                        decoration: const BoxDecoration(
                                           color: Colors.white,
-                                          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                                          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
                                         ),
                                       ),
                                     ),

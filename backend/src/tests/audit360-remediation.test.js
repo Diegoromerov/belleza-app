@@ -103,28 +103,57 @@ describe('A360 C-04 — el WebSocket exige token', () => {
   });
 });
 
-describe('A360 C-05 — no hay cobros fabricados', () => {
-  test('el pago de cita devuelve 501 en producción', () => {
-    const src = leer('src/controllers/bookingController.js');
-    expect(src).toMatch(/PAYMENT_GATEWAY_NOT_INTEGRATED/);
+describe('A360 C-05 — ningún cobro ni dispersión se fabrica', () => {
+  // Antes estas guardas exigían la AUSENCIA de integración (501 y simuladores
+  // "que se rechazan"). Con la integración real ya hecha, la guarda útil es la
+  // otra cara del mismo invariante: que cobrar y dispersar dependan de la
+  // pasarela, y que el repositorio no se autoconceda un estado de pago.
+  test('el cobro de una cita exige un instrumento real y no se marca `paid` por su cuenta', () => {
+    const src = soloCodigo(leer('src/controllers/bookingController.js'));
+
+    // Ya no hay simulador ni referencias inventadas.
+    expect(src).not.toMatch(/simdev_|wompi_sim_|simulated:\s*true/);
+    // Se exige un instrumento tokenizado por Wompi y se llama a la API real.
+    expect(src).toMatch(/MISSING_PAYMENT_INSTRUMENT/);
+    expect(src).toMatch(/wompiClient\.createTransaction/);
+    // Y no hay instrumento simulado: el cobro responde con la transacción pendiente.
+    expect(src).toMatch(/PAYMENT_GATEWAY_NOT_CONFIGURED/);
+
+    // La cita solo se marca pagada dentro del webhook APPROVED, nunca en el cobro.
+    const inicio = src.indexOf('exports.payBooking');
+    const fin = src.indexOf('procesarWebhookWompi');
+    expect(inicio).toBeGreaterThan(-1);
+    expect(fin).toBeGreaterThan(inicio);
+    const cobro = src.slice(inicio, fin);
+    expect(cobro).toMatch(/wompiClient\.createTransaction/); // la guarda no puede pasar en vacío
+    expect(cobro).not.toMatch(/payment_status\s*=\s*'paid'/);
+    expect(cobro).not.toMatch(/estado\s*=\s*'CONFIRMADA'/);
   });
 
-  test('los payouts simulados se rechazan en producción', () => {
+  test('la dispersión usa la API real de pagos a terceros y ya no simula', () => {
     const src = leer('src/services/wompiService.js');
-    expect(src).toMatch(/simuladorPermitido/);
-    expect(src).toMatch(/rechazarSimulacion/);
+    expect(src).not.toMatch(/simuladorPermitido|rechazarSimulacion|setTimeout/);
+    expect(src).toMatch(/wompiPayoutsClient\.createPayoutBatch/);
+    expect(src).toMatch(/wompiPayoutsClient\.resolveBankId/);
+    expect(src).toMatch(/isConfigured\(\)/);
+  });
+
+  test('la referencia y el estado del retiro los emite Wompi, no el repositorio', () => {
+    const src = leer('src/services/wompiService.js');
+    expect(src).toMatch(/referencia_wompi\s*=\s*\$3/);
+    expect(src).toMatch(/mapearEstadoRetiro\(lote\.status\)/);
+  });
+
+  test('el webhook valida el checksum real de Wompi, no un esquema inventado', () => {
+    const src = soloCodigo(leer('src/controllers/bookingController.js'));
+    expect(src).not.toMatch(/x-wompi-signature|x-wompi-nonce|x-wompi-timestamp/);
+    expect(src).toMatch(/verifyEventChecksum/);
   });
 
   test('la validación médica no afirma un pago verificado por Wompi', () => {
     const src = soloCodigo(leer('src/controllers/designsController.js'));
     expect(src).not.toMatch(/Pago de \$15\.000 COP verificado por Wompi/);
     expect(src).toMatch(/PAYMENT_GATEWAY_NOT_INTEGRATED/);
-  });
-
-  test('wompiService no llama a ninguna API real: por eso no puede marcar paid', () => {
-    const src = leer('src/services/wompiService.js');
-    const urls = src.match(/https?:\/\//g) || [];
-    expect(urls.length).toBe(0);
   });
 });
 

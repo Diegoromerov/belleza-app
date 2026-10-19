@@ -9,7 +9,10 @@ const businessRepository = require('../repositories/businessRepository');
 
 describe('Systematic Debugging — Business Rating & Compliance Score Suite', () => {
   test('1. Handles empty tasks array cleanly without Division by Zero (Score = 0%)', async () => {
-    const mockProviderId = 'prov-debug-empty-tasks';
+    // provider_id es INTEGER en business_profiles (migracion 012 + pgMemory.js).
+    // Con un string, pg-mem corta con "invalid input syntax for integer" y el
+    // caso de division por cero nunca llega a ejercitarse.
+    const mockProviderId = 900001;
     const profile = await businessRepository.createProfile({
       id: 'biz-debug-empty',
       provider_id: mockProviderId,
@@ -31,7 +34,8 @@ describe('Systematic Debugging — Business Rating & Compliance Score Suite', ()
   });
 
   test('3. Verifies score update consistency on getProfileSummary', async () => {
-    const mockProviderId = 'prov-debug-score-calc';
+    // INTEGER, igual que el caso anterior: el esquema lo exige.
+    const mockProviderId = 900002;
     const profile = await businessRepository.createProfile({
       id: 'biz-debug-calc',
       provider_id: mockProviderId,

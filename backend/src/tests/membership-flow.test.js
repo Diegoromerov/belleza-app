@@ -171,7 +171,13 @@ describe('Suite de Integración: SaaS Membership & Active Context (Fase 2B.3)', 
       await switchContext(req, res);
 
       expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'business_profile_id es obligatorio' }));
+      // El contrato de validacion del proyecto es { error: 'VALIDATION_ERROR', message, details }
+      // (authController.js:31, y lo asertan authZodValidation / biometric.integration / ...).
+      // Esta asercion es de antes de la capa Zod y esperaba el mensaje dentro de `error`.
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+        error: 'VALIDATION_ERROR',
+        message: 'business_profile_id es obligatorio',
+      }));
     });
 
     test('Rechaza con 403 si el usuario no tiene membresía activa en el business_profile_id solicitado', async () => {

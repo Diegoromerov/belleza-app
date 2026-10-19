@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../widgets/profile/profile_header.dart';
 import '../../widgets/profile/luxe_list_tile.dart';
+import '../../widgets/profile/delivery_addresses_section.dart';
 import '../../services/auth_service.dart';
 import 'settings_screen.dart';
 import 'biometric_history_screen.dart';
@@ -91,12 +92,12 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             ),
           ),
         ),
-        title: Row(
+        title: const Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.auto_awesome, size: 15, color: Color(0xFFC5A052)),
-            const SizedBox(width: 8),
-            const Text(
+            Icon(Icons.auto_awesome, size: 15, color: Color(0xFFC5A052)),
+            SizedBox(width: 8),
+            Text(
               'Mi Perfil Concierge',
               style: TextStyle(
                 fontFamily: 'CormorantGaramond',
@@ -216,6 +217,17 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
                   const SizedBox(height: 24),
 
+                  // GRUPO 1.b: DIRECCIONES DE ENTREGA (estructura colombiana)
+                  _buildSectionHeader('DIRECCIONES DE ENTREGA'),
+                  const SizedBox(height: 10),
+
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: DeliveryAddressesSection(),
+                  ),
+
+                  const SizedBox(height: 24),
+
                   // GRUPO 2: PREFERENCIAS Y SEGURIDAD
                   _buildSectionHeader('PREFERENCIAS Y PRIVACIDAD'),
                   const SizedBox(height: 10),
@@ -300,7 +312,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                             HapticFeedback.lightImpact();
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (_) => FaqScreen()),
+                              MaterialPageRoute(builder: (_) => const FaqScreen()),
                             );
                           },
                         ),

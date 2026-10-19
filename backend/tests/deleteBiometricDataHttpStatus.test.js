@@ -223,6 +223,10 @@ function montarEndpointConsent({ fallarEnDelete = false, reemplazarDelete = null
     '../utils/expressAsync': { wrapRouterAsync: () => {} },
     '../middleware/auth': { authMiddleware: (req, res, next) => next() },
     '../services/consentService': svc,
+    // consentRoutes.js:11 hace `require('../config/db')`. Sin este stub el sandbox
+    // lanzaba «require no soportado» y la ruta /data no llegaba a registrarse, así que
+    // C1/C2/C3 fallaban sin llegar a ejercitar el handler.
+    '../config/db': { pool },
   });
 
   return () =>

@@ -4,8 +4,8 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import '../../core/theme/belleza_luxe_theme.dart';
 import '../../widgets/profile/luxe_list_tile.dart';
+import '../../widgets/profile/delivery_addresses_section.dart';
 import '../../services/api_service.dart';
-import '../../services/auth_service.dart';
 import '../../services/analytics_service.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -164,7 +164,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     bool obscureCurrent = true;
     bool obscureNew = true;
     bool obscureConfirm = true;
-    bool _isLoading = false;
+    bool isLoading = false;
 
     showDialog(
       context: context,
@@ -232,7 +232,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           actions: [
             TextButton(
-              onPressed: _isLoading ? null : () => Navigator.pop(context),
+              onPressed: isLoading ? null : () => Navigator.pop(context),
               child: const Text('Cancelar', style: TextStyle(color: LuxeColors.nude700)),
             ),
             ElevatedButton(
@@ -240,7 +240,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 backgroundColor: LuxeColors.nude900,
                 foregroundColor: Colors.white,
               ),
-              onPressed: _isLoading ? null : () async {
+              onPressed: isLoading ? null : () async {
                 if (newPasswordController.text.isEmpty ||
                     newPasswordController.text != confirmPasswordController.text) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -260,7 +260,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   );
                   return;
                 }
-                setDialogState(() => _isLoading = true);
+                setDialogState(() => isLoading = true);
                 
                 try {
                   final headers = await ApiService.getAuthHeaders();
@@ -275,7 +275,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ).timeout(const Duration(seconds: 15));
 
                   if (mounted) {
-                    setDialogState(() => _isLoading = false);
+                    setDialogState(() => isLoading = false);
                     
                     if (response.statusCode == 200) {
                       Navigator.pop(context);
@@ -297,7 +297,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   }
                 } catch (e) {
                   if (mounted) {
-                    setDialogState(() => _isLoading = false);
+                    setDialogState(() => isLoading = false);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text('Error de conexión: $e'),
@@ -307,7 +307,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   }
                 }
               },
-              child: _isLoading
+              child: isLoading
                   ? const SizedBox(
                       width: 16,
                       height: 16,
@@ -385,7 +385,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         uri,
         headers: headers,
         body: json.encode({
-          'tipo': 'PETICION',
+          'tipo': 'ARCO_SUPRESION',
           'categoria': 'seguridad',
           'asunto': 'Solicitud de Supresión de Datos (ARCO) - Ley 1581/2012',
           'descripcion': 'El usuario solicita la supresión total de sus datos personales y biométricos '
@@ -728,6 +728,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                       showDivider: false,
                     ),
+
+                    const SizedBox(height: LuxeSpacing.xxl),
+
+                    // SECCIÓN 4: DIRECCIONES DE ENTREGA
+                    const Text(
+                      'DIRECCIONES DE ENTREGA',
+                      style: TextStyle(
+                        fontFamily: 'JetBrainsMono',
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: LuxeColors.nude500,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    const DeliveryAddressesSection(),
 
                     const SizedBox(height: LuxeSpacing.xxl),
 

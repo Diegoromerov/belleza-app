@@ -15,7 +15,7 @@ async function aplicarPricingDinamico() {
         EXTRACT(hour FROM scheduled_at) as hora_dia,
         COUNT(*) as total_citas
       FROM bookings
-      WHERE creado_en >= NOW() - INTERVAL '30 days'
+      WHERE scheduled_at >= NOW() - INTERVAL '30 days'
       GROUP BY dia_semana, hora_dia
       ORDER BY total_citas ASC
       LIMIT 5;

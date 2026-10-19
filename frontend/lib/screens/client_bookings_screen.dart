@@ -5,6 +5,7 @@ import 'otp_confirm_screen.dart';
 import '../shared/theme.dart';
 import '../services/audience_service.dart';
 import '../shared/mens_theme.dart';
+import '../utils/json_num.dart';
 
 class ClientBookingsScreen extends StatefulWidget {
   const ClientBookingsScreen({super.key});
@@ -238,7 +239,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
       ),
       builder: (context) {
         final totalAmount =
-            (booking['total_amount'] as num?)?.toDouble() ?? 0.0;
+            toDoubleOr(booking['total_amount'], 0.0);
         final providerName = (booking['provider_business_name'] != null &&
                 booking['provider_business_name'].toString().isNotEmpty)
             ? booking['provider_business_name'].toString()
@@ -691,7 +692,7 @@ class _ClientBookingsScreenState extends State<ClientBookingsScreen>
     final avatarUrl = booking['provider_avatar_url']?.toString() ?? '';
     final serviceName = booking['service_name']?.toString() ?? 'Servicio';
     final scheduledAt = booking['scheduled_at']?.toString() ?? '';
-    final totalAmount = (booking['total_amount'] as num?)?.toDouble() ?? 0.0;
+    final totalAmount = toDoubleOr(booking['total_amount'], 0.0);
     final isReviewed = booking['is_reviewed'] == true;
     final reviewData = booking['review'] as Map<String, dynamic>?;
 

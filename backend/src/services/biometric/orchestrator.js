@@ -18,62 +18,51 @@ class BiometricOrchestrator {
     let faceScores, handsDiagnosis, uvData = null;
 
     const [faceResult, handsResult, uvResult] = await Promise.allSettled([
-      breakers.youcam.execute(
-        () => youcamClient.analyzeFace(faceImage, traceId),
-        () => ({
-          hydration: 60,
-          wrinkles: 30,
-          spots: 40,
-          pores: 35,
-          subtono: 'neutro',
-          bioAge: 35,
-        })
-      ),
-      breakers.gemini.execute(
-        () => geminiClient.analyzeHands(handsImage, traceId),
-        () => ({
-          manchasSolares: 'leve',
-          sequedad: 'moderada',
-          cuticulas: 'sanas',
-          unas: 'sanas',
-          edadAparente: 35,
-        })
-      ),
+      breakers.youcam.execute(() => youcamClient.analyzeFace(faceImage, traceId)),
+      breakers.gemini.execute(() => geminiClient.analyzeHands(handsImage, traceId)),
       (lat && lng) ? openUV.getUV(lat, lng) : Promise.resolve(null),
     ]);
 
-    faceScores = faceResult.status === 'fulfilled' ? faceResult.value : {
-      hydration: 60, wrinkles: 30, spots: 40, pores: 35, subtono: 'neutro', bioAge: 35
-    };
+    if (faceResult.status === 'rejected' || handsResult.status === 'rejected') {
+      const error = new Error('El análisis biométrico no está disponible; no se generó ni guardó un diagnóstico.');
+      error.code = 'BIOMETRIC_ANALYSIS_UNAVAILABLE';
+      error.statusCode = 503;
+      throw error;
+    }
 
-    handsDiagnosis = handsResult.status === 'fulfilled' ? handsResult.value : {
-      manchasSolares: 'leve', sequedad: 'moderada', cuticulas: 'sanas', unas: 'sanas', edadAparente: 35
-    };
+    faceScores = faceResult.value;
+    handsDiagnosis = handsResult.value;
 
     if (uvResult.status === 'fulfilled' && uvResult.value) {
       uvData = uvResult.value;
     }
 
     // 4. Generar recomendación con DeepSeek (con fallback a Gemini envuelto en Circuit Breaker)
-    let recommendation = await breakers.deepseek.execute(
+    let recommendation;
+    try {
+      recommendation = await breakers.deepseek.execute(
       () => deepseekClient.generateRecommendation(faceScores, handsDiagnosis),
-      async () => {
-        try {
-          return await breakers.gemini.execute(
-            () => geminiClient.generateRecommendation(faceScores, handsDiagnosis, traceId),
-            () => deepseekClient.getFallbackRecommendation()
-          );
-        } catch (e) {
-          return deepseekClient.getFallbackRecommendation();
-        }
-      }
-    );
+      () => breakers.gemini.execute(() => geminiClient.generateRecommendation(faceScores, handsDiagnosis, traceId))
+      );
+    } catch (cause) {
+      const error = new Error('Las recomendaciones biométricas no están disponibles; no se guardó un diagnóstico incompleto.');
+      error.code = 'BIOMETRIC_ANALYSIS_UNAVAILABLE';
+      error.statusCode = 503;
+      error.cause = cause;
+      throw error;
+    }
 
     // 5. Obtener tonos VTO recomendados según subtono biométrico
-    let vtoTones = await breakers.deepseek.execute(
-      () => deepseekClient.getVtoToneMatching(faceScores.subtono),
-      () => deepseekClient.getFallbackVtoTones(faceScores.subtono)
-    );
+    let vtoTones;
+    try {
+      vtoTones = await breakers.deepseek.execute(() => deepseekClient.getVtoToneMatching(faceScores.subtono));
+    } catch (cause) {
+      const error = new Error('La personalización de tonos no está disponible; no se guardó un diagnóstico incompleto.');
+      error.code = 'BIOMETRIC_ANALYSIS_UNAVAILABLE';
+      error.statusCode = 503;
+      error.cause = cause;
+      throw error;
+    }
 
     if (uvData) {
       recommendation = `${recommendation}\n\n☀️ **Alerta FPS Activa:** ${uvData.recommendation} (Nivel de riesgo: ${uvData.riskLevel}, Índice UV: ${uvData.uv})`;

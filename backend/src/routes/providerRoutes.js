@@ -4,6 +4,12 @@ const router = express.Router();
 const providerController = require('../controllers/providerController');
 const { authMiddleware } = require('../middleware/auth');
 const { pool } = require('../config/db');
+const {
+  validarRut,
+  validarCodigoResponsabilidad,
+  resolverResponsabilidadIva,
+  reconciliarConDian
+} = require('../services/ivaPrestador');
 
 // ─── CONTRATO DE COMISIÓN E INDEPENDENCIA (D-GL-023 · F8) ────────────────────
 // El prestador es independiente, no empleado. Se registra versión, fecha e IP:
@@ -14,7 +20,8 @@ const CONTRATO_VERSION_ACTUAL = '2026-10';
 router.get('/provider/contract', authMiddleware, async (req, res) => {
   try {
     const { rows } = await pool.query(
-      `SELECT contrato_version, contrato_aceptado_at, independencia_aceptada_at, regimen_iva
+      `SELECT contrato_version, contrato_aceptado_at, independencia_aceptada_at,
+              responsable_iva, rut_responsabilidad_codigo
          FROM perfiles_prestador WHERE id = $1`,
       [req.user.id]
     );
@@ -32,7 +39,7 @@ router.get('/provider/contract', authMiddleware, async (req, res) => {
 });
 
 router.post('/provider/contract/accept', authMiddleware, async (req, res) => {
-  const { version, independencia, regimen_iva } = req.body;
+  const { version, independencia } = req.body;
 
   if (!independencia) {
     return res.status(400).json({
@@ -46,11 +53,11 @@ router.post('/provider/contract/accept', authMiddleware, async (req, res) => {
           SET contrato_version = $2,
               contrato_aceptado_at = NOW(),
               contrato_aceptado_ip = $3,
-              independencia_aceptada_at = NOW(),
-              regimen_iva = COALESCE($4, regimen_iva)
+              independencia_aceptada_at = NOW()
         WHERE id = $1
-        RETURNING contrato_version, contrato_aceptado_at, independencia_aceptada_at, regimen_iva`,
-      [req.user.id, version || CONTRATO_VERSION_ACTUAL, req.ip, regimen_iva || null]
+        RETURNING contrato_version, contrato_aceptado_at, independencia_aceptada_at,
+                  responsable_iva, rut_responsabilidad_codigo`,
+      [req.user.id, version || CONTRATO_VERSION_ACTUAL, req.ip]
     );
 
     if (!rows.length) return res.status(404).json({ error: 'Perfil de prestador no encontrado.' });
@@ -128,6 +135,148 @@ router.put('/provider/schedule', authMiddleware, async (req, res) => {
   } catch (err) {
     console.error('Error al actualizar horario de prestador:', err);
     res.status(500).json({ error: 'Error al actualizar horario de atención.' });
+  }
+});
+
+// ─── DATOS FISCALES: RESPONSABILIDAD DE IVA DEL PRESTADOR ───────────────────
+//
+// Contexto: hallazgo W13 de `.hermes/REVISAR.md` y el diseño en
+// `.hermes/plans/2026-10-10_captura-responsabilidad-iva-onboarding.md`.
+//
+// El art. 476 num. 1 lit. a) del E.T. dice que los tratamientos de belleza están
+// GRAVADOS, pero quién cobra el impuesto lo decide el art. 437 par. 3 (por
+// ingresos) y consta en el RUT: código 48 = responsable de IVA, 49 = no
+// responsable.
+//
+// D3 — mientras el prestador no declare, NO se presume responsable y sus reservas
+// no discriminan IVA. Como el precio publicado es el precio final al consumidor,
+// esto NO cambia lo que paga el cliente: sólo deja de desglosarse un IVA que el
+// prestador no ha acreditado.
+const ROLES_ADMIN = ['admin', 'ADMIN', 'superadmin', 'SUPERADMIN'];
+
+// GET /api/provider/fiscal — estado de la responsabilidad de IVA del prestador.
+router.get('/provider/fiscal', authMiddleware, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT rut_numero, rut_responsabilidad_codigo, responsable_iva,
+              responsable_iva_override, responsabilidad_iva_fuente,
+              responsabilidad_iva_actualizada_at
+         FROM usuarios
+        WHERE id = $1`,
+      [req.user.id]
+    );
+
+    if (!rows.length) {
+      return res.status(404).json({ error: 'Usuario no encontrado.' });
+    }
+
+    const fila = rows[0];
+    res.json({
+      rut_numero: fila.rut_numero,
+      rut_responsabilidad_codigo: fila.rut_responsabilidad_codigo,
+      responsable_iva: fila.responsable_iva,
+      override: fila.responsable_iva_override,
+      fuente: fila.responsabilidad_iva_fuente,
+      actualizada_at: fila.responsabilidad_iva_actualizada_at,
+      // Explícito, para que la app no tenga que deducir el estado.
+      estado: fila.responsabilidad_iva_fuente ? 'DECLARADA' : 'SIN_DECLARAR'
+    });
+  } catch (err) {
+    console.error('Error al consultar datos fiscales:', err);
+    res.status(500).json({ error: 'Error al consultar los datos fiscales.' });
+  }
+});
+
+// PATCH /api/provider/fiscal — declarar la responsabilidad de IVA.
+// D2: el número de RUT es obligatorio. D1: el valor se DERIVA del código, y el
+// override manual queda auditado (y sólo lo fija un admin).
+// Extensión: si la DIAN está disponible, valida y reconcilia contra el RUT real.
+router.patch('/provider/fiscal', authMiddleware, async (req, res) => {
+  const { rut_numero, rut_responsabilidad_codigo } = req.body;
+
+  const rut = validarRut(rut_numero);
+  if (!rut.valido) {
+    return res.status(400).json({ error: 'RUT_INVALIDO', detalle: rut.motivo });
+  }
+
+  const codigo = validarCodigoResponsabilidad(rut_responsabilidad_codigo);
+  if (!codigo.valido) {
+    return res.status(400).json({
+      error: 'CODIGO_RESPONSABILIDAD_INVALIDO',
+      detalle: codigo.motivo
+    });
+  }
+
+  try {
+    const actual = await pool.query(
+      'SELECT responsable_iva_override FROM usuarios WHERE id = $1',
+      [req.user.id]
+    );
+    if (!actual.rows.length) {
+      return res.status(404).json({ error: 'Usuario no encontrado.' });
+    }
+
+    // El override NO lo puede tocar el prestador: si pudiera, se declararía a sí
+    // mismo lo contrario de lo que dice su RUT. Es una decisión de un admin, y
+    // queda registrada como MANUAL (D1).
+    let override = actual.rows[0].responsable_iva_override;
+    if (Object.prototype.hasOwnProperty.call(req.body, 'override')) {
+      if (!ROLES_ADMIN.includes(req.user.role)) {
+        return res.status(403).json({
+          error: 'OVERRIDE_REQUIERE_ADMIN',
+          detalle:
+            'El override de la responsabilidad de IVA sólo lo puede fijar un administrador.'
+        });
+      }
+      override = req.body.override === null ? null : Boolean(req.body.override);
+    }
+
+    // Reconciliar con DIAN (si disponible)
+    const reconciliacion = await reconciliarConDian({
+      rutNumero: rut.rut,
+      codigoDeclarado: codigo.codigo,
+      override
+    });
+
+    const { rows } = await pool.query(
+      `UPDATE usuarios
+          SET rut_numero = $2,
+              rut_responsabilidad_codigo = $3,
+              responsable_iva = $4,
+              responsable_iva_override = $5,
+              responsabilidad_iva_fuente = $6,
+              responsabilidad_iva_actualizada_at = NOW(),
+              responsabilidad_iva_cambiada_por = $7
+        WHERE id = $1
+        RETURNING rut_numero, rut_responsabilidad_codigo, responsable_iva,
+                  responsable_iva_override, responsabilidad_iva_fuente,
+                  responsabilidad_iva_actualizada_at`,
+      [
+        req.user.id,
+        rut.rut,
+        codigo.codigo,
+        reconciliacion.responsableIva === true,
+        override,
+        reconciliacion.fuente,
+        req.user.id
+      ]
+    );
+
+    res.json({
+      ok: true,
+      mensaje: reconciliacion.responsableIva
+        ? 'Quedaste registrado como responsable de IVA.'
+        : 'Quedaste registrado como no responsable de IVA.',
+      fiscal: {
+        ...rows[0],
+        estado: reconciliacion.fuente ? 'DECLARADA' : 'SIN_DECLARAR',
+        // Auditoría de la reconciliación DIAN
+        auditoria_dian: reconciliacion.auditoria
+      }
+    });
+  } catch (err) {
+    console.error('Error al actualizar datos fiscales:', err);
+    res.status(500).json({ error: 'Error al actualizar los datos fiscales.' });
   }
 });
 

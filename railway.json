@@ -1,0 +1,19 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "services": {
+    "backend": {
+      "source": "backend",
+      "build": {
+        "dockerfilePath": "Dockerfile"
+      }
+    },
+    "admin-dashboard": {
+      "source": "admin-dashboard",
+      "build": {
+        "dockerfilePath": "Dockerfile"
+      },
+      "healthcheckPath": "/",
+      "healthcheckTimeout": 100
+    }
+  }
+}

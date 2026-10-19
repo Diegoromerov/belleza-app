@@ -130,7 +130,16 @@ function normalizarEstadoDependencias(dbStatus) {
   for (const id of DEPENDENCIAS_CONOCIDAS) estado[id] = false;
   if (!dbStatus || typeof dbStatus !== 'object') return estado;
 
-  if (dbStatus.pgAvailable === false || dbStatus.servingFabricatedData === true) {
+  const isStrict =
+    process.env.NODE_ENV === 'production' ||
+    process.env.NODE_ENV === 'staging' ||
+    Boolean(process.env.RAILWAY_ENVIRONMENT);
+
+  const databaseBlocked =
+    (dbStatus.pgAvailable === false || dbStatus.servingFabricatedData === true) &&
+    (!dbStatus.memoryFallbackAllowed || isStrict);
+
+  if (databaseBlocked) {
     estado.database = true;
   }
 
@@ -252,6 +261,9 @@ function decidirBloqueo(dbStatus) {
 
   const isDegraded = dbStatus.servingFabricatedData === true || dbStatus.pgAvailable === false;
   if (isDegraded) {
+    if (dbStatus.memoryFallbackAllowed && process.env.NODE_ENV !== 'production') {
+      return { shouldBlock: false, reason: 'MEMORY_FALLBACK_ALLOWED' };
+    }
     return { shouldBlock: true, reason: 'DEGRADED_DB', httpStatus: 503, header: 'memory-fallback' };
   }
 

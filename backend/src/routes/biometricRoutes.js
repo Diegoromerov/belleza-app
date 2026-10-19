@@ -17,7 +17,25 @@ const { biometricAnalyzeSchema, biometricProfileParamSchema } = require('../sche
  * - Checklist Item 4: Eliminación de userId || 'guest' (Exigencia de JWT válido).
  * - Checklist Item 5: Header Idempotency-Key obligatorio.
  */
-router.post('/analyze', authMiddleware, biometricConsentGuard, idempotencyMiddleware, async (req, res) => {
+// DECISION 2026-10-09 (Diego): la validacion Zod va ANTES del veto de consentimiento.
+// Antes el guard corria primero y respondia 403 a un cuerpo mal formado: se evaluaba
+// autorizacion sobre una peticion que ni siquiera era valida. Un cuerpo invalido es un error
+// del cliente (400) y debe reportarse antes de mirar permisos; el 403 queda para el caso
+// bien formado y sin consentimiento valido.
+const validateBiometricAnalyze = (req, res, next) => {
+  const parsed = biometricAnalyzeSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({
+      error: 'VALIDATION_ERROR',
+      message: 'Datos de analisis biometrico invalidos',
+      details: parsed.error.issues,
+    });
+  }
+  req.body = parsed.data;
+  next();
+};
+
+router.post('/analyze', authMiddleware, idempotencyMiddleware, validateBiometricAnalyze, biometricConsentGuard, async (req, res) => {
   const userId = req.user?.id;
   if (!userId) {
     return res.status(401).json({
@@ -29,6 +47,9 @@ router.post('/analyze', authMiddleware, biometricConsentGuard, idempotencyMiddle
   console.log(`📥 [BIOMETRIC] Request recibida en POST /analyze - IP: ${req.ip}, User ID JWT: ${userId}`);
 
   // Validación Zod de entrada
+  if (req.method === 'POST' && !req.headers['idempotency-key'] && !req.headers['x-idempotency-key']) {
+    return res.status(400).json({ error: 'VALIDATION_ERROR', code: 'MISSING_IDEMPOTENCY_KEY', message: 'El encabezado Idempotency-Key es obligatorio para el análisis biométrico.' });
+  }
   const parseResult = biometricAnalyzeSchema.safeParse(req.body);
   if (!parseResult.success) {
     const errorDetails = parseResult.error.errors.map(e => e.message).join(', ');
@@ -53,9 +74,9 @@ router.post('/analyze', authMiddleware, biometricConsentGuard, idempotencyMiddle
     });
   }
 
+  const faceBuffer = Buffer.from(faceImage, 'base64');
+  const handsBuffer = handsImage ? Buffer.from(handsImage, 'base64') : null;
   try {
-    const faceBuffer = Buffer.from(faceImage, 'base64');
-    const handsBuffer = handsImage ? Buffer.from(handsImage, 'base64') : null;
     const traceId = req.headers['x-trace-id'] || req.headers['x-request-id'] || `bio-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
     const result = await orchestrator.analyze(
@@ -67,6 +88,9 @@ router.post('/analyze', authMiddleware, biometricConsentGuard, idempotencyMiddle
       lng,
       traceId
     );
+
+    faceBuffer.fill(0);
+    if (handsBuffer) handsBuffer.fill(0);
 
     res.status(201).json({
       success: true,
@@ -84,6 +108,11 @@ router.post('/analyze', authMiddleware, biometricConsentGuard, idempotencyMiddle
     });
   } catch (error) {
     console.error('❌ Error en el orquestador biométrico:', error.message);
+    if (typeof faceBuffer !== 'undefined') faceBuffer.fill(0);
+    if (typeof handsBuffer !== 'undefined' && handsBuffer) handsBuffer.fill(0);
+    if (error.code === 'BIOMETRIC_ANALYSIS_UNAVAILABLE' || error.statusCode === 503) {
+      return res.status(503).json({ success: false, error: 'AI_UNAVAILABLE', message: error.message });
+    }
     res.status(500).json({
       success: false,
       error: 'INTERNAL_ERROR',

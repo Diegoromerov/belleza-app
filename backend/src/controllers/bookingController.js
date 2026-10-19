@@ -5,100 +5,51 @@ const { Booking, Service, User, Transaction } = require('../models');
 const { sequelize } = require('../config/database');
 const { Op } = require('sequelize');
 const crypto = require('crypto');
+const dianInvoiceClient = require('../services/dianInvoiceClient');
 
-// ── Anti-replay del webhook de Wompi (Fix P0 DINERO #4 / t_fix_pagos_04) ──────
-// La versión anterior solo firmaba el payload: un webhook válido capturado podía
-// reenviarse indefinidamente (replay). Ahora la firma HMAC cubre
-// `timestamp.nonce.rawBody`, el timestamp debe caer en una ventana de tolerancia
-// y el nonce es de un solo uso.
-const WOMPI_WEBHOOK_TOLERANCE_MS = (() => {
-  const raw = parseInt(process.env.WOMPI_WEBHOOK_TOLERANCE_MS, 10);
-  return Number.isFinite(raw) && raw > 0 ? raw : 5 * 60 * 1000; // 5 minutos por defecto
-})();
+// ── Verificación de eventos de Wompi (integración real) ──────────────────────
+// CORRECCIÓN DE CAUSA RAÍZ: el esquema anterior firmaba con HMAC-SHA256 el cuerpo
+// y exigía los headers propios `x-wompi-signature` / `x-wompi-timestamp` /
+// `x-wompi-nonce`. Ese esquema NO es el de Wompi: ningún evento real lo cumple,
+// así que todos los webhooks legítimos habrían sido rechazados con 401 y ningún
+// pago se habría confirmado nunca. El contrato real (docs.wompi.co → Eventos →
+// Validación de integridad) es:
+//
+//   checksum = SHA256( <valores de signature.properties, en orden, sin separador>
+//                      + <timestamp del evento>
+//                      + <secreto de eventos> )        [hex minúscula]
+//
+// y llega en el header `X-Event-Checksum` o en `signature.checksum`. La lista
+// `signature.properties` varía entre eventos: se lee del propio evento, nunca se
+// asume fija. La verificación (y la comparación en tiempo constante) vive en
+// wompiClient.verifyEventChecksum.
+const wompiClient = require('../services/wompiClient');
+const { discriminarIva } = require('../utils/iva');
 
-// Caché de nonces ya procesados: nonce -> instante de expiración (ms).
-// LIMITE: es por proceso. En un despliegue multi-instancia debe respaldarse en
-// un almacén compartido (p.ej. Redis) para que el replay se bloquee entre nodos.
-const wompiUsedNonces = new Map();
-
-const pruneWompiNonces = (now) => {
-  for (const [nonce, expiresAt] of wompiUsedNonces) {
-    if (expiresAt <= now) wompiUsedNonces.delete(nonce);
+/** URL http(s) utilizable como redirect_url (no vacia, no de otro esquema). */
+function esUrlHttpValida(valor) {
+  if (!valor || typeof valor !== 'string' || valor.trim().length === 0) return false;
+  try {
+    const url = new URL(valor.trim());
+    return url.protocol === 'https:' || url.protocol === 'http:';
+  } catch {
+    return false;
   }
-};
-
-// Solo para tests: limpia el registro de nonces entre casos.
-const resetWompiNonceStore = () => wompiUsedNonces.clear();
+}
 
 const verifyWompiSignature = (req) => {
-  const secret = process.env.WOMPI_WEBHOOK_SECRET;
-  if (!secret) {
-    if (process.env.NODE_ENV === 'test') {
-      return true;
-    }
-    console.error('🚨 [FINTECH SECURITY ALERT] WOMPI_WEBHOOK_SECRET no está configurado. Webhook rechazado.');
-    return false;
+  // Sin secreto de eventos no hay nada que verificar: se falla en CERRADO.
+  // El atajo que aceptaba cualquier evento en NODE_ENV=test contradecía el
+  // contrato (401 a una firma no verificable) y hacía que la compuerta mintiera:
+  // en CI, sin secreto, el webhook acusaba recibo (200) de eventos sin firma.
+  const headerChecksum = req.header('x-event-checksum');
+  const resultado = wompiClient.verifyEventChecksum(req.body, headerChecksum);
+
+  if (!resultado.valid) {
+    console.warn(`🚨 [FINTECH SECURITY ALERT] Evento Wompi rechazado desde IP ${req.ip}: ${resultado.reason}`);
   }
 
-  const signature = req.header('x-wompi-signature') || req.header('x-signature');
-  const timestamp = req.header('x-wompi-timestamp');
-  const nonce = req.header('x-wompi-nonce');
-
-  if (!signature) {
-    console.warn(`🚨 [FINTECH SECURITY ALERT] Webhook recibido sin firma desde IP ${req.ip}`);
-    return false;
-  }
-
-  // Anti-replay: timestamp y nonce son obligatorios. Sin ellos no hay forma de
-  // distinguir un webhook fresco de una repetición de uno capturado.
-  if (!timestamp || !nonce) {
-    console.warn(`🚨 [FINTECH SECURITY ALERT] Webhook sin timestamp/nonce desde IP ${req.ip}. Rechazado (posible replay).`);
-    return false;
-  }
-
-  // Ventana de tolerancia: rechaza timestamps antiguos y futuros (desfase de reloj).
-  const timestampNumber = Number(timestamp);
-  if (!Number.isFinite(timestampNumber)) {
-    return false;
-  }
-  // Acepta epoch en segundos o milisegundos.
-  const timestampMs = timestampNumber < 1e12 ? timestampNumber * 1000 : timestampNumber;
-  const now = Date.now();
-  if (Math.abs(now - timestampMs) > WOMPI_WEBHOOK_TOLERANCE_MS) {
-    console.warn(`🚨 [FINTECH SECURITY ALERT] Webhook con timestamp fuera de ventana (${timestamp}) desde IP ${req.ip}.`);
-    return false;
-  }
-
-  const payloadString = req.rawBody ? req.rawBody.toString('utf8') : JSON.stringify(req.body);
-
-  // La firma cubre timestamp y nonce: no basta con presentar una firma válida,
-  // hay que presentarla junto al timestamp/nonce exactos que se firmaron.
-  const signedContent = `${timestamp}.${nonce}.${payloadString}`;
-  const expected = crypto
-    .createHmac('sha256', secret)
-    .update(signedContent)
-    .digest('hex');
-
-  const signatureBuffer = Buffer.from(signature, 'hex');
-  const expectedBuffer = Buffer.from(expected, 'hex');
-
-  if (signatureBuffer.length !== expectedBuffer.length) {
-    return false;
-  }
-
-  if (!crypto.timingSafeEqual(signatureBuffer, expectedBuffer)) {
-    return false;
-  }
-
-  // Anti-replay: un nonce firmado solo puede consumirse una vez dentro de la ventana.
-  pruneWompiNonces(now);
-  if (wompiUsedNonces.has(nonce)) {
-    console.warn(`🚨 [FINTECH SECURITY ALERT] Webhook con nonce reutilizado (${nonce}) desde IP ${req.ip}. Rechazado (replay).`);
-    return false;
-  }
-  wompiUsedNonces.set(nonce, now + WOMPI_WEBHOOK_TOLERANCE_MS);
-
-  return true;
+  return resultado.valid;
 };
 
 // 🔹 CREAR RESERVA
@@ -126,6 +77,20 @@ exports.createBooking = async (req, res) => {
     if (services.length !== service_ids.length) {
       return res.status(404).json({ error: 'Uno o más servicios no fueron encontrados' });
     }
+
+    // Condición tributaria del PRESTADOR, leída de SU cuenta — nunca del request:
+    // un cliente no puede decidir la carga tributaria de la operación. Ver la
+    // migración 086 para la base legal (art. 476 num. 1 lit. a y art. 437 par. 3
+    // del Estatuto Tributario).
+    const prestadorFiscal = await sequelize.query(
+      'SELECT responsable_iva, tarifa_iva FROM usuarios WHERE id = :providerId;',
+      { replacements: { providerId: provider_id }, type: sequelize.QueryTypes.SELECT }
+    );
+    const responsableIva =
+      prestadorFiscal.length > 0 && prestadorFiscal[0].responsable_iva === true;
+    const tarifaIvaAplicada = responsableIva
+      ? Number(prestadorFiscal[0].tarifa_iva ?? 0.19)
+      : 0;
 
     // Ordenar los servicios en base al orden recibido en service_ids
     const servicesMap = {};
@@ -208,11 +173,30 @@ exports.createBooking = async (req, res) => {
       }
     }
 
+    // IVA — art. 476 num. 1 lit. a) E.T.: los tratamientos de belleza NO están
+    // excluidos, así que están gravados a la tarifa general (19%, art. 468 E.T.).
+    // Pero el precio que publica el prestador es el precio FINAL al consumidor,
+    // así que el IVA se DISCRIMINA del total y NO se le suma: la reserva conserva
+    // el precio que el cliente vio, y queda separada la base gravable que la
+    // factura necesita. Si el prestador no es responsable de IVA (art. 437
+    // par. 3 E.T.) la tarifa es 0 y el total entero es base.
+    const { subtotalBase, ivaValor } = discriminarIva(total_amount, tarifaIvaAplicada);
+
     const pin = Math.floor(1000 + Math.random() * 9000).toString();
 
-    // Calcular tarifa_reserva basada en el costo real transaccional de Wompi ($900 COP + 2.89% + IVA 19% del fee)
-    const feeFijo = 900;
-    const feeVariable = total_amount * 0.0289;
+    // Costo transaccional de Wompi — tarifa confirmada por el comercio:
+    // 2,65% + $700 + IVA, con el IVA SÓLO sobre la comisión (no sobre el monto),
+    // que es como lo liquida Wompi.
+    //
+    // Dos cosas que esta cifra NO incluye, a propósito:
+    //  - El recargo de 1,44% por tarjeta débito/crédito o PSE: el medio de pago
+    //    se elige después, en el checkout, así que esto es la tarifa BASE.
+    //  - OJO: `tarifa_reserva` no se lee en ningún flujo (ni el cobro, que usa
+    //    `valor_bruto`, ni la liquidación del prestador). Es un dato guardado, así
+    //    que corregirlo hoy no mueve dinero; si se va a usar, hay que mover el
+    //    cálculo al momento del pago para poder aplicar el recargo del medio.
+    const feeFijo = 700;
+    const feeVariable = total_amount * 0.0265;
     const feeTotal = feeFijo + feeVariable;
     const ivaFee = feeTotal * 0.19;
     const tarifaReserva = Math.round(feeTotal + ivaFee);
@@ -248,6 +232,9 @@ exports.createBooking = async (req, res) => {
           scheduled_at: new Date(currentScheduledTime),
           valor_bruto: bookingBruto,
           tarifa_reserva: bookingTarife,
+          subtotal_base: isPrimary ? subtotalBase : null,
+          iva_valor: isPrimary ? ivaValor : null,
+          tarifa_iva_aplicada: isPrimary ? tarifaIvaAplicada : null,
           service_address: service_address || null,
           notes: notes || null,
           estado: 'PENDIENTE_PAGO',
@@ -809,163 +796,229 @@ exports.cancelBookingByProvider = async (req, res) => {
   }
 };
 
-// 🔹 Simular Pago con Wompi para una cita (Cliente) - REFACTORIZADO A SEQUELIZE TRANSACTIONS
+// 🔹 Cobro real con Wompi para una cita (Cliente)
+//
+// Qué hace: crea una TRANSACCIÓN en la API de Wompi con la firma de integridad
+// calculada en el servidor y deja la cita como estaba (PENDIENTE_PAGO) hasta que
+// el webhook `transaction.updated` confirme el pago. Este endpoint NUNCA marca
+// `payment_status='paid'`: lo que no cobró Wompi no se marca como cobrado.
+//
+// Cuerpo esperado:
+//   { acceptance_token, payment_method: 'NEQUI'|'CARD',
+//     payment_source_id?                              ← fuente guardada (Nequi: vía /tokens/nequi + /payment_sources)
+//     phone_number?     (NEQUI)
+//     payment_method_token? (+ installments para CARD) }
+//
+// La tokenización del medio de pago (tarjeta/Nequi) ocurre en el cliente contra
+// Wompi; aquí solo llega el token o el id de la fuente de pago, nunca el PAN/CVV.
 exports.payBooking = async (req, res) => {
   try {
-    // El simulador NUNCA debe actuar en producción: marcaba la cita como CONFIRMADA y
-    // payment_status='paid' con una referencia inventada y sin cobrar nada
-    // (A360-2026-09-22/C-05). Sin pasarela real, la respuesta honesta es 501.
-    if (process.env.NODE_ENV === 'production' && process.env.ALLOW_PAYMENT_SIMULATOR !== 'true') {
-      return res.status(501).json({
-        error: 'PAYMENT_GATEWAY_NOT_INTEGRATED',
-        message: 'La pasarela de pagos real no está integrada en este entorno. No se procesan pagos simulados.'
-      });
-    }
-
     const bookingId = req.params.id;
     const clientId = req.user.id;
-    const { payment_method } = req.body;
 
-    // ── Simulador de desarrollo, declarado y acotado ───────────────────────
-    // Este endpoint NO cobra: no existe todavía ninguna función de cobro contra
-    // la API de Wompi en el repositorio (wompiService solo dispersa pagos), así
-    // que aquí solo se puede simular. El problema era que simulaba SIEMPRE, en
-    // cualquier entorno, y respondía "Pago procesado y verificado con éxito por
-    // el simulador de Wompi" mientras la cita quedaba CONFIRMADA y pagada con
-    // una referencia inventada. Fuera de desarrollo la respuesta honesta es un
-    // error, no un pago: no se puede marcar como cobrado lo que no se cobró.
-    // guard-allow-simulacion NODE_ENV
-    if (process.env.NODE_ENV === 'production') {
-      return res.status(501).json({
-        error: 'El cobro en línea aún no está disponible: falta integrar la pasarela de pagos.',
-        code: 'PAYMENT_GATEWAY_NOT_INTEGRATED'
+    // Compuerta explícita: sin credenciales reales no se intenta cobrar ni se
+    // simula en su lugar.
+    if (!wompiClient.isConfigured()) {
+      return res.status(503).json({
+        error: 'PAYMENT_GATEWAY_NOT_CONFIGURED',
+        message: 'La pasarela de pagos no está configurada (faltan credenciales de Wompi). No se realizó ningún cobro.'
       });
     }
 
-    const method = (payment_method || 'NEQUI').toUpperCase();
-    if (!['NEQUI', 'CARD'].includes(method)) {
-      return res.status(400).json({ error: 'Método de pago inválido. Permitidos: NEQUI, CARD' });
+    const { payment_method, payment_source_id, payment_method_token, installments, acceptance_token, phone_number, redirect_url, customer_data } = req.body;
+
+    const method = (payment_method || '').toUpperCase();
+    const validPaymentMethods = [
+      'NEQUI', 'CARD', 'PSE', 'BANCOLOMBIA_TRANSFER', 'DAVIPLATA',
+      'BANCO_DE_BOGOTA_TRANSFER', 'BANCO_DE_OCCIDENTE_TRANSFER',
+      'BANCO_AV_VILLAS_TRANSFER', 'BANCO_POPULAR_TRANSFER', 'BANCO_PICHINCHA_TRANSFER'
+    ];
+    if (!validPaymentMethods.includes(method)) {
+      return res.status(400).json({ error: `Método de pago inválido. Permitidos: ${validPaymentMethods.join(', ')}` });
     }
 
-    const booking = await Booking.findOne({
-      where: { id: bookingId, client_id: clientId }
-    });
+    if (!acceptance_token) {
+      return res.status(400).json({
+        error: 'MISSING_ACCEPTANCE_TOKEN',
+        message: 'acceptance_token es obligatorio: el usuario debe aceptar los términos de Wompi antes de pagar.'
+      });
+    }
 
+    // Instrumento de pago según método
+    const redirectMethods = [
+      'PSE', 'BANCOLOMBIA_TRANSFER', 'DAVIPLATA',
+      'BANCO_DE_BOGOTA_TRANSFER', 'BANCO_DE_OCCIDENTE_TRANSFER',
+      'BANCO_AV_VILLAS_TRANSFER', 'BANCO_POPULAR_TRANSFER', 'BANCO_PICHINCHA_TRANSFER'
+    ];
+
+    if (!payment_source_id) {
+      if (method === 'CARD' && !payment_method_token) {
+        return res.status(400).json({
+          error: 'MISSING_PAYMENT_INSTRUMENT',
+          message: 'Para tarjeta se requiere payment_source_id o payment_method_token (token de POST /tokens/cards).'
+        });
+      }
+      if (method === 'NEQUI' && !phone_number) {
+        return res.status(400).json({
+          error: 'MISSING_PAYMENT_INSTRUMENT',
+          message: 'Para Nequi se requiere payment_source_id o phone_number. Wompi no acepta un `token` en payment_method NEQUI: tokeniza en POST /tokens/nequi y crea una fuente de pago (POST /payment_sources).'
+        });
+      }
+      if (redirectMethods.includes(method)) {
+        // `.trim().isEmpty` es Dart, no JS: una URL de solo espacios pasaba.
+        if (!esUrlHttpValida(redirect_url)) {
+          return res.status(400).json({ error: 'redirect_url debe ser una URL http(s) válida para pagos con redirección (PSE, Bancolombia, Daviplata).' });
+        }
+        if (!customer_data || !customer_data.email || !customer_data.full_name || !customer_data.phone_number) {
+          return res.status(400).json({ error: 'customer_data (email, full_name, phone_number) es obligatorio para pagos con redirección.' });
+        }
+      }
+    }
+
+    const booking = await Booking.findOne({ where: { id: bookingId, client_id: clientId } });
     if (!booking) {
       return res.status(404).json({ error: 'Cita no encontrada o no tienes permisos para pagarla' });
     }
-
     if (booking.estado !== 'PENDIENTE_PAGO') {
       return res.status(400).json({ error: `La cita no se encuentra en estado PENDIENTE_PAGO. Estado actual: ${booking.estado}` });
     }
 
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    const amount = Math.round(parseFloat(booking.valor_bruto));
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return res.status(422).json({ error: 'La reserva no tiene un monto cobrable.' });
+    }
+    const amountInCents = amount * 100;
 
-    // Referencia de simulación, no de pasarela: antes se llamaba 'wompi_sim_' y
-    // ese prefijo hacía pasar por transacción de Wompi algo que Wompi nunca vio.
-    const referenceToken = 'simdev_' + Math.random().toString(36).substring(2, 11).toUpperCase();
+    // Wompi exige `reference` único por transacción. La primera intentona usa el
+    // id de la cita; los reintentos (p.ej. tras un DECLINED) agregan sufijo.
+    const intentosPrevios = await Transaction.count({ where: { booking_id: bookingId } });
+    const reference = intentosPrevios === 0 ? bookingId : `${bookingId}-r${intentosPrevios + 1}`;
 
-    const result = await sequelize.transaction(async (t) => {
-      // 1. Actualizar el estado de la cita
-      booking.estado = 'CONFIRMADA';
-      booking.payment_status = 'paid';
-      await booking.save({ transaction: t });
+    // Preparar datos para Wompi según el método
+    // - NEQUI con phone_number: paymentMethod = { type: 'NEQUI', phone_number }
+    // - NEQUI con payment_source_id: paymentSourceId = payment_source_id
+    // - CARD con payment_source_id: paymentSourceId = payment_source_id
+    // - CARD con payment_method_token: paymentMethod = { type: 'CARD', token, installments }
+    // - PSE / transferencias: paymentMethod = method (string), customerData, redirectUrl
+    let paymentSourceId = null;
+    let paymentMethod = null;
 
-      // Propagar a citas hijas enlazadas
-      if (booking.productos_adicionales && Array.isArray(booking.productos_adicionales.linked_booking_ids)) {
-        const linkedIds = booking.productos_adicionales.linked_booking_ids;
-        if (linkedIds.length > 0) {
-          await Booking.update(
-            { estado: 'CONFIRMADA', payment_status: 'paid' },
-            { where: { id: linkedIds }, transaction: t }
-          );
-        }
+    if (method === 'NEQUI') {
+      if (phone_number) {
+        paymentMethod = { type: 'NEQUI', phone_number };
+      } else if (payment_source_id) {
+        paymentSourceId = payment_source_id;
       }
-
-      // Decrementar stock de productos con validación preventiva (FOR UPDATE)
-      const productsList = Array.isArray(booking.productos_adicionales)
-        ? booking.productos_adicionales
-        : (booking.productos_adicionales && Array.isArray(booking.productos_adicionales.products)
-            ? booking.productos_adicionales.products
-            : []);
-
-      if (productsList.length > 0) {
-        for (const item of productsList) {
-          const prodRes = await sequelize.query(
-            'SELECT stock, nombre FROM productos WHERE id = :productId FOR UPDATE;',
-            {
-              replacements: { productId: item.id },
-              type: sequelize.QueryTypes.SELECT,
-              transaction: t
-            }
-          );
-          if (prodRes.length === 0) {
-            throw new Error(`Producto con ID ${item.id} no encontrado.`);
-          }
-          const currentStock = parseInt(prodRes[0].stock) || 0;
-          if (currentStock < item.cantidad) {
-            throw new Error(`Stock insuficiente para el producto: ${prodRes[0].nombre}. Disponible: ${currentStock}, Solicitado: ${item.cantidad}`);
-          }
-          await sequelize.query(
-            'UPDATE productos SET stock = stock - :qty WHERE id = :productId;',
-            {
-              replacements: { qty: item.cantidad, productId: item.id },
-              type: sequelize.QueryTypes.UPDATE,
-              transaction: t
-            }
-          );
-        }
+    } else if (method === 'CARD') {
+      if (payment_source_id) {
+        paymentSourceId = payment_source_id;
+      } else if (payment_method_token) {
+        paymentMethod = {
+          type: 'CARD',
+          token: payment_method_token,
+          installments: installments || 1
+        };
       }
+    } else if (redirectMethods.includes(method)) {
+      // PSE, Daviplata, etc. - paymentMethod será el string del método
+      paymentMethod = method;
+    }
 
-      // 2. Registrar la transacción
-      const [tx, created] = await Transaction.findOrCreate({
-        where: { booking_id: bookingId },
-        defaults: {
-          amount: booking.valor_bruto,
-          status: 'paid',
-          payment_method: method,
-          external_id: referenceToken
-        },
-        transaction: t
+    const wompiTransactionData = {
+      amountInCents,
+      currency: 'COP',
+      reference,
+      customerEmail: req.user.email,
+      acceptanceToken: acceptance_token,
+      paymentSourceId,
+      customerData: redirectMethods.includes(method) ? customer_data : null,
+      redirectUrl: redirectMethods.includes(method) ? redirect_url : null,
+      ip: req.ip
+    };
+
+    // paymentMethod solo si NO hay paymentSourceId (exclusividad Wompi)
+    if (paymentMethod) {
+      wompiTransactionData.paymentMethod = paymentMethod;
+    }
+
+    // Para métodos de redirección, Wompi espera payment_method con el tipo específico
+    if (redirectMethods.includes(method)) {
+      wompiTransactionData.paymentMethod = method;
+      wompiTransactionData.paymentSourceId = null;
+    }
+
+    let wompiTx;
+    try {
+      wompiTx = await wompiClient.createTransaction(wompiTransactionData);
+    } catch (err) {
+      const detalle = err?.body?.error?.messages || err?.message || 'error desconocido';
+      console.error(`❌ [WOMPI] No se pudo crear la transacción para la cita ${bookingId}:`, JSON.stringify(detalle));
+      // Error de red (ECONNRESET, ETIMEDOUT, ENOTFOUND) → 502
+      // Error 4xx de Wompi → 402
+      const isNetworkError = err?.cause?.code === 'ECONNRESET' || 
+                            err?.cause?.code === 'ETIMEDOUT' || 
+                            err?.cause?.code === 'ENOTFOUND' ||
+                            err?.code === 'ECONNRESET' ||
+                            err?.code === 'ETIMEDOUT' ||
+                            err?.code === 'ENOTFOUND';
+      const status = isNetworkError ? 502 : 
+                    (err?.status && err.status >= 400 && err.status < 500 ? 402 : 502);
+      return res.status(status).json({
+        error: 'WOMPI_TRANSACTION_FAILED',
+        message: 'Wompi rechazó la creación de la transacción. No se realizó ningún cobro.',
+        detalle
       });
+    }
 
-      if (!created) {
-        tx.amount = booking.valor_bruto;
-        tx.status = 'paid';
-        tx.payment_method = method;
-        tx.external_id = referenceToken;
-        await tx.save({ transaction: t });
+    // Registrar la transacción local como PENDIENTE (la confirmación es del webhook).
+    // En reintentos la fila ya existe: hay que reapuntarla a la transacción VIVA, o
+    // `external_id` queda apuntando a un intento muerto y el webhook no la reconoce.
+    const [txLocal, creada] = await Transaction.findOrCreate({
+      where: { booking_id: bookingId },
+      defaults: {
+        amount: booking.valor_bruto,
+        status: 'pending',
+        payment_method: method,
+        external_id: wompiTx.id
       }
-
-      return {
-        booking_id: bookingId,
-        reference: referenceToken,
-        amount: parseFloat(booking.valor_bruto),
-        payment_method: method
-      };
     });
 
-    console.log(`\n💳 [WOMPI SIMULADOR / SOLO DESARROLLO] Cita ${bookingId} marcada como pagada de forma simulada. Referencia: ${referenceToken}. NO hubo cobro real.`);
+    if (!creada && txLocal.external_id !== wompiTx.id) {
+      await txLocal.update({
+        amount: booking.valor_bruto,
+        status: 'pending',
+        payment_method: method,
+        external_id: wompiTx.id
+      });
+    }
 
-    res.json({
+    console.log(`💳 [WOMPI] Transacción ${wompiTx.id} (${wompiTx.status}) creada para la cita ${bookingId}. Pendiente de confirmación por webhook.`);
+
+    return res.status(202).json({
       success: true,
-      simulated: true,
-      message: 'Pago SIMULADO (solo desarrollo): no se realizó ningún cobro real.',
-      status: 'APPROVED',
-      ...result
+      message: redirectMethods.includes(method)
+        ? 'Transacción creada en Wompi. El pago se completa cuando el usuario autorice en la URL de redirección.'
+        : 'Transacción creada en Wompi. El pago se confirma cuando Wompi notifica el evento.',
+      status: wompiTx.status,
+      wompi_transaction_id: wompiTx.id,
+      reference: wompiTx.reference,
+      amount,
+      payment_method: method,
+      // Sólo para PSE / Bancolombia / Daviplata: el cliente DEBE abrir esta URL para
+      // autorizar. Sin ella la transacción queda PENDING y no hay forma de pagarla.
+      async_payment_url: wompiTx.asyncPaymentUrl || null
     });
-
   } catch (error) {
     console.error('❌ ERROR EN POST /api/bookings/:id/pay:', error);
     res.status(500).json({ error: 'Error interno al procesar el pago' });
   }
 };
 
-// 🔹 Webhook Simulado de Wompi - REFACTORIZADO A SEQUELIZE TRANSACTIONS
+// 🔹 Webhook de Wompi (pago de cita) — confirma con el evento real de Wompi
 const procesarWebhookWompi = async (req, res) => {
   try {
     if (!verifyWompiSignature(req)) {
-      return res.status(401).json({ error: 'Firma de webhook invÃ¡lida.' });
+      return res.status(401).json({ error: 'Firma de webhook inválida.' });
     }
 
     const { event, data } = req.body;
@@ -973,11 +1026,15 @@ const procesarWebhookWompi = async (req, res) => {
 
     if (event === 'transaction.updated' && data && data.transaction) {
       const tx = data.transaction;
-      const bookingId = tx.reference;
       const status = tx.status;
       const amount = tx.amount_in_cents / 100;
       const paymentMethod = tx.payment_method_type || 'NEQUI';
       const externalId = tx.id;
+
+      // `reference` es la referencia con la que creamos la transacción: el id de
+      // la cita en el primer intento, o `<bookingId>-rN` en los reintentos.
+      const reference = String(tx.reference || '');
+      const bookingId = reference.replace(/-r\d+$/, '');
 
       if (status === 'APPROVED') {
         await sequelize.transaction(async (t) => {
@@ -1080,9 +1137,25 @@ const procesarWebhookWompi = async (req, res) => {
             trans.external_id = externalId;
             await trans.save({ transaction: t });
           }
+
+          // 🔹 Generar factura electrónica DIAN (async, no bloquea confirmación)
+          try {
+            await generarFacturaDian(bookingId, t);
+          } catch (invoiceError) {
+            console.error(`❌ [DIAN INVOICE] Error generando factura para cita ${bookingId}:`, invoiceError.message);
+            // No falla el webhook: la factura se puede reintentar manualmente
+          }
         });
 
         console.log(`✅ [WOMPI WEBHOOK SUCCESS] Cita ${bookingId} confirmada por webhook Sequelize.`);
+      } else if (['DECLINED', 'VOIDED', 'ERROR'].includes(status)) {
+        // Estados finales de rechazo: la transacción local no puede quedarse
+        // pendiente para siempre ni, mucho menos, figurar como pagada.
+        await Transaction.update(
+          { status: 'failed', external_id: externalId },
+          { where: { booking_id: bookingId } }
+        );
+        console.log(`⚠️ [WOMPI WEBHOOK] Transacción ${externalId} de la cita ${bookingId} quedó en ${status}.`);
       }
     }
 
@@ -1105,13 +1178,27 @@ const procesarWebhookWompi = async (req, res) => {
  *
  * El contrato de la API no cambia: misma ruta, misma respuesta, mismos códigos.
  */
-exports.wompiWebhook = (req, res) =>
-  runAsSystemContext(() => procesarWebhookWompi(req, res));
+exports.wompiWebhook = (req, res) => {
+  // Wompi entrega TODOS los eventos a UNA sola URL, la que se configura en el
+  // dashboard del comercio. Hay dos clases de transacciones: reservas (referencia
+  // = <bookingId> o <bookingId>-rN) y pedidos de tienda (referencia
+  // `wompi_order_<id>_<ts>`, ver orderController.payOrder). Sin este despacho el
+  // evento de un pedido entraba al flujo de reservas, no encontraba la reserva y
+  // Wompi reintentaba para siempre: el pedido no se cerraba nunca.
+  // El `require` es perezoso para no crear un ciclo de imports entre controllers.
+  const referencia = String(
+    req.body?.data?.transaction?.reference
+      ?? req.body?.data?.reference
+      ?? ''
+  );
+  if (referencia.startsWith('wompi_order_')) {
+    return require('./orderController').storeWebhook(req, res);
+  }
+  return runAsSystemContext(() => procesarWebhookWompi(req, res));
+};
 
-// Expuestos para pruebas unitarias del contrato anti-replay.
+// Expuesto para pruebas unitarias del contrato de verificación de eventos.
 exports.verifyWompiSignature = verifyWompiSignature;
-exports.resetWompiNonceStore = resetWompiNonceStore;
-exports.WOMPI_WEBHOOK_TOLERANCE_MS = WOMPI_WEBHOOK_TOLERANCE_MS;
 
 // 🔹 Crear reseña para cita completada
 exports.createReview = async (req, res) => {
@@ -1218,3 +1305,151 @@ exports.startService = async (req, res) => {
     res.status(500).json({ error: 'Error interno al iniciar el servicio' });
   }
 };
+
+/**
+ * Genera y envía la Factura Electrónica DIAN para una cita pagada.
+ * Se ejecuta dentro de la transacción del webhook (no bloquea confirmación).
+ */
+async function generarFacturaDian(bookingId, transaction) {
+  if (!dianInvoiceClient.isConfigured()) {
+    console.info(`[DIAN INVOICE] Cliente no configurado (falta certificado/NIT). Saltando factura para cita ${bookingId}.`);
+    return;
+  }
+
+  // Obtener datos completos de la cita con relaciones necesarias
+  const booking = await Booking.findByPk(bookingId, {
+    include: [
+      { model: Service, as: 'service' },
+      { model: User, as: 'client' },
+      { model: User, as: 'provider' }
+    ],
+    transaction
+  });
+
+  if (!booking) {
+    throw new Error(`Cita ${bookingId} no encontrada para facturación`);
+  }
+
+  // Datos del emisor (desde config/env)
+  const emisorNit = process.env.DIAN_NIT;
+  const emisorDv = process.env.DIAN_DV || '0';
+  const emisorRazonSocial = process.env.DIAN_RAZON_SOCIAL || 'GlowApp S.A.S.';
+  const emisorDireccion = process.env.DIAN_DIRECCION || 'Calle 100 # 7-21';
+  const emisorMunicipio = process.env.DIAN_MUNICIPIO || '11001'; // Bogotá D.C.
+  const emisorDepartamento = process.env.DIAN_DEPARTAMENTO || '11';
+  const emisorTelefono = process.env.DIAN_TELEFONO || '+57 1 234 5678';
+  const emisorEmail = process.env.DIAN_EMAIL || 'facturacion@glowapp.co';
+  const emisorRutResponsabilidades = [48]; // Responsable de IVA
+
+  // Datos del adquiriente (cliente)
+  const client = booking.client;
+  const provider = booking.provider;
+
+  // Calcular desglose IVA (ya congelado en booking.iva_desglose)
+  const ivaDesglose = booking.iva_desglose || { valor_iva: 0, base_gravable: booking.valor_bruto, tarifa: 19 };
+  const subtotal = parseFloat(booking.valor_bruto) || 0;
+  const totalImpuestos = parseFloat(ivaDesglose.valor_iva) || 0;
+  const totalFactura = subtotal + totalImpuestos;
+
+  // Preparar líneas
+  const lineas = [];
+  if (booking.service) {
+    lineas.push({
+      cantidad: 1,
+      unidad: '94', // Unidad de servicio
+      descripcion: booking.service.name || 'Servicio de belleza',
+      valorUnitario: subtotal,
+      ivaPorcentaje: ivaDesglose.tarifa || 19,
+      codigo: booking.service.id
+    });
+  }
+
+  // Productos adicionales
+  if (booking.productos_adicionales && Array.isArray(booking.productos_adicionales)) {
+    const products = Array.isArray(booking.productos_adicionales.products)
+      ? booking.productos_adicionales.products
+      : booking.productos_adicionales;
+    products.forEach(p => {
+      const pSubtotal = parseFloat(p.precio_unitario) * p.cantidad;
+      const pIva = pSubtotal * (p.iva_porcentaje || 19) / 100;
+      lineas.push({
+        cantidad: p.cantidad,
+        unidad: '94',
+        descripcion: p.nombre || 'Producto',
+        valorUnitario: parseFloat(p.precio_unitario),
+        ivaPorcentaje: p.iva_porcentaje || 19,
+        codigo: p.id
+      });
+    });
+  }
+
+  const now = new Date();
+  const fechaEmision = now.toISOString().split('T')[0];
+  const horaEmision = now.toTimeString().split(' ')[0];
+
+  // Generar XML UBL 2.1
+  const xmlFirmado = await dianInvoiceClient.generarFacturaXml({
+    numeroFactura: `FAC-${bookingId}`,
+    fechaEmision,
+    horaEmision,
+    tipoFactura: '01',
+    metodoPago: '1',
+    formaPago: '1',
+    moneda: 'COP',
+    tipoOperacion: '10',
+
+    // Emisor
+    emisorNit,
+    emisorDv,
+    emisorRazonSocial,
+    emisorDireccion,
+    emisorMunicipio,
+    emisorDepartamento,
+    emisorTelefono,
+    emisorEmail,
+    emisorRutResponsabilidades,
+
+    // Adquiriente
+    adquirienteTipoDoc: client.document_type === 'CC' ? 13 : 31,
+    adquirienteNumeroDoc: client.document_number,
+    adquirienteDv: client.document_dv || '0',
+    adquirienteRazonSocial: `${client.first_name} ${client.last_name}`,
+    adquirienteDireccion: client.address || 'Sin dirección',
+    adquirienteMunicipio: client.city_code || '11001',
+    adquirienteDepartamento: client.state_code || '11',
+    adquirienteTelefono: client.phone || 'N/A',
+    adquirienteEmail: client.email,
+
+    // Líneas y totales
+    lineas,
+    subtotal,
+    totalDescuentos: 0,
+    totalCargos: 0,
+    totalImpuestos,
+    totalFactura,
+
+    observaciones: `Cita ${bookingId} - Servicio: ${booking.service?.name}`
+  });
+
+  // Enviar a DIAN / Proveedor
+  const resultado = await dianInvoiceClient.enviarFactura(xmlFirmado, `FAC-${bookingId}`);
+
+  if (!resultado.aceptada) {
+    throw new Error(`Factura rechazada por DIAN: ${JSON.stringify(resultado.respuesta)}`);
+  }
+
+  // Guardar CUFE y QR en la cita (campo nuevo o metadata)
+  await Booking.update(
+    {
+      cufe: resultado.cufe,
+      qr_factura: resultado.qr,
+      factura_emitida: true,
+      factura_fecha: new Date()
+    },
+    { where: { id: bookingId }, transaction }
+  );
+
+  console.log(`✅ [DIAN INVOICE] Factura emitida para cita ${bookingId} - CUFE: ${resultado.cufe}`);
+}
+
+module.exports = { ...exports, generarFacturaDian };

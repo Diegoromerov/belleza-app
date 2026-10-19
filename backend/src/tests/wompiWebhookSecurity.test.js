@@ -1,14 +1,19 @@
 /**
  * backend/src/tests/wompiWebhookSecurity.test.js
  *
- * FASE C — Fix P0 DINERO #4 (t_fix_pagos_04)
- * Hallazgo: el webhook HMAC solo firmaba el payload, sin timestamp ni nonce,
- * lo que permitía un ataque de replay indefinido de un webhook válido capturado.
+ * Contrato de verificación de eventos de Wompi.
  *
- * Estos tests exigen, para aceptar un webhook:
- *   1) Firma HMAC que CUBRE timestamp + nonce + rawBody (bind criptográfico).
- *   2) Timestamp dentro de una ventana de tolerancia (rechaza antiguos y futuros).
- *   3) Nonce presente y de un solo uso (idempotencia anti-replay).
+ * El archivo anterior exigía un esquema INVENTADO (HMAC-SHA256 de
+ * `timestamp.nonce.rawBody` con headers `x-wompi-signature`/`x-wompi-timestamp`/
+ * `x-wompi-nonce`). Wompi no firma así: ningún evento real lo cumplía, de modo que
+ * el webhook habría respondido 401 a TODO pago legítimo y ningún cobro se habría
+ * confirmado nunca.
+ *
+ * Este archivo fija el esquema REAL (docs.wompi.co → Eventos → Validación de
+ * integridad):
+ *   checksum = SHA256( <valores de signature.properties en orden, sin separador>
+ *                      + <timestamp del evento> + <events_secret> )
+ * disponible en el header `X-Event-Checksum` y en `signature.checksum`.
  */
 
 const crypto = require('crypto');
@@ -17,54 +22,42 @@ const request = require('supertest');
 
 const bookingController = require('../controllers/bookingController');
 
-const SECRET = 'test_wompi_webhook_secret_key_12345';
-const TOLERANCE_MS = 5 * 60 * 1000; // 5 minutos
+const SECRET = 'test_wompi_events_secret_12345';
 
-function sign(secret, timestamp, nonce, rawBody) {
-  return crypto
-    .createHmac('sha256', secret)
-    .update(`${timestamp}.${nonce}.${rawBody}`)
-    .digest('hex');
+const sha256 = (s) => crypto.createHash('sha256').update(s).digest('hex');
+
+function checksumDe(evento, secret = SECRET) {
+  const valores = evento.signature.properties
+    .map((ruta) => ruta.split('.').reduce((acc, k) => acc[k], evento.data))
+    .join('');
+  return sha256(`${valores}${evento.timestamp}${secret}`);
 }
 
-function legacySign(secret, rawBody) {
-  // Esquema VULNERABLE anterior: HMAC solo sobre el payload.
-  return crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
-}
-
-function buildReq({ body, timestamp, nonce, omit = [], signature }) {
-  const rawBody = JSON.stringify(body);
-  const headers = {};
-  if (!omit.includes('signature')) {
-    headers['x-wompi-signature'] =
-      signature !== undefined ? signature : sign(SECRET, timestamp, nonce, rawBody);
-  }
-  if (!omit.includes('timestamp')) headers['x-wompi-timestamp'] = String(timestamp);
-  if (!omit.includes('nonce')) headers['x-wompi-nonce'] = nonce;
-
-  return {
-    body,
-    rawBody: Buffer.from(rawBody, 'utf8'),
-    headers,
-    header(name) {
-      return this.headers[String(name).toLowerCase()];
+function eventoTransaccion({ status = 'APPROVED', amountInCents = 4490000, timestamp = 1747673128600 } = {}) {
+  const evento = {
+    event: 'transaction.updated',
+    data: {
+      transaction: {
+        id: '1234-1610641025-49201',
+        reference: 'booking-456',
+        status,
+        amount_in_cents: amountInCents,
+        payment_method_type: 'NEQUI'
+      }
     },
-    ip: '127.0.0.1',
+    signature: {
+      properties: ['transaction.id', 'transaction.status', 'transaction.amount_in_cents'],
+      checksum: null
+    },
+    timestamp
   };
+  evento.signature.checksum = checksumDe(evento);
+  return evento;
 }
 
-const PAYLOAD = {
-  event: 'transaction.updated',
-  data: {
-    transaction: {
-      id: 'tx_replay_123',
-      reference: 'booking_456',
-      status: 'APPROVED',
-      amount_in_cents: 5000000,
-      payment_method_type: 'NEQUI',
-    },
-  },
-};
+function verify(evento) {
+  return bookingController.verifyWompiSignature({ body: evento, header: () => undefined, ip: '127.0.0.1' });
+}
 
 function buildApp() {
   const app = express();
@@ -72,176 +65,163 @@ function buildApp() {
     express.json({
       verify: (req, _res, buf) => {
         req.rawBody = buf;
-      },
+      }
     })
   );
   app.post('/api/payments/wompi-webhook', bookingController.wompiWebhook);
   return app;
 }
 
-describe('Wompi webhook — verificación HMAC con timestamp + nonce (anti-replay)', () => {
-  let verifyWompiSignature;
-
-  beforeAll(() => {
-    verifyWompiSignature = bookingController.verifyWompiSignature;
-  });
-
+describe('Wompi webhook — validación del checksum real de eventos', () => {
   beforeEach(() => {
-    process.env.WOMPI_WEBHOOK_SECRET = SECRET;
+    process.env.WOMPI_EVENTS_SECRET = SECRET;
     process.env.NODE_ENV = 'test';
-    if (typeof bookingController.resetWompiNonceStore === 'function') {
-      bookingController.resetWompiNonceStore();
-    }
   });
 
   afterEach(() => {
-    delete process.env.WOMPI_WEBHOOK_SECRET;
+    delete process.env.WOMPI_EVENTS_SECRET;
   });
 
   test('expone verifyWompiSignature para poder verificarlo de forma aislada', () => {
-    expect(typeof verifyWompiSignature).toBe('function');
+    expect(typeof bookingController.verifyWompiSignature).toBe('function');
   });
 
-  describe('Camino feliz', () => {
-    test('acepta un webhook con firma válida, timestamp fresco y nonce nuevo', () => {
-      const now = Date.now();
-      const req = buildReq({ body: PAYLOAD, timestamp: now, nonce: 'nonce-fresh-1' });
-      expect(verifyWompiSignature(req)).toBe(true);
-    });
-
-    test('acepta el mismo payload con otro nonce (no bloquea pagos legítimos)', () => {
-      const now = Date.now();
-      expect(verifyWompiSignature(buildReq({ body: PAYLOAD, timestamp: now, nonce: 'n-a' }))).toBe(true);
-      expect(verifyWompiSignature(buildReq({ body: PAYLOAD, timestamp: now, nonce: 'n-b' }))).toBe(true);
-    });
+  test('acepta un evento cuyo checksum coincide (cuerpo)', () => {
+    expect(verify(eventoTransaccion())).toBe(true);
   });
 
-  describe('Cabeceras obligatorias', () => {
-    test('rechaza webhook sin cabecera de firma', () => {
-      const now = Date.now();
-      const req = buildReq({ body: PAYLOAD, timestamp: now, nonce: 'n-1', omit: ['signature'] });
-      expect(verifyWompiSignature(req)).toBe(false);
-    });
-
-    test('rechaza webhook sin timestamp', () => {
-      const now = Date.now();
-      const req = buildReq({ body: PAYLOAD, timestamp: now, nonce: 'n-2', omit: ['timestamp'] });
-      expect(verifyWompiSignature(req)).toBe(false);
-    });
-
-    test('rechaza webhook sin nonce', () => {
-      const now = Date.now();
-      const req = buildReq({ body: PAYLOAD, timestamp: now, nonce: 'n-3', omit: ['nonce'] });
-      expect(verifyWompiSignature(req)).toBe(false);
-    });
-
-    test('rechaza timestamp no numérico', () => {
-      const now = Date.now();
-      const req = buildReq({ body: PAYLOAD, timestamp: now, nonce: 'n-bad-ts' });
-      req.headers['x-wompi-timestamp'] = 'not-a-number';
-      // La firma se calculó con el valor real; el timestamp inválido debe rechazarse por sí mismo.
-      expect(verifyWompiSignature(req)).toBe(false);
-    });
+  test('acepta el checksum tomado del header X-Event-Checksum', () => {
+    const evento = eventoTransaccion();
+    const header = evento.signature.checksum;
+    delete evento.signature.checksum;
+    const req = {
+      body: evento,
+      header: (n) => (String(n).toLowerCase() === 'x-event-checksum' ? header : undefined),
+      ip: '127.0.0.1'
+    };
+    expect(bookingController.verifyWompiSignature(req)).toBe(true);
   });
 
-  describe('Vulnerabilidad de replay (binding criptográfico)', () => {
-    test('RECHAZA una firma estilo antiguo (HMAC solo del payload) aunque vengan timestamp y nonce', () => {
-      const now = Date.now();
-      const rawBody = JSON.stringify(PAYLOAD);
-      const req = buildReq({
-        body: PAYLOAD,
-        timestamp: now,
-        nonce: 'n-legacy',
-        signature: legacySign(SECRET, rawBody), // firma sin cubrir ts/nonce
-      });
-      expect(verifyWompiSignature(req)).toBe(false);
+  describe('Rechazos', () => {
+    test('RECHAZA si el monto fue alterado tras firmar (no se puede inflar lo pagado)', () => {
+      const evento = eventoTransaccion();
+      evento.data.transaction.amount_in_cents = 1;
+      expect(verify(evento)).toBe(false);
     });
 
-    test('RECHAZA si se altera el timestamp sin recalcular la firma (evita saltarse la ventana)', () => {
-      const now = Date.now();
-      const rawBody = JSON.stringify(PAYLOAD);
-      const nonce = 'n-tamper-ts';
-      // Firma legítima del instante real...
-      const signature = sign(SECRET, now, nonce, rawBody);
-      // ...pero el atacante reenvía con un timestamp "fresco" distinto.
-      const req = buildReq({ body: PAYLOAD, timestamp: now + 1000, nonce, signature });
-      expect(verifyWompiSignature(req)).toBe(false);
+    test('RECHAZA si se altera el timestamp (impide reusar un checksum capturado)', () => {
+      const evento = eventoTransaccion();
+      evento.timestamp = evento.timestamp + 99999;
+      expect(verify(evento)).toBe(false);
     });
 
-    test('RECHAZA reutilizar el mismo nonce (replay)', () => {
-      const now = Date.now();
-      const first = buildReq({ body: PAYLOAD, timestamp: now, nonce: 'n-replay' });
-      const second = buildReq({ body: PAYLOAD, timestamp: now, nonce: 'n-replay' });
+    test('RECHAZA si se altera el estado (DECLINED -> APPROVED)', () => {
+      const evento = eventoTransaccion({ status: 'DECLINED' });
+      evento.data.transaction.status = 'APPROVED';
+      expect(verify(evento)).toBe(false);
+    });
 
-      expect(verifyWompiSignature(first)).toBe(true);
-      expect(verifyWompiSignature(second)).toBe(false); // replay bloqueado
+    test('RECHAZA una firma calculada con otro secreto', () => {
+      const evento = eventoTransaccion();
+      evento.signature.checksum = checksumDe(evento, 'otro_secreto');
+      expect(verify(evento)).toBe(false);
+    });
+
+    test('RECHAZA si falta signature.properties', () => {
+      const evento = eventoTransaccion();
+      delete evento.signature.properties;
+      expect(verify(evento)).toBe(false);
+    });
+
+    test('RECHAZA si falta el checksum y no viene en el header', () => {
+      const evento = eventoTransaccion();
+      delete evento.signature.checksum;
+      expect(verify(evento)).toBe(false);
+    });
+
+    test('RECHAZA si una property apunta a un campo inexistente en data', () => {
+      const evento = eventoTransaccion();
+      evento.signature.properties = ['transaction.campo_inexistente'];
+      expect(verify(evento)).toBe(false);
+    });
+
+    test('RECHAZA si no hay secreto de eventos configurado', () => {
+      delete process.env.WOMPI_EVENTS_SECRET;
+      // En NODE_ENV=test hay un atajo para no romper otros tests; se desactiva para
+      // comprobar que sin secreto la verificación real falla en cerrado.
+      const prev = process.env.NODE_ENV;
+      process.env.NODE_ENV = 'production';
+      try {
+        expect(verify(eventoTransaccion())).toBe(false);
+      } finally {
+        process.env.NODE_ENV = prev;
+      }
     });
   });
 
-  describe('Ventana temporal', () => {
-    test('rechaza timestamp más antiguo que la tolerancia (5 min)', () => {
-      const old = Date.now() - TOLERANCE_MS - 1000;
-      const req = buildReq({ body: PAYLOAD, timestamp: old, nonce: 'n-old' });
-      expect(verifyWompiSignature(req)).toBe(false);
-    });
-
-    test('rechaza timestamp en el futuro más allá de la tolerancia (clock skew)', () => {
-      const future = Date.now() + TOLERANCE_MS + 1000;
-      const req = buildReq({ body: PAYLOAD, timestamp: future, nonce: 'n-future' });
-      expect(verifyWompiSignature(req)).toBe(false);
-    });
-
-    test('acepta timestamp dentro de la tolerancia (borde cercano)', () => {
-      const recent = Date.now() - TOLERANCE_MS + 5000;
-      const req = buildReq({ body: PAYLOAD, timestamp: recent, nonce: 'n-edge' });
-      expect(verifyWompiSignature(req)).toBe(true);
-    });
-  });
-
-  describe('Integración HTTP (endpoint /api/payments/wompi-webhook)', () => {
-    function post(app, payload, { timestamp, nonce, omit = [] }) {
-      const raw = JSON.stringify(payload);
-      const r = request(app)
-        .post('/api/payments/wompi-webhook')
-        .set('Content-Type', 'application/json');
-      if (!omit.includes('timestamp')) r.set('x-wompi-timestamp', String(timestamp));
-      if (!omit.includes('nonce')) r.set('x-wompi-nonce', nonce);
-      if (!omit.includes('signature')) r.set('x-wompi-signature', sign(SECRET, timestamp, nonce, raw));
-      return r.send(raw);
-    }
-
-    test('responde 401 cuando faltan timestamp/nonce (firma solo del payload)', async () => {
+  describe('Integración HTTP (/api/payments/wompi-webhook)', () => {
+    test('responde 200 a un evento correctamente firmado', async () => {
       const app = buildApp();
-      const raw = JSON.stringify(PAYLOAD);
       const res = await request(app)
         .post('/api/payments/wompi-webhook')
-        .set('Content-Type', 'application/json')
-        .set('x-wompi-signature', legacySign(SECRET, raw))
-        .send(raw);
+        .send(eventoTransaccion({ status: 'PENDING' }));
+      expect(res.status).toBe(200);
+    });
+
+    test('responde 401 cuando el checksum no corresponde', async () => {
+      const app = buildApp();
+      const evento = eventoTransaccion();
+      evento.data.transaction.amount_in_cents = 1; // alterado después de firmar
+      const res = await request(app).post('/api/payments/wompi-webhook').send(evento);
       expect(res.status).toBe(401);
     });
 
-    test('responde 401 al reintentar el mismo webhook (replay)', async () => {
+    test('responde 401 si el evento no trae firma alguna', async () => {
       const app = buildApp();
-      const now = Date.now();
-      const nonce = 'n-http-replay';
-
-      const first = await post(app, { event: 'ping' }, { timestamp: now, nonce });
-      expect(first.status).toBe(200);
-
-      const second = await post(app, { event: 'ping' }, { timestamp: now, nonce });
-      expect(second.status).toBe(401);
+      const res = await request(app).post('/api/payments/wompi-webhook').send({
+        event: 'transaction.updated',
+        data: { transaction: { id: 'x', reference: 'b', status: 'APPROVED', amount_in_cents: 1 } }
+      });
+      expect(res.status).toBe(401);
     });
+  });
+});
 
-    test('acepta un webhook correctamente firmado con timestamp y nonce frescos', async () => {
-      const app = buildApp();
-      const res = await post(
-        app,
-        { event: 'ping' },
-        { timestamp: Date.now(), nonce: 'n-http-ok' }
-      );
-      expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-    });
+// ---------------------------------------------------------------------------
+// Wompi entrega TODOS los eventos a una sola URL. La de reservas recibia tambien
+// los de pedidos de tienda, no encontraba la reserva y Wompi reintentaba: el
+// pedido no se cerraba nunca. Estos casos fijan el despacho por prefijo.
+// ---------------------------------------------------------------------------
+describe('Wompi webhook — despacho por tipo de referencia', () => {
+  const orderController = require('../controllers/orderController');
+  let storeSpy;
+
+  beforeEach(() => {
+    process.env.WOMPI_EVENTS_SECRET = SECRET;
+    storeSpy = jest
+      .spyOn(orderController, 'storeWebhook')
+      .mockImplementation((req, res) => res.json({ delegado: 'store' }));
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+    delete process.env.WOMPI_EVENTS_SECRET;
+  });
+
+  test('una referencia wompi_order_ se despacha al webhook de tienda', async () => {
+    const evento = eventoTransaccion();
+    evento.data.transaction.reference =
+      'wompi_order_8f14e45f-ceea-467f-a1c0-000000000001_1750000000000';
+    evento.signature.checksum = checksumDe(evento);
+
+    const res = await request(buildApp()).post('/api/payments/wompi-webhook').send(evento);
+
+    expect(storeSpy).toHaveBeenCalledTimes(1);
+    expect(res.status).toBe(200);
+  });
+
+  test('una referencia de reserva NO se desvia al webhook de tienda', async () => {
+    await request(buildApp()).post('/api/payments/wompi-webhook').send(eventoTransaccion());
+    expect(storeSpy).not.toHaveBeenCalled();
   });
 });

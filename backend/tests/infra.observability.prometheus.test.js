@@ -104,14 +104,22 @@ describe('P0 infra/observabilidad · Prometheus + health endpoint', () => {
     expect(
       exponeMetrica(res.text, 'glowapp_db_available') || exponeMetrica(res.text, 'glowapp_db_degraded')
     ).toBe(true);
-    // En tests no hay DATABASE_URL: la capa de datos no está disponible (no se miente con 1).
+
+    // El invariante real es que la métrica NO mienta: tiene que coincidir con lo que
+    // /api/health acaba de reportar. Antes se fijaba 0 asumiendo "en tests no hay
+    // DATABASE_URL", pero el pipeline levanta un PostgreSQL real y ci.yml invierte la
+    // precedencia para que la app lo sondee de verdad: la capa de datos SÍ está
+    // disponible y un 0 hardcodeado sería justo la mentira que esta prueba caza.
+    const degradadoSegunHealth = salud.body.status === 'DEGRADED';
+    const saludComprobada = salud.body.status !== 'UNKNOWN';
+
     const disponible = valorDeMetrica(res.text, 'glowapp_db_available');
-    if (Number.isFinite(disponible)) {
-      expect(disponible).toBe(0);
+    if (Number.isFinite(disponible) && saludComprobada) {
+      expect(disponible).toBe(degradadoSegunHealth ? 0 : 1);
     }
     const degradado = valorDeMetrica(res.text, 'glowapp_db_degraded');
-    if (Number.isFinite(degradado)) {
-      expect(degradado).toBe(1);
+    if (Number.isFinite(degradado) && saludComprobada) {
+      expect(degradado).toBe(degradadoSegunHealth ? 1 : 0);
     }
   });
 

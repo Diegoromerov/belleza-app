@@ -3,10 +3,12 @@ const express = require('express');
 const router = express.Router();
 const { processBiometricScan } = require('../services/aiOrchestrator');
 const pool = require('../config/db'); // Asumiendo que tienes tu config de PG aquí
+const { authMiddleware } = require('../middleware/auth');
+const biometricConsentGuard = require('../middleware/biometricConsentGuard');
 
-router.post('/scan', async (req, res) => {
+router.post('/scan', authMiddleware, biometricConsentGuard, async (req, res) => {
   try {
-    const { image_base64, user_id } = req.body;
+    const { image_base64 } = req.body;
 
     if (!image_base64) {
       return res.status(400).json({ error: 'Se requiere una imagen para el análisis.' });
@@ -24,7 +26,7 @@ router.post('/scan', async (req, res) => {
     `;
     
     const values = [
-      user_id || 'guest', // Fallback si no hay usuario logueado
+      req.user.id,
       biometricData.subtono,
       biometricData.estacion,
       JSON.stringify(biometricData.paleta),
@@ -42,6 +44,9 @@ router.post('/scan', async (req, res) => {
     });
 
   } catch (error) {
+    if (error.code === 'BIOMETRIC_ANALYSIS_UNAVAILABLE' || error.statusCode === 503) {
+      return res.status(503).json({ error: 'AI_UNAVAILABLE', message: 'El análisis no está disponible en este momento.' });
+    }
     res.status(500).json({ error: error.message });
   }
 });

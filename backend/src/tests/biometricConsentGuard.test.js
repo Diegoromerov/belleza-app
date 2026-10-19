@@ -91,7 +91,10 @@ describe('biometricConsentGuard - VETO UUID/INTEGER mismatch', () => {
 
     expect(response.status).toBe(403);
     expect(response.body.error).toBe('CONSENT_DENIED');
-    expect(response.body.code).toBe('MISSING_ACTIVE_CONSENT');
+    // El middleware emite MISSING_VALID_CONSENT (biometricConsentGuard.js:36) y
+    // tests/biometricConsent.unified.test.js:151 PROHIBE el string viejo. Asertar
+    // MISSING_ACTIVE_CONSENT contradecia al propio repo.
+    expect(response.body.code).toBe('MISSING_VALID_CONSENT');
   });
 
   test('Debe rechazar usuario NO autenticado (401)', async () => {
