@@ -370,7 +370,12 @@ class YouCamClient {
       wrinkles: uiOf('hd_wrinkle.whole', 'hd_wrinkle'),
       spots: uiOf('hd_age_spot'),
       pores: uiOf('hd_pore.whole', 'hd_pore'),
-      subtono: skinType.whole || 'neutro',
+      // Y-F2: `hd_skin_type` devuelve el TIPO de piel (Oily/Dry/Normal/Combination),
+      // no el subtono. Antes se publicaba aquí y Flutter lo usaba como subtono, cayendo
+      // siempre en el valor por defecto. El subtono lo mide undertone.service sobre la
+      // foto; aquí se declara el tipo y se deja el subtono en null.
+      pielTipo: skinType.whole || null,
+      subtono: null,
       bioAge: isFiniteNumber(skinAge.raw) ? skinAge.raw : (isFiniteNumber(skinAge.ui) ? skinAge.ui : null),
       // Capa rica (Y-F1)
       metrics,

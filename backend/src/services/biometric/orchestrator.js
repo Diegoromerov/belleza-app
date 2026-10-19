@@ -3,6 +3,8 @@ const geminiClient = require('./gemini.client');
 const deepseekClient = require('./deepseek.client');
 const profileService = require('./profile.service');
 const scanSessionService = require('./scanSession.service');
+const captureQuality = require('./captureQuality.service');
+const undertoneService = require('./undertone.service');
 const openUV = require('../openUV');
 const logger = require('../../config/logger');
 const { breakers } = require('../circuitBreakerService');
@@ -15,11 +17,23 @@ class BiometricOrchestrator {
     const parsedUserId = parseInt(userId, 10);
     logger.info('Iniciando análisis biométrico resilietne para el usuario', { userId: parsedUserId, traceId });
 
+    // Y-F2: puerta de calidad antes de gastar unidades del proveedor. Una foto
+    // oscura, borrosa o de menos de 640 px no se envía: se responde 422 con el motivo.
+    const prepared = await captureQuality.prepareFace(faceImage);
+    if (prepared.rejected) {
+      const error = new Error('La foto no cumple los requisitos mínimos para medir piel.');
+      error.code = 'CAPTURE_REJECTED';
+      error.statusCode = 422;
+      error.details = prepared.quality;
+      throw error;
+    }
+    const normalizedFace = prepared.image.buffer;
+
     // 1-3. Ejecutar análisis de rostro, manos y UV con Circuit Breakers
     let faceScores, handsDiagnosis, uvData = null;
 
     const [faceResult, handsResult, uvResult] = await Promise.allSettled([
-      breakers.youcam.execute(() => youcamClient.analyzeFace(faceImage, traceId)),
+      breakers.youcam.execute(() => youcamClient.analyzeFace(normalizedFace, traceId)),
       breakers.gemini.execute(() => geminiClient.analyzeHands(handsImage, traceId)),
       (lat && lng) ? openUV.getUV(lat, lng) : Promise.resolve(null),
     ]);
@@ -33,6 +47,14 @@ class BiometricOrchestrator {
 
     faceScores = faceResult.value;
     handsDiagnosis = handsResult.value;
+
+    // Y-F2: el subtono se mide sobre la foto normalizada, no se hereda del tipo de piel.
+    // Si no hay píxeles de piel suficientes queda en null con fuente 'no_medido'.
+    const undertone = await undertoneService.measureUndertone(normalizedFace);
+    faceScores.subtonoMedicion = undertone;
+    faceScores.subtono = undertone.measured ? undertone.subtono : null;
+    faceScores.subtonoFuente = undertone.measured ? 'ita_hue_propio' : 'no_medido';
+    normalizedFace.fill(0); // la imagen ya se midió: no se conserva en memoria
 
     if (uvResult.status === 'fulfilled' && uvResult.value) {
       uvData = uvResult.value;
@@ -96,8 +118,8 @@ class BiometricOrchestrator {
     const scanSession = await scanSessionService.saveScan({
       userId: parsedUserId,
       faceScores,
-      geometry: null,  // Y-F2: geometría de captura (distancia, ángulo, luminancia)
-      quality: null,   // Y-F2: score de calidad y motivo de rechazo
+      geometry: prepared.geometry, // Y-F2: origen, normalización y EXIF de la captura
+      quality: { ...prepared.quality, undertone }, // Y-F2: veredicto, score y motivos
       tolerante: true,
     });
 

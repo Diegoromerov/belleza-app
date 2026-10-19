@@ -114,7 +114,10 @@ describe('YouCam — explotación completa de la llamada (Y-F1)', () => {
     expect(parsed.wrinkles).toBe(81);
     expect(parsed.spots).toBe(77);
     expect(parsed.pores).toBe(69);
-    expect(parsed.subtono).toBe('Oily');
+    // Y-F2: hd_skin_type es el tipo de piel, no el subtono. El subtono lo mide
+    // undertone.service; el parser lo deja en null.
+    expect(parsed.pielTipo).toBe('Oily');
+    expect(parsed.subtono).toBeNull();
     expect(parsed.bioAge).toBeCloseTo(31.4, 6);
     expect(parsed.skinAge.raw).toBeCloseTo(31.4, 6);
     expect(parsed.overall.raw).toBe(74);
