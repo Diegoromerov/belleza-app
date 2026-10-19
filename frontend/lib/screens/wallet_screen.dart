@@ -233,10 +233,18 @@ class _WalletScreenState extends State<WalletScreen>
           }
         } catch (e) {
           if (mounted) {
+            // Hasta que la cuenta tenga activo "Pagos a terceros" de Wompi, el
+            // backend responde 503 PAYOUTS_NOT_CONFIGURED antes de debitar. Al
+            // prestador hay que decirle que su saldo está intacto, no mostrarle
+            // el código de error.
+            final texto = e.toString();
+            final sinDispersion = texto.contains('PAYOUTS_NOT_CONFIGURED') ||
+                texto.contains('503');
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(
-                    'Error: ${e.toString().replaceAll('Exception: ', '')}'),
+                content: Text(sinDispersion
+                    ? 'Los retiros se habilitan pronto. No se descontó nada de tu saldo.'
+                    : 'Error: ${texto.replaceAll('Exception: ', '')}'),
                 backgroundColor: Colors.red,
               ),
             );
