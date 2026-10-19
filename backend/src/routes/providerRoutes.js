@@ -20,9 +20,15 @@ const CONTRATO_VERSION_ACTUAL = '2026-10';
 router.get('/provider/contract', authMiddleware, async (req, res) => {
   try {
     const { rows } = await pool.query(
-      `SELECT contrato_version, contrato_aceptado_at, independencia_aceptada_at,
-              responsable_iva, rut_responsabilidad_codigo
-         FROM perfiles_prestador WHERE id = $1`,
+      // `responsable_iva` y `rut_responsabilidad_codigo` viven en `usuarios`
+      // (migraciones 086 y 087), no en `perfiles_prestador`. La consulta las pedía
+      // a la tabla equivocada y la ruta devolvía 500 en cada llamada, de modo que
+      // el prestador no podía ver ni aceptar su contrato.
+      `SELECT p.contrato_version, p.contrato_aceptado_at, p.independencia_aceptada_at,
+              u.responsable_iva, u.rut_responsabilidad_codigo
+         FROM perfiles_prestador p
+         JOIN usuarios u ON u.id = p.id
+        WHERE p.id = $1`,
       [req.user.id]
     );
     if (!rows.length) return res.status(404).json({ error: 'Perfil de prestador no encontrado.' });
@@ -49,14 +55,22 @@ router.post('/provider/contract/accept', authMiddleware, async (req, res) => {
 
   try {
     const { rows } = await pool.query(
-      `UPDATE perfiles_prestador
-          SET contrato_version = $2,
-              contrato_aceptado_at = NOW(),
-              contrato_aceptado_ip = $3,
-              independencia_aceptada_at = NOW()
-        WHERE id = $1
-        RETURNING contrato_version, contrato_aceptado_at, independencia_aceptada_at,
-                  responsable_iva, rut_responsabilidad_codigo`,
+      // `RETURNING` solo devuelve columnas de la tabla actualizada: las fiscales
+      // se leen de `usuarios` con un CTE. El `JOIN` dentro del UPDATE mezclaría
+      // las filas y dejaría el perfil sin actualizar.
+      `WITH actualizado AS (
+         UPDATE perfiles_prestador
+            SET contrato_version = $2,
+                contrato_aceptado_at = NOW(),
+                contrato_aceptado_ip = $3,
+                independencia_aceptada_at = NOW()
+          WHERE id = $1
+          RETURNING *
+       )
+       SELECT a.contrato_version, a.contrato_aceptado_at, a.independencia_aceptada_at,
+              u.responsable_iva, u.rut_responsabilidad_codigo
+         FROM actualizado a
+         JOIN usuarios u ON u.id = a.id`,
       [req.user.id, version || CONTRATO_VERSION_ACTUAL, req.ip]
     );
 
