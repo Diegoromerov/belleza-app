@@ -289,6 +289,17 @@ async function checkout(tc) {
   // rol, no de `productos.precio_al_publico`. Si la base no tiene precios de
   // lista cargados, todo el bloque se omite con el motivo a la vista: un 403
   // repetido no enseña nada.
+  // D-GL-011 v2: el umbral vive en la tabla, y la migración 094 lo sembraba con
+  // valores de un borrador anterior. Este chequeo es el guardia de esa regla.
+  const zonas = (await pg.query(
+    "SELECT ciudad, gratis_desde_monto FROM zonas_envio WHERE lower(ciudad) LIKE 'bogot%' OR lower(ciudad) = 'cali'"
+  )).rows;
+  const bogota = zonas.find((z) => /bogot/i.test(z.ciudad));
+  const cali = zonas.find((z) => /cali/i.test(z.ciudad));
+  rec('G0 umbrales cargados según D-GL-011',
+    (!bogota || Number(bogota.gratis_desde_monto) === 300000) && (!cali || Number(cali.gratis_desde_monto) === 480000),
+    `Bogotá=${bogota?.gratis_desde_monto ?? 'sin zona'} Cali=${cali?.gratis_desde_monto ?? 'sin zona'}`);
+
   const lista = (await pg.query(
     `SELECT id FROM listas_precios WHERE codigo = 'cliente' AND estado = 'ACTIVA' LIMIT 1`
   )).rows[0];
