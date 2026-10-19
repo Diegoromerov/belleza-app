@@ -1,11 +1,12 @@
 const { pool } = require('../config/db');
 const { resolverPrecio } = require('../services/precioService');
+const { calcularEnvio } = require('../services/envioService');
 
 // POST /api/store/checkout → Crear un nuevo pedido
 exports.createOrder = async (req, res) => {
   const compradorId = req.user.id;
   const userRole = req.user.role; // 'client', 'provider', 'salon', 'admin'
-  const { booking_id, nombre_entrega, direccion_entrega, items } = req.body;
+  const { booking_id, nombre_entrega, direccion_entrega, ciudad_entrega, peso_kg, items } = req.body;
 
   if (!items || !Array.isArray(items) || items.length === 0) {
     return res.status(400).json({ error: 'Se requiere una lista de productos (items)' });
@@ -126,11 +127,28 @@ exports.createOrder = async (req, res) => {
       });
     }
 
-    // Calcular envío e IVA
-    // Opción 1 de Open Questions: Envío gratis si se entrega en la cita.
-    const costoEnvio = tieneDescuentoReserva ? 0.00 : 12000.00;
-    const iva = subtotal * 0.19; // 19% IVA
-    const total = subtotal + iva + costoEnvio;
+    // Calcular envío e IVA.
+    // Antes: `costoEnvio = tieneDescuentoReserva ? 0 : 12000.00`, una constante
+    // que ignoraba zona, peso y valor del pedido, y que dejaba sin usar las 21
+    // zonas de `zonas_envio`. Ahora la tarifa sale de la tabla de la zona y la
+    // retención de 1.000 se suma en el servicio (D-GL-011 v2, D-GL-015).
+    const unidades = processedItems.reduce((total, item) => total + item.cantidad, 0);
+    const envioDetalle = await calcularEnvio({
+      client,
+      ciudad: ciudad_entrega,
+      direccion: direccion_entrega,
+      pesoKg: peso_kg,
+      subtotal,
+      unidades,
+      entregaEnCita: tieneDescuentoReserva
+    });
+    const costoEnvio = envioDetalle.envio;
+    // El precio de lista de la tienda YA incluye IVA (regla 6): el impuesto se
+    // discrimina del subtotal, no se suma encima. `subtotal` sigue siendo lo que
+    // ve y paga el comprador por la mercancía; `iva` es solo la porción
+    // tributaria contenida en ese valor.
+    const iva = Math.round(subtotal - subtotal / 1.19);
+    const total = subtotal + costoEnvio;
 
     // El estado NO se escribe aquí: lo pone el DEFAULT del esquema, que ya es
     // el correcto ('PENDIENTE_PAGO' en
@@ -183,7 +201,8 @@ exports.createOrder = async (req, res) => {
       success: true,
       data: {
         order,
-        items: processedItems
+        items: processedItems,
+        envio: envioDetalle
       }
     });
 
@@ -193,6 +212,111 @@ exports.createOrder = async (req, res) => {
     res.status(500).json({ error: 'Error al procesar el checkout' });
   } finally {
     client.release();
+  }
+};
+
+// POST /api/store/envio/cotizacion → Desglose del pedido SIN crearlo.
+// Solo lectura: no inserta pedidos, no descuenta stock y no abre transacción
+// de escritura. La app lo usa para mostrar el envío y el total real antes de
+// abrir la pasarela de pago.
+exports.cotizarEnvio = async (req, res) => {
+  const userRole = req.user.role;
+  const { items, direccion_entrega, ciudad_entrega, peso_kg, booking_id } = req.body;
+
+  if (!items || !Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ error: 'Se requiere una lista de productos (items)' });
+  }
+
+  try {
+    let entregaEnCita = false;
+
+    // Mismas reglas que createOrder: solo el dueño de la reserva puede
+    // asociarla, y una reserva válida implica entrega en la cita (sin courier).
+    if (booking_id) {
+      if (userRole === 'provider') {
+        return res.status(400).json({ error: 'Un prestador no puede asociar compras a una reserva' });
+      }
+
+      const bookingRes = await pool.query(
+        'SELECT id, client_id FROM bookings WHERE id = $1;',
+        [booking_id]
+      );
+
+      if (bookingRes.rows.length === 0) {
+        return res.status(404).json({ error: 'Reserva no encontrada' });
+      }
+      if (bookingRes.rows[0].client_id !== req.user.id) {
+        return res.status(403).json({ error: 'No tienes acceso a esta reserva' });
+      }
+
+      entregaEnCita = true;
+    }
+
+    // El subtotal SIEMPRE se resuelve en el servidor con el mismo servicio que
+    // usa el checkout; nunca se acepta un subtotal enviado por el cliente.
+    let subtotal = 0;
+    let unidades = 0;
+
+    for (const item of items) {
+      const { producto_id, cantidad } = item || {};
+      const cantidadNum = Number(cantidad);
+      if (!producto_id || !Number.isFinite(cantidadNum) || cantidadNum <= 0) {
+        return res.status(400).json({ error: 'ID de producto y cantidad válidos son obligatorios' });
+      }
+
+      let resPrecio;
+      try {
+        resPrecio = await resolverPrecio({
+          rol: userRole,
+          productoId: producto_id,
+          cantidad: cantidadNum
+        });
+      } catch (precioErr) {
+        if (precioErr.code === 'MINIMO_NO_CUMPLIDO') {
+          return res.status(400).json({
+            error: precioErr.message,
+            unidad_minima: precioErr.unidad_minima,
+            lista: precioErr.lista
+          });
+        }
+        throw precioErr;
+      }
+
+      if (!resPrecio || resPrecio.estado === 'sin_precio' || resPrecio.precio === null || resPrecio.precio === undefined) {
+        return res.status(403).json({ error: `No hay precio disponible para el producto ${producto_id}` });
+      }
+
+      subtotal += resPrecio.precio * cantidadNum;
+      unidades += cantidadNum;
+    }
+
+    const envioDetalle = await calcularEnvio({
+      client: pool,
+      ciudad: ciudad_entrega,
+      direccion: direccion_entrega,
+      pesoKg: peso_kg,
+      subtotal,
+      unidades,
+      entregaEnCita
+    });
+
+    // Misma convención que createOrder: el precio de lista incluye IVA.
+    const iva = Math.round(subtotal - subtotal / 1.19);
+    const total = subtotal + envioDetalle.envio;
+
+    res.json({
+      success: true,
+      data: {
+        subtotal,
+        iva,
+        envio: envioDetalle.envio,
+        total,
+        envio_detalle: envioDetalle
+      }
+    });
+  } catch (error) {
+    console.error('❌ ERROR EN COTIZACIÓN DE ENVÍO:', error);
+    res.status(500).json({ error: 'Error al cotizar el envío' });
   }
 };
 

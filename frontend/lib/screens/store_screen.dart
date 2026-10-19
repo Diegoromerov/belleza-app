@@ -1,4 +1,6 @@
 // frontend/lib/screens/store_screen.dart
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../shared/theme.dart';
@@ -224,9 +226,57 @@ class _StoreScreenState extends State<StoreScreen> {
   void _showCheckoutDialog() {
     if (_cart.isEmpty) return;
 
-    final double subtotal = _getCartSubtotal();
-    final double iva = subtotal * 0.19;
-    final double total = subtotal + iva;
+    // D3: el transporte y el total se piden al servidor antes de abrir la
+    // pasarela. El cliente no calcula dinero: solo muestra lo que devuelve
+    // /api/store/envio/cotizacion.
+    Map<String, dynamic>? cotizacion;
+    bool cotizando = false;
+    String? errorCotizacion;
+    Timer? debounceDireccion;
+    StateSetter? actualizarDialogo;
+    bool dialogoCerrado = false;
+    bool cotizacionInicialPedida = false;
+
+    void actualizar(VoidCallback fn) {
+      if (dialogoCerrado) return;
+      actualizarDialogo?.call(fn);
+    }
+
+    Future<void> cotizar(String direccion) async {
+      final itemsList = _cart.values.map((item) {
+        final prod = item['product'] as Map<String, dynamic>;
+        return {
+          'producto_id': prod['id'],
+          'cantidad': item['quantity'] as int,
+        };
+      }).toList();
+      if (itemsList.isEmpty) return;
+
+      actualizar(() {
+        cotizando = true;
+        errorCotizacion = null;
+      });
+
+      try {
+        final response = await ApiService.post('/api/store/envio/cotizacion', {
+          'items': itemsList,
+          'direccion_entrega': direccion,
+          if (widget.bookingId != null) 'booking_id': widget.bookingId,
+        });
+        final dynamic data = (response is Map) ? response['data'] : null;
+        if (response is Map && response['success'] == true && data is Map) {
+          cotizacion = Map<String, dynamic>.from(data);
+        } else {
+          cotizacion = null;
+          errorCotizacion = 'No se pudo cotizar el envío.';
+        }
+      } catch (e) {
+        cotizacion = null;
+        errorCotizacion = 'No se pudo cotizar el envío: $e';
+      } finally {
+        actualizar(() => cotizando = false);
+      }
+    }
 
     final TextEditingController nameCtrl = TextEditingController();
     final TextEditingController addressCtrl = TextEditingController();
@@ -239,6 +289,13 @@ class _StoreScreenState extends State<StoreScreen> {
       builder: (ctx) {
         return StatefulBuilder(
           builder: (context, setCheckoutState) {
+            actualizarDialogo = setCheckoutState;
+
+            if (!cotizacionInicialPedida) {
+              cotizacionInicialPedida = true;
+              Future.microtask(() => cotizar(addressCtrl.text));
+            }
+
             if (processing) {
               return Dialog(
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -273,6 +330,21 @@ class _StoreScreenState extends State<StoreScreen> {
 
             final double screenWidth = MediaQuery.of(context).size.width;
             final bool isMobile = screenWidth < 680;
+
+            // Valores mostrados y cobrados: salen de la cotización del
+            // servidor. Sin cotización válida no se habilita el pago.
+            final Map<String, dynamic>? cot = cotizacion;
+            final Map<String, dynamic> envioDetalle =
+                (cot?['envio_detalle'] as Map?)?.cast<String, dynamic>() ??
+                    const {};
+            final double subtotalMostrado =
+                (cot?['subtotal'] as num?)?.toDouble() ?? _getCartSubtotal();
+            final double ivaMostrado = (cot?['iva'] as num?)?.toDouble() ??
+                (subtotalMostrado - subtotalMostrado / 1.19).roundToDouble();
+            final double envioMostrado =
+                (cot?['envio'] as num?)?.toDouble() ?? 0.0;
+            final double totalMostrado =
+                (cot?['total'] as num?)?.toDouble() ?? subtotalMostrado;
 
             final Widget formColumn = Padding(
               padding: const EdgeInsets.all(24.0),
@@ -322,6 +394,19 @@ class _StoreScreenState extends State<StoreScreen> {
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.location_on_outlined),
                       ),
+                      // Recalcula el envío al cambiar la dirección, con debounce:
+                      // una sola cotización 600 ms después de la última tecla.
+                      onChanged: (value) {
+                        debounceDireccion?.cancel();
+                        setCheckoutState(() {
+                          cotizando = true;
+                          errorCotizacion = null;
+                        });
+                        debounceDireccion =
+                            Timer(const Duration(milliseconds: 600), () {
+                          cotizar(value);
+                        });
+                      },
                       validator: (v) => (v == null || v.isEmpty) ? 'Campo obligatorio' : null,
                     ),
                     Container(
@@ -366,7 +451,9 @@ class _StoreScreenState extends State<StoreScreen> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: ElevatedButton(
-                            onPressed: () async {
+                            onPressed: (cot == null || cotizando)
+                                ? null
+                                : () async {
                               if (formKey.currentState!.validate()) {
                                 final itemsList = _cart.values.map((item) {
                                   final prod = item['product'] as Map<String, dynamic>;
@@ -392,7 +479,7 @@ class _StoreScreenState extends State<StoreScreen> {
                                   context: context,
                                   bookingId: widget.bookingId ?? '',
                                   serviceName: 'Compra GlowShop (${_cart.length} productos)',
-                                  price: total,
+                                  price: (cot['total'] as num).toDouble(),
                                   providerName: 'GlowShop Oficial',
                                   itemType: 'product',
                                 );
@@ -536,9 +623,46 @@ class _StoreScreenState extends State<StoreScreen> {
                 const SizedBox(height: 20),
                   const Divider(),
                   const SizedBox(height: 10),
-                  _buildSummaryRow('Subtotal', _formatCOP(subtotal)),
+                  _buildSummaryRow('Subtotal', _formatCOP(subtotalMostrado)),
                   const SizedBox(height: 6),
-                  _buildSummaryRow('IVA (19%)', _formatCOP(iva)),
+                  _buildSummaryRow('IVA incluido (19%)', _formatCOP(ivaMostrado)),
+                  const SizedBox(height: 6),
+                  if (cotizando)
+                    _buildSummaryRow('Envío', 'Calculando...')
+                  else if (cot != null && envioMostrado == 0)
+                    _buildSummaryRow(
+                      'Envío gratis',
+                      envioDetalle['motivo'] == 'entrega_en_cita'
+                          ? 'Entrega en la cita'
+                          : 'Superaste el umbral',
+                    )
+                  else
+                    _buildSummaryRow(
+                      envioDetalle['motivo'] == 'zona_comodin'
+                          ? 'Envío estimado'
+                          : 'Envío',
+                      _formatCOP(envioMostrado),
+                    ),
+                  if (errorCotizacion != null) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            errorCotizacion!,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.red,
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () => cotizar(addressCtrl.text),
+                          child: const Text('Reintentar'),
+                        ),
+                      ],
+                    ),
+                  ],
                   const SizedBox(height: 10),
                   const Divider(),
                   const SizedBox(height: 10),
@@ -554,7 +678,7 @@ class _StoreScreenState extends State<StoreScreen> {
                         ),
                       ),
                       Text(
-                        _formatCOP(total),
+                        cot != null ? _formatCOP(totalMostrado) : '—',
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
@@ -600,7 +724,11 @@ class _StoreScreenState extends State<StoreScreen> {
           },
         );
       },
-    );
+    ).then((_) {
+      // El diálogo se cerró: no dejar timers ni setState pendientes.
+      dialogoCerrado = true;
+      debounceDireccion?.cancel();
+    });
   }
 
   void _showOrderSuccessDialog() {

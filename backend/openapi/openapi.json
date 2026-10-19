@@ -2625,6 +2625,22 @@
         "x-glowapp-documented": false
       }
     },
+    "/api/debug-schema": {
+      "get": {
+        "operationId": "getapi_debug_schema",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "GET /api/debug-schema (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "debug-schema"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
     "/api/designs/analyze": {
       "post": {
         "operationId": "postapi_designs_analyze",
@@ -4363,6 +4379,22 @@
         "x-glowapp-documented": false
       }
     },
+    "/api/store/envio/cotizacion": {
+      "post": {
+        "operationId": "postapi_store_envio_cotizacion",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "POST /api/store/envio/cotizacion (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "store"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
     "/api/store/orders": {
       "get": {
         "operationId": "getapi_store_orders",
@@ -5418,8 +5450,8 @@
   ],
   "x-glowapp-contract": {
     "generator": "backend/src/openapi/buildOpenApi.js",
-    "operationsDiscovered": 236,
+    "operationsDiscovered": 240,
     "operationsDocumented": 16,
-    "routesMounted": 252
+    "routesMounted": 256
   }
 }
