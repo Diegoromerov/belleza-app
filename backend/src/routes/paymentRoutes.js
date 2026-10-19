@@ -10,7 +10,7 @@ const { paymentLimiter, otpLimiter } = require('../middleware/rateLimiter');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const wompiService = require('../services/wompiService');
-const { aCentavos, aDecimal, calcularRetenciones, sumarMontos } = require('../utils/money');
+const { aCentavos, aDecimal, sumarMontos } = require('../utils/money');
 
 // ─── UTILIDADES ──────────────────────────────────────────────────────────────
 
@@ -263,36 +263,25 @@ router.post('/bookings/:id/confirm-otp', authMiddleware, async (req, res) => {
       });
     }
 
-    const ventanaHoras = parseInt(await getConfig('wallet_ventana_pendiente_horas', '2'));
+    const ventanaHoras = parseInt(await getConfig('wallet_ventana_pendiente_horas', '48'));
     const maduraAt = new Date(Date.now() + ventanaHoras * 60 * 60 * 1000);
 
-    const retefuentePct = parseFloat(await getConfig('retefuente_pct', '4.0'));
-    const reteicaPct = parseFloat(await getConfig('reteica_pct', '0.414'));
-    const reteivaPct = parseFloat(await getConfig('reteiva_pct', '15.0'));
-
-    // P0 dinero (t_fix_pagos_06): las retenciones y el neto se calculan en CENTAVOS
-    // ENTEROS. Con punto flotante, un IVA de 22,5 centavos (15% de una comisión de
-    // 1.50) se redondeaba a 22 (0.22) en vez de 23 (0.23): la dispersión perdía un
-    // centavo de forma silenciosa. Ver src/utils/money.js.
+    // D-GL-023 — SIN RETENCIONES.
+    // El prestador recibe íntegro su pago neto (80% del valor del servicio).
+    // Retefuente, reteICA y reteIVA se eliminaron: la plataforma no retiene
+    // tributos de un tercero independiente, y la reteIVA se aplicaba sobre toda
+    // la comisión en vez de sobre el IVA contenido en ella (6,3× de más).
+    // El cálculo se conserva en centavos enteros para que la dispersión no derive.
     const basePagoNetoCentavos = aCentavos(otp.pago_neto_prestador);
     const comisionPlataformaCentavos = aCentavos(otp.comision_plataforma);
 
-    const retenciones = calcularRetenciones({
-      basePagoNetoCents: basePagoNetoCentavos,
-      comisionPlataformaCents: comisionPlataformaCentavos,
-      retefuentePct,
-      reteicaPct,
-      reteivaPct
-    });
-
     const basePagoNeto = aDecimal(basePagoNetoCentavos);
     const comisionPlataforma = aDecimal(comisionPlataformaCentavos);
-    const retencionFuente = aDecimal(retenciones.retencionFuenteCents);
-    const retencionIca = aDecimal(retenciones.retencionIcaCents);
-    const retencionIva = aDecimal(retenciones.retencionIvaCents);
-
-    const totalRetenciones = aDecimal(retenciones.totalRetencionesCents);
-    const montoNeto = aDecimal(retenciones.montoNetoCents);
+    const retencionFuente = 0;
+    const retencionIca = 0;
+    const retencionIva = 0;
+    const totalRetenciones = 0;
+    const montoNeto = basePagoNeto;
 
     await client.query(
       `UPDATE otp_validaciones SET estado = 'USADO', usado_at = NOW() WHERE booking_id = $1`,
@@ -481,22 +470,34 @@ router.get('/wallet', authMiddleware, async (req, res) => {
 
     const wallet = rows[0];
 
-    const minCop = parseInt(await getConfig('retiro_demanda_min_cop', '50000'));
-    const diasMin = parseInt(await getConfig('retiro_demanda_dias', '3'));
+    // D-GL-024 — el ciclo estándar es semanal y no tiene mínimo; el anticipado
+    // exige 100.000 y solo opera sobre saldo madurado. El mínimo ya no bloquea
+    // el retiro del ciclo: bloquea únicamente el adelanto.
+    const minCop = parseInt(await getConfig('retiro_demanda_min_cop', '100000'));
+    const diasMin = parseInt(await getConfig('retiro_demanda_dias', '7'));
+    const saldoDisponible = parseFloat(wallet.saldo_disponible || 0);
+    const saldoPendiente = parseFloat(wallet.saldo_pendiente || 0);
+
     let puede_retirar = false;
     let razon_bloqueo = null;
     let proxima_fecha_retiro = null;
 
+    // El anticipado depende solo del monto maduro disponible.
+    const puede_retirar_anticipado = saldoDisponible >= minCop;
+
     if (wallet.retiros_pausados) {
       razon_bloqueo = 'Tu cuenta tiene retiros pausados. Contacta soporte.';
-    } else if (parseFloat(wallet.saldo_disponible) < minCop) {
-      razon_bloqueo = `Saldo insuficiente. Mínimo: $${minCop.toLocaleString('es-CO')}`;
+    } else if (saldoDisponible <= 0) {
+      razon_bloqueo = saldoPendiente > 0
+        ? 'Tu saldo está en custodia. Se habilita 48 h después de cada servicio.'
+        : 'Aún no tienes saldo disponible.';
     } else if (wallet.ultimo_retiro_at) {
       const diasTranscurridos = (Date.now() - new Date(wallet.ultimo_retiro_at)) / (1000 * 60 * 60 * 24);
       if (diasTranscurridos < diasMin) {
         const diasRestantes = Math.ceil(diasMin - diasTranscurridos);
         proxima_fecha_retiro = new Date(new Date(wallet.ultimo_retiro_at).getTime() + diasMin * 24 * 60 * 60 * 1000);
-        razon_bloqueo = `Próximo retiro disponible en ${diasRestantes} día(s).`;
+        razon_bloqueo = `Tu próximo retiro del ciclo es en ${diasRestantes} día(s).`
+          + (puede_retirar_anticipado ? ` Puedes adelantarlo hoy desde $${minCop.toLocaleString('es-CO')}.` : '');
       } else {
         puede_retirar = true;
       }
@@ -507,9 +508,12 @@ router.get('/wallet', authMiddleware, async (req, res) => {
     res.json({
       ...wallet,
       puede_retirar,
+      puede_retirar_anticipado,
       razon_bloqueo,
       proxima_fecha_retiro,
-      minimo_retiro_cop: minCop
+      minimo_retiro_cop: minCop,
+      ciclo_dias: diasMin,
+      saldo_total: saldoDisponible + saldoPendiente
     });
   } catch (err) {
     console.error('Error al obtener wallet:', err);
@@ -706,8 +710,15 @@ router.put('/wallet/bank-account', authMiddleware, handleSaveBankAccount);
 router.post('/wallet/withdraw', authMiddleware, async (req, res) => {
   if (!await requirePrestador(req, res)) return;
 
-  const { monto } = req.body;
+  const { monto, tipo_origen } = req.body;
   const montoSolicitado = parseFloat(monto);
+
+  // D-GL-024: DEMANDA = retiro anticipado (mín. 100.000, con costo de
+  // dispersión a cargo del prestador). SEMANAL/QUINCENA/MENSUAL = ciclo.
+  const tipoOrigen = ['DEMANDA', 'SEMANAL', 'QUINCENA', 'MENSUAL']
+    .includes(String(tipo_origen || '').toUpperCase())
+    ? String(tipo_origen).toUpperCase()
+    : 'DEMANDA';
 
   if (!monto || isNaN(montoSolicitado) || montoSolicitado <= 0) {
     return res.status(400).json({ error: 'Monto inválido.' });
@@ -728,8 +739,16 @@ router.post('/wallet/withdraw', authMiddleware, async (req, res) => {
     }
 
     const wallet = rows[0];
-    const minCop = parseInt(await getConfig('retiro_demanda_min_cop', '50000'));
-    const diasMin = parseInt(await getConfig('retiro_demanda_dias', '3'));
+    const minCop = parseInt(await getConfig('retiro_demanda_min_cop', '100000'));
+    const diasMin = parseInt(await getConfig('retiro_demanda_dias', '7'));
+    const esAnticipado = tipoOrigen === 'DEMANDA';
+    const diasCiclo = tipoOrigen === 'QUINCENA' ? 15 : tipoOrigen === 'MENSUAL' ? 30 : diasMin;
+    const costoFijo = parseFloat(await getConfig('retiro_costo_fijo_cop', '1849'));
+    const costoPct = parseFloat(await getConfig('retiro_costo_pct', '0.4'));
+    // El costo de la dispersión anticipada lo asume el prestador (D-GL-024).
+    const costoRetiro = esAnticipado
+      ? Math.round(costoFijo + (montoSolicitado * costoPct) / 100)
+      : 0;
 
     if (wallet.retiros_pausados) {
       await client.query('ROLLBACK');
@@ -744,11 +763,14 @@ router.post('/wallet/withdraw', authMiddleware, async (req, res) => {
       });
     }
 
-    if (montoSolicitado < minCop) {
+    // El mínimo aplica SOLO al anticipado: el retiro del ciclo no tiene más
+    // mínimo que un monto positivo (D-GL-024).
+    if (esAnticipado && montoSolicitado < minCop) {
       await client.query('ROLLBACK');
       return res.status(400).json({
-        error: `El monto mínimo de retiro es $${minCop.toLocaleString('es-CO')} COP.`,
-        minimo: minCop
+        error: `El retiro anticipado exige un mínimo de $${minCop.toLocaleString('es-CO')} COP.`,
+        minimo: minCop,
+        accion: 'ESPERAR_CICLO'
       });
     }
 
@@ -760,36 +782,34 @@ router.post('/wallet/withdraw', authMiddleware, async (req, res) => {
       });
     }
 
-    if (wallet.ultimo_retiro_at) {
+    // El espaciado es del ciclo, no del anticipado: adelantar es potestativo y
+    // se paga con la tarifa de dispersión.
+    if (!esAnticipado && wallet.ultimo_retiro_at) {
       const diasTranscurridos = (Date.now() - new Date(wallet.ultimo_retiro_at)) / (1000 * 60 * 60 * 24);
-      if (diasTranscurridos < diasMin) {
-        const proximaFecha = new Date(new Date(wallet.ultimo_retiro_at).getTime() + diasMin * 24 * 60 * 60 * 1000);
+      if (diasTranscurridos < diasCiclo) {
+        const proximaFecha = new Date(new Date(wallet.ultimo_retiro_at).getTime() + diasCiclo * 24 * 60 * 60 * 1000);
         await client.query('ROLLBACK');
         return res.status(429).json({
-          error: `Solo puedes retirar una vez cada ${diasMin} días.`,
-          proxima_fecha: proximaFecha
+          error: `Tu ciclo de retiro es cada ${diasCiclo} días. Puedes adelantarlo con la tarifa de dispersión.`,
+          proxima_fecha: proximaFecha,
+          accion: 'ADELANTAR_CON_COSTO'
         });
       }
     }
 
-    const { rows: disputasActivas } = await client.query(
-      `SELECT COUNT(*) FROM disputas d
-       JOIN bookings b ON d.booking_id = b.id
-       WHERE b.provider_id = $1 AND d.estado IN ('ABIERTA','EN_REVISION')`,
-      [req.user.id]
-    );
-    if (parseInt(disputasActivas[0].count) > 0) {
-      await client.query('ROLLBACK');
-      return res.status(409).json({
-        error: 'Tienes disputas activas. Los retiros se reanudan al resolver todas las disputas.'
-      });
-    }
+    // D-GL-023: una disputa congela el pago del servicio disputado, no todos los
+    // retiros del prestador. El dinero en disputa ya está separado en
+    // `saldo_en_disputa` al abrir el caso, así que no se bloquea el saldo maduro.
 
     const retiroResult = await client.query(
-      `INSERT INTO retiros (provider_id, wallet_id, monto, tipo_origen, numero_cuenta, banco)
-       VALUES ($1, $2, $3, 'DEMANDA', $4, $5)
+      `INSERT INTO retiros (provider_id, wallet_id, monto, tipo_origen, numero_cuenta, banco, metadata)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING *`,
-      [req.user.id, wallet.id, montoSolicitado, wallet.numero_cuenta, wallet.banco]
+      [
+        req.user.id, wallet.id, montoSolicitado, tipoOrigen,
+        wallet.numero_cuenta, wallet.banco,
+        JSON.stringify({ anticipado: esAnticipado, costo_retiro: costoRetiro, costo_pct: costoPct })
+      ]
     );
     const retiro = retiroResult.rows[0];
 
@@ -814,8 +834,14 @@ router.post('/wallet/withdraw', authMiddleware, async (req, res) => {
       [
         req.user.id, montoSolicitado,
         parseFloat(walletActualizado.rows[0].saldo_total),
-        `Retiro por demanda solicitado`,
-        JSON.stringify({ retiro_id: retiro.id, cuenta: wallet.numero_cuenta, banco: wallet.banco })
+        esAnticipado ? 'Retiro anticipado solicitado' : `Retiro del ciclo ${tipoOrigen} solicitado`,
+        JSON.stringify({
+          retiro_id: retiro.id,
+          cuenta: wallet.numero_cuenta,
+          banco: wallet.banco,
+          tipo_origen: tipoOrigen,
+          costo_retiro: costoRetiro
+        })
       ]
     );
 
@@ -824,16 +850,20 @@ router.post('/wallet/withdraw', authMiddleware, async (req, res) => {
       accion: 'RETIRO_SOLICITADO',
       tabla: 'retiros',
       registroId: retiro.id,
-      datosDespues: { monto: montoSolicitado, tipo: 'DEMANDA' },
+      datosDespues: { monto: montoSolicitado, tipo: tipoOrigen, costo_retiro: costoRetiro },
       ip: req.ip
     });
 
     await client.query('COMMIT');
 
+    // En el retiro anticipado el costo de la dispersión lo asume el prestador:
+    // se debita el monto completo del saldo y se transfiere el neto.
+    const montoADispersar = Math.max(0, montoSolicitado - costoRetiro);
+
     wompiService.crearPayout({
       retiroId: retiro.id,
       providerId: req.user.id,
-      amount: montoSolicitado,
+      amount: montoADispersar,
       numeroCuenta: wallet.numero_cuenta,
       banco: wallet.banco,
       automatico: false
@@ -841,9 +871,14 @@ router.post('/wallet/withdraw', authMiddleware, async (req, res) => {
 
     res.json({
       ok: true,
-      mensaje: 'Retiro solicitado exitosamente. El dinero llegará en 1-2 días hábiles.',
+      mensaje: esAnticipado
+        ? `Retiro anticipado solicitado. Recibirás $${montoADispersar.toLocaleString('es-CO')} (costo de dispersión $${costoRetiro.toLocaleString('es-CO')}).`
+        : 'Retiro del ciclo solicitado. Llega en 1-2 días hábiles, sin costo.',
       retiro_id: retiro.id,
       monto: montoSolicitado,
+      costo_retiro: costoRetiro,
+      monto_neto: montoADispersar,
+      tipo_origen: tipoOrigen,
       cuenta: `${wallet.banco} ****${wallet.numero_cuenta?.slice(-4)}`,
       estado: 'PROCESANDO'
     });

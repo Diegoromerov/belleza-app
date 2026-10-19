@@ -173,9 +173,11 @@ describe('FASE C · t_fix_backend_04 — Montos float vs centavos enteros (payme
       expect(fuente).toMatch(/require\(\s*['"]\.\.\/utils\/money['"]\s*\)/);
     });
 
-    test('invoca money.calcularRetenciones para las retenciones del prestador', () => {
+    test('D-GL-023: no aplica retenciones al prestador (retefuente, reteICA y reteIVA eliminadas)', () => {
       const fuente = fuenteRuta();
-      expect(fuente).toMatch(/calcularRetenciones\s*\(/);
+      expect(fuente).not.toMatch(/calcularRetenciones\s*\(/);
+      expect(fuente).toMatch(/retencionFuente\s*=\s*0/);
+      expect(fuente).toMatch(/retencionIva\s*=\s*0/);
     });
 
     test('elimina el redondeo flotante Math.round(x * 100) / 100 de las retenciones', () => {
