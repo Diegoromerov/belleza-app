@@ -11,6 +11,18 @@ import 'auth_service.dart';
 import 'location_service.dart';
 import '../models/biometric_result.dart';
 
+/// Y-F2: el backend rechazó la foto por calidad (HTTP 422). Los motivos vienen
+/// medidos (oscuridad, desenfoque, resolución), no son texto genérico.
+class CaptureRejectedException implements Exception {
+  final List<String> reasons;
+  CaptureRejectedException(this.reasons);
+
+  @override
+  String toString() => reasons.isEmpty
+      ? 'La foto no cumple los requisitos para medir piel.'
+      : reasons.join(' ');
+}
+
 class BiometricService {
   /// Versión del texto de consentimiento que la pantalla muestra al usuario.
   /// Debe coincidir con `BIOMETRIC_CONSENT_VERSION` del backend
@@ -156,6 +168,11 @@ class BiometricService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         return jsonDecode(response.body);
       }
+      // Y-F2: la captura fue rechazada por calidad. Se propaga el motivo medido
+      // (oscuridad, desenfoque, resolución) en vez de un HTTP 422 opaco.
+      if (response.statusCode == 422) {
+        throw CaptureRejectedException(_captureReasons(response.body));
+      }
       // A360-2026-09-22/C-04: antes se devolvían aquí datos biométricos
       // inventados (glowScore 84, bioAge 26…) ante cualquier respuesta no-2xx.
       // Nunca se fabrican resultados: el error se propaga.
@@ -165,8 +182,34 @@ class BiometricService {
       );
     } catch (e) {
       debugPrint('❌ [BiometricService] Análisis biométrico fallido: $e');
+      // El rechazo de captura conserva sus motivos: envolverlo en un Exception
+      // genérico los borraría y el usuario volvería a ver un error opaco.
+      if (e is CaptureRejectedException) rethrow;
       throw Exception('No se pudo completar el análisis biométrico: $e');
     }
+  }
+
+  /// Motivos que midió el backend al rechazar la foto (Y-F2).
+  static List<String> _captureReasons(String body) {
+    try {
+      final decoded = jsonDecode(body);
+      if (decoded is Map) {
+        final capture = decoded['capture'];
+        if (capture is Map) {
+          final reasons = capture['reasons'];
+          if (reasons is List) {
+            return reasons
+                .whereType<Map>()
+                .map((r) => r['message']?.toString() ?? '')
+                .where((m) => m.isNotEmpty)
+                .toList();
+          }
+        }
+      }
+    } catch (_) {
+      // Cuerpo no-JSON: se cae al mensaje genérico de la excepción.
+    }
+    return const [];
   }
 
   /// Resultado de demostración. SÓLO puede invocarse desde un punto de entrada

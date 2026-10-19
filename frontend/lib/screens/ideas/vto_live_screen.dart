@@ -40,7 +40,9 @@ class _VtoLiveScreenState extends State<VtoLiveScreen> {
           .whereType<Map<String, dynamic>>()
           .toList();
     } else {
-      final subtono = widget.biometricResult.face?.subtono ?? 'neutro';
+      final subtono = (widget.biometricResult.face?.subtonoMedido ?? false)
+          ? widget.biometricResult.face!.subtono
+          : 'neutro';
       final isWarm = subtono.toLowerCase().contains('cál');
       _recommendedLipsticks = isWarm
           ? [
@@ -72,7 +74,9 @@ class _VtoLiveScreenState extends State<VtoLiveScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final subtono = widget.biometricResult.face?.subtono ?? 'neutro';
+    final subtono = (widget.biometricResult.face?.subtonoMedido ?? false)
+          ? widget.biometricResult.face!.subtono
+          : 'neutro';
 
     return Scaffold(
       backgroundColor: Colors.black,

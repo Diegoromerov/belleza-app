@@ -55,6 +55,14 @@ class ScanSessionService {
         subtono: faceScores.subtono,
         bioAge: faceScores.bioAge,
       },
+      // Y-F2/Y-F3: el tipo de piel y la base del subtono vivían solo en memoria, así que
+      // el historial no podía explicar de dónde salía el valor. Se guardan con la sesión.
+      skin: {
+        pielTipo: faceScores.pielTipo || null,
+        subtono: faceScores.subtono ?? null,
+        subtonoFuente: faceScores.subtonoFuente || 'no_medido',
+        medicion: faceScores.subtonoMedicion || null,
+      },
       masks: faceScores.masks || [],
     };
 

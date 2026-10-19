@@ -42,7 +42,9 @@ class _NailVtoScreenState extends State<NailVtoScreen> {
           .whereType<Map<String, dynamic>>()
           .toList();
     } else {
-      final subtono = widget.biometricResult.face?.subtono ?? 'neutro';
+      final subtono = (widget.biometricResult.face?.subtonoMedido ?? false)
+          ? widget.biometricResult.face!.subtono
+          : 'neutro';
       final isWarm = subtono.toLowerCase().contains('cál');
       _recommendedNails = isWarm
           ? [
