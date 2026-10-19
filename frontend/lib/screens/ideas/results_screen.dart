@@ -380,6 +380,34 @@ class _ResultsScreenState extends State<ResultsScreen> {
   // ---------------------------------------------------------------------
   // Hero: anillo de score con la edad biométrica como hallazgo principal
   // ---------------------------------------------------------------------
+  /// Y-F3: una línea con el veredicto contra el baseline propio.
+  /// Devuelve null cuando no hubo comparación: mostrar "sin cambios" cuando en
+  /// realidad no se comparó sería una afirmación falsa.
+  String? _deltaLabel(BiometricResult result) {
+    final verdict = result.deltaVerdict;
+    if (verdict == null) return null;
+
+    final glow = result.deltaGlowScore;
+    final detalle = (glow != null && glow.abs() >= 1)
+        ? ' (Glow ${glow > 0 ? '+' : ''}${glow.toStringAsFixed(0)})'
+        : '';
+
+    switch (verdict) {
+      case 'MEJORO':
+        return 'Mejoró frente a tu escaneo anterior$detalle';
+      case 'EMPEORO':
+        return 'Empeoró frente a tu escaneo anterior$detalle';
+      case 'MIXTO':
+        return 'Cambió: unas métricas mejor, otras peor$detalle';
+      case 'SIN_CAMBIO':
+        return 'Sin cambios medibles frente a tu escaneo anterior';
+      case 'SIN_BASELINE':
+        return 'Primer escaneo: aún no hay con qué comparar';
+      default:
+        return null;
+    }
+  }
+
   Widget _buildHero(FaceScores face) {
     final hydrationFraction = (face.hydration.clamp(0, 100)) / 100;
 
@@ -428,7 +456,9 @@ class _ResultsScreenState extends State<ResultsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Piel hidratada, tono ${face.subtono}',
+                face.subtonoMedido
+                    ? 'Tono ${face.subtono} · piel ${face.pielTipo ?? 'sin dato'}'
+                    : 'Piel ${face.pielTipo ?? 'sin dato'} · subtono sin medir',
                 style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
@@ -443,6 +473,19 @@ class _ResultsScreenState extends State<ResultsScreen> {
                   color: _PassportColors.textEyebrow,
                 ),
               ),
+              // Y-F3: veredicto del cambio contra el escaneo anterior. Solo se muestra
+              // cuando el backend pudo comparar; nunca se inventa una mejora.
+              if (_deltaLabel(widget.result) != null) ...[
+                const SizedBox(height: 2),
+                Text(
+                  _deltaLabel(widget.result)!,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: _PassportColors.textAccent,
+                  ),
+                ),
+              ],
             ],
           ),
         ),

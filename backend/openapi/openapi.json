@@ -2219,6 +2219,22 @@
         "x-glowapp-documented": false
       }
     },
+    "/api/biometric/delta/latest": {
+      "get": {
+        "operationId": "getapi_biometric_delta_latest",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "GET /api/biometric/delta/latest (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "biometric"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
     "/api/biometric/profile/{userId}": {
       "delete": {
         "operationId": "deleteapi_biometric_profile_userId",
@@ -6489,8 +6505,8 @@
   ],
   "x-glowapp-contract": {
     "generator": "backend/src/openapi/buildOpenApi.js",
-    "operationsDiscovered": 292,
+    "operationsDiscovered": 293,
     "operationsDocumented": 16,
-    "routesMounted": 308
+    "routesMounted": 309
   }
 }

@@ -9,6 +9,7 @@ const deltaService = require('./delta.service');
 const scanComparisonService = require('./scanComparison.service');
 const openUV = require('../openUV');
 const logger = require('../../config/logger');
+const { BIOMETRIC_CONSENT_VERSION } = require('../../config/consentConfig');
 const { breakers } = require('../circuitBreakerService');
 
 class BiometricOrchestrator {
@@ -184,6 +185,12 @@ class BiometricOrchestrator {
       scanSessionId: scanSession.id || null,
       metricsCount: scanSession.metricsCount,
       delta,
+      // Y-F1b: el cliente necesita saber si autorizó con el texto vigente o con uno viejo.
+      consent: {
+        version: scanSession.consentVersion || null,
+        currentVersion: BIOMETRIC_CONSENT_VERSION,
+        outdated: scanSession.consentOutdated === true,
+      },
       face: faceScores,
       glowScore,
       dermoFamilies,
@@ -196,10 +203,13 @@ class BiometricOrchestrator {
   }
 
   calculateGlowScore(faceScores) {
-    const hydration = faceScores.hydration || 60;
-    const wrinkles = faceScores.wrinkles || 30;
-    const spots = faceScores.spots || 20;
-    const pores = faceScores.pores || 35;
+    // Un 0 medido es un dato, no un valor ausente: `|| 60` lo convertía en 60 y
+    // falseaba el GlowScore (y con Y-F3, el Δ contra el baseline).
+    const num = (value, fallback) => (Number.isFinite(value) ? value : fallback);
+    const hydration = num(faceScores.hydration, 60);
+    const wrinkles = num(faceScores.wrinkles, 30);
+    const spots = num(faceScores.spots, 20);
+    const pores = num(faceScores.pores, 35);
 
     const hydrationWeight = 0.35;
     const clarityWeight = 0.25;   // (100 - spots)
@@ -217,10 +227,11 @@ class BiometricOrchestrator {
   }
 
   getDermatologicalFamilies(faceScores) {
-    const pores = faceScores.pores || 35;
-    const spots = faceScores.spots || 20;
-    const wrinkles = faceScores.wrinkles || 30;
-    const hydration = faceScores.hydration || 60;
+    const num = (value, fallback) => (Number.isFinite(value) ? value : fallback);
+    const pores = num(faceScores.pores, 35);
+    const spots = num(faceScores.spots, 20);
+    const wrinkles = num(faceScores.wrinkles, 30);
+    const hydration = num(faceScores.hydration, 60);
 
     return {
       sebumPores: {

@@ -4,6 +4,7 @@ const express = require('express');
 const router = express.Router();
 const orchestrator = require('../services/biometric/orchestrator');
 const profileService = require('../services/biometric/profile.service');
+const scanComparisonService = require('../services/biometric/scanComparison.service');
 const { authMiddleware } = require('../middleware/auth');
 const idempotencyMiddleware = require('../middleware/idempotency');
 const biometricConsentGuard = require('../middleware/biometricConsentGuard');
@@ -104,6 +105,7 @@ router.post('/analyze', authMiddleware, idempotencyMiddleware, validateBiometric
         keyIngredients: result.keyIngredients,
         vtoTones: result.vtoTones,
         delta: result.delta,
+        consent: result.consent,
       },
       createdAt: result.createdAt,
     });
@@ -129,6 +131,34 @@ router.post('/analyze', authMiddleware, idempotencyMiddleware, validateBiometric
       error: 'INTERNAL_ERROR',
       message: 'Error al procesar el análisis biométrico. Por favor intenta nuevamente.',
     });
+  }
+});
+
+/**
+ * GET /api/biometric/delta/latest
+ * Y-F3: última comparación del usuario contra su propio baseline.
+ * No calcula: lee la comparación ya persistida cuando se hizo el escaneo.
+ */
+router.get('/delta/latest', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'UNAUTHORIZED', message: 'Se requiere una sesión autenticada.' });
+    }
+
+    const latest = await scanComparisonService.getLatest(parseInt(userId, 10));
+    if (!latest) {
+      return res.status(404).json({
+        success: false,
+        error: 'NO_COMPARISONS',
+        message: 'Todavía no hay comparaciones: se necesitan al menos dos escaneos.',
+      });
+    }
+
+    res.json({ success: true, delta: latest });
+  } catch (error) {
+    console.error('❌ Error en GET /api/biometric/delta/latest:', error.message);
+    res.status(500).json({ success: false, error: 'INTERNAL_ERROR', message: 'No se pudo obtener la comparación.' });
   }
 });
 

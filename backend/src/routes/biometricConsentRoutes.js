@@ -12,6 +12,7 @@ const {
   BIOMETRIC_CONSENT_VERSION,
   getActiveProcessors,
   isSupportedConsentVersion,
+  isOutdatedConsent,
 } = require('../config/consentConfig');
 const { 
   getUserConsents, 
@@ -89,6 +90,10 @@ router.get('/biometric/:consentType', authMiddleware, async (req, res) => {
         allowed,
         reason,
         code,
+        // Y-F1b: la versión vigente viaja con la respuesta para que el cliente pueda
+        // pedir re-consentimiento sin adivinar el número.
+        current_version: BIOMETRIC_CONSENT_VERSION,
+        outdated: consent ? isOutdatedConsent(consent.version_terms) : false,
         consent: consent ? {
           id: consent.id,
           granted: consent.granted,
