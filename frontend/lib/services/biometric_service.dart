@@ -12,6 +12,12 @@ import 'location_service.dart';
 import '../models/biometric_result.dart';
 
 class BiometricService {
+  /// Versión del texto de consentimiento que la pantalla muestra al usuario.
+  /// Debe coincidir con `BIOMETRIC_CONSENT_VERSION` del backend
+  /// (`backend/src/config/consentConfig.js`); si no coincide, el análisis queda
+  /// marcado como autorizado con una versión desactualizada.
+  static const String consentVersion = '2.0';
+
   static Future<String> getBaseUrl() async {
     await ApiService.ensureBaseUrl();
     return ApiService.baseUrl;
@@ -33,7 +39,7 @@ class BiometricService {
       body: jsonEncode({
         'consent_type': 'facial_analysis',
         'purpose': 'Análisis facial y recomendaciones personalizadas de cuidado de piel.',
-        'version_terms': '1.0',
+        'version_terms': consentVersion,
       }),
     );
 

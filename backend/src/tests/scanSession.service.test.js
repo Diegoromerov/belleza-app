@@ -5,6 +5,11 @@
 //   * metrics_count coincide con el número real de métricas,
 //   * las acciones pedidas/ausentes quedan en claro para auditar la llamada,
 //   * un fallo de escritura no rompe la respuesta (tolerante) salvo que se pida lo contrario.
+//
+// Y-F1b — además registra con qué versión del consentimiento se autorizó:
+//   * 2.0 vigente => consent_outdated = false,
+//   * 1.0 anterior => consent_outdated = true,
+//   * sin consentimiento legible => versión null y marcado como desactualizado.
 
 process.env.BIOMETRIC_ENCRYPTION_KEY = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
 
@@ -45,13 +50,33 @@ const FACE_SCORES = {
   masks: [{ key: 'hd_moisture', url: null, name: 'hd_moisture_output.png' }],
 };
 
+/**
+ * saveScan hace dos consultas: (1) versión del consentimiento, (2) INSERT.
+ * Se encolan en ese orden para que cada test controle ambas.
+ */
+function mockQueries({
+  consentVersion = '2.0',
+  consentError = null,
+  insertRow = { id: 42, captured_at: '2026-10-19T12:00:00.000Z' },
+  insertError = null,
+} = {}) {
+  pool.query.mockImplementationOnce(async () => {
+    if (consentError) throw consentError;
+    return { rows: consentVersion === null ? [] : [{ version_terms: consentVersion }] };
+  });
+  pool.query.mockImplementationOnce(async () => {
+    if (insertError) throw insertError;
+    return { rows: [insertRow] };
+  });
+}
+
 describe('ScanSessionService — persistencia cifrada (Y-F1)', () => {
   beforeEach(() => {
     pool.query.mockReset();
   });
 
   test('inserta metrics_count real y cifra el bloque de métricas', async () => {
-    pool.query.mockResolvedValueOnce({ rows: [{ id: 42, captured_at: '2026-10-19T12:00:00.000Z' }] });
+    mockQueries();
 
     const result = await scanSessionService.saveScan({ userId: 7, faceScores: FACE_SCORES });
 
@@ -59,8 +84,8 @@ describe('ScanSessionService — persistencia cifrada (Y-F1)', () => {
     expect(result.id).toBe(42);
     expect(result.metricsCount).toBe(Object.keys(FACE_SCORES.metrics).length);
 
-    const [, params] = pool.query.mock.calls[0];
-    const [userId, taskId, encrypted, metricsCount, requestedActions, missing] = params;
+    const [, params] = pool.query.mock.calls[1];
+    const [userId, taskId, encrypted, metricsCount, requestedActions, missing, , , consentVersion, consentOutdated] = params;
 
     expect(userId).toBe(7);
     expect(taskId).toBe('task-777');
@@ -80,10 +105,14 @@ describe('ScanSessionService — persistencia cifrada (Y-F1)', () => {
     // Metadatos de auditoría en claro
     expect(JSON.parse(requestedActions)).toHaveLength(5);
     expect(JSON.parse(missing)).toEqual(['hd_tear_trough']);
+
+    // Y-F1b: versión del consentimiento registrada en el escaneo
+    expect(consentVersion).toBe('2.0');
+    expect(consentOutdated).toBe(false);
   });
 
   test('un fallo de escritura no rompe la respuesta (tolerante por defecto)', async () => {
-    pool.query.mockRejectedValueOnce(new Error('connection reset'));
+    mockQueries({ insertError: new Error('connection reset') });
 
     const result = await scanSessionService.saveScan({ userId: 7, faceScores: FACE_SCORES });
 
@@ -92,7 +121,7 @@ describe('ScanSessionService — persistencia cifrada (Y-F1)', () => {
   });
 
   test('con tolerante:false propaga el error', async () => {
-    pool.query.mockRejectedValueOnce(new Error('permission denied'));
+    mockQueries({ insertError: new Error('permission denied') });
 
     await expect(
       scanSessionService.saveScan({ userId: 7, faceScores: FACE_SCORES, tolerante: false })
@@ -127,6 +156,8 @@ describe('ScanSessionService — persistencia cifrada (Y-F1)', () => {
         missing_metrics: [],
         geometry: null,
         quality: null,
+        consent_version: '2.0',
+        consent_outdated: false,
         captured_at: '2026-10-19T12:00:00.000Z',
       }],
     });
@@ -135,5 +166,67 @@ describe('ScanSessionService — persistencia cifrada (Y-F1)', () => {
 
     expect(scan.payload.metrics.hd_moisture.ui_score).toBe(70);
     expect(scan.metricsCount).toBe(Object.keys(FACE_SCORES.metrics).length);
+    expect(scan.consentVersion).toBe('2.0');
+    expect(scan.consentOutdated).toBe(false);
+  });
+});
+
+describe('ScanSessionService — versión del consentimiento (Y-F1b)', () => {
+  beforeEach(() => {
+    pool.query.mockReset();
+  });
+
+  const findInsertParams = () => {
+    const call = pool.query.mock.calls.find(([sql]) => sql.includes('INSERT INTO biometric_scan_sessions'));
+    return call ? call[1] : null;
+  };
+
+  test('consentimiento 2.0 (vigente) se guarda sin marcar', async () => {
+    mockQueries({ consentVersion: '2.0' });
+
+    const result = await scanSessionService.saveScan({ userId: 7, faceScores: FACE_SCORES });
+
+    expect(result.consentVersion).toBe('2.0');
+    expect(result.consentOutdated).toBe(false);
+
+    const params = findInsertParams();
+    expect(params[8]).toBe('2.0');
+    expect(params[9]).toBe(false);
+  });
+
+  test('consentimiento 1.0 (anterior) queda marcado como desactualizado', async () => {
+    mockQueries({ consentVersion: '1.0' });
+
+    const result = await scanSessionService.saveScan({ userId: 7, faceScores: FACE_SCORES });
+
+    expect(result.consentVersion).toBe('1.0');
+    expect(result.consentOutdated).toBe(true);
+
+    const params = findInsertParams();
+    expect(params[8]).toBe('1.0');
+    expect(params[9]).toBe(true);
+  });
+
+  test('sin consentimiento legible no inventa versión y marca el escaneo', async () => {
+    mockQueries({ consentVersion: null });
+
+    const result = await scanSessionService.saveScan({ userId: 7, faceScores: FACE_SCORES });
+
+    expect(result.consentVersion).toBeNull();
+    expect(result.consentOutdated).toBe(true);
+
+    const params = findInsertParams();
+    expect(params[8]).toBeNull();
+    expect(params[9]).toBe(true);
+  });
+
+  test('si la consulta del consentimiento falla, el escaneo se guarda igual', async () => {
+    mockQueries({ consentError: new Error('relation does not exist') });
+
+    const result = await scanSessionService.saveScan({ userId: 7, faceScores: FACE_SCORES });
+
+    expect(result.persisted).toBe(true);
+    expect(result.consentVersion).toBeNull();
+    expect(result.consentOutdated).toBe(true);
   });
 });

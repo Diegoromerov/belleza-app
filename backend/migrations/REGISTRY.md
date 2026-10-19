@@ -227,3 +227,19 @@ crear el archivo y quedó en verde.
 `requested_actions`/`missing_metrics` en `JSONB` y rechaza `metrics_encrypted NULL`.
 Pendiente: aplicación en la base real, que ocurre sola en el siguiente arranque del
 runner (`schema_migrations` la registra por nombre de archivo).
+
+---
+
+## 3. Y-F1b usa `101`: versión del consentimiento en el escaneo
+
+**Archivo:** `101_add_consent_version_to_scan_sessions.sql`
+**Qué crea:** dos columnas en `biometric_scan_sessions` — `consent_version`
+(`version_terms` vigente al escanear) y `consent_outdated` (el escaneo se autorizó con
+un texto anterior). No toca `biometric_consents`: esa tabla ya tenía `version_terms`
+desde la `037`, lo que faltaba era usarlo.
+**Por qué 101:** `100` quedó ocupado por Y-F1 en esta misma rama; el guard de
+numeración se ejecutó después y siguió en verde.
+**Verificación:** aplicada sobre Postgres en memoria después de la `100`; un `INSERT`
+con `consent_version '1.0'` devuelve `consent_outdated = true`, otro sin versión deja
+`NULL`, y re-aplicarla no falla (`ADD COLUMN IF NOT EXISTS`). Pendiente: base real, en
+el siguiente arranque del runner.

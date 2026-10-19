@@ -14,6 +14,9 @@
 const { pool } = require('../../config/db');
 const biometricCryptoService = require('../biometricCryptoService');
 const logger = require('../../config/logger');
+const { BIOMETRIC_CONSENT_VERSION, isOutdatedConsent } = require('../../config/consentConfig');
+
+const CONSENT_TYPE = 'facial_analysis';
 
 class ScanSessionService {
   /**
@@ -57,12 +60,18 @@ class ScanSessionService {
 
     const encrypted = biometricCryptoService.encrypt(payload);
 
+    // Y-F1b: con qué texto autorizó el usuario. Si la consulta falla no se bloquea el
+    // guardado: se registra como versión desconocida y el escaneo queda marcado.
+    const consentVersion = await this._getConsentVersion(userId);
+    const consentOutdated = isOutdatedConsent(consentVersion);
+
     try {
       const result = await pool.query(
         `INSERT INTO biometric_scan_sessions
            (user_id, provider, provider_task_id, metrics_encrypted, metrics_count,
-            requested_actions, missing_metrics, geometry, quality)
-         VALUES ($1, 'youcam', $2, $3, $4, $5::jsonb, $6::jsonb, $7::jsonb, $8::jsonb)
+            requested_actions, missing_metrics, geometry, quality,
+            consent_version, consent_outdated)
+         VALUES ($1, 'youcam', $2, $3, $4, $5::jsonb, $6::jsonb, $7::jsonb, $8::jsonb, $9, $10)
          RETURNING id, captured_at`,
         [
           userId,
@@ -73,11 +82,20 @@ class ScanSessionService {
           JSON.stringify(payload.missing),
           geometry ? JSON.stringify(geometry) : null,
           quality ? JSON.stringify(quality) : null,
+          consentVersion,
+          consentOutdated,
         ]
       );
 
       const row = result.rows[0];
-      return { persisted: true, id: row.id, capturedAt: row.captured_at, metricsCount };
+      return {
+        persisted: true,
+        id: row.id,
+        capturedAt: row.captured_at,
+        metricsCount,
+        consentVersion,
+        consentOutdated,
+      };
     } catch (error) {
       logger.error('No se pudo persistir la sesión de escaneo biométrico', {
         userId,
@@ -85,7 +103,30 @@ class ScanSessionService {
         error: error.message,
       });
       if (!tolerante) throw error;
-      return { persisted: false, metricsCount, reason: error.message };
+      return { persisted: false, metricsCount, consentVersion, consentOutdated, reason: error.message };
+    }
+  }
+
+  /**
+   * `version_terms` del consentimiento facial vigente. Devuelve null si no hay
+   * consentimiento legible: eso marca el escaneo como desactualizado en vez de
+   * inventar la versión vigente.
+   */
+  async _getConsentVersion(userId) {
+    try {
+      const result = await pool.query(
+        `SELECT version_terms
+           FROM biometric_consents
+          WHERE user_id = $1 AND consent_type = $2
+            AND granted = TRUE AND revoked_at IS NULL
+          ORDER BY granted_at DESC NULLS LAST
+          LIMIT 1`,
+        [userId, CONSENT_TYPE]
+      );
+      return result.rows?.[0]?.version_terms || null;
+    } catch (error) {
+      logger.warn('No se pudo leer la versión del consentimiento biométrico', { userId, error: error.message });
+      return null;
     }
   }
 
@@ -93,7 +134,8 @@ class ScanSessionService {
   async getScan(id) {
     const result = await pool.query(
       `SELECT id, user_id, provider, provider_task_id, metrics_encrypted, metrics_count,
-              requested_actions, missing_metrics, geometry, quality, captured_at
+              requested_actions, missing_metrics, geometry, quality,
+              consent_version, consent_outdated, captured_at
          FROM biometric_scan_sessions WHERE id = $1`,
       [id]
     );
@@ -110,6 +152,9 @@ class ScanSessionService {
       missing: row.missing_metrics,
       geometry: row.geometry,
       quality: row.quality,
+      consentVersion: row.consent_version,
+      consentOutdated: row.consent_outdated,
+      consentVersionCurrent: BIOMETRIC_CONSENT_VERSION,
       capturedAt: row.captured_at,
       payload: biometricCryptoService.decrypt(row.metrics_encrypted),
     };
