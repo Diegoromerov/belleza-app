@@ -289,7 +289,7 @@ router.post('/bookings/:id/confirm-otp', authMiddleware, async (req, res) => {
     );
 
     await client.query(
-      `UPDATE bookings SET estado = 'COMPLETADA', payment_status = 'paid' WHERE id = $1`,
+      `UPDATE bookings SET estado = 'COMPLETADA', payment_status = 'paid', completed_at = NOW() WHERE id = $1`,
       [id]
     );
 
@@ -968,18 +968,28 @@ router.post('/disputes', authMiddleware, async (req, res) => {
     const rolActor = userRow.rows[0].rol;
 
     if (rolActor === 'CLIENTE' && booking.estado === 'COMPLETADA') {
-      const ventanaHoras = parseInt(await getConfig('disputa_ventana_horas', '2'));
-      const otpResult = await client.query(
-        `SELECT usado_at FROM otp_validaciones WHERE booking_id = $1 AND estado = 'USADO'`,
-        [booking_id]
-      );
-      if (otpResult.rows.length && otpResult.rows[0].usado_at) {
-        const horasTranscurridas = (Date.now() - new Date(otpResult.rows[0].usado_at)) / (1000 * 60 * 60);
+      // D-GL-023: la ventana es de 48 h desde la finalización del servicio, no
+      // desde el uso del OTP (que podía ocurrir minutos después).
+      const ventanaHoras = parseInt(await getConfig('disputa_ventana_horas', '48'));
+
+      let finServicio = booking.completed_at ? new Date(booking.completed_at) : null;
+      if (!finServicio) {
+        const otpResult = await client.query(
+          `SELECT usado_at FROM otp_validaciones WHERE booking_id = $1 AND estado = 'USADO'`,
+          [booking_id]
+        );
+        if (otpResult.rows.length && otpResult.rows[0].usado_at) {
+          finServicio = new Date(otpResult.rows[0].usado_at);
+        }
+      }
+
+      if (finServicio) {
+        const horasTranscurridas = (Date.now() - finServicio.getTime()) / (1000 * 60 * 60);
         if (horasTranscurridas > ventanaHoras) {
           await client.query('ROLLBACK');
           return res.status(409).json({
-            error: `La ventana de disputa (${ventanaHoras}h post-confirmación) ha expirado.`,
-            usado_at: otpResult.rows[0].usado_at
+            error: `La ventana de disputa (${ventanaHoras} h desde la finalización) ha expirado.`,
+            finalizado_at: finServicio.toISOString()
           });
         }
       }
@@ -994,12 +1004,14 @@ router.post('/disputes', authMiddleware, async (req, res) => {
       return res.status(409).json({ error: 'Ya existe una disputa abierta para esta reserva.' });
     }
 
+    const slaDias = parseInt(await getConfig('disputa_sla_dias', '5'));
+
     const disputaResult = await client.query(
       `INSERT INTO disputas
-         (booking_id, iniciado_por, tipo_actor, tipo, descripcion, evidencia_urls, monto_disputado)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+         (booking_id, iniciado_por, tipo_actor, tipo, descripcion, evidencia_urls, monto_disputado, sla_limite_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW() + ($8 || ' days')::interval)
        RETURNING *`,
-      [booking_id, req.user.id, rolActor, tipo, descripcion, evidencia_urls || [], booking.valor_bruto]
+      [booking_id, req.user.id, rolActor, tipo, descripcion, evidencia_urls || [], booking.valor_bruto, slaDias]
     );
 
     await client.query(
@@ -1040,7 +1052,7 @@ router.post('/disputes', authMiddleware, async (req, res) => {
 
     res.status(201).json({
       ok: true,
-      mensaje: 'Disputa registrada. Un agente la revisará en máximo 48 horas.',
+      mensaje: `Disputa registrada. El pago queda congelado y se resuelve en máximo ${slaDias} días.`,
       disputa: disputaResult.rows[0]
     });
   } catch (err) {

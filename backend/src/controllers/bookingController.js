@@ -477,6 +477,28 @@ exports.cancelBooking = async (req, res) => {
       return res.status(400).json({ error: 'No se puede cancelar una cita que ya ha sido completada' });
     }
 
+    // ── D-GL-023 · Política de cancelación por tramos ──────────────────────
+    // >24 h antes: se devuelve el 100%. Entre 2 y 24 h: se devuelve el 50% y el
+    // prestador conserva el 80% de lo cobrado. Con menos de 2 h o no-show: se
+    // cobra el 100%. Antes no existía ninguna de estas reglas: se cancelaba y no
+    // pasaba nada con el dinero.
+    const horasAntes = (new Date(booking.scheduled_at).getTime() - Date.now()) / (60 * 60 * 1000);
+    let tramo = 'MENOS_2H';
+    let porcentajeDevolucion = 0;
+
+    if (horasAntes >= 24) {
+      tramo = 'MAS_24H';
+      porcentajeDevolucion = 100;
+    } else if (horasAntes >= 2) {
+      tramo = 'ENTRE_2_Y_24H';
+      porcentajeDevolucion = 50;
+    }
+
+    const estabaPagada = booking.payment_status === 'paid';
+    const brutoReserva = Number(booking.valor_bruto) || 0;
+    const montoDevolucion = Math.round((brutoReserva * porcentajeDevolucion) / 100);
+    const montoCobrado = brutoReserva - montoDevolucion;
+
     // P0 DINERO #2 — reversión de stock al cancelar.
     // payBooking() y el webhook de Wompi descuentan el stock de los productos adicionales
     // cuando la cita pasa a pagada. Si la cita se cancela y ese stock no se devuelve, las
@@ -527,22 +549,262 @@ exports.cancelBooking = async (req, res) => {
       }
 
       booking.estado = 'CANCELADA';
+      booking.cancelado_por = 'CLIENTE';
+      booking.cancelado_at = new Date();
       await booking.save({ transaction: t });
+
+      // ── D-GL-023 · Asientos de la cancelación ────────────────────────────
+      if (estabaPagada) {
+        await sequelize.query(
+          `INSERT INTO reembolsos
+             (booking_id, client_id, monto, porcentaje_devolucion, tramo, motivo, estado)
+           VALUES (:bookingId, :clientId, :monto, :pct, :tramo, :motivo, 'PENDIENTE');`,
+          {
+            replacements: {
+              bookingId,
+              clientId,
+              monto: montoDevolucion,
+              pct: porcentajeDevolucion,
+              tramo,
+              motivo: `Cancelación del cliente con ${Math.max(0, horasAntes).toFixed(1)} h de anticipación`
+            },
+            type: sequelize.QueryTypes.INSERT,
+            transaction: t
+          }
+        );
+
+        // El prestador conserva el 80% de la parte cobrada, si la hay.
+        const netoPrestador = Math.round(montoCobrado * 0.8);
+        if (netoPrestador > 0) {
+          await sequelize.query(
+            `INSERT INTO provider_wallet (provider_id, saldo_disponible, total_ganado)
+             VALUES (:providerId, :neto, :neto)
+             ON CONFLICT (provider_id) DO UPDATE
+               SET saldo_disponible = provider_wallet.saldo_disponible + :neto,
+                   total_ganado      = provider_wallet.total_ganado + :neto,
+                   updated_at        = NOW();`,
+            {
+              replacements: { providerId: booking.provider_id, neto: netoPrestador },
+              type: sequelize.QueryTypes.INSERT,
+              transaction: t
+            }
+          );
+
+          await sequelize.query(
+            `INSERT INTO wallet_transactions
+               (provider_id, booking_id, tipo, monto, saldo_resultante, estado, descripcion, metadata)
+             SELECT :providerId, :bookingId, 'CREDITO_SERVICIO', :neto,
+                    saldo_disponible + saldo_pendiente, 'COMPLETADO',
+                    :desc, CAST(:meta AS jsonb)
+             FROM provider_wallet WHERE provider_id = :providerId;`,
+            {
+              replacements: {
+                providerId: booking.provider_id,
+                bookingId,
+                neto: netoPrestador,
+                desc: 'Compensación por cancelación tardía del cliente',
+                meta: JSON.stringify({ tramo, porcentaje_devolucion: porcentajeDevolucion, monto_cobrado: montoCobrado })
+              },
+              type: sequelize.QueryTypes.INSERT,
+              transaction: t
+            }
+          );
+        }
+      }
     });
 
     console.log(`❌ Cita ${bookingId} cancelada por el cliente ${clientId}`);
 
     res.json({
       success: true,
-      message: 'Cita cancelada exitosamente',
+      message: tramo === 'MAS_24H'
+        ? 'Cita cancelada. Se devuelve el 100% de lo pagado.'
+        : tramo === 'ENTRE_2_Y_24H'
+          ? 'Cita cancelada. Se devuelve el 50% de lo pagado.'
+          : 'Cita cancelada dentro de las 2 horas previas: no aplica devolución.',
       booking: {
         id: booking.id,
         status: booking.estado
+      },
+      cancelacion: {
+        tramo,
+        horas_anticipacion: Math.max(0, Number(horasAntes.toFixed(1))),
+        porcentaje_devolucion: porcentajeDevolucion,
+        monto_devolucion: estabaPagada ? montoDevolucion : 0,
+        monto_cobrado: estabaPagada ? montoCobrado : 0
       }
     });
 
   } catch (error) {
     console.error('❌ ERROR EN PATCH /api/bookings/:id/cancel:', { message: error.message, code: error.code });
+    res.status(500).json({ error: 'Error interno al cancelar la cita' });
+  }
+};
+
+// 🔹 Reprogramar cita (Cliente) — una sola vez y hasta 24 h antes
+// D-GL-023: la primera reprogramación es gratis; la segunda cuenta como
+// cancelación y el botón debe quedar bloqueado. El bloqueo vive aquí (API),
+// no solo en la interfaz.
+exports.rescheduleBooking = async (req, res) => {
+  try {
+    const bookingId = req.params.id;
+    const clientId = req.user.id;
+    const { scheduled_at } = req.body;
+
+    if (!scheduled_at) {
+      return res.status(400).json({ error: 'Debes indicar la nueva fecha y hora.' });
+    }
+
+    const booking = await Booking.findOne({ where: { id: bookingId, client_id: clientId } });
+
+    if (!booking) {
+      return res.status(404).json({ error: 'Cita no encontrada o sin permisos para reprogramarla.' });
+    }
+
+    if (!['PENDIENTE_PAGO', 'CONFIRMADA'].includes(booking.estado)) {
+      return res.status(409).json({
+        error: `No se puede reprogramar una cita en estado ${booking.estado}.`,
+        accion: 'CANCELAR'
+      });
+    }
+
+    const veces = Number(booking.reschedule_count) || 0;
+    if (veces >= 1) {
+      return res.status(409).json({
+        error: 'Ya usaste tu reprogramación gratuita. Una segunda reprogramación cuenta como cancelación.',
+        accion: 'CANCELAR',
+        reprogramaciones_usadas: veces
+      });
+    }
+
+    const horasAntes = (new Date(booking.scheduled_at).getTime() - Date.now()) / (60 * 60 * 1000);
+    if (horasAntes < 24) {
+      return res.status(409).json({
+        error: 'La reprogramación gratuita se cierra 24 horas antes del servicio.',
+        accion: 'CANCELAR',
+        horas_anticipacion: Number(Math.max(0, horasAntes).toFixed(1))
+      });
+    }
+
+    const nuevaFecha = new Date(scheduled_at);
+    if (isNaN(nuevaFecha.getTime()) || nuevaFecha.getTime() <= Date.now()) {
+      return res.status(400).json({ error: 'La nueva fecha debe ser futura.' });
+    }
+
+    booking.scheduled_at = nuevaFecha;
+    booking.reschedule_count = veces + 1;
+    await booking.save();
+
+    res.json({
+      success: true,
+      message: 'Cita reprogramada. Esta fue tu reprogramación gratuita.',
+      booking: {
+        id: booking.id,
+        scheduled_at: booking.scheduled_at,
+        reschedule_count: booking.reschedule_count
+      },
+      puede_reprogramar: false
+    });
+  } catch (error) {
+    console.error('❌ ERROR EN PATCH /api/bookings/:id/reschedule:', error.message);
+    res.status(500).json({ error: 'Error interno al reprogramar la cita' });
+  }
+};
+
+// 🔹 Cancelar cita por el prestador
+// D-GL-023: >24 h no hay sanción; <24 h cuenta en el score y tres en 90 días
+// suspenden los retiros. Antes el prestador simplemente no tenía forma de cancelar.
+exports.cancelBookingByProvider = async (req, res) => {
+  try {
+    const bookingId = req.params.id;
+    const providerId = req.user.id;
+
+    const booking = await Booking.findOne({ where: { id: bookingId, provider_id: providerId } });
+
+    if (!booking) {
+      return res.status(404).json({ error: 'Cita no encontrada o sin permisos para cancelarla.' });
+    }
+    if (booking.estado === 'CANCELADA') {
+      return res.status(400).json({ error: 'La cita ya está cancelada' });
+    }
+    if (booking.estado === 'COMPLETADA') {
+      return res.status(400).json({ error: 'No se puede cancelar una cita completada' });
+    }
+
+    const horasAntes = (new Date(booking.scheduled_at).getTime() - Date.now()) / (60 * 60 * 1000);
+    const tardia = horasAntes < 24;
+
+    booking.estado = 'CANCELADA';
+    booking.cancelado_por = 'PRESTADOR';
+    booking.cancelado_at = new Date();
+    await booking.save();
+
+    // Devolución íntegra al cliente: la falta es del prestador.
+    if (booking.payment_status === 'paid') {
+      await sequelize.query(
+        `INSERT INTO reembolsos
+           (booking_id, client_id, monto, porcentaje_devolucion, tramo, motivo, estado)
+         VALUES (:bookingId, :clientId, :monto, 100, 'CANCELA_PRESTADOR', :motivo, 'PENDIENTE');`,
+        {
+          replacements: {
+            bookingId,
+            clientId: booking.client_id,
+            monto: Number(booking.valor_bruto) || 0,
+            motivo: `Cancelación del prestador con ${Math.max(0, horasAntes).toFixed(1)} h de anticipación`
+          },
+          type: sequelize.QueryTypes.INSERT
+        }
+      );
+    }
+
+    let suspendido = false;
+    let cancelaciones90d = 0;
+
+    if (tardia) {
+      const { rows } = await pool.query(
+        `SELECT COUNT(*)::int AS total
+           FROM bookings
+          WHERE provider_id = $1
+            AND cancelado_por = 'PRESTADOR'
+            AND cancelado_at > NOW() - INTERVAL '90 days'`,
+        [providerId]
+      );
+      cancelaciones90d = rows[0]?.total || 0;
+
+      await pool.query(
+        `UPDATE perfiles_prestador
+            SET cancelaciones_tardias = cancelaciones_tardias + 1
+          WHERE id = $1`,
+        [providerId]
+      );
+
+      if (cancelaciones90d >= 3) {
+        suspendido = true;
+        await pool.query(
+          `INSERT INTO provider_wallet (provider_id, retiros_pausados)
+           VALUES ($1, TRUE)
+           ON CONFLICT (provider_id) DO UPDATE SET retiros_pausados = TRUE, updated_at = NOW()`,
+          [providerId]
+        );
+      }
+    }
+
+    res.json({
+      success: true,
+      message: tardia
+        ? 'Cita cancelada. Por cancelar con menos de 24 h se registró en tu historial.'
+        : 'Cita cancelada sin sanción.',
+      booking: { id: booking.id, status: booking.estado },
+      cancelacion: {
+        horas_anticipacion: Number(Math.max(0, horasAntes).toFixed(1)),
+        tardia,
+        cancelaciones_90d: cancelaciones90d,
+        retiros_suspendidos: suspendido,
+        devolucion_cliente: booking.payment_status === 'paid' ? Number(booking.valor_bruto) || 0 : 0
+      }
+    });
+  } catch (error) {
+    console.error('❌ ERROR EN PATCH /api/bookings/:id/cancel-provider:', error.message);
     res.status(500).json({ error: 'Error interno al cancelar la cita' });
   }
 };

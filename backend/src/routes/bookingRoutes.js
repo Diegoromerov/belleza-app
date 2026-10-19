@@ -21,6 +21,10 @@ router.patch('/bookings/:id/status', authMiddleware, pilaCheck, bookingControlle
 // 🔹 CANCELAR CITA
 router.patch('/bookings/:id/cancel', authMiddleware, bookingController.cancelBooking);
 
+// D-GL-023 — reprogramación única (bloqueo en API) y cancelación del prestador
+router.patch('/bookings/:id/reschedule', authMiddleware, bookingController.rescheduleBooking);
+router.patch('/bookings/:id/cancel-provider', authMiddleware, pilaCheck, bookingController.cancelBookingByProvider);
+
 // 🔹 SIMULAR PAGO CON WOMPI
 router.post('/bookings/:id/pay', authMiddleware, bookingController.payBooking);
 

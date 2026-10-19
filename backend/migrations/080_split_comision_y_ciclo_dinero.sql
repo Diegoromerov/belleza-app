@@ -76,7 +76,9 @@ VALUES
   ('retiro_demanda_min_cop',        '100000', 'Monto mínimo del retiro anticipado en COP'),
   ('retiro_demanda_dias',           '7',      'Días del ciclo estándar de retiro'),
   ('retiro_costo_fijo_cop',         '1849',   'Costo fijo de dispersión Wompi que asume el prestador en retiro anticipado'),
-  ('retiro_costo_pct',              '0.4',    'Porcentaje de dispersión Wompi que asume el prestador en retiro anticipado')
+  ('retiro_costo_pct',              '0.4',    'Porcentaje de dispersión Wompi que asume el prestador en retiro anticipado'),
+  ('disputa_ventana_horas',         '48',     'Ventana para abrir disputa después de completado el servicio'),
+  ('disputa_sla_dias',              '5',      'Días para resolver una disputa')
 ON CONFLICT (key) DO UPDATE
   SET value = EXCLUDED.value,
       descripcion = EXCLUDED.descripcion,
