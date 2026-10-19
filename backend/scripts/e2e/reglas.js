@@ -111,12 +111,22 @@ async function preparar() {
   creado.usuarios = [cli[0].id, pro[0].id];
   creado.perfil = pro[0].id;
 
+  // `active_start_hour` es `time` en producción y `integer` en bases donde
+  // `index.js` creó la columna al arrancar. El arnés tiene que servir en las dos.
+  const tipoHorario = (await q(
+    `SELECT data_type FROM information_schema.columns
+      WHERE table_name = 'perfiles_prestador' AND column_name = 'active_start_hour'`
+  ))[0]?.data_type || 'integer';
+  const esHora = String(tipoHorario).includes('time');
+  const inicio = esHora ? "'09:00'::time" : '9';
+  const fin = esHora ? "'19:00'::time" : '19';
+
   await q(
     `INSERT INTO perfiles_prestador (id, business_name, description, estatus_verificacion, is_active,
        rating_avg, rating_count, ubicacion, cancelaciones_tardias, tenant_id, active_start_hour, active_end_hour)
      VALUES ($1,'E2E Studio','Perfil efímero del arnés E2E','APROBADO',true,4.8,10,
        ST_SetSRID(ST_MakePoint(-74.15,4.66),4326)::geography,0,1,
-       '09:00'::time,'19:00'::time)`,
+       ${inicio},${fin})`,
     [creado.perfil]
   );
 
@@ -142,20 +152,25 @@ async function limpiar() {
     // cleanup falla y deja basura en la base.
     await pg.query('SET LOCAL session_replication_role = replica');
     const reservas = creado.reservas.length ? creado.reservas : [null];
+    // `wallet_transactions.provider_id` es uuid en producción e integer en las
+    // bases que crea `index.js`: se compara como texto para servir en ambas.
+    const reservasTxt = reservas.map((r) => (r === null ? null : String(r)));
     const tx = await pg.query(
-      'SELECT id FROM wallet_transactions WHERE provider_id = $1 OR booking_id = ANY($2::uuid[])',
-      [creado.perfil, reservas]
+      'SELECT id FROM wallet_transactions WHERE provider_id::text = $1::text OR booking_id::text = ANY($2::text[])',
+      [String(creado.perfil), reservasTxt]
     );
-    const txIds = tx.rows.map((r) => r.id);
-    await pg.query('DELETE FROM wallet_ledger_events WHERE provider_id = $1 OR tx_id = ANY($2::uuid[])', [creado.perfil, txIds]);
-    await pg.query('DELETE FROM wallet_transactions WHERE provider_id = $1 OR booking_id = ANY($2::uuid[])', [creado.perfil, reservas]);
-    await pg.query('DELETE FROM propinas WHERE booking_id = ANY($1::uuid[])', [reservas]);
-    await pg.query('DELETE FROM reembolsos WHERE booking_id = ANY($1::uuid[])', [reservas]);
-    await pg.query('DELETE FROM bookings WHERE id = ANY($1::uuid[])', [reservas]);
-    for (const p of creado.pedidos) await pg.query('DELETE FROM pedidos_tienda WHERE id = $1', [p]);
-    if (creado.servicios.length) await pg.query('DELETE FROM services WHERE id = ANY($1::int[])', [creado.servicios]);
-    if (creado.perfil) await pg.query('DELETE FROM perfiles_prestador WHERE id = $1', [creado.perfil]);
-    if (creado.usuarios.length) await pg.query('DELETE FROM usuarios WHERE id = ANY($1::int[])', [creado.usuarios]);
+    const txIds = tx.rows.map((r) => String(r.id));
+    await pg.query('DELETE FROM wallet_ledger_events WHERE provider_id::text = $1::text OR tx_id::text = ANY($2::text[])', [String(creado.perfil), txIds]);
+    await pg.query('DELETE FROM wallet_transactions WHERE provider_id::text = $1::text OR booking_id::text = ANY($2::text[])', [String(creado.perfil), reservasTxt]);
+    await pg.query('DELETE FROM propinas WHERE booking_id::text = ANY($1::text[])', [reservasTxt]);
+    await pg.query('DELETE FROM reembolsos WHERE booking_id::text = ANY($1::text[])', [reservasTxt]);
+    await pg.query('DELETE FROM bookings WHERE id::text = ANY($1::text[])', [reservasTxt]);
+    // Los ids son uuid en producción e integer en las bases que crea
+    // `index.js`. Comparar como texto evita el "uuid = integer".
+    for (const p of creado.pedidos) await pg.query('DELETE FROM pedidos_tienda WHERE id::text = $1::text', [String(p)]);
+    if (creado.servicios.length) await pg.query('DELETE FROM services WHERE id::text = ANY($1::text[])', [creado.servicios.map(String)]);
+    if (creado.perfil) await pg.query('DELETE FROM perfiles_prestador WHERE id::text = $1::text', [String(creado.perfil)]);
+    if (creado.usuarios.length) await pg.query('DELETE FROM usuarios WHERE id::text = ANY($1::text[])', [creado.usuarios.map(String)]);
     await pg.query('COMMIT');
     console.log('CLEANUP  ::  datos de prueba borrados');
   } catch (e) {
@@ -270,11 +285,30 @@ async function cancelaciones(tc, servicioId) {
 }
 
 async function checkout(tc) {
+  // El precio que cobra el checkout sale de `precios_producto` para la lista del
+  // rol, no de `productos.precio_al_publico`. Si la base no tiene precios de
+  // lista cargados, todo el bloque se omite con el motivo a la vista: un 403
+  // repetido no enseña nada.
+  const lista = (await pg.query(
+    `SELECT id FROM listas_precios WHERE codigo = 'cliente' AND estado = 'ACTIVA' LIMIT 1`
+  )).rows[0];
+  if (!lista) {
+    omitir('G envío e IVA', 'no hay lista de precios activa para el rol cliente');
+    return;
+  }
   const productos = (await pg.query(
-    `SELECT id, precio_al_publico, stock FROM productos
-      WHERE coalesce(precio_al_publico,0) > 0 AND stock > 0
-      ORDER BY precio_al_publico DESC LIMIT 50`
+    `SELECT pr.producto_id AS id, pr.precio, p.stock
+       FROM precios_producto pr
+       JOIN productos p ON p.id = pr.producto_id
+      WHERE pr.lista_id = $1 AND (pr.vigente_hasta IS NULL OR pr.vigente_hasta > NOW())
+        AND pr.precio > 0 AND p.stock > 0
+      ORDER BY pr.precio DESC LIMIT 100`,
+    [lista.id]
   )).rows;
+  if (!productos.length) {
+    omitir('G envío e IVA', 'la base no tiene precios de lista cargados para el rol cliente');
+    return;
+  }
 
   const pedir = async (prod, cantidad, ciudad, departamento) => {
     const r = await llamar('POST', '/api/store/checkout', {
@@ -287,11 +321,18 @@ async function checkout(tc) {
   };
 
   // Producto que sirva para cruzar el umbral de Bogotá (300.000) con el stock real.
-  const paraBogota = productos.find((p) => Number(p.precio_al_publico) * Math.ceil(300000 / Number(p.precio_al_publico)) <= Number(p.stock));
+  // Se busca un producto que cruce el umbral con una cantidad razonable y que
+  // tenga stock suficiente: cantidad <= stock. Comparar dinero contra stock es
+  // el error que dejaba este bloque siempre en SKIP.
+  const paraBogota = productos.find((p) => {
+    const precio = Number(p.precio);
+    const cantidad = Math.ceil(300000 / precio);
+    return precio < 300000 && cantidad >= 2 && cantidad <= 12 && cantidad <= Number(p.stock);
+  });
   if (!paraBogota) {
     omitir('G1-G2 umbral Bogotá', 'ningún producto del catálogo alcanza 300.000 con el stock disponible');
   } else {
-    const precio = Number(paraBogota.precio_al_publico);
+    const precio = Number(paraBogota.precio);
     const cantidad = Math.ceil(300000 / precio);
     const bajo = await pedir(paraBogota, 1, 'Bogotá', 'Cundinamarca');
     rec('G1 Bogotá bajo el umbral cobra envío', bajo.status < 300 && Number(bajo.o.envio) > 1000,
@@ -314,13 +355,14 @@ async function checkout(tc) {
 
   // Umbral nacional (480.000) — necesita un producto con stock suficiente.
   const paraNacional = productos.find((p) => {
-    const q = Math.ceil(480000 / Number(p.precio_al_publico));
-    return q <= 20 && q <= Number(p.stock);
+    const precio = Number(p.precio);
+    const q = Math.ceil(480000 / precio);
+    return precio < 480000 && q >= 2 && q <= 12 && q <= Number(p.stock);
   });
   if (!paraNacional) {
     omitir('G5-G6 umbral nacional', 'ningún producto del catálogo alcanza 480.000 con stock ≤ 20 unidades');
   } else {
-    const precio = Number(paraNacional.precio_al_publico);
+    const precio = Number(paraNacional.precio);
     const cantidad = Math.ceil(480000 / precio);
     const bajo = await pedir(paraNacional, cantidad - 1, 'Cali', 'Valle del Cauca');
     const alto = await pedir(paraNacional, cantidad, 'Cali', 'Valle del Cauca');
