@@ -60,6 +60,22 @@ async function requireAdmin(req, res) {
 
 // ─── CHECK-IN GPS ────────────────────────────────────────────────────────────
 
+/**
+ * Distancia en metros entre dos coordenadas (haversine).
+ * Devuelve null si falta cualquiera de los dos puntos: sin referencia no se
+ * puede validar, y fingir que se validó es peor que no validar.
+ */
+function distanciaMetros(lat1, lng1, lat2, lng2) {
+  if ([lat1, lng1, lat2, lng2].some((v) => !Number.isFinite(v))) return null;
+  const R = 6371000;
+  const rad = (g) => (g * Math.PI) / 180;
+  const dLat = rad(lat2 - lat1);
+  const dLng = rad(lng2 - lng1);
+  const a = Math.sin(dLat / 2) ** 2 +
+            Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+
 router.post('/bookings/:id/checkin', authMiddleware, async (req, res) => {
   if (!await requirePrestador(req, res)) return;
 
@@ -84,18 +100,43 @@ router.post('/bookings/:id/checkin', authMiddleware, async (req, res) => {
     }
 
     const tolerancia = parseInt(await getConfig('gps_tolerancia_metros', '500'));
+    const booking = rows[0];
+
+    // La tolerancia se leía y nunca se validaba: el check-in era decorativo.
+    // Si la reserva tiene coordenadas de referencia, se exige estar dentro del
+    // radio. Si no las tiene, se registra el punto y se marca como no validado
+    // (la dirección estructurada no se puede geocodificar aquí).
+    const distancia = distanciaMetros(
+      Number(latitud), Number(longitud),
+      booking.service_lat != null ? Number(booking.service_lat) : null,
+      booking.service_lng != null ? Number(booking.service_lng) : null
+    );
+
+    if (distancia !== null && distancia > tolerancia) {
+      return res.status(409).json({
+        error: `Estás a ${Math.round(distancia)} m del punto del servicio. El máximo permitido es ${tolerancia} m.`,
+        distancia_metros: Math.round(distancia),
+        tolerancia_metros: tolerancia
+      });
+    }
 
     await pool.query(
       `UPDATE bookings SET estado = 'CHECKIN_REALIZADO',
-       notes = COALESCE(notes, '') || $3
+       checkin_lat = $3, checkin_lng = $4, checkin_at = NOW(),
+       notes = COALESCE(notes, '') || $5
        WHERE id = $1 AND provider_id = $2`,
-      [id, req.user.id, ` [CHECKIN: ${latitud},${longitud} @ ${new Date().toISOString()}]`]
+      [
+        id, req.user.id, Number(latitud), Number(longitud),
+        ` [CHECKIN: ${latitud},${longitud}${distancia !== null ? ` @ ${Math.round(distancia)}m` : ' (sin referencia)'} @ ${new Date().toISOString()}]`
+      ]
     );
 
     res.json({
       ok: true,
       mensaje: 'Check-in registrado. Puedes comenzar el servicio.',
-      tolerancia_metros: tolerancia
+      tolerancia_metros: tolerancia,
+      distancia_metros: distancia !== null ? Math.round(distancia) : null,
+      gps_validado: distancia !== null
     });
   } catch (err) {
     console.error('Error en check-in:', err);
@@ -559,6 +600,100 @@ router.get('/wallet/transactions', authMiddleware, async (req, res) => {
   }
 });
 
+// ─── WALLET — ESTADO DE CUENTA DEL PRESTADOR (D-GL-023) ─────────────────────
+// El prestador reconstruye su 80% sin calculadora: valor de sus servicios,
+// comisión restada, propinas como línea aparte y retenciones en cero.
+// Query: ?desde=YYYY-MM-DD&hasta=YYYY-MM-DD (por defecto, últimos 30 días)
+
+router.get('/wallet/statement', authMiddleware, async (req, res) => {
+  if (!await requirePrestador(req, res)) return;
+
+  try {
+    const hasta = req.query.hasta ? new Date(`${req.query.hasta}T23:59:59`) : new Date();
+    const desde = req.query.desde
+      ? new Date(`${req.query.desde}T00:00:00`)
+      : new Date(hasta.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    if (isNaN(desde.getTime()) || isNaN(hasta.getTime())) {
+      return res.status(400).json({ error: 'Fechas inválidas. Usa YYYY-MM-DD.' });
+    }
+
+    const resumen = await pool.query(
+      `SELECT COUNT(*)::int                          AS servicios,
+              COALESCE(SUM(valor_bruto), 0)          AS valor_servicios,
+              COALESCE(SUM(comision_plataforma), 0)  AS comision,
+              COALESCE(SUM(propina), 0)              AS propinas,
+              COALESCE(SUM(pago_neto_prestador), 0)  AS neto_servicios
+         FROM bookings
+        WHERE provider_id = $1
+          AND estado = 'COMPLETADA'
+          AND COALESCE(completed_at, scheduled_at) >= $2
+          AND COALESCE(completed_at, scheduled_at) <= $3`,
+      [req.user.id, desde, hasta]
+    );
+
+    const detalle = await pool.query(
+      `SELECT b.id, b.scheduled_at, b.completed_at, b.valor_bruto,
+              b.comision_plataforma, b.pago_neto_prestador, b.propina,
+              s.name AS servicio
+         FROM bookings b
+         LEFT JOIN services s ON s.id = b.service_id
+        WHERE b.provider_id = $1
+          AND b.estado = 'COMPLETADA'
+          AND COALESCE(b.completed_at, b.scheduled_at) >= $2
+          AND COALESCE(b.completed_at, b.scheduled_at) <= $3
+        ORDER BY COALESCE(b.completed_at, b.scheduled_at) DESC
+        LIMIT 100`,
+      [req.user.id, desde, hasta]
+    );
+
+    const saldos = await pool.query(
+      `SELECT saldo_disponible, saldo_pendiente, saldo_en_disputa,
+              total_ganado, total_retirado, modelo_retiro, ultimo_retiro_at
+         FROM provider_wallet WHERE provider_id = $1`,
+      [req.user.id]
+    );
+
+    const r = resumen.rows[0] || {};
+    const s = saldos.rows[0] || {};
+
+    res.json({
+      periodo: { desde, hasta },
+      resumen: {
+        servicios: r.servicios || 0,
+        valor_servicios: Number(r.valor_servicios || 0),
+        comision: Number(r.comision || 0),
+        neto_servicios: Number(r.neto_servicios || 0),
+        propinas: Number(r.propinas || 0),
+        retenciones: 0,
+        total_ciclo: Number(r.neto_servicios || 0) + Number(r.propinas || 0)
+      },
+      saldos: {
+        disponible: Number(s.saldo_disponible || 0),
+        en_custodia: Number(s.saldo_pendiente || 0),
+        en_disputa: Number(s.saldo_en_disputa || 0),
+        total_ganado: Number(s.total_ganado || 0),
+        total_retirado: Number(s.total_retirado || 0),
+        modelo_retiro: s.modelo_retiro || 'SEMANAL',
+        ultimo_retiro_at: s.ultimo_retiro_at || null
+      },
+      servicios: detalle.rows.map((row) => ({
+        booking_id: row.id,
+        servicio: row.servicio,
+        fecha: row.completed_at || row.scheduled_at,
+        valor_servicio: Number(row.valor_bruto),
+        comision: Number(row.comision_plataforma),
+        retenciones: 0,
+        propina: Number(row.propina || 0),
+        recibes: Number(row.pago_neto_prestador) + Number(row.propina || 0)
+      }))
+    });
+  } catch (err) {
+    console.error('Error al generar estado de cuenta:', err);
+    res.status(500).json({ error: 'Error al generar el estado de cuenta.' });
+  }
+});
+
 // ─── WALLET — OBTENER CUENTA BANCARIA ───────────────────────────────────────
 
 router.get('/wallet/bank-account', authMiddleware, async (req, res) => {
@@ -760,6 +895,24 @@ router.post('/wallet/withdraw', authMiddleware, async (req, res) => {
       return res.status(403).json({
         error: 'Debes verificar tu cuenta bancaria antes de retirar.',
         accion: 'VERIFICAR_CUENTA'
+      });
+    }
+
+    // D-GL-023 / F8: no se paga a un prestador sin contrato de comisión aceptado
+    // ni sin aceptación de la cláusula de independencia. Antes se retenía el 20%
+    // a 11 prestadores que nunca habían aceptado nada.
+    const contratoRes = await client.query(
+      `SELECT contrato_version, contrato_aceptado_at, independencia_aceptada_at
+         FROM perfiles_prestador WHERE id = $1`,
+      [req.user.id]
+    );
+    const perfil = contratoRes.rows[0];
+    if (!perfil || !perfil.contrato_aceptado_at || !perfil.independencia_aceptada_at) {
+      await client.query('ROLLBACK');
+      return res.status(403).json({
+        error: 'Debes aceptar el contrato de comisión y la cláusula de independencia antes de retirar.',
+        accion: 'ACEPTAR_CONTRATO',
+        contrato_version_actual: perfil?.contrato_version || null
       });
     }
 

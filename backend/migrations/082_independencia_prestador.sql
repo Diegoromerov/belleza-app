@@ -24,6 +24,14 @@ ALTER TABLE perfiles_prestador ADD COLUMN IF NOT EXISTS cancelaciones_tardias IN
 -- no solo un contador acumulado.
 ALTER TABLE bookings ADD COLUMN IF NOT EXISTS cancelado_at TIMESTAMPTZ;
 
+-- Punto de referencia del servicio y coordenadas del check-in. Sin referencia no
+-- se puede validar la tolerancia: se registra el punto y se marca gps_validado=false.
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS service_lat  NUMERIC(10,7);
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS service_lng  NUMERIC(10,7);
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS checkin_lat  NUMERIC(10,7);
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS checkin_lng  NUMERIC(10,7);
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS checkin_at   TIMESTAMPTZ;
+
 COMMENT ON COLUMN perfiles_prestador.contrato_version IS
   'Versión del contrato de comisión aceptada. NULL = nunca aceptó.';
 COMMENT ON COLUMN perfiles_prestador.independencia_aceptada_at IS
