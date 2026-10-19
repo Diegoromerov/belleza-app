@@ -8,6 +8,11 @@ const { wrapRouterAsync } = require('../utils/expressAsync');
 const express = require('express');
 const router = express.Router();
 const { authMiddleware } = require('../middleware/auth');
+const {
+  BIOMETRIC_CONSENT_VERSION,
+  getActiveProcessors,
+  isSupportedConsentVersion,
+} = require('../config/consentConfig');
 const { 
   getUserConsents, 
   grantConsent, 
@@ -113,8 +118,17 @@ router.get('/biometric/:consentType', authMiddleware, async (req, res) => {
 router.post('/biometric', authMiddleware, async (req, res) => {
   try {
     const userId = req.user.id;
-    const { consent_type, purpose, version_terms = '1.0' } = req.body;
-    
+    const { consent_type, purpose, version_terms = BIOMETRIC_CONSENT_VERSION } = req.body;
+
+    // Y-F1b: la versión que se registra debe ser una que el backend conozca. Antes el
+    // campo se aceptaba sin validar (o se ignoraba y quedaba '1.0'): el registro
+    // auditable decía una versión que el usuario nunca vio.
+    if (!isSupportedConsentVersion(version_terms)) {
+      return res.status(400).json({
+        error: 'invalid_version_terms',
+        message: `version_terms debe ser una de: ${BIOMETRIC_CONSENT_VERSION} (vigente). Recibido: ${version_terms}`
+      });
+    }
     // Validaciones
     if (!consent_type || !VALID_CONSENT_TYPES.includes(consent_type)) {
       return res.status(400).json({
@@ -293,8 +307,8 @@ router.get('/terms', async (req, res) => {
   try {
     // En produccion, estos terminos vendrian de una tabla o archivo de configuracion
     const terms = {
-      version: '1.0',
-      last_updated: '2026-08-05',
+      version: BIOMETRIC_CONSENT_VERSION,
+      last_updated: '2026-10-19',
       title: 'Consentimiento para Tratamiento de Datos Biometricos - GlowApp',
       sections: [
         {
@@ -303,7 +317,7 @@ router.get('/terms', async (req, res) => {
         },
         {
           title: '2. Datos Recopilados',
-          content: 'Embeddings faciales vectoriales, caracteristicas de piel (tipo, hidratacion, tono), caracteristicas de cabello (tipo, color, textura), medidas corporales si aplica. NO se almacenan imagenes originales, solo representaciones matematicas (embeddings).'
+          content: 'Fotografia facial (enviada al encargado del tratamiento para su analisis; GlowApp no conserva la imagen original), metricas cutaneas por subregion (hidratacion, poros, arrugas, textura, acne, rojez, firmeza, ojeras, manchas, surco lagrimal), tipo de piel, edad cutanea y mascaras de analisis. GlowApp guarda las metricas cifradas con AES-256-GCM.'
         },
         {
           title: '3. Derechos del Titular (Ley 1581/2012)',
@@ -314,8 +328,8 @@ router.get('/terms', async (req, res) => {
           content: 'Datos biometricos se retienen solo mientras el consentimiento este vigente. Al revocar, se eliminan en 24h. Cifrado AES-256 en reposo, TLS 1.3 en transito. Acceso solo por personal autorizado (ATENA, AURA).'
         },
         {
-          title: '5. Transferencia Internacional',
-          content: 'Embeddings pueden procesarse en servidores NVIDIA (EE.UU.) para inferencia. No se almacenan alli. Clausulas contractuales tipo aprobadas por la SIC.'
+          title: '5. Encargados del Tratamiento y Transferencia Internacional',
+          content: `La fotografia facial y sus derivados se procesan con: ${getActiveProcessors().map((p) => `${p.name} — ${p.country}: ${p.purpose}`).join('; ')}. Todos implican transferencia internacional de datos, amparada en la autorizacion expresa del titular (Ley 1581/2012, art. 26) y en clausulas contractuales. Perfect Corp. procesa la fotografia en su infraestructura y la elimina segun su contrato de servicio; GlowApp conserva solo las metricas cifradas.`
         }
       ]
     };

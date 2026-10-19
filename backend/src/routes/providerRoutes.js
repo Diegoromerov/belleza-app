@@ -11,6 +11,68 @@ const {
   reconciliarConDian
 } = require('../services/ivaPrestador');
 
+// ─── CONTRATO DE COMISIÓN E INDEPENDENCIA (D-GL-023 · F8) ────────────────────
+// El prestador es independiente, no empleado. Se registra versión, fecha e IP:
+// sin ese registro no hay forma de probar el vínculo comercial.
+
+const CONTRATO_VERSION_ACTUAL = '2026-10';
+
+router.get('/provider/contract', authMiddleware, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT contrato_version, contrato_aceptado_at, independencia_aceptada_at,
+              responsable_iva, rut_responsabilidad_codigo
+         FROM perfiles_prestador WHERE id = $1`,
+      [req.user.id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Perfil de prestador no encontrado.' });
+
+    res.json({
+      version_actual: CONTRATO_VERSION_ACTUAL,
+      ...rows[0],
+      aceptado: Boolean(rows[0].contrato_aceptado_at && rows[0].independencia_aceptada_at)
+    });
+  } catch (err) {
+    console.error('Error al consultar contrato:', err);
+    res.status(500).json({ error: 'Error al consultar el contrato.' });
+  }
+});
+
+router.post('/provider/contract/accept', authMiddleware, async (req, res) => {
+  const { version, independencia } = req.body;
+
+  if (!independencia) {
+    return res.status(400).json({
+      error: 'Debes aceptar expresamente la cláusula de independencia: la plataforma no es tu empleador.'
+    });
+  }
+
+  try {
+    const { rows } = await pool.query(
+      `UPDATE perfiles_prestador
+          SET contrato_version = $2,
+              contrato_aceptado_at = NOW(),
+              contrato_aceptado_ip = $3,
+              independencia_aceptada_at = NOW()
+        WHERE id = $1
+        RETURNING contrato_version, contrato_aceptado_at, independencia_aceptada_at,
+                  responsable_iva, rut_responsabilidad_codigo`,
+      [req.user.id, version || CONTRATO_VERSION_ACTUAL, req.ip]
+    );
+
+    if (!rows.length) return res.status(404).json({ error: 'Perfil de prestador no encontrado.' });
+
+    res.json({
+      ok: true,
+      mensaje: 'Contrato aceptado. Ya puedes recibir pagos y retirar.',
+      contrato: rows[0]
+    });
+  } catch (err) {
+    console.error('Error al aceptar contrato:', err);
+    res.status(500).json({ error: 'Error al registrar la aceptación.' });
+  }
+});
+
 router.get('/providers', providerController.getProviders);
 router.get('/providers/:id', providerController.getProviderById);
 router.get('/providers/:id/slots', providerController.getProviderSlots);

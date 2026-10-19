@@ -634,6 +634,25 @@ class ApiService {
   /// estado PENDING: quien confirma el pago es el webhook de Wompi, no esta
   /// llamada. Tratar el 202 como error dejaría al usuario con un fallo visible
   /// en un cobro que sí se inició.
+  /// D-GL-023 — propina: 100% al prestador, 0% de comisión.
+  /// Se envía después del servicio, nunca en el checkout.
+  static Future<Map<String, dynamic>> submitTip(
+      String bookingId, double amount) async {
+    final headers = await _getAuthHeaders();
+    final response = await http
+        .post(
+          Uri.parse('$_baseUrl$_apiPath/bookings/$bookingId/tip'),
+          headers: headers,
+          body: json.encode({'monto': amount.round()}),
+        )
+        .timeout(requestTimeout);
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return json.decode(response.body);
+    }
+    throw Exception(
+        json.decode(response.body)['error'] ?? 'Error ${response.statusCode}');
+  }
+
   static Future<Map<String, dynamic>> payBooking(
     String bookingId,
     String paymentMethod, {
