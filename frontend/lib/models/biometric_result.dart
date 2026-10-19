@@ -10,6 +10,10 @@ class BiometricResult {
   final int? glowScore;
   final Map<String, dynamic>? dermoFamilies;
 
+  /// Y-F5: la medición se reutilizó de un escaneo previo con la misma foto
+  /// (no se gastó una unidad del proveedor).
+  final bool cacheHit;
+
   BiometricResult({
     this.profileId,
     this.face,
@@ -22,6 +26,7 @@ class BiometricResult {
     this.deltaVerdict,
     this.deltaGlowScore,
     this.deltaSignificant,
+    this.cacheHit = false,
   });
 
   /// Y-F3: veredicto del cambio contra el baseline propio.
@@ -41,6 +46,10 @@ class BiometricResult {
     final deltaGlow = deltaMap?['glowScore'] is Map ? deltaMap!['glowScore'] as Map : null;
     final rawGlowDelta = deltaGlow?['delta'];
     final rawSignificant = deltaMap?['significant'];
+
+    // Y-F5: si la medición vino de la caché de la misma foto.
+    final rawCache = data['cache'] ?? json['cache'];
+    final cacheMap = rawCache is Map ? rawCache : null;
 
     final rawGlowScore = json['glowScore'] ?? data['glowScore'];
     int? parsedGlowScore = (rawGlowScore is num)
@@ -84,6 +93,7 @@ class BiometricResult {
       deltaSignificant: rawSignificant is num
           ? rawSignificant.toInt()
           : int.tryParse(rawSignificant?.toString() ?? ''),
+      cacheHit: cacheMap?['hit'] == true,
     );
   }
 }

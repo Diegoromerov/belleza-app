@@ -486,6 +486,19 @@ class _ResultsScreenState extends State<ResultsScreen> {
                   ),
                 ),
               ],
+              // Y-F5: si la medición se reutilizó, se dice. Presentar métricas recicladas
+              // como un análisis nuevo sería engañoso.
+              if (widget.result.cacheHit) ...[
+                const SizedBox(height: 2),
+                const Text(
+                  'Medición reutilizada de tu foto anterior',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontStyle: FontStyle.italic,
+                    color: _PassportColors.textEyebrow,
+                  ),
+                ),
+              ],
             ],
           ),
         ),

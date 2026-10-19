@@ -257,3 +257,26 @@ impide que un escaneo se compare consigo mismo (daría Δ = 0 y un «sin cambio�
 **Verificación:** aplicadas 100 → 101 → 102 sobre Postgres en memoria; un `INSERT` con
 `threshold 2.00` devuelve `MEJORO` con `compared_count 29`, y ambos rechazos (mismo
 escaneo, duplicado de `current_scan_id`) saltan. Guard de numeración en verde (7 pruebas).
+
+---
+
+## 5. Y-F5 usa `104`: huella de la foto para no pagar dos veces
+
+**Archivo:** `104_add_image_fingerprint_to_scan_sessions.sql`
+**Qué añade:** `image_hash` — HMAC-SHA256 del JPEG normalizado con pepper del servidor
+— con índice por `(user_id, image_hash)`.
+**Qué NO añade:** ninguna columna para el descriptor perceptual. El dHash de 64 bits es
+un dato biométrico derivado, así que viaja **dentro del payload cifrado** de la sesión
+(AES-256-GCM) y se compara descifrando las últimas 20 sesiones del usuario.
+**Por qué HMAC y no sha256 pelado:** un sha256 de la foto es un identificador estable:
+cualquiera con acceso a la base podría comprobar si una foto concreta pertenece a un
+usuario. Con pepper, sin la clave eso no se puede.
+**Si falta el pepper:** no se calcula el hash exacto y la caché se apoya sólo en el
+dHash; el escaneo nunca se bloquea por eso.
+**Aislamiento:** toda búsqueda filtra por `user_id`; la misma foto de otra persona nunca
+devuelve métricas ajenas.
+**Un acierto no es una medición:** no se inserta sesión nueva ni comparación, así que la
+serie no se llena de duplicados con Δ0.
+**Verificación:** 100 → 104 sobre Postgres en memoria, re-aplicable; la columna
+`image_phash` no existe; el ciphertext no contiene el dHash en claro; la construcción de
+la ventana temporal se validó contra el Postgres de producción (12 pruebas de la fase).

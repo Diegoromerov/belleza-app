@@ -13,6 +13,10 @@ jest.mock('../services/biometric/profile.service', () => ({ saveProfile: jest.fn
 jest.mock('../services/biometric/scanSession.service', () => ({
   saveScan: jest.fn(),
   getPrevious: jest.fn(),
+  // Y-F5: el orquestador consulta la caché antes de llamar al proveedor.
+  findReusableScan: jest.fn(),
+  restoreFaceScores: jest.fn((payload) => payload),
+  getCacheTtlHours: jest.fn(() => 24),
 }));
 jest.mock('../services/biometric/scanComparison.service', () => ({ save: jest.fn(), getLatest: jest.fn() }));
 jest.mock('../services/biometric/youcam.client', () => ({ analyzeFace: jest.fn() }));
@@ -244,6 +248,10 @@ describe('Y-F3 — el orquestador devuelve el veredicto contra el escaneo anteri
 
   beforeEach(() => {
     jest.clearAllMocks();
+
+    // Y-F5: sin foto previa, el análisis va al proveedor como antes.
+    scanSessionService.findReusableScan.mockResolvedValue(null);
+    scanSessionService.getCacheTtlHours.mockReturnValue(24);
 
     profileService.saveProfile.mockResolvedValue({ id: 999, createdAt: '2026-10-19T00:00:00Z' });
     youcam.analyzeFace.mockResolvedValue({

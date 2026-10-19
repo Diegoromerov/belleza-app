@@ -106,6 +106,7 @@ router.post('/analyze', authMiddleware, idempotencyMiddleware, validateBiometric
         vtoTones: result.vtoTones,
         delta: result.delta,
         consent: result.consent,
+        cache: result.cache,
       },
       createdAt: result.createdAt,
     });

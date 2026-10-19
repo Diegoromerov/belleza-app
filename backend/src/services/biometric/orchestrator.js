@@ -7,6 +7,7 @@ const captureQuality = require('./captureQuality.service');
 const undertoneService = require('./undertone.service');
 const deltaService = require('./delta.service');
 const scanComparisonService = require('./scanComparison.service');
+const imageHashService = require('./imageHash.service');
 const openUV = require('../openUV');
 const logger = require('../../config/logger');
 const { BIOMETRIC_CONSENT_VERSION } = require('../../config/consentConfig');
@@ -32,11 +33,32 @@ class BiometricOrchestrator {
     }
     const normalizedFace = prepared.image.buffer;
 
+    // Y-F5: huella de la foto ANTES de gastar una unidad del proveedor. Se calcula sobre
+    // la imagen ya normalizada (512x512) para que dos envíos de la misma foto coincidan
+    // aunque el cliente recomprima distinto.
+    const fingerprint = await imageHashService.fingerprint(normalizedFace);
+    const reusable = await scanSessionService.findReusableScan({ userId: parsedUserId, fingerprint });
+
+    if (reusable) {
+      logger.info('Análisis facial reutilizado: misma foto dentro de la ventana', {
+        userId: parsedUserId,
+        reusedScanId: reusable.id,
+        match: reusable.match,
+        distance: reusable.distance,
+      });
+    }
+
     // 1-3. Ejecutar análisis de rostro, manos y UV con Circuit Breakers
     let faceScores, handsDiagnosis, uvData = null;
 
+    // Un acierto de caché evita la llamada que se paga por unidad; manos y UV siguen
+    // su curso porque no dependen de la foto facial.
+    const facePromise = reusable
+      ? Promise.resolve(scanSessionService.restoreFaceScores(reusable.payload))
+      : breakers.youcam.execute(() => youcamClient.analyzeFace(normalizedFace, traceId));
+
     const [faceResult, handsResult, uvResult] = await Promise.allSettled([
-      breakers.youcam.execute(() => youcamClient.analyzeFace(normalizedFace, traceId)),
+      facePromise,
       breakers.gemini.execute(() => geminiClient.analyzeHands(handsImage, traceId)),
       (lat && lng) ? openUV.getUV(lat, lng) : Promise.resolve(null),
     ]);
@@ -53,10 +75,13 @@ class BiometricOrchestrator {
 
     // Y-F2: el subtono se mide sobre la foto normalizada, no se hereda del tipo de piel.
     // Si no hay píxeles de piel suficientes queda en null con fuente 'no_medido'.
-    const undertone = await undertoneService.measureUndertone(normalizedFace);
-    faceScores.subtonoMedicion = undertone;
-    faceScores.subtono = undertone.measured ? undertone.subtono : null;
-    faceScores.subtonoFuente = undertone.measured ? 'ita_hue_propio' : 'no_medido';
+    // Y-F5: con la misma foto, la medición guardada sigue siendo válida y no se repite.
+    if (!(reusable && faceScores.subtonoMedicion)) {
+      const undertone = await undertoneService.measureUndertone(normalizedFace);
+      faceScores.subtonoMedicion = undertone;
+      faceScores.subtono = undertone.measured ? undertone.subtono : null;
+      faceScores.subtonoFuente = undertone.measured ? 'ita_hue_propio' : 'no_medido';
+    }
     normalizedFace.fill(0); // la imagen ya se midió: no se conserva en memoria
 
     if (uvResult.status === 'fulfilled' && uvResult.value) {
@@ -118,15 +143,20 @@ class BiometricOrchestrator {
     // propia serie temporal. Si la escritura falla no se rompe la respuesta: el análisis
     // ya se pagó y el perfil quedó guardado; se devuelve `scanSession.persisted = false`
     // para que quede rastro en logs y en la respuesta interna.
-    const scanSession = await scanSessionService.saveScan({
-      userId: parsedUserId,
-      faceScores,
-      geometry: prepared.geometry, // Y-F2: origen, normalización y EXIF de la captura
-      quality: { ...prepared.quality, undertone }, // Y-F2: veredicto, score y motivos
-      tolerante: true,
-    });
+    // Y-F5 (auditoría): un acierto de caché NO es una medición nueva. Guardar otra fila
+    // duplicaría el análisis y produciría un Δ0 que parece una segunda medición.
+    const scanSession = reusable
+      ? null
+      : await scanSessionService.saveScan({
+          userId: parsedUserId,
+          faceScores,
+          geometry: prepared.geometry, // Y-F2: origen, normalización y EXIF de la captura
+          quality: { ...prepared.quality, undertone: faceScores.subtonoMedicion }, // Y-F2: veredicto, score y motivos
+          fingerprint, // Y-F5: huella para reutilizar el análisis si vuelve la misma foto
+          tolerante: true,
+        });
 
-    if (!scanSession.persisted) {
+    if (scanSession && !scanSession.persisted) {
       logger.warn('Sesión de escaneo no persistida', {
         userId: parsedUserId,
         reason: scanSession.reason,
@@ -137,7 +167,7 @@ class BiometricOrchestrator {
     // Y-F3: comparación contra el escaneo anterior del mismo usuario. Si es el primero,
     // no hay baseline y se dice; no se fabrica una mejora del 100%.
     let delta = null;
-    if (scanSession.persisted && scanSession.id) {
+    if (scanSession && scanSession.persisted && scanSession.id) {
       try {
         const previous = await scanSessionService.getPrevious(parsedUserId, scanSession.id);
         if (previous) {
@@ -182,14 +212,25 @@ class BiometricOrchestrator {
 
     return {
       profileId: profile.id,
-      scanSessionId: scanSession.id || null,
-      metricsCount: scanSession.metricsCount,
+      // En un acierto de caché no hay sesión nueva: la referencia viaja en `cache.reusedScanId`.
+      scanSessionId: scanSession?.id || null,
+      metricsCount: scanSession ? scanSession.metricsCount : Object.keys(faceScores.metrics || {}).length,
       delta,
+      // Y-F5: trazabilidad del ahorro. `hit: true` significa que no se gastó una unidad.
+      cache: {
+        hit: Boolean(reusable),
+        reusedScanId: reusable?.id || null,
+        match: reusable?.match || null,
+        distance: reusable?.distance ?? null,
+        ttlHours: scanSessionService.getCacheTtlHours(),
+      },
       // Y-F1b: el cliente necesita saber si autorizó con el texto vigente o con uno viejo.
+      // En un acierto de caché no hay sesión nueva, pero la versión vigente se informa
+      // igual, sin inventar una autorización que no se acaba de registrar.
       consent: {
-        version: scanSession.consentVersion || null,
+        version: scanSession ? scanSession.consentVersion || null : BIOMETRIC_CONSENT_VERSION,
         currentVersion: BIOMETRIC_CONSENT_VERSION,
-        outdated: scanSession.consentOutdated === true,
+        outdated: scanSession ? scanSession.consentOutdated === true : false,
       },
       face: faceScores,
       glowScore,
