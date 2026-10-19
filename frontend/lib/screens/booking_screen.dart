@@ -380,26 +380,39 @@ class _BookingScreenState extends State<BookingScreen> {
     }
   }
 
-  void _nextStep() {
-    if (_currentStep < 3) {
-      setState(() => _currentStep++);
+  /// Mueve el asistente a [paso].
+  ///
+  /// La barra de progreso lee `_currentStep` y el contenido lo dibuja el
+  /// PageView con `_pageController`: son dos fuentes distintas. Si la animación
+  /// no corría —controlador sin montar, por ejemplo durante una ruta modal— el
+  /// número avanzaba y la página se quedaba, dejando la barra en "Confirmación"
+  /// con el contenido del paso 1. Ahora, sin clientes, se salta al paso en el
+  /// siguiente frame y la barra nunca se separa del contenido.
+  void _irAlPaso(int paso) {
+    if (paso < 0 || paso > 3) return;
+    setState(() => _currentStep = paso);
+
+    if (_pageController.hasClients) {
       _pageController.animateToPage(
-        _currentStep,
+        paso,
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
+      return;
     }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_pageController.hasClients) return;
+      _pageController.jumpToPage(_currentStep);
+    });
+  }
+
+  void _nextStep() {
+    if (_currentStep < 3) _irAlPaso(_currentStep + 1);
   }
 
   void _prevStep() {
-    if (_currentStep > 0) {
-      setState(() => _currentStep--);
-      _pageController.animateToPage(
-        _currentStep,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-    }
+    if (_currentStep > 0) _irAlPaso(_currentStep - 1);
   }
 
   @override
