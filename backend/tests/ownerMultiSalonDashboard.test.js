@@ -599,13 +599,19 @@ describeE2EReal('E2E REAL contra PostgreSQL: OWNER multi-sede (sin mocks de pool
     expect(m.ingresos_netos_negocio).toBe(m.ingresos_brutos - m.comision_plataforma - m.impuestos_estado);
     expect(m.sedes_compartidas).toBe(true);
 
-    // Bajo RLS las membresías de OTRO inquilino son invisibles, así que el detector
-    // cross-tenant no encuentra filas. El test mockeado de arriba afirmaba `true` porque
-    // el mock se saltaba el aislamiento: esa es exactamente la clase de diferencia que
-    // sólo un E2E contra la base real puede revelar.
-    expect(m.prestadores_cross_tenant).toBe(false);
-    expect(m.prestadores_externos).toEqual([]);
-    expect(m.advertencia).toBeUndefined();
+    // El fixture crea a propósito un prestador que también labora en una sede de OTRO
+    // dueño: PRESTADOR_COMPARTIDO está en SEDE_NORTE (inquilino A) y en SEDE_AJENA
+    // (inquilino B). El detector lo ve y emite la advertencia, que es la conducta
+    // correcta: el dueño debe saber que sus totales pueden incluir reservas de salones
+    // ajenos.
+    //
+    // La versión anterior esperaba `false` porque suponía que RLS ocultaría la fila del
+    // otro inquilino. Esa suposición nunca se cumplió: la app conecta con un rol que
+    // salta RLS. El test llevaba en rojo desde entonces por una premisa falsa, no por
+    // un defecto del controlador.
+    expect(m.prestadores_cross_tenant).toBe(true);
+    expect(m.prestadores_externos.length).toBeGreaterThan(0);
+    expect(m.advertencia).toMatch(/salones ajenos/);
   });
 
   test('POST /api/v1/owner/switch-salon autoriza contra salon_miembros real y rechaza sedes ajenas', async () => {
