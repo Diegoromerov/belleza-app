@@ -11,13 +11,38 @@
 // tratamiento que el texto debe nombrar (Ley 1581 de 2012, transferencia internacional).
 
 /** Versión del texto de consentimiento que se muestra hoy al usuario. */
-const BIOMETRIC_CONSENT_VERSION = '2.0';
+const BIOMETRIC_CONSENT_VERSION = '2.1';
 
 /**
  * Versiones que el backend acepta registrar. Una versión desconocida se rechaza con
  * 400: guardar un número inventado deja el registro auditable sin valor probatorio.
  */
-const SUPPORTED_CONSENT_VERSIONS = Object.freeze(['1.0', '2.0']);
+const SUPPORTED_CONSENT_VERSIONS = Object.freeze(['1.0', '2.0', '2.1']);
+
+/**
+ * Y-F1d (texto 2.1) — huella de la fotografía.
+ *
+ * Hasta la 2.0 el aviso hablaba de la imagen y de las métricas, pero no de que se
+ * guarda un identificador de la foto para no volver a pagar la misma medición. Omitir
+ * eso deja al titular sin saber qué queda de su imagen después del análisis, así que
+ * la 2.1 lo declara con nombre y plazo.
+ *
+ * `retentionHours` se lee del mismo entorno que usa el servicio de caché
+ * (`BIOMETRIC_CACHE_TTL_HOURS`): si mañana se cambia el plazo, el texto cambia solo.
+ */
+const BIOMETRIC_FINGERPRINT = Object.freeze({
+  what: 'una huella criptográfica de la fotografía (HMAC-SHA256 con una clave secreta del servidor) '
+    + 'y un descriptor perceptual de 64 bits cifrado con AES-256-GCM',
+  purpose: 'reconocer si se vuelve a enviar la misma foto y reutilizar la medición ya realizada, '
+    + 'para no cobrarla dos veces ni duplicar el escaneo',
+  notStored: 'la imagen original no se conserva',
+  notUsedFor: 'no identifica a la persona, no se usa para reconocimiento facial ni se comparte '
+    + 'con ningún encargado',
+  retentionHours: (() => {
+    const n = Number.parseInt(process.env.BIOMETRIC_CACHE_TTL_HOURS, 10);
+    return Number.isFinite(n) && n >= 0 ? n : 24;
+  })(),
+});
 
 /**
  * Encargados del tratamiento a los que sale la fotografía o sus derivados.
@@ -94,6 +119,10 @@ const CONSENT_VERSION_NOTES = Object.freeze({
   '2.0': 'Nombra a Perfect Corp./YouCam (Taiwán), NVIDIA (Nemotron vía NIM) y DeepSeek '
     + 'con su país y la transferencia internacional; corrige la afirmación de que la '
     + 'imagen nunca sale de memoria de sesión.',
+  '2.1': 'Declara la huella de la fotografía (HMAC con clave secreta + descriptor '
+    + 'perceptual cifrado), para qué se guarda, cuánto tiempo y que no identifica a la '
+    + 'persona ni se comparte. Sin este párrafo, el titular no sabía qué quedaba de su '
+    + 'imagen después del análisis.',
 });
 
 const isSupportedConsentVersion = (version) => SUPPORTED_CONSENT_VERSIONS.includes(version);
@@ -109,6 +138,7 @@ module.exports = {
   BIOMETRIC_CONSENT_VERSION,
   SUPPORTED_CONSENT_VERSIONS,
   BIOMETRIC_PROCESSORS,
+  BIOMETRIC_FINGERPRINT,
   CONSENT_VERSION_NOTES,
   getActiveProcessors,
   isSupportedConsentVersion,

@@ -10,6 +10,7 @@ const router = express.Router();
 const { authMiddleware } = require('../middleware/auth');
 const {
   BIOMETRIC_CONSENT_VERSION,
+  BIOMETRIC_FINGERPRINT,
   getActiveProcessors,
   isSupportedConsentVersion,
   isOutdatedConsent,
@@ -313,7 +314,7 @@ router.get('/terms', async (req, res) => {
     // En produccion, estos terminos vendrian de una tabla o archivo de configuracion
     const terms = {
       version: BIOMETRIC_CONSENT_VERSION,
-      last_updated: '2026-10-19',
+      last_updated: '2026-10-20',
       title: 'Consentimiento para Tratamiento de Datos Biometricos - GlowApp',
       sections: [
         {
@@ -335,6 +336,11 @@ router.get('/terms', async (req, res) => {
         {
           title: '5. Encargados del Tratamiento y Transferencia Internacional',
           content: `La fotografia facial y sus derivados se procesan con: ${getActiveProcessors().map((p) => `${p.name} — ${p.country}: ${p.purpose}`).join('; ')}. Todos implican transferencia internacional de datos, amparada en la autorizacion expresa del titular (Ley 1581/2012, art. 26) y en clausulas contractuales. Perfect Corp. procesa la fotografia en su infraestructura y la elimina segun su contrato de servicio; GlowApp conserva solo las metricas cifradas.`
+        },
+        {
+          // Y-F1d (texto 2.1): la huella existía desde Y-F5 y el aviso no la nombraba.
+          title: '6. Huella de la Fotografia',
+          content: `Para no cobrar dos veces la misma medicion, GlowApp conserva ${BIOMETRIC_FINGERPRINT.what}. Se usa exclusivamente para ${BIOMETRIC_FINGERPRINT.purpose}. ${BIOMETRIC_FINGERPRINT.notStored} y la huella ${BIOMETRIC_FINGERPRINT.notUsedFor}. Se conserva mientras la medicion sea reutilizable: ${BIOMETRIC_FINGERPRINT.retentionHours} horas desde la captura, y se elimina con el resto de sus datos biometricos al revocar el consentimiento.`
         }
       ]
     };

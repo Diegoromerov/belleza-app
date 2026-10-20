@@ -11,6 +11,7 @@ const express = require('express');
 
 const {
   BIOMETRIC_CONSENT_VERSION,
+  BIOMETRIC_FINGERPRINT,
   BIOMETRIC_PROCESSORS,
   getActiveProcessors,
   isOutdatedConsent,
@@ -19,11 +20,13 @@ const {
 const consentRoutes = require('../routes/biometricConsentRoutes');
 
 describe('Y-F1b — consentimiento versionado y divulgación del proveedor', () => {
-  test('la versión vigente es 2.0 y la 1.0 queda desactualizada', () => {
-    expect(BIOMETRIC_CONSENT_VERSION).toBe('2.0');
+  test('la versión vigente es 2.1 y la 2.0 queda desactualizada', () => {
+    expect(BIOMETRIC_CONSENT_VERSION).toBe('2.1');
     expect(isOutdatedConsent('1.0')).toBe(true);
-    expect(isOutdatedConsent('2.0')).toBe(false);
+    expect(isOutdatedConsent('2.0')).toBe(true);
+    expect(isOutdatedConsent('2.1')).toBe(false);
     expect(isOutdatedConsent(null)).toBe(true);
+    expect(isSupportedConsentVersion('2.0')).toBe(true); // se puede seguir registrando
     expect(isSupportedConsentVersion('3.0')).toBe(false);
   });
 
@@ -47,8 +50,8 @@ describe('Y-F1b — consentimiento versionado y divulgación del proveedor', () 
       const { version, last_updated: lastUpdated, sections } = res.body.data;
       const texto = sections.map((s) => `${s.title}: ${s.content}`).join('\n');
 
-      expect(version).toBe('2.0');
-      expect(lastUpdated).toBe('2026-10-19');
+      expect(version).toBe('2.1');
+      expect(lastUpdated).toBe('2026-10-20');
 
       expect(texto).toMatch(/Perfect Corp\./);
       expect(texto).toMatch(/YouCam/);
@@ -122,5 +125,53 @@ describe('Y-F1b — consentimiento versionado y divulgación del proveedor', () 
     if (res.status === 400) {
       expect(res.body.error).toBe('invalid_version_terms');
     }
+  });
+});
+
+describe('Y-F1d (texto 2.1) — la huella de la foto se declara', () => {
+  const app = () => {
+    const a = express();
+    a.use(express.json());
+    a.use('/api/consent', consentRoutes);
+    return a;
+  };
+
+  test('/terms tiene una sección que nombra la huella y no la esconde', async () => {
+    const res = await request(app()).get('/api/consent/terms');
+    expect(res.status).toBe(200);
+
+    const seccion = res.body.data.sections.find((s) => /Huella de la Fotografia/i.test(s.title));
+    expect(seccion).toBeDefined();
+
+    const texto = seccion.content;
+    expect(texto).toMatch(/HMAC-SHA256/);
+    expect(texto).toMatch(/clave secreta/);
+    expect(texto).toMatch(/AES-256-GCM/);
+    expect(texto).toMatch(/no se conserva/i); // la imagen original
+  });
+
+  test('el texto dice para qué se usa y para qué no', async () => {
+    const res = await request(app()).get('/api/consent/terms');
+    const texto = res.body.data.sections
+      .map((s) => `${s.title}: ${s.content}`)
+      .join('\n');
+
+    expect(texto).toMatch(/no cobrar dos veces/i);
+    expect(texto).toMatch(/no identifica a la persona/i);
+    expect(texto).toMatch(/no se usa para reconocimiento facial/i);
+  });
+
+  test('el plazo que anuncia el aviso es el mismo que aplica la caché', async () => {
+    const scanSessionService = require('../services/biometric/scanSession.service');
+    const res = await request(app()).get('/api/consent/terms');
+    const seccion = res.body.data.sections.find((s) => /Huella de la Fotografia/i.test(s.title));
+
+    expect(seccion.content).toContain(`${BIOMETRIC_FINGERPRINT.retentionHours} horas`);
+    expect(BIOMETRIC_FINGERPRINT.retentionHours).toBe(scanSessionService.getCacheTtlHours());
+  });
+
+  test('la 2.0 sigue siendo una versión registrable: nadie queda sin poder consentir', () => {
+    expect(isSupportedConsentVersion('2.0')).toBe(true);
+    expect(isOutdatedConsent('2.0')).toBe(true); // pero se marca para re-consentir
   });
 });

@@ -18,6 +18,7 @@ const mockPool = { query: jest.fn() };
 jest.mock('../config/db', () => ({ pool: mockPool }));
 
 const biometricCryptoService = require('../services/biometricCryptoService');
+const { BIOMETRIC_CONSENT_VERSION } = require('../config/consentConfig');
 const scanSessionService = require('../services/biometric/scanSession.service');
 const pool = mockPool;
 
@@ -55,7 +56,7 @@ const FACE_SCORES = {
  * Se encolan en ese orden para que cada test controle ambas.
  */
 function mockQueries({
-  consentVersion = '2.0',
+  consentVersion = BIOMETRIC_CONSENT_VERSION,
   consentError = null,
   insertRow = { id: 42, captured_at: '2026-10-19T12:00:00.000Z' },
   insertError = null,
@@ -107,7 +108,7 @@ describe('ScanSessionService — persistencia cifrada (Y-F1)', () => {
     expect(JSON.parse(missing)).toEqual(['hd_tear_trough']);
 
     // Y-F1b: versión del consentimiento registrada en el escaneo
-    expect(consentVersion).toBe('2.0');
+    expect(consentVersion).toBe(BIOMETRIC_CONSENT_VERSION);
     expect(consentOutdated).toBe(false);
   });
 
@@ -181,16 +182,31 @@ describe('ScanSessionService — versión del consentimiento (Y-F1b)', () => {
     return call ? call[1] : null;
   };
 
-  test('consentimiento 2.0 (vigente) se guarda sin marcar', async () => {
+  test('consentimiento 2.0 (anterior) se guarda marcado para re-consentir', async () => {
     mockQueries({ consentVersion: '2.0' });
 
     const result = await scanSessionService.saveScan({ userId: 7, faceScores: FACE_SCORES });
 
+    // El permiso es válido (el usuario autorizó), pero el texto que leyó ya no es el
+    // vigente: 2.1 es la actual desde Y-F1d.
     expect(result.consentVersion).toBe('2.0');
-    expect(result.consentOutdated).toBe(false);
+    expect(result.consentOutdated).toBe(true);
 
     const params = findInsertParams();
     expect(params[8]).toBe('2.0');
+    expect(params[9]).toBe(true);
+  });
+
+  test('consentimiento con la versión vigente no se marca', async () => {
+    mockQueries({ consentVersion: BIOMETRIC_CONSENT_VERSION });
+
+    const result = await scanSessionService.saveScan({ userId: 7, faceScores: FACE_SCORES });
+
+    expect(result.consentVersion).toBe(BIOMETRIC_CONSENT_VERSION);
+    expect(result.consentOutdated).toBe(false);
+
+    const params = findInsertParams();
+    expect(params[8]).toBe(BIOMETRIC_CONSENT_VERSION);
     expect(params[9]).toBe(false);
   });
 
