@@ -69,22 +69,29 @@ jobs:
       - name: Instalar dependencias
         run: cd backend && npm ci --legacy-peer-deps
 
-      - name: Preparar esquema, migraciones y roles RLS
+      # El esquema de pruebas de ci.yml (`prepareRlsDatabase.js`) tiene 13 tablas:
+      # le sirve a los tests unitarios, no al arnés, que necesita el módulo de
+      # tienda completo (`pedidos_tienda`, `listas_precios`, `platform_config`).
+      # Ese esquema en producción se acumuló durante meses aplicando migraciones
+      # sobre `sequelize.sync`, y no hay script que lo reproduzca desde cero.
+      # `schema-base.sql` es un volcado ESTRUCTURAL (sin datos) de la base donde
+      # el arnés pasa 25/25: 118 tablas, restaurado en ~2 s.
+      - name: Restaurar el esquema base
         run: |
           cd backend
           set -o pipefail
-          node scripts/prepareRlsDatabase.js 2>&1 | tee /tmp/prep.log
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f scripts/e2e/schema-base.sql 2>&1 | tee /tmp/schema.log
           rc=$?
           if [ $rc -ne 0 ]; then
-            echo "::error::prepareRlsDatabase.js falló con exit $rc — últimas 20 líneas:"
-            tail -20 /tmp/prep.log | while IFS= read -r l; do echo "::error::$l"; done
+            echo "::error::restaurar schema-base.sql falló con exit $rc — últimas 20 líneas:"
+            tail -20 /tmp/schema.log | while IFS= read -r l; do echo "::error::$l"; done
           fi
           exit $rc
 
-      - name: Sembrar catálogo mínimo
+      - name: Sembrar inquilino, zonas y catálogo mínimo
         run: |
           cd backend
-          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f scripts/e2e/seed-ci.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f scripts/e2e/seed-ci.sql
 
       - name: Arrancar el backend
         run: |
