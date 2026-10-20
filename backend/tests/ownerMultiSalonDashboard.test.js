@@ -333,6 +333,14 @@ describe('Fase 3: Multi-Sede OWNER Dashboard & Endpoints Integration Tests', () 
 // mismo rol de aplicación que producción, con RLS activo. Solo se salta si no hay BD declarada.
 
 const REAL_QUERY = pool.query; // referencia real capturada antes de que corran los mocks de arriba
+
+// El guard abre una transacción real (runInTenantTransaction) y necesita
+// `pool.connect`. Los bloques mockeados solo reemplazan `pool.query`, así que se
+// les entrega un cliente que delega en el mock; contra la base real, el original.
+const REAL_CONNECT = pool.connect.bind(pool);
+pool.connect = async () => (pool.query === REAL_QUERY
+  ? REAL_CONNECT()
+  : { query: (text, params) => pool.query(text, params), release: () => {} });
 const describeE2EReal = HAY_BD_REAL ? describe : describe.skip;
 
 describeE2EReal('E2E REAL contra PostgreSQL: OWNER multi-sede (sin mocks de pool.query)', () => {
