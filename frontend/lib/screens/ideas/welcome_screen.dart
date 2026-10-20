@@ -262,7 +262,7 @@ class _BiometricWelcomeScreenState extends State<BiometricWelcomeScreen> {
                                   SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
-                                      'Actualizamos el aviso de datos biométricos: ahora explica qué huella de tu foto se conserva. Necesitamos que lo aceptes de nuevo para seguir midiendo.',
+                                      'Actualizamos el aviso de datos biométricos: ahora dice cuánto tiempo conservamos tus datos y qué se borra, y cuándo. Necesitamos que lo aceptes de nuevo para seguir midiendo.',
                                       style: TextStyle(fontSize: 11.5, color: Colors.white, height: 1.35),
                                     ),
                                   ),

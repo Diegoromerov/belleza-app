@@ -20,11 +20,12 @@ const {
 const consentRoutes = require('../routes/biometricConsentRoutes');
 
 describe('Y-F1b — consentimiento versionado y divulgación del proveedor', () => {
-  test('la versión vigente es 2.1 y la 2.0 queda desactualizada', () => {
-    expect(BIOMETRIC_CONSENT_VERSION).toBe('2.1');
+  test('la versión vigente es 2.2 y las anteriores quedan desactualizadas', () => {
+    expect(BIOMETRIC_CONSENT_VERSION).toBe('2.2');
     expect(isOutdatedConsent('1.0')).toBe(true);
     expect(isOutdatedConsent('2.0')).toBe(true);
-    expect(isOutdatedConsent('2.1')).toBe(false);
+    expect(isOutdatedConsent('2.1')).toBe(true);
+    expect(isOutdatedConsent('2.2')).toBe(false);
     expect(isOutdatedConsent(null)).toBe(true);
     expect(isSupportedConsentVersion('2.0')).toBe(true); // se puede seguir registrando
     expect(isSupportedConsentVersion('3.0')).toBe(false);
@@ -50,7 +51,7 @@ describe('Y-F1b — consentimiento versionado y divulgación del proveedor', () 
       const { version, last_updated: lastUpdated, sections } = res.body.data;
       const texto = sections.map((s) => `${s.title}: ${s.content}`).join('\n');
 
-      expect(version).toBe('2.1');
+      expect(version).toBe('2.2');
       expect(lastUpdated).toBe('2026-10-20');
 
       expect(texto).toMatch(/Perfect Corp\./);
@@ -173,5 +174,27 @@ describe('Y-F1d (texto 2.1) — la huella de la foto se declara', () => {
   test('la 2.0 sigue siendo una versión registrable: nadie queda sin poder consentir', () => {
     expect(isSupportedConsentVersion('2.0')).toBe(true);
     expect(isOutdatedConsent('2.0')).toBe(true); // pero se marca para re-consentir
+  });
+
+  test('la sección de retención declara el plazo real y no un «mientras sea necesario»', async () => {
+    // T-111. El texto anterior decía «se retienen solo mientras el consentimiento esté
+    // vigente», que no es un plazo. Ahora tiene fecha y la fecha sale de la config.
+    const { getRetentionMonths } = require('../config/biometricRetention');
+    const meses = getRetentionMonths();
+
+    const res = await request(app()).get('/api/consent/terms');
+    const seccion = res.body.data.sections.find((s) => /Retencion/i.test(s.title));
+
+    expect(seccion).toBeDefined();
+    expect(seccion.content).toContain(`${meses} meses`);
+    expect(seccion.content).toMatch(/escaneo/i);
+    expect(seccion.content).toMatch(/cerrar la cuenta/i);
+    expect(seccion.content).toMatch(/constancia de que el borrado ocurri/i);
+    // Sin número escrito a mano: si el plazo cambia en el entorno, cambia el aviso.
+    process.env.BIOMETRIC_RETENTION_MONTHS = '6';
+    const otro = await request(app()).get('/api/consent/terms');
+    const seccionOtro = otro.body.data.sections.find((s) => /Retencion/i.test(s.title));
+    expect(seccionOtro.content).toContain('6 meses');
+    delete process.env.BIOMETRIC_RETENTION_MONTHS;
   });
 });

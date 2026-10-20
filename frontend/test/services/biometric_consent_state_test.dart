@@ -14,8 +14,8 @@ void main() {
       final estado = BiometricConsentState.fromJson({
         'allowed': true,
         'outdated': false,
-        'version_terms': '2.1',
-        'consent': {'version_terms': '2.1', 'granted': true},
+        'version_terms': '2.2',
+        'consent': {'version_terms': '2.2', 'granted': true},
       });
 
       expect(estado.known, isTrue);
@@ -23,7 +23,7 @@ void main() {
       expect(estado.outdated, isFalse);
       expect(estado.canScan, isTrue);
       expect(estado.needsReconsent, isFalse);
-      expect(estado.version, '2.1');
+      expect(estado.version, '2.2');
     });
   });
 
@@ -46,11 +46,11 @@ void main() {
       final estado = BiometricConsentState.fromJson({
         'allowed': true,
         'outdated': true,
-        'current_version': '2.1',
+        'current_version': '2.2',
         'consent': {'version_terms': '2.0'},
       });
 
-      expect(estado.currentVersion, '2.1');
+      expect(estado.currentVersion, '2.2');
     });
   });
 
@@ -92,10 +92,10 @@ void main() {
   });
 
   group('paridad con el backend', () {
-    test('la versión del cliente es la vigente del servidor (2.1)', () {
+    test('la versión del cliente es la vigente del servidor (2.2)', () {
       // La misma comprobación existe en backend/src/tests/cierreFases.test.js leyendo
       // el fuente Dart; aquí se fija para que un cambio de versión no pase inadvertido.
-      expect(BiometricService.consentVersion, '2.1');
+      expect(BiometricService.consentVersion, '2.2');
     });
   });
 }

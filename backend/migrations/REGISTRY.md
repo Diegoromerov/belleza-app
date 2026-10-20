@@ -280,3 +280,21 @@ serie no se llena de duplicados con Δ0.
 **Verificación:** 100 → 104 sobre Postgres en memoria, re-aplicable; la columna
 `image_phash` no existe; el ciphertext no contiene el dHash en claro; la construcción de
 la ventana temporal se validó contra el Postgres de producción (12 pruebas de la fase).
+
+## 6. T-111 usa `106`: el plazo de conservación necesita un log sin usuario
+
+**Archivo:** `106_biometric_retention.sql`
+**Qué añade:** `biometric_access_log.user_id` pasa a admitir `NULL` y se crea
+`idx_biometric_scan_sessions_captured_at`.
+**Por qué `NULL` en el log:** la purga por retención borra escaneos de muchas personas en
+una sola pasada. Dejar constancia de lo que hizo exigía un `user_id` que la tabla no
+permitía dejar vacío; la alternativa habría sido guardar identificadores de gente cuyos
+datos se acababan de suprimir. La fila de purga queda con `accessed_by =
+'system_retention'`, `access_type = 'retention_purge'` y conteos agregados.
+**Por qué el índice:** el índice existente es `(user_id, captured_at)` y no sirve para
+«todo lo anterior a esta fecha», que es exactamente la consulta de la purga.
+**Qué NO añade:** ninguna columna de fecha de purga. El borrado se prueba por conteo y
+por la fila de auditoría; una columna «purged_at» sobre una sesión borrada no existe por
+definición.
+**Verificación:** el corte se calcula con `retentionCutoff()` (24 meses desde el último
+escaneo) y `dryRun` cuenta sin borrar antes de ejecutar.
