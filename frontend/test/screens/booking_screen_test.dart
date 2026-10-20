@@ -212,8 +212,10 @@ void main() {
     expect(find.text('2. Elige una Fecha (Calendario)'), findsOneWidget);
     expect(find.byIcon(Icons.receipt_long), findsOneWidget);
 
-    // El sticky summary inicial debe mostrar total $0.00
-    expect(find.text('\$0.00'), findsOneWidget);
+    // La pantalla preselecciona el primer servicio, así que el resumen ya tiene
+    // que mostrar su precio. Antes decía $0.00 porque el total solo sumaba los
+    // productos complementarios y el servicio nunca entraba en la cuenta.
+    expect(find.text('\$45.000'), findsOneWidget);
 
     // Avanzar al Paso 2: Dirección y Notas
     final continueBtn = find.widgetWithText(ElevatedButton, 'Continuar');
@@ -241,15 +243,15 @@ void main() {
     await tester.tap(addProductBtn);
     await tester.pumpAndSettle();
 
-    // El sticky summary debe reflejar el precio del producto añadido ($35000.00)
-    expect(find.text('\$35000.00'), findsOneWidget);
+    // Servicio (45.000) + producto (35.000): el resumen suma las dos cosas.
+    expect(find.text('\$80.000'), findsOneWidget);
 
     // Avanzar al Paso 4: Confirmación y Pago
     await tester.tap(continueBtn);
     await tester.pumpAndSettle();
 
     expect(find.byIcon(Icons.receipt_long), findsOneWidget);
-    expect(find.text('\$35000.00'), findsOneWidget);
+    expect(find.text('\$80.000'), findsOneWidget);
   });
 
   testWidgets('Sticky summary color token matches AppTokens.stickySummaryBg', (WidgetTester tester) async {

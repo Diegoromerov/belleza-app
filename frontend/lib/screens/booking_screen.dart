@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import '../services/api_service.dart';
 import '../shared/theme.dart';
 import '../services/booking_recovery_service.dart';
@@ -1247,7 +1248,11 @@ class _BookingScreenState extends State<BookingScreen> {
         orElse: () => <String, dynamic>{},
       );
       if (s.isNotEmpty) {
-        servicesPrice += _parseDouble(s['price']);
+        // El servicio puede llegar con `precio` (fila de BD, flujo del mapa y
+        // del chat) o con `price` (respuesta de /api/providers/:id). Leer solo
+        // `price` dejaba esta tarjeta en $0 mientras la de abajo, que ya usa el
+        // fallback, mostraba el valor correcto.
+        servicesPrice += _parseDouble(s['precio'] ?? s['price']);
         serviceNames.add(s['name']?.toString() ?? 'Servicio');
       }
     }
@@ -1257,7 +1262,7 @@ class _BookingScreenState extends State<BookingScreen> {
     _selectedProductsQty.forEach((id, qty) {
       final prod = _recommendedProducts.firstWhere((p) => p['id'].toString() == id, orElse: () => <String, dynamic>{});
       if (prod.isNotEmpty) {
-        productsSubtotal += _parseDouble(prod['precio']) * qty;
+        productsSubtotal += _parseDouble(prod['precio'] ?? prod['price']) * qty;
       }
     });
 
@@ -1429,7 +1434,7 @@ class _BookingScreenState extends State<BookingScreen> {
     }
     return Column(
       children: widget.services.map((service) {
-        final price = _parseDouble(service['price']);
+        final price = _parseDouble(service['precio'] ?? service['price']);
         final name = service['name']?.toString() ?? 'Sin nombre';
         final id = service['id']?.toString() ?? '';
         final description = service['description']?.toString() ?? '';
@@ -1670,7 +1675,23 @@ class _BookingScreenState extends State<BookingScreen> {
           final unitPrice = _parseDouble(p['precio'] ?? p['price']);
           return sum + (unitPrice * qty);
         });
-    final double total = subtotal; // Aquí pueden añadirse impuestos, descuentos, etc.
+    // El servicio también cuesta: sumarlo es lo que hacía falta aquí. Antes el
+    // total era solo el de los productos complementarios, así que con el servicio
+    // ya elegido y sin productos la tarjeta mostraba $0.00 y parecía que el
+    // servicio era gratis. Los precios publicados ya incluyen IVA (D-GL-023,
+    // regla 8), por eso se suman tal cual, sin volver a gravarlos.
+    final double servicesTotal = selectedServiceIds.fold<double>(
+      0.0,
+      (sum, id) {
+        final s = widget.services.firstWhere(
+          (srv) => srv['id']?.toString() == id,
+          orElse: () => <String, dynamic>{},
+        );
+        if (s.isEmpty) return sum;
+        return sum + _parseDouble(s['precio'] ?? s['price']);
+      },
+    );
+    final double total = servicesTotal + subtotal;
 
     return Semantics(
       label:
@@ -1720,7 +1741,8 @@ class _BookingScreenState extends State<BookingScreen> {
               ),
             ),
             Text(
-              '\$${total.toStringAsFixed(2)}',
+              NumberFormat.currency(locale: 'es_CO', symbol: '\$', decimalDigits: 0)
+                  .format(total),
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
