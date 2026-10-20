@@ -23,7 +23,9 @@ on:
         type: boolean
 
 env:
-  NODE_VERSION: '18'
+  # `sharp` exige Node >= 20.9.0: con 18 los suites que lo importan no cargan y
+  # fallan como "Test suite failed to run" (10 suites de 164). ci.yml ya usa 22.
+  NODE_VERSION: '22.x'
   DATABASE_URL: ${{ secrets.RAILWAY_DATABASE_URL }}
   DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
   GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
