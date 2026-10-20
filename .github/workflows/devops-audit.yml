@@ -259,13 +259,21 @@ jobs:
           flutter-version: '3.24.0'
 
       - name: flutter pub outdated (frontend)
+        # Auditoría, no puerta: si el reporte de dependencias no se puede generar,
+        # se deja constancia y el job sigue. Antes esto tumbaba SUP entero.
         run: |
           if ! command -v flutter >/dev/null 2>&1; then
             echo "Flutter no disponible: se omite la consulta de dependencias"
             echo '{"note":"omitido: flutter no disponible"}' > ../pub-outdated.json
             exit 0
           fi
-          cd frontend && flutter pub outdated --json > ../pub-outdated.json 2>/dev/null || flutter pub outdated
+          cd frontend
+          flutter pub get > /dev/null 2>&1 || true
+          if ! flutter pub outdated --json > ../pub-outdated.json 2>/dev/null; then
+            echo "pub outdated no produjo reporte; se registra el motivo y se continua"
+            echo '{"note":"pub outdated no disponible en este entorno"}' > ../pub-outdated.json
+          fi
+          head -c 400 ../pub-outdated.json; echo
 
       - name: Verificar .gitignore y build artifacts
         run: |
