@@ -6,6 +6,7 @@ import 'package:camera/camera.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../shared/theme.dart';
+import '../../services/biometric_service.dart';
 import 'processing_screen.dart';
 import 'widgets/face_overlay_painter.dart';
 import 'widgets/hand_overlay_painter.dart';
@@ -77,6 +78,40 @@ class _CaptureScreenState extends State<CaptureScreen>
     );
 
     _initializeCamera();
+    // Y-F1f: si el permiso es de un texto anterior (o no hay permiso), no se abre la
+    // cámara a medir. El backend también lo rechaza, pero negarse a capturar es más
+    // honesto que pedir una foto para luego devolver un 403.
+    _verificarConsentimiento();
+  }
+
+  Future<void> _verificarConsentimiento() async {
+    final estado = await BiometricService.getConsentState();
+    if (!mounted || !estado.known || estado.canScan) return;
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: Text(estado.needsReconsent ? 'Actualizamos el aviso' : 'Falta tu autorización'),
+        content: Text(
+          estado.needsReconsent
+              ? 'Autorizaste el análisis con una versión anterior del aviso. La versión '
+                  '${estado.currentVersion} explica qué huella de tu foto se conserva y para qué. '
+                  'Acéptala para volver a medir.'
+              : 'Para analizar tu piel necesitamos tu autorización sobre el tratamiento de datos '
+                  'biométricos. Vuelve al inicio y acéptala para continuar.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Entendido'),
+          ),
+        ],
+      ),
+    );
+
+    // Sin autorización vigente no se captura: se sale de la pantalla.
+    if (mounted) Navigator.of(context).pop();
   }
 
   @override

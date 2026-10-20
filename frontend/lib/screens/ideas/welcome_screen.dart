@@ -21,16 +21,32 @@ class _BiometricWelcomeScreenState extends State<BiometricWelcomeScreen> {
   }
 
   Future<void> _checkExistingConsent() async {
-    final hasConsent = await BiometricService.hasConsent();
-    if (hasConsent && mounted) {
+    // Y-F1f: no basta con «tiene permiso». Si autorizó con un texto anterior, el
+    // permiso no cubre lo que el sistema guarda hoy (la 2.1 añadió la huella de la
+    // foto), así que se le pide aceptar el vigente en vez de pasar de largo.
+    final estado = await BiometricService.getConsentState();
+    if (!mounted) return;
+
+    if (estado.canScan) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const CaptureScreen()),
       );
+      return;
+    }
+
+    if (estado.needsReconsent) {
+      setState(() {
+        _needsReconsent = true;
+        _consentAccepted = false;
+      });
     }
   }
   bool _consentAccepted = false;
   bool _isRegisteringConsent = false;
+
+  /// Autorizó con un texto anterior al vigente: hay que volver a aceptarlo.
+  bool _needsReconsent = false;
 
   void _showPrivacyPolicyModal(BuildContext context, bool isMen) {
     showModalBottomSheet(
@@ -139,24 +155,26 @@ class _BiometricWelcomeScreenState extends State<BiometricWelcomeScreen> {
       _isRegisteringConsent = true;
     });
 
+    // Se capturan antes del await: usar `context` después de una espera asíncrona es
+    // lo que marca el analizador, y con razón.
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+
     try {
       // Registrar consentimiento auditable en el Backend de PostgreSQL/Dashboard B2B
       await BiometricService.saveConsent();
     } catch (e) {
       debugPrint('⚠️ No se pudo registrar el consentimiento: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No se pudo guardar tu consentimiento. Revisa tu conexión e inténtalo de nuevo.')),
-        );
-      }
+      messenger.showSnackBar(
+        const SnackBar(content: Text('No se pudo guardar tu consentimiento. Revisa tu conexión e inténtalo de nuevo.')),
+      );
       if (mounted) setState(() => _isRegisteringConsent = false);
       return;
     }
 
     if (mounted) {
       setState(() => _isRegisteringConsent = false);
-      Navigator.pushReplacement(
-        context,
+      navigator.pushReplacement(
         MaterialPageRoute(builder: (_) => const CaptureScreen()),
       );
     }
@@ -225,6 +243,34 @@ class _BiometricWelcomeScreenState extends State<BiometricWelcomeScreen> {
                           const Spacer(),
 
                           // 🛡️ Contenedor Frosted Glass del Contrato & Habeas Data (Ley 1581)
+                          // Y-F1f: aviso de re-consentimiento cuando el permiso es de
+                          // una versión anterior del texto.
+                          if (_needsReconsent) ...[
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFD4AF37).withValues(alpha: 0.14),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: const Color(0xFFD4AF37).withValues(alpha: 0.55),
+                                ),
+                              ),
+                              child: const Row(
+                                children: [
+                                  Icon(Icons.privacy_tip_outlined, size: 18, color: Color(0xFFE5C158)),
+                                  SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      'Actualizamos el aviso de datos biométricos: ahora explica qué huella de tu foto se conserva. Necesitamos que lo aceptes de nuevo para seguir midiendo.',
+                                      style: TextStyle(fontSize: 11.5, color: Colors.white, height: 1.35),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                          ],
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                             decoration: BoxDecoration(
