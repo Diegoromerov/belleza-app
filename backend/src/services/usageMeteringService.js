@@ -81,7 +81,8 @@ function hasFeature(plan, feature) {
  * Obtiene límite numérico para feature (null = ilimitado)
  */
 function getLimit(plan, feature) {
-  return getPlanLimits(plan)[feature] ?? 0;
+  const limits = getPlanLimits(plan);
+  return feature in limits ? limits[feature] : 0;
 }
 
 /**
