@@ -52,7 +52,7 @@ jobs:
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/glowtest
       DATABASE_URL_ADMIN: postgres://postgres:postgres@localhost:5432/glowtest
       RLS_ROLE_PASSWORD: ci_only_password
-      JWT_SECRET: ci_e2e_secret_solo_para_pruebas
+      JWT_SECRET: ci_e2e_secret_solo_para_pruebas_2026_no_produccion
       E2E_PASSWORD: ci_e2e_password
       E2E_ALLOW_NON_LOCAL: 'true'
 
@@ -93,10 +93,14 @@ jobs:
           cd backend
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f scripts/e2e/seed-ci.sql
 
+      # NODE_ENV=development a propósito: index.js solo llama a app.listen()
+      # cuando NODE_ENV !== 'test' (en 'test' exporta la app para jest y no abre
+      # puerto). Con el env del job en 'test' el servidor nunca arrancaba y el
+      # paso moría esperando /api/health.
       - name: Arrancar el backend
         run: |
           cd backend
-          nohup node index.js > /tmp/backend.log 2>&1 &
+          NODE_ENV=development nohup node index.js > /tmp/backend.log 2>&1 &
           for i in $(seq 1 60); do
             if curl -sf "$API_URL/api/health" > /dev/null; then
               echo "backend arriba tras ${i} intentos"
