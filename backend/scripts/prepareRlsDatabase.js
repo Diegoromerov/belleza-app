@@ -58,7 +58,7 @@ const MIGRACIONES = [
   // sin `missing_ok`, Postgres lanza error en vez de devolver cero filas. Sin
   // esta línea la base de pruebas reproduce el defecto que el test
   // `rlsPoliticasSinContexto` debe detectar.
-  'migrations/106_rls_politicas_sin_contexto.sql',
+  'migrations/107_rls_politicas_sin_contexto.sql',
 ];
 
 async function main() {

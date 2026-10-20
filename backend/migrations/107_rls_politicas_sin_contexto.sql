@@ -1,4 +1,4 @@
--- 106_rls_politicas_sin_contexto.sql
+-- 107_rls_politicas_sin_contexto.sql
 --
 -- Las políticas de la 058 llaman current_setting('app.tenant_id') SIN el segundo
 -- argumento. Con el contexto puesto eso funciona; sin él, Postgres lanza:
