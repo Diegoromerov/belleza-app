@@ -1,0 +1,21 @@
+{
+  "tabla": "schema_migrations",
+  "predicado": {
+    "filename": "104_umbrales_envio_aprobados.sql"
+  },
+  "filas": [
+    {
+      "id": 178,
+      "filename": "104_umbrales_envio_aprobados.sql",
+      "applied_at": "2026-10-20T04:04:59.744Z",
+      "checksum": "06671ae75d8809a3"
+    },
+    {
+      "id": 179,
+      "filename": "105_umbrales_envio_aprobados.sql",
+      "applied_at": "2026-10-20T04:10:18.319Z",
+      "checksum": "06671ae75d8809a3"
+    }
+  ],
+  "exportado": "2026-10-19"
+}
