@@ -1,9 +1,9 @@
 // backend/src/routes/saasUsageRoutes.js
 const express = require('express');
 const { pool } = require('../config/db');
-const { saasContext } = require('../middleware/saasContext');
+const saasContext = require('../middleware/saasContext');
 const { requireEntitlement } = require('../middleware/featureGate');
-const authMiddleware = require('../middleware/auth');
+const { authMiddleware } = require('../middleware/auth');
 const usageMeteringService = require('../services/usageMeteringService');
 
 const router = express.Router();

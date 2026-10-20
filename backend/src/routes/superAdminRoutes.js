@@ -2,7 +2,7 @@
 const express = require('express');
 const { pool } = require('../config/db');
 const superAdminGuard = require('../middleware/superAdminGuard');
-const authMiddleware = require('../middleware/auth');
+const { authMiddleware } = require('../middleware/auth');
 const subscriptionService = require('../services/subscriptionService');
 const invoiceService = require('../services/invoiceService');
 const usageMeteringService = require('../services/usageMeteringService');

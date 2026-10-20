@@ -1,9 +1,9 @@
 // backend/src/routes/saasBillingRoutes.js
 const express = require('express');
 const { pool } = require('../config/db');
-const { saasContext } = require('../middleware/saasContext');
+const saasContext = require('../middleware/saasContext');
 const { requireEntitlement, requireOwner } = require('../middleware/featureGate');
-const authMiddleware = require('../middleware/auth');
+const { authMiddleware } = require('../middleware/auth');
 const subscriptionService = require('../services/subscriptionService');
 const invoiceService = require('../services/invoiceService');
 const stripeService = require('../services/stripeService');

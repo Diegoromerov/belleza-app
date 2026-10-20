@@ -1,9 +1,9 @@
 // backend/src/routes/saasTeamRoutes.js
 const express = require('express');
 const { pool } = require('../config/db');
-const { saasContext } = require('../middleware/saasContext');
+const saasContext = require('../middleware/saasContext');
 const { requireRole, requireOwner } = require('../middleware/featureGate');
-const authMiddleware = require('../middleware/auth');
+const { authMiddleware } = require('../middleware/auth');
 const crypto = require('crypto');
 
 const router = express.Router();
