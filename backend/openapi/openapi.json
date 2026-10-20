@@ -2235,6 +2235,22 @@
         "x-glowapp-documented": false
       }
     },
+    "/api/biometric/history": {
+      "get": {
+        "operationId": "getapi_biometric_history",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "GET /api/biometric/history (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "biometric"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
     "/api/biometric/profile/{userId}": {
       "delete": {
         "operationId": "deleteapi_biometric_profile_userId",
@@ -6505,8 +6521,8 @@
   ],
   "x-glowapp-contract": {
     "generator": "backend/src/openapi/buildOpenApi.js",
-    "operationsDiscovered": 293,
+    "operationsDiscovered": 294,
     "operationsDocumented": 16,
-    "routesMounted": 309
+    "routesMounted": 310
   }
 }

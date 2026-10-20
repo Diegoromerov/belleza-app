@@ -30,6 +30,35 @@ class BiometricService {
   /// marcado como autorizado con una versión desactualizada.
   static const String consentVersion = '2.0';
 
+  /// Y-F6: serie de escaneos del usuario, tal como quedó guardada.
+  ///
+  /// El backend no recalcula nada: el GlowScore viene de `quality.glowScore` y el
+  /// veredicto de la comparación persistida. Un escaneo viejo sin puntaje llega con
+  /// `glowScore: null`, y la pantalla lo dice en vez de inventar un número.
+  static Future<List<Map<String, dynamic>>> getHistory({int limit = 20}) async {
+    final baseUrl = await getBaseUrl();
+    final token = await AuthService.getToken();
+    if (token == null) {
+      throw Exception('Tu sesión no está iniciada.');
+    }
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/api/biometric/history?limit=$limit'),
+      headers: {'Authorization': 'Bearer $token'},
+    ).timeout(const Duration(seconds: 20));
+
+    if (response.statusCode == 401) {
+      throw Exception('Tu sesión expiró. Vuelve a entrar.');
+    }
+    if (response.statusCode != 200) {
+      throw Exception('No se pudo cargar tu evolución (${response.statusCode}).');
+    }
+
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+    final scans = (data['scans'] as List<dynamic>? ?? const []);
+    return scans.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+  }
+
   static Future<String> getBaseUrl() async {
     await ApiService.ensureBaseUrl();
     return ApiService.baseUrl;

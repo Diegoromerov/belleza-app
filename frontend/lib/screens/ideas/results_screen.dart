@@ -12,6 +12,7 @@ import 'widgets/recommendation_card.dart';
 import 'widgets/product_card.dart';
 import 'widgets/color_palette.dart';
 import '../../services/social_share_service.dart';
+import 'evolution_screen.dart';
 
 // ---------------------------------------------------------------------------
 // Tokens de marca para esta pantalla estilo Pasaporte Editorial
@@ -155,6 +156,31 @@ class _ResultsScreenState extends State<ResultsScreen> {
                       _buildUVBanner(),
                       const SizedBox(height: 20),
                     ],
+                    // Y-F6: la serie completa, para ver el cambio contra escaneos
+                    // anteriores y no sólo el veredicto del último.
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const EvolutionScreen()),
+                        );
+                      },
+                      icon: const Icon(Icons.show_chart, color: _PassportColors.primary),
+                      label: const Text(
+                        '📈 Ver mi evolución',
+                        style: TextStyle(
+                          color: _PassportColors.textAccent,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 48),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
                     if (face != null) ...[
                       ColorPaletteWidget(
                         hexColor: _getHexColorFromSubtono(face.subtono),

@@ -173,7 +173,11 @@ class BiometricOrchestrator {
             ...prepared.geometry, // Y-F2: origen, normalización y EXIF de la captura
             cliente: geometryAssessment, // Y-F4: ángulos y distancia declarados y revalidados
           },
-          quality: { ...prepared.quality, undertone: faceScores.subtonoMedicion }, // Y-F2: veredicto, score y motivos
+          quality: {
+            ...prepared.quality,
+            undertone: faceScores.subtonoMedicion, // Y-F2: veredicto, score y motivos
+            glowScore, // Y-F6: el puntaje se guarda para poder graficar la serie sin recalcular
+          },
           fingerprint, // Y-F5: huella para reutilizar el análisis si vuelve la misma foto
           tolerante: true,
         });

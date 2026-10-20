@@ -5,6 +5,7 @@ const router = express.Router();
 const orchestrator = require('../services/biometric/orchestrator');
 const profileService = require('../services/biometric/profile.service');
 const scanComparisonService = require('../services/biometric/scanComparison.service');
+const historyService = require('../services/biometric/history.service');
 const { authMiddleware } = require('../middleware/auth');
 const idempotencyMiddleware = require('../middleware/idempotency');
 const biometricConsentGuard = require('../middleware/biometricConsentGuard');
@@ -172,6 +173,31 @@ router.get('/delta/latest', authMiddleware, async (req, res) => {
   } catch (error) {
     console.error('❌ Error en GET /api/biometric/delta/latest:', error.message);
     res.status(500).json({ success: false, error: 'INTERNAL_ERROR', message: 'No se pudo obtener la comparación.' });
+  }
+});
+
+/**
+ * GET /api/biometric/history
+ * Y-F6: la serie completa del usuario, más reciente primero.
+ * No recalcula: lee el GlowScore guardado con cada sesión y el veredicto persistido
+ * de cada comparación. Un usuario sin escaneos recibe una lista vacía, no un 404.
+ */
+router.get('/history', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'UNAUTHORIZED', message: 'Se requiere una sesión autenticada.' });
+    }
+
+    const { scans, limit } = await historyService.list(userId, { limit: req.query.limit });
+
+    res.json({ success: true, scans, total: scans.length, limit });
+  } catch (error) {
+    if (error.statusCode === 400) {
+      return res.status(400).json({ success: false, error: 'INVALID_USER', message: error.message });
+    }
+    console.error('❌ Error en GET /api/biometric/history:', error.message);
+    res.status(500).json({ success: false, error: 'INTERNAL_ERROR', message: 'No se pudo obtener el historial.' });
   }
 });
 
