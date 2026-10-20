@@ -27,11 +27,17 @@ const path = require('path');
 
 const API = process.env.API_URL || `http://127.0.0.1:${process.env.PORT || 8080}`;
 const DB = process.env.DATABASE_URL;
-const PASSWORD = process.env.E2E_PASSWORD || 'Prueba123!';
+// Sin valor por defecto: el escáner verifyNoVersionedSecrets.js marca cualquier
+// literal como credencial versionada, y tiene razón. Se exige explícita.
+const PASSWORD = process.env.E2E_PASSWORD;
 const SUFIJO = Date.now().toString(36);
 
 if (!DB) {
   console.error('Falta DATABASE_URL. El arnés necesita leer la base para comprobar los splits.');
+  process.exit(1);
+}
+if (!PASSWORD) {
+  console.error('Falta E2E_PASSWORD: contraseña de las cuentas efímeras que crea el arnés.');
   process.exit(1);
 }
 

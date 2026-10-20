@@ -21,7 +21,7 @@ npm run e2e
 |---|---|
 | `DATABASE_URL` | Obligatoria. El arnés lee la base para verificar los splits |
 | `API_URL` | Base de la API. Por defecto `http://127.0.0.1:$PORT` |
-| `E2E_PASSWORD` | Contraseña de las cuentas efímeras. Por defecto `Prueba123!` |
+| `E2E_PASSWORD` | **Obligatoria.** Contraseña de las cuentas efímeras (sin valor por defecto: un literal en el código lo marca el escáner de secretos) |
 | `E2E_ALLOW_NON_LOCAL` | `true` para permitir un destino que no sea localhost |
 
 Sale con **código 2** si alguna verificación falla, así que sirve en CI.
