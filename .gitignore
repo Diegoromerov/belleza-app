@@ -106,3 +106,6 @@ frontend/test/golden/failures/
 # El service worker de FCM se GENERA en el build (tool/generate_firebase_sw.dart):
 # lleva la configuracion de Firebase, que no se versiona (lib/firebase_options.dart).
 frontend/web/firebase-messaging-sw.js
+
+# Montaje local de skills; estaba como gitlink sin .gitmodules y rompia actions/checkout
+.agent/
