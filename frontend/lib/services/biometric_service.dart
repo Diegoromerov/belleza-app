@@ -91,7 +91,7 @@ class BiometricService {
   /// Debe coincidir con `BIOMETRIC_CONSENT_VERSION` del backend
   /// (`backend/src/config/consentConfig.js`); si no coincide, el análisis queda
   /// marcado como autorizado con una versión desactualizada.
-  static const String consentVersion = '2.1';
+  static const String consentVersion = '2.2';
 
   /// Y-F6: serie de escaneos del usuario, tal como quedó guardada.
   ///

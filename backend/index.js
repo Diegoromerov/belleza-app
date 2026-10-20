@@ -72,6 +72,7 @@ const adminMiddleware = async (req, res, next) => {
 };
 const { processAssistantMessage, AI_USER_ID } = require('./src/services/geminiService');
 const { inicializarJobs } = require('./src/jobs/paymentJobs');
+const { iniciarRetencionBiometrica } = require('./src/jobs/biometricRetention');
 
 const crypto = require('crypto');
 
@@ -1783,6 +1784,8 @@ try {
     await initDatabase();
     // Iniciar jobs de pagos (maduración, retiros automáticos, conciliación)
     inicializarJobs();
+    // T-111: purga diaria de escaneos que cumplieron el plazo del aviso
+    iniciarRetencionBiometrica();
     // (WORKERS DESHABILITADOS)
     // Inicializar servidor WebSocket compartiendo puerto HTTP
     initWebSocketServer(server);

@@ -10,14 +10,16 @@
 // Aquí vive la versión vigente, las versiones aceptables y los encargados del
 // tratamiento que el texto debe nombrar (Ley 1581 de 2012, transferencia internacional).
 
+const { describeRetention } = require('./biometricRetention');
+
 /** Versión del texto de consentimiento que se muestra hoy al usuario. */
-const BIOMETRIC_CONSENT_VERSION = '2.1';
+const BIOMETRIC_CONSENT_VERSION = '2.2';
 
 /**
  * Versiones que el backend acepta registrar. Una versión desconocida se rechaza con
  * 400: guardar un número inventado deja el registro auditable sin valor probatorio.
  */
-const SUPPORTED_CONSENT_VERSIONS = Object.freeze(['1.0', '2.0', '2.1']);
+const SUPPORTED_CONSENT_VERSIONS = Object.freeze(['1.0', '2.0', '2.1', '2.2']);
 
 /**
  * Y-F1d (texto 2.1) — huella de la fotografía.
@@ -123,7 +125,19 @@ const CONSENT_VERSION_NOTES = Object.freeze({
     + 'perceptual cifrado), para qué se guarda, cuánto tiempo y que no identifica a la '
     + 'persona ni se comparte. Sin este párrafo, el titular no sabía qué quedaba de su '
     + 'imagen después del análisis.',
+  '2.2': 'Declara el plazo de conservación: 24 meses desde el último escaneo, purga '
+    + 'también de las cuentas inactivas, borrado inmediato al cerrar la cuenta y '
+    + 'constancia del borrado sin datos dentro. Sin plazo, «conservamos tus datos» no '
+    + 'tenía fecha y la Ley 1581 exige temporalidad.',
 });
+
+/**
+ * T-111 — plazo de conservación, tal como lo verá el titular en el aviso.
+ * Se construye en cada llamada para que un cambio de entorno mueva el texto.
+ */
+function getRetentionNotice() {
+  return describeRetention();
+}
 
 const isSupportedConsentVersion = (version) => SUPPORTED_CONSENT_VERSIONS.includes(version);
 
@@ -140,6 +154,7 @@ module.exports = {
   BIOMETRIC_PROCESSORS,
   BIOMETRIC_FINGERPRINT,
   CONSENT_VERSION_NOTES,
+  getRetentionNotice,
   getActiveProcessors,
   isSupportedConsentVersion,
   isOutdatedConsent,

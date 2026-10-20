@@ -323,6 +323,11 @@ async function deleteBiometricData(userId) {
   try {
     let recordsAffected = 0;
     const tables = [
+      // T-111: las comparaciones antes que las sesiones (cuelgan de ellas), y ambas
+      // antes que el resto. Antes faltaban: cerrar la cuenta borraba la foto y el
+      // perfil, pero dejaba intactos los escaneos cifrados y su huella — el mensaje
+      // «tus datos han sido eliminados» era falso justo en lo biométrico.
+      'biometric_scan_comparisons', 'biometric_scan_sessions',
       'user_photos', 'biometric_history', 'beauty_profiles',
       'user_biometrics', 'ai_diagnostics', 'skin_profiles',
     ];
@@ -350,7 +355,7 @@ async function deleteBiometricData(userId) {
       accessedBy: 'user_self',
       accessType: 'delete_data',
       ip: null,
-      details: { recordsAffected, tables: ['user_photos', 'biometric_history', 'beauty_profiles', 'user_biometrics', 'ai_diagnostics', 'skin_profiles'] }
+      details: { recordsAffected, tables: ['biometric_scan_comparisons', 'biometric_scan_sessions', 'user_photos', 'biometric_history', 'beauty_profiles', 'user_biometrics', 'ai_diagnostics', 'skin_profiles'] }
     });
 
     return { deleted: true, recordsAffected };

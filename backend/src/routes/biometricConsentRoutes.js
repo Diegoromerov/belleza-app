@@ -12,6 +12,7 @@ const {
   BIOMETRIC_CONSENT_VERSION,
   BIOMETRIC_FINGERPRINT,
   getActiveProcessors,
+  getRetentionNotice,
   isSupportedConsentVersion,
   isOutdatedConsent,
 } = require('../config/consentConfig');
@@ -330,8 +331,10 @@ router.get('/terms', async (req, res) => {
           content: 'Acceso: Consultar que datos se tienen sobre usted\nRectificacion: Corregir datos inexactos\nSupresion: Eliminar sus datos biometricos en cualquier momento (Art. 15)\nRevocatoria: Retirar consentimiento sin efecto retroactivo\nQueja: Ante la SIC si considera vulnerados sus derechos'
         },
         {
-          title: '4. Retencion y Seguridad',
-          content: 'Datos biometricos se retienen solo mientras el consentimiento este vigente. Al revocar, se eliminan en 24h. Cifrado AES-256 en reposo, TLS 1.3 en transito. Acceso solo por personal autorizado (ATENA, AURA).'
+          // T-111 (texto 2.2): la sección decía «mientras el consentimiento esté vigente»,
+          // que no es un plazo. La Ley 1581 exige temporalidad y ahora tiene fecha.
+          title: '4. Retencion: Plazo, Purga y Borrado',
+          content: `Los datos biometricos se conservan ${getRetentionNotice().retentionMonths} meses contados desde ${getRetentionNotice().from}. Se mantienen ${getRetentionNotice().whatIsKept}; ${getRetentionNotice().whatIsDeleted}. La misma regla se aplica a las cuentas inactivas: la inactividad no prolonga la conservacion. Al revocar el consentimiento los datos se eliminan en 24 horas. Al cerrar la cuenta, ${getRetentionNotice().onAccountDeletion}. Cifrado AES-256-GCM en reposo y TLS en transito; acceso solo por personal autorizado (ATENA, AURA).`
         },
         {
           title: '5. Encargados del Tratamiento y Transferencia Internacional',
