@@ -54,6 +54,11 @@ const MIGRACIONES = [
   'migrations/065_multi_tenant_hardening.sql',
   'migrations/067_create_multi_salon_ddl.sql',
   'migrations/068_force_rls_strict_isolation.sql',
+  // 106 vuelve tolerantes las políticas de la 058/068 cuando falta el contexto:
+  // sin `missing_ok`, Postgres lanza error en vez de devolver cero filas. Sin
+  // esta línea la base de pruebas reproduce el defecto que el test
+  // `rlsPoliticasSinContexto` debe detectar.
+  'migrations/106_rls_politicas_sin_contexto.sql',
 ];
 
 async function main() {
