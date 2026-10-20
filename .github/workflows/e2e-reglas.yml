@@ -1,0 +1,124 @@
+name: E2E - Reglas del dinero
+
+# El arnés existía desde el 19-oct y corría solo cuando alguien se acordaba.
+# Los tres defectos que encontró (IVA cobrado dos veces, contrato en 500,
+# reprogramación infinita) los encontró a mano, después de estar en producción.
+# Este workflow lo ejecuta en cada PR que toque el backend: si una regla del
+# dinero se rompe, se sabe antes del merge y no por un cliente.
+
+on:
+  pull_request:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/e2e-reglas.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  reglas:
+    name: Arnés E2E (reglas del dinero)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: glowtest
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 12
+
+    env:
+      NODE_ENV: test
+      PORT: '8083'
+      API_URL: http://127.0.0.1:8083
+      # La aplicación corre con el rol propietario a propósito: este arnés
+      # verifica reglas de negocio (split, propina, cancelación, envío, IVA),
+      # no aislamiento entre inquilinos. El aislamiento tiene su propia
+      # compuerta en ci.yml (`verifyTenantIsolation.js`).
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/glowtest
+      DATABASE_URL_ADMIN: postgres://postgres:postgres@localhost:5432/glowtest
+      RLS_ROLE_PASSWORD: ci_only_password
+      JWT_SECRET: ci_e2e_secret_solo_para_pruebas
+      E2E_PASSWORD: ci_e2e_password
+      E2E_ALLOW_NON_LOCAL: 'true'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Instalar dependencias
+        run: cd backend && npm ci --legacy-peer-deps
+
+      - name: Preparar esquema, migraciones y roles RLS
+        run: |
+          cd backend
+          set -o pipefail
+          node scripts/prepareRlsDatabase.js 2>&1 | tee /tmp/prep.log
+          rc=$?
+          if [ $rc -ne 0 ]; then
+            echo "::error::prepareRlsDatabase.js falló con exit $rc — últimas 20 líneas:"
+            tail -20 /tmp/prep.log | while IFS= read -r l; do echo "::error::$l"; done
+          fi
+          exit $rc
+
+      - name: Sembrar catálogo mínimo
+        run: |
+          cd backend
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f scripts/e2e/seed-ci.sql
+
+      - name: Arrancar el backend
+        run: |
+          cd backend
+          nohup node index.js > /tmp/backend.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -sf "$API_URL/api/health" > /dev/null; then
+              echo "backend arriba tras ${i} intentos"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "::error::el backend no respondió en 120 s — últimas 30 líneas:"
+          tail -30 /tmp/backend.log | while IFS= read -r l; do echo "::error::$l"; done
+          exit 1
+
+      - name: Ejecutar el arnés
+        run: |
+          cd backend
+          set -o pipefail
+          npm run e2e 2>&1 | tee /tmp/e2e.log
+          rc=$?
+          if [ $rc -ne 0 ]; then
+            echo "::error::el arnés reportó fallos (exit $rc)"
+            grep -E '✗|FALLA|ERROR' /tmp/e2e.log | head -20 | while IFS= read -r l; do echo "::error::$l"; done
+            echo "::error::log del backend — últimas 25 líneas:"
+            tail -25 /tmp/backend.log | while IFS= read -r l; do echo "::error::$l"; done
+          fi
+          exit $rc
+
+      - name: Resumen del arnés
+        if: always()
+        run: |
+          echo '### Arnés E2E' >> "$GITHUB_STEP_SUMMARY"
+          if [ -f /tmp/e2e.log ]; then
+            grep -E '^(OK|OMITIDO|FALLA|[0-9]+ / [0-9]+)' /tmp/e2e.log | tail -60 >> "$GITHUB_STEP_SUMMARY" || true
+          fi

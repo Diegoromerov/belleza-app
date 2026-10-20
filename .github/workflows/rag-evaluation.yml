@@ -26,7 +26,10 @@ env:
   # `sharp` exige Node >= 20.9.0: con 18 los suites que lo importan no cargan y
   # fallan como "Test suite failed to run" (10 suites de 164). ci.yml ya usa 22.
   NODE_VERSION: '22.x'
-  DATABASE_URL: ${{ secrets.RAILWAY_DATABASE_URL }}
+  # Aquí estaba `DATABASE_URL: secrets.RAILWAY_DATABASE_URL`. Un job llamado
+  # Unit Tests tenía credenciales de PRODUCCIÓN: unos tests unitarios no deben
+  # poder escribir en la base real, y ninguna prueba debería depender de ella
+  # para pasar. Quien necesite base levanta su propio servicio (integration-tests).
   DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
   GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
   NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
@@ -100,8 +103,33 @@ jobs:
   integration-tests:
     name: Integration Tests (RAG Pipeline)
     runs-on: ubuntu-latest
+    # Sin `services:` este job esperaba una base que nadie levantaba y moría con
+    # ECONNREFUSED; de paso usaba la de producción por el env global.
+    services:
+      postgres:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: glowtest
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/glowtest
+      DATABASE_URL_ADMIN: postgres://postgres:postgres@localhost:5432/glowtest
     needs: [lint-and-typecheck, unit-tests]
-    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    # Solo manual (workflow_dispatch). No puede pasar en cada PR por una razón
+    # que no es de infraestructura: NVIDIA_EMBEDDING_MODEL apunta a
+    # nvidia/nv-embedqa-e5-v5, dado de baja el 2026-08-25 (la API responde 410).
+    # Sin embeddings no hay evaluación válida que comparar contra la línea base;
+    # ejecutarlo en cada PR solo añadiría un check rojo permanente. Reactivar
+    # aquí cuando se migre el modelo y las dimensiones (1024 -> 2048).
+    if: github.event_name == 'workflow_dispatch'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
