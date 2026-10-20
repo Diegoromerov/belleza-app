@@ -461,6 +461,22 @@ app.use('/api/mentorship', mentorshipRoutes);
 app.use('/api/xp-logs', xpLogRoutes);
 app.use('/api/v1/business', businessRoutes);
 app.use('/api/v1/memberships', membershipRoutes);
+
+// ==========================================
+// 🔹 SAAS B2B ROUTES (Fases 1-4)
+// ==========================================
+const saasTeamRoutes = require('./src/routes/saasTeamRoutes');
+const saasUsageRoutes = require('./src/routes/saasUsageRoutes');
+const saasBillingRoutes = require('./src/routes/saasBillingRoutes');
+const saasApiKeyRoutes = require('./src/routes/saasApiKeyRoutes');
+const superAdminRoutes = require('./src/routes/superAdminRoutes');
+
+app.use('/api/saas/team', saasTeamRoutes);
+app.use('/api/saas/usage', saasUsageRoutes);
+app.use('/api/saas/billing', saasBillingRoutes);
+app.use('/api/saas/api-keys', saasApiKeyRoutes);
+app.use('/api/superadmin', superAdminRoutes);
+
 // Health check — NO escribe en la base de datos. Antes ejecutaba un `setval` sobre
 // `usuarios_id_seq` en cada probe (y respondía 200 con la BD caída).
 // A360-2026-09-22/A-06 + C-03.
