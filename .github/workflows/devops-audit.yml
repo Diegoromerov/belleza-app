@@ -82,7 +82,9 @@ jobs:
               "a1b2c3d4.*",
               "ci_secret_key_.*"
             ]
-            paths = ["test*.js", "*Test*.js", "*.md", "docs/**", "scratch/**"]
+            # `paths` en gitleaks son EXPRESIONES REGULARES, no globs: "*Test*.js"
+            # no compila y el binario hacía panic (exit 2) sin auditar nada.
+            paths = [".*test.*\\.js$", ".*Test.*\\.js$", ".*\\.md$", "^docs/", "^scratch/"]
           EOF
 
       - name: Ejecutar gitleaks
@@ -174,7 +176,8 @@ jobs:
         run: |
           cat backend/migrations/058_enable_rls_policies.sql | grep -A2 -B2 'ENABLE\|FORCE\|WITH CHECK'
           cat backend/src/middleware/auth.js | grep -A5 -B5 'app.tenant_id'
-          cat backend/src/config/tenantContext.js
+          # El archivo se llama tenantRouting.js; el nombre viejo hacía fallar el cat.
+          cat backend/src/config/tenantRouting.js
 
       - name: Verificar backfill tenant
         run: |
@@ -248,8 +251,20 @@ jobs:
           cd backend && npm audit --json > ../npm-audit.json 2>/dev/null || true
           cat ../npm-audit.json | head -50
 
+      # Este job no instalaba Flutter y lo invocaba igual: el paso moría con
+      # exit 127 y arrastraba todo el auditor SUP.
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+
       - name: flutter pub outdated (frontend)
         run: |
+          if ! command -v flutter >/dev/null 2>&1; then
+            echo "Flutter no disponible: se omite la consulta de dependencias"
+            echo '{"note":"omitido: flutter no disponible"}' > ../pub-outdated.json
+            exit 0
+          fi
           cd frontend && flutter pub outdated --json > ../pub-outdated.json 2>/dev/null || flutter pub outdated
 
       - name: Verificar .gitignore y build artifacts
