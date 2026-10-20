@@ -31,6 +31,10 @@ class _CaptureScreenState extends State<CaptureScreen>
 
   // Imágenes capturadas
   Uint8List? _faceImage;
+  /// Y-F4: geometría del último cuadro válido (ángulos y proporción del rostro).
+  /// Viaja con la foto para que el backend la vuelva a validar: el cliente no es
+  /// la única autoridad sobre si la captura sirve.
+  Map<String, dynamic>? _captureGeometry;
   Uint8List? _handsImage;
 
   // Estado de validación
@@ -424,6 +428,10 @@ class _CaptureScreenState extends State<CaptureScreen>
         _detectedFace = face;
         _isFaceValid = isValid;
         _qualityScore = quality;
+        // Y-F4: se guarda la geometría del cuadro que se va a capturar.
+        if (isValid) {
+          _captureGeometry = _buildGeometry(face, imageSize);
+        }
         _instruction = isValid
             ? '✨ ¡Rostro Alineado 3D! Mantén la posición (Captura en 1.5s...)'
             : _getFaceInstruction(face, imageSize);
@@ -440,6 +448,26 @@ class _CaptureScreenState extends State<CaptureScreen>
         _validFramesCount = 0;
       }
     }
+  }
+
+  /// Y-F4: geometría que el backend vuelve a validar. Mismas unidades que ML Kit
+  /// (grados) y proporción del rostro sobre el ancho de la imagen, que es la
+  /// aproximación de distancia cuando no hay profundidad.
+  Map<String, dynamic> _buildGeometry(Face face, Size imageSize) {
+    final box = face.boundingBox;
+    final imageWidth = imageSize.width;
+    final imageHeight = imageSize.height;
+
+    return {
+      'yaw': face.headEulerAngleY ?? 0.0,
+      'roll': face.headEulerAngleZ ?? 0.0,
+      'pitch': face.headEulerAngleX ?? 0.0,
+      'faceRatio': imageWidth > 0 ? box.width / imageWidth : 0.0,
+      'aspectRatio': box.width > 0 ? box.height / box.width : 0.0,
+      'centerOffset': imageWidth > 0 && imageHeight > 0
+          ? (box.center.dx - imageWidth / 2).abs() / (imageWidth / 2)
+          : 0.0,
+    };
   }
 
   bool _validateFace(Face face, Size imageSize) {
@@ -657,6 +685,8 @@ class _CaptureScreenState extends State<CaptureScreen>
         builder: (_) => ProcessingScreen(
           faceImage: _faceImage!,
           handsImage: _handsImage!,
+          // Y-F4: la geometría medida en el cliente viaja con la foto.
+          geometry: _captureGeometry,
         ),
       ),
     );

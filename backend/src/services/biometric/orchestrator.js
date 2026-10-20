@@ -8,6 +8,7 @@ const undertoneService = require('./undertone.service');
 const deltaService = require('./delta.service');
 const scanComparisonService = require('./scanComparison.service');
 const imageHashService = require('./imageHash.service');
+const captureGeometry = require('./captureGeometry.service');
 const openUV = require('../openUV');
 const logger = require('../../config/logger');
 const { BIOMETRIC_CONSENT_VERSION } = require('../../config/consentConfig');
@@ -17,9 +18,27 @@ class BiometricOrchestrator {
   /**
    * Orquesta el análisis completo con resiliencia y Circuit-Breakers (Sprint 2.3 ADR-001)
    */
-  async analyze(userId, faceImage, handsImage, entryPoint = 'ideas', lat, lng, traceId = null) {
+  async analyze(userId, faceImage, handsImage, entryPoint = 'ideas', lat, lng, traceId = null, geometry = null) {
     const parsedUserId = parseInt(userId, 10);
     logger.info('Iniciando análisis biométrico resilietne para el usuario', { userId: parsedUserId, traceId });
+
+    // Y-F4: geometría declarada por el cliente (ángulos + tamaño del rostro). Se
+    // juzga aquí, antes de tocar la imagen y antes de gastar unidades: si el rostro
+    // venía girado, inclinado o fuera de distancia, la medición no es comparable con
+    // las anteriores y no debe entrar en la serie de Y-F3.
+    const geometryAssessment = captureGeometry.assess(geometry, {
+      requerida: process.env.BIOMETRIC_REQUIRE_GEOMETRY === 'true',
+    });
+    if (geometryAssessment.veredicto === 'RECHAZADA') {
+      const error = new Error('La posición del rostro no permite una medición comparable.');
+      error.code = 'CAPTURE_REJECTED';
+      error.statusCode = 422;
+      error.details = {
+        geometry: geometryAssessment,
+        metrics: geometryAssessment.metricas,
+      };
+      throw error;
+    }
 
     // Y-F2: puerta de calidad antes de gastar unidades del proveedor. Una foto
     // oscura, borrosa o de menos de 640 px no se envía: se responde 422 con el motivo.
@@ -150,7 +169,10 @@ class BiometricOrchestrator {
       : await scanSessionService.saveScan({
           userId: parsedUserId,
           faceScores,
-          geometry: prepared.geometry, // Y-F2: origen, normalización y EXIF de la captura
+          geometry: {
+            ...prepared.geometry, // Y-F2: origen, normalización y EXIF de la captura
+            cliente: geometryAssessment, // Y-F4: ángulos y distancia declarados y revalidados
+          },
           quality: { ...prepared.quality, undertone: faceScores.subtonoMedicion }, // Y-F2: veredicto, score y motivos
           fingerprint, // Y-F5: huella para reutilizar el análisis si vuelve la misma foto
           tolerante: true,
@@ -215,6 +237,13 @@ class BiometricOrchestrator {
       // En un acierto de caché no hay sesión nueva: la referencia viaja en `cache.reusedScanId`.
       scanSessionId: scanSession?.id || null,
       metricsCount: scanSession ? scanSession.metricsCount : Object.keys(faceScores.metrics || {}).length,
+      // Y-F4: con qué geometría se tomó la foto. `SIN_GEOMETRIA` significa que el
+      // cliente no la envió: la foto se midió igual, pero no se pudo verificar.
+      captureGeometry: {
+        provista: geometryAssessment.provista,
+        veredicto: geometryAssessment.veredicto,
+        metricas: geometryAssessment.metricas,
+      },
       delta,
       // Y-F5: trazabilidad del ahorro. `hit: true` significa que no se gastó una unidad.
       cache: {

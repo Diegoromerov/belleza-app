@@ -134,6 +134,7 @@ class BiometricService {
     required List<int> handsImageBytes,
     double? lat,
     double? lng,
+    Map<String, dynamic>? geometry,
   }) async {
     final baseUrl = await getBaseUrl();
     final token = await AuthService.getToken();
@@ -161,6 +162,8 @@ class BiometricService {
               'handsImage': base64Encode(compressedHands),
               'lat': lat,
               'lng': lng,
+              // Y-F4: sólo se envía si el cuadro validado traía geometría.
+              if (geometry != null) 'geometry': geometry,
             }),
           )
           .timeout(const Duration(seconds: 40));

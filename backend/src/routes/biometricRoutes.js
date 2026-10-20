@@ -17,6 +17,15 @@ const { biometricAnalyzeSchema, biometricProfileParamSchema } = require('../sche
  * - Checklist Item 3: Validación Zod obligatoria en endpoints mutantes.
  * - Checklist Item 4: Eliminación de userId || 'guest' (Exigencia de JWT válido).
  * - Checklist Item 5: Header Idempotency-Key obligatorio.
+ *
+ * Y-F4: el cuerpo acepta `geometry` opcional { yaw, roll, pitch?, faceRatio?,
+ * aspectRatio?, centerOffset? } medida por el cliente con ML Kit. Se revalida aquí
+ * (captureGeometry.service) antes de llamar al proveedor: un rostro girado,
+ * inclinado o fuera de distancia responde 422 CAPTURE_REJECTED con el motivo y no
+ * gasta unidades. Ausente = se mide igual, marcado como `SIN_GEOMETRIA`; con
+ * BIOMETRIC_REQUIRE_GEOMETRY=true la ausencia también es rechazo.
+ * (El endpoint no tiene requestBody explícito en openapi.json: sigue siendo un stub
+ * autodescubierto, así que el campo no aparece en el spec generado.)
  */
 // DECISION 2026-10-09 (Diego): la validacion Zod va ANTES del veto de consentimiento.
 // Antes el guard corria primero y respondia 403 a un cuerpo mal formado: se evaluaba
@@ -62,7 +71,7 @@ router.post('/analyze', authMiddleware, idempotencyMiddleware, validateBiometric
     });
   }
 
-  const { faceImage, handsImage, entryPoint, lat, lng } = parseResult.data;
+  const { faceImage, handsImage, entryPoint, lat, lng, geometry } = parseResult.data;
 
   // Validar tamaño de payload base64 (máx 20MB por imagen)
   const faceSize = Buffer.from(faceImage, 'base64').length;
@@ -87,7 +96,10 @@ router.post('/analyze', authMiddleware, idempotencyMiddleware, validateBiometric
       entryPoint || 'ideas',
       lat,
       lng,
-      traceId
+      traceId,
+      // Y-F4: geometría medida por el cliente; el orquestador la revalida antes de
+      // llamar al proveedor y la guarda con la sesión.
+      geometry || null
     );
 
     faceBuffer.fill(0);
