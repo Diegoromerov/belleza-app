@@ -7,6 +7,15 @@ const JWT_SECRET = 'test_secret_key_2026_at_least_32_chars_long';
 process.env.JWT_SECRET = JWT_SECRET;
 
 const { pool } = require('../src/config/db');
+
+// ownerGuard abre una transacción real (runInTenantTransaction) y necesita
+// `pool.connect`. Los bloques de abajo solo reemplazan `pool.query`, así que se
+// entrega un cliente que delega en el mock y libera sin hacer nada.
+const ORIGINAL_QUERY = pool.query;
+const REAL_CONNECT = pool.connect.bind(pool);
+pool.connect = async () => (pool.query === ORIGINAL_QUERY
+  ? REAL_CONNECT()
+  : { query: (text, params) => pool.query(text, params), release: () => {} });
 const salonController = require('../src/controllers/salonController');
 const salonRoutes = require('../src/routes/salonRoutes');
 const { requireOwnerRole, protectOwnerMember } = require('../src/middleware/ownerGuard');
