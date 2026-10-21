@@ -11,6 +11,7 @@ const businessWorkflowService = require('./businessWorkflowService');
 const businessRequirementService = require('./businessRequirementService');
 const businessRepository = require('../repositories/businessRepository');
 const { KNOWLEDGE_CATEGORIES } = require('../config/knowledgeCategories');
+const { pool } = require('../config/db');
 
 /**
  * Definicón de JSON Schemas de las herramientas (Tool Definitions) para DeepSeek / Gemini Function Calling
@@ -184,6 +185,57 @@ const AURA_TOOLS_DEFINITIONS = [
         required: ['queryText']
       }
     }
+  },
+  // ── PROVIDER & SALON AGGREGATIONS & OPERATIONAL TOOLS ──
+  {
+    type: 'function',
+    function: {
+      name: 'get_provider_appointments',
+      description: 'Consulta citas y reservas del prestador o salón autenticado en la base de datos (pendientes, ejecutadas, canceladas o por rango temporal como hoy o este mes).',
+      parameters: {
+        type: 'object',
+        properties: {
+          timeRange: {
+            type: 'string',
+            enum: ['all', 'today', 'this_week', 'this_month', 'upcoming'],
+            description: 'Rango temporal a consultar (por defecto this_month)'
+          },
+          status: {
+            type: 'string',
+            enum: ['all', 'pending', 'confirmed', 'completed', 'cancelled'],
+            description: 'Filtro por estado de la cita'
+          }
+        }
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'get_provider_financial_metrics',
+      description: 'Calcula métricas financieras y facturación del prestador o salón autenticado (ingresos brutos, netos, desglose de IVA y comisiones) para un rango como este mes.',
+      parameters: {
+        type: 'object',
+        properties: {
+          period: {
+            type: 'string',
+            enum: ['this_month', 'last_month', 'this_week', 'all_time'],
+            description: 'Periodo de cálculo financiero (por defecto this_month)'
+          }
+        }
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'get_salon_operational_summary',
+      description: 'Obtiene el resumen operacional de la sede o salón administrado por el usuario (número de profesionales/miembros en equipo, citas globales e información del salón).',
+      parameters: {
+        type: 'object',
+        properties: {}
+      }
+    }
   }
 ];
 
@@ -327,6 +379,184 @@ async function executeAuraTool(toolName, args, userId, userRole = 'provider', te
           tenantId
         });
         return { status: 'success', domain: 'REGULATORY', knowledge: results };
+      }
+
+      // ── OPERATIONAL & FINANCIAL TOOLS (PRESTADOR / SALÓN) ──
+      case 'get_provider_appointments': {
+        const parsedUserId = parseInt(userId, 10);
+        if (isNaN(parsedUserId)) {
+          return { status: 'error', message: 'Identificador de usuario inválido.' };
+        }
+
+        const timeRange = args.timeRange || 'this_month';
+        const statusFilter = args.status || 'all';
+
+        let dateCondition = '';
+        if (timeRange === 'today') {
+          dateCondition = "AND (scheduled_at >= CURRENT_DATE AND scheduled_at < CURRENT_DATE + INTERVAL '1 day')";
+        } else if (timeRange === 'this_week') {
+          dateCondition = "AND scheduled_at >= DATE_TRUNC('week', CURRENT_DATE) AND scheduled_at < DATE_TRUNC('week', CURRENT_DATE) + INTERVAL '1 week'";
+        } else if (timeRange === 'this_month') {
+          dateCondition = "AND scheduled_at >= DATE_TRUNC('month', CURRENT_DATE) AND scheduled_at < DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month'";
+        } else if (timeRange === 'upcoming') {
+          dateCondition = "AND scheduled_at >= NOW()";
+        }
+
+        let statusCondition = '';
+        if (statusFilter === 'pending') {
+          statusCondition = "AND estado IN ('PENDIENTE_PAGO', 'CONFIRMADA', 'PENDIENTE')";
+        } else if (statusFilter === 'confirmed') {
+          statusCondition = "AND estado = 'CONFIRMADA'";
+        } else if (statusFilter === 'completed') {
+          statusCondition = "AND estado IN ('COMPLETADA', 'FINALIZADA')";
+        } else if (statusFilter === 'cancelled') {
+          statusCondition = "AND estado IN ('CANCELADA', 'RECHAZADA')";
+        }
+
+        const query = `
+          SELECT 
+            b.id,
+            b.scheduled_at,
+            b.estado,
+            b.valor_bruto,
+            b.pago_neto_prestador,
+            b.service_address,
+            u.nombre as client_name,
+            s.name as service_name
+          FROM bookings b
+          LEFT JOIN usuarios u ON u.id = b.client_id
+          LEFT JOIN services s ON s.id = b.service_id
+          WHERE (b.provider_id = $1 OR b.business_profile_id = (
+            SELECT id::text FROM business_profiles WHERE user_id = $1 LIMIT 1
+          ))
+          ${dateCondition}
+          ${statusCondition}
+          ORDER BY b.scheduled_at ASC
+          LIMIT 50;
+        `;
+
+        const res = await pool.query(query, [parsedUserId]);
+        const appointments = res.rows || [];
+
+        const countsByStatus = appointments.reduce((acc, curr) => {
+          acc[curr.estado] = (acc[curr.estado] || 0) + 1;
+          return acc;
+        }, {});
+
+        return {
+          status: 'success',
+          timeRange,
+          filterStatus: statusFilter,
+          totalAppointments: appointments.length,
+          breakdownByStatus: countsByStatus,
+          appointments: appointments.map(apt => ({
+            id: apt.id,
+            fecha: apt.scheduled_at,
+            estado: apt.estado,
+            cliente: apt.client_name || 'Cliente GlowApp',
+            servicio: apt.service_name || 'Servicio de Belleza',
+            monto: apt.valor_bruto,
+            direccion: apt.service_address
+          }))
+        };
+      }
+
+      case 'get_provider_financial_metrics': {
+        const parsedUserId = parseInt(userId, 10);
+        if (isNaN(parsedUserId)) {
+          return { status: 'error', message: 'Identificador de usuario inválido.' };
+        }
+
+        const period = args.period || 'this_month';
+        let dateCondition = "AND scheduled_at >= DATE_TRUNC('month', CURRENT_DATE) AND scheduled_at < DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month'";
+
+        if (period === 'last_month') {
+          dateCondition = "AND scheduled_at >= DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month') AND scheduled_at < DATE_TRUNC('month', CURRENT_DATE)";
+        } else if (period === 'this_week') {
+          dateCondition = "AND scheduled_at >= DATE_TRUNC('week', CURRENT_DATE) AND scheduled_at < DATE_TRUNC('week', CURRENT_DATE) + INTERVAL '1 week'";
+        } else if (period === 'all_time') {
+          dateCondition = "";
+        }
+
+        const query = `
+          SELECT 
+            COUNT(id) as total_citas,
+            COALESCE(SUM(CASE WHEN estado IN ('COMPLETADA', 'FINALIZADA', 'CONFIRMADA') THEN valor_bruto ELSE 0 END), 0) as facturacion_bruta,
+            COALESCE(SUM(CASE WHEN estado IN ('COMPLETADA', 'FINALIZADA', 'CONFIRMADA') THEN pago_neto_prestador ELSE 0 END), 0) as ingreso_neto_prestador,
+            COALESCE(SUM(CASE WHEN estado IN ('COMPLETADA', 'FINALIZADA', 'CONFIRMADA') THEN subtotal_base ELSE 0 END), 0) as total_subtotal_base,
+            COALESCE(SUM(CASE WHEN estado IN ('COMPLETADA', 'FINALIZADA', 'CONFIRMADA') THEN iva_valor ELSE 0 END), 0) as total_iva_recaudado,
+            COUNT(CASE WHEN estado IN ('COMPLETADA', 'FINALIZADA') THEN 1 END) as citas_ejecutadas,
+            COUNT(CASE WHEN estado IN ('CANCELADA', 'RECHAZADA') THEN 1 END) as citas_canceladas,
+            COUNT(CASE WHEN estado IN ('PENDIENTE_PAGO', 'CONFIRMADA') THEN 1 END) as citas_pendientes
+          FROM bookings
+          WHERE (provider_id = $1 OR business_profile_id = (
+            SELECT id::text FROM business_profiles WHERE user_id = $1 LIMIT 1
+          ))
+          ${dateCondition};
+        `;
+
+        const res = await pool.query(query, [parsedUserId]);
+        const metrics = res.rows?.[0] || {};
+
+        return {
+          status: 'success',
+          period,
+          facturacion_bruta: parseFloat(metrics.facturacion_bruta || 0),
+          ingreso_neto_prestador: parseFloat(metrics.ingreso_neto_prestador || 0),
+          subtotal_base: parseFloat(metrics.total_subtotal_base || 0),
+          iva_recaudado: parseFloat(metrics.total_iva_recaudado || 0),
+          resumen_citas: {
+            total: parseInt(metrics.total_citas || 0, 10),
+            ejecutadas: parseInt(metrics.citas_ejecutadas || 0, 10),
+            pendientes: parseInt(metrics.citas_pendientes || 0, 10),
+            canceladas: parseInt(metrics.citas_canceladas || 0, 10)
+          }
+        };
+      }
+
+      case 'get_salon_operational_summary': {
+        const parsedUserId = parseInt(userId, 10);
+        if (isNaN(parsedUserId)) {
+          return { status: 'error', message: 'Identificador de usuario inválido.' };
+        }
+
+        const salonQuery = `
+          SELECT 
+            s.id,
+            s.nombre_salon,
+            s.direccion,
+            s.ciudad,
+            s.plan_saas,
+            (SELECT COUNT(*) FROM salon_miembros sm WHERE sm.salon_id = s.id AND sm.estado = 'ACTIVO') as total_profesionales,
+            (SELECT COUNT(*) FROM bookings b WHERE b.provider_id IN (
+               SELECT usuario_id FROM salon_miembros WHERE salon_id = s.id
+             ) AND b.scheduled_at >= DATE_TRUNC('month', CURRENT_DATE)) as total_citas_mes
+          FROM salones s
+          WHERE s.id_dueno = $1
+          LIMIT 1;
+        `;
+
+        const res = await pool.query(salonQuery, [parsedUserId]);
+        if (!res.rows || res.rows.length === 0) {
+          return {
+            status: 'not_found',
+            message: 'No se encontró un salón o sede registrado para este usuario administrador.'
+          };
+        }
+
+        const salon = res.rows[0];
+        return {
+          status: 'success',
+          salon: {
+            id: salon.id,
+            nombre: salon.nombre_salon,
+            direccion: salon.direccion,
+            ciudad: salon.ciudad,
+            plan: salon.plan_saas,
+            equipo_profesionales: parseInt(salon.total_profesionales || 0, 10),
+            citas_este_mes: parseInt(salon.total_citas_mes || 0, 10)
+          }
+        };
       }
 
       default:
