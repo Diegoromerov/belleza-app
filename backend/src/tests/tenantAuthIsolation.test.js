@@ -92,7 +92,11 @@ describe('Aislamiento de tenant en authMiddleware (P0 t_fix_tenant_04)', () => {
   beforeEach(() => {
     mockTenantEnSesion = null;
     mockConsultas.length = 0;
-    delete process.env.TENANT_TRANSACTION_PER_REQUEST;
+    // authMiddleware delega en middleware/tenantContext cuando el usuario tiene
+    // tenant (fix/rls-tenant-context). Aquí se prueba la ausencia de fuga a nivel
+    // de SESIÓN, no la capa transaccional: se deja tenantContext en passthrough
+    // para que la cadena llame a next() sin abrir transacción sobre el pool falso.
+    process.env.TENANT_TRANSACTION_PER_REQUEST = 'false';
   });
 
   test('la autenticación sigue poblando req.user (sin regresión funcional)', async () => {
