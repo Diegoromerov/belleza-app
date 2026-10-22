@@ -1,5 +1,5 @@
 -- ===========================================================================
--- 107_saas_billing_schema.sql — Esquema de Facturación y Suscripciones SaaS B2B
+-- 111_saas_billing_schema.sql — Esquema de Facturación y Suscripciones SaaS B2B
 -- ===========================================================================
 -- Idempotente: todo es CREATE ... IF NOT EXISTS
 -- Ejecutar DESPUÉS de 012_business_engine.sql (business_profiles existe)

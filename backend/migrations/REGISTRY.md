@@ -298,3 +298,24 @@ por la fila de auditoría; una columna «purged_at» sobre una sesión borrada n
 definición.
 **Verificación:** el corte se calcula con `retentionCutoff()` (24 meses desde el último
 escaneo) y `dryRun` cuenta sin borrar antes de ejecutar.
+
+---
+
+## 7. Migración 111 — el SaaS B2B reclamó un `107` ya ocupado
+
+**Archivo:** `111_saas_billing_schema.sql` (antes `107_saas_billing_schema.sql`).
+**Qué pasó.** Dos PRs del 20-oct partieron con horas de diferencia y ambos vieron libre
+el `107`: `107_rls_politicas_sin_contexto.sql` (01:02) y `107_saas_billing_schema.sql`
+(14:56). Los dos entraron en `main` y el guard quedó en rojo **después** del merge, con
+el gate de CI fallando en `main` desde entonces. Las dos están aplicadas en producción.
+**Qué se hizo:** renumerar la **más nueva** al siguiente libre real del directorio
+(`111`; el máximo en disco era `110`), según la regla 5.
+**Por qué renumerar una ya aplicada no rompe nada aquí:** el runner registra por
+`filename`, así que la próxima ejecución manual la volverá a aplicar bajo el nombre
+nuevo. Se verificó sentencia por sentencia que el archivo es idempotente: 3
+`CREATE TABLE IF NOT EXISTS`, 10 `CREATE INDEX IF NOT EXISTS`, un bloque `DO` que crea
+el trigger solo si no existe y `CREATE OR REPLACE FUNCTION`. Re-ejecutar es no-op.
+La fila `107_saas_billing_schema.sql` de `schema_migrations` se deja como registro
+histórico de lo que realmente se ejecutó; no se borra.
+**Lección para la próxima:** el número se elige mirando el directorio **y las ramas en
+vuelo en el remoto**, no solo el worktree. Dos ramas del mismo día se pisan igual.
